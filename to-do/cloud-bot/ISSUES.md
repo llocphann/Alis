@@ -1296,6 +1296,7 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   invalid/repeated selections. Evidence:
   [Ready-slot and transition recovery](../../docs/evidence/abyss-product/20261011-wallpaper-recovery/README.md).
   This does not establish the sole cause of the owner's Melt failure.
+  Product repair: `273a67c06` on Alis dev, pushed; owner runtime unchanged.
   State: OPEN for committed exact-SHA focused/canonical, actual picker/
   desktop path, owner physical Liquid ON/unavailable/OFF, fractional/
   multiple outputs, video and external backend failure acceptance.

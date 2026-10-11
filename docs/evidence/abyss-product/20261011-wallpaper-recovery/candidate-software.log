@@ -1,0 +1,16 @@
+  INFO: Launching config: "/tmp/alis-wallpaper-recovery-gbhox1db/shell.qml"
+  INFO: Shell ID: "497aa7755ea8c354bf0503f1d0b7a8b3" Path ID "497aa7755ea8c354bf0503f1d0b7a8b3"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/p6d37k0rmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.156809.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-wallpaper-recovery-gbhox1db/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-wallpaper-recovery-gbhox1db/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML Image at @modules/common/widgets/WallpaperCrossfader.qml[885:9]: Cannot open: file:///tmp/alis-wallpaper-recovery-gbhox1db/missing.png
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-wallpaper-recovery-gbhox1db/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN qml: [WallpaperCrossfader] Transition timed out; applying the ready image
+  WARN scene: QML Image at @modules/common/widgets/WallpaperCrossfader.qml[885:9]: Cannot open: file:///tmp/alis-wallpaper-recovery-gbhox1db/missing.png
+  INFO qml: WALLPAPER_RECOVERY_PASS 50 11 {"source":"/tmp/alis-wallpaper-recovery-gbhox1db/c.png","displayedSource":"/tmp/alis-wallpaper-recovery-gbhox1db/c.png","activeIndex":1,"pendingSource":"","loadingSource":"","transitioning":false,"primePending":false,"primeSwaps":0,"shader":"","shaderReady":false,"shaderPresented":false,"slot0Status":0,"slot1Status":1,"visible":true,"windowVisible":true,"graphicsApi":1,"shaderStatus":1,"opacity":1}
+
+processExit=0

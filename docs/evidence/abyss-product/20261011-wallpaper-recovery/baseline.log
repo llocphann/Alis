@@ -1,0 +1,16 @@
+  INFO: Launching config: "/tmp/alis-wallpaper-recovery-bbjuoir0/shell.qml"
+  INFO: Shell ID: "4d557292627008e8228cad2782e77efe" Path ID "4d557292627008e8228cad2782e77efe"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/4gd3al0rmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.157372.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-wallpaper-recovery-bbjuoir0/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-wallpaper-recovery-bbjuoir0/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML Image at @modules/common/widgets/WallpaperCrossfader.qml[804:9]: Cannot open: file:///tmp/alis-wallpaper-recovery-bbjuoir0/missing.png
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-wallpaper-recovery-bbjuoir0/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+ ERROR qml: WALLPAPER_RECOVERY_FAIL OFF failed load replaced the last ready image {"source":"/tmp/alis-wallpaper-recovery-bbjuoir0/missing.png","displayedSource":"/tmp/alis-wallpaper-recovery-bbjuoir0/missing.png","pendingSource":"","loadingSource":"","transitioning":false,"primePending":false,"primeSwaps":0,"shader":"","shaderReady":false,"shaderPresented":false,"slot0Status":3,"slot1Status":0,"visible":true,"windowVisible":true,"graphicsApi":3,"shaderStatus":1,"opacity":1} check@qs:@/qs/shell.qml:22
+runChecks@qs:@/qs/shell.qml:32
+expression for onTriggered@qs:@/qs/shell.qml:65
+
+processExit=0
