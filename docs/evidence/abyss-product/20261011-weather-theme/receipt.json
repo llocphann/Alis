@@ -1,0 +1,38 @@
+{
+  "source_baseline": "bf22740c5",
+  "kind": "focused actual QML bindings on a private Niri/software fixture, not field pixel parity or owner visual acceptance",
+  "candidate_hashes": {
+    "modules/bar/weather/WeatherPopupContent.qml": "a8b4f4a053bb12044bfdfc85f2949353cf6e9b0ea78982884a1edf480c79630c",
+    "scripts/test-weather-hourly-light-runtime.py": "414a730ec3c6c334bcf1d2beaa32b4d78476c98ea78a16d18a160e14a0037330"
+  },
+  "audit": "Detailed Weather cards use Material neutral colSurfaceContainerHigh while Orbital uses Abyss palette. No literal fixed gray was found.",
+  "repair": "Abyss details share field palette with a small accent tint and contrast-adjusted ink; other family preserves existing fills.",
+  "focused": {
+    "native_exit": 0,
+    "layout_contract_exit": 0,
+    "hourly_label_checks_minimum": 48,
+    "detail_card_states": 72,
+    "detail_cards": 6,
+    "palettes": [
+      "warm",
+      "green",
+      "violet"
+    ],
+    "modes": [
+      "light",
+      "dark"
+    ],
+    "panel_families": [
+      "abyss",
+      "waffle"
+    ],
+    "tests": [
+      "hourly ink regression",
+      "live accent recoloring in open Details",
+      "text contrast >=4.5",
+      "preserved non-Abyss neutral fills"
+    ]
+  },
+  "owner_runtime_preferences_changed": false,
+  "owner_wallpaper_theme_acceptance": false
+}

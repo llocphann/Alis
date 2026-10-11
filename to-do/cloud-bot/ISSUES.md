@@ -875,8 +875,18 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   child theme bindings, including inherited/default backgrounds. Correct
   fixed-grey surfaces without flattening meaningful component hierarchy;
   verify light/dark, wallpaper color changes, open/reopen, readable contrast
-  and Abyss connected presentation. State: OPEN; needs theme screenshots,
-  source validation and owner acceptance.
+  and Abyss connected presentation. **Source repair 2026-10-11:** audit finds
+  neutral Material fills in Details while Orbital uses Abyss palette; no
+  literal fixed grey is present. Six detail cards now share the field palette
+  with an accent tint and contrast-adjusted foregrounds. Existing non-Abyss
+  fills and the component hierarchy remain. The expanded hourly native
+  fixture passes live open-popup accent changes, light/dark palettes, six
+  detail cards and >=4.5 text contrast, plus preserved non-Abyss fills;
+  the layout contract passes. It uses the supported Abyss/Waffle settings
+  values rather than the retired ii family alias that normalizes to Abyss.
+  [Focused receipt](../../docs/evidence/abyss-product/20261011-weather-theme/receipt.json).
+  State: OPEN for final canonical, real wallpaper-theme/connected-field
+  screenshots and owner acceptance; native QML palette bindings pass.
 
 - [ ] **Edit Abyss Layout Media IPC preview incorrectly shows Volume IPC — owner report 2026-10-10:**
   The editor presents the **Volume IPC** sample when **Media IPC** is selected.

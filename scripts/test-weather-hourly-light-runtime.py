@@ -16,6 +16,7 @@ import QtTest
 import Quickshell
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.bar.weather
 ShellRoot {
     Component.onCompleted: Quickshell.watchFiles = false
@@ -32,6 +33,11 @@ ShellRoot {
             for (const child of item.children ?? []) labels(child, result)
             return result
         }
+        function cards(item, result) {
+            if (["weatherPrimaryMetric", "weatherSecondaryMetrics", "weatherSunTimeline"].includes(item.objectName)) result.push(item)
+            for (const child of item.children ?? []) cards(child, result)
+            return result
+        }
         function runChecks() {
             try {
                 tryCompare(Config, "ready", true, 4000)
@@ -40,7 +46,7 @@ ShellRoot {
                     hourly: Array.from({length: 8}, (_, i) => ({label: String(i * 3).padStart(2, "0") + ":00",
                         temp: "25°", code: "113", isNight: false}))}
                 let checked = 0
-                for (const family of ["abyss", "ii"]) {
+                for (const family of ["abyss", "waffle"]) {
                     Config.setNestedValue("panelFamily", family)
                     wait(100)
                     for (const dark of [false, true, false]) {
@@ -57,6 +63,40 @@ ShellRoot {
                             checked++
                         }
                     }
+                }
+                const detailCards=cards(popup, [])
+                check(detailCards.length===6,"detailed Weather lost its four metrics, secondary strip or timeline")
+                for (const family of ["abyss", "waffle"]) {
+                    Config.setNestedValue("panelFamily",family)
+                    popup.currentTab=1
+                    for (const dark of [false,true]) {
+                        Appearance.m3colors.darkmode=dark
+                        Appearance.m3colors.m3surface=dark ? "#0b111b" : "#fff9f3"
+                        Appearance.m3colors.m3background=dark ? "#0b111b" : "#fff9f3"
+                        Appearance.m3colors.m3surfaceContainerLow=dark ? "#141d28" : "#fcf0e8"
+                        Appearance.m3colors.m3surfaceContainer=dark ? "#1b2430" : "#f4e9e0"
+                        Appearance.m3colors.m3surfaceContainerHigh=dark ? "#25313d" : "#eaded5"
+                        Appearance.m3colors.m3onSurface=dark ? "#e5edf4" : "#201c18"
+                        Appearance.m3colors.m3onSurfaceVariant=dark ? "#bac5ce" : "#564c42"
+                        let previousCard=""
+                        for (const primary of ["#e99b78", "#72ceac", "#aca0ee"]) {
+                            Appearance.m3colors.m3primary=primary
+                            wait(30)
+                            for (const card of detailCards) {
+                                check(String(card.color)===String(popup.cardColor),"detail card retained an unrelated background")
+                                const contrast=ColorUtils.contrastRatio(popup.ink,card.color)
+                                check(contrast>=4.49,"detail text contrast dropped below 4.5: "+JSON.stringify({family:family,dark:dark,ink:String(popup.ink),card:String(card.color),ratio:contrast}))
+                                if(family==="waffle") check(String(card.color)===String(Appearance.colors.colSurfaceContainerHigh),"Material detail palette changed: "+JSON.stringify({family:family,actualFamily:Config.options.panelFamily,abyss:popup.abyss,card:String(card.color),material:String(Appearance.colors.colSurfaceContainerHigh)}))
+                                checked++
+                            }
+                            if(family==="abyss") {
+                                check(String(popup.cardColor)!==String(Appearance.colors.colSurfaceContainerHigh),"Abyss details retained the neutral Material card fill")
+                                check(!previousCard || previousCard!==String(popup.cardColor),"visible detail background ignored a live accent/theme change")
+                                previousCard=String(popup.cardColor)
+                            }
+                        }
+                    }
+                    popup.currentTab=0
                 }
                 console.info("WEATHER_HOUR_INK_PASS", checked, "actual hourly labels, both routes, live light/dark/light changes")
             } catch (e) { console.error("WEATHER_HOUR_INK_FAIL", e.message, e.stack) }
@@ -81,4 +121,4 @@ ShellRoot {
         if result.returncode or "WEATHER_HOUR_INK_PASS" not in result.stdout or any(s in result.stdout for s in bad):
             print(result.stdout)
             raise SystemExit(1)
-        print("WEATHER_HOUR_INK_PASS actual popup hours remain black in light mode and follow dark-mode ink on both routes")
+        print("WEATHER_HOUR_INK_PASS actual hours and six detail cards follow live light/dark/accent changes on both routes")
