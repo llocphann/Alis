@@ -44,6 +44,7 @@ Window {
   function check(value,message){if(!value)throw new Error(message)}
   function named(item,name){if(item.objectName===name)return item;for(const child of item.data ?? item.children ?? []){const value=named(child,name);if(value)return value}return null}
   function allImages(item){let result=[];if(item.objectName==="wallpaperCardImage")result.push(item);for(const child of item.data ?? item.children ?? [])result=result.concat(allImages(child));return result}
+  function allLabels(item){let result=[];if(item.objectName==="wallpaperCardLabel")result.push(item);for(const child of item.data ?? item.children ?? [])result=result.concat(allLabels(child));return result}
   function runChecks(){try {
    tryCompare(Config,"ready",true,4000)
    Config.setNestedValues({"background.transition.type":"inirMelt","background.transition.enable":true})
@@ -77,6 +78,10 @@ Window {
    search.text="";tryCompare(picker,"count",5,2000);wait(80)
    picker.moveSelection(1);wait(230);check(carousel.currentIndex===1,"carousel navigation lost selection")
    tryVerify(()=>allImages(carousel).length>=5 && allImages(carousel).every(image=>image.status===Image.Ready),7000)
+   const labels=allLabels(carousel)
+   check(labels.length>=5 && labels.every(label=>picker.entries.some(entry=>entry.name===label.text)
+     && !label.text.includes("/") && !label.text.includes("\\\\")),
+     "wallpaper cards must show a basename with extension, never a directory or full path")
    tryCompare(quoted,"status",Image.Ready,7000)
    check(FileUtils.trimFileProtocol(named(carousel,"wallpaperCardImage").thumbnailPath).startsWith(Quickshell.env("XDG_CACHE_HOME")),"thumbnail escaped the private cache")
    wait(260)

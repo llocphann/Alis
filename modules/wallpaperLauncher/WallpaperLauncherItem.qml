@@ -34,6 +34,6 @@ Item {
         }
         Rectangle {visible:root.applied;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:8;width:26;height:26;radius:13;color:AbyssStyle.accent;MaterialSymbol {anchors.centerIn:parent;text:"check";iconSize:18;color:AbyssStyle.surface}}
     }
-    AbyssLabel {anchors.top:preview.bottom;anchors.topMargin:8;anchors.horizontalCenter:parent.horizontalCenter;width:parent.width-20;horizontalAlignment:Text.AlignHCenter;text:root.modelData.relativePath.replace(/\.[^/.]+$/,"");elide:Text.ElideMiddle;color:root.current ? AbyssStyle.accent : AbyssStyle.textColor}
+    AbyssLabel {anchors.top:preview.bottom;anchors.topMargin:8;anchors.horizontalCenter:parent.horizontalCenter;width:parent.width-20;horizontalAlignment:Text.AlignHCenter;objectName:"wallpaperCardLabel";text:root.modelData.name;elide:Text.ElideMiddle;color:root.current ? AbyssStyle.accent : AbyssStyle.textColor}
     MouseArea {anchors.fill:parent;onClicked:root.activated(root.index)}
 }
