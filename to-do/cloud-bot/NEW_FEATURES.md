@@ -6,7 +6,7 @@ handled alongside the selected feature in the same single-agent context.
 Source-implemented features below still need their stated delivery/owner gates;
 do not reimplement them solely because a checkbox is open.
 
-**Immediate owner priority — updated 2026-10-12:** continue Screen Edge multi-selection after
+**Immediate owner priority — updated 2026-10-12:** qualify completed feature source milestones after
 DASH-F01/F02 source milestones. Weekly Planner `f62f24361`, tab reorder
 `f94de0535` and Events durable acknowledgement prerequisite `ccd750167`
 have separate focused evidence; committed canonical and owner gates stay open.
@@ -16,7 +16,7 @@ preserves the consumed result. Single reset+3minute continuation fired04:29ICT,
 and the new five-hour window began at100% remaining. No historical task backfill,
 owner preference, AI/vault consent or installed Companion change is authorized
 by the continuation. AGENDA-F01 now has source/focused linking evidence below;
-Per-module locks `a450be887` are source/focused PASS; continue multi-selection.
+Per-module locks `a450be887` are source/focused PASS; multi-selection source/focused PASS now follows below.
 Full qualification/owner gates
 remain open across these feature milestones. Frozen Agenda source0465 completed
 FAIL359/7/1; [raw exact receipt](../../docs/evidence/abyss-product/20261012-0465ffc5a/README.md)
@@ -214,13 +214,23 @@ order or close unverified Issues because their source is implemented.
   actions instead of silently changing unrelated modules. Test horizontal and
   vertical edges, cross-edge/per-output selection, drag/snapping and Cancel/
   Undo/Done/save semantics; coordinate with compact toolbar redesign in
-  [Rework](REWORK_OPTIMIZATION.md). State: IN PROGRESS — 2026-10-12, after lock source a450be887. Design:
-  editor-only selection set with a primary target, explicit toggle/clear,
-  coherent batch lock/unlock/enable/disable/remove/size/alignment and guarded
-  group drag/snapping; mixed locked placement batches reject atomically.
-  Selection is transient and never a saved user setting. Native input,
-  undo/cancel/save/restart and per-output guards will qualify the source;
-  owner/installed/material/multi-output gates remain open.
+  [Rework](REWORK_OPTIMIZATION.md). State: SOURCE IMPLEMENTED / focused PASS —
+  2026-10-12. Explicit editor-only selection set/primary target, visible lock/
+  selection state, pointer add/Ctrl-toggle, Space/Ctrl+A and Clear. Exact-target
+  batch lock/unlock/enable/disable/remove/custom-size/resize/alignment reject
+  locked/stale/infeasible placement edits atomically. Same-Edge groups preserve
+  gaps/order through drag/snapping and cross-Edge destination orientation;
+  mixed-Edge sets have batch controls with explicit group-drag rejection.
+  Source geometry snapshots and bounded measurement reflow repair the new
+  cross-Edge gap defect (ABYSS-I03); Reset/Cancel invalidate queued moves.
+  Undo preserves draft/selection; global/output-only Save preserves other
+  profiles and rejects concurrent source changes. No selection setting is saved.
+  Pure1588 and lock regression7044 PASS; actual QV4/private-native55checks,
+  2processes/13foreground captures, actual JSON reads and restart PASS.
+  [Pinned source/raw evidence](../../docs/evidence/abyss-product/20261012-multi-selection/README.md).
+  Full committed-SHA canonical, installed/owner physical pointer and normal
+  Popups, full Abyss material and actual multi-output/hotplug remain OPEN.
+
 
 - [ ] **DASH-F03 — Checkbox to show/hide Music tab scrollbars in Dashboard Settings — owner request 2026-10-11:**
   [Owner: Alis dev; New Feature] Add exactly **one independent

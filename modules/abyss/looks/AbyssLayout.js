@@ -140,17 +140,20 @@ function setLocked(placements,id,locked,width,height,options,fontScale) {
     var records=locked ? geometry(placements,width,height,options,fontScale) : [];
     return normalize(placements.map(function(p) {
         if(p.id!==id) return p;
-        if(!locked) return Object.assign({},p,{locked:false});
-        if(p.locked) return p;
         var record=records.find(function(r) {return r.id===id;});
-        var horizontal=p.edge==="top" || p.edge==="bottom",length=horizontal ? width : height;
-        var measured=options?.extents?.[id];
-        var natural=Number.isFinite(measured) && !(options?.editing && measured<1) ? Math.max(0,measured)
-            : extent(p.kind,!horizontal)*bounded(fontScale,1,.7,2);
-        return Object.assign({},p,{locked:true,
-            lockPosition:record && length>0 ? (record.along+record.span/2)/length : p.position,
-            lockScale:record && natural*moduleSize(p,options)>0 ? record.span/(natural*moduleSize(p,options)) : 1});
+        return lockPlacement(p,record,locked,width,height,options,fontScale);
     }),"top");
+}
+function lockPlacement(p,record,locked,width,height,options,fontScale) {
+    if(!locked)return Object.assign({},p,{locked:false});
+    if(p.locked)return p;
+    var horizontal=p.edge==="top" || p.edge==="bottom",length=horizontal ? width : height;
+    var measured=options?.extents?.[p.id];
+    var natural=Number.isFinite(measured) && !(options?.editing && measured<1) ? Math.max(0,measured)
+        : extent(p.kind,!horizontal)*bounded(fontScale,1,.7,2);
+    return Object.assign({},p,{locked:true,
+        lockPosition:record && length>0 ? (record.along+record.span/2)/length : p.position,
+        lockScale:record && natural*moduleSize(p,options)>0 ? record.span/(natural*moduleSize(p,options)) : 1});
 }
 function conflicts(records) {
     var result=[];
@@ -165,6 +168,101 @@ function checkedMove(placements,id,x,y,width,height,options,fontScale,snap) {
     var failures=conflicts(geometry(result.placements,width,height,options,fontScale));
     if(failures.length)return {placements:placements,guides:[],rejected:failures[0]};
     return result;
+}
+// Selection is editor state, never persisted with a placement. Every batch is
+// validated in full before changing any target; stale IDs cannot become a
+// partial transaction after a concurrent remove or a reset.
+function selectedModules(placements,ids) {
+    var unique=Array.from(new Set(Array.from(ids || [])));
+    return {ids:unique,items:unique.map(function(id) {return placements.find(function(p) {return p.id===id;});})};
+}
+function checkedBatch(placements,ids,action,value,width,height,options,fontScale) {
+    var selection=selectedModules(placements,ids),items=selection.items;
+    function deny(message) {return {placements:placements,rejected:message};}
+    if(!items.length)return deny("Select a module first");
+    if(items.some(function(p) {return !p;}))return deny("The selection changed. Select the modules again.");
+    var placementKeys=["edge","position","alignment","size","customSize","depth"];
+    if(placementKeys.indexOf(action)>=0 && items.some(function(p) {return p.locked;}))
+        return deny("Unlock every selected module before changing its placement or size");
+    if(["remove","locked","enabled","joinCorner"].concat(placementKeys).indexOf(action)<0)
+        return deny("This action cannot be applied to modules");
+    var records=(action==="locked" || action==="joinCorner") && value ? geometry(placements,width,height,options,fontScale) : [];
+    if(action==="joinCorner" && value && items.some(function(p) {
+        return !cornerForModule(records,p.id,width,height);
+    }))return deny("Every selected module must be beside a corner to connect the group");
+    var proposed=placements.filter(function(p) {return action!=="remove" || selection.ids.indexOf(p.id)<0;})
+        .map(function(p) {
+            if(selection.ids.indexOf(p.id)<0)return p;
+            if(action==="locked") {
+                // Capture all anchors from the same rendered layout.
+                var own=records.find(function(r) {return r.id===p.id;});
+                return lockPlacement(p,own,!!value,width,height,options,fontScale);
+            }
+            var update={};update[action]=value;
+            if(action==="customSize" && value && !p.customSize)update.size=edgeSize(options,p.edge);
+            return Object.assign({},p,update);
+        });
+    proposed=normalize(proposed,"top");
+    var failures=conflicts(geometry(proposed,width,height,options,fontScale));
+    if(failures.length)return deny(failures[0]);
+    return {placements:proposed,rejected:""};
+}
+// Move a same-Edge group as one transaction using the production geometry.
+// Preserve rendered offsets on that Edge. Across Edges, retain ordering and
+// visible gaps while adapting spans to the destination's orientation/scale.
+// A mixed-Edge selection has batch controls but cannot be dragged as one row.
+function checkedGroupMove(placements,ids,primaryId,x,y,width,height,options,fontScale,snap,originRecords) {
+    var selection=selectedModules(placements,ids),items=selection.items;
+    function deny(message) {return {placements:placements,guides:[],rejected:message};}
+    if(!items.length || selection.ids.indexOf(primaryId)<0 || items.some(function(p) {return !p;}))
+        return deny("The selection changed. Select the modules again.");
+    if(items.length===1)return checkedMove(placements,primaryId,x,y,width,height,options,fontScale,snap);
+    if(items.some(function(p) {return p.locked;}))return deny("Unlock every selected module before dragging the group");
+    var sourceEdge=items[0].edge;
+    if(items.some(function(p) {return p.edge!==sourceEdge;}))return deny("Select modules on one Edge to drag together. Batch controls work across Edges.");
+    var source=(originRecords || geometry(placements,width,height,options,fontScale)).filter(function(r) {return selection.ids.indexOf(r.id)>=0;})
+        .sort(function(a,b) {return a.along-b.along || a.id.localeCompare(b.id);});
+    if(source.length!==items.length || source.some(function(p) {return p.span<=0;}))
+        return deny("Enable and show every selected module before dragging the group");
+    var location=project(x,y,width,height),horizontal=location.edge==="top" || location.edge==="bottom";
+    var length=horizontal ? width : height;
+    var candidate=placements.map(function(p) {return selection.ids.indexOf(p.id)>=0
+        ? Object.assign({},p,{edge:location.edge,alignment:"free",position:(source.findIndex(function(r) {return r.id===p.id;})+1)/(items.length+1)}) : p;});
+    var destination=geometry(candidate,width,height,options,fontScale);
+    var offsets=[],cursor=0;
+    for(var i=0;i<source.length;i++) {
+        var record=destination.find(function(r) {return r.id===source[i].id;});
+        if(!record)return deny("This Edge hides a selected module. Adjust its width or size first.");
+        if(i)cursor+=Math.max(0,source[i].along-source[i-1].along-source[i-1].span);
+        offsets.push({id:source[i].id,along:cursor,span:record.span});cursor+=record.span;
+    }
+    if(cursor>length+1e-6)return deny("The selected group cannot fit on this Edge");
+    var primary=offsets.find(function(p) {return p.id===primaryId;});
+    var start=Math.max(0,Math.min(length-cursor,location.position*length-primary.along-primary.span/2)),guides=[];
+    if(snap) {
+        var targets=[{start:0,line:0,label:"Start"},{start:(length-cursor)/2,line:length/2,label:"Center"},
+            {start:length-cursor,line:length,label:"End"}];
+        var gap=bounded(options?.gap,8,0,32);
+        geometry(placements.filter(function(p) {return selection.ids.indexOf(p.id)<0;}),width,height,options,fontScale)
+            .filter(function(p) {return p.edge===location.edge;}).forEach(function(p) {
+                targets.push({start:p.along-gap-cursor,line:p.along-gap,label:Math.round(gap)+" px gap"});
+                targets.push({start:p.along+p.span+gap,line:p.along+p.span+gap,label:Math.round(gap)+" px gap"});
+            });
+        var target=targets.filter(function(t) {return t.start>=0 && t.start+cursor<=length;})
+            .sort(function(a,b) {return Math.abs(a.start-start)-Math.abs(b.start-start);})[0];
+        if(target && Math.abs(target.start-start)<=10){start=target.start;guides=[{horizontal:horizontal,along:target.line,label:target.label}];}
+    }
+    candidate=normalize(candidate.map(function(p) {
+        var offset=offsets.find(function(r) {return r.id===p.id;});
+        return offset ? Object.assign({},p,{position:(start+offset.along+offset.span/2)/length}) : p;
+    }),"top");
+    var actual=geometry(candidate,width,height,options,fontScale),failures=conflicts(actual);
+    if(failures.length)return deny(failures[0]);
+    if(offsets.some(function(p) {
+        var r=actual.find(function(r) {return r.id===p.id;});
+        return !r || Math.abs(r.along-start-p.along)>.05 || Math.abs(r.span-p.span)>.05;
+    }))return deny("The group is blocked here. Move it to free space or move modules separately.");
+    return {placements:candidate,guides:guides,rejected:""};
 }
 function saveProfile(options, outputName, placements, gap, outputOnly, edgeSizes, singleModuleExpansion, size, edgeThicknesses, edgeWidthAffectsModules, edgeJoinModules, edgeModuleRadii) {
     var normalized = normalize(placements,"top");

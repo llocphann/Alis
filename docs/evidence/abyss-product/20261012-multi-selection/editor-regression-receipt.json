@@ -1,0 +1,6 @@
+{
+  "command": "bash scripts/test-abyss-editor-runtime.sh",
+  "exit_code": 0,
+  "source_scope": "working source after bounded finalization, before queued Reset/Cancel guards; focused target/input and legacy Undo proof only",
+  "raw_output": "editor-regression.log"
+}

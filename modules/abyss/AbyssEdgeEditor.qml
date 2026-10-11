@@ -22,6 +22,22 @@ Item {
     property var draft: []
     property var handles: []
     property string selectedId: ""
+    property bool multiSelect: false
+    property var selectedIds: []
+    readonly property var targetIds: multiSelect
+        ? selectedIds.filter(id=>draft.some(p=>p.id===id)) : selectedId ? [selectedId] : []
+    readonly property var targets: targetIds.map(id=>draft.find(p=>p.id===id)).filter(p=>p)
+    readonly property bool anyTargetLocked: targets.some(p=>p.locked)
+    readonly property bool allTargetsLocked: targets.length>0 && targets.every(p=>p.locked)
+    readonly property bool allTargetsDisabled: targets.length>0 && targets.every(p=>!p.enabled)
+    readonly property bool allTargetsCustom: targets.length>0 && targets.every(p=>p.customSize)
+    property var _lastSelection: null
+    property var _dragOrigin: null
+    property var _dragRecords: null
+    property var _dragRequest: null
+    property int _dragToken: 0
+    property bool _groupReflowQueued: false
+    property int _groupReflowBudget: 0
     property string feedback: ""
     property var undoStack: []
     property var _lastSnapshot: null
@@ -97,7 +113,7 @@ Item {
                 ? Number(placement?.size ?? 1)
                 : Placement.edgeSize(draftOptions,edge)
             score += 18 + Math.max(.5,scale) * 8
-            if (placement?.id === selectedId)
+            if (targetIds.includes(placement?.id))
                 score += 220
         }
         return score
@@ -129,6 +145,33 @@ Item {
     }
 
     function refreshHandles(): void { handles = draft.map(p => p.id) }
+    function selectionState(): var {return {selectedId:selectedId,selectedIds:Array.from(selectedIds),multiSelect:multiSelect}}
+    function pruneSelection(): void {
+        selectedIds=selectedIds.filter(id=>draft.some(p=>p.id===id))
+        if(!draft.some(p=>p.id===selectedId))selectedId=selectedIds[selectedIds.length-1] || ""
+    }
+    function select(id,toggle=false): void {
+        rememberHistory()
+        if(!draft.some(p=>p.id===id))return
+        if(!multiSelect)selectedId=id
+        else {
+            const present=selectedIds.includes(id)
+            selectedIds=present && toggle ? selectedIds.filter(value=>value!==id)
+                : present ? selectedIds : selectedIds.concat([id])
+            selectedId=selectedIds.includes(id) ? id : selectedIds[selectedIds.length-1] || ""
+        }
+        rememberHistory()
+    }
+    function setMultiSelection(enabled): void {
+        clearDrag()
+        rememberHistory();multiSelect=enabled
+        selectedIds=enabled && selectedId ? [selectedId] : []
+        rememberHistory()
+    }
+    function clearSelection(): void {
+        clearDrag()
+        rememberHistory();selectedIds=[];selectedId="";guides=[];rememberHistory()
+    }
     function snapshot(): var {
         return JSON.parse(JSON.stringify({draft:draft,gap:gap,edgeSizes:edgeSizes,
             edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,
@@ -148,9 +191,9 @@ Item {
     function rememberHistory(): void {
         if(!_historyReady || _dragging)return
         const next=snapshot()
-        if(JSON.stringify(next)===JSON.stringify(_lastSnapshot))return
-        undoStack=undoStack.concat([{state:_lastSnapshot,selectedId:selectedId}]).slice(-64)
-        _lastSnapshot=next
+        if(JSON.stringify(next)===JSON.stringify(_lastSnapshot)){_lastSelection=selectionState();return}
+        undoStack=undoStack.concat([{state:_lastSnapshot,selection:_lastSelection}]).slice(-64)
+        _lastSnapshot=next;_lastSelection=selectionState()
     }
     function sourceSignature(): string {
         const options=Config.options?.abyss?.modules
@@ -165,8 +208,11 @@ Item {
         _historyReady=false;_dragging=false
         undoStack=undoStack.slice(0,-1)
         Object.keys(previous.state).forEach(key=>root[key]=JSON.parse(JSON.stringify(previous.state[key])))
-        selectedId=draft.some(p=>p.id===previous.selectedId) ? previous.selectedId : ""
-        refreshHandles();guides=[];feedback="";_lastSnapshot=snapshot();_historyReady=true
+        multiSelect=previous.selection?.multiSelect ?? false
+        selectedIds=previous.selection?.selectedIds ?? []
+        selectedId=previous.selection?.selectedId ?? "";pruneSelection()
+        refreshHandles();guides=[];feedback="";clearDrag()
+        _lastSnapshot=snapshot();_lastSelection=selectionState();_historyReady=true
     }
     function toggleLock(id): void {
         const p=draft.find(p=>p.id===id)
@@ -174,6 +220,52 @@ Item {
         const options=Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true})
         draft=Placement.setLocked(draft,id,!p.locked,width,height,options,Appearance.fontSizeScale)
         feedback=""
+    }
+    function batch(action,value): void {
+        if(_dragging){feedback="Finish moving the module group before editing its settings";return}
+        rememberHistory()
+        const options=Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true})
+        const result=Placement.checkedBatch(draft,targetIds,action,value,width,height,options,Appearance.fontSizeScale)
+        feedback=result.rejected || ""
+        if(result.rejected)return
+        draft=result.placements
+        if(action==="remove")refreshHandles()
+    }
+    function lockSelection(): void {batch("locked",!allTargetsLocked)}
+    function startDrag(id): void {
+        rememberHistory();_dragToken++;_dragRequest=null
+        _dragOrigin=JSON.parse(JSON.stringify(draft))
+        _dragRecords=JSON.parse(JSON.stringify(moduleLayer.layoutRecords));_dragging=true
+        feedback=""
+    }
+    function clearDrag(): void {_dragToken++;_dragOrigin=null;_dragRecords=null;_dragRequest=null;_dragging=false}
+    function reflowGroup(): void {
+        if(_groupReflowQueued || !_dragging || !multiSelect || !_dragRequest || _groupReflowBudget<=0)return
+        _groupReflowQueued=true
+        const token=_dragToken
+        Qt.callLater(()=>{
+            if(!root)return
+            _groupReflowQueued=false
+            if(root._dragToken!==token || !root._dragging || !root._dragRequest)return
+            const request=root._dragRequest
+            root._groupReflowBudget--
+            root.move(request.id,request.x,request.y,request.snap,true)
+        })
+    }
+    function endDrag(): void {
+        const request=_dragRequest,token=_dragToken
+        if(multiSelect && _dragging && request) {
+            // The destination's mature module reports a new natural span when
+            // rotating. Coalesce three finite layout turns before releasing the
+            // gesture's Undo snapshot. There is no idle timer or new renderer.
+            const settle=remaining=>{
+                if(!root || root._dragToken!==token || !root._dragging)return
+                root.move(request.id,request.x,request.y,request.snap,true)
+                if(remaining>0)Qt.callLater(()=>settle(remaining-1))
+                else {root.clearDrag();root.guides=[];root.queueHistory()}
+            }
+            Qt.callLater(()=>settle(2))
+        } else {clearDrag();guides=[];queueHistory()}
     }
     function begin(): void {
         _historyReady=false;_dragging=false;feedback=""
@@ -193,14 +285,16 @@ Item {
         draftPositions=JSON.parse(JSON.stringify(Config.options?.abyss?.positions ?? []))
         positionEdits=[];editingPopups=false
         selectedId = ""
+        selectedIds=[];multiSelect=false;clearDrag()
         refreshHandles()
-        undoStack=[];_lastSnapshot=snapshot();_historyReady=true
+        undoStack=[];_lastSnapshot=snapshot();_lastSelection=selectionState();_historyReady=true
         _sourceSignature=sourceSignature()
         Qt.callLater(() => root.relocateToolbar())
         forceActiveFocus()
     }
     function finish(save): void {
         if (save) {
+            if(_dragging){feedback="Finish moving the module group before saving";return}
             if(layoutConflicts.length){feedback=layoutConflicts[0];return}
             if(_sourceSignature!==sourceSignature()){feedback="This layout changed outside the editor. Cancel and reopen before saving.";return}
             const writes=Placement.saveProfile(Config.options?.abyss?.modules,outputName,draft,gap,outputOnly,edgeSizes,singleModuleExpansion,moduleScale,edgeThicknesses,edgeWidthAffectsModules,edgeJoinModules,edgeModuleRadii)
@@ -211,9 +305,11 @@ Item {
         }
         guides = []
         _historyReady=false
+        clearDrag()
         GlobalStates.abyssEditing = false
     }
     function reset(): void {
+        clearDrag();rememberHistory()
         draft = Placement.seed(moduleLayer.zones,moduleLayer.edge,width,height)
         gap = 8
         edgeSizes = {top:1,right:1,bottom:1,left:1}
@@ -225,15 +321,18 @@ Item {
         singleModuleExpansion = {top:"edge",right:"edge",bottom:"edge",left:"edge"}
         guides = []
         selectedId = ""
+        selectedIds=[]
         draftPositions=JSON.parse(JSON.stringify(Config.options?.abyss?.positions ?? []));positionEdits=[]
         refreshHandles()
     }
     function change(key,value): void {
+        if(multiSelect){batch(key,value);return}
         if(selected?.locked && ["edge","position","alignment","size","customSize","depth"].includes(key)) {
             feedback="Unlock this module before changing its placement or size";return
         }
         feedback=""
-        draft = draft.map(p => p.id === selectedId ? Object.assign({},p,{[key]:value}) : p)
+        draft = draft.map(p => p.id === selectedId ? Object.assign({},p,
+            key==="customSize" && value && !p.customSize ? {size:Placement.edgeSize(draftOptions,p.edge)} : {},{[key]:value}) : p)
     }
     function editPosition(positions,kind,output,values): void {
         draftPositions=positions
@@ -251,12 +350,16 @@ Item {
         const output=outputOnly ? outputName : ""
         editPosition(Presentation.save(draftPositions,previewKind,output,values),previewKind,output,values)
     }
-    function move(id,x,y,snap = true): void {
-        selectedId = id
+    function move(id,x,y,snap = true,reflow=false): void {
+        if(!multiSelect)selectedId = id
+        if(!reflow)_groupReflowBudget=3
+        if(multiSelect && _dragging)_dragRequest={id:id,x:x,y:y,snap:snap}
         const options = Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true})
-        const result=Placement.checkedMove(draft,id,x,y,width,height,options,Appearance.fontSizeScale,snap && snapEnabled)
+        const result=multiSelect
+            ? Placement.checkedGroupMove(_dragOrigin || draft,targetIds,id,x,y,width,height,options,Appearance.fontSizeScale,snap && snapEnabled,_dragRecords)
+            : Placement.checkedMove(draft,id,x,y,width,height,options,Appearance.fontSizeScale,snap && snapEnabled)
         feedback=result.rejected || ""
-        if(result.rejected){guides=[];return}
+        if(result.rejected){guides=[];if(multiSelect && _dragOrigin)draft=_dragOrigin;return}
         draft=result.placements;guides=result.guides
         editingEdge = draft.find(p => p.id===id)?.edge ?? editingEdge
         root.scheduleToolbarRelocation()
@@ -273,7 +376,7 @@ Item {
         root.scheduleToolbarRelocation()
     }
     onEditingEdgeChanged: root.scheduleToolbarRelocation()
-    onDraftChanged: {root.scheduleToolbarRelocation();root.queueHistory()}
+    onDraftChanged: {root.pruneSelection();root.scheduleToolbarRelocation();root.queueHistory()}
     onGapChanged: root.queueHistory()
     onEdgeSizesChanged: root.queueHistory()
     onEdgeThicknessesChanged: root.queueHistory()
@@ -289,6 +392,11 @@ Item {
     onPreviewKindChanged: root.scheduleToolbarRelocation()
     onOutputOnlyChanged: {root.scheduleToolbarRelocation();root.queueHistory()}
 
+    Connections {
+        target:root.moduleLayer
+        function onMeasuredExtentsChanged(){root.reflowGroup()}
+    }
+
     Timer {
         id: toolbarRelocate
         interval: 90
@@ -299,21 +407,34 @@ Item {
     function add(kind): void {
         if (draft.length >= 24) return
         const existing = draft.find(p => p.kind === kind && !p.enabled)
-        if (existing) { selectedId = existing.id;change("enabled",true);return }
+        if (existing) {
+            const result=Placement.checkedBatch(draft,[existing.id],"enabled",true,width,height,
+                Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true}),Appearance.fontSizeScale)
+            if(result.rejected){feedback=result.rejected;return}
+            draft=result.placements;select(existing.id);return
+        }
         const id = kind+"-"+Date.now()
         const proposed=Placement.normalize(draft.concat([{id:id,kind:kind,edge:editingEdge,position:.5}]),"top")
         const failures=Placement.conflicts(Placement.geometry(proposed,width,height,Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true}),Appearance.fontSizeScale))
         if(failures.length){feedback=failures[0];return}
         draft=proposed;feedback=""
-        selectedId = id
+        select(id)
         refreshHandles()
     }
     onVisibleChanged: if (visible) begin()
     Component.onCompleted: if (visible) begin()
-    Component.onDestruction: if (GlobalStates.abyssEditorTargetOutput === outputName) GlobalStates.abyssEditing = false
+    Component.onDestruction: {
+        _historyReady=false;clearDrag()
+        if (GlobalStates.abyssEditorTargetOutput === outputName) GlobalStates.abyssEditing = false
+    }
     Keys.onEscapePressed: finish(false)
     Keys.onReturnPressed: finish(true)
-    Keys.onPressed:event=>{if(event.key===Qt.Key_Z && (event.modifiers & Qt.ControlModifier)){undo();event.accepted=true}}
+    Keys.onPressed:event=>{
+        if(event.key===Qt.Key_Z && (event.modifiers & Qt.ControlModifier)){undo();event.accepted=true}
+        else if(event.key===Qt.Key_A && (event.modifiers & Qt.ControlModifier) && multiSelect && !editingPopups){
+            rememberHistory();selectedIds=draft.map(p=>p.id);selectedId=selectedIds[0] || "";rememberHistory();event.accepted=true
+        }
+    }
     Repeater {
         model: root.handles
         onItemAdded: (index,item) => root.inputRegions = root.inputRegions.concat([item.inputRegion])
@@ -330,16 +451,17 @@ Item {
             activeFocusOnTab:true
             Accessible.role:Accessible.Button
             Accessible.name:Placement.label(record?.kind)+(record?.locked ? " · Locked" : "")
-            Accessible.onPressAction:root.selectedId=handle.modelData
+                +(root.targetIds.includes(handle.modelData) ? " · Selected" : "")
+            Accessible.onPressAction:root.select(handle.modelData,root.multiSelect)
             Keys.onPressed:event=>{
-                if(event.key===Qt.Key_Space){root.selectedId=handle.modelData;event.accepted=true}
-                else if(event.key===Qt.Key_L){root.selectedId=handle.modelData;root.toggleLock(handle.modelData);event.accepted=true}
+                if(event.key===Qt.Key_Space){root.select(handle.modelData,root.multiSelect);event.accepted=true}
+                else if(event.key===Qt.Key_L){root.select(handle.modelData);root.lockSelection();event.accepted=true}
             }
             Rectangle {
                 anchors.fill: parent; anchors.margins: -3
-                color: Qt.alpha(AbyssStyle.accent,drag.pressed ? .22 : .08)
+                color: Qt.alpha(AbyssStyle.accent,drag.pressed ? .22 : root.targetIds.includes(handle.modelData) ? .18 : .08)
                 radius: 8
-                border.width: root.selectedId === handle.modelData ? 2 : 1
+                border.width: root.targetIds.includes(handle.modelData) ? 2 : 1
                 border.color: Qt.alpha(AbyssStyle.accent,.6)
             }
             MaterialSymbol {
@@ -348,13 +470,23 @@ Item {
                 text:handle.record?.lockConflict ? "warning" : "lock"
                 iconSize:14;color:handle.record?.lockConflict ? Appearance.colors.colError : AbyssStyle.accent
             }
+            MaterialSymbol {
+                anchors.left:parent.left;anchors.top:parent.top
+                visible:root.multiSelect && root.targetIds.includes(handle.modelData)
+                text:"check_circle";iconSize:14;color:AbyssStyle.accent
+            }
             MouseArea {
                 id: drag
                 anchors.fill: parent
                 cursorShape:handle.record?.locked ? Qt.ArrowCursor : pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                onPressed:{root.selectedId=handle.modelData;handle.forceActiveFocus();root.rememberHistory();root._dragging=true;root.feedback=handle.record?.locked ? "Unlock this module before moving it" : ""}
-                onReleased:{root.guides=[];root._dragging=false;root.queueHistory()}
-                onCanceled:{root.guides=[];root._dragging=false;root.queueHistory()}
+                onPressed:mouse=>{
+                    root.select(handle.modelData,!!(mouse.modifiers & Qt.ControlModifier))
+                    handle.forceActiveFocus()
+                    if(!(mouse.modifiers & Qt.ControlModifier))root.startDrag(handle.modelData)
+                    if(handle.record?.locked)root.feedback="Unlock this module before moving it"
+                }
+                onReleased:root.endDrag()
+                onCanceled:root.endDrag()
                 onPositionChanged: mouse => {
                     if (!pressed || !root._dragging) return
                     const point = mapToItem(root,mouse.x,mouse.y)
@@ -763,6 +895,31 @@ Item {
                 }
 
                 GridLayout {
+                    visible:!root.editingPopups
+                    Layout.fillWidth:true
+                    columns:root.toolbarOnHorizontalEdge && width>500*Appearance.fontSizeScale ? 3 : 1
+                    AbyssCheckBox {
+                        objectName:"abyssMultiSelection"
+                        text:"Select multiple modules"
+                        checked:root.multiSelect
+                        onToggled:root.setMultiSelection(checked)
+                    }
+                    AbyssLabel {
+                        objectName:"abyssSelectionCount"
+                        visible:root.multiSelect
+                        text:root.targets.length+" selected · "+root.targets.filter(p=>p.locked).length+" locked"
+                        Layout.fillWidth:true;wrapMode:Text.WordWrap
+                    }
+                    AbyssButton {
+                        objectName:"abyssSelectionClear"
+                        visible:root.multiSelect
+                        text:"Clear selection";glyph:"deselect"
+                        enabled:root.targetIds.length>0
+                        onClicked:root.clearSelection()
+                    }
+                }
+
+                GridLayout {
                     id:selectedModuleControls
                     visible:!root.editingPopups
                     Layout.fillWidth:true
@@ -774,6 +931,8 @@ Item {
                         id:selection
                         model:root.draft.map(p => ({
                             label:Placement.label(p.kind)
+                                +(root.multiSelect && root.targetIds.includes(p.id) ? " · Selected" : "")
+                                +(p.locked ? " · Locked" : "")
                                 +(p.enabled ? "" : " (disabled)"),
                             id:p.id}))
                         textRole:"label";valueRole:"id"
@@ -782,7 +941,7 @@ Item {
                         displayText:root.selected
                             ? Placement.label(root.selected.kind)
                             : "Select a module"
-                        onActivated:root.selectedId=currentValue
+                        onActivated:root.select(currentValue,root.multiSelect)
                         Layout.preferredWidth:root.toolbarOnHorizontalEdge ? 190 : -1
                         Layout.minimumWidth:0
                         Layout.maximumWidth:selectedModuleControls.width
@@ -790,37 +949,34 @@ Item {
                     }
                     AbyssButton {
                         objectName:"abyssModulePositionLock"
-                        text:root.selected?.locked ? "Unlock position" : "Lock position"
-                        glyph:root.selected?.locked ? "lock_open" : "lock"
+                        text:root.allTargetsLocked ? "Unlock position" : "Lock position"
+                        glyph:root.allTargetsLocked ? "lock_open" : "lock"
                         compact:root.toolbarOnHorizontalEdge
                         description:text
-                        enabled:root.selected !== undefined
-                        Keys.onPressed:event=>{if(event.key===Qt.Key_Return || event.key===Qt.Key_Enter){root.toggleLock(root.selectedId);event.accepted=true}}
-                        onClicked:root.toggleLock(root.selectedId)
+                        enabled:root.targets.length>0
+                        Keys.onPressed:event=>{if(event.key===Qt.Key_Return || event.key===Qt.Key_Enter){root.lockSelection();event.accepted=true}}
+                        onClicked:root.lockSelection()
                     }
                     AbyssButton {
-                        text:root.selected?.enabled === false
+                        objectName:"abyssSelectionEnabled"
+                        text:root.allTargetsDisabled
                             ? "Enable" : "Disable"
-                        glyph:root.selected?.enabled === false
+                        glyph:root.allTargetsDisabled
                             ? "visibility" : "visibility_off"
                         compact:root.toolbarOnHorizontalEdge
                         description:text
-                        enabled:root.selected !== undefined
+                        enabled:root.targets.length>0
                         Layout.fillWidth:!root.toolbarOnHorizontalEdge
-                        onClicked:root.change("enabled",!root.selected.enabled)
+                        onClicked:root.batch("enabled",root.allTargetsDisabled)
                     }
                     AbyssButton {
                         text:"Remove";glyph:"delete"
+                        objectName:"abyssSelectionRemove"
                         compact:root.toolbarOnHorizontalEdge
-                        description:"Remove selected module"
-                        enabled:root.selected !== undefined
+                        description:root.multiSelect ? "Remove selected modules" : "Remove selected module"
+                        enabled:root.targets.length>0
                         Layout.fillWidth:!root.toolbarOnHorizontalEdge
-                        onClicked:{
-                            root.draft=root.draft.filter(
-                                p => p.id!==root.selectedId)
-                            root.selectedId=""
-                            root.refreshHandles()
-                        }
+                        onClicked:root.batch("remove",true)
                     }
                     StyledComboBox {
                         id:alignmentChoice
@@ -832,7 +988,9 @@ Item {
                         textRole:"label";valueRole:"value"
                         currentIndex:Math.max(0,model.findIndex(
                             p => p.value===root.selected?.alignment))
-                        enabled:root.selected !== undefined && !root.selected.locked
+                        displayText:root.multiSelect && root.targets.some(p=>p.alignment!==root.selected?.alignment)
+                            ? "Mixed alignment" : currentText
+                        enabled:root.targets.length>0 && !root.anyTargetLocked
                         onActivated:root.change("alignment",currentValue)
                         Layout.preferredWidth:root.toolbarOnHorizontalEdge ? 146 : -1
                         Layout.minimumWidth:0
@@ -841,24 +999,19 @@ Item {
                     }
                     AbyssCheckBox {
                         text:"Custom size"
-                        checked:root.selected?.customSize ?? false
-                        enabled:root.selected !== undefined && !root.selected.locked
+                        checked:root.allTargetsCustom
+                        enabled:root.targets.length>0 && !root.anyTargetLocked
                         Layout.fillWidth:!root.toolbarOnHorizontalEdge
-                        onToggled:{
-                            if(checked) root.change(
-                                "size",Placement.edgeSize(
-                                    root.draftOptions,root.selected.edge))
-                            root.change("customSize",checked)
-                        }
+                        onToggled:root.change("customSize",checked)
                     }
                     AbyssCheckBox {
                         objectName:"abyssModuleJoinCorner"
                         text:root.nearbyCorner
                             ? "Connect to "+root.nearbyCorner+" corner"
                             : "Join nearby corner"
-                        checked:root.selected?.joinCorner ?? false
-                        enabled:root.selected !== undefined
-                            && (!!root.nearbyCorner || checked)
+                        checked:root.targets.length>0 && root.targets.every(p=>p.joinCorner)
+                        enabled:root.targets.length>0 && (root.targets.every(p=>!!Placement.cornerForModule(
+                            root.moduleLayer.layoutRecords,p.id,root.width,root.height)) || checked)
                         Layout.fillWidth:!root.toolbarOnHorizontalEdge
                         onToggled:root.change("joinCorner",checked)
                         StyledToolTip {
@@ -874,7 +1027,7 @@ Item {
                             : Placement.edgeSize(
                                 root.draftOptions,
                                 root.selected?.edge ?? root.editingEdge)
-                        enabled:!!root.selected?.customSize && !root.selected?.locked
+                        enabled:root.allTargetsCustom && !root.anyTargetLocked
                         Layout.fillWidth:true
                         onMoved:root.change("size",value)
                     }
@@ -884,9 +1037,11 @@ Item {
                     text:root.toolbarOnHorizontalEdge
                         ? (root.editingPopups
                             ? "Drag preview · Enter save · Esc cancel"
+                            : root.multiSelect ? "Click to add · Ctrl-click / Space toggle · Ctrl+A all · Drag group · Shift free · Enter save · Esc cancel"
                             : "Drag to move/reorder · Shift free · Enter save · Esc cancel")
                         : (root.editingPopups
                             ? "Drag · Enter save · Esc cancel"
+                            : root.multiSelect ? "Click to add · Ctrl-click / Space toggle · Ctrl+A all · Drag group · Shift free · Enter save · Esc cancel"
                             : "Drag · Shift free · Enter save · Esc cancel")
                     color: Appearance.m3colors.darkmode
                         ? AbyssStyle.textColorMuted : "#1a1a1a"

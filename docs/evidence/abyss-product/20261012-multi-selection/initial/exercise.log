@@ -1,0 +1,15 @@
+  INFO: Launching config: "/tmp/alis-edge-multi-4xyivz2q/shell.qml"
+  INFO: Shell ID: "e1335b622f2734a4613e22d5190d0790" Path ID "e1335b622f2734a4613e22d5190d0790"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/st3j73nrmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.891401.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-edge-multi-4xyivz2q/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-edge-multi-4xyivz2q/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-edge-multi-4xyivz2q/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-edge-multi-4xyivz2q/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+ ERROR qml: ABYSS_MULTI_NATIVE_FAIL Ctrl-click did not remove target coherently check@qs:@/qs/shell.qml:31
+run@qs:@/qs/shell.qml:76
+expression for onTriggered@qs:@/qs/shell.qml:128 [] ["a","b"]

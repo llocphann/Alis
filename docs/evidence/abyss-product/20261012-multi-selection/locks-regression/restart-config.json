@@ -1,0 +1,104 @@
+{
+  "configured": true,
+  "depth": 36,
+  "edgeJoinModules": {
+    "bottom": false,
+    "left": false,
+    "right": false,
+    "top": false
+  },
+  "edgeModuleRadii": {
+    "bottom": -1,
+    "left": -1,
+    "right": -1,
+    "top": -1
+  },
+  "edgeSizes": {
+    "bottom": 1,
+    "left": 1,
+    "right": 1,
+    "top": 1
+  },
+  "edgeThicknesses": {
+    "bottom": -1,
+    "left": -1,
+    "right": -1,
+    "top": -1
+  },
+  "edgeWidthAffectsModules": {
+    "bottom": true,
+    "left": true,
+    "right": true,
+    "top": true
+  },
+  "gap": 8,
+  "outputLayouts": [
+    {
+      "edgeJoinModules": {
+        "left": true
+      },
+      "outputName": "B",
+      "placements": []
+    }
+  ],
+  "placements": [
+    {
+      "alignment": "start",
+      "compact": false,
+      "customSize": false,
+      "depth": 1,
+      "edge": "top",
+      "enabled": true,
+      "id": "a",
+      "influence": 1,
+      "joinCorner": false,
+      "kind": "clock",
+      "lockPosition": 0.076158940397351,
+      "lockScale": 1,
+      "locked": true,
+      "position": 0.2,
+      "size": 1
+    },
+    {
+      "alignment": "free",
+      "compact": false,
+      "customSize": false,
+      "depth": 1,
+      "edge": "left",
+      "enabled": true,
+      "id": "b",
+      "influence": 1,
+      "joinCorner": false,
+      "kind": "clock",
+      "lockPosition": null,
+      "lockScale": null,
+      "locked": false,
+      "position": 0.7,
+      "size": 1
+    },
+    {
+      "alignment": "free",
+      "compact": false,
+      "customSize": false,
+      "depth": 1,
+      "edge": "top",
+      "enabled": true,
+      "id": "c",
+      "influence": 1,
+      "joinCorner": false,
+      "kind": "clock",
+      "lockPosition": null,
+      "lockScale": null,
+      "locked": false,
+      "position": 0.97,
+      "size": 1
+    }
+  ],
+  "singleModuleExpansion": {
+    "bottom": "edge",
+    "left": "edge",
+    "right": "edge",
+    "top": "edge"
+  },
+  "size": 1
+}

@@ -9,6 +9,17 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
 
 ## Current failures and owner reports
 
+- [ ] **ABYSS-I03 — Group drag changes gaps when crossing Edge orientation — discovered 2026-10-12:**
+  Related multi-selection: the destination's mature renderer reports a new
+  span after the first group proposal, so recomputing source gaps with that span
+  distorted spacing. Snapshot rendered source records; bounded coalesced reflow
+  and finite release settling adapt destination spans while preserving gaps.
+  Reset/Cancel/Undo invalidate queued work; blocked groups reject atomically.
+  The failing native gap assertion remains unchanged and retained beside
+  fix-forward PASS55checks/13foreground captures and independent JSON restart.
+  [Evidence](../../docs/evidence/abyss-product/20261012-multi-selection/README.md).
+  State: SOURCE/FOCUSED FIXED; exact-SHA canonical/installed/owner OPEN.
+
 - [ ] **ABYSS-I02 — Edit layout copies Qt signal members into saved Edge maps — discovered 2026-10-12:**
   Related `ABYSS-F01`. Actual private-native global Done after output-only
   save/Undo failed while assigning read-only `objectNameChanged`; generic

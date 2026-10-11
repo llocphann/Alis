@@ -1,0 +1,7 @@
+{
+  "modules/abyss/AbyssEdgeEditor.qml": "d331f4af904791bfbbb9deb08843a9645dbed6ac8f9e14a85209efd69760f428",
+  "modules/abyss/looks/AbyssLayout.js": "d36fed50e871c2222d3920789bcf39b34589d19e546916ee78a490b2cf43699a",
+  "scripts/test-abyss-multi-selection.mjs": "38675caa33899514b084379061e8af80190e602211cc5694d900824c6c1e43af",
+  "scripts/test-abyss-multi-selection-runtime.py": "72ee459b3b40cea23028eaea02a6030d163d61cb604c7ccd44c0c06f9c0e1013",
+  "scripts/validate-maintainer-local.sh": "e7444e9fd92924ee79c9cdbb42987ecf9768e09b899e455998181538c4b01113"
+}

@@ -317,6 +317,7 @@ run_check 'Dashboard horizontal gesture and stable page order regression' node s
 run_check 'Weekly Planner civil dates, overlap, recurrence and DST regression' node scripts/test-weekly-planner-policy.mjs
 run_check 'Agenda one-way task link identity and owned fields' node scripts/test-agenda-todo-policy.mjs
 run_check 'Screen Edge lock reservations and output packing' node scripts/test-abyss-module-locks.mjs
+run_check 'Screen Edge multi-selection transactions' node scripts/test-abyss-multi-selection.mjs
 run_check 'Quick Notes Markdown preview, formatting and attachment safety regression' node scripts/test-quick-notes-markdown-policy.mjs
 run_check 'Abyss unified content opacity migration regression' node scripts/test-abyss-content-opacity-migration.mjs
 run_check 'translation catalog structure' python3 translations/tools/l10n.py audit-all

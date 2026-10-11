@@ -1,0 +1,17 @@
+{
+  "status": "SOURCE_FOCUSED_PASS",
+  "canonical": "NOT_RUN_FOR_THIS_SOURCE",
+  "owner_installed": "OPEN",
+  "pure_checks": 1588,
+  "lock_checks": 7044,
+  "native_processes": 2,
+  "native_checks": 55,
+  "foreground_captures": 13,
+  "remaining": [
+    "full exact-SHA canonical",
+    "owner/installed physical input",
+    "full Abyss material",
+    "multi-output/hotplug"
+  ],
+  "source_hashes": "source-sha256.json"
+}
