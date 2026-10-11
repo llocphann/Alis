@@ -22,7 +22,7 @@ import qs.modules.abyss.content
 ShellRoot {
     id: root
     property int step: 0
-    property var kinds: ["volume","brightness","mic","media","keyboardLayout","voiceSearch"]
+    property var kinds: ["volume","brightness","mic","media","mediaOsd","keyboardLayout","voiceSearch"]
     function check(ok,message): bool {
         if(ok) return true
         console.error("ABYSS_OSD_FAIL",message);Qt.quit();return false
@@ -40,6 +40,7 @@ ShellRoot {
             else {
                 if(!root.check(content.feature?.connectedSurface,"mature indicator outer chrome is suppressed")) return
                 if(!root.check(content.feature.QsWindow.window===window,"output window owns indicator input")) return
+                if(content.indicatorKind==="mediaOsd" && !root.check(String(content.primaryIndicator?.source ?? "").endsWith("/MediaIndicator.qml"),"Media IPC preview must instantiate the media indicator, not volume")) return
                 if(!root.check(content.desiredWidth>=Appearance.sizes.osdWidth && content.desiredHeight>=40,"mature usable indicator dimensions: "+content.indicatorKind+" "+content.desiredWidth+"×"+content.desiredHeight)) return
                 if(root.step===1) {
                     if(!root.check(content.desiredWidth===Appearance.sizes.osdWidth,"original volume width")) return
@@ -62,4 +63,4 @@ fi
 if ! rg -q ABYSS_OSD_PASS "$osd_test_root/runtime.log" || rg -q 'ABYSS_OSD_FAIL|ReferenceError:|TypeError:|Binding loop|Unable to assign|is not a type|Type .* unavailable' "$osd_test_root/runtime.log"; then
     cat "$osd_test_root/runtime.log";exit 1
 fi
-printf 'PASS: mature Volume, Brightness, Mic, Media, Keyboard and Voice OSDs share the output content adapter\n'
+printf 'PASS: mature Volume, Brightness, Mic, Media + Media IPC, Keyboard and Voice OSDs share the output content adapter\n'

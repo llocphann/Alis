@@ -48,7 +48,7 @@ ColumnLayout {
         Layout.alignment: Qt.AlignVCenter
         source: "../../onScreenDisplay/indicators/"
             +({volume:"Volume",brightness:"Brightness",mic:"Mic",
-                media:"Media",keyboardLayout:"KeyboardLayout",
+                media:"Media",mediaOsd:"Media",keyboardLayout:"KeyboardLayout",
                 voiceSearch:"VoiceSearch"}[indicatorKind] ?? "Volume")
             +"Indicator.qml"
         onLoaded: {
