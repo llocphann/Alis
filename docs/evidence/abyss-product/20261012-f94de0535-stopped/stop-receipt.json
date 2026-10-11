@@ -1,0 +1,49 @@
+{
+  "source_sha": "f94de053514954b07635381a318025fc76a3d522",
+  "source_root": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis",
+  "driver": "/tmp/alis-canonical-ietfk_73/f94de053514954b07635381a318025fc76a3d522.sh",
+  "driver_sha256": "de94fa7950e376f21c61d66fc025858757ac5cdd073a79a513f4f1fe08900770",
+  "log": "/tmp/alis-canonical-ietfk_73/canonical.log",
+  "terminal": "/tmp/alis-canonical-ietfk_73/terminal.log",
+  "receipt": "/tmp/alis-canonical-ietfk_73/canonical.json",
+  "status": "STOPPED",
+  "parser_path_prefix": "/usr/lib/qt6/bin",
+  "arguments": [
+    "--current-repo",
+    "--strict-qml"
+  ],
+  "prepared_at": "2026-10-11T18:48:52.364916+00:00",
+  "started_at": "2026-10-11T18:48:52.440060+00:00",
+  "driver_pid": 624917,
+  "exit_code": -15,
+  "finished_at": "2026-10-11T19:03:19.311746+00:00",
+  "stop_reason": "five_hour_remaining_below_3_percent",
+  "five_hour_remaining_percent": 2,
+  "completed_checks": 235,
+  "partial_counts": {
+    "PASS": 231,
+    "FAIL": 4,
+    "SKIP": 0
+  },
+  "failures": [
+    {
+      "check": 78,
+      "name": "Python regression: scripts/test-calendar-editor-layout-runtime.py"
+    },
+    {
+      "check": 98,
+      "name": "Python regression: scripts/test-dashboard-editor-field-runtime.py"
+    },
+    {
+      "check": 155,
+      "name": "Python regression: scripts/test-material-only-global-style-contract.py"
+    },
+    {
+      "check": 188,
+      "name": "Python regression: scripts/test-recording-abyss-runtime.py"
+    }
+  ],
+  "full_summary": null,
+  "resume_at": "2026-10-12T04:29:37+07:00",
+  "owner_acceptance": "OPEN"
+}

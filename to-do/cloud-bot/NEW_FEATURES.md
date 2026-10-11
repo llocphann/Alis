@@ -6,9 +6,17 @@ handled alongside the selected feature in the same single-agent context.
 Source-implemented features below still need their stated delivery/owner gates;
 do not reimplement them solely because a checkbox is open.
 
-**Immediate owner priority — updated 2026-10-12:** continue the current
-Weekly Planner milestone. Todo persistence and shared Settings task tabs have
-source/focused evidence; their remaining canonical and owner gates stay open.
+**Immediate owner priority — updated 2026-10-12:** continue AGENDA-F01 after
+DASH-F01/F02 source milestones. Weekly Planner `f62f24361`, tab reorder
+`f94de0535` and Events durable acknowledgement prerequisite `ccd750167`
+have separate focused evidence; committed canonical and owner gates stay open.
+The last canonical was stopped at five-hour2%, with four partial failures;
+[its frozen receipt](../../docs/evidence/abyss-product/20261012-f94de0535-stopped/README.md)
+preserves the consumed result. Single reset+3minute continuation fired04:29ICT,
+and the new five-hour window is100% remaining. No historical task backfill,
+owner preference, AI/vault consent or installed Companion change is authorized
+by the continuation. Implement the link/schema, idempotent acknowledged Todo
+mutation and shared pending feedback next; locks and multi-selection remain new.
 Implement **DASH-F01 → DASH-F02 → AGENDA-F01 → ABYSS-F01 → Screen Edge
 multi-selection** in that order. Carry out their related data/input repairs and
 Rework/optimization alongside delivery, preserving remaining canonical and
@@ -442,7 +450,7 @@ order or close unverified Issues because their source is implemented.
   PASS6 startup/restart processes, 45 QML checks and 6 independent JSON
   readbacks: coalescing, deferred refresh, denied save, explicit/cached retry
   and no phantom acknowledgements. [Pinned prerequisite evidence](../../docs/evidence/abyss-product/20261012-events-durable-boundary/README.md).
-  Running canonical `f94de0535` predates this Events change. Historical
+  Stopped canonical `f94de0535` predates this Events change. Historical
   events require opt-in backfill. Link schema, idempotent internal/optional
   Obsidian worker mutations and cross-surface UI remain unimplemented; this
   prerequisite alone does not create linked tasks or complete `AGENDA-F01`.

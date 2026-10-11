@@ -1005,7 +1005,18 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
   justified by this archive.
 
 
-- [ ] **Canonical validation — updated 2026-10-12:** frozen committed driver
+- [ ] **Canonical validation — updated 2026-10-12:** latest frozen clean-clone
+  `f94de053514954b07635381a318025fc76a3d522` is **STOPPED, exit -15** at the
+  actual five-hour 2% threshold. Only235 completed checks: **231PASS / 4FAIL /
+  0SKIP**; no full summary. Failures: Calendar Remove atDPR1.5/240; Dashboard
+  edit933×546→933×540; stale Material literal-padding fixture; native Recording
+  controls without a precise assertion. Keep the three runtime causes
+  NOT_DIAGNOSED. The Material fixture-only fix-forward `f003ec5f9` focused PASS
+  is separate and does not change the frozen result. This run also predates
+  Events prerequisite `ccd750167`. [Raw consumed logs/stop receipt](../../docs/evidence/abyss-product/20261012-f94de0535-stopped/README.md).
+  Next appropriate qualification uses a newly frozen driver from the actual
+  committed SHA, preserving its bytes throughout; no full/owner PASS implied.
+  **Earlier complete run:** frozen committed driver
   on clean-clone `2dbb678a9ab28fdcd2e8bbfa3d0b224e3b1e28dd` finishes
   **FAIL: 350 PASS / 1 FAIL / 1 SKIP, exit 1**. Config persistence/mutation/
   opacity migration, four-edge Popup hover, both editors and the Qt 6.12
