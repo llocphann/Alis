@@ -900,7 +900,39 @@ run privileged installation just because manual buttons are retired.
   midnight, all-day/in-progress, 0/1/long lists, scroll,
   theme/scaling and popup focus; verify no Dashboard Agenda
   truncation and owner native screenshot parity. Coordinate
-  with CAL-F01 indicators. State: OPEN; not implemented.
+  with CAL-F01 indicators.
+  **Owner refinement — 2026-10-12 (Events scrollbar):** in the
+  **Calendar Popup Events pane only**, hide the scrollbar track/thumb
+  entirely (e.g. popup-scoped `ScrollBar.AlwaysOff`) while preserving
+  vertical wheel/touchpad/finger/keyboard scrolling, focus, FAB,
+  event cards and the Add/Edit/Remove form. Do NOT globally disable
+  `EventsWidget` scrolling or hide scrollbars in unrelated Sidebar/
+  Dashboard hosts. Test 0/1/many events, narrow/high-DPI windows and
+  scrolling to the final event. State: OPEN; not implemented.
+
+- [ ] **DASH-R03 — Weekly Planner Day/date + All day header material parity — owner screenshot 2026-10-12:**
+  [Owner: Alis dev; Rework / Material UX] The 7-column date/day header
+  and its **All day** strip in Dashboard Weekly Planner currently read
+  as a flat, detached dark band (owner screenshot) rather than an
+  Abyss-connected content surface. Rework the two header regions as one
+  coherent, compact Abyss Panel material language, with deliberate
+  header/column divisions, selected/today/hover states and no unnecessary
+  independent cards or expensive new shader/blur passes.
+  Match the **theme-color semantics of the owner-approved Detailed
+  Weather Popup content background**, not a hard-coded screenshot tint:
+  reuse `AbyssStyle.contentLayer` / theme accent/ink/contrast policy,
+  allowing live wallpaper/theme changes and preserving Waffle/non-Abyss
+  styling. Source starting points:
+  `modules/dashboard/DashboardWeeklyPlanner.qml` (date column header,
+  All day band and sticky left/top corner), and
+  `modules/bar/weather/WeatherPopupContent.qml` as palette reference.
+  Preserve seven aligned columns, date/time zones/DST positioning,
+  all-day expand/collapse, current-day indicator, time scroll and
+  event hit testing. Verify narrow/fractional screens, multi-output,
+  light/dark, long weekday/date translations, foreground contrast,
+  scroll anchoring and actual Niri screenshots. Coordinate with
+  DASH-F01's new in-Dashboard expandable Edit Events column.
+  State: NEW/OPEN; not implemented.
 
 - [ ] **DASH-R02 — Horizontal-only Dashboard gesture page navigation — owner request 2026-10-11:**
   [Owner: Alis dev; Rework/UX] **Only horizontal left/right swipe

@@ -1157,6 +1157,34 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
   confirmed by the owner. Link: generalized presentation jank is tracked in
   [Rework](REWORK_OPTIMIZATION.md). State: OPEN, native evidence pending.
 
+- [ ] **SIDE-I01 — Sidebar Left inner content color does not match the active Abyss theme — owner screenshots 2026-10-12:**
+  [Owner: Alis dev; Bug / Material theme parity] The inner content/body
+  background of **Sidebar Left**, especially the Intelligence/AI content
+  container in the attached owner screenshot, still reads as a neutral,
+  mismatched dark slab rather than the theme-aware card treatment already
+  owner-approved for **Detailed Weather Popup**. This is about **inner
+  content**, not changing the outer Abyss Panel silhouette, global opacity,
+  blur sliders or the selected wallpaper. Screenshots were supplied in
+  chat 2026-10-12; they are not yet checked into Git.
+  **Reference:** `modules/bar/weather/WeatherPopupContent.qml` uses
+  `AbyssStyle.contentLayer` / `AbyssStyle.accent` blending for Details
+  cards and readability-adjusted foreground tokens. Audit
+  `modules/sidebarLeft/SidebarLeftContent.qml`, its
+  `connectedSurfaceColor`, the SwipeView's inner content card currently
+  painted with `Appearance.colors.colLayer1`, and any AI content-owned
+  background before choosing the smallest shared theme binding. Use the
+  effective live wallpaper/theme palette: **not a hard-coded dark-red
+  color sampled from the screenshot**. Preserve existing layer separation,
+  accessibility contrast, panel connectedness, original content opacity/
+  blur ownership, AI/chat/input/selection states and Waffle appearance.
+  **Acceptance:** visually coherent with approved Detailed Weather
+  cards under Abyss, while retaining legible text/icons and meaningful
+  surface hierarchy; changes propagate without restart across dark/light
+  mode and wallpaper accent changes, all Sidebar Left tabs, hover/focus,
+  nested content, partial opacity, narrow widths and 4 edges/scales.
+  Add QML source/contrast regression plus live Niri/Quickshell capture
+  and owner approval. State: NEW/OPEN; not implemented.
+
 - [x] **Detailed Weather Popup background does not follow theme — owner report 2026-10-10:**
   Several component/card backgrounds remain grey rather than adapting to the
   selected theme. Audit `modules/bar/weather/WeatherPopupContent.qml` and

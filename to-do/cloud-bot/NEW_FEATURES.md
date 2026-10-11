@@ -289,6 +289,35 @@ order or close unverified Issues because their source is implemented.
   multi-output/theme/reduced-motion, no leaked focus, bounded render
   cost, optional integrations absent and data intact after restart.
   Deterministic date/geometry tests plus owner-approved Niri UI.
+  **Owner refinement — 2026-10-12 (Edit Events inline expanded column):**
+  Selecting a local event or clicking a time slot in the **Weekly
+  Planner Dashboard tab** must open **Edit/Create Events as a real
+  expandable column INSIDE the Dashboard**, using the same shared
+  expanding side-column layout as Todo and Quick Notes. Do NOT launch
+  a separate Sidebar Left/Right, floating popup or full-page modal
+  overlay for this Weekly Planner action. Coordinate one pane state
+  (events / todo / notes / closed): opening Events expands the
+  adjacent column and reflows/shrinks the planner; switching between
+  the three preserves expected unsaved-edit/cancel/focus behavior.
+  Keep the Events form accessible and scrollable on small screens,
+  but **hide visible scrollbar chrome in this Edit Events column**
+  without disabling wheel/touchpad/keyboard scrolling or hiding
+  field controls. Preserve date/time slot prefill, existing local
+  event fields, stable event identity, Save/Cancel/Remove, validation,
+  read-only imported events, timezone/DST, source persistence and
+  no duplicate write backend. Leave unrelated Dashboard Agenda
+  invocation and Calendar Popup editor behavior unchanged.
+  **Existing gap:** `modules/dashboard/DashboardWeeklyPlanner.qml`
+  currently offers `sideView` Todo/Notes only; `DashboardContent.qml`
+  routes `onRequestEventsDialog` through the full-area
+  `agendaDialogLoader` / `EventsDialog`. Move the Weekly
+  Planner route into the shared in-page expandable column and
+  test mode switching, narrow responsive layout, outside click/
+  Escape, unsaved edits, no focus leakage, and owner screenshot.
+  Coordinate Day/date and All day header material in
+  `REWORK_OPTIMIZATION.md` (DASH-R03).
+  **State of this follow-up:** NOT IMPLEMENTED / OPEN, despite
+  the earlier Weekly Planner grid and shared Todo/Notes native PASS.
   State: SOURCE IMPLEMENTED / FOCUSED PASS — 2026-10-12, after Todo durability
   and shared Settings task-tab milestones. One bounded weekly projection of canonical
   Events/CalendarSync with actual civil-day boundaries (23/24/25h), overlapping
