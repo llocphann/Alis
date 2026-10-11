@@ -435,7 +435,17 @@ order or close unverified Issues because their source is implemented.
   stores, cancel/undo, internal vs Obsidian and package absent,
   restart and cross-surface updates are deterministic and
   preserve user files. Add source/fixture and owner native QA.
-  State: NEW/OPEN; not implemented.
+  State: IN PROGRESS — 2026-10-12, after `DASH-F01`/`DASH-F02` source milestones.
+  First data prerequisite: Events exposes only acknowledged, cloned durable
+  snapshots and save failure/busy feedback; Agenda→Todo must consume that
+  boundary, never `eventAdded` or an optimistic FileView cache. Actual headless
+  PASS6 startup/restart processes, 45 QML checks and 6 independent JSON
+  readbacks: coalescing, deferred refresh, denied save, explicit/cached retry
+  and no phantom acknowledgements. [Pinned prerequisite evidence](../../docs/evidence/abyss-product/20261012-events-durable-boundary/README.md).
+  Running canonical `f94de0535` predates this Events change. Historical
+  events require opt-in backfill. Link schema, idempotent internal/optional
+  Obsidian worker mutations and cross-surface UI remain unimplemented; this
+  prerequisite alone does not create linked tasks or complete `AGENDA-F01`.
 
 - [ ] **Quick Notes Markdown Reading and editable Source/Live mode — owner request 2026-10-11:**
   [Owner: Alis dev; NEW feature] Upgrade existing shared Quick Notes into

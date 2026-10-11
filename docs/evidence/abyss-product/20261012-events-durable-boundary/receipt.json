@@ -1,0 +1,23 @@
+{
+  "baseSha": "f94de053514954b07635381a318025fc76a3d522",
+  "sourceFiles": {
+    "services/Events.qml": "578ece3f512577921e14a668fca902b8ba9ac8a22ce02baec399ac011927d0b0",
+    "scripts/test-events-durable-snapshot-runtime.py": "84433bfe1dd5bfdf01a073ebb43a4d5f4237ac60e4c9bc9b51519e52b5c235db"
+  },
+  "scope": "AGENDA-F01 prerequisite only; no automatic Todo creation",
+  "headless": {
+    "status": "PASS",
+    "exit": 0,
+    "processes": 6,
+    "qmlChecks": 45,
+    "independentJsonReadbacks": 6,
+    "cases": [
+      "coalesced snapshot and deferred refresh",
+      "real denied save/no phantom ack/explicit retry",
+      "cached-byte fault injection using actual fresh writer",
+      "restart after every case"
+    ]
+  },
+  "canonical": "new Events source not covered by running f94de053514954b07635381a318025fc76a3d522",
+  "owner": "OPEN"
+}

@@ -1,0 +1,6 @@
+  INFO qml: EVENTS_DURABLE_PASS normal 10 [["Alpha"],["Alpha updated","Beta"]]
+  INFO qml: EVENTS_DURABLE_PASS restart 2 []
+  INFO qml: EVENTS_DURABLE_PASS failure 16 [["Alpha"],["Alpha updated","Beta"],["Alpha updated","Beta","Denied"]]
+  INFO qml: EVENTS_DURABLE_PASS restart 2 []
+  INFO qml: EVENTS_DURABLE_PASS cached 13 [["Alpha"],["Alpha updated","Beta"],["Alpha updated","Beta"]]
+  INFO qml: EVENTS_DURABLE_PASS restart 2 []

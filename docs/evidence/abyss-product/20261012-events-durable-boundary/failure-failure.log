@@ -1,0 +1,7 @@
+  INFO: Launching config: "/tmp/alis-events-durable-d5lp8wiu/failure/shell.qml"
+  INFO: Shell ID: "3ddd4a55868ccb7a7dcf70a4d17ff939" Path ID "3ddd4a55868ccb7a7dcf70a4d17ff939"
+  INFO: Saving logs to "/tmp/alis-events-durable-d5lp8wiu/failure/runtime/quickshell/by-id/uerd5bbrmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/Events.qml[101:5]: Write of /tmp/alis-events-durable-d5lp8wiu/failure/state/quickshell/user/events.json failed: Permission denied.
+  WARN qml: [Events] Failed to save events: 3
+  INFO qml: EVENTS_DURABLE_PASS failure 16 [["Alpha"],["Alpha updated","Beta"],["Alpha updated","Beta","Denied"]]

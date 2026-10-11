@@ -19,20 +19,59 @@ Singleton {
     property bool _saving: false
     property bool _saveQueued: false
     property bool _reloadAfterSaveFailure: false
+    property bool _saveFailed: false
+    property bool _loadQueued: false
+    property string _saveSnapshotJson: ""
+    property string _lastSavedJson: ""
+    property string _durableSnapshotJson: ""
+    property FileView _uncachedWriter: null
+    property string errorMessage: ""
+    readonly property bool persistenceBusy: _saving || _saveQueued || _reloadAfterSaveFailure || _saveFailed
+    // Agenda linking must consume actual acknowledged bytes, never eventAdded
+    // (an in-memory change) or FileView's optimistic write cache.
+    signal eventsPersisted(var savedEvents)
+    function getDurableEvents() {
+        return root._durableSnapshotJson.length ? JSON.parse(root._durableSnapshotJson).events : []
+    }
 
     function _reloadFailedWriteCache(): void {
         if (root._reloadAfterSaveFailure)
             eventsFileView.reload()
     }
 
-    function _finishSave(): void {
+    function _finishSave(error): void {
         if (!root._saving)
             return
         root._saving = false
         const saveAgain = root._saveQueued
         root._saveQueued = false
-        if (saveAgain)
+        if (error.length>0) {
+            root._saveFailed=true
+            root.errorMessage=Translation.tr("Could not save Agenda. Your changes remain in memory; retry after restoring write access.")
+            console.warn("[Events] Failed to save events:",error)
+            root._reloadAfterSaveFailure=true
+            Qt.callLater(root._reloadFailedWriteCache)
+            return
+        }
+        root._lastSavedJson=root._saveSnapshotJson
+        root._durableSnapshotJson=root._saveSnapshotJson
+        root._saveFailed=false
+        root.errorMessage=""
+        root.eventsPersisted(root.getDurableEvents())
+        if (saveAgain) {
+            root._saveQueued=true
             Qt.callLater(root.saveToFile)
+        } else if (root._loadQueued) {
+            root._loadQueued=false
+            Qt.callLater(root.loadFromFile)
+        }
+    }
+    function _finishUncachedSave(writer,error): void {
+        if(root._uncachedWriter===writer) {
+            root._uncachedWriter=null
+            root._finishSave(error)
+        }
+        writer.destroy()
     }
     
     signal eventAdded(var event)
@@ -79,6 +118,8 @@ Singleton {
 
             const fileContents = eventsFileView.text()
             if (!fileContents || fileContents.trim() === "") {
+                root._lastSavedJson=fileContents || ""
+                root._durableSnapshotJson=""
                 root.list = []
                 root.nextId = 1
                 root.ready = true
@@ -103,25 +144,21 @@ Singleton {
                 root.list = events
                 root.nextId = Number.isInteger(storedNextId) && storedNextId > maxId
                     ? storedNextId : maxId + 1
+                root._lastSavedJson=fileContents
+                root._durableSnapshotJson=JSON.stringify({nextId:root.nextId,events:root.list})
                 root.ready = true
                 _log("[Events] Loaded", root.list.length, "events")
             } catch (e) {
+                root._lastSavedJson=""
+                root._durableSnapshotJson=""
                 console.warn("[Events] Failed to parse file:", e)
                 root.list = []
                 root.nextId = 1
                 root.ready = true
             }
         }
-        onSaved: root._finishSave()
-        onSaveFailed: (error) => {
-            root._saving = false
-            root._saveQueued = false
-            console.warn("[Events] Failed to save events:", error)
-            root._reloadAfterSaveFailure = true
-            // FileView still owns the completed writer while this signal
-            // runs. Start recovery after its native callback has returned.
-            Qt.callLater(root._reloadFailedWriteCache)
-        }
+        onSaved: root._finishSave("")
+        onSaveFailed: error=>root._finishSave(String(error))
         onLoadFailed: (error) => {
             if (root._reloadAfterSaveFailure) {
                 root._reloadAfterSaveFailure = false
@@ -138,6 +175,15 @@ Singleton {
                 root.list = []
                 root.nextId = 1
             }
+        }
+    }
+
+    Component {
+        id:uncachedEventWriter
+        FileView {
+            preload:false
+            onSaved:root._finishUncachedSave(this,"")
+            onSaveFailed:error=>root._finishUncachedSave(this,String(error))
         }
     }
 
@@ -405,16 +451,29 @@ Singleton {
         const serialized = JSON.stringify(data, null, 2)
         // Unchanged bytes emit no saved() signal. Do not acquire a write
         // lease for a no-op, or the following real edit will remain queued.
-        if (eventsFileView.loaded && eventsFileView.text() === serialized) {
+        if (!root._saveFailed && root._lastSavedJson === serialized) {
             root._saveQueued = false
             return
         }
         root._saveQueued = false
+        root._saveSnapshotJson=serialized
         root._saving = true
-        eventsFileView.setText(serialized)
+        try {
+            if(eventsFileView.text()===serialized) {
+                const writer=uncachedEventWriter.createObject(root,{path:Qt.resolvedUrl(root.filePath)})
+                if(!writer)throw new Error("Could not create Agenda writer")
+                root._uncachedWriter=writer
+                writer.setText(serialized)
+            }else eventsFileView.setText(serialized)
+        }catch(error){root._finishSave(String(error))}
     }
 
     function loadFromFile() {
+        if(root.persistenceBusy) {
+            root._loadQueued=true
+            if(root._saveFailed && !root._saving && !root._reloadAfterSaveFailure)root.saveToFile()
+            return
+        }
         root.ready = false
         eventsFileView.reload()
     }

@@ -1,0 +1,5 @@
+  INFO: Launching config: "/tmp/alis-events-durable-d5lp8wiu/normal/shell.qml"
+  INFO: Shell ID: "22b8ca3d88d0f45eb624ba883e784c2f" Path ID "22b8ca3d88d0f45eb624ba883e784c2f"
+  INFO: Saving logs to "/tmp/alis-events-durable-d5lp8wiu/normal/runtime/quickshell/by-id/9drd5bbrmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: EVENTS_DURABLE_PASS restart 2 []
