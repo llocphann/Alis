@@ -652,6 +652,91 @@ run privileged installation just because manual buttons are retired.
   State: SOURCE IMPLEMENTED / focused native PASS.
   Owner visual/physical review and committed canonical remain OPEN.
 
+- [ ] **ABYSS-R06 — Remove toggles for mandatory Abyss runtime modules — owner 2026-10-12:**
+  [Owner: Alis dev; Rework] When Abyss Panel is selected, structural modules
+  required for rendering/interaction must be treated as **always enabled**
+  and removed from the visible Modules toggle list. Optional modules
+  must remain user-toggleable; do NOT classify everything enabled by
+  default as mandatory. Inventory dependency/mount chains and document
+  a concrete mandatory-vs-optional table before implementation.
+  Source: `modules/abyss/settings/AbyssStyleSettings.qml` creates the
+  `moduleToggleGrid` from `enabledPanels`; `modules/common/
+  PanelFamilyPolicy.js` owns family defaults, migration and reset;
+  `modules/abyss/critical/ShellAbyssCriticalPanels.qml` gates the
+  one-and-only `abyssPerimeter` SDF field host using `enabledPanels`.
+  The Perimeter is a strong mandatory candidate. Individually evaluate
+  Background, Bar, Dock, Popup, Sidebar Left/Right, Notification Popup/
+  Center, OSD, Clipboard, Overview, Lock, Polkit, Session Screen and
+  other panels; do not prematurely force optional or privileged helpers.
+  Enforce the required set in runtime AND configuration reconciliation
+  (not a hidden switch with an ineffective saved-off value). Preserve
+  Waffle, profile migration, old saved `enabledPanels`, reset, optional
+  packages, per-output layouts and user-consent boundaries.
+  Acceptance: mandatory hosts cannot be disabled on Abyss and
+  are absent from the toggle UI; optional hosts still toggle;
+  no loss of field, input, fullscreen OSD or startup when old
+  profiles disable a required ID. Test migration, switch Abyss/Waffle,
+  restart, live Niri on multiple outputs. State: NEW/OPEN, not implemented.
+
+- [ ] **SET-R03 — Short, essential help text across all Settings — owner 2026-10-12:**
+  [Owner: Alis dev; Rework/UI copy] Review **every** Settings page
+  (Overlay, standalone, Abyss, Waffle, Integrations, Companion and
+  dynamically injected pages) and simplify long on-screen notes,
+  descriptions, hints and tooltips into a **few essential words**.
+  Remove unnecessary duplication when the label already explains
+  the action. Avoid paragraphs, long instructional sentences or
+  repetitive headings. Examples from screenshot: the two long
+  explanatory paragraphs below Abyss Modules toggles. Search
+  `modules/settings/**`, `modules/abyss/settings/**`, other
+  supported family pages and shared `SettingsNote`,
+  `SettingsTaskNavigator`, `description` and `StyledToolTip` uses.
+  Preserve essential consent/security, data-loss and privileged
+  operation warnings; move lengthy technical help to discoverable
+  documentation rather than stripping safety meaning. Maintain
+  localization/source parity, accessible names, Settings search,
+  layout/hierarchy and all functional behavior. Acceptance:
+  audited copy inventory and brief English UI labels in every
+  Settings family; long translations, small screens and native
+  owner screenshot review. State: NEW/OPEN, not implemented.
+
+- [ ] **SET-R04 — Remove "Use opaque Material appearance" preset button — owner 2026-10-12:**
+  [Owner: Alis dev; Rework/removal] Delete the **button** from
+  `modules/abyss/settings/AbyssStyleSettings.qml` completely.
+  This button performs a real batch `Config.setNestedValues`
+  change (surface/content opacity, blur, waves, refraction, glow,
+  highlight, perimeter radius): it is NOT a Settings redirect.
+  Previous SET-R01 research kept it for that reason, but this
+  explicit owner removal request **supersedes that keep decision**.
+  Preserve each individual opacity/blur/effects/radius setting and
+  its saved value; do not trigger the old preset or reset users'
+  current appearance on upgrade. Remove dead UI text and update
+  test/translation expectations. State: NEW/OPEN, not implemented.
+
+- [ ] **ABYSS-R07 — Screen Edge Clock and Date use shared Typography — owner 2026-10-12:**
+  [Owner: Alis dev; Rework/font settings] On Top, Bottom,
+  Left AND Right Abyss Screen Edges, Clock/Date must inherit
+  the main Settings → Typography font family and size scale,
+  with meaningful time/date hierarchy derived from shared tokens.
+  Remove the separate Time font, Time size (px), Date font,
+  Date size (px) controls from the Abyss Clock settings section
+  in `modules/settings/BarConfig.qml`.
+  `modules/bar/ClockWidget.qml` currently reads
+  `bar.clock.timeFontFamily/timePixelSize/dateFontFamily/datePixelSize`
+  and falls back to `Appearance.font.family.main` and shared
+  pixel-size tokens. Audit the rotated Left/Right path
+  `modules/verticalBar/VerticalClockWidget.qml` in light of
+  ABYSS-R05 (full-design rotation, no compact variant).
+  Use one typography source-of-truth without silently modifying
+  Waffle or other still-valid consumers of legacy settings.
+  Preserve old config keys as inert/compatibility values when
+  appropriate, not destructive deletion. Keep time/date formats,
+  font contrast, dynamic theme and calendar hover/click behavior.
+  Acceptance: changing global Typography live-updates Clock/Date
+  on all four edges and survives restart; no independent Clock/Date
+  font/size controls in Abyss settings; test multiple scales,
+  locales, small screens, focus/popup hitboxes, owner native
+  visual signoff. State: NEW/OPEN, not implemented.
+
 - [ ] **SET-R01 — Eliminate redundant Settings-to-Settings navigation buttons:**
   The maintainer wants **no Settings action whose only purpose is to switch
   to another Settings tab/page**. Perform a complete source/UI audit of
@@ -682,7 +767,9 @@ run privileged installation just because manual buttons are retired.
   core pure redirect buttons are identified in Modules/Quick/Interface/
   System/Sidebars/Services, plus one in Alis-Companion (13 total).
   Services' old search delegation is compatibility,
-  not a visible button. Opaque Material actually applies values and stays;
+  not a visible button. Opaque Material was preserved in the earlier navigation-only audit
+  because it changes real settings, but the owner's newer explicit
+  removal request supersedes that decision (SET-R04).
   reload/Open config/Shortcuts/floating tools/install/calendar actions stay.
   Remove empty redirect wrappers, hide Abyss' now-empty Modules sub-tab while
   retaining real Waffle module controls and canonical/legacy routes.
@@ -900,7 +987,39 @@ run privileged installation just because manual buttons are retired.
   midnight, all-day/in-progress, 0/1/long lists, scroll,
   theme/scaling and popup focus; verify no Dashboard Agenda
   truncation and owner native screenshot parity. Coordinate
-  with CAL-F01 indicators. State: OPEN; not implemented.
+  with CAL-F01 indicators.
+  **Owner refinement — 2026-10-12 (Events scrollbar):** in the
+  **Calendar Popup Events pane only**, hide the scrollbar track/thumb
+  entirely (e.g. popup-scoped `ScrollBar.AlwaysOff`) while preserving
+  vertical wheel/touchpad/finger/keyboard scrolling, focus, FAB,
+  event cards and the Add/Edit/Remove form. Do NOT globally disable
+  `EventsWidget` scrolling or hide scrollbars in unrelated Sidebar/
+  Dashboard hosts. Test 0/1/many events, narrow/high-DPI windows and
+  scrolling to the final event. State: OPEN; not implemented.
+
+- [ ] **DASH-R03 — Weekly Planner Day/date + All day header material parity — owner screenshot 2026-10-12:**
+  [Owner: Alis dev; Rework / Material UX] The 7-column date/day header
+  and its **All day** strip in Dashboard Weekly Planner currently read
+  as a flat, detached dark band (owner screenshot) rather than an
+  Abyss-connected content surface. Rework the two header regions as one
+  coherent, compact Abyss Panel material language, with deliberate
+  header/column divisions, selected/today/hover states and no unnecessary
+  independent cards or expensive new shader/blur passes.
+  Match the **theme-color semantics of the owner-approved Detailed
+  Weather Popup content background**, not a hard-coded screenshot tint:
+  reuse `AbyssStyle.contentLayer` / theme accent/ink/contrast policy,
+  allowing live wallpaper/theme changes and preserving Waffle/non-Abyss
+  styling. Source starting points:
+  `modules/dashboard/DashboardWeeklyPlanner.qml` (date column header,
+  All day band and sticky left/top corner), and
+  `modules/bar/weather/WeatherPopupContent.qml` as palette reference.
+  Preserve seven aligned columns, date/time zones/DST positioning,
+  all-day expand/collapse, current-day indicator, time scroll and
+  event hit testing. Verify narrow/fractional screens, multi-output,
+  light/dark, long weekday/date translations, foreground contrast,
+  scroll anchoring and actual Niri screenshots. Coordinate with
+  DASH-F01's new in-Dashboard expandable Edit Events column.
+  State: NEW/OPEN; not implemented.
 
 - [ ] **DASH-R02 — Horizontal-only Dashboard gesture page navigation — owner request 2026-10-11:**
   [Owner: Alis dev; Rework/UX] **Only horizontal left/right swipe
@@ -1208,6 +1327,70 @@ run privileged installation just because manual buttons are retired.
   with nonempty custom data and requires a separate new committed run.
   State: OPEN for owner visual/theme/typography,
   per-surface contrast, animation and multiple-output acceptance.
+
+- [ ] **ABYSS-R05 — Preserve the full module design when placed on Left/Right Screen Edges — owner requirement 2026-10-12:**
+  [Owner: Alis dev; Rework / four-edge visual and geometry parity]
+  **ALL Screen Edge modules** must retain the same **non-compact
+  component design, visible content, proportions, controls, icon/text
+  hierarchy and user-configured size** they have on Top/Bottom when
+  moved to Left/Right. Do **NOT** automatically swap to old Material
+  vertical/compact bar variants, drop labels, collapse information,
+  change widget style or silently reduce their scale solely because
+  an edge is vertical. **Only rotate/reorient the original module to
+  face the appropriate Screen Edge** (Top/Bottom/Left/Right). Rotating
+  a full design means correct 90°/270° orientation, pivot/anchors,
+  transformed width/height and input coordinates, NOT recreating a
+  narrower substitute. Existing intentionally explicit custom size/
+  appearance settings should remain respected; moving between edges
+  must not silently rewrite their saved values.
+
+  **Source starting points:** `modules/abyss/bar/AbyssBarModule.qml`
+  currently branches on `vertical` to load the distinct
+  `Vertical.Resources`, `Vertical.VerticalClockWidget`,
+  `Vertical.VerticalMedia` and `Vertical.BatteryIndicator`
+  variants; other module kinds pass `vertical` to child controls
+  and `compact` to Clock/UtilButtons. Review EVERY module kind,
+  including Workspaces, Weather, Tray, Taskbar, Active Window,
+  Distro/Launcher, Utilities, Timer and Shell Update, plus installed
+  or optional modules; use the original horizontal/full-content
+  presentation with a shared edge-orientation transform rather than
+  replacing it with Material-era vertical layouts.
+  `modules/abyss/bar/AbyssBar.qml` selects the physical edge,
+  exposes `naturalSpan` and `contentScale`, and passes
+  `placement?.compact`; `modules/abyss/looks/AbyssLayout.js`
+  has orientation-specific `extent()` and `geometry()` with a
+  capacity `scale` factor. Audit measured extents, 90°/270° bounding
+  boxes, hit region, corner joins and center/alignment carefully:
+  removing only the QML `Vertical.*` branch is insufficient.
+
+  **Size and capacity:** preserve each module's configured visual
+  size and layout on all four edges; Left/Right rotation may swap
+  physical width and height but must not shrink fonts, icons, card
+  surfaces, controls or their proportional relationships. For a
+  crowded/short edge, do NOT silently apply a compact fallback or
+  proportional auto-shrink. Determine an explicit non-destructive
+  capacity rule (bounded repositioning, placement rejected with
+  clear editor feedback, or another reviewed non-clipping solution)
+  so other modules cannot overlap, vanish, steal click targets or
+  move unpredictably. Coordinate with ABYSS-R01 (corner clearance),
+  ABYSS-R03 (smooth repacking), ABYSS-F01 (locked positions) and
+  per-output/edge-width/custom-size configuration. Preserve Popup
+  attachment, hover, mouse/touch, keyboard, tooltips, OSD and
+  fullscreen interactions; module *content* remains fully usable.
+
+  **Acceptance:** for each supported module, compare Top → Right →
+  Bottom → Left → Top on the same config: same content/controls and
+  design, no automatic compact variant, no unintended size drift;
+  only orientation and swapped axis dimensions differ. Verify
+  long labels/text, animation and hover/popup placement, rotation
+  direction, readability, exact hit regions, crowded edges, locked
+  neighbors, four-corner crossing, output-only profiles, saved
+  Done/Cancel/Reset, restart, dark/light themes, 1x/fractional DPI,
+  multiple monitors and small screen limits. Add deterministic
+  geometry/orientation and source QML tests, followed by real
+  Niri/Quickshell before/after captures and owner visual signoff.
+  State: NEW/OPEN — requirement recorded; no source implementation
+  or native acceptance claimed in this entry.
 
 - [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**
   [Owner: Alis dev; Rework/Optimization] Improve the perceptual and

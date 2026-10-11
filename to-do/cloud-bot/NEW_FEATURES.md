@@ -297,6 +297,46 @@ order or close unverified Issues because their source is implemented.
   multi-output/theme/reduced-motion, no leaked focus, bounded render
   cost, optional integrations absent and data intact after restart.
   Deterministic date/geometry tests plus owner-approved Niri UI.
+  **Owner refinement — 2026-10-12 (Edit Events inline expanded column):**
+  Selecting a local event or clicking a time slot in the **Weekly
+  Planner Dashboard tab** must open **Edit/Create Events as a real
+  expandable column INSIDE the Dashboard**, using the same shared
+  expanding side-column layout as Todo and Quick Notes. Do NOT launch
+  a separate Sidebar Left/Right, floating popup or full-page modal
+  overlay for this Weekly Planner action. Coordinate one pane state
+  (events / todo / notes / closed): opening Events expands the
+  adjacent column and reflows/shrinks the planner; switching between
+  the three preserves expected unsaved-edit/cancel/focus behavior.
+  Keep the Events form accessible and scrollable on small screens,
+  but **hide visible scrollbar chrome in this Edit Events column**
+  without disabling wheel/touchpad/keyboard scrolling or hiding
+  field controls. Preserve date/time slot prefill, existing local
+  event fields, stable event identity, Save/Cancel/Remove, validation,
+  read-only imported events, timezone/DST, source persistence and
+  no duplicate write backend. Leave unrelated Dashboard Agenda
+  invocation and Calendar Popup editor behavior unchanged.
+  **Existing gap:** `modules/dashboard/DashboardWeeklyPlanner.qml`
+  currently offers `sideView` Todo/Notes only; `DashboardContent.qml`
+  routes `onRequestEventsDialog` through the full-area
+  `agendaDialogLoader` / `EventsDialog`. Move the Weekly
+  Planner route into the shared in-page expandable column and
+  test mode switching, narrow responsive layout, outside click/
+  Escape, unsaved edits, no focus leakage, and owner screenshot.
+  Coordinate Day/date and All day header material in
+  `REWORK_OPTIMIZATION.md` (DASH-R03).
+  **State of this follow-up:** NOT IMPLEMENTED / OPEN, despite
+  the earlier Weekly Planner grid and shared Todo/Notes native PASS.
+  **Owner refinement — 2026-10-12 (Quick Notes Markdown parity):**
+  The `notes` expanded column inside Weekly Planner must expose
+  the same Markdown Reading / Source Editing choice, Ctrl+B/Ctrl+I/
+  Ctrl+K shortcuts, stable-ID autosave, and managed attachment preview
+  as the shared Edgebar Quick Notes, WITHOUT a duplicate editor or
+  data backend. The same requirement applies to the regular Dashboard
+  Quick Notes card. Keep the existing Dashboard Source-first default;
+  Reading is an explicit user-selectable mode, not a hover-triggered
+  focus/mode switch in Dashboard. Owner details and the unified
+  native acceptance matrix live in the existing Quick Notes Markdown
+  feature below; do not create a second feature or close either gate.
   State: SOURCE IMPLEMENTED / FOCUSED PASS — 2026-10-12, after Todo durability
   and shared Settings task-tab milestones. One bounded weekly projection of canonical
   Events/CalendarSync with actual civil-day boundaries (23/24/25h), overlapping
@@ -514,6 +554,58 @@ order or close unverified Issues because their source is implemented.
   Keep concurrent views on one note synchronized by stable ID,
   without discarding unsaved changes or overwriting an external
   Obsidian-exported note.
+
+  **Owner refinement — 2026-10-12 (Dashboard & Weekly Planner parity
+  with Quick Notes Edgebar; source work still OPEN):**
+  - Extend the same shared `NotepadWidget` / `QuickNotesView` Markdown
+    Reading and Source Editing experience to **Dashboard Quick Notes**
+    (`modules/dashboard/DashNotes.qml`) and to the **Quick Notes
+    expanded column in Weekly Planner** (the same `DashNotes` loaded
+    through `DashboardWeeklyPlanner.qml`). No cloned editor, note
+    store, attachment import pipeline or second autosave scheduler.
+  - **Reading:** render actual Markdown as in the Edgebar; no keyboard
+    focus/caret or implicit note edits. Unlike the hover Edgebar,
+    Dashboard/Weekly Planner MUST preserve their existing
+    **Source-first default** and offer a clear, keyboard-accessible
+    Reading/Source switch. Do not force Reading on hover, tab/page
+    selection, load, dashboard open or ordinary pointer movement.
+    A user deliberately choosing Reading may click the note body
+    to return to Source Editing; exiting Source flushes pending
+    changes without changing note identity.
+  - **Source Editing:** preserve normal writing and selections;
+    Ctrl+B / Ctrl+I wrap/toggle bold and italic, and Ctrl+K inserts
+    Markdown links, sharing the existing `MarkdownNote.js` helper.
+    Keep Ctrl+V image/text paste, Ctrl+S save, Unicode/IME,
+    Undo/Redo, keyboard focus and context menu working.
+  - **Autosave/attachments:** keep the existing Notepad stable note
+    ID and pending-save synchronization across Dashboard,
+    Weekly Planner, Sidebar and Edgebar, including when switching
+    note tabs, modes, Dashboard pages, expanding/collapsing the
+    planner column or closing the host. Reuse the Alis-managed
+    attachment preview and existing paste/import helpers.
+  - **No regression:** Sidebar Notes retains its present Source
+    editor behavior, and the Edgebar keeps hover-to-Reading with
+    explicit click-to-edit. A new optional Reading switch must not
+    steal focus, unexpectedly persist a global mode, increase
+    background renderer work when hidden, or change Waffle/
+    connected Abyss theming.
+  - **Implementation gap confirmed at receipt:** `QuickNotesView.qml`
+    currently defaults `readingOnHover: false`; `DashNotes.qml`
+    does not expose a Reading toggle, although formatting shortcuts,
+    the Markdown renderer, autosave and attachment preview live
+    in the shared `NotepadWidget.qml`. Wire a deliberate mode
+    selector through the shared view and ensure it is usable in
+    Dashboard's normal card and the narrow Weekly Planner expanded
+    column.
+  - **Acceptance:** source contract plus actual native Niri/
+    Quickshell tests on both Dashboard and Weekly Planner: default
+    Source; switch to formatted Reading without focus; click back
+    to Editing; Ctrl+B/I/K selection and empty-selection cases;
+    unchanged saved Markdown bytes and note IDs; attachments;
+    autosave/Undo/Redo/IME; multiple note views editing/reloading;
+    expand/collapse, tab/page switch, Today/next week, narrow
+    widths, theme changes, restart, and no accidental focus/data
+    loss. Keep OPEN until both surfaces and owner UI are verified.
 
   **Security & performance:** render untrusted note Markdown as data,
   never executable HTML/JS/QML; sanitize or disable raw HTML,
