@@ -151,7 +151,7 @@ grep -Fq 'showHeader: root.arrangementChromeVisible' "$monitor_config" \
     || { printf 'FAIL: embedded Monitor Arrangement still exposes its drop-down header\n' >&2; exit 1; }
 for token in \
     'embeddedArrangementOnly ? 252 : 292' \
-    'embeddedArrangementOnly ? 0.92 : 1.0' \
+    'embeddedArrangementOnly ? 0.65 : 0.70' \
     'fitScale * root.arrangementVisualScale' \
     'implicitWidth: root.embeddedArrangementOnly ? 30 : 34'; do
     grep -Fq "$token" "$monitor_config" \

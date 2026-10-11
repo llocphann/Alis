@@ -13,12 +13,12 @@ ContentPage {
     property bool embeddedArrangementOnly: false
     embedded: embeddedArrangementOnly
     readonly property bool arrangementChromeVisible: !embeddedArrangementOnly
-    // Keep the Utilities monitor page visually in line with the other compact
-    // tabs. Settings still uses the full-size arrangement editor.
+    // Reduce only the monitor diagram tiles (~30% in both views); keep
+    // the canvas, logical output coordinates and Niri drag/save math unchanged.
     readonly property real arrangementCanvasHeight:
         embeddedArrangementOnly ? 252 : 292
     readonly property real arrangementVisualScale:
-        embeddedArrangementOnly ? 0.92 : 1.0
+        embeddedArrangementOnly ? 0.65 : 0.70
 
     property string activeSection: "outputs"
 
