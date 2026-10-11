@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "nextId": 2,
+  "events": [
+    {
+      "id": 1,
+      "title": "From Agenda",
+      "description": "detail",
+      "dateTime": "2099-01-03T10:00:00Z",
+      "startDate": "2099-01-03T10:00:00Z",
+      "endDate": "2099-01-03T11:00:00Z",
+      "allDay": false,
+      "category": "meeting",
+      "priority": "normal",
+      "reminderMinutes": 0,
+      "recurrence": "none",
+      "notified": false,
+      "reminderNotified": false,
+      "createdAt": "2026-10-11T22:11:18.265Z",
+      "todoLink": {
+        "version": 1,
+        "key": "agenda-mv4dnx4p-1-zqb5ziwozye",
+        "state": "detached",
+        "provider": "[\"obsidian\",\"/tmp/alis-agenda-obsidian-loah_acm/managed-note-delete/Vault\",\"managed-note\",\"Tasks.md\"]",
+        "fingerprint": "{\"content\":\"From Agenda\",\"description\":\"detail\",\"date\":\"2099-01-03\",\"startTime\":\"17:00\",\"endTime\":\"18:00\",\"startDate\":\"2099-01-03T10:00:00Z\",\"endDate\":\"2099-01-03T11:00:00Z\",\"allDay\":false}",
+        "sourceDate": "",
+        "taskMissing": false
+      }
+    }
+  ],
+  "todoUnlinks": []
+}

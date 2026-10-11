@@ -1,0 +1,36 @@
+{
+  "nextId": 53,
+  "events": [
+    {
+      "id": 50,
+      "title": "Historical",
+      "dateTime": "2099-01-01T10:00:00Z",
+      "startDate": "2099-01-01T10:00:00Z",
+      "notified": false
+    },
+    {
+      "id": 51,
+      "title": "Still scheduled",
+      "description": "new detail",
+      "dateTime": "2099-01-05T12:00:00Z",
+      "startDate": "2099-01-05T12:00:00Z",
+      "endDate": "2099-01-05T13:00:00Z",
+      "allDay": false,
+      "category": "meeting",
+      "priority": "normal",
+      "reminderMinutes": 0,
+      "recurrence": "none",
+      "notified": false,
+      "reminderNotified": false,
+      "createdAt": "2026-10-11T21:41:41.095Z",
+      "todoLink": {
+        "version": 1,
+        "key": "agenda-mv4cltuv-1f-68r1t7t8xm5i",
+        "state": "detached",
+        "provider": "internal",
+        "fingerprint": "{\"content\":\"Alpha edited\",\"description\":\"new detail\",\"date\":\"2099-01-05\",\"startTime\":\"19:00\",\"endTime\":\"20:00\",\"startDate\":\"2099-01-05T12:00:00Z\",\"endDate\":\"2099-01-05T13:00:00Z\",\"allDay\":false}",
+        "sourceDate": ""
+      }
+    }
+  ]
+}

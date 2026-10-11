@@ -1,0 +1,21 @@
+{
+  "modules/common/widgets/AgendaTodoLink.qml": "6c43d9dd43549d4be99a75dfdc64d5d132c8abc338424734fb9dbe514d21f60a",
+  "modules/common/widgets/qmldir": "cbdb3af353bfd02d5bb56aadb4c8c124043b4ed9428e27b2c49f86b16a17591f",
+  "modules/dashboard/DashTodo.qml": "83b2292b76a79ff228d7c2dfff308ae63f530ef546c13479fbc5e2710ea87062",
+  "modules/dashboard/DashboardWeeklyPlanner.qml": "8add54deb0fac1130f854d76041ff1edb74ae497ce1f16c2601315c2c86ffccd",
+  "modules/sidebarRight/calendar/CalendarEventRow.qml": "6db658065689170ec6239e8faa47d0b9151a5db2230c9a3ce8baf1f75f22fdb5",
+  "modules/sidebarRight/events/EventCard.qml": "ba2dc4784dc877ed894a063608ff7705e0211b498fb7bfce6c998ae144097504",
+  "scripts/test-agenda-obsidian-runtime.py": "843053558d2f7fd67c3b8f9d3ec6b1f72d7b20c20d1333371d6bfcfee8cbc3b4",
+  "scripts/test-agenda-todo-bootstrap.py": "9c061f183c80cdaf61c773b64fc4ac47a20dfc3406ede372b8151fb7a27069c7",
+  "scripts/test-agenda-todo-policy.mjs": "2ae42e4e6d9991523ee9e125b9312712d7954602c7686e9226c8a60c86908080",
+  "scripts/test-agenda-todo-runtime.py": "8429ea2a4c06a6240b89b4582c4b92d0d2de3c4ef5aa1e6fa7202bcc3876dcfb",
+  "scripts/test-agenda-todo-ui-runtime.py": "cc03834da8e0c3d6260f305be8b6ebb29f6e68c3e471b4475dc677ecc03f449a",
+  "scripts/validate-maintainer-local.sh": "3782b0884cba74097f907bc8c8619a542c23afac5a0a35008b9cc58dbfb5f436",
+  "services/AgendaTodoPolicy.js": "290fa6543ef959ccefdfd525262c650e89112ce0319174a3d7e8025206ba78b3",
+  "services/DailyNoteTodoBackend.qml": "969405e81cb651ff4c2aaaab50bb79315a13498abfcbc24ae2c50a6e9c007799",
+  "services/Events.qml": "110241fff0c7f9a234a5297f706632c499b3d738a9275dcc86f44647f6a60019",
+  "services/InternalTodoBackend.qml": "ed606015dd98fd44a818d2a11f4a1534e04208e4b18d726935f15a4dd735f7c9",
+  "services/ObsidianTodoBackend.qml": "65f955396ac53f2416feefe129f976622fb0aafa9f74616d2cdbcabaf9196429",
+  "services/Todo.qml": "622da5197d00ef7e810f012450820c1a4efd9f8b8b846911765648c6414b50e8",
+  "translations/en_US.json": "74dce4c92e668c4ad922c589dcfdfdec97198b2a175ad4eeb9e7ee8634963a2b"
+}

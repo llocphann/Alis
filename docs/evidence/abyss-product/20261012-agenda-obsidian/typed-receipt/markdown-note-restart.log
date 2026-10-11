@@ -1,0 +1,9 @@
+  INFO: Launching config: "/tmp/alis-agenda-obsidian-yc_thwdw/markdown-note/shell.qml"
+  INFO: Shell ID: "96522eb71a0f9bd73d09defa825577be" Path ID "96522eb71a0f9bd73d09defa825577be"
+  INFO: Saving logs to "/tmp/alis-agenda-obsidian-yc_thwdw/markdown-note/runtime/quickshell/by-id/1jng3vjrmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-agenda-obsidian-yc_thwdw/markdown-note/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-obsidian-yc_thwdw/markdown-note/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: AGENDA_OBSIDIAN_PASS markdown-note restart 3

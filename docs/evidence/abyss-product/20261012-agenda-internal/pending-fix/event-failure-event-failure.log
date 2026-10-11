@@ -1,0 +1,8 @@
+  INFO: Launching config: "/tmp/alis-agenda-link-vkq0vaxl/event-failure/shell.qml"
+  INFO: Shell ID: "de28e6660e516a9d5ac92e71c117caa7" Path ID "de28e6660e516a9d5ac92e71c117caa7"
+  INFO: Saving logs to "/tmp/alis-agenda-link-vkq0vaxl/event-failure/runtime/quickshell/by-id/lafglxirmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-agenda-link-vkq0vaxl/event-failure/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[107:5]: Write of /tmp/alis-agenda-link-vkq0vaxl/event-failure/state/quickshell/user/events.json failed: Permission denied.
+  WARN qml: [Events] Failed to save events: 3
+  INFO qml: AGENDA_TODO_PASS event-failure 2

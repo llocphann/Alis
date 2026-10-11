@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "nextId": 2,
+  "events": [
+    {
+      "id": 1,
+      "title": "Synced name",
+      "description": "changed detail",
+      "dateTime": "2099-01-03T10:00:00Z",
+      "startDate": "2099-01-03T10:00:00Z",
+      "endDate": "2099-01-03T11:00:00Z",
+      "allDay": false,
+      "category": "meeting",
+      "priority": "normal",
+      "reminderMinutes": 0,
+      "recurrence": "none",
+      "notified": false,
+      "reminderNotified": false,
+      "createdAt": "2026-10-11T22:00:15.726Z",
+      "todoLink": {
+        "version": 1,
+        "key": "agenda-mv4d9pwu-1-22a572j7no02",
+        "state": "linked",
+        "provider": "[\"obsidian\",\"/tmp/alis-agenda-obsidian-3zzum7e0/markdown-note/Vault\",\"markdown-note\",[\"\",\"Tasks.md\",\"Tasks\",2]]",
+        "fingerprint": "{\"content\":\"Synced name\",\"description\":\"changed detail\",\"date\":\"2099-01-03\",\"startTime\":\"17:00\",\"endTime\":\"18:00\",\"startDate\":\"2099-01-03T10:00:00Z\",\"endDate\":\"2099-01-03T11:00:00Z\",\"allDay\":false}",
+        "sourceDate": "2026-10-12",
+        "taskMissing": false
+      }
+    }
+  ],
+  "todoUnlinks": []
+}

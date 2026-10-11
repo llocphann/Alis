@@ -4,6 +4,7 @@ import qs.modules.common
 import Quickshell;
 import Quickshell.Io;
 import QtQuick;
+import "AgendaTodoPolicy.js" as AgendaTodoPolicy
 
 /**
  * Internal Hadalis to-do persistence backend.
@@ -63,6 +64,9 @@ Scope {
     property bool _jsonSaveFailed: false
     property bool _refreshQueued: false
     property string _lastSavedJson: ""
+    property string _durableJson: "[]"
+    signal itemsPersisted(var savedItems)
+    function getDurableItems() { return JSON.parse(root._durableJson) }
     property string _jsonWriteSnapshot: ""
     property FileView _jsonWriter: null
     property string errorMessage: ""
@@ -83,10 +87,19 @@ Scope {
             const item = value[i]
             if (!item || typeof item !== "object" || Array.isArray(item))
                 continue
-            normalized.push({
+            const clean = {
                 "content": String(item.content ?? ""),
                 "done": item.done === true
-            })
+            }
+            if (typeof item.id === "string") clean.id = item.id
+            if (typeof item.notes === "string") clean.notes = item.notes
+            for (const field of ["description","date","startTime","endTime","startDate","endDate"])
+                if(typeof item[field] === "string")clean[field]=item[field]
+            if(typeof item.allDay === "boolean")clean.allDay=item.allDay
+            if (item.agenda?.version === 1 && AgendaTodoPolicy.validLink({version:1,key:item.agenda.key,state:"linked"})) {
+                clean.agenda = Object.assign({},item.agenda)
+            }
+            normalized.push(clean)
         }
         return normalized
     }
@@ -103,6 +116,25 @@ Scope {
 
     function addTask(desc) {
         return addItem({ "content": desc, "done": false })
+    }
+
+    function ensureAgenda(event) {
+        if (!root.ready || root.persistenceBusy) return false
+        const key=event.todoLink.key
+        const index=root.list.findIndex(item=>item.agenda?.key===key)
+        const next=AgendaTodoPolicy.linkedItem(event,index>=0?root.list[index]:null)
+        if(index>=0 && JSON.stringify(next)===JSON.stringify(root.list[index])) return true
+        const items=root.list.slice()
+        if(index>=0)items[index]=next;else items.push(next)
+        root.list=items;root._persistAll();return true
+    }
+    function unlinkAgenda(key) {
+        if(!root.ready || root.persistenceBusy)return false
+        const index=root.list.findIndex(item=>item.agenda?.key===key)
+        if(index<0)return true
+        const items=root.list.slice();const item=Object.assign({},items[index])
+        delete item.agenda;items[index]=item
+        root.list=items;root._persistAll();return true
     }
 
     function markDone(index) {
@@ -199,6 +231,7 @@ Scope {
         if (!root._jsonSaving) return
         if (error.length === 0) {
             root._lastSavedJson = root._jsonWriteSnapshot
+            root._durableJson = root._jsonWriteSnapshot
             root._jsonSaveFailed = false
             root.errorMessage = ""
         } else {
@@ -207,6 +240,7 @@ Scope {
             console.warn("[Todo] Failed to save JSON:", error)
         }
         root._jsonSaving = false
+        if(error.length===0)root.itemsPersisted(root.getDurableItems())
         if (error.length === 0 && root._jsonSaveQueued) {
             // Keep the queued flag until the follow-up starts: migration must
             // not observe a false idle interval with an older disk revision.
@@ -349,6 +383,7 @@ Scope {
             }
             root.ready = true
             root._lastSavedJson = fileContents
+            root._durableJson = JSON.stringify(root.list)
             _log("[Todo] JSON loaded,", root.list.length, "tasks")
             // Generate txt mirror from loaded JSON, then unlock after settling
             root._writeTxt()
@@ -464,7 +499,13 @@ Scope {
 
                 _log("[Todo] txt changed externally:", parsed.length, "tasks")
                 root._suppressTxtWrite = true
-                root.list = parsed
+                // TXT has no identity fields. Preserve linked metadata when a
+                // checkbox/text item still matches; never resurrect deleted tasks.
+                const remaining=root.list.slice()
+                root.list=parsed.map(item=>{
+                    const index=remaining.findIndex(old=>old.content===item.content)
+                    return index>=0?Object.assign({},remaining.splice(index,1)[0],item):item
+                })
                 root._saveJson()
                 root._suppressTxtWrite = false
             }

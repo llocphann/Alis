@@ -1,0 +1,10 @@
+  INFO: Launching config: "/tmp/alis-events-durable-cmekp9zh/failure/shell.qml"
+  INFO: Shell ID: "d9e191c10543ac2ab10ec8280a597df5" Path ID "d9e191c10543ac2ab10ec8280a597df5"
+  INFO: Saving logs to "/tmp/alis-events-durable-cmekp9zh/failure/runtime/quickshell/by-id/43lgljjrmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-events-durable-cmekp9zh/failure/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[371:5]: Read of /tmp/alis-events-durable-cmekp9zh/failure/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/Events.qml[121:5]: Write of /tmp/alis-events-durable-cmekp9zh/failure/state/quickshell/user/events.json failed: Permission denied.
+  WARN qml: [Events] Failed to save events: 3
+  INFO qml: EVENTS_DURABLE_PASS failure 22 [["Alpha"],["Alpha updated","Beta"],["Alpha updated","Beta"],["Alpha updated","Beta"],["Alpha updated","Beta"],["Alpha updated","Beta"],["Alpha updated","Beta","Denied"],["Alpha updated","Beta","Denied"],["Alpha updated","Beta","Denied"]]

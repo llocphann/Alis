@@ -174,7 +174,7 @@ Item {
                                 Accessible.name:modelData.event.title+(modelData.source==="external"?" · Read-only":"")
                                 contentItem:StyledText {text:allDayButton.modelData.event.title;color:root.ink;elide:Text.ElideRight;font.pixelSize:Appearance.font.pixelSize.smallest}
                                 onClicked:if(modelData.source==="local")root.requestEventsDialog(modelData.event)
-                                StyledToolTip {text:parent.Accessible.name}
+                                StyledToolTip {text:parent.Accessible.name+(parent.modelData.source==="local" && !parent.modelData.virtual && Todo.agendaStatus(parent.modelData.event)?" · "+Todo.agendaStatus(parent.modelData.event):"")}
                             }
                         }
                         StyledText {
@@ -219,10 +219,11 @@ Item {
                                 contentItem:Column {
                                     clip:true
                                     StyledText {width:parent.width;text:timedButton.modelData.event.title;color:root.ink;font.weight:Font.Medium;font.pixelSize:Appearance.font.pixelSize.smallest;elide:Text.ElideRight}
+                                    StyledText {width:parent.width;visible:text.length>0;text:timedButton.modelData.source==="local" && !timedButton.modelData.virtual ? Translation.tr(Todo.agendaStatus(timedButton.modelData.event)) : "";color:root.mutedInk;font.pixelSize:Appearance.font.pixelSize.smallest;elide:Text.ElideRight}
                                     StyledText {width:parent.width;text:Qt.formatTime(timedButton.modelData.startDate,"hh:mm")+" – "+Qt.formatTime(timedButton.modelData.endDate,"hh:mm");color:root.mutedInk;font.pixelSize:Appearance.font.pixelSize.smallest;elide:Text.ElideRight}
                                 }
                                 onClicked:if(modelData.source==="local")root.requestEventsDialog(modelData.event)
-                                StyledToolTip {text:parent.Accessible.name+(parent.modelData.virtual?" · Recurring: edits apply to the saved event":"")}
+                                StyledToolTip {text:parent.Accessible.name+(parent.modelData.virtual?" · Recurring: edits apply to the saved event":parent.modelData.source==="local" && Todo.agendaStatus(parent.modelData.event)?" · "+Todo.agendaStatus(parent.modelData.event):"")}
                             }
                         }
                         Rectangle {

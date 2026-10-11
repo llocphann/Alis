@@ -29,6 +29,22 @@ Scope {
     readonly property string watchPath: root.implementation?.watchPath ?? ("")
     signal migrationCommitted(var payload)
     signal migrationFinished(bool success, var payload)
+    signal agendaMutationFinished(bool success,var payload)
+    function deleteAgenda(link): bool {
+        if(typeof root.implementation?.deleteAgenda === "function")return root.implementation.deleteAgenda(link)
+        root.missingOperationError="Update the optional integration to link Agenda"
+        return false
+    }
+    function unlinkAgenda(link): bool {
+        if(typeof root.implementation?.unlinkAgenda === "function")return root.implementation.unlinkAgenda(link)
+        root.missingOperationError="Update the optional integration to link Agenda"
+        return false
+    }
+    function ensureAgenda(event): bool {
+        if(typeof root.implementation?.ensureAgenda === "function")return root.implementation.ensureAgenda(event)
+        root.missingOperationError="Update the optional integration to link Agenda"
+        return false
+    }
     function refresh(): void {
         if (root.implementation) return root.implementation.refresh()
         root.missingOperationError = "Install and enable the Hadalird integration to use this action"
@@ -73,6 +89,8 @@ Scope {
     }
     Connections {
         target: root.implementation
+        ignoreUnknownSignals:true
+        function onAgendaMutationFinished(success,payload): void {root.agendaMutationFinished(success,payload)}
         function onMigrationCommitted(payload): void {root.migrationCommitted(payload)}
         function onMigrationFinished(success, payload): void {root.migrationFinished(success, payload)}
     }

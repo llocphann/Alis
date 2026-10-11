@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-agenda-obsidian-hfjn5142/markdown-note/shell.qml"
+  INFO: Shell ID: "057924f8aa51be0365c3f8263ea79e81" Path ID "057924f8aa51be0365c3f8263ea79e81"
+  INFO: Saving logs to "/tmp/alis-agenda-obsidian-hfjn5142/markdown-note/runtime/quickshell/by-id/g0mginjrmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-agenda-obsidian-hfjn5142/markdown-note/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-obsidian-hfjn5142/markdown-note/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-obsidian-hfjn5142/markdown-note/state/quickshell/user/gamemode_active failed: File does not exist.
+ ERROR qml: AGENDA_OBSIDIAN_FAIL unlink destroyed/changed the independent task check@qs:@/qs/shell.qml:15
+expression for onTriggered@qs:@/qs/shell.qml:48 {"events":[],"unlinks":[],"tasks":[],"error":"","requested":"obsidian","mode":"markdown-note","configured":true,"host":"{\"available\":true,\"enabled\":true,\"diagnostic\":\"not-installed\",\"version\":\"\",\"sourceSha\":\"\",\"managerBusy\":false,\"authorizationPending\":false,\"managerError\":\"\",\"updateAvailable\":false,\"canRollback\":false,\"systemProvisionerAvailable\":true,\"systemHelpersInstalled\":true,\"systemHelpersDiagnostic\":\"ready\",\"gatewayPackageInstalled\":true,\"integrations\":{\"tlp\":false,\"thinkfan\":false,\"obsidian\":true}}"}

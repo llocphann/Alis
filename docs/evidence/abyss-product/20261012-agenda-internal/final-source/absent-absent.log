@@ -1,0 +1,6 @@
+  INFO: Launching config: "/tmp/alis-agenda-link-_lei_cj8/absent/shell.qml"
+  INFO: Shell ID: "264966afcd24b2baeb4b3512533340d3" Path ID "264966afcd24b2baeb4b3512533340d3"
+  INFO: Saving logs to "/tmp/alis-agenda-link-_lei_cj8/absent/runtime/quickshell/by-id/krwgmrkrmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-agenda-link-_lei_cj8/absent/state/quickshell/user/todo.txt failed: File does not exist.
+  INFO qml: AGENDA_TODO_PASS absent 2

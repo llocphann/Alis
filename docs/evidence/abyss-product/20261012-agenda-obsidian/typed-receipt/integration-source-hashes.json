@@ -1,0 +1,10 @@
+{
+  "services/AgendaTaskMutation.qml": "dca4cc9af217f685045d5b4a19af159991337f1f927e417b6362b278c60267b0",
+  "services/DailyNoteTodoBackend.qml": "d4765bb86655c8d8d9c9a826647bf2bd24edfaf50da3c1d56e0aa556667b57fd",
+  "services/ObsidianTodoBackend.qml": "373ff26c972e9e81bb72379860a9cc8b2a284c75cc860292e3de1e6e9194d857",
+  "scripts/todo/agenda_metadata.py": "82da93aa3f0a9ae4c9241e22a69f779fb90f369a91d21df12380cffceeca3841",
+  "scripts/todo/obsidian_agenda.py": "10dc655fed8e9ddce5af210b1065c8f898a81812c0e701348dff110c6fc70806",
+  "scripts/todo/obsidian_daily_todo.py": "0419fc7bc8258a31ad8b8cdb1713e5a66e22bbc3f3ae821ed8c41314836062bb",
+  "scripts/todo/obsidian_tasks.py": "451df346334b9de47e004c762dc7df88d8684a69c0e89114849bbe3a64b60de5",
+  "scripts/todo/obsidian_todo.py": "5c77aafe50c14f042ddfcfe54aea8e2b733cf6bc27c26c03c79d2a46844495e1"
+}

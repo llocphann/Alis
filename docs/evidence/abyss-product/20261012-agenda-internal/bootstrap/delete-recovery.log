@@ -1,0 +1,6 @@
+  INFO: Launching config: "/tmp/alis-agenda-bootstrap-ry3d8n_i/delete-recovery/shell.qml"
+  INFO: Shell ID: "5c01270e732dd2d1c2813452f1e4cff6" Path ID "5c01270e732dd2d1c2813452f1e4cff6"
+  INFO: Saving logs to "/tmp/alis-agenda-bootstrap-ry3d8n_i/delete-recovery/runtime/quickshell/by-id/uwpgd6krmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-agenda-bootstrap-ry3d8n_i/delete-recovery/state/quickshell/user/todo.txt failed: File does not exist.
+  INFO qml: AGENDA_BOOTSTRAP_PASS delete-recovery

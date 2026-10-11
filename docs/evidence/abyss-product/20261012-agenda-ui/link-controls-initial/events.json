@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "nextId": 2,
+  "events": [
+    {
+      "id": 1,
+      "title": "Linked weekly fixture",
+      "description": "Independent scheduled event",
+      "dateTime": "2026-10-13T02:00:00.000Z",
+      "startDate": "2026-10-13T02:00:00.000Z",
+      "endDate": "2026-10-13T03:00:00.000Z",
+      "allDay": false,
+      "category": "meeting",
+      "priority": "normal",
+      "reminderMinutes": 0,
+      "recurrence": "daily",
+      "notified": false,
+      "reminderNotified": false,
+      "createdAt": "2026-10-11T22:22:59.388Z",
+      "todoLink": {
+        "version": 1,
+        "key": "agenda-mv4e2y4c-1-xlh3cwvfn6",
+        "state": "linked",
+        "provider": "internal",
+        "fingerprint": "{\"content\":\"Linked weekly fixture\",\"description\":\"Independent scheduled event\",\"date\":\"2026-10-13\",\"startTime\":\"09:00\",\"endTime\":\"10:00\",\"startDate\":\"2026-10-13T02:00:00.000Z\",\"endDate\":\"2026-10-13T03:00:00.000Z\",\"allDay\":false}",
+        "sourceDate": "",
+        "taskMissing": false
+      }
+    }
+  ],
+  "todoUnlinks": []
+}

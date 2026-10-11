@@ -1,0 +1,8 @@
+  INFO: Launching config: "/tmp/alis-agenda-link-vkq0vaxl/task-failure/shell.qml"
+  INFO: Shell ID: "c398adb87d1170b66f4057f4c085ff24" Path ID "c398adb87d1170b66f4057f4c085ff24"
+  INFO: Saving logs to "/tmp/alis-agenda-link-vkq0vaxl/task-failure/runtime/quickshell/by-id/t9fgkxirmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-agenda-link-vkq0vaxl/task-failure/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[371:5]: Write of /tmp/alis-agenda-link-vkq0vaxl/task-failure/state/quickshell/user/todo.json failed: Permission denied.
+  WARN qml: [Todo] Failed to save JSON: 3
+  INFO qml: AGENDA_TODO_PASS task-failure 3

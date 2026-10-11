@@ -1,0 +1,60 @@
+{
+  "nextId": 53,
+  "events": [
+    {
+      "id": 50,
+      "title": "Historical",
+      "dateTime": "2099-01-01T10:00:00Z",
+      "startDate": "2099-01-01T10:00:00Z",
+      "notified": false
+    },
+    {
+      "id": 51,
+      "title": "Alpha",
+      "description": "alpha detail",
+      "dateTime": "2099-01-03T10:00:00Z",
+      "startDate": "2099-01-03T10:00:00Z",
+      "endDate": "2099-01-03T11:00:00Z",
+      "allDay": false,
+      "category": "meeting",
+      "priority": "normal",
+      "reminderMinutes": 0,
+      "recurrence": "none",
+      "notified": false,
+      "reminderNotified": false,
+      "createdAt": "2026-10-11T21:39:27.738Z",
+      "todoLink": {
+        "version": 1,
+        "key": "agenda-mv4ciyyi-1f-4myi0sx09pnn",
+        "state": "linked",
+        "provider": "internal",
+        "fingerprint": "{\"content\":\"Alpha\",\"description\":\"alpha detail\",\"date\":\"2099-01-03\",\"startTime\":\"17:00\",\"endTime\":\"18:00\",\"startDate\":\"2099-01-03T10:00:00Z\",\"endDate\":\"2099-01-03T11:00:00Z\",\"allDay\":false}",
+        "sourceDate": ""
+      }
+    },
+    {
+      "id": 52,
+      "title": "Beta",
+      "description": "beta detail",
+      "dateTime": "2099-01-04T00:00:00Z",
+      "startDate": "2099-01-04T00:00:00Z",
+      "endDate": "",
+      "allDay": true,
+      "category": "general",
+      "priority": "normal",
+      "reminderMinutes": 0,
+      "recurrence": "none",
+      "notified": false,
+      "reminderNotified": false,
+      "createdAt": "2026-10-11T21:39:27.738Z",
+      "todoLink": {
+        "version": 1,
+        "key": "agenda-mv4ciyyi-1g-9od72fq93yw",
+        "state": "linked",
+        "provider": "internal",
+        "fingerprint": "{\"content\":\"Beta\",\"description\":\"beta detail\",\"date\":\"2099-01-04\",\"startTime\":\"\",\"endTime\":\"\",\"startDate\":\"2099-01-04T00:00:00Z\",\"endDate\":\"\",\"allDay\":true}",
+        "sourceDate": ""
+      }
+    }
+  ]
+}

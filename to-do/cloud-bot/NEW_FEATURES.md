@@ -6,17 +6,18 @@ handled alongside the selected feature in the same single-agent context.
 Source-implemented features below still need their stated delivery/owner gates;
 do not reimplement them solely because a checkbox is open.
 
-**Immediate owner priority — updated 2026-10-12:** continue AGENDA-F01 after
+**Immediate owner priority — updated 2026-10-12:** continue ABYSS-F01 after
 DASH-F01/F02 source milestones. Weekly Planner `f62f24361`, tab reorder
 `f94de0535` and Events durable acknowledgement prerequisite `ccd750167`
 have separate focused evidence; committed canonical and owner gates stay open.
 The last canonical was stopped at five-hour2%, with four partial failures;
 [its frozen receipt](../../docs/evidence/abyss-product/20261012-f94de0535-stopped/README.md)
 preserves the consumed result. Single reset+3minute continuation fired04:29ICT,
-and the new five-hour window is100% remaining. No historical task backfill,
+and the new five-hour window began at100% remaining. No historical task backfill,
 owner preference, AI/vault consent or installed Companion change is authorized
-by the continuation. Implement the link/schema, idempotent acknowledged Todo
-mutation and shared pending feedback next; locks and multi-selection remain new.
+by the continuation. AGENDA-F01 now has source/focused linking evidence below;
+continue per-module locks then multi-selection. Full qualification/owner gates
+remain open across these feature milestones.
 Implement **DASH-F01 → DASH-F02 → AGENDA-F01 → ABYSS-F01 → Screen Edge
 multi-selection** in that order. Carry out their related data/input repairs and
 Rework/optimization alongside delivery, preserving remaining canonical and
@@ -483,17 +484,35 @@ order or close unverified Issues because their source is implemented.
   stores, cancel/undo, internal vs Obsidian and package absent,
   restart and cross-surface updates are deterministic and
   preserve user files. Add source/fixture and owner native QA.
-  State: IN PROGRESS — 2026-10-12, after `DASH-F01`/`DASH-F02` source milestones.
+  State: SOURCE IMPLEMENTED / focused PASS — 2026-10-12, after
+  `DASH-F01`/`DASH-F02` source milestones. Versioned per-created-occurrence
+  keys and a durable unlink/delete outbox live in Events; Todo consumes actual
+  event/task acknowledgements. Provider/source-date are pinned before mutation;
+  no historical/imported-event backfill, inverse Todo→Agenda or task resurrection.
+  Title/date/time/details update while task completion/notes remain independent.
+  Event deletion/unlink retains task; explicit task deletion detaches durably
+  first. Pending feedback and three bounded optional-worker retries replace
+  indefinite polling; explicit retry restores failed actual writes.
+  Shared Calendar/Planner/Dashboard relationship UI includes Retry/Unlink with
+  Enter/Space/pointer control; virtual recurrence projection carries no false
+  saved-task badge. Optional workers belong to Alis-Intergration main
+  `4d0aa3f508fdd6bd953696d92bf529f1fb9f4b32` (package0.2.2), without owner install.
+  Focused PASS: pure142; internal8 processes/24checks; Events-only bootstrap3
+  actual processes/disk readbacks; internal persistence6/77 and Events6/59;
+  optional bridge16 processes/48checks across both note modes; UI28checks/
+  8captures with actual shared stores and private compositor allocation.
+  [Source hashes, raw failures/fix-forwards, readbacks and acceptance limits](../../docs/evidence/abyss-product/20261012-agenda-internal/README.md).
   First data prerequisite: Events exposes only acknowledged, cloned durable
   snapshots and save failure/busy feedback; Agenda→Todo must consume that
   boundary, never `eventAdded` or an optimistic FileView cache. Actual headless
   PASS6 startup/restart processes, 45 QML checks and 6 independent JSON
   readbacks: coalescing, deferred refresh, denied save, explicit/cached retry
   and no phantom acknowledgements. [Pinned prerequisite evidence](../../docs/evidence/abyss-product/20261012-events-durable-boundary/README.md).
-  Stopped canonical `f94de0535` predates this Events change. Historical
-  events require opt-in backfill. Link schema, idempotent internal/optional
-  Obsidian worker mutations and cross-surface UI remain unimplemented; this
-  prerequisite alone does not create linked tasks or complete `AGENDA-F01`.
+  Stopped canonical `f94de0535` predates this feature. Fresh committed exact-SHA
+  full qualification, source-switch/midnight and older-package retry cases,
+  installed identity, owner Calendar/Dashboard/Planner creation and actual
+  external-vault acceptance remain OPEN. Continue ABYSS-F01 while preserving
+  these gates; source/focused evidence alone does not complete the feature.
 
 - [ ] **Quick Notes Markdown Reading and editable Source/Live mode — owner request 2026-10-11:**
   [Owner: Alis dev; NEW feature] Upgrade existing shared Quick Notes into

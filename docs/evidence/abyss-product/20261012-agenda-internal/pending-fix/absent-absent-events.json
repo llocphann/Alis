@@ -1,0 +1,28 @@
+{
+  "nextId": 2,
+  "events": [
+    {
+      "id": 1,
+      "title": "Unavailable",
+      "description": "",
+      "dateTime": "2099-02-01T10:00:00Z",
+      "startDate": "2099-02-01T10:00:00Z",
+      "endDate": "",
+      "allDay": false,
+      "category": "general",
+      "priority": "normal",
+      "reminderMinutes": 0,
+      "recurrence": "none",
+      "notified": false,
+      "reminderNotified": false,
+      "createdAt": "2026-10-11T21:41:46.469Z",
+      "todoLink": {
+        "version": 1,
+        "key": "agenda-mv4cly05-1-dys69htwb6g4",
+        "state": "pending",
+        "provider": "",
+        "fingerprint": ""
+      }
+    }
+  ]
+}

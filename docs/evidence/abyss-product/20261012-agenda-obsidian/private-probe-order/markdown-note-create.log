@@ -1,0 +1,13 @@
+  INFO: Launching config: "/tmp/alis-agenda-obsidian-hfjn5142/markdown-note/shell.qml"
+  INFO: Shell ID: "057924f8aa51be0365c3f8263ea79e81" Path ID "057924f8aa51be0365c3f8263ea79e81"
+  INFO: Saving logs to "/tmp/alis-agenda-obsidian-hfjn5142/markdown-note/runtime/quickshell/by-id/bulg9njrmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-agenda-obsidian-hfjn5142/markdown-note/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[371:5]: Read of /tmp/alis-agenda-obsidian-hfjn5142/markdown-note/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-agenda-obsidian-hfjn5142/markdown-note/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-obsidian-hfjn5142/markdown-note/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-obsidian-hfjn5142/markdown-note/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: AGENDA_OBSIDIAN_PASS markdown-note create 4

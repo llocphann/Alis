@@ -1,0 +1,9 @@
+  INFO: Launching config: "/tmp/alis-agenda-obsidian-loah_acm/managed-note-unlink/shell.qml"
+  INFO: Shell ID: "a847fdd6c7eaac316bfa39c0462e7c59" Path ID "a847fdd6c7eaac316bfa39c0462e7c59"
+  INFO: Saving logs to "/tmp/alis-agenda-obsidian-loah_acm/managed-note-unlink/runtime/quickshell/by-id/f5rgjakrmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-obsidian-loah_acm/managed-note-unlink/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-agenda-obsidian-loah_acm/managed-note-unlink/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: AGENDA_OBSIDIAN_PASS managed-note restart 3

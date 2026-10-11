@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 2,
+  "nextId": 2,
+  "events": [
+    {
+      "id": 1,
+      "title": "Retry",
+      "description": "detail",
+      "dateTime": "2099-01-03T10:00:00Z",
+      "startDate": "2099-01-03T10:00:00Z",
+      "endDate": "2099-01-03T11:00:00Z",
+      "allDay": false,
+      "category": "meeting",
+      "priority": "normal",
+      "reminderMinutes": 0,
+      "recurrence": "none",
+      "notified": false,
+      "reminderNotified": false,
+      "createdAt": "2026-10-11T21:45:11.545Z",
+      "todoLink": {
+        "version": 1,
+        "key": "agenda-mv4cqc8q-1-zbnhndyznzs",
+        "state": "linked",
+        "provider": "internal",
+        "fingerprint": "{\"content\":\"Retry\",\"description\":\"detail\",\"date\":\"2099-01-03\",\"startTime\":\"17:00\",\"endTime\":\"18:00\",\"startDate\":\"2099-01-03T10:00:00Z\",\"endDate\":\"2099-01-03T11:00:00Z\",\"allDay\":false}",
+        "sourceDate": ""
+      }
+    }
+  ],
+  "todoUnlinks": []
+}

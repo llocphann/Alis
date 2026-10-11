@@ -4,6 +4,7 @@ import qs.modules.common
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "AgendaTodoPolicy.js" as AgendaTodoPolicy
 
 Singleton {
     id: root
@@ -14,6 +15,7 @@ Singleton {
 
     property string filePath: Directories.eventsPath
     property var list: []
+    property var todoUnlinks: []
     property int nextId: 1
     property bool ready: false
     property bool _saving: false
@@ -32,6 +34,26 @@ Singleton {
     signal eventsPersisted(var savedEvents)
     function getDurableEvents() {
         return root._durableSnapshotJson.length ? JSON.parse(root._durableSnapshotJson).events : []
+    }
+    function getDurableTodoUnlinks() {
+        return root._durableSnapshotJson.length ? (JSON.parse(root._durableSnapshotJson).todoUnlinks || []) : []
+    }
+    function _queueTodoUnlink(event,deleteTask) {
+        const link=event?.todoLink
+        if(!AgendaTodoPolicy.validLink(link) || !link.provider)return
+        const existing=root.todoUnlinks.find(value=>value.key===link.key && value.provider===link.provider)
+        if(existing) {
+            if(deleteTask && !existing.deleteTask)root.todoUnlinks=root.todoUnlinks.map(value=>value===existing?Object.assign({},value,{deleteTask:true}):value)
+        } else root.todoUnlinks=root.todoUnlinks.concat([Object.assign({},link,{eventId:event.id,deleteTask:deleteTask===true})])
+    }
+    function finishTodoUnlink(key,provider) {
+        const next=root.todoUnlinks.filter(value=>value.key!==key || value.provider!==provider)
+        if(next.length===root.todoUnlinks.length)return false
+        root.todoUnlinks=next;root.saveToFile();return true
+    }
+    function _notifyAgendaLinks() {
+        if(root.getDurableEvents().some(event=>AgendaTodoPolicy.validLink(event.todoLink) && event.todoLink.state!=="detached") || root.getDurableTodoUnlinks().some(link=>AgendaTodoPolicy.validLink(link) && link.provider))
+            Qt.callLater(()=>Todo._scheduleAgenda())
     }
 
     function _reloadFailedWriteCache(): void {
@@ -58,6 +80,7 @@ Singleton {
         root._saveFailed=false
         root.errorMessage=""
         root.eventsPersisted(root.getDurableEvents())
+        root._notifyAgendaLinks()
         if (saveAgain) {
             root._saveQueued=true
             Qt.callLater(root.saveToFile)
@@ -121,6 +144,7 @@ Singleton {
                 root._lastSavedJson=fileContents || ""
                 root._durableSnapshotJson=""
                 root.list = []
+                root.todoUnlinks = []
                 root.nextId = 1
                 root.ready = true
                 return
@@ -142,19 +166,21 @@ Singleton {
                 }
                 const storedNextId = Number(data?.nextId)
                 root.list = events
+                root.todoUnlinks=Array.isArray(data?.todoUnlinks)?data.todoUnlinks:[]
                 root.nextId = Number.isInteger(storedNextId) && storedNextId > maxId
                     ? storedNextId : maxId + 1
                 root._lastSavedJson=fileContents
-                root._durableSnapshotJson=JSON.stringify({nextId:root.nextId,events:root.list})
+                root._durableSnapshotJson=JSON.stringify({nextId:root.nextId,events:root.list,todoUnlinks:root.todoUnlinks})
+                root._notifyAgendaLinks()
+                root.errorMessage=""
                 root.ready = true
                 _log("[Events] Loaded", root.list.length, "events")
             } catch (e) {
-                root._lastSavedJson=""
-                root._durableSnapshotJson=""
                 console.warn("[Events] Failed to parse file:", e)
-                root.list = []
-                root.nextId = 1
-                root.ready = true
+                // An unreadable store is not an empty Agenda. Keep the last
+                // usable snapshot and forbid link/unlink mutations until repaired.
+                root.errorMessage="Could not read Agenda. Restore the file and retry."
+                root.ready = false
             }
         }
         onSaved: root._finishSave("")
@@ -354,11 +380,12 @@ Singleton {
             recurrence: recurrence || "none", // none, daily, weekly, monthly, yearly
             notified: false,
             reminderNotified: false,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            todoLink: AgendaTodoPolicy.newLink(root.nextId - 1, Date.now(), Math.random().toString(36).slice(2, 14))
         }
         
         root.list.push(event)
-        root.list = root.list // Trigger binding update
+        root.list = root.list.slice(0)
         root.eventAdded(event)
         root.saveToFile()
         return event
@@ -368,8 +395,9 @@ Singleton {
         if (!root.ready) return false
         const index = root.list.findIndex(e => e.id === id)
         if (index !== -1) {
+            root._queueTodoUnlink(root.list[index])
             root.list.splice(index, 1)
-            root.list = root.list
+            root.list = root.list.slice(0)
             root.eventRemoved(id)
             root.saveToFile()
             return true
@@ -377,12 +405,26 @@ Singleton {
         return false
     }
 
+    function setTodoLink(id, key, patch) {
+        const event = root.list.find(value => value.id === id)
+        if (!event || !AgendaTodoPolicy.validLink(event.todoLink) || event.todoLink.key !== key)
+            return false
+        return root.updateEvent(id, {todoLink: Object.assign({}, event.todoLink, patch)})
+    }
+
+    function unlinkTodo(id,deleteTask) {
+        const event = root.list.find(value => value.id === id)
+        root._queueTodoUnlink(event,deleteTask)
+        return event && AgendaTodoPolicy.validLink(event.todoLink)
+            ? root.setTodoLink(id, event.todoLink.key, {state:"detached"}) : false
+    }
+
     function updateEvent(id, updates) {
         if (!root.ready) return false
         const index = root.list.findIndex(e => e.id === id)
         if (index !== -1) {
             root.list[index] = Object.assign({}, root.list[index], updates)
-            root.list = root.list
+            root.list = root.list.slice(0)
             root.eventUpdated(root.list[index])
             root.saveToFile()
             return true
@@ -445,8 +487,10 @@ Singleton {
             return
         }
         const data = {
+            schemaVersion: 2,
             nextId: root.nextId,
-            events: root.list
+            events: root.list,
+            todoUnlinks: root.todoUnlinks
         }
         const serialized = JSON.stringify(data, null, 2)
         // Unchanged bytes emit no saved() signal. Do not acquire a write

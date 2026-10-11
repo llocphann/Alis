@@ -135,6 +135,11 @@ Item {
                 }
                 
                 // Description or location
+                AgendaTodoLink {
+                    Layout.fillWidth:true
+                    event:root.isExternal ? null : root.event
+                    z:2
+                }
                 StyledText {
                     Layout.fillWidth: true
                     visible: text !== ""

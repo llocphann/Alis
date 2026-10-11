@@ -1,0 +1,6 @@
+  INFO: Launching config: "/tmp/alis-agenda-bootstrap-ry3d8n_i/corrupt/shell.qml"
+  INFO: Shell ID: "ed6625d53e93b50f3ce868534916d6d0" Path ID "ed6625d53e93b50f3ce868534916d6d0"
+  INFO: Saving logs to "/tmp/alis-agenda-bootstrap-ry3d8n_i/corrupt/runtime/quickshell/by-id/hxpgd6krmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN qml: [Events] Failed to parse file: SyntaxError: JSON.parse: Parse error
+  INFO qml: AGENDA_BOOTSTRAP_PASS corrupt

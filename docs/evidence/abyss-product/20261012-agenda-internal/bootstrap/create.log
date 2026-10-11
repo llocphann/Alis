@@ -1,0 +1,6 @@
+  INFO: Launching config: "/tmp/alis-agenda-bootstrap-ry3d8n_i/create/shell.qml"
+  INFO: Shell ID: "14d8b9a93f12beaf4d55bc2ca6e6f7af" Path ID "14d8b9a93f12beaf4d55bc2ca6e6f7af"
+  INFO: Saving logs to "/tmp/alis-agenda-bootstrap-ry3d8n_i/create/runtime/quickshell/by-id/9wpgc6krmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-agenda-bootstrap-ry3d8n_i/create/state/quickshell/user/todo.txt failed: File does not exist.
+  INFO qml: AGENDA_BOOTSTRAP_PASS create

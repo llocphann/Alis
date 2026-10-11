@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-agenda-obsidian-loah_acm/markdown-note-delete/shell.qml"
+  INFO: Shell ID: "d1fb3b90bc07ce53b33da16ddb5e5413" Path ID "d1fb3b90bc07ce53b33da16ddb5e5413"
+  INFO: Saving logs to "/tmp/alis-agenda-obsidian-loah_acm/markdown-note-delete/runtime/quickshell/by-id/hzqgbakrmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-obsidian-loah_acm/markdown-note-delete/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-agenda-obsidian-loah_acm/markdown-note-delete/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-obsidian-loah_acm/markdown-note-delete/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: AGENDA_BRIDGE_RECEIPT delete-task true {"agendaReceipt":{"fingerprint":"","key":"agenda-mv4dng3r-1-54z7bt4xlnh","kind":"delete","taskMissing":false},"document":{"bom":false,"finalNewline":true,"newline":"lf","sha256":"712a1dd02860b948dfd9bf1052cc34c3a9e6d37cfdfc6ff92326159e01a38bae"},"managed":{"endLine":4,"heading":"Tasks","headingLevel":2,"kind":"heading","sha256":"f06eeb639f473e16d6516671ce54028994611928547156243b7da84737e08dbc","startLine":2},"mode":"markdown-note","noteFullPath":"/tmp/alis-agenda-obsidian-loah_acm/markdown-note-delete/Vault/Tasks.md","notePath":"Tasks.md","ok":true,"sourceDate":"2026-10-12","tasks":[{"content":"Existing","done":true,"durationMinutes":null,"endTime":"","group":"","id":"ff6c138e195d79388e6be86c","indent":"","listMarker":"-","rawContent":"Existing","rawHash":"1a3f5f36b7595a47ef3dca590544f92b44dab974d2c6009ac09f0f783f0e991d","rawLine":"- [x] Existing","sourceDate":"2026-10-12","sourceLine":3,"sourcePath":"Tasks.md","startTime":"","statusChar":"x","statusType":"DONE"}],"vaultPath":"/tmp/alis-agenda-obsidian-loah_acm/markdown-note-delete/Vault"}
+  INFO qml: AGENDA_OBSIDIAN_PASS markdown-note delete-task 3

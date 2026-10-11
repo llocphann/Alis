@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs.modules.common
+import "AgendaTodoPolicy.js" as AgendaTodoPolicy
 
 /**
  * Todo service facade.
@@ -82,6 +83,144 @@ Singleton {
     }
     readonly property int internalItemCount: internal.list.length
 
+    readonly property string agendaProvider: !root.useObsidian ? "internal" : JSON.stringify([
+        "obsidian",root.sharedVaultPath,root.obsidianSourceMode,
+        root.useMarkdownNote ? [dailyObsidian.folder,dailyObsidian.noteFormat,dailyObsidian.plannerHeading,dailyObsidian.plannerHeadingLevel] : obsidian.notePath])
+    property string agendaError: ""
+    property int _agendaRetries: 0
+    property var _agendaReceipt: null
+    property var _agendaAttempt: null
+    property var _agendaFailures: ({})
+    function _scheduleAgenda() { Qt.callLater(root._reconcileAgenda) }
+    function retryAgendaLinks() {
+        root._agendaRetries=0;root.agendaError=""
+        root._agendaFailures=({})
+        if(!root.useObsidian && internal.errorMessage)internal.retrySave()
+        if(root.useObsidian)root.obsidianBackend.reload()
+        if(Events.errorMessage)Events.saveToFile()
+        root._scheduleAgenda()
+    }
+    function agendaStatus(event) {
+        if(!AgendaTodoPolicy.validLink(event?.todoLink))return ""
+        if(event.todoLink.state==="detached")return Events.todoUnlinks.some(link=>link.key===event.todoLink.key && link.deleteTask)?"To-do removal pending":""
+        const link=event.todoLink
+        if(link.provider && link.provider!==root.agendaProvider)return "To-do in another source"
+        const sourceVisible=!root.useObsidian || root.useLegacyManagedNote || link.sourceDate===root.obsidianBackend.sourceDate
+        if(link.taskMissing || (link.state==="linked" && sourceVisible && root.ready && !root.list.some(item=>item.agenda?.key===link.key)))return "To-do removed"
+        if(link.state!=="linked" || link.fingerprint!==AgendaTodoPolicy.fingerprint(event))return "To-do pending"
+        if(!root.useObsidian && !root.list.some(item=>item.agenda?.key===link.key))return "To-do removed"
+        return "Linked To-do"
+    }
+    function _reconcileAgenda() {
+        if(!Events.ready || Events.persistenceBusy || agendaRetry.running)return
+        const events=Events.getDurableEvents()
+        const eligible=events.filter(event=>AgendaTodoPolicy.validLink(event.todoLink) && event.todoLink.state!=="detached")
+        if(!root.ready || root.busy || (!root.useObsidian && internal.persistenceBusy)) {
+            if(eligible.length)root.agendaError="To-do link pending"
+            return
+        }
+        const items=root.useObsidian ? root.list : internal.getDurableItems()
+        const unlink=Events.getDurableTodoUnlinks().find(value=>AgendaTodoPolicy.validLink(value) && value.provider===root.agendaProvider)
+        if(unlink) {
+            if(!root.useObsidian) {
+                if(!items.some(item=>item.agenda?.key===unlink.key))Events.finishTodoUnlink(unlink.key,root.agendaProvider)
+                else if(unlink.deleteTask)internal.deleteItem(root.list.findIndex(item=>item.agenda?.key===unlink.key))
+                else internal.unlinkAgenda(unlink.key)
+            } else if(root._agendaReceipt?.kind===(unlink.deleteTask?"delete":"unlink") && root._agendaReceipt?.key===unlink.key && root._agendaReceipt?.provider===root.agendaProvider) {
+                Events.finishTodoUnlink(unlink.key,root.agendaProvider)
+            } else root._startExternalAgenda(unlink.deleteTask?"delete":"unlink",unlink,unlink)
+            return
+        }
+        for(const event of eligible) {
+            const link=event.todoLink
+            if(link.provider && link.provider!==root.agendaProvider)continue
+            if(!link.provider) {
+                Events.setTodoLink(event.id,link.key,{provider:root.agendaProvider,sourceDate:root.useMarkdownNote && root.useObsidian ? root.obsidianBackend.sourceDate : ""})
+                return
+            }
+            const wanted=AgendaTodoPolicy.fingerprint(event)
+            const token=root.agendaProvider+"|"+link.key+"|ensure|"+wanted
+            const task=items.find(item=>item.agenda?.key===link.key)
+            const receipt=root._agendaReceipt
+            const acknowledged=task?.agenda?.fingerprint===wanted || (receipt?.key===link.key && receipt?.provider===root.agendaProvider && receipt?.fingerprint===wanted)
+            if(acknowledged) {
+                if(link.state!=="linked" || link.fingerprint!==wanted) {
+                    Events.setTodoLink(event.id,link.key,{state:"linked",fingerprint:wanted,taskMissing:!task && receipt?.taskMissing===true});return
+                }
+                continue
+            }
+            // Missing after a completed link means deliberate task deletion.
+            if(link.state==="linked" && link.fingerprint===wanted)continue
+            if(link.state==="linked" && !task && !root.useObsidian)continue
+            if((root._agendaFailures[token] || 0)>=3)continue
+            root.agendaError="To-do link pending"
+            const accepted=root.useObsidian ? root._startExternalAgenda("ensure",event,Object.assign({},event,{agendaDesired:AgendaTodoPolicy.desired(event),agendaFingerprint:wanted})) : internal.ensureAgenda(event)
+            if(!accepted) {
+                root.agendaError="To-do link pending"
+                if(!root.useObsidian) {
+                    root._agendaFailures=Object.assign({},root._agendaFailures,{[token]:(root._agendaFailures[token] || 0)+1})
+                    if(root._agendaFailures[token]<3)agendaRetry.restart()
+                }
+            }
+            return
+        }
+        if(!root.useObsidian) {
+            const live=eligible.map(event=>event.todoLink.key)
+            const orphan=items.find(item=>item.agenda && live.indexOf(item.agenda.key)<0)
+            if(orphan){internal.unlinkAgenda(orphan.agenda.key);return}
+        } else {
+            const orphan=items.find(item=>item.agenda && !eligible.some(event=>event.todoLink.key===item.agenda.key))
+            if(orphan){root._startExternalAgenda("unlink",orphan.agenda,orphan.agenda);return}
+        }
+        root.agendaError="";root._agendaRetries=0;agendaRetry.stop()
+    }
+    function _startExternalAgenda(kind,event,payload) {
+        const link=event.todoLink || event
+        const fingerprint=payload.agendaFingerprint || ""
+        const token=root.agendaProvider+"|"+link.key+"|"+kind+"|"+fingerprint
+        if((root._agendaFailures[token] || 0)>=3)return false
+        root._agendaAttempt={key:link.key,kind:kind,fingerprint:fingerprint,provider:root.agendaProvider,token:token}
+        const accepted=kind==="ensure" ? root.obsidianBackend.ensureAgenda(payload) : kind==="delete" ? root.obsidianBackend.deleteAgenda(payload) : root.obsidianBackend.unlinkAgenda(payload)
+        if(!accepted)root._agendaFinished(false,null)
+        return accepted
+    }
+    function _agendaFinished(success,payload) {
+        const attempt=root._agendaAttempt
+        root._agendaAttempt=null
+        if(!attempt || attempt.provider!==root.agendaProvider)return
+        if(success) {
+            root._agendaReceipt=Object.assign({},payload?.agendaReceipt || {},attempt)
+        } else {
+            root.agendaError="To-do link pending"
+            root._agendaFailures=Object.assign({},root._agendaFailures,{[attempt.token]:(root._agendaFailures[attempt.token] || 0)+1})
+            if(root._agendaFailures[attempt.token]<3)agendaRetry.restart()
+        }
+        root._scheduleAgenda()
+    }
+    Timer {id:agendaRetry;interval:1000;repeat:false;onTriggered:root._scheduleAgenda()}
+    Connections {
+        target:Events
+        function onEventsPersisted(savedEvents) {root._scheduleAgenda()}
+        function onReadyChanged() {root._scheduleAgenda()}
+        function onPersistenceBusyChanged() {if(!Events.persistenceBusy)root._scheduleAgenda()}
+    }
+    Connections {
+        target:internal
+        function onItemsPersisted(savedItems) {root._scheduleAgenda()}
+        function onReadyChanged() {root._scheduleAgenda()}
+        function onPersistenceBusyChanged() {if(!internal.persistenceBusy)root._scheduleAgenda()}
+    }
+    onReadyChanged:root._scheduleAgenda()
+    onBusyChanged:if(!root.busy)root._scheduleAgenda()
+    onAgendaProviderChanged: {root._agendaReceipt=null;root._scheduleAgenda()}
+    function _deferAgendaDeletion(item) {
+        if(!item?.agenda || !root.ready || root.busy)return false
+        const event=Events.list.find(value=>value.todoLink?.key===item.agenda.key)
+        if(!event)return false
+        Events.unlinkTodo(event.id,true)
+        return true
+    }
+
     // Compatibility paths remain the internal store paths. New UI must use
     // openSource() instead of assuming Todo.txtFilePath is canonical.
     property alias filePath: internal.filePath
@@ -119,6 +258,8 @@ Singleton {
 
     Connections {
         target: root.obsidianBackend
+
+        function onAgendaMutationFinished(success,payload): void {root._agendaFinished(success,payload)}
 
         function onMigrationFinished(success, payload): void {
             root._migrationInFlight = false
@@ -275,6 +416,8 @@ Singleton {
     }
 
     function deleteTask(taskId) {
+        const linked=root.list.find(item=>String(item.id ?? "")===String(taskId ?? ""))
+        if(root._deferAgendaDeletion(linked))return true
         if (!root.useObsidian) {
             if (root._migrationInFlight)
                 return false
@@ -319,6 +462,7 @@ Singleton {
     }
 
     function deleteItem(index) {
+        if(root._deferAgendaDeletion(root._itemAt(index)))return true
         if (!root.useObsidian) {
             if (root._migrationInFlight)
                 return false

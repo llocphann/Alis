@@ -1,0 +1,8 @@
+  INFO: Launching config: "/tmp/alis-events-durable-cmekp9zh/normal/shell.qml"
+  INFO: Shell ID: "300b0d46cb1ef7a78dd260bcab1f6e93" Path ID "300b0d46cb1ef7a78dd260bcab1f6e93"
+  INFO: Saving logs to "/tmp/alis-events-durable-cmekp9zh/normal/runtime/quickshell/by-id/j1lgkjjrmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-events-durable-cmekp9zh/normal/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[371:5]: Read of /tmp/alis-events-durable-cmekp9zh/normal/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  INFO qml: EVENTS_DURABLE_PASS normal 14 [["Alpha"],["Alpha updated","Beta"],["Alpha updated","Beta"],["Alpha updated","Beta"],["Alpha updated","Beta"],["Alpha updated","Beta"]]

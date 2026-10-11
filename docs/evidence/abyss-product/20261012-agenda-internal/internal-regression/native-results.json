@@ -1,0 +1,38 @@
+[
+  {
+    "action": "normal",
+    "store": "missing",
+    "exit_code": 0,
+    "json_readback": true
+  },
+  {
+    "action": "restart",
+    "store": "missing",
+    "exit_code": 0,
+    "json_readback": true
+  },
+  {
+    "action": "normal",
+    "store": "existing",
+    "exit_code": 0,
+    "json_readback": true
+  },
+  {
+    "action": "restart",
+    "store": "existing",
+    "exit_code": 0,
+    "json_readback": true
+  },
+  {
+    "action": "failure",
+    "store": "existing",
+    "exit_code": 0,
+    "json_readback": true
+  },
+  {
+    "action": "restart",
+    "store": "existing",
+    "exit_code": 0,
+    "json_readback": true
+  }
+]

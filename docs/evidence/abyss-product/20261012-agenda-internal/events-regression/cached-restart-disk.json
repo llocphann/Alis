@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "nextId": 3,
+  "events": [
+    {
+      "id": 1,
+      "title": "Alpha updated",
+      "description": "",
+      "dateTime": "2099-01-01T09:00:00Z",
+      "startDate": "2099-01-01T09:00:00Z",
+      "endDate": "",
+      "allDay": false,
+      "category": "general",
+      "priority": "normal",
+      "reminderMinutes": 0,
+      "recurrence": "none",
+      "notified": false,
+      "reminderNotified": false,
+      "createdAt": "2026-10-11T21:54:59.922Z",
+      "todoLink": {
+        "version": 1,
+        "key": "agenda-mv4d2y8i-1-rcr6228036oe",
+        "state": "linked",
+        "provider": "internal",
+        "fingerprint": "{\"content\":\"Alpha updated\",\"description\":\"\",\"date\":\"2099-01-01\",\"startTime\":\"16:00\",\"endTime\":\"\",\"startDate\":\"2099-01-01T09:00:00Z\",\"endDate\":\"\",\"allDay\":false}",
+        "sourceDate": "",
+        "taskMissing": false
+      }
+    },
+    {
+      "id": 2,
+      "title": "Beta",
+      "description": "",
+      "dateTime": "2099-01-01T10:00:00Z",
+      "startDate": "2099-01-01T10:00:00Z",
+      "endDate": "",
+      "allDay": false,
+      "category": "general",
+      "priority": "normal",
+      "reminderMinutes": 0,
+      "recurrence": "none",
+      "notified": false,
+      "reminderNotified": false,
+      "createdAt": "2026-10-11T21:54:59.922Z",
+      "todoLink": {
+        "version": 1,
+        "key": "agenda-mv4d2y8i-2-fjeulvldccqd",
+        "state": "linked",
+        "provider": "internal",
+        "fingerprint": "{\"content\":\"Beta\",\"description\":\"\",\"date\":\"2099-01-01\",\"startTime\":\"17:00\",\"endTime\":\"\",\"startDate\":\"2099-01-01T10:00:00Z\",\"endDate\":\"\",\"allDay\":false}",
+        "sourceDate": "",
+        "taskMissing": false
+      }
+    }
+  ],
+  "todoUnlinks": []
+}

@@ -1,0 +1,6 @@
+# Private fixture
+## Tasks
+- [x] Existing
+- [ ] 17:00 - 18:00 From Agenda <!-- alis:agenda:v1:eyJ2ZXJzaW9uIjoxLCJrZXkiOiJhZ2VuZGEtbXY0ZG43a3YtMS1tbDRicngyNzRxb2siLCJldmVudElkIjoxLCJvd25lZCI6IjE3OjAwIC0gMTg6MDAgRnJvbSBBZ2VuZGEiLCJ0aXRsZSI6IkZyb20gQWdlbmRhIiwiZGF0ZSI6IjIwOTktMDEtMDMiLCJzdGFydFRpbWUiOiIxNzowMCIsImVuZFRpbWUiOiIxODowMCIsInNvdXJjZURhdGUiOiIyMDI2LTEwLTEyIiwiZmluZ2VycHJpbnRIYXNoIjoiNzg0ZWU3NTYwNDMxODY1NDYyMjZkOTY2YTJlMTU2ZGY5NmYzMjI1NTUzNjAzYjBjMWU4ZWU3NjE4ZWE0ZThhZSJ9 -->
+## Journal
+Independent diary

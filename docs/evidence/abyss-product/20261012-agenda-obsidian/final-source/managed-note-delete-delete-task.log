@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-agenda-obsidian-loah_acm/managed-note-delete/shell.qml"
+  INFO: Shell ID: "3284035089b7fd85ccb3e8152856a614" Path ID "3284035089b7fd85ccb3e8152856a614"
+  INFO: Saving logs to "/tmp/alis-agenda-obsidian-loah_acm/managed-note-delete/runtime/quickshell/by-id/odrgxakrmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-agenda-obsidian-loah_acm/managed-note-delete/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-obsidian-loah_acm/managed-note-delete/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-obsidian-loah_acm/managed-note-delete/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: AGENDA_BRIDGE_RECEIPT delete-task true {"agendaReceipt":{"fingerprint":"","key":"agenda-mv4dnx4p-1-zqb5ziwozye","kind":"delete","taskMissing":false},"document":{"bom":false,"finalNewline":true,"newline":"lf","sha256":"0012a0ac1677182062a30d96836a3f775305509219ef3eaba0575810b2b75177"},"managed":{"endLine":4,"sha256":"f06eeb639f473e16d6516671ce54028994611928547156243b7da84737e08dbc","startLine":2},"noteFullPath":"/tmp/alis-agenda-obsidian-loah_acm/managed-note-delete/Vault/Tasks.md","notePath":"Tasks.md","ok":true,"tasks":[{"content":"Existing","done":true,"id":"ff6c138e195d79388e6be86c","indent":"","listMarker":"-","rawHash":"1a3f5f36b7595a47ef3dca590544f92b44dab974d2c6009ac09f0f783f0e991d","rawLine":"- [x] Existing","sourceLine":3,"sourcePath":"Tasks.md","statusChar":"x","statusType":"DONE"}],"vaultPath":"/tmp/alis-agenda-obsidian-loah_acm/managed-note-delete/Vault"}
+  INFO qml: AGENDA_OBSIDIAN_PASS managed-note delete-task 3

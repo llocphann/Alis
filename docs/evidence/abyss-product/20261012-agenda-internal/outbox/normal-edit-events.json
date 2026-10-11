@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 2,
+  "nextId": 53,
+  "events": [
+    {
+      "id": 50,
+      "title": "Historical",
+      "dateTime": "2099-01-01T10:00:00Z",
+      "startDate": "2099-01-01T10:00:00Z",
+      "notified": false
+    },
+    {
+      "id": 51,
+      "title": "Alpha edited",
+      "description": "new detail",
+      "dateTime": "2099-01-05T12:00:00Z",
+      "startDate": "2099-01-05T12:00:00Z",
+      "endDate": "2099-01-05T13:00:00Z",
+      "allDay": false,
+      "category": "meeting",
+      "priority": "normal",
+      "reminderMinutes": 0,
+      "recurrence": "none",
+      "notified": false,
+      "reminderNotified": false,
+      "createdAt": "2026-10-11T21:45:06.916Z",
+      "todoLink": {
+        "version": 1,
+        "key": "agenda-mv4cq8o4-1f-u27m1tiqag3i",
+        "state": "linked",
+        "provider": "internal",
+        "fingerprint": "{\"content\":\"Alpha edited\",\"description\":\"new detail\",\"date\":\"2099-01-05\",\"startTime\":\"19:00\",\"endTime\":\"20:00\",\"startDate\":\"2099-01-05T12:00:00Z\",\"endDate\":\"2099-01-05T13:00:00Z\",\"allDay\":false}",
+        "sourceDate": ""
+      }
+    },
+    {
+      "id": 52,
+      "title": "Beta",
+      "description": "beta detail",
+      "dateTime": "2099-01-04T00:00:00Z",
+      "startDate": "2099-01-04T00:00:00Z",
+      "endDate": "",
+      "allDay": true,
+      "category": "general",
+      "priority": "normal",
+      "reminderMinutes": 0,
+      "recurrence": "none",
+      "notified": false,
+      "reminderNotified": false,
+      "createdAt": "2026-10-11T21:45:06.916Z",
+      "todoLink": {
+        "version": 1,
+        "key": "agenda-mv4cq8o4-1g-f41caaoki3eq",
+        "state": "linked",
+        "provider": "internal",
+        "fingerprint": "{\"content\":\"Beta\",\"description\":\"beta detail\",\"date\":\"2099-01-04\",\"startTime\":\"\",\"endTime\":\"\",\"startDate\":\"2099-01-04T00:00:00Z\",\"endDate\":\"\",\"allDay\":true}",
+        "sourceDate": ""
+      }
+    }
+  ],
+  "todoUnlinks": []
+}

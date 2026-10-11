@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-agenda-obsidian-loah_acm/managed-note-unlink/shell.qml"
+  INFO: Shell ID: "a847fdd6c7eaac316bfa39c0462e7c59" Path ID "a847fdd6c7eaac316bfa39c0462e7c59"
+  INFO: Saving logs to "/tmp/alis-agenda-obsidian-loah_acm/managed-note-unlink/runtime/quickshell/by-id/i8rgoakrmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-agenda-obsidian-loah_acm/managed-note-unlink/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-obsidian-loah_acm/managed-note-unlink/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-obsidian-loah_acm/managed-note-unlink/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: AGENDA_BRIDGE_RECEIPT remove true {"agendaReceipt":{"fingerprint":"","key":"agenda-mv4dnoll-1-5itgj1zwfwe","kind":"unlink","taskMissing":false},"document":{"bom":false,"finalNewline":true,"newline":"lf","sha256":"76b63318783eca0d86d896875ec9c823ab0d1ffddf5a7d699b741dc16a2fcd4f"},"managed":{"endLine":5,"sha256":"c4884e666f8746144048da738b903730cc6f93c2c8474d734c18cdd43f4a96d0","startLine":2},"noteFullPath":"/tmp/alis-agenda-obsidian-loah_acm/managed-note-unlink/Vault/Tasks.md","notePath":"Tasks.md","ok":true,"tasks":[{"content":"Existing","done":true,"id":"ff6c138e195d79388e6be86c","indent":"","listMarker":"-","rawHash":"1a3f5f36b7595a47ef3dca590544f92b44dab974d2c6009ac09f0f783f0e991d","rawLine":"- [x] Existing","sourceLine":3,"sourcePath":"Tasks.md","statusChar":"x","statusType":"DONE"},{"content":"17:00 - 18:00 Synced name extra notes","done":true,"id":"6aebda3d5717f0393fa3545a","indent":"","listMarker":"-","rawHash":"ec39f8f54a566b642a75de47582be1d6f9fb6c31fd38e94b5f6205d7f17e3753","rawLine":"- [x] 17:00 - 18:00 Synced name extra notes","sourceLine":4,"sourcePath":"Tasks.md","statusChar":"x","statusType":"DONE"}],"vaultPath":"/tmp/alis-agenda-obsidian-loah_acm/managed-note-unlink/Vault"}
+  INFO qml: AGENDA_OBSIDIAN_PASS managed-note remove 1

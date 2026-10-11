@@ -589,6 +589,12 @@ DashCard {
                                     }
                                 }
 
+                                MaterialSymbol {
+                                    visible:taskRow.modelData.agenda !== undefined
+                                    text:"link"
+                                    iconSize:14
+                                    color:root.colSubtext
+                                }
                                 StyledText {
                                     Layout.fillWidth: true
                                     text: taskRow.modelData.content ?? ""

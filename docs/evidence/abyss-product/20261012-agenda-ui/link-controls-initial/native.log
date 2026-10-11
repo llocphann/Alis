@@ -1,0 +1,17 @@
+  INFO: Launching config: "/tmp/alis-agenda-ui-ipwu2jqa/shell.qml"
+  INFO: Shell ID: "da5bb50b7e18948e31f30196cef1a503" Path ID "da5bb50b7e18948e31f30196cef1a503"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/1cxgaukrmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.789662.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-agenda-ui-ipwu2jqa/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-ui-ipwu2jqa/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-agenda-ui-ipwu2jqa/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-agenda-ui-ipwu2jqa/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[371:5]: Read of /tmp/alis-agenda-ui-ipwu2jqa/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-agenda-ui-ipwu2jqa/state/quickshell/user/gamemode_active failed: File does not exist.
+ ERROR qml: AGENDA_UI_FAIL shared Todo did not show its Agenda icon check@qs:@/qs/shell.qml:32
+run@qs:@/qs/shell.qml:49
+expression for onTriggered@qs:@/qs/shell.qml:90

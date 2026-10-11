@@ -1,0 +1,7 @@
+  INFO: Launching config: "/tmp/alis-internal-todo-j38f8g4c/shell.qml"
+  INFO: Shell ID: "f0c64662f0b47d0d3a28492c5ead8b45" Path ID "f0c64662f0b47d0d3a28492c5ead8b45"
+  INFO: Saving logs to "/tmp/alis-internal-todo-j38f8g4c/runtime/quickshell/by-id/75lgojjrmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @shell.qml[11:2]: Read of /tmp/alis-internal-todo-j38f8g4c/normal-existing/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-internal-todo-j38f8g4c/normal-existing/todo.txt failed: File does not exist.
+  INFO qml: INTERNAL_TODO_PERSISTENCE_PASS normal existing 21

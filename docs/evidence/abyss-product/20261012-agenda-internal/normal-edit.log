@@ -1,0 +1,5 @@
+  INFO: Launching config: "/tmp/alis-agenda-link-ap8qcdyn/normal/shell.qml"
+  INFO: Shell ID: "ef44d3fc34bdb51f9742892f0522a162" Path ID "ef44d3fc34bdb51f9742892f0522a162"
+  INFO: Saving logs to "/tmp/alis-agenda-link-ap8qcdyn/normal/runtime/quickshell/by-id/zfegstirmt/log.qslog"
+  INFO: Configuration Loaded
+ ERROR qml: AGENDA_TODO_FAIL edit bounded timeout phase1    expression for onTriggered@qs:@/qs/shell.qml:29
