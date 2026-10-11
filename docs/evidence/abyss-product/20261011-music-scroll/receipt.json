@@ -1,0 +1,81 @@
+{
+  "source_baseline": "889c01f3f",
+  "kind": "focused native QML working candidate, not canonical or owner acceptance",
+  "candidate_hashes": {
+    "modules/dashboard/DashboardContent.qml": "6ca9212cb76e85f377192826897bf0e607749ad30b60e3be647b2ec9b3f12c3c",
+    "modules/dashboard/DashboardMusic.qml": "e8fdde3fbbe43fc415e3db54932bcb0d2fd423fdbb62f6e9fdf16066a5c5f678"
+  },
+  "before": {
+    "results_content_height": 5497,
+    "results_viewport_height": 474,
+    "vertical_wheel_content_y": 0,
+    "page": 1,
+    "scrollbar_visible": true,
+    "oracle": "FAIL: overlay WheelHandler blocks rejected wheel events"
+  },
+  "after": {
+    "qs_exit": 0,
+    "views": [
+      {
+        "list": "musicResultList",
+        "height": 544,
+        "contentHeight": 5497,
+        "contentY": 71.74860551624474,
+        "originY": 0,
+        "currentPage": 1
+      },
+      {
+        "list": "musicQueueList",
+        "height": 360,
+        "contentHeight": 5497,
+        "contentY": 71.86827424124843,
+        "originY": 0,
+        "currentPage": 1
+      },
+      {
+        "list": "musicLyricsList",
+        "height": 624,
+        "contentHeight": 2988,
+        "contentY": 71.91760474621766,
+        "originY": 0,
+        "currentPage": 1
+      },
+      {
+        "list": "musicGenreList",
+        "height": 582,
+        "contentHeight": 5497,
+        "contentY": 71.91760474621766,
+        "originY": 0,
+        "currentPage": 1
+      },
+      {
+        "list": "musicFolderList",
+        "height": 306,
+        "contentHeight": 5497,
+        "contentY": 71.84854849879403,
+        "originY": 0,
+        "currentPage": 1
+      },
+      {
+        "list": "musicPlaylistList",
+        "height": 203.7,
+        "contentHeight": 5200,
+        "contentY": 71.91760474621766,
+        "originY": 0,
+        "currentPage": 1
+      }
+    ],
+    "scrollbar_drag": 6,
+    "keyboard_navigation_end_reveal": 6,
+    "themed_visible_overflow_thumb": 6,
+    "oracle": "PASS"
+  },
+  "boundary": {
+    "synthetic_backend": true,
+    "owner_music_queue_changed": false,
+    "owner_runtime_changed": false,
+    "debug_focus_requested": false,
+    "physical_touchpad_fractional_multi_output_or_owner_acceptance": false
+  },
+  "api_reference": "https://doc.qt.io/qt-6/qml-qtquick-wheelhandler.html#blocking-prop"
+}

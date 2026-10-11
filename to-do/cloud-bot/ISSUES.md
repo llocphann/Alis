@@ -898,7 +898,19 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   render theme-consistent scrollbar when content overflows. Check wheel,
   touchpad, drag and keyboard scrolling through long results and Queue in
   compact/expanded layouts; keep selection, search and playback behavior.
-  State: OPEN; source investigation and owner desktop acceptance pending.
+  **Native reproduction/repair 2026-10-11:** 100 result rows overflow a
+  474px viewport but actual vertical wheel leaves contentY=0. The Dashboard
+  overlay WheelHandler rejects list events yet still blocks delivery through
+  its default blocking policy. It now permits delivery to the list below;
+  six Music lists use an explicit theme-accent overflow thumb. The focused
+  `scripts/test-dashboard-music-scroll-runtime.py` passes actual vertical
+  wheel, thumb press/drag and keyboard/end reveal for Results, Queue, Lyrics,
+  Genres, Folders and Playlists (100 entries each; exit 0). Column targets
+  are panned into the actual native viewport before input. The existing
+  full Music navigation/selection/Queue animation fixture remains intact.
+  [Before/after receipt](../../docs/evidence/abyss-product/20261011-music-scroll/receipt.json).
+  State: OPEN for final exact-SHA canonical and owner touchpad, scaling,
+  compact/expanded visual/input acceptance; focused source scrolling passes.
 
 - [ ] **Volume/Brightness OSD missing in fullscreen; Physical Screen Edge fallback — owner report 2026-10-11:**
   Under real fullscreen, changing volume or brightness does not display its

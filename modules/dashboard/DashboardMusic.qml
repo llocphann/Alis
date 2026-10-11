@@ -356,6 +356,20 @@ Item {
             root.backend.cycleRepeatMode();
         }
     }
+    component MusicScrollBar: ScrollBar {
+        id: scrollbar
+        policy: ScrollBar.AsNeeded
+        implicitWidth: 10
+        padding: 2
+        minimumSize: .05
+        contentItem: Rectangle {
+            implicitWidth: 6
+            implicitHeight: 36
+            radius: width / 2
+            color: root.accent
+            opacity: scrollbar.pressed || scrollbar.active ? .9 : .45
+        }
+    }
     component Pane: Rectangle {
         property string title: ""
         default property alias content: body.data
@@ -558,7 +572,7 @@ Item {
                             model: root.genres
                             clip: true
                             spacing: 3
-                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                            ScrollBar.vertical: MusicScrollBar {}
                             delegate: Entry {
                                 required property var modelData
                                 width: ListView.view.width
@@ -587,7 +601,7 @@ Item {
                                 model: root.folders
                                 clip: true
                                 spacing: 3
-                                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                                ScrollBar.vertical: MusicScrollBar {}
                                 delegate: Entry {
                                     required property var modelData
                                     width: ListView.view.width
@@ -612,7 +626,7 @@ Item {
                                 Layout.preferredHeight: Math.min(contentHeight, parent.height * .35)
                                 model: root.backend.playlists ?? []
                                 clip: true
-                                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                                ScrollBar.vertical: MusicScrollBar {}
                                 delegate: Entry {
                                     required property var modelData
                                     width: ListView.view.width
@@ -726,9 +740,7 @@ Item {
                         model: root.results
                         clip: true
                         spacing: 3
-                        ScrollBar.vertical: ScrollBar {
-                            policy: ScrollBar.AsNeeded
-                        }
+                        ScrollBar.vertical: MusicScrollBar {}
                         delegate: Entry {
                             id: resultEntry
                             required property var modelData
@@ -849,7 +861,7 @@ Item {
                             clip: true
                             spacing: 3
                             model: root.backend.activeQueue ?? []
-                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                            ScrollBar.vertical: MusicScrollBar {}
                             delegate: Entry {
                                 required property var modelData
                                 required property int index
@@ -877,9 +889,7 @@ Item {
                     clip: true
                     spacing: 12
                     model: root.backend.localLyricsLines ?? []
-                    ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AsNeeded
-                    }
+                    ScrollBar.vertical: MusicScrollBar {}
                     currentIndex: root.presentationActive ? (root.backend.localLyricsActiveIndex ?? -1) : -1
                     highlightRangeMode: ListView.ApplyRange
                     preferredHighlightBegin: height * .35

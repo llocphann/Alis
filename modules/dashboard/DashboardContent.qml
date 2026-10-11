@@ -164,6 +164,8 @@ Item {
                         id: dashboardVerticalWheel
                         target: null
                         orientation: Qt.Vertical
+                        // Rejected list events must reach the Flickable below.
+                        blocking: false
                         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                         enabled: root.presentationActive && root.musicEnabled && !root.editMode && !root._agendaDialogShown && !(musicPage.item?.playlistDialogVisible ?? false)
                         onWheel: event => {
