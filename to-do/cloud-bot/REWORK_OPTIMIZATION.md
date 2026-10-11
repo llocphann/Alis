@@ -782,7 +782,14 @@ run privileged installation just because manual buttons are retired.
   usable hit targets, connection/discovery, loading/error/empty states and
   scroll access. Test long networks/devices, small screens, all attached edges
   and scaling. Separate from existing Wi-Fi/Bluetooth missing-text bug in
-  [Issues](ISSUES.md). State: READY for responsive sizing; owner acceptance open.
+  [Issues](ISSUES.md). **SOURCE PATCH on dev (2026-10-11):**
+  `17210c7a65c6d9f93e12e8e861adb803859c234e` reduces the
+  shared `AbyssNetworkPopup` from 380×500 to 260×330 (68%/66%
+  of prior dimensions), preserving the embedded mature Wi-Fi/
+  Bluetooth forms and scrolling. The existing native network popup
+  fixture now expects this geometry, but has NOT run in a local
+  Wayland session. State: SOURCE PATCHED; native 4-edge input,
+  scrolling, long names, password/pairing, scales and owner signoff OPEN.
 
 - [ ] **Monitor Arrangement tiles about 30% smaller — owner request 2026-10-10:**
   Reduce UI monitor tiles by roughly 30% (about 70% of former displayed width/
@@ -790,7 +797,14 @@ run privileged installation just because manual buttons are retired.
   correct aspect labels, selection/dragging, snapping, multi-monitor layouts,
   non-overlapping controls and responsive hit targets. Related to existing
   Utilities acceptance in [New features](NEW_FEATURES.md), not a new backend.
-  State: READY for presentation audit and owner desktop acceptance.
+  **SOURCE PATCH on dev (2026-10-11):**
+  `2ca620ea912e3eb8475a6e380d5b942004cd483d` updates only
+  `arrangementVisualScale` to 0.65 embedded (was 0.92) and 0.70
+  in Settings (was 1.0), yielding ~29–30% smaller monitor tiles.
+  The logical Niri output coordinates, bounds, drag snapping and
+  save/rollback paths are untouched; Utilities test expectation
+  updated. State: SOURCE PATCHED; local drag/hotplug/scale,
+  label readability and owner visual acceptance still OPEN.
 
 - [ ] **Quick Notes Edgebar scrolling sensitivity — owner request 2026-10-10:**
   Tune wheel/touchpad scroll speed for predictable navigation, including
@@ -1074,6 +1088,14 @@ run privileged installation just because manual buttons are retired.
   Actual wallpaper application is tracked only in Issues/bugs.
   References: `/tmp/codex-clipboard-c5723427-ceae-4515-a739-3010f8a551fa.png`,
   `/tmp/codex-clipboard-3baf8385-6e63-4e7b-8306-0e0ec31f3be9.png`.
+  **Filename-label source patch on dev (2026-10-11):**
+  `991e5de00b6ad415fcfa42c412e04dbe3e11de16` renders
+  `WallpaperLauncherItem` from the existing `WallpaperLibrary.name`
+  basename WITH extension, while selection keeps the full path;
+  the native carousel fixture now checks its displayed labels.
+  Remaining selector/tooltip duplication audit, live theme preview,
+  wallpaper application bug, native visual and owner acceptance
+  are NOT covered by this commit. State: PARTIAL SOURCE PATCH; OPEN.
 
 - [ ] **WALL-R01 — Rename iNiR Melt transition to Liquid and restore its effect safely — owner request 2026-10-11:**
   [Owner: Alis dev; Rework/transition identity and quality] Rename the

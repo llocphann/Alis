@@ -868,7 +868,14 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   Trace IPC preview type-to-component routing and restore the proper Media IPC
   sample while retaining a correct Volume IPC preview and actual IPC behavior.
   Test horizontal/vertical layout, four Screen Edges, Cancel/Done and per-output
-  save/reopen. State: OPEN; source diagnosis and native visual acceptance pending.
+  save/reopen. **SOURCE FIX on Alis dev (2026-10-11):**
+  commit `05d5b07e3ddede9d606930b20694916385739e00` adds the
+  `mediaOsd → MediaIndicator` mapping in `AbyssOsdContent.qml`
+  instead of falling back to Volume. Expanded the existing real-QML
+  `scripts/test-abyss-osd-content.sh` to check this preview alias;
+  no desktop test was run by the cloud executor. Keep OPEN pending
+  actual four-Edge editor preview, Volume control, save/reopen and
+  owner visual acceptance at the installed source SHA.
 
 - [ ] **Music tab Results / Queue scroll and scrollbar missing — owner report 2026-10-10:**
   Result, Queue and potentially other affected Music tab lists do not scroll
