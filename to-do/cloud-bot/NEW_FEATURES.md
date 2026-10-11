@@ -1,8 +1,17 @@
 # New features
 
-Work after [Issues/bugs](ISSUES.md) and [Rework/optimization](REWORK_OPTIMIZATION.md).
+Work after [Issues/bugs](ISSUES.md) and [Rework/optimization](REWORK_OPTIMIZATION.md),
+unless the maintainer explicitly changes the immediate priority.
 Source-implemented features below still need their stated delivery/owner gates;
 do not reimplement them solely because a checkbox is open.
+
+**Immediate owner priority — 2026-10-12:** finish the current Todo persistence,
+Dashboard editor qualification and shared Settings task-tab milestone, then
+implement **DASH-F01 → DASH-F02 → AGENDA-F01 → ABYSS-F01 → Screen Edge
+multi-selection** in that order. Carry out their necessary data/input
+prerequisites, preserving remaining canonical and desktop acceptance gates.
+This explicit sequence takes precedence over selecting unrelated Rework or
+other New features; it does not authorize closing unverified Issues.
 
 
 - [ ] **Alis Quickshell deep performance profiler — owner request 2026-10-11:**

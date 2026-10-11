@@ -6,6 +6,20 @@ that implementation is missing. Refetch current `dev` before diagnosing.
 
 ## Current failures and owner reports
 
+- [ ] **TODO-I01 — Internal Todo save completion may block later JSON persistence — discovered 2026-10-12:**
+  [Alis dev; data integrity] Source `37461128a` starts `_jsonSaving` for
+  `FileView.setText` but releases it in `onLoaded`; no `onSaved`/`onSaveFailed`
+  exists. This matches the confirmed Config/Calendar acknowledgement failure.
+  Actual headless/private-D-Bus reproduction on the unchanged backend confirms
+  data loss: two tasks remain in memory and TXT, while JSON is still `[]`,
+  `_jsonSaving` and the queued flag remain true. Private receipt/raw log will
+  accompany the source repair; no owner files or windows were touched.
+  State: IN PROGRESS; repair actual saved/failed completion before Agenda→Todo.
+  Verify Add/Done/Unfinished/Delete, unchanged and
+  overlapping saves, failure/retry, text sync and restart; retain owner data,
+  optional backend/migration boundaries. Source repair and restart/failure
+  qualification remain open.
+
 - [ ] **CFG-I02 — Config migration/custom-widget injection blocks later saves — discovered/fixed in source 2026-10-11:**
   [Owner: Alis dev; priority: configuration integrity] Exact baseline
   `b44899d504d106b7a6d65ff16030f583fb3b526d` completes migration, then
@@ -967,6 +981,14 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   Fixture-only follow-up adds failure snapshots and isolates its backend/
   D-Bus/config in the existing private Niri helper, retaining original
   assertions, sample cadence/ranges and deadlines. No Weather runtime change.
+  **Next source qualification `37461128a` is RUNNING, with failures retained:**
+  its Todo deep-link VM fixture lacks newly required actual FamilyPolicy/Config
+  dependencies; fix the fixture to load the real policy, preserving all30
+  original route assertions. Dashboard field fails "Edit resized widgets"
+  on 1280×900 Overview/left without before/after dimensions. Root cause is
+  unproven; next bounded diagnostic records canvas/body/layout before and after
+  edit, preserving original geometry oracle. Do not change production sizing
+  or label the full run PASS. Final receipt is pending completion.
   **Previous full milestone:** frozen committed driver
   on clean-clone `b44899d504d106b7a6d65ff16030f583fb3b526d` finishes
   **PASS: 349 PASS / 0 FAIL / 2 SKIP, exit 0**. Dashboard horizontal routing,
