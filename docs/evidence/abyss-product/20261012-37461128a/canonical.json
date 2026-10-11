@@ -1,0 +1,20 @@
+{
+  "source_sha": "37461128a446c8a0a797bcc412377dc2068fb1c6",
+  "source_root": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis",
+  "driver": "/tmp/alis-canonical-7gydsgs9/37461128a446c8a0a797bcc412377dc2068fb1c6.sh",
+  "driver_sha256": "f0d1492eccfbbda046cdd7fabf48fd03409c5b5e17f896f47eca07ad0e2dde6d",
+  "log": "/tmp/alis-canonical-7gydsgs9/canonical.log",
+  "terminal": "/tmp/alis-canonical-7gydsgs9/terminal.log",
+  "started_at": "2026-10-11T17:26:56.128113+00:00",
+  "status": "FAIL",
+  "parser_path_prefix": "/usr/lib/qt6/bin",
+  "arguments": [
+    "--current-repo",
+    "--strict-qml"
+  ],
+  "exit_code": 1,
+  "finished_at": "2026-10-11T17:49:52.200237+00:00",
+  "passed": 349,
+  "failed": 2,
+  "skipped": 1
+}

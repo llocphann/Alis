@@ -28,6 +28,8 @@ ShellRoot {
  property int motionSamples:0
  property var slideTrace:[]
  property var observedPopup:null
+ property var observedCanvas:null
+ property var layoutTrace:[]
  property double slideStarted:0
  property string slidePhase:""
  Component.onCompleted:Quickshell.watchFiles=false
@@ -51,6 +53,11 @@ ShellRoot {
   }
  }
  Connections {
+  target:root.observedCanvas
+  function onWidthChanged(){test.recordLayout("width-signal")}
+  function onHeightChanged(){test.recordLayout("height-signal")}
+ }
+ Connections {
   target:root.observedPopup
   function onRevealProgressChanged(){
    root.slideTrace.push({phase:"signal/"+root.slidePhase,ms:Date.now()-root.slideStarted,p:root.observedPopup.revealProgress,requested:root.observedPopup.revealRequested,animations:Appearance.animationsEnabled})
@@ -60,7 +67,18 @@ ShellRoot {
  TestCase {
   id:test;when:false;optional:true
   SignalSpy {id:clickSpy;signalName:"clicked"}
-  function check(v,m){if(!v)throw new Error(root.caseName+": "+m)}
+  function recordLayout(phase){
+   const canvas=root.observedCanvas
+   const parents=[]
+   let item=canvas
+   for(let i=0;item && i<9;i++,item=item.parent)
+    parents.push({type:String(item),width:item.width,height:item.height,implicitWidth:item.implicitWidth,implicitHeight:item.implicitHeight})
+   root.layoutTrace.push({phase,ms:Date.now(),caseName:root.caseName,editing:canvas?.editMode,
+    bodyProgress:body.progress,placement:body.placement,targetContent:body.targetRecord?.content,
+    requestedAlong:body.requestedAlong,minimumInward:body.minimumInward,parents})
+   if(root.layoutTrace.length>100)root.layoutTrace.shift()
+  }
+  function check(v,m){if(!v){recordLayout("failure");console.info("DASHBOARD_LAYOUT_TRACE",JSON.stringify(root.layoutTrace));throw new Error(root.caseName+": "+m)}}
   function find(item,p){if(p(item))return item;for(const c of item.children??[]){const x=find(c,p);if(x)return x}return null}
   function flushFrame(){
    const before=root.capturedFrames
@@ -162,6 +180,7 @@ ShellRoot {
     tryVerify(()=>body.contentItem.item!==null,5000)
     const canvas=find(body.contentItem.item,i=>typeof i.beginResize==="function")
     check(canvas!==null,"missing canvas "+route)
+    root.observedCanvas=canvas;root.layoutTrace=[];recordLayout("loaded")
     Config.setNestedValue("dashboard.canvas.widgets",canvas.defaultEntries().map(p=>Object.assign({},p,{visible:p.id==="notes",x:.15,y:.15,w:.3,h:.35})))
     wait(80)
     // Empty placeholders and long drafts must not drive card width or lose
@@ -182,10 +201,11 @@ ShellRoot {
     check(viewport.contentY+viewport.height>=note.contentHeight,"last note line is unreachable")
     note.text=draft;wait(40)
     const dimensions=[canvas.width,canvas.height],saved=JSON.stringify(Config.options.dashboard.canvas.widgets)
-    canvas.beginEditMode();wait(120);flushFrame()
+    recordLayout("before-edit")
+    canvas.beginEditMode();wait(120);flushFrame();recordLayout("after-edit")
     const popup=find(surface,i=>i.objectName==="abyssDashboardEditPopup" && i.canvasController===canvas)
     check(popup?.visible,"editor did not join output field")
-    check(canvas.width===dimensions[0] && canvas.height===dimensions[1],"Edit resized widgets "+route+edge)
+    check(canvas.width===dimensions[0] && canvas.height===dimensions[1],"Edit resized widgets "+route+edge+" "+JSON.stringify({before:dimensions,after:[canvas.width,canvas.height]}))
     const origin=canvas.mapToItem(surface,0,0)
     check(popup.y+popup.height<=origin.y+1,"controls overlap widget canvas "+route+edge+" "+JSON.stringify([popup.y,popup.height,origin.y,body.targetRecord.content]))
     check(popup.x>=0 && popup.y>=0 && popup.x+popup.width<=surface.width && popup.y+popup.height<=surface.height,"editor outside output")

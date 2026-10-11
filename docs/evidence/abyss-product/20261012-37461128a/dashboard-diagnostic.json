@@ -1,0 +1,14 @@
+{
+  "source_sha": "37461128a446c8a0a797bcc412377dc2068fb1c6",
+  "source_root": "/tmp/alis-dashboard-layout-diagnostic-7m39ajsc/Alis",
+  "instrumented_fixture": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/scripts/test-dashboard-editor-field-runtime.py",
+  "original_fixture_sha256": "dd1857ac367937d7ce161fd3a373f900707e5fe221e27cad2a1c5671ce9c0df6",
+  "diagnostic_fixture_sha256": "2eba8c7bd0f16a27e61765445f215c6c59de273b24fde6bb10d3d13944e66b75",
+  "status": "NOT_REPRODUCED; NOT_DIAGNOSED",
+  "runtime_changed": false,
+  "assertions_and_deadlines_changed": false,
+  "exit_code": 0,
+  "composed_cases": 16,
+  "motion_samples": 222,
+  "canonical_upgraded": false
+}

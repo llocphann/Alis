@@ -44,7 +44,9 @@ const body=source.match(/function navigateToKey\([^)]*\):\s*bool\s*\{([\s\S]*?)\
 for(const abyssFamily of [true,false]){
  const events=[];
  const root={abyssFamily,pageIndexForKey:key=>({services:7,integrations:38,bar:34,'shell-layout':2}[key] ?? -1),navigateRequested:(...args)=>events.push(args)};
- const context=vm.createContext({root});
+ const policy=vm.createContext({});
+ vm.runInContext(fs.readFileSync(process.argv[2],'utf8').replace(/^\.pragma library\s*$/m,''),policy);
+ const context=vm.createContext({root,FamilyPolicy:policy,Config:{options:{panelFamily:abyssFamily?'abyss':'waffle'}}});
  const navigate=vm.runInContext('(function(key,section){'+body+'})',context);
  for(const section of ['Todo','To-do & Quick Notes','Obsidian vault','Zettelkasten','Quick Notes','Calendar Sync','SERVICES · OBSIDIAN']){
   assert.equal(navigate('services',section),true);assert.deepEqual(events.pop(),[38,section]);
@@ -56,5 +58,5 @@ for(const abyssFamily of [true,false]){
  assert.equal(navigate('missing','Obsidian'),false);assert.equal(events.length,0);
 }
 console.log('Moved Services deep links: PASS (30 routes, missing targets and both families)');
-''', str(ROOT / "modules/settings/SettingsPageRegistry.qml")], check=True)
+''', str(ROOT / "modules/settings/SettingsPageRegistry.qml"), str(ROOT / "modules/common/PanelFamilyPolicy.js")], check=True)
 print("Todo/Obsidian settings deep-link contract: PASS")

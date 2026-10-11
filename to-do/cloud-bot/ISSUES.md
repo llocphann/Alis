@@ -981,14 +981,19 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   Fixture-only follow-up adds failure snapshots and isolates its backend/
   D-Bus/config in the existing private Niri helper, retaining original
   assertions, sample cadence/ranges and deadlines. No Weather runtime change.
-  **Next source qualification `37461128a` is RUNNING, with failures retained:**
+  **Next source qualification `37461128a` finished FAIL 349/2/1, exit 1:**
   its Todo deep-link VM fixture lacks newly required actual FamilyPolicy/Config
   dependencies; fix the fixture to load the real policy, preserving all30
   original route assertions. Dashboard field fails "Edit resized widgets"
   on 1280×900 Overview/left without before/after dimensions. Root cause is
   unproven; next bounded diagnostic records canvas/body/layout before and after
   edit, preserving original geometry oracle. Do not change production sizing
-  or label the full run PASS. Final receipt is pending completion.
+  or label the full run PASS. One bounded exact-runtime diagnostic passes
+  all16 route/edge/size cases and222 motion samples; NOT_REPRODUCED /
+  NOT_DIAGNOSED. The fixture now records bounded before/after ancestor
+  dimensions without changing its original assertions or deadlines. The
+  Todo VM correction passes all30 unchanged routes in both families.
+  [Complete consumed receipt/log and focused evidence](../../docs/evidence/abyss-product/20261012-37461128a/README.md).
   **Previous full milestone:** frozen committed driver
   on clean-clone `b44899d504d106b7a6d65ff16030f583fb3b526d` finishes
   **PASS: 349 PASS / 0 FAIL / 2 SKIP, exit 0**. Dashboard horizontal routing,
