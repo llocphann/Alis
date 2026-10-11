@@ -652,6 +652,91 @@ run privileged installation just because manual buttons are retired.
   State: SOURCE IMPLEMENTED / focused native PASS.
   Owner visual/physical review and committed canonical remain OPEN.
 
+- [ ] **ABYSS-R06 — Remove toggles for mandatory Abyss runtime modules — owner 2026-10-12:**
+  [Owner: Alis dev; Rework] When Abyss Panel is selected, structural modules
+  required for rendering/interaction must be treated as **always enabled**
+  and removed from the visible Modules toggle list. Optional modules
+  must remain user-toggleable; do NOT classify everything enabled by
+  default as mandatory. Inventory dependency/mount chains and document
+  a concrete mandatory-vs-optional table before implementation.
+  Source: `modules/abyss/settings/AbyssStyleSettings.qml` creates the
+  `moduleToggleGrid` from `enabledPanels`; `modules/common/
+  PanelFamilyPolicy.js` owns family defaults, migration and reset;
+  `modules/abyss/critical/ShellAbyssCriticalPanels.qml` gates the
+  one-and-only `abyssPerimeter` SDF field host using `enabledPanels`.
+  The Perimeter is a strong mandatory candidate. Individually evaluate
+  Background, Bar, Dock, Popup, Sidebar Left/Right, Notification Popup/
+  Center, OSD, Clipboard, Overview, Lock, Polkit, Session Screen and
+  other panels; do not prematurely force optional or privileged helpers.
+  Enforce the required set in runtime AND configuration reconciliation
+  (not a hidden switch with an ineffective saved-off value). Preserve
+  Waffle, profile migration, old saved `enabledPanels`, reset, optional
+  packages, per-output layouts and user-consent boundaries.
+  Acceptance: mandatory hosts cannot be disabled on Abyss and
+  are absent from the toggle UI; optional hosts still toggle;
+  no loss of field, input, fullscreen OSD or startup when old
+  profiles disable a required ID. Test migration, switch Abyss/Waffle,
+  restart, live Niri on multiple outputs. State: NEW/OPEN, not implemented.
+
+- [ ] **SET-R03 — Short, essential help text across all Settings — owner 2026-10-12:**
+  [Owner: Alis dev; Rework/UI copy] Review **every** Settings page
+  (Overlay, standalone, Abyss, Waffle, Integrations, Companion and
+  dynamically injected pages) and simplify long on-screen notes,
+  descriptions, hints and tooltips into a **few essential words**.
+  Remove unnecessary duplication when the label already explains
+  the action. Avoid paragraphs, long instructional sentences or
+  repetitive headings. Examples from screenshot: the two long
+  explanatory paragraphs below Abyss Modules toggles. Search
+  `modules/settings/**`, `modules/abyss/settings/**`, other
+  supported family pages and shared `SettingsNote`,
+  `SettingsTaskNavigator`, `description` and `StyledToolTip` uses.
+  Preserve essential consent/security, data-loss and privileged
+  operation warnings; move lengthy technical help to discoverable
+  documentation rather than stripping safety meaning. Maintain
+  localization/source parity, accessible names, Settings search,
+  layout/hierarchy and all functional behavior. Acceptance:
+  audited copy inventory and brief English UI labels in every
+  Settings family; long translations, small screens and native
+  owner screenshot review. State: NEW/OPEN, not implemented.
+
+- [ ] **SET-R04 — Remove "Use opaque Material appearance" preset button — owner 2026-10-12:**
+  [Owner: Alis dev; Rework/removal] Delete the **button** from
+  `modules/abyss/settings/AbyssStyleSettings.qml` completely.
+  This button performs a real batch `Config.setNestedValues`
+  change (surface/content opacity, blur, waves, refraction, glow,
+  highlight, perimeter radius): it is NOT a Settings redirect.
+  Previous SET-R01 research kept it for that reason, but this
+  explicit owner removal request **supersedes that keep decision**.
+  Preserve each individual opacity/blur/effects/radius setting and
+  its saved value; do not trigger the old preset or reset users'
+  current appearance on upgrade. Remove dead UI text and update
+  test/translation expectations. State: NEW/OPEN, not implemented.
+
+- [ ] **ABYSS-R07 — Screen Edge Clock and Date use shared Typography — owner 2026-10-12:**
+  [Owner: Alis dev; Rework/font settings] On Top, Bottom,
+  Left AND Right Abyss Screen Edges, Clock/Date must inherit
+  the main Settings → Typography font family and size scale,
+  with meaningful time/date hierarchy derived from shared tokens.
+  Remove the separate Time font, Time size (px), Date font,
+  Date size (px) controls from the Abyss Clock settings section
+  in `modules/settings/BarConfig.qml`.
+  `modules/bar/ClockWidget.qml` currently reads
+  `bar.clock.timeFontFamily/timePixelSize/dateFontFamily/datePixelSize`
+  and falls back to `Appearance.font.family.main` and shared
+  pixel-size tokens. Audit the rotated Left/Right path
+  `modules/verticalBar/VerticalClockWidget.qml` in light of
+  ABYSS-R05 (full-design rotation, no compact variant).
+  Use one typography source-of-truth without silently modifying
+  Waffle or other still-valid consumers of legacy settings.
+  Preserve old config keys as inert/compatibility values when
+  appropriate, not destructive deletion. Keep time/date formats,
+  font contrast, dynamic theme and calendar hover/click behavior.
+  Acceptance: changing global Typography live-updates Clock/Date
+  on all four edges and survives restart; no independent Clock/Date
+  font/size controls in Abyss settings; test multiple scales,
+  locales, small screens, focus/popup hitboxes, owner native
+  visual signoff. State: NEW/OPEN, not implemented.
+
 - [ ] **SET-R01 — Eliminate redundant Settings-to-Settings navigation buttons:**
   The maintainer wants **no Settings action whose only purpose is to switch
   to another Settings tab/page**. Perform a complete source/UI audit of
@@ -682,7 +767,9 @@ run privileged installation just because manual buttons are retired.
   core pure redirect buttons are identified in Modules/Quick/Interface/
   System/Sidebars/Services, plus one in Alis-Companion (13 total).
   Services' old search delegation is compatibility,
-  not a visible button. Opaque Material actually applies values and stays;
+  not a visible button. Opaque Material was preserved in the earlier navigation-only audit
+  because it changes real settings, but the owner's newer explicit
+  removal request supersedes that decision (SET-R04).
   reload/Open config/Shortcuts/floating tools/install/calendar actions stay.
   Remove empty redirect wrappers, hide Abyss' now-empty Modules sub-tab while
   retaining real Waffle module controls and canonical/legacy routes.
