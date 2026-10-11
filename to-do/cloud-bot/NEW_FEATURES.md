@@ -496,8 +496,21 @@ other New features; it does not authorize closing unverified Issues.
   stored Markdown text and stable note ID across each transition.
   Add QML/parser/formatting/focus/performance tests and require
   native Niri/Quickshell owner visual + input acceptance.
-  State: NEW/OPEN; source audit complete at high level, design/
-  implementation/test and owner acceptance pending.
+  **Source milestone on Alis dev (2026-10-12):** the bottom-left
+  Quick Notes hover surface uses the existing stable-ID NotepadWidget
+  in Markdown Reading mode (Qt native MarkdownText rendering; no editor
+  keyboard focus until an explicit note-body click). Source Editing
+  retains the canonical TextArea, 800ms autosave and tab identity;
+  Ctrl+B/Ctrl+I/Ctrl+K apply reversible Markdown marker edits on the
+  original bytes, without HTML conversion. External image URLs/raw
+  HTML are not loaded by the preview; existing owned hashed image
+  attachments remain visible in the separate lazy attachment rail.
+  Sidebar/Dashboard maintain their previous Source-first behavior;
+  Live Editing near-caret rendering is NOT implemented.
+  Pure-JS policy and private-Niri focused test fixtures added but
+  NOT YET RUN in this cloud session. State: SOURCE PATCHED / OPEN for
+  Markdown fidelity, preview/Source focus, Unicode/IME/undo/restart,
+  mouse/touchpad, attachment parity, full canonical and owner UI acceptance.
 
 - [ ] **Quick Notes image delivery:** Hadalis `add29d6f8` implements shared
   paste/import, original-byte storage, Markdown persistence and preview with

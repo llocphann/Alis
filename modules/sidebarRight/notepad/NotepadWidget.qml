@@ -797,6 +797,7 @@ Item {
 
                         TextArea {
                             id: textArea
+                            objectName: "quickNotesSourceEditor"
                             enabled: Notepad.ready
                             // Qt's wrapped placeholder derives its implicit
                             // width from this width. The viewport owns sizing.
