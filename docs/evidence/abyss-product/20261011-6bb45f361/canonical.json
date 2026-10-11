@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "kind": "canonical-maintainer-local",
+  "sourceSha": "6bb45f361346048e7368511169fa5151c390e4ac",
+  "command": "bash scripts/validate-maintainer-local.sh --current-repo",
+  "execution": "clean clone of exact committed local source",
+  "result": "FAIL",
+  "exitCode": 1,
+  "checksRun": 346,
+  "passed": 343,
+  "failed": 2,
+  "skipped": 2,
+  "failedChecks": [
+    "scripts/test-dashboard-editor-field-runtime.py",
+    "scripts/test-abyss-dashboard-editing.sh"
+  ],
+  "observations": [
+    "Direct editor fixture terminated without PASS/FAIL marker; its original wrapper did not print the native exit code.",
+    "Shell editor wrapper passed stable workspace assertions, then its composed fixture failed to observe intermediate motion while closing the 720x650 Dashboard top case.",
+    "Both independent panel material native tests and the bounded Weather visual lock passed."
+  ],
+  "cause": "NOT_DIAGNOSED: movement versus capture/sampling timing must be distinguished; no animation or assertions changed",
+  "ownerDesktopAcceptance": false,
+  "rawLogSha256": "5bb627c81d126d2e7f1a7b3c3288ba846213cfa8b7812a0f458cd8c19156836e"
+}

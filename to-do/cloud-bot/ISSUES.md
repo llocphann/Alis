@@ -79,8 +79,10 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   captures / 270 pixel checks: exact alpha equality across blur, explicit 0
   and effect suppression. No shader tuning is justified by these results.
   [Reproducer evidence and source hashes](../../docs/evidence/abyss-product/20261011-panel-material/README.md).
-  State: OPEN for final exact-SHA canonical and owner physical/real-theme,
-  video/multi-output review. ABYSS-R04 remains separate and unimplemented.
+  Both material fixtures PASS in canonical `6bb45f361` (overall FAIL on the
+  separate editor fixture). State: OPEN for a final overall canonical result
+  and owner physical/real-theme, video/multi-output review. ABYSS-R04 remains
+  separate and unimplemented.
 
 - [x] **P0 — fullscreen window retains hidden Screen Edges/Panel/Perimeter after switching to another window (owner report 2026-10-10):**
   Reproduce on Niri: fullscreen client A, then open/focus window B in the
@@ -898,13 +900,25 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   justified by this archive.
 
 
-- [ ] **Canonical validation — updated 2026-10-11:** the subsequent
+- [ ] **Canonical validation — updated 2026-10-11:** the latest retained
+  clean-clone `6bb45f361346048e7368511169fa5151c390e4ac` run finished
+  **FAIL: 343 PASS, 2 FAIL, 2 SKIP; exit 1**. Both failures execute the same
+  composed Dashboard editor fixture: the direct invocation lacks a final marker;
+  the shell wrapper passes workspace checks, then fails intermediate movement
+  on closing the 720×650 top Dashboard case. Its capture/sampling cause is
+  NOT_DIAGNOSED. Both panel-material native fixtures and the Weather visual
+  lock pass. Preserve real animation and strict assertions; diagnose timing,
+  not repeated retries until green. [Full log](../../docs/evidence/abyss-product/20261011-6bb45f361/canonical.log)
+  and [receipt](../../docs/evidence/abyss-product/20261011-6bb45f361/canonical.json).
+  Next: bounded progress/capture traces on the exact unchanged source, then
+  qualify any resulting repair. Owner physical/hardware gates remain separate.
+  **Interrupted earlier run:** the subsequent
   clean-clone `d1056867d9457ef255e3a5ba514a347802e70cdf` run was interrupted;
   its temporary logs are no longer present and no full final receipt exists.
   An observed Dashboard editor partial-slide sampling failure is still
   unresolved; do not mark that source or run PASS. Save future logs durably.
   Next: diagnose that unchanged strict fixture, then qualify final source.
-  **Last complete retained run:** clean-clone validation
+  **Earlier complete retained run:** clean-clone validation
   of `1af17ab476f11e8c62f71276df6fd547022c9061` finished **FAIL: 342 PASS,
   1 FAIL, 2 SKIP; exit 1**. Calendar storage/layout, screenshot pointer/export
   lifecycle, Recording dot controls, both Music fixtures and physical fullscreen
