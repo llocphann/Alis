@@ -37,7 +37,7 @@ Item {
     signal transitionFinished()
 
     function renderState(): var {
-        return {source: root.source, displayedSource: internal.displayedSource,
+        return {source: root.source, displayedSource: internal.displayedSource, activeIndex: internal.activeIndex,
             pendingSource: internal.pendingSource, loadingSource: internal.loadingSource,
             transitioning: root._transitioning, primePending: root._shaderTexturePrimePending,
             primeSwaps: root._shaderTexturePrimeSwaps, shader: root._activeShader,
@@ -205,7 +205,7 @@ Item {
         // window cannot present texture frames. Applying the image must still
         // finish; the existing image-slot crossfade works in both cases.
         if (root.GraphicsInfo.api === GraphicsInfo.Software || !root.visible
-                || (root.Window.window && !root.Window.window.visible)) {
+                || !root.Window.window?.visible) {
             root._cancelShaderTexturePrime()
             internal.performSwitch(true)
             return
@@ -342,6 +342,7 @@ Item {
 
         function resetTransition(): void {
             transitionAnim.stop()
+            transitionDeadline.stop()
             root._cancelShaderTexturePrime()
             transitionState.progress = 0
             transitionFromIndex = -1
@@ -366,24 +367,19 @@ Item {
 
             pendingSource = newSource
 
-            if (!root._canTransition) {
-                const active = activeImage()
-                active.source = newSource
-                if (activeIndex === 0)
-                    img1.source = ""
-                else
-                    img0.source = ""
-                displayedSource = newSource
-                pendingSource = ""
-                loadingSource = ""
-                resetTransition()
+            // Always decode into the spare slot, including reduced motion.
+            // A failed selection must not replace the last successfully shown
+            // image or publish a source which has never reached Image.Ready.
+            if (!root._canTransition && root._transitioning) {
+                root._onTransitionEnd()
                 return
             }
 
-            if (newSource === displayedSource && !root._transitioning && loadingSource === "") {
+            if (newSource === displayedSource && !root._transitioning) {
                 pendingSource = ""
                 loadingSource = ""
                 root._cancelShaderTexturePrime()
+                inactiveImage().source = ""
                 return
             }
 
@@ -421,6 +417,10 @@ Item {
         }
 
         function handleReady(slotIndex: int, loadedSource: string): void {
+            if (slotIndex === activeIndex && !root._transitioning) {
+                if (loadedSource !== "") displayedSource = loadedSource
+                return
+            }
             if (loadedSource === "" || loadedSource !== pendingSource)
                 return
 
@@ -452,6 +452,17 @@ Item {
                 return
             }
 
+            const incoming = inactiveImage()
+            if (String(incoming.source) !== pendingSource || incoming.status !== Image.Ready)
+                return
+
+            if (!root._canTransition || !root.visible || !root.Window.window?.visible
+                    || displayedSource === "" || activeImage().status !== Image.Ready) {
+                transitionToIndex = activeIndex === 0 ? 1 : 0
+                root._onTransitionEnd(false)
+                return
+            }
+
             if (skipShader || !root.shaderTransitionRequested)
                 root._activeShader = ""
             else if (root._activeShader === "")
@@ -467,6 +478,8 @@ Item {
             transitionFromIndex = activeIndex
             transitionToIndex = activeIndex === 0 ? 1 : 0
             transitionState.progress = 0
+            transitionDeadline.interval = Math.max(1500, root.transitionDuration + 500)
+            transitionDeadline.restart()
             if (root._activeShader === "")
                 transitionAnim.restart()
             else {
@@ -479,10 +492,12 @@ Item {
         }
     }
 
-    function _onTransitionEnd(): void {
+    function _onTransitionEnd(notify = true): void {
         transitionAnim.stop()
-        const fromIndex = internal.transitionFromIndex
-        if (internal.transitionToIndex >= 0)
+        transitionDeadline.stop()
+        const incoming = internal.transitionToIndex >= 0
+            ? internal.slotImage(internal.transitionToIndex) : null
+        if (incoming?.status === Image.Ready)
             internal.activeIndex = internal.transitionToIndex
         _transitioning = false
         transitionState.progress = 0
@@ -502,16 +517,34 @@ Item {
         }
 
         _activeShader = ""
-        transitionFinished()
+        if (notify) transitionFinished()
         if (internal.pendingSource !== "" && internal.pendingSource !== internal.displayedSource)
             internal.loadPending()
     }
 
     onSourceChanged: internal.switchTo(source)
+    on_CanTransitionChanged: {
+        if (!root._canTransition) {
+            if (root._transitioning) root._onTransitionEnd()
+            else if (root._shaderTexturePrimePending) root._finishShaderWaitWithoutShader()
+        }
+    }
     onVisibleChanged: {
-        if (!visible && (root._shaderTexturePrimePending
-                || (root._shaderRequestedActive && !transitionAnim.running)))
-            root._finishShaderWaitWithoutShader()
+        if (!visible) {
+            if (root._transitioning) root._onTransitionEnd()
+            else if (root._shaderTexturePrimePending) root._finishShaderWaitWithoutShader()
+        }
+    }
+
+    // A running animation can also stop receiving presentation updates. Only
+    // this in-flight switch owns a deadline; there is no idle polling.
+    Timer {
+        id: transitionDeadline
+        repeat: false
+        onTriggered: {
+            console.warn("[WallpaperCrossfader] Transition timed out; applying the ready image")
+            root._onTransitionEnd()
+        }
     }
 
     // No idle polling. A failed render/compile handoff must not pin the old
@@ -525,11 +558,13 @@ Item {
 
     Connections {
         target: root.Window.window
-        enabled: root._shaderTexturePrimePending
+        enabled: root._shaderTexturePrimePending || root._transitioning
 
         function onVisibleChanged(): void {
-            if (!root.Window.window.visible)
-                root._finishShaderWaitWithoutShader()
+            if (!root.Window.window.visible) {
+                if (root._transitioning) root._onTransitionEnd()
+                else root._finishShaderWaitWithoutShader()
+            }
         }
 
         function onFrameSwapped(): void {
@@ -1009,6 +1044,6 @@ Item {
         internal.loadingSource = ""
         img1.source = ""
         img0.source = root.source
-        internal.displayedSource = root.source
+        internal.displayedSource = img0.status === Image.Ready ? root.source : ""
     }
 }

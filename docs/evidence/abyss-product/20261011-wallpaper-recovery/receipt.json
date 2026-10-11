@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "task": "Wallpaper selection/display correctness",
+  "baselineSha": "413c64be084225d0d4d01f5980652701cdce8681",
+  "baselinePayloadSha256": "99cc3dd6b95fef206c09cb74918682f79befdb2a5058bf4d75c56b8ca5916398",
+  "candidatePayloadSha256": "2585079ff7557eb375b805421c4ff13ff84152ad4c1aae18539a55bf587b7e30",
+  "candidateNativeScope": "private unfocused Qt/Niri; same candidate component bytes; OpenGL/software; no owner files or rendering preferences changed",
+  "baselineResult": "expected FAIL: transition OFF destroys current ready image and claims failed selection",
+  "candidateResult": "PASS both backends, process/script exits 0, 11 captures each and 22 exact RGB center-pixel checks",
+  "cases": [
+    "OFF valid/invalid loads",
+    "disable mid-flight",
+    "paused real animation deadline",
+    "rapid A/B/C latest",
+    "repeat selection",
+    "animated Image.Error",
+    "hidden Window",
+    "hidden Item",
+    "detached Item/no frame lease",
+    "unavailable shader with experimental melt requested"
+  ],
+  "notProven": [
+    "owner physical desktop melt apply",
+    "multi-output/fractional/hotplug",
+    "video source",
+    "failed external wallpaper backend switch",
+    "committed exact-SHA canonical"
+  ],
+  "ownerInstall": false,
+  "resourcePercentClaim": null,
+  "captureOracle": "exact expected RGB at center of uniform image; no whole-image or Companion G0 claim"
+}

@@ -1283,8 +1283,22 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   effect cannot render, complete the image switch with a safe fade/instant
   fallback and accurately surface the transition limitation. Linked
   transition rename/polish: [WALL-R01](REWORK_OPTIMIZATION.md).
-  State: OPEN; owner regression reported, actual native failure and repair
-  NOT YET verified.
+  **Focused repair, 2026-10-11:** native baseline `413c64be084225d0d4d01f5980652701cdce8681`
+  confirms a distinct failure: transitions OFF overwrite the active Ready
+  image and publish an invalid selection as displayedSource. The source now
+  always preloads a spare slot, commits only Ready, finishes a disabled or
+  hidden switch, and bounds an in-flight animation with a one-shot deadline.
+  The shader wait fallback remains; no idle polling or shader change.
+  Identical candidate/product QML bytes passed OpenGL/software failure
+  injection, eleven captures per backend and 22 exact expected RGB center
+  pixels, process/script exits 0. These cases include paused animation,
+  mid-flight disable, missing QSB, hidden/unattached window, rapid/latest and
+  invalid/repeated selections. Evidence:
+  [Ready-slot and transition recovery](../../docs/evidence/abyss-product/20261011-wallpaper-recovery/README.md).
+  This does not establish the sole cause of the owner's Melt failure.
+  State: OPEN for committed exact-SHA focused/canonical, actual picker/
+  desktop path, owner physical Liquid ON/unavailable/OFF, fractional/
+  multiple outputs, video and external backend failure acceptance.
 
 - [ ] **Cheatsheet close opens Update popup:** qualify the repaired independent
   close/visibility ownership through first and repeated slide-out. No unrelated
