@@ -12,22 +12,28 @@ GroupButton {
     id: root
     Accessible.checkable: true
     Accessible.checked: root.toggled
-    horizontalPadding: 11
-    verticalPadding: 6
+    property bool abyssTaskNavigation: false
+    horizontalPadding: root.abyssTaskNavigation ? 14 * Appearance.fontSizeScale : 11
+    verticalPadding: root.abyssTaskNavigation ? 9 * Appearance.fontSizeScale : 6
+    baseHeight: Math.max(contentItem.implicitHeight + verticalPadding * 2,
+        root.abyssTaskNavigation ? SettingsMaterialPreset.taskTabHeight : 0)
     bounce: false
     property bool useAbyssPillShape: true
-    waveFace: root.useAbyssPillShape && Config.options?.panelFamily === "abyss"
+    waveFace: !root.abyssTaskNavigation && root.useAbyssPillShape && Config.options?.panelFamily === "abyss"
     property string buttonIcon
     // Opt-in high contrast for compact category tabs on dense Settings pages.
     property bool highContrastSelection: false
-    selectionOutlineWidth: root.highContrastSelection && root.toggled ? 2 : 0
-    selectionOutlineColor: Appearance.colors.colPrimary
-    colBackgroundToggled: root.highContrastSelection
+    selectionOutlineWidth: root.abyssTaskNavigation && root.visualFocus ? 1
+        : root.highContrastSelection && root.toggled ? 2 : 0
+    selectionOutlineColor: root.abyssTaskNavigation ? SettingsMaterialPreset.taskTabFocusColor : Appearance.colors.colPrimary
+    colBackgroundToggled: root.abyssTaskNavigation ? SettingsMaterialPreset.taskTabSelectedColor : root.highContrastSelection
         ? Appearance.colors.colPrimaryContainer : Appearance.colors.colPrimary
-    colBackgroundToggledHover: root.highContrastSelection
+    colBackgroundToggledHover: root.abyssTaskNavigation ? ColorUtils.mix(SettingsMaterialPreset.taskTabSelectedColor,
+        SettingsMaterialPreset.taskTabHoverColor, .88) : root.highContrastSelection
         ? Qt.darker(Appearance.colors.colPrimaryContainer, 1.06)
         : Appearance.colors.colPrimaryHover
-    colBackgroundToggledActive: root.highContrastSelection
+    colBackgroundToggledActive: root.abyssTaskNavigation ? ColorUtils.mix(SettingsMaterialPreset.taskTabSelectedColor,
+        SettingsMaterialPreset.taskTabPressedColor, .8) : root.highContrastSelection
         ? Qt.darker(Appearance.colors.colPrimaryContainer, 1.12)
         : Appearance.colors.colPrimaryActive
     property string buttonPreviewKind: ""
@@ -39,9 +45,9 @@ GroupButton {
     property bool leftmost: false
     property bool rightmost: false
     readonly property bool showZzzPreview: false
-    leftRadius: ((root.useAbyssPillShape && Config.options?.panelFamily === "abyss") || toggled || leftmost)
+    leftRadius: root.abyssTaskNavigation ? Math.min(height / 2, SettingsMaterialPreset.taskTabRadius) : ((root.useAbyssPillShape && Config.options?.panelFamily === "abyss") || toggled || leftmost)
         ? (height / 2) : Appearance.rounding.unsharpenmore
-    rightRadius: ((root.useAbyssPillShape && Config.options?.panelFamily === "abyss") || toggled || rightmost)
+    rightRadius: root.abyssTaskNavigation ? Math.min(height / 2, SettingsMaterialPreset.taskTabRadius) : ((root.useAbyssPillShape && Config.options?.panelFamily === "abyss") || toggled || rightmost)
         ? (height / 2) : Appearance.rounding.unsharpenmore
     Behavior on leftRadius {
         enabled: Appearance.animationsEnabled
@@ -51,11 +57,11 @@ GroupButton {
         enabled: Appearance.animationsEnabled
         animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
     }
-    colBackground: root.useAbyssPillShape && Config.options?.panelFamily === "abyss"
+    colBackground: root.abyssTaskNavigation ? "transparent" : root.useAbyssPillShape && Config.options?.panelFamily === "abyss"
         ? Qt.alpha(Appearance.colors.colPrimary,.1) : Appearance.colors.colSecondaryContainer
-    colBackgroundHover: root.useAbyssPillShape && Config.options?.panelFamily === "abyss"
+    colBackgroundHover: root.abyssTaskNavigation ? SettingsMaterialPreset.taskTabHoverColor : root.useAbyssPillShape && Config.options?.panelFamily === "abyss"
         ? Qt.alpha(Appearance.colors.colPrimary,.18) : Appearance.colors.colSecondaryContainerHover
-    colBackgroundActive: root.useAbyssPillShape && Config.options?.panelFamily === "abyss"
+    colBackgroundActive: root.abyssTaskNavigation ? SettingsMaterialPreset.taskTabPressedColor : root.useAbyssPillShape && Config.options?.panelFamily === "abyss"
         ? Qt.alpha(Appearance.colors.colPrimary,.26) : Appearance.colors.colSecondaryContainerActive
 
     contentItem: RowLayout {
@@ -89,7 +95,9 @@ GroupButton {
                 anchors.centerIn: parent
                 text: root.buttonIcon
                 iconSize: Appearance.font.pixelSize.normal
-                color: root.toggled
+                color: root.abyssTaskNavigation
+                    ? (root.toggled ? SettingsMaterialPreset.taskTabSelectedInk : SettingsMaterialPreset.taskTabInk)
+                    : root.toggled
                     ? (root.highContrastSelection ? Appearance.colors.colOnPrimaryContainer
                         : Appearance.colors.colOnPrimary)
                     : Appearance.colors.colOnSecondaryContainer
@@ -128,7 +136,9 @@ GroupButton {
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
                 maximumLineCount: 1
-                color: root.toggled
+                color: root.abyssTaskNavigation
+                    ? (root.toggled ? SettingsMaterialPreset.taskTabSelectedInk : SettingsMaterialPreset.taskTabInk)
+                    : root.toggled
                     ? (root.highContrastSelection ? Appearance.colors.colOnPrimaryContainer
                         : Appearance.colors.colOnPrimary)
                     : Appearance.colors.colOnSecondaryContainer

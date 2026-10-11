@@ -30,6 +30,7 @@ Flow {
     property var currentValue: null
     property bool highContrastSelection: false
     property bool useAbyssPillShape: true
+    property bool taskNavigation: false
     readonly property bool hovered: _hoverHandler.hovered
 
     signal selected(var newValue)
@@ -57,6 +58,21 @@ Flow {
             p = p.parent;
         }
         return { page: page, sectionTitle: sectionTitle, groupTitle: groupTitle };
+    }
+
+    function moveTaskFocus(index, direction): bool {
+        if (!root.taskNavigation || root.options.length === 0)
+            return false
+        for (let step = 1; step <= root.options.length; ++step) {
+            const next = (index + direction * step + root.options.length) % root.options.length
+            const button = optionRepeater.itemAt(next)
+            if (!button || !button.enabled || !button.visible)
+                continue
+            button.forceActiveFocus(Qt.TabFocusReason)
+            root.selected(root.options[next].value)
+            return true
+        }
+        return false
     }
 
     function focusFromSettingsSearch() {
@@ -148,6 +164,30 @@ Flow {
             buttonText: modelData.displayName
             highContrastSelection: root.highContrastSelection
             useAbyssPillShape: root.useAbyssPillShape
+            abyssTaskNavigation: root.taskNavigation && Config.options?.panelFamily === "abyss"
+            enabled: !root.taskNavigation || modelData?.enabled !== false
+            maxTextWidth: root.taskNavigation
+                ? Math.max(0, root.width - horizontalPadding * 2
+                    - (buttonIcon.length > 0 ? Appearance.font.pixelSize.normal + 4 : 0)) : 180
+            enableImplicitWidthAnimation: !root.taskNavigation
+            enableImplicitHeightAnimation: !root.taskNavigation
+            Keys.onLeftPressed: event => { event.accepted = root.moveTaskFocus(index, -1) }
+            Keys.onRightPressed: event => { event.accepted = root.moveTaskFocus(index, 1) }
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_Home)
+                    event.accepted = root.moveTaskFocus(-1, 1)
+                else if (event.key === Qt.Key_End)
+                    event.accepted = root.moveTaskFocus(0, -1)
+                else event.accepted = false
+            }
+            Keys.onReturnPressed: event => {
+                event.accepted = root.taskNavigation
+                if (event.accepted) paletteButton.clicked()
+            }
+            Keys.onEnterPressed: event => {
+                event.accepted = root.taskNavigation
+                if (event.accepted) paletteButton.clicked()
+            }
             opacity: modelData?.dimmed === true ? 0.45 : 1
             toggled: (root.currentValue != null && root.currentValue == modelData.value) ?? false
             onClicked: {

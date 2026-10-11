@@ -1,0 +1,29 @@
+{
+  "before_source_sha": "37461128a446c8a0a797bcc412377dc2068fb1c6",
+  "candidate_base_sha": "0dff9e8d10cdecb1dd8e03093068a3ebde6512c1",
+  "source_sha256": {
+    "modules/common/widgets/ConfigSelectionArray.qml": "d8e3e8a961be5643d1f99a35ef10a3f7ecc8c4f53d9f57fd40e30ae03d79e9b1",
+    "modules/common/widgets/SelectionGroupButton.qml": "5f7c0b9aeab7695aeeb0ce6ed8f361a0eebef5263b2ad9287a18515663092a1b",
+    "modules/common/widgets/SettingsMaterialPreset.qml": "006beeb4e8e4e7b4abe91a2d034a34fd556ac4209663374812906025cf9b4fa8",
+    "modules/common/widgets/SettingsTaskNavigator.qml": "fd2e8003d2bfb743dc2239082a4656ed9a13bf398dc6deda6a82ddb4f9b1be04",
+    "scripts/test-settings-task-tabs-runtime.py": "561811ec46c49416bb8d2c2355d766b9b2b465ee14c964297f90232258a496ed"
+  },
+  "native_dpr": [
+    1,
+    1.25
+  ],
+  "native_qml_checks": 4642,
+  "native_captures": 168,
+  "retained_example_captures": 12,
+  "hierarchy_exit_code": 0,
+  "full_page_routes": [
+    "compositor",
+    "system",
+    "panels",
+    "themes"
+  ],
+  "inventory_consumers": 22,
+  "owner_focus_requested": false,
+  "canonical": "NOT_RUN current candidate",
+  "owner": "OPEN"
+}

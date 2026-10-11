@@ -125,6 +125,23 @@ QtObject {
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.colors.colOnSurfaceVariant
 
+    // ── In-page task navigation ──
+    // One quiet shared rail; native rectangles need no per-tab texture/blur.
+    readonly property real taskTabPadding: 6 * Appearance.fontSizeScale
+    readonly property real taskTabHeight: 40 * Appearance.fontSizeScale
+    readonly property real taskTabRadius: 16 * Appearance.fontSizeScale
+    readonly property real taskRailRadius: 22 * Appearance.fontSizeScale
+    readonly property color taskRailBase: Appearance.colors.colLayer2Base
+    readonly property color taskRailColor: Qt.alpha(taskRailBase, AbyssStyle.contentOpacity * .72)
+    readonly property color taskTabSelectedBase: ColorUtils.mix(AbyssStyle.accent,
+        Appearance.colors.colLayer1Base, .26)
+    readonly property color taskTabSelectedColor: Qt.alpha(taskTabSelectedBase, AbyssStyle.contentOpacity)
+    readonly property color taskTabHoverColor: Qt.alpha(AbyssStyle.accent, AbyssStyle.contentOpacity * .16)
+    readonly property color taskTabPressedColor: Qt.alpha(AbyssStyle.accent, AbyssStyle.contentOpacity * .24)
+    readonly property color taskTabInk: ColorUtils.ensureReadable(Appearance.colors.colOnLayer1, taskRailBase)
+    readonly property color taskTabSelectedInk: ColorUtils.ensureReadable(Appearance.colors.colOnPrimaryContainer, taskTabSelectedBase)
+    readonly property color taskTabFocusColor: ColorUtils.ensureReadable(AbyssStyle.accent, taskRailBase, 3)
+
     // ── Navigation rail ──
     readonly property int navWidth: 180
     readonly property int navItemHeight: Math.round((Appearance.regaliaEverywhere ? Appearance.regalia.controlHeight : 34) * Appearance.fontSizeScale)

@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-settings-task-tabs-a969nh46/shell.qml"
+  INFO: Shell ID: "ad90736cb39582983a7bbbfb2c858a06" Path ID "ad90736cb39582983a7bbbfb2c858a06"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/m1gcek8rmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.580609.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-settings-task-tabs-a969nh46/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-settings-task-tabs-a969nh46/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-settings-task-tabs-a969nh46/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: SETTINGS_TASK_TABS_NATIVE_PASS {"checks":2321,"captures":84,"dpr":1.25}

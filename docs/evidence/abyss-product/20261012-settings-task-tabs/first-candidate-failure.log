@@ -1,0 +1,8 @@
+  INFO: Launching config: "/tmp/alis-settings-task-tabs-3mdx5ryl/shell.qml"
+  INFO: Shell ID: "1e0805538544a68894c45aa4deeef2e4" Path ID "1e0805538544a68894c45aa4deeef2e4"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/ihfc8j8rmt/log.qslog"
+ ERROR: Failed to load configuration
+ ERROR:   caused by @shell.qml[19:3]: Type SettingsTaskNavigator unavailable
+ ERROR:   caused by @modules/common/widgets/SettingsTaskNavigator.qml[184:9]: Type ConfigSelectionArray unavailable
+ ERROR:   caused by @modules/common/widgets/ConfigSelectionArray.qml[177:18]: Cannot assign to non-existent property "onEndPressed"
+

@@ -19,6 +19,7 @@ ColumnLayout {
     property var options: []
     property var searchAliases: ({})
     property bool highContrastSelection: false
+    readonly property bool abyssTaskStyle: Config.options?.panelFamily === "abyss"
 
     signal selected(string value)
 
@@ -88,7 +89,7 @@ ColumnLayout {
         radius: Appearance.rounding.normal
         // Follow upstream iNiR's quiet information hierarchy: task context is
         // a neutral settings plate, while selection is carried by the tabs.
-        color: Appearance.colors.colLayer1
+        color: root.abyssTaskStyle ? SettingsMaterialPreset.cardColor : Appearance.colors.colLayer1
 
         // Full variant (icon + title + description) for pages that onboard;
         // compact variant (centered description + summary) when the page header
@@ -167,14 +168,33 @@ ColumnLayout {
         }
     }
 
-    ConfigSelectionArray {
+    Item {
+        visible: root.options.length > 0
         Layout.fillWidth: true
-        currentValue: root.currentValue
-        options: root.options
-        // Settings task tabs intentionally follow iNiR's segmented geometry
-        // even when the containing surface belongs to Abyss.
-        useAbyssPillShape: false
-        highContrastSelection: root.highContrastSelection
-        onSelected: value => root.selected(value)
+        implicitHeight: taskOptions.implicitHeight + padding * 2
+        readonly property real padding: root.abyssTaskStyle ? SettingsMaterialPreset.taskTabPadding : 0
+
+        Rectangle {
+            objectName: "settingsTaskRail"
+            anchors.fill: parent
+            visible: root.abyssTaskStyle
+            color: SettingsMaterialPreset.taskRailColor
+            radius: SettingsMaterialPreset.taskRailRadius
+        }
+
+        ConfigSelectionArray {
+            id: taskOptions
+            objectName: "settingsTaskOptions"
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: parent.padding
+            y: parent.padding
+            currentValue: root.currentValue
+            options: root.options
+            taskNavigation: true
+            useAbyssPillShape: false
+            highContrastSelection: root.highContrastSelection
+            onSelected: value => root.selected(value)
+        }
     }
 }

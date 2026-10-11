@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Contract for iNiR-derived Settings task navigation inside the Abyss host."""
+"""Compatibility entry point: shared sculpted Settings task navigation."""
 
 from pathlib import Path
 
@@ -15,13 +15,16 @@ page = read("modules/common/widgets/ContentPage.qml")
 overlay = read("modules/settings/SettingsOverlay.qml")
 embedded = read("modules/abyss/content/AbyssSettingsContent.qml")
 
-assert 'color: Appearance.colors.colLayer1' in nav
-assert 'useAbyssPillShape: false' in nav
+assert 'SettingsMaterialPreset.cardColor' in nav
+assert 'taskNavigation: true' in nav
+assert 'settingsTaskRail' in nav
+assert 'SettingsMaterialPreset.taskRailColor' in nav
 assert 'property var searchAliases: ({})' in nav
 assert 'page.settingsTaskNavigator = root' in nav
 assert 'property bool useAbyssPillShape: true' in array
 assert 'useAbyssPillShape: root.useAbyssPillShape' in array
-assert 'waveFace: root.useAbyssPillShape && Config.options?.panelFamily === "abyss"' in button
+assert 'waveFace: !root.abyssTaskNavigation && root.useAbyssPillShape' in button
+assert 'root.taskNavigation && Config.options?.panelFamily === "abyss"' in array
 assert 'property var settingsTaskNavigator: null' in page
 
 # Presentation ownership is intentionally unchanged: Abyss still embeds the
@@ -30,4 +33,4 @@ assert 'property var settingsTaskNavigator: null' in page
 assert 'parent: root.embeddedHost ?? nativeHost.item?.contentItem ?? null' in overlay
 assert 'embeddedHost:' in embedded or 'embeddedHost' in embedded
 
-print("PASS: iNiR-style task tabs retained inside the existing Abyss Settings host")
+print("PASS: shared sculpted task rail stays in the existing Settings host; Waffle and ordinary controls retain their style")

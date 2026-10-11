@@ -635,8 +635,20 @@ run privileged installation just because manual buttons are retired.
   pages), before/after screenshots and owner review for every
   navigation family, focused QML/JS tests updated, canonical
   validation and live Niri Quickshell visual/interaction signoff.
-  State: OPEN; screenshot-based requirements and source candidates
-  identified, redesign/implementation NOT STARTED.
+  **Candidate in progress 2026-10-12:** shared task navigator gains a single
+  themed rail with sculpted selected/hover/focus states, bounded labels and
+  keyboard arrows/Home/End/Enter. All current consumers share it, including
+  optional Companion and Abyss wrappers; regular value choices and Waffle's
+  styling remain separate. No extra per-tab blur, texture or liquid renderer.
+  Actual private-native qualification PASS4642 QML checks /168 captures on
+  DPR1/1.25, dark/light, font scales1/1.25, narrow/full widths, key/focus,
+  disabled and dynamic models, motion reversal and zero opacity. Existing
+  Overlay/standalone navigation PASS;22 consumers inventoried; four actual
+  page families have before/after captures. Original candidate compile failure
+  and subsequent repair evidence are retained.
+  [Source hashes, inventory, images and raw checks](../../docs/evidence/abyss-product/20261012-settings-task-tabs/README.md).
+  State: SOURCE IMPLEMENTED / focused native PASS.
+  Owner visual/physical review and committed canonical remain OPEN.
 
 - [ ] **SET-R01 — Eliminate redundant Settings-to-Settings navigation buttons:**
   The maintainer wants **no Settings action whose only purpose is to switch

@@ -1,0 +1,17 @@
+  INFO: Launching config: "/tmp/alis-task-settings-pages-nj2mew8d/shell.qml"
+  INFO: Shell ID: "89894d64e5482fdbd7286d3ad731a95d" Path ID "89894d64e5482fdbd7286d3ad731a95d"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/cyichq8rmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.584414.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-task-settings-pages-nj2mew8d/state/quickshell/states.json failed: File does not exist.
+ DEBUG qml: Failed to load persistent states file: 2
+ DEBUG qml: [Persistent] File not found, creating new file.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-task-settings-pages-nj2mew8d/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-task-settings-pages-nj2mew8d/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-task-settings-pages-nj2mew8d/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN scene: QML FileView at @services/IconThemeService.qml[39:5]: Read of /tmp/alis-task-settings-pages-nj2mew8d/state/inir/native-backend failed: File does not exist.
+  WARN scene: QML FileView at @services/MaterialThemeLoader.qml[577:5]: Read of /tmp/alis-task-settings-pages-nj2mew8d/state/quickshell/user/generated/colors.json failed: File does not exist.
+  WARN scene: QML FileView at @services/MaterialThemeLoader.qml[577:5]: Read of /tmp/alis-task-settings-pages-nj2mew8d/state/quickshell/user/generated/colors.json failed: File does not exist.
+  INFO qml: SETTINGS_PAGE_CAPTURE_PASS 4

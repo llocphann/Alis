@@ -1,0 +1,14 @@
+[
+  {
+    "checks": 2321,
+    "captures": 84,
+    "dpr": 1,
+    "exit_code": 0
+  },
+  {
+    "checks": 2321,
+    "captures": 84,
+    "dpr": 1.25,
+    "exit_code": 0
+  }
+]
