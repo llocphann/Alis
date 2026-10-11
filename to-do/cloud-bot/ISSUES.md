@@ -259,7 +259,30 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   candidates rather than stack another blind fix. Acceptance: normal
   hover → connected Popup and reverse transfer restored with Companion
   on/off, clicks unaffected, four edges/scales/outputs and actual owner
-  desktop signoff. State: OPEN; NOT_DIAGNOSED, native reproduction needed.
+  desktop signoff.
+  **Diagnosed/source repair, 2026-10-11:** Alis-Companion main
+  `a49284fa36cf030d3b2ab4212ecf7efebc63edf3` is pushed. On host
+  `413c64be084225d0d4d01f5980652701cdce8681`, actual Qt source/anchor
+  events show the later full-output companionPointer HoverHandler steals
+  module hover despite blocking=false. Single-handler isolation and
+  ancestor/sibling reversal establish this Qt interception; native mask
+  or lease hypotheses are not promoted to a physical-pointer diagnosis.
+  The observer now belongs to the existing host ancestor, with exact
+  scene coordinates preserved and QObject ownership returned on output
+  destruction. Native mask/layer/focus, actor/shaders/animation code are
+  unchanged. Real private package/perimeter testing passed 946 checks,
+  36 cases over four edges/three modules/three entry states, 49 field
+  flushes, exit 0; verifies connector/body/reversal, actual clicks,
+  Vertical Media's separate outside catcher and package teardown.
+  AI/journal/voice remained OFF in isolated test state. Per-move capture
+  liveness and corrected click-oracle failures are not product PASSes;
+  [owning-repository technical evidence](https://github.com/llocphann/Alis-Companion/blob/a49284fa36cf030d3b2ab4212ecf7efebc63edf3/docs/evidence/20261011-module-hover/README.md)
+  retains the baseline/controls/matrix and source-byte pins.
+  State: OPEN for committed exact-pair qualification, actual wl_pointer
+  delivery, installed-release readback, Wi-Fi/Bluetooth, fractional/
+  multiple outputs and owner drag/chat/animated acceptance. The earlier
+  rejected host hover/bridge patches remain reverted. No owner install
+  or Companion G0 replay occurred.
 
 - [ ] **Popup/Edgebar closes while hovered — received/updated 2026-10-10:**
   **Owner update, 2026-10-10 evening — LOCAL DESKTOP CHATBOT NEXT:**
