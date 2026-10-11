@@ -1,0 +1,49 @@
+  INFO: Launching config: "/tmp/alis-config-raw-write-82x4emy5/shell.qml"
+  INFO: Shell ID: "9da8560b6f7695db6ba0792695f16578" Path ID "9da8560b6f7695db6ba0792695f16578"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-82x4emy5/runtime/quickshell/by-id/0587835rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE startup/migration {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.78,"disk":0.78}
+  INFO qml: CONFIG_RAW_WRITE_TRACE edit after migration {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS migration 1 0 4
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-82x4emy5/shell.qml"
+  INFO: Shell ID: "9da8560b6f7695db6ba0792695f16578" Path ID "9da8560b6f7695db6ba0792695f16578"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-82x4emy5/runtime/quickshell/by-id/t587935rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE restart {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS restart 1 0 4
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-82x4emy5/shell.qml"
+  INFO: Shell ID: "9da8560b6f7695db6ba0792695f16578" Path ID "9da8560b6f7695db6ba0792695f16578"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-82x4emy5/runtime/quickshell/by-id/t687a35rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE startup/migration {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.78,"disk":0.78}
+  INFO qml: CONFIG_RAW_WRITE_TRACE first raw save {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 0 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 1 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 2 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE later edit/retry {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS flush 1 0 15
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-82x4emy5/shell.qml"
+  INFO: Shell ID: "9da8560b6f7695db6ba0792695f16578" Path ID "9da8560b6f7695db6ba0792695f16578"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-82x4emy5/runtime/quickshell/by-id/l787b35rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE restart {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS restart 1 0 4
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-82x4emy5/shell.qml"
+  INFO: Shell ID: "9da8560b6f7695db6ba0792695f16578" Path ID "9da8560b6f7695db6ba0792695f16578"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-82x4emy5/runtime/quickshell/by-id/1887c35rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE startup/migration {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.78,"disk":0.78}
+  INFO qml: CONFIG_RAW_WRITE_TRACE first raw save {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 0 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 1 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 2 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE later edit/retry {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_TRACE failure {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+ ERROR qml: CONFIG_RAW_WRITE_FAIL raw save lost optional keys: later edit/retry check@qs:@/qs/shell.qml:14
+stored@qs:@/qs/shell.qml:39
+runChecks@qs:@/qs/shell.qml:92
+expression for onTriggered@qs:@/qs/shell.qml:103

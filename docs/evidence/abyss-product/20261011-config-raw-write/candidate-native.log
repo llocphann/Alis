@@ -1,0 +1,115 @@
+  INFO: Launching config: "/tmp/alis-config-raw-write-j3ocg6n8/shell.qml"
+  INFO: Shell ID: "b32855fdefa113e5685ef9b19a4d5e9d" Path ID "b32855fdefa113e5685ef9b19a4d5e9d"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-j3ocg6n8/runtime/quickshell/by-id/h6r7wc5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE startup/migration {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.78,"disk":0.78}
+  INFO qml: CONFIG_RAW_WRITE_TRACE edit after migration {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS migration 1 0 4
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-j3ocg6n8/shell.qml"
+  INFO: Shell ID: "b32855fdefa113e5685ef9b19a4d5e9d" Path ID "b32855fdefa113e5685ef9b19a4d5e9d"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-j3ocg6n8/runtime/quickshell/by-id/zcr7yc5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE restart {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS restart 1 0 4
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-j3ocg6n8/shell.qml"
+  INFO: Shell ID: "b32855fdefa113e5685ef9b19a4d5e9d" Path ID "b32855fdefa113e5685ef9b19a4d5e9d"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-j3ocg6n8/runtime/quickshell/by-id/8gr70d5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE startup/migration {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.78,"disk":0.78}
+  INFO qml: CONFIG_RAW_WRITE_TRACE first raw save {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 0 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 1 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 2 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE later edit/retry {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS flush 1 0 15
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-j3ocg6n8/shell.qml"
+  INFO: Shell ID: "b32855fdefa113e5685ef9b19a4d5e9d" Path ID "b32855fdefa113e5685ef9b19a4d5e9d"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-j3ocg6n8/runtime/quickshell/by-id/nlr72d5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE restart {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS restart 1 0 4
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-j3ocg6n8/shell.qml"
+  INFO: Shell ID: "b32855fdefa113e5685ef9b19a4d5e9d" Path ID "b32855fdefa113e5685ef9b19a4d5e9d"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-j3ocg6n8/runtime/quickshell/by-id/bor74d5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE startup/migration {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.78,"disk":0.78}
+  INFO qml: CONFIG_RAW_WRITE_TRACE first raw save {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 0 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 1 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 2 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE later edit/retry {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS flush 0 0 10
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-j3ocg6n8/shell.qml"
+  INFO: Shell ID: "b32855fdefa113e5685ef9b19a4d5e9d" Path ID "b32855fdefa113e5685ef9b19a4d5e9d"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-j3ocg6n8/runtime/quickshell/by-id/5qr76d5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE restart {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS restart 0 0 3
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-j3ocg6n8/shell.qml"
+  INFO: Shell ID: "b32855fdefa113e5685ef9b19a4d5e9d" Path ID "b32855fdefa113e5685ef9b19a4d5e9d"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-j3ocg6n8/runtime/quickshell/by-id/1rr78d5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE startup/migration {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.78,"disk":0.78}
+  INFO qml: CONFIG_RAW_WRITE_TRACE first raw save {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 0 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 1 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 2 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE later edit/retry {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS flush 1 1 15
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-j3ocg6n8/shell.qml"
+  INFO: Shell ID: "b32855fdefa113e5685ef9b19a4d5e9d" Path ID "b32855fdefa113e5685ef9b19a4d5e9d"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-j3ocg6n8/runtime/quickshell/by-id/ntr7ad5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE restart {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS restart 1 1 4
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-j3ocg6n8/shell.qml"
+  INFO: Shell ID: "b32855fdefa113e5685ef9b19a4d5e9d" Path ID "b32855fdefa113e5685ef9b19a4d5e9d"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-j3ocg6n8/runtime/quickshell/by-id/fur7bd5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE startup/migration {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.78,"disk":0.78}
+  INFO qml: CONFIG_RAW_WRITE_TRACE first raw save {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 0 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 1 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 2 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  WARN scene: QML FileView at @modules/common/Config.qml[509:5]: Write of /tmp/alis-config-raw-write-j3ocg6n8/config/illogical-impulse/config.json failed: Permission denied.
+  WARN qml: [Config] write flight released: save failed (3)
+  INFO qml: CONFIG_RAW_WRITE_TRACE failed save acknowledgement {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE later edit/retry {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS failure 1 0 19
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-j3ocg6n8/shell.qml"
+  INFO: Shell ID: "b32855fdefa113e5685ef9b19a4d5e9d" Path ID "b32855fdefa113e5685ef9b19a4d5e9d"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-j3ocg6n8/runtime/quickshell/by-id/5xr7ed5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE restart {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS restart 1 0 4
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-j3ocg6n8/shell.qml"
+  INFO: Shell ID: "b32855fdefa113e5685ef9b19a4d5e9d" Path ID "b32855fdefa113e5685ef9b19a4d5e9d"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-j3ocg6n8/runtime/quickshell/by-id/jyr7fd5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE startup/migration {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.78,"disk":0.78}
+  INFO qml: CONFIG_RAW_WRITE_TRACE first raw save {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 0 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 1 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE unchanged flush 2 {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.41,"disk":0.41}
+  WARN scene: QML FileView at @modules/common/Config.qml[509:5]: Write of /tmp/alis-config-raw-write-j3ocg6n8/config/illogical-impulse/config.json failed: Permission denied.
+  WARN qml: [Config] write flight released: save failed (3)
+  INFO qml: CONFIG_RAW_WRITE_TRACE failed save acknowledgement {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.41}
+  INFO qml: CONFIG_RAW_WRITE_TRACE later edit/retry {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS failure 0 0 13
+
+  INFO: Launching config: "/tmp/alis-config-raw-write-j3ocg6n8/shell.qml"
+  INFO: Shell ID: "b32855fdefa113e5685ef9b19a4d5e9d" Path ID "b32855fdefa113e5685ef9b19a4d5e9d"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-j3ocg6n8/runtime/quickshell/by-id/xzr7hd5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE restart {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.73,"disk":0.73}
+  INFO qml: CONFIG_RAW_WRITE_PASS restart 0 0 3

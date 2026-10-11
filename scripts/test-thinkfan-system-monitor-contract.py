@@ -168,7 +168,6 @@ def main() -> None:
 
     for token in (
         "function flushWrites(): void",
-        "if (root._writeInFlight) {",
         "root._pendingWrite = true",
         "root._writeMirrorToDisk()",
     ):

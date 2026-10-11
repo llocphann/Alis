@@ -1,0 +1,6 @@
+{"script": "test-config-inflight-mutation-runtime.py", "exit_code": 0}
+CONFIG_WRITE_RACE_PASS in-memory and persisted state survive all four overlapping saves
+{"script": "test-abyss-content-opacity-config-runtime.py", "exit_code": 0}
+CONTENT_OPACITY_CONFIG_PASS 5 saved cases / 10 actual Config processes and disk readbacks; no windows or owner preferences
+{"script": "test-thinkfan-system-monitor-contract.py", "exit_code": 0}
+ThinkFan/System Monitor contract: OK

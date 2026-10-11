@@ -6,6 +6,24 @@ that implementation is missing. Refetch current `dev` before diagnosing.
 
 ## Current failures and owner reports
 
+- [ ] **CFG-I02 — Config migration/custom-widget injection blocks later saves — discovered/fixed in source 2026-10-11:**
+  [Owner: Alis dev; priority: configuration integrity] Exact baseline
+  `b44899d504d106b7a6d65ff16030f583fb3b526d` completes migration, then
+  unguarded same-byte custom reinjection blocks later saves: live .73
+  remains .78 on disk. Explicit raw flush reproduces the same loss after
+  .41; the exact clean-clone regression fails its 1800ms startup gate.
+  Source repair avoids duplicate custom injection, makes unchanged raw
+  writes obtain actual atomic saved/failed receipts, starts guards before
+  synchronous completion and preserves queued raw-flush intent/unknown keys.
+  Twelve actual headless Config startup/restart processes PASS (98 QML
+  checks plus private disk checks), including custom/no-custom, repeated
+  unchanged/overlapping saves, permission denial and explicit retry. Existing
+  mutation, opacity-migration and Thinkfan contracts PASS, exit 0 each.
+  [Pinned source and all retained failures/evidence](../../docs/evidence/abyss-product/20261011-config-raw-write/README.md).
+  State: SOURCE FIXED / OPEN for final committed canonical and owner
+  persistence; no owner data/preferences or windows were touched. The
+  pre-repair b448 canonical PASS does not qualify this new repair.
+
 - [ ] **ABYSS-I01 — Panel background blur appears coupled to Panel opacity — owner report 2026-10-11:**
   [Owner: Alis dev; Bug / material rendering] User reports
   **Panel background blur** changes together with **Panel
@@ -82,7 +100,8 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   Both material fixtures PASS in canonical `6bb45f361` (overall FAIL on the
   separate editor fixture). State: OPEN for a final overall canonical result
   and owner physical/real-theme, video/multi-output review. ABYSS-R04 remains
-  separate and unimplemented.
+  separate; its unified slider/migration is implemented at `553525a25`,
+  with full canonical and owner acceptance still open.
 
 - [x] **P0 — fullscreen window retains hidden Screen Edges/Panel/Perimeter after switching to another window (owner report 2026-10-10):**
   Reproduce on Niri: fullscreen client A, then open/focus window B in the
@@ -930,7 +949,16 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   justified by this archive.
 
 
-- [ ] **Canonical validation — updated 2026-10-11:** latest complete exact clean-clone
+- [ ] **Canonical validation — updated 2026-10-11:** frozen committed driver
+  on clean-clone `b44899d504d106b7a6d65ff16030f583fb3b526d` finishes
+  **PASS: 349 PASS / 0 FAIL / 2 SKIP, exit 0**. Dashboard horizontal routing,
+  shared opacity/material, all four Popup hover edges and both editor gates
+  pass. The skips are unknown-version qmlformat wrapper and deferred Nix.
+  This exact SHA precedes CFG-I02; qualify the newly committed persistence
+  repair separately. All prior FAIL/INTERRUPTED/NOT_STARTED receipts remain
+  historical, with owner/physical pointer/audio/multi-output gates OPEN.
+  [Full frozen-driver log and receipt](../../docs/evidence/abyss-product/20261011-b44899d50/README.md).
+  **Earlier complete exact clean-clone**
   `b543bb7602eb74901c3c137c89c70c301e12fde4`: **FAIL, 345 PASS / 1 FAIL /
   2 SKIP, exit 1**. The sole failure dismisses StyledPopup at its right
   padding probe (762,143); post-dismiss geometry cannot establish the cause.

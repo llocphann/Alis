@@ -1,0 +1,10 @@
+  INFO: Launching config: "/tmp/alis-config-raw-write-b6b9dsp9/shell.qml"
+  INFO: Shell ID: "0d5fd6e3b3e12dc4ccb60395305fd19c" Path ID "0d5fd6e3b3e12dc4ccb60395305fd19c"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-b6b9dsp9/runtime/quickshell/by-id/jmd7a95rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE failure {"busy":false,"pending":false,"inject":false,"retries":0,"value":0.78,"disk":0.78}
+ ERROR qml: CONFIG_RAW_WRITE_FAIL List doesn't define a Count function qtest_findVisualChild@qrc:/qt-project.org/imports/QtTest/TestCase.qml:1104
+findChild@qrc:/qt-project.org/imports/QtTest/TestCase.qml:1091
+settle@qs:@/qs/shell.qml:28
+runChecks@qs:@/qs/shell.qml:56
+expression for onTriggered@qs:@/qs/shell.qml:105

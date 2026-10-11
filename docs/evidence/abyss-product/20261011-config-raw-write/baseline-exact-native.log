@@ -1,0 +1,9 @@
+  INFO: Launching config: "/tmp/alis-config-raw-write-gkfpkt78/shell.qml"
+  INFO: Shell ID: "eeb149d6d187e6d0ca82a1bb8e614da9" Path ID "eeb149d6d187e6d0ca82a1bb8e614da9"
+  INFO: Saving logs to "/tmp/alis-config-raw-write-gkfpkt78/runtime/quickshell/by-id/8rr78d5rmt/log.qslog"
+  INFO: Configuration Loaded
+  INFO qml: CONFIG_RAW_WRITE_TRACE failure {"busy":true,"pending":false,"inject":false,"retries":0,"value":0.78,"disk":0.78}
+ ERROR qml: CONFIG_RAW_WRITE_FAIL QtQuickTest::fail tryVerify@qrc:/qt-project.org/imports/QtTest/TestCase.qml:603
+settle@qs:@/qs/shell.qml:26
+runChecks@qs:@/qs/shell.qml:54
+expression for onTriggered@qs:@/qs/shell.qml:103

@@ -938,8 +938,9 @@ run privileged installation just because manual buttons are retired.
   [Source pins and focused evidence](../../docs/evidence/abyss-product/20261011-dashboard-navigation/README.md).
   Product milestone `8edd331797771924435a91ed1ed8abac382490c2` is pushed;
   combined material source is `553525a25d6b93ab63b02a3233eee3c909579b38`.
-  Canonical 8edd was interrupted, and 553 launch did not start; see Issues.
-  State: OPEN for committed canonical, owner touchpad/mouse/scaling and
+  Frozen clean-clone b44899d50 canonical now PASS 349/0/2, exit 0; prior
+  interrupted/not-started receipts remain retained. Later CFG-I02 must be
+  qualified separately. State: OPEN for owner touchpad/mouse/scaling and
   multi-output acceptance; actual third Planner page (DASH-F01), dot drag
   transactions (DASH-F02) and their native three-page/restart gates remain
   NOT IMPLEMENTED. Do not turn policy permutations into product acceptance.
@@ -1171,9 +1172,10 @@ run privileged installation just because manual buttons are retired.
   A separate extra unchanged Config flush missed its four-second lease
   deadline; raw failure retained, cause NOT_DIAGNOSED, no flush repair claimed.
   Product `553525a25d6b93ab63b02a3233eee3c909579b38` is pushed.
-  Five-hour 2% stop checkpoint: full canonical NOT_STARTED (launcher path
-  error); execute correct frozen driver after scheduled reset continuation.
-  State: OPEN for committed full canonical and owner visual/theme/typography,
+  After reset, frozen clean-clone b44899d50 canonical PASS 349/0/2, exit 0;
+  prior launcher/stop receipts are retained. CFG-I02 now repairs migration
+  with nonempty custom data and requires a separate new committed run.
+  State: OPEN for owner visual/theme/typography,
   per-surface contrast, animation and multiple-output acceptance.
 
 - [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**

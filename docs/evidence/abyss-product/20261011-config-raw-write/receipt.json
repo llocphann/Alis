@@ -1,0 +1,47 @@
+{
+  "task": "CFG-I02",
+  "base_sha": "b44899d504d106b7a6d65ff16030f583fb3b526d",
+  "source_identity": "precommit source pinned by hashes",
+  "source_sha256": {
+    "modules/common/Config.qml": "5482f04ae264a584229a4cd32eb587c90ac02ca3199e6e07860942ad8b72e5fe",
+    "scripts/test-config-raw-write-runtime.py": "8a68bce1eb29e5035365aa8d9cf3a4ec3bf60f2a59497fa17c9f2070639d4508",
+    "scripts/test-thinkfan-system-monitor-contract.py": "7fd1cb6200ac3ca6663ebeac145dc111d5a677736f61b2d3446de51a681abb8a"
+  },
+  "baseline_exact": {
+    "source_sha": "b44899d504d106b7a6d65ff16030f583fb3b526d",
+    "fixture_sha256": "8a68bce1eb29e5035365aa8d9cf3a4ec3bf60f2a59497fa17c9f2070639d4508",
+    "exit_code": 1,
+    "result": "EXPECTED_FAIL",
+    "log": "/tmp/alis-config-baseline-zzpuzdg5/native.log"
+  },
+  "candidate": {
+    "result": "PASS",
+    "exit_code": 0,
+    "actual_config_processes": 12,
+    "qml_checks": 98,
+    "private_disk_readbacks": true,
+    "cases": [
+      "legacy card migration with custom widgets",
+      "custom/no-custom raw writes",
+      "three unchanged flushes per save case",
+      "async and synchronous completion",
+      "overlapping edits/queued raw flush",
+      "permission-denied failure keeps disk unchanged and explicit retry persists desired bytes",
+      "restart for every case"
+    ]
+  },
+  "compatibility": {
+    "config_inflight_mutation": "PASS/0",
+    "opacity_config_migration": "PASS/0 (5 cases / 10 processes)",
+    "thinkfan_config_contract": "PASS/0"
+  },
+  "retained_interim_failures": {
+    "optional_key_loss": "first candidate lost unknown keys when queued flush became an adapter save; candidate was not committed/pinned",
+    "qobject_lookup": "fixture findChild on nonvisual Config singleton invalid; removed invalid inspection, actual save/disk/deadlines unchanged"
+  },
+  "canonical": "PENDING on final committed repair; b448 pre-repair canonical PASS is separate",
+  "owner_preferences_changed": false,
+  "windows_opened": false,
+  "resource_percentages_claimed": false,
+  "recorded_at": "2026-10-11T16:54:30.871872+00:00"
+}

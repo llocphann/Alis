@@ -25,13 +25,15 @@ Singleton {
     }
 
     function flushWrites(): void {
+        // Keep raw-save intent when this flush is queued behind another save.
+        root._pendingRawWrite = true;
         fileWriteTimer.stop();
         fileReloadTimer.stop();
         if (!root.ready) {
             root._pendingWrite = true;
             return;
         }
-        if (root._writeInFlight) {
+        if (root._writeInFlight || root._rawWriteView !== null) {
             root._pendingWrite = true;
             return;
         }
@@ -39,8 +41,9 @@ Singleton {
         root._pendingWrite = false;
         root._writeInFlight = true;
         root._writeRetries = 0;
-        root._writeMirrorToDisk();
+        root._pendingRawWrite = false;
         writeFlightGuard.restart();
+        root._writeMirrorToDisk();
     }
 
     function _applyNestedKey(nestedKey, value) {
@@ -134,7 +137,7 @@ Singleton {
     }
 
     function _recordPendingMutation(nestedKey, value): void {
-        if (!root._reloadInFlight && !root._writeInFlight)
+        if (!root._reloadInFlight && !root._writeInFlight && root._rawWriteView === null)
             return;
         const path = Array.isArray(nestedKey) ? nestedKey.join(".") : String(nestedKey);
         if (root._reloadInFlight) {
@@ -142,7 +145,7 @@ Singleton {
             overlay[path] = value;
             root._reloadOverlay = overlay;
         }
-        if (root._writeInFlight) {
+        if (root._writeInFlight || root._rawWriteView !== null) {
             let overlay = root._cloneObject(root._writeOverlay);
             overlay[path] = value;
             root._writeOverlay = overlay;
@@ -275,7 +278,9 @@ Singleton {
     }
 
     property bool _writeInFlight: false
+    property FileView _rawWriteView: null
     property bool _pendingWrite: false
+    property bool _pendingRawWrite: false
     property bool _pendingCustomInject: false
     property bool _pendingReload: false
     property bool _reloadInFlight: false
@@ -360,18 +365,54 @@ Singleton {
             root.customWidgetData = root._cloneObject(root._customSnapshotForInject);
     }
 
+    function _finishRawWrite(view: FileView, reason: string): void {
+        if (root._rawWriteView === view) {
+            root._rawWriteView = null;
+            root._endWriteFlight(reason);
+        }
+        view.destroy();
+    }
+
+    Component {
+        id: uncachedRawWriter
+        FileView {
+            // A fresh write-only view submits even unchanged bytes. Comparing
+            // the main view's cache cannot prove a successful disk save.
+            preload: false
+            blockWrites: root.blockWrites
+            onSaved: root._finishRawWrite(this, "")
+            onSaveFailed: error => root._finishRawWrite(this, `save failed (${error})`)
+        }
+    }
+
     function _writeMirrorToDisk(): void {
+        if (root._rawWriteView !== null)
+            return;
         try {
             let obj = root._jsonMirror;
-            if (!obj || Object.keys(obj).length === 0) return;
+            if (!obj || Object.keys(obj).length === 0) {
+                root._endWriteFlight("empty config mirror");
+                return;
+            }
             if (root._hasObjectKeys(root.customWidgetData)) {
                 if (!obj.background) obj.background = {};
                 if (!obj.background.widgets) obj.background.widgets = {};
                 obj.background.widgets.custom = root.customWidgetData;
             }
-            configFileView.setText(JSON.stringify(obj, null, 4));
+            // This complete snapshot already contains custom data. A second
+            // identical injection receives no FileView acknowledgement.
+            root._pendingCustomInject = false;
+            root._customSnapshotForInject = ({});
+            const text = JSON.stringify(obj, null, 4);
+            if (configFileView.text() === text) {
+                const view = uncachedRawWriter.createObject(root, {path: root.filePath});
+                if (!view)
+                    throw new Error("could not create raw config writer");
+                root._rawWriteView = view;
+                view.setText(text);
+            } else configFileView.setText(text);
         } catch (e) {
-            console.warn("[Config] mirror write failed:", e.message);
+            root._endWriteFlight(`mirror write failed (${e.message})`);
         }
     }
 
@@ -386,8 +427,10 @@ Singleton {
             root.customWidgetData = root._cloneObject(customData);
             root._customSnapshotForInject = ({});
             root._writeInFlight = true;
-            configFileView.setText(JSON.stringify(root._jsonMirror, null, 4));
-        } catch (e) { root._writeInFlight = false; }
+            root._writeRetries = 0;
+            writeFlightGuard.restart();
+            root._writeMirrorToDisk();
+        } catch (e) { root._endWriteFlight(`custom injection failed (${e.message})`); }
     }
 
     Timer {
@@ -395,7 +438,7 @@ Singleton {
         interval: root.readWriteDelay
         repeat: false
         onTriggered: {
-            if (root._writeInFlight || fileWriteTimer.running || customInjectTimer.running || root._reloadInFlight) {
+            if (root._writeInFlight || root._rawWriteView !== null || fileWriteTimer.running || customInjectTimer.running || root._reloadInFlight) {
                 root._pendingReload = true;
                 return;
             }
@@ -414,7 +457,7 @@ Singleton {
                 root._pendingWrite = true;
                 return;
             }
-            if (root._writeInFlight) {
+            if (root._writeInFlight || root._rawWriteView !== null) {
                 root._pendingWrite = true;
                 return;
             }
@@ -423,13 +466,14 @@ Singleton {
             root._writeInFlight = true;
             root._writeRetries = 0;
             fileReloadTimer.stop();
+            writeFlightGuard.restart();
             // A migration patches the original document, including keys owned
             // by optional/custom features that JsonAdapter does not declare.
-            if (root._styleMigrationWritePending) {
+            if (root._styleMigrationWritePending || root._pendingRawWrite) {
                 root._styleMigrationWritePending = false;
+                root._pendingRawWrite = false;
                 root._writeMirrorToDisk();
             } else configFileView.writeAdapter();
-            writeFlightGuard.restart();
         }
     }
 
@@ -471,7 +515,7 @@ Singleton {
             // A save from the previous mutation can signal FileChanged after
             // onSaved while the next debounced local write is already queued.
             // Never reload that older disk snapshot ahead of the queued write.
-            if (root._writeInFlight || fileWriteTimer.running || customInjectTimer.running) {
+            if (root._writeInFlight || root._rawWriteView !== null || fileWriteTimer.running || customInjectTimer.running) {
                 root._pendingReload = true;
                 return;
             }

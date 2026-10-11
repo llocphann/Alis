@@ -1,0 +1,16 @@
+{
+  "source_sha": "b44899d504d106b7a6d65ff16030f583fb3b526d",
+  "source_root": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis",
+  "driver": "/tmp/alis-canonical-klcbap4i/b44899d504d106b7a6d65ff16030f583fb3b526d.sh",
+  "driver_sha256": "f0d1492eccfbbda046cdd7fabf48fd03409c5b5e17f896f47eca07ad0e2dde6d",
+  "log": "/tmp/alis-canonical-klcbap4i/canonical.log",
+  "terminal": "/tmp/alis-canonical-klcbap4i/terminal.log",
+  "started_at": "2026-10-11T16:31:52.770694+00:00",
+  "status": "PASS",
+  "exit_code": 0,
+  "finished_at": "2026-10-11T16:50:42.153633+00:00",
+  "passed": 349,
+  "failed": 0,
+  "skipped": 2,
+  "boundary": "exact committed pre-CFG-I02 source; does not explain older intermittent failures or establish owner acceptance"
+}
