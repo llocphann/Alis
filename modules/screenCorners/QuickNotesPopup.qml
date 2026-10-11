@@ -308,6 +308,7 @@ Bar.StyledPopup {
                         showHeader: false
                         showZettelkastenActions: false
                         verticalDotNavigation: true
+                        readingOnHover: true
                         onEditorActivated: root.enterEditorMode()
                     }
                 }

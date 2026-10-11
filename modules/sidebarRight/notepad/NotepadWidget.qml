@@ -8,6 +8,7 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 import Quickshell
 import Quickshell.Io
+import "MarkdownNote.js" as MarkdownNote
 
 Item {
     id: root
@@ -23,6 +24,10 @@ Item {
     // Keep the same editor/autosave backend while hiding Dashboard/Sidebar
     // navigation chrome that would slow down a one-thought interaction.
     property bool quickCapturePresentation: false
+    // The hover corner reads Markdown without taking input focus; all other
+    // shared editor hosts preserve their existing Source-first behavior.
+    property bool readingOnHover: false
+    property bool markdownEditing: !root.readingOnHover
     property bool verticalDotNavigation: false
     // Quick Notes can coexist on Dashboard, Sidebar Left and the bottom-left
     // corner. In that mode each surface keeps the stable ID of the note it is
@@ -57,15 +62,8 @@ Item {
         ? textArea.text.trim().split(/\s+/).length : 0
     readonly property int tabCount: Notepad.tabs.length
     readonly property string attachmentDirectory: Directories.stateUserPath + "/notepad-attachments"
-    readonly property var imageUrls: {
-        const result = []
-        const pattern = /!\[[^\]\n]*\]\((file:\/\/[^)\r\n]+)\)/g
-        const draft = String(textArea.text)
-        let match
-        while ((match = pattern.exec(draft)) !== null)
-            if (!result.includes(match[1])) result.push(match[1])
-        return result
-    }
+    readonly property var imageUrls:
+        MarkdownNote.attachmentUrls(textArea.text, root.attachmentDirectory)
     readonly property bool attachmentBusy: clipboardProc.pending
     function pasteFromClipboard(): bool {
         return root._startAttachment("")
@@ -153,6 +151,7 @@ Item {
     function focusEditor(): void {
         if (!Notepad.ready)
             return
+        root.markdownEditing = true
         Qt.callLater(() => {
             if (root.visible && root.enabled)
                 textArea.forceActiveFocus()
@@ -160,8 +159,29 @@ Item {
     }
 
     function releaseEditorFocus(): void {
+        root.flushPendingSave()
         textArea.focus = false
         root.focus = false
+        if (root.readingOnHover)
+            root.markdownEditing = false
+    }
+
+    function formatMarkdown(kind): bool {
+        // This is Source editing, never conversion to rendered text.
+        if (!Notepad.ready || !root.markdownEditing || !textArea.activeFocus)
+            return false
+        const start = textArea.selectionStart >= 0
+            ? textArea.selectionStart : textArea.cursorPosition
+        const end = textArea.selectionEnd >= 0
+            ? textArea.selectionEnd : textArea.cursorPosition
+        const patch = MarkdownNote.format(textArea.text, start, end, kind)
+        if (!patch)
+            return false
+        // TextArea's incremental edits retain the native undo stack.
+        textArea.remove(patch.from, patch.to)
+        textArea.insert(patch.from, patch.insert)
+        textArea.select(patch.selectionStart, patch.selectionEnd)
+        return true
     }
 
     function _activeTabId(): string {
@@ -716,8 +736,55 @@ Item {
                         : Appearance.colors.colLayer0Border
                     clip: true
 
+                    Flickable {
+                        id: markdownReader
+                        objectName: "quickNotesMarkdownReading"
+                        visible: root.readingOnHover && !root.markdownEditing
+                        anchors.fill: parent
+                        anchors.margins: root.compactPresentation ? 6 : 8
+                        anchors.bottomMargin: (root.compactPresentation ? 6 : 8)
+                            + (imagePreview.active ? imagePreview.height + 4 : 0)
+                        contentWidth: width
+                        contentHeight: Math.max(height, markdownBody.implicitHeight + 12)
+                        clip: true
+                        boundsBehavior: Flickable.StopAtBounds
+                        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.IBeamCursor
+                            onClicked: root.focusEditor()
+                            onWheel: wheel => wheel.accepted = false
+                        }
+
+                        Text {
+                            id: markdownBody
+                            objectName: "quickNotesMarkdownBody"
+                            x: 4
+                            y: 4
+                            width: Math.max(1, markdownReader.width - 8)
+                            textFormat: Text.MarkdownText
+                            wrapMode: Text.Wrap
+                            color: root.colText
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            text: textArea.text.length > 0
+                                ? MarkdownNote.safeReading(textArea.text)
+                                : Translation.tr("Click to edit this note")
+                            // Markdown links are visual text, never an
+                            // automatic external process/network action.
+                            onLinkActivated: link => {}
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.IBeamCursor
+                                onClicked: root.focusEditor()
+                                onWheel: wheel => wheel.accepted = false
+                            }
+                        }
+                    }
+
                     ScrollView {
                         id: scrollView
+                        visible: !root.readingOnHover || root.markdownEditing
                         anchors.fill: parent
                         anchors.margins: root.compactPresentation ? 6 : 8
                         anchors.bottomMargin: (root.compactPresentation ? 6 : 8)
@@ -809,6 +876,15 @@ Item {
                             }
 
                             Keys.onPressed: event => {
+                                if (Notepad.ready && event.modifiers === Qt.ControlModifier) {
+                                    const formatKind = event.key === Qt.Key_B ? "bold"
+                                        : event.key === Qt.Key_I ? "italic"
+                                        : event.key === Qt.Key_K ? "link" : ""
+                                    if (formatKind && root.formatMarkdown(formatKind)) {
+                                        event.accepted = true
+                                        return
+                                    }
+                                }
                                 if (Notepad.ready && (event.modifiers & Qt.ControlModifier)
                                         && event.key === Qt.Key_V) {
                                     root.pasteFromClipboard()

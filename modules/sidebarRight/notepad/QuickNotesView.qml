@@ -21,6 +21,7 @@ Item {
     property bool showHeader: true
     property bool showZettelkastenActions: true
     property bool verticalDotNavigation: false
+    property bool readingOnHover: false
 
     implicitHeight: root.preferredHeight
 
@@ -163,6 +164,7 @@ Item {
             Layout.minimumHeight: root.constrainedHeight ? 76 : 130
             compactPresentation: true
             verticalDotNavigation: root.verticalDotNavigation
+            readingOnHover: root.readingOnHover
             surfaceLocalTabSelection: root.surfaceLocalTabSelection
             margin: 0
             onEditorActivated: root.editorActivated()
