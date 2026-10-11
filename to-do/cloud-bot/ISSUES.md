@@ -1089,7 +1089,9 @@ that implementation is missing. Refetch current `dev` before diagnosing.
 - [ ] **CAP-I01 — Intermittent Quickshell restart during screenshot — owner report 2026-10-11:**
   [Owner: Alis dev; priority: startup/crash investigation] The shell
   sometimes appears to **reset/reinitialize when taking a screenshot**;
-  the owner suspects a crash but this is NOT YET CONFIRMED. Preserve
+  the owner reports a crash after completing a screenshot hotkey. A real
+  SIGSEGV/restart on 2026-10-11 is now CONFIRMED, while its correlation
+  with a capture and its faulting code remain UNKNOWN. Preserve
   screenshots and normal shell state: screenshot/region-selection capture
   must never restart Quickshell, clear unrelated UI/session state or
   trigger an unrequested Settings/Panel reload. Distinguish (1) actual
@@ -1131,7 +1133,36 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   and zero unexpected shell PID/uptime discontinuity. Add focused
   tests for failure exits and lifecycle cleanup; native exact-SHA
   reproduction and owner retest are mandatory before closure.
-  State: OPEN; crash vs reload NOT DIAGNOSED, no runtime fix applied.
+  **Local investigation 2026-10-11:** user-service journal records
+  `code=dumped, status=11/SEGV` at 01:07:25 +07 and a managed restart
+  at 01:07:30–31. Coredump metadata identifies `/usr/bin/qs -n -p`
+  for the installed shell (crashed PID 330432), signal 11/SEGV_MAPERR;
+  storage is `none`, so no native stack is available. No capture event
+  timestamp/source identity was retained for that crash. The current
+  installed manifest is `9dd5120bf`, service started at 13:40:57 +07
+  (PID 219020, restart count 0); readback hashes match current source
+  for RegionSelection, AnnotationEditor, Cliphist, CliphistImage and
+  AbyssPerimeter. This current manifest does NOT establish the code
+  loaded by the 01:07 crash.
+
+  Both shortcut routes are configured: Print/Ctrl+Print/Alt+Print use
+  native Niri captures, while Super+Shift+S/Ctrl+Shift+S open the shell
+  region menu. The owner confirmed “hotkey, crash after capture”; the
+  exact combination is still being clarified. Private unfocused Niri
+  tests on `9dd5120bfb0735fc5dfdf5e157139f0622d66edf` passed 10
+  immediate cancels, 10 region Copy operations, three native annotation
+  exports and an export/close race. QS exited normally with 13 synthetic
+  PNG saves of the expected 160×96 dimensions. The same bounded cycles
+  also exited normally with actual AbyssPerimeter and an isolated PNG
+  clipboard watcher present (`HOST_CAPTURE_LIFECYCLE_PASS`); image-ready
+  state was not separately asserted in that diagnostic. This is bounded lifecycle
+  diagnosis, not reproduction of the owner failure or a repair. No user
+  clipboard, screenshot pixels, preferences or shell process were changed.
+  Metadata: [sanitized diagnostic receipt](../../docs/evidence/abyss-product/20261011-9dd5120bf/screenshot-diagnosis.json).
+  Next: compare the actual shortcut route with the composed host/clipboard
+  lifecycle and obtain a faulting stack or timestamp-correlated reproduction.
+  State: OPEN; real crash confirmed, capture cause UNKNOWN; no speculative
+  runtime fix applied. Owner/native acceptance remains required.
 
 ## Cross-repository correctness and release gates
 

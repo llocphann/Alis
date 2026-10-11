@@ -1,0 +1,82 @@
+{
+  "source_sha": "9dd5120bfb0735fc5dfdf5e157139f0622d66edf",
+  "date": "2026-10-11",
+  "evidence_kind": "bounded focused diagnosis; not canonical or owner acceptance",
+  "crash": {
+    "local_time": "2026-10-11T01:07:25+07:00",
+    "process": "quickshell",
+    "pid": 330432,
+    "signal": "11/SEGV_MAPERR",
+    "service_exit": "code=dumped, status=11/SEGV",
+    "managed_restart_local_time": "2026-10-11T01:07:30+07:00",
+    "core_storage": "none",
+    "stack_available": false,
+    "capture_correlation": "unknown",
+    "loaded_sha": "unknown"
+  },
+  "current_install": {
+    "manifest_commit": "9dd5120bf",
+    "service_start_local_time": "2026-10-11T13:40:57+07:00",
+    "pid": 219020,
+    "restart_count": 0,
+    "readback_matches": [
+      "modules/regionSelector/RegionSelection.qml",
+      "modules/regionSelector/AnnotationEditor.qml",
+      "services/deferred/Cliphist.qml",
+      "modules/common/widgets/CliphistImage.qml",
+      "modules/abyss/AbyssPerimeter.qml"
+    ],
+    "is_crash_loaded_identity": false
+  },
+  "region_diagnosis": {
+    "script": "private temporary RegionSelection + AnnotationEditor fixture",
+    "qs_exit": 0,
+    "copy_cycles": 10,
+    "immediate_cancel_cycles": 10,
+    "annotation_exports": 3,
+    "export_immediate_close_cycles": 1,
+    "saved_synthetic_pngs": 13,
+    "png_dimensions": [
+      160,
+      96
+    ],
+    "result": "CAPTURE_LIFECYCLE_PASS",
+    "native_backend": "private dark unfocused Niri; isolated config/cache/runtime/clipboard; no owner pixels",
+    "owner_hotkey_qualified": false
+  },
+  "related_focused_checks": [
+    {
+      "command": "python3 scripts/test-abyss-geometry-contract.py",
+      "exit": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/test-popup-anchor-hover-runtime.py",
+      "exit": 0,
+      "result": "POPUP_ANCHOR_HOVER_PASS",
+      "scope": "Qt synthetic input in a private compositor; owner global pointer crossing and Companion on/off remain open"
+    }
+  ],
+  "synchronization": {
+    "Alis": "9dd5120bfb0735fc5dfdf5e157139f0622d66edf",
+    "Alis-Companion": "d80553ac7718b6c01f62d34877a511502d520db3",
+    "Alis-Intergration": "7c3623da5cf8741a0b82cb4d3d8054017dfa99d0",
+    "method": "fetch and fast-forward; no installed deployment"
+  },
+  "backlog_audit": {
+    "issues_open": 33,
+    "rework_open": 33,
+    "features_open": 22,
+    "total_open": 88,
+    "note": "source-only fixes with unresolved acceptance stay open; no seven-day eligible completion identified"
+  },
+  "privacy": "No owner screenshot pixels, clipboard payloads, window names, journal location, machine ID or boot ID retained.",
+  "composed_host_diagnosis": {
+    "qs_exit": 0,
+    "result": "HOST_CAPTURE_LIFECYCLE_PASS",
+    "cycles": "10 immediate cancels, 10 region copies, 3 annotation exports, 1 export-immediate-close",
+    "host": "actual AbyssPerimeter plus CliphistImage, isolated PNG clipboard watcher",
+    "saved_synthetic_pngs": 13,
+    "scope": "no runtime restart observed; clipboard rendering readiness was not asserted; no owner hotkey or capture-causality acceptance"
+  }
+}
