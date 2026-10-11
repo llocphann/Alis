@@ -1210,10 +1210,21 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   diagnosis, not reproduction of the owner failure or a repair. No user
   clipboard, screenshot pixels, preferences or shell process were changed.
   Metadata: [sanitized diagnostic receipt](../../docs/evidence/abyss-product/20261011-9dd5120bf/screenshot-diagnosis.json).
-  Next: exercise actual region-menu pointer release/toolbar callbacks with
-  the composed host, and obtain a stack or timestamp-correlated reproduction.
-  State: OPEN; real crash confirmed, capture cause UNKNOWN; no speculative
-  runtime fix applied. Owner/native acceptance remains required.
+  **Actual pointer diagnosis and bounded repair 2026-10-11:** composed
+  private Abyss host, actual region MouseArea press/move/release and toolbar
+  cancel handlers pass 10 Copy / 10 cancel / 3 normal exports. Ten additional
+  duplicate-export/close races reproduce a separate data-loss defect: only
+  15 of 23 expected PNGs survive at `0a145ce1b`, with invalid QML callback
+  context warnings. AnnotationEditor now guards concurrent grabs and defers
+  requested close until the accepted grab callback finishes. The same native
+  workload saves all 23 expected 160x96 PNGs with zero invalid-context warnings
+  and QS exit 0. `scripts/test-screenshot-pointer-runtime.py` retains the
+  regression; [receipt](../../docs/evidence/abyss-product/20261011-annotation-export/receipt.json)
+  identifies the working source hash and before/after boundary. No SIGSEGV
+  was reproduced; this export fix does not establish the owner's crash cause.
+  Next: obtain a stack or timestamp-correlated capture failure, then owner
+  retest at the installed SHA. State: OPEN; real crash confirmed, capture
+  cause UNKNOWN; accepted-export lifecycle repaired with focused evidence.
 
 ## Cross-repository correctness and release gates
 

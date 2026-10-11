@@ -1,0 +1,36 @@
+{
+  "source_before": "0a145ce1b05b28aa1dcf1515ad0b87c197f5a03a",
+  "candidate_file": "modules/regionSelector/AnnotationEditor.qml",
+  "candidate_sha256": "f6e8d4279933eefa8ae53c8a7d967d229d1b48c93162ba7940d4cb2f17153ed8",
+  "kind": "focused private native QML, working candidate; not canonical or owner acceptance",
+  "scenario": {
+    "copies": 10,
+    "toolbar_cancels": 10,
+    "normal_exports": 3,
+    "duplicate_export_then_close_races": 10,
+    "expected_png_saves": 23,
+    "png_size": [
+      160,
+      96
+    ]
+  },
+  "before": {
+    "qs_exit": 0,
+    "png_saves": 15,
+    "invalid_context_warnings": 2,
+    "oracle": "FAIL: accepted export lost when Loader unloads before grab callback"
+  },
+  "after": {
+    "qs_exit": 0,
+    "png_saves": 23,
+    "invalid_context_warnings": 0,
+    "oracle": "PASS"
+  },
+  "crash_boundary": "No SIGSEGV reproduced. This fixes a proven export lifecycle/data loss defect; owner hotkey crash cause remains UNKNOWN.",
+  "isolation": {
+    "private_niri": true,
+    "owner_focus_requested": false,
+    "owner_runtime_changed": false,
+    "owner_clipboard_or_screenshot_pixels_used": false
+  }
+}

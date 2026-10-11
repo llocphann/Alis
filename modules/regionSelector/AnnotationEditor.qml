@@ -38,6 +38,8 @@ PanelWindow {
     property var history: []              // creation order: {kind:"shape"|"text"}
     property var current: null            // live shape being drawn
     property bool _exportPending: false   // dedupe for exportImage re-entry
+    property bool _exportInFlight: false
+    property bool _closeAfterExport: false
 
     // Color-picker preset exception: white/black/gray stay literal.
     readonly property var palette: [
@@ -72,6 +74,15 @@ PanelWindow {
     function clearAll() { root.strokes = []; root.texts = []; root.history = []; root.current = null; }
 
     function close() {
+        // Keep the QML callback context alive until an accepted grab finishes.
+        // Closing its Loader now would discard the requested export.
+        if (_exportInFlight) {
+            _closeAfterExport = true;
+            return;
+        }
+        _exportPending = false;
+        exportWaitTimer.stop();
+        exportGiveUpTimer.stop();
         GlobalStates.annotationEditorOpen = false;
         GlobalStates.annotationEditorPath = "";
         root.finished();
@@ -426,6 +437,7 @@ PanelWindow {
     property string _outPath: _tempDir + "/annotated.png"
 
     function exportImage() {
+        if (_exportInFlight) return;
         // Drop text focus so the cursor isn't captured in the grab.
         keySink.forceActiveFocus();
 
@@ -449,19 +461,28 @@ PanelWindow {
             return;
         }
 
-        captureArea.grabToImage(function(result) {
+        _exportInFlight = true;
+        const accepted = captureArea.grabToImage(function(result) {
             // This Qt build exposes only the sync saveToFile() form.
             const saved = result.saveToFile(root._outPath);
             if (!saved) {
+                root._exportInFlight = false;
                 console.warn("[AnnotationEditor] saveToFile failed for", root._outPath);
                 Quickshell.execDetached(["/usr/bin/notify-send", "Edit failed", "Could not write temp file", "-a", "Screenshot", "-t", "3000"]);
+                if (root._closeAfterExport) root.close();
                 return;
             }
             // Let cp/wl-copy read the temp file before cleanup.
             cleanupProc.startDetached();
             saveProc.startDetached();
+            root._exportInFlight = false;
             root.close();
         }, Qt.size(iw, ih));
+        if (!accepted) {
+            _exportInFlight = false;
+            console.warn("[AnnotationEditor] render grab refused");
+            if (_closeAfterExport) close();
+        }
     }
 
     // Best-effort temp cleanup after cp/wl-copy have had time to read it.
