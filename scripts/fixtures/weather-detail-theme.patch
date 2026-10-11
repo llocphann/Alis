@@ -1,0 +1,255 @@
+--- a/modules/bar/weather/WeatherPopupContent.qml
++++ b/modules/bar/weather/WeatherPopupContent.qml
+@@ -1,12 +1,29 @@
+ import qs.services
+ import qs.modules.common
+ import qs.modules.common.widgets
++import qs.modules.common.functions
++import qs.modules.abyss.looks
+ 
+ import QtQuick
+ import QtQuick.Layouts
+ 
+ Item {
+     id: root
++
++    readonly property bool abyss: Config.options?.panelFamily === "abyss"
++    // Detail cards share the field's palette; neutral Material fills remain
++    // available for the other supported panel families.
++    readonly property color cardColor: abyss
++        ? ColorUtils.mix(AbyssStyle.contentLayer, AbyssStyle.accent, .88)
++        : Appearance.colors.colSurfaceContainerHigh
++    readonly property color ink: abyss
++        ? ColorUtils.ensureReadable(AbyssStyle.textColor, cardColor, 4.5)
++        : Appearance.colors.colOnSurface
++    readonly property color mutedInk: abyss
++        ? ColorUtils.readableSubtext(ink, cardColor, .7)
++        : Appearance.colors.colOnSurfaceVariant
++    readonly property color accent: abyss ? AbyssStyle.accent : Appearance.colors.colPrimary
++    readonly property color outline: abyss ? Qt.alpha(ink, .2) : Appearance.colors.colOutlineVariant
+ 
+     property bool compact: false
+     readonly property real compactBreakpoint: 900
+@@ -148,7 +165,7 @@
+                         Weather.data?.wCode,
+                         Weather.isNightNow()) ?? "cloud"
+                     iconSize: 30
+-                    color: Appearance.colors.colPrimary
++                    color: root.accent
+                     Layout.alignment: Qt.AlignVCenter
+                 }
+ 
+@@ -157,7 +174,7 @@
+ 
+                     StyledText {
+                         text: Weather.data?.temp ?? "--°"
+-                        color: Appearance.colors.colOnSurface
++                        color: root.ink
+                         font {
+                             pixelSize: 25
+                             weight: Font.Medium
+@@ -167,7 +184,7 @@
+                     StyledText {
+                         text: Translation.tr("Feels like %1")
+                             .arg(Weather.data?.tempFeelsLike ?? "--°")
+-                        color: Appearance.colors.colOnSurfaceVariant
++                        color: root.mutedInk
+                         font.pixelSize: Appearance.font.pixelSize.smaller
+                     }
+                 }
+@@ -181,7 +198,7 @@
+                     StyledText {
+                         Layout.alignment: Qt.AlignRight
+                         text: Weather.data?.description ?? ""
+-                        color: Appearance.colors.colOnSurface
++                        color: root.ink
+                         font {
+                             pixelSize: Appearance.font.pixelSize.normal
+                             weight: Font.DemiBold
+@@ -196,7 +213,7 @@
+                             ? Weather.visibleCity
+                             : Translation.tr("Last refresh: %1")
+                                 .arg(Weather.data?.lastRefresh ?? "--:--")
+-                        color: Appearance.colors.colOnSurfaceVariant
++                        color: root.mutedInk
+                         font.pixelSize: Appearance.font.pixelSize.smallest
+                         elide: Text.ElideRight
+                         Layout.maximumWidth: root.compact ? 118 : 130
+@@ -207,7 +224,7 @@
+                         visible: Weather.showVisibleCity
+                         text: Translation.tr("Last refresh: %1")
+                             .arg(Weather.data?.lastRefresh ?? "--:--")
+-                        color: Appearance.colors.colOnSurfaceVariant
++                        color: root.mutedInk
+                         font.pixelSize: Appearance.font.pixelSize.smallest
+                     }
+                 }
+@@ -246,10 +263,11 @@
+ 
+             Rectangle {
+                 id: secondaryStrip
++                objectName: "weatherSecondaryMetrics"
+                 Layout.fillWidth: true
+                 implicitHeight: root.compact ? 32 : 34
+                 radius: Appearance.rounding.small
+-                color: Appearance.colors.colSurfaceContainerHigh
++                color: root.cardColor
+ 
+                 RowLayout {
+                     anchors.fill: parent
+@@ -267,7 +285,7 @@
+                     Rectangle {
+                         Layout.preferredWidth: 1
+                         Layout.preferredHeight: 18
+-                        color: Appearance.colors.colOutlineVariant
++                        color: root.outline
+                     }
+ 
+                     SecondaryMetric {
+@@ -281,10 +299,11 @@
+ 
+             Rectangle {
+                 id: sunTimeline
++                objectName: "weatherSunTimeline"
+                 Layout.fillWidth: true
+                 implicitHeight: root.compact ? 52 : 56
+                 radius: Appearance.rounding.small
+-                color: Appearance.colors.colSurfaceContainerHigh
++                color: root.cardColor
+ 
+                 MaterialSymbol {
+                     id: sunriseIcon
+@@ -294,7 +313,7 @@
+                     anchors.topMargin: root.compact ? 7 : 8
+                     text: "wb_twilight"
+                     iconSize: 16
+-                    color: Appearance.colors.colPrimary
++                    color: root.accent
+                 }
+ 
+                 MaterialSymbol {
+@@ -305,7 +324,7 @@
+                     anchors.topMargin: root.compact ? 7 : 8
+                     text: "bedtime"
+                     iconSize: 16
+-                    color: Appearance.colors.colPrimary
++                    color: root.accent
+                 }
+ 
+                 Rectangle {
+@@ -317,7 +336,7 @@
+                     anchors.verticalCenter: sunriseIcon.verticalCenter
+                     height: 2
+                     radius: 1
+-                    color: Appearance.colors.colOutlineVariant
++                    color: root.outline
+ 
+                     Rectangle {
+                         width: 8
+@@ -326,9 +345,9 @@
+                         x: Math.max(0, Math.min(parent.width - width,
+                             root.sunProgress * parent.width - width / 2))
+                         anchors.verticalCenter: parent.verticalCenter
+-                        color: Appearance.colors.colPrimary
++                        color: root.accent
+                         border.width: 1
+-                        border.color: Appearance.colors.colLayer2
++                        border.color: root.abyss ? root.cardColor : Appearance.colors.colLayer2
+                     }
+                 }
+ 
+@@ -338,7 +357,7 @@
+                     anchors.bottom: parent.bottom
+                     anchors.bottomMargin: root.compact ? 6 : 7
+                     text: Weather.data?.sunrise ?? "--:--"
+-                    color: Appearance.colors.colOnSurface
++                    color: root.ink
+                     font.pixelSize: Appearance.font.pixelSize.smaller
+                 }
+ 
+@@ -347,7 +366,7 @@
+                     anchors.bottom: parent.bottom
+                     anchors.bottomMargin: root.compact ? 6 : 7
+                     text: Translation.tr("Sun")
+-                    color: Appearance.colors.colOnSurfaceVariant
++                    color: root.mutedInk
+                     font {
+                         pixelSize: Appearance.font.pixelSize.smallest
+                         weight: Font.DemiBold
+@@ -360,7 +379,7 @@
+                     anchors.bottom: parent.bottom
+                     anchors.bottomMargin: root.compact ? 6 : 7
+                     text: Weather.data?.sunset ?? "--:--"
+-                    color: Appearance.colors.colOnSurface
++                    color: root.ink
+                     font.pixelSize: Appearance.font.pixelSize.smaller
+                 }
+             }
+@@ -370,6 +389,7 @@
+ 
+     component PrimaryMetric: Rectangle {
+         id: primaryMetric
++        objectName: "weatherPrimaryMetric"
+         required property string title
+         required property string symbol
+         required property string value
+@@ -377,7 +397,7 @@
+         Layout.fillWidth: true
+         implicitHeight: root.compact ? 36 : 42
+         radius: Appearance.rounding.small
+-        color: Appearance.colors.colSurfaceContainerHigh
++        color: root.cardColor
+ 
+         RowLayout {
+             anchors {
+@@ -390,7 +410,7 @@
+             MaterialSymbol {
+                 text: primaryMetric.symbol
+                 iconSize: 15
+-                color: Appearance.colors.colOnSurfaceVariant
++                color: root.mutedInk
+                 Layout.alignment: Qt.AlignVCenter
+             }
+ 
+@@ -402,7 +422,7 @@
+                 StyledText {
+                     Layout.fillWidth: true
+                     text: primaryMetric.title.toUpperCase()
+-                    color: Appearance.colors.colOnSurfaceVariant
++                    color: root.mutedInk
+                     font {
+                         pixelSize: Appearance.font.pixelSize.smallest
+                         weight: Font.DemiBold
+@@ -414,7 +434,7 @@
+                 StyledText {
+                     Layout.fillWidth: true
+                     text: primaryMetric.value
+-                    color: Appearance.colors.colOnSurface
++                    color: root.ink
+                     font {
+                         pixelSize: Appearance.font.pixelSize.small
+                         weight: Font.DemiBold
+@@ -435,12 +455,12 @@
+         MaterialSymbol {
+             text: secondaryMetric.symbol
+             iconSize: 15
+-            color: Appearance.colors.colOnSurfaceVariant
++            color: root.mutedInk
+         }
+ 
+         StyledText {
+             text: secondaryMetric.title
+-            color: Appearance.colors.colOnSurfaceVariant
++            color: root.mutedInk
+             font.pixelSize: Appearance.font.pixelSize.smallest
+         }
+ 
+@@ -448,7 +468,7 @@
+ 
+         StyledText {
+             text: secondaryMetric.value
+-            color: Appearance.colors.colOnSurface
++            color: root.ink
+             font {
+                 pixelSize: Appearance.font.pixelSize.smaller
+                 weight: Font.DemiBold

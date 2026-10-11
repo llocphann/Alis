@@ -41,6 +41,9 @@ approved_on = "2026-10-07"
 # arithmetic-only patch. Reverse that exact patch and check the ORIGINAL visual
 # hash, then require the old/new arithmetic and real QV4 geometry oracle. This
 # does not refresh a visual baseline or allow any other source/renderer drift.
+# The owner's 2026-10-10 Detailed Weather theme request authorizes only the
+# exact detail-palette patch. Reverse it to the ORIGINAL wrapper blob; the
+# Orbital page, tab rail, renderer and QSB hashes stay frozen.
 expected = {
     "modules/bar/weather/LiquidOrbitalField.qml":
         "1883b6877a02f6013fcacc7e30142e5f522b6165",
@@ -76,6 +79,20 @@ def approved_visual_after_exact_cache_patch(payload: bytes, approved_blob: str) 
         return result.returncode == 0 and git_blob_id(original.read_bytes()) == approved_blob
 
 
+def approved_visual_after_exact_detail_patch(payload: bytes, approved_blob: str) -> bool:
+    patch = (root / "scripts/fixtures/weather-detail-theme.patch").read_bytes()
+    if hashlib.sha256(patch).hexdigest() != "a214d0a52727066bffe8745e1f25aafcb129badb8a1274c2b7830e50d150503b":
+        return False
+    with tempfile.TemporaryDirectory(prefix="alis-weather-detail-lock-") as name:
+        private = Path(name)
+        original = private / "modules/bar/weather/WeatherPopupContent.qml"
+        original.parent.mkdir(parents=True)
+        original.write_bytes(payload)
+        result = subprocess.run(["git", "apply", "--reverse", "-"], input=patch,
+                                cwd=private, capture_output=True)
+        return result.returncode == 0 and git_blob_id(original.read_bytes()) == approved_blob
+
+
 drift = []
 exact_cache_patch = False
 for relative, approved_blob in expected.items():
@@ -88,6 +105,8 @@ for relative, approved_blob in expected.items():
     if actual_blob != approved_blob:
         if relative == "modules/bar/weather/OrbitalWeather.qml" and approved_visual_after_exact_cache_patch(payload, approved_blob):
             exact_cache_patch = True
+            continue
+        if relative == "modules/bar/weather/WeatherPopupContent.qml" and approved_visual_after_exact_detail_patch(payload, approved_blob):
             continue
         drift.append((relative, approved_blob, actual_blob))
 

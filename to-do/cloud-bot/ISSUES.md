@@ -823,7 +823,21 @@ that implementation is missing. Refetch current `dev` before diagnosing.
 
 
 - [ ] **Canonical validation — updated 2026-10-11:** clean-clone validation
-  of `9ab8d408b793a938ed2a01a9c496e9156404715e` finished **FAIL: 336 PASS,
+  of `1af17ab476f11e8c62f71276df6fd547022c9061` finished **FAIL: 342 PASS,
+  1 FAIL, 2 SKIP; exit 1**. Calendar storage/layout, screenshot pointer/export
+  lifecycle, Recording dot controls, both Music fixtures and physical fullscreen
+  OSD pass. The sole failure is the Weather Orbital whole-wrapper hash after
+  the requested Details palette change. The follow-up restores original tab
+  rail colors and admits only a checksum-pinned Details patch reversed to the
+  ORIGINAL approved wrapper blob; the Orbital/renderer/QSB baselines remain
+  unchanged. The frozen visual lock and actual Weather ink/card fixture pass
+  separately; unapproved panel-width/tint mutations still fail. This does not
+  turn the canonical FAIL into a PASS. [Full log](../../docs/evidence/abyss-product/20261011-1af17ab47/canonical.log)
+  and [receipt](../../docs/evidence/abyss-product/20261011-1af17ab47/canonical.json).
+  Next: exact-SHA clean-clone validation of the final follow-up; owner physical
+  input/visual, hardware and multi-output gates remain separate.
+  **Earlier same-day run:**
+  `9ab8d408b793a938ed2a01a9c496e9156404715e` finished **FAIL: 336 PASS,
   4 FAIL, 2 SKIP; exit 1**. Its Calendar persistence/layout, Music, warm
   Dashboard, Weather handoff, keyboard, editor, OSD and shared-content
   fixtures passed. All four failures share one source-contract drift:
@@ -887,6 +901,11 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   [Focused receipt](../../docs/evidence/abyss-product/20261011-weather-theme/receipt.json).
   State: OPEN for final canonical, real wallpaper-theme/connected-field
   screenshots and owner acceptance; native QML palette bindings pass.
+  The follow-up restores the original tab-rail palette and keeps every frozen
+  Orbital visual hash. Only the exact requested Details patch is recognized
+  by reversing its pinned bytes to the original approved wrapper; unrelated
+  geometry or palette drift remains rejected. Focused visual-lock and native
+  ink/card checks pass after this correction.
 
 - [ ] **Edit Abyss Layout Media IPC preview incorrectly shows Volume IPC — owner report 2026-10-10:**
   The editor presents the **Volume IPC** sample when **Media IPC** is selected.

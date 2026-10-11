@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "kind": "canonical-maintainer-local",
+  "sourceSha": "1af17ab476f11e8c62f71276df6fd547022c9061",
+  "command": "bash scripts/validate-maintainer-local.sh --current-repo",
+  "execution": "clean clone of exact committed local source",
+  "result": "FAIL",
+  "exitCode": 1,
+  "passed": 342,
+  "failed": 1,
+  "skipped": 2,
+  "failedChecks": [
+    "scripts/test-weather-orbital-visual-lock.sh"
+  ],
+  "cause": "exact WeatherPopupContent hash protects Details as well as the frozen Orbital; the authorized Details palette patch changes that whole-file hash",
+  "ownerDesktopAcceptance": false,
+  "repair": "Restore original tab rail colors and admit only a checksum-pinned reversible Details patch; original Orbital visual hashes remain unchanged",
+  "driftChecks": {
+    "exact_details": true,
+    "unapproved_panel_width": false,
+    "unapproved_detail_tint": false
+  }
+}

@@ -500,8 +500,8 @@ Item {
                     height: 7
                     radius: width / 2
                     color: indicatorDot.index === root.currentTab
-                        ? root.accent
-                        : root.outline
+                        ? Appearance.colors.colPrimary
+                        : Appearance.colors.colOutlineVariant
                     opacity: indicatorDot.index === root.currentTab ? 1 : 0.55
 
                     MouseArea {
