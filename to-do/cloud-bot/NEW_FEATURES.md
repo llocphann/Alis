@@ -177,6 +177,60 @@ do not reimplement them solely because a checkbox is open.
   [Rework](REWORK_OPTIMIZATION.md). State: NEW, design/implementation and owner
   input acceptance pending.
 
+- [ ] **DASH-F03 — Checkbox to show/hide Music tab scrollbars in Dashboard Settings — owner request 2026-10-11:**
+  [Owner: Alis dev; New Feature] Add exactly **one independent
+  checkbox** in **Settings → Dashboard → Music**, such as
+  **"Show Music scrollbars"**, backed by a persistent Boolean
+  `dashboard.music.showScrollbars` with a backwards-compatible
+  default of **ON**. It changes only the visual presentation of
+  scrollbars in the **Dashboard Music tab**, including all its
+  scrollable subviews: Genre/Folders/Playlist/Results/Queue/
+  Lyrics vertical tracks and the horizontal multi-column Music
+  browser scrollbar. Do not affect Sidebar Music, general
+  Dashboard, Calendar, Weekly Planner or unrelated app lists.
+  Apply changes live without needing to reopen Dashboard;
+  ensure theme-aware style and contrast when visible.
+
+  **Source starting points:**
+  `modules/settings/DashboardMusicSettings.qml` currently owns
+  the Music enable switch but no scrollbar preference;
+  `modules/dashboard/DashboardMusic.qml` declares a shared
+  `MusicScrollBar: ScrollBar` (`ScrollBar.AsNeeded`) used by
+  several ListViews plus a separate
+  `ScrollBar.horizontal` on `musicColumnsViewport`.
+  Introduce the persistent setting through the repo's validated
+  config default/schema/migration path (`defaults/config.json`
+  and related tests), update both scrollbar owners and avoid
+  duplicating options in multiple Settings pages.
+
+  **Critical semantics:** Unchecked must hide scrollbar chrome
+  only, NOT disable wheel/touchpad scrolling, touch/flick,
+  drag-to-scroll of content, keyboard Home/End/PageUp/PageDown,
+  programmatic position, nested Music navigation or normal
+  cursor/focus. It is acceptable that the draggable scrollbar
+  thumb itself is unavailable while hidden; the content remains
+  navigable by other supported inputs. A checkbox flip may not
+  resize/clobber list contents, lose scroll offset, restart music
+  playback or reload/swap playlist/queue. When checked, preserve
+  existing overflow-only thumb visibility; do not force bars
+  onto lists with no overflow. In particular coordinate with
+  **DASH-R02** horizontal-only page navigation so hiding
+  scrollbar never causes vertical wheel to switch tabs, and
+  with the existing [Music scroll correctness issue](ISSUES.md).
+
+  **Acceptance:** checkbox ON/OFF live and persisted after
+  Settings close/reopen and shell restart; all six Music lists
+  and horizontal viewport with empty/short/overflow content;
+  hidden scrollbar plus successful wheel/touchpad/keyboard
+  scrolling and queue operations; visible normal thumb
+  drag/hover/overflow; no nested gesture interception or
+  unexpected page switch, layout width jump, clipping or
+  playback interruption. Test small/large/fractional monitors,
+  dark/light, disabled Music and optionally unloaded Music
+  page, migration from old config (default ON), source QML
+  assertions and real Niri/Quickshell owner visual review.
+  State: NEW/OPEN; checkbox and rendering policy NOT IMPLEMENTED.
+
 - [ ] **DASH-F01 — Weekly Planner: new Dashboard tab for Agenda / Events / Todo / Quick Notes — owner request 2026-10-11:**
   [Owner: Alis dev; New Feature] Add a full **Weekly Planner** Dashboard
   page inspired by the owner's first screenshot (Obsidian Day Planner-like

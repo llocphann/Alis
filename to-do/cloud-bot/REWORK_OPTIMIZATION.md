@@ -869,6 +869,63 @@ run privileged installation just because manual buttons are retired.
   truncation and owner native screenshot parity. Coordinate
   with CAL-F01 indicators. State: OPEN; not implemented.
 
+- [ ] **DASH-R02 — Horizontal-only Dashboard gesture page navigation — owner request 2026-10-11:**
+  [Owner: Alis dev; Rework/UX] **Only horizontal left/right swipe
+  or horizontal scroll may change Dashboard tabs/pages. Vertical
+  scrolling/swiping must NEVER switch Dashboard tabs** — on the
+  page body, header, page indicators or nested Music/Weekly Planner
+  content. Preserve explicit intentional selection by clicking
+  a page indicator or accessible keyboard navigation; the
+  restriction is for gesture routing, not removal of page dots.
+
+  **Source evidence:** `modules/dashboard/DashboardContent.qml`
+  currently has an overlay `WheelHandler` with
+  `orientation: Qt.Vertical` which writes numeric
+  `GlobalStates.dashboardPage` and a second horizontal handler.
+  `modules/dashboard/DashboardHeader.qml` separately has a
+  vertical `WheelHandler` calling `pageRequested()`. Eliminate
+  vertical page-switch behavior in BOTH owners and audit other
+  swipe/wheel shortcuts for equivalent accidental switching.
+  Do NOT merely block all vertical events; route them to the
+  intended child Flickable/ListView/Scrollbar and allow normal
+  scrolling of Genre, Folders, Results, Playlist, Queue, Lyrics,
+  future Weekly Planner's time axis and the Dashboard's other
+  scrollable widgets. Horizontal gestures must have predictable
+  direction and threshold/debounce/hysteresis (avoid one
+  high-resolution touchpad gesture skipping multiple tabs),
+  continuous/faithful slide, fast reversal and safe boundary
+  behavior. Respect Music's nested horizontal browser:
+  let `DashboardMusic.panHorizontally()` or the inner Flickable
+  consume a genuine horizontal content-scroll first; switch
+  pages only when the inner surface cannot appropriately consume
+  that gesture, without trapping navigation forever.
+
+  Coordinate with **DASH-F01** (third Weekly Planner page),
+  **DASH-F02** (drag-reordered stable tab IDs) in
+  [New Features](NEW_FEATURES.md): gesture navigation operates on
+  the active persisted page order, not hardcoded 0/1, and may be
+  disabled only while a tab indicator is actively being dragged
+  or an edit/dialog gesture owns input. Maintain accessibility,
+  navigation through page indicator click, scroll with Shift if
+  OS/toolkit maps that action to a horizontal delta, and
+  reduced-motion without inventing a gesture-based page switch
+  from a vertical-only signal. Existing Music Results/Queue
+  vertical-scroll bug in [Issues](ISSUES.md) remains an independent
+  correctness gate and must not regress.
+
+  **Acceptance:** two-page and three-page Dashboard; vertical
+  wheel/touchpad up/down across header, dots, canvas, Music
+  list/Queue/Lyrics and Planner never changes page but scrolls
+  vertical contents as appropriate; horizontal touchpad/swipe,
+  horizontal wheel and deliberate page-dot clicks change the
+  correct adjacent page, honor reordered tabs, first/last edge
+  boundaries and nested Music column scroll. Test fast gesture
+  bursts, drag thresholds, wheel over list/scrollbar, Shift-wheel,
+  diagonal touchpad movement, keyboard, scale/theme, open/close/
+  restart and real Niri/Quickshell owner acceptance. Update
+  focused QML/JS gesture-routing contracts and scroll fixtures.
+  State: OPEN; gesture change NOT IMPLEMENTED.
+
 - [ ] **DASH-R01 — Smooth Dashboard slide-in and slide-out — owner report 2026-10-11:**
   [Owner: Alis dev; Rework / animation performance] The **whole
   Dashboard** does not slide smoothly when **appearing or closing**.
