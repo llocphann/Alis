@@ -278,7 +278,14 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   liveness and corrected click-oracle failures are not product PASSes;
   [owning-repository technical evidence](https://github.com/llocphann/Alis-Companion/blob/a49284fa36cf030d3b2ab4212ecf7efebc63edf3/docs/evidence/20261011-module-hover/README.md)
   retains the baseline/controls/matrix and source-byte pins.
-  State: OPEN for committed exact-pair qualification, actual wl_pointer
+  **Committed exact-pair qualification:** owning selected-check validator on
+  clean host `b543bb7602eb74901c3c137c89c70c301e12fde4` + Companion
+  `a49284fa36cf030d3b2ab4212ecf7efebc63edf3` passes 946 checks / 49 field
+  frames, script/validator exit 0, 1 PASS / 0 FAIL / 0 SKIP. Private installed
+  payload bytes were read back; this is QtTest dispatch, not wl_pointer, a
+  full package suite or G0.
+  [Exact-pair receipt](https://github.com/llocphann/Alis-Companion/blob/0f81bf31cf1de66ed5ecced37ddfd0ce86443913/docs/evidence/20261011-module-hover/exact-pair.json).
+  State: OPEN for actual wl_pointer
   delivery, installed-release readback, Wi-Fi/Bluetooth, fractional/
   multiple outputs and owner drag/chat/animated acceptance. The earlier
   rejected host hover/bridge patches remain reverted. No owner install
@@ -923,7 +930,15 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   justified by this archive.
 
 
-- [ ] **Canonical validation — updated 2026-10-11:** the latest retained
+- [ ] **Canonical validation — updated 2026-10-11:** latest exact clean-clone
+  `b543bb7602eb74901c3c137c89c70c301e12fde4`: **FAIL, 345 PASS / 1 FAIL /
+  2 SKIP, exit 1**. The sole failure dismisses StyledPopup at its right
+  padding probe (762,143); post-dismiss geometry cannot establish the cause.
+  Next: bounded pre/post probe paint/input and lease diagnosis, preserving
+  four-edge dwell and original timers/deadlines. Both Dashboard editor gates
+  and Wallpaper apply/carousel/recovery pass this run; earlier failures remain
+  retained. [Exact log/receipt](../../docs/evidence/abyss-product/20261011-b543bb760/README.md).
+  **Earlier retained**
   clean-clone `6bb45f361346048e7368511169fa5151c390e4ac` run finished
   **FAIL: 343 PASS, 2 FAIL, 2 SKIP; exit 1**. Both failures execute the same
   composed Dashboard editor fixture: the direct invocation lacks a final marker;
@@ -1325,7 +1340,11 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   [Ready-slot and transition recovery](../../docs/evidence/abyss-product/20261011-wallpaper-recovery/README.md).
   This does not establish the sole cause of the owner's Melt failure.
   Product repair: `273a67c06` on Alis dev, pushed; owner runtime unchanged.
-  State: OPEN for committed exact-SHA focused/canonical, actual picker/
+  **Committed qualification:** clean-clone `b543bb7602eb74901c3c137c89c70c301e12fde4`
+  passes actual background apply, carousel and recovery tests. Overall
+  canonical remains FAIL on the separate popup hover fixture (345/1/2); see
+  [exact receipt](../../docs/evidence/abyss-product/20261011-b543bb760/canonical.json).
+  State: OPEN for actual picker/
   desktop path, owner physical Liquid ON/unavailable/OFF, fractional/
   multiple outputs, video and external backend failure acceptance.
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Real pointer transfer for StyledPopup hosted by the existing Abyss field."""
 import json
+import os
 import tempfile
 from pathlib import Path
 from native_test_session import private_wayland, run_qs
@@ -31,6 +32,19 @@ ShellRoot {
  property int genericCloses: 0
  property bool barRevealed: true
  property string edge: "bottom"
+ property var trace: []
+ function snapshot(stage, point) {
+  const c=host.record.content
+  const p=point ? Qt.point(point[0],point[1]) : Qt.point(-1,-1)
+  root.trace=root.trace.concat([{
+   stage,edge:root.edge,point,scene:[scene.width,scene.height],
+   content:{x:c.x,y:c.y,width:c.width,height:c.height},
+   input:host.inputBounds,source:controller.sourceInputRegions,
+   requested:popup.requestedVisible,body:popup._contentHovered,
+   anchor:popup._anchorHover.hovered,progress:popup.revealProgress,
+   contains:host.hoverParent.contains(Qt.point(p.x-host.hoverParent.x,p.y-host.hoverParent.y))
+  }]).slice(-80)
+ }
  QtObject { id: trigger; property bool triggerHovered: true }
  Component.onCompleted: Quickshell.watchFiles=false
  AbyssSurfaceController {
@@ -120,6 +134,7 @@ ShellRoot {
    render();outside()
    check(!popup.requestedVisible,"popup starts open")
    for(const edge of ["bottom","top","left","right"]) {
+    root.snapshot("edge-start",null)
     root.edge=edge;render();outside()
     mouseMove(anchor,anchor.width/2,anchor.height/2);wait(80);render()
     check(popup.requestedVisible && controller.activePopup===popup,"bare Item anchor did not open by hover on "+edge)
@@ -196,7 +211,9 @@ ShellRoot {
     }
     padPoints.push(...shoulders)
     for(const point of padPoints){
+     root.snapshot("padding-before",point)
      mouseMove(scene,point[0],point[1]);wait(900);render()
+     root.snapshot("padding-after",point)
      check(popup.requestedVisible && popup._contentHovered,"painted popup padding dismissed owner on "+edge+": "+JSON.stringify({point,input:host.inputBounds,content:host.record.content,requested:popup.requestedVisible,hosted:host.hostedPopup!==null}))
      check(GlobalStates.barPopupHoverHeld(window.screen.name) && anchor.visible,"hovered popup let the Edgebar auto-hide")
     }
@@ -261,7 +278,10 @@ ShellRoot {
    editor.readOnly=true;wait(400)
    check(root.idleCloses===2,"read-only text retained a stale input session")
    console.info("POPUP_ANCHOR_HOVER_PASS")
-  } catch(e) { console.error("POPUP_ANCHOR_HOVER_FAIL",e.message,e.stack) } Qt.quit() }
+  } catch(e) {
+   console.error("POPUP_ANCHOR_HOVER_TRACE",JSON.stringify(root.trace))
+   console.error("POPUP_ANCHOR_HOVER_FAIL",e.message,e.stack)
+  } Qt.quit() }
  }
  Timer { interval:100;running:true;onTriggered:test.runChecks() }
 }
@@ -278,6 +298,8 @@ ShellRoot {
         # Every grab retains its 2-second deadline; sustained body/padding dwell
         # must outlast actual hide timers even when nested Niri is unfocused.
         result = run_qs(folder, env, timeout=190)
+        if os.environ.get("ALIS_POPUP_HOVER_LOG"):
+            Path(os.environ["ALIS_POPUP_HOVER_LOG"]).write_text(result.stdout)
         if result.returncode or "POPUP_ANCHOR_HOVER_PASS" not in result.stdout or any(
             token in result.stdout for token in ["POPUP_ANCHOR_HOVER_FAIL", "ReferenceError:", "TypeError:", "Binding loop", "Object set as mask", "Failed to load configuration"]
         ):

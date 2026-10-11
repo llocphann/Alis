@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "kind": "canonical-maintainer-local",
+  "sourceSha": "b543bb7602eb74901c3c137c89c70c301e12fde4",
+  "command": "bash scripts/validate-maintainer-local.sh --current-repo",
+  "execution": "clean clone of exact committed local source",
+  "result": "FAIL",
+  "exitCode": 1,
+  "checksRun": 347,
+  "passed": 345,
+  "failed": 1,
+  "skipped": 2,
+  "failedChecks": [
+    "scripts/test-popup-anchor-hover-runtime.py"
+  ],
+  "observations": [
+    "Both Dashboard editor gates passed this run; earlier failures remain retained and unexplained.",
+    "Wallpaper background apply, carousel and new transition recovery tests passed.",
+    "StyledPopup hover fixture closed while probing right padding at (762,143); post-dismiss content width/input bounds are zero. No cause assigned from post-dismiss geometry."
+  ],
+  "cause": "NOT_DIAGNOSED; preserve right padding probe geometry and pointer lease before and after movement",
+  "ownerDesktopAcceptance": false,
+  "rawLogSha256": "0a3dae97a0b6dece93dbf1dddffe539a7bd8388f4e9ac91547b75912b08e6f91"
+}
