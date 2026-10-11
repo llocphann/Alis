@@ -1,0 +1,22 @@
+  INFO: Launching config: "/tmp/alis-weather-native-diagnostic-9j9rr11h/shell.qml"
+  INFO: Shell ID: "04d840c3e5b5b35a70e2f7613eb99995" Path ID "04d840c3e5b5b35a70e2f7613eb99995"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/ua7a5x6rmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.476000.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-weather-native-diagnostic-9j9rr11h/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-weather-native-diagnostic-9j9rr11h/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: WEATHER_TABS_START 500 0
+  INFO qml: GEOMETRY_INLINE 0 {"rootHeight":300,"viewportHeight":300,"orbitY":0,"detailY":300,"tab":0,"childTypes":["QQuickItem(0x7f7f3b299a40)","QQuickItem(0x7f7f3786a6e0)"]}
+  INFO qml: GEOMETRY_NEXT_EVENT {"rootHeight":300,"viewportHeight":300,"orbitY":0,"detailY":300,"tab":0}
+  INFO qml: GEOMETRY_INLINE 1 {"rootHeight":300,"viewportHeight":300,"orbitY":0,"detailY":300,"tab":0,"childTypes":["QQuickItem(0x7f7f3b299a40)","QQuickItem(0x7f7f3786a6e0)"]}
+  INFO qml: GEOMETRY_INLINE 2 {"rootHeight":300,"viewportHeight":300,"orbitY":0,"detailY":300,"tab":0,"childTypes":["QQuickItem(0x7f7f3b299a40)","QQuickItem(0x7f7f3786a6e0)"]}
+  INFO qml: GEOMETRY_INLINE 3 {"rootHeight":300,"viewportHeight":300,"orbitY":0,"detailY":300,"tab":0,"childTypes":["QQuickItem(0x7f7f3b299a40)","QQuickItem(0x7f7f3786a6e0)"]}
+  INFO qml: GEOMETRY_INLINE 4 {"rootHeight":300,"viewportHeight":300,"orbitY":0,"detailY":300,"tab":0,"childTypes":["QQuickItem(0x7f7f3b299a40)","QQuickItem(0x7f7f3786a6e0)"]}
+  INFO qml: GEOMETRY_INLINE 5 {"rootHeight":300,"viewportHeight":300,"orbitY":0,"detailY":300,"tab":0,"childTypes":["QQuickItem(0x7f7f3b299a40)","QQuickItem(0x7f7f3786a6e0)"]}
+  INFO qml: GEOMETRY_INLINE 6 {"rootHeight":300,"viewportHeight":300,"orbitY":0,"detailY":300,"tab":0,"childTypes":["QQuickItem(0x7f7f3b299a40)","QQuickItem(0x7f7f3786a6e0)"]}
+  INFO qml: GEOMETRY_INLINE 7 {"rootHeight":300,"viewportHeight":300,"orbitY":0,"detailY":300,"tab":0,"childTypes":["QQuickItem(0x7f7f3b299a40)","QQuickItem(0x7f7f3786a6e0)"]}
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-weather-native-diagnostic-9j9rr11h/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: WEATHER_TABS_SETTLED 48 0 12
+  INFO qml: WEATHER_TABS_PASS

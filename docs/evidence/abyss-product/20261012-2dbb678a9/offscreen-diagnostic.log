@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-weather-motion-diagnostic-jirfcumk/shell.qml"
+  INFO: Shell ID: "64d3f43389e7ec856598d49d1bc8fd03" Path ID "64d3f43389e7ec856598d49d1bc8fd03"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/iv5alu6rmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-weather-motion-diagnostic-jirfcumk/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-weather-motion-diagnostic-jirfcumk/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: WEATHER_TABS_START 500 0
+  INFO qml: GEOMETRY_INLINE {"rootHeight":300,"viewportHeight":300,"orbitY":0,"detailY":300,"tab":0,"childTypes":["QQuickItem(0x7fda90beddc0)","QQuickItem(0x7fda90bec620)"]}
+  INFO qml: GEOMETRY_NEXT_EVENT {"rootHeight":300,"viewportHeight":300,"orbitY":0,"detailY":300,"tab":0}
