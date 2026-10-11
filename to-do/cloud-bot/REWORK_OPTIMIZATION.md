@@ -982,7 +982,7 @@ run privileged installation just because manual buttons are retired.
   obtain owner visual signoff.
   State: OPEN; corrected checkbox specification only, NOT IMPLEMENTED.
 
-- [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request 2026-10-11:**
+- [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**
   [Owner: Alis dev; Rework/Optimization] Improve the perceptual and
   actual responsiveness of Screen Edge modules while editing a layout:
   module drag follows the pointer smoothly with stable timing, snap
@@ -993,6 +993,18 @@ run privileged installation just because manual buttons are retired.
   quality, native click/hover regions and regular Popup attachments.
   No forceful artificial tween that makes the drag target lag behind
   the cursor or obscures unexpected automatic packing.
+
+  **Owner follow-up (2026-10-11, 13:36 ICT):** Screen Edge modules STILL
+  do not move smoothly when the user changes their position. Treat this as
+  a concrete outstanding **Edit Abyss Layout drag/reposition smoothness**
+  acceptance failure, not simply an optional polishing idea. Reproduce
+  pointer-follow lag, micro-stutter or nonuniform speed of the dragged module
+  separately from the abrupt jumping/repacking of other modules. Check
+  transitions while dragging past snap anchors or neighboring modules,
+  crossing corner bounds and during release/settling; collect on-screen
+  frame/input evidence before attributing root cause. The rendered module
+  should follow the pointer continuously and land predictably, without
+  a delayed catch-up animation, teleport, oscillation or editor flicker.
 
   **Source starting points:** `modules/abyss/AbyssEdgeEditor.qml`
   updates the draft via `move` / `snapMove` during each pointer
@@ -1031,6 +1043,10 @@ run privileged installation just because manual buttons are retired.
   handoff, Edit → Done/Cancel/Reset → reopen, and owner visual
   acceptance under real Niri/Quickshell. State: OPEN; diagnosis,
   implementation, native smoothness proof and owner signoff pending.
+  **Reconfirmation is NOT a tested performance regression**: require an
+  owner-observed before/after drag capture on the exact tested runtime,
+  matched sampling conditions and separate judgments for dragged-module
+  tracking vs neighbor displacement before closing ABYSS-R03.
 
 - [ ] **Screen Edge/module editor:** verify separate 0px-capable widths on all
   four edges, thickness-only versus inherited module sizing, per-module overrides,
