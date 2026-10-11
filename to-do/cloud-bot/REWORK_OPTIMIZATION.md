@@ -801,6 +801,74 @@ run privileged installation just because manual buttons are retired.
   scales and ordinary versus Shift navigation. State: READY for interaction
   tuning; preferred speed and owner acceptance require native input retest.
 
+- [ ] **DASH-R01 — Smooth Dashboard slide-in and slide-out — owner report 2026-10-11:**
+  [Owner: Alis dev; Rework / animation performance] The **whole
+  Dashboard** does not slide smoothly when **appearing or closing**.
+  Improve both entrance and exit on the real desktop, preserving the
+  connected Abyss presentation, the existing appearance/theme and
+  the chosen motion language. This task concerns the main Dashboard
+  surface, **not** the already source-tested 'Edit Dashboard toolbar
+  slide' item immediately below and not the separate horizontal
+  Dashboard Music page navigation.
+
+  **Audit the two current presentation paths and actual active host:**
+  `modules/dashboard/Dashboard.qml` (standalone retained PanelWindow,
+  `_presentationTimer`, `_presentedOpen`, `panelTranslateY`,
+  `_hideContentTimer`/`_renderSuspendTimer`, SurfaceMotion enter/exit
+  duration/easing) and `modules/overview/OverviewDashboard.qml`
+  (Abyss/Overview `popupPresented`, first reveal frame,
+  `revealProgress`, bottom-edge Translate and search switch).
+  Inspect `modules/abyss/content/AbyssDashboardContent.qml`,
+  `modules/abyss/AbyssPerimeter.qml`, shared `SurfaceMotion` tokens,
+  compositor window presentation, input mask/body allocation and
+  expensive Dashboard child loaders. Determine which surface is
+  actually used for the owner reproduction; do not assume the
+  one-frame 16ms staging timer, easing, Qt render work or compositor
+  is the cause before event-backed measurement.
+
+  **Desired behavior:** consistent smooth slide from its correct
+  attached screen edge into the workspace and back, with no
+  perceptible first-frame jump, pop/fade replacing the slide,
+  hitch, end-of-motion snap, stale frozen frame, blank/cyan flash,
+  content resize during motion or abrupt disappearance at close.
+  Close must visually finish **before** paint/layer/content is
+  released, but focus and interactive hit regions must be revoked
+  at the correct stage; rapid reopen while closing should reverse
+  from the current presentation state without restarting from
+  a hidden origin or creating a duplicate surface. Keep widgets'
+  state, loaded media/artwork, search/Overview navigation and
+  edit-mode content intact. Avoid forced full-surface FBO copies,
+  always-on animation loops, cosmetic opacity-only workarounds
+  or quality reductions that conceal real stutters.
+
+  **Evidence and tuning:** capture source/installed SHA plus actual
+  open/close event timestamps, first presented frame, translation
+  progress, map/unmap/content lifetime, Qt `frameSwapped` p50/p95/p99
+  intervals, input-region changes and bounded CPU/GPU diagnostics
+  when supported. `frameSwapped` is NOT compositor present timing;
+  characterize vs separately observed actual Niri presentation.
+  Compare cold first open, warm reopen, settled/idle and loaded
+  Dashboard widgets, avoiding a numerical smoothness claim from
+  one unmatched clip. Reuse the existing [Abyss Panel motion
+  investigation](REWORK_OPTIMIZATION.md) and the planned opt-in
+  profiler rather than changing unrelated SurfaceMotion curves
+  or assuming source contract PASS proves live smoothness.
+
+  **Regression/acceptance:** first open and repeat open/close,
+  close→open / open→close rapid reversals, keyboard/shortcut/
+  click-outside and Escape dismissal, Dashboard ↔ Search /
+  Overview transitions, edit mode, music page, fullscreen,
+  multiple outputs, bottom/left/right attachment where supported,
+  small screens, fractional DPI, light/dark and reduced-motion
+  / animations-disabled mode. Test no ghost input blockers,
+  widget resets, lost pointer/focus, content flash or visually
+  disconnected Abyss edge while moving. Update focused Dashboard
+  motion lifecycle/Qt contract tests (including
+  `scripts/test-dashboard-presentation-motion-contract.py`) and
+  perform real owner Niri/Quickshell visual/performance acceptance
+  on the exact tested SHA. State: OPEN; diagnosis, implementation
+  and native owner smoothness acceptance pending.
+
 - [ ] **Edit Dashboard toolbar slide — received/updated 2026-10-10:** pushed
   `8c673129b58dbde73bf31c82df25c1085bf63e15` slides full-size connected controls
   from the attachment using the shared motion token. Input follows the clipped
