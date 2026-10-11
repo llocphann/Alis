@@ -1008,7 +1008,7 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   confirmed by the owner. Link: generalized presentation jank is tracked in
   [Rework](REWORK_OPTIMIZATION.md). State: OPEN, native evidence pending.
 
-- [ ] **Detailed Weather Popup background does not follow theme — owner report 2026-10-10:**
+- [x] **Detailed Weather Popup background does not follow theme — owner report 2026-10-10:**
   Several component/card backgrounds remain grey rather than adapting to the
   selected theme. Audit `modules/bar/weather/WeatherPopupContent.qml` and
   child theme bindings, including inherited/default backgrounds. Correct
@@ -1031,6 +1031,7 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   by reversing its pinned bytes to the original approved wrapper; unrelated
   geometry or palette drift remains rejected. Focused visual-lock and native
   ink/card checks pass after this correction.
+  **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer confirms the Weather Details color/theme repair and preserved visual constraints are acceptable. Close this *Details theme* bug against the recorded source repair and focused native/QML palette and frozen-Orbital tests. Previous lines saying owner visual acceptance OPEN are historical and are superseded by this signoff. This does NOT verify other Weather Orbital text, hover/Pyramid overlap or the separate canonical suite.
 
 - [ ] **Edit Abyss Layout Media IPC preview incorrectly shows Volume IPC — owner report 2026-10-10:**
   The editor presents the **Volume IPC** sample when **Media IPC** is selected.
@@ -1046,7 +1047,7 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   actual four-Edge editor preview, Volume control, save/reopen and
   owner visual acceptance at the installed source SHA.
 
-- [ ] **Music tab Results / Queue scroll and scrollbar missing — owner report 2026-10-10:**
+- [x] **Music tab Results / Queue scroll and scrollbar missing — owner report 2026-10-10:**
   Result, Queue and potentially other affected Music tab lists do not scroll
   and show no scrollbar. Repair content height/viewport/event routing and
   render theme-consistent scrollbar when content overflows. Check wheel,
@@ -1065,8 +1066,9 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   [Before/after receipt](../../docs/evidence/abyss-product/20261011-music-scroll/receipt.json).
   State: OPEN for final exact-SHA canonical and owner touchpad, scaling,
   compact/expanded visual/input acceptance; focused source scrolling passes.
+  **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts restored vertical scrolling and overflow scrollbars for Dashboard Music Results, Queue and companion list views. Focused native six-list scrolling/drag/keyboard fixture (exit 0) retained above. This closes the original *broken Music scrollbar* bug, NOT the future checkbox to hide them (DASH-F03), horizontal-only tab navigation (DASH-R02), unrelated playback/audio bugs or independent canonical validation.
 
-- [ ] **Volume/Brightness OSD missing in fullscreen; Physical Screen Edge fallback — owner report 2026-10-11:**
+- [x] **Volume/Brightness OSD missing in fullscreen; Physical Screen Edge fallback — owner report 2026-10-11:**
   Under real fullscreen, changing volume or brightness does not display its
   corresponding IPC/OSD/Popup. Restore transient Volume and Brightness feedback
   while keeping the app genuinely fullscreen. When normal Abyss Screen Edge
@@ -1100,6 +1102,7 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   State: OPEN for final exact-SHA canonical and owner physical keys, real
   games/videos, multi-output/fractional visual/input acceptance; focused
   compositor feasibility and source behavior pass.
+  **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts the source repair restoring fullscreen Volume/Brightness OSD at physical screen edges and normal non-fullscreen placement. Retain the 130 native assertions and source receipt; this closes the reported OSD issue. It does NOT reclassify the broader unrelated GameMode/fullscreen, panel-hover/companion or canonical gate as passed.
 
 - [ ] **Recording Popup Expand Controls/Minimize buttons fail; dot-only minimized hover mode — owner report 2026-10-11:**
   The Expand Controls and Minimize actions on the Recording Popup do not work.
@@ -1143,7 +1146,7 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   and buffer messages remains open. Trace the model reset and popup/text-field
   focus lifecycle independently; preserve the redacted Weather location.
 
-- [ ] **CAL-I01 — Calendar event changes do not reach disk after the first save — discovered 2026-10-11:**
+- [x] **CAL-I01 — Calendar event changes do not reach disk after the first save — discovered 2026-10-11:**
   [Alis dev; data integrity] Actual native QML reproduction against
   `services/Events.qml` at `a4750cda8`: a fresh private Events store writes
   its empty initialization file, then Add only changes the in-memory list.
@@ -1169,8 +1172,9 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   with [upstream FileView implementation](https://github.com/quickshell-mirror/quickshell/blob/master/src/io/fileview.cpp);
   the native fixture, rather than API inference, establishes the repair.
   Actual owner event data and installed runtime were not changed.
+  **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts the Calendar Events persistence repair. The separately retained focused native 149-check result covers Add/Edit/Remove real disk readback, coalescing and denied-write retry. This closes the event-storage defect; do NOT infer that the new Calendar event dots, three-day Popup scope or Agenda→Todo feature has been implemented, and the overall canonical check stays independent.
 
-- [ ] **Calendar Popup Add/Edit Events text fields too small; event Remove button clipped — owner report 2026-10-10:**
+- [x] **Calendar Popup Add/Edit Events text fields too small; event Remove button clipped — owner report 2026-10-10:**
   Restore readable Title/Description fields and a fully visible Remove click
   target at normal/scaled fonts in compact Calendar panes. **Source repair
   and focused native checks complete on 2026-10-11; owner acceptance OPEN.**
@@ -1196,6 +1200,7 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   still has the earlier source; visual/physical owner retest and exact-SHA
   canonical qualification are pending. Keep this item open until Calendar
   Popup Add/Edit/Save/Remove is accepted on the owner desktop.
+  **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts the Calendar Add/Edit form geometry, readable inputs and contained Remove action. Retain the focused native 137-check layout receipt and Calendar storage acceptance. This closes the compact form sizing issue only, not the Calendar Popup indicators, Events three-day filter or shared canonical result.
 
 - [ ] **Weather popup overlap / Calendar-Weather Pyramid flicker — owner update 2026-10-10:**
   New case: rapidly hover between Calendar Popup and Weather Popup; Weather

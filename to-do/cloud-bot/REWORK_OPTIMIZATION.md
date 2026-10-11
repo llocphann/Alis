@@ -790,7 +790,7 @@ run privileged installation just because manual buttons are retired.
   [New features](NEW_FEATURES.md). State: READY for compact design; native
   input/layout and owner visual acceptance pending.
 
-- [ ] **Wi-Fi and Bluetooth Popups about 35% smaller — owner request 2026-10-10:**
+- [x] **Wi-Fi and Bluetooth Popups about 35% smaller — owner request 2026-10-10:**
   Reduce each Popup's displayed footprint by roughly 35% (target about 65%
   of previous width/height where viable). Preserve readable status/rows,
   usable hit targets, connection/discovery, loading/error/empty states and
@@ -804,8 +804,9 @@ run privileged installation just because manual buttons are retired.
   fixture now expects this geometry, but has NOT run in a local
   Wayland session. State: SOURCE PATCHED; native 4-edge input,
   scrolling, long names, password/pairing, scales and owner signoff OPEN.
+  **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts the compact Wi-Fi/Bluetooth Popup design delivered by the 260×330 source patch. This closes the owner-requested size/appearance rework. The previous line describing absent full local Wayland testing is historical and does not become a claimed native PASS; network connectivity/loading, other popup behavior, multi-edge/fractional scale and regression testing remain ordinary independent validation requirements.
 
-- [ ] **Monitor Arrangement tiles about 30% smaller — owner request 2026-10-10:**
+- [x] **Monitor Arrangement tiles about 30% smaller — owner request 2026-10-10:**
   Reduce UI monitor tiles by roughly 30% (about 70% of former displayed width/
   height), never real display resolution or compositor placement. Maintain
   correct aspect labels, selection/dragging, snapping, multi-monitor layouts,
@@ -825,6 +826,7 @@ run privileged installation just because manual buttons are retired.
   retaining the previous compact tile fit budget and unchanged Niri positions.
   Extended the existing native fixture to check the gap at real 620×400 size.
   State: SOURCE PATCHED; owner screenshot, scale and multi-output acceptance OPEN.
+  **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts the resized monitor tiles and removed blank space above/below the tab-indicator region from the two documented source commits. Close this size/spacing rework. Keep actual output placement unchanged; the earlier lack of exhaustive local drag/hotplug/multi-output testing remains an evidence limitation, not a newly asserted native PASS.
 
 - [ ] **Quick Notes Edgebar scrolling sensitivity — owner request 2026-10-10:**
   Tune wheel/touchpad scroll speed for predictable navigation, including
