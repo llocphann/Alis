@@ -355,6 +355,8 @@ do not reimplement them solely because a checkbox is open.
   Integrations → Calendar Settings now provides one persisted 0–5
   `calendar.maxEventDots` control (default 3); 0 hides indicators,
   overflow displays a + cue without changing actual event counts.
+  Added native private-Niri 0/1/3/5 event-dot/overflow regression
+  and English source strings; test is not yet run on a Wayland worker.
   State: SOURCE PATCHED / OPEN for focused/native Niri visual,
   Settings persistence, recurrence/long-name/month-edge and owner QA.
 

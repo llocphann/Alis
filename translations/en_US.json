@@ -5639,5 +5639,9 @@
   "Results": "Results",
   "Select music library folder": "Select music library folder",
   "Show the local music page in Dashboard": "Show the local music page in Dashboard",
-  "Unknown genre": "Unknown genre"
+  "Unknown genre": "Unknown genre",
+  "Show Music scrollbars": "Show Music scrollbars",
+  "Hide scrollbar tracks and thumbs without disabling Music list or touchpad scrolling": "Hide scrollbar tracks and thumbs without disabling Music list or touchpad scrolling",
+  "Maximum indicators per day": "Maximum indicators per day",
+  "Calendar Popup event dots (0 hides them; maximum 5)": "Calendar Popup event dots (0 hides them; maximum 5)"
 }

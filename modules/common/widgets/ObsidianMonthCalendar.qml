@@ -296,6 +296,8 @@ Item {
 
                     delegate: Rectangle {
                         id: dayCell
+                        objectName: "calendarEventDayCell"
+                        required property int index
                         required property var modelData
 
                         readonly property int eventCount:
@@ -359,6 +361,7 @@ Item {
                                 }
 
                                 delegate: Rectangle {
+                                    objectName: "calendarEventDot"
                                     required property var modelData
                                     width: 3
                                     height: 3
@@ -370,6 +373,7 @@ Item {
                             // Extra events are still visible as a compact + cue;
                             // the complete count remains in the day model.
                             StyledText {
+                                objectName: "calendarEventOverflow"
                                 visible: root.countedEventDots
                                     && dayCell.eventCount > root.effectiveMaxEventDots
                                 text: "+"
