@@ -1,0 +1,6 @@
+{
+  "source_sha": "2dbb678a9ab28fdcd2e8bbfa3d0b224e3b1e28dd",
+  "fixture_source_sha256": "cbf5f320939150ef9b0297ef964a5a8dc855207d3ca431fbf10d23149bcddc3d",
+  "diagnostic": "geometry probe; offscreen Qt Window replacing FloatingWindow; original reveal assertion unchanged",
+  "exit_code": 0
+}

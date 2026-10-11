@@ -1,0 +1,11 @@
+{
+  "source_base": "2dbb678a9ab28fdcd2e8bbfa3d0b224e3b1e28dd",
+  "fixture_sha256": "e4aee5d6db5357b5583feedad6ca0b7ad560a72922c199c52a41dcd4accff633",
+  "result": "PASS",
+  "exit_code": 0,
+  "runtime_changed": false,
+  "assertions_and_deadlines_changed": false,
+  "canonical_original": "FAIL / 350 PASS / 1 FAIL / 1 SKIP / exit1",
+  "canonical_cause": "NOT_DIAGNOSED",
+  "owner_preferences_changed": false
+}

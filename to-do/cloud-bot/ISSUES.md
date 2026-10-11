@@ -20,9 +20,11 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   unchanged/overlapping saves, permission denial and explicit retry. Existing
   mutation, opacity-migration and Thinkfan contracts PASS, exit 0 each.
   [Pinned source and all retained failures/evidence](../../docs/evidence/abyss-product/20261011-config-raw-write/README.md).
-  State: SOURCE FIXED / OPEN for final committed canonical and owner
-  persistence; no owner data/preferences or windows were touched. The
-  pre-repair b448 canonical PASS does not qualify this new repair.
+  State: SOURCE FIXED / OPEN for overall canonical and owner persistence.
+  Exact committed `2dbb678a9` passes its Config regression; full canonical
+  is FAIL 350/1/1 on the separate Weather initial-reveal fixture. No owner
+  data/preferences or windows were touched.
+  [Committed canonical receipt](../../docs/evidence/abyss-product/20261012-2dbb678a9/README.md).
 
 - [ ] **ABYSS-I01 — Panel background blur appears coupled to Panel opacity — owner report 2026-10-11:**
   [Owner: Alis dev; Bug / material rendering] User reports
@@ -949,7 +951,23 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   justified by this archive.
 
 
-- [ ] **Canonical validation — updated 2026-10-11:** frozen committed driver
+- [ ] **Canonical validation — updated 2026-10-12:** frozen committed driver
+  on clean-clone `2dbb678a9ab28fdcd2e8bbfa3d0b224e3b1e28dd` finishes
+  **FAIL: 350 PASS / 1 FAIL / 1 SKIP, exit 1**. Config persistence/mutation/
+  opacity migration, four-edge Popup hover, both editors and the Qt 6.12
+  parser pass. `test-weather-tab-motion.sh` fails "initial reveal paints
+  only the selected tab" before emitting actual geometry. Next: bounded
+  initial layout/paint diagnostic with the original assertion; distinguish
+  a real painted overlap from a fixture inspection/scheduling error. Keep
+  the full result FAIL; no resource/owner acceptance is implied.
+  [Frozen log/receipt](../../docs/evidence/abyss-product/20261012-2dbb678a9/README.md).
+  **Bounded diagnosis:** actual private-native FloatingWindow passes the
+  unchanged assertions and eight initial geometry probes; offscreen also
+  has correct geometry. Cause remains NOT_DIAGNOSED, full result stays FAIL.
+  Fixture-only follow-up adds failure snapshots and isolates its backend/
+  D-Bus/config in the existing private Niri helper, retaining original
+  assertions, sample cadence/ranges and deadlines. No Weather runtime change.
+  **Previous full milestone:** frozen committed driver
   on clean-clone `b44899d504d106b7a6d65ff16030f583fb3b526d` finishes
   **PASS: 349 PASS / 0 FAIL / 2 SKIP, exit 0**. Dashboard horizontal routing,
   shared opacity/material, all four Popup hover edges and both editor gates
