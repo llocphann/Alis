@@ -1063,6 +1063,8 @@
         "style": "panel"
     },
     "dashboard": {
+        "pageOrderVersion": 1,
+        "pageOrder": ["dashboard", "music", "weeklyPlanner"],
         "music": {
             "enable": true
         },

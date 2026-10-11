@@ -80,6 +80,51 @@ ShellRoot {
    check(Math.abs(dots.mapToItem(dashboard,0,0).x+dots.width/2-dashboard.width/2)<1,"page dots are not centered")
    check(findChild(dashboard,"dashboardPageDot0").width===8 && findChild(dashboard,"dashboardPageDot0").height===8,"page indicator must remain a small circular dot")
    check(findChild(dashboard,"dashboardMusic")===null,"Music UI eagerly allocated before its first visit")
+   // Real Qt wheel dispatch across body, header and the page indicators.
+   for(const area of [dashboard,dots.parent,dots]) {
+    for(const dy of [-120,120]) {
+     mouseWheel(area,area.width/2,area.height/2,0,dy)
+     check(dashboard.currentPageId==="dashboard","vertical wheel changed Dashboard page")
+    }
+    mouseWheel(area,area.width/2,area.height/2,0,-120,Qt.NoButton,Qt.ShiftModifier)
+    check(dashboard.currentPageId==="dashboard","Shift-only vertical signal changed page")
+    mouseWheel(area,area.width/2,area.height/2,-120,-160)
+    check(dashboard.currentPageId==="dashboard","vertical-dominant diagonal changed page")
+   }
+   for(let tick=0;tick<3;tick++) {
+    mouseWheel(dots,dots.width/2,dots.height/2,-30,0)
+    check(dashboard.currentPageId==="dashboard","small horizontal ticks skipped threshold")
+   }
+   mouseWheel(dots,dots.width/2,dots.height/2,-30,0)
+   tryCompare(dashboard,"currentPageId","music",1000)
+   mouseWheel(dots.parent,dots.parent.width/2,dots.parent.height/2,120,0)
+   tryCompare(dashboard,"currentPageId","dashboard",1000)
+   dashboard.resetPageWheel()
+   // QtTest mouseWheel dispatches angle deltas. Exercise pixel/phase state in
+   // the actual QV4 owners separately; this does not simulate physical touchpad delivery.
+   function phaseEvent(x,y,phase,header) {
+    const event={pixelDelta:{x,y},angleDelta:{x:0,y:0},phase,accepted:false}
+    if(header)dots.parent.horizontalWheel(event)
+    else dashboard.handlePageWheel(event,true)
+    return event
+   }
+   phaseEvent(0,0,1,false)
+   phaseEvent(-16,0,2,false)
+   check(dashboard.currentPageId==="dashboard","body pixel threshold bypassed")
+   phaseEvent(-16,0,2,true)
+   check(dashboard.currentPageId==="music","header/body did not share phased threshold")
+   phaseEvent(-64,0,4,true)
+   check(dashboard.currentPageId==="music","momentum changed another page")
+   phaseEvent(32,0,2,true)
+   check(dashboard.currentPageId==="dashboard","phased reversal failed")
+   phaseEvent(0,0,3,false)
+   check(!phaseEvent(0,40,0,true).accepted && dashboard.currentPageId==="dashboard","pixel vertical event was intercepted")
+   dashboard.resetPageWheel()
+   dashboard.openAgendaDialog(null)
+   check(!dashboard.navigationAllowed && !findChild(dashboard,"dashboardPage1").enabled,"dialog retained page input")
+   phaseEvent(-40,0,1,false)
+   check(dashboard.currentPageId==="dashboard","page gesture interrupted dialog input")
+   check(dashboard.handleEscape(),"Agenda dialog did not release its navigation guard")
    mouseWheel(dashboard,dashboard.width/2,dashboard.height/2,-120,0)
    tryCompare(dashboard,"currentPage",1,1000)
    renderFrame(dashboard,"wheel music frame pending")
@@ -316,12 +361,28 @@ ShellRoot {
     check(GlobalStates.dashboardOpen && !GlobalStates.sidebarLeftOpen && dashboard.currentPage===1,"Music navigation opened the retired Sidebar")
    }
    DevNavigation.closeAll()
+   // Stable identity survives order changes; legacy public numeric intent
+   // remains Music=1 regardless of its rendered index.
+   dashboard.selectPage("music")
+   Config.setNestedValue("dashboard.pageOrder",["music","dashboard","weeklyPlanner"])
+   check(dashboard.currentPageId==="music" && dashboard.currentPage===0,"reorder changed selected identity")
+   check(GlobalStates.dashboardPage===1,"reorder changed public Music intent")
+   mouseClick(findChild(dashboard,"dashboardPage1"))
+   check(dashboard.currentPageId==="dashboard" && GlobalStates.dashboardPage===0,"reordered dot selected wrong identity")
+   dots.parent.forceActiveFocus();keyClick(Qt.Key_Left)
+   check(dashboard.currentPageId==="music","accessible Left ignored persisted order")
+   keyClick(Qt.Key_Right)
+   check(dashboard.currentPageId==="dashboard","accessible Right ignored persisted order")
+   Config.setNestedValue("dashboard.music.enable",false)
+   check(dashboard.pageIds.length===1 && dashboard.currentPageId==="dashboard","disabled page retained navigation")
+   check(Config.options.dashboard.pageOrder[0]==="music","disabled page rewrote stored order")
+   Config.setNestedValues({"dashboard.music.enable":true,"dashboard.pageOrder":["dashboard","music","weeklyPlanner"]})
    const settings=Qt.createComponent(Qt.resolvedUrl("modules/settings/DashboardMusicSettings.qml"))
    check(settings.status===Component.Ready,"Music settings failed to compile: "+settings.errorString())
    const settingsItem=settings.createObject(window.contentItem,{visible:false})
    check(settingsItem!==null,"Music settings failed to load")
    settingsItem.destroy()
-   console.info("DASHBOARD_MUSIC_RUNTIME_PASS native-page-dots responsive-columns genre folder child-folder actual-playback-click stable-canvas hidden-presentation edit-lock")
+   console.info("DASHBOARD_MUSIC_RUNTIME_PASS native-page-dots responsive-columns genre folder child-folder actual-playback-click stable-canvas hidden-presentation edit-lock horizontal-only-shared-burst reordered-stable-ids keyboard disabled-order-preservation")
   } catch(e) { console.error("DASHBOARD_MUSIC_RUNTIME_FAIL",e.message,e.stack) } Qt.quit() }
  }
  Timer { interval:100; running:true; onTriggered:test.runChecks() }
@@ -335,6 +396,8 @@ ShellRoot {
   capture=Path(os.environ.get("HADALIS_MUSIC_CAPTURE",str(folder/"dashboard-music.png")))
   env.update(QSG_RHI_BACKEND="opengl",MUSIC_CAPTURE=str(capture),MUSIC_CAPTURE_NARROW=str(capture.with_name(capture.stem+"-narrow.png")))
   result=run_qs(folder,env,timeout=40)
+  if os.environ.get("ALIS_DASHBOARD_MUSIC_LOG"):
+   Path(os.environ["ALIS_DASHBOARD_MUSIC_LOG"]).write_text(result.stdout)
   if result.returncode or "DASHBOARD_MUSIC_RUNTIME_PASS" not in result.stdout or any(x in result.stdout for x in ["DASHBOARD_MUSIC_RUNTIME_FAIL","TypeError:","ReferenceError:","Binding loop","Unable to assign","Failed to load configuration"]):
    print(result.stdout);raise SystemExit(1)
   print("DASHBOARD_MUSIC_RUNTIME_PASS native dots/wheel/panning, tabbed Library/Results/Media+Queue/optional Lyrics, genre/folder/search, single/double/Ctrl actions, queue/playlist/volume, cold restore and edit lock")

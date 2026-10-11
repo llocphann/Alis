@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "task": "DASH-R02",
+  "baseSha": "0031ad4b8cd52b854c2ab51b9704b3e607c70f92",
+  "candidateIdentity": "precommit working source, pinned by SHA256",
+  "sourceHashes": {
+    "GlobalStates.qml": "4f16b54b5bf6f90568968807becd6494ff53e7987cfd2adfa66e0f7d6b9029c4",
+    "defaults/config.json": "66e309256859d9fa79e16aa793cffba58c3cd6944904fd1ebdf85acaab3240c7",
+    "modules/common/Config.qml": "c04dc012a351bf566af6f7ef2adc90b00f9fb363e9278366ad5a8377d8b33b87",
+    "modules/dashboard/DashboardContent.qml": "1ea846f4c0d92930880d526c7e4d1a2251d6470aa21e97cb7f7ca6185683b313",
+    "modules/dashboard/DashboardHeader.qml": "506b434a6e9adb3eb744a9a6e01ac92454a2bb140498b79e0ae4cfba81635dc8",
+    "modules/dashboard/DashboardMusic.qml": "70a43139daf77b37b5b42388c92ccc8c6a6f57f96d8d0abdd3537ca0e0de7637",
+    "modules/dashboard/DashboardPagePolicy.js": "989148f310c319f6201350d0deaaaa79251e9c295cf951638292bd72ef35020b",
+    "scripts/test-dashboard-page-policy.mjs": "230eca067c90d8adb843b4b5cf86c97b986fb607ebe8650b1801f0c899096efc",
+    "scripts/test-dashboard-music-runtime.py": "adffe72130c2425d3520793eeab708a89e74fce7c5f30d1f99031717fdcb24f3"
+  },
+  "baselineRuntimeSha": "b543bb7602eb74901c3c137c89c70c301e12fde4",
+  "baselineResult": "EXPECTED FAIL: actual vertical wheel changes page from Dashboard to Music",
+  "baselineExitCode": 1,
+  "candidateChecks": {
+    "nodePolicy": {
+      "result": "PASS",
+      "checks": 990,
+      "exitCode": 0,
+      "scope": "two/three-page permutations; policy only for future Planner"
+    },
+    "actualDashboardMusic": {
+      "result": "PASS",
+      "exitCode": 0,
+      "scope": "real Qt wheel dispatch, QV4 pixel/phase owner calls, stable reordered IDs, keyboard, disabled order, modal/editor guards and existing Music actions"
+    },
+    "actualSixOverflowLists": {
+      "result": "PASS",
+      "exitCode": 0
+    },
+    "localMusicDemand": {
+      "result": "PASS",
+      "exitCode": 0
+    },
+    "localMusicMutationPythonAndRust": {
+      "result": "PASS",
+      "exitCode": 0
+    },
+    "parser": "PASS /usr/lib/qt6/bin/qmlformat 6.12.0"
+  },
+  "physicalTouchpadAcceptance": false,
+  "ownerPreferencesChanged": false,
+  "weeklyPlannerProductPageImplemented": false,
+  "dragReorderProductUIImplemented": false,
+  "canonical": "NOT RUN on this candidate"
+}

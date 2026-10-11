@@ -23,7 +23,7 @@ expect(music, 'objectName: "musicLibrary"', 'objectName: "musicGenreTab"',
        'objectName: "musicFolderTab"', 'function switchLibraryTab(tab): void',
        'function restoreBrowserColumns(): bool', 'sourceMode = ""',
        'visible: root.libraryTab === "genre"', 'visible: root.libraryTab === "folder"',
-       'function acceptsPageWheel(x, y): bool',
+       'function panHorizontally(',
        'objectName: "musicPlayAll"', 'objectName: "musicPlaySelection"',
        'root.backend.playQueue(root.allResultTracks, 0',
        'root.backend.playQueue(root.selectedTracks, 0',
@@ -37,10 +37,14 @@ expect(music, 'objectName: "musicLibrary"', 'objectName: "musicGenreTab"',
        'mediaColumnWidth: Math.min(380, Math.max(315, width * .29))')
 expect(pages, 'function handleEscape(): bool', 'dashboardCanvas.cancelEditMode()',
        'musicPage.item?.restoreBrowserColumns()', 'orientation: Qt.Horizontal',
-       'orientation: Qt.Vertical', 'acceptsPageWheel(local.x, local.y)')
+       'PagePolicy.advance(', 'GlobalStates.dashboardPageId',
+       'PagePolicy.ordered(', 'musicPage.item?.panHorizontally(movement.x)')
+assert 'orientation: Qt.Vertical' not in pages, 'vertical page navigation remains in body'
+assert 'orientation: Qt.Vertical' not in header, 'vertical page navigation remains in header'
 expect(dashboard, 'contentLoader.item?.handleEscape()', 'event.accepted = true')
 expect(header, 'id: uptime', 'anchors.left: parent.left',
-       'id: actions', 'anchors.right: parent.right', 'orientation: Qt.Vertical')
+       'id: actions', 'anchors.right: parent.right', 'orientation: Qt.Horizontal',
+       'root.horizontalWheel(event)', 'Keys.onLeftPressed:', 'Keys.onRightPressed:')
 expect(module, 'readonly property bool hovered: hoverTracker.hovered',
        'onHoveredChanged: root.interaction(hovered ? .35 : -.15)')
 expect(popup, 'readonly property bool moduleHoverActive: !!(',

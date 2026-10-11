@@ -881,7 +881,7 @@ run privileged installation just because manual buttons are retired.
   restriction is for gesture routing, not removal of page dots.
 
   **Source evidence:** `modules/dashboard/DashboardContent.qml`
-  currently has an overlay `WheelHandler` with
+  at intake had an overlay `WheelHandler` with
   `orientation: Qt.Vertical` which writes numeric
   `GlobalStates.dashboardPage` and a second horizontal handler.
   `modules/dashboard/DashboardHeader.qml` separately has a
@@ -926,7 +926,20 @@ run privileged installation just because manual buttons are retired.
   diagonal touchpad movement, keyboard, scale/theme, open/close/
   restart and real Niri/Quickshell owner acceptance. Update
   focused QML/JS gesture-routing contracts and scroll fixtures.
-  State: OPEN; gesture change NOT IMPLEMENTED.
+  **Source implementation, 2026-10-11:** vertical handlers are removed from
+  body/header; one shared horizontal burst/phase threshold, fast reversal,
+  boundary and Music-content ownership policy now drives stable IDs and
+  persisted active order. Numeric Music=1 compatibility is retained;
+  dialogs/editing suspend both dots and gestures. Baseline exact b543bb760
+  reproduces vertical switching (expected FAIL, exit 1). Candidate Node
+  policy passes 990 checks over two/three-page order permutations; actual
+  Dashboard/Music controls, all six overflow lists, LocalMusic demand and
+  Python/Rust mutation fixtures PASS (each exit 0).
+  [Source pins and focused evidence](../../docs/evidence/abyss-product/20261011-dashboard-navigation/README.md).
+  State: OPEN for committed canonical, owner touchpad/mouse/scaling and
+  multi-output acceptance; actual third Planner page (DASH-F01), dot drag
+  transactions (DASH-F02) and their native three-page/restart gates remain
+  NOT IMPLEMENTED. Do not turn policy permutations into product acceptance.
 
 - [ ] **DASH-R01 — Smooth Dashboard slide-in and slide-out — owner report 2026-10-11:**
   [Owner: Alis dev; Rework / animation performance] The **whole

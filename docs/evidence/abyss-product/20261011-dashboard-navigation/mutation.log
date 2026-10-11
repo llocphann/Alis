@@ -1,0 +1,3 @@
+PASS: actual LocalMusic ordered Process transport via python
+PASS: actual LocalMusic ordered Process transport via rust
+PASS: real LocalMusic QML/FileView/Process ordering against isolated MPD protocol

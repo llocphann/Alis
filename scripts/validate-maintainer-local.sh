@@ -313,6 +313,7 @@ run_check 'NotificationCenter anchor hover lease regression' node scripts/test-n
 run_check 'Abyss notification popup geometry transition regression' node scripts/test-abyss-notification-transition.mjs
 run_check 'Abyss hover scene geometry diagnostic regression' node scripts/test-abyss-hover-geometry-probe.mjs
 run_check 'Abyss frame activity diagnostic regression' node scripts/test-abyss-frame-activity-probe.mjs
+run_check 'Dashboard horizontal gesture and stable page order regression' node scripts/test-dashboard-page-policy.mjs
 run_check 'translation catalog structure' python3 translations/tools/l10n.py audit-all
 run_check 'translation source parity' python3 translations/tools/source-parity.py
 while IFS= read -r -d '' test_file; do

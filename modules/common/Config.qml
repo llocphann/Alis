@@ -2087,6 +2087,8 @@ Singleton {
             }
 
             property JsonObject dashboard: JsonObject {
+                property int pageOrderVersion: 1
+                property list<string> pageOrder: ["dashboard", "music", "weeklyPlanner"]
                 property JsonObject music: JsonObject {
                     property bool enable: true
                 }

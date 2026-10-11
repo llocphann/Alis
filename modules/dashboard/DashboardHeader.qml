@@ -18,20 +18,32 @@ Item {
     property bool showActions: true
     property int currentPage: 0
     property int pageCount: 1
+    property var pageIds: ["dashboard", "music"]
+    property bool navigationAllowed: true
     readonly property bool narrow: width < 620
     readonly property bool abyss: Config.options?.panelFamily === "abyss"
     signal pageRequested(int index)
     signal editModeRequested
+    signal horizontalWheel(var event)
     WheelHandler {
         target: null
-        orientation: Qt.Vertical
-        enabled: root.pageCount > 1 && !root.editMode
-        onWheel: event => {
-            const delta = event.pixelDelta.y || event.angleDelta.y / 3
-            if (!delta) return
-            root.pageRequested(delta < 0 ? 1 : 0)
+        orientation: Qt.Horizontal
+        blocking: false
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        enabled: root.navigationAllowed && root.pageCount > 1 && !root.editMode
+        onWheel: event => root.horizontalWheel(event)
+    }
+    Keys.onLeftPressed: event => {
+        if (root.navigationAllowed && !root.editMode && root.currentPage > 0) {
+            root.pageRequested(root.currentPage - 1)
             event.accepted = true
-        }
+        } else event.accepted = false
+    }
+    Keys.onRightPressed: event => {
+        if (root.navigationAllowed && !root.editMode && root.currentPage < root.pageCount - 1) {
+            root.pageRequested(root.currentPage + 1)
+            event.accepted = true
+        } else event.accepted = false
     }
 
     readonly property bool inirEverywhere: Appearance.inirEverywhere
@@ -79,7 +91,7 @@ Item {
         spacing: root.narrow ? 3 : 8
 
         HeaderButton {
-            enabled: root.currentPage === 0
+            enabled: root.pageIds[root.currentPage] === "dashboard"
             iconName: root.editMode ? "done" : "edit"
             tooltip: root.editMode ? Translation.tr("Done editing") : Translation.tr("Edit widgets")
             toggled: root.editMode
@@ -140,8 +152,9 @@ Item {
                 implicitWidth: 24
                 implicitHeight: 32
                 buttonRadius: 16
-                enabled: !root.editMode
-                Accessible.name: index === 0 ? Translation.tr("Dashboard") : Translation.tr("Music")
+                enabled: root.navigationAllowed && !root.editMode
+                Accessible.name: root.pageIds[index] === "dashboard" ? Translation.tr("Dashboard")
+                    : root.pageIds[index] === "music" ? Translation.tr("Music") : Translation.tr("Weekly Planner")
                 colBackground: "transparent"
                 colBackgroundHover: Qt.alpha(root.colText, .08)
                 contentItem: Item {

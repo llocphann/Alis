@@ -1,0 +1,23 @@
+  INFO: Launching config: "/tmp/hadalis-dashboard-music-a6wudatq/shell.qml"
+  INFO: Shell ID: "0387ad38fb883f22ce0874d9196dc918" Path ID "0387ad38fb883f22ce0874d9196dc918"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/mmg5eq2rmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.254806.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-music-a6wudatq/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-a6wudatq/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/hadalis-dashboard-music-a6wudatq/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[331:5]: Read of /tmp/hadalis-dashboard-music-a6wudatq/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[252:5]: Read of /tmp/hadalis-dashboard-music-a6wudatq/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/Events.qml[62:5]: Read of /tmp/hadalis-dashboard-music-a6wudatq/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fab5b1c8ae0)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-a6wudatq/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN qt.qpa.wayland: Failed to create grabbing popup. Ensure popup  ProxiedWindow(0x7fab58d41e10) has a transientParent set and that parent window has received input.
+  WARN qt.qpa.wayland: Failed to create grabbing popup. Ensure popup  ProxiedWindow(0x7fab5a3f57f0) has a transientParent set and that parent window has received input.
+  INFO qml: [Weather] Getting location from IP...
+  INFO qml: [Weather] Location: [redacted]
+  INFO qml: DASHBOARD_MUSIC_RUNTIME_PASS native-page-dots responsive-columns genre folder child-folder actual-playback-click stable-canvas hidden-presentation edit-lock horizontal-only-shared-burst reordered-stable-ids keyboard disabled-order-preservation

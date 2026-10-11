@@ -405,6 +405,7 @@ Singleton {
     property bool controlPanelOpen: false
     property bool dashboardOpen: false
     property int dashboardPage: 0
+    property string dashboardPageId: "dashboard"
     // Lightweight browsing identity survives the bounded Dashboard UI cache.
     property var dashboardMusicBrowser: ({})
     property bool workspaceShowNumbers: false

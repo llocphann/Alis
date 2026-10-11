@@ -223,18 +223,6 @@ Item {
         else
             backend.enqueueTrack(entry.track, true);
     }
-    // Leave nested list scrolling intact when vertical wheel navigates pages.
-    function acceptsPageWheel(x, y): bool {
-        const lists = [genreList, folderList, playlistList, resultList, queueList, lyricsList]
-        for (const item of lists) {
-            if (!item.visible || item.width <= 0 || item.height <= 0)
-                continue
-            const p = item.mapFromItem(root, x, y)
-            if (p.x >= 0 && p.x < item.width && p.y >= 0 && p.y < item.height)
-                return false
-        }
-        return true
-    }
     function panHorizontally(amount): bool {
         const next = Math.max(0, Math.min(horizontal.contentWidth - horizontal.width, horizontal.contentX - amount));
         if (Math.abs(next - horizontal.contentX) < .01)

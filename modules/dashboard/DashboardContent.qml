@@ -8,6 +8,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.sidebarRight.events
+import "DashboardPagePolicy.js" as PagePolicy
 
 Item {
     id: root
@@ -20,14 +21,58 @@ Item {
 
     property alias editMode: dashboardCanvas.editMode
     readonly property bool musicEnabled: Config.options?.dashboard?.music?.enable ?? true
-    readonly property int currentPage: musicEnabled ? Math.max(0, Math.min(1, GlobalStates.dashboardPage)) : 0
+    readonly property var pageIds: PagePolicy.ordered(Config.options?.dashboard?.pageOrder,
+        musicEnabled ? ["dashboard", "music"] : ["dashboard"])
+    readonly property string currentPageId: pageIds.includes(GlobalStates.dashboardPageId)
+        ? GlobalStates.dashboardPageId : pageIds[0]
+    readonly property int currentPage: pageIds.indexOf(currentPageId)
     property var musicBackend: null
-    property bool musicVisited: currentPage === 1
-    onCurrentPageChanged: if (currentPage === 1)
+    property bool musicVisited: currentPageId === "music"
+    onCurrentPageIdChanged: if (currentPageId === "music")
         musicVisited = true
     onEditModeChanged: if (editMode)
-        GlobalStates.dashboardPage = 0
+        selectPage("dashboard")
     readonly property var canvasController: dashboardCanvas
+
+    readonly property bool navigationAllowed: root.presentationActive && pageIds.length > 1
+        && !root.editMode && !root._agendaDialogShown && !(musicPage.item?.playlistDialogVisible ?? false)
+    property var _pageWheelState: PagePolicy.idle()
+    function resetPageWheel(): void {
+        pageWheelIdle.stop()
+        _pageWheelState = PagePolicy.idle()
+    }
+    function selectPage(id): void {
+        if (!pageIds.includes(id)) return
+        GlobalStates.dashboardPageId = id
+        GlobalStates.dashboardPage = PagePolicy.defaultOrder.indexOf(id)
+    }
+    function handlePageWheel(event, panContent): void {
+        event.accepted = false
+        if (!navigationAllowed) return
+        const movement = PagePolicy.delta(event)
+        const phase = Number(event.phase ?? 0)
+        const contentConsumed = movement.x && Math.abs(movement.x) > Math.abs(movement.y)
+            && panContent && currentPageId === "music" && musicPage.item?.panHorizontally(movement.x)
+        const result = PagePolicy.advance(_pageWheelState, movement, phase, Date.now(), pageIds, currentPageId, contentConsumed)
+        _pageWheelState = result.state
+        event.accepted = result.accepted
+        if (!_pageWheelState.phased && _pageWheelState.direction) pageWheelIdle.restart()
+        else pageWheelIdle.stop()
+        if (result.target) selectPage(result.target)
+    }
+    onNavigationAllowedChanged: if (!navigationAllowed) resetPageWheel()
+    Timer {id:pageWheelIdle;interval:180;repeat:false;onTriggered:root._pageWheelState=PagePolicy.idle()}
+    Connections {
+        target: GlobalStates
+        function onDashboardPageChanged(): void {
+            const id = PagePolicy.defaultOrder[GlobalStates.dashboardPage] ?? "dashboard"
+            GlobalStates.dashboardPageId = root.pageIds.includes(id) ? id : root.pageIds[0]
+        }
+    }
+    Component.onCompleted: {
+        const legacy = PagePolicy.defaultOrder[GlobalStates.dashboardPage]
+        if (legacy && pageIds.includes(legacy)) GlobalStates.dashboardPageId = legacy
+    }
 
     readonly property bool showHeader: Config.options?.dashboard?.showHeader ?? true
 
@@ -45,7 +90,7 @@ Item {
             dashboardCanvas.cancelEditMode()
             return true
         }
-        return currentPage === 1 && (musicPage.item?.restoreBrowserColumns() ?? false)
+        return currentPageId === "music" && (musicPage.item?.restoreBrowserColumns() ?? false)
     }
 
     function openAgendaDialog(arg) {
@@ -103,8 +148,11 @@ Item {
                 visible: root.showHeader || root.musicEnabled
                 showActions: root.showHeader
                 currentPage: root.currentPage
-                pageCount: root.musicEnabled ? 2 : 1
-                onPageRequested: index => GlobalStates.dashboardPage = index
+                pageCount: root.pageIds.length
+                pageIds: root.pageIds
+                navigationAllowed: root.navigationAllowed
+                onHorizontalWheel: event => root.handlePageWheel(event, false)
+                onPageRequested: index => {root.resetPageWheel();root.selectPage(root.pageIds[index])}
                 editMode: dashboardCanvas.editMode
                 onEditModeRequested: {
                     if (dashboardCanvas.editMode)
@@ -122,7 +170,7 @@ Item {
                 clip: true
                 // Editing must see the original workspace immediately, including
                 // entry during an already running page transition.
-                readonly property real slideProgress: root.editMode ? 0 : pagePosition
+                readonly property real slideProgress: root.editMode ? root.pageIds.indexOf("dashboard") : pagePosition
                 property real pagePosition: root.currentPage
                 Behavior on pagePosition {
                     enabled: root.presentationActive && Appearance.animationsEnabled && !root.editMode
@@ -135,10 +183,10 @@ Item {
                     id: dashboardCanvas
                     width: pages.width
                     height: pages.height
-                    x: -pages.slideProgress * pages.width
-                    visible: pages.slideProgress < 1
-                    enabled: root.currentPage === 0
-                    presentationActive: root.presentationActive && root.currentPage === 0
+                    x: (root.pageIds.indexOf("dashboard") - pages.slideProgress) * pages.width
+                    visible: Math.abs(pages.slideProgress - root.pageIds.indexOf("dashboard")) < 1
+                    enabled: root.currentPageId === "dashboard"
+                    presentationActive: root.presentationActive && root.currentPageId === "dashboard"
                     warmContent: root.warmContent
                     onRequestEventsDialog: event => root.openAgendaDialog(event)
                 }
@@ -146,13 +194,13 @@ Item {
                     id: musicPage
                     width: pages.width
                     height: pages.height
-                    x: (1 - pages.slideProgress) * pages.width
-                    visible: pages.slideProgress > 0
-                    enabled: root.currentPage === 1
+                    x: (root.pageIds.indexOf("music") - pages.slideProgress) * pages.width
+                    visible: root.musicEnabled && Math.abs(pages.slideProgress - root.pageIds.indexOf("music")) < 1
+                    enabled: root.currentPageId === "music"
                     active: root.musicEnabled && root.musicVisited && (root.presentationActive || root.warmContent)
                     sourceComponent: DashboardMusic {
                         backend: root.musicBackend ?? LocalMusic
-                        presentationActive: root.presentationActive && root.currentPage === 1
+                        presentationActive: root.presentationActive && root.currentPageId === "music"
                     }
                 }
                 // Handle page gestures above the canvas and its scrollable widgets.
@@ -161,44 +209,12 @@ Item {
                     anchors.fill: parent
                     z: 100
                     WheelHandler {
-                        id: dashboardVerticalWheel
-                        target: null
-                        orientation: Qt.Vertical
-                        // Rejected list events must reach the Flickable below.
-                        blocking: false
-                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                        enabled: root.presentationActive && root.musicEnabled && !root.editMode && !root._agendaDialogShown && !(musicPage.item?.playlistDialogVisible ?? false)
-                        onWheel: event => {
-                            const delta = event.pixelDelta.y || event.angleDelta.y / 3
-                            if (!delta) return
-                            if (root.currentPage === 1 && musicPage.item) {
-                                const at = dashboardVerticalWheel.point.position
-                                const local = musicPage.item.mapFromItem(pages, at.x, at.y)
-                                if (!musicPage.item.acceptsPageWheel(local.x, local.y)) {
-                                    event.accepted = false
-                                    return // Preserve vertical scrolling inside music lists.
-                                }
-                            }
-                            GlobalStates.dashboardPage = delta < 0 ? 1 : 0
-                            event.accepted = true
-                        }
-                    }
-                    WheelHandler {
                         target: null
                         orientation: Qt.Horizontal
+                        blocking: false
                         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                        enabled: root.presentationActive && root.musicEnabled && !root.editMode && !root._agendaDialogShown && !(musicPage.item?.playlistDialogVisible ?? false)
-                        onWheel: event => {
-                            const delta = event.pixelDelta.x || event.angleDelta.x / 3;
-                            if (delta === 0)
-                                return;
-                            if (root.currentPage === 1 && musicPage.item?.panHorizontally(delta)) {
-                                event.accepted = true;
-                                return;
-                            }
-                            GlobalStates.dashboardPage = Math.max(0, Math.min(1, root.currentPage + (delta < 0 ? 1 : -1)));
-                            event.accepted = true;
-                        }
+                        enabled: root.navigationAllowed
+                        onWheel: event => root.handlePageWheel(event, true)
                     }
                 }
             }
