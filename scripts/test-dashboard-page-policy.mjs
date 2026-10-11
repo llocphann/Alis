@@ -71,4 +71,22 @@ eq(policy.delta({pixelDelta:{x:-3.5,y:1},angleDelta:{x:-120,y:0}}), {x:-3.5,y:1}
 eq(policy.delta({angleDelta:{x:120,y:-60}}), {x:40,y:-20});
 eq(policy.ordered(['music','unknown','dashboard','weeklyPlanner'], ['dashboard']), ['dashboard'], 'disabled page remained active');
 eq(policy.ordered(undefined, ['dashboard','music']), ['dashboard','music'], 'legacy config lacked defaults');
+eq(policy.normalized(['music','future','music','dashboard']),['music','future','dashboard','weeklyPlanner'],'legacy/default migration erased a future page');
+for(const available of [['dashboard','music','weeklyPlanner'],['dashboard','weeklyPlanner']]) {
+ for(const order of permutations(['dashboard','music','weeklyPlanner'])) {
+  const raw=[order[0],'future-a',order[1],'future-b',order[2]],before=JSON.stringify(raw);
+  const visible=order.filter(id=>available.includes(id));
+  for(const id of visible)for(let target=-2;target<visible.length+2;target++) {
+   const expected=[...visible];expected.splice(expected.indexOf(id),1);expected.splice(Math.max(0,Math.min(visible.length-1,target)),0,id);
+   const moved=policy.move(raw,available,id,target);
+   eq(policy.ordered(moved,available),expected,'visible page moved to the wrong insertion slot');
+   eq([moved[1],moved[3]],['future-a','future-b'],'unknown page positions erased');
+   if(!available.includes('music'))eq(moved.indexOf('music'),raw.indexOf('music'),'hidden Music slot moved');
+   eq(JSON.stringify(raw),before,'draft reorder mutated saved input');
+   eq(policy.move(moved,available,id,visible.indexOf(id)),raw,'inverse reorder changed stable hidden/future slots');
+  }
+ }
+}
+eq(policy.move(ids,ids,'missing',1),ids,'unknown drag changed valid order');
+eq(policy.move(ids,ids,'music',NaN),ids,'invalid drop changed valid order');
 console.log(`DASHBOARD_PAGE_POLICY_PASS ${checks} checks; stable/reordered two and three pages, thresholds, vertical/diagonal, bursts, phases, reversal, inner-browser ownership`);

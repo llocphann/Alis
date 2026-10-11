@@ -9,6 +9,25 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
 
 ## Current failures and owner reports
 
+- [ ] **DASH-I07 — Tab-order conflict baseline must survive Undo Reset — source review 2026-10-12:**
+  Related `DASH-F02`: resetting an edit accepts the newest saved order, but
+  undoing that Reset must restore the earlier conflict baseline as well as
+  the older draft. Otherwise Done could overwrite a concurrent save. The
+  shared draft snapshot now includes the baseline; the native regression
+  preserves both refused Done and unchanged saved order after Undo Reset.
+  Latest actual native PASS preserves both refused Done and concurrent saved
+  order after Undo Reset. [Evidence](../../docs/evidence/abyss-product/20261012-dashboard-tab-order/README.md).
+  State: SOURCE/FOCUSED FIXED; committed canonical/owner gates OPEN.
+
+- [ ] **DASH-I06 — Transient page label during hidden-tab model updates — discovered 2026-10-12:**
+  Related `DASH-F02` native fractional test passes drag/transaction checks but
+  detects `Unable to assign [undefined] to QString` while Music is removed:
+  its old delegate briefly outlives the new stable-ID array. The shared label
+  function now returns a string for absent IDs, preserving order and avoiding
+  a bogus label during model disposal. Latest actual native at measured DPR1.25
+  PASS warning-free. [Evidence](../../docs/evidence/abyss-product/20261012-dashboard-tab-order/README.md).
+  State: SOURCE/FOCUSED FIXED; committed canonical/owner gates OPEN.
+
 - [ ] **DASH-I05 — Music scrollbar preference missing from typed Config — discovered 2026-10-12:**
   Related to `DASH-F01`/`DASH-F02` shared Dashboard acceptance. The new Music
   Settings checkbox/defaults refer to `dashboard.music.showScrollbars`, but the
@@ -18,7 +37,7 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
   is retained with Weekly Planner evidence. Actual private-Niri Settings now
   toggles both values through typed Config and a freshly reloaded Music UI,
   PASS without that warning. [Bounded evidence](../../docs/evidence/abyss-product/20261012-weekly-planner/README.md).
-  State: SOURCE/FОCUSED FIXED; final committed-SHA canonical and installed
+  State: SOURCE/FOCUSED FIXED; final committed-SHA canonical and installed
   owner Settings persistence remain OPEN.
 
 - [ ] **TODO-I01 — Internal Todo save completion may block later JSON persistence — discovered 2026-10-12:**

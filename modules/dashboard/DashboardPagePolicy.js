@@ -2,6 +2,25 @@
 // Numeric legacy selections are confined to this compatibility map.
 var defaultOrder = ["dashboard", "music", "weeklyPlanner"];
 
+function normalized(raw) {
+    var result=[];
+    (typeof raw==="string" ? [] : Array.from(raw || [])).concat(defaultOrder).forEach(function(id) {
+        if (typeof id==="string" && id.length && result.indexOf(id)<0) result.push(id);
+    });
+    return result;
+}
+
+// Only substitute visible slots. Hidden and future pages retain their stored
+// positions and identity when a currently available page moves around them.
+function move(raw, available, id, target) {
+    var result=normalized(raw), visible=ordered(result,available), from=visible.indexOf(id);
+    if (from<0 || !Number.isFinite(target)) return result;
+    target=Math.max(0,Math.min(visible.length-1,Math.round(target)));
+    visible.splice(from,1);visible.splice(target,0,id);
+    var index=0;
+    return result.map(function(page) {return available.indexOf(page)>=0 ? visible[index++] : page;});
+}
+
 function ordered(raw, available) {
     var result = [];
     Array.from(raw || []).concat(available).forEach(function(id) {

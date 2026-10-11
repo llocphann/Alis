@@ -21,7 +21,7 @@ Item {
 
     property alias editMode: dashboardCanvas.editMode
     readonly property bool musicEnabled: Config.options?.dashboard?.music?.enable ?? true
-    readonly property var pageIds: PagePolicy.ordered(Config.options?.dashboard?.pageOrder,
+    readonly property var pageIds: PagePolicy.ordered(dashboardCanvas.effectivePageOrder,
         musicEnabled ? ["dashboard", "music", "weeklyPlanner"] : ["dashboard", "weeklyPlanner"])
     readonly property string currentPageId: pageIds.includes(GlobalStates.dashboardPageId)
         ? GlobalStates.dashboardPageId : pageIds[0]
@@ -87,6 +87,7 @@ Item {
     property bool _agendaDialogLoaded: false
 
     function handleEscape(): bool {
+        if (dashboardHeader.cancelPageDrag()) return true
         if (_agendaDialogShown) {
             _agendaDialogShown = false
             return true
@@ -164,6 +165,8 @@ Item {
                 pageCount: root.pageIds.length
                 pageIds: root.pageIds
                 navigationAllowed: root.navigationAllowed
+                reorderAllowed: root.editMode && !root._agendaDialogShown
+                onPageMoveRequested: (id,target) => dashboardCanvas.movePage(id,target,root.pageIds)
                 onHorizontalWheel: event => root.handlePageWheel(event, false)
                 onPageRequested: index => {root.resetPageWheel();root.selectPage(root.pageIds[index])}
                 editMode: dashboardCanvas.editMode

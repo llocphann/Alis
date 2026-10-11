@@ -1,0 +1,8 @@
+  INFO: Launching config: "/tmp/alis-dashboard-tab-reorder-aoy8s75c/shell.qml"
+  INFO: Shell ID: "00fc3926e294f4440a22e4fd32d63c79" Path ID "00fc3926e294f4440a22e4fd32d63c79"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/iw9d7larmt/log.qslog"
+  WARN: --- WARNING ---
+  WARN: WAYLAND_DISPLAY is present but QT_QPA_PLATFORM is "offscreen"
+  WARN: If you are actually running wayland, set QT_QPA_PLATFORM to "wayland" or most functionality will be broken.
+  INFO: Configuration Loaded
+  INFO qml: DASHBOARD_TAB_REORDER_RESTART_PASS

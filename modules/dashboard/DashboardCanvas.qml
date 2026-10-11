@@ -9,6 +9,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import "DashboardLayout.js" as WorkingLayout
+import "DashboardPagePolicy.js" as PagePolicy
 
 Item {
     id: root
@@ -35,7 +36,12 @@ Item {
         if (!root.canUndo) return
         root.finishInteraction(false)
         const history=root._undoEntries.slice()
-        root._draftEntries=history.pop()
+        const previous=history.pop()
+        root._draftEntries=previous.widgets
+        root._draftPageOrder=previous.pages
+        root._basePageOrder=previous.basePages
+        root._draftWorkspaceWidth=previous.width
+        root._draftWorkspaceHeight=previous.height
         root._undoEntries=history
         root.layoutMessage=""
     }
@@ -112,6 +118,17 @@ Item {
     // Dashboard layout editing is transactional. The live editor works against
     // this in-memory draft; persistent Config is touched only by Done.
     property var _draftEntries: null
+    property var _draftPageOrder: null
+    property var _basePageOrder: null
+    readonly property var savedPageOrder: Config.options?.dashboard?.pageOrder ?? PagePolicy.defaultOrder
+    readonly property var effectivePageOrder: editMode && _draftPageOrder!==null ? _draftPageOrder : savedPageOrder
+    readonly property bool pageOrderDirty: editMode && JSON.stringify(_draftPageOrder)!==JSON.stringify(_basePageOrder)
+    onSavedPageOrderChanged: {
+        if (editMode && !pageOrderDirty) {
+            _basePageOrder=Array.from(savedPageOrder)
+            _draftPageOrder=Array.from(savedPageOrder)
+        }
+    }
     property real _draftWorkspaceWidth: 0
     property real _draftWorkspaceHeight: 0
     property var _draftGridSize: null
@@ -173,6 +190,8 @@ Item {
         // Pressing Done without making an edit must be an identity operation.
         root._draftEntries = root._cloneEntries(
             Config.options?.dashboard?.canvas?.widgets ?? [])
+        root._basePageOrder=Array.from(root.savedPageOrder)
+        root._draftPageOrder=Array.from(root.savedPageOrder)
         root._draftWorkspaceWidth = Number(
             Config.options?.dashboard?.canvas?.workspaceWidth ?? 0)
         root._draftWorkspaceHeight = Number(
@@ -192,9 +211,34 @@ Item {
             root.editMode = true
     }
 
+    function _rememberDraft(): void {
+        root._undoEntries=root._undoEntries.slice(-15).concat([{
+            widgets:root._cloneEntries(root._draftEntries ?? root._storedEntries()),
+            pages:Array.from(root.effectivePageOrder),
+            basePages:Array.from(root._basePageOrder ?? root.savedPageOrder),
+            width:root._draftWorkspaceWidth,height:root._draftWorkspaceHeight
+        }])
+    }
+
+    function movePage(id, target, available): bool {
+        if (!root.editMode) return false
+        const visible=PagePolicy.ordered(root.effectivePageOrder,available)
+        const next=PagePolicy.move(root.effectivePageOrder,available,id,target)
+        if (JSON.stringify(visible)===JSON.stringify(PagePolicy.ordered(next,available))) return false
+        root.finishInteraction(true)
+        root._rememberDraft()
+        root._draftPageOrder=next
+        root.layoutMessage=""
+        return true
+    }
+
     function commitEditMode() {
         if (!root.editMode)
             return
+        if (root.pageOrderDirty && JSON.stringify(root.savedPageOrder)!==JSON.stringify(root._basePageOrder)) {
+            root.layoutMessage=Translation.tr("Tab order changed elsewhere. Reset or cancel this edit before saving.")
+            return
+        }
         root.finishInteraction(true)
         const updates = {
             "dashboard.canvas.widgets":
@@ -211,6 +255,10 @@ Item {
         updates["dashboard.canvas.autoAdjustSize"] =
             root._draftAutoAdjustSize
         updates["dashboard.canvas.gridStyle"] = root._draftGridStyle
+        if (root.pageOrderDirty) {
+            updates["dashboard.pageOrder"]=Array.from(root._draftPageOrder)
+            updates["dashboard.pageOrderVersion"]=1
+        }
         Config.setNestedValues(updates)
         root.editMode = false
     }
@@ -279,7 +327,7 @@ Item {
         if (root.editMode) {
             const previous=root._cloneEntries(root._draftEntries ?? root._storedEntries())
             if (JSON.stringify(previous)!==JSON.stringify(entries))
-                root._undoEntries=root._undoEntries.slice(-15).concat([previous])
+                root._rememberDraft()
             root._draftEntries = root._cloneEntries(entries)
             if (root.responsiveWorkspace) {
                 root._draftWorkspaceWidth = canvas.width
@@ -369,6 +417,9 @@ Item {
             // next edit session's baseline/default rather than jumping back to
             // the factory geometry.
             const committed = Config.options?.dashboard?.canvas?.widgets ?? []
+            root._rememberDraft()
+            root._basePageOrder=Array.from(root.savedPageOrder)
+            root._draftPageOrder=Array.from(root.savedPageOrder)
             root._draftEntries = root._cloneEntries(
                 committed.length > 0 ? committed : root.defaultEntries())
             root._draftWorkspaceWidth = Number(
@@ -1808,6 +1859,8 @@ Item {
         root._smartSnapAxes = ({ x: false, y: false })
         root.selectedId = ""
         root._draftEntries = null
+        root._draftPageOrder=null
+        root._basePageOrder=null
         root._undoEntries = []
         root._draftWorkspaceWidth = 0
         root._draftWorkspaceHeight = 0

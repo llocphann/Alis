@@ -336,7 +336,18 @@ order or close unverified Issues because their source is implemented.
   close/reopen/restart, touchpad/keyboard/fractional DPI; no
   duplicated/missing tabs, wrong content or overlay input. Add
   source and real Niri pointer regression tests.
-  State: NEW/OPEN; not implemented.
+  State: SOURCE IMPLEMENTED / FOCUSED PASS — 2026-10-12, after Weekly Planner.
+  Visible-slot stable-ID reorder preserves hidden/unknown pages; real edit-only
+  drag with threshold/label ghost/insertion/Escape, Alt+Left/Right and moved-tab
+  focus share the existing Canvas draft/Undo/Cancel/Reset/Done transaction.
+  Reset means last Done, consistent with widget editing. No per-pointer Config
+  write; concurrent order blocks Done, including after Undo Reset. Pure policy
+  PASS1857; actual private-Niri PASS60 checks/14 frames on measured DPR1.25,
+  four saved images, actual JSON readback and headless restart PASS.
+  [Source-byte receipt, failures and raw evidence](../../docs/evidence/abyss-product/20261012-dashboard-tab-order/README.md).
+  Final committed-SHA canonical and owner/installed, all edges/families,
+  multi-output/physical touchpad gates OPEN. Continue `AGENDA-F01` after this
+  source milestone; do not close waiting acceptance or repeat unrelated Issues.
 
 - [ ] **CAL-F01 — Calendar Popup agenda indicators and configurable maximum — owner screenshots 2026-10-11:**
   [Owner: Alis dev; New Feature] Display compact event/Agenda

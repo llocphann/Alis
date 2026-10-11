@@ -1,0 +1,125 @@
+{
+  "appearance": {
+    "cardOpacity": 1,
+    "density": "comfortable",
+    "showCardTitles": true
+  },
+  "canvas": {
+    "autoAdjustSize": true,
+    "gridSize": 24,
+    "gridStyle": "dots",
+    "snap": true,
+    "widgets": [
+      {
+        "h": 0.3,
+        "id": "welcome",
+        "visible": false,
+        "w": 0.3,
+        "x": 0.1,
+        "y": 0.1
+      },
+      {
+        "h": 0.3,
+        "id": "clock",
+        "visible": false,
+        "w": 0.3,
+        "x": 0.1,
+        "y": 0.1
+      },
+      {
+        "h": 0.3,
+        "id": "system",
+        "visible": false,
+        "w": 0.3,
+        "x": 0.1,
+        "y": 0.1
+      },
+      {
+        "h": 0.3,
+        "id": "github",
+        "visible": false,
+        "w": 0.3,
+        "x": 0.1,
+        "y": 0.1
+      },
+      {
+        "h": 0.3,
+        "id": "notifications",
+        "visible": false,
+        "w": 0.3,
+        "x": 0.1,
+        "y": 0.1
+      },
+      {
+        "h": 0.3,
+        "id": "todo",
+        "visible": false,
+        "w": 0.3,
+        "x": 0.1,
+        "y": 0.1
+      },
+      {
+        "h": 0.3,
+        "id": "media",
+        "visible": false,
+        "w": 0.3,
+        "x": 0.1,
+        "y": 0.1
+      },
+      {
+        "h": 0.3,
+        "id": "weather",
+        "visible": false,
+        "w": 0.3,
+        "x": 0.1,
+        "y": 0.1
+      },
+      {
+        "h": 0.3,
+        "id": "calendar",
+        "visible": false,
+        "w": 0.3,
+        "x": 0.1,
+        "y": 0.1
+      },
+      {
+        "h": 0.3,
+        "id": "agenda",
+        "visible": false,
+        "w": 0.3,
+        "x": 0.1,
+        "y": 0.1
+      },
+      {
+        "h": 0.3,
+        "id": "notes",
+        "visible": false,
+        "w": 0.3,
+        "x": 0.1,
+        "y": 0.1
+      }
+    ],
+    "workspaceHeight": 0,
+    "workspaceWidth": 0
+  },
+  "github": {
+    "username": ""
+  },
+  "heightRatio": 0.72,
+  "keepLoaded": false,
+  "music": {
+    "enable": true,
+    "showScrollbars": true
+  },
+  "pageOrder": [
+    "weeklyPlanner",
+    "future",
+    "dashboard",
+    "music"
+  ],
+  "pageOrderVersion": 1,
+  "showHeader": true,
+  "showPowerButtons": true,
+  "subtitle": "",
+  "widthRatio": 0.72
+}

@@ -1,0 +1,41 @@
+{
+  "baseSha": "f62f24361a6299f524467ceaa4f500f70fa79554",
+  "sourceFiles": {
+    "modules/dashboard/DashboardCanvas.qml": "e6f3fa38199331f09d94956d64f3ffb197ef8c46f8cb7a9b78c038f7147ce7c4",
+    "modules/dashboard/DashboardContent.qml": "9865610ac4f7d70d17e9d551b60c5a602c94b5dad4fd3d38c23d313890f91137",
+    "modules/dashboard/DashboardHeader.qml": "74b1e6554b8c5f254517d3c9f8afbf32e4e1f602b8a3c6afb68f91e432142ae6",
+    "modules/dashboard/DashboardPagePolicy.js": "6e77a24583eae5f9d26f58d4bafb6f11621dfbd57b7be59dd71d51793f3012e4",
+    "scripts/test-dashboard-tab-reorder-runtime.py": "0edbf11870bd0ae38ec4d87991c5f44d18ab3fb4520414bf8bc73fd93ea32340",
+    "scripts/test-dashboard-page-policy.mjs": "0edc32c4e0f6cd132a8c62e32bf0b28f1abac0a7c9a774741f086e9535037713",
+    "scripts/test-dashboard-music-runtime.py": "a25092dc59e30e0a8bc42c851716785f637397828aefdd488e6211c4e14632db"
+  },
+  "policy": {
+    "status": "PASS",
+    "checks": 1857,
+    "exit": 0
+  },
+  "native": {
+    "status": "PASS",
+    "checks": 60,
+    "frames": 14,
+    "savedPng": 4,
+    "actualDpr": 1.25,
+    "exit": 0,
+    "backend": "software",
+    "loop": "basic"
+  },
+  "diskReadback": "PASS private JSON order/version; dashboard-only snapshot in disk.json",
+  "headlessRestart": {
+    "status": "PASS",
+    "exit": 0
+  },
+  "earlierDpr1": "PASS54/13 before ghost label and conflict-baseline additions; raw retained",
+  "hostMusic": {
+    "status": "PASS",
+    "exit": 0,
+    "raw": "host-music.log",
+    "loop": "basic"
+  },
+  "canonical": "NOT_STARTED for final committed SHA",
+  "owner": "OPEN"
+}

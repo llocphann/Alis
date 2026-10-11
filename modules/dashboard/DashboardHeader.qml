@@ -20,11 +20,62 @@ Item {
     property int pageCount: 1
     property var pageIds: ["dashboard", "music"]
     property bool navigationAllowed: true
+    property bool reorderAllowed: editMode
+    property string dragPageId: ""
+    property bool draggingPage: false
+    property int dragTarget: -1
+    property point dragPress: Qt.point(0,0)
+    property point dragPointer: Qt.point(0,0)
+    property string _movedPageId: ""
     readonly property bool narrow: width < 620
     readonly property bool abyss: Config.options?.panelFamily === "abyss"
     signal pageRequested(int index)
+    signal pageMoveRequested(string id, int target)
     signal editModeRequested
     signal horizontalWheel(var event)
+    function pageLabel(id): string {
+        return id==="dashboard"?Translation.tr("Dashboard")
+            :id==="music"?Translation.tr("Music"):id==="weeklyPlanner"?Translation.tr("Weekly Planner"):String(id ?? "")
+    }
+    function focusMovedPage(): void {
+        const index=pageIds.indexOf(_movedPageId)
+        if(reorderAllowed && index>=0)pageRepeater.itemAt(index)?.forceActiveFocus()
+    }
+    function moveFocusedPage(id,target): void {
+        _movedPageId=id
+        pageMoveRequested(id,target)
+        Qt.callLater(root.focusMovedPage)
+    }
+    function cancelPageDrag(): bool {
+        const active=dragPageId.length>0
+        dragPageId="";draggingPage=false;dragTarget=-1
+        return active
+    }
+    function updatePageDrag(position): void {
+        if (!dragPageId.length) return
+        dragPointer=position
+        if (!draggingPage && Math.hypot(position.x-dragPress.x,position.y-dragPress.y)>=Qt.styleHints.startDragDistance)
+            draggingPage=true
+        if (!draggingPage) return
+        const point=root.mapToItem(pages,position.x,position.y)
+        let nearest=Infinity,index=-1
+        for(let at=0;at<pageRepeater.count;at++) {
+            const item=pageRepeater.itemAt(at)
+            const distance=Math.abs(point.x-item.x-item.width/2)
+            if(distance<nearest){nearest=distance;index=at}
+        }
+        dragTarget=index
+    }
+    function finishPageDrag(position): void {
+        const id=dragPageId,target=dragTarget
+        const accept=draggingPage && reorderAllowed && position.x>=0 && position.x<=width
+            && position.y>=-16 && position.y<=height+16
+        cancelPageDrag()
+        if(accept)moveFocusedPage(id,target)
+    }
+    onReorderAllowedChanged: if(!reorderAllowed)cancelPageDrag()
+    onPageIdsChanged: cancelPageDrag()
+    Keys.onEscapePressed: event => {event.accepted=root.cancelPageDrag()}
     WheelHandler {
         target: null
         orientation: Qt.Horizontal
@@ -145,16 +196,18 @@ Item {
         spacing: 4
         visible: root.pageCount > 1
         Repeater {
+            id:pageRepeater
             model: root.pageCount
             delegate: RippleButton {
+                id:pageButton
                 required property int index
                 objectName: "dashboardPage" + index
                 implicitWidth: 24
                 implicitHeight: 32
                 buttonRadius: 16
-                enabled: root.navigationAllowed && !root.editMode
-                Accessible.name: root.pageIds[index] === "dashboard" ? Translation.tr("Dashboard")
-                    : root.pageIds[index] === "music" ? Translation.tr("Music") : Translation.tr("Weekly Planner")
+                enabled: root.reorderAllowed || (root.navigationAllowed && !root.editMode)
+                focusPolicy:Qt.StrongFocus
+                Accessible.name:root.pageLabel(root.pageIds[index])
                 colBackground: "transparent"
                 colBackgroundHover: Qt.alpha(root.colText, .08)
                 contentItem: Item {
@@ -167,12 +220,59 @@ Item {
                         color: index === root.currentPage ? root.colText : Qt.alpha(root.colText, .35)
                     }
                 }
-                onClicked: root.pageRequested(index)
+                onClicked: if(!root.editMode && root.navigationAllowed)root.pageRequested(index)
+                Keys.onPressed: event => {
+                    if(root.reorderAllowed && (event.modifiers & Qt.AltModifier)
+                            && (event.key===Qt.Key_Left || event.key===Qt.Key_Right)) {
+                        root.moveFocusedPage(root.pageIds[index],index+(event.key===Qt.Key_Left?-1:1))
+                        event.accepted=true
+                    }else if(event.key===Qt.Key_Escape && root.cancelPageDrag())event.accepted=true
+                    else event.accepted=false
+                }
+                Rectangle {
+                    anchors.fill:parent;anchors.margins:2;radius:12;color:"transparent"
+                    border.width:pageButton.activeFocus?1:0;border.color:root.colText
+                }
+                MouseArea {
+                    anchors.fill:parent
+                    enabled:root.reorderAllowed
+                    cursorShape:pressed?Qt.ClosedHandCursor:Qt.OpenHandCursor
+                    onPressed: mouse => {
+                        pageButton.forceActiveFocus()
+                        const point=mapToItem(root,mouse.x,mouse.y)
+                        root.dragPageId=root.pageIds[pageButton.index]
+                        root.dragPress=point;root.dragPointer=point;root.dragTarget=pageButton.index
+                    }
+                    onPositionChanged:mouse=>{if(pressed)root.updatePageDrag(mapToItem(root,mouse.x,mouse.y))}
+                    onReleased:mouse=>root.finishPageDrag(mapToItem(root,mouse.x,mouse.y))
+                    onCanceled:root.cancelPageDrag()
+                }
                 StyledToolTip {
-                    text: parent.Accessible.name
+                    text:parent.Accessible.name+(root.editMode?" · "+Translation.tr("Drag to reorder; Alt+Left/Right also moves tabs") : "")
                 }
             }
         }
+    }
+    MaterialSymbol {
+        visible:root.reorderAllowed
+        anchors.right:pages.left;anchors.rightMargin:2;anchors.verticalCenter:pages.verticalCenter
+        text:"drag_indicator";iconSize:16;color:root.colSubtext
+    }
+    Rectangle {
+        objectName:"dashboardTabInsertion"
+        visible:root.draggingPage && root.dragTarget>=0
+        x:pages.x+(pageRepeater.itemAt(root.dragTarget)?.x ?? 0)
+            +(root.dragTarget>root.pageIds.indexOf(root.dragPageId)?24:0)-2
+        y:pages.y+6;width:2;height:20;radius:1;color:root.colText
+    }
+    Rectangle {
+        objectName:"dashboardTabDragGhost"
+        visible:root.draggingPage
+        x:Math.max(0,Math.min(root.width-width,root.dragPointer.x-width/2))
+        y:root.dragPointer.y+14;width:ghostLabel.implicitWidth+24;height:28;radius:14;z:20
+        color:root.abyss?AbyssStyle.contentLayer:Appearance.colors.colLayer1
+        border.width:1;border.color:Qt.alpha(root.colText,.4)
+        StyledText {id:ghostLabel;anchors.centerIn:parent;text:root.pageLabel(root.dragPageId);color:root.colText;font.pixelSize:Appearance.font.pixelSize.smallest}
     }
     RowLayout {
         id: uptime
