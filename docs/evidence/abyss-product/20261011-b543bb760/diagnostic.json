@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "productSourceSha": "b543bb7602eb74901c3c137c89c70c301e12fde4",
+  "fixtureChange": "bounded pre/post geometry/hover diagnostic only",
+  "result": "PASS",
+  "exitCode": 0,
+  "scope": "four edges, padding/bridge/shoulder dwell, generic and StyledPopup, no product change",
+  "cause": "NOT_DIAGNOSED: canonical right-padding failure was not reproduced",
+  "upgradesEarlierCanonical": false,
+  "ownerDesktopAcceptance": false
+}

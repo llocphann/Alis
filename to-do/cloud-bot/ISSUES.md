@@ -938,6 +938,11 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   four-edge dwell and original timers/deadlines. Both Dashboard editor gates
   and Wallpaper apply/carousel/recovery pass this run; earlier failures remain
   retained. [Exact log/receipt](../../docs/evidence/abyss-product/20261011-b543bb760/README.md).
+  **Bounded diagnostic:** unchanged b543 runtime passes the four-edge
+  fixture with pre/post probe traces, exit 0. The canonical dismissal was
+  not reproduced; cause remains NOT_DIAGNOSED and no runtime change or
+  canonical upgrade is claimed. Retain the diagnostic receipt beside the
+  failed run; next actual failed transfer needs source/paint/input leases.
   **Earlier retained**
   clean-clone `6bb45f361346048e7368511169fa5151c390e4ac` run finished
   **FAIL: 343 PASS, 2 FAIL, 2 SKIP; exit 1**. Both failures execute the same
