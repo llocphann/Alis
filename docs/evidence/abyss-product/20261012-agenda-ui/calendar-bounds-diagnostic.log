@@ -1,0 +1,17 @@
+  INFO: Launching config: "/tmp/alis-calendar-layout-o_dm2vjo/shell.qml"
+  INFO: Shell ID: "68a900b33e9848066ca1635c6553693a" Path ID "68a900b33e9848066ca1635c6553693a"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/i9qg68krmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.780511.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-calendar-layout-o_dm2vjo/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-calendar-layout-o_dm2vjo/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-calendar-layout-o_dm2vjo/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @shell.qml[15:2]: Read of /tmp/alis-calendar-layout-o_dm2vjo/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-calendar-layout-o_dm2vjo/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CALENDAR_BOUNDS_DIAGNOSTIC {"scale":1.5,"paneWidth":240,"cardWidth":240,"cardHeight":105,"removeX":248,"removeY":37,"path":[{"width":32,"height":32,"implicitWidth":16,"implicitHeight":30,"x":232,"y":25},{"width":212,"height":81,"implicitWidth":522,"implicitHeight":81,"x":16,"y":12},{"width":240,"height":105,"implicitWidth":0,"implicitHeight":0,"x":0,"y":0},{"width":240,"height":105,"implicitWidth":0,"implicitHeight":105,"x":16,"y":350},{"width":906,"height":1070,"implicitWidth":0,"implicitHeight":0,"x":0,"y":0},{"width":906,"height":1070,"implicitWidth":0,"implicitHeight":0,"x":0,"y":0}]}
+ ERROR qml: CALENDAR_EDITOR_LAYOUT_FAIL Remove action escapes the card at 1.5 / 240 check@qs:@/qs/shell.qml:39
+runChecks@qs:@/qs/shell.qml:83
+expression for onTriggered@qs:@/qs/shell.qml:130 saving false queued false diskEvents 0
+

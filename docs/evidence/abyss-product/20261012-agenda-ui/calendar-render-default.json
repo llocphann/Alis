@@ -1,0 +1,7 @@
+{
+  "exit_code": 0,
+  "production_unchanged": true,
+  "original_geometry_assertions": true,
+  "render_loop": "default",
+  "bounded_capture_before_measurement": true
+}

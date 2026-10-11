@@ -1010,8 +1010,15 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
   actual five-hour 2% threshold. Only235 completed checks: **231PASS / 4FAIL /
   0SKIP**; no full summary. Failures: Calendar Remove atDPR1.5/240; Dashboard
   edit933×546→933×540; stale Material literal-padding fixture; native Recording
-  controls without a precise assertion. Keep the three runtime causes
-  NOT_DIAGNOSED. The Material fixture-only fix-forward `f003ec5f9` focused PASS
+  controls without a precise assertion. Dashboard/Recording causes remain
+  NOT_DIAGNOSED. Calendar's bounded default-loop diagnostic now records stale
+  unpolished Remove x248 before paint and actual x196 after a rendered frame
+  in the same 240px card, with unchanged production sizing/click oracles.
+  Fixture-only repair waits for that frame before measuring: focused PASS149
+  checks/12 captures, including all original narrow/font/theme/full-target
+  assertions. [Calendar diagnosis and raw evidence](../../docs/evidence/abyss-product/20261012-agenda-ui/calendar-qualification.md).
+  This does not rewrite the frozen FAIL or qualify a newer full source.
+  The Material fixture-only fix-forward `f003ec5f9` focused PASS
   is separate and does not change the frozen result. This run also predates
   Events prerequisite `ccd750167`. [Raw consumed logs/stop receipt](../../docs/evidence/abyss-product/20261012-f94de0535-stopped/README.md).
   Next appropriate qualification uses a newly frozen driver from the actual

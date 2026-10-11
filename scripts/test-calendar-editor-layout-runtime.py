@@ -3,6 +3,7 @@
 from pathlib import Path
 import shutil
 import tempfile
+import os
 
 from native_test_session import private_wayland, run_qs
 
@@ -19,6 +20,8 @@ with tempfile.TemporaryDirectory(prefix="alis-calendar-layout-") as name:
     config = folder / "config/illogical-impulse"
     config.mkdir(parents=True)
     shutil.copy2(ROOT / "defaults/config.json", config / "config.json")
+    evidence=Path(os.environ.get("ALIS_CALENDAR_LAYOUT_EVIDENCE",folder/"frames")).resolve()
+    evidence.mkdir(parents=True,exist_ok=True)
     (folder / "shell.qml").write_text(r'''
 pragma ComponentBehavior: Bound
 import QtQuick
@@ -79,6 +82,11 @@ ShellRoot {
      Config.setNestedValue("appearance.typography.sizeScale",scale)
      for(const paneWidth of [240,292]){
       editor.width=paneWidth;card.width=paneWidth;wait(120)
+      // An unfocused private window can defer layout polish. Measure an
+      // actual rendered frame, retaining every original field/target oracle.
+      let rendered=false
+      card.grabToImage(result=>{rendered=result.saveToFile(Quickshell.env("CALENDAR_LAYOUT_EVIDENCE")+"/"+(dark?"dark":"light")+"-"+scale+"-"+paneWidth+".png")})
+      tryVerify(()=>rendered,3000,"Calendar card did not render")
       editor.eventTitle="";editor.eventDescription="";wait(20)
       const emptyHeights=input.map(field=>field.height)
       for(const field of input){
@@ -151,8 +159,10 @@ ShellRoot {
             print("SKIP: Calendar layout requires a private Niri backend")
             raise SystemExit(0)
         env["CALENDAR_LAYOUT_ROOT"] = str(folder)
+        env["CALENDAR_LAYOUT_EVIDENCE"] = str(evidence)
         result = run_qs(folder, env, timeout=25)
     output = result.stdout
+    (evidence/"focused.log").write_text(output)
     bad = ["CALENDAR_EDITOR_LAYOUT_FAIL", "ReferenceError:", "TypeError:",
            "Binding loop", "Unable to assign", "is not a type",
            "Failed to load configuration"]

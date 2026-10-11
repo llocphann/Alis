@@ -1,0 +1,31 @@
+  INFO: Launching config: "/tmp/alis-calendar-layout-m9m3vs9r/shell.qml"
+  INFO: Shell ID: "0dc423735214e9e61b3a74682d66b9df" Path ID "0dc423735214e9e61b3a74682d66b9df"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/ybsgyekrmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.783192.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-calendar-layout-m9m3vs9r/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-calendar-layout-m9m3vs9r/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-calendar-layout-m9m3vs9r/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @shell.qml[15:2]: Read of /tmp/alis-calendar-layout-m9m3vs9r/state/quickshell/user/events.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-calendar-layout-m9m3vs9r/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: CALENDAR_RENDERED_BOUNDS {"scale":1,"paneWidth":240,"beforeX":196,"afterX":196,"width":32,"cardWidth":240}
+  INFO qml: CALENDAR_RENDERED_BOUNDS {"scale":1,"paneWidth":292,"beforeX":248,"afterX":248,"width":32,"cardWidth":292}
+  INFO qml: CALENDAR_RENDERED_BOUNDS {"scale":1.5,"paneWidth":240,"beforeX":248,"afterX":196,"width":32,"cardWidth":240}
+  INFO qml: CALENDAR_RENDERED_BOUNDS {"scale":1.5,"paneWidth":292,"beforeX":248,"afterX":248,"width":32,"cardWidth":292}
+  INFO qml: CALENDAR_RENDERED_BOUNDS {"scale":2,"paneWidth":240,"beforeX":248,"afterX":196,"width":32,"cardWidth":240}
+  INFO qml: CALENDAR_RENDERED_BOUNDS {"scale":2,"paneWidth":292,"beforeX":248,"afterX":248,"width":32,"cardWidth":292}
+  INFO qml: CALENDAR_RENDERED_BOUNDS {"scale":1,"paneWidth":240,"beforeX":248,"afterX":196,"width":32,"cardWidth":240}
+  INFO qml: CALENDAR_RENDERED_BOUNDS {"scale":1,"paneWidth":292,"beforeX":248,"afterX":248,"width":32,"cardWidth":292}
+  INFO qml: CALENDAR_RENDERED_BOUNDS {"scale":1.5,"paneWidth":240,"beforeX":248,"afterX":196,"width":32,"cardWidth":240}
+  INFO qml: CALENDAR_RENDERED_BOUNDS {"scale":1.5,"paneWidth":292,"beforeX":248,"afterX":248,"width":32,"cardWidth":292}
+  INFO qml: CALENDAR_RENDERED_BOUNDS {"scale":2,"paneWidth":240,"beforeX":248,"afterX":196,"width":32,"cardWidth":240}
+  INFO qml: CALENDAR_RENDERED_BOUNDS {"scale":2,"paneWidth":292,"beforeX":248,"afterX":248,"width":32,"cardWidth":292}
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-calendar-layout-m9m3vs9r/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[371:5]: Read of /tmp/alis-calendar-layout-m9m3vs9r/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Write of /tmp/alis-calendar-layout-m9m3vs9r/state/quickshell/user/events.json failed: Permission denied.
+  WARN qml: [Events] Failed to save events: 3
+  INFO qml: CALENDAR_EDITOR_LAYOUT_PASS 149 checks: narrow panes, 100/150/200 percent fonts, light/dark, field fit, whole Remove target, Add/Edit/Remove disk readback, coalesced/no-op writes, denied-write recovery
