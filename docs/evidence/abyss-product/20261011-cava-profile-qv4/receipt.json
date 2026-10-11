@@ -1,0 +1,15 @@
+{
+  "result": "PASS",
+  "cases": 10084,
+  "checks": 1364978,
+  "baselineWeightCalls": 199584,
+  "candidateWeightCalls": 11088,
+  "boundary": "Extracted production arithmetic executed by QV4; no real-QML NOTIFY, dependency, shader, frame timing or whole-shell resource claim",
+  "sources": {
+    "modules/common/widgets/BarCavaVisualizer.qml": "f64a17603d0ab43ffc5fa699705045bb9249d82d865f3e5deb138b2e00d0ca47",
+    "docs/evidence/abyss-product/20261010-hover-checkpoint/unpromoted/bar-cava-candidate.qml": "2bdfc248f58b13067af1d1ded006df52adec7ce42bf71285626818c7f01f6c9b"
+  },
+  "qtVersion": "6.12.0",
+  "source_baseline": "1af17ab476f11e8c62f71276df6fd547022c9061",
+  "candidate_promoted": false
+}

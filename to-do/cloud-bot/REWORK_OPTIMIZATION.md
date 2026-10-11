@@ -543,6 +543,20 @@ holds technical research; this file holds pending outcomes.
   QV4 exact sample/level parity, unchanged scratch/NOTIFY, strict render comparison
   and measured cost before implementing. Preserve upstream-like bounce, CAVA
   ownership, warm reopen and every animation/frame cadence.
+  **Preliminary offline stage 2026-10-11:** extracted baseline/candidate
+  arithmetic executes in QV4 (Qt 6.12.0): 10,084 cases / 1,364,978 checks
+  preserve exact sample, smooth and level vectors plus comparable A/B scratch
+  identity transitions. Profile-weight calls are 199,584 vs 11,088 for this
+  workload; these are operation counts, not resource or frame-time gains.
+  [Reproducer, frozen hashes and boundary](../../docs/evidence/abyss-product/20261011-cava-profile-qv4/README.md).
+  **Actual QML stage:** private Niri loads both typed components; 4,704
+  frames / 377,954 checks PASS, exit 0, with matching 6,509 `_levelsChanged`
+  signals, vectors, stable sample/smooth buffers and published A/B identities.
+  Configuration/source/active transitions are covered; full read/dependency
+  order and width/density/radius transitions remain open. Opacity is zero:
+  no render proof. Strict RGBA and uncontended matched cost remain required.
+  Both stage receipts preserve their scope and source hashes. Candidate remains
+  UNPROMOTED; product and owner settings are unchanged.
 
 - [ ] **Remaining optimization candidates:** read the current audit tail,
   distinguish CONFIRMED/HIGH CONFIDENCE from hypotheses and retire duplicates.

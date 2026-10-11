@@ -1,0 +1,15 @@
+{
+  "result": "PASS",
+  "exit_code": 0,
+  "frames": 4704,
+  "checks": 377954,
+  "baseline_level_notify": 6509,
+  "candidate_level_notify": 6509,
+  "host_sha": "7e6ce62fe6369faafbc950dfafcb48be3dbde815",
+  "candidate_promoted": false,
+  "sources": {
+    "modules/common/widgets/BarCavaVisualizer.qml": "f64a17603d0ab43ffc5fa699705045bb9249d82d865f3e5deb138b2e00d0ca47",
+    "docs/evidence/abyss-product/20261010-hover-checkpoint/unpromoted/bar-cava-candidate.qml": "2bdfc248f58b13067af1d1ded006df52adec7ce42bf71285626818c7f01f6c9b"
+  },
+  "boundary": "Actual typed QML property changes, scratch identity and level NOTIFY on private Niri. spectrumOpacity=0; no strict RGBA, full dependency/read-order audit or matched timing/resource proof. Owner runtime and preferences untouched. Fixture lacks scripts symlink: two unrelated native-dispatch launch warnings retained."
+}

@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-cava-profile-native-uknyxie5/shell.qml"
+  INFO: Shell ID: "9a2d357634d62d2d0d812413bcf04cad" Path ID "9a2d357634d62d2d0d812413bcf04cad"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/p2dav0kqmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.483483.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-cava-profile-native-uknyxie5/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-cava-profile-native-uknyxie5/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN: Process failed to start, likely because the binary could not be found. Command: QList("/tmp/alis-cava-profile-native-uknyxie5/scripts/native-dispatch", "niri", "get-hot-corners")
+  WARN: Process failed to start, likely because the binary could not be found. Command: QList("/tmp/alis-cava-profile-native-uknyxie5/scripts/native-dispatch", "niri", "sync-backdrop-overview-shadow", "off")
+  INFO qml: CAVA_NATIVE_PROFILE_PASS {"frames":4704,"checks":377954,"beforeNotify":6509,"afterNotify":6509}
