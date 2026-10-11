@@ -6,6 +6,72 @@ that implementation is missing. Refetch current `dev` before diagnosing.
 
 ## Current failures and owner reports
 
+- [ ] **ABYSS-I01 — Panel background blur appears coupled to Panel opacity — owner report 2026-10-11:**
+  [Owner: Alis dev; Bug / material rendering] User reports
+  **Panel background blur** changes together with **Panel
+  background opacity**, rather than behaving as an independent
+  visible effect. Diagnose both the Settings dependency and
+  rendered material. Desired behavior: independently adjustable
+  blur radius on Panel/Popup/Dashboard/Sidebar/Settings background,
+  regardless of the user's chosen Panel & content opacity
+  value. Changing opacity must not reset, force, disable or
+  recompute blur radius or accidentally unset the user's blur
+  preference; changing blur must not change alpha. The
+  `Panel background follows Screen Edge` convenience switch
+  currently couples BOTH `abyss.content.opacity` and
+  `abyss.content.blurRadius` through a single `setNestedValues`;
+  separate inherited-alpha behavior from blur ownership.
+  Refine follow-mode labels/migration so users understand whether
+  Blur follows the Edge or remains independently set, without
+  two conflicting controls writing the same key.
+
+  **Code evidence and feasibility:** `AbyssStyle.qml` resolves
+  `contentOpacity` and `contentBlurRadius` independently;
+  `AbyssField.qml` sends both to the single shader
+  `contentMaterial` vector; `AbyssField.frag` mixes independent
+  opacity and blurRadius values based on bodyBlend, but also
+  multiplies the sampled blurred-wallpaper contribution by
+  `opacity` before blending it into tinted body RGB. Hence
+  a *visual* coupling is plausible even though parameter storage
+  is separate. The current finite five-tap sample is wallpaper
+  sampling, **not true live compositor-behind-window blur**.
+  At 100% opaque alpha the physical wallpaper cannot show
+  through by transparency; if a consistent frosted-glass effect
+  is desired, compose the sampled, blurred wallpaper into the
+  opaque tinted material intentionally while preserving exact
+  alpha. Distinguish inherent compositing contrast from an
+  actual failure to render blur; do not promise impossible
+  compositor capture or claim a root cause without pixel
+  evidence. Feasible candidate: decouple the inherited
+  `blurRadius` from inherited opacity in Settings and tune the
+  one-pass shader's mix/absorption, keeping known strict-lossless
+  material contract and bounded GPU cost. Regenerate the
+  matching compiled `AbyssField.frag.qsb` whenever shader
+  source is changed, no extra compositor/blur FBO allowed
+  without justified measurements.
+
+  **Existing test:** `scripts/test-abyss-content-material.sh`
+  already captures clear vs 24px blurred material at 30% body
+  opacity and asserts unchanged alpha and a changed RGB
+  wallpaper sample; this source contract does NOT prove the
+  reported full interactive opacity/blur combinations are
+  correct. Add a two-axis test matrix of independent settings:
+  opacity 0/25/50/75/100%, blur radius 0/8/16/24px,
+  inherited vs explicit 0 values, blur enabled/disabled,
+  dark/light wallpapers, quality vs performance/effects-off,
+  animated/video wallpaper fallback, and output-specific
+  selection. Verify setting either axis leaves the other
+  stored property and actual alpha/blur radius unchanged.
+  Compare shader pixel captures for visible blur gradient
+  where the material/backdrop permits it, before/after with
+  matching source SHA; verify no new transparency leaks,
+  ghost content, unexpected tint, unreadable text, input
+  blockers or frame-time regression. Require actual native
+  Niri/Quickshell owner visual signoff. Coordinate the single
+  opacity slider with [ABYSS-R04](REWORK_OPTIMIZATION.md).
+  State: OPEN; source-level fix appears feasible; native fault
+  reproduction, shader treatment and verified release pending.
+
 - [x] **P0 — fullscreen window retains hidden Screen Edges/Panel/Perimeter after switching to another window (owner report 2026-10-10):**
   Reproduce on Niri: fullscreen client A, then open/focus window B in the
   same active workspace. Screen Edges, Abyss Panel and Perimeter reportedly

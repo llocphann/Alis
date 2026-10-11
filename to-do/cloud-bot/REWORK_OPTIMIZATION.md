@@ -1087,6 +1087,64 @@ run privileged installation just because manual buttons are retired.
   obtain owner visual signoff.
   State: OPEN; corrected checkbox specification only, NOT IMPLEMENTED.
 
+- [ ] **ABYSS-R04 — Unified Panel and Content card opacity slider — owner request 2026-10-11:**
+  [Owner: Alis dev; Rework/Settings] In Abyss **Surface** Settings,
+  **Content card opacity** and **Panel background opacity** should
+  have ONE shared opacity slider, rather than two independent sliders.
+  Keep a single clearly labeled **Panel & content opacity** control,
+  driving both enclosing Panel/Popup/Dashboard/Sidebar/Settings
+  background transparency and their built-in content-card tint
+  consistently. No separate visible `Content card opacity` slider.
+  Cards must respond immediately and consistently with the parent
+  material; do not multiply the same alpha twice over stacked card
+  backgrounds and accidentally make content unreadable/overly dim.
+  Leave Screen Edge's own `Surface opacity` slider separate, and
+  do not couple the shared content opacity to wallpaper blur.
+
+  **Verified source:** `modules/abyss/settings/AbyssStyleSettings.qml`
+  currently exposes independent `abyss.content.opacity` (with
+  -1 = inherit Screen Edge) and `abyss.content.cardOpacity` (.9
+  default) sliders. `AbyssStyle.qml` resolves separate
+  `contentOpacity` and `cardOpacity`; `contentLayer` and
+  `SettingsMaterialPreset.qml` use the latter for cards/groups,
+  while `AbyssField.qml` passes contentOpacity into the field
+  shader. Use ONE effective source-of-truth property in the
+  shared palette/material path; preserve both normal QML and
+  shader consumers with no duplicate opacity multiplier.
+  Audit `modules/dashboard/DashCard.qml`, Dashboard appearance
+  controls, all Abyss content-card consumers and the existing
+  'Panel background follows Screen Edge' checkbox. The latter
+  should continue to mean opacity inheritance **only if chosen**
+  and must NOT incidentally overwrite blur settings. Keep the
+  distinct `dashboard.appearance.cardOpacity` setting if it
+  applies to a genuinely separate per-Dashboard widget-layer
+  control; reconcile/remove duplicate user-visible sliders when
+  they control the same built-in Abyss material.
+
+  **Config migration:** choose one documented deterministic
+  precedence for legacy `abyss.content.opacity`,
+  `abyss.content.cardOpacity` and inherited -1, preserving
+  existing explicit user-selected content-opacity values where
+  possible, without resetting the Screen Edge opacity or
+  saved per-output settings. Retire/alias the legacy card key
+  safely instead of writing two independent values which drift
+  after Settings close/reopen or shell hot reload. Opaque Material
+  preset must set the unified control correctly. Provide
+  readable typography and stable contrast at 0/25/50/75/100%
+  alpha; test popup, Dashboard, Sidebar, IPC and Settings cards,
+  light/dark, themes, multiple outputs, animations and
+  restart persistence.
+
+  **Acceptance:** exactly one visible shared slider in Abyss
+  Surface Settings; moving it updates panel backdrop + content
+  cards together without unintended double-transparency; 0%
+  is a valid explicit value, 100% is opaque, `Surface opacity`
+  and `Panel background blur` remain separate. Live focused
+  QML/style/field pixel fixtures and native Niri/Quickshell
+  owner screenshots required. Linked blur correctness:
+  [ABYSS-I01](ISSUES.md). State: OPEN; source inspected,
+  design/migration/implementation and native acceptance pending.
+
 - [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**
   [Owner: Alis dev; Rework/Optimization] Improve the perceptual and
   actual responsiveness of Screen Edge modules while editing a layout:
