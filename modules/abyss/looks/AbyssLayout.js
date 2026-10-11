@@ -32,7 +32,10 @@ function normalize(list, fallbackEdge) {
             alignment:["start","center","end"].indexOf(p.alignment)>=0 ? p.alignment : "free",
             customSize:p.customSize === true || (p.customSize === undefined && Number.isFinite(Number(p.size)) && Number(p.size)!==1),
             size:bounded(p.size,1,0.6,1.8),depth:bounded(p.depth,1,0.5,2),
-            influence:bounded(p.influence,1,0,2),compact:p.compact === true,joinCorner:p.joinCorner === true};
+            influence:bounded(p.influence,1,0,2),compact:p.compact === true,joinCorner:p.joinCorner === true,
+            locked:p.locked === true,
+            lockPosition:p.locked === true ? bounded(p.lockPosition,bounded(p.position,.5,0,1),0,1) : undefined,
+            lockScale:p.locked === true ? bounded(p.lockScale,1,.01,1) : undefined};
     });
 }
 function seed(zones, edge, width, height) {
@@ -56,16 +59,26 @@ function resolve(options, outputName, fallback) {
     if (profile) return normalize(profile.placements,"top");
     return options?.configured ? normalize(options.placements,"top") : fallback;
 }
+// QML JsonObject also enumerates QObject signals. Persist only the four owned
+// Edge fields, never objectNameChanged/destroyed or other QObject internals.
+function edgeMap(base,overrides) {
+    var result={};
+    ["top","right","bottom","left"].forEach(function(edge) {
+        var value=overrides?.[edge]!==undefined ? overrides[edge] : base?.[edge];
+        if(value!==undefined)result[edge]=value;
+    });
+    return result;
+}
 function optionsForOutput(options, outputName) {
     var profile = Array.from(options?.outputLayouts || []).find(function(p) { return p.outputName === outputName; });
     return Object.assign({},options,{gap:profile?.gap ?? options?.gap ?? 8,
         size:bounded(profile?.size ?? options?.size,1,.6,1.8),
-        edgeSizes:Object.assign({},options?.edgeSizes,profile?.edgeSizes),
-        edgeThicknesses:Object.assign({},options?.edgeThicknesses,profile?.edgeThicknesses),
-        edgeWidthAffectsModules:Object.assign({},options?.edgeWidthAffectsModules,profile?.edgeWidthAffectsModules),
-        edgeJoinModules:Object.assign({},options?.edgeJoinModules,profile?.edgeJoinModules),
-        edgeModuleRadii:Object.assign({},options?.edgeModuleRadii,profile?.edgeModuleRadii),
-        singleModuleExpansion:Object.assign({},options?.singleModuleExpansion,profile?.singleModuleExpansion)});
+        edgeSizes:edgeMap(options?.edgeSizes,profile?.edgeSizes),
+        edgeThicknesses:edgeMap(options?.edgeThicknesses,profile?.edgeThicknesses),
+        edgeWidthAffectsModules:edgeMap(options?.edgeWidthAffectsModules,profile?.edgeWidthAffectsModules),
+        edgeJoinModules:edgeMap(options?.edgeJoinModules,profile?.edgeJoinModules),
+        edgeModuleRadii:edgeMap(options?.edgeModuleRadii,profile?.edgeModuleRadii),
+        singleModuleExpansion:edgeMap(options?.singleModuleExpansion,profile?.singleModuleExpansion)});
 }
 function edgeSize(options, edge) { return bounded(options?.edgeSizes?.[edge],1,.6,1.8); }
 function edgeThickness(options, edge, fallback) {
@@ -85,12 +98,14 @@ function project(x, y, width, height) {
     return {edge:edge,position:bounded((index%2===0 ? x : y)/Math.max(1,index%2===0 ? width : height),.5,0,1)};
 }
 function move(placements, id, x, y, width, height) {
+    if (placements.some(function(p) { return p.id===id && p.locked; })) return normalize(placements,"top");
     var location = project(x,y,width,height);
     return normalize(placements.map(function(p) { return p.id===id ? Object.assign({},p,location,{alignment:"free"}) : p; }),"top");
 }
 // Snap to the output center, end margins, and adjacent modules at the configured gap.
 // Guides are presentation data only; positions stay normalized for other resolutions.
 function snapMove(placements, id, x, y, width, height, options, fontScale) {
+    if (placements.some(function(p) { return p.id===id && p.locked; })) return {placements:normalize(placements,"top"),guides:[],rejected:"Unlock this module before moving it"};
     var moved = move(placements,id,x,y,width,height);
     var selected = moved.find(function(p) { return p.id===id; });
     if (!selected) return {placements:moved,guides:[]};
@@ -119,26 +134,58 @@ function snapMove(placements, id, x, y, width, height, options, fontScale) {
     return {placements:moved,guides:Math.abs(actual.along+actual.span/2-target.center)<1
         ? [{horizontal:horizontal,along:target.line,label:target.label}] : []};
 }
+// Capture the displayed center and compression, not a neighbor-dependent aligned
+// group's future position. Anchors are normalized independently on each output.
+function setLocked(placements,id,locked,width,height,options,fontScale) {
+    var records=locked ? geometry(placements,width,height,options,fontScale) : [];
+    return normalize(placements.map(function(p) {
+        if(p.id!==id) return p;
+        if(!locked) return Object.assign({},p,{locked:false});
+        if(p.locked) return p;
+        var record=records.find(function(r) {return r.id===id;});
+        var horizontal=p.edge==="top" || p.edge==="bottom",length=horizontal ? width : height;
+        var measured=options?.extents?.[id];
+        var natural=Number.isFinite(measured) && !(options?.editing && measured<1) ? Math.max(0,measured)
+            : extent(p.kind,!horizontal)*bounded(fontScale,1,.7,2);
+        return Object.assign({},p,{locked:true,
+            lockPosition:record && length>0 ? (record.along+record.span/2)/length : p.position,
+            lockScale:record && natural*moduleSize(p,options)>0 ? record.span/(natural*moduleSize(p,options)) : 1});
+    }),"top");
+}
+function conflicts(records) {
+    var result=[];
+    records.forEach(function(p) {if(p.lockConflict && result.indexOf(p.lockConflict)<0)result.push(p.lockConflict);});
+    return result;
+}
+function checkedMove(placements,id,x,y,width,height,options,fontScale,snap) {
+    var p=placements.find(function(p) {return p.id===id;});
+    if(!p)return {placements:placements,guides:[],rejected:"This module is no longer available"};
+    if(p?.locked)return {placements:placements,guides:[],rejected:"Unlock this module before moving it"};
+    var result=snap ? snapMove(placements,id,x,y,width,height,options,fontScale) : {placements:move(placements,id,x,y,width,height),guides:[]};
+    var failures=conflicts(geometry(result.placements,width,height,options,fontScale));
+    if(failures.length)return {placements:placements,guides:[],rejected:failures[0]};
+    return result;
+}
 function saveProfile(options, outputName, placements, gap, outputOnly, edgeSizes, singleModuleExpansion, size, edgeThicknesses, edgeWidthAffectsModules, edgeJoinModules, edgeModuleRadii) {
     var normalized = normalize(placements,"top");
     var profiles = Array.from(options?.outputLayouts || []);
     var current = optionsForOutput(options,outputName);
-    var expansion = Object.assign({},singleModuleExpansion ?? current.singleModuleExpansion);
+    var expansion = edgeMap(singleModuleExpansion ?? current.singleModuleExpansion);
     var scale = bounded(size ?? current.size,1,.6,1.8);
-    var thicknesses = Object.assign({},edgeThicknesses ?? current.edgeThicknesses);
-    var affects = Object.assign({},edgeWidthAffectsModules ?? current.edgeWidthAffectsModules);
-    var joins = Object.assign({},edgeJoinModules ?? current.edgeJoinModules);
-    var radii = Object.assign({},edgeModuleRadii ?? current.edgeModuleRadii);
+    var thicknesses = edgeMap(edgeThicknesses ?? current.edgeThicknesses);
+    var affects = edgeMap(edgeWidthAffectsModules ?? current.edgeWidthAffectsModules);
+    var joins = edgeMap(edgeJoinModules ?? current.edgeJoinModules);
+    var radii = edgeMap(edgeModuleRadii ?? current.edgeModuleRadii);
     if (outputOnly) {
         var existing = profiles.find(function(p) { return p.outputName===outputName; });
         profiles = profiles.filter(function(p) { return p.outputName!==outputName; });
         profiles.push(Object.assign({},existing,{outputName:outputName,placements:normalized,gap:bounded(gap,8,0,32),
-            edgeSizes:Object.assign({},edgeSizes ?? current.edgeSizes),singleModuleExpansion:expansion,size:scale,edgeThicknesses:thicknesses,edgeWidthAffectsModules:affects,edgeJoinModules:joins,edgeModuleRadii:radii}));
+            edgeSizes:edgeMap(edgeSizes ?? current.edgeSizes),singleModuleExpansion:expansion,size:scale,edgeThicknesses:thicknesses,edgeWidthAffectsModules:affects,edgeJoinModules:joins,edgeModuleRadii:radii}));
         return {"abyss.modules.outputLayouts":profiles};
     }
     return {"abyss.modules.configured":true,"abyss.modules.placements":normalized,
         "abyss.modules.gap":bounded(gap,8,0,32),"abyss.modules.outputLayouts":profiles.filter(function(p) { return p.outputName!==outputName; }),
-        "abyss.modules.edgeSizes":Object.assign({},edgeSizes ?? options?.edgeSizes),
+        "abyss.modules.edgeSizes":edgeMap(edgeSizes ?? options?.edgeSizes),
         "abyss.modules.singleModuleExpansion":expansion,"abyss.modules.size":scale,
         "abyss.modules.edgeThicknesses":thicknesses,"abyss.modules.edgeWidthAffectsModules":affects,"abyss.modules.edgeJoinModules":joins,"abyss.modules.edgeModuleRadii":radii};
 }
@@ -220,6 +267,77 @@ function clearanceInsets(insets, localRecords, edge, along, span) {
     });
     return result;
 }
+// Solve contiguous unlocked groups in the free intervals between immutable
+// reservations. A bounded dynamic program preserves their relative order and
+// chooses the closest feasible packing, including the existing 1% size floor.
+function packLockedEdge(list,sizes,length,gap,options,horizontal) {
+    function record(p,start,span,scale) {
+        return Object.assign({},p,{along:start,span:span,layoutScale:scale,vertical:!horizontal,
+            depth:bounded(options?.depth,36,22,64)*p.depth,
+            compact:p.compact || (!horizontal && p.kind!=="clock") || scale<.65});
+    }
+    var locked=[],free=[];
+    list.forEach(function(p,i) {
+        if(p.locked) {
+            var scale=bounded(p.lockScale,1,.01,1),span=sizes[i]*scale;
+            locked.push(record(p,bounded(p.lockPosition,p.position,0,1)*length-span/2,span,scale));
+        } else free.push({p:p,size:sizes[i],center:p.position*length});
+    });
+    locked.sort(function(a,b) {return a.along-b.along || a.id.localeCompare(b.id);});
+    var end=-gap;
+    for(var i=0;i<locked.length;i++) {
+        var own=locked[i];
+        if(own.along<-1e-7 || own.along+own.span>length+1e-7)
+            return {error:"A locked module no longer fits this output. Undo the size change or unlock it."};
+        if(own.along<end-1e-7)
+            return {error:"Locked modules overlap at this size. Undo the size change or unlock them."};
+        if(i>0)gap=Math.min(gap,Math.max(0,own.along-end));
+        end=own.along+own.span;
+    }
+    ["start","center","end"].forEach(function(alignment) {
+        var group=free.filter(function(item) {return item.p.alignment===alignment;});
+        var span=group.reduce(function(sum,item) {return sum+item.size;},0)+Math.max(0,group.length-1)*gap;
+        var cursor=alignment==="start" ? 0 : alignment==="end" ? length-span : (length-span)/2;
+        group.forEach(function(item) {item.center=cursor+item.size/2;cursor+=item.size+gap;});
+    });
+    free.sort(function(a,b) {return a.center-b.center || a.p.id.localeCompare(b.p.id);});
+    var intervals=[],cursor=0;
+    locked.forEach(function(p) {intervals.push({start:cursor,end:Math.max(cursor,p.along-gap)});cursor=p.along+p.span+gap;});
+    intervals.push({start:Math.min(length,cursor),end:length});
+    function pack(start,count,interval) {
+        if(!count)return {records:[],cost:0};
+        var group=free.slice(start,start+count),total=group.reduce(function(sum,p) {return sum+p.size;},0);
+        var available=interval.end-interval.start-gap*(count-1);
+        if(available<total*.01-1e-7)return null;
+        var scale=Math.min(1,Math.max(.01,available/Math.max(1e-9,total)));
+        var cursor=interval.start;
+        var records=group.map(function(item) {
+            var span=item.size*scale,start=Math.max(cursor,item.center-span/2);
+            cursor=start+span+gap;return record(item.p,start,span,scale);
+        });
+        var end=interval.end,cost=(1-scale)*total/4;
+        for(var i=records.length-1;i>=0;i--) {
+            var p=records[i];p.along=Math.max(interval.start,Math.min(p.along,end-p.span));end=p.along-gap;
+            cost+=Math.abs(p.along+p.span/2-group[i].center);
+        }
+        return {records:records,cost:cost};
+    }
+    var states=[{cost:0,records:[]}];
+    intervals.forEach(function(interval) {
+        var next=[];
+        states.forEach(function(state,used) {
+            for(var count=0;count<=free.length-used;count++) {
+                var candidate=pack(used,count,interval);
+                if(!candidate)break;
+                var at=used+count,cost=state.cost+candidate.cost;
+                if(!next[at] || cost<next[at].cost-1e-7)next[at]={cost:cost,records:state.records.concat(candidate.records)};
+            }
+        });
+        states=next;
+    });
+    if(!states[free.length])return {error:"Not enough space around locked modules. Undo this change or unlock a module."};
+    return {records:locked.concat(states[free.length].records).sort(function(a,b) {return a.along-b.along || a.id.localeCompare(b.id);})};
+}
 function geometry(placements, width, height, options, fontScale) {
     var result = [];
     ["top","right","bottom","left"].forEach(function(edge) {
@@ -247,6 +365,9 @@ function geometry(placements, width, height, options, fontScale) {
         if (!list.length || length < 1) return;
         gap = Math.min(gap,Math.max(0,(length-2*margin)/(list.length*4)));
         var scale = Math.min(1,Math.max(0.01,(length-2*margin-gap*(list.length-1))/Math.max(1,total)));
+        var lockedResult=list.some(function(p) {return p.locked;}) ? packLockedEdge(list,sizes,length,gap,options,horizontal) : null;
+        var records=lockedResult?.records;
+        if(!records) {
         // Each aligned group keeps its internal order; free placements keep their
         // requested position. Resolve collisions once across the entire edge.
         var targets = list.map(function(p,index) { return margin+p.position*(length-2*margin)-sizes[index]*scale/2; });
@@ -260,7 +381,7 @@ function geometry(placements, width, height, options, fontScale) {
             return targets[a.index]-targets[b.index] || a.placement.id.localeCompare(b.placement.id);
         });
         var cursor = margin;
-        var records = order.map(function(entry) {
+        records = order.map(function(entry) {
             var p=entry.placement,index=entry.index;
             var size = sizes[index]*scale;
             var start = Math.max(cursor,targets[index]);
@@ -274,8 +395,13 @@ function geometry(placements, width, height, options, fontScale) {
             records[i].along = Math.max(margin,Math.min(records[i].along,end-records[i].span));
             end = records[i].along-gap;
         }
+        // Infeasible output changes retain anchors/lock flags in saved data.
+        // Show deterministic ordinary packing with a visible conflict instead
+        // of overlapping controls; the editor refuses to persist this fallback.
+        if(lockedResult?.error)records=records.map(function(p) {return Object.assign({},p,{lockConflict:lockedResult.error});});
+        }
         records.forEach(function(p) {
-            var inset = 8, cross = 32*bounded(fontScale,1,.7,2)*moduleSize(p,options)*scale;
+            var inset = 8, cross = 32*bounded(fontScale,1,.7,2)*moduleSize(p,options)*(p.layoutScale ?? scale);
             p.content = horizontal ? {x:p.along,y:edge==="top"?inset:height-inset-cross,width:p.span,height:cross}
                 : {x:edge==="left"?inset:width-inset-cross,y:p.along,width:cross,height:p.span};
             result.push(p);

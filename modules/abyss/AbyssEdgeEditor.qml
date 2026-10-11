@@ -22,6 +22,13 @@ Item {
     property var draft: []
     property var handles: []
     property string selectedId: ""
+    property string feedback: ""
+    property var undoStack: []
+    property var _lastSnapshot: null
+    property string _sourceSignature: ""
+    property bool _historyReady: false
+    property bool _historyQueued: false
+    property bool _dragging: false
     property real gap: 8
     property var edgeSizes: ({top:1,right:1,bottom:1,left:1})
     property var edgeThicknesses: ({top:-1,right:-1,bottom:-1,left:-1})
@@ -53,6 +60,7 @@ Item {
     property var inputRegions: []
     readonly property string nearbyCorner: Placement.cornerForModule(moduleLayer.layoutRecords,selectedId,width,height)
     readonly property var selected: draft.find(p => p.id === selectedId)
+    readonly property var layoutConflicts: Placement.conflicts(moduleLayer.layoutRecords)
     readonly property var draftOptions: Object.assign({},Config.options?.abyss?.modules,{gap:gap,edgeSizes:edgeSizes,size:moduleScale,
         singleModuleExpansion:singleModuleExpansion,edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeThickness:AbyssStyle.perimeterThickness})
 
@@ -121,7 +129,54 @@ Item {
     }
 
     function refreshHandles(): void { handles = draft.map(p => p.id) }
+    function snapshot(): var {
+        return JSON.parse(JSON.stringify({draft:draft,gap:gap,edgeSizes:edgeSizes,
+            edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,
+            edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,moduleScale:moduleScale,
+            singleModuleExpansion:singleModuleExpansion,outputOnly:outputOnly,
+            draftPositions:draftPositions,positionEdits:positionEdits}))
+    }
+    function queueHistory(): void {
+        if(!_historyReady || _historyQueued || _dragging)return
+        _historyQueued=true
+        Qt.callLater(()=>{
+            _historyQueued=false
+            if(!_historyReady || _dragging)return
+            root.rememberHistory()
+        })
+    }
+    function rememberHistory(): void {
+        if(!_historyReady || _dragging)return
+        const next=snapshot()
+        if(JSON.stringify(next)===JSON.stringify(_lastSnapshot))return
+        undoStack=undoStack.concat([{state:_lastSnapshot,selectedId:selectedId}]).slice(-64)
+        _lastSnapshot=next
+    }
+    function sourceSignature(): string {
+        const options=Config.options?.abyss?.modules
+        const values={configured:options?.configured,placements:Array.from(options?.placements || []),gap:options?.gap,size:options?.size}
+        for(const key of ["edgeSizes","edgeThicknesses","edgeWidthAffectsModules","edgeJoinModules","edgeModuleRadii","singleModuleExpansion"])values[key]=Placement.edgeMap(options?.[key])
+        return JSON.stringify({global:values,profile:Array.from(options?.outputLayouts || []).find(p=>p.outputName===outputName) || null})
+    }
+    function undo(): void {
+        _dragging=false;rememberHistory()
+        if(!undoStack.length)return
+        const previous=undoStack[undoStack.length-1]
+        _historyReady=false;_dragging=false
+        undoStack=undoStack.slice(0,-1)
+        Object.keys(previous.state).forEach(key=>root[key]=JSON.parse(JSON.stringify(previous.state[key])))
+        selectedId=draft.some(p=>p.id===previous.selectedId) ? previous.selectedId : ""
+        refreshHandles();guides=[];feedback="";_lastSnapshot=snapshot();_historyReady=true
+    }
+    function toggleLock(id): void {
+        const p=draft.find(p=>p.id===id)
+        if(!p)return
+        const options=Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true})
+        draft=Placement.setLocked(draft,id,!p.locked,width,height,options,Appearance.fontSizeScale)
+        feedback=""
+    }
     function begin(): void {
+        _historyReady=false;_dragging=false;feedback=""
         draft = JSON.parse(JSON.stringify(Placement.resolve(Config.options?.abyss?.modules,outputName,
             Placement.seed(moduleLayer.zones,moduleLayer.edge,width,height))))
         const options = Placement.optionsForOutput(Config.options?.abyss?.modules,outputName)
@@ -139,11 +194,15 @@ Item {
         positionEdits=[];editingPopups=false
         selectedId = ""
         refreshHandles()
+        undoStack=[];_lastSnapshot=snapshot();_historyReady=true
+        _sourceSignature=sourceSignature()
         Qt.callLater(() => root.relocateToolbar())
         forceActiveFocus()
     }
     function finish(save): void {
         if (save) {
+            if(layoutConflicts.length){feedback=layoutConflicts[0];return}
+            if(_sourceSignature!==sourceSignature()){feedback="This layout changed outside the editor. Cancel and reopen before saving.";return}
             const writes=Placement.saveProfile(Config.options?.abyss?.modules,outputName,draft,gap,outputOnly,edgeSizes,singleModuleExpansion,moduleScale,edgeThicknesses,edgeWidthAffectsModules,edgeJoinModules,edgeModuleRadii)
             let positions=Config.options?.abyss?.positions ?? []
             positionEdits.forEach(edit=>positions=Presentation.save(positions,edit.kind,edit.outputName,edit.values))
@@ -151,6 +210,7 @@ Item {
             Config.setNestedValues(writes)
         }
         guides = []
+        _historyReady=false
         GlobalStates.abyssEditing = false
     }
     function reset(): void {
@@ -169,6 +229,10 @@ Item {
         refreshHandles()
     }
     function change(key,value): void {
+        if(selected?.locked && ["edge","position","alignment","size","customSize","depth"].includes(key)) {
+            feedback="Unlock this module before changing its placement or size";return
+        }
+        feedback=""
         draft = draft.map(p => p.id === selectedId ? Object.assign({},p,{[key]:value}) : p)
     }
     function editPosition(positions,kind,output,values): void {
@@ -189,12 +253,11 @@ Item {
     }
     function move(id,x,y,snap = true): void {
         selectedId = id
-        if (snap && snapEnabled) {
-            const options = Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true})
-            const result = Placement.snapMove(draft,id,x,y,width,height,options,Appearance.fontSizeScale)
-            draft = result.placements
-            guides = result.guides
-        } else { draft = Placement.move(draft,id,x,y,width,height); guides = [] }
+        const options = Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true})
+        const result=Placement.checkedMove(draft,id,x,y,width,height,options,Appearance.fontSizeScale,snap && snapEnabled)
+        feedback=result.rejected || ""
+        if(result.rejected){guides=[];return}
+        draft=result.placements;guides=result.guides
         editingEdge = draft.find(p => p.id===id)?.edge ?? editingEdge
         root.scheduleToolbarRelocation()
         const now = Date.now()
@@ -210,11 +273,21 @@ Item {
         root.scheduleToolbarRelocation()
     }
     onEditingEdgeChanged: root.scheduleToolbarRelocation()
-    onDraftChanged: root.scheduleToolbarRelocation()
+    onDraftChanged: {root.scheduleToolbarRelocation();root.queueHistory()}
+    onGapChanged: root.queueHistory()
+    onEdgeSizesChanged: root.queueHistory()
+    onEdgeThicknessesChanged: root.queueHistory()
+    onEdgeWidthAffectsModulesChanged: root.queueHistory()
+    onEdgeJoinModulesChanged: root.queueHistory()
+    onEdgeModuleRadiiChanged: root.queueHistory()
+    onModuleScaleChanged: root.queueHistory()
+    onSingleModuleExpansionChanged: root.queueHistory()
+    onDraftPositionsChanged: root.queueHistory()
+    onPositionEditsChanged: root.queueHistory()
     onEditingPopupsChanged: root.scheduleToolbarRelocation()
     onPreviewPositionChanged: root.scheduleToolbarRelocation()
     onPreviewKindChanged: root.scheduleToolbarRelocation()
-    onOutputOnlyChanged: root.scheduleToolbarRelocation()
+    onOutputOnlyChanged: {root.scheduleToolbarRelocation();root.queueHistory()}
 
     Timer {
         id: toolbarRelocate
@@ -228,7 +301,10 @@ Item {
         const existing = draft.find(p => p.kind === kind && !p.enabled)
         if (existing) { selectedId = existing.id;change("enabled",true);return }
         const id = kind+"-"+Date.now()
-        draft = Placement.normalize(draft.concat([{id:id,kind:kind,edge:editingEdge,position:.5}]),"top")
+        const proposed=Placement.normalize(draft.concat([{id:id,kind:kind,edge:editingEdge,position:.5}]),"top")
+        const failures=Placement.conflicts(Placement.geometry(proposed,width,height,Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true}),Appearance.fontSizeScale))
+        if(failures.length){feedback=failures[0];return}
+        draft=proposed;feedback=""
         selectedId = id
         refreshHandles()
     }
@@ -237,18 +313,28 @@ Item {
     Component.onDestruction: if (GlobalStates.abyssEditorTargetOutput === outputName) GlobalStates.abyssEditing = false
     Keys.onEscapePressed: finish(false)
     Keys.onReturnPressed: finish(true)
+    Keys.onPressed:event=>{if(event.key===Qt.Key_Z && (event.modifiers & Qt.ControlModifier)){undo();event.accepted=true}}
     Repeater {
         model: root.handles
         onItemAdded: (index,item) => root.inputRegions = root.inputRegions.concat([item.inputRegion])
         onItemRemoved: (index,item) => root.inputRegions = root.inputRegions.filter(region => region !== item.inputRegion)
         Item {
             id: handle
+            objectName:"abyssModuleHandle"
             required property string modelData
             readonly property var record: root.moduleLayer.layoutRecords.find(p => p.id === modelData)
             readonly property Region inputRegion: Region { item:handle;width:root.editingPopups ? 0 : handle.width }
             x: record?.content.x ?? 0; y: record?.content.y ?? 0
             width: record?.content.width ?? 0; height: record?.content.height ?? 0
             visible: record !== undefined && !root.editingPopups
+            activeFocusOnTab:true
+            Accessible.role:Accessible.Button
+            Accessible.name:Placement.label(record?.kind)+(record?.locked ? " · Locked" : "")
+            Accessible.onPressAction:root.selectedId=handle.modelData
+            Keys.onPressed:event=>{
+                if(event.key===Qt.Key_Space){root.selectedId=handle.modelData;event.accepted=true}
+                else if(event.key===Qt.Key_L){root.selectedId=handle.modelData;root.toggleLock(handle.modelData);event.accepted=true}
+            }
             Rectangle {
                 anchors.fill: parent; anchors.margins: -3
                 color: Qt.alpha(AbyssStyle.accent,drag.pressed ? .22 : .08)
@@ -256,15 +342,21 @@ Item {
                 border.width: root.selectedId === handle.modelData ? 2 : 1
                 border.color: Qt.alpha(AbyssStyle.accent,.6)
             }
+            MaterialSymbol {
+                anchors.right:parent.right;anchors.top:parent.top
+                visible:handle.record?.locked ?? false
+                text:handle.record?.lockConflict ? "warning" : "lock"
+                iconSize:14;color:handle.record?.lockConflict ? Appearance.colors.colError : AbyssStyle.accent
+            }
             MouseArea {
                 id: drag
                 anchors.fill: parent
-                cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                onPressed: root.selectedId = handle.modelData
-                onReleased: root.guides = []
-                onCanceled: root.guides = []
+                cursorShape:handle.record?.locked ? Qt.ArrowCursor : pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                onPressed:{root.selectedId=handle.modelData;handle.forceActiveFocus();root.rememberHistory();root._dragging=true;root.feedback=handle.record?.locked ? "Unlock this module before moving it" : ""}
+                onReleased:{root.guides=[];root._dragging=false;root.queueHistory()}
+                onCanceled:{root.guides=[];root._dragging=false;root.queueHistory()}
                 onPositionChanged: mouse => {
-                    if (!pressed) return
+                    if (!pressed || !root._dragging) return
                     const point = mapToItem(root,mouse.x,mouse.y)
                     root.move(handle.modelData,point.x,point.y,!(mouse.modifiers & Qt.ShiftModifier))
                 }
@@ -412,6 +504,12 @@ Item {
                         Layout.fillWidth: true
                     }
                     AbyssButton {
+                        objectName:"abyssLayoutUndo"
+                        text:"Undo";glyph:"undo";compact:true
+                        enabled:root.undoStack.length>0
+                        onClicked:root.undo()
+                    }
+                    AbyssButton {
                         text: "Reset"; glyph: "restart_alt"; compact: true
                         description: "Reset layout draft"
                         onClicked: root.reset()
@@ -424,8 +522,17 @@ Item {
                     AbyssButton {
                         text: "Done"; glyph: "check"
                         description: "Save layout changes"
+                        enabled:!root.layoutConflicts.length
                         onClicked: root.finish(true)
                     }
+                }
+
+                AbyssLabel {
+                    objectName:"abyssLayoutFeedback"
+                    visible:text.length>0
+                    text:root.layoutConflicts[0] || root.feedback
+                    Layout.fillWidth:true;wrapMode:Text.WordWrap
+                    color:Appearance.colors.colError
                 }
 
                 RowLayout {
@@ -656,9 +763,10 @@ Item {
                 }
 
                 GridLayout {
+                    id:selectedModuleControls
                     visible:!root.editingPopups
                     Layout.fillWidth:true
-                    columns:root.toolbarOnHorizontalEdge ? 7 : 1
+                    columns:!root.toolbarOnHorizontalEdge || width<420*Appearance.fontSizeScale ? 1 : width<740*Appearance.fontSizeScale ? 2 : width<1100*Appearance.fontSizeScale ? 4 : 8
                     rowSpacing:6
                     columnSpacing:6
 
@@ -676,7 +784,19 @@ Item {
                             : "Select a module"
                         onActivated:root.selectedId=currentValue
                         Layout.preferredWidth:root.toolbarOnHorizontalEdge ? 190 : -1
+                        Layout.minimumWidth:0
+                        Layout.maximumWidth:selectedModuleControls.width
                         Layout.fillWidth:!root.toolbarOnHorizontalEdge
+                    }
+                    AbyssButton {
+                        objectName:"abyssModulePositionLock"
+                        text:root.selected?.locked ? "Unlock position" : "Lock position"
+                        glyph:root.selected?.locked ? "lock_open" : "lock"
+                        compact:root.toolbarOnHorizontalEdge
+                        description:text
+                        enabled:root.selected !== undefined
+                        Keys.onPressed:event=>{if(event.key===Qt.Key_Return || event.key===Qt.Key_Enter){root.toggleLock(root.selectedId);event.accepted=true}}
+                        onClicked:root.toggleLock(root.selectedId)
                     }
                     AbyssButton {
                         text:root.selected?.enabled === false
@@ -712,15 +832,17 @@ Item {
                         textRole:"label";valueRole:"value"
                         currentIndex:Math.max(0,model.findIndex(
                             p => p.value===root.selected?.alignment))
-                        enabled:root.selected !== undefined
+                        enabled:root.selected !== undefined && !root.selected.locked
                         onActivated:root.change("alignment",currentValue)
                         Layout.preferredWidth:root.toolbarOnHorizontalEdge ? 146 : -1
+                        Layout.minimumWidth:0
+                        Layout.maximumWidth:selectedModuleControls.width
                         Layout.fillWidth:!root.toolbarOnHorizontalEdge
                     }
                     AbyssCheckBox {
                         text:"Custom size"
                         checked:root.selected?.customSize ?? false
-                        enabled:root.selected !== undefined
+                        enabled:root.selected !== undefined && !root.selected.locked
                         Layout.fillWidth:!root.toolbarOnHorizontalEdge
                         onToggled:{
                             if(checked) root.change(
@@ -752,7 +874,7 @@ Item {
                             : Placement.edgeSize(
                                 root.draftOptions,
                                 root.selected?.edge ?? root.editingEdge)
-                        enabled:root.selected?.customSize ?? false
+                        enabled:!!root.selected?.customSize && !root.selected?.locked
                         Layout.fillWidth:true
                         onMoved:root.change("size",value)
                     }

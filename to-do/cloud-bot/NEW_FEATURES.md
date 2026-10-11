@@ -183,8 +183,25 @@ order or close unverified Issues because their source is implemented.
   neighbors/Popups stay interactive, and saved lock state
   survives restart under both default and per-output layouts.
   Require native Niri/Quickshell pointer, visual and owner
-  acceptance. State: NEW/OPEN; source implementation and
-  validation NOT STARTED.
+  acceptance. State: SOURCE IMPLEMENTED / focused PASS — 2026-10-12.
+  Normalized center/compression anchors are captured from the approved visible
+  slot; default existing records remain unlocked. Locked reservations stay
+  fixed through feasible neighbor move/snap/insert/delete/size edits; a bounded
+  ordered interval solver fits unlocked groups. Full/infeasible moves are
+  rejected; output/font/width conflicts expose deterministic ordinary packing
+  without changing stored anchors/flags and block Done until repaired.
+  Handle glyph, Lock/Unlock control, keyboard L/Enter/Space, bounded64-step Undo,
+  Cancel/Reset and global/output-only persistence use the existing editor.
+  Concurrent changes to the same global/output source refuse Done, including
+  after Undo Reset; other output profiles survive. Related Qt map serialization
+  and compact-grid clipping repairs are tracked in ABYSS-I02.
+  Focused PASS7044 pure/property checks (192 pre-feature no-lock geometry/input
+  comparisons), actual QV4/private-native62checks/26foreground frames and
+  independent JSON/process restart, existing four-edge/small-output editor
+  oracle, four editor contracts and parser. [Pinned working-source evidence](../../docs/evidence/abyss-product/20261012-module-locks/README.md).
+  Full exact-SHA canonical, installed/owner normal-popup and physical pointer,
+  actual multi-output/hotplug and full Abyss material acceptance remain OPEN.
+  Continue Screen Edge multi-selection with explicit locked-batch guards.
 
 - [ ] **Edit Abyss Layout Screen Edge module multi-selection — owner request 2026-10-10:**
   Add an explicit multiple-selection mode for Screen Edge modules while

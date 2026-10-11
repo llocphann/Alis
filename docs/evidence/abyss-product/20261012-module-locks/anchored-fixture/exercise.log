@@ -1,0 +1,24 @@
+  INFO: Launching config: "/tmp/alis-edge-locks-z64qxu0h/shell.qml"
+  INFO: Shell ID: "6d17ed88e337d4bab9eea5ebb4cea77f" Path ID "6d17ed88e337d4bab9eea5ebb4cea77f"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/akgheplrmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.814596.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-edge-locks-z64qxu0h/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-edge-locks-z64qxu0h/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-edge-locks-z64qxu0h/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-edge-locks-z64qxu0h/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-edge-locks-z64qxu0h/state/quickshell/states.json failed: File does not exist.
+ DEBUG qml: Failed to load persistent states file: 2
+ DEBUG qml: [Persistent] File not found, creating new file.
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/alis-edge-locks-z64qxu0h/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f04dd46ad60)
+ ERROR qml: ABYSS_LOCK_NATIVE_FAIL Cannot assign to read-only property "objectNameChanged" _assignObjectInto@qs:@/qs/modules/common/Config.qml:134
+_applyNestedKey@qs:@/qs/modules/common/Config.qml:116
+setNestedValues@qs:@/qs/modules/common/Config.qml:181
+finish@qs:@/qs/modules/abyss/AbyssEdgeEditor.qml:196
+run@qs:@/qs/shell.qml:107
+expression for onTriggered@qs:@/qs/shell.qml:113 []

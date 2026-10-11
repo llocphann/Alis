@@ -1,0 +1,20 @@
+  INFO: Launching config: "/tmp/alis-edge-locks-d_169ixh/shell.qml"
+  INFO: Shell ID: "b4ec8d9e6030e1cf5f81980a749d2204" Path ID "b4ec8d9e6030e1cf5f81980a749d2204"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/5hnhfylrmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.823555.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-edge-locks-d_169ixh/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-edge-locks-d_169ixh/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-edge-locks-d_169ixh/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-edge-locks-d_169ixh/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-edge-locks-d_169ixh/state/quickshell/states.json failed: File does not exist.
+ DEBUG qml: Failed to load persistent states file: 2
+ DEBUG qml: [Persistent] File not found, creating new file.
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/alis-edge-locks-d_169ixh/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f703de8fb80)
+  INFO qml: [Weather] Getting location from IP...
+  INFO qml: ABYSS_LOCK_NATIVE_PASS exercise 59 checks 25 frames

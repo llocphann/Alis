@@ -47,7 +47,9 @@ ShellRoot {
         if(!root.check(point.x>=-.01 && point.y>=-.01
             && point.x+item.width<=viewport.width+.01
             && point.y+item.height<=viewport.height+.01,
-            "editor control is fully visible inside its input clip")) return false
+            "editor control is fully visible inside its input clip "+JSON.stringify({step:root.step,
+                text:item.text,edge:editor.toolbarEdge,x:point.x,y:point.y,width:item.width,height:item.height,
+                viewportWidth:viewport.width,viewportHeight:viewport.height,contentY:viewport.contentY}))) return false
         driver.mouseClick(item)
         return true
     }

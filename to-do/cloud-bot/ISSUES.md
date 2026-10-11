@@ -9,6 +9,31 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
 
 ## Current failures and owner reports
 
+- [ ] **ABYSS-I02 — Edit layout copies Qt signal members into saved Edge maps — discovered 2026-10-12:**
+  Related `ABYSS-F01`. Actual private-native global Done after output-only
+  save/Undo failed while assigning read-only `objectNameChanged`; generic
+  Object.assign of typed JsonObject maps included Qt signals. Production
+  output/save map adapters now copy only top/right/bottom/left fields.
+  Earlier raw failure is retained under module-locks/anchored-fixture.
+  Native focused fix-forward PASS62checks/26foreground frames includes both
+  scopes, actual JSON/process restart and refused concurrent Save after Undo
+  Reset. Six Edge maps on both readbacks contain only the four owned keys.
+  A related new-control horizontal overflow (corner target right814 vs clip794)
+  now uses adaptive1/2/4/8-column selected controls. Original four-edge/small-
+  output pointer oracle PASS, with unchanged click bounds and no auto-scroll
+  substituted for this diagnosis. [Evidence](../../docs/evidence/abyss-product/20261012-module-locks/README.md).
+  State: SOURCE/FOCUSED FIXED; exact-SHA canonical/installed/owner OPEN.
+
+- [ ] **AGENDA-I01 — Linked task reconciliation and keyboard retry stalls — discovered 2026-10-12:**
+  Related `AGENDA-F01`: queued no-op Event save could hold a stale write lease;
+  optional QVariant sequence cleared the UI despite correct task files; Enter
+  on Retry propagated into EventCard. Source0465ffc5a consumes idle-lease
+  notification and Enter/Return locally; Integration4d0aa3f transports typed
+  JSON and releases acknowledged job busy state. Original focused failures and
+  actual store/QML bridge/UI fix-forward results remain in
+  [Agenda evidence](../../docs/evidence/abyss-product/20261012-agenda-internal/README.md).
+  State: SOURCE/FOCUSED FIXED; full0465 qualification running, owner/installed OPEN.
+
 - [ ] **DASH-I07 — Tab-order conflict baseline must survive Undo Reset — source review 2026-10-12:**
   Related `DASH-F02`: resetting an edit accepts the newest saved order, but
   undoing that Reset must restore the earlier conflict baseline as well as

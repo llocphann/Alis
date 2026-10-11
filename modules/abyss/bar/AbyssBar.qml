@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.abyss.looks
 import "../looks/AbyssGeometry.js" as Geometry
 import "../looks/AbyssLayout.js" as Layout
@@ -104,6 +105,11 @@ Item {
             x: geometry?.content.x ?? 0; y: geometry?.content.y ?? 0
             width: geometry?.content.width ?? 0; height: geometry?.content.height ?? 0
             onInteraction: strength => { if (geometry) root.interaction(geometry.edge,geometry.along+geometry.span/2,geometry.span,strength*geometry.influence) }
+            Loader {
+                anchors.right:parent.right;anchors.top:parent.top
+                active:!root.editing && !!module.geometry?.lockConflict
+                sourceComponent:MaterialSymbol {text:"warning";iconSize:14;color:Appearance.colors.colError;Accessible.name:module.geometry?.lockConflict || ""}
+            }
             onRequest: kind => { if (geometry) root.popupRequested(kind,geometry.edge,geometry.along+geometry.span/2) }
             onHoverRequest: kind => { if (geometry) root.popupHoveredRequested(kind,geometry.edge,geometry.along+geometry.span/2) }
             onHoverState: (kind, hovered) => {

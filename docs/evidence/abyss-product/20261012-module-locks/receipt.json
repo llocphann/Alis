@@ -1,0 +1,14 @@
+{
+  "parentSha": "0465ffc5ad7d7a6b9b1347f45a2b9c6ca1e798a5",
+  "scope": "focused source; private fixtures only",
+  "pureChecks": 7044,
+  "nativeProcesses": 2,
+  "nativeChecks": 62,
+  "nativeForegroundFrames": 26,
+  "nativeResult": "PASS",
+  "legacyEditorOracle": "PASS",
+  "diskMapsChecked": 12,
+  "parser": "PASS",
+  "canonicalForThisSource": "NOT_STARTED",
+  "ownerInstalledPhysicalMultiOutput": "OPEN"
+}

@@ -1,0 +1,10 @@
+  INFO: Launching config: "/tmp/alis-edge-locks-6cbf0tga/shell.qml"
+  INFO: Shell ID: "a2dd6265e07bb9ca6ac858eabd11abf2" Path ID "a2dd6265e07bb9ca6ac858eabd11abf2"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/9ski6imrmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.865750.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-edge-locks-6cbf0tga/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-edge-locks-6cbf0tga/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-edge-locks-6cbf0tga/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: ABYSS_LOCK_NATIVE_PASS restart 3 checks 1 frames

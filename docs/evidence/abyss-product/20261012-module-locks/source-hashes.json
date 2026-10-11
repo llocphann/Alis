@@ -1,0 +1,11 @@
+{
+  "modules/abyss/looks/AbyssLayout.js": "6257212201972c1d6bb9200cfec6fdb46df1f8dbfac1628451b0dfedadc7f732",
+  "modules/abyss/AbyssEdgeEditor.qml": "a4844b59c881911098e3f41ef158823b4c586276ee71f735727bdf0a4744d5f0",
+  "modules/abyss/bar/AbyssBar.qml": "74819463b99a362b7bb5ea18130335aa4135b6220c12aeafc4252e4d8ed4498f",
+  "scripts/test-abyss-module-locks.mjs": "13131acae2336dcf4a9defe2393f193abcb31f974898f497593b5f0a06f9d1f9",
+  "scripts/test-abyss-module-locks-runtime.py": "c5b2a2b6ca473b47c2d364ec6d01db6215354d2f3550846ffcac5b3c44309bb0",
+  "scripts/test-abyss-editor-runtime.sh": "6845277fdb96c7842c1acf7f522a7b626c271c0a3803e0abf1184b79f0ea7f19",
+  "scripts/test-abyss-edge-editor-toolbar-contract.py": "18175e55dc52d438b22f9df24a2fc8bed85f0fe7f6cc72d1a1b927194c284423",
+  "scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py": "1bebb15b481e5681708b92386eb0360981f3df98f24629984345bce3738e510e",
+  "scripts/validate-maintainer-local.sh": "7e5976cab58c096162c48c1b01dc6b2b65ec839327be8c1c34a31a4805eba241"
+}
