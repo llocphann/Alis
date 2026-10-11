@@ -4,11 +4,9 @@ function safeReading(source) {
     var raw = String(source === undefined || source === null ? "" : source).slice(0, 160000);
     // Leave fenced-code payloads untouched, but never load Markdown image URLs.
     // The existing preview uses only owned attachment images.
-    return raw.split(/(\x60{3}[\s\S]*?\x60{3})/g).map(function(part, index) {
+    return raw.split(/(\x60{3}[\s\S]*?\x60{3}|~{3}[\s\S]*?~{3})/g).map(function(part, index) {
         if (index % 2) return part;
-        return part.replace(/!\[([^\]\r\n]*)\]\((?:\\.|[^)\r\n])*\)/g,
-                function(_, alt) { return "[Image: " + alt + "]"; })
-            .replace(/!\[([^\]\r\n]*)\]\[[^\]\r\n]*\]/g,
+        return part.replace(/!\[([^\]\r\n]*)\](?:\((?:\\.|[^)\r\n])*\)|\[[^\]\r\n]*\])?/g,
                 function(_, alt) { return "[Image: " + alt + "]"; })
             .replace(/</g, "&lt;");
     }).join("");

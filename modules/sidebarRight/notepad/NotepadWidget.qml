@@ -28,6 +28,7 @@ Item {
     // shared editor hosts preserve their existing Source-first behavior.
     property bool readingOnHover: false
     property bool markdownEditing: !root.readingOnHover
+    property int _markdownFocusEpoch: 0
     property bool verticalDotNavigation: false
     // Quick Notes can coexist on Dashboard, Sidebar Left and the bottom-left
     // corner. In that mode each surface keeps the stable ID of the note it is
@@ -152,13 +153,16 @@ Item {
         if (!Notepad.ready)
             return
         root.markdownEditing = true
+        const focusEpoch = ++root._markdownFocusEpoch
         Qt.callLater(() => {
-            if (root.visible && root.enabled)
+            if (focusEpoch === root._markdownFocusEpoch
+                    && root.markdownEditing && root.visible && root.enabled)
                 textArea.forceActiveFocus()
         })
     }
 
     function releaseEditorFocus(): void {
+        ++root._markdownFocusEpoch
         root.flushPendingSave()
         textArea.focus = false
         root.focus = false

@@ -314,6 +314,7 @@ run_check 'Abyss notification popup geometry transition regression' node scripts
 run_check 'Abyss hover scene geometry diagnostic regression' node scripts/test-abyss-hover-geometry-probe.mjs
 run_check 'Abyss frame activity diagnostic regression' node scripts/test-abyss-frame-activity-probe.mjs
 run_check 'Dashboard horizontal gesture and stable page order regression' node scripts/test-dashboard-page-policy.mjs
+run_check 'Quick Notes Markdown preview, formatting and attachment safety regression' node scripts/test-quick-notes-markdown-policy.mjs
 run_check 'Abyss unified content opacity migration regression' node scripts/test-abyss-content-opacity-migration.mjs
 run_check 'translation catalog structure' python3 translations/tools/l10n.py audit-all
 run_check 'translation source parity' python3 translations/tools/source-parity.py

@@ -15,6 +15,8 @@ eq(ctx.format('abc',1,1,'link'),{from:1,to:1,insert:'[](https://)',selectionStar
 eq(ctx.format('abc',0,3,'unknown'),null);
 assert.equal(ctx.safeReading('# Title\n**bold**\n![remote](https://bad.example/a.png)').includes('!['),false);count++;
 assert.equal(ctx.safeReading('<img src="https://bad.example/x">').includes('<img'),false);count++;
+assert.equal(ctx.safeReading('![ref][remote]\n[remote]: https://bad.example/x.png').includes('![ref]'),false);count++;
+assert.equal(ctx.safeReading('![shorthand]\n[shorthand]: https://bad.example/x.png').includes('![shorthand]'),false);count++;
 const fence=String.fromCharCode(96).repeat(3);
 assert.equal(ctx.safeReading(fence+'\n![literal](https://no.fetch)\n'+fence).includes('![literal]'),true);count++;
 const dir='/tmp/test/notepad-attachments',hash='a'.repeat(64);
