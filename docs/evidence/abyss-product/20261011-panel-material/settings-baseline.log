@@ -1,0 +1,12 @@
+  INFO: Launching config: "/tmp/alis-panel-material-settings-ujr0_mrp/shell.qml"
+  INFO: Shell ID: "58dae968296356e11c9d44347ada238e" Path ID "58dae968296356e11c9d44347ada238e"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/fidenvqmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.17486.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-panel-material-settings-ujr0_mrp/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-panel-material-settings-ujr0_mrp/state/quickshell/user/gamemode_active failed: File does not exist.
+ ERROR qml: PANEL_MATERIAL_SETTINGS_FAIL opacity inheritance overwrote independent blur: -1 check@qs:@/qs/shell.qml:21
+runChecks@qs:@/qs/shell.qml:44
+expression for onTriggered@qs:@/qs/shell.qml:90
+

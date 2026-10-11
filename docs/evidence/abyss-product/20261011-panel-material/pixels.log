@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-panel-material-pixels-ltun_fte/shell.qml"
+  INFO: Shell ID: "8f6881130ef154405e78572adef000f4" Path ID "8f6881130ef154405e78572adef000f4"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/slecsvqmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.18891.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-panel-material-pixels-ltun_fte/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-panel-material-pixels-ltun_fte/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-panel-material-pixels-ltun_fte/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: PANEL_PIXEL_PASS 120 actual alpha/blur/policy/light-dark captures

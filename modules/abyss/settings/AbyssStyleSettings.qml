@@ -116,23 +116,31 @@ ColumnLayout {
             }
             Percent { text:"Blur strength";configKey:"abyss.effects.blur.radius";fallback:10;maximum:24 }
             ConfigSwitch {
-                text:"Panel background follows Screen Edge";autoToggle:false
-                checked:(Config.options?.abyss?.content?.opacity ?? -1)<0 && (Config.options?.abyss?.content?.blurRadius ?? -1)<0
-                onToggledByUser:checked=>Config.setNestedValues({"abyss.content.opacity":checked ? -1 : AbyssStyle.contentOpacity,
-                    "abyss.content.blurRadius":checked ? -1 : AbyssStyle.contentBlurRadius})
+                objectName:"abyssPanelOpacityFollow"
+                text:"Panel opacity follows Screen Edge";autoToggle:false
+                checked:(Config.options?.abyss?.content?.opacity ?? -1)<0
+                onToggledByUser:checked=>Config.setNestedValue("abyss.content.opacity",checked ? -1 : AbyssStyle.contentOpacity)
             }
             WindowDialogSlider {
+                objectName:"abyssPanelOpacity"
                 text:"Panel background opacity";Layout.fillWidth:true;from:0;to:1;stepSize:.01
                 value:AbyssStyle.contentOpacity;valueText:Math.round(value*100)+" %"
                 onMoved:Config.setNestedValue("abyss.content.opacity",value)
             }
+            ConfigSwitch {
+                objectName:"abyssPanelBlurFollow"
+                text:"Panel blur follows Screen Edge";autoToggle:false
+                checked:(Config.options?.abyss?.content?.blurRadius ?? -1)<0
+                onToggledByUser:checked=>Config.setNestedValue("abyss.content.blurRadius",checked ? -1 : AbyssStyle.configuredContentBlurRadius)
+            }
             WindowDialogSlider {
+                objectName:"abyssPanelBlur"
                 text:"Panel background blur";Layout.fillWidth:true;from:0;to:24;stepSize:1
-                value:AbyssStyle.contentBlurRadius;valueText:Math.round(value)+" px"
+                value:AbyssStyle.configuredContentBlurRadius;valueText:Math.round(value)+" px"
                 onMoved:Config.setNestedValue("abyss.content.blurRadius",value)
             }
             Percent { text:"Content card opacity";configKey:"abyss.content.cardOpacity";fallback:.9 }
-            SettingsNote { text:"Screen Edge opacity can reach 0% so wallpaper-facing hot corners can be fully clear. Popup, Dashboard, Sidebar, IPC and Settings backgrounds keep their own content opacity. Blur samples the output wallpaper in the existing field pass; content cards add a separate tint." }
+            SettingsNote { text:"Panel opacity and blur follow the Screen Edge independently. Each slider sets an explicit value, including 0. Blur samples the output wallpaper in the existing field pass; Performance quality and disabled effects keep the saved radius while suppressing rendering. Content cards add a separate tint." }
             ConfigSwitch {
                 text:"Refraction (Quality)";autoToggle:false
                 checked:Config.options?.abyss?.effects?.refraction?.enabled ?? false

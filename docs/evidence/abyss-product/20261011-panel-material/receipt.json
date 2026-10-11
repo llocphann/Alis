@@ -1,0 +1,35 @@
+{
+  "task": "ABYSS-I01",
+  "base_sha": "d1056867d9457ef255e3a5ba514a347802e70cdf",
+  "source_repo": "https://github.com/llocphann/Alis",
+  "sources": {
+    "modules/abyss/looks/AbyssStyle.qml": "250af34589425132cddaea84d7453d79a04a0d434aad247050bc290220f144ca",
+    "modules/abyss/settings/AbyssStyleSettings.qml": "da245640b7872da97587fd92eb655140c4387e790a355f2abb13c0e0cd61c850",
+    "modules/abyss/looks/AbyssField.frag": "fc5efc9e584d581f247793407a2583f1c74e262352aa06e3f45c643103cc7e8a",
+    "modules/abyss/looks/AbyssField.frag.qsb": "53ef3a7286b263d96a95a9642066e0e4f4e1f5082f1f171b11ba67f3f3790cff",
+    "scripts/test-abyss-panel-material-settings-runtime.py": "8f62e4b8a77a1e3943376c968c1a9b3779187abf93ca9982363c8930af07eb97",
+    "scripts/test-abyss-panel-material-pixels-runtime.py": "264ca99ae5f1e5b33ab552ec47d4d12d60a25f89035a39e0e491eabab30e7c5a"
+  },
+  "settings_baseline": {
+    "result": "FAIL_EXPECTED",
+    "exit_code": 1,
+    "root": "archived d1056867d modules/assets/services/defaults",
+    "fault": "opacity inheritance changes explicit blur 17 to -1"
+  },
+  "settings_fixed": {
+    "result": "PASS",
+    "exit_code": 0,
+    "checks": 377,
+    "restart_checks": 3
+  },
+  "pixels": {
+    "result": "PASS",
+    "exit_code": 0,
+    "captures": 120,
+    "checks": 270
+  },
+  "renderer_changed": false,
+  "owner_state_changed": false,
+  "canonical": "PENDING",
+  "boundary": "Settings callbacks and owned GPU parameter matrix only. Physical clicks, video fallback, multiple outputs, full material/theme visual review and cost not qualified. Pillow byte-sum cleanup reconciled offline against all retained captures, without a GPU rerun."
+}

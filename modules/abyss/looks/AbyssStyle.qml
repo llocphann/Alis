@@ -22,8 +22,12 @@ Singleton {
     // completely, matching the established stable GlassBackground contract.
     readonly property real surfaceOpacity: Math.max(0,Math.min(1,options?.surface?.opacity ?? .78))
     readonly property real contentOpacity: Math.max(0,Math.min(1,(options?.content?.opacity ?? -1) < 0 ? surfaceOpacity : options.content.opacity))
+    // Settings show and detach the saved choice even when the power/effects
+    // policy temporarily suppresses rendering. Never save that temporary zero.
+    readonly property real configuredContentBlurRadius: Math.max(0,Math.min(24,
+        (options?.content?.blurRadius ?? -1) < 0 ? options?.effects?.blur?.radius ?? 10 : options.content.blurRadius))
     readonly property real contentBlurRadius: quality === "performance" || !Appearance.effectsEnabled ? 0
-        : (options?.content?.blurRadius ?? -1) < 0 ? blurRadius : Math.max(0,Math.min(24,options.content.blurRadius))
+        : (options?.content?.blurRadius ?? -1) < 0 ? blurRadius : configuredContentBlurRadius
     readonly property real cardOpacity: Math.max(0,Math.min(1,options?.content?.cardOpacity ?? .9))
     readonly property color contentLayer: Qt.alpha(Appearance.colors.colLayer1Base,cardOpacity)
     readonly property real shadowStrength: quality === "performance" || !Appearance.effectsEnabled ? 0 : Math.max(0, Math.min(0.5, options?.effects?.shadowStrength ?? 0.24))

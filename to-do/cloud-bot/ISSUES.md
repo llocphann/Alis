@@ -69,8 +69,18 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   blockers or frame-time regression. Require actual native
   Niri/Quickshell owner visual signoff. Coordinate the single
   opacity slider with [ABYSS-R04](REWORK_OPTIMIZATION.md).
-  State: OPEN; source-level fix appears feasible; native fault
-  reproduction, shader treatment and verified release pending.
+  **Source repair + focused native evidence 2026-10-11:** the old Settings
+  handler on archived `d1056867d` reproduces blur 17→-1 when enabling opacity
+  inheritance (expected FAIL, exit 1). Separate opacity/blur follow controls
+  now write only their own keys. Detaching blur retains the configured radius
+  while Performance/effects-off suppress the effective radius temporarily.
+  Actual QML handlers pass 377 checks plus three disk/restart checks (exit 0).
+  The unchanged one-pass shader/QSB passes 120 light/dark alpha/radius/policy
+  captures / 270 pixel checks: exact alpha equality across blur, explicit 0
+  and effect suppression. No shader tuning is justified by these results.
+  [Reproducer evidence and source hashes](../../docs/evidence/abyss-product/20261011-panel-material/README.md).
+  State: OPEN for final exact-SHA canonical and owner physical/real-theme,
+  video/multi-output review. ABYSS-R04 remains separate and unimplemented.
 
 - [x] **P0 — fullscreen window retains hidden Screen Edges/Panel/Perimeter after switching to another window (owner report 2026-10-10):**
   Reproduce on Niri: fullscreen client A, then open/focus window B in the
@@ -888,7 +898,13 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   justified by this archive.
 
 
-- [ ] **Canonical validation — updated 2026-10-11:** clean-clone validation
+- [ ] **Canonical validation — updated 2026-10-11:** the subsequent
+  clean-clone `d1056867d9457ef255e3a5ba514a347802e70cdf` run was interrupted;
+  its temporary logs are no longer present and no full final receipt exists.
+  An observed Dashboard editor partial-slide sampling failure is still
+  unresolved; do not mark that source or run PASS. Save future logs durably.
+  Next: diagnose that unchanged strict fixture, then qualify final source.
+  **Last complete retained run:** clean-clone validation
   of `1af17ab476f11e8c62f71276df6fd547022c9061` finished **FAIL: 342 PASS,
   1 FAIL, 2 SKIP; exit 1**. Calendar storage/layout, screenshot pointer/export
   lifecycle, Recording dot controls, both Music fixtures and physical fullscreen
