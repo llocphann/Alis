@@ -1,0 +1,18 @@
+  INFO: Launching config: "/tmp/alis-weekly-planner-j6wnek85/shell.qml"
+  INFO: Shell ID: "249a7d695cbe4e1fc40045cf15bacdbf" Path ID "249a7d695cbe4e1fc40045cf15bacdbf"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/v3tcj99rmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.597571.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-weekly-planner-j6wnek85/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-weekly-planner-j6wnek85/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-weekly-planner-j6wnek85/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN scene: QML FileView at @services/Notepad.qml[196:5]: Read of /tmp/alis-weekly-planner-j6wnek85/state/quickshell/user/notepad-tabs.json failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[412:5]: Read of /tmp/alis-weekly-planner-j6wnek85/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[337:5]: Read of /tmp/alis-weekly-planner-j6wnek85/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/Notepad.qml[246:5]: Read of /tmp/alis-weekly-planner-j6wnek85/state/quickshell/user/notepad.txt failed: File does not exist.
+ ERROR qml: WEEKLY_PLANNER_NATIVE_FAIL Property 'flatMap' of object [object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object] is not a function run@qs:@/qs/shell.qml:70
+expression for onTriggered@qs:@/qs/shell.qml:78
+

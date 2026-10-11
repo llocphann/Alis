@@ -1,0 +1,14 @@
+  INFO: Launching config: "/tmp/alis-weekly-planner-cfb0wn_e/shell.qml"
+  INFO: Shell ID: "6268d525b5c24687449cd8e97a8ef895" Path ID "6268d525b5c24687449cd8e97a8ef895"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/0wzcwx9rmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.606362.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-weekly-planner-cfb0wn_e/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-weekly-planner-cfb0wn_e/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-weekly-planner-cfb0wn_e/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+ ERROR qml: WEEKLY_PLANNER_NATIVE_FAIL narrow view clipped seven columns: {"scene":480,"planner":480,"viewport":1180,"content":1180,"height":700} check@qs:@/qs/shell.qml:32
+run@qs:@/qs/shell.qml:65
+expression for onTriggered@qs:@/qs/shell.qml:84
+

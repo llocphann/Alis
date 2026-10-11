@@ -9,6 +9,18 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
 
 ## Current failures and owner reports
 
+- [ ] **DASH-I05 — Music scrollbar preference missing from typed Config — discovered 2026-10-12:**
+  Related to `DASH-F01`/`DASH-F02` shared Dashboard acceptance. The new Music
+  Settings checkbox/defaults refer to `dashboard.music.showScrollbars`, but the
+  typed JsonObject does not declare it; actual native Settings emits "Cannot
+  assign to non-existent property". Add the matching boolean declaration and
+  verify both values through the real Settings/QV4 binding. Original warning
+  is retained with Weekly Planner evidence. Actual private-Niri Settings now
+  toggles both values through typed Config and a freshly reloaded Music UI,
+  PASS without that warning. [Bounded evidence](../../docs/evidence/abyss-product/20261012-weekly-planner/README.md).
+  State: SOURCE/FОCUSED FIXED; final committed-SHA canonical and installed
+  owner Settings persistence remain OPEN.
+
 - [ ] **TODO-I01 — Internal Todo save completion may block later JSON persistence — discovered 2026-10-12:**
   [Alis dev; data integrity] Source `37461128a` starts `_jsonSaving` for
   `FileView.setText` but releases it in `onLoaded`; no `onSaved`/`onSaveFailed`

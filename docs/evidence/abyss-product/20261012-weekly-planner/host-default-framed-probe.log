@@ -1,0 +1,26 @@
+  INFO: Launching config: "/tmp/hadalis-dashboard-music-do4jle_y/shell.qml"
+  INFO: Shell ID: "8a0f519d9d44f0b81fda9cb313768953" Path ID "8a0f519d9d44f0b81fda9cb313768953"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/012db3armt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.609131.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-music-do4jle_y/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-do4jle_y/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/hadalis-dashboard-music-do4jle_y/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[412:5]: Read of /tmp/hadalis-dashboard-music-do4jle_y/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[337:5]: Read of /tmp/hadalis-dashboard-music-do4jle_y/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/Events.qml[62:5]: Read of /tmp/hadalis-dashboard-music-do4jle_y/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f5f80e50d60)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-do4jle_y/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: [Weather] Getting location from IP...
+  INFO qml: [Weather] Location: [redacted]
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: [Weather] Updated: 25°C [redacted]
+  INFO qml: [Weather] Air quality updated: 54 EAQI
+  WARN qt.qpa.wayland: Failed to create grabbing popup. Ensure popup  ProxiedWindow(0x7f5f7fe805c0) has a transientParent set and that parent window has received input.
+  WARN qt.qpa.wayland: Failed to create grabbing popup. Ensure popup  ProxiedWindow(0x7f5f9d000120) has a transientParent set and that parent window has received input.
+  WARN scene: @modules/common/Config.qml[118:-1]: Error: Cannot assign to non-existent property "showScrollbars"
+  INFO qml: DASHBOARD_MUSIC_RUNTIME_PASS native-page-dots responsive-columns genre folder child-folder actual-playback-click stable-canvas hidden-presentation edit-lock horizontal-only-shared-burst reordered-stable-ids keyboard disabled-order-preservation

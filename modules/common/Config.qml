@@ -2139,6 +2139,7 @@ Singleton {
                 property list<string> pageOrder: ["dashboard", "music", "weeklyPlanner"]
                 property JsonObject music: JsonObject {
                     property bool enable: true
+                    property bool showScrollbars: true
                 }
                 property bool keepLoaded: false
                 property bool showHeader: true

@@ -289,12 +289,20 @@ order or close unverified Issues because their source is implemented.
   multi-output/theme/reduced-motion, no leaked focus, bounded render
   cost, optional integrations absent and data intact after restart.
   Deterministic date/geometry tests plus owner-approved Niri UI.
-  State: IN PROGRESS — 2026-10-12, after Todo durability and shared Settings
-  task-tab milestones. Implement one bounded weekly projection of canonical
+  State: SOURCE IMPLEMENTED / FOCUSED PASS — 2026-10-12, after Todo durability
+  and shared Settings task-tab milestones. One bounded weekly projection of canonical
   Events/CalendarSync with actual civil-day boundaries (23/24/25h), overlapping
   and all-day slices, stable-ID third page and shared Todo/Quick Notes panels.
   Imported events remain read-only; view projections do not write recurrences
-  or reminders. Deterministic/native checks and owner acceptance remain OPEN.
+  or reminders. Pure policy PASS four time zones; actual private-Niri grid
+  PASS30 checks/9 captures including 480×410 shared panels and DST. Actual
+  three-page Dashboard/Music host, clicked Agenda time prefill, pinned-week
+  cold reload and repaired Music Settings typed preference PASS on the private
+  basic render loop. Original Queue animation failures and bounded probes are
+  retained; this does not qualify the owner's render loop or upgrade earlier
+  canonical failures. [Source-byte receipt and all raw evidence](../../docs/evidence/abyss-product/20261012-weekly-planner/README.md).
+  Full committed-SHA canonical, installed data/restart, owner visual and
+  multi-output/fractional/input acceptance remain OPEN; continue `DASH-F02`.
 
 - [ ] **DASH-F02 — Drag-reorder Dashboard tab indicators in Edit Dashboard Layout — owner request 2026-10-11:**
   [Owner: Alis dev; New Feature] In **Edit Dashboard Layout**, drag

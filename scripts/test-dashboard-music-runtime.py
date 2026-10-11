@@ -61,6 +61,10 @@ ShellRoot {
   id: window; visible:true; implicitWidth:1280; implicitHeight:720; color:"#111820"
   DashboardContent { id: dashboard; width:window.width; height:Math.min(window.height,720); embeddedSurface:true; presentationActive:true; musicBackend:fake }
  }
+ // The owner keeps nested debug Niri unfocused. An occluded parent can stop
+ // Wayland frame callbacks; request bounded private QSG frames for animation
+ // assertions without focusing an owner window or changing the deadlines.
+ Timer {interval:16;repeat:true;running:true;onTriggered:dashboard.grabToImage(()=>{},Qt.size(64,36))}
  TestCase {
   id:test; when:false; optional:true
   function check(v,m) { if(!v) throw new Error(m) }
@@ -374,16 +378,49 @@ ShellRoot {
    keyClick(Qt.Key_Right)
    check(dashboard.currentPageId==="dashboard","accessible Right ignored persisted order")
    Config.setNestedValue("dashboard.music.enable",false)
-   check(dashboard.pageIds.length===1 && dashboard.currentPageId==="dashboard","disabled page retained navigation")
+   check(dashboard.pageIds.length===2 && !dashboard.pageIds.includes("music") && dashboard.pageIds.includes("weeklyPlanner") && dashboard.currentPageId==="dashboard","disabling Music lost Planner or retained Music")
    check(Config.options.dashboard.pageOrder[0]==="music","disabled page rewrote stored order")
    Config.setNestedValues({"dashboard.music.enable":true,"dashboard.pageOrder":["dashboard","music","weeklyPlanner"]})
+   tryVerify(()=>findChild(dashboard,"dashboardMusic")!==null,2000)
+   music=findChild(dashboard,"dashboardMusic")
    const settings=Qt.createComponent(Qt.resolvedUrl("modules/settings/DashboardMusicSettings.qml"))
    check(settings.status===Component.Ready,"Music settings failed to compile: "+settings.errorString())
    const settingsItem=settings.createObject(window.contentItem,{visible:false})
    check(settingsItem!==null,"Music settings failed to load")
+   const scrollbarToggle=Array.from(settingsItem.contentData).find(item=>item.text===Translation.tr("Show Music scrollbars"))
+   check(scrollbarToggle!==undefined,"Music scrollbar Settings missing")
+   scrollbarToggle.checked=false
+   check(Config.options.dashboard.music.showScrollbars===false && !music.showMusicScrollbars,"Music scrollbar disable failed typed persistence/binding")
+   scrollbarToggle.checked=true
+   check(Config.options.dashboard.music.showScrollbars===true && music.showMusicScrollbars,"Music scrollbar enable failed typed persistence/binding")
    settingsItem.destroy()
+   check(findChild(dashboard,"dashboardWeeklyPlanner")===null,"Planner allocated before its first visit")
+   dashboard.selectPage("weeklyPlanner")
+   tryVerify(()=>findChild(dashboard,"dashboardWeeklyPlanner")!==null,4000)
+   check(dashboard.currentPage===2 && GlobalStates.dashboardPage===2,"Planner lost stable/legacy identity")
+   const planner=findChild(dashboard,"dashboardWeeklyPlanner")
+   planner.changeWeek(1)
+   const pinnedWeek=planner.days[0].date.getTime()
+   dashboard.openAgendaDialog({plannerDate:new Date(2030,0,2,9,15)})
+   tryVerify(()=>findChild(dashboard,"dashboardAgendaDialog")!==null,2000)
+   const form=findChild(dashboard,"dashboardAgendaDialog")
+   check(form.eventTime==="09:15" && form.eventEndTime==="10:15" && form.eventDate.getDate()===2,"Planner click lost date/time in shared Agenda form")
+   check(dashboard.handleEscape(),"Planner Agenda form did not dismiss")
+   Config.setNestedValue("dashboard.pageOrder",["weeklyPlanner","dashboard","music"])
+   check(dashboard.currentPageId==="weeklyPlanner" && dashboard.currentPage===0 && GlobalStates.dashboardPage===2,"reordering moved Planner identity")
+   dashboard.presentationActive=false
+   tryVerify(()=>findChild(dashboard,"dashboardWeeklyPlanner")===null,2000)
+   dashboard.presentationActive=true
+   tryVerify(()=>findChild(dashboard,"dashboardWeeklyPlanner")!==null,4000)
+   check(findChild(dashboard,"dashboardWeeklyPlanner").days[0].date.getTime()===pinnedWeek,"cold Planner forgot selected week")
+   Config.setNestedValue("dashboard.pageOrder",["dashboard","music","weeklyPlanner"])
+   dashboard.selectPage("music")
    console.info("DASHBOARD_MUSIC_RUNTIME_PASS native-page-dots responsive-columns genre folder child-folder actual-playback-click stable-canvas hidden-presentation edit-lock horizontal-only-shared-burst reordered-stable-ids keyboard disabled-order-preservation")
-  } catch(e) { console.error("DASHBOARD_MUSIC_RUNTIME_FAIL",e.message,e.stack) } Qt.quit() }
+  } catch(e) {
+   const player=findChild(dashboard,"musicPlayer"),queue=findChild(dashboard,"musicQueuePanel")
+   console.error("DASHBOARD_MUSIC_RUNTIME_FAIL",e.message,e.stack)
+   console.info("DASHBOARD_MUSIC_FAILURE_GEOMETRY",JSON.stringify({page:dashboard.currentPageId,player:player?{y:player.y,height:player.height,implicitHeight:player.implicitHeight}:null,queue:queue?{y:queue.y,height:queue.height}:null}))
+  } Qt.quit() }
  }
  Timer { interval:100; running:true; onTriggered:test.runChecks() }
 }
@@ -394,10 +431,10 @@ ShellRoot {
   data=json.loads((ROOT/"defaults/config.json").read_text());data["panelFamily"]="abyss";data["abyss"]["companion"]["enabled"]=False
   (config/"config.json").write_text(json.dumps(data))
   capture=Path(os.environ.get("HADALIS_MUSIC_CAPTURE",str(folder/"dashboard-music.png")))
-  env.update(QSG_RHI_BACKEND="opengl",MUSIC_CAPTURE=str(capture),MUSIC_CAPTURE_NARROW=str(capture.with_name(capture.stem+"-narrow.png")))
+  env.update(QSG_RHI_BACKEND="opengl",QSG_RENDER_LOOP="basic",MUSIC_CAPTURE=str(capture),MUSIC_CAPTURE_NARROW=str(capture.with_name(capture.stem+"-narrow.png")))
   result=run_qs(folder,env,timeout=40)
   if os.environ.get("ALIS_DASHBOARD_MUSIC_LOG"):
    Path(os.environ["ALIS_DASHBOARD_MUSIC_LOG"]).write_text(result.stdout)
-  if result.returncode or "DASHBOARD_MUSIC_RUNTIME_PASS" not in result.stdout or any(x in result.stdout for x in ["DASHBOARD_MUSIC_RUNTIME_FAIL","TypeError:","ReferenceError:","Binding loop","Unable to assign","Failed to load configuration"]):
+  if result.returncode or "DASHBOARD_MUSIC_RUNTIME_PASS" not in result.stdout or any(x in result.stdout for x in ["DASHBOARD_MUSIC_RUNTIME_FAIL","TypeError:","ReferenceError:","Binding loop","Unable to assign","Cannot assign to non-existent property","Failed to load configuration"]):
    print(result.stdout);raise SystemExit(1)
   print("DASHBOARD_MUSIC_RUNTIME_PASS native dots/wheel/panning, tabbed Library/Results/Media+Queue/optional Lyrics, genre/folder/search, single/double/Ctrl actions, queue/playlist/volume, cold restore and edit lock")

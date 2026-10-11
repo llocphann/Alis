@@ -1,0 +1,41 @@
+{
+  "baseSha": "3c92ac8e42302f430ae6ab9ba03639a803a9f2e5",
+  "scope": "focused working source bytes; canonical and owner acceptance open",
+  "sourceFiles": {
+    "GlobalStates.qml": "4e91abdd8b4f642a2d218cd8e4203219f4868d8f81a1739fd31a15afaeee5516",
+    "modules/dashboard/DashboardContent.qml": "06da0fd6e021dcb18f25704e347bccb35a139939b786da9ef06b6f890fbc57ed",
+    "modules/dashboard/DashboardWeeklyPlanner.qml": "4839a1f3a165236934b194cf20344e9a732244859ab5e1cba0439673444229ca",
+    "modules/dashboard/WeeklyPlannerPolicy.js": "9e7e07c1106be3b3676ecce4f1cac244c6cf9453ef6ce01a9c29e1eafcf58003",
+    "modules/dashboard/qmldir": "c67c47d54fc24cd6f58736d3c5f9c9460036121ef83e69bcbcfd652d271e85ff",
+    "scripts/test-weekly-planner-policy.mjs": "ab9d612e0fa05c1ebc119fcbffc093f2a2969895670ca6187a45b3da76363cef",
+    "scripts/test-weekly-planner-runtime.py": "3180bafdf5a90b8ff0cf671ae5199f3227e2677760426a30845df28b8573c15a",
+    "scripts/test-dashboard-music-runtime.py": "676255c51856dd62f81c7149e685ff3634c008582858aed7e7b11d85ccec6594",
+    "scripts/validate-maintainer-local.sh": "de94fa7950e376f21c61d66fc025858757ac5cdd073a79a513f4f1fe08900770",
+    "modules/common/Config.qml": "a08f41d0d3d1864f904663bc43874d09f5d3ca7f8023af5c1cb07a22ac74039b"
+  },
+  "plannerNative": {
+    "status": "PASS",
+    "exit": 0,
+    "checks": 30,
+    "captures": 9
+  },
+  "policy": {
+    "status": "PASS",
+    "exit": 0,
+    "zones": [
+      "UTC",
+      "Asia/Ho_Chi_Minh",
+      "America/New_York",
+      "Europe/Berlin"
+    ]
+  },
+  "hostNative": {
+    "status": "PASS",
+    "exit": 0,
+    "renderLoop": "basic",
+    "raw": "host-basic-pass.log",
+    "defaultLoop": "one framed PASS with original property warning; other stalled probes retained, not owner-qualified"
+  },
+  "owner": "OPEN",
+  "canonical": "NOT_STARTED for this source"
+}

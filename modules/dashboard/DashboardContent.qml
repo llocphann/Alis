@@ -22,14 +22,17 @@ Item {
     property alias editMode: dashboardCanvas.editMode
     readonly property bool musicEnabled: Config.options?.dashboard?.music?.enable ?? true
     readonly property var pageIds: PagePolicy.ordered(Config.options?.dashboard?.pageOrder,
-        musicEnabled ? ["dashboard", "music"] : ["dashboard"])
+        musicEnabled ? ["dashboard", "music", "weeklyPlanner"] : ["dashboard", "weeklyPlanner"])
     readonly property string currentPageId: pageIds.includes(GlobalStates.dashboardPageId)
         ? GlobalStates.dashboardPageId : pageIds[0]
     readonly property int currentPage: pageIds.indexOf(currentPageId)
     property var musicBackend: null
     property bool musicVisited: currentPageId === "music"
-    onCurrentPageIdChanged: if (currentPageId === "music")
-        musicVisited = true
+    property bool plannerVisited: currentPageId === "weeklyPlanner"
+    onCurrentPageIdChanged: {
+        if (currentPageId === "music") musicVisited = true
+        if (currentPageId === "weeklyPlanner") plannerVisited = true
+    }
     onEditModeChanged: if (editMode)
         selectPage("dashboard")
     readonly property var canvasController: dashboardCanvas
@@ -52,7 +55,8 @@ Item {
         const movement = PagePolicy.delta(event)
         const phase = Number(event.phase ?? 0)
         const contentConsumed = movement.x && Math.abs(movement.x) > Math.abs(movement.y)
-            && panContent && currentPageId === "music" && musicPage.item?.panHorizontally(movement.x)
+            && panContent && (currentPageId === "music" ? musicPage.item?.panHorizontally(movement.x)
+                : currentPageId === "weeklyPlanner" ? plannerPage.item?.panHorizontally(movement.x) : false)
         const result = PagePolicy.advance(_pageWheelState, movement, phase, Date.now(), pageIds, currentPageId, contentConsumed)
         _pageWheelState = result.state
         event.accepted = result.accepted
@@ -78,6 +82,7 @@ Item {
 
     property var _agendaEditEvent: null
     property var _agendaPrefillDate: null
+    property bool _agendaPrefillTime: false
     property bool _agendaDialogShown: false
     property bool _agendaDialogLoaded: false
 
@@ -94,9 +99,11 @@ Item {
     }
 
     function openAgendaDialog(arg) {
-        const isDate = arg instanceof Date;
+        const plannerDate = arg?.plannerDate;
+        const isDate = arg instanceof Date || plannerDate instanceof Date;
         root._agendaEditEvent = (arg && !isDate) ? arg : null;
-        root._agendaPrefillDate = isDate ? arg : null;
+        root._agendaPrefillDate = isDate ? (plannerDate ?? arg) : null;
+        root._agendaPrefillTime = plannerDate instanceof Date;
         root._agendaDialogLoaded = true;
         if (agendaDialogLoader.item) {
             if (root._agendaEditEvent) {
@@ -105,9 +112,15 @@ Item {
                 agendaDialogLoader.item.resetForm();
                 if (root._agendaPrefillDate)
                     agendaDialogLoader.item.eventDate = root._agendaPrefillDate;
+                root.prefillAgendaTime();
             }
         }
         root._agendaDialogShown = true;
+    }
+    function prefillAgendaTime(): void {
+        if (!root._agendaPrefillTime || !root._agendaPrefillDate || !agendaDialogLoader.item) return;
+        agendaDialogLoader.item.eventTime = Qt.formatTime(root._agendaPrefillDate,"hh:mm");
+        agendaDialogLoader.item.eventEndTime = Qt.formatTime(new Date(root._agendaPrefillDate.getTime()+3600000),"hh:mm");
     }
 
     // Dashboard does not own a separate background renderer. Detached Dashboard
@@ -145,7 +158,7 @@ Item {
             DashboardHeader {
                 id: dashboardHeader
                 Layout.fillWidth: true
-                visible: root.showHeader || root.musicEnabled
+                visible: root.showHeader || root.pageIds.length > 1
                 showActions: root.showHeader
                 currentPage: root.currentPage
                 pageCount: root.pageIds.length
@@ -204,6 +217,18 @@ Item {
                     }
                 }
                 // Handle page gestures above the canvas and its scrollable widgets.
+                Loader {
+                    id:plannerPage
+                    width:pages.width;height:pages.height
+                    x:(root.pageIds.indexOf("weeklyPlanner")-pages.slideProgress)*pages.width
+                    visible:Math.abs(pages.slideProgress-root.pageIds.indexOf("weeklyPlanner"))<1
+                    enabled:root.currentPageId==="weeklyPlanner"
+                    active:root.plannerVisited && (root.presentationActive || root.warmContent)
+                    sourceComponent:DashboardWeeklyPlanner {
+                        presentationActive:root.presentationActive && root.currentPageId==="weeklyPlanner"
+                        onRequestEventsDialog:event=>root.openAgendaDialog(event)
+                    }
+                }
                 // Pointer handlers leave clicks and vertical scrolling to those widgets.
                 Item {
                     anchors.fill: parent
@@ -225,7 +250,7 @@ Item {
             anchors.fill: parent
             z: 200
             active: root._agendaDialogLoaded
-            sourceComponent: EventsDialog {}
+            sourceComponent: EventsDialog {objectName:"dashboardAgendaDialog"}
             onLoaded: {
                 item.show = Qt.binding(() => root._agendaDialogShown);
                 if (root._agendaEditEvent) {
@@ -234,6 +259,7 @@ Item {
                     item.resetForm();
                     if (root._agendaPrefillDate)
                         item.eventDate = root._agendaPrefillDate;
+                    root.prefillAgendaTime();
                 }
                 item.forceActiveFocus();
             }

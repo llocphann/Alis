@@ -20,3 +20,4 @@ DashboardEditGrid 1.0 DashboardEditGrid.qml
 DashboardEditToolbar 1.0 DashboardEditToolbar.qml
 DashboardHeader 1.0 DashboardHeader.qml
 DashboardMusic 1.0 DashboardMusic.qml
+DashboardWeeklyPlanner 1.0 DashboardWeeklyPlanner.qml
