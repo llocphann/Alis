@@ -1,0 +1,111 @@
+Diagnostic process exit: 0
+  INFO: Launching config: "/tmp/hadalis-dashboard-editor-field-ifq9la0r/shell.qml"
+  INFO: Shell ID: "f959fa57abb2a1eae45b8b229a0265e7" Path ID "f959fa57abb2a1eae45b8b229a0265e7"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/wva26lxqmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.107398.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-editor-field-ifq9la0r/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-ifq9la0r/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CHECKS_START
+  INFO qml: CONFIG_READY
+  INFO qml: CASE_START [[1280,900],"Dashboard","top"]
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/hadalis-dashboard-editor-field-ifq9la0r/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[331:5]: Read of /tmp/hadalis-dashboard-editor-field-ifq9la0r/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[252:5]: Read of /tmp/hadalis-dashboard-editor-field-ifq9la0r/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/Events.qml[62:5]: Read of /tmp/hadalis-dashboard-editor-field-ifq9la0r/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/Notepad.qml[196:5]: Read of /tmp/hadalis-dashboard-editor-field-ifq9la0r/state/quickshell/user/notepad-tabs.json failed: File does not exist.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fc4c9de4960)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-ifq9la0r/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notepad.qml[246:5]: Read of /tmp/hadalis-dashboard-editor-field-ifq9la0r/state/quickshell/user/notepad.txt failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","top"] open-partial 0
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","top"] open-full 0.49074074074074076
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","top"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Dashboard","top"]
+  INFO qml: CASE_START [[1280,900],"Dashboard","right"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","right"] open-partial 0
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","right"] open-full 0.497338
+  INFO qml: [Weather] Getting location from IP...
+  INFO qml: [Weather] Location: [redacted]
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","right"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Dashboard","right"]
+  INFO qml: CASE_START [[1280,900],"Dashboard","bottom"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","bottom"] open-partial 0
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","bottom"] open-full 0.48099121262002736
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","bottom"] close-full 1
+  INFO qml: [Weather] Updated: [redacted]
+  INFO qml: CASE_DONE [[1280,900],"Dashboard","bottom"]
+  INFO qml: CASE_START [[1280,900],"Dashboard","left"]
+  INFO qml: [Weather] Air quality updated: [redacted]
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","left"] open-partial 0
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","left"] open-full 0.48099121262002736
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","left"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Dashboard","left"]
+  INFO qml: CASE_START [[1280,900],"Overview","top"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","top"] open-partial 0
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","top"] open-full 0.48099121262002736
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","top"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Overview","top"]
+  INFO qml: CASE_START [[1280,900],"Overview","right"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","right"] open-partial 0
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","right"] open-full 0.49074074074074076
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","right"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Overview","right"]
+  INFO qml: CASE_START [[1280,900],"Overview","bottom"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","bottom"] open-partial 0
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","bottom"] open-full 0.48099121262002736
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","bottom"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Overview","bottom"]
+  INFO qml: CASE_START [[1280,900],"Overview","left"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","left"] open-partial 0
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","left"] open-full 0.4874574043739259
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","left"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Overview","left"]
+  INFO qml: CASE_START [[720,650],"Dashboard","top"]
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","top"] open-partial 0
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","top"] open-full 0.6393970891632372
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","top"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Dashboard","top"]
+  INFO qml: CASE_START [[720,650],"Dashboard","right"]
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","right"] open-partial 0
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","right"] open-full 0.6316227379972565
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","right"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Dashboard","right"]
+  INFO qml: CASE_START [[720,650],"Dashboard","bottom"]
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","bottom"] open-partial 0
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","bottom"] open-full 0.4874574043739259
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","bottom"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Dashboard","bottom"]
+  INFO qml: CASE_START [[720,650],"Dashboard","left"]
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","left"] open-partial 0
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","left"] open-full 0.48099121262002736
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","left"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Dashboard","left"]
+  INFO qml: CASE_START [[720,650],"Overview","top"]
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","top"] open-partial 0
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","top"] open-full 0.49074074074074076
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","top"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Overview","top"]
+  INFO qml: CASE_START [[720,650],"Overview","right"]
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","right"] open-partial 0
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","right"] open-full 0.48099121262002736
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","right"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Overview","right"]
+  INFO qml: CASE_START [[720,650],"Overview","bottom"]
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","bottom"] open-partial 0
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","bottom"] open-full 0.49074074074074076
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","bottom"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Overview","bottom"]
+  INFO qml: CASE_START [[720,650],"Overview","left"]
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","left"] open-partial 0
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","left"] open-full 0.48099121262002736
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","left"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Overview","left"]
+  INFO qml: DASHBOARD_FIELD_PASS 16 composed routes/edges/sizes: dimensions above-field Add Undo Cancel Done input-release 219 native slide/reversal samples
+
+  INFO qml: DASHBOARD_FIELD_PASS 16 composed routes/edges/sizes: dimensions above-field Add Undo Cancel Done input-release 219 native slide/reversal samples
+DASHBOARD_FIELD_PASS 16 composed route/edge/size cases; stable workspace; native Undo Cancel Done; full-size slide/reversal/reduced motion; field paint/input

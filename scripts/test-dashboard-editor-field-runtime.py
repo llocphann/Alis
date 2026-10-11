@@ -26,6 +26,10 @@ ShellRoot {
  property string caseName:""
  property int capturedFrames:0
  property int motionSamples:0
+ property var slideTrace:[]
+ property var observedPopup:null
+ property double slideStarted:0
+ property string slidePhase:""
  Component.onCompleted:Quickshell.watchFiles=false
  FloatingWindow {
   id:window;visible:true;implicitWidth:1280;implicitHeight:900;color:"#111820"
@@ -44,6 +48,13 @@ ShellRoot {
    along:((["top","bottom"].includes(edge)?width:height)-span)/2
    source:Qt.resolvedUrl("modules/abyss/content/Abyss"+root.route+"Content.qml")
   }
+  }
+ }
+ Connections {
+  target:root.observedPopup
+  function onRevealProgressChanged(){
+   root.slideTrace.push({phase:"signal/"+root.slidePhase,ms:Date.now()-root.slideStarted,p:root.observedPopup.revealProgress,requested:root.observedPopup.revealRequested,animations:Appearance.animationsEnabled})
+   if(root.slideTrace.length>80)root.slideTrace.shift()
   }
  }
  TestCase {
@@ -74,22 +85,28 @@ ShellRoot {
    root.motionSamples++
   }
   function advanceSlide(popup,canvas,dimensions,opening,partial){
-   const deadline=Date.now()+3000
+   root.observedPopup=popup;root.slideStarted=Date.now();root.slidePhase=(opening?"open":"close")+(partial?"-partial":"-full");root.slideTrace=[]
+   const deadline=root.slideStarted+3000
+   console.info("SLIDE_PHASE",root.caseName,root.slidePhase,popup.revealProgress)
    let previous=popup.revealProgress,intermediate=0
    while(Date.now()<deadline){
+    root.slideTrace.push({phase:"before-grab",ms:Date.now()-root.slideStarted,p:popup.revealProgress,requested:popup.revealRequested,animations:Appearance.animationsEnabled,edit:canvas.editMode,body:body.progress,captures:root.capturedFrames})
+    if(root.slideTrace.length>80)root.slideTrace.shift()
     flushFrame()
     const progress=popup.revealProgress
+    root.slideTrace.push({phase:"after-grab",ms:Date.now()-root.slideStarted,p:progress,captures:root.capturedFrames})
+    if(root.slideTrace.length>80)root.slideTrace.shift()
     check(opening?progress>=previous-.001:progress<=previous+.001,"slide reversed unexpectedly")
     if(progress>0 && progress<1){sampleSlide(popup,canvas,dimensions);intermediate++}
     previous=progress
     if(partial && progress>=.20 && progress<.85)return progress
     if(!partial && progress===(opening?1:0)){
-     check(intermediate>0,"toolbar appeared/disappeared without intermediate movement")
+     check(intermediate>0,"toolbar appeared/disappeared without intermediate movement "+JSON.stringify(root.slideTrace))
      return progress
     }
     wait(8)
    }
-   throw new Error("toolbar slide did not reach "+(partial?"partial reveal":opening?"open":"closed"))
+   throw new Error(root.caseName+": toolbar slide did not reach "+(partial?"partial reveal":opening?"open":"closed")+" "+JSON.stringify(root.slideTrace))
   }
   function checkSlide(popup,canvas,dimensions){
    Config.setNestedValue("performance.reduceAnimations",false)
@@ -133,13 +150,13 @@ ShellRoot {
    tryCompare(clickSpy,"count",1,1000)
   }
   function runChecks(){try{
-   tryCompare(Config,"ready",true,4000)
+   console.info("CHECKS_START");tryCompare(Config,"ready",true,4000);console.info("CONFIG_READY")
    Config.setNestedValues({"performance.reduceAnimations":true,"dashboard.showHeader":false})
    GlobalStates.deferredPanelsReady=true;GlobalStates.overviewMode="dashboard"
    tryCompare(field,"ready",true,4000)
    let count=0
    for(const size of [[1280,900],[720,650]])for(const route of ["Dashboard","Overview"])for(const edge of ["top","right","bottom","left"]){
-    root.caseName=JSON.stringify([size,route,edge])
+    root.caseName=JSON.stringify([size,route,edge]);console.info("CASE_START",root.caseName)
     root.shown=false;wait(100);root.surfaceWidth=size[0];root.surfaceHeight=size[1];root.route=route;root.edge=edge;root.shown=true
     check(surface.width===size[0] && surface.height===size[1],"field allocation did not resize")
     tryVerify(()=>body.contentItem.item!==null,5000)
@@ -183,7 +200,7 @@ ShellRoot {
     canvas.beginEditMode();wait(80);canvas.setWidgetVisible("notes",false);clickAction(popup,"dashboardEditDone");wait(80)
     check(!canvas.editMode && !canvas.visibleIds.includes("notes"),"Done did not save layout")
     check(!popup.visible && liquid.participants.dashboardEditor?.inputBounds.width===0,"editor did not release input")
-    checkSlide(popup,canvas,dimensions)
+    checkSlide(popup,canvas,dimensions);console.info("CASE_DONE",root.caseName)
     count++
    }
    console.info("DASHBOARD_FIELD_PASS",count,"composed routes/edges/sizes: dimensions above-field Add Undo Cancel Done input-release",root.motionSamples,"native slide/reversal samples")
@@ -198,7 +215,8 @@ ShellRoot {
   value=json.loads((ROOT/"defaults/config.json").read_text());value["panelFamily"]="abyss";value["abyss"]["companion"]["enabled"]=False
   (config/"config.json").write_text(json.dumps(value));env["QSG_RHI_BACKEND"]="opengl"
   result=run_qs(folder,env,timeout=80)
-  if result.returncode or "DASHBOARD_FIELD_PASS" not in result.stdout or any(s in result.stdout for s in ["DASHBOARD_FIELD_FAIL","ReferenceError:","TypeError:","Binding loop","Failed to load configuration"]):print(result.stdout);raise SystemExit(1)
+  if result.returncode or "DASHBOARD_FIELD_PASS" not in result.stdout or any(s in result.stdout for s in ["DASHBOARD_FIELD_FAIL","ReferenceError:","TypeError:","Binding loop","Failed to load configuration"]):
+   print("Dashboard native process exit:",result.returncode);print(result.stdout);raise SystemExit(1)
   for line in result.stdout.splitlines():
    if "DASHBOARD_FIELD_PASS" in line:print(line)
   print("DASHBOARD_FIELD_PASS 16 composed route/edge/size cases; stable workspace; native Undo Cancel Done; full-size slide/reversal/reduced motion; field paint/input")

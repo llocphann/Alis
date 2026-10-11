@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "kind": "focused-editor-diagnostic",
+  "sourceSha": "6bb45f361346048e7368511169fa5151c390e4ac",
+  "execution": "exact clean clone; private unfocused Niri; owned field grab only; no owner input",
+  "command": "HADALIS_DASHBOARD_TEST_ROOT=<clean-clone> python3 <diagnostic>",
+  "result": "PASS",
+  "exitCode": 0,
+  "cases": 16,
+  "nativeMotionSamples": 219,
+  "runtimeChanged": false,
+  "assertionsChanged": false,
+  "originalTestSha256": "25ab12a9457738ad0ec38063c8b30a2afe282ca9393522a8027f90c06213ba24",
+  "diagnosticSha256": "4ea2306eb5f55aec5f0b14e37795ccba0a4280615287ef41018062c4ba146d18",
+  "committedTestSha256": "dd1857ac367937d7ce161fd3a373f900707e5fe221e27cad2a1c5671ce9c0df6",
+  "canonicalStatus": "FAIL on 6bb45f361; this focused observation does not explain or upgrade that result",
+  "rootCause": "NOT_DIAGNOSED",
+  "ownerDesktopAcceptance": false,
+  "redactions": "Weather location/result fields only"
+}

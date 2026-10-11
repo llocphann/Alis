@@ -912,6 +912,12 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   and [receipt](../../docs/evidence/abyss-product/20261011-6bb45f361/canonical.json).
   Next: bounded progress/capture traces on the exact unchanged source, then
   qualify any resulting repair. Owner physical/hardware gates remain separate.
+  **Bounded diagnostic:** the unchanged `6bb45f361` runtime on an exact clean
+  clone passes 16 cases / 219 slide and reversal samples (exit 0). This does
+  NOT explain or upgrade the canonical FAIL. The fixture now records a bounded
+  case/phase/progress/capture trace and native exit code on failure, with all
+  assertions, deadlines and production animation unchanged.
+  [Diagnostic evidence](../../docs/evidence/abyss-product/20261011-editor-slide-diagnostic/README.md).
   **Interrupted earlier run:** the subsequent
   clean-clone `d1056867d9457ef255e3a5ba514a347802e70cdf` run was interrupted;
   its temporary logs are no longer present and no full final receipt exists.
