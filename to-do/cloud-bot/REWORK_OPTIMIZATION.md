@@ -835,6 +835,40 @@ run privileged installation just because manual buttons are retired.
   scales and ordinary versus Shift navigation. State: READY for interaction
   tuning; preferred speed and owner acceptance require native input retest.
 
+- [ ] **CAL-R01 — Compact Calendar Popup Events to Today / Tomorrow / Day After — owner screenshot 2026-10-11:**
+  [Owner: Alis dev; Rework/UX] The **Events pane immediately beside
+  the Calendar Popup** should show only Today's, Tomorrow's and
+  the Day After Tomorrow's events, three **local calendar dates**
+  inclusive rather than a rolling 72-hour timer. Match the
+  owner's second screenshot: compact, readable event cards
+  beside the calendar; group by date with clear headers and
+  chronological order. Include in-progress/all-day events for
+  today and handle recurring entries correctly. Show a correct
+  filtered badge count, an appropriate 3-day empty state and
+  scrolling if many events occur in the permitted window.
+  Events after day +2 must remain available in full Agenda/
+  Weekly Planner, not deleted or globally filtered.
+
+  Scope strictly to `modules/bar/ClockCalendarContent.qml`'s
+  `EventsWidget`. Currently `EventsWidget.qml` combines
+  `Events.getUpcomingEvents(30)` and 30 days of CalendarSync
+  external buckets. Introduce a caller-specified 3-day range
+  and/or shared filtered query so other consumers retain their
+  normal horizon; `modules/dashboard/DashAgenda.qml` uses
+  **14-day** lookahead and must remain unchanged. Avoid fetching
+  30 days only to hide 27, preserve local/external read-only
+  behavior, Add/Edit/Remove editor, FAB focus and month-calendar
+  geometry. Validate midnight rollover, local/UTC boundaries,
+  multi-day/recurring events, empty/loading and source refresh.
+
+  Acceptance: only day offsets 0,1,2 visible with labels and
+  correct count; day 3+ excluded from this small panel but still
+  present in full Agenda; source/date ordering, changes after
+  midnight, all-day/in-progress, 0/1/long lists, scroll,
+  theme/scaling and popup focus; verify no Dashboard Agenda
+  truncation and owner native screenshot parity. Coordinate
+  with CAL-F01 indicators. State: OPEN; not implemented.
+
 - [ ] **DASH-R01 — Smooth Dashboard slide-in and slide-out — owner report 2026-10-11:**
   [Owner: Alis dev; Rework / animation performance] The **whole
   Dashboard** does not slide smoothly when **appearing or closing**.

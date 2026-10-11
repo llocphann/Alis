@@ -177,6 +177,158 @@ do not reimplement them solely because a checkbox is open.
   [Rework](REWORK_OPTIMIZATION.md). State: NEW, design/implementation and owner
   input acceptance pending.
 
+- [ ] **DASH-F01 — Weekly Planner: new Dashboard tab for Agenda / Events / Todo / Quick Notes — owner request 2026-10-11:**
+  [Owner: Alis dev; New Feature] Add a full **Weekly Planner** Dashboard
+  page inspired by the owner's first screenshot (Obsidian Day Planner-like
+  week-at-a-glance: 7 dated day columns and vertical hourly timeline).
+  This is a visual/concept reference, NOT permission to copy plugin code.
+  Show prev/next week, Today, current day/time line, all-day section,
+  time-scaled events with overlap handling, completed/pending Todo and
+  relevant Quick Notes links/preview. Localized weekdays, calendar
+  week-start, date rollover/time zones and DST must be correct. Support
+  scrolling, small screens/fractional scales and keyboard access without
+  clipping the planner's 7-day representation.
+
+  Use ONE existing canonical source per domain: `services/Events.qml`
+  for local Agenda/Events, `services/CalendarSync.qml` for read-only
+  imported events, `services/Todo.qml` for tasks, `services/Notepad.qml`
+  for Quick Notes. Allow click-driven create/edit Agenda, add/toggle Todo,
+  open Quick Notes and navigate date/time; only add drag-to-reschedule
+  after safe edit/cancel/collision semantics are designed and tested.
+  Respect recurring, multi-day and all-day events; mark imported sources
+  read-only and keep existing links/attachments and optional Obsidian vault
+  permission boundaries. No second data backend, duplicated reminders
+  or automatic writes to user notes.
+
+  `modules/dashboard/DashboardContent.qml` currently handles only
+  `dashboardPage` 0/1 (Dashboard/Music) and `DashboardHeader.qml`
+  emits ordinal page-dot selections. Extend to stable-ID pages:
+  Dashboard, Music, Weekly Planner, preserving existing order, active
+  tab, page slide, warm/loading semantics and both standalone and
+  Abyss/Overview-hosted Dashboard. Coordinate new ordering with
+  `DASH-F02`, one-way Agenda task linking with `AGENDA-F01`
+  and event persistence gate `CAL-I01`. Do not conflate this new
+  **page** with the already existing Agenda/Todo/Calendar canvas widgets.
+
+  Acceptance: week grid with 0/one/overlapping/recurring/all-day events;
+  navigation across month/year/DST, today marker, working-hour scroll,
+  Todo and note view/edit without duplicates, read-only imports,
+  multi-output/theme/reduced-motion, no leaked focus, bounded render
+  cost, optional integrations absent and data intact after restart.
+  Deterministic date/geometry tests plus owner-approved Niri UI.
+  State: NEW/OPEN; no runtime implementation.
+
+- [ ] **DASH-F02 — Drag-reorder Dashboard tab indicators in Edit Dashboard Layout — owner request 2026-10-11:**
+  [Owner: Alis dev; New Feature] In **Edit Dashboard Layout**, drag
+  page indicators (dots) to reorder entire Dashboard **tabs/pages**,
+  including Dashboard, Music and the new Weekly Planner (DASH-F01).
+  Do NOT reorder canvas widget cards or Settings subtabs.
+  `DashboardHeader.qml` currently draws ordinal
+  `dashboardPageDots` using `pageCount` and index-specific
+  labels, while `DashboardContent.qml` and
+  `GlobalStates.dashboardPage` assume numeric page IDs;
+  replace that fragile ordering with stable page IDs plus a
+  versioned saved order and migration for old 0/1 selections.
+  Default order preserves current Dashboard→Music, appending Planner;
+  disabled Music/hidden pages must not erase persisted choices.
+
+  Show a draggable affordance, insertion preview and pointer ghost
+  only in edit mode, with drag threshold, Escape/cancel, focus and
+  keyboard alternative to change order. Changing indicator order
+  must update page navigation, content order, slide direction,
+  wheel/touchpad, tooltips, active indicator and accessibility
+  consistently; never just move the decorative dots.
+  Share the page-order model with any Settings-hosted Dashboard
+  editor; save only on Done, allow Undo/Cancel/Reset and persist
+  across restart. Avoid writing Config on every pointer movement.
+  Preserve card editing, Dashboard Music scroll, agenda dialogs,
+  long press/click, normal non-edit selection and all Abyss edges.
+
+  Acceptance: reorder three tabs both directions, repeat/reverse
+  and cancelled drags, current tab identity, disabled Music, legacy
+  two-page config, unknown/future page IDs, Reset/Undo/Done,
+  close/reopen/restart, touchpad/keyboard/fractional DPI; no
+  duplicated/missing tabs, wrong content or overlay input. Add
+  source and real Niri pointer regression tests.
+  State: NEW/OPEN; not implemented.
+
+- [ ] **CAL-F01 — Calendar Popup agenda indicators and configurable maximum — owner screenshots 2026-10-11:**
+  [Owner: Alis dev; New Feature] Display compact event/Agenda
+  indicator dots below the relevant dates in the **Calendar Popup**,
+  matching the owner's Dashboard Calendar reference (third image).
+  Provide **Settings → Calendar → Maximum indicators per day**,
+  bounded (suggest 0–5; 0 hides, default 3). The limit controls
+  visual dots, NOT the actual count of stored events; support a
+  subtle +/overflow cue or accessible count when more exist.
+  Reuse colors/source distinctions where meaningful, without
+  equating the number of unique colors to total event count.
+  Preserve compact 30px day cells and legibility in light/dark.
+
+  Source parity: `modules/common/widgets/ObsidianMonthCalendar.qml`
+  already supports `showEventDots`, `eventCount` and
+  `eventColors` but hardcodes a maximum 3. Dashboard
+  `modules/sidebarRight/calendar/CalendarWidget.qml` supplies
+  these and enables dots; `modules/bar/ClockCalendarContent.qml`
+  currently supplies neither counts nor `showEventDots`.
+  Reuse `Events.getEventsForDate` and
+  `CalendarSync.getEventsForDate`; update after local
+  add/edit/remove, external calendar refresh, month navigation
+  and midnight, including adjacent-month days. Put a validated
+  preference in `defaults/config.json` and the active Calendar
+  Settings route, respecting existing ii/Abyss Settings hierarchy.
+  Avoid a second renderer/overlay; share configurable max with
+  Dashboard month view if appropriate and avoid changing its
+  current visual defaults without explicit user intent.
+
+  Acceptance: zero, 1, many and overflow dots at max 0/1/3/5;
+  local, external, all-day, recurring events and mixed colors;
+  time zone, prev/next month, theme/fractional DPI, readable
+  today/selected days, live settings changes, restart persistence
+  and owner photo parity; source tests and native Niri visual QA.
+  State: NEW/OPEN; not implemented.
+
+- [ ] **AGENDA-F01 — Creating an Agenda automatically creates one linked To-do (not vice versa) — owner request 2026-10-11:**
+  [Owner: Alis dev; New Feature] **Local Agenda/Event creation
+  ⇒ exactly one corresponding Todo item**, automatically after
+  durable event creation. **Independent Todo creation ⇒ no Agenda**,
+  no calendar reservation, no implied reminder. The linked task
+  shares sensible title/date/time/details but keeps its own
+  completed/pending state; completing Todo must NOT cancel the
+  scheduled Agenda or vice versa. Show a clear linked relationship
+  across Calendar Popup, Dashboard Agenda/Todo and Weekly Planner,
+  without rendering the same event twice or sending duplicate alarms.
+
+  Data design must live at the canonical `services/Events.qml`
+  + `services/Todo.qml` mutation/adapter boundary, not in
+  separate popup forms. Events persist numeric IDs and Todo
+  can use internal JSON/txt or opt-in Obsidian Markdown backend;
+  specify stable event→task ID / occurrence link schema,
+  versioned migration, idempotent reconciliation on failed/
+  delayed writes, retries and process restart. **CAL-I01**
+  separately tracks Event disk persistence: do not create
+  phantom Todos from events that were not durably saved.
+  If Todo is not ready/busy/unsupported, show a pending-link
+  warning and bounded safe retry, not silent loss or creation
+  of duplicates. Respect user-chosen Obsidian backend/privacy,
+  permissions and existing external Markdown task edits.
+
+  Define owned-field sync for title/date/time changes while
+  preserving independent Todo notes and completion; explicit
+  non-destructive delete/unlink policy and safe recurrence
+  semantics (one item per eligible created occurrence, no
+  runaway duplication). Existing historical Agenda/Todo data
+  preserved; any backfill must be opt-in and previewable.
+  Imported external `CalendarSync`/ICS events are read-only
+  and should NOT auto-generate tasks merely due to sync.
+
+  Acceptance: create via Calendar Popup, Dashboard and Planner
+  yields one linked Todo; Todo-only creates none; edit/delete,
+  recurrence, completion, repeated save/retry, crash between
+  stores, cancel/undo, internal vs Obsidian and package absent,
+  restart and cross-surface updates are deterministic and
+  preserve user files. Add source/fixture and owner native QA.
+  State: NEW/OPEN; not implemented.
+
 - [ ] **Quick Notes Markdown Reading and editable Source/Live mode — owner request 2026-10-11:**
   [Owner: Alis dev; NEW feature] Upgrade existing shared Quick Notes into
   a genuine **Markdown note reader and editor** without replacing the
