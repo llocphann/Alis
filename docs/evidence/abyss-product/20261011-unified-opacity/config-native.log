@@ -1,0 +1,99 @@
+  INFO: Launching config: "/tmp/alis-content-opacity-config-99rrhhjr/shell.qml"
+  INFO: Shell ID: "81f820de48aaf94ec83209d2bfdf9c46" Path ID "81f820de48aaf94ec83209d2bfdf9c46"
+  INFO: Saving logs to "/tmp/alis-content-opacity-config-99rrhhjr/runtime/quickshell/by-id/bi56dk3rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CONTENT_OPACITY_CONFIG_PASS 0 0
+
+  INFO: Launching config: "/tmp/alis-content-opacity-config-99rrhhjr/shell.qml"
+  INFO: Shell ID: "81f820de48aaf94ec83209d2bfdf9c46" Path ID "81f820de48aaf94ec83209d2bfdf9c46"
+  INFO: Saving logs to "/tmp/alis-content-opacity-config-99rrhhjr/runtime/quickshell/by-id/nj56ek3rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CONTENT_OPACITY_CONFIG_PASS 0 1
+
+  INFO: Launching config: "/tmp/alis-content-opacity-config-99rrhhjr/shell.qml"
+  INFO: Shell ID: "81f820de48aaf94ec83209d2bfdf9c46" Path ID "81f820de48aaf94ec83209d2bfdf9c46"
+  INFO: Saving logs to "/tmp/alis-content-opacity-config-99rrhhjr/runtime/quickshell/by-id/tk56fk3rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CONTENT_OPACITY_CONFIG_PASS 1 0
+
+  INFO: Launching config: "/tmp/alis-content-opacity-config-99rrhhjr/shell.qml"
+  INFO: Shell ID: "81f820de48aaf94ec83209d2bfdf9c46" Path ID "81f820de48aaf94ec83209d2bfdf9c46"
+  INFO: Saving logs to "/tmp/alis-content-opacity-config-99rrhhjr/runtime/quickshell/by-id/9m56gk3rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CONTENT_OPACITY_CONFIG_PASS 1 1
+
+  INFO: Launching config: "/tmp/alis-content-opacity-config-99rrhhjr/shell.qml"
+  INFO: Shell ID: "81f820de48aaf94ec83209d2bfdf9c46" Path ID "81f820de48aaf94ec83209d2bfdf9c46"
+  INFO: Saving logs to "/tmp/alis-content-opacity-config-99rrhhjr/runtime/quickshell/by-id/cn56hk3rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CONTENT_OPACITY_CONFIG_PASS 2 0
+
+  INFO: Launching config: "/tmp/alis-content-opacity-config-99rrhhjr/shell.qml"
+  INFO: Shell ID: "81f820de48aaf94ec83209d2bfdf9c46" Path ID "81f820de48aaf94ec83209d2bfdf9c46"
+  INFO: Saving logs to "/tmp/alis-content-opacity-config-99rrhhjr/runtime/quickshell/by-id/ho56ik3rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CONTENT_OPACITY_CONFIG_PASS 2 1
+
+  INFO: Launching config: "/tmp/alis-content-opacity-config-99rrhhjr/shell.qml"
+  INFO: Shell ID: "81f820de48aaf94ec83209d2bfdf9c46" Path ID "81f820de48aaf94ec83209d2bfdf9c46"
+  INFO: Saving logs to "/tmp/alis-content-opacity-config-99rrhhjr/runtime/quickshell/by-id/tp56jk3rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CONTENT_OPACITY_CONFIG_PASS 3 0
+
+  INFO: Launching config: "/tmp/alis-content-opacity-config-99rrhhjr/shell.qml"
+  INFO: Shell ID: "81f820de48aaf94ec83209d2bfdf9c46" Path ID "81f820de48aaf94ec83209d2bfdf9c46"
+  INFO: Saving logs to "/tmp/alis-content-opacity-config-99rrhhjr/runtime/quickshell/by-id/wq56kk3rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CONTENT_OPACITY_CONFIG_PASS 3 1
+
+  INFO: Launching config: "/tmp/alis-content-opacity-config-99rrhhjr/shell.qml"
+  INFO: Shell ID: "81f820de48aaf94ec83209d2bfdf9c46" Path ID "81f820de48aaf94ec83209d2bfdf9c46"
+  INFO: Saving logs to "/tmp/alis-content-opacity-config-99rrhhjr/runtime/quickshell/by-id/0s56lk3rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CONTENT_OPACITY_CONFIG_PASS 4 0
+
+  INFO: Launching config: "/tmp/alis-content-opacity-config-99rrhhjr/shell.qml"
+  INFO: Shell ID: "81f820de48aaf94ec83209d2bfdf9c46" Path ID "81f820de48aaf94ec83209d2bfdf9c46"
+  INFO: Saving logs to "/tmp/alis-content-opacity-config-99rrhhjr/runtime/quickshell/by-id/dt56mk3rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-content-opacity-config-99rrhhjr/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CONTENT_OPACITY_CONFIG_PASS 4 1

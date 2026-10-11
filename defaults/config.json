@@ -2123,7 +2123,7 @@
             "tension": 0.5,
             "softness": 24
         },
-        "content": {"opacity": -1, "blurRadius": -1, "cardOpacity": 0.9},
+        "content": {"opacityVersion": 1, "opacity": -1, "blurRadius": -1, "cardOpacity": 0.9},
         "waves": {
             "strength": -1,
             "whitewater": 0.65,

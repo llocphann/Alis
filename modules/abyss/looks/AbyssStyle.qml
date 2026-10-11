@@ -28,7 +28,8 @@ Singleton {
         (options?.content?.blurRadius ?? -1) < 0 ? options?.effects?.blur?.radius ?? 10 : options.content.blurRadius))
     readonly property real contentBlurRadius: quality === "performance" || !Appearance.effectsEnabled ? 0
         : (options?.content?.blurRadius ?? -1) < 0 ? blurRadius : configuredContentBlurRadius
-    readonly property real cardOpacity: Math.max(0,Math.min(1,options?.content?.cardOpacity ?? .9))
+    // Public compatibility alias; cards and enclosing surfaces share one alpha.
+    readonly property real cardOpacity: contentOpacity
     readonly property color contentLayer: Qt.alpha(Appearance.colors.colLayer1Base,cardOpacity)
     readonly property real shadowStrength: quality === "performance" || !Appearance.effectsEnabled ? 0 : Math.max(0, Math.min(0.5, options?.effects?.shadowStrength ?? 0.24))
     readonly property real refractionStrength: quality !== "quality" || !Appearance.effectsEnabled || !(options?.effects?.refraction?.enabled ?? false) ? 0 : Math.max(0, Math.min(16, options?.effects?.refraction?.strength ?? 6))

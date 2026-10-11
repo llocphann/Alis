@@ -101,3 +101,18 @@ function migrateMaterial(options) {
     result.visitedPanelFamilies = Array.from(new Set(visited));
     return result;
 }
+
+// Read the raw saved object, not adapter defaults. Explicit Panel opacity
+// (including 0 and inheritance) wins; a card-only legacy choice is adopted once.
+// Keep retired/unknown keys so optional packages and newer schemas survive.
+function migrateContentOpacity(options) {
+    var content = options?.abyss?.content || {};
+    if (Number(content.opacityVersion || 0) >= 1) return {};
+    var result = {"abyss.content.opacityVersion":1};
+    if (!Object.prototype.hasOwnProperty.call(content, "opacity")) {
+        var legacy = content.cardOpacity;
+        result["abyss.content.opacity"] = typeof legacy === "number" && Number.isFinite(legacy)
+            ? Math.max(0, Math.min(1, legacy)) : -1;
+    }
+    return result;
+}

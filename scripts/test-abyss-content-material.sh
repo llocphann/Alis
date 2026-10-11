@@ -45,10 +45,10 @@ ShellRoot {
             if(root.step===6) Config.setNestedValue("abyss.content.opacity",1)
             if(root.step===7) root.capture("opaque")
             if(root.step===8 && root.captures<3) return
-            if(root.step===8) Config.setNestedValue("abyss.content.cardOpacity",.45)
+            if(root.step===8) Config.setNestedValues({"abyss.content.opacity":.45,"abyss.content.cardOpacity":.12})
             if(root.step===9) {
                 if(root.captures!==3) return
-                if(Math.abs(AbyssStyle.contentLayer.a-.45)>.01) { console.error("MATERIAL_FAIL","live content tint",AbyssStyle.contentLayer.a,root.captures);root.finished=true;return }
+                if(Math.abs(AbyssStyle.contentLayer.a-.45)>.01 || AbyssStyle.cardOpacity!==AbyssStyle.contentOpacity) { console.error("MATERIAL_FAIL","shared content tint/retired key",AbyssStyle.contentLayer.a,root.captures);root.finished=true;return }
             }
             if(root.step===10) Config.setNestedValues({"abyss.quality":"performance",
                 "abyss.surface.opacity":0,"abyss.content.opacity":1,

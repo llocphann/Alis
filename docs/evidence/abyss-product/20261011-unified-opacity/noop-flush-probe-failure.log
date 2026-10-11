@@ -1,0 +1,13 @@
+  INFO: Launching config: "/tmp/alis-content-opacity-config-gary1nkn/shell.qml"
+  INFO: Shell ID: "953ea43626714659b4e761842bee8281" Path ID "953ea43626714659b4e761842bee8281"
+  INFO: Saving logs to "/tmp/alis-content-opacity-config-gary1nkn/runtime/quickshell/by-id/rq465g3rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  WARN : Failed to create wl_display (No such file or directory)
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-content-opacity-config-gary1nkn/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-content-opacity-config-gary1nkn/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-content-opacity-config-gary1nkn/state/quickshell/user/gamemode_active failed: File does not exist.
+ ERROR qml: CONTENT_OPACITY_CONFIG_FAIL QtQuickTest::fail tryVerify@qrc:/qt-project.org/imports/QtTest/TestCase.qml:603
+runChecks@qs:@/qs/shell.qml:22
+expression for onTriggered@qs:@/qs/shell.qml:26
+

@@ -61,7 +61,7 @@ QtObject {
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
         : Appearance.colors.colLayer0Border
 
-    readonly property color groupColor: Config.options?.panelFamily === "abyss" ? Qt.alpha(Appearance.colors.colLayer2Base,AbyssStyle.cardOpacity*.55) : Appearance.angelEverywhere
+    readonly property color groupColor: Config.options?.panelFamily === "abyss" ? Qt.alpha(Appearance.colors.colLayer2Base,AbyssStyle.contentOpacity*.55) : Appearance.angelEverywhere
         ? ColorUtils.transparentize(Appearance.colors.colLayer2Base, Appearance.angel.popupTransparentize * 0.6)
         : Appearance.regaliaEverywhere ? "transparent"
         : Appearance.zzzEverywhere ? "transparent"

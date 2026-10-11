@@ -63,6 +63,7 @@ ShellRoot {
                     Config.setNestedValues({"abyss.content.opacity":percent / 100, "abyss.content.blurRadius":radius})
                     wait(30)
                     check(AbyssStyle.contentOpacity === percent / 100, "wrong effective alpha")
+                    check(AbyssStyle.cardOpacity === percent / 100 && Math.abs(AbyssStyle.contentLayer.a-percent/100)<.005, "card tint did not share panel alpha")
                     check(AbyssStyle.configuredContentBlurRadius === radius, "configured radius changed")
                     check(AbyssStyle.contentBlurRadius === (policy === "quality" ? radius : 0), "wrong effective blur policy")
                     if (field.wantsWallpaper) {

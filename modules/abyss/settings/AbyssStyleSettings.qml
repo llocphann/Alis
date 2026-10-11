@@ -117,13 +117,13 @@ ColumnLayout {
             Percent { text:"Blur strength";configKey:"abyss.effects.blur.radius";fallback:10;maximum:24 }
             ConfigSwitch {
                 objectName:"abyssPanelOpacityFollow"
-                text:"Panel opacity follows Screen Edge";autoToggle:false
+                text:"Panel and content opacity follows Screen Edge";autoToggle:false
                 checked:(Config.options?.abyss?.content?.opacity ?? -1)<0
                 onToggledByUser:checked=>Config.setNestedValue("abyss.content.opacity",checked ? -1 : AbyssStyle.contentOpacity)
             }
             WindowDialogSlider {
                 objectName:"abyssPanelOpacity"
-                text:"Panel background opacity";Layout.fillWidth:true;from:0;to:1;stepSize:.01
+                text:"Panel & content opacity";Layout.fillWidth:true;from:0;to:1;stepSize:.01
                 value:AbyssStyle.contentOpacity;valueText:Math.round(value*100)+" %"
                 onMoved:Config.setNestedValue("abyss.content.opacity",value)
             }
@@ -139,8 +139,7 @@ ColumnLayout {
                 value:AbyssStyle.configuredContentBlurRadius;valueText:Math.round(value)+" px"
                 onMoved:Config.setNestedValue("abyss.content.blurRadius",value)
             }
-            Percent { text:"Content card opacity";configKey:"abyss.content.cardOpacity";fallback:.9 }
-            SettingsNote { text:"Panel opacity and blur follow the Screen Edge independently. Each slider sets an explicit value, including 0. Blur samples the output wallpaper in the existing field pass; Performance quality and disabled effects keep the saved radius while suppressing rendering. Content cards add a separate tint." }
+            SettingsNote { text:"Panel backgrounds and content cards share one opacity, including 0. Screen Edge opacity and panel blur remain separate. Performance quality and disabled effects preserve the saved blur radius." }
             ConfigSwitch {
                 text:"Refraction (Quality)";autoToggle:false
                 checked:Config.options?.abyss?.effects?.refraction?.enabled ?? false
@@ -151,7 +150,7 @@ ColumnLayout {
             Percent { text:"Glow";configKey:"abyss.effects.glow.strength";fallback:.08;maximum:.3 }
             RippleButton {
                 buttonText:"Use opaque Material appearance";implicitHeight:36;Layout.fillWidth:true
-                onClicked:Config.setNestedValues({"abyss.surface.opacity":1,"abyss.content.opacity":1,"abyss.content.blurRadius":0,"abyss.content.cardOpacity":1,"abyss.waves.enabled":false,
+                onClicked:Config.setNestedValues({"abyss.surface.opacity":1,"abyss.content.opacity":1,"abyss.content.blurRadius":0,"abyss.waves.enabled":false,
                     "abyss.effects.blur.enabled":false,"abyss.effects.refraction.enabled":false,
                     "abyss.effects.glow.strength":0,"abyss.effects.surfaceHighlight":0,
                     "abyss.perimeter.radius":Config.options?.appearance?.screenEdge?.radius ?? 25})

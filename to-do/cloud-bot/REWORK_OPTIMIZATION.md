@@ -1157,8 +1157,18 @@ run privileged installation just because manual buttons are retired.
   and `Panel background blur` remain separate. Live focused
   QML/style/field pixel fixtures and native Niri/Quickshell
   owner screenshots required. Linked blur correctness:
-  [ABYSS-I01](ISSUES.md). State: OPEN; source inspected,
-  design/migration/implementation and native acceptance pending.
+  [ABYSS-I01](ISSUES.md). **Implemented/focused qualification 2026-10-11:**
+  one shared slider, live card alias, independent Edge/blur and opaque action
+  are implemented. Raw migration schema 1 preserves explicit Panel opacity
+  including 0/-1; only an absent opacity adopts legacy card alpha. Unknown/
+  optional/per-output data and future schemas are retained. Pure policy
+  221 checks, five actual Config cases/ten startup-restart processes, Settings
+  413 + four restart checks, 120 field captures/270 pixel checks and content
+  smoke PASS, each exit 0. [Source pins/evidence](../../docs/evidence/abyss-product/20261011-unified-opacity/README.md).
+  A separate extra unchanged Config flush missed its four-second lease
+  deadline; raw failure retained, cause NOT_DIAGNOSED, no flush repair claimed.
+  State: OPEN for committed full canonical and owner visual/theme/typography,
+  per-surface contrast, animation and multiple-output acceptance.
 
 - [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**
   [Owner: Alis dev; Rework/Optimization] Improve the perceptual and

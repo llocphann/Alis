@@ -1,0 +1,2 @@
+<stdin>:10: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+PASS: GPU body opacity/blur, independent Edge alpha, zero-alpha wallpaper reveal, live card tint and performance effect release

@@ -40,6 +40,7 @@ ShellRoot {
                 check(Config.options.abyss.content.opacity === .75, "saved opacity lost")
                 check(Config.options.abyss.content.blurRadius === 12, "saved blur lost")
                 check(AbyssStyle.contentOpacity === .75 && AbyssStyle.contentBlurRadius === 12, "restart resolved wrong material")
+                check(AbyssStyle.cardOpacity === .75 && Math.abs(AbyssStyle.contentLayer.a-.75)<.005, "restart restored independent card alpha")
                 console.info("PANEL_MATERIAL_RESTART_PASS", root.checks)
                 Qt.quit(); return
             }
@@ -58,6 +59,8 @@ ShellRoot {
             const opacitySlider = findChild(settings, "abyssPanelOpacity")
             const blurSlider = findChild(settings, "abyssPanelBlur")
             check(blurFollow !== null && opacitySlider !== null && blurSlider !== null, "separate controls missing")
+            check(opacitySlider.text === "Panel & content opacity", "shared slider label missing")
+            check(find(settings, i => i.text === "Content card opacity") === null, "retired card slider still visible")
             for (const alpha of [-1, 0, .25, .5, .75, 1]) for (const radius of [-1, 0, 8, 16, 24]) {
                 Config.setNestedValues({"abyss.content.opacity":alpha, "abyss.content.blurRadius":radius})
                 const beforeBlur = Config.options.abyss.content.blurRadius
@@ -68,6 +71,7 @@ ShellRoot {
                 check(Config.options.abyss.content.blurRadius === beforeBlur, "opacity detach wrote blur")
                 opacitySlider.value = alpha < 0 ? 0 : alpha; opacitySlider.moved()
                 check(Config.options.abyss.content.opacity === (alpha < 0 ? 0 : alpha), "opacity slider ignored explicit value")
+                check(AbyssStyle.cardOpacity === AbyssStyle.contentOpacity && Math.abs(AbyssStyle.contentLayer.a-AbyssStyle.contentOpacity)<.005, "shared slider did not update cards")
                 check(Config.options.abyss.content.blurRadius === beforeBlur, "opacity slider wrote blur")
                 const beforeAlpha = Config.options.abyss.content.opacity
                 blurFollow.toggledByUser(true)
@@ -90,6 +94,13 @@ ShellRoot {
                 check(Config.options.abyss.content.blurRadius === 12, "detach saved temporary policy zero")
                 check(Config.options.abyss.content.opacity === .75, "policy/detach changed opacity")
             }
+            const opaque = find(settings, i => i.buttonText === "Use opaque Material appearance")
+            check(opaque !== null, "opaque material action missing")
+            const retired = Config.options.abyss.content.cardOpacity
+            opaque.clicked()
+            check(AbyssStyle.contentOpacity === 1 && AbyssStyle.cardOpacity === 1, "opaque action did not set shared alpha")
+            check(Config.options.abyss.content.cardOpacity === retired, "opaque action wrote retired card preference")
+            check(Config.options.abyss.content.blurRadius === 0, "opaque action retained blur")
             Config.setNestedValues({"abyss.quality":"quality", "performance.lowPower":false,
                 "abyss.content.opacity":.75, "abyss.content.blurRadius":12})
             Config.flushWrites(); wait(200)

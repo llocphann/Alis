@@ -503,7 +503,9 @@ Singleton {
             if (overlayPaths.length > 0)
                 fileWriteTimer.restart();
 
-            const styleMigration = FamilyPolicy.migrateMaterial(root._jsonMirror);
+            const styleMigration = Object.assign({},
+                FamilyPolicy.migrateMaterial(root._jsonMirror),
+                FamilyPolicy.migrateContentOpacity(root._jsonMirror));
             if (Object.keys(styleMigration).length) {
                 root._styleMigrationWritePending = true;
                 root.setNestedValues(styleMigration);
@@ -600,9 +602,11 @@ Singleton {
                     property int softness: 24
                 }
                 property JsonObject content: JsonObject {
+                    property int opacityVersion: 1
                     // -1 follows the Screen Edge material until customized.
                     property real opacity: -1
                     property int blurRadius: -1
+                    // Retired saved key; migrated once when opacity is absent.
                     property real cardOpacity: 0.9
                 }
                 property JsonObject waves: JsonObject {

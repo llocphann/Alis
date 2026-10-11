@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "task": "ABYSS-R04",
+  "sourceIdentity": "precommit candidate pinned by hashes",
+  "baseSha": "08fa4797b319d85fa620fbb1fbc90100769417ec",
+  "sourceHashes": {
+    "modules/common/PanelFamilyPolicy.js": "a7454827d61a5b57957bbc6b066611b312ebcba768455cdbdd4d857f5802e877",
+    "modules/common/Config.qml": "0855ab722c12cd95bfccdf7956331789b0bc5b1b5f931287a6b52f8424ec2a94",
+    "modules/abyss/looks/AbyssStyle.qml": "829f7ab7fc595eda28b2a3d4de65467f7cff6f9369f3a4e7fa554cfd1cda3670",
+    "modules/abyss/settings/AbyssStyleSettings.qml": "56d27134bcc42c1cba91e5fb483a0e46281043d5fb24668b88866f0e9ab760a4",
+    "modules/common/widgets/SettingsMaterialPreset.qml": "ae516c88135940fc68cb02d8bbbd1f6bb71cf2a461d78c5938eefe6be5868c76",
+    "defaults/config.json": "ca434283c41d26f049b6a7751ddfee19c4265970cabe1c621c5803fd9dee49a2",
+    "scripts/test-abyss-content-opacity-migration.mjs": "f29637a2a11e56dc450bcec2fd20d748d63c221d74daf3166e21ac354eaa46c9",
+    "scripts/test-abyss-content-opacity-config-runtime.py": "1703b8ef039f4846805faa4cc084362ceea7ef1bf293d83da05886b0ff0a133b",
+    "scripts/test-abyss-panel-material-settings-runtime.py": "c518769cf14be0fcb7c7a4f2be135b2cd9a5878bbf33b984818bff8c91f5edf0",
+    "scripts/test-abyss-panel-material-pixels-runtime.py": "5f8c5d5ed14a42b6edc63ba59e68997909cf2b2310968e682a44d1815de44a46",
+    "scripts/test-abyss-content-material.sh": "2307ca6ca1f82dc0af62d121efb2e40ddc537534e33d80ac55d3c032da015836"
+  },
+  "migration": "raw explicit opacity wins including zero/inheritance; only missing opacity adopts finite numeric legacy card value, clamped; schema 1; retired/unknown keys preserved",
+  "checks": {
+    "pureMigration": {
+      "result": "PASS",
+      "assertions": 221,
+      "exitCode": 0
+    },
+    "automaticConfigMigrationAndRestart": {
+      "result": "PASS",
+      "savedCases": 5,
+      "actualProcesses": 10,
+      "exitCode": 0
+    },
+    "actualSettingsHandlers": {
+      "result": "PASS",
+      "assertions": 413,
+      "restartAssertions": 4,
+      "exitCode": 0
+    },
+    "fieldPixelMatrix": {
+      "result": "PASS",
+      "captures": 120,
+      "pixelChecks": 270,
+      "exitCode": 0
+    },
+    "contentSmoke": {
+      "result": "PASS",
+      "exitCode": 0
+    }
+  },
+  "extraNoopFlushProbe": {
+    "result": "FAIL",
+    "exitCode": 1,
+    "cause": "NOT_DIAGNOSED: an extra unchanged flush after automatic migration did not release its write lease within 4 seconds",
+    "scope": "automatic migration qualification removes that extra operation but retains actual disk/restart checks; no no-op flush fix is claimed"
+  },
+  "ownerPreferencesChanged": false,
+  "shadersChanged": false,
+  "canonical": "NOT RUN on this candidate",
+  "ownerVisualAcceptance": false
+}
