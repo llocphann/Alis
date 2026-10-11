@@ -836,12 +836,18 @@ the Abyss critical host is active. For support investigations only.
 | Function | Description |
 |----------|-------------|
 | `snapshot` | Return the current per-output hover, input region and popup lifecycle state as JSON |
+| `startFrames` | Explicitly start per-output Qt frameSwapped wall-clock sampling, capped at 600 intervals, with bounded motion and timer-heartbeat records. Disabled before this call; not compositor presentation or GPU timing. |
+| `stopFrames` | Stop the requested frame/timer sampling and return per-output counts, interval percentiles and bounded event records as JSON. Zero samples are unavailable evidence, not a successful performance measurement. |
 | `refreshMask` | **One-shot experiment**: emit Region.changed for the current input regions, without remount or family switch. Only runs in normal Abyss idle, otherwise skipped. This tests whether resubmitting the shaped input mask restores pointer hover; it is not an automatic startup fix. |
 | `swapMask` | Toggle the normal input mask between the original shaped Region and an equivalent Region wrapper. Calling again restores the original identity; no full-output input interception. |
 | `remapWindow` | Briefly unmap/remap only the Abyss perimeter window (260 ms), preserving panel family and settings; visible flicker is possible. Diagnostic only. |
 
 ```bash
 inir abyssHoverProbe snapshot
+# Use scripts/collect-abyss-hover-frames.sh for a bounded, source-checked capture.
+# When invoking the sampler directly, finish it explicitly:
+inir abyssHoverProbe startFrames
+inir abyssHoverProbe stopFrames
 # Only for guided debugging, before the Waffle workaround:
 inir abyssHoverProbe refreshMask
 inir abyssHoverProbe swapMask

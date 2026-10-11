@@ -822,7 +822,18 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   justified by this archive.
 
 
-- [ ] **Canonical validation — updated 2026-10-10:** exact committed SHA
+- [ ] **Canonical validation — updated 2026-10-11:** clean-clone validation
+  of `9ab8d408b793a938ed2a01a9c496e9156404715e` is in progress.
+  Its previously failing Music, warm Dashboard, Weather handoff, editor and
+  OSD fixtures have passed in this run; final result is not yet available.
+  Three failures so far share a concrete source-contract drift:
+  `abyssHoverProbe.startFrames/stopFrames` exist in QML but lack descriptions
+  and generated CLI entries. Added the descriptions and regenerated the
+  registry; parser regression, registry freshness and documentation checks
+  now pass separately (exit 0). This does not upgrade the running canonical
+  result or prove owner desktop acceptance. Complete this run, retain its
+  exact-SHA receipt, then validate the final committed repair.
+  **Historical run:** exact committed SHA
   `10311cd96892d86d86870d327d28b27e32df8fbd` finished **FAIL: 327 PASS, 8 FAIL,
   1 SKIP**. Failures: keyboard sizing, Dashboard Music, Dashboard warm readiness,
   Equalizer presentation, Weather handoff, Abyss editor, OSD and shared content.
