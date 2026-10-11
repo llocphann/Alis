@@ -101,6 +101,71 @@ do not reimplement them solely because a checkbox is open.
   Alis CLI/identity dependency is tracked in Rework/optimization.
   No revived Automation/MegaQML service is required.
 
+- [ ] **ABYSS-F01 — Per-module Screen Edge position lock — owner request 2026-10-11:**
+  [Owner: Alis dev; NEW feature] In **Edit Abyss Layout**, allow the
+  user to independently **Lock position / Unlock position** for
+  each Screen Edge module. Show a compact lock control near the
+  selected module's positioning/size actions and an unmistakable
+  lock glyph/state on its editor handle; support pointer and
+  accessible keyboard interaction. Default all existing modules
+  to UNLOCKED for backward compatibility. A locked module stays
+  in the user-approved position and edge: dragging, snapping,
+  inserting, deleting, resizing or reordering **other** modules
+  may NOT silently move it, change its alignment/edge or reorder
+  its anchored slot. Moving a locked module itself requires
+  explicit unlock first; normal viewing and Popup actions remain
+  usable and unchanged.
+
+  **Collision semantics:** treat locked records as immovable
+  obstacles/reservations in the production geometry and snap
+  solver, **not only disabled drag handles**. Move or compress
+  unlocked items within valid capacity while preserving their
+  relative order when possible. If the requested new position
+  cannot fit (including all-locked/full edges), clamp/reject
+  that move and give clear non-destructive feedback; never push
+  or overlap a locked module, clip it or silently unlock it.
+  If a global resize, resolution/hotplug, font scale or changed
+  edge width makes an old locked layout mathematically infeasible,
+  define deterministic migration/fallback and surface the
+  conflict to the user before persisting changes. Avoid
+  claiming absolute physical-pixel stability across resolutions:
+  document normalized vs per-output anchoring and handle outputs
+  with different available geometry explicitly.
+
+  **Persistence/source:** extend `normalize`, `move`, `snapMove`,
+  `geometry`, `resolve`, `optionsForOutput`/`saveProfile` in
+  `modules/abyss/looks/AbyssLayout.js` as appropriate; save a
+  stable per-ID lock flag (and any genuinely required anchor)
+  with the module's global or output-only placement. Update
+  `modules/abyss/AbyssEdgeEditor.qml` draft/handle, selection,
+  save/cancel/reset and per-output override behavior. Locking
+  is **Edit-layout placement protection**, not a new lock on
+  normal Popup hover/click, config synchronization or the
+  companion actor. Existing user data, hidden/disabled modules,
+  join-corner decorations and custom size inheritance survive.
+
+  **Related features:** pending multi-selection of Screen Edge
+  modules must visibly identify locked selections and skip or
+  explicitly reject batch moves/resize for them, never silently
+  modify a mixed group; normal undo/cancel/Done must be exact.
+  Coordinate with `ABYSS-R03` movement smoothness in
+  [Rework](REWORK_OPTIMIZATION.md) and existing corner/snap
+  behaviors. No new second layout engine or background agent.
+
+  **Acceptance:** unit/property/real-QML regression tests covering
+  A locked / B dragged into A; insert or delete beside A;
+  move A attempt; unlock A; multiple locked slots, different
+  alignments, edge crossing, small viewport/over-capacity,
+  output hotplug/scaling, custom widths/sizes, hidden/zero-size
+  modules, multi-select, save/undo/cancel/reset and relaunch.
+  Verify locked layout coordinates remain unchanged wherever
+  feasible, unmovable conflicts have visible feedback,
+  neighbors/Popups stay interactive, and saved lock state
+  survives restart under both default and per-output layouts.
+  Require native Niri/Quickshell pointer, visual and owner
+  acceptance. State: NEW/OPEN; source implementation and
+  validation NOT STARTED.
+
 - [ ] **Edit Abyss Layout Screen Edge module multi-selection — owner request 2026-10-10:**
   Add an explicit multiple-selection mode for Screen Edge modules while
   **Edit Abyss Layout** is active. Show which modules are selected, support

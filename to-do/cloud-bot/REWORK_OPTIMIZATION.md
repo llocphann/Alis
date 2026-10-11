@@ -894,6 +894,56 @@ run privileged installation just because manual buttons are retired.
   obtain owner visual signoff.
   State: OPEN; corrected checkbox specification only, NOT IMPLEMENTED.
 
+- [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request 2026-10-11:**
+  [Owner: Alis dev; Rework/Optimization] Improve the perceptual and
+  actual responsiveness of Screen Edge modules while editing a layout:
+  module drag follows the pointer smoothly with stable timing, snap
+  target/guides feel predictable without jolts, and neighboring
+  modules do not visibly jump or oscillate during reordering, add/
+  remove, resizing, edge transfers and editing-to-normal transitions.
+  Preserve existing liquid/connected geometry, theme, animation
+  quality, native click/hover regions and regular Popup attachments.
+  No forceful artificial tween that makes the drag target lag behind
+  the cursor or obscures unexpected automatic packing.
+
+  **Source starting points:** `modules/abyss/AbyssEdgeEditor.qml`
+  updates the draft via `move` / `snapMove` during each pointer
+  change, refreshes guides and schedules toolbar relocation;
+  `modules/abyss/looks/AbyssLayout.js` recomputes geometry and uses
+  a sort + forward/backward collision-packing pass that can shift
+  neighboring records. Determine real update/event, QML binding,
+  rendering and input cost before making a change; those source
+  observations alone do NOT prove why the user perceives stutter.
+  Keep the drag gesture's hot path bounded, avoid repeatedly
+  rebuilding heavyweight content or writing Config per motion
+  event; stabilize drag anchor, snap hysteresis, toolbar placement,
+  visual/interactive geometry and deterministic placement across
+  frames. Investigate excessive recomputation, competing input
+  handlers and renderer re-layout with source-pinned trace receipts.
+  Reuse the Alis opt-in performance profiler where available.
+
+  **Lock integration:** coordinate with `ABYSS-F01` in
+  [New features](NEW_FEATURES.md): collision and animation updates
+  MUST NOT move a locked module. Animate/reposition only eligible
+  unlocked neighbors and show an unambiguous blocked-state cue
+  rather than snapping a different locked item out of place.
+  **ABYSS-R01** corner spacing, **ABYSS-R02** inner corner rounding
+  and pending Edit Layout multi-selection remain independent;
+  ensure there are no conflicting snapping, clipping or saved-layout
+  rules among them.
+
+  **Acceptance:** deterministic source tests on the actual packing
+  engine for crowded/sparse edges, long/fast repeated drags,
+  crossing edges/corners, snap on/off, adjacent-locked obstacles,
+  module size/visibility changes and per-output persistence;
+  p50/p95/p99 drag-to-render/frame timing with exact source SHA
+  and matched baseline where native capture is supported (no
+  invented FPS/CPU gains). Check four edges, fractional DPI,
+  small and multiple monitors, themes/reduced-motion, hover/click
+  handoff, Edit → Done/Cancel/Reset → reopen, and owner visual
+  acceptance under real Niri/Quickshell. State: OPEN; diagnosis,
+  implementation, native smoothness proof and owner signoff pending.
+
 - [ ] **Screen Edge/module editor:** verify separate 0px-capable widths on all
   four edges, thickness-only versus inherited module sizing, per-module overrides,
   joined nearby modules when width does not affect them, nearest-corner joins
