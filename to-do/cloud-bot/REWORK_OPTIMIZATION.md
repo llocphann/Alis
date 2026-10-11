@@ -8,6 +8,17 @@ holds technical research; this file holds pending outcomes.
 
 ## Resource use and responsiveness
 
+
+**2026-10-12 06:53 ICT checkpoint:** feature-first cohort is source/focused;
+Dashboard0becc72ab preserves dots-only canvas height and qualifies Music visual
+scrollbar preference without changing list allocation or transport. Full
+frozen593368c15 [stopped receipt](../../docs/evidence/abyss-product/20261012-593368c15-stopped/README.md)
+contains318completed311PASS/7FAIL/0SKIP, no full summary. Related motion/capture,
+toolbar clearance, hover and Recording work remains actionable alongside feature
+qualification; no RAM/CPU/GPU percentage measured/claimed. Keep G0dc4d5ecfe118
+INCONCLUSIVE offline-only; do not replay lineage or reduce strict RGBA. Stop
+all work at exact five-hour1%; resume once09:32:29ICT after its reset3minutes.
+
 - [ ] **Abyss Panel motion stutter — received/updated 2026-10-10:**
   Specific owner Notification Edgebar-hover and Recording-start stutters have
   independent reproductions in [Issues](ISSUES.md); keep this broad

@@ -13,7 +13,8 @@ have separate focused evidence; committed canonical and owner gates stay open.
 An earlier canonical was stopped at five-hour2%, with four partial failures;
 [its frozen receipt](../../docs/evidence/abyss-product/20261012-f94de0535-stopped/README.md)
 preserves the consumed result. Single reset+3minute continuation fired04:29ICT. Frozen multi-selection
-canonical593368c15 is now running independently; new Dashboard fixes below
+canonical593368c15 was STOPPED at five-hour1%, with318 completed checks:
+311PASS/7FAIL/0SKIP and no full summary. New Dashboard0becc72ab fixes below
 are qualified only by their pinned focused bytes until a newer full run. No historical task backfill,
 owner preference, AI/vault consent or installed Companion change is authorized
 by the continuation. AGENDA-F01 now has source/focused linking evidence below;
@@ -27,6 +28,21 @@ multi-selection** in that order. Carry out their related data/input repairs and
 Rework/optimization alongside delivery, preserving remaining canonical and
 desktop acceptance gates. Do not resume the former Issues → Rework → Features
 order or close unverified Issues because their source is implemented.
+
+
+**2026-10-12 06:53 ICT quota checkpoint:** stop all product/test work because
+only the exact five-hour window remains1%; weekly62%used is not a stop trigger.
+Reset09:29:29ICT; continue once at09:32:29ICT. Source cohorts now implemented:
+Weekly Plannerf62f24361; tab reorderf94de0535; Agenda host0465ffc5a /
+optional Integration4d0aa3f; module locksa450be887; multi-selection593368c15;
+Dashboard canvas/Music checkbox focused qualification0becc72ab. Preserve their
+source/focused evidence; do not reimplement completed milestones. Latest full
+attempt [STOPPED raw receipt](../../docs/evidence/abyss-product/20261012-593368c15-stopped/README.md)
+is318completed311PASS/7FAIL/0SKIP, not full PASS. Ancestor0465 completeFAIL
+359/7/1 remains immutable. Next: qualify feature cohort with related remaining
+Dashboard motion/toolbar, Recording, Settings, hover and IPC repairs; freeze a
+new canonical from actual fresh committed SHA after repairs. All stated
+owner/installed/material/multi-output and Companion gates remain OPEN.
 
 
 - [ ] **Alis Quickshell deep performance profiler — owner request 2026-10-11:**

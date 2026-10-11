@@ -9,6 +9,19 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
 
 ## Current failures and owner reports
 
+
+**2026-10-12 06:53 ICT checkpoint:** frozen593368c15 STOPPED at five-hour1%,
+318completed311PASS/7FAIL/0SKIP; [raw failures/driver](../../docs/evidence/abyss-product/20261012-593368c15-stopped/README.md).
+Do not call it a full result. Seven completed failures are Dashboard field,
+Recording controls, Screenshot pointer, Settings task tabs, mature app hover,
+Dashboard toolbar footprint and IPC output-override corner joining. Dashboard
+0becc72ab separately fixes hidden-header dimensions (36native checks/30frames,
+12images) and Music empty scrollbar/Queue disposal (181checks/49frames,2processes).
+Post-header original slide capture remains FAIL/unqualified; no weakened oracle.
+Next related diagnosis retains the actual toolbar119,-376,782,395 (bottom19px
+inside canvas), Recording missing inner marker and private-native timeout state;
+do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
+
 - [ ] **DASH-I10 — Cleared Queue delegates briefly read undefined tracks — discovered 2026-10-12:**
   DASH-F03's empty-list test exposes actual title/artist/artUrl TypeError while
   removed Queue delegates briefly outlive their modelData. Preserve valid rows

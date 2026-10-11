@@ -1,0 +1,53 @@
+{
+  "status": "STOPPED_5_HOUR_QUOTA",
+  "full_summary": false,
+  "source_sha": "593368c154b1abb82369f6dc2e3277b405c254ea",
+  "integration_sha": "4d0aa3f508fdd6bd953696d92bf529f1fb9f4b32",
+  "completed_checks": 318,
+  "completed_counts": {
+    "PASS": 311,
+    "FAIL": 7,
+    "SKIP": 0
+  },
+  "last_completed": [
+    "318",
+    "shell regression: scripts/test-maintainer-validator-log-contract.sh",
+    "PASS"
+  ],
+  "failures": [
+    [
+      "107",
+      "Python regression: scripts/test-dashboard-editor-field-runtime.py"
+    ],
+    [
+      "198",
+      "Python regression: scripts/test-recording-abyss-runtime.py"
+    ],
+    [
+      "210",
+      "Python regression: scripts/test-screenshot-pointer-runtime.py"
+    ],
+    [
+      "219",
+      "Python regression: scripts/test-settings-task-tabs-runtime.py"
+    ],
+    [
+      "259",
+      "shell regression: scripts/test-abyss-app-hover-menu.sh"
+    ],
+    [
+      "265",
+      "shell regression: scripts/test-abyss-dashboard-editing.sh"
+    ],
+    [
+      "270",
+      "shell regression: scripts/test-abyss-ipc-corner.sh"
+    ]
+  ],
+  "stop_usage": {
+    "used_percent": 99,
+    "window_minutes": 300,
+    "reset_unix_seconds": 1791772169
+  },
+  "next_source": "0becc72ab5c763905543b47a73dd6467e08c1163"
+}
