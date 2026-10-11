@@ -980,14 +980,76 @@ run privileged installation just because manual buttons are retired.
   Stop callback and idle/secondary-output allocation. Confirm owner appearance
   and an actual recording/stop. No owner recording was started/stopped in fixtures.
 
-- [ ] **Wallpaper picker polish and live theme preview:** qualify the connected
-  thumbnail selector against the supplied reference, restrained search icon,
-  borderless action buttons and Abyss-styled tooltips. Remove `>wallpaper`,
-  `(grid)` and `(overflow)` labels from the retired picker. Preview Edge/Panel/
-  Popup colors while browsing images, restore on cancel and retain the chosen
-  palette on apply. Actual wallpaper application is tracked in Issues/bugs.
+- [ ] **Wallpaper picker polish, filename-only labels and live theme preview — owner update 2026-10-11:**
+  [Owner: Alis dev; Rework] Qualify the connected thumbnail selector
+  against the supplied reference, restrained search icon, borderless action
+  buttons and Abyss-styled tooltips. Remove `>wallpaper`, `(grid)` and
+  `(overflow)` labels from the retired picker. **When opening Change
+  Wallpaper / browsing/selecting images, display only each file's basename
+  (e.g. `forest.jpg`), NOT its full absolute or relative directory path.**
+  Cover Wallpaper Launcher carousel/cards (currently
+  `WallpaperLauncherItem.qml` displays `modelData.relativePath`,
+  potentially including nested directories), selector grids, quick selectors
+  and visible selected-wallpaper labels/tooltips. Use the existing
+  `WallpaperLibrary.qml` `name` field or
+  `FileUtils.fileNameForPath` for presentation, preserving extension,
+  Unicode and truncation/ellipsis; when two files share one basename,
+  retain separate selectable entries and disambiguate on deliberate details
+  view, not by always showing long paths. **Keep the complete normalized path
+  internally** for identity, selection, opening, applying, multi-monitor
+  routing, storage and export; never apply by basename alone.
+  Preview Edge/Panel/Popup colors while browsing, restore on cancel and
+  retain the chosen palette on apply. Verify deeply nested directories,
+  duplicate names, very long/Unicode filenames, path with spaces,
+  local and animated media, selected/current indicators, keyboard search,
+  alternate outputs, translations and actual native UI labels.
+  Actual wallpaper application is tracked only in Issues/bugs.
   References: `/tmp/codex-clipboard-c5723427-ceae-4515-a739-3010f8a551fa.png`,
   `/tmp/codex-clipboard-3baf8385-6e63-4e7b-8306-0e0ec31f3be9.png`.
+
+- [ ] **WALL-R01 — Rename iNiR Melt transition to Liquid and restore its effect safely — owner request 2026-10-11:**
+  [Owner: Alis dev; Rework/transition identity and quality] Rename the
+  **user-facing wallpaper transition** currently labeled
+  `Liquid melt (iNiR)` to exactly **`Liquid`**, including its short
+  description, settings selection, tooltips/help and relevant translated
+  strings. The intended effect is the existing flowing/liquid melt, not a
+  renamed ordinary fade pretending to render liquid. Source locations:
+  `modules/settings/BackgroundConfig.qml` (`Liquid melt (iNiR)`,
+  `inirMelt` option/description);
+  `modules/common/widgets/WallpaperCrossfader.qml` (shader gating,
+  transition state/fallback); and
+  `modules/common/widgets/wallpaperTransitions/inirMelt.frag[.qsb]`.
+  Preserve saved `background.transition.type = "inirMelt"` profiles
+  by mapping them compatibly to the new `Liquid` UI selection. If a new
+  internal identifier `liquid` or shader asset name is introduced,
+  version/migrate config, programmatic callers/tests and installed compiled
+  QSB atomically, without losing settings or silently disabling the effect.
+  This task is also a concrete surface of the broader Alis identity rebrand.
+
+  Diagnose why the Liquid effect is not working on the real Qt/Wayland
+  renderer before calling it fixed. Assess actual shader compilation,
+  texture priming, `frameSwapped`, QSG backend capability,
+  compositor behavior and presentation sequencing; the current
+  experimental flag `INIR_EXPERIMENTAL_MELT` and automatic crossfade
+  fallback are not evidence of a working Liquid visual. If supported,
+  restore a genuinely visible liquid animation with bounded resources
+  and strict-lossless pixels before/after transition; when unsupported
+  or failing, degrade gracefully to a real crossfade/instant switch,
+  show accurate status as useful, and do not leave selection or image
+  application blocked. **Functional wallpaper-switch failure itself is
+  owned by the linked existing [wallpaper Bug](ISSUES.md), not a duplicate
+  Rework fix/closure.** Avoid transition quality reductions elsewhere
+  and do not run infinite render/poll loops.
+
+  Acceptance: Settings displays only `Liquid`, existing `inirMelt`
+  settings remain selected/persist on upgrade, intended fluid animation
+  is visibly tested when the real backend supports it, alternate
+  compositor/software renderer and forced compile/no-frame/timeouts
+  complete a safe fallback, no stuck old desktop wallpaper, correct
+  Overview/physical display, rapid repeated selections, durations,
+  multiple monitors/fractional scale, fullscreen and owner Niri
+  image/video visual signoff. Add focused QML/JS/shader-contract tests.
+  State: OPEN; UI rename and native effect validation NOT IMPLEMENTED.
 
 
 ## Product identity, CLI and upgrade compatibility

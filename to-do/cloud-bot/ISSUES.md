@@ -1016,11 +1016,49 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   add/remove and editor ownership across outputs. Native image/pin fixtures
   pass; owner's interactive acceptance remains distinct.
 
-- [ ] **Wallpaper does not change on normal desktop:** source has repaired
-  wallpaper ownership and live color preview. Confirm actual desktop application
-  and Overview separately, rapid selection/cancel, output targeting, still/video
-  image readiness and transition priming. A palette change alone is not proof
-  that the selected wallpaper was applied.
+- [ ] **Wallpaper sometimes stays unchanged on desktop while Overview updates — Liquid/iNiR Melt transition failure, owner update 2026-10-11:**
+  [Owner: Alis dev; bug/high-impact wallpaper correctness] Selecting another
+  image can update the **Overview preview** without changing the **actual
+  desktop wallpaper**, especially when the configured iNiR Melt transition
+  cannot complete. Earlier wallpaper ownership and live color-preview source
+  repairs exist, but the owner reports that the end-to-end apply remains
+  unreliable. Treat this as a fresh reproduction/acceptance gate, not as proof
+  of a specific shader fault. **The selected valid wallpaper MUST apply even
+  if any transition fails, never begins, times out, is disabled or has an
+  unsupported shader/backend.** Transition animation is optional; successful
+  image selection and desktop display are mandatory. Preserve the last
+  successfully displayed image until the new source is actually Image.Ready;
+  do not commit a broken/empty texture or claim success for an invalid file.
+
+  Investigate the complete source chain from wallpaper picker
+  (`WallpaperSelectorContent.qml`, `WallpaperLauncherContent.qml`,
+  `Wallpapers.applySelectionTarget` / `apply`, `WallpaperListener`)
+  through display ownership/engine (`awww` vs internal Quickshell
+  `WallpaperCrossfader.qml`) and multi-output/Overview preview state.
+  `WallpaperCrossfader.qml` currently recognizes `inirMelt`, gates its
+  experimental shader on `INIR_EXPERIMENTAL_MELT=1`, normalizes it to
+  `crossfade` in non-shader use and has a 1500ms shader-wait fallback.
+  Those are **source observations, NOT native proof that fallback succeeds**.
+  Capture exact source/installed SHA, actual renderer/ShaderEffect status,
+  `Image.status`, `displayedSource/pendingSource`, `frameSwapped`/
+  timeout, compositor output and wallpaper-backend receipts before changing
+  any mechanism. Separate compile failure, source load error, an invisible
+  window, stale completion, queued rapid selections, IPC/backend failure,
+  canceled preview and divergent Overview source; no assumed root cause.
+
+  Add bounded, deterministic failure-injection tests for shader not compiled,
+  software backend, hidden/no frames, prime timeout, Image.Error, fallback
+  completion, rapid A→B→C changes, repeated selection, preview cancel,
+  image/video, different outputs, theme update and failed backend switch.
+  Real Niri/Quickshell acceptance requires chosen **valid** wallpaper B
+  visibly on the physical desktop/target monitor (not only Overview/palette)
+  with Liquid enabled, unavailable and OFF, preserving current on failure,
+  normal wallpaper/Popup input and no permanently busy transition. If the
+  effect cannot render, complete the image switch with a safe fade/instant
+  fallback and accurately surface the transition limitation. Linked
+  transition rename/polish: [WALL-R01](REWORK_OPTIMIZATION.md).
+  State: OPEN; owner regression reported, actual native failure and repair
+  NOT YET verified.
 
 - [ ] **Cheatsheet close opens Update popup:** qualify the repaired independent
   close/visibility ownership through first and repeated slide-out. No unrelated
