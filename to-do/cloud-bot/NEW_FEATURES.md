@@ -507,10 +507,23 @@ other New features; it does not authorize closing unverified Issues.
   attachments remain visible in the separate lazy attachment rail.
   Sidebar/Dashboard maintain their previous Source-first behavior;
   Live Editing near-caret rendering is NOT implemented.
-  Pure-JS policy and private-Niri focused test fixtures added but
-  NOT YET RUN in this cloud session. State: SOURCE PATCHED / OPEN for
-  Markdown fidelity, preview/Source focus, Unicode/IME/undo/restart,
-  mouse/touchpad, attachment parity, full canonical and owner UI acceptance.
+  **Verification at source `bb370eff16db3c53ff45a99a93f962fe6df89eb9`:**
+  the exact Git blob `MarkdownNote.js` (SHA
+  `7a624cf2a0168f814e79a1d80254f2ab1fa9a6bf`) and matching
+  `test-quick-notes-markdown-policy.mjs` blob (SHA
+  `dbeda1516c6b7b2d1ea7af001bdfcc4250c2aed9`) run with
+  Node: **14 tests PASS**. GitHub CI [run 38162496197]
+  (https://github.com/llocphann/Alis/actions/runs/38162496197)
+  confirms the Markdown policy PASS, source QML guards and translation
+  source parity PASS. The private-Niri Markdown QML fixture exits
+  with a **SKIP: qs unavailable**, not an actual native PASS.
+  Full CI is FAIL (323 PASS / 33 FAIL / 2 SKIP): most failures require
+  missing Quickshell and there are separate pre-existing/independent
+  source-contract mismatches; it does not certify this patch's desktop
+  rendering, focus, IME, undo or compatibility behavior.
+  State: SOURCE PATCHED / OPEN for native markdown fidelity,
+  preview/Source focus, Unicode/IME/undo/restart, mouse/touchpad,
+  attachment parity, full canonical and owner UI acceptance.
 
 - [ ] **Quick Notes image delivery:** Hadalis `add29d6f8` implements shared
   paste/import, original-byte storage, Markdown persistence and preview with
