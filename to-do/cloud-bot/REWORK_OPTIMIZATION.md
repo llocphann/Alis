@@ -1241,6 +1241,70 @@ run privileged installation just because manual buttons are retired.
   State: OPEN for owner visual/theme/typography,
   per-surface contrast, animation and multiple-output acceptance.
 
+- [ ] **ABYSS-R05 — Preserve the full module design when placed on Left/Right Screen Edges — owner requirement 2026-10-12:**
+  [Owner: Alis dev; Rework / four-edge visual and geometry parity]
+  **ALL Screen Edge modules** must retain the same **non-compact
+  component design, visible content, proportions, controls, icon/text
+  hierarchy and user-configured size** they have on Top/Bottom when
+  moved to Left/Right. Do **NOT** automatically swap to old Material
+  vertical/compact bar variants, drop labels, collapse information,
+  change widget style or silently reduce their scale solely because
+  an edge is vertical. **Only rotate/reorient the original module to
+  face the appropriate Screen Edge** (Top/Bottom/Left/Right). Rotating
+  a full design means correct 90°/270° orientation, pivot/anchors,
+  transformed width/height and input coordinates, NOT recreating a
+  narrower substitute. Existing intentionally explicit custom size/
+  appearance settings should remain respected; moving between edges
+  must not silently rewrite their saved values.
+
+  **Source starting points:** `modules/abyss/bar/AbyssBarModule.qml`
+  currently branches on `vertical` to load the distinct
+  `Vertical.Resources`, `Vertical.VerticalClockWidget`,
+  `Vertical.VerticalMedia` and `Vertical.BatteryIndicator`
+  variants; other module kinds pass `vertical` to child controls
+  and `compact` to Clock/UtilButtons. Review EVERY module kind,
+  including Workspaces, Weather, Tray, Taskbar, Active Window,
+  Distro/Launcher, Utilities, Timer and Shell Update, plus installed
+  or optional modules; use the original horizontal/full-content
+  presentation with a shared edge-orientation transform rather than
+  replacing it with Material-era vertical layouts.
+  `modules/abyss/bar/AbyssBar.qml` selects the physical edge,
+  exposes `naturalSpan` and `contentScale`, and passes
+  `placement?.compact`; `modules/abyss/looks/AbyssLayout.js`
+  has orientation-specific `extent()` and `geometry()` with a
+  capacity `scale` factor. Audit measured extents, 90°/270° bounding
+  boxes, hit region, corner joins and center/alignment carefully:
+  removing only the QML `Vertical.*` branch is insufficient.
+
+  **Size and capacity:** preserve each module's configured visual
+  size and layout on all four edges; Left/Right rotation may swap
+  physical width and height but must not shrink fonts, icons, card
+  surfaces, controls or their proportional relationships. For a
+  crowded/short edge, do NOT silently apply a compact fallback or
+  proportional auto-shrink. Determine an explicit non-destructive
+  capacity rule (bounded repositioning, placement rejected with
+  clear editor feedback, or another reviewed non-clipping solution)
+  so other modules cannot overlap, vanish, steal click targets or
+  move unpredictably. Coordinate with ABYSS-R01 (corner clearance),
+  ABYSS-R03 (smooth repacking), ABYSS-F01 (locked positions) and
+  per-output/edge-width/custom-size configuration. Preserve Popup
+  attachment, hover, mouse/touch, keyboard, tooltips, OSD and
+  fullscreen interactions; module *content* remains fully usable.
+
+  **Acceptance:** for each supported module, compare Top → Right →
+  Bottom → Left → Top on the same config: same content/controls and
+  design, no automatic compact variant, no unintended size drift;
+  only orientation and swapped axis dimensions differ. Verify
+  long labels/text, animation and hover/popup placement, rotation
+  direction, readability, exact hit regions, crowded edges, locked
+  neighbors, four-corner crossing, output-only profiles, saved
+  Done/Cancel/Reset, restart, dark/light themes, 1x/fractional DPI,
+  multiple monitors and small screen limits. Add deterministic
+  geometry/orientation and source QML tests, followed by real
+  Niri/Quickshell before/after captures and owner visual signoff.
+  State: NEW/OPEN — requirement recorded; no source implementation
+  or native acceptance claimed in this entry.
+
 - [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**
   [Owner: Alis dev; Rework/Optimization] Improve the perceptual and
   actual responsiveness of Screen Edge modules while editing a layout:
