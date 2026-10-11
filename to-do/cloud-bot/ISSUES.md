@@ -930,7 +930,7 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   justified by this archive.
 
 
-- [ ] **Canonical validation — updated 2026-10-11:** latest exact clean-clone
+- [ ] **Canonical validation — updated 2026-10-11:** latest complete exact clean-clone
   `b543bb7602eb74901c3c137c89c70c301e12fde4`: **FAIL, 345 PASS / 1 FAIL /
   2 SKIP, exit 1**. The sole failure dismisses StyledPopup at its right
   padding probe (762,143); post-dismiss geometry cannot establish the cause.
@@ -943,6 +943,12 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   not reproduced; cause remains NOT_DIAGNOSED and no runtime change or
   canonical upgrade is claimed. Retain the diagnostic receipt beside the
   failed run; next actual failed transfer needs source/paint/input leases.
+  **Later interrupted driver:** clean-clone `8edd331797771924435a91ed1ed8abac382490c2`
+  stopped after check 232, Bash exit 2 / unexpected quoted EOF. The outer
+  validator was edited while running; this is INTERRUPTED_DRIVER_ERROR, not
+  a complete source PASS/FAIL. [Partial receipt/logs](../../docs/evidence/abyss-product/20261011-8edd33179-interrupted/README.md).
+  Next qualification must execute frozen committed driver bytes, then preserve
+  its printed exact SHA and full final result.
   **Earlier retained**
   clean-clone `6bb45f361346048e7368511169fa5151c390e4ac` run finished
   **FAIL: 343 PASS, 2 FAIL, 2 SKIP; exit 1**. Both failures execute the same

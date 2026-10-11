@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "sourceSha": "8edd331797771924435a91ed1ed8abac382490c2",
+  "result": "INTERRUPTED_DRIVER_ERROR",
+  "exitCode": 2,
+  "complete": false,
+  "partialCounts": {
+    "PASS": 232,
+    "FAIL": 0,
+    "SKIP": 0
+  },
+  "lastCheck": 232,
+  "failure": "outer validator Bash reported unexpected EOF while looking for matching double quote",
+  "concurrentChange": "outer host validator file was edited for the next material gate during execution; source tests were a clean clone",
+  "staticSyntax": "original and revised validators parse; live-driver edit can invalidate read offsets",
+  "nextLaunch": "freeze exact committed driver bytes before launch; do not edit active driver",
+  "upgradesEarlierCanonical": false,
+  "ownerDesktopAcceptance": false
+}
