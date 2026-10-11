@@ -823,16 +823,20 @@ that implementation is missing. Refetch current `dev` before diagnosing.
 
 
 - [ ] **Canonical validation — updated 2026-10-11:** clean-clone validation
-  of `9ab8d408b793a938ed2a01a9c496e9156404715e` is in progress.
-  Its previously failing Music, warm Dashboard, Weather handoff, editor and
-  OSD fixtures have passed in this run; final result is not yet available.
-  Three failures so far share a concrete source-contract drift:
+  of `9ab8d408b793a938ed2a01a9c496e9156404715e` finished **FAIL: 336 PASS,
+  4 FAIL, 2 SKIP; exit 1**. Its Calendar persistence/layout, Music, warm
+  Dashboard, Weather handoff, keyboard, editor, OSD and shared-content
+  fixtures passed. All four failures share one source-contract drift:
   `abyssHoverProbe.startFrames/stopFrames` exist in QML but lack descriptions
-  and generated CLI entries. Added the descriptions and regenerated the
-  registry; parser regression, registry freshness and documentation checks
-  now pass separately (exit 0). This does not upgrade the running canonical
-  result or prove owner desktop acceptance. Complete this run, retain its
-  exact-SHA receipt, then validate the final committed repair.
+  and generated CLI entries (parser, registry freshness, docs and the
+  distribution check invoking that parser). `2c51aa599` adds the descriptions
+  and regenerates the registry; the first three focused checks pass separately
+  (exit 0). This does not upgrade the canonical result or prove owner desktop
+  acceptance. [Full log](../../docs/evidence/abyss-product/20261011-9ab8d408b/canonical.log)
+  and [receipt](../../docs/evidence/abyss-product/20261011-9ab8d408b/canonical.json)
+  retain exact source and boundaries. QML parser capability and deferred Nix
+  are the two SKIPs. Next: qualify the final committed repairs in a new
+  exact-SHA clean clone; owner installed/input/visual gates remain separate.
   **Historical run:** exact committed SHA
   `10311cd96892d86d86870d327d28b27e32df8fbd` finished **FAIL: 327 PASS, 8 FAIL,
   1 SKIP**. Failures: keyboard sizing, Dashboard Music, Dashboard warm readiness,

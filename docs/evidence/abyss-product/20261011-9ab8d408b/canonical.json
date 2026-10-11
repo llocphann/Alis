@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "kind": "canonical-maintainer-local",
+  "sourceSha": "9ab8d408b793a938ed2a01a9c496e9156404715e",
+  "command": "bash scripts/validate-maintainer-local.sh --current-repo",
+  "execution": "clean clone of exact committed local source",
+  "result": "FAIL",
+  "exitCode": 1,
+  "passed": 336,
+  "failed": 4,
+  "skipped": 2,
+  "failedChecks": [
+    "scripts/test-ipc-registry-generator.py",
+    "IPC registry freshness",
+    "documentation contracts",
+    "scripts/test-local-distribution.sh"
+  ],
+  "cause": "QML startFrames/stopFrames absent from IPC descriptions and generated registry",
+  "repairSourceSha": "2c51aa599",
+  "repairFocusedChecks": {
+    "ipcRegistryParser": {
+      "result": "PASS",
+      "exitCode": 0
+    },
+    "registryFreshness": {
+      "result": "PASS",
+      "exitCode": 0
+    },
+    "documentationContracts": {
+      "result": "PASS",
+      "exitCode": 0
+    }
+  },
+  "skips": [
+    "QML parser lacks required syntax capability",
+    "Nix explicitly deferred, non-blocking"
+  ],
+  "ownerDesktopAcceptance": false,
+  "newWorkingTreeRecordingCandidateCovered": false,
+  "note": "The repair focused checks do not change this canonical FAIL. Owner runtime remains unchanged."
+}
