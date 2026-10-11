@@ -24,6 +24,21 @@ Item {
         1
     )
     readonly property bool eventEditorActive: eventsPane.inlineEditorMode
+    readonly property int maxEventDots: Math.max(0, Math.min(5,
+        Number(Config.options?.calendar?.maxEventDots ?? 3)))
+    property int _localEventRevision: 0
+    property int _externalEventRevision: 0
+
+    Connections {
+        target: Events
+        function onEventAdded(event) { root._localEventRevision++ }
+        function onEventUpdated(event) { root._localEventRevision++ }
+        function onEventRemoved(id) { root._localEventRevision++ }
+    }
+    Connections {
+        target: CalendarSync
+        function onEventsUpdated() { root._externalEventRevision++ }
+    }
 
     function closeEventEditor(): void {
         if (eventsPane.inlineEditorMode)
@@ -31,6 +46,9 @@ Item {
     }
 
     readonly property var calendarCells: {
+        // Invalidate when the shared local/external stores notify changes.
+        root._localEventRevision
+        root._externalEventRevision
         const year = root.viewingDate.getFullYear()
         const month = root.viewingDate.getMonth()
         const first = new Date(year, month, 1)
@@ -41,11 +59,19 @@ Item {
         for (let i = 0; i < 42; ++i) {
             const d = new Date(start)
             d.setDate(start.getDate() + i)
+            const local = Events.getEventsForDate(d)
+            const external = CalendarSync.getEventsForDate(d) || []
+            // One color per EVENT, not per distinct event source.
+            const colors = local.map(() => Appearance.colors.colPrimary)
+                .concat(external.map(evt => evt.sourceColor
+                    || Appearance.colors.colPrimary))
             cells.push({
                 date: d,
                 day: d.getDate(),
                 currentMonth: d.getMonth() === month && d.getFullYear() === year,
                 today: root.sameDay(d, root.today),
+                eventCount: local.length + external.length,
+                eventColors: colors,
             })
         }
         return cells
@@ -106,6 +132,9 @@ Item {
                 today: root.today
                 locale: root.locale
                 calendarCells: root.calendarCells
+                showEventDots: root.maxEventDots > 0
+                countedEventDots: true
+                maxEventDots: root.maxEventDots
                 selectedDate: eventsPane.inlineEditorMode
                     ? eventsPane.inlineEditorDate
                     : root.selectedEventDate

@@ -1012,7 +1012,8 @@
             "sources": []
         },
         "showUpcoming": true,
-        "upcomingDays": 3
+        "upcomingDays": 3,
+        "maxEventDots": 3
     },
     "closeConfirm": {
         "enabled": false

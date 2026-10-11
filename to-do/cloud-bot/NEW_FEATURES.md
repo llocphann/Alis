@@ -347,7 +347,16 @@ do not reimplement them solely because a checkbox is open.
   time zone, prev/next month, theme/fractional DPI, readable
   today/selected days, live settings changes, restart persistence
   and owner photo parity; source tests and native Niri visual QA.
-  State: NEW/OPEN; not implemented.
+  **Cloud source milestone (2026-10-12):** opt-in counted event
+  dots for Calendar Popup reuse `ObsidianMonthCalendar` without
+  changing Sidebar/Dashboard's existing unique-source-color style.
+  `ClockCalendarContent` supplies one color per local/ICS event and
+  updates on local add/edit/remove, ICS refresh, month/date change.
+  Integrations → Calendar Settings now provides one persisted 0–5
+  `calendar.maxEventDots` control (default 3); 0 hides indicators,
+  overflow displays a + cue without changing actual event counts.
+  State: SOURCE PATCHED / OPEN for focused/native Niri visual,
+  Settings persistence, recurrence/long-name/month-edge and owner QA.
 
 - [ ] **AGENDA-F01 — Creating an Agenda automatically creates one linked To-do (not vice versa) — owner request 2026-10-11:**
   [Owner: Alis dev; New Feature] **Local Agenda/Event creation

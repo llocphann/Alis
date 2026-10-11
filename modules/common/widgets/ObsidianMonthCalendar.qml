@@ -15,6 +15,11 @@ Item {
     property var selectedDate: null
     property bool interactiveDays: false
     property bool showEventDots: false
+    // Opt in only for the Popup: existing Sidebar/Dashboard source-color
+    // dots retain their original distinct-color presentation by default.
+    property bool countedEventDots: false
+    property int maxEventDots: 3
+    readonly property int effectiveMaxEventDots: Math.max(0, Math.min(5, root.maxEventDots))
     // Popup consumers keep the compact 30px cells. Sidebar/Dashboard opt into
     // responsive sizing so the same visual language can use available width
     // without turning into a second Calendar style.
@@ -313,6 +318,7 @@ Item {
                             anchors.centerIn: parent
                             anchors.verticalCenterOffset:
                                 root.showEventDots && dayCell.eventCount > 0
+                                    && (!root.countedEventDots || root.effectiveMaxEventDots > 0)
                                     ? -2 : 0
                             text: String(dayCell.modelData?.day ?? "")
                             color: dayCell.selected
@@ -333,14 +339,23 @@ Item {
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 2
                             spacing: 1
-                            visible: root.showEventDots
-                                && dayCell.eventCount > 0
+                            visible: root.showEventDots && dayCell.eventCount > 0
+                                && (!root.countedEventDots || root.effectiveMaxEventDots > 0)
 
                             Repeater {
                                 model: {
-                                    if (dayCell.eventColors?.length > 0)
-                                        return dayCell.eventColors.slice(0, 3)
-                                    return [root.colAccent]
+                                    if (!root.countedEventDots) {
+                                        // Preserve current Sidebar/Dashboard behavior.
+                                        if (dayCell.eventColors?.length > 0)
+                                            return dayCell.eventColors.slice(0, 3)
+                                        return [root.colAccent]
+                                    }
+                                    const count = Math.min(Math.max(0, dayCell.eventCount),
+                                        root.effectiveMaxEventDots)
+                                    const colors = []
+                                    for (let i = 0; i < count; ++i)
+                                        colors.push(dayCell.eventColors[i] ?? root.colAccent)
+                                    return colors
                                 }
 
                                 delegate: Rectangle {
@@ -350,6 +365,17 @@ Item {
                                     radius: 1.5
                                     color: modelData
                                 }
+                            }
+
+                            // Extra events are still visible as a compact + cue;
+                            // the complete count remains in the day model.
+                            StyledText {
+                                visible: root.countedEventDots
+                                    && dayCell.eventCount > root.effectiveMaxEventDots
+                                text: "+"
+                                font.pixelSize: 9
+                                font.weight: Font.DemiBold
+                                color: root.colAccent
                             }
                         }
 
