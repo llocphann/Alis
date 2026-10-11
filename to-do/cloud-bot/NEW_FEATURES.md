@@ -229,7 +229,15 @@ do not reimplement them solely because a checkbox is open.
   dark/light, disabled Music and optionally unloaded Music
   page, migration from old config (default ON), source QML
   assertions and real Niri/Quickshell owner visual review.
-  State: NEW/OPEN; checkbox and rendering policy NOT IMPLEMENTED.
+  **Cloud source milestone (2026-10-12):** one persistent
+  `dashboard.music.showScrollbars` flag (default ON), one Dashboard
+  Music Settings checkbox, and a single policy bound to the existing
+  six vertical and one horizontal scrollbar. `ScrollBar.AlwaysOff`
+  hides visual chrome only; Flickable and underlying event routing
+  are untouched. Expanded `test-dashboard-music-scroll-runtime.py`
+  for OFF/ON toggling and actual vertical-wheel navigation.
+  State: SOURCE PATCHED, native Niri test, preference restart, owner
+  layout/touchpad and canonical acceptance OPEN.
 
 - [ ] **DASH-F01 — Weekly Planner: new Dashboard tab for Agenda / Events / Todo / Quick Notes — owner request 2026-10-11:**
   [Owner: Alis dev; New Feature] Add a full **Weekly Planner** Dashboard

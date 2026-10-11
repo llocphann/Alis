@@ -72,7 +72,7 @@ ShellRoot {
   }
   function runChecks() { try {
    tryCompare(Config,"ready",true,6000)
-   Config.setNestedValues({"performance.reduceAnimations":true,"dashboard.music.enable":true,"dashboard.showHeader":true,"dashboard.canvas.widgets":[]})
+   Config.setNestedValues({"performance.reduceAnimations":true,"dashboard.music.enable":true,"dashboard.music.showScrollbars":true,"dashboard.showHeader":true,"dashboard.canvas.widgets":[]})
    GlobalStates.dashboardPage=1
    tryVerify(()=>findChild(dashboard,"dashboardMusic")!==null,4000)
    const music=findChild(dashboard,"dashboardMusic")
@@ -120,7 +120,34 @@ ShellRoot {
     scroll.currentIndex=scroll.count-1;scroll.positionViewAtEnd()
     check(scroll.contentY>scroll.originY+1,"keyboard selection/end reveal unavailable "+name)
    }
-   console.info("MUSIC_SCROLL_PASS six overflow lists: vertical wheel, themed thumb drag and keyboard/end reveal")
+   // Turning the preference off hides only scrollbar chrome. All list and
+   // horizontal viewport navigation must stay alive, with no Music reload.
+   const listNames=["musicResultList","musicQueueList","musicLyricsList","musicGenreList","musicFolderList","musicPlaylistList"]
+   const oldMusic=music
+   Config.setNestedValue("dashboard.music.showScrollbars",false)
+   tryVerify(()=>music.showMusicScrollbars===false,1200)
+   for(const name of listNames){
+    const list=findChild(music,name)
+    check(list!==null && list.ScrollBar.vertical.policy===ScrollBar.AlwaysOff,
+     "hidden Music scrollbar policy missing "+name)
+   }
+   const horizontal=findChild(music,"musicColumnsViewport")
+   check(horizontal!==null && horizontal.ScrollBar.horizontal.policy===ScrollBar.AlwaysOff,
+    "horizontal Music scrollbar should be hidden")
+   music.libraryTab="genre"
+   const results=findChild(music,"musicResultList")
+   results.contentY=results.originY
+   mouseMove(results,15,20);wait(150)
+   mouseWheel(results,15,20,0,-120);wait(200)
+   check(results.contentY>results.originY+1 && dashboard.currentPage===1,
+    "hidden scrollbar must not block real vertical wheel")
+   check(music===oldMusic,"scrollbar preference unloaded the music surface")
+   Config.setNestedValue("dashboard.music.showScrollbars",true)
+   tryVerify(()=>music.showMusicScrollbars===true,1200)
+   check(results.ScrollBar.vertical.policy===ScrollBar.AsNeeded
+      && horizontal.ScrollBar.horizontal.policy===ScrollBar.AsNeeded,
+      "Music scrollbars did not return")
+   console.info("MUSIC_SCROLL_PASS six overflow lists, hidden/visible preference, wheel and keyboard")
   } catch(e) { console.error("MUSIC_SCROLL_FAIL",e.message,e.stack) } Qt.quit() }
  }
  Timer { interval:100; running:true; onTriggered:test.runChecks() }

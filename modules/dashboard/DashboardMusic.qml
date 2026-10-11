@@ -13,6 +13,8 @@ import "DashboardMusicModel.js" as Library
 Item {
     id: root
     objectName: "dashboardMusic"
+    // A visual-only preference: leave Flickable/wheel/key navigation alive.
+    readonly property bool showMusicScrollbars: Config.options?.dashboard?.music?.showScrollbars ?? true
     required property var backend
     property bool presentationActive: visible
     // Queue is a compact preview until hovered; expand it upwards by shrinking
@@ -346,7 +348,7 @@ Item {
     }
     component MusicScrollBar: ScrollBar {
         id: scrollbar
-        policy: ScrollBar.AsNeeded
+        policy: root.showMusicScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
         implicitWidth: 10
         padding: 2
         minimumSize: .05
@@ -500,7 +502,7 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
         clip: true
         ScrollBar.horizontal: ScrollBar {
-            policy: ScrollBar.AsNeeded
+            policy: root.showMusicScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
         }
         Row {
             width: horizontal.contentWidth

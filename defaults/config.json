@@ -1066,7 +1066,8 @@
         "pageOrderVersion": 1,
         "pageOrder": ["dashboard", "music", "weeklyPlanner"],
         "music": {
-            "enable": true
+            "enable": true,
+            "showScrollbars": true
         },
         "keepLoaded": false,
         "showHeader": true,

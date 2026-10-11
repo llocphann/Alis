@@ -12,6 +12,12 @@ SettingsGroup {
         checked: Config.options?.dashboard?.music?.enable ?? true
         onCheckedChanged: Config.setNestedValue("dashboard.music.enable",checked)
     }
+    ConfigSwitch {
+        text: Translation.tr("Show Music scrollbars")
+        description: Translation.tr("Hide scrollbar tracks and thumbs without disabling Music list or touchpad scrolling")
+        checked: Config.options?.dashboard?.music?.showScrollbars ?? true
+        onCheckedChanged: Config.setNestedValue("dashboard.music.showScrollbars", checked)
+    }
     ContentSubsection {
         title: Translation.tr("MPD")
         RowLayout {
