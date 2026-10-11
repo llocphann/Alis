@@ -1,17 +1,19 @@
 # New features
 
-Work after [Issues/bugs](ISSUES.md) and [Rework/optimization](REWORK_OPTIMIZATION.md),
-unless the maintainer explicitly changes the immediate priority.
+Work first under the [shared priority effective 2026-10-12](README.md), with
+related [Issues/bugs](ISSUES.md) and [Rework/optimization](REWORK_OPTIMIZATION.md)
+handled alongside the selected feature in the same single-agent context.
 Source-implemented features below still need their stated delivery/owner gates;
 do not reimplement them solely because a checkbox is open.
 
-**Immediate owner priority — 2026-10-12:** finish the current Todo persistence,
-Dashboard editor qualification and shared Settings task-tab milestone, then
-implement **DASH-F01 → DASH-F02 → AGENDA-F01 → ABYSS-F01 → Screen Edge
-multi-selection** in that order. Carry out their necessary data/input
-prerequisites, preserving remaining canonical and desktop acceptance gates.
-This explicit sequence takes precedence over selecting unrelated Rework or
-other New features; it does not authorize closing unverified Issues.
+**Immediate owner priority — updated 2026-10-12:** continue the current
+Weekly Planner milestone. Todo persistence and shared Settings task tabs have
+source/focused evidence; their remaining canonical and owner gates stay open.
+Implement **DASH-F01 → DASH-F02 → AGENDA-F01 → ABYSS-F01 → Screen Edge
+multi-selection** in that order. Carry out their related data/input repairs and
+Rework/optimization alongside delivery, preserving remaining canonical and
+desktop acceptance gates. Do not resume the former Issues → Rework → Features
+order or close unverified Issues because their source is implemented.
 
 
 - [ ] **Alis Quickshell deep performance profiler — owner request 2026-10-11:**
@@ -287,7 +289,12 @@ other New features; it does not authorize closing unverified Issues.
   multi-output/theme/reduced-motion, no leaked focus, bounded render
   cost, optional integrations absent and data intact after restart.
   Deterministic date/geometry tests plus owner-approved Niri UI.
-  State: NEW/OPEN; no runtime implementation.
+  State: IN PROGRESS — 2026-10-12, after Todo durability and shared Settings
+  task-tab milestones. Implement one bounded weekly projection of canonical
+  Events/CalendarSync with actual civil-day boundaries (23/24/25h), overlapping
+  and all-day slices, stable-ID third page and shared Todo/Quick Notes panels.
+  Imported events remain read-only; view projections do not write recurrences
+  or reminders. Deterministic/native checks and owner acceptance remain OPEN.
 
 - [ ] **DASH-F02 — Drag-reorder Dashboard tab indicators in Edit Dashboard Layout — owner request 2026-10-11:**
   [Owner: Alis dev; New Feature] In **Edit Dashboard Layout**, drag

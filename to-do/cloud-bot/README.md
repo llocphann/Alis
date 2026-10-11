@@ -9,11 +9,18 @@ is historical; both environments read/write the same three lists through
 resuming work, and finishing a milestone. Execution location does not change
 classification, priority or acceptance requirements.
 
-| Order | Category | Scope |
+**Maintainer priority, effective 2026-10-12:** continue the current work;
+prioritize New features, with related Rework/optimization and Issues/bugs
+handled alongside the selected feature. The three categories still classify
+outcomes; their position is not an instruction to finish every Issue first.
+"Alongside" means coordinated work in this single-agent context, not separate
+agents or task boards.
+
+| Priority | Category | Scope |
 | --- | --- | --- |
-| 1 | [Issues/bugs](ISSUES.md) | Broken behavior, regressions, actionable warnings and correctness/release checks. Fix urgent failures first. |
-| 2 | [Rework/optimization](REWORK_OPTIMIZATION.md) | Redesign existing behavior, simplify UI/docs, reduce CPU/RAM/GPU and improve responsiveness. |
-| 3 | [New features](NEW_FEATURES.md) | Capabilities that the product does not yet provide, including feature delivery still awaiting acceptance. |
+| First | [New features](NEW_FEATURES.md) | Capabilities that the product does not yet provide, including feature delivery still awaiting acceptance. Follow explicit feature sequences. |
+| Alongside the selected feature | [Rework/optimization](REWORK_OPTIMIZATION.md) | Related redesign, UI simplification, CPU/RAM/GPU reduction and responsiveness improvements. |
+| Alongside the selected feature | [Issues/bugs](ISSUES.md) | Related broken behavior, regressions, actionable warnings and correctness/release checks. |
 
 ## Every incoming request
 
@@ -46,29 +53,37 @@ bug returns to Issues/bugs with its prior evidence linked.
 ## Select the next task autonomously
 
 The maintainer's explicit immediate priority, stop or deferral comes first.
-Otherwise select actionable, unresolved work in this order:
+Otherwise select an actionable, unresolved New feature, then address its related
+Rework and Issues as part of delivering and qualifying that feature:
 
-| Order | Selection within the category |
+| Category | Selection within the category |
 | --- | --- |
-| Issues/bugs | Data/config integrity, startup/crashes, authorization or install/update failures first; then broken main functions/input; then remaining correctness, visual bugs, actionable warnings and validation failures. Use actual impact/evidence, not an alarming log label alone. |
-| Rework/optimization | Work that unblocks current acceptance or improves frequently used paths; prioritize strict-lossless, evidenced resource/responsiveness gains over speculative changes or cosmetic polish. Preserve the audit's proof/measurement gates. |
-| New features | Requested capabilities with clear scope and available dependencies; favor broad user value and work that unblocks other requested outcomes. |
+| New features | Follow the maintainer's explicit sequence. Otherwise choose requested capabilities with clear scope and available dependencies; favor broad user value and work that unblocks other requested outcomes. |
+| Related Rework/optimization | Work sharing the selected feature's UI, data or input path, or needed for its acceptance; prioritize strict-lossless, evidenced resource/responsiveness gains. Preserve the audit's proof/measurement gates. |
+| Related Issues/bugs | Repair defects in the selected feature or its shared paths. Within those repairs, prioritize data/config integrity and crashes, then broken functions/input, then visual correctness and actionable warnings. Use actual impact/evidence, not an alarming log label alone. |
 
 Within comparable impact, prefer work that unblocks other tasks, then the older
 unresolved request. File position and message recency alone do not determine
 priority. Group closely related repairs only when they share a technical purpose.
-Do the minimum prerequisite needed for a selected higher-priority task, then
-return to it; do not use the dependency to expand into unrelated feature work.
+Record linked tasks in their own categories and group related changes only when
+they share a technical purpose. Do the minimum prerequisite needed for the
+selected feature, then return to it; do not expand a dependency into unrelated
+backlog work. Unrelated Rework/Issues remain open without preempting actionable
+features solely because they are bugs or older requests.
 
 A task is actionable when its next meaningful step can be performed with current
 access, dependencies and authorization. A source fix awaiting owner desktop,
 hardware or unavailable evidence stays open with that exact dependency recorded.
-Continue another actionable Issue; only when no Issue can advance, move to Rework,
-then New features. Recheck waiting items on relevant new evidence. Never treat
-waiting as completion or change the category to bypass priority.
+Continue the next actionable feature in the explicit sequence. If no feature
+can advance, continue related Rework/Issues, then other actionable Rework/Issues
+using impact, dependencies and existing evidence; neither of those categories
+has a blanket precedence over the other. Recheck waiting items on relevant new
+evidence. Never treat waiting as completion or change a category to bypass
+priority.
 
 If a new request arrives during work, classify/update it immediately and reassess.
-Switch promptly for an explicit priority or critical failure; otherwise finish a
+Switch promptly for an explicit priority; resolve a failure that blocks the
+selected feature as its prerequisite. Otherwise finish a
 safe atomic milestone before switching. After each milestone, update the affected
 item with its result and remaining gate, then select the next authorized task.
 A generic "continue" resumes this process without asking for a task choice or

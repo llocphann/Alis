@@ -1,7 +1,9 @@
 # Rework/optimization
 
-Work after actionable [Issues/bugs](ISSUES.md), unless the maintainer changes
-the immediate priority. [The canonical audit](../../docs/optimization/STRICT_LOSSLESS_GPU_RAM_CPU_AUDIT.md)
+Follow the [shared feature-first priority](README.md): address Rework and
+optimization related to the selected New feature alongside its implementation.
+Other work remains actionable when no selected feature can advance.
+[The canonical audit](../../docs/optimization/STRICT_LOSSLESS_GPU_RAM_CPU_AUDIT.md)
 holds technical research; this file holds pending outcomes.
 
 ## Resource use and responsiveness

@@ -1,8 +1,11 @@
-# Issues/bugs — fix first
+# Issues/bugs
 
 Consolidated on 2026-10-10 from the [former task ledgers](../../docs/archive/chatbot/2026-10-10/README.md).
 Open items include remaining acceptance of source fixes; they do not all mean
 that implementation is missing. Refetch current `dev` before diagnosing.
+Under the [shared priority](README.md), address Issues related to the selected
+New feature alongside its implementation. Other unresolved Issues retain their
+evidence and acceptance gates; this file is not a blanket first-work queue.
 
 ## Current failures and owner reports
 

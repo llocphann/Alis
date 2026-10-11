@@ -17,7 +17,7 @@ The `cloud-bot` directory name does not create a separate workflow for Local AI.
 7. Waffle is a separate supported shell family. Never classify Waffle as legacy or remove it as ii/Connected Perimeter cleanup.
 8. Prefer behavior/contract tests over implementation-spelling grep assertions. Do not change runtime behavior merely to make a stale test green.
 9. Use `to-do/` as the single active chatbot task entry point. ChatGPT is the only reasoning agent; repository tests and the canonical maintainer validator are the execution/acceptance path. Do not create bot-number, ownership, collision-boundary, separate task-board or handoff bureaucracy. Continue the highest-value unresolved work in one agent context.
-10. On receipt, automatically record/classify every actionable maintainer request into `Issues/bugs`, `Rework/optimization`, or `New features` before implementation. Merge duplicates and corrections; split mixed requests by outcome. Select the next actionable task autonomously using the shared policy below, without asking the maintainer to classify or choose routine work. Default order is Issues/bugs → Rework/optimization → New features unless the maintainer explicitly changes the immediate priority. Keep unverified source fixes open with their remaining acceptance; archive fully completed items after seven days.
+10. On receipt, automatically record/classify every actionable maintainer request into `Issues/bugs`, `Rework/optimization`, or `New features` before implementation. Merge duplicates and corrections; split mixed requests by outcome. Select the next actionable task autonomously using the shared policy below, without asking the maintainer to classify or choose routine work. Effective 2026-10-12, prioritize New features; address related Rework/optimization and Issues/bugs alongside the selected feature in the same single-agent context. Preserve explicit feature sequences and complete the current safe atomic milestone. When no feature can advance, continue related, then other actionable Rework/Issues. Keep unverified source fixes open with their remaining acceptance; archive fully completed items after seven days.
 
 ## Task routing
 
@@ -49,7 +49,7 @@ from the maintainer.
 ## Current product priorities
 
 Unless the maintainer changes them, these product directions guide implementation
-within the selected task. They do not override the category/severity order or an
+within the selected task. They do not override the shared feature-first policy or an
 explicit immediate priority.
 
 1. Caelestia-like UI/UX using the existing iNiR surfaces: existing popups should visually connect to their bar/screen edge instead of introducing a second popup system.

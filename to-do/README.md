@@ -1,11 +1,15 @@
 # Hadalis chatbot tasks
 
 **Local and Cloud development AI share this entry point and the same backlog.**
-Read [AGENTS.md](../AGENTS.md), refetch `dev`, then follow this order:
+Read [AGENTS.md](../AGENTS.md), refetch `dev`, then apply the maintainer's
+priority effective 2026-10-12:
 
-1. [Issues/bugs — fix first](cloud-bot/ISSUES.md).
-2. [Rework/optimization](cloud-bot/REWORK_OPTIMIZATION.md).
-3. [New features](cloud-bot/NEW_FEATURES.md).
+1. [New features](cloud-bot/NEW_FEATURES.md), preserving the explicit feature sequence.
+2. [Rework/optimization](cloud-bot/REWORK_OPTIMIZATION.md) and
+   [Issues/bugs](cloud-bot/ISSUES.md) related to the selected feature, handled
+   alongside it. Continue the current safe atomic milestone; keep all three
+   categories and their acceptance gates separate. This changes task priority,
+   not the single-agent workflow.
 
 [Shared intake, task selection and archive policy](cloud-bot/README.md) is
 mandatory for both environments: classify actionable requests on receipt, merge
