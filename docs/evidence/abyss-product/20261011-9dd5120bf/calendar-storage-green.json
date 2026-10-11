@@ -1,0 +1,27 @@
+{
+  "production_base_sha": "a4750cda8",
+  "source_state": "working-tree Events.qml repair before commit; exact hashes below",
+  "service_sha256": "a9e4b062d645067ef1b8300842eb08dc1d8105794def7dcef92a24c2d0ab9c54",
+  "test_sha256": "bc68d17bf4d04365b34dad7706015099d7c0ade6112c4df2b133c9ad8a696446",
+  "command": "python3 scripts/test-calendar-editor-layout-runtime.py",
+  "exit": 0,
+  "result": "CALENDAR_EDITOR_LAYOUT_PASS",
+  "checks": 149,
+  "coverage": [
+    "240/292px Calendar panes",
+    "100/150/200 percent fonts",
+    "light/dark colors",
+    "placeholder and long single-line text fit",
+    "whole Remove target",
+    "keyboard title input",
+    "Add/Edit/Remove disk readback",
+    "no-op write release",
+    "rapid coalesced changes",
+    "denied write retains prior disk bytes and in-memory edits",
+    "identical payload retry after permissions return"
+  ],
+  "backend": "actual QML/private unfocused dark Niri; synthetic local Events storage",
+  "owner_acceptance": false,
+  "canonical_acceptance": false,
+  "uncommitted_source_check_is_exact_sha_canonical": false
+}

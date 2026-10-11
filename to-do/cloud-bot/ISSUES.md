@@ -936,6 +936,33 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   and buffer messages remains open. Trace the model reset and popup/text-field
   focus lifecycle independently; preserve the redacted Weather location.
 
+- [ ] **CAL-I01 — Calendar event changes do not reach disk after the first save — discovered 2026-10-11:**
+  [Alis dev; data integrity] Actual native QML reproduction against
+  `services/Events.qml` at `a4750cda8`: a fresh private Events store writes
+  its empty initialization file, then Add only changes the in-memory list.
+  After four seconds, `_saving=true`, `_saveQueued=true` and readback still
+  contains zero events. The service releases writes through `onLoaded`, but
+  FileView acknowledges saves through `onSaved`/`onSaveFailed` instead.
+  Fix completion/queued-save handling and no-op saves; preserve current data
+  and surface write errors. Verify real Add/Edit/Remove disk readback, rapid
+  coalesced changes, repeated no-op saves and write failure recovery using
+  private fixture storage. Link: compact Calendar layout below. State:
+  SOURCE FIX + FOCUSED NATIVE PASS; owner and canonical acceptance pending.
+  Writes now finish on `onSaved`; no-op bytes never acquire a write lease,
+  and queued mutations save the latest event list. On failure, retain edits
+  in memory, log the error and defer cache reload until the native writer
+  callback returns; readback must not replace those edits. A user retry can
+  then save identical bytes after access returns. The native test passes
+  **149 checks, exit 0**, including actual Add/Edit/Remove disk readback,
+  rapid coalescing, duplicate no-op saves, denied writes preserving prior
+  disk data, and an identical-payload retry after permission recovery.
+  [Negative receipt](../../docs/evidence/abyss-product/20261011-9dd5120bf/calendar-storage-red.json)
+  and [focused repair receipt](../../docs/evidence/abyss-product/20261011-9dd5120bf/calendar-storage-green.json)
+  retain source/test hashes and boundaries. The callback ordering agrees
+  with [upstream FileView implementation](https://github.com/quickshell-mirror/quickshell/blob/master/src/io/fileview.cpp);
+  the native fixture, rather than API inference, establishes the repair.
+  Actual owner event data and installed runtime were not changed.
+
 - [ ] **Calendar Popup Add/Edit Events text fields too small; event Remove button clipped — owner report 2026-10-10:**
   Restore readable Title/Description fields and a fully visible Remove click
   target at normal/scaled fonts in compact Calendar panes. **Source repair
@@ -955,7 +982,8 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   PASS, exit 0**, using actual QML in an unfocused private Niri session,
   240/292px panes, 100/150/200 percent fonts, light/dark, empty placeholders,
   long input, clicks at the top/middle/bottom of Remove, keyboard title
-  entry and isolated Add/Edit/Remove persistence. Existing Calendar/Weather
+  entry and isolated Add/Edit/Remove in-memory state. The subsequent
+  CAL-I01 extension covers real disk persistence with 149 checks. Existing Calendar/Weather
   composition contract PASS; obsolete 36px spelling assertion retired.
   Owner files, clipboard and preferences were untouched. Installed desktop
   still has the earlier source; visual/physical owner retest and exact-SHA
@@ -1155,7 +1183,8 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   Both shortcut routes are configured: Print/Ctrl+Print/Alt+Print use
   native Niri captures, while Super+Shift+S/Ctrl+Shift+S open the shell
   region menu. The owner confirmed “hotkey, crash after capture”; the
-  exact combination is still being clarified. Private unfocused Niri
+  confirmed combination is Super+Shift+S/Ctrl+Shift+S (shell region menu),
+  not the native Print route. Private unfocused Niri
   tests on `9dd5120bfb0735fc5dfdf5e157139f0622d66edf` passed 10
   immediate cancels, 10 region Copy operations, three native annotation
   exports and an export/close race. QS exited normally with 13 synthetic
@@ -1166,8 +1195,8 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   diagnosis, not reproduction of the owner failure or a repair. No user
   clipboard, screenshot pixels, preferences or shell process were changed.
   Metadata: [sanitized diagnostic receipt](../../docs/evidence/abyss-product/20261011-9dd5120bf/screenshot-diagnosis.json).
-  Next: compare the actual shortcut route with the composed host/clipboard
-  lifecycle and obtain a faulting stack or timestamp-correlated reproduction.
+  Next: exercise actual region-menu pointer release/toolbar callbacks with
+  the composed host, and obtain a stack or timestamp-correlated reproduction.
   State: OPEN; real crash confirmed, capture cause UNKNOWN; no speculative
   runtime fix applied. Owner/native acceptance remains required.
 

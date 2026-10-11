@@ -78,5 +78,6 @@
     "host": "actual AbyssPerimeter plus CliphistImage, isolated PNG clipboard watcher",
     "saved_synthetic_pngs": 13,
     "scope": "no runtime restart observed; clipboard rendering readiness was not asserted; no owner hotkey or capture-causality acceptance"
-  }
+  },
+  "owner_hotkey": "Super+Shift+S or Ctrl+Shift+S; shell region menu"
 }

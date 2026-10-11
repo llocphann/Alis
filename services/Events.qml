@@ -18,6 +18,22 @@ Singleton {
     property bool ready: false
     property bool _saving: false
     property bool _saveQueued: false
+    property bool _reloadAfterSaveFailure: false
+
+    function _reloadFailedWriteCache(): void {
+        if (root._reloadAfterSaveFailure)
+            eventsFileView.reload()
+    }
+
+    function _finishSave(): void {
+        if (!root._saving)
+            return
+        root._saving = false
+        const saveAgain = root._saveQueued
+        root._saveQueued = false
+        if (saveAgain)
+            Qt.callLater(root.saveToFile)
+    }
     
     signal eventAdded(var event)
     signal eventRemoved(int id)
@@ -48,14 +64,18 @@ Singleton {
         path: Qt.resolvedUrl(root.filePath)
         watchChanges: true
         onLoaded: {
-            if (root._saving) {
-                root._saving = false
-                if (root._saveQueued) {
-                    root._saveQueued = false
-                    Qt.callLater(() => root.saveToFile())
-                }
+            if (root._reloadAfterSaveFailure) {
+                // Refresh FileView's failed-write cache without replacing
+                // unsaved edits with the older on-disk event list.
+                root._reloadAfterSaveFailure = false
+                const saveAgain = root._saveQueued
+                root._saveQueued = false
+                if (saveAgain)
+                    Qt.callLater(root.saveToFile)
                 return
             }
+            if (root._saving)
+                return
 
             const fileContents = eventsFileView.text()
             if (!fileContents || fileContents.trim() === "") {
@@ -92,7 +112,22 @@ Singleton {
                 root.ready = true
             }
         }
+        onSaved: root._finishSave()
+        onSaveFailed: (error) => {
+            root._saving = false
+            root._saveQueued = false
+            console.warn("[Events] Failed to save events:", error)
+            root._reloadAfterSaveFailure = true
+            // FileView still owns the completed writer while this signal
+            // runs. Start recovery after its native callback has returned.
+            Qt.callLater(root._reloadFailedWriteCache)
+        }
         onLoadFailed: (error) => {
+            if (root._reloadAfterSaveFailure) {
+                root._reloadAfterSaveFailure = false
+                root._saveQueued = false
+                return
+            }
             if (error === FileViewError.FileNotFound) {
                 console.log("[Events] File not found, creating new file.")
                 root.list = []
@@ -359,16 +394,24 @@ Singleton {
     }
 
     function saveToFile() {
-        if (root._saving) {
+        if (root._saving || root._reloadAfterSaveFailure) {
             root._saveQueued = true
             return
         }
-        root._saving = true
         const data = {
             nextId: root.nextId,
             events: root.list
         }
-        eventsFileView.setText(JSON.stringify(data, null, 2))
+        const serialized = JSON.stringify(data, null, 2)
+        // Unchanged bytes emit no saved() signal. Do not acquire a write
+        // lease for a no-op, or the following real edit will remain queued.
+        if (eventsFileView.loaded && eventsFileView.text() === serialized) {
+            root._saveQueued = false
+            return
+        }
+        root._saveQueued = false
+        root._saving = true
+        eventsFileView.setText(serialized)
     }
 
     function loadFromFile() {

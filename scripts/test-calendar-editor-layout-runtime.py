@@ -24,6 +24,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest
 import Quickshell
+import Quickshell.Io
 import qs.services
 import qs.modules.common
 import qs.modules.sidebarRight.events
@@ -32,6 +33,14 @@ ShellRoot {
  property int removals:0
  property int checks:0
  Component.onCompleted:Quickshell.watchFiles=false
+ FileView {
+  id:diskReceipt
+  path:Events.filePath;watchChanges:true
+  property var snapshot:null
+  onFileChanged:reload()
+  onLoaded:{try{snapshot=JSON.parse(text())}catch(error){snapshot=null}}
+ }
+ Process {id:permissions;property int exitCode:-1;onExited:(code,status)=>exitCode=code}
  function all(item,predicate){
   let found=predicate(item)?[item]:[]
   for(const child of item.children??[])found=found.concat(all(child,predicate))
@@ -50,6 +59,14 @@ ShellRoot {
   id:test;when:false;optional:true
   function check(ok,message){root.checks++;if(!ok)throw new Error(message)}
   function fields(){return root.all(editor,item=>item.placeholderText!==undefined && item.placeholderText.length>0)}
+  function persisted(predicate){diskReceipt.reload();wait(60);return predicate(diskReceipt.snapshot?.events)}
+  function setPermissions(mode){
+   check(Events.filePath.startsWith(Quickshell.env("CALENDAR_LAYOUT_ROOT")+"/"),"storage must be private before permission fixture")
+   permissions.exitCode=-1
+   permissions.command=["/usr/bin/chmod",mode,Directories.stateUserPath,Events.filePath]
+   permissions.running=true;tryVerify(()=>permissions.exitCode!==-1,3000)
+   check(permissions.exitCode===0,"private storage permission fixture failed")
+  }
   function runChecks(){try{
    tryCompare(Config,"ready",true,6000);tryCompare(Events,"ready",true,6000)
    Config.setNestedValue("panelFamily","abyss")
@@ -95,12 +112,36 @@ ShellRoot {
    input[0].forceActiveFocus();keyClick(Qt.Key_A)
    check(editor.eventTitle.toLowerCase()==="a","title keyboard input did not reach form state")
    check(editor.saveEvent() && Events.list.length===1,"Add did not persist to isolated Events store")
+   tryVerify(()=>persisted(events=>events?.length===1 && events[0].title.toLowerCase()==="a"),4000)
+   check(diskReceipt.snapshot?.events?.[0]?.title.toLowerCase()==="a","Add did not reach isolated disk storage")
    const saved=Events.list[0];editor.loadEvent(saved)
    editor.eventTitle="Edited fixture"
    check(editor.saveEvent() && Events.list[0].title==="Edited fixture","Edit did not retain identity")
+   tryVerify(()=>persisted(events=>events?.[0]?.title==="Edited fixture"),4000)
+   check(diskReceipt.snapshot?.events?.[0]?.title==="Edited fixture","Edit did not reach isolated disk storage")
    check(Events.removeEvent(saved.id) && Events.list.length===0,"Remove did not update isolated Events store")
-   console.info("CALENDAR_EDITOR_LAYOUT_PASS",root.checks,"checks: narrow panes, 100/150/200 percent fonts, light/dark, field fit, whole Remove target, Add/Edit/Remove")
-  }catch(error){console.error("CALENDAR_EDITOR_LAYOUT_FAIL",error.message,error.stack)}Qt.quit()}
+   tryVerify(()=>persisted(events=>events?.length===0),4000)
+   check(diskReceipt.snapshot?.events?.length===0,"Remove did not reach isolated disk storage")
+   Events.saveToFile();Events.saveToFile();wait(60)
+   check(!Events._saving && !Events._saveQueued,"unchanged saves acquired a write lease")
+   const first=Events.addEvent("First batch","",new Date(Date.now()+86400000).toISOString())
+   const last=Events.addEvent("Last batch","",first.dateTime)
+   Events.updateEvent(last.id,{title:"Latest batch"});Events.removeEvent(first.id)
+   tryVerify(()=>persisted(events=>events?.length===1 && events[0].title==="Latest batch"),4000)
+   check(!Events._saving && !Events._saveQueued,"coalesced writes did not release their lease")
+   setPermissions("500")
+   Events.updateEvent(last.id,{title:"Retained after denied write"})
+   tryVerify(()=>!Events._saving,4000)
+   check(Events.list[0].title==="Retained after denied write","failed write discarded in-memory changes")
+   check(persisted(events=>events?.[0]?.title==="Latest batch"),"failed write corrupted the prior disk state")
+   setPermissions("700");Events.saveToFile()
+   tryVerify(()=>persisted(events=>events?.[0]?.title==="Retained after denied write"),4000)
+   check(!Events._saving && !Events._saveQueued,"retry left a write lease held")
+   Events.removeEvent(last.id)
+   tryVerify(()=>persisted(events=>events?.length===0),4000)
+   console.info("CALENDAR_EDITOR_LAYOUT_PASS",root.checks,"checks: narrow panes, 100/150/200 percent fonts, light/dark, field fit, whole Remove target, Add/Edit/Remove disk readback, coalesced/no-op writes, denied-write recovery")
+  }catch(error){console.error("CALENDAR_EDITOR_LAYOUT_FAIL",error.message,error.stack,
+   "saving",Events._saving,"queued",Events._saveQueued,"diskEvents",diskReceipt.snapshot?.events?.length)}Qt.quit()}
  }
  Timer {interval:100;running:true;onTriggered:test.runChecks()}
 }
@@ -109,6 +150,7 @@ ShellRoot {
         if env is None:
             print("SKIP: Calendar layout requires a private Niri backend")
             raise SystemExit(0)
+        env["CALENDAR_LAYOUT_ROOT"] = str(folder)
         result = run_qs(folder, env, timeout=25)
     output = result.stdout
     bad = ["CALENDAR_EDITOR_LAYOUT_FAIL", "ReferenceError:", "TypeError:",

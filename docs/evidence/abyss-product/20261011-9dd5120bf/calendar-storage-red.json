@@ -1,0 +1,15 @@
+{
+  "production_base_sha": "a4750cda8",
+  "service_sha256": "039fe99b4e695aba05b11ac2e0441455e08afcf047c9ccac424bfb786587986b",
+  "test": "test-calendar-editor-layout-runtime.py with added private FileView disk readback",
+  "test_sha256": "475b32062ce9e96cfac5689925379c5c824acb2b50eb90a270e43a5171393b08",
+  "result": "FAIL",
+  "exit": 1,
+  "native_state_after_add": {
+    "saving": true,
+    "queued": true,
+    "disk_events": 0
+  },
+  "scope": "actual QML/private Niri, private event file explicitly reloaded; no owner data",
+  "canonically_qualified": false
+}
