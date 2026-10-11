@@ -930,7 +930,22 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   output, scaling, fast repeats, leaving fullscreen and nonfullscreen behavior.
   **Independent of the already owner-accepted fullscreen focus/screen-edge
   suppression regression** documented earlier; do not reopen that fix.
-  State: OPEN; diagnosis, Niri functional/visual test and owner signoff pending.
+  **Native diagnosis/repair 2026-10-11:** real private Niri fullscreen
+  reproduces the missing OSD: its open/paint/input gates require the same
+  presented flag that suppresses ordinary Screen Edges. The existing field
+  now admits only transient Volume/Brightness feedback with zero physical
+  insets and an Overlay layer without keyboard focus. It paints only the OSD
+  record while covered, then releases input/paint/layer on close; normal
+  Screen Edge attachment returns when fullscreen ends. No extra window,
+  permanent overlay or full-output input Region is added. Unrelated OSD kinds
+  remain hidden. The existing disconnected-target fallback is preserved.
+  `scripts/test-abyss-fullscreen-osd-runtime.py` passes 130 native assertions
+  for both indicators on four edges, focus/layer/paint scope, timeout, rapid
+  repeat, lock and normal restoration (exit 0).
+  [Before/after receipt](../../docs/evidence/abyss-product/20261011-fullscreen-osd/receipt.json).
+  State: OPEN for final exact-SHA canonical and owner physical keys, real
+  games/videos, multi-output/fractional visual/input acceptance; focused
+  compositor feasibility and source behavior pass.
 
 - [ ] **Recording Popup Expand Controls/Minimize buttons fail; dot-only minimized hover mode — owner report 2026-10-11:**
   The Expand Controls and Minimize actions on the Recording Popup do not work.

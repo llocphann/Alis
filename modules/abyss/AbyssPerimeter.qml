@@ -582,6 +582,18 @@ Scope {
             readonly property bool fullscreenCovered: GameMode.hasFullscreenOnOutput(outputName)
             readonly property bool presented: !GlobalStates.screenLocked
                 && (!fullscreenCovered || (Config.options?.abyss?.perimeter?.visibleInFullscreen ?? false))
+            // Fullscreen feedback owns only this transient body, never the
+            // suppressed Screen Edges, popup leases or keyboard focus.
+            readonly property bool physicalOsdKind: osd.presentationKind === "volume" || osd.presentationKind === "brightness"
+            readonly property bool physicalOsdRequested: !presented && fullscreenCovered && physicalOsdKind
+                && !GlobalStates.screenLocked
+                && (Config.options?.enabledPanels ?? []).includes("abyssOnScreenDisplay")
+                && (GlobalStates.osdVolumeOpen || GlobalStates.osdBrightnessOpen)
+                && Geometry.targets(outputName,Config.options?.osd?.screenList ?? [],Quickshell.screens.map(s => s.name))
+            readonly property bool physicalOsdResident: !presented && fullscreenCovered && physicalOsdKind
+                && !GlobalStates.screenLocked && (physicalOsdRequested || osd.visualResident)
+            readonly property var physicalInsets: ({left:0,top:0,right:0,bottom:0})
+            readonly property var paintInsets: physicalOsdResident ? physicalInsets : nativeInsets
             readonly property bool editorOpen: GlobalStates.abyssEditing && GlobalStates.abyssEditorTargetOutput === outputName
             onPresentedChanged: if (!presented && editorOpen) GlobalStates.abyssEditing = false
             screen: modelData
@@ -597,7 +609,7 @@ Scope {
             // switches Top -> Overlay at pointer entry, which can invalidate
             // hover just as the popup begins opening. Keep native-dialog/
             // Polkit overrides and the existing shaped input mask.
-            WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen ? WlrLayer.Bottom : PolkitService.active ? WlrLayer.Top : ((CompositorService.isNiri && window.presented) || window.editorOpen || wallpaperBody.open || (keyboardBody.open && (Config.options?.osk?.keepOnTop ?? false)) || utility.open || liquid.popupsOpen || toastBody.open || dialogBody.open || companionExtension.editing || settings.open || dashboardBody.open || controls.open || (window.fullscreenCovered && window.presented)) ? WlrLayer.Overlay : WlrLayer.Top
+            WlrLayershell.layer: GlobalStates.settingsNativeDialogOpen ? WlrLayer.Bottom : PolkitService.active ? WlrLayer.Top : (window.physicalOsdResident || (CompositorService.isNiri && window.presented) || window.editorOpen || wallpaperBody.open || (keyboardBody.open && (Config.options?.osk?.keepOnTop ?? false)) || utility.open || liquid.popupsOpen || toastBody.open || dialogBody.open || companionExtension.editing || settings.open || dashboardBody.open || controls.open || (window.fullscreenCovered && window.presented)) ? WlrLayer.Overlay : WlrLayer.Top
             WlrLayershell.keyboardFocus: !window.presented || !field.ready || GlobalStates.regionSelectorOpen || GlobalStates.settingsNativeDialogOpen || PolkitService.active || window.overviewDragging || companionExtension.curiosityOwned
                 ? WlrKeyboardFocus.None
                 : (companionExtension.editing || window.editorOpen || (utility.presented && utility.ready) || liquid.popupExclusiveFocus || (popup.presented && (popup.contentItem.item?.keyboardFocus ?? false)) || (dialogBody.presented && dialogBody.ready) || (aux.presented && aux.ready) || (wallpaperBody.presented && wallpaperBody.ready) || (clipboardBody.presented && clipboardBody.ready) || (settings.presented && settings.ready) || (dashboardBody.presented && dashboardBody.ready) || (controls.presented && controls.ready)) ? WlrKeyboardFocus.Exclusive
@@ -645,7 +657,7 @@ Scope {
                 Region { regions:corners.sidebarRegions }
                 Region { x: notification.inputBounds.x; y: notification.inputBounds.y; width: window.presented && field.ready ? notification.inputBounds.width : 0; height: notification.inputBounds.height }
                 Region { x: toastBody.inputBounds.x; y: toastBody.inputBounds.y; width: window.presented && field.ready ? toastBody.inputBounds.width : 0; height: toastBody.inputBounds.height }
-                Region { x: osd.inputBounds.x; y: osd.inputBounds.y; width: window.presented && field.ready ? osd.inputBounds.width : 0; height: osd.inputBounds.height }
+                Region { x: osd.inputBounds.x; y: osd.inputBounds.y; width: (window.presented || window.physicalOsdResident) && field.ready ? osd.inputBounds.width : 0; height: osd.inputBounds.height }
                 Region { x: dashboardBody.inputBounds.x; y: dashboardBody.inputBounds.y; width: window.presented && field.ready ? dashboardBody.inputBounds.width : 0; height: dashboardBody.inputBounds.height }
                 Region { x: controls.inputBounds.x; y: controls.inputBounds.y; width: window.presented && field.ready ? controls.inputBounds.width : 0; height: controls.inputBounds.height }
                 Region { x: settings.inputBounds.x; y: settings.inputBounds.y; width: window.presented && field.ready && !GlobalStates.settingsNativeDialogOpen ? settings.inputBounds.width : 0; height: settings.inputBounds.height }
@@ -806,7 +818,7 @@ Scope {
                 presented: window.presented
                 presentationItem: field
                 dialogHost: dialogBody
-                edgeInsets: window.nativeInsets
+                edgeInsets: window.paintInsets
                 moduleRecords: bar.visible ? bar.deformations : []
                 sourceInputRegions: bar.visible ? bar.inputRegions : []
             }
@@ -1383,13 +1395,15 @@ Scope {
                 joinedEdge: window.presentation(presentationKind).joinCorner===true
                     ? ModuleLayout.adjacentEdge({edge:edge,along:along,span:span},window.width,window.height) : ""
                 outputName: window.outputName
-                open: window.presented && field.ready && (Config.options?.enabledPanels ?? []).includes("abyssOnScreenDisplay")
+                open: (window.presented || window.physicalOsdRequested) && field.ready && (Config.options?.enabledPanels ?? []).includes("abyssOnScreenDisplay")
                     && (GlobalStates.osdVolumeOpen || GlobalStates.osdBrightnessOpen || GlobalStates.osdMicOpen || GlobalStates.osdMediaOpen || GlobalStates.osdKeyboardLayoutOpen)
                     && Geometry.targets(window.outputName,Config.options?.osd?.screenList ?? [],Quickshell.screens.map(s => s.name))
-                edgeInsets: window.bodyInsets(edge,along,span)
+                edgeInsets: window.physicalOsdResident ? window.physicalInsets : window.bodyInsets(edge,along,span)
                 padding: 12
                 span: (Geometry.horizontal(edge) ? (contentItem.item?.desiredWidth ?? Appearance.sizes.osdWidth) : (contentItem.item?.desiredHeight ?? 48))+padding*2
-                along: window.positionAlong(presentationKind,edge,span,(Geometry.horizontal(edge) ? window.width : window.height)/2-span/2)
+                along: Presentation.along(window.presentation(presentationKind),edge,span,window.width,window.height,
+                    (Geometry.horizontal(edge) ? window.width : window.height)/2-span/2,
+                    window.physicalOsdResident ? window.physicalInsets : window.nativeInsets)
                 depth: (Geometry.horizontal(edge) ? (contentItem.item?.desiredHeight ?? 48) : (contentItem.item?.desiredWidth ?? Appearance.sizes.osdWidth))+padding*2
                 source: "content/AbyssOsdContent.qml"
                 HoverHandler {
@@ -1460,9 +1474,9 @@ Scope {
                 renderScale: window.modelData?.devicePixelRatio ?? 1
                 z: -1
                 anchors.fill: parent
-                visible: window.presented
-                edgeInsets: window.nativeInsets
-                records: liquid.records
+                visible: window.presented || window.physicalOsdResident
+                edgeInsets: window.paintInsets
+                records: window.presented ? liquid.records : window.physicalOsdResident ? [osd.record] : []
                 waveTexture: liquid.waves.texture
                 waterLink: companionExtension.waterLink
             }

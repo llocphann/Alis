@@ -1,0 +1,242 @@
+{
+  "source_baseline": "889c01f3f",
+  "kind": "focused private native QML working candidate, not canonical or owner acceptance",
+  "candidate_perimeter_sha256": "df3019811c2cabbd8d7b27bb6ffbe7d853f69d9acfcbf69e2e36571262f4fbd5",
+  "before": {
+    "real_private_fullscreen": true,
+    "normal_surfaces_suppressed": true,
+    "osd_open": false,
+    "oracle": "FAIL: Volume OSD stays gated by window.presented"
+  },
+  "after": {
+    "qs_exit": 0,
+    "checks": 130,
+    "geometry": [
+      {
+        "edge": "top",
+        "actualEdge": "top",
+        "progress": 1,
+        "record": {
+          "x": 840,
+          "y": 12,
+          "width": 180,
+          "height": 48
+        },
+        "placement": {
+          "visible": true,
+          "evicted": false,
+          "along": 828,
+          "inward": 0,
+          "span": 204,
+          "depth": 72,
+          "shrunk": false,
+          "content": {
+            "x": 840,
+            "y": 12,
+            "width": 180,
+            "height": 48
+          }
+        }
+      },
+      {
+        "edge": "right",
+        "actualEdge": "right",
+        "progress": 1,
+        "record": {
+          "x": 1668,
+          "y": 527,
+          "width": 180,
+          "height": 48
+        },
+        "placement": {
+          "visible": true,
+          "evicted": false,
+          "along": 515,
+          "inward": 0,
+          "span": 72,
+          "depth": 204,
+          "shrunk": false,
+          "content": {
+            "x": 1668,
+            "y": 527,
+            "width": 180,
+            "height": 48
+          }
+        }
+      },
+      {
+        "edge": "bottom",
+        "actualEdge": "bottom",
+        "progress": 1,
+        "record": {
+          "x": 840,
+          "y": 1042,
+          "width": 180,
+          "height": 48
+        },
+        "placement": {
+          "visible": true,
+          "evicted": false,
+          "along": 828,
+          "inward": 0,
+          "span": 204,
+          "depth": 72,
+          "shrunk": false,
+          "content": {
+            "x": 840,
+            "y": 1042,
+            "width": 180,
+            "height": 48
+          }
+        }
+      },
+      {
+        "edge": "left",
+        "actualEdge": "left",
+        "progress": 1,
+        "record": {
+          "x": 12,
+          "y": 527,
+          "width": 180,
+          "height": 48
+        },
+        "placement": {
+          "visible": true,
+          "evicted": false,
+          "along": 515,
+          "inward": 0,
+          "span": 72,
+          "depth": 204,
+          "shrunk": false,
+          "content": {
+            "x": 12,
+            "y": 527,
+            "width": 180,
+            "height": 48
+          }
+        }
+      },
+      {
+        "edge": "top",
+        "actualEdge": "top",
+        "progress": 1,
+        "record": {
+          "x": 840,
+          "y": 12,
+          "width": 180,
+          "height": 48
+        },
+        "placement": {
+          "visible": true,
+          "evicted": false,
+          "along": 828,
+          "inward": 0,
+          "span": 204,
+          "depth": 72,
+          "shrunk": false,
+          "content": {
+            "x": 840,
+            "y": 12,
+            "width": 180,
+            "height": 48
+          }
+        }
+      },
+      {
+        "edge": "right",
+        "actualEdge": "right",
+        "progress": 1,
+        "record": {
+          "x": 1668,
+          "y": 527,
+          "width": 180,
+          "height": 48
+        },
+        "placement": {
+          "visible": true,
+          "evicted": false,
+          "along": 515,
+          "inward": 0,
+          "span": 72,
+          "depth": 204,
+          "shrunk": false,
+          "content": {
+            "x": 1668,
+            "y": 527,
+            "width": 180,
+            "height": 48
+          }
+        }
+      },
+      {
+        "edge": "bottom",
+        "actualEdge": "bottom",
+        "progress": 1,
+        "record": {
+          "x": 840,
+          "y": 1042,
+          "width": 180,
+          "height": 48
+        },
+        "placement": {
+          "visible": true,
+          "evicted": false,
+          "along": 828,
+          "inward": 0,
+          "span": 204,
+          "depth": 72,
+          "shrunk": false,
+          "content": {
+            "x": 840,
+            "y": 1042,
+            "width": 180,
+            "height": 48
+          }
+        }
+      },
+      {
+        "edge": "left",
+        "actualEdge": "left",
+        "progress": 1,
+        "record": {
+          "x": 12,
+          "y": 527,
+          "width": 180,
+          "height": 48
+        },
+        "placement": {
+          "visible": true,
+          "evicted": false,
+          "along": 515,
+          "inward": 0,
+          "span": 72,
+          "depth": 204,
+          "shrunk": false,
+          "content": {
+            "x": 12,
+            "y": 527,
+            "width": 180,
+            "height": 48
+          }
+        }
+      }
+    ],
+    "oracle": "PASS",
+    "covered": [
+      "volume and brightness on all four physical edges",
+      "Overlay layer with no keyboard focus",
+      "only OSD paint record, ordinary Screen Edges hidden",
+      "bounded input, rapid repeat and closing release",
+      "timeout, lock and normal attachment restoration",
+      "unrelated OSD suppression",
+      "existing disconnected-target fallback"
+    ]
+  },
+  "boundaries": {
+    "synthetic_osd_requests": true,
+    "physical_keys_audio_brightness_hardware": false,
+    "multi_output_fractional_owner_visual_acceptance": false,
+    "debug_focus_requested": false,
+    "owner_runtime_or_preferences_changed": false
+  }
+}
