@@ -14,11 +14,17 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   data loss: two tasks remain in memory and TXT, while JSON is still `[]`,
   `_jsonSaving` and the queued flag remain true. Private receipt/raw log will
   accompany the source repair; no owner files or windows were touched.
-  State: IN PROGRESS; repair actual saved/failed completion before Agenda→Todo.
-  Verify Add/Done/Unfinished/Delete, unchanged and
-  overlapping saves, failure/retry, text sync and restart; retain owner data,
-  optional backend/migration boundaries. Source repair and restart/failure
-  qualification remain open.
+  Source repair uses saved/failed completion, acknowledged no-op detection,
+  coalescing, guarded refresh and fresh write-only retry for failed cached
+  bytes. Failed changes remain in memory with error feedback; migration
+  cannot snapshot unsaved JSON. Six actual headless startup/restart processes
+  PASS77 QML checks plus independent private disk readbacks, covering
+  Add/Done/Unfinished/Delete, unchanged/overlapping saves, refresh, denied-write
+  retry, text sync and restart. Same regression fails on the unchanged
+  baseline, exit1. Facade/optional settings/feedback contracts PASS.
+  [Source hashes, original loss and all raw evidence](../../docs/evidence/abyss-product/20261012-todo-persistence/README.md).
+  State: SOURCE FIXED / OPEN for committed canonical and owner persistence;
+  Agenda→Todo may now proceed on this repaired canonical backend.
 
 - [ ] **CFG-I02 — Config migration/custom-widget injection blocks later saves — discovered/fixed in source 2026-10-11:**
   [Owner: Alis dev; priority: configuration integrity] Exact baseline

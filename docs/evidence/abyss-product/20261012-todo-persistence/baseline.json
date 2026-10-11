@@ -1,0 +1,9 @@
+{
+  "source_sha": "37461128a446c8a0a797bcc412377dc2068fb1c6",
+  "source_sha256": "268f1e1e1d30250791825d1846192f01a3c672597ddd21996b0355099fb6c694",
+  "exit_code": 0,
+  "disk_json": "[]",
+  "disk_txt": "- [ ] first private task\n- [ ] second private task\n",
+  "owner_files_changed": false,
+  "windows_opened": false
+}

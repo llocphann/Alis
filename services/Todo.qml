@@ -62,8 +62,8 @@ Singleton {
     readonly property var list: root.useObsidian ? root.obsidianBackend.list : internal.list
     readonly property bool ready: root.useObsidian ? root.obsidianBackend.ready : internal.ready
     readonly property bool busy: root.useObsidian ? root.obsidianBackend.busy : root._migrationInFlight
-    readonly property string errorMessage: root.useObsidian ? root.obsidianBackend.errorMessage : ""
-    readonly property string errorCode: root.useObsidian ? root.obsidianBackend.errorCode : ""
+    readonly property string errorMessage: root.useObsidian ? root.obsidianBackend.errorMessage : internal.errorMessage
+    readonly property string errorCode: root.useObsidian ? root.obsidianBackend.errorCode : internal.errorCode
     readonly property var capabilities: root.useObsidian
         ? root.obsidianBackend.capabilities
         : ({
@@ -71,7 +71,7 @@ Singleton {
             noteReadable: true,
             noteWritable: true,
             richMutationAvailable: false,
-            lastError: ""
+            lastError: internal.errorMessage
         })
     readonly property string sourceLabel: {
         if (!root.useObsidian)

@@ -1,0 +1,14 @@
+  INFO: Launching config: "/tmp/alis-internal-todo-yvnt3nch/shell.qml"
+  INFO: Shell ID: "f5413cb602121f3ae14dd77f80ce4f71" Path ID "f5413cb602121f3ae14dd77f80ce4f71"
+  INFO: Saving logs to "/tmp/alis-internal-todo-yvnt3nch/runtime/quickshell/by-id/7xfc5k8rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @shell.qml[11:2]: Read of /tmp/alis-internal-todo-yvnt3nch/normal-missing/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @shell.qml[10:2]: Read of /tmp/alis-internal-todo-yvnt3nch/normal-missing/todo.json failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[331:5]: Read of /tmp/alis-internal-todo-yvnt3nch/normal-missing/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[252:5]: Read of /tmp/alis-internal-todo-yvnt3nch/normal-missing/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+ ERROR qml: INTERNAL_TODO_PERSISTENCE_FAIL QtQuickTest::fail {"list":[],"saving":true,"queued":false,"busy":true} tryVerify@qrc:/qt-project.org/imports/QtTest/TestCase.qml:603
+settle@qs:@/qs/shell.qml:21
+run@qs:@/qs/shell.qml:26
+expression for onTriggered@qs:@/qs/shell.qml:63
+

@@ -1,0 +1,8 @@
+  INFO: Launching config: "/tmp/alis-todo-save-baseline-04_0tjtp/shell.qml"
+  INFO: Shell ID: "f95b8c867bcfa7affa6459adb0d2d5e2" Path ID "f95b8c867bcfa7affa6459adb0d2d5e2"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/w2vb418rmt/log.qslog"
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[331:5]: Read of /tmp/alis-todo-save-baseline-04_0tjtp/store/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[252:5]: Read of /tmp/alis-todo-save-baseline-04_0tjtp/store/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  INFO qml: TODO_BASELINE_STATE {"list":[{"content":"first private task","done":false},{"content":"second private task","done":false}],"saving":true,"queued":true,"busy":true}

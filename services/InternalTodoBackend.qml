@@ -56,16 +56,23 @@ Scope {
     // until storage is ready, then persist the latest list once.
     property bool _storageInitializing: false
 
-    // FileView emits onLoaded after setText(). Serialize canonical JSON writes
-    // so a stale self-write callback cannot rehydrate an older list while a
-    // newer UI/external-text edit is waiting to be persisted.
+    // Only saved()/saveFailed() complete a write. Reads must never replace
+    // edits while their canonical JSON is still being persisted.
     property bool _jsonSaving: false
     property bool _jsonSaveQueued: false
+    property bool _jsonSaveFailed: false
+    property bool _refreshQueued: false
+    property string _lastSavedJson: ""
+    property string _jsonWriteSnapshot: ""
+    property FileView _jsonWriter: null
+    property string errorMessage: ""
+    readonly property string errorCode: root._jsonSaveFailed ? "INTERNAL_SAVE_FAILED" : ""
 
     // Migration reads the JSON file directly. Expose whether an in-memory edit
     // is still being persisted so the facade cannot snapshot a stale revision.
     readonly property bool persistenceBusy:
         root._storageInitializing || root._jsonSaving || root._jsonSaveQueued
+            || root._jsonSaveFailed
 
     // --- Public API ---
 
@@ -132,8 +139,20 @@ Scope {
     }
 
     function refresh() {
+        if (root.persistenceBusy) {
+            root._refreshQueued = true
+            if (root._jsonSaveFailed && !root._jsonSaving)
+                root._persistAll()
+            return
+        }
         root.ready = false
         todoFileView.reload()
+    }
+
+    function retrySave() {
+        if (!root.ready) return false
+        root._persistAll()
+        return true
     }
 
     // --- Persistence helpers ---
@@ -145,8 +164,74 @@ Scope {
             root._jsonSaveQueued = true
             return
         }
+        const serialized = JSON.stringify(root.list)
+        root._jsonSaveQueued = false
+        if (!root._jsonSaveFailed && serialized === root._lastSavedJson) {
+            root._finishQueuedRefresh()
+            return
+        }
+        root._jsonWriteSnapshot = serialized
         root._jsonSaving = true
-        todoFileView.setText(JSON.stringify(root.list))
+        try {
+            // A failed setText updates FileView's cache, but not disk. An
+            // explicit retry of the same bytes needs a fresh write-only view.
+            if (todoFileView.text() === serialized) {
+                const writer = uncachedJsonWriter.createObject(root, {path: root.filePath})
+                if (!writer) throw new Error("Could not create Todo writer")
+                root._jsonWriter = writer
+                writer.setText(serialized)
+            } else {
+                todoFileView.setText(serialized)
+            }
+        } catch (error) {
+            root._finishJsonSave(String(error))
+        }
+    }
+
+    function _finishQueuedRefresh() {
+        if (root._refreshQueued && !root.persistenceBusy) {
+            root._refreshQueued = false
+            Qt.callLater(() => root.refresh())
+        }
+    }
+
+    function _finishJsonSave(error) {
+        if (!root._jsonSaving) return
+        if (error.length === 0) {
+            root._lastSavedJson = root._jsonWriteSnapshot
+            root._jsonSaveFailed = false
+            root.errorMessage = ""
+        } else {
+            root._jsonSaveFailed = true
+            root.errorMessage = "Could not save To-do. Your changes remain in memory; retry after restoring write access."
+            console.warn("[Todo] Failed to save JSON:", error)
+        }
+        root._jsonSaving = false
+        if (error.length === 0 && root._jsonSaveQueued) {
+            // Keep the queued flag until the follow-up starts: migration must
+            // not observe a false idle interval with an older disk revision.
+            Qt.callLater(() => root._saveJson())
+        } else {
+            root._jsonSaveQueued = false
+            root._finishQueuedRefresh()
+        }
+    }
+
+    function _finishUncachedSave(writer, error) {
+        if (root._jsonWriter === writer) {
+            root._jsonWriter = null
+            root._finishJsonSave(error)
+        }
+        writer.destroy()
+    }
+
+    Component {
+        id: uncachedJsonWriter
+        FileView {
+            preload: false
+            onSaved: root._finishUncachedSave(this, "")
+            onSaveFailed: error => root._finishUncachedSave(this, String(error))
+        }
     }
 
     function _persistAll() {
@@ -253,14 +338,7 @@ Scope {
         id: todoFileView
         path: Qt.resolvedUrl(root.filePath)
         onLoaded: {
-            if (root._jsonSaving) {
-                root._jsonSaving = false
-                if (root._jsonSaveQueued) {
-                    root._jsonSaveQueued = false
-                    Qt.callLater(() => root._saveJson())
-                }
-                return
-            }
+            if (root.persistenceBusy) return
 
             const fileContents = todoFileView.text()
             try {
@@ -270,11 +348,14 @@ Scope {
                 root.list = []
             }
             root.ready = true
+            root._lastSavedJson = fileContents
             _log("[Todo] JSON loaded,", root.list.length, "tasks")
             // Generate txt mirror from loaded JSON, then unlock after settling
             root._writeTxt()
             startupUnlock.start()
         }
+        onSaved: root._finishJsonSave("")
+        onSaveFailed: error => root._finishJsonSave(String(error))
         onLoadFailed: (error) => {
             if (error == FileViewError.FileNotFound) {
                 console.log("[Todo] JSON not found, creating new file.")

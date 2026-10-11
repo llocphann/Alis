@@ -1,0 +1,18 @@
+{
+  "baseline_sha": "37461128a446c8a0a797bcc412377dc2068fb1c6",
+  "source_state": "working tree at c9630c2b1; Todo source candidate only",
+  "source_files": {
+    "services/InternalTodoBackend.qml": "c2c6bf26327cba2910b8533d92ade34a8c33ee8e4a1bee5b375f1c3bf9fe4b5f",
+    "services/Todo.qml": "7f32001b3962eb4fe945a1f9a23baeca757ebed062b47629df29b51e0e07edcd",
+    "scripts/test-internal-todo-persistence-runtime.py": "2c90f43c8ce42aa515af19ab3acaddb94e1865e4effb8408f88983384a79a399"
+  },
+  "baseline_oracle_exit_code": 1,
+  "focused_exit_code": 0,
+  "actual_headless_processes": 6,
+  "qml_checks": 77,
+  "disk_readbacks": 6,
+  "owner_data_changed": false,
+  "windows_opened": false,
+  "canonical_current_candidate": "NOT_RUN",
+  "owner_acceptance": "OPEN"
+}
