@@ -18,8 +18,10 @@ FocusScope {
     property bool autoDismissOnIdle: true
     property bool triggerHovered: false
     property int idleDismissDelay: 650
-    implicitWidth: 380
-    implicitHeight: 500
+    // The connection lists already scroll; keep their usable controls while
+    // shortening the attached tray popup to ~2/3 of its previous size.
+    implicitWidth: 260
+    implicitHeight: 330
     property alias dialog: form.item
     readonly property bool editorFocusHeld: root.activeFocus && root.Window.active
         && PopupFocus.editableDescendant(root.Window.window?.activeFocusItem, root)

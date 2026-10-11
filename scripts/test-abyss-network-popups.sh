@@ -98,7 +98,7 @@ ShellRoot {
             property bool triggerHovered: true
             identity: "networkPopup"; outputName: "network-test"; controller: controller
             edgeInsets: controller.edgeInsets
-            edge: "top"; along: 100; span: 408; depth: 528
+            edge: "top"; along: 100; span: 288; depth: 358
             stableContentSize: true; largeSurface: true
             source: Qt.resolvedUrl("modules/abyss/content/AbyssPopupContent.qml")
             contentKind: "wifi"
@@ -121,7 +121,7 @@ ShellRoot {
             } else if(root.step===1 || root.step===3) {
                 const popup=body.contentItem.item,network=popup?.feature,form=network?.dialog
                 if(network) network.autoDismissOnIdle=false
-                if(!root.check(body.ready && body.inputBounds.width>0 && popup.desiredWidth===380 && popup.desiredHeight===500,"bounded network popup content loads")) return
+                if(!root.check(body.ready && body.inputBounds.width>0 && popup.desiredWidth===260 && popup.desiredHeight===330,"bounded network popup content loads")) return
                 if(!root.check(form?.show && form.effectiveEmbedded && !form.liquidHosted && controller.activeDialog===null,"mature form reuses the popup rather than acquiring a dialog host")) return
                 if(!root.check(form.showEmbeddedFooter===false,"System Tray embedding removes the Done/Details footer")) return
                 if(!root.check(root.visibleText(form,root.step===1 ? "Connect to Wi-Fi" : "Bluetooth devices"),"mature connection title is visible with nonzero text bounds and alpha")) return
@@ -135,7 +135,7 @@ ShellRoot {
                 if(network) network.autoDismissOnIdle=false
             } else if(root.step===4) {
                 if(!root.check(root.dismissed===1 && !body.open && body.inputBounds.width===0,"dismissal releases the existing host and input")) return
-                body.edge="right";body.span=528;body.depth=408;body.open=true
+                body.edge="right";body.span=358;body.depth=288;body.open=true
             } else if(root.step===5) {
                 if(!root.check(body.inputBounds.x>=0 && body.inputBounds.y>=0 && body.inputBounds.x+body.inputBounds.width<=960 && body.inputBounds.y+body.inputBounds.height<=720,"popup can move to a vertical Edge")) return
                 body.contentItem.item.enabled=false
