@@ -58,9 +58,11 @@ Singleton {
             || label.includes("calendar"))
         const index = root.pageIndexForKey(integration ? "integrations" : key)
         if (index < 0) return false
-        root.navigateRequested(index, root.abyssFamily && !section
-            ? ({"shell-layout":"surface",bar:"bar"}[key] ?? "")
-            : String(section ?? ""))
+        const route = FamilyPolicy.settingsRoute(Config.options?.panelFamily, index,
+            root.abyssFamily && !section
+                ? ({"shell-layout":"surface",bar:"bar"}[key] ?? "")
+                : String(section ?? ""))
+        root.navigateRequested(route.pageIndex, route.section)
         return true
     }
     property bool _legacyTlpPowerRedirectPending: false

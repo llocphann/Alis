@@ -122,10 +122,12 @@ def main() -> None:
         ("Services", services, 'Config.setNestedValue("bar.modules.weather"'),
     ):
         forbid(source, token, path)
+    # SET-R01 retires visible pure redirects; canonical route/search APIs stay.
     for path, source in (("Quick", quick), ("Modules", modules),
-                         ("System", system), ("Sidebars", sidebars),
-                         ("Services", services)):
-        require(source, "SettingsPageRegistry.navigateToKey(", path)
+                         ("System", system), ("Sidebars", sidebars)):
+        forbid(source, "SettingsPageRegistry.navigateToKey(", path)
+    require(services, 'SettingsPageRegistry.navigateToKey("integrations",section)',
+            "legacy Services search delegation")
     require(data, "pageIndex: 4, pageName: root.pages[4].name,\n"
                   '            section: Translation.tr("Typography"),',
             "scale search destination")

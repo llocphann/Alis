@@ -53,6 +53,22 @@ Window {
    check(SettingsPageRegistry.navigateToKey("integrations","Calendar Sync"),"integration deep link is unreachable")
    tryVerify(()=>overlay.pageHost?.currentIndex===38 && overlay.pageHost?.currentItem?.activeSection==="calendar",7000)
    check(overlay.navGroup==="apps","deep link did not reveal its parent")
+   check(SettingsPageRegistry.navigateToKey("modules","Modules"),"legacy Modules route is unreachable")
+   tryVerify(()=>overlay.pageHost?.currentIndex===34 && overlay.pageHost?.currentItem?.activeSection==="modules",7000)
+   check(SettingsPageRegistry.navigateToKey("modules","panels"),"Shell availability route is unreachable")
+   tryVerify(()=>overlay.pageHost?.currentIndex===10 && overlay.pageHost?.currentItem?.settingsTaskNavigator!==null,7000)
+   const modulePage=overlay.pageHost.currentItem
+   check(!modulePage.settingsTaskNavigator.options.some(option=>option.value==="modules"),
+         "Abyss retained an empty redirect-only Modules sub-tab")
+   modulePage.activeSection="modules"
+   check(modulePage.activeSection==="panels","old module selection exposes an empty tab")
+   Config.setNestedValue("panelFamily","waffle");wait(100)
+   check(modulePage.settingsTaskNavigator.options.some(option=>option.value==="modules"),
+         "Waffle lost its real module controls")
+   modulePage.activeSection="modules"
+   check(modulePage.activeSection==="modules","Waffle module selection was incorrectly redirected")
+   Config.setNestedValue("panelFamily","abyss");wait(100)
+   check(modulePage.activeSection==="panels","family switch retained the empty Abyss module tab")
    check(SettingsPageRegistry.navigateToKey("services","To-do & Quick Notes"),"legacy Services deep link is unreachable")
    tryVerify(()=>overlay.pageHost?.currentIndex===38 && overlay.pageHost?.currentItem?.activeSection==="obsidian",7000)
    overlay.pageHost.currentItem.activateSettingsSearchSection("To-do & Quick Notes")

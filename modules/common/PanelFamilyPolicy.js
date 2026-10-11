@@ -44,6 +44,8 @@ function settingsRoute(family, index, section) {
     var tabs={waves:32,spectrum:32,interaction:32,modules:34,bar:34,dock:22,sidebars:23,popups:33};
     if (index === 2 && tabs[value.toLowerCase()])
         return {pageIndex:tabs[value.toLowerCase()],section:value};
+    if (index === 10 && ["modules", "bar modules"].includes(value.toLowerCase().trim()))
+        return {pageIndex:34,section:"modules"};
     if (index === 10 && value.toLowerCase() === "abyss")
         return {pageIndex:2,section:"surface"};
     return {pageIndex:index,section:value};

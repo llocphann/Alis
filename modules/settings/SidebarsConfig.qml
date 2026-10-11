@@ -130,18 +130,6 @@ ContentPage {
                 title: Translation.tr("Left Sidebar")
                 tooltip: Translation.tr("Choose which tabs appear in the left sidebar")
 
-                RippleButtonWithIcon {
-                    Layout.fillWidth: true
-                    materialIcon: "neurology"
-                    mainText: Translation.tr("AI Chat") + " · "
-                        + ((Config.options?.policies?.ai ?? 0) === 0
-                            ? Translation.tr("Off") : Translation.tr("On"))
-                    onClicked: SettingsPageRegistry.navigateToKey("ai", "Privacy")
-                    StyledToolTip {
-                        text: Translation.tr("Configure AI availability in AI → Privacy")
-                    }
-                }
-
                 SettingsSwitch {
                     buttonIcon: "translate"
                     text: Translation.tr("Translator")
@@ -149,18 +137,6 @@ ContentPage {
                     onCheckedChanged: Config.setNestedValue("sidebar.translator.enable", checked)
                     StyledToolTip {
                         text: Translation.tr("Translate text between languages")
-                    }
-                }
-
-                RippleButtonWithIcon {
-                    Layout.fillWidth: true
-                    materialIcon: "bookmark_heart"
-                    mainText: Translation.tr("Anime") + " · "
-                        + ((Config.options?.policies?.weeb ?? 0) === 0
-                            ? Translation.tr("Off") : Translation.tr("On"))
-                    onClicked: SettingsPageRegistry.navigateToKey("system", "Policies")
-                    StyledToolTip {
-                        text: Translation.tr("Configure content visibility in System → Safety")
                     }
                 }
 

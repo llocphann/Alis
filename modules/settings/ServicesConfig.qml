@@ -916,19 +916,6 @@ ContentPage {
                 onCheckedChanged: Config.setNestedValue("bar.weather.enable", checked)
             }
 
-            RippleButtonWithIcon {
-                Layout.fillWidth: true
-                visible: Config.options?.panelFamily !== "waffle"
-                materialIcon: "view_timeline"
-                mainText: Translation.tr("Bar weather module") + " · "
-                    + ((Config.options?.bar?.modules?.weather ?? false)
-                        ? Translation.tr("On") : Translation.tr("Off"))
-                onClicked: SettingsPageRegistry.navigateToKey("bar", "Modules")
-                StyledToolTip {
-                    text: Translation.tr("Visibility is configured in Bar → Modules")
-                }
-            }
-
             SettingsSwitch {
                 buttonIcon: "visibility_off"
                 text: Translation.tr("Hide weather location")
@@ -1073,11 +1060,4 @@ ContentPage {
         }
     }
 
-    SettingsCardSection {
-        visible:root.activeSection === "data"
-        title:Translation.tr("Third-party integrations")
-        SettingsGroup {
-            RippleButton {Layout.fillWidth:true;implicitHeight:44;onClicked:SettingsPageRegistry.navigateToKey("integrations","");contentItem:StyledText {text:Translation.tr("Obsidian, Calendar and Music Recognition");color:Appearance.colors.colPrimary}}
-        }
-    }
 }

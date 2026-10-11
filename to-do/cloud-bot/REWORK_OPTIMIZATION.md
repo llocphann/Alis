@@ -664,8 +664,25 @@ run privileged installation just because manual buttons are retired.
   Acceptance: Settings route inventory with action-by-action decisions,
   no unnecessary cross-tab button remaining, keyboard/Back/Escape,
   Settings search, saved page selection, themes and both shell families
-  passing focused and native owner UI checks. State: OPEN for
-  inventory/removal; no code changes yet.
+  passing focused and native owner UI checks. **Audit 2026-10-12:** twelve
+  core pure redirect buttons are identified in Modules/Quick/Interface/
+  System/Sidebars/Services, plus one in Alis-Companion (13 total).
+  Services' old search delegation is compatibility,
+  not a visible button. Opaque Material actually applies values and stays;
+  reload/Open config/Shortcuts/floating tools/install/calendar actions stay.
+  Remove empty redirect wrappers, hide Abyss' now-empty Modules sub-tab while
+  retaining real Waffle module controls and canonical/legacy routes.
+  **Source/focused native 2026-10-12:** all 13 pure redirects and empty wrappers
+  removed. Legacy Abyss page10 Modules routes map to canonical page34; direct
+  stale selection/family change reconciles Panels. Real Waffle Modules remain.
+  Five source/behavior checks and actual private-Niri navigation PASS exit0:
+  pointer parent/child/Back, legacy search/deep links, family switch, order
+  editor and standalone Abyss/Waffle. Companion source is
+  `7ba1529ccf1f3f5b2940883f7e83777230b89018`, selected package check PASS1/0/0;
+  Integration `7c3623da5cf8741a0b82cb4d3d8054017dfa99d0` has no pure redirect.
+  [Action inventory, hashes and native evidence](../../docs/evidence/abyss-product/20261012-settings-redirect/README.md).
+  State: SOURCE IMPLEMENTED / OPEN for committed canonical, owner both-theme
+  UI/keyboard/Escape, saved selection and physical/multi-output acceptance.
 
 - [ ] **INT-R01 — Move TLP and Thinkfan Settings into Integrations → Settings:**
   [Owners: Alis dev host + Alis-Intergration main optional views]

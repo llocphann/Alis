@@ -41,7 +41,6 @@ ContentPage {
         return (Config.options?.enabledPanels ?? []).includes("iiOverlay")
     }
 
-
     function openFloatingTools(): void {
         GlobalStates.settingsOverlayOpen = false
         GlobalStates.overlayOpen = true
@@ -59,14 +58,6 @@ ContentPage {
                 Layout.fillWidth: true
                 materialIcon: "info"
                 text: Translation.tr("Floating image and widgets panel (Super+G)")
-            }
-
-
-            RippleButtonWithIcon {
-                Layout.fillWidth: true
-                materialIcon: "extension"
-                mainText: Translation.tr("Manage availability in Shell & interface")
-                onClicked: SettingsPageRegistry.navigateToKey("modules", "panels")
             }
 
             RippleButtonWithIcon {
@@ -2210,7 +2201,5 @@ ContentPage {
             }
         }
     }
-
-
 
 }

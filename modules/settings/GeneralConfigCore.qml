@@ -100,17 +100,6 @@ ContentPage {
                 Layout.alignment: Qt.AlignTop
 
                 ContentSubsection {
-                    title: Translation.tr("AI")
-
-                    RippleButtonWithIcon {
-                        Layout.fillWidth: true
-                        materialIcon: "neurology"
-                        mainText: Translation.tr("AI privacy settings")
-                        onClicked: SettingsPageRegistry.navigateToKey("ai", "Privacy")
-                    }
-                }
-
-                ContentSubsection {
                     title: Translation.tr("Weeb")
                     tooltip: Translation.tr("Control anime content visibility")
                     ConfigSelectionArray {

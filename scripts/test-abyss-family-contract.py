@@ -26,6 +26,12 @@ for (const [section,pageIndex] of [['waves',32],['spectrum',32],['popups',33],['
 }
 assert.deepEqual(settingsRoute('abyss',10,'panels'),{pageIndex:10,section:'panels'});
 assert.deepEqual(settingsRoute('abyss',10,'abyss'),{pageIndex:2,section:'surface'});
+for (const section of ['modules','Modules','bar modules',' Bar modules ']) {
+    assert.deepEqual(settingsRoute('abyss',10,section),{pageIndex:34,section:'modules'});
+    assert.deepEqual(settingsRoute('waffle',10,section),{pageIndex:10,section});
+}
+for (const section of ['panels','terminal','interface','Shell Modules','unknown'])
+    assert.deepEqual(settingsRoute('abyss',10,section),{pageIndex:10,section});
 let result = ensure('abyss', abyssPanels, ['iiLock'], ['iiCheatsheet'], ['ii']);
 assert(result.enabled.includes('abyssPerimeter'));
 assert(!result.enabled.includes('iiCheatsheet')); // shared disabled preference

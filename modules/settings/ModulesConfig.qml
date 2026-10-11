@@ -77,6 +77,14 @@ ContentPage {
 
     property string activeSection: "panels"
 
+    function reconcileActiveSection(): void {
+        if (modulesPage.isAbyss && modulesPage.activeSection === "modules")
+            modulesPage.activeSection = "panels"
+    }
+    onActiveSectionChanged: reconcileActiveSection()
+    onIsAbyssChanged: reconcileActiveSection()
+    Component.onCompleted: reconcileActiveSection()
+
     SettingsTaskNavigator {
         icon: "extension"
         title: "Shell & interface"
@@ -89,7 +97,7 @@ ContentPage {
             { displayName: Translation.tr("Terminal"), icon: "terminal", value: "terminal" },
             { displayName: Translation.tr("Modules"), icon: "dashboard", value: "modules" },
             { displayName: Translation.tr("Interface"), icon: "tune", value: "interface" }
-        ]
+        ].filter(option => option.value !== "modules" || !modulesPage.isAbyss)
     }
 
     SettingsCardSection {
@@ -847,22 +855,6 @@ ContentPage {
     }
 
     SettingsCardSection {
-        settingsTaskSection: "modules"
-        visible: modulesPage.isAbyss && modulesPage.activeSection === "modules"
-        expanded: true
-        icon: "widgets"
-        title: "Bar modules"
-        SettingsGroup {
-            RippleButtonWithIcon {
-                Layout.fillWidth: true
-                materialIcon: "open_in_new"
-                mainText: "Configure Bar modules"
-                onClicked: SettingsPageRegistry.navigateToKey("abyss-modules", "modules")
-            }
-        }
-    }
-
-    SettingsCardSection {
         settingsTaskSection: "interface"
         visible: modulesPage.activeSection === "interface"
         expanded: true
@@ -875,12 +867,6 @@ ContentPage {
                 text: Translation.tr("Current UI scale: %1%").arg(
                     Math.round((Config.options?.appearance?.typography?.sizeScale ?? 1.0) * 100))
                 color: Appearance.colors.colOnSurfaceVariant
-            }
-            RippleButtonWithIcon {
-                Layout.fillWidth: true
-                materialIcon: "text_format"
-                mainText: Translation.tr("Open Typography settings")
-                onClicked: SettingsPageRegistry.navigateToKey("themes", "Typography")
             }
         }
     }

@@ -34,7 +34,7 @@ for token in (
 
 assert 'Config.setNestedValue("enabledPanels"' not in interface
 assert 'Config.setNestedValue("enabledPanels"' in modules
-assert 'SettingsPageRegistry.navigateToKey("modules", "panels")' in interface
+assert "SettingsPageRegistry.navigateToKey(" not in interface
 
 palette_search='''pageIndex: 4, pageName: root.pages[4].name,
             section: Translation.tr("Color Themes"),

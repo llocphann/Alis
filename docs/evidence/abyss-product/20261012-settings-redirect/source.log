@@ -1,0 +1,10 @@
+test-settings-information-architecture.py exit=0
+Settings v11 information architecture, routing and ownership: OK
+test-settings-ownership-cleanup.py exit=0
+PASS: duplicate Settings controls have one canonical owner
+test-p0-settings-navigation-contract.py exit=0
+PASS: P0 Settings routes, Screen Edge discoverability and Fan Control ownership
+test-abyss-family-contract.py exit=0
+ok - family cycle/migration/isolation, shared IPC, settings routes and output selection
+test-settings-navigation-behavior.py exit=0
+PASS: adjacent tab moves, boundary no-ops, deduplication, hidden-page restore and persisted navigation

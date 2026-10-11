@@ -1,0 +1,42 @@
+{
+  "task": "SET-R01",
+  "host_base_sha": "ed48ca3b673c73f3804c55d4ea83955ded2ad8b9",
+  "source_identity": "precommit candidate pinned by file SHA256",
+  "source_sha256": {
+    "modules/common/PanelFamilyPolicy.js": "bea3a6051b2703c27959688a6d0a12827e73b8009e26b46b0294c10aa601254d",
+    "modules/settings/GeneralConfigCore.qml": "89d6ed78bb9f97b37f530f6b9b79c05921c4dbb6229498828e86dcc465ba0ca9",
+    "modules/settings/InterfaceConfig.qml": "24aea95d7292e6dcb01d2690395dfa6b351e562a3dc0e8603cafb072cdbede41",
+    "modules/settings/ModulesConfig.qml": "670773f65ad149a54fda5f33d94baa458ea0c53644bf827397129e43d14e2e18",
+    "modules/settings/QuickConfig.qml": "219853d8995bd93599a8e95a5c2183250500f1b43a269a068417d6978669b7bf",
+    "modules/settings/ServicesConfig.qml": "2e93dd5d20c821454793a147c469e2f313254cc633a9da5e3f41e623b5f9c0d6",
+    "modules/settings/SettingsPageRegistry.qml": "a35c773f54aa33603a6986070aae18f3b659e33b82a9de555bed705e125e8e5a",
+    "modules/settings/SidebarsConfig.qml": "ad712a7eb2472660b00f62a71c4e02fefe6adbf2eb58c406606be1bc3efba074",
+    "scripts/test-abyss-family-contract.py": "a90f8294bf19ab921c1feec079c50051a9ddf6de1e406b9ce3548f9c40fd4811",
+    "scripts/test-settings-hierarchy-runtime.py": "7377ea1b185985c2761de0ccaed7662c2ae9c52af7ee64d07d45fe1ecfc6e6fb",
+    "scripts/test-settings-information-architecture.py": "e9d806ae6a19abd07c633f5f003fa89240e096d43fc3660b31b4c2d78025555d",
+    "scripts/test-settings-ownership-cleanup.py": "47a29351e874c5a232d47c273d63d459e6ea0090cbaa4a2f60b639384fa1db3e"
+  },
+  "companion_source_sha": "7ba1529ccf1f3f5b2940883f7e83777230b89018",
+  "integration_audited_sha": "7c3623da5cf8741a0b82cb4d3d8054017dfa99d0",
+  "removed_pure_buttons": 13,
+  "core_removed": 12,
+  "companion_removed": 1,
+  "source_checks": {
+    "tests": 5,
+    "result": "PASS",
+    "exit_code_each": 0
+  },
+  "native": {
+    "test": "test-settings-hierarchy-runtime.py",
+    "result": "PASS",
+    "exit_code": 0,
+    "private_niri": true,
+    "actual_qt_pointer_navigation": true,
+    "back_and_legacy_search": true,
+    "abyss_waffle_and_standalone": true
+  },
+  "canonical": "PENDING on committed milestone",
+  "owner_ui": "OPEN: both themes, keyboard/Escape, persisted selection, physical/multi-output",
+  "owner_config_changed": false,
+  "recorded_at": "2026-10-11T17:26:24.339967+00:00"
+}
