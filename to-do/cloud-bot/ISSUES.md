@@ -939,7 +939,18 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   start/stop. Don't create transparent interception zones or accidentally
   end recording. Cross-reference the existing Recording presentation item
   in REWORK_OPTIMIZATION.md; avoid a duplicate feature item.
-  State: OPEN; native UI/interaction test and owner acceptance pending.
+  **Source repair 2026-10-11:** minimized Recording now has a 14x14 resting
+  footprint with one 8px dot; the timer, Stop/audio/drag/expand controls remain
+  hidden until hover. Hover peeks without changing the persistent collapsed
+  choice; Expand/Minimize actions set that choice explicitly. Auto-hide keeps
+  the minimized dot available, and active drag keeps expanded controls resident.
+  Keyboard Space/Return and accessibility press can expand the focused dot.
+  `scripts/test-recording-abyss-runtime.py` passes actual native four-Edge
+  minimize/leave/hover/expand/keyboard, timer, mute, auto-hide, drag, Stop,
+  lock/output teardown and retained ii/Waffle cases (exit 0). Recording and
+  audio backends are fixtures; no owner recording/session was changed.
+  State: OPEN for final exact-SHA canonical, fractional/multi-output and
+  owner desktop visual/input acceptance; focused source interactions pass.
 
 - [ ] **New boot/runtime warnings:** owner's log runs `0ea54cc09` and reaches
   the first frame; no startup Type-unavailable failure is shown. Investigate

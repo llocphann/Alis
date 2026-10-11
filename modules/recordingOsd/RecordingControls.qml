@@ -15,12 +15,27 @@ Item {
     property real dragHeight: 0
     readonly property bool vertical: owner.isVertical
     readonly property bool connected: owner.embeddedMode
-    implicitWidth: controls.implicitWidth
-    implicitHeight: controls.implicitHeight
+    implicitWidth: owner.controlsExpanded ? controls.implicitWidth : 14
+    implicitHeight: owner.controlsExpanded ? controls.implicitHeight : 14
+
+    Item {
+        objectName: "recordingMinimizedDot"
+        anchors.centerIn: parent
+        width: 14; height: 14
+        visible: !root.owner.controlsExpanded
+        activeFocusOnTab: true
+        Accessible.role: Accessible.Button
+        Accessible.name: Translation.tr("Expand controls")
+        Accessible.onPressAction: root.owner.expandControls()
+        Keys.onReturnPressed: root.owner.expandControls()
+        Keys.onSpacePressed: root.owner.expandControls()
+        RecordingDot { anchors.centerIn: parent }
+    }
 
     GridLayout {
         id: controls
         anchors.centerIn: parent
+        visible: root.owner.controlsExpanded
         columns: root.vertical ? 1 : 7
         rowSpacing: 2
         columnSpacing: 2
@@ -130,7 +145,7 @@ Item {
             tooltip: Translation.tr("Stop recording")
         }
         Rectangle {
-            visible: !root.owner.collapsed && root.owner.audioMode !== "none"
+            visible: root.owner.audioMode !== "none"
             Layout.preferredWidth: root.vertical ? 22 : 1
             Layout.preferredHeight: root.vertical ? 1 : 22
             Layout.alignment: Qt.AlignCenter
@@ -139,7 +154,7 @@ Item {
         }
         OsdButton {
             objectName: "recordingSystemAudio"
-            visible: !root.owner.collapsed && root.owner.usesSystemAudio
+            visible: root.owner.usesSystemAudio
             iconName: root.owner.audioService.sink?.audio?.muted ? "volume_off" : "volume_up"
             dimmed: root.owner.audioService.sink?.audio?.muted ?? false
             onClicked: root.owner.audioService.toggleMute()
@@ -147,7 +162,7 @@ Item {
         }
         OsdButton {
             objectName: "recordingMicrophone"
-            visible: !root.owner.collapsed && root.owner.usesMicrophone
+            visible: root.owner.usesMicrophone
             iconName: root.owner.audioService.micMuted ? "mic_off" : "mic"
             dimmed: root.owner.audioService.micMuted
             onClicked: root.owner.audioService.toggleMicMute()
@@ -156,7 +171,10 @@ Item {
         OsdButton {
             objectName: "recordingCollapse"
             iconName: root.owner.collapsed ? "open_in_full" : "close_fullscreen"
-            onClicked: root.owner.collapsed = !root.owner.collapsed
+            onClicked: {
+                if (root.owner.collapsed) root.owner.expandControls()
+                else root.owner.minimizeControls()
+            }
             tooltip: root.owner.collapsed ? Translation.tr("Expand controls") : Translation.tr("Minimize")
         }
     }
@@ -164,7 +182,7 @@ Item {
         width: 8; height: 8; radius: 4
         color: Appearance.colors.colError
         SequentialAnimation on opacity {
-            running: root.owner.recordingStatus.isRecording && root.owner.presentationVisible
+            running: Appearance.animationsEnabled && root.owner.recordingStatus.isRecording && root.owner.presentationVisible
                 && root.owner.revealed && parent.visible
             loops: Animation.Infinite
             NumberAnimation { to: .2; duration: 800; easing.type: Easing.InOutSine }
@@ -177,6 +195,7 @@ Item {
         property string tooltip: ""
         property bool dimmed: false
         property bool filled: false
+        buttonText: tooltip
         property color iconColor: Appearance.colors.colOnLayer2
         Layout.preferredWidth: 30
         Layout.preferredHeight: 30

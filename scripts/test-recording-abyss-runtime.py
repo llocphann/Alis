@@ -116,9 +116,31 @@ ShellRoot {
     click("recordingSystemAudio");check(!systemAudio.muted,"system audio did not unmute")
     click("recordingMicrophone");check(audio.micMuted,"mic did not mute")
     click("recordingMicrophone");check(!audio.micMuted,"mic did not unmute")
-    const span=body.span;click("recordingCollapse");settle()
-    check(body.recorder.collapsed && body.span<span && !find(body.recorder.controls,"recordingSystemAudio"),"collapse lost compact geometry")
-    click("recordingCollapse");settle();check(!body.recorder.collapsed,"expand failed")
+    const span=body.span;click("recordingCollapse")
+    check(body.recorder.collapsed,"Minimize did not persist its choice")
+    mouseMove(scene,80,80);settle()
+    let dot=find(body.recorder.controls,"recordingMinimizedDot")
+    check(dot && body.span<span && body.recorder.controls.width===14 && body.recorder.controls.height===14,
+      "Minimize did not retain a small dot-only footprint on "+edge)
+    for(const name of ["recordingTimer","recordingStop","recordingSystemAudio","recordingMicrophone","recordingDragHandle","recordingCollapse"])
+     check(!find(body.recorder.controls,name),"minimized mode exposed "+name)
+    Config.setNestedValue("screenRecord.recordingOsd.autoHide",true);wait(2300)
+    check(body.open && body.recorder.revealed && !body.recorder.controlsExpanded,
+      "auto-hide removed the minimized recording dot")
+    mouseMove(dot,dot.width/2,dot.height/2)
+    tryVerify(()=>body.recorder.controlsExpanded,2000);settle()
+    check(body.recorder.collapsed && !find(body.recorder.controls,"recordingMinimizedDot")
+      && find(body.recorder.controls,"recordingSystemAudio") && find(body.recorder.controls,"recordingStop"),
+      "dot hover did not temporarily reveal all controls")
+    click("recordingCollapse");check(!body.recorder.collapsed,"Expand controls did not persist expanded mode")
+    Config.setNestedValue("screenRecord.recordingOsd.autoHide",false)
+    mouseMove(scene,80,80);settle()
+    check(body.recorder.controlsExpanded && find(body.recorder.controls,"recordingStop"),"explicit expansion collapsed on leave")
+    click("recordingCollapse");mouseMove(scene,80,80);settle()
+    dot=find(body.recorder.controls,"recordingMinimizedDot")
+    check(dot,"second minimization lost its recovery dot")
+    dot.forceActiveFocus();keyClick(Qt.Key_Space);settle()
+    check(!body.recorder.collapsed && body.recorder.controlsExpanded,"keyboard could not expand the minimized recording dot")
     const rect=body.targetRecord.content
     const hx=edge==="left"?body.edgeInsets.left+2:edge==="right"?scene.width-body.edgeInsets.right-2:rect.x+rect.width/2
     const hy=edge==="top"?body.edgeInsets.top+2:edge==="bottom"?scene.height-body.edgeInsets.bottom-2:rect.y+rect.height/2

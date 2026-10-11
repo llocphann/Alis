@@ -26,6 +26,9 @@ Scope {
     property bool revealed: true
     property bool controlsHovered: false
     readonly property bool osdTargetHovered: controlsHovered || connectionHovered
+    property bool draggingControls: false
+    // Minimized is a persistent choice; hovering only peeks at the controls.
+    readonly property bool controlsExpanded: !collapsed || osdTargetHovered || draggingControls
     readonly property Item controls: controlsLoader.item
     readonly property var nativeWindow: osdLoader.item
     signal dragStarted()
@@ -53,8 +56,15 @@ Scope {
         if (autoHide) startHideTimer()
         else { hideTimer.stop(); revealed = true }
     }
+    onCollapsedChanged: {
+        hideTimer.stop()
+        revealed = true
+        if (!collapsed) startHideTimer()
+    }
+    function expandControls(): void { root.collapsed = false; root.revealed = true }
+    function minimizeControls(): void { root.collapsed = true; root.revealed = true }
     function startHideTimer(): void {
-        if (autoHide && !osdTargetHovered && recordingStatus.isRecording)
+        if (autoHide && !collapsed && !osdTargetHovered && !draggingControls && recordingStatus.isRecording)
             hideTimer.restart()
     }
     function formatTime(totalSeconds: int): string {
@@ -72,12 +82,20 @@ Scope {
             root.recordingStatus.scheduleQuickCheck()
         }
     }
-    onDragStarted: if (nativeWindow) nativeWindow.pill.animatePosition = false
-    onDragFinished: if (nativeWindow) nativeWindow.snapToNearestEdge()
+    onDragStarted: {
+        draggingControls = true
+        hideTimer.stop()
+        if (nativeWindow) nativeWindow.pill.animatePosition = false
+    }
+    onDragFinished: {
+        draggingControls = false
+        if (nativeWindow) nativeWindow.snapToNearestEdge()
+        startHideTimer()
+    }
     Connections {
         target: root.recordingStatus
         function onIsRecordingChanged(): void {
-            if (!root.recordingStatus.isRecording) { hideTimer.stop(); return }
+            if (!root.recordingStatus.isRecording) { hideTimer.stop(); root.draggingControls = false; return }
             root.collapsed = false
             if (!root.embeddedMode) root.isVertical = false
             root.revealed = true
@@ -88,7 +106,7 @@ Scope {
     Timer {
         id: hideTimer
         interval: 2000
-        onTriggered: if (root.autoHide && !root.osdTargetHovered) root.revealed = false
+        onTriggered: if (root.autoHide && !root.collapsed && !root.osdTargetHovered && !root.draggingControls) root.revealed = false
     }
     Loader {
         id: controlsLoader
@@ -241,7 +259,7 @@ Scope {
     IpcHandler {
         target: "recordingOsd"
         function toggle(): void { if (root.recordingStatus.isRecording) root.stopRecording() }
-        function show(): void { root.collapsed = false; root.revealed = true; root.startHideTimer() }
-        function hide(): void { root.collapsed = true; if (root.autoHide) root.revealed = false }
+        function show(): void { root.expandControls(); root.startHideTimer() }
+        function hide(): void { root.minimizeControls() }
     }
 }
