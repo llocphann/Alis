@@ -13,6 +13,7 @@ import QtQuick
 import QtQuick.Controls
 import QtTest
 import Quickshell
+import Quickshell.Io
 import qs
 import qs.modules.common
 import qs.services
@@ -21,6 +22,9 @@ import qs.modules.settings
 ShellRoot {
  id: root
  property int captures: 0
+ property int checks:0
+ property string action:Quickshell.env("MUSIC_SCROLL_ACTION")
+ FileView {id:disk;path:Config.filePath;property var snapshot:null;onLoaded:{try{snapshot=JSON.parse(text())}catch(error){snapshot=null}}}
  Component.onCompleted: Quickshell.watchFiles=false
  QtObject {
   id: fake
@@ -64,7 +68,7 @@ ShellRoot {
  }
  TestCase {
   id:test; when:false; optional:true
-  function check(v,m) { if(!v) throw new Error(m) }
+  function check(v,m) { root.checks++;if(!v) throw new Error(m) }
   function renderFrame(item,message) {
    const before=root.captures
    check(item.grabToImage(image=>root.captures++),message+": render request refused")
@@ -72,6 +76,53 @@ ShellRoot {
   }
   function runChecks() { try {
    tryCompare(Config,"ready",true,6000)
+   if(root.action==="restart"){
+    check(Config.options.dashboard.music.showScrollbars===false,"saved OFF preference lost on actual restart")
+    check(findChild(dashboard,"dashboardMusic")===null,"Music unexpectedly allocated before first visit")
+    GlobalStates.dashboardPage=1
+    tryVerify(()=>findChild(dashboard,"dashboardMusic")!==null,4000)
+    const music=findChild(dashboard,"dashboardMusic")
+    check(!music.showMusicScrollbars,"restarted Music ignored saved OFF preference")
+    renderFrame(dashboard,"restarted hidden Music")
+    for(const name of ["musicResultList","musicQueueList","musicLyricsList","musicGenreList","musicFolderList","musicPlaylistList"])
+     check(findChild(music,name).ScrollBar.vertical.policy===ScrollBar.AlwaysOff,"restart hidden policy missing "+name)
+    check(findChild(music,"musicColumnsViewport").ScrollBar.horizontal.policy===ScrollBar.AlwaysOff,"restart horizontal policy missing")
+    Config.setNestedValue("dashboard.music.showScrollbars",true)
+    renderFrame(dashboard,"short lists no-overflow frame")
+    const names=["musicResultList","musicQueueList","musicLyricsList","musicGenreList","musicFolderList","musicPlaylistList"]
+    for(const name of names){
+     if(name==="musicGenreList")music.libraryTab="genre"
+     if(name==="musicFolderList"||name==="musicPlaylistList")music.libraryTab="folder"
+     renderFrame(dashboard,"visible short list "+name)
+     const list=findChild(music,name)
+     console.info("MUSIC_SHORT_RECEIPT",name,JSON.stringify({count:list.count,height:list.height,contentHeight:list.contentHeight,visible:list.ScrollBar.vertical.visible,opacity:list.ScrollBar.vertical.opacity,size:list.ScrollBar.vertical.size,thumbOpacity:list.ScrollBar.vertical.contentItem.opacity}))
+     check(list.height>0&&list.contentHeight<=list.height+1&&!list.ScrollBar.vertical.visible,"visible short/empty list forces a scrollbar "+name)
+    }
+    fake.libraryTracks=[];fake.activeQueue=[];fake.playlists=[];fake.localLyricsLines=[]
+    renderFrame(dashboard,"empty lists no-overflow frame")
+    for(const name of names){
+     if(name==="musicGenreList")music.libraryTab="genre"
+     if(name==="musicFolderList"||name==="musicPlaylistList")music.libraryTab="folder"
+     renderFrame(dashboard,"empty list "+name)
+     const list=findChild(music,name)
+     check(list.count===0&&!list.ScrollBar.vertical.visible,"empty list forces a scrollbar "+name)
+    }
+    // Request an actual wider client on this fixture's private Niri socket.
+    // A 1280px hint alone can still be allocated906px by the compositor.
+    Quickshell.execDetached(["niri","msg","action","set-column-width","1300"])
+    const viewport=findChild(music,"musicColumnsViewport"),bar=viewport.ScrollBar.horizontal
+    tryVerify(()=>viewport.width>=1000,3000)
+    renderFrame(dashboard,"actual wider non-overflow viewport")
+    console.info("MUSIC_WIDE_RECEIPT",JSON.stringify({windowWidth:window.width,viewportWidth:viewport.width,contentWidth:viewport.contentWidth,size:bar.size}))
+    tryVerify(()=>bar.size>=1&&(!bar.visible||(bar.contentItem.opacity===0&&(!bar.background?.visible||bar.background.opacity===0))),1400)
+    check(viewport.contentWidth<=viewport.width,"wide case never reached actual non-overflow allocation")
+    Config.setNestedValue("dashboard.music.enable",false)
+    check(!dashboard.pageIds.includes("music"),"disabled Music page remains navigable")
+    Config.setNestedValue("dashboard.music.showScrollbars",false)
+    tryVerify(()=>{disk.reload();return disk.snapshot?.dashboard?.music?.showScrollbars===false&&disk.snapshot?.dashboard?.music?.enable===false},5000)
+    console.info("MUSIC_SCROLL_RESTART_PASS",root.checks,"checks",root.captures,"rendered frames saved OFF, unallocated/disabled page and short/empty lists");Qt.quit();return
+   }
+   check(Config.options.dashboard.music.showScrollbars===true,"old config missing scrollbar flag must default ON")
    Config.setNestedValues({"performance.reduceAnimations":true,"dashboard.music.enable":true,"dashboard.music.showScrollbars":true,"dashboard.showHeader":true,"dashboard.canvas.widgets":[]})
    GlobalStates.dashboardPage=1
    tryVerify(()=>findChild(dashboard,"dashboardMusic")!==null,4000)
@@ -124,8 +175,18 @@ ShellRoot {
    // horizontal viewport navigation must stay alive, with no Music reload.
    const listNames=["musicResultList","musicQueueList","musicLyricsList","musicGenreList","musicFolderList","musicPlaylistList"]
    const oldMusic=music
+   const queueBefore=JSON.stringify(fake.activeQueue),playlistsBefore=JSON.stringify(fake.playlists)
+   const offsets=listNames.map(name=>{const list=findChild(music,name);return {name:name,y:list.contentY,index:list.currentIndex,width:list.width,height:list.height}})
+   const viewport=findChild(music,"musicColumnsViewport"),oldX=viewport.contentX
    Config.setNestedValue("dashboard.music.showScrollbars",false)
    tryVerify(()=>music.showMusicScrollbars===false,1200)
+   renderFrame(dashboard,"hidden Music layout")
+   for(const before of offsets){
+    const list=findChild(music,before.name)
+    check(Math.abs(list.contentY-before.y)<.1&&Math.abs(list.width-before.width)<.1&&Math.abs(list.height-before.height)<.1,"preference changed scroll offset or pane allocation "+before.name)
+    check(list.currentIndex===before.index,"preference changed selected list index "+before.name)
+   }
+   check(viewport.contentX===oldX,"preference changed horizontal offset")
    for(const name of listNames){
     const list=findChild(music,name)
     check(list!==null && list.ScrollBar.vertical.policy===ScrollBar.AlwaysOff,
@@ -134,20 +195,55 @@ ShellRoot {
    const horizontal=findChild(music,"musicColumnsViewport")
    check(horizontal!==null && horizontal.ScrollBar.horizontal.policy===ScrollBar.AlwaysOff,
     "horizontal Music scrollbar should be hidden")
-   music.libraryTab="genre"
-   const results=findChild(music,"musicResultList")
-   results.contentY=results.originY
-   mouseMove(results,15,20);wait(150)
-   mouseWheel(results,15,20,0,-120);wait(200)
-   check(results.contentY>results.originY+1 && dashboard.currentPage===1,
-    "hidden scrollbar must not block real vertical wheel")
+   for(const name of listNames){
+    if(name==="musicGenreList")music.libraryTab="genre"
+    if(name==="musicFolderList"||name==="musicPlaylistList")music.libraryTab="folder"
+    renderFrame(dashboard,"hidden list pre-pan allocation")
+    const list=findChild(music,name),before=list.mapToItem(dashboard,0,0)
+    if(before.x<12)music.panHorizontally(12-before.x)
+    else if(before.x+list.width>dashboard.width-12)music.panHorizontally(-(before.x+list.width-dashboard.width+12))
+    mouseMove(list,Math.min(16,list.width/2),Math.min(24,list.height/2));wait(300)
+    renderFrame(dashboard,"hidden list layout")
+    check(!list.ScrollBar.vertical.visible&&list.contentHeight>list.height,"hidden scrollbar chrome/overflow "+name)
+    // The visible-phase keyboard oracle intentionally selected the last row.
+    // Prepare a stable start selection before the independent hidden-wheel
+    // oracle, including ListView highlight/focus repositioning after tab reveal.
+    list.currentIndex=0;list.positionViewAtBeginning()
+    renderFrame(dashboard,"hidden wheel start selection")
+    list.cancelFlick();list.contentY=list.originY
+    console.info("MUSIC_HIDDEN_BEFORE",name,JSON.stringify({contentY:list.contentY,originY:list.originY,currentIndex:list.currentIndex,moving:list.moving,flicking:list.flicking,dragging:list.dragging,activeFocus:list.activeFocus}))
+    mouseWheel(list,Math.min(16,list.width/2),Math.min(24,list.height/2),0,-120);wait(200)
+    console.info("MUSIC_HIDDEN_RECEIPT",name,JSON.stringify({at:list.mapToItem(dashboard,0,0),width:list.width,height:list.height,contentHeight:list.contentHeight,contentY:list.contentY,originY:list.originY,windowWidth:dashboard.width,windowHeight:dashboard.height,contentX:horizontal.contentX}))
+    check(list.contentY>list.originY+1&&dashboard.currentPage===1,"hidden scrollbar must not block actual wheel "+name)
+    list.forceActiveFocus();keyClick(Qt.Key_Down);keyClick(Qt.Key_Down)
+    check(list.currentIndex>=1,"hidden scrollbar blocked keyboard "+name)
+    list.currentIndex=list.count-1;list.positionViewAtEnd()
+    check(list.contentY>list.originY+1,"hidden scrollbar blocked end reveal "+name)
+   }
+   horizontal.cancelFlick();horizontal.contentX=0
+   mouseWheel(horizontal,12,12,-120,0);wait(250)
+   check(horizontal.contentX>0&&dashboard.currentPage===1,"hidden scrollbar blocked horizontal wheel or changed page")
    check(music===oldMusic,"scrollbar preference unloaded the music surface")
+   check(JSON.stringify(fake.activeQueue)===queueBefore&&JSON.stringify(fake.playlists)===playlistsBefore&&!fake.playing,"preference changed queue/playlist/transport")
    Config.setNestedValue("dashboard.music.showScrollbars",true)
    tryVerify(()=>music.showMusicScrollbars===true,1200)
-   check(results.ScrollBar.vertical.policy===ScrollBar.AsNeeded
+   check(findChild(music,"musicResultList").ScrollBar.vertical.policy===ScrollBar.AsNeeded
       && horizontal.ScrollBar.horizontal.policy===ScrollBar.AsNeeded,
       "Music scrollbars did not return")
-   console.info("MUSIC_SCROLL_PASS six overflow lists, hidden/visible preference, wheel and keyboard")
+   const settings=Qt.createComponent(Qt.resolvedUrl("modules/settings/DashboardMusicSettings.qml"))
+   check(settings.status===Component.Ready,"Music settings failed to compile: "+settings.errorString())
+   let page=settings.createObject(window.contentItem,{width:360,x:16,y:16,z:500})
+   const toggles=Array.from(page.contentData).filter(item=>item.text===Translation.tr("Show Music scrollbars"))
+   check(toggles.length===1,"Music settings must contain exactly one preference checkbox")
+   renderFrame(page,"Settings checkbox frame")
+   check(toggles[0].width>0&&toggles[0].height>0,"Music settings checkbox has no input bounds")
+   mouseClick(toggles[0]);check(Config.options.dashboard.music.showScrollbars===false&&!music.showMusicScrollbars,"actual Settings click did not hide chrome")
+   page.destroy();wait(80)
+   page=settings.createObject(window.contentItem,{width:360,x:16,y:16,z:500})
+   check(Array.from(page.contentData).find(item=>item.text===Translation.tr("Show Music scrollbars")).checked===false,"Settings close/reopen lost preference")
+   page.destroy()
+   tryVerify(()=>{disk.reload();return disk.snapshot?.dashboard?.music?.showScrollbars===false},5000)
+   console.info("MUSIC_SCROLL_PASS",root.checks,"checks",root.captures,"rendered frames six overflow lists, hidden/visible preference, wheel and keyboard")
   } catch(e) { console.error("MUSIC_SCROLL_FAIL",e.message,e.stack) } Qt.quit() }
  }
  Timer { interval:100; running:true; onTriggered:test.runChecks() }
@@ -157,6 +253,7 @@ ShellRoot {
   if env is None: raise SystemExit("SKIP: Dashboard music requires a private Niri surface")
   config=folder/"config/illogical-impulse";config.mkdir(parents=True,exist_ok=True)
   data=json.loads((ROOT/"defaults/config.json").read_text());data["panelFamily"]="abyss";data["abyss"]["companion"]["enabled"]=False
+  data["dashboard"]["music"].pop("showScrollbars",None)
   (config/"config.json").write_text(json.dumps(data))
   capture=Path(os.environ.get("HADALIS_MUSIC_CAPTURE",str(folder/"dashboard-music.png")))
   env.update(QSG_RHI_BACKEND="opengl",MUSIC_CAPTURE=str(capture),MUSIC_CAPTURE_NARROW=str(capture.with_name(capture.stem+"-narrow.png")))
@@ -165,4 +262,14 @@ ShellRoot {
    Path(os.environ["ALIS_MUSIC_SCROLL_LOG"]).write_text(result.stdout)
   if result.returncode or "MUSIC_SCROLL_PASS" not in result.stdout or any(x in result.stdout for x in ["MUSIC_SCROLL_FAIL","TypeError:","ReferenceError:","Binding loop","Unable to assign","Failed to load configuration"]):
    print(result.stdout);raise SystemExit(1)
+  saved=json.loads((config/"config.json").read_text())
+  assert saved["dashboard"]["music"]["showScrollbars"] is False,"independent disk readback missing OFF preference"
+  if os.environ.get("ALIS_MUSIC_SCROLL_LOG"):
+   Path(os.environ["ALIS_MUSIC_SCROLL_LOG"]).with_name("config-off.json").write_text(json.dumps(saved["dashboard"],indent=2)+"\n")
+  restarted=run_qs(folder,dict(env,MUSIC_SCROLL_ACTION="restart"),timeout=25)
+  if os.environ.get("ALIS_MUSIC_SCROLL_LOG"):
+   Path(os.environ["ALIS_MUSIC_SCROLL_LOG"]).with_name("restart.log").write_text(restarted.stdout)
+  if restarted.returncode or "MUSIC_SCROLL_RESTART_PASS" not in restarted.stdout or any(x in restarted.stdout for x in ["MUSIC_SCROLL_FAIL","TypeError:","ReferenceError:","Binding loop","Unable to assign","Failed to load configuration"]):
+   print(restarted.stdout);raise SystemExit(1)
   print("PASS: six actual Music lists, vertical wheel, themed scrollbar drag and keyboard/end reveal")
+  print("PASS: hidden six-list/horizontal wheel, exact allocation/offsets/transport, Settings click/reopen, disk readback and process restart")

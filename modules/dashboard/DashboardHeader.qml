@@ -12,7 +12,10 @@ import qs.modules.abyss.looks
  */
 Item {
     id: root
-    implicitHeight: Math.max(32, actions.implicitHeight)
+    // Page dots remain when actions are hidden. A hidden RowLayout can report
+    // a new implicit size after Edit changes its children; it must not resize
+    // the visible page header or the widget canvas.
+    implicitHeight: Math.max(32, showActions ? actions.implicitHeight : 0)
 
     property bool editMode: false
     property bool showActions: true

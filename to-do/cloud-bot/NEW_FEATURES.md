@@ -10,10 +10,11 @@ do not reimplement them solely because a checkbox is open.
 DASH-F01/F02 source milestones. Weekly Planner `f62f24361`, tab reorder
 `f94de0535` and Events durable acknowledgement prerequisite `ccd750167`
 have separate focused evidence; committed canonical and owner gates stay open.
-The last canonical was stopped at five-hour2%, with four partial failures;
+An earlier canonical was stopped at five-hour2%, with four partial failures;
 [its frozen receipt](../../docs/evidence/abyss-product/20261012-f94de0535-stopped/README.md)
-preserves the consumed result. Single reset+3minute continuation fired04:29ICT,
-and the new five-hour window began at100% remaining. No historical task backfill,
+preserves the consumed result. Single reset+3minute continuation fired04:29ICT. Frozen multi-selection
+canonical593368c15 is now running independently; new Dashboard fixes below
+are qualified only by their pinned focused bytes until a newer full run. No historical task backfill,
 owner preference, AI/vault consent or installed Companion change is authorized
 by the continuation. AGENDA-F01 now has source/focused linking evidence below;
 Per-module locks `a450be887` are source/focused PASS; multi-selection source/focused PASS now follows below.
@@ -247,8 +248,8 @@ order or close unverified Issues because their source is implemented.
   ensure theme-aware style and contrast when visible.
 
   **Source starting points:**
-  `modules/settings/DashboardMusicSettings.qml` currently owns
-  the Music enable switch but no scrollbar preference;
+  `modules/settings/DashboardMusicSettings.qml` owns
+  the Music enable switch and the new single scrollbar preference;
   `modules/dashboard/DashboardMusic.qml` declares a shared
   `MusicScrollBar: ScrollBar` (`ScrollBar.AsNeeded`) used by
   several ListViews plus a separate
@@ -291,8 +292,20 @@ order or close unverified Issues because their source is implemented.
   hides visual chrome only; Flickable and underlying event routing
   are untouched. Expanded `test-dashboard-music-scroll-runtime.py`
   for OFF/ON toggling and actual vertical-wheel navigation.
-  State: SOURCE PATCHED, native Niri test, preference restart, owner
-  layout/touchpad and canonical acceptance OPEN.
+  **2026-10-12 focused qualification:** actual QV4/private-Niri
+  2processes/181checks/49rendered frames PASS; exactly one Settings checkbox
+  clicked OFF, close/reopen, FileView write acknowledgement, independent
+  JSON readback and actual second-process saved-OFF restart. Six-list
+  visible thumb/wheel/keyboard and hidden vertical/horizontal navigation
+  preserve allocation/offset/selection/transport and page. Default ON,
+  unallocated/disabled Music, short/empty six-list and measured1300px
+  horizontal no-overflow are covered. Empty-list acceptance uncovered
+  related DASH-I08 custom-thumb overflow and DASH-I10 Queue disposal
+  TypeError, both fixed forward with retained raw failures.
+  [Pinned source/raw evidence](../../docs/evidence/abyss-product/20261012-music-scrollbar/README.md).
+  State: SOURCE/FOCUSED PASS; source-pinned full canonical, installed/owner
+  layout/touchpad/flick, dark/light/fractional/multi-output and actual audio
+  playback remain OPEN. Fixture transport parity is not actual MPD/audio.
 
 - [ ] **DASH-F01 — Weekly Planner: new Dashboard tab for Agenda / Events / Todo / Quick Notes — owner request 2026-10-11:**
   [Owner: Alis dev; New Feature] Add a full **Weekly Planner** Dashboard

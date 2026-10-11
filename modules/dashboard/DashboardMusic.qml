@@ -349,6 +349,9 @@ Item {
     component MusicScrollBar: ScrollBar {
         id: scrollbar
         policy: root.showMusicScrollbars ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+        // This custom thumb replaces the style's fading/overflow states.
+        // Keep empty and fitting lists free of scrollbar chrome as well.
+        visible: policy === ScrollBar.AlwaysOn || (policy !== ScrollBar.AlwaysOff && size < 1)
         implicitWidth: 10
         padding: 2
         minimumSize: .05
@@ -856,10 +859,11 @@ Item {
                                 required property var modelData
                                 required property int index
                                 width: ListView.view.width
-                                caption: String(modelData.title || modelData.uri || "")
-                                detail: String(modelData.artist ?? "")
+                                enabled: modelData !== undefined && index >= 0
+                                caption: String(modelData?.title || modelData?.uri || "")
+                                detail: String(modelData?.artist ?? "")
                                 glyph: "music_note"
-                                artUrl: String(modelData.artUrl ?? modelData.art ?? "")
+                                artUrl: String(modelData?.artUrl ?? modelData?.art ?? "")
                                 onDoubleClicked: root.backend.jumpTo(index)
                             }
                         }

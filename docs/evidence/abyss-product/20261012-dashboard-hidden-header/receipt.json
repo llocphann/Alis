@@ -1,0 +1,9 @@
+{
+  "status": "SOURCE_FOCUSED_PASS",
+  "native_checks": 36,
+  "rendered_frames": 30,
+  "saved_header_images": 12,
+  "full_field": "FAIL_CAPTURE_PARTIAL_INTERVAL",
+  "canonical": "NOT_RUN_FOR_THIS_SOURCE",
+  "owner": "OPEN"
+}

@@ -1,0 +1,18 @@
+  INFO: Launching config: "/tmp/hadalis-dashboard-music-0z3u7p_q/shell.qml"
+  INFO: Shell ID: "0e06aaeaea08601f1f4ca64772677773" Path ID "0e06aaeaea08601f1f4ca64772677773"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/v2mjnvnrmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.913726.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-music-0z3u7p_q/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-0z3u7p_q/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-0z3u7p_q/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: MUSIC_SHORT_RECEIPT musicResultList {"count":0,"height":544,"contentHeight":0,"visible":false,"opacity":1,"size":1,"thumbOpacity":0.45}
+  INFO qml: MUSIC_SHORT_RECEIPT musicQueueList {"count":2,"height":200,"contentHeight":107,"visible":false,"opacity":1,"size":1,"thumbOpacity":0.45}
+  INFO qml: MUSIC_SHORT_RECEIPT musicLyricsList {"count":2,"height":624,"contentHeight":84,"visible":false,"opacity":1,"size":1,"thumbOpacity":0.45}
+  INFO qml: MUSIC_SHORT_RECEIPT musicGenreList {"count":2,"height":582,"contentHeight":107,"visible":false,"opacity":1,"size":1,"thumbOpacity":0.45}
+  INFO qml: MUSIC_SHORT_RECEIPT musicFolderList {"count":2,"height":0,"contentHeight":107,"visible":false,"opacity":1,"size":0,"thumbOpacity":0.45}
+ ERROR qml: MUSIC_SCROLL_FAIL short/empty list forces a scrollbar musicFolderList check@qs:@/qs/shell.qml:61
+runChecks@qs:@/qs/shell.qml:86
+expression for onTriggered@qs:@/qs/shell.qml:217

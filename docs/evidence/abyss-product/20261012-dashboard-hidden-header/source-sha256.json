@@ -1,0 +1,5 @@
+{
+  "modules/dashboard/DashboardHeader.qml": "d204826e6cf69b704572a941dd4567d588cad9f7360f676beb8107621bfcc8fb",
+  "scripts/test-dashboard-hidden-header-runtime.py": "07bfce7913675c6b970283886cd7c343b33620581bf784460814409d8abd1131",
+  "scripts/test-dashboard-editor-field-runtime.py": "2eba8c7bd0f16a27e61765445f215c6c59de273b24fde6bb10d3d13944e66b75"
+}

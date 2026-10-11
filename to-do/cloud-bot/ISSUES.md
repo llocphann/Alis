@@ -9,6 +9,44 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
 
 ## Current failures and owner reports
 
+- [ ] **DASH-I10 — Cleared Queue delegates briefly read undefined tracks — discovered 2026-10-12:**
+  DASH-F03's empty-list test exposes actual title/artist/artUrl TypeError while
+  removed Queue delegates briefly outlive their modelData. Preserve valid rows
+  and use empty text/art for this disposal state; disable unavailable/negative-
+  index targets. State: SOURCE/FOCUSED FIXED; final two private-native processes pass
+  181checks/49frames including actual empty/short Queue mutation with no
+  TypeError/ReferenceError/binding/assignment/load errors.
+  [Raw scoped evidence](../../docs/evidence/abyss-product/20261012-music-scrollbar/README.md).
+  Exact-SHA canonical and owner/installed gates remain OPEN.
+
+- [ ] **DASH-I09 — Hidden header actions change widget canvas height on Edit — diagnosed 2026-10-12:**
+  Related Planner/tab reorder and Dashboard layout. Frozen0465 trace preserves
+  body content932.8×590 while the header/column implicit height grows44→50;
+  widget canvas933×546 becomes933×540 after Edit. With showHeader false the
+  page dots remain visible, but hidden actions RowLayout newly reports38px
+  instead of0 when its child state changes. Header height now uses action size
+  only when showActions is true, preserving32px for the dots-only header.
+  State: SOURCE/FOCUSED FIXED; actual private-native36checks/30frames,
+  12 header images, three widths/two action sets keep Edit/Cancel canvas exact.
+  Original full-field top1280 case reaches motion after dimension/control
+  assertions, then FAIL: reveal signals0→1 in309ms but grab returns1881ms,
+  missing the required partial interval. Keep that full-field result FAIL;
+  original slide sampling is unchanged and remains unqualified.
+  [Raw scoped evidence](../../docs/evidence/abyss-product/20261012-dashboard-hidden-header/README.md).
+  Frozen complete FAIL, newer full-field/canonical and owner/installed OPEN.
+
+- [ ] **DASH-I08 — Music paints custom scrollbar thumb on fitting/empty lists — discovered 2026-10-12:**
+  Related DASH-F03. Actual private-native empty Results has contentHeight0,
+  size1, visible true and custom thumb opacity.45. Replacing Qt's styled
+  contentItem lost its overflow/fade state; AsNeeded alone retains the control.
+  The shared custom vertical Music scrollbar now has explicit overflow-only
+  visibility; underlying list sizing/navigation stay intact. Horizontal uses
+  Qt's original style with zero painted thumb/background opacity on no overflow.
+  State: SOURCE/FOCUSED FIXED; final private-native181checks/49frames
+  include all six short/empty lists and actual wide horizontal no-overflow.
+  [Raw scoped evidence](../../docs/evidence/abyss-product/20261012-music-scrollbar/README.md).
+  Exact-SHA canonical and owner/installed gates remain OPEN.
+
 - [ ] **ABYSS-I03 — Group drag changes gaps when crossing Edge orientation — discovered 2026-10-12:**
   Related multi-selection: the destination's mature renderer reports a new
   span after the first group proposal, so recomputing source gaps with that span

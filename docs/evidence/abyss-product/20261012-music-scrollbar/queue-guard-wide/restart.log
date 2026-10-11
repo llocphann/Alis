@@ -1,0 +1,22 @@
+  INFO: Launching config: "/tmp/hadalis-dashboard-music-gwikclcf/shell.qml"
+  INFO: Shell ID: "6deb67c4d0090edc33aba31439ab052b" Path ID "6deb67c4d0090edc33aba31439ab052b"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/zcfk5pormt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.951078.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-music-gwikclcf/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-gwikclcf/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-gwikclcf/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: [Weather] Getting location from IP...
+  INFO qml: [Weather] Location: [redacted]
+  INFO qml: MUSIC_SHORT_RECEIPT musicResultList {"count":0,"height":544,"contentHeight":0,"visible":false,"opacity":1,"size":1,"thumbOpacity":0.45}
+  INFO qml: [Weather] Updated: 25°C [redacted]
+  INFO qml: MUSIC_SHORT_RECEIPT musicQueueList {"count":2,"height":200,"contentHeight":107,"visible":false,"opacity":1,"size":1,"thumbOpacity":0.45}
+  INFO qml: [Weather] Air quality updated: 51 EAQI
+  INFO qml: MUSIC_SHORT_RECEIPT musicLyricsList {"count":2,"height":624,"contentHeight":84,"visible":false,"opacity":1,"size":1,"thumbOpacity":0.45}
+  INFO qml: MUSIC_SHORT_RECEIPT musicGenreList {"count":2,"height":582,"contentHeight":107,"visible":false,"opacity":1,"size":1,"thumbOpacity":0.45}
+  INFO qml: MUSIC_SHORT_RECEIPT musicFolderList {"count":2,"height":458,"contentHeight":107,"visible":false,"opacity":1,"size":1,"thumbOpacity":0.45}
+  INFO qml: MUSIC_SHORT_RECEIPT musicPlaylistList {"count":1,"height":52,"contentHeight":52,"visible":false,"opacity":1,"size":1,"thumbOpacity":0.45}
+  INFO qml: MUSIC_WIDE_RECEIPT {"windowWidth":1300,"viewportWidth":1300,"contentWidth":1300,"size":1}
+  INFO qml: MUSIC_SCROLL_RESTART_PASS 40 checks 16 rendered frames saved OFF, unallocated/disabled page and short/empty lists

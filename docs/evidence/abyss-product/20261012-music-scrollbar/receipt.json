@@ -1,0 +1,22 @@
+{
+  "status": "SOURCE_FOCUSED_PASS",
+  "parent_sha": "593368c154b1abb82369f6dc2e3277b405c254ea",
+  "native_processes": 2,
+  "checks": [
+    141,
+    40
+  ],
+  "rendered_frames": [
+    33,
+    16
+  ],
+  "final_logs": [
+    "queue-guard-wide/native.log",
+    "queue-guard-wide/restart.log"
+  ],
+  "settings_disk_readback": "queue-guard-wide/config-off.json",
+  "actual_private_window_width": 1300,
+  "canonical": "NOT_RUN_FOR_FINAL_BYTES",
+  "owner": "OPEN",
+  "real_audio_playback": "NOT_TESTED"
+}

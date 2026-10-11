@@ -1,0 +1,47 @@
+  INFO: Launching config: "/tmp/hadalis-dashboard-music-tkqjr5r7/shell.qml"
+  INFO: Shell ID: "efcda154b418abdd83d7c00dd0b56bd7" Path ID "efcda154b418abdd83d7c00dd0b56bd7"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/gcvja5ormt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.927067.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-music-tkqjr5r7/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-tkqjr5r7/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/hadalis-dashboard-music-tkqjr5r7/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/hadalis-dashboard-music-tkqjr5r7/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[371:5]: Read of /tmp/hadalis-dashboard-music-tkqjr5r7/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/hadalis-dashboard-music-tkqjr5r7/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fb2ddfed600)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-tkqjr5r7/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: [Weather] Getting location from IP...
+  INFO qml: MUSIC_SCROLL_RECEIPT musicResultList {"height":544,"contentHeight":5497,"contentY":70.68557749752195,"originY":0,"currentPage":1}
+  INFO qml: [Weather] Location: [redacted]
+  INFO qml: MUSIC_THUMB_RECEIPT musicResultList {"start":{"x":5,"y":28.720029106785518},"barHeight":544,"at":{"x":581.784,"y":166},"windowWidth":906}
+  INFO qml: [Weather] Updated: 25°C [redacted]
+  INFO qml: MUSIC_SCROLL_RECEIPT musicQueueList {"height":360,"contentHeight":5497,"contentY":71.74104652850909,"originY":0,"currentPage":1}
+  INFO qml: [Weather] Air quality updated: 51 EAQI
+  INFO qml: MUSIC_THUMB_RECEIPT musicQueueList {"start":{"x":5,"y":13.657267600509385},"barHeight":360,"at":{"x":884,"y":350},"windowWidth":906}
+  INFO qml: MUSIC_SCROLL_RECEIPT musicLyricsList {"height":624,"contentHeight":2988,"contentY":71.83798055605155,"originY":0,"currentPage":1}
+  INFO qml: MUSIC_THUMB_RECEIPT musicLyricsList {"start":{"x":5,"y":66.73895582329317},"barHeight":624,"at":{"x":885.624,"y":86},"windowWidth":906}
+  INFO qml: MUSIC_SCROLL_RECEIPT musicGenreList {"height":582,"contentHeight":5497,"contentY":71.8153216281431,"originY":0,"currentPage":1}
+  INFO qml: MUSIC_THUMB_RECEIPT musicGenreList {"start":{"x":5,"y":32.59814444242315},"barHeight":582,"at":{"x":227,"y":128},"windowWidth":906}
+  INFO qml: MUSIC_SCROLL_RECEIPT musicFolderList {"height":306,"contentHeight":5497,"contentY":71.85365213813499,"originY":0,"currentPage":1}
+  INFO qml: MUSIC_THUMB_RECEIPT musicFolderList {"start":{"x":5,"y":10.405675823176267},"barHeight":306,"at":{"x":227,"y":128},"windowWidth":906}
+  INFO qml: MUSIC_SCROLL_RECEIPT musicPlaylistList {"height":203.7,"contentHeight":5200,"contentY":71.82118417025855,"originY":0,"currentPage":1}
+  INFO qml: MUSIC_THUMB_RECEIPT musicPlaylistList {"start":{"x":5,"y":6.992500000000007},"barHeight":203.7,"at":{"x":227,"y":464},"windowWidth":906}
+  INFO qml: MUSIC_HIDDEN_BEFORE musicResultList {"contentY":0,"originY":0,"currentIndex":0,"moving":false,"flicking":false,"dragging":false,"activeFocus":false}
+  INFO qml: MUSIC_HIDDEN_RECEIPT musicResultList {"at":{"x":264.784,"y":166},"width":327,"height":544,"contentHeight":5497,"contentY":71.23804950946564,"originY":0,"windowWidth":906,"windowHeight":720,"contentX":0}
+  INFO qml: MUSIC_HIDDEN_BEFORE musicQueueList {"contentY":0,"originY":0,"currentIndex":0,"moving":false,"flicking":false,"dragging":false,"activeFocus":false}
+  INFO qml: MUSIC_HIDDEN_RECEIPT musicQueueList {"at":{"x":589,"y":350},"width":305,"height":360,"contentHeight":5497,"contentY":71.27570937603629,"originY":0,"windowWidth":906,"windowHeight":720,"contentX":30.82400000000007}
+  INFO qml: MUSIC_HIDDEN_BEFORE musicLyricsList {"contentY":0,"originY":0,"currentIndex":0,"moving":false,"flicking":false,"dragging":false,"activeFocus":false}
+  INFO qml: MUSIC_HIDDEN_RECEIPT musicLyricsList {"at":{"x":738.624,"y":86},"width":157,"height":624,"contentHeight":2988,"contentY":71.23804950946564,"originY":0,"windowWidth":906,"windowHeight":720,"contentX":214}
+  INFO qml: MUSIC_HIDDEN_BEFORE musicGenreList {"contentY":0,"originY":0,"currentIndex":0,"moving":false,"flicking":false,"dragging":false,"activeFocus":false}
+  INFO qml: MUSIC_HIDDEN_RECEIPT musicGenreList {"at":{"x":10,"y":128},"width":227,"height":582,"contentHeight":5497,"contentY":71.27570937603629,"originY":0,"windowWidth":906,"windowHeight":720,"contentX":0}
+  INFO qml: MUSIC_HIDDEN_BEFORE musicFolderList {"contentY":0,"originY":0,"currentIndex":0,"moving":false,"flicking":false,"dragging":false,"activeFocus":false}
+  INFO qml: MUSIC_HIDDEN_RECEIPT musicFolderList {"at":{"x":10,"y":128},"width":227,"height":306,"contentHeight":5497,"contentY":71.31166858343566,"originY":0,"windowWidth":906,"windowHeight":720,"contentX":0}
+  INFO qml: MUSIC_HIDDEN_BEFORE musicPlaylistList {"contentY":0,"originY":0,"currentIndex":0,"moving":false,"flicking":false,"dragging":false,"activeFocus":false}
+  INFO qml: MUSIC_HIDDEN_RECEIPT musicPlaylistList {"at":{"x":10,"y":464},"width":227,"height":203.7,"contentHeight":5200,"contentY":71.27570937603629,"originY":0,"windowWidth":906,"windowHeight":720,"contentX":0}
+  INFO qml: MUSIC_SCROLL_PASS 141 checks 33 rendered frames six overflow lists, hidden/visible preference, wheel and keyboard

@@ -1,0 +1,13 @@
+  INFO: Launching config: "/tmp/alis-hidden-header-cxw6d8ps/shell.qml"
+  INFO: Shell ID: "2608c115767d1acc3c4c12e21a5dd6c3" Path ID "2608c115767d1acc3c4c12e21a5dd6c3"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/akxjt8ormt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.929939.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-hidden-header-cxw6d8ps/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-hidden-header-cxw6d8ps/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/alis-hidden-header-cxw6d8ps/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f08db6a4d20)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-hidden-header-cxw6d8ps/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs

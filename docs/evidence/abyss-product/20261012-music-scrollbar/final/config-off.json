@@ -1,0 +1,35 @@
+{
+  "appearance": {
+    "cardOpacity": 1,
+    "density": "comfortable",
+    "showCardTitles": true
+  },
+  "canvas": {
+    "autoAdjustSize": true,
+    "gridSize": 24,
+    "gridStyle": "dots",
+    "snap": true,
+    "widgets": [],
+    "workspaceHeight": 0,
+    "workspaceWidth": 0
+  },
+  "github": {
+    "username": ""
+  },
+  "heightRatio": 0.72,
+  "keepLoaded": false,
+  "music": {
+    "enable": true,
+    "showScrollbars": false
+  },
+  "pageOrder": [
+    "dashboard",
+    "music",
+    "weeklyPlanner"
+  ],
+  "pageOrderVersion": 1,
+  "showHeader": true,
+  "showPowerButtons": true,
+  "subtitle": "",
+  "widthRatio": 0.72
+}

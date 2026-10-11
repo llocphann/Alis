@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/hadalis-dashboard-music-5l0r_wez/shell.qml"
+  INFO: Shell ID: "57fb8c3d78d8cb37f9203712216cb44e" Path ID "57fb8c3d78d8cb37f9203712216cb44e"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/w1hj6pnrmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.907304.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-music-5l0r_wez/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-5l0r_wez/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-music-5l0r_wez/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: MUSIC_SCROLL_RESTART_PASS saved OFF, unallocated page and six empty lists

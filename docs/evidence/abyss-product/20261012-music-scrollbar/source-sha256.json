@@ -1,0 +1,7 @@
+{
+  "modules/dashboard/DashboardMusic.qml": "af65808fca29bddc176a2e91a8ff72e847a82acef57c8ce604131bfaf44838d8",
+  "modules/settings/DashboardMusicSettings.qml": "e0815a2c88233b17bd60286b9d0906eab03d3cd0f9dc5a0cd07e5c8c82b43dad",
+  "defaults/config.json": "11e69659851f2e3a972d74fb86f8fa417315350edf48658775e693884cfb9477",
+  "modules/common/Config.qml": "a08f41d0d3d1864f904663bc43874d09f5d3ca7f8023af5c1cb07a22ac74039b",
+  "scripts/test-dashboard-music-scroll-runtime.py": "57ffe844316440ee02d1454b2bf643bebca4fcff7274142c0240c2d99f86fd48"
+}
