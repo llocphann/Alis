@@ -1,0 +1,21 @@
+{
+  "source_sha": "0465ffc5ad7d7a6b9b1347f45a2b9c6ca1e798a5",
+  "source_root": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis",
+  "integration_sha": "4d0aa3f508fdd6bd953696d92bf529f1fb9f4b32",
+  "integration_source": "/tmp/alis-canonical-k5oo_5ip/integration",
+  "driver": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/drivers/0465ffc5ad7d7a6b9b1347f45a2b9c6ca1e798a5.sh",
+  "driver_sha256": "3782b0884cba74097f907bc8c8619a542c23afac5a0a35008b9cc58dbfb5f436",
+  "log": "/tmp/alis-canonical-k5oo_5ip/canonical.log",
+  "terminal": "/tmp/alis-canonical-k5oo_5ip/terminal.log",
+  "receipt": "/tmp/alis-canonical-k5oo_5ip/canonical.json",
+  "status": "FAIL",
+  "parser_path_prefix": "/usr/lib/qt6/bin",
+  "arguments": [
+    "--current-repo",
+    "--strict-qml"
+  ],
+  "started_at": "2026-10-11T22:29:17.832241+00:00",
+  "driver_pid": 793520,
+  "exit_code": 1,
+  "finished_at": "2026-10-11T23:03:23.075063+00:00"
+}

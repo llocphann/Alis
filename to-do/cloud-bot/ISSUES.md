@@ -32,7 +32,7 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
   JSON and releases acknowledged job busy state. Original focused failures and
   actual store/QML bridge/UI fix-forward results remain in
   [Agenda evidence](../../docs/evidence/abyss-product/20261012-agenda-internal/README.md).
-  State: SOURCE/FOCUSED FIXED; full0465 qualification running, owner/installed OPEN.
+  State: SOURCE/FOCUSED FIXED; full0465 FAIL359/7/1 on separate fixtures; owner/installed OPEN.
 
 - [ ] **DASH-I07 — Tab-order conflict baseline must survive Undo Reset — source review 2026-10-12:**
   Related `DASH-F02`: resetting an edit accepts the newest saved order, but
@@ -1030,7 +1030,19 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
   justified by this archive.
 
 
-- [ ] **Canonical validation — updated 2026-10-12:** latest frozen clean-clone
+- [ ] **Canonical validation — updated 2026-10-12:** latest complete frozen
+  clean-clone `0465ffc5ad7d7a6b9b1347f45a2b9c6ca1e798a5`, paired with optional
+  Integration `4d0aa3f508fdd6bd953696d92bf529f1fb9f4b32`, **FAIL, exit1:
+  359PASS / 7FAIL / 1SKIP**. Failing fixtures: Dashboard editor field;
+  Recording Abyss; Screenshot pointer timeout124; Settings task-tabs;
+  app hover menu; Abyss Dashboard editing; IPC corner. Causes remain
+  NOT_DIAGNOSED, and the complete raw outputs/frozen driver are preserved.
+  Calendar and Material padding fixtures PASS on this source; no newer source,
+  lock feature, installed/owner/material/multi-output gate is qualified.
+  [Exact complete receipt/log](../../docs/evidence/abyss-product/20261012-0465ffc5a/README.md).
+  Next: targeted bounded failure diagnosis with the original assertions,
+  alongside selected features, then a fresh frozen committed-SHA qualification.
+  **Previous frozen clean-clone**
   `f94de053514954b07635381a318025fc76a3d522` is **STOPPED, exit -15** at the
   actual five-hour 2% threshold. Only235 completed checks: **231PASS / 4FAIL /
   0SKIP**; no full summary. Failures: Calendar Remove atDPR1.5/240; Dashboard

@@ -6,7 +6,7 @@ handled alongside the selected feature in the same single-agent context.
 Source-implemented features below still need their stated delivery/owner gates;
 do not reimplement them solely because a checkbox is open.
 
-**Immediate owner priority — updated 2026-10-12:** continue ABYSS-F01 after
+**Immediate owner priority — updated 2026-10-12:** continue Screen Edge multi-selection after
 DASH-F01/F02 source milestones. Weekly Planner `f62f24361`, tab reorder
 `f94de0535` and Events durable acknowledgement prerequisite `ccd750167`
 have separate focused evidence; committed canonical and owner gates stay open.
@@ -16,8 +16,11 @@ preserves the consumed result. Single reset+3minute continuation fired04:29ICT,
 and the new five-hour window began at100% remaining. No historical task backfill,
 owner preference, AI/vault consent or installed Companion change is authorized
 by the continuation. AGENDA-F01 now has source/focused linking evidence below;
-continue per-module locks then multi-selection. Full qualification/owner gates
-remain open across these feature milestones.
+Per-module locks `a450be887` are source/focused PASS; continue multi-selection.
+Full qualification/owner gates
+remain open across these feature milestones. Frozen Agenda source0465 completed
+FAIL359/7/1; [raw exact receipt](../../docs/evidence/abyss-product/20261012-0465ffc5a/README.md)
+keeps that result independent of lock and multi-selection work.
 Implement **DASH-F01 → DASH-F02 → AGENDA-F01 → ABYSS-F01 → Screen Edge
 multi-selection** in that order. Carry out their related data/input repairs and
 Rework/optimization alongside delivery, preserving remaining canonical and
@@ -211,8 +214,13 @@ order or close unverified Issues because their source is implemented.
   actions instead of silently changing unrelated modules. Test horizontal and
   vertical edges, cross-edge/per-output selection, drag/snapping and Cancel/
   Undo/Done/save semantics; coordinate with compact toolbar redesign in
-  [Rework](REWORK_OPTIMIZATION.md). State: NEW, design/implementation and owner
-  input acceptance pending.
+  [Rework](REWORK_OPTIMIZATION.md). State: IN PROGRESS — 2026-10-12, after lock source a450be887. Design:
+  editor-only selection set with a primary target, explicit toggle/clear,
+  coherent batch lock/unlock/enable/disable/remove/size/alignment and guarded
+  group drag/snapping; mixed locked placement batches reject atomically.
+  Selection is transient and never a saved user setting. Native input,
+  undo/cancel/save/restart and per-output guards will qualify the source;
+  owner/installed/material/multi-output gates remain open.
 
 - [ ] **DASH-F03 — Checkbox to show/hide Music tab scrollbars in Dashboard Settings — owner request 2026-10-11:**
   [Owner: Alis dev; New Feature] Add exactly **one independent
