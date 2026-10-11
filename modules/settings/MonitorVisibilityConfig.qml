@@ -13,10 +13,11 @@ ContentPage {
     property bool embeddedArrangementOnly: false
     embedded: embeddedArrangementOnly
     readonly property bool arrangementChromeVisible: !embeddedArrangementOnly
-    // Reduce only the monitor diagram tiles (~30% in both views); keep
-    // the canvas, logical output coordinates and Niri drag/save math unchanged.
+    // Fill the Utilities viewport up to its page indicators, rather than
+    // leaving an unused band under the embedded arrangement card.
+    // Reserve 55 px for the card/group chrome and keep monitor tiles compact.
     readonly property real arrangementCanvasHeight:
-        embeddedArrangementOnly ? 252 : 292
+        embeddedArrangementOnly ? Math.max(160, height - 55) : 292
     readonly property real arrangementVisualScale:
         embeddedArrangementOnly ? 0.65 : 0.70
 
@@ -1215,6 +1216,7 @@ ContentPage {
 
             Rectangle {
                 id: monitorLayoutCanvas
+                objectName: "monitorArrangementCanvas"
                 Layout.fillWidth: true
                 implicitHeight: root.arrangementCanvasHeight
                 radius: Appearance.rounding.normal
@@ -1235,7 +1237,11 @@ ContentPage {
                 readonly property real innerPadding: Appearance.sizes.spacingLarge
                 readonly property real fitScale: {
                     const usableWidth = Math.max(1, width - innerPadding * 2)
-                    const usableHeight = Math.max(1, height - innerPadding * 2)
+                    // Increasing the canvas height must not enlarge monitor
+                    // tiles again: keep the original 252 px fit-height budget.
+                    const tileFitHeight = root.embeddedArrangementOnly
+                        ? Math.min(height, 252) : height
+                    const usableHeight = Math.max(1, tileFitHeight - innerPadding * 2)
                     return Math.min(usableWidth / Math.max(1, bounds.width), usableHeight / Math.max(1, bounds.height))
                 }
                 readonly property real canvasScale: Math.max(

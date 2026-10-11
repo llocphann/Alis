@@ -805,6 +805,12 @@ run privileged installation just because manual buttons are retired.
   save/rollback paths are untouched; Utilities test expectation
   updated. State: SOURCE PATCHED; local drag/hotplug/scale,
   label readability and owner visual acceptance still OPEN.
+  **Follow-up source adjustment (2026-10-11, owner screenshot):** fixed-height
+  Utilities left an oversized blank band between Monitor Arrangement and
+  the four page indicators. Let the embedded canvas fill the usable viewport,
+  retaining the previous compact tile fit budget and unchanged Niri positions.
+  Extended the existing native fixture to check the gap at real 620×400 size.
+  State: SOURCE PATCHED; owner screenshot, scale and multi-output acceptance OPEN.
 
 - [ ] **Quick Notes Edgebar scrolling sensitivity — owner request 2026-10-10:**
   Tune wheel/touchpad scroll speed for predictable navigation, including

@@ -96,6 +96,7 @@ Item {
         }
 
         Row {
+            objectName: "utilitiesPageIndicators"
             Layout.alignment: Qt.AlignHCenter
             spacing: 8
 

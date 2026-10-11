@@ -150,8 +150,10 @@ grep -Fq 'readonly property bool arrangementChromeVisible: !embeddedArrangementO
 grep -Fq 'showHeader: root.arrangementChromeVisible' "$monitor_config" \
     || { printf 'FAIL: embedded Monitor Arrangement still exposes its drop-down header\n' >&2; exit 1; }
 for token in \
-    'embeddedArrangementOnly ? 252 : 292' \
+    'embeddedArrangementOnly ? Math.max(160, height - 55) : 292' \
     'embeddedArrangementOnly ? 0.65 : 0.70' \
+    '? Math.min(height, 252) : height' \
+    'objectName: "monitorArrangementCanvas"' \
     'fitScale * root.arrangementVisualScale' \
     'implicitWidth: root.embeddedArrangementOnly ? 30 : 34'; do
     grep -Fq "$token" "$monitor_config" \
@@ -206,6 +208,7 @@ cp "$repo_root/defaults/config.json" "$test_root/config/illogical-impulse/config
 cat > "$test_root/shell.qml" <<'QML'
 //@ pragma ShellId hadalis-abyss-utilities-popup-test
 import QtQuick
+import QtTest
 import Quickshell
 import qs
 import qs.modules.common
@@ -218,6 +221,7 @@ ShellRoot {
     property int dismissed: 0
     property real monitorWidth: 0
     property real monitorHeight: 0
+    TestCase { id: driver; when: false; optional: true }
     function check(ok,message): bool {
         if (ok) return true
         console.error("UTILITIES_POPUP_FAIL",message)
@@ -233,7 +237,11 @@ ShellRoot {
         implicitHeight: 720
         AbyssPopupContent {
             id: popup
-            anchors.fill: parent
+            // Measure the real 620x400 popup footprint, not the larger
+            // outer 900x720 fixture window.
+            anchors.centerIn: parent
+            width: 620
+            height: 400
             kind: "utilities"
             autoDismissOnIdle: false
             outputName: "utilities-test"
@@ -256,6 +264,13 @@ ShellRoot {
                     "Utilities feature uses the shared 620x400 viewport")) return
                 root.monitorWidth = popup.desiredWidth
                 root.monitorHeight = popup.desiredHeight
+                const canvas = driver.findChild(utility, "monitorArrangementCanvas")
+                const dots = driver.findChild(utility, "utilitiesPageIndicators")
+                if (!root.check(!!canvas && !!dots, "monitor canvas and pager are loaded")) return
+                const gap = dots.mapToItem(utility, 0, 0).y
+                    - canvas.mapToItem(utility, 0, canvas.height).y
+                if (!root.check(gap >= 0 && gap <= 56,
+                    "monitor canvas has no oversized blank band before dots: " + gap)) return
                 if (!root.check(utility.currentPage === 0 && utility.loadedPageCount > 0
                     && utility.loadedPageCount <= 3, "pages are lazy rather than all eagerly loaded")) return
                 utility.currentPage = 1
