@@ -1,0 +1,4 @@
+Selection group palette: PASS (18 family/shape/state cases)
+Material surface ink: PASS (dark readability and light palette)
+Onscreen keyboard palette and key shape: PASS (12 cases)
+Material-only global style contract: PASS

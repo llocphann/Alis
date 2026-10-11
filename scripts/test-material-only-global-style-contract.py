@@ -678,13 +678,16 @@ def main() -> None:
     forbid(input_chip, "RegaliaControlFace {", "InputChip.qml")
 
     for token in (
-        "horizontalPadding: 11",
-        "verticalPadding: 6",
         "readonly property bool showZzzPreview: false",
         "buttonPreviewKind",
     ):
         require(selection_group_button, token, "SelectionGroupButton.qml")
     bindings = {}
+    paddings = {}
+    for name in ("horizontalPadding", "verticalPadding"):
+        expression = re.search(r"^    " + name + r": (.+)$", selection_group_button, re.M)
+        assert expression, f"SelectionGroupButton missing padding: {name}"
+        paddings[name] = expression[1]
     for name in ("colBackground", "colBackgroundHover", "colBackgroundActive"):
         binding = re.search(r"^    " + name + r": (.*(?:\n        .*)*)", selection_group_button, re.M)
         assert binding, f"SelectionGroupButton missing palette binding: {name}"
@@ -692,14 +695,18 @@ def main() -> None:
     subprocess.run(["node", "-e", r"""
 const vm=require('node:vm'),assert=require('node:assert/strict');
 const bindings=JSON.parse(process.argv[1]);
+const paddings=JSON.parse(process.argv[2]);
 const states=[['colBackground',.1,'colSecondaryContainer'],['colBackgroundHover',.18,'colSecondaryContainerHover'],['colBackgroundActive',.26,'colSecondaryContainerActive']];
 for(const family of ['abyss','ii','waffle'])for(const optIn of [true,false])for(const [name,alpha,fallback] of states){
  const colors={colPrimary:'primary',colSecondaryContainer:'normal',colSecondaryContainerHover:'hover',colSecondaryContainerActive:'pressed'};
- const result=vm.runInNewContext(bindings[name],{root:{useAbyssPillShape:optIn},Config:{options:{panelFamily:family}},Appearance:{colors},Qt:{alpha:(color,a)=>color+':'+a}});
+ const context={root:{useAbyssPillShape:optIn,abyssTaskNavigation:false},Config:{options:{panelFamily:family}},Appearance:{colors,fontSizeScale:1.25},Qt:{alpha:(color,a)=>color+':'+a}};
+ const result=vm.runInNewContext(bindings[name],context);
  assert.equal(result,optIn && family==='abyss' ? 'primary:'+alpha : colors[fallback],family+' '+optIn+' '+name);
+ assert.equal(vm.runInNewContext(paddings.horizontalPadding,context),11,'generic horizontal padding');
+ assert.equal(vm.runInNewContext(paddings.verticalPadding,context),6,'generic vertical padding');
 }
 console.log('Selection group palette: PASS (18 family/shape/state cases)');
-""", json.dumps(bindings)], check=True)
+""", json.dumps(bindings), json.dumps(paddings)], check=True)
     for token in ("ZzzCornerPreview", "cornerPreview", "Appearance.zzz."):
         forbid(selection_group_button, token, "SelectionGroupButton.qml")
     for token in (
