@@ -936,6 +936,9 @@ run privileged installation just because manual buttons are retired.
   Dashboard/Music controls, all six overflow lists, LocalMusic demand and
   Python/Rust mutation fixtures PASS (each exit 0).
   [Source pins and focused evidence](../../docs/evidence/abyss-product/20261011-dashboard-navigation/README.md).
+  Product milestone `8edd331797771924435a91ed1ed8abac382490c2` is pushed;
+  combined material source is `553525a25d6b93ab63b02a3233eee3c909579b38`.
+  Canonical 8edd was interrupted, and 553 launch did not start; see Issues.
   State: OPEN for committed canonical, owner touchpad/mouse/scaling and
   multi-output acceptance; actual third Planner page (DASH-F01), dot drag
   transactions (DASH-F02) and their native three-page/restart gates remain
@@ -1167,6 +1170,9 @@ run privileged installation just because manual buttons are retired.
   smoke PASS, each exit 0. [Source pins/evidence](../../docs/evidence/abyss-product/20261011-unified-opacity/README.md).
   A separate extra unchanged Config flush missed its four-second lease
   deadline; raw failure retained, cause NOT_DIAGNOSED, no flush repair claimed.
+  Product `553525a25d6b93ab63b02a3233eee3c909579b38` is pushed.
+  Five-hour 2% stop checkpoint: full canonical NOT_STARTED (launcher path
+  error); execute correct frozen driver after scheduled reset continuation.
   State: OPEN for committed full canonical and owner visual/theme/typography,
   per-surface contrast, animation and multiple-output acceptance.
 

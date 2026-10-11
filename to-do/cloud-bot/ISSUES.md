@@ -949,6 +949,16 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   a complete source PASS/FAIL. [Partial receipt/logs](../../docs/evidence/abyss-product/20261011-8edd33179-interrupted/README.md).
   Next qualification must execute frozen committed driver bytes, then preserve
   its printed exact SHA and full final result.
+  **2026-10-11 23:17 ICT stop checkpoint:** product
+  `553525a25d6b93ab63b02a3233eee3c909579b38` launch NOT_STARTED, exit 127,
+  zero checks: wrong manually typed frozen-driver filename. Correct frozen
+  bytes exist; read actual SHA/path from metadata, never guess.
+  [Launch receipt](../../docs/evidence/abyss-product/20261011-553525a25-launch/README.md).
+  Five-hour remaining is 2%; all work stops. One heartbeat
+  `ti-p-t-c-alis-sau-reset-5-gi` resumes at **23:26:43 ICT on 2026-10-11**,
+  exactly that window reset +3 minutes. Weekly is irrelevant; no credits used.
+  Resume canonical on fresh exact SHA/frozen driver, then Issues → Rework →
+  New Features. All earlier failed/incomplete and owner gates remain separate.
   **Earlier retained**
   clean-clone `6bb45f361346048e7368511169fa5151c390e4ac` run finished
   **FAIL: 343 PASS, 2 FAIL, 2 SKIP; exit 1**. Both failures execute the same

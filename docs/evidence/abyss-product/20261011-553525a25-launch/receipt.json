@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "sourceSha": "553525a25d6b93ab63b02a3233eee3c909579b38",
+  "result": "NOT_STARTED_LAUNCHER_PATH_ERROR",
+  "exitCode": 127,
+  "checksRun": 0,
+  "reason": "launcher used an incorrect manually typed SHA filename; actual frozen driver exists with the printed committed SHA",
+  "frozenDriver": {
+    "sourceSha": "553525a25d6b93ab63b02a3233eee3c909579b38",
+    "path": ".git/maintainer-validation/drivers/553525a25d6b93ab63b02a3233eee3c909579b38.sh",
+    "sha256": "f0d1492eccfbbda046cdd7fabf48fd03409c5b5e17f896f47eca07ad0e2dde6d"
+  },
+  "canonicalAcceptance": false,
+  "stoppedAt5HourUsedPercent": 98,
+  "remainingPercent": 2,
+  "resetUtc": "2026-10-11T16:23:43Z",
+  "resumeUtc": "2026-10-11T16:26:43Z",
+  "automationId": "ti-p-t-c-alis-sau-reset-5-gi"
+}
