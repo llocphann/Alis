@@ -106,7 +106,6 @@ def main() -> None:
         "embeddedBackgroundColor:",
         "component EventSectionHeader: WindowDialogSectionHeader",
         "Appearance.colors.colSurfaceContainerHigh",
-        "root.embeddedPresentation ? 36 : 56",
         "visible: !root.embeddedPresentation",
         'Translation.tr("Title") + " *"',
         'Translation.tr("Note (opt)")',

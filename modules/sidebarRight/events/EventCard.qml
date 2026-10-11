@@ -16,7 +16,8 @@ Item {
     signal removeClicked()
     signal editClicked(var event)
     
-    implicitHeight: cardContent.implicitHeight + 16
+    implicitHeight: cardContent.implicitHeight
+        + cardContent.anchors.topMargin + cardContent.anchors.bottomMargin
     activeFocusOnTab: !root.isExternal
     Accessible.role: root.isExternal ? Accessible.StaticText : Accessible.Button
     Accessible.name: root.event?.title ?? Translation.tr("Event")
@@ -121,6 +122,7 @@ Item {
             // Event info
             ColumnLayout {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 spacing: 4
                 
                 StyledText {
@@ -148,10 +150,14 @@ Item {
                 }
                 
                 RowLayout {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     spacing: 8
                     
                     // Date/time badge
                     Rectangle {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         implicitHeight: dateTimeRow.implicitHeight + 6
                         implicitWidth: dateTimeRow.implicitWidth + 10
                         radius: height / 2
@@ -161,7 +167,10 @@ Item {
                         
                         RowLayout {
                             id: dateTimeRow
-                            anchors.centerIn: parent
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.margins: 5
                             spacing: 4
                             
                             MaterialSymbol {
@@ -171,6 +180,9 @@ Item {
                             }
                             
                             StyledText {
+                                Layout.fillWidth: true
+                                Layout.minimumWidth: 0
+                                elide: Text.ElideRight
                                 text: {
                                     if (root.isAllDay) return Translation.tr("All day")
                                     const start = Qt.formatTime(root.eventDate, "HH:mm")
@@ -195,6 +207,8 @@ Item {
                     
                     // Source / category badge
                     Rectangle {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
                         implicitHeight: categoryText.implicitHeight + 6
                         implicitWidth: categoryText.implicitWidth + 12
                         radius: height / 2
@@ -205,6 +219,9 @@ Item {
                         StyledText {
                             id: categoryText
                             anchors.centerIn: parent
+                            width: Math.max(0, parent.width - 12)
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
                             text: {
                                 if (root.isExternal) return root.event?.sourceName ?? Translation.tr("External")
                                 switch (root.event?.category ?? "general") {

@@ -937,23 +937,30 @@ that implementation is missing. Refetch current `dev` before diagnosing.
   focus lifecycle independently; preserve the redacted Weather location.
 
 - [ ] **Calendar Popup Add/Edit Events text fields too small; event Remove button clipped — owner report 2026-10-10:**
-  In **Calendar Popup → Add Event**, the text input boxes are visibly
-  smaller/shorter than their text, reducing readability. Existing event
-  **Remove** control is partly cut off. Restore sufficient field height and
-  internal text baseline/padding to fit the actual font and placeholder at
-  normal and scaled DPI; ensure the Remove control is fully visible and has
-  an accessible click target without clipping the card, Popup edge or editor
-  action row. Investigate the Calendar Popup embedded layout
-  (`modules/bar/ClockCalendarContent.qml`,
-  `modules/sidebarRight/events/EventsWidget.qml`,
-  `EventsDialog.qml` embedded presentation, and `EventCard.qml`) to
-  identify **which** remove control is clipped before changing its layout;
-  `EventsDialog.qml` currently specifies 36px embedded text-field height
-  and 30px embedded action buttons, but this alone does not prove the cause.
-  Preserve compact Popup design and correct Add/Edit/Remove behavior; test
-  long input text, placeholder, light/dark, font scaling, small screens,
-  empty/populated calendar and add/edit/save/remove. State: OPEN; source
-  diagnosis, native visual test and owner acceptance pending.
+  Restore readable Title/Description fields and a fully visible Remove click
+  target at normal/scaled fonts in compact Calendar panes. **Source repair
+  and focused native checks complete on 2026-10-11; owner acceptance OPEN.**
+  A private Niri probe of `9dd5120bf` measured 36px fields with 17.5px top
+  and 8px bottom padding: only 10.5px remained for 19px/28px text at
+  100/150 percent fonts. At 150 percent, EventCard's Remove occupied
+  x=294–326 outside its 292px card. Its content also exceeded the allocated
+  height by 8px because vertical margins were not included.
+
+  EventsDialog now uses font-sized compact fields, 8px top padding and
+  single-line horizontal scrolling for long embedded input. Modal fields
+  retain their normal 56px floor and grow when larger fonts require it.
+  EventCard allocates both vertical margins; metadata badges can shrink
+  and elide while reserving the fixed Remove target inside the card.
+  `python3 scripts/test-calendar-editor-layout-runtime.py`: **137 checks
+  PASS, exit 0**, using actual QML in an unfocused private Niri session,
+  240/292px panes, 100/150/200 percent fonts, light/dark, empty placeholders,
+  long input, clicks at the top/middle/bottom of Remove, keyboard title
+  entry and isolated Add/Edit/Remove persistence. Existing Calendar/Weather
+  composition contract PASS; obsolete 36px spelling assertion retired.
+  Owner files, clipboard and preferences were untouched. Installed desktop
+  still has the earlier source; visual/physical owner retest and exact-SHA
+  canonical qualification are pending. Keep this item open until Calendar
+  Popup Add/Edit/Save/Remove is accepted on the owner desktop.
 
 - [ ] **Weather popup overlap / Calendar-Weather Pyramid flicker — owner update 2026-10-10:**
   New case: rapidly hover between Calendar Popup and Weather Popup; Weather

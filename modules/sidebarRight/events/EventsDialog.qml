@@ -27,6 +27,19 @@ WindowDialog {
         font.weight: Font.Medium
     }
 
+    component EventTextField: MaterialTextField {
+        // Material's floating-label padding leaves too little room in the
+        // compact editor. Keep a single line and size it for the actual font.
+        implicitHeight: Math.max(root.embeddedPresentation ? 40 : 56,
+            Math.ceil(contentHeight + topPadding + bottomPadding))
+        wrapMode: root.embeddedPresentation ? TextInput.NoWrap : TextInput.Wrap
+        Binding on topPadding {
+            when: root.embeddedPresentation
+            value: 8
+            restoreMode: Binding.RestoreBindingOrValue
+        }
+    }
+
     // Popup-only icon control. Standalone/full EventsDialog keeps its existing
     // labelled controls; this is rendered only by embeddedPresentation.
     component CompactEventOptionButton: Button {
@@ -342,10 +355,9 @@ WindowDialog {
                 spacing: root.embeddedPresentation ? 4 : 8
                 topPadding: root.embeddedPresentation ? 2 : 8
 
-                MaterialTextField {
+                EventTextField {
                     id: titleField
                     width: parent.width - (root.embeddedPresentation ? 8 : 16)
-                    implicitHeight: root.embeddedPresentation ? 36 : 56
                     anchors.horizontalCenter: parent.horizontalCenter
                     placeholderText: root.embeddedPresentation
                         ? Translation.tr("Title") + " *"
@@ -359,9 +371,8 @@ WindowDialog {
                     onTextChanged: root.eventTitle = text
                 }
 
-                MaterialTextField {
+                EventTextField {
                     width: parent.width - (root.embeddedPresentation ? 8 : 16)
-                    implicitHeight: root.embeddedPresentation ? 36 : 56
                     anchors.horizontalCenter: parent.horizontalCenter
                     placeholderText: root.embeddedPresentation
                         ? Translation.tr("Note (opt)")
