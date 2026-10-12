@@ -83,7 +83,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Move persistent shell surfaces directly on the desktop or arrange them here. Every change uses the same live layout controller.")
+                text: Translation.tr("Arrange persistent surfaces here or on the desktop; both use live layout.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 wrapMode: Text.Wrap
