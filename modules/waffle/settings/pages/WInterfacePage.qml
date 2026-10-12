@@ -511,7 +511,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Media OSD")
             icon: "music-note-2"
-            description: Translation.tr("Show feedback for explicit media controls. Pill also announces automatic track changes outside games.")
+            description: Translation.tr("Show media feedback; Pill also announces track changes outside games.")
             checked: Config.options?.osd?.mediaEnabled ?? true
             onCheckedChanged: Config.setNestedValue("osd.mediaEnabled", checked)
         }
@@ -803,7 +803,7 @@ WSettingsPage {
             visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
             label: Translation.tr("Discord compression")
             icon: "info"
-            description: Translation.tr("Two-pass compression keeps the original recording and squeezes a sharing copy. Tiny file, less drama.")
+            description: Translation.tr("Create a smaller sharing copy; keep the original recording.")
         }
 
         WSettingsDropdown {
