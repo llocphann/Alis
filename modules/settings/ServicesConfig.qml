@@ -36,7 +36,7 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "settings"
         title: Translation.tr("Services")
-        description: Translation.tr("Service controls are grouped by responsibility: local system behavior, networking, search, updates and external data sources.")
+        description: Translation.tr("System, network, search, updates and data sources.")
         summary: Translation.tr("System · network · search · updates · data")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
@@ -292,7 +292,7 @@ ContentPage {
                     Config.setNestedValue("search.sloppy", checked)
                 }
                 StyledToolTip {
-                    text: Translation.tr("Could be better if you make a ton of typos,\nbut results can be weird and might not work with acronyms\n(e.g. \"GIMP\" might not give you the paint program)")
+                    text: Translation.tr("Tolerates typos but may misread acronyms (e.g., GIMP).")
                 }
             }
 
@@ -442,7 +442,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Automatically checks the iNiR git repository for new versions and shows a notification in the bar.")
+                text: Translation.tr("Check for shell updates and notify on the bar.")
                 color: Appearance.colors.colOnSurfaceVariant
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -476,7 +476,7 @@ ContentPage {
                 enabled: Config.options?.shellUpdates?.enabled ?? true
                 onCheckedChanged: Config.setNestedValue("shellUpdates.openTerminalOnUpdate", checked)
                 StyledToolTip {
-                    text: Translation.tr("Run setup in your configured terminal so the full TUI output is visible. Off = silent background update with only the bar pill indicator.")
+                    text: Translation.tr("Run setup in a terminal for full output; off updates silently with bar status.")
                 }
             }
 
@@ -903,7 +903,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Set a city name or coordinates for precise location. Leave empty to auto-detect from IP. Weather from wttr.in with Open-Meteo fallback; air quality from Open-Meteo.")
+                text: Translation.tr("Enter city or coordinates; blank uses IP. Weather: wttr.in/Open-Meteo; air quality: Open-Meteo.")
                 color: Appearance.colors.colOnSurfaceVariant
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
