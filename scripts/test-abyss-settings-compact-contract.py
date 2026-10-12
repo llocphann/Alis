@@ -10,4 +10,18 @@ assert "root.actionLabel(slot.actionId)" in q
 assert "id: moduleToggleGrid" in s
 assert "columns: width >= 980 ? 3 : (width >= 620 ? 2 : 1)" in s
 assert "Module functionality settings" not in s
+# SET-R04: the removed batch preset must not return. Independent settings
+# remain editable; removing the button must not reset saved appearance state.
+assert 'Use opaque Material appearance' not in s
+assert 'onClicked:Config.setNestedValues({"abyss.surface.opacity":1' not in s
+for config in (
+    'configKey:"abyss.surface.opacity"',
+    'configKey:"abyss.perimeter.radius"',
+    'configKey:"abyss.effects.glow.strength"',
+):
+    assert config in s, config
+for owner in ('objectName:"abyssPanelOpacity"', 'objectName:"abyssPanelBlur"'):
+    assert owner in s, owner
+assert 'Config.setNestedValue("abyss.effects.blur.enabled",checked)' in s
+assert 'Config.setNestedValue("abyss.effects.refraction.enabled",checked)' in s
 print("quick action row + Abyss modules grid contract: ok")
