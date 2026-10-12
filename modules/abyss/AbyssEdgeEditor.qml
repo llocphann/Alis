@@ -1111,8 +1111,8 @@ AbyssSlider {
                         Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
                         StyledComboBox {
                                                     baseHeight:28*Appearance.fontSizeScale
-                                                    Layout.preferredWidth:120*Appearance.fontSizeScale
-                                                    Layout.maximumWidth:120*Appearance.fontSizeScale
+                                                    Layout.preferredWidth:142*Appearance.fontSizeScale
+                                                    Layout.maximumWidth:142*Appearance.fontSizeScale
                                                 Layout.fillWidth:true;Layout.minimumWidth:0;
                                             
                                                 id:selection
@@ -1141,7 +1141,7 @@ AbyssSlider {
                                             AbyssButton {
                                                 Layout.maximumHeight:root.editorActionSize
                                                 Layout.maximumWidth:root.editorActionSize
-                                                Layout.preferredWidth:root.editorActionSize
+                                                Layout.preferredWidth:28*Appearance.fontSizeScale
                                                 editorSquare:true
                                                 Layout.fillWidth:false;Layout.minimumWidth:0
                                             
@@ -1157,7 +1157,7 @@ AbyssSlider {
                                             AbyssButton {
                                                 Layout.maximumHeight:root.editorActionSize
                                                 Layout.maximumWidth:root.editorActionSize
-                                                Layout.preferredWidth:root.editorActionSize
+                                                Layout.preferredWidth:28*Appearance.fontSizeScale
                                                 editorSquare:true
                                                 Layout.fillWidth:false;Layout.minimumWidth:0
                                             
@@ -1175,7 +1175,7 @@ AbyssSlider {
                                             AbyssButton {
                                                 Layout.maximumHeight:root.editorActionSize
                                                 Layout.maximumWidth:root.editorActionSize
-                                                Layout.preferredWidth:root.editorActionSize
+                                                Layout.preferredWidth:28*Appearance.fontSizeScale
                                                 editorSquare:true
                                                 Layout.fillWidth:false;Layout.minimumWidth:0
                                             
