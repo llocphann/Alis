@@ -83,6 +83,15 @@ ShellRoot {
     mouseClick(handle("b"),handle("b").width/2,handle("b").height/2,Qt.LeftButton,Qt.ControlModifier)
     check(editor.targetIds.length===1&&editor.selectedId==="a","Ctrl-click did not remove target coherently")
     handle("b").forceActiveFocus();keyClick(Qt.Key_Space,Qt.ControlModifier);check(editor.targetIds.length===2,"Ctrl+Space did not add accessible target")
+    // The editor has no selection-mode switch: Shift forms a contiguous visual
+    // interval from the last ordinary-click anchor, Ctrl+Shift extends it.
+    mouseClick(handle("a"))
+    mouseClick(handle("c"),handle("c").width/2,handle("c").height/2,Qt.LeftButton,Qt.ShiftModifier)
+    check(JSON.stringify(editor.targetIds)===JSON.stringify(["a","b","c"]), "Shift-click failed ordered three-module range")
+    mouseClick(handle("d"),handle("d").width/2,handle("d").height/2,Qt.LeftButton,Qt.ControlModifier|Qt.ShiftModifier)
+    check(editor.targetIds.length===4&&editor.targetIds.includes("d"),"Ctrl+Shift-click failed cross-Edge range extension")
+    mouseClick(handle("a"));mouseClick(handle("b"),handle("b").width/2,handle("b").height/2,Qt.LeftButton,Qt.ControlModifier)
+    check(editor.targetIds.length===2,"ordinary click did not collapse range back to a single anchor")
     const offset=rec("b").along-rec("a").along
     drag("a","top",editor.width*.3);capture("horizontal-drag")
     check(!editor.feedback&&Math.abs(rec("b").along-rec("a").along-offset)<.1,"same Edge group drag distorted rendered spacing")
