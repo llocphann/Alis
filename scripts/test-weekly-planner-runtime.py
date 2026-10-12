@@ -152,9 +152,15 @@ Window {
      "multi-date must keep Event enabled but disable recurring choices")
    const repeatChoices=find(inline,"plannerRepeatChoices")
    check(!!repeatChoices,"Planner Repeat selector missing")
-   const choices=repeatChoices.children.filter(item=>item?.modelData?.value !== undefined)
-   check(choices.length===5 && choices[0].enabled
-     && choices.slice(1).every(item=>!item.enabled && item.opacity<.5),
+   // Option models can replace their delegates when enabled flags change.
+   function repeatItems() {
+     return repeatChoices.children.filter(item=>item && item.modelData
+       && item.modelData.value !== undefined)
+   }
+   wait(50)
+   const disabledChoices=repeatItems()
+   check(disabledChoices.length===5 && disabledChoices[0].enabled
+     && disabledChoices.slice(1).every(item=>!item.enabled && item.opacity<.5),
      "conflicting Repeat buttons must be disabled and grey, not just ignored")
    inline.setRepeatOption("weekly")
    check(inline.recurrence==="none"
@@ -165,8 +171,11 @@ Window {
      && JSON.stringify(inline.plannerSelectedDateKeys)===preservedDays,
      "invalid direct Repeat assignment erased selected days")
    inline.choosePlannerDay(new Date(2025,0,7,12),0)
+   wait(50)
+   const enabledChoices=repeatItems()
    check(inline.plannerSelectedCount===1 && !inline.plannerRepeatConflict
-     && choices.slice(1).every(item=>item.enabled && item.opacity===1),
+     && enabledChoices.length===5
+     && enabledChoices.slice(1).every(item=>item.enabled && item.opacity===1),
      "returning to one day must restore all Repeat choices")
    inline.setRepeatOption("weekly")
    check(inline.recurrence==="weekly","Repeat should work with one day")
