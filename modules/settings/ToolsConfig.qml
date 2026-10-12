@@ -18,7 +18,7 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "build"
         title: Translation.tr("Tools")
-        description: Translation.tr("Open only the tool you are configuring; capture, selection and overlay controls no longer share one long settings stack.")
+        description: Translation.tr("Capture, selection and overlay settings by tool.")
         summary: Translation.tr("Recording · snipping · crosshair · Discord · OSD")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
@@ -546,7 +546,7 @@ ContentPage {
                     visible: Config.options?.screenRecord?.discordCompress?.enabled ?? false
                     Layout.fillWidth: true
                     materialIcon: "info"
-                    text: Translation.tr("Uses two-pass H.264 compression and keeps the original recording untouched. Your CPU gets exercise, not a demolition derby.")
+                    text: Translation.tr("Two-pass H.264 makes a smaller copy; original stays intact. Higher CPU load.")
                 }
 
                 ConfigRow {
@@ -768,7 +768,7 @@ ContentPage {
                     checked: Config.options?.regionSelector?.rememberSnipChoice ?? true
                     onCheckedChanged: Config.setNestedValue("regionSelector.rememberSnipChoice", checked)
                     StyledToolTip {
-                        text: Translation.tr("The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.")
+                        text: Translation.tr("Snip menu remembers action/shape; dedicated shortcuts stay fixed. Recording is never remembered; off defaults to rectangle capture.")
                     }
                 }
             }
@@ -837,7 +837,7 @@ ContentPage {
                             Config.setNestedValue("regionSelector.targetRegions.content", checked);
                         }
                         StyledToolTip {
-                            text: Translation.tr("Could be images or parts of the screen that have some containment.\nMight not always be accurate.\nThis is done with an image processing algorithm run locally and no AI is used.")
+                            text: Translation.tr("Local image processing estimates object bounds (no AI); may be inaccurate.")
                         }
                     }
                 }
@@ -1037,7 +1037,7 @@ ContentPage {
                     Config.setNestedValue("osd.mediaEnabled", checked);
                 }
                 StyledToolTip {
-                    text: Translation.tr("Show feedback for explicit media controls and Pill track changes. During games, explicit skips stay visible while automatic track progression stays hidden.")
+                    text: Translation.tr("Show media actions and Pill track changes; in games, manual skips only.")
                 }
             }
 
