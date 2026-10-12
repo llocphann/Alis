@@ -98,6 +98,7 @@ WindowDialog {
     }
 
     property var editingEvent: null
+    property int editingOccurrenceIndex: 0
     property bool isEditing: editingEvent !== null
 
     // Form state
@@ -216,6 +217,7 @@ WindowDialog {
 
     function resetForm(): void {
         root.editingEvent = null
+        root.editingOccurrenceIndex = 0
         root.eventTitle = ""
         root.eventDescription = ""
         root.eventDate = new Date()
@@ -232,13 +234,16 @@ WindowDialog {
 
     function loadEvent(event: var): void {
         root.editingEvent = event
+        root.editingOccurrenceIndex = event._editOccurrenceIndex ?? 0
+        const selectedSlot = Array.isArray(event.occurrences)
+            ? (event.occurrences[root.editingOccurrenceIndex] || event) : event
         root.eventTitle = event.title || ""
         root.eventDescription = event.description || ""
-        const startSource = event.startDate || event.dateTime
+        const startSource = selectedSlot.startDate || selectedSlot.dateTime
         const startDt = new Date(startSource)
         const safeStart = isNaN(startDt.getTime()) ? new Date() : startDt
-        const endDt = event.endDate
-            ? new Date(event.endDate)
+        const endDt = selectedSlot.endDate
+            ? new Date(selectedSlot.endDate)
             : new Date(safeStart.getTime() + 60 * 60 * 1000)
         const safeEnd = isNaN(endDt.getTime())
             ? new Date(safeStart.getTime() + 60 * 60 * 1000) : endDt
@@ -283,6 +288,20 @@ WindowDialog {
         const startIso = startDateTime.toISOString()
         const endIso = endDateTime.toISOString()
 
+        if (root.isEditing && Array.isArray(root.editingEvent.occurrences)) {
+            // One write preserves the other days and the canonical Todo link.
+            // Recurrence edits need a separate series policy; never mix them.
+            if (root.recurrence !== "none") return false
+            return Events.rescheduleOccurrence(root.editingEvent.id,
+                root.editingOccurrenceIndex,startIso,endIso,{
+                    title:root.eventTitle.trim(),
+                    description:root.eventDescription.trim(),
+                    allDay:root.allDay,
+                    category:root.eventCategory,
+                    priority:root.eventPriority,
+                    reminderMinutes:root.reminderMinutes
+                })
+        }
         if (root.isEditing) {
             return Events.updateEvent(root.editingEvent.id, {
                 title: root.eventTitle.trim(),
