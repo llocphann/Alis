@@ -312,8 +312,8 @@
   "Apply blur effect to the lock screen background": "Apply blur effect to the lock screen background",
   "Apply blur effect to the overview background": "Apply blur effect to the overview background",
   "Apply blur effect to video/GIF wallpapers. Has performance impact - disable if you experience lag": "Apply blur effect to video/GIF wallpapers. Has performance impact - disable if you experience lag",
-  "Apply blur to animated wallpapers in backdrop. May significantly impact performance.": "Apply blur to animated wallpapers in backdrop. May significantly impact performance.",
-  "Apply blur to animated wallpapers. Independent from window blur. May significantly impact performance.": "Apply blur to animated wallpapers. Independent from window blur. May significantly impact performance.",
+  "Blur animated backdrops; may greatly increase GPU load.": "Blur animated backdrops; may greatly increase GPU load.",
+  "Animated wallpaper blur is separate from window blur; high GPU cost.": "Animated wallpaper blur is separate from window blur; high GPU cost.",
   "Apply current colors to all open terminal windows without restarting them": "Apply current colors to all open terminal windows without restarting them",
   "Apply dark color scheme": "Apply dark color scheme",
   "Apply extra glass blur behind the Settings panel. Only visible with aurora or angel global style.": "Apply extra glass blur behind the Settings panel. Only visible with aurora or angel global style.",
@@ -500,7 +500,7 @@
   "Blur strength for video wallpapers (percentage of full blur radius)": "Blur strength for video wallpapers (percentage of full blur radius)",
   "Blur the wallpaper when windows are open": "Blur the wallpaper when windows are open",
   "Blur the wallpaper when windows are present": "Blur the wallpaper when windows are present",
-  "Blur wallpaper when windows are open. Temporarily hides during wallpaper transitions.": "Blur wallpaper when windows are open. Temporarily hides during wallpaper transitions.",
+  "Blur wallpaper behind windows; pause during transitions.": "Blur wallpaper behind windows; pause during transitions.",
   "Blurred wallpaper shown in Niri's native overview (Mod+Tab)": "Blurred wallpaper shown in Niri's native overview (Mod+Tab)",
   "Bold": "Bold",
   "Bookmark these — your desktop will feel instantly faster once they're muscle memory.": "Bookmark these — your desktop will feel instantly faster once they're muscle memory.",
@@ -3342,7 +3342,7 @@
   "Tweaks": "Tweaks",
   "Two minutes to make it yours. Skipping is fine, but you'll thank yourself later.": "Two minutes to make it yours. Skipping is fine, but you'll thank yourself later.",
   "Two-finger": "Two-finger",
-  "Two-pass compression keeps the original recording and squeezes a sharing copy. Tiny file, less drama.": "Two-pass compression keeps the original recording and squeezes a sharing copy. Tiny file, less drama.",
+  "Create a smaller sharing copy; keep the original recording.": "Create a smaller sharing copy; keep the original recording.",
   "Type": "Type",
   "Type /key to get started with online models\nCtrl+O to expand the sidebar\nCtrl+P to detach sidebar into a window": "Type /key to get started with online models\nCtrl+O to expand the sidebar\nCtrl+P to detach sidebar into a window",
   "Type shortcuts: / for actions, > for apps, = for math": "Type shortcuts: / for actions, > for apps, = for math",
@@ -5652,5 +5652,7 @@
     "To-do pending": "To-do pending",
     "To-do removal pending": "To-do removal pending",
     "To-do removed": "To-do removed",
-    "To-do in another source": "To-do in another source"
+    "To-do in another source": "To-do in another source",
+  "Hide wallpaper behind fullscreen windows; keep the Task View backdrop.": "Hide wallpaper behind fullscreen windows; keep the Task View backdrop.",
+  "Show media feedback; Pill also announces track changes outside games.": "Show media feedback; Pill also announces track changes outside games."
 }
