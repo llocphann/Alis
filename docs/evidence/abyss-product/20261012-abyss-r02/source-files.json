@@ -1,0 +1,14 @@
+{
+  "defaults/config.json": "e2d13181b84e21243b15ffa739ecadf16ba14912e5587f6aa69ed2f63f9c0223",
+  "modules/common/Config.qml": "0907002667f14e013154ca88fbda20aee15925a06dd8a324d3481d7ec646a113",
+  "modules/abyss/looks/AbyssGeometry.js": "f634439b8344fafd13c27d7428035dab9c9bf70514e34adfd7afa3d0b70efcb8",
+  "modules/abyss/looks/AbyssLayout.js": "8941b9b7fb495c0ce1a840b3034d1946df8a851fca3fafe67687ca8891b2d097",
+  "modules/abyss/looks/AbyssField.qml": "becbc71363078035b39ff09d878870fb13b290ce5168a4db0129bff068f16a5a",
+  "modules/abyss/looks/AbyssField.frag": "44570c3b6e17b6186661bb08b6f73f2ac93ffddb6eb800e30715552eafa71d78",
+  "modules/abyss/looks/AbyssField.frag.qsb": "6ebf54efb1b39544775af038c0b9bf3e0d1c4102bbfcfe7a8ec89a3f0f950336",
+  "modules/abyss/looks/AbyssFieldImmersion.qml": "eb34b5034d2612f4b7b24de47086ff5799dbbba3309c8402e6152ef612de81c1",
+  "modules/abyss/AbyssPerimeter.qml": "1c42704253899b2dddd3673eef833dad6f700dca46aafa978eda06911c1cc097",
+  "modules/abyss/AbyssEdgeEditor.qml": "ee0a770a10b3e34a1c935da567db36684a5ae60480b2d91b7d3dffc7d7dab034",
+  "scripts/test-abyss-zero-corners.mjs": "7b07bebbd759a25cda9f8045915af0dce7eda1d0362fd4457ba36a7e0f450575",
+  "scripts/test-abyss-zero-corners-runtime.py": "e474b319a625ed658f71ef6f5f182745463eaf85d1511e1f6940c73549da55fc"
+}

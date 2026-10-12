@@ -1478,6 +1478,7 @@ Scope {
                 anchors.fill: parent
                 visible: window.presented || window.physicalOsdResident
                 edgeInsets: window.paintInsets
+                roundZeroCorners: window.presented ? bar.layoutOptions.edgeRoundZeroCorners ?? {} : {}
                 records: window.presented ? liquid.records : window.physicalOsdResident ? [osd.record] : []
                 waveTexture: liquid.waves.texture
                 waterLink: companionExtension.waterLink

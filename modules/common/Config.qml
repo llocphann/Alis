@@ -708,6 +708,12 @@ Singleton {
                         property bool bottom: false
                         property bool left: false
                     }
+                    property JsonObject edgeRoundZeroCorners: JsonObject {
+                        property bool top: false
+                        property bool right: false
+                        property bool bottom: false
+                        property bool left: false
+                    }
                     property JsonObject edgeModuleRadii: JsonObject {
                         property real top: -1
                         property real right: -1

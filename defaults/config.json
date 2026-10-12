@@ -2161,6 +2161,7 @@
             "edgeWidthAffectsModules": {"top": true, "right": true, "bottom": true, "left": true},
             "edgeJoinModules": {"top": false, "right": false, "bottom": false, "left": false},
             "edgeModuleRadii": {"top": -1, "right": -1, "bottom": -1, "left": -1},
+            "edgeRoundZeroCorners": {"top": false, "right": false, "bottom": false, "left": false},
             "depth": 36
         },
         "motion": {

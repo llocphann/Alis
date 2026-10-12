@@ -1217,7 +1217,7 @@ run privileged installation just because manual buttons are retired.
   Calm stays below Balanced (the former Calm); Fluid/Deep should be distinct and
   restrained. Detailed wave controls belong to Custom; show numeric audio strength.
 
-- [ ] **ABYSS-R02 — Checkbox to preserve rounded INNER workspace corners at 0px Edge width — owner clarification 2026-10-11:**
+- [x] **ABYSS-R02 — Checkbox to preserve rounded INNER workspace corners at 0px Edge width — owner clarification 2026-10-11:**
   [Owner: Alis dev; Rework] **FINAL OWNER-APPROVED GEOMETRY INTENT:**
   When an Edge in **Edit Abyss Layout** is configured with effective
   **Edge width = 0px**, offer exactly **one independent CHECKBOX option**
@@ -1291,7 +1291,14 @@ run privileged installation just because manual buttons are retired.
   Preserve existing nonzero-width corners and compositor hot
   corner input. Update focused QML/JS/field pixel tests and
   obtain owner visual signoff.
-  State: OPEN; corrected checkbox specification only, NOT IMPLEMENTED.
+  **Hoàn thành (bot báo xong) — Owner chưa verified, 2026-10-12.**
+  Independent 0px checkbox, shared Curvature, OR corner ownership and one-field
+  localized inner arcs are implemented; no new strip or input blocker.
+  Policy 9606, native controls 68/24, fresh-process restart 2 and GPU
+  30 strict RGBA comparisons/24 PNG PASS, including original OFF/nonzero parity.
+  [Evidence](../../docs/evidence/abyss-product/20261012-abyss-r02/README.md).
+  Owner, installed fullscreen/input, fractional/multi-output and current
+  exact-SHA canonical remain separate pending gates.
 
 - [x] **ABYSS-R04 — Unified Panel and Content card opacity slider — owner request 2026-10-11:**
   [Owner: Alis dev; Rework/Settings] In Abyss **Surface** Settings,

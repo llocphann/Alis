@@ -14,6 +14,7 @@ ShaderEffect {
     readonly property var bodyTexture:bodySource
     readonly property vector4d viewport:sourcePass.viewport
     readonly property vector4d insets:sourcePass.insets
+    readonly property vector4d zeroCorners:sourcePass.zeroCorners
     readonly property vector4d material:sourcePass.material
     readonly property vector4d liquidContact:sourcePass.liquidContact
     readonly property vector4d liquidContactNormal:sourcePass.liquidContactNormal

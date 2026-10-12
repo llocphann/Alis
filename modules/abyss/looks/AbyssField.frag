@@ -10,6 +10,7 @@ layout(std140,binding=0) uniform buf {
     vec4 renderRect;
     float maskOnly;
     vec4 insets;
+    vec4 zeroCorners;
     vec4 material;
     vec4 liquidContact;
     vec4 liquidContactNormal;
@@ -141,9 +142,26 @@ vec4 workspaceRect() {
     vec4 edges=mix(vec4(-64.0),insets,step(vec4(0.001),insets));
     return vec4(edges.xy,viewport.xy-edges.xy-edges.zw);
 }
+float innerCorner(vec2 uv,float r) {
+    if(uv.x<=r && uv.y<=r)return r-length(uv-vec2(r));
+    float a=length(vec2(uv.x-r,uv.y)),b=length(vec2(uv.x,uv.y-r));
+    return uv.x>r && uv.y>r ? min(a,b) : uv.x>r ? a : b;
+}
+float zeroCornerField(float d,vec2 p) {
+    if(dot(zeroCorners,vec4(1.0))<0.5)return d;
+    vec4 edges=max(vec4(0.0),insets);
+    float r=max(0.0,min(material.x,min(viewport.x-edges.x-edges.z,viewport.y-edges.y-edges.w)*0.5));
+    if(r<=0.0)return d;
+    vec2 low=p-edges.xy,high=viewport.xy-edges.zw-p;
+    if(zeroCorners.x>.5)d=min(d,innerCorner(low,r));
+    if(zeroCorners.y>.5)d=min(d,innerCorner(vec2(high.x,low.y),r));
+    if(zeroCorners.z>.5)d=min(d,innerCorner(high,r));
+    if(zeroCorners.w>.5)d=min(d,innerCorner(vec2(low.x,high.y),r));
+    return d;
+}
 float field(vec2 p) {
     vec4 hole=workspaceRect();
-    float d=-roundedBox(p,hole,material.x);
+    float d=zeroCornerField(-roundedBox(p,hole,material.x),p);
     d=record(d,p,rect0,radii0.x); d=record(d,p,rect1,radii0.y); d=record(d,p,rect2,radii0.z); d=record(d,p,rect3,radii0.w);
     d=record(d,p,rect4,radii1.x); d=record(d,p,rect5,radii1.y); d=record(d,p,rect6,radii1.z); d=record(d,p,rect7,radii1.w);
     d=record(d,p,rect8,radii2.x); d=record(d,p,rect9,radii2.y); d=record(d,p,rect10,radii2.z); d=record(d,p,rect11,radii2.w);

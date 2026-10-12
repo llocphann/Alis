@@ -1,0 +1,106 @@
+{
+  "configured": true,
+  "depth": 36,
+  "edgeJoinModules": {
+    "bottom": false,
+    "left": false,
+    "right": false,
+    "top": false
+  },
+  "edgeModuleRadii": {
+    "bottom": -1,
+    "left": -1,
+    "right": -1,
+    "top": -1
+  },
+  "edgeRoundZeroCorners": {
+    "bottom": false,
+    "left": false,
+    "right": false,
+    "top": false
+  },
+  "edgeSizes": {
+    "bottom": 1,
+    "left": 1,
+    "right": 1,
+    "top": 1
+  },
+  "edgeThicknesses": {
+    "bottom": -1,
+    "left": -1,
+    "right": -1,
+    "top": -1
+  },
+  "edgeWidthAffectsModules": {
+    "bottom": true,
+    "left": true,
+    "right": true,
+    "top": true
+  },
+  "gap": 8,
+  "outputLayouts": [
+    {
+      "edgeRoundZeroCorners": {
+        "left": true
+      },
+      "outputName": "B",
+      "placements": []
+    },
+    {
+      "edgeJoinModules": {
+        "bottom": false,
+        "left": false,
+        "right": false,
+        "top": false
+      },
+      "edgeModuleRadii": {
+        "bottom": -1,
+        "left": -1,
+        "right": -1,
+        "top": -1
+      },
+      "edgeRoundZeroCorners": {
+        "bottom": true,
+        "left": true,
+        "right": true,
+        "top": true
+      },
+      "edgeSizes": {
+        "bottom": 1,
+        "left": 1,
+        "right": 1,
+        "top": 1
+      },
+      "edgeThicknesses": {
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0
+      },
+      "edgeWidthAffectsModules": {
+        "bottom": true,
+        "left": true,
+        "right": true,
+        "top": true
+      },
+      "gap": 8,
+      "outputName": "A",
+      "placements": [],
+      "singleModuleExpansion": {
+        "bottom": "edge",
+        "left": "edge",
+        "right": "edge",
+        "top": "edge"
+      },
+      "size": 1
+    }
+  ],
+  "placements": [],
+  "singleModuleExpansion": {
+    "bottom": "edge",
+    "left": "edge",
+    "right": "edge",
+    "top": "edge"
+  },
+  "size": 1
+}

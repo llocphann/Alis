@@ -21,6 +21,7 @@ with tempfile.TemporaryDirectory(prefix='hadalis-abyss-shader-') as tmp:
     broken = (repo / 'modules/abyss/looks/AbyssField.qml').read_text()
     broken = broken.replace('import qs.modules.common', 'import qs.modules.abyss.looks\nimport qs.modules.common')
     broken = broken.replace('Qt.resolvedUrl("AbyssField.frag.qsb")', 'Qt.resolvedUrl("broken.qsb")')
+    (root / 'AbyssGeometry.js').symlink_to(repo / 'modules/abyss/looks/AbyssGeometry.js')
     (root / 'BrokenField.qml').write_text(broken)
     (root / 'broken.qsb').write_bytes(b'not a Qt shader package')
     (root / 'shell.qml').write_text('''//@ pragma ShellId hadalis-abyss-shader-test

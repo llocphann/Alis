@@ -80,6 +80,7 @@ function optionsForOutput(options, outputName) {
         edgeWidthAffectsModules:edgeMap(options?.edgeWidthAffectsModules,profile?.edgeWidthAffectsModules),
         edgeJoinModules:edgeMap(options?.edgeJoinModules,profile?.edgeJoinModules),
         edgeModuleRadii:edgeMap(options?.edgeModuleRadii,profile?.edgeModuleRadii),
+        edgeRoundZeroCorners:edgeMap(options?.edgeRoundZeroCorners,profile?.edgeRoundZeroCorners),
         singleModuleExpansion:edgeMap(options?.singleModuleExpansion,profile?.singleModuleExpansion)});
 }
 function edgeSize(options, edge) { return bounded(options?.edgeSizes?.[edge],1,.6,1.8); }
@@ -291,7 +292,7 @@ function checkedGroupMove(placements,ids,primaryId,x,y,width,height,options,font
     }))return deny("The group is blocked here. Move it to free space or move modules separately.");
     return {placements:candidate,guides:guides,rejected:""};
 }
-function saveProfile(options, outputName, placements, gap, outputOnly, edgeSizes, singleModuleExpansion, size, edgeThicknesses, edgeWidthAffectsModules, edgeJoinModules, edgeModuleRadii) {
+function saveProfile(options, outputName, placements, gap, outputOnly, edgeSizes, singleModuleExpansion, size, edgeThicknesses, edgeWidthAffectsModules, edgeJoinModules, edgeModuleRadii, edgeRoundZeroCorners) {
     var normalized = normalize(placements,"top");
     var profiles = Array.from(options?.outputLayouts || []);
     var current = optionsForOutput(options,outputName);
@@ -301,18 +302,19 @@ function saveProfile(options, outputName, placements, gap, outputOnly, edgeSizes
     var affects = edgeMap(edgeWidthAffectsModules ?? current.edgeWidthAffectsModules);
     var joins = edgeMap(edgeJoinModules ?? current.edgeJoinModules);
     var radii = edgeMap(edgeModuleRadii ?? current.edgeModuleRadii);
+    var zeroCorners=edgeMap(edgeRoundZeroCorners ?? current.edgeRoundZeroCorners);
     if (outputOnly) {
         var existing = profiles.find(function(p) { return p.outputName===outputName; });
         profiles = profiles.filter(function(p) { return p.outputName!==outputName; });
         profiles.push(Object.assign({},existing,{outputName:outputName,placements:normalized,gap:bounded(gap,8,0,32),
-            edgeSizes:edgeMap(edgeSizes ?? current.edgeSizes),singleModuleExpansion:expansion,size:scale,edgeThicknesses:thicknesses,edgeWidthAffectsModules:affects,edgeJoinModules:joins,edgeModuleRadii:radii}));
+            edgeSizes:edgeMap(edgeSizes ?? current.edgeSizes),singleModuleExpansion:expansion,size:scale,edgeThicknesses:thicknesses,edgeWidthAffectsModules:affects,edgeJoinModules:joins,edgeModuleRadii:radii,edgeRoundZeroCorners:zeroCorners}));
         return {"abyss.modules.outputLayouts":profiles};
     }
     return {"abyss.modules.configured":true,"abyss.modules.placements":normalized,
         "abyss.modules.gap":bounded(gap,8,0,32),"abyss.modules.outputLayouts":profiles.filter(function(p) { return p.outputName!==outputName; }),
         "abyss.modules.edgeSizes":edgeMap(edgeSizes ?? options?.edgeSizes),
         "abyss.modules.singleModuleExpansion":expansion,"abyss.modules.size":scale,
-        "abyss.modules.edgeThicknesses":thicknesses,"abyss.modules.edgeWidthAffectsModules":affects,"abyss.modules.edgeJoinModules":joins,"abyss.modules.edgeModuleRadii":radii};
+        "abyss.modules.edgeThicknesses":thicknesses,"abyss.modules.edgeWidthAffectsModules":affects,"abyss.modules.edgeJoinModules":joins,"abyss.modules.edgeModuleRadii":radii,"abyss.modules.edgeRoundZeroCorners":zeroCorners};
 }
 function stripDepth(placements, edge, options, fontScale) {
     return placements.filter(function(p) { return p.enabled && p.edge===edge; }).reduce(function(depth,p) {

@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-zero-corners-yq80qjis/shell.qml"
+  INFO: Shell ID: "3c5b438213309f382597b55087a113ff" Path ID "3c5b438213309f382597b55087a113ff"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/x44pzy2smt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1171379.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-zero-corners-yq80qjis/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-zero-corners-yq80qjis/state/quickshell/user/gamemode_active failed: File does not exist.
+ ERROR qml: ABYSS_ZERO_NATIVE_FAIL 0px flags lost after process restart check@qs:@/qs/shell.qml:30
+run@qs:@/qs/shell.qml:38
+expression for onTriggered@qs:@/qs/shell.qml:66

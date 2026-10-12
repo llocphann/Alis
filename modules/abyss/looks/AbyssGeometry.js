@@ -249,10 +249,11 @@ function smoothUnion(a, b, k) {
     var h = Math.max(k-Math.abs(a-b),0)/k;
     return Math.min(a,b)-h*h*k*0.25;
 }
-function distance(x, y, width, height, insets, radius, records, softness, recordRadius) {
+function distance(x, y, width, height, insets, radius, records, softness, recordRadius, roundZeroCorners) {
     var left=insets.left>0 ? insets.left : -64, top=insets.top>0 ? insets.top : -64;
     var right=insets.right>0 ? insets.right : -64, bottom=insets.bottom>0 ? insets.bottom : -64;
     var d = -roundedDistance(x,y,{x:left,y:top,width:width-left-right,height:height-top-bottom},radius);
+    d=zeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners);
     for (var i=0;i<records.length;i++) {
         var rec=records[i];
         if (rec.surface.width>0 && rec.surface.height>0)
@@ -292,4 +293,30 @@ function joinCorner(record, adjacent, width, height, insets) {
     else if (adjacent==="top") { surface.height += surface.y+50;surface.y=-50; }
     else surface.height=height+50-surface.y;
     return Object.assign({},record,{surface:surface,joinedEdge:adjacent});
+}
+
+// Corner ownership is OR: either enabled zero-width adjoining Edge owns one arc.
+// This changes only the workspace-facing quarter curve, never the outer boundary.
+function zeroCornerMask(insets,choices) {
+    var on=function(edge) {return choices?.[edge]===true && insets[edge]<=0;};
+    return [on("top")||on("left"),on("top")||on("right"),
+        on("bottom")||on("right"),on("bottom")||on("left")];
+}
+function innerCornerDistance(u,v,r) {
+    // Exact distance to the finite quarter arc. A max/intersection SDF
+    // underestimates outside this quadrant, painting a false circular shadow.
+    if(u<=r && v<=r)return r-Math.hypot(u-r,v-r);
+    var a=Math.hypot(u-r,v),b=Math.hypot(u,v-r);
+    return u>r && v>r ? Math.min(a,b) : u>r ? a : b;
+}
+function zeroCornerField(d,x,y,width,height,insets,radius,choices) {
+    if(!choices || !(choices.top || choices.right || choices.bottom || choices.left))return d;
+    var mask=zeroCornerMask(insets,choices);
+    if(!mask.some(function(enabled) {return enabled;}))return d;
+    var left=Math.max(0,insets.left),right=Math.max(0,insets.right),top=Math.max(0,insets.top),bottom=Math.max(0,insets.bottom);
+    var r=Math.max(0,Math.min(radius,(width-left-right)/2,(height-top-bottom)/2));
+    if(r<=0)return d;
+    var u=[x-left,width-right-x,width-right-x,x-left],v=[y-top,y-top,height-bottom-y,height-bottom-y];
+    mask.forEach(function(enabled,i) {if(enabled)d=Math.min(d,innerCornerDistance(u[i],v[i],r));});
+    return d;
 }

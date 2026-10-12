@@ -51,6 +51,7 @@ Item {
     property var edgeThicknesses: ({top:-1,right:-1,bottom:-1,left:-1})
     property var edgeWidthAffectsModules: ({top:true,right:true,bottom:true,left:true})
     property var edgeJoinModules: ({top:false,right:false,bottom:false,left:false})
+    property var edgeRoundZeroCorners: ({top:false,right:false,bottom:false,left:false})
     property var edgeModuleRadii: ({top:-1,right:-1,bottom:-1,left:-1})
     property real moduleScale: 1
     property var singleModuleExpansion: ({top:"edge",right:"edge",bottom:"edge",left:"edge"})
@@ -79,7 +80,7 @@ Item {
     readonly property var selected: draft.find(p => p.id === selectedId)
     readonly property var layoutConflicts: Placement.conflicts(moduleLayer.layoutRecords)
     readonly property var draftOptions: Object.assign({},Config.options?.abyss?.modules,{gap:gap,edgeSizes:edgeSizes,size:moduleScale,
-        singleModuleExpansion:singleModuleExpansion,edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius})
+        singleModuleExpansion:singleModuleExpansion,edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeRoundZeroCorners:edgeRoundZeroCorners,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius})
 
     function toolbarEdgeScore(edge): real {
         let score = (edge === toolbarEdge ? -4 : 0)
@@ -176,7 +177,7 @@ Item {
     function snapshot(): var {
         return JSON.parse(JSON.stringify({draft:draft,gap:gap,edgeSizes:edgeSizes,
             edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,
-            edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,moduleScale:moduleScale,
+            edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeRoundZeroCorners:edgeRoundZeroCorners,moduleScale:moduleScale,
             singleModuleExpansion:singleModuleExpansion,outputOnly:outputOnly,
             draftPositions:draftPositions,positionEdits:positionEdits}))
     }
@@ -199,7 +200,7 @@ Item {
     function sourceSignature(): string {
         const options=Config.options?.abyss?.modules
         const values={configured:options?.configured,placements:Array.from(options?.placements || []),gap:options?.gap,size:options?.size}
-        for(const key of ["edgeSizes","edgeThicknesses","edgeWidthAffectsModules","edgeJoinModules","edgeModuleRadii","singleModuleExpansion"])values[key]=Placement.edgeMap(options?.[key])
+        for(const key of ["edgeSizes","edgeThicknesses","edgeWidthAffectsModules","edgeJoinModules","edgeModuleRadii","edgeRoundZeroCorners","singleModuleExpansion"])values[key]=Placement.edgeMap(options?.[key])
         return JSON.stringify({global:values,profile:Array.from(options?.outputLayouts || []).find(p=>p.outputName===outputName) || null})
     }
     function undo(): void {
@@ -281,6 +282,7 @@ Item {
         edgeThicknesses = Object.assign({top:-1,right:-1,bottom:-1,left:-1},options.edgeThicknesses)
         edgeWidthAffectsModules = Object.assign({top:true,right:true,bottom:true,left:true},options.edgeWidthAffectsModules)
         edgeJoinModules = Object.assign({top:false,right:false,bottom:false,left:false},options.edgeJoinModules)
+        edgeRoundZeroCorners=Object.assign({top:false,right:false,bottom:false,left:false},options.edgeRoundZeroCorners)
         edgeModuleRadii = Object.assign({top:-1,right:-1,bottom:-1,left:-1},options.edgeModuleRadii)
         moduleScale = options.size
         singleModuleExpansion = Object.assign({top:"edge",right:"edge",bottom:"edge",left:"edge"},options.singleModuleExpansion)
@@ -301,7 +303,7 @@ Item {
             if(_dragging){feedback="Finish moving the module group before saving";return}
             if(layoutConflicts.length){feedback=layoutConflicts[0];return}
             if(_sourceSignature!==sourceSignature()){feedback="This layout changed outside the editor. Cancel and reopen before saving.";return}
-            const writes=Placement.saveProfile(Config.options?.abyss?.modules,outputName,draft,gap,outputOnly,edgeSizes,singleModuleExpansion,moduleScale,edgeThicknesses,edgeWidthAffectsModules,edgeJoinModules,edgeModuleRadii)
+            const writes=Placement.saveProfile(Config.options?.abyss?.modules,outputName,draft,gap,outputOnly,edgeSizes,singleModuleExpansion,moduleScale,edgeThicknesses,edgeWidthAffectsModules,edgeJoinModules,edgeModuleRadii,edgeRoundZeroCorners)
             let positions=Config.options?.abyss?.positions ?? []
             positionEdits.forEach(edit=>positions=Presentation.save(positions,edit.kind,edit.outputName,edit.values))
             if(positionEdits.length) writes["abyss.positions"]=positions
@@ -322,6 +324,7 @@ Item {
         edgeWidthAffectsModules = {top:true,right:true,bottom:true,left:true}
         edgeJoinModules = {top:false,right:false,bottom:false,left:false}
         edgeModuleRadii = {top:-1,right:-1,bottom:-1,left:-1}
+        edgeRoundZeroCorners = {top:false,right:false,bottom:false,left:false}
         singleModuleExpansion = {top:"edge",right:"edge",bottom:"edge",left:"edge"}
         guides = []
         selectedId = ""
@@ -390,6 +393,7 @@ Item {
     onEdgeWidthAffectsModulesChanged: root.queueHistory()
     onEdgeJoinModulesChanged: root.queueHistory()
     onEdgeModuleRadiiChanged: root.queueHistory()
+    onEdgeRoundZeroCornersChanged: root.queueHistory()
     onModuleScaleChanged: root.queueHistory()
     onSingleModuleExpansionChanged: root.queueHistory()
     onDraftPositionsChanged: root.queueHistory()
@@ -839,6 +843,17 @@ Item {
                             {},root.edgeThicknesses,
                             {[root.editingEdge]:-1})
                     }
+                }
+
+                AbyssCheckBox {
+                    objectName:"abyssRoundZeroCorners"
+                    visible:!root.editingPopups
+                    enabled:Placement.edgeThickness(root.draftOptions,root.editingEdge)===0
+                    text:"Round inner corners at 0px"
+                    Layout.fillWidth:true
+                    checked:root.edgeRoundZeroCorners[root.editingEdge]===true
+                    onToggled:root.edgeRoundZeroCorners=Object.assign({},root.edgeRoundZeroCorners,{[root.editingEdge]:checked})
+                    StyledToolTip {text:parent.enabled ? "Uses shared Curvature" : "Set Edge width to 0px"}
                 }
 
                 AbyssButton {
