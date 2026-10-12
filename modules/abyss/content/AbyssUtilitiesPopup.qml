@@ -304,7 +304,7 @@ Item {
                                     && DisplayMode.mirrorSource.length > 0
                                     && DisplayMode.mirrorTarget.length > 0
                                 onClicked: {
-                                    if (DisplayMode.currentMode === "mirror") DisplayMode.stopMirror()
+                                    if (DisplayMode.currentMode === "mirror") DisplayMode.stopMirror(true)
                                     else DisplayMode.apply("mirror")
                                 }
                             }

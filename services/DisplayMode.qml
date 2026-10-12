@@ -32,6 +32,7 @@ Singleton {
     // Immutable identity of the launched wl-mirror process. UI dropdown
     // selections are normalized on hotplug and must not mask a disconnect.
     property var _runningMirrorPair: null
+    property bool _manualMirrorStop: false
     property var _currentAction: null
     property bool _rollingBack: false
     property bool _stoppingMirror: false
@@ -120,6 +121,9 @@ Singleton {
         _previousActive = activeOutputs.slice()
         _queue = plan.actions.slice()
         _pendingMirror = plan.mirror
+        // A later explicit Apply takes ownership of the status; do not let a
+        // still-pending earlier manual Stop overwrite the new mode's result.
+        _manualMirrorStop = false
         _rollingBack = false
         _operationFailure = ""
         _requestedMode = mode
@@ -193,9 +197,12 @@ Singleton {
         _runNextAction()
     }
 
-    function stopMirror(): void {
+    function stopMirror(manual=false): void {
         _pendingMirrorRestart = null
         if (!mirrorProcess.running) return
+        // A manual Stop deserves a confirmation; a stop as part of a new
+        // display mode or a hotplug must not override that operation's status.
+        _manualMirrorStop = !!manual
         _stoppingMirror = true
         mirrorProcess.running = false
     }
@@ -267,10 +274,16 @@ Singleton {
     Process {
         id: mirrorProcess
         stderr: StdioCollector { id: mirrorError }
-        onStarted: root.statusMessage = "Mirroring "
-            + root.mirrorSource + " to " + root.mirrorTarget + "."
+        onStarted: {
+            // Show the running process identity, not dropdowns changed after
+            // the command was launched.
+            if (root._runningMirrorPair)
+                root.statusMessage = DisplayPlan.mirrorRunningMessage(root._runningMirrorPair)
+        }
         onExited: exitCode => {
             const expectedStop = root._stoppingMirror
+            const manualStop = root._manualMirrorStop
+            root._manualMirrorStop = false
             root._stoppingMirror = false
             root._runningMirrorPair = null
             if (root._pendingMirrorRestart) {
@@ -279,8 +292,9 @@ Singleton {
                 Qt.callLater(() => root._launchMirror(restart))
                 return
             }
+            const stoppedMessage=DisplayPlan.mirrorStoppedMessage(expectedStop,manualStop)
+            if (stoppedMessage.length) root.statusMessage = stoppedMessage
             if (!expectedStop) {
-                root.statusMessage = "Display mirror stopped."
                 if (exitCode !== 0)
                     root.lastError = "wl-mirror exited with an error."
                         + (mirrorError.text.trim().length ? " " + mirrorError.text.trim() : "")

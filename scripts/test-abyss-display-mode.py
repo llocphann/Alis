@@ -68,6 +68,15 @@ assert.equal(mirrorPairConnected(names,null),false);
 assert.equal(mirrorPairConnected(['eDP-1','DP-1'],{source:'eDP-1',target:'DP-1'}),true);
 assert.equal(mirrorPairConnected(names,{source:'',target:'DP-1'}),false);
 
+assert.equal(mirrorRunningMessage({source:'DP-1',target:'HDMI-A-1'}),'Mirroring DP-1 to HDMI-A-1.');
+assert.equal(mirrorRunningMessage(null),'');
+assert.equal(mirrorStoppedMessage(true,true),'Display mirror stopped.',
+    'explicit Stop must confirm the active mirror ended');
+assert.equal(mirrorStoppedMessage(true,false),'',
+    'internal replacement and hotplug stop retain their own status');
+assert.equal(mirrorStoppedMessage(false,false),'Display mirror stopped.',
+    'unexpected process exit reports a stopped session');
+
 const original=JSON.stringify(names);
 plan('extend',names,'eDP-1','','','');
 assert.equal(JSON.stringify(names),original,'planner does not mutate caller output lists');

@@ -58,6 +58,18 @@ function restore(names, previouslyActive, preferredPrimary) {
     return {ok:true,error:"",actions:orderedActions(names,targets),targets:targets};
 }
 
+// Stable runtime reporting: UI source/target dropdowns can change while
+// wl-mirror is still running. Only the launched pair is authoritative.
+function mirrorRunningMessage(pair) {
+    return pair?.source && pair?.target
+        ? "Mirroring " + pair.source + " to " + pair.target + "."
+        : "";
+}
+function mirrorStoppedMessage(expectedStop, manualStop) {
+    // Internal stop during Apply/hotplug must not replace its own status.
+    return !expectedStop || manualStop ? "Display mirror stopped." : "";
+}
+
 // Validate the actual running wl-mirror pair, not a UI selection that may be
 // rewritten when Niri reports a hotplug. Reject stale queued restarts too.
 function mirrorPairConnected(names,pair) {
