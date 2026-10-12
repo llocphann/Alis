@@ -2436,7 +2436,8 @@ open_detached_qml_window() {
 }
 
 resolve_setup_dir() {
-    if [[ -x "$launcher_root/setup" && -f "$launcher_root/shell.qml" ]]; then
+    if [[ -x "$launcher_root/setup" && -f "$launcher_root/shell.qml" ]] &&
+            bash -n "$launcher_root/setup" 2>/dev/null; then
         printf '%s' "$launcher_root"
         return
     fi
@@ -2454,7 +2455,11 @@ resolve_setup_dir() {
     fi
 
     stored_repo="${stored_repo/#\~/$HOME}"
-    if [[ -n "$stored_repo" && -d "${stored_repo}/.git" && -x "${stored_repo}/setup" && -f "${stored_repo}/shell.qml" ]]; then
+    # Git worktrees store .git as a file, not a directory. Recover from
+    # either checkout layout when a copied runtime setup is outdated/broken.
+    if [[ -n "$stored_repo" && ( -d "${stored_repo}/.git" || -f "${stored_repo}/.git" )
+            && -x "${stored_repo}/setup" && -f "${stored_repo}/shell.qml" ]] &&
+            bash -n "${stored_repo}/setup" 2>/dev/null; then
         printf '%s' "$stored_repo"
         return
     fi
@@ -2471,6 +2476,15 @@ run_setup_command() {
     if [[ ! -x "$setup_script" ]]; then
         echo "setup not found in $dir" >&2
         exit 1
+    fi
+
+    # Do not execute a stale/corrupt runtime copy: a parse error otherwise
+    # appears near a valid case arm (-q|--quiet) with no useful diagnosis.
+    local syntax_error
+    if ! syntax_error="$(bash -n "$setup_script" 2>&1)"; then
+        printf 'inir: refusing syntax-invalid setup at %s\n%s\n' "$setup_script" "$syntax_error" >&2
+        printf '%s\n' 'Run update from a healthy Alis Git checkout: bash ./setup update' >&2
+        return 2
     fi
 
     cd "$dir"

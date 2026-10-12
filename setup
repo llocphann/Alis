@@ -5,7 +5,7 @@
 resolve_bootstrap_repo_root() {
     local script_dir="$1"
 
-    if [[ -d "${script_dir}/.git" && -f "${script_dir}/setup" && -f "${script_dir}/shell.qml" ]]; then
+    if [[ -e "${script_dir}/.git" && -f "${script_dir}/setup" && -f "${script_dir}/shell.qml" ]]; then
         printf '%s' "$script_dir"
         return
     fi
@@ -39,7 +39,7 @@ resolve_bootstrap_repo_root() {
 
     stored_repo="${stored_repo/#\~/$HOME}"
 
-    if [[ -n "$stored_repo" && -d "${stored_repo}/.git" && -f "${stored_repo}/setup" && -f "${stored_repo}/shell.qml" ]]; then
+    if [[ -n "$stored_repo" && -e "${stored_repo}/.git" && -f "${stored_repo}/setup" && -f "${stored_repo}/shell.qml" ]]; then
         printf '%s' "$stored_repo"
         return
     fi
