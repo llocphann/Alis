@@ -134,60 +134,76 @@ Window {
        && inline.eventTime==="09:15" && inline.eventEndTime==="10:15",
      "clicked 09:15 slot lost local date or end-time prefill")
    check(!inline.hasUnsavedChanges(),"slot prefill was marked dirty before any edits")
-   // Modifier selection is Add-only and exclusive with Repeat.
+   // Multi-day eligibility follows a civil calendar hierarchy; the
+   // selection must survive both page changes and Repeat interactions.
    const initialDate=Qt.formatDate(inline.eventDate,"yyyy-MM-dd")
    inline.choosePlannerDay(new Date(2025,0,3,12),Qt.ControlModifier)
    check(inline.plannerSelectedCount===2
        && inline.plannerSelectedDateKeys.includes(initialDate)
        && inline.plannerSelectedDateKeys.includes("2025-01-03"),
      "Ctrl+Click failed to add a second calendar day")
+   // 31 Dec 2024 and 3 Jan 2025 share an ISO week but not month/year.
+   check(inline.canSelectRepeat("weekly")
+       && !inline.canSelectRepeat("monthly")
+       && !inline.canSelectRepeat("yearly"),
+     "weekly cross-year boundary eligibility is incorrect")
    inline.choosePlannerDay(new Date(2025,0,5,12),Qt.ShiftModifier)
    check(inline.plannerSelectedCount===3
        && inline.plannerSelectedDateKeys.includes("2025-01-04"),
-     "Shift+Click failed to select the inclusive range")
+     "Shift+Click failed to select inclusive days")
    check(inline.hasUnsavedChanges(),"multi-day selection did not mark form dirty")
-   const preservedDays=JSON.stringify(inline.plannerSelectedDateKeys)
-   check(inline.plannerRepeatConflict && !inline.canSelectRepeat("weekly")
-     && inline.canSelectRepeat("none"),
-     "multi-date must keep Event enabled but disable recurring choices")
    const repeatChoices=find(inline,"plannerRepeatChoices")
-   check(!!repeatChoices,"Planner Repeat selector missing")
-   // Option models can replace their delegates when enabled flags change.
+   check(!!repeatChoices,"Repeat selector missing")
    function repeatItems() {
      return repeatChoices.children.filter(item=>item && item.modelData
        && item.modelData.value !== undefined)
    }
    wait(50)
-   const disabledChoices=repeatItems()
-   check(disabledChoices.length===5 && disabledChoices[0].enabled
-     && disabledChoices.slice(1).every(item=>!item.enabled && item.opacity<.5),
-     "conflicting Repeat buttons must be disabled and grey, not just ignored")
+   let options=repeatItems()
+   check(options.length===5 && options[0].enabled && !options[1].enabled
+       && options[1].opacity<.5 && options.slice(2).every(item=>item.enabled),
+     "same-week dates must gray only Daily")
+   const picked=JSON.stringify(inline.plannerSelectedDateKeys)
    inline.setRepeatOption("weekly")
-   check(inline.recurrence==="none"
-     && JSON.stringify(inline.plannerSelectedDateKeys)===preservedDays,
-     "disabled Repeat selection erased selected days")
-   inline.recurrence="monthly"
-   check(inline.recurrence==="none"
-     && JSON.stringify(inline.plannerSelectedDateKeys)===preservedDays,
-     "invalid direct Repeat assignment erased selected days")
+   check(inline.recurrence==="weekly"
+       && JSON.stringify(inline.plannerSelectedDateKeys)===picked,
+     "compatible Weekly must retain all chosen dates")
+   inline.choosePlannerDay(new Date(2025,0,7,12),Qt.ControlModifier)
+   check(JSON.stringify(inline.plannerSelectedDateKeys)===picked
+       && inline.recurrence==="weekly",
+     "incompatible day must not erase Weekly selection or cadence")
+   inline.setRepeatOption("monthly")
+   inline.choosePlannerDay(new Date(2025,0,7,12),Qt.ControlModifier)
+   check(inline.plannerSelectedCount===4
+       && !inline.canSelectRepeat("weekly")
+       && inline.canSelectRepeat("monthly")
+       && inline.canSelectRepeat("yearly"),
+     "different weeks within month must permit Monthly/Yearly only")
+   wait(50)
+   options=repeatItems()
+   check(options.length===5 && !options[1].enabled && !options[2].enabled
+       && options[3].enabled && options[4].enabled,
+     "different weeks were not reflected in Repeat button states")
+   inline.setRepeatOption("yearly")
+   inline.choosePlannerDay(new Date(2025,1,2,12),Qt.ControlModifier)
+   check(inline.plannerSelectedCount===5 && inline.recurrence==="yearly"
+       && !inline.canSelectRepeat("monthly") && inline.canSelectRepeat("yearly"),
+     "different months in one year must still permit Yearly")
+   const yearDraft=JSON.stringify(inline.plannerSelectedDateKeys)
+   inline.choosePlannerDay(new Date(2026,0,2,12),Qt.ControlModifier)
+   check(JSON.stringify(inline.plannerSelectedDateKeys)===yearDraft
+       && inline.recurrence==="yearly",
+     "different years must reject an incompatible Yearly selection")
+   inline.setRepeatOption("none")
+   inline.choosePlannerDay(new Date(2026,0,2,12),Qt.ControlModifier)
+   check(inline.plannerSelectedCount===6 && !inline.canSelectRepeat("yearly"),
+     "Event with different years must gray Yearly")
    inline.choosePlannerDay(new Date(2025,0,7,12),0)
    wait(50)
-   const enabledChoices=repeatItems()
-   check(inline.plannerSelectedCount===1 && !inline.plannerRepeatConflict
-     && enabledChoices.length===5
-     && enabledChoices.slice(1).every(item=>item.enabled && item.opacity===1),
-     "returning to one day must restore all Repeat choices")
-   inline.setRepeatOption("weekly")
-   check(inline.recurrence==="weekly","Repeat should work with one day")
-   const beforeBlocked=JSON.stringify(inline.plannerSelectedDateKeys)
-   inline.choosePlannerDay(new Date(2025,0,8,12),Qt.ControlModifier)
-   check(JSON.stringify(inline.plannerSelectedDateKeys)===beforeBlocked
-     && inline.recurrence==="weekly",
-     "multi-day selection while repeating must not mutate the form")
-   inline.setRepeatOption("none")
-   inline.choosePlannerDay(new Date(2025,0,8,12),Qt.ControlModifier)
-   check(inline.plannerSelectedCount===2 && inline.recurrence==="none",
-     "turning Repeat off must unlock explicit multi-day selection")
+   options=repeatItems()
+   check(inline.plannerSelectedCount===1
+       && options.length===5 && options.every(item=>item.enabled),
+     "returning to a single day must re-enable all repeat options")
    inline.resetForm()
    inline.eventDate=slotDate
    inline.eventTime="09:15"
