@@ -1,6 +1,7 @@
 # Issues/bugs
 
 - [x] **ABYSS-I08 — P0 Edit Abyss Layout QML fails to load (owner log, 2026-10-13):**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   Installed `dev` source `d3d2bc4ecb5b06320d3b2a0a71c09055966c7626`
   reports `AbyssEdgeEditor.qml:917:157: Property value set multiple times`
   and parent `AbyssPerimeter.qml:726: Type AbyssEdgeEditor unavailable`.
@@ -99,6 +100,7 @@ inside canvas), Recording missing inner marker and private-native timeout state;
 do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
 
 - [x] **DASH-I10 — Cleared Queue delegates briefly read undefined tracks — discovered 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   DASH-F03's empty-list test exposes actual title/artist/artUrl TypeError while
   removed Queue delegates briefly outlive their modelData. Preserve valid rows
   and use empty text/art for this disposal state; disable unavailable/negative-
@@ -110,6 +112,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **DASH-I09 — Hidden header actions change widget canvas height on Edit — diagnosed 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   Related Planner/tab reorder and Dashboard layout. Frozen0465 trace preserves
   body content932.8×590 while the header/column implicit height grows44→50;
   widget canvas933×546 becomes933×540 after Edit. With showHeader false the
@@ -134,6 +137,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **DASH-I08 — Music paints custom scrollbar thumb on fitting/empty lists — discovered 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   Related DASH-F03. Actual private-native empty Results has contentHeight0,
   size1, visible true and custom thumb opacity.45. Replacing Qt's styled
   contentItem lost its overflow/fade state; AsNeeded alone retains the control.
@@ -147,6 +151,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **ABYSS-I07 — Multi-select drag collapses on mouse-down (discovered 2026-10-12):**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   The modifier-selection implementation in `AbyssEdgeEditor.qml`
   selected the clicked handle unconditionally on mouse-down; with two
   modules selected, that removed the group before `startDrag` and
@@ -160,6 +165,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   exact helper blob PASS; QML/Niri and full canonical exact-SHA were NOT RUN.
 
 - [x] **ABYSS-I03 — Group drag changes gaps when crossing Edge orientation — discovered 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   Related multi-selection: the destination's mature renderer reports a new
   span after the first group proposal, so recomputing source gaps with that span
   distorted spacing. Snapshot rendered source records; bounded coalesced reflow
@@ -172,6 +178,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **ABYSS-I02 — Edit layout copies Qt signal members into saved Edge maps — discovered 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   Related `ABYSS-F01`. Actual private-native global Done after output-only
   save/Undo failed while assigning read-only `objectNameChanged`; generic
   Object.assign of typed JsonObject maps included Qt signals. Production
@@ -199,6 +206,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **DASH-I07 — Tab-order conflict baseline must survive Undo Reset — source review 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   Related `DASH-F02`: resetting an edit accepts the newest saved order, but
   undoing that Reset must restore the earlier conflict baseline as well as
   the older draft. Otherwise Done could overwrite a concurrent save. The
@@ -210,6 +218,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **DASH-I06 — Transient page label during hidden-tab model updates — discovered 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   Related `DASH-F02` native fractional test passes drag/transaction checks but
   detects `Unable to assign [undefined] to QString` while Music is removed:
   its old delegate briefly outlives the new stable-ID array. The shared label
@@ -220,6 +229,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **DASH-I05 — Music scrollbar preference missing from typed Config — discovered 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   Related to `DASH-F01`/`DASH-F02` shared Dashboard acceptance. The new Music
   Settings checkbox/defaults refer to `dashboard.music.showScrollbars`, but the
   typed JsonObject does not declare it; actual native Settings emits "Cannot
@@ -275,6 +285,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **ABYSS-I01 — Panel background blur appears coupled to Panel opacity — owner report 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   [Owner: Alis dev; Bug / material rendering] User reports
   **Panel background blur** changes together with **Panel
   background opacity**, rather than behaving as an independent
@@ -1503,6 +1514,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer confirms the Weather Details color/theme repair and preserved visual constraints are acceptable. Close this *Details theme* bug against the recorded source repair and focused native/QML palette and frozen-Orbital tests. Previous lines saying owner visual acceptance OPEN are historical and are superseded by this signoff. This does NOT verify other Weather Orbital text, hover/Pyramid overlap or the separate canonical suite.
 
 - [x] **ABYSS-I05 — Edit Abyss Layout Media IPC preview incorrectly shows Volume IPC — owner report 2026-10-10:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   The editor presents the **Volume IPC** sample when **Media IPC** is selected.
   Trace IPC preview type-to-component routing and restore the proper Media IPC
   sample while retaining a correct Volume IPC preview and actual IPC behavior.
@@ -1700,6 +1712,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   Preserve click-only actions, keyboard focus and empty-space click-through.
 
 - [x] **NET-I01 — Wi-Fi/Bluetooth popup text missing:** the loading blocker is fixed at
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   `134b0115a`, and visible-title fixtures pass through `2d31f06b9`. Confirm actual
   owner populated/empty/loading/disabled states and actions. System Tray owns
   these icons; do not reintroduce standalone Wi-Fi/Bluetooth edge modules.
@@ -1743,6 +1756,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   pass; owner's interactive acceptance remains distinct.
 
 - [x] **WALL-I01 — Wallpaper sometimes stays unchanged on desktop while Overview updates — Liquid/iNiR Melt transition failure, owner update 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   [Owner: Alis dev; bug/high-impact wallpaper correctness] Selecting another
   image can update the **Overview preview** without changing the **actual
   desktop wallpaper**, especially when the configured iNiR Melt transition
@@ -1807,6 +1821,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Wallpaper ready-slot/fallback product source repair and focused apply/recovery tests reported complete; owner live Liquid/Melt-path behavior remains unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [x] **UTIL-I02 — Mirror status misreports selected devices/manual Stop (source diagnosis 2026-10-12):**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   `DisplayMode.qml` previously formed `onStarted` text from mutable UI
   dropdown selections and suppressed all expected-stop status, including a
   direct user Stop request. Track the launch-time identity and direct Stop
