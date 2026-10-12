@@ -77,14 +77,14 @@ assert 'anchors.centerIn: parent' in button
 assert 'property bool editorSquare: false' in button
 assert 'root.editorSquare && root.iconOnly' in button
 assert 'component EditorIconHint: Item' in editor
-assert len(re.findall(r'EditorIconHint\s*\{', editor)) == 4
+assert len(re.findall(r'EditorIconHint\s*\{', editor)) == 3
 assert 'objectName:"abyssEditingEdgeDropdown"' in editor
 assert 'objectName:"abyssModuleDropdown"' in editor
 # Dropdowns are their column headers and must not have a leading glyph.
 edge_column=editor[editor.index('id:edgeEditorColumn'):]
 assert edge_column.index('id:edgeChoice') < edge_column.index('EditorIconHint {')
 assert editor.count('AbyssSlider {') == 6
-assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 6
+assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 4
 # Qt rejects two assignments to the same attached property in one QML item.
 # All six compact sliders must keep exactly one minimum-width binding.
 for line_number, line in enumerate(editor.splitlines(), 1):
@@ -96,7 +96,7 @@ slider_rows = [
     line for line in editor.splitlines()
     if 'Layout.preferredWidth:root.editorSliderWidth' in line
 ]
-assert len(slider_rows) == 6
+assert len(slider_rows) == 4
 assert all(
     row.count('Layout.minimumWidth:') == 1
     and 'Layout.minimumWidth:75*Appearance.fontSizeScale' in row
@@ -113,7 +113,7 @@ assert 'Layout.preferredWidth:58*Appearance.fontSizeScale' in editor
 assert 'readonly property real editorActionSize: 30 * Appearance.fontSizeScale' in editor
 assert 'readonly property real editorSliderWidth: 158 * Appearance.fontSizeScale' in editor
 assert editor.count('editorCompact:true') == 6
-assert editor.count('Layout.preferredWidth:20*Appearance.fontSizeScale') == 4
+assert editor.count('Layout.preferredWidth:20*Appearance.fontSizeScale') == 3
 assert editor.count('spacing:2') >= 10
 assert 'root.editorSquare ? 17 * Appearance.fontSizeScale' in button
 assert 'objectName:"abyssButtonCenteredGlyph"' in button
@@ -130,8 +130,8 @@ assert '750*Appearance.fontSizeScale' in editor
 assert 'Ctrl/Shift-click select · Drag' not in editor
 
 # Every Editor button has a bounded square hit rectangle, even in fill rows.
-assert editor.count('Layout.maximumWidth:root.editorActionSize') == 17
-assert editor.count('Layout.maximumHeight:root.editorActionSize') == 17
+assert editor.count('Layout.maximumWidth:root.editorActionSize') == 18
+assert editor.count('Layout.maximumHeight:root.editorActionSize') == 18
 for name,action in [('abyssModuleCustomSizeToggle','customSize'),('abyssModuleJoinCorner','joinCorner')]:
     part=editor[editor.index('objectName:"'+name+'"'):]
     part=part[:part.index('onToggled:')+len('onToggled:root.change("'+action+'",checked)')]
@@ -148,10 +148,20 @@ for name in ["abyssScaleModulesToggle","abyssScaleModulesSlider","abyssJoinNearb
     assert editor.count('objectName:"'+name+'"') == 1, name
 assert 'glyph:"join_inner"' in editor
 assert 'id:scaleModulesRow' in editor
+assert editor.count('Layout.preferredWidth:Math.max(78,(edgeEditorColumn.width-50*Appearance.fontSizeScale)/2)') == 2
+assert editor.count('Layout.maximumWidth:135*Appearance.fontSizeScale') == 2
+assert 'objectName:"abyssModuleHeaderActions"' in editor
+assert 'objectName:"abyssModuleRoundingAction"' in editor
+assert 'objectName:"abyssRoundZeroCorners"' in editor
+assert 'id:edgeGapAndSizeRow' in editor
+assert 'id:edgeWidthRow' in editor
+assert 'Math.min(root.width-48,660*Appearance.fontSizeScale)' in editor
+assert 'columns:1;rowSpacing:4*Appearance.fontSizeScale' in editor
+assert editor.count('AbyssCheckBox {') == 1
 assert 'visible:root.edgeWidthAffectsModules[root.editingEdge]===false' not in editor
 assert 'enabled:root.edgeWidthAffectsModules[root.editingEdge]===false' in editor
 assert 'root.expandedControls ? 860 : 720' not in editor
-assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 6
+assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 4
 assert editor.count('editorSquare:true') >= 14
 assert 'columnSpacing:10*Appearance.fontSizeScale' in editor
 assert 'rowSpacing:6*Appearance.fontSizeScale' in editor
