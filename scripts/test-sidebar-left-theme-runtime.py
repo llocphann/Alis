@@ -70,10 +70,19 @@ ShellRoot {
      "non-Abyss sidebar no longer uses its old material")
    capture("waffle")
    Config.setNestedValue("panelFamily","abyss")
-   tryVerify(()=>sameColor(inner.color,ColorUtils.mix(AbyssStyle.contentLayer,AbyssStyle.accent,.88)),3000)
+   tryVerify(()=>sameColor(inner.color,Qt.alpha(
+       ColorUtils.mix(AbyssStyle.contentLayer,AbyssStyle.accent,.88),
+       AbyssStyle.contentOpacity)),3000)
    check(ColorUtils.ensureReadable(AbyssStyle.textColor,inner.color,4.5).a>0,
      "adaptive accessible text color unavailable")
    capture("restored")
+   // Tint may alter RGB, never add invisible opacity back into 0% content.
+   for(const alpha of [0,0.25,0.78,1]) {
+    Config.setNestedValue("abyss.content.opacity",alpha)
+    tryVerify(()=>Math.abs(inner.color.a-alpha)<.006,3000)
+    check(Math.abs(inner.color.a-alpha)<.006,
+        "sidebar background alpha does not follow saved content opacity "+alpha)
+   }
    console.info("SIDEBAR_LEFT_THEME_NATIVE_PASS",root.checks,root.frames)
   }catch(error){
    console.error("SIDEBAR_LEFT_THEME_NATIVE_FAIL",error.message,error.stack)
