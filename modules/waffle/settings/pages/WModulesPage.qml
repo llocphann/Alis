@@ -79,7 +79,7 @@ WSettingsPage {
     WSettingsInfoBar {
         visible: !root.isWaffleActive
         severity: WSettingsInfoBar.Severity.Info
-        message: Translation.tr("These Waffle modules are currently inactive because another panel family is selected. You can still pre-configure them here before switching.")
+        message: Translation.tr("Waffle modules are inactive; configure them now or switch panel family.")
     }
 
     WSettingsCard {
@@ -130,7 +130,7 @@ WSettingsPage {
             visible: !root.isWaffleActive
             label: Translation.tr("Waffle family currently inactive")
             icon: "info"
-            description: Translation.tr("Changes here will apply when you switch the panel family back to Windows 11 (Waffle).")
+            description: Translation.tr("Changes apply when Waffle becomes active.")
         }
 
         WSettingsSwitch {
@@ -192,7 +192,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Task View")
             icon: "library"
-            description: Translation.tr("Overview of all workspaces and windows. Supports carousel and centered focus modes.")
+            description: Translation.tr("All workspaces and windows; carousel or centered focus.")
             checked: root.isPanelEnabled("wTaskView")
             onCheckedChanged: root.setPanelEnabled("wTaskView", checked)
         }
@@ -213,7 +213,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Fit left sidebar to widgets")
             icon: "panel-left-expand"
-            description: Translation.tr("Shrink the left sidebar to its content on the Widgets tab instead of full height")
+            description: Translation.tr("Fit the Widgets sidebar to content height.")
             checked: Config.options?.sidebar?.collapseWidgetsTab ?? false
             onCheckedChanged: Config.setNestedValue("sidebar.collapseWidgetsTab", checked)
         }
