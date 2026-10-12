@@ -7,6 +7,8 @@ const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
 const policy=read("modules/sidebarRight/events/EventDateSelection.js");
 const {key,localDate,choose,range,ranges}=vm.runInNewContext(
   policy+";({key,localDate,choose,range,ranges})",{});
+const R=vm.runInNewContext(
+  read("services/EventRepeatPolicy.js")+";({allowed,templateAllowed,nextCycle})",{});
 const date=(y,m,d)=>new Date(y,m-1,d,12);
 const keys=result=>JSON.stringify(result.keys);
 const old="2026-10-13";
@@ -61,8 +63,8 @@ const service=read("services/Events.qml");
 const occurrences=read("services/EventOccurrences.js");
 assert.match(calendar,/signal dayActivated\(var date, int modifiers\)/);
 assert.match(calendar,/root\.dayActivated\(dayCell\.modelData\.date,mouse\.modifiers\)/);
-assert.match(dialog,/root\.plannerRepeatConflict && root\.recurrence!=="none"/);
-assert.match(dialog,/chosen\.keys\.length>1 && root\.recurrence!=="none"/);
+assert.match(dialog,/!root\.canSelectRepeat\(root\.recurrence\)/);
+assert.match(dialog,/multi && !RepeatPolicy\.allowed\(chosen\.keys,root\.recurrence\)/);
 assert.doesNotMatch(dialog.split("onRecurrenceChanged:",2)[1].split("Connections {",1)[0],
   /resetPlannerDateSelection/, "Repeat must never discard checked dates");
 assert.equal((dialog.match(/enabled: root\.canSelectRepeat\(/g)||[]).length,4,
@@ -77,7 +79,9 @@ assert.match(dialog,/const multi= root\.plannerPresentation && !root\.isEditing/
 assert.match(dialog,/selectedDays\.length>1 && root\.recurrence!=="none"/);
 assert.match(dialog,/DateSelection\.ranges\(selectedDays/);
 assert.match(dialog,/root\.plannerSelectedDateKeys : \[\]\]/);
-assert.match(service,/supplied\.length>1[\s\S]*\(recurrence \|\| "none"\)!=="none"/);
+assert.match(service,/RepeatPolicy\.templateAllowed\(explicitSlots,recurrence \|\| "none"\)/);
+assert.match(service,/event\.repeatTemplate=explicitSlots\.map/);
+assert.match(service,/RepeatPolicy\.nextCycle\(event\.repeatTemplate/);
 assert.match(service,/const groupIndex = bulk \? -1/);
 assert.match(service,/if \(bulk\) event=Occurrences\.store\(event,explicitSlots\)/);
 assert.match(service,/root\.eventAdded\(event\)[\s\S]*root\.saveToFile\(\)/);
@@ -85,4 +89,40 @@ assert.match(occurrences,/occurrences:ordered/);
 assert.match(occurrences,/startDate:first\.startDate,dateTime:first\.startDate/);
 assert.equal((dialog.match(/onDayActivated:/g)||[]).length,1,
   "Do not attach duplicate day-click handlers or extra buttons");
-console.log("WEEKLY_PLANNER_MULTIDATE_PASS: ctrl toggle, shift ranges, cross-month, DST, one-ID storage and repeat isolation");
+const cases=[
+ {days:["2026-10-13"],expected:["none","daily","weekly","monthly","yearly"]},
+ {days:["2026-10-13","2026-10-15"],expected:["none","weekly","monthly","yearly"]},
+ {days:["2026-10-13","2026-10-20"],expected:["none","monthly","yearly"]},
+ {days:["2026-10-30","2026-11-03"],expected:["none","yearly"]},
+ {days:["2026-12-29","2027-01-03"],expected:["none","weekly"]},
+ {days:["2026-12-15","2027-01-16"],expected:["none"]}
+];
+for(const example of cases) {
+ const allowed=["none","daily","weekly","monthly","yearly"]
+   .filter(mode=>R.allowed(example.days,mode));
+ assert.deepEqual(allowed,example.expected,
+   "incompatible repeat modes for "+JSON.stringify(example.days));
+}
+function slot(y,m,d,h=9) {
+ const start=new Date(y,m-1,d,h,0,0),end=new Date(y,m-1,d,h+1,0,0);
+ return {startDate:start.toISOString(),endDate:end.toISOString()};
+}
+function groupDates(group) {return group.map(s=>new Date(s.startDate).getDate());}
+const weekly=R.nextCycle([slot(2026,10,13),slot(2026,10,15)],
+ "weekly",new Date(2026,9,15,11));
+assert.deepEqual(groupDates(weekly),[20,22],"weekly group did not repeat every selected weekday");
+const monthly=R.nextCycle([slot(2026,1,30),slot(2026,1,31)],
+ "monthly",new Date(2026,1,1));
+assert.deepEqual(groupDates(monthly),[30,31],
+ "30/31 January must skip February instead of overflowing");
+assert.equal(new Date(monthly[0].startDate).getMonth(),2);
+const leap=R.nextCycle([slot(2028,2,28),slot(2028,2,29)],
+ "yearly",new Date(2028,2,1));
+assert.deepEqual(groupDates(leap),[28],
+ "yearly Feb 29 must skip non-leap years, not roll into March");
+assert.equal(new Date(leap[0].startDate).getFullYear(),2029);
+assert.equal(R.templateAllowed([slot(2026,10,13),slot(2026,10,20)],"weekly"),false);
+assert.equal(R.templateAllowed([slot(2026,10,13),slot(2026,10,20)],"monthly"),true);
+assert.match(read("modules/dashboard/WeeklyPlannerPolicy.js"),/date!==null/,
+ "week projection must omit nonexistent calendar dates");
+console.log("WEEKLY_PLANNER_MULTIDATE_PASS: modifier choice, cycle eligibility, recurring groups, DST and identity");
