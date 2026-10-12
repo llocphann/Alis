@@ -37,10 +37,7 @@ ShellRoot {
         // Relocation is intentionally debounced for 90 ms. Let it complete,
         // then wait for real layout polish before deriving a pointer position.
         driver.wait(120)
-        if(!editor.expandedControls) {
-            driver.mouseClick(driver.findChild(editor,"abyssEditorOptions"))
-            driver.wait(120)
-        }
+        if(!root.check(editor.expandedControls,"layout options must always be shown")) return false
         return root.check(driver.waitForPolish(editor.Window.window,3000),"editor controls did not finish layout")
     }
     function clickControl(item): bool {

@@ -31,13 +31,13 @@ columns=re.search(r"\bcolumns:\s*([\s\S]+?)\n\s*rowSpacing:",selected)
 assert columns, "selected module controls need an adaptive grid"
 subprocess.run(["node","-e",r'''
 const assert=require('node:assert/strict'),vm=require('node:vm');
-for(const expandedControls of [false,true])for(const toolbarOnHorizontalEdge of [false,true]) {
+for(const toolbarOnHorizontalEdge of [false,true]) {
  for(const fontSizeScale of [.7,1,1.5,2]) {
   let previous=1;
   for(const width of [0,250,400,419,420,600,739,740,900,1099,1100,1400,2200]) {
-   const actual=vm.runInNewContext(process.argv[1],{root:{toolbarOnHorizontalEdge,expandedControls},width,Appearance:{fontSizeScale}});
+   const actual=vm.runInNewContext(process.argv[1],{root:{toolbarOnHorizontalEdge},width,Appearance:{fontSizeScale}});
    const expected=!toolbarOnHorizontalEdge || width<440*fontSizeScale
-       ? 1 : expandedControls && width>=700*fontSizeScale ? 3 : 2;
+       ? 1 : width>=700*fontSizeScale ? 3 : 2;
    assert([1,2,3].includes(actual));assert.equal(actual,expected);
    assert(actual>=previous);previous=actual;
   }

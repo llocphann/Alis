@@ -23,13 +23,14 @@ for needle in [
     assert needle in editor, needle
 
 # Immediate edit actions use compact icons on every Edge; tooltip/accessible
-# names remain textual. Fine tuning is disclosed through the Options control.
+# names remain textual. Fine tuning is always available in the editor; there is no Options toggle.
 for name in ["abyssLayoutUndo", "abyssLayoutDone", "abyssLayoutCancel", "abyssModulePositionLock", "abyssSelectionEnabled", "abyssSelectionRemove"]:
     block = editor[editor.index('objectName:"'+name+'"'):]
     block = block[:block.index("onClicked:")]
     assert re.search(r"compact:\s*true", block), name
-assert 'property bool expandedControls: false' in editor
-assert 'objectName:"abyssEditorOptions"' in editor
+assert 'readonly property bool expandedControls: true' in editor
+assert 'objectName:"abyssEditorOptions"' not in editor
+assert 'expandedControls=false' not in editor
 assert 'objectName:"abyssEditorAdd"' not in editor
 assert 'objectName:"abyssEditorConfirmAdd"' in editor
 assert 'property bool compactActions: false' in positions
@@ -91,14 +92,15 @@ assert all(
     for row in slider_rows
 ), "each compact slider needs one minimum width"
 assert editor.count('editorSquare:true') >= 10
-assert 'id:scaleModulesCaption' in editor
-assert 'Behavior on Layout.preferredWidth' in editor
+assert 'id:scaleModulesCaption' not in editor
+assert 'id:scaleText' not in editor
+assert 'description:"Scale modules:' in editor
 assert 'root.edgeWidthAffectsModules[root.editingEdge]!==false' in editor
 assert 'description:"Choose a module to add"' not in editor
 assert 'Layout.preferredWidth:92*Appearance.fontSizeScale' in editor
 assert 'Layout.preferredWidth:58*Appearance.fontSizeScale' in editor
 assert 'readonly property real editorActionSize: 30 * Appearance.fontSizeScale' in editor
-assert 'readonly property real editorSliderWidth: 144 * Appearance.fontSizeScale' in editor
+assert 'readonly property real editorSliderWidth: 158 * Appearance.fontSizeScale' in editor
 assert editor.count('editorCompact:true') == 6
 assert editor.count('Layout.preferredWidth:20*Appearance.fontSizeScale') == 5
 assert editor.count('spacing:2') >= 10
@@ -110,7 +112,7 @@ assert 'objectName:"abyssEditorSelectedFields"' in editor
 assert 'columns:!root.toolbarOnHorizontalEdge || width<460*Appearance.fontSizeScale' in editor
 assert 'columns:!root.toolbarOnHorizontalEdge || width<440*Appearance.fontSizeScale' in editor
 assert editor.count('text:"This output only"') == 1
-assert 'root.expandedControls ? 860 : 720' in editor
+assert '750*Appearance.fontSizeScale' in editor
 assert 'Ctrl/Shift-click select · Drag' not in editor
 
 # Every Editor button has a bounded square hit rectangle, even in fill rows.
@@ -118,14 +120,17 @@ assert editor.count('Layout.maximumWidth:root.editorActionSize') == 15
 assert editor.count('Layout.maximumHeight:root.editorActionSize') == 15
 
 
-# The selected Edge's Scale modules row must reserve enough room for the
-# full, common-width slider before animating in its caption. On compact side
-# toolbars the caption disappears and the slider stays beside its button.
-for name in ["abyssScaleModulesToggle","abyssScaleModulesCaption","abyssScaleModulesSlider"]:
+# The editor's fine-controls grid keeps nine stable slots in all states.
+# Scale modules and Join nearby modules are icon-only with hover help;
+# the controls do not disappear or reflow on the per-Edge scaling toggle.
+for name in ["abyssScaleModulesToggle","abyssScaleModulesSlider","abyssJoinNearbyModules","abyssModuleRounding"]:
     assert editor.count('objectName:"'+name+'"') == 1, name
+assert 'glyph:"join_inner"' in editor
 assert 'id:scaleModulesRow' in editor
-assert 'Layout.fillWidth:false' in editor[editor.index('id:scaleModulesCaption'):]
-assert 'editFineControls.width' in editor
-assert 'cellWidth>=root.editorActionSize+root.editorSliderWidth' in editor
-assert 'desiredLabelWidth+scaleModulesRow.spacing*2' in editor
-assert 'width:parent.width' in editor[editor.index('id:scaleText'):]
+assert 'visible:root.edgeWidthAffectsModules[root.editingEdge]===false' not in editor
+assert 'enabled:root.edgeWidthAffectsModules[root.editingEdge]===false' in editor
+assert 'root.expandedControls ? 860 : 720' not in editor
+assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 6
+assert editor.count('editorSquare:true') >= 14
+assert 'columnSpacing:4;rowSpacing:3' in editor
+assert 'rowSpacing:3;columnSpacing:4' in editor

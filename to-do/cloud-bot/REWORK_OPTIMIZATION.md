@@ -1087,6 +1087,17 @@ run privileged installation just because manual buttons are retired.
   READY for UI audit; owner visual acceptance pending.
 
 - [x] **ABYSS-R08 — Compact Edit Abyss Layout control bar — owner request 2026-10-10:**
+  **Owner visual refinement 2026-10-13 (dev source, native acceptance OPEN):**
+  Keep fine controls always visible; remove show/hide Options action;
+  extend the six editor sliders 144→158 font-scaled px and contract the
+  horizontal toolbar cap to 750 scaled px with smaller row/grid spacing.
+  Replace Scale modules inline text with tooltip-only semantics and replace
+  Join nearby modules checkbox with a rounded-square icon toggle. Its
+  neighboring Module rounding group and Join toggle retain their grid slots,
+  using disabled/enabled state rather than disappearing, so switching
+  Width affects modules does not shift the controls. Update source and native
+  contracts for always-on options, stable positions and preserved draft/
+  Cancel/Done/IPC behavior. Await physical four-edge and scaling verification.
   **Hoàn thành (bot báo xong) — Owner chưa verified, 2026-10-12.**
   Source `86af17627` is pushed: compact defaults on four Edges, discoverable
   immediate actions, disclosed full tuning, quick IPC selector, bounded

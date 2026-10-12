@@ -65,7 +65,7 @@ ShellRoot {
     "abyss.modules.placements":[{id:"a",kind:"clock",edge:"top",position:.2,customSize:true,size:.6},{id:"b",kind:"clock",edge:"top",position:.7,customSize:true,size:.6}],
     "abyss.modules.outputLayouts":[{outputName:"B",placements:[],edgeJoinModules:{left:true}}]})
    GlobalStates.deferredPanelsReady=true;GlobalStates.abyssEditing=true;wait(150)
-   check(!editor.expandedControls,"new edit session did not start compact")
+   check(editor.expandedControls,"editing options must be always visible")
    const saved=JSON.stringify(Config.options.abyss.modules.placements)
    const cases=[[800,800,1,true],[420,440,1,true],[320,240,1.5,false]]
    for(let n=0;n<cases.length;n++){
@@ -83,7 +83,7 @@ ShellRoot {
     Appearance.m3colors.m3primary=dark?"#82d9df":"#236d78"
     Appearance.m3colors.m3onSurface=dark?"#d8edef":"#132f34"
     for(const edge of ["top","right","bottom","left"]){
-     editor.expandedControls=false;editor.editingPopups=false;editor.select("a");settle(edge)
+     editor.editingPopups=false;editor.select("a");settle(edge)
      const body=item("abyssEdgeEditorBody"),scroll=item("abyssEdgeEditorScroll")
      const done=item("abyssLayoutDone")
      const glyph=findChild(done,"abyssButtonCenteredGlyph")
@@ -95,60 +95,63 @@ ShellRoot {
          "editor button exceeds compact square size")
      tryVerify(()=>body.presented&&body.ready,3000)
      check(!editor.layoutConflicts.length,"fixture exceeds actual available module capacity")
-     for(const name of ["abyssLayoutUndo","abyssLayoutCancel","abyssLayoutDone","abyssEditorOptions","abyssEditorSelection","abyssModulePositionLock","abyssSelectionEnabled","abyssSelectionRemove"])
+     for(const name of ["abyssLayoutUndo","abyssLayoutCancel","abyssLayoutDone","abyssEditorConfirmAdd","abyssEditorSelection","abyssModulePositionLock","abyssSelectionEnabled","abyssSelectionRemove"])
       control(name)
-     const compact={span:body.span,depth:body.depth,area:body.span*body.depth,height:scroll.contentHeight}
-     frame(n===0||n===2?"compact-"+n+"-"+edge:null)
+     const layout={span:body.span,depth:body.depth,area:body.span*body.depth,height:scroll.contentHeight}
+     frame(n===0||n===2?"layout-"+n+"-"+edge:null)
      click("abyssModulePositionLock");check(editor.allTargetsLocked,"quick lock did not apply")
      click("abyssModulePositionLock");check(!editor.anyTargetLocked,"quick unlock did not apply")
      click("abyssSelectionEnabled");check(editor.allTargetsDisabled,"quick disable did not apply")
      click("abyssSelectionEnabled");check(!editor.allTargetsDisabled,"quick enable did not apply")
-     click("abyssEditorOptions");settle(edge);check(editor.expandedControls,"Options did not expand")
+     check(editor.expandedControls,"editor options unexpectedly hidden")
      control("abyssRoundZeroCorners");control("abyssModuleJoinCorner");control("abyssModuleRounding")
-     check(scroll.contentHeight>compact.height,"expanded editor lost its advanced controls")
-     // Scale toggle keeps a full-length slider and clips the animated caption
-     // when a fine-control cell is too narrow. Re-test both states on all Edges.
-     const scaleCaption=item("abyssScaleModulesCaption")
+     control("abyssJoinNearbyModules")
+     // All nine fine-control grid cells remain in place when the Width
+     // scales modules mode changes, including Join and Module rounding.
      const scaleSlider=control("abyssScaleModulesSlider")
      const scaleToggle=control("abyssScaleModulesToggle")
-     check(scaleCaption.width<=scaleCaption.desiredLabelWidth+1,"scale caption is too wide")
-     check(scaleSlider.width<=editor.editorSliderWidth+.5,"scale slider exceeds uniform width")
+     const join=control("abyssJoinNearbyModules")
+     const rounding=control("abyssModuleRounding")
+     check(scaleSlider.width<=editor.editorSliderWidth+.5,"scale slider exceeds shared width")
+     const point=(item)=>item.mapToItem(scroll.contentItem,0,0)
+     const before=[point(scaleSlider),point(join),point(rounding)]
      const wasScaling=editor.edgeWidthAffectsModules[editor.editingEdge]!==false
-     click("abyssScaleModulesToggle");wait(180)
-     check((editor.edgeWidthAffectsModules[editor.editingEdge]!==false)!==wasScaling,"scale toggle did not update draft")
-     const nowScaling=editor.edgeWidthAffectsModules[editor.editingEdge]!==false
-     const shouldShow=nowScaling && scaleCaption.cellWidth>=editor.editorActionSize+
-         editor.editorSliderWidth+scaleCaption.desiredLabelWidth+6
-     check(shouldShow ? scaleCaption.width>0 : scaleCaption.width<1,
-         "scale caption visibility does not respect full slider width")
-     click("abyssScaleModulesToggle");wait(180)
+     check(join.enabled===!wasScaling && rounding.enabled===!wasScaling,
+         "Join/rounding available in wrong width mode")
+     click("abyssScaleModulesToggle");wait(100)
+     check((editor.edgeWidthAffectsModules[editor.editingEdge]!==false)!==wasScaling,
+         "scale toggle did not change draft")
+     check(join.enabled===wasScaling && rounding.enabled===wasScaling,
+         "Join/rounding state failed to follow width mode")
+     const after=[point(scaleSlider),point(join),point(rounding)]
+     for(let i=0;i<before.length;i++)
+      check(Math.abs(before[i].x-after[i].x)<.6 && Math.abs(before[i].y-after[i].y)<.6,
+          "fine control jumped position at index "+i)
+     click("abyssScaleModulesToggle");wait(100)
      check((editor.edgeWidthAffectsModules[editor.editingEdge]!==false)===wasScaling,
          "scale toggle did not restore draft")
-     const expanded={span:body.span,depth:body.depth,area:body.span*body.depth,height:scroll.contentHeight}
-     check(n>0||compact.area<expanded.area,"wide compact bar did not reduce its displayed footprint")
-     frame(n===0?"expanded-"+edge:null)
-     click("abyssEditorOptions");settle(edge);check(!editor.expandedControls&&scroll.contentY===0,"collapse kept stale scrolling")
+     frame(n===0?"layout-options-"+edge:null)
      click("abyssEditorIpcMode");settle(edge);check(editor.editingPopups,"IPC mode was lost")
      const chooser=control("abyssEditorIpcKind")
      check(chooser.count===7,"quick IPC selector exposes popup relocation")
      chooser.forceActiveFocus();keyClick(Qt.Key_Home);keyClick(Qt.Key_Down);keyClick(Qt.Key_Down);wait(50)
      check(editor.previewKind==="brightness","keyboard IPC selector did not update real preview")
-     click("abyssEditorOptions");settle(edge);check(editor.previewHost.ready,"IPC preview did not retain its host")
-     click("abyssEditorOptions");settle(edge);check(editor.previewKind==="brightness","collapse erased IPC draft")
+     tryVerify(()=>editor.previewHost.ready,3000)
+     check(editor.previewKind==="brightness","IPC draft changed unexpectedly")
      click("abyssEditorModulesMode");settle(edge)
      check(JSON.stringify(Config.options.abyss.modules.placements)===saved,"controls wrote Config before Done")
-     root.measurements.push({viewport:[scene.width,scene.height],fontScale:scale,dark:dark,edge:edge,compact:compact,expanded:expanded})
+     root.measurements.push({viewport:[scene.width,scene.height],fontScale:scale,dark:dark,edge:edge,layout:layout})
     }
    }
    root.testWidth=800;root.testHeight=800;Config.setNestedValue("appearance.typography.sizeScale",1);editor.outputName="A";wait(100)
-   editor.editingPopups=false;editor.expandedControls=false;editor.select("a");settle("bottom")
+   editor.editingPopups=false;editor.select("a");settle("bottom")
    const count=editor.draft.length
-   click("abyssEditorOptions");settle("bottom");check(editor.expandedControls,"Options did not disclose module palette")
+   check(editor.expandedControls,"module palette hidden by a stale Options mode")
    click("abyssEditorConfirmAdd");wait(100);check(editor.draft.length===count+1,"visible Add did not add a module")
    click("abyssSelectionRemove");wait(100);check(editor.draft.length===count,"quick Remove did not remove selected module")
    click("abyssLayoutUndo");wait(100);check(editor.draft.length===count+1,"Undo did not restore removed module")
    editor.finish(false);wait(100);check(JSON.stringify(Config.options.abyss.modules.placements)===saved,"Cancel mutated placements")
-   GlobalStates.abyssEditing=true;wait(150);check(!editor.expandedControls,"reopen retained expanded UI state")
+   GlobalStates.abyssEditing=true;wait(150);check(editor.expandedControls,"reopen should always show fine tuning")
    editor.select("a");editor.batch("locked",true);editor.finish(true);wait(250)
    check(Config.options.abyss.modules.outputLayouts.some(p=>p.outputName==="B"),"Done erased another output")
    console.info("ABYSS_COMPACT_EDITOR_PASS",root.checks,"checks",root.frames,"frames",JSON.stringify(root.measurements))

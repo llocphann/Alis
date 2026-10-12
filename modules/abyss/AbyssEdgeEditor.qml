@@ -38,7 +38,7 @@ Item {
         }
     }
     readonly property real editorActionSize: 30 * Appearance.fontSizeScale
-    readonly property real editorSliderWidth: 144 * Appearance.fontSizeScale
+    readonly property real editorSliderWidth: 158 * Appearance.fontSizeScale
     required property string outputName
     required property var moduleLayer
     required property var controller
@@ -96,7 +96,7 @@ Item {
     property bool snapEnabled: true
     property bool outputOnly: true
     property bool editingPopups: false
-    property bool expandedControls: false
+    readonly property bool expandedControls: true
     property var draftPositions: []
     property var positionEdits: []
     property alias previewKind:previewPositions.kind
@@ -315,7 +315,7 @@ Item {
         editingEdge = moduleLayer.edge
         guides = []
         draftPositions=JSON.parse(JSON.stringify(Config.options?.abyss?.positions ?? []))
-        positionEdits=[];editingPopups=false;expandedControls=false
+        positionEdits=[];editingPopups=false
         selectedId = ""
         selectedIds=[];selectionAnchor="";clearDrag()
         refreshHandles()
@@ -427,10 +427,6 @@ Item {
     onEditingPopupsChanged: root.scheduleToolbarRelocation()
     onPreviewPositionChanged: root.scheduleToolbarRelocation()
     onPreviewKindChanged: root.scheduleToolbarRelocation()
-    onExpandedControlsChanged: {
-        toolbarScroll.contentY=0
-        root.scheduleToolbarRelocation()
-    }
     onOutputOnlyChanged: {root.scheduleToolbarRelocation();root.queueHistory()}
 
     Connections {
@@ -657,7 +653,7 @@ Item {
         // busy, the same editor can move to a side Edge with a deeper body and
         // a long vertical span instead of covering the module being edited.
         span: root.toolbarOnHorizontalEdge
-            ? Math.min(root.width-48,root.expandedControls ? 860 : 720)
+            ? Math.min(root.width-48,750*Appearance.fontSizeScale)
             : Math.min(root.height-48,toolbar.implicitHeight+padding*2)
         along: ((root.toolbarOnHorizontalEdge ? root.width : root.height)-span)/2
         depth: root.toolbarOnHorizontalEdge
@@ -716,12 +712,12 @@ Item {
             ColumnLayout {
                 id: toolbarColumn
                 width: toolbarScroll.width
-                spacing: 4
+                spacing: 3
 
                 GridLayout {
                     Layout.fillWidth: true;Layout.minimumWidth:0
                     columns: width>=480*Appearance.fontSizeScale ? 2 : 1
-                    rowSpacing: 6
+                    rowSpacing: 4
                     AbyssLabel {
                         text: "Edit layout · "+root.outputName
                         font.bold: true
@@ -752,17 +748,7 @@ Item {
                             Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
                             onClicked: root.reset()
                         }
-                        AbyssButton {
-                        Layout.maximumHeight:root.editorActionSize
-                        Layout.maximumWidth:root.editorActionSize
-                        editorSquare:true
-                            objectName:"abyssEditorOptions"
-                            text:"Options";glyph:"tune";compact:true
-                            description:root.expandedControls ? "Hide layout options" : "Show layout options"
-                            checkable:true;checked:root.expandedControls
-                            Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
-                            onToggled:root.expandedControls=checked
-                        }
+
 
                         AbyssButton {
                         Layout.maximumHeight:root.editorActionSize
@@ -799,7 +785,7 @@ Item {
                 GridLayout {
                     Layout.fillWidth: true;Layout.minimumWidth:0
                     columns:width>=660*Appearance.fontSizeScale
-                        ? (root.editingPopups ? (root.expandedControls ? 4 : 3) : (root.expandedControls ? 3 : 2))
+                        ? (root.editingPopups ? 4 : 3)
                         : root.editingPopups && width>=440*Appearance.fontSizeScale ? 3 : 2
                     columnSpacing:4;rowSpacing:4
                     SelectionGroupButton {
@@ -842,7 +828,7 @@ Item {
                                         AbyssCheckBox {
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         
-                                            visible:root.expandedControls
+                                            visible:true
                                             text:"This output only"
                                             checked:root.outputOnly
                         
@@ -852,7 +838,7 @@ Item {
 
                 AbyssPositionSettings {
                     id:previewPositions
-                    visible:root.expandedControls && root.editingPopups
+                    visible:root.editingPopups
                     kind:"volume"
                     compactVertical:!root.toolbarWideControls
                     compactActions:root.toolbarOnHorizontalEdge
@@ -873,11 +859,11 @@ Item {
                 GridLayout {
                     id:editFineControls
                     objectName:"abyssEditorFineControls"
-                    visible:root.expandedControls && !root.editingPopups
+                    visible:!root.editingPopups
                     Layout.fillWidth:true;Layout.minimumWidth:0
                     columns:!root.toolbarOnHorizontalEdge || width<460*Appearance.fontSizeScale
                         ? 1 : width>=700*Appearance.fontSizeScale ? 3 : 2
-                    columnSpacing:6;rowSpacing:4
+                    columnSpacing:4;rowSpacing:3
                     RowLayout {
                         Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
                         StyledComboBox {
@@ -1010,7 +996,7 @@ Item {
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         
                                             objectName:"abyssRoundZeroCorners"
-                                            visible:root.expandedControls && !root.editingPopups
+                                            visible:!root.editingPopups
                                             enabled:Placement.edgeThickness(root.draftOptions,root.editingEdge)===0
                                             text:"Round at 0px"
                         
@@ -1050,43 +1036,11 @@ AbyssButton {
                         compact:true
                                             
                                             text:"Width affects modules";glyph:"width"
-                                            description:"Scale inherited modules with this Edge (0px hides them), or change only the bare Edge and retain local module bulges. Custom module sizes stay independent."
+                                            description:"Scale modules: scale inherited modules with this Edge (0px hides them), or change only the bare Edge and retain local module bulges. Custom module sizes stay independent."
                                             checkable:true;checked:root.edgeWidthAffectsModules[root.editingEdge]!==false
                                             onToggled:root.edgeWidthAffectsModules=Object.assign({},root.edgeWidthAffectsModules,{[root.editingEdge]:checked})
                                         }
-                        Item {
-                            id:scaleModulesCaption
-                            objectName:"abyssScaleModulesCaption"
-                            clip:true
-                            implicitHeight:root.editorActionSize
-                            Layout.alignment:Qt.AlignVCenter
-                            Layout.fillWidth:false
-                            Layout.minimumWidth:0
-                            // Preserve the shared slider length on narrow cells.
-                            // Only reveal the caption if the full slider fits.
-                            readonly property real desiredLabelWidth:
-                                Math.min(85*Appearance.fontSizeScale,scaleText.implicitWidth)
-                            readonly property real cellWidth:
-                                (editFineControls.width
-                                    - Math.max(0,editFineControls.columns-1)*editFineControls.columnSpacing)
-                                    / Math.max(1,editFineControls.columns)
-                            Layout.preferredWidth:root.edgeWidthAffectsModules[root.editingEdge]!==false
-                                && cellWidth>=root.editorActionSize+root.editorSliderWidth
-                                    +desiredLabelWidth+scaleModulesRow.spacing*2
-                                ? desiredLabelWidth : 0
-                            Behavior on Layout.preferredWidth {
-                                enabled:AbyssStyle.motionEnabled
-                                NumberAnimation { duration:AbyssStyle.motionFast }
-                            }
-                            AbyssLabel {
-                                id:scaleText
-                                anchors.left:parent.left;anchors.verticalCenter:parent.verticalCenter
-                                opacity:scaleModulesCaption.width>0 ? 1 : 0
-                                width:parent.width
-                                text:"Scale modules"
-                                elide:Text.ElideRight
-                            }
-                        }
+
 
 AbyssSlider {
                         editorCompact:true
@@ -1102,22 +1056,23 @@ AbyssSlider {
                     }
 
                     RowLayout {
-                        visible:root.edgeWidthAffectsModules[root.editingEdge]===false
                         Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
-                        AbyssCheckBox {
-                        Layout.fillWidth:true;Layout.minimumWidth:0
-                        
-                                            objectName:"abyssJoinNearbyModules"
-                                            visible:root.expandedControls && !root.editingPopups && root.edgeWidthAffectsModules[root.editingEdge]===false
-                                            text:"Join nearby modules"
-                                            checked:root.edgeJoinModules[root.editingEdge]===true
-                        
-                                            onToggled:root.edgeJoinModules=Object.assign({},root.edgeJoinModules,{[root.editingEdge]:checked})
-                                            StyledToolTip {text:"Connect neighboring module surfaces on this Edge. Distant groups keep their own bulges; module sizes stay unchanged."}
-                                        }
+                        AbyssButton {
+                            objectName:"abyssJoinNearbyModules"
+                            text:"Join nearby modules";glyph:"join_inner"
+                            compact:true;editorSquare:true
+                            description:"Join nearby modules: connect neighboring module surfaces on this Edge. Distant groups keep their own bulges and module sizes remain unchanged."
+                            checkable:true
+                            checked:root.edgeJoinModules[root.editingEdge]===true
+                            enabled:root.edgeWidthAffectsModules[root.editingEdge]===false
+                            Layout.preferredWidth:root.editorActionSize
+                            Layout.preferredHeight:root.editorActionSize
+                            Layout.maximumWidth:root.editorActionSize
+                            Layout.maximumHeight:root.editorActionSize
+                            onToggled:root.edgeJoinModules=Object.assign({},root.edgeJoinModules,{[root.editingEdge]:checked})
+                        }
                     }
                     RowLayout {
-                        visible:root.edgeWidthAffectsModules[root.editingEdge]===false
                         Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
                         EditorIconHint {
                         Layout.preferredWidth:20*Appearance.fontSizeScale
@@ -1128,6 +1083,7 @@ AbyssSlider {
                         
                         
                                                 objectName:"abyssModuleRounding"
+                                                enabled:root.edgeWidthAffectsModules[root.editingEdge]===false
                                                 unit:"px";from:0;to:64;stepSize:1
                                                 value:(root.edgeModuleRadii[root.editingEdge] ?? -1)<0
                                                     ? AbyssStyle.neckRadius : root.edgeModuleRadii[root.editingEdge]
@@ -1143,7 +1099,8 @@ AbyssSlider {
                         
                                                 compact:true
                                                 description:"Inherit shared module rounding"
-                                                enabled:(root.edgeModuleRadii[root.editingEdge] ?? -1)>=0
+                                                enabled:root.edgeWidthAffectsModules[root.editingEdge]===false
+                                                    && (root.edgeModuleRadii[root.editingEdge] ?? -1)>=0
                                                 onClicked:root.edgeModuleRadii=Object.assign({},root.edgeModuleRadii,{[root.editingEdge]:-1})
                                             }
                     }
@@ -1182,8 +1139,8 @@ AbyssSlider {
                     visible:!root.editingPopups
                     Layout.fillWidth:true;Layout.minimumWidth:0
                     columns:!root.toolbarOnHorizontalEdge || width<440*Appearance.fontSizeScale
-                        ? 1 : root.expandedControls && width>=700*Appearance.fontSizeScale ? 3 : 2
-                    rowSpacing:4;columnSpacing:6
+                        ? 1 : width>=700*Appearance.fontSizeScale ? 3 : 2
+                    rowSpacing:3;columnSpacing:4
                     StyledComboBox {
                             baseHeight:28*Appearance.fontSizeScale
                             Layout.preferredWidth:142*Appearance.fontSizeScale
@@ -1270,7 +1227,7 @@ AbyssSlider {
                         Layout.fillWidth:true;Layout.minimumWidth:0;
                     
                         id:alignmentChoice
-                        visible:root.expandedControls
+                        visible:true
                         model:[
                             {label:"Free position",value:"free"},
                             {label:"Align start",value:"start"},
@@ -1289,12 +1246,12 @@ AbyssSlider {
                     
                     }
                     RowLayout {
-                        visible:root.expandedControls
+                        visible:true
                         Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
                     AbyssCheckBox {
                         Layout.fillWidth:true;Layout.minimumWidth:0
                     
-                        visible:root.expandedControls
+                        visible:true
                         text:"Custom size"
                         checked:root.allTargetsCustom
                         enabled:root.targets.length>0 && !root.anyTargetLocked
@@ -1306,7 +1263,7 @@ AbyssSlider {
                         Layout.fillWidth:true;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                     
                     
-                        visible:root.expandedControls
+                        visible:true
                         from:.6;to:1.8
                         value:root.selected?.customSize
                             ? root.selected.size
@@ -1322,7 +1279,7 @@ AbyssSlider {
                         Layout.fillWidth:true;Layout.minimumWidth:0
                     
                         objectName:"abyssModuleJoinCorner"
-                        visible:root.expandedControls
+                        visible:true
                         text:root.nearbyCorner
                             ? "Connect to "+root.nearbyCorner+" corner"
                             : "Join nearby corner"
