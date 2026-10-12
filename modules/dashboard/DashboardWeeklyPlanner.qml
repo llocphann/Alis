@@ -45,22 +45,18 @@ Item {
     readonly property real columnWidth: Math.max(102 * Appearance.fontSizeScale, (viewport.width - 44) / 7)
     readonly property color ink: Appearance.colors.colOnLayer1
     readonly property color mutedInk: Appearance.colors.colSubtext
-    // Share the Detailed Weather content palette, with a neutral Material
-    // fallback for Waffle. No additional per-day shader or blur pass.
+    // Match the date and All-day headings to the actual timeline: its day
+    // cells have no opaque backing, so the pinned headings must not paint a
+    // contrasting solid Weather/Material card over the transparent grid.
+    // The Today tint on the day column stays visible through this surface.
     readonly property bool abyssPanel: Config.options?.panelFamily === "abyss"
-    readonly property color headerSurface: abyssPanel
-        ? ColorUtils.mix(AbyssStyle.contentLayer, AbyssStyle.accent, .88)
-        : Appearance.colors.colSurfaceContainerHigh
-    readonly property color headerInk: abyssPanel
-        ? ColorUtils.ensureReadable(AbyssStyle.textColor, headerSurface, 4.5)
-        : Appearance.colors.colOnSurface
-    readonly property color headerMutedInk: abyssPanel
-        ? ColorUtils.readableSubtext(headerInk, headerSurface, .7)
-        : Appearance.colors.colOnSurfaceVariant
+    readonly property color headerSurface: "transparent"
+    readonly property color headerInk: root.ink
+    readonly property color headerMutedInk: root.mutedInk
     readonly property color headerAccent: abyssPanel
         ? AbyssStyle.accent : Appearance.colors.colPrimary
-    readonly property color headerTodayInk:
-        ColorUtils.ensureReadable(headerAccent, headerSurface, 4.5)
+    readonly property color headerTodayInk: ColorUtils.ensureReadable(
+        headerAccent, abyssPanel ? AbyssStyle.contentLayer : Appearance.colors.colLayer0, 4.5)
     readonly property color headerDivider: Qt.alpha(headerInk, .16)
     signal requestEventsDialog(var event)
     Connections {
