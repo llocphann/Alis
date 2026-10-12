@@ -25,7 +25,7 @@ Item {
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
             color: Appearance.colors.colSubtext
-            text: "Install Hadalird and enable Thinkfan in Settings → Integrations."
+            text: Translation.tr("Install Hadalird; enable Thinkfan in Settings → Integrations.")
         }
     }
 }
