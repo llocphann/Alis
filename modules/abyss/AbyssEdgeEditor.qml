@@ -9,6 +9,7 @@ import qs.modules.common.widgets
 import qs.modules.abyss.looks
 import qs.modules.abyss.settings
 import "looks/AbyssLayout.js" as Placement
+import "looks/AbyssSelection.js" as ModuleSelection
 import "looks/AbyssPresentation.js" as Presentation
 
 // Drafts never write Config. Only Done merges this output into the latest profile.
@@ -22,10 +23,13 @@ Item {
     property var draft: []
     property var handles: []
     property string selectedId: ""
-    property bool multiSelect: false
+    // A multi-selection is inferred from Ctrl/Shift-click, never a toolbar mode.
     property var selectedIds: []
-    readonly property var targetIds: multiSelect
-        ? selectedIds.filter(id=>draft.some(p=>p.id===id)) : selectedId ? [selectedId] : []
+    property string selectionAnchor: ""
+    readonly property var targetIds: selectedIds.length
+        ? selectedIds.filter(id=>draft.some(p=>p.id===id))
+        : selectedId && draft.some(p=>p.id===selectedId) ? [selectedId] : []
+    readonly property bool multiSelect: targetIds.length>1
     readonly property var targets: targetIds.map(id=>draft.find(p=>p.id===id)).filter(p=>p)
     readonly property bool anyTargetLocked: targets.some(p=>p.locked)
     readonly property bool allTargetsLocked: targets.length>0 && targets.every(p=>p.locked)
@@ -147,32 +151,28 @@ Item {
     }
 
     function refreshHandles(): void { handles = draft.map(p => p.id) }
-    function selectionState(): var {return {selectedId:selectedId,selectedIds:Array.from(selectedIds),multiSelect:multiSelect}}
+    function selectionState(): var {
+        return {selectedId:selectedId,selectedIds:Array.from(selectedIds),anchor:selectionAnchor}
+    }
     function pruneSelection(): void {
         selectedIds=selectedIds.filter(id=>draft.some(p=>p.id===id))
         if(!draft.some(p=>p.id===selectedId))selectedId=selectedIds[selectedIds.length-1] || ""
+        if(!draft.some(p=>p.id===selectionAnchor))selectionAnchor=selectedId
     }
-    function select(id,toggle=false): void {
-        rememberHistory()
+    function select(id,ctrl=false,shift=false): void {
         if(!draft.some(p=>p.id===id))return
-        if(!multiSelect)selectedId=id
-        else {
-            const present=selectedIds.includes(id)
-            selectedIds=present && toggle ? selectedIds.filter(value=>value!==id)
-                : present ? selectedIds : selectedIds.concat([id])
-            selectedId=selectedIds.includes(id) ? id : selectedIds[selectedIds.length-1] || ""
-        }
         rememberHistory()
-    }
-    function setMultiSelection(enabled): void {
-        clearDrag()
-        rememberHistory();multiSelect=enabled
-        selectedIds=enabled && selectedId ? [selectedId] : []
+        const next=ModuleSelection.select(targetIds,selectedId,selectionAnchor,
+            id,ModuleSelection.orderedIds(draft),ctrl,shift)
+        selectedIds=next.ids
+        selectedId=next.primary
+        selectionAnchor=next.anchor
+        feedback=""
         rememberHistory()
     }
     function clearSelection(): void {
         clearDrag()
-        rememberHistory();selectedIds=[];selectedId="";guides=[];rememberHistory()
+        rememberHistory();selectedIds=[];selectedId="";selectionAnchor="";guides=[];rememberHistory()
     }
     function snapshot(): var {
         return JSON.parse(JSON.stringify({draft:draft,gap:gap,edgeSizes:edgeSizes,
@@ -210,9 +210,8 @@ Item {
         _historyReady=false;_dragging=false
         undoStack=undoStack.slice(0,-1)
         Object.keys(previous.state).forEach(key=>root[key]=JSON.parse(JSON.stringify(previous.state[key])))
-        multiSelect=previous.selection?.multiSelect ?? false
         selectedIds=previous.selection?.selectedIds ?? []
-        selectedId=previous.selection?.selectedId ?? "";pruneSelection()
+        selectedId=previous.selection?.selectedId ?? "";selectionAnchor=previous.selection?.anchor ?? selectedId;pruneSelection()
         refreshHandles();guides=[];feedback="";clearDrag()
         _lastSnapshot=snapshot();_lastSelection=selectionState();_historyReady=true
     }
@@ -291,7 +290,7 @@ Item {
         draftPositions=JSON.parse(JSON.stringify(Config.options?.abyss?.positions ?? []))
         positionEdits=[];editingPopups=false
         selectedId = ""
-        selectedIds=[];multiSelect=false;clearDrag()
+        selectedIds=[];selectionAnchor="";clearDrag()
         refreshHandles()
         undoStack=[];_lastSnapshot=snapshot();_lastSelection=selectionState();_historyReady=true
         _sourceSignature=sourceSignature()
@@ -328,7 +327,7 @@ Item {
         singleModuleExpansion = {top:"edge",right:"edge",bottom:"edge",left:"edge"}
         guides = []
         selectedId = ""
-        selectedIds=[]
+        selectedIds=[];selectionAnchor=""
         draftPositions=JSON.parse(JSON.stringify(Config.options?.abyss?.positions ?? []));positionEdits=[]
         refreshHandles()
     }
@@ -442,8 +441,9 @@ Item {
     Keys.onReturnPressed: finish(true)
     Keys.onPressed:event=>{
         if(event.key===Qt.Key_Z && (event.modifiers & Qt.ControlModifier)){undo();event.accepted=true}
-        else if(event.key===Qt.Key_A && (event.modifiers & Qt.ControlModifier) && multiSelect && !editingPopups){
-            rememberHistory();selectedIds=draft.map(p=>p.id);selectedId=selectedIds[0] || "";rememberHistory();event.accepted=true
+        else if(event.key===Qt.Key_A && (event.modifiers & Qt.ControlModifier) && !editingPopups){
+            rememberHistory();selectedIds=ModuleSelection.orderedIds(draft);
+            selectedId=selectedIds[0] || "";selectionAnchor=selectedId;rememberHistory();event.accepted=true
         }
     }
     Repeater {
@@ -471,10 +471,15 @@ Item {
             Accessible.role:Accessible.Button
             Accessible.name:Placement.label(record?.kind)+(record?.locked ? " · Locked" : "")
                 +(root.targetIds.includes(handle.modelData) ? " · Selected" : "")
-            Accessible.onPressAction:root.select(handle.modelData,root.multiSelect)
+            Accessible.onPressAction:root.select(handle.modelData)
             Keys.onPressed:event=>{
-                if(event.key===Qt.Key_Space){root.select(handle.modelData,root.multiSelect);event.accepted=true}
-                else if(event.key===Qt.Key_L){root.select(handle.modelData);root.lockSelection();event.accepted=true}
+                if(event.key===Qt.Key_Space){
+                    root.select(handle.modelData,!!(event.modifiers & Qt.ControlModifier),
+                        !!(event.modifiers & Qt.ShiftModifier));event.accepted=true
+                } else if(event.key===Qt.Key_L){
+                    if(!root.targetIds.includes(handle.modelData))root.select(handle.modelData)
+                    root.lockSelection();event.accepted=true
+                }
             }
             Rectangle {
                 anchors.fill: parent; anchors.margins: -3
@@ -499,9 +504,11 @@ Item {
                 anchors.fill: parent
                 cursorShape:handle.record?.locked ? Qt.ArrowCursor : pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                 onPressed:mouse=>{
-                    root.select(handle.modelData,!!(mouse.modifiers & Qt.ControlModifier))
+                    const ctrl=!!(mouse.modifiers & Qt.ControlModifier)
+                    const shift=!!(mouse.modifiers & Qt.ShiftModifier)
+                    root.select(handle.modelData,ctrl,shift)
                     handle.forceActiveFocus()
-                    if(!(mouse.modifiers & Qt.ControlModifier)){
+                    if(!ctrl && !shift){
                         const point=mapToItem(root,mouse.x,mouse.y)
                         root.startDrag(handle.modelData,point.x,point.y)
                     }
@@ -931,12 +938,6 @@ Item {
                     visible:!root.editingPopups
                     Layout.fillWidth:true
                     columns:root.toolbarOnHorizontalEdge && width>500*Appearance.fontSizeScale ? 3 : 1
-                    AbyssCheckBox {
-                        objectName:"abyssMultiSelection"
-                        text:"Select multiple modules"
-                        checked:root.multiSelect
-                        onToggled:root.setMultiSelection(checked)
-                    }
                     AbyssLabel {
                         objectName:"abyssSelectionCount"
                         visible:root.multiSelect
@@ -945,7 +946,7 @@ Item {
                     }
                     AbyssButton {
                         objectName:"abyssSelectionClear"
-                        visible:root.multiSelect
+                        visible:root.targetIds.length>0
                         text:"Clear selection";glyph:"deselect"
                         enabled:root.targetIds.length>0
                         onClicked:root.clearSelection()
@@ -974,7 +975,7 @@ Item {
                         displayText:root.selected
                             ? Placement.label(root.selected.kind)
                             : "Select a module"
-                        onActivated:root.select(currentValue,root.multiSelect)
+                        onActivated:root.select(currentValue)
                         Layout.preferredWidth:root.toolbarOnHorizontalEdge ? 190 : -1
                         Layout.minimumWidth:0
                         Layout.maximumWidth:selectedModuleControls.width
@@ -1070,12 +1071,10 @@ Item {
                     text:root.toolbarOnHorizontalEdge
                         ? (root.editingPopups
                             ? "Drag preview · Enter save · Esc cancel"
-                            : root.multiSelect ? "Click to add · Ctrl-click / Space toggle · Ctrl+A all · Drag group · Shift free · Enter save · Esc cancel"
-                            : "Drag to move/reorder · Shift free · Enter save · Esc cancel")
+                            : "Click single · Ctrl-click toggle · Shift-click range · Ctrl+A all · Drag selected group · Enter save · Esc cancel")
                         : (root.editingPopups
                             ? "Drag · Enter save · Esc cancel"
-                            : root.multiSelect ? "Click to add · Ctrl-click / Space toggle · Ctrl+A all · Drag group · Shift free · Enter save · Esc cancel"
-                            : "Drag · Shift free · Enter save · Esc cancel")
+                            : "Click / Ctrl / Shift select · Drag group · Enter save · Esc cancel")
                     color: Appearance.m3colors.darkmode
                         ? AbyssStyle.textColorMuted : "#1a1a1a"
                     Layout.fillWidth:true

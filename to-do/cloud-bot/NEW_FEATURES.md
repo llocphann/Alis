@@ -276,6 +276,20 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   keyboard selection, batch/drag guards, visual selection and Undo/Cancel/Save;
   transient selection must not persist as a setting. Prior implementation
   and evidence below are retained, not proof this new interaction is delivered.
+  **Modifier-input source milestone (2026-10-12):** the selection-mode
+  checkbox is removed. Normal click replaces the selected group, Ctrl-click
+  toggles a module, Shift-click selects the contiguous visual-order range
+  from its stable anchor, and Ctrl+Shift extends the current set. Ctrl+Space
+  and Shift+Space on focused handles mirror pointer semantics; Ctrl+A
+  selects all in the active editor without an activation mode. Multi-group
+  drag and locked/transactional batch guards remain tied to the actual
+  selection size, not a user setting. The shared pure selection helper
+  and Node policy regression are added; the existing native fixture now
+  uses actual Ctrl-click instead of the removed checkbox.
+  **Not yet qualified:** canonical exact-SHA regression, actual
+  Niri/Quickshell Ctrl/Shift pointer and keyboard gesture, toolbar/hit
+  region behavior at fractional/vertical edges, and owner acceptance.
+  This records an implementation milestone, not native PASS or task closure.
   Show which modules are selected, support
   add/remove/clear selection and coherent subsequent edits when several targets
   are selected. Keep normal non-edit behavior intact; define guarded batch
