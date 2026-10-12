@@ -441,6 +441,23 @@ Singleton {
         return true
     }
 
+    function removeOccurrence(id, index) {
+        if (!root.ready) return false
+        const position = root.list.findIndex(e => e.id === id)
+        if (position < 0) return false
+        const event = root.list[position]
+        const slots = Occurrences.entries(event)
+        if (!Number.isInteger(index) || index < 0 || index >= slots.length) return false
+        // Removing the last date is the same as deleting the event and its Todo.
+        if (slots.length === 1) return root.removeEvent(id)
+        slots.splice(index,1)
+        root.list[position] = Occurrences.store(event,slots)
+        root.list = root.list.slice()
+        root.eventUpdated(root.list[position])
+        root.saveToFile()
+        return true
+    }
+
     function removeEvent(id) {
         if (!root.ready) return false
         const index = root.list.findIndex(e => e.id === id)
