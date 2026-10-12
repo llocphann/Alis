@@ -134,6 +134,31 @@ Window {
        && inline.eventTime==="09:15" && inline.eventEndTime==="10:15",
      "clicked 09:15 slot lost local date or end-time prefill")
    check(!inline.hasUnsavedChanges(),"slot prefill was marked dirty before any edits")
+   // Modifier selection is Add-only and exclusive with Repeat.
+   const initialDate=Qt.formatDate(inline.eventDate,"yyyy-MM-dd")
+   inline.choosePlannerDay(new Date(2025,0,3,12),Qt.ControlModifier)
+   check(inline.plannerSelectedCount===2
+       && inline.plannerSelectedDateKeys.includes(initialDate)
+       && inline.plannerSelectedDateKeys.includes("2025-01-03"),
+     "Ctrl+Click failed to add a second calendar day")
+   inline.choosePlannerDay(new Date(2025,0,5,12),Qt.ShiftModifier)
+   check(inline.plannerSelectedCount===3
+       && inline.plannerSelectedDateKeys.includes("2025-01-04"),
+     "Shift+Click failed to select the inclusive range")
+   check(inline.hasUnsavedChanges(),"multi-day selection did not mark form dirty")
+   inline.recurrence="weekly"
+   check(inline.plannerSelectedCount===1,
+     "Repeat Weekly must collapse explicit date selection")
+   inline.choosePlannerDay(new Date(2025,0,7,12),Qt.ControlModifier)
+   check(inline.plannerSelectedCount===2 && inline.recurrence==="none",
+     "Adding an explicit date must disable the previously selected Repeat cadence")
+   inline.resetForm()
+   inline.eventDate=slotDate
+   inline.eventTime="09:15"
+   inline.eventEndTime="10:15"
+   inline.captureFormBaseline()
+   check(!inline.hasUnsavedChanges(),
+     "Reset after modifier tests failed to restore clean Add Event draft")
    inline.eventTitle="Unsaved private draft"
    check(inline.hasUnsavedChanges(),"unsaved title was not marked dirty")
    const priorWeek=planner.days[0].date.getTime()

@@ -54,9 +54,15 @@ function choose(values,anchor,primary,clicked,ctrl,shift) {
         result=[nextKey];
     }
     if (result.length>limit) return null;
-    var nextPrimary=result.indexOf(nextKey)>=0 ? nextKey : result[0];
+    var nextPrimary=result.indexOf(nextKey)>=0 ? nextKey
+        : (result.indexOf(active)>=0 ? active : result[0]);
+    // Removing a different selected day must not reset the existing range
+    // anchor to the first day: subsequent Shift+Click still uses the last
+    // active anchor instead of selecting an unexpectedly large date span.
     var nextAnchor=shift ? lastAnchor
-        : (ctrl && selected.indexOf(nextKey)>=0 ? nextPrimary : nextKey);
+        : (ctrl && selected.indexOf(nextKey)>=0
+            ? (result.indexOf(lastAnchor)>=0 ? lastAnchor : nextPrimary)
+            : nextKey);
     return {keys:result,primary:nextPrimary,anchor:nextAnchor};
 }
 // Construct each occurrence at LOCAL wall-clock time to preserve DST days,
