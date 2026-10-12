@@ -304,7 +304,7 @@ ContentPage {
                 }
 
                 StyledToolTip {
-                    text: Translation.tr("Controls how vivid wallpaper-derived accent colors are. 100% keeps the default balance; higher values produce richer accents.")
+                    text: Translation.tr("Wallpaper accent saturation: 100% default; higher is more vivid.")
                 }
             }
 
@@ -486,7 +486,7 @@ ContentPage {
 
                             StyledText {
                                 Layout.fillWidth: true
-                                text: Translation.tr("Load them only when you actually need the grid. The full selector button above stays available.")
+                                text: Translation.tr("Load grid on demand; full selector remains available.")
                                 wrapMode: Text.WordWrap
                                 color: Appearance.colors.colSubtext
                                 font.pixelSize: Appearance.font.pixelSize.small
@@ -1611,7 +1611,7 @@ ContentPage {
             NoticeBox {
                 Layout.fillWidth: true
                 materialIcon: "folder"
-                text: Translation.tr("Recordings and iNiR screenshots can use different folders. These paths are also available in Tools for detailed capture settings.")
+                text: Translation.tr("Choose separate capture folders; detailed paths in Tools.")
             }
 
             ContentSubsection {
@@ -1720,7 +1720,7 @@ ContentPage {
                 checked: Config.options?.reloadToasts?.enable ?? true
                 onCheckedChanged: Config.setNestedValue("reloadToasts.enable", checked)
                 StyledToolTip {
-                    text: Translation.tr("Show toast notifications when Quickshell or Niri config reloads.\nErrors are always shown.")
+                    text: Translation.tr("Show reload notices; errors always appear.")
                 }
             }
 
