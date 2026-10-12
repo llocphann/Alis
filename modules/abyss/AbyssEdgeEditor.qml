@@ -826,7 +826,15 @@ Item {
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                         spacing: 8
                         Item { Layout.fillWidth: true; Layout.minimumWidth: 0 }
-                        StyledComboBox {
+                        // On narrow vertical toolbars the two scope controls
+                        // stack instead of overflowing the BodyHost clip.
+                        GridLayout {
+                            Layout.fillWidth: false
+                            Layout.alignment: Qt.AlignRight
+                            columns: editorModeHeader.columns === 2 ? 2 : 1
+                            columnSpacing: 8
+                            rowSpacing: 4
+                            StyledComboBox {
                             id:ipcOutputChoice
                             objectName:"abyssEditorIpcOutput"
                             // Shared output scope is useful in both Modules and IPC.
@@ -848,6 +856,7 @@ Item {
                             text:"This output only"
                             checked:root.outputOnly
                             onToggled:root.outputOnly=checked
+                        }
                         }
                     }
                 }
