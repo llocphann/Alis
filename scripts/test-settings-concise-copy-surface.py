@@ -104,4 +104,25 @@ for hint in (
     assert hint in SIDEBARS, hint
     assert EN_US.get(hint) == hint, hint
 
+# Waffle is a supported family. Keep the short labels discoverable in English
+# without losing the GPU-cost warning or original-recording assurance.
+WAFFLE_HELP = {
+    "WGeneralPage.qml": ("Maximize a lone tiled window; restore its size when another opens.",),
+    "WBackgroundPage.qml": (
+        "Animated wallpaper blur is separate from window blur; high GPU cost.",
+        "Hide wallpaper behind fullscreen windows; keep the Task View backdrop.",
+        "Blur wallpaper behind windows; pause during transitions.",
+        "Blur animated backdrops; may greatly increase GPU load.",
+    ),
+    "WInterfacePage.qml": (
+        "Create a smaller sharing copy; keep the original recording.",
+        "Show media feedback; Pill also announces track changes outside games.",
+    ),
+}
+for page, hints in WAFFLE_HELP.items():
+    source = (ROOT / "modules" / "waffle" / "settings" / "pages" / page).read_text(encoding="utf-8")
+    for hint in hints:
+        assert hint in source, (page, hint)
+        assert EN_US.get(hint) == hint, (page, hint)
+
 print("Settings concise-copy/shared-surface contract: PASS")
