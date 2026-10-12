@@ -1,0 +1,152 @@
+[
+  {
+    "public": "r03-native-window/native.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-window/native.log",
+    "sha256": "0f6e4deb3e966959c77552957d166d8b5a7ea7fdaaa26a597849c855615c1800"
+  },
+  {
+    "public": "r03-native-window/probe.py",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-window/probe.py",
+    "sha256": "cbe6469339e2432dbd39ec6c4559ee2c4d873190094b61e7205c3d5b74f1e1ff"
+  },
+  {
+    "public": "r03-native-window/result.json",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-window/result.json",
+    "sha256": "0447756a62ad59a827233b4ea7b66f5d971b3278839969947da366340ab2ea13"
+  },
+  {
+    "public": "r03-native-window/terminal.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-window/terminal.log",
+    "sha256": "e96433939153edfd4a70a08a97dcf9f35c25691d8a23883450204aeb3328074a"
+  },
+  {
+    "public": "r03-native-editor-owner/native.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-editor-owner/native.log",
+    "sha256": "f02c7f4f1a6a1d19227025f84d384592729278a9813cb44bd56dc2943f56ff53"
+  },
+  {
+    "public": "r03-native-editor-owner/probe.py",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-editor-owner/probe.py",
+    "sha256": "09e821260ad7c7897526399d0994f6e7675f0f6297385673071e15b12f429b0c"
+  },
+  {
+    "public": "r03-native-editor-owner/result.json",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-editor-owner/result.json",
+    "sha256": "55c3c05e0f270e91cf8989203cd0cfc6c7df28998b8feddbe3f436ee84e929f3"
+  },
+  {
+    "public": "r03-native-editor-owner/terminal.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-editor-owner/terminal.log",
+    "sha256": "e96433939153edfd4a70a08a97dcf9f35c25691d8a23883450204aeb3328074a"
+  },
+  {
+    "public": "r03-native-source-owner/native.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-source-owner/native.log",
+    "sha256": "4d9dddccbcd57a4b1d1481974f8c0774f843768f8b83fc888efb78fad20b7775"
+  },
+  {
+    "public": "r03-native-source-owner/probe.py",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-source-owner/probe.py",
+    "sha256": "760ea7ccbb6e804db709668e97a66143abe85b47be6d753e7cb6a8955cf4eb4f"
+  },
+  {
+    "public": "r03-native-source-owner/result.json",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-source-owner/result.json",
+    "sha256": "f16f2b546a021c80225d78e440bd1bb8e657a06b7540ce1d9eba3f9e2c0dd9d3"
+  },
+  {
+    "public": "r03-native-source-owner/terminal.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-source-owner/terminal.log",
+    "sha256": "161b7f61ebcfb1caea88edfb9f1d4c62baf685a405893adece4b64b27dd27370"
+  },
+  {
+    "public": "r03-native-pin-split/native.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-pin-split/native.log",
+    "sha256": "d1a5390a07a31ef7214b51d36a0d4c4ffe6573cf5877d4ff620e5893e1059bc7"
+  },
+  {
+    "public": "r03-native-pin-split/probe.py",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-pin-split/probe.py",
+    "sha256": "61273a732fe9b104db7ac2d4ae72fe581dc034e2ca0ec450ecd50ed498f47696"
+  },
+  {
+    "public": "r03-native-pin-split/result.json",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-pin-split/result.json",
+    "sha256": "73e2bb5a3adbcba5e1bbf0736f52c943a1bd58d1f6362704955ead5a276f201d"
+  },
+  {
+    "public": "r03-native-pin-split/terminal.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-pin-split/terminal.log",
+    "sha256": "e96433939153edfd4a70a08a97dcf9f35c25691d8a23883450204aeb3328074a"
+  },
+  {
+    "public": "r03-source-regression/native.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-source-regression/native.log",
+    "sha256": "66eb361da70317f42d25d86c28c664b19d324b1f21468a1cce957ac1dcef3d13"
+  },
+  {
+    "public": "r03-source-regression/process.json",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-source-regression/process.json",
+    "sha256": "c80ef2da0d6457ee9af2f1a5fe5dc1551a442d0eaa844c961d76c0f2b7eba558"
+  },
+  {
+    "public": "r03-source-regression-fixed/native.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-source-regression-fixed/native.log",
+    "sha256": "48dc99125f43b5523a76057ce1c89f674592dcbc75ef6309bca3c63882f2bd3e"
+  },
+  {
+    "public": "r03-source-regression-fixed/process.json",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-source-regression-fixed/process.json",
+    "sha256": "c80ef2da0d6457ee9af2f1a5fe5dc1551a442d0eaa844c961d76c0f2b7eba558"
+  },
+  {
+    "public": "r03-source-regression-split/native.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-source-regression-split/native.log",
+    "sha256": "9621f03ebe1d79d6f41eca33e170120c38cac6eb02e620ee53623fee099088a5"
+  },
+  {
+    "public": "r03-source-regression-split/process.json",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-source-regression-split/process.json",
+    "sha256": "c80ef2da0d6457ee9af2f1a5fe5dc1551a442d0eaa844c961d76c0f2b7eba558"
+  },
+  {
+    "public": "r03-native-body-retention/native.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-body-retention/native.log",
+    "sha256": "ad826b5b0f7df4f8287aba5dafcaad55539dad05714059ffaaaf900101858a8f"
+  },
+  {
+    "public": "r03-native-body-retention/probe.py",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-body-retention/probe.py",
+    "sha256": "ae3d7f52f0849880c301495b6780c4bf7128594d435c43a3215ad4c0df852efb"
+  },
+  {
+    "public": "r03-native-body-retention/terminal.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-native-body-retention/terminal.log",
+    "sha256": "d13e20adb46b7332232ed915e79a4a161d171ffa0a58d7e282f15e10cbc4b8f3"
+  },
+  {
+    "public": "r03-cold-source.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-cold-source.log",
+    "sha256": "6fddad6f73843f763251cd4e7fd8ce286419edbf6b256ef175c29f03c14f4788"
+  },
+  {
+    "public": "r03-cold-lifecycle.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-cold-lifecycle.log",
+    "sha256": "29429b860f05c54a06a33b3b6cfd702058f58277b96cc52fc6eccdd5aa1709b6"
+  },
+  {
+    "public": "r03-notification-lease.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-notification-lease.log",
+    "sha256": "6a88628aafe5e348920960b30639ee001d8d3bf1bd2705b069d24e664996cb96"
+  },
+  {
+    "public": "r03-anchor-hover.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-anchor-hover.log",
+    "sha256": "d91f11c58f6e7ea21b69b2c70b604f1183e016233ba1d344c17f4c0ffb4afe5c"
+  },
+  {
+    "public": "r03-anchor-hover-serial.log",
+    "original": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-anchor-hover-serial.log",
+    "sha256": "3485bde48d0c24ea383d071441a79eb3b651302bc4296684cc931f62787ea394"
+  }
+]

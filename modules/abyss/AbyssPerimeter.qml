@@ -822,7 +822,12 @@ Scope {
                 dialogHost: dialogBody
                 edgeInsets: window.paintInsets
                 moduleRecords: bar.visible ? bar.deformations : []
-                sourceInputRegions: bar.visible ? bar.inputRegions : []
+                // Editing disables the mature module's input, but its handle
+                // still owns the same source pixels. Do not let a popup behind
+                // that handle acquire body hover and keep itself alive during
+                // the gesture. Pin/keyboard requests remain independent.
+                sourceInputRegions: (bar.visible ? bar.inputRegions : []).concat(
+                    editor.visible ? editor.inputRegions : [])
             }
             readonly property var sideObstacles: {
                 // Keep the filter phase before either selected record read.

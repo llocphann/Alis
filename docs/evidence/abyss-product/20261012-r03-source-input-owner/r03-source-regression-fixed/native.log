@@ -1,0 +1,13 @@
+  INFO: Launching config: "/tmp/alis-editor-popup-source-pe617it_/shell.qml"
+  INFO: Shell ID: "bf3159ac61721eff1b14dd3494a1d10f" Path ID "bf3159ac61721eff1b14dd3494a1d10f"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/c36vlncsmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1454209.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-editor-popup-source-pe617it_/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-editor-popup-source-pe617it_/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-editor-popup-source-pe617it_/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+ ERROR qml: ABYSS_EDITOR_POPUP_SOURCE_FAIL source disable incorrectly suppresses actual body hover / top check@qs:@/qs/shell.qml:62
+run@qs:@/qs/shell.qml:77
+expression for onTriggered@qs:@/qs/shell.qml:86

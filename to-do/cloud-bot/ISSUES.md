@@ -518,6 +518,12 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Companion hover handler source correction and source-pinned exact-pair checks reported complete; actual owner wl_pointer/installed Companion remains unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [ ] **POP-I01 — Screen Edge / Popup Bridge Hover Continuity — received/updated 2026-10-10:**
+  **Related R03 repair 2026-10-12:** disabled-source/editor-handle ownership
+  has focused native proof; this does not close the owner's general bridge
+  dismissal report or reapply either rejected predicate. Original serial
+  four-edge padding/shoulder/auto-hide fixture passes; physical owner,
+  generic/corner/family protocol and multi-output evidence remain separate.
+  [Native source ownership receipt](../../docs/evidence/abyss-product/20261012-r03-source-input-owner/README.md).
   **Task identity and scope (owner-assigned code 2026-10-12):** Main hover
   regression: an already-open Popup/Edgebar must NOT disappear while the
   pointer moves or dwells on the visible connection/bridge between its

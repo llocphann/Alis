@@ -1,0 +1,2693 @@
+{
+  "classification": "actual virtual-pointer native drag diagnostic; observations are not physical pointer latency/compositor-present FPS",
+  "source_sha": "05ad9ccc20431542fe9c700ef018f0861bfb3327",
+  "private_display": "wayland-2",
+  "parent_display": "wayland-1",
+  "explicit_focus_requested": false,
+  "worktree_variant": true,
+  "perimeter_sha256": "8c3b48cde57875d48029984c8db3208195979936eaac3a430c9490f48391a374",
+  "styled_popup_sha256": "b66890e441894dc9c68eebcf2538c4a0723f04442ebebf7eddd8cc876dfecc90",
+  "source_start": {
+    "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/modules/abyss/AbyssPerimeter.qml": "8c3b48cde57875d48029984c8db3208195979936eaac3a430c9490f48391a374",
+    "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/modules/bar/StyledPopup.qml": "b66890e441894dc9c68eebcf2538c4a0723f04442ebebf7eddd8cc876dfecc90"
+  },
+  "source_unchanged": true,
+  "copied_profile_keys": [
+    "placements",
+    "gap",
+    "size",
+    "edgeThicknesses",
+    "edgeWidthAffectsModules"
+  ],
+  "hold_popup": true,
+  "native_events": [
+    {
+      "stage": "press-position",
+      "sent": [
+        221.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964404754017
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        230.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964575902651
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        238.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964618707450
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        247.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964651687056
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        255.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964686044371
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        264.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964702907670
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        272.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964719605581
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        281.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964736461857
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        289.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964753184284
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        298.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964769784612
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        306.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964786637512
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        315.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964803318862
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        323.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964820030388
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        332.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964852534647
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        340.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964869359104
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        349.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964886368185
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        357.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964903178015
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        366.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964919697814
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        374.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964936397848
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        383.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964952996424
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        391.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964969661794
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        400.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793964986326393
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        408.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965003087812
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        417.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965019758853
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        425.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965036448769
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        434.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965053182737
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        442.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965070061916
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        451.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965086881504
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        459.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965103527728
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        468.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965120295850
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        476.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965136951422
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        485.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965153687383
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        493.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965170312268
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        502.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965187047008
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        510.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965203668476
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        519.1007294392446,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965220212700
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        527.6007294392446,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965236876928
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        536.1007294392446,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965253607330
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        544.6007294392446,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965285700462
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        553.1007294392446,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965302936166
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        561.6007294392446,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965320829877
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        550.8487148504597,
+        41.18615917822839,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965337454010
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        540.0967002616748,
+        50.46603348071352,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965354059689
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        529.3446856728899,
+        59.74590778319866,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965370780051
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        518.592671084105,
+        69.0257820856838,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965387543274
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        507.8406564953201,
+        78.30565638816893,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965404328317
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        497.0886419065352,
+        87.58553069065405,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965420970985
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        486.3366273177503,
+        96.86540499313921,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965437659388
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        475.58461272896545,
+        106.14527929562433,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965454328365
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        464.83259814018055,
+        115.42515359810947,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965471004746
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        454.08058355139565,
+        124.70502790059462,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965502714333
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        443.32856896261075,
+        133.98490220307974,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965519703607
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        432.57655437382584,
+        143.26477650556487,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965536467351
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        421.824539785041,
+        152.54465080805,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965553256882
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        411.0725251962561,
+        161.82452511053515,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965570571183
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        400.3205106074712,
+        171.1043994130203,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965587347570
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        389.5684960186863,
+        180.3842737155054,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965603977003
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        378.8164814299014,
+        189.66414801799056,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965620711452
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        368.06446684111654,
+        198.9440223204757,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965637327891
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        357.31245225233164,
+        208.2238966229608,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965669274550
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        346.56043766354674,
+        217.50377092544596,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965686165000
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        335.80842307476183,
+        226.78364522793106,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965702985559
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        325.05640848597693,
+        236.06351953041622,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965719646391
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        314.3043938971921,
+        245.34339383290137,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965736793550
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        303.5523793084072,
+        254.62326813538647,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965753733001
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        292.8003647196223,
+        263.9031424378716,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965771063251
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        282.0483501308374,
+        273.1830167403568,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965787815503
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        271.2963355420525,
+        282.46289104284193,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965804448473
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        260.54432095326763,
+        291.7427653453271,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965821294680
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        249.79230636448273,
+        301.0226396478122,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965838111142
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        239.04029177569782,
+        310.30251395029734,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965854958292
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        228.28827718691292,
+        319.58238825278244,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965871556206
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        217.53626259812802,
+        328.8622625552676,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965888364272
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        206.78424800934317,
+        338.14213685775275,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965905004556
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        196.03223342055827,
+        347.42201116023784,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965921530416
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        185.2802188317733,
+        356.701885462723,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965938103894
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        174.52820424298847,
+        365.98175976520815,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965954849574
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        163.77618965420356,
+        375.26163406769325,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965971582911
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        153.02417506541872,
+        384.5415083701784,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793965988339952
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        142.27216047663381,
+        393.82138267266356,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793966005001936
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        131.52014588784886,
+        403.1012569751487,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793966021668949
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        120.76813129906401,
+        412.3811312776338,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793966053413181
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        110.0161167102791,
+        421.6610055801189,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793966086863654
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        99.26410212149426,
+        430.9408798826041,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793966103806692
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        88.51208753270936,
+        440.2207541850892,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793966120629486
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        77.76007294392451,
+        449.5006284875743,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793966137587232
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        67.00805835513955,
+        458.78050279005953,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793966154460409
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        56.25604376635465,
+        468.0603770925446,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793966171161897
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        45.504029177569805,
+        477.3402513950297,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793966187700551
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        34.75201458878496,
+        486.62012569751494,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793966204425833
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        24.0,
+        495.90000000000003,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791793966221266019
+    }
+  ],
+  "qml": {
+    "trace": [
+      {
+        "timestamp": 1791793964808,
+        "seq": 1,
+        "pressed": true,
+        "point": {
+          "x": 238.59375,
+          "y": 31.90625
+        },
+        "subject": {
+          "x": 70.22744933271156,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791793965083,
+        "seq": 2,
+        "pressed": true,
+        "point": {
+          "x": 346.6731921770608,
+          "y": 31.90625
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791793965233,
+        "seq": 3,
+        "pressed": true,
+        "point": {
+          "x": 315.09375,
+          "y": 31.90625
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791793965467,
+        "seq": 4,
+        "pressed": true,
+        "point": {
+          "x": 323.59375,
+          "y": 31.90625
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791793965622,
+        "seq": 5,
+        "pressed": true,
+        "point": {
+          "x": 519.09375,
+          "y": 31.90625
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791793965857,
+        "seq": 6,
+        "pressed": true,
+        "point": {
+          "x": 527.59375,
+          "y": 31.90625
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791793966019,
+        "seq": 7,
+        "pressed": true,
+        "point": {
+          "x": 378.8125,
+          "y": 189.671875
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791793966243,
+        "seq": 8,
+        "pressed": true,
+        "point": {
+          "x": 368.0625,
+          "y": 198.9375
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791793966859,
+        "seq": 9,
+        "pressed": true,
+        "point": {
+          "x": -28.041266509772356,
+          "y": 672.9091175992098
+        },
+        "subject": {
+          "x": 8,
+          "y": 287.0809925992098,
+          "width": 31.922288736163168,
+          "height": 213.48030592309118
+        },
+        "dragging": true,
+        "edge": "left",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791793967198,
+        "seq": 10,
+        "pressed": true,
+        "point": {
+          "x": 131.515625,
+          "y": 412.359375
+        },
+        "subject": {
+          "x": 8,
+          "y": 296.3466175992098,
+          "width": 31.922288736163168,
+          "height": 213.48030592309118
+        },
+        "dragging": true,
+        "edge": "left",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791793967452,
+        "seq": 11,
+        "pressed": true,
+        "point": {
+          "x": 24,
+          "y": 588.71875
+        },
+        "subject": {
+          "x": 8,
+          "y": 389.1591175992098,
+          "width": 31.922288736163168,
+          "height": 213.48030592309118
+        },
+        "dragging": true,
+        "edge": "left",
+        "feedback": ""
+      }
+    ],
+    "frames": [
+      {
+        "timestamp": 1791793964380,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793964404,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793964437,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793964471,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793964487,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793964504,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793964521,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793964566,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793964586,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793964809,
+        "seq": 1,
+        "x": 70.22744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793965233,
+        "seq": 3,
+        "x": 178.30689150977236,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793965622,
+        "seq": 5,
+        "x": 178.30689150977236,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793966020,
+        "seq": 7,
+        "x": 178.30689150977236,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791793966860,
+        "seq": 9,
+        "x": 8,
+        "y": 287.0809925992098,
+        "width": 31.922288736163168,
+        "height": 213.48030592309118
+      },
+      {
+        "timestamp": 1791793967543,
+        "seq": 11,
+        "x": 8,
+        "y": 389.1591175992098,
+        "width": 31.922288736163168,
+        "height": 213.48030592309118
+      },
+      {
+        "timestamp": 1791793967742,
+        "seq": 11,
+        "x": 8,
+        "y": 389.1591175992098,
+        "width": 31.922288736163168,
+        "height": 213.48030592309118
+      }
+    ],
+    "state": {
+      "timestamp": 1791793967744,
+      "family": "abyss",
+      "shellEntryReady": true,
+      "deferredPanelsReady": true,
+      "compositorNiri": true,
+      "outputCount": 1,
+      "outputs": [
+        {
+          "output": "winit",
+          "windowVisible": true,
+          "presented": true,
+          "editorOpen": true,
+          "fullscreenCovered": false,
+          "fieldReady": true,
+          "framePresented": true,
+          "barVisible": true,
+          "barEnabled": true,
+          "barOnOutput": true,
+          "barEditing": true,
+          "barHover": true,
+          "probeMaskProxy": false,
+          "probeUnmapped": false,
+          "barInputRegionCount": 12,
+          "editorRegionCount": 18,
+          "liquidPresented": true,
+          "liquidPopupsOpen": true,
+          "barPopupHoverLease": true,
+          "popupSlots": [
+            {
+              "kind": "resources",
+              "order": 2,
+              "active": true,
+              "requestedVisible": true,
+              "semanticHold": false,
+              "lingerVisible": true,
+              "humanVisibleRequest": true,
+              "rawVisibleRequest": true,
+              "hoverActivates": true,
+              "notificationHover": null,
+              "moduleHover": false,
+              "anchorHover": false,
+              "anchorScenePoint": null,
+              "bodyHover": false,
+              "contentHover": false,
+              "contentScenePoint": null,
+              "hoverGeometry": {
+                "edge": "left",
+                "joinedEdge": "",
+                "outputWidth": 1860,
+                "outputHeight": 1102,
+                "connectionInsets": {
+                  "top": 10,
+                  "right": 10,
+                  "bottom": 16,
+                  "left": 16
+                },
+                "rawSurface": {
+                  "x": -50,
+                  "y": 446.56129852230106,
+                  "w": 1938,
+                  "h": 140
+                },
+                "joinedSurface": {
+                  "x": -50,
+                  "y": 446.56129852230106,
+                  "w": 1938,
+                  "h": 140
+                },
+                "pointHit": null
+              },
+              "hosted": true,
+              "bodyAcceptsInput": true,
+              "bodyReady": true,
+              "hoverParentEnabled": true,
+              "nativeRegionRegistered": true,
+              "stripCount": 50,
+              "bounds": {
+                "x": 16,
+                "y": 446.56129852230106,
+                "w": 1844,
+                "h": 140
+              },
+              "content": {
+                "x": 1556,
+                "y": 460.56129852230106,
+                "w": 318,
+                "h": 112
+              }
+            },
+            null,
+            null,
+            null
+          ],
+          "genericPopup": {
+            "activeKind": "",
+            "desiredKind": "",
+            "resident": false,
+            "requestedOpen": false,
+            "progress": 0,
+            "inputBounds": {
+              "x": 0,
+              "y": 0,
+              "w": 0,
+              "h": 0
+            },
+            "triggerHover": false,
+            "focusHeld": false
+          },
+          "modules": [
+            {
+              "id": "distroIcon",
+              "kind": "distroIcon",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 8,
+                "y": 8,
+                "w": 44.07721273965162,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 8,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "resources",
+              "kind": "resources",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": true,
+              "featureHovered": null,
+              "featureContainsMouse": true,
+              "rect": {
+                "x": 8,
+                "y": 389.1591175992098,
+                "w": 31.922288736163168,
+                "h": 213.48030592309118
+              },
+              "input": {
+                "x": 8,
+                "y": 389,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": true,
+                "presentationActive": true,
+                "hosted": true
+              }
+            },
+            {
+              "id": "activeWindow",
+              "kind": "activeWindow",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 193.25474023125892,
+                "y": 8,
+                "w": 89.6485682840372,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 193,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": null
+            },
+            {
+              "id": "utilButtons",
+              "kind": "utilButtons",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 507.7036883158983,
+                "y": 8,
+                "w": 262.9691336331758,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 507,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": null
+            },
+            {
+              "id": "media",
+              "kind": "media",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 780.323058542134,
+                "y": 8,
+                "w": 155.39085169233115,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 780,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "workspaces",
+              "kind": "workspaces",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 945.3641468275251,
+                "y": 8,
+                "w": 38.84771292308279,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 945,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": null
+            },
+            {
+              "id": "clock",
+              "kind": "clock",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 993.8620963436679,
+                "y": 8,
+                "w": 206.19170705328557,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 993,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "weather",
+              "kind": "weather",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1209.7040399900134,
+                "y": 8,
+                "w": 113.55485315978045,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1209,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "battery",
+              "kind": "battery",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1807.1757158579815,
+                "y": 8,
+                "w": 44.8242841420186,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1807,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "tray",
+              "kind": "tray",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 1651.0994844009942,
+                "y": 8,
+                "w": 146.42599486392743,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1651,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "timer",
+              "kind": "timer",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1401.7010192858456,
+                "y": 8,
+                "w": 101.60171072190883,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1401,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "shellUpdate",
+              "kind": "shellUpdate",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1512.9529666008143,
+                "y": 8,
+                "w": 128.49628120711998,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1512,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "prepared": {
+    "output": "winit",
+    "width": 1860,
+    "height": 1102,
+    "subject": {
+      "x": 61.72744933271156,
+      "y": 8,
+      "width": 319.746560213066,
+      "height": 47.81256975148651
+    },
+    "state": {
+      "timestamp": 1791793963730,
+      "family": "abyss",
+      "shellEntryReady": true,
+      "deferredPanelsReady": true,
+      "compositorNiri": true,
+      "outputCount": 1,
+      "outputs": [
+        {
+          "output": "winit",
+          "windowVisible": true,
+          "presented": true,
+          "editorOpen": true,
+          "fullscreenCovered": false,
+          "fieldReady": true,
+          "framePresented": true,
+          "barVisible": true,
+          "barEnabled": true,
+          "barOnOutput": true,
+          "barEditing": true,
+          "barHover": false,
+          "probeMaskProxy": false,
+          "probeUnmapped": false,
+          "barInputRegionCount": 12,
+          "editorRegionCount": 18,
+          "liquidPresented": true,
+          "liquidPopupsOpen": false,
+          "barPopupHoverLease": false,
+          "popupSlots": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "genericPopup": {
+            "activeKind": "",
+            "desiredKind": "",
+            "resident": false,
+            "requestedOpen": false,
+            "progress": 0,
+            "inputBounds": {
+              "x": 0,
+              "y": 0,
+              "w": 0,
+              "h": 0
+            },
+            "triggerHover": false,
+            "focusHeld": false
+          },
+          "modules": [
+            {
+              "id": "distroIcon",
+              "kind": "distroIcon",
+              "constructed": true,
+              "visible": false,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 8,
+                "y": 8,
+                "w": 44.07721273965162,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 8,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "resources",
+              "kind": "resources",
+              "constructed": true,
+              "visible": false,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 61.72744933271156,
+                "y": 8,
+                "w": 319.746560213066,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 61,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": true,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "activeWindow",
+              "kind": "activeWindow",
+              "constructed": true,
+              "visible": false,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 391.1242461388375,
+                "y": 8,
+                "w": 134.79969616459135,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 391,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": null
+            },
+            {
+              "id": "utilButtons",
+              "kind": "utilButtons",
+              "constructed": true,
+              "visible": false,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 583.0139683396621,
+                "y": 8,
+                "w": 262.9691336331758,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 583,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": null
+            },
+            {
+              "id": "media",
+              "kind": "media",
+              "constructed": true,
+              "visible": false,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 993.8620963436679,
+                "y": 8,
+                "w": 155.39085169233115,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 993,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "workspaces",
+              "kind": "workspaces",
+              "constructed": true,
+              "visible": false,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 1020.6744268512889,
+                "y": 8,
+                "w": 38.84771292308279,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1020,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": null
+            },
+            {
+              "id": "clock",
+              "kind": "clock",
+              "constructed": true,
+              "visible": false,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 1158.9031846290588,
+                "y": 8,
+                "w": 206.19170705328557,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1158,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "weather",
+              "kind": "weather",
+              "constructed": true,
+              "visible": false,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1374.7451282754043,
+                "y": 8,
+                "w": 101.60171072190883,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1374,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "battery",
+              "kind": "battery",
+              "constructed": true,
+              "visible": false,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1807.1757158579815,
+                "y": 8,
+                "w": 44.8242841420186,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1807,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "tray",
+              "kind": "tray",
+              "constructed": true,
+              "visible": false,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 1651.0994844009942,
+                "y": 8,
+                "w": 146.42599486392743,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1651,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "timer",
+              "kind": "timer",
+              "constructed": true,
+              "visible": false,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1401.7010192858456,
+                "y": 8,
+                "w": 101.60171072190883,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1401,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "shellUpdate",
+              "kind": "shellUpdate",
+              "constructed": true,
+              "visible": false,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1512.9529666008143,
+                "y": 8,
+                "w": 128.49628120711998,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1512,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "armed": {
+    "handle": {
+      "x": 61.72744933271156,
+      "y": 8,
+      "w": 319.746560213066,
+      "h": 47.81256975148651
+    },
+    "state": {
+      "timestamp": 1791793964378,
+      "family": "abyss",
+      "shellEntryReady": true,
+      "deferredPanelsReady": true,
+      "compositorNiri": true,
+      "outputCount": 1,
+      "outputs": [
+        {
+          "output": "winit",
+          "windowVisible": true,
+          "presented": true,
+          "editorOpen": true,
+          "fullscreenCovered": false,
+          "fieldReady": true,
+          "framePresented": true,
+          "barVisible": true,
+          "barEnabled": true,
+          "barOnOutput": true,
+          "barEditing": true,
+          "barHover": false,
+          "probeMaskProxy": false,
+          "probeUnmapped": false,
+          "barInputRegionCount": 12,
+          "editorRegionCount": 18,
+          "liquidPresented": true,
+          "liquidPopupsOpen": true,
+          "barPopupHoverLease": true,
+          "popupSlots": [
+            {
+              "kind": "resources",
+              "order": 2,
+              "active": true,
+              "requestedVisible": true,
+              "semanticHold": false,
+              "lingerVisible": true,
+              "humanVisibleRequest": true,
+              "rawVisibleRequest": true,
+              "hoverActivates": true,
+              "notificationHover": null,
+              "moduleHover": false,
+              "anchorHover": false,
+              "anchorScenePoint": null,
+              "bodyHover": false,
+              "contentHover": false,
+              "contentScenePoint": null,
+              "hoverGeometry": {
+                "edge": "top",
+                "joinedEdge": "left",
+                "outputWidth": 1860,
+                "outputHeight": 1102,
+                "connectionInsets": {
+                  "top": 10,
+                  "right": 10,
+                  "bottom": 16,
+                  "left": 16
+                },
+                "rawSurface": {
+                  "x": 30,
+                  "y": -50,
+                  "w": 346,
+                  "h": 226.84170995926974
+                },
+                "joinedSurface": {
+                  "x": -50,
+                  "y": -50,
+                  "w": 426,
+                  "h": 226.84170995926974
+                },
+                "pointHit": null
+              },
+              "hosted": true,
+              "bodyAcceptsInput": true,
+              "bodyReady": true,
+              "hoverParentEnabled": true,
+              "nativeRegionRegistered": true,
+              "stripCount": 51,
+              "bounds": {
+                "x": 30,
+                "y": 10,
+                "w": 346,
+                "h": 166.84170995926974
+              },
+              "content": {
+                "x": 44,
+                "y": 77.8125697514865,
+                "w": 318,
+                "h": 85.02914020778323
+              }
+            },
+            null,
+            null,
+            null
+          ],
+          "genericPopup": {
+            "activeKind": "",
+            "desiredKind": "",
+            "resident": false,
+            "requestedOpen": false,
+            "progress": 0,
+            "inputBounds": {
+              "x": 0,
+              "y": 0,
+              "w": 0,
+              "h": 0
+            },
+            "triggerHover": false,
+            "focusHeld": false
+          },
+          "modules": [
+            {
+              "id": "distroIcon",
+              "kind": "distroIcon",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 8,
+                "y": 8,
+                "w": 44.07721273965162,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 8,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "resources",
+              "kind": "resources",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 61.72744933271156,
+                "y": 8,
+                "w": 319.746560213066,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 61,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": true,
+                "presentationActive": true,
+                "hosted": true
+              }
+            },
+            {
+              "id": "activeWindow",
+              "kind": "activeWindow",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 391.1242461388375,
+                "y": 8,
+                "w": 89.6485682840372,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 391,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": null
+            },
+            {
+              "id": "utilButtons",
+              "kind": "utilButtons",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 507.7036883158983,
+                "y": 8,
+                "w": 262.9691336331758,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 507,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": null
+            },
+            {
+              "id": "media",
+              "kind": "media",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 780.323058542134,
+                "y": 8,
+                "w": 155.39085169233115,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 780,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "workspaces",
+              "kind": "workspaces",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 945.3641468275251,
+                "y": 8,
+                "w": 38.84771292308279,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 945,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": null
+            },
+            {
+              "id": "clock",
+              "kind": "clock",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 993.8620963436679,
+                "y": 8,
+                "w": 206.19170705328557,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 993,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "weather",
+              "kind": "weather",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1209.7040399900134,
+                "y": 8,
+                "w": 101.60171072190883,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1209,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "battery",
+              "kind": "battery",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1807.1757158579815,
+                "y": 8,
+                "w": 44.8242841420186,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1807,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "tray",
+              "kind": "tray",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 1651.0994844009942,
+                "y": 8,
+                "w": 146.42599486392743,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1651,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "timer",
+              "kind": "timer",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1401.7010192858456,
+                "y": 8,
+                "w": 101.60171072190883,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1401,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "shellUpdate",
+              "kind": "shellUpdate",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1512.9529666008143,
+                "y": 8,
+                "w": 128.49628120711998,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1512,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

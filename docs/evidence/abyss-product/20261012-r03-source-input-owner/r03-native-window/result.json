@@ -1,0 +1,1756 @@
+{
+  "classification": "actual virtual-pointer native drag diagnostic; observations are not physical pointer latency/compositor-present FPS",
+  "source_sha": "05ad9ccc20431542fe9c700ef018f0861bfb3327",
+  "private_display": "wayland-2",
+  "parent_display": "wayland-1",
+  "explicit_focus_requested": false,
+  "copied_profile_keys": [
+    "placements",
+    "gap",
+    "size",
+    "edgeThicknesses",
+    "edgeWidthAffectsModules"
+  ],
+  "hold_popup": false,
+  "native_events": [
+    {
+      "stage": "press-position",
+      "sent": [
+        221.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390159615955
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        230.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390348855168
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        238.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390391248910
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        247.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390424779884
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        255.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390442278187
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        264.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390459058622
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        272.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390475889992
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        281.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390492512983
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        289.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390509260286
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        298.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390525905138
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        306.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390542510686
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        315.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390559098963
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        323.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390575739166
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        332.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390592347730
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        340.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390624556488
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        349.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390641463348
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        357.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390658318022
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        366.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390675042242
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        374.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390691691692
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        383.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390708389833
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        391.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390725236141
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        400.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390742043666
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        408.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390758962589
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        417.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390775950120
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        425.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390792567922
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        434.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390809331846
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        442.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390826023344
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        451.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390842642248
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        459.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390859339457
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        468.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390876068887
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        476.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390893230302
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        485.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390909859405
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        493.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390926386377
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        502.10072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390943000091
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        510.60072943924456,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792390974759090
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        519.1007294392446,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391007919943
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        527.6007294392446,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391024811726
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        536.1007294392446,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391041612939
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        544.6007294392446,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391058362506
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        553.1007294392446,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391075137140
+    },
+    {
+      "stage": "same-edge",
+      "sent": [
+        561.6007294392446,
+        31.906284875743253,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391092205702
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        550.8487148504597,
+        41.18615917822839,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391109597447
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        540.0967002616748,
+        50.46603348071352,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391126578977
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        529.3446856728899,
+        59.74590778319866,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391143382725
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        518.592671084105,
+        69.0257820856838,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391160135909
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        507.8406564953201,
+        78.30565638816893,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391176762948
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        497.0886419065352,
+        87.58553069065405,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391208022014
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        486.3366273177503,
+        96.86540499313921,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391225190783
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        475.58461272896545,
+        106.14527929562433,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391241971599
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        464.83259814018055,
+        115.42515359810947,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391258707070
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        454.08058355139565,
+        124.70502790059462,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391275488576
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        443.32856896261075,
+        133.98490220307974,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391292594859
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        432.57655437382584,
+        143.26477650556487,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391309544028
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        421.824539785041,
+        152.54465080805,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391326388002
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        411.0725251962561,
+        161.82452511053515,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391343067448
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        400.3205106074712,
+        171.1043994130203,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391374879155
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        389.5684960186863,
+        180.3842737155054,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391391879150
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        378.8164814299014,
+        189.66414801799056,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391408913458
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        368.06446684111654,
+        198.9440223204757,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391426068211
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        357.31245225233164,
+        208.2238966229608,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391442751424
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        346.56043766354674,
+        217.50377092544596,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391459412917
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        335.80842307476183,
+        226.78364522793106,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391476134312
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        325.05640848597693,
+        236.06351953041622,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391492703933
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        314.3043938971921,
+        245.34339383290137,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391509345559
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        303.5523793084072,
+        254.62326813538647,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391526121455
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        292.8003647196223,
+        263.9031424378716,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391542957474
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        282.0483501308374,
+        273.1830167403568,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391559788302
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        271.2963355420525,
+        282.46289104284193,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391592025333
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        260.54432095326763,
+        291.7427653453271,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391608838799
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        249.79230636448273,
+        301.0226396478122,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391625630124
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        239.04029177569782,
+        310.30251395029734,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391642372138
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        228.28827718691292,
+        319.58238825278244,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391659128317
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        217.53626259812802,
+        328.8622625552676,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391675901568
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        206.78424800934317,
+        338.14213685775275,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391692582888
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        196.03223342055827,
+        347.42201116023784,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391709378341
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        185.2802188317733,
+        356.701885462723,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391741843357
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        174.52820424298847,
+        365.98175976520815,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391758911137
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        163.77618965420356,
+        375.26163406769325,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391775730415
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        153.02417506541872,
+        384.5415083701784,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391793128872
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        142.27216047663381,
+        393.82138267266356,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391809875133
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        131.52014588784886,
+        403.1012569751487,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391826524794
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        120.76813129906401,
+        412.3811312776338,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391843221162
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        110.0161167102791,
+        421.6610055801189,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391859851577
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        99.26410212149426,
+        430.9408798826041,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391876594181
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        88.51208753270936,
+        440.2207541850892,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391893318060
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        77.76007294392451,
+        449.5006284875743,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391910099346
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        67.00805835513955,
+        458.78050279005953,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391926855887
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        56.25604376635465,
+        468.0603770925446,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391943566581
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        45.504029177569805,
+        477.3402513950297,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391960313974
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        34.75201458878496,
+        486.62012569751494,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391976993311
+    },
+    {
+      "stage": "cross-edge",
+      "sent": [
+        24.0,
+        495.90000000000003,
+        1860,
+        1102
+      ],
+      "wall_ns": 1791792391993593239
+    }
+  ],
+  "qml": {
+    "trace": [
+      {
+        "timestamp": 1791792390583,
+        "seq": 1,
+        "pressed": true,
+        "point": {
+          "x": 346.6731921770608,
+          "y": 31.90625
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791792390793,
+        "seq": 2,
+        "pressed": true,
+        "point": {
+          "x": 238.59375,
+          "y": 31.90625
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791792390941,
+        "seq": 3,
+        "pressed": true,
+        "point": {
+          "x": 323.59375,
+          "y": 31.90625
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791792391168,
+        "seq": 4,
+        "pressed": true,
+        "point": {
+          "x": 332.09375,
+          "y": 31.90625
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791792391319,
+        "seq": 5,
+        "pressed": true,
+        "point": {
+          "x": 493.59375,
+          "y": 31.90625
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791792391549,
+        "seq": 6,
+        "pressed": true,
+        "point": {
+          "x": 502.09375,
+          "y": 31.90625
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791792391694,
+        "seq": 7,
+        "pressed": true,
+        "point": {
+          "x": 432.578125,
+          "y": 143.265625
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791792391923,
+        "seq": 8,
+        "pressed": true,
+        "point": {
+          "x": 421.828125,
+          "y": 152.546875
+        },
+        "subject": {
+          "x": 178.30689150977236,
+          "y": 8,
+          "width": 319.746560213066,
+          "height": 47.81256975148651
+        },
+        "dragging": true,
+        "edge": "top",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791792392478,
+        "seq": 9,
+        "pressed": true,
+        "point": {
+          "x": 36.474358490227644,
+          "y": 561.5341175992098
+        },
+        "subject": {
+          "x": 8,
+          "y": 231.39349259920985,
+          "width": 31.922288736163168,
+          "height": 213.48030592309118
+        },
+        "dragging": true,
+        "edge": "left",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791792392742,
+        "seq": 10,
+        "pressed": true,
+        "point": {
+          "x": 196.03125,
+          "y": 356.703125
+        },
+        "subject": {
+          "x": 8,
+          "y": 240.67474259920985,
+          "width": 31.922288736163168,
+          "height": 213.48030592309118
+        },
+        "dragging": true,
+        "edge": "left",
+        "feedback": ""
+      },
+      {
+        "timestamp": 1791792392990,
+        "seq": 11,
+        "pressed": true,
+        "point": {
+          "x": 24,
+          "y": 644.390625
+        },
+        "subject": {
+          "x": 8,
+          "y": 389.1591175992098,
+          "width": 31.922288736163168,
+          "height": 213.48030592309118
+        },
+        "dragging": true,
+        "edge": "left",
+        "feedback": ""
+      }
+    ],
+    "frames": [
+      {
+        "timestamp": 1791792390143,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792390159,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792390216,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792390230,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792390247,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792390262,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792390284,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792390303,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792390331,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792390364,
+        "seq": 0,
+        "x": 61.72744933271156,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792390941,
+        "seq": 3,
+        "x": 178.30689150977236,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792391319,
+        "seq": 5,
+        "x": 178.30689150977236,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792391700,
+        "seq": 7,
+        "x": 178.30689150977236,
+        "y": 8,
+        "width": 319.746560213066,
+        "height": 47.81256975148651
+      },
+      {
+        "timestamp": 1791792392484,
+        "seq": 9,
+        "x": 8,
+        "y": 231.39349259920985,
+        "width": 31.922288736163168,
+        "height": 213.48030592309118
+      },
+      {
+        "timestamp": 1791792393083,
+        "seq": 11,
+        "x": 8,
+        "y": 389.1591175992098,
+        "width": 31.922288736163168,
+        "height": 213.48030592309118
+      },
+      {
+        "timestamp": 1791792393295,
+        "seq": 11,
+        "x": 8,
+        "y": 389.1591175992098,
+        "width": 31.922288736163168,
+        "height": 213.48030592309118
+      }
+    ],
+    "state": {
+      "timestamp": 1791792393298,
+      "family": "abyss",
+      "shellEntryReady": true,
+      "deferredPanelsReady": true,
+      "compositorNiri": true,
+      "outputCount": 1,
+      "outputs": [
+        {
+          "output": "winit",
+          "windowVisible": true,
+          "presented": true,
+          "editorOpen": true,
+          "fullscreenCovered": false,
+          "fieldReady": true,
+          "framePresented": true,
+          "barVisible": true,
+          "barEnabled": true,
+          "barOnOutput": true,
+          "barEditing": true,
+          "barHover": false,
+          "probeMaskProxy": false,
+          "probeUnmapped": false,
+          "barInputRegionCount": 12,
+          "editorRegionCount": 18,
+          "liquidPresented": true,
+          "liquidPopupsOpen": true,
+          "barPopupHoverLease": true,
+          "popupSlots": [
+            {
+              "kind": "resources",
+              "order": 1,
+              "active": true,
+              "requestedVisible": true,
+              "semanticHold": false,
+              "lingerVisible": true,
+              "humanVisibleRequest": true,
+              "rawVisibleRequest": true,
+              "hoverActivates": true,
+              "notificationHover": null,
+              "moduleHover": false,
+              "anchorHover": false,
+              "anchorScenePoint": null,
+              "bodyHover": false,
+              "contentHover": true,
+              "contentScenePoint": {
+                "x": 24,
+                "y": 495.90625
+              },
+              "hoverGeometry": {
+                "edge": "left",
+                "joinedEdge": "",
+                "outputWidth": 1860,
+                "outputHeight": 1102,
+                "connectionInsets": {
+                  "top": 10,
+                  "right": 10,
+                  "bottom": 16,
+                  "left": 16
+                },
+                "rawSurface": {
+                  "x": -50,
+                  "y": 390.87379852230106,
+                  "w": 444,
+                  "h": 140
+                },
+                "joinedSurface": {
+                  "x": -50,
+                  "y": 390.87379852230106,
+                  "w": 444,
+                  "h": 140
+                },
+                "pointHit": {
+                  "inInputBounds": true,
+                  "inShoulderStrip": false,
+                  "inSourceRegion": false,
+                  "inRawSurfaceBounds": true
+                }
+              },
+              "hosted": true,
+              "bodyAcceptsInput": true,
+              "bodyReady": true,
+              "hoverParentEnabled": true,
+              "nativeRegionRegistered": true,
+              "stripCount": 50,
+              "bounds": {
+                "x": 16,
+                "y": 390.87379852230106,
+                "w": 378,
+                "h": 140
+              },
+              "content": {
+                "x": 62,
+                "y": 404.87379852230106,
+                "w": 318,
+                "h": 112
+              }
+            },
+            null,
+            null,
+            null
+          ],
+          "genericPopup": {
+            "activeKind": "",
+            "desiredKind": "",
+            "resident": false,
+            "requestedOpen": false,
+            "progress": 0,
+            "inputBounds": {
+              "x": 0,
+              "y": 0,
+              "w": 0,
+              "h": 0
+            },
+            "triggerHover": false,
+            "focusHeld": false
+          },
+          "modules": [
+            {
+              "id": "distroIcon",
+              "kind": "distroIcon",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 8,
+                "y": 8,
+                "w": 44.07721273965162,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 8,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "resources",
+              "kind": "resources",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 8,
+                "y": 389.1591175992098,
+                "w": 31.922288736163168,
+                "h": 213.48030592309118
+              },
+              "input": {
+                "x": 8,
+                "y": 389,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": true,
+                "presentationActive": true,
+                "hosted": true
+              }
+            },
+            {
+              "id": "activeWindow",
+              "kind": "activeWindow",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 172.3257383555093,
+                "y": 8,
+                "w": 89.6485682840372,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 172,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": null
+            },
+            {
+              "id": "utilButtons",
+              "kind": "utilButtons",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 507.7036883158983,
+                "y": 8,
+                "w": 262.9691336331758,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 507,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": null
+            },
+            {
+              "id": "media",
+              "kind": "media",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 780.323058542134,
+                "y": 8,
+                "w": 155.39085169233115,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 780,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "workspaces",
+              "kind": "workspaces",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 945.3641468275251,
+                "y": 8,
+                "w": 38.84771292308279,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 945,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": null
+            },
+            {
+              "id": "clock",
+              "kind": "clock",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 993.8620963436679,
+                "y": 8,
+                "w": 206.19170705328557,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 993,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "weather",
+              "kind": "weather",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1209.7040399900134,
+                "y": 8,
+                "w": 113.55485315978045,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1209,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "battery",
+              "kind": "battery",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1807.1757158579815,
+                "y": 8,
+                "w": 44.8242841420186,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1807,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": true,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "tray",
+              "kind": "tray",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": null,
+              "rect": {
+                "x": 1651.0994844009942,
+                "y": 8,
+                "w": 146.42599486392743,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1651,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "timer",
+              "kind": "timer",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1401.7010192858456,
+                "y": 8,
+                "w": 101.60171072190883,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1401,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            },
+            {
+              "id": "shellUpdate",
+              "kind": "shellUpdate",
+              "constructed": true,
+              "visible": true,
+              "enabled": false,
+              "hovered": false,
+              "featureHovered": null,
+              "featureContainsMouse": false,
+              "rect": {
+                "x": 1512.9529666008143,
+                "y": 8,
+                "w": 128.49628120711998,
+                "h": 47.81256975148651
+              },
+              "input": {
+                "x": 1512,
+                "y": 8,
+                "w": 0,
+                "h": 0
+              },
+              "popup": {
+                "anchorReady": false,
+                "liquidOwner": true,
+                "liquidControllerMatches": true,
+                "windowBound": true,
+                "screenBound": true,
+                "moduleHoverActive": false,
+                "anchorHover": false,
+                "requestedVisible": false,
+                "presentationActive": false,
+                "hosted": false
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-editor-popup-source-tts9z4vi/shell.qml"
+  INFO: Shell ID: "17a5edec726a84aa20aade913c195b04" Path ID "17a5edec726a84aa20aade913c195b04"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/rz8vqvcsmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1457968.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-editor-popup-source-tts9z4vi/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-editor-popup-source-tts9z4vi/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-editor-popup-source-tts9z4vi/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: ABYSS_EDITOR_POPUP_SOURCE_PASS 150 checks 57 frames

@@ -201,7 +201,7 @@ LazyLoader {
     // Read live module and source pointer state, never an event-copied latch:
     // nested controls can consume hover transitions while still tracking their
     // own MouseArea.containsMouse. All sources release when the pointer leaves.
-    readonly property bool moduleHoverActive: !!(
+    readonly property bool moduleHoverActive: root._sourceHoverReady && !!(
         root._liquidAnchor?.hovered
         || root._liquidAnchor?.feature?.containsMouse
         || root._liquidAnchor?.feature?.hovered
@@ -303,22 +303,31 @@ LazyLoader {
         && root.hoverTarget.width > 0
         && root.hoverTarget.height > 0
 
+    // Source input eligibility is narrower than presentation readiness: a
+    // disabled module can retain mature-feature hover flags during editing,
+    // while an already-open body's hover or explicit pin/keyboard request
+    // still has its own lifetime on this output.
+    readonly property bool _sourceHoverReady: root._anchorReady
+        && (!root._liquidAnchor
+            || (root._liquidAnchor.visible && root._liquidAnchor.enabled))
+
     // Observe the actual source Item, including interactive descendants. Legacy
     // MouseArea flags can stop reporting hover over a child's pointer handler
     // or survive a focus click; neither is the popup's pointer lease.
     property Item _anchorHover: Item {
         parent: root.hoverTarget
         anchors.fill: parent
-        enabled: root.hoverActivates && root._anchorReady
-        readonly property bool hovered: sourceHover.hovered
+        enabled: root.hoverActivates && root._sourceHoverReady
+        readonly property bool hovered: sourceHover.enabled && sourceHover.hovered
         // Read-only, scene-local coordinates, valid ONLY while hovered.
         // Qt resets HandlerPoint when not tracking a point; never
         // interpret (0,0) after leave as a genuine pointer position.
-        readonly property var hoverProbeScenePoint: sourceHover.hovered
+        readonly property var hoverProbeScenePoint: sourceHover.enabled && sourceHover.hovered
             ? ({ x: sourceHover.point.scenePosition.x,
                  y: sourceHover.point.scenePosition.y }) : null
         HoverHandler {
             id: sourceHover
+            enabled: root.hoverActivates && root._sourceHoverReady
             onHoveredChanged: {
                 if (hovered && !root._liquidController)
                     root.refreshAnchorOwnership()

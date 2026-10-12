@@ -35,7 +35,7 @@ const leaseFn = new Function('root', 'contentLoader',
     'return (' + leaseExpression + ');');
 
 assert.match(styled, /property Item _anchorHover: Item\s*\{/);
-assert.match(styled, /readonly property bool hovered: sourceHover\.hovered/);
+assert.match(styled, /readonly property bool hovered: sourceHover\.enabled\s*&&\s*sourceHover\.hovered/);
 assert.match(source, /onHoverLeaseRequestedChanged:\s*\{[\s\S]*?if \(root\.hoverLeaseRequested\)\s*\{[\s\S]*?exitGraceTimer\.stop\(\)/);
 
 const base = {
@@ -89,11 +89,13 @@ const anchorPointFn = new Function('sourceHover', 'return (' + scenePointExpr(st
 const contentPointFn = new Function('popupContentHover', 'return (' + scenePointExpr(abyss,
     'readonly property var hoverProbeContentScenePoint:',
     '                    readonly property string presentationKind:') + ');');
-assert.deepEqual(anchorPointFn({ hovered: true, point: { scenePosition: { x: 13, y: 5 } } }),
+assert.deepEqual(anchorPointFn({ enabled: true, hovered: true, point: { scenePosition: { x: 13, y: 5 } } }),
     { x: 13, y: 5 });
-assert.equal(anchorPointFn({ hovered: false }), null);
+assert.equal(anchorPointFn({ enabled: true, hovered: false }), null);
+assert.equal(anchorPointFn({ enabled: false, hovered: true,
+    point: { scenePosition: { x: 13, y: 5 } } }), null);
 assert.deepEqual(contentPointFn({ hovered: true, point: { scenePosition: { x: 1520, y: 650 } } }),
     { x: 1520, y: 650 });
 assert.equal(contentPointFn({ hovered: false }), null);
-assertions += 4;
+assertions += 5;
 console.log('PASS: ' + assertions + ' NotificationCenter source/lease assertions');

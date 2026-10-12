@@ -1,0 +1,11 @@
+{
+  "base_commit": "05ad9ccc20431542fe9c700ef018f0861bfb3327",
+  "dirty_worktree": true,
+  "files": {
+    "modules/abyss/AbyssPerimeter.qml": "8c3b48cde57875d48029984c8db3208195979936eaac3a430c9490f48391a374",
+    "modules/bar/StyledPopup.qml": "b66890e441894dc9c68eebcf2538c4a0723f04442ebebf7eddd8cc876dfecc90",
+    "scripts/test-abyss-editor-popup-source-runtime.py": "cdd0078ff6fd5e1baeb80e277b60379aae29d9c7f8a6e6830c5ef78d2975bb24",
+    "scripts/test-notification-center-hover-lease.mjs": "dba42c9dbb5ac2a6a9bd9d33b35dfc876193532300c95cf0889c5e738166cff4"
+  },
+  "classification": "focused native/policy proof of these bytes; not full canonical/owner acceptance"
+}

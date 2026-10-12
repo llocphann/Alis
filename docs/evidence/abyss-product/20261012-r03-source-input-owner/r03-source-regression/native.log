@@ -1,0 +1,17 @@
+  INFO: Launching config: "/tmp/alis-editor-popup-source-dm8wm6vm/shell.qml"
+  INFO: Shell ID: "6cca28702e8b966447c73a3e91d7d131" Path ID "6cca28702e8b966447c73a3e91d7d131"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/zq5vqmcsmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1453762.sock
+  WARN scene: @shell.qml[16:-1]: ReferenceError: source is not defined
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-editor-popup-source-dm8wm6vm/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-editor-popup-source-dm8wm6vm/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-editor-popup-source-dm8wm6vm/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN scene: @shell.qml[16:-1]: ReferenceError: editorSource is not defined
+  WARN scene: @shell.qml[16:-1]: ReferenceError: source is not defined
+  WARN scene: @shell.qml[16:-1]: ReferenceError: editorSource is not defined
+ ERROR qml: ABYSS_EDITOR_POPUP_SOURCE_FAIL source disable incorrectly suppresses actual body hover / top check@qs:@/qs/shell.qml:62
+run@qs:@/qs/shell.qml:77
+expression for onTriggered@qs:@/qs/shell.qml:86

@@ -1489,6 +1489,14 @@ run privileged installation just because manual buttons are retired.
   and current exact-SHA canonical remain separate pending gates.
 
 - [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**
+  **2026-10-12 focused partial source repair — STILL OPEN:** actual private
+  virtual-pointer drag exposed source hover remaining true while the module
+  is disabled for Edit, holding Resources popup open. Separate source input
+  eligibility from presentation; editor handles retain source priority.
+  Four-edge native ownership 150 checks/57 frames, cold/remount and original
+  serial four-edge hover PASS; explicit protocol pin remains presented with
+  source hover false. Dense drag/frame gaps still need diagnosis; no resource
+  gain/owner acceptance claimed. [Raw variants and failures](../../docs/evidence/abyss-product/20261012-r03-source-input-owner/README.md).
   [Owner: Alis dev; Rework/Optimization] Improve the perceptual and
   actual responsiveness of Screen Edge modules while editing a layout:
   module drag follows the pointer smoothly with stable timing, snap
