@@ -8,6 +8,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "EventDateSelection.js" as DateSelection
+import "../../../services/EventRepeatPolicy.js" as RepeatPolicy
 import Quickshell
 
 WindowDialog {
@@ -56,12 +57,14 @@ WindowDialog {
     property string plannerSelectionAnchor: ""
     property bool _plannerPickingDate: false
     readonly property int plannerSelectedCount: plannerSelectedDateKeys.length
-    // Explicit dates and a recurrence generator are mutually exclusive.
-    // Disable contradictory choices without destroying a date selection.
+    // Enable a repeat interval if the picked days fit ONE calendar cycle:
+    // daily = one day, weekly = one Monday–Sunday week, monthly = one month,
+    // yearly = one calendar year. Disabled choices never clear selected days.
     readonly property bool plannerRepeatConflict: plannerPresentation
         && !isEditing && plannerSelectedCount > 1
     function canSelectRepeat(value): bool {
-        return value === "none" || !root.plannerRepeatConflict
+        return !root.plannerPresentation || root.isEditing
+            || RepeatPolicy.allowed(root.plannerSelectedDateKeys,value)
     }
     function setRepeatOption(value): void {
         if (!root.canSelectRepeat(value)) return
@@ -85,10 +88,10 @@ WindowDialog {
             root.editorWarning=Translation.tr("Select at most 512 days.")
             return
         }
-        // Preserve an already active Repeat cadence if the user attempts
-        // a conflicting Ctrl/Shift multi-day selection.
-        if (chosen.keys.length>1 && root.recurrence!=="none") {
-            root.editorWarning=Translation.tr("Set Repeat to Event before selecting multiple days.")
+        // Keep an already chosen cadence when adding dates within the same
+        // cycle. Reject only the conflicting gesture, without altering draft.
+        if (multi && !RepeatPolicy.allowed(chosen.keys,root.recurrence)) {
+            root.editorWarning=Translation.tr("These dates conflict with the selected Repeat interval.")
             return
         }
         root._plannerPickingDate=true
@@ -104,9 +107,9 @@ WindowDialog {
         if (!root._plannerPickingDate) root.resetPlannerDateSelection()
     }
     onRecurrenceChanged: {
-        // Guard direct/programmatic changes too: reject invalid Repeat,
-        // never clear the user's checked days or their unsaved event draft.
-        if (root.plannerRepeatConflict && root.recurrence!=="none")
+        // Programmatic assignments must follow exactly the UI eligibility
+        // rules. Preserve the complete multi-date selection if invalid.
+        if (!root.canSelectRepeat(root.recurrence))
             root.recurrence="none"
     }
     Connections {
@@ -435,9 +438,9 @@ WindowDialog {
 
         const selectedDays=root.plannerPresentation
             ? root.plannerSelectedDateKeys : []
-        // Only Add Event may supply explicit multi-date ranges; Repeat remains
-        // a single-date recurrence mechanism with its existing behavior.
-        if (selectedDays.length>1 && root.recurrence!=="none") return false
+        // Multi-day and Repeat can coexist only inside one selected cycle.
+        if (selectedDays.length>1
+                && !RepeatPolicy.allowed(selectedDays,root.recurrence)) return false
         const batches=selectedDays.length>1
             ? DateSelection.ranges(selectedDays,root.eventTime,root.eventEndTime,root.allDay)
             : null
@@ -952,8 +955,8 @@ WindowDialog {
                         wrapFullLabels: root.plannerPresentation
                         centerWrappedRows: root.plannerPresentation
                         options: [
-                            // Multi-date is explicit non-recurring storage;
-                            // disable the four incompatible cadence generators.
+                            // Valid modes depend on the calendar cycle occupied
+                            // by the selected days, not merely the day count.
                             { displayName: Translation.tr("Event"), icon: "event", value: "none" },
                             { displayName: Translation.tr("Daily"), icon: "today", value: "daily",
                                 enabled: root.canSelectRepeat("daily") },
@@ -972,7 +975,7 @@ WindowDialog {
                         visible:root.plannerRepeatConflict
                         width:parent.width
                         horizontalAlignment:Text.AlignHCenter
-                        text:Translation.tr("Select one day to enable Repeat")
+                        text:Translation.tr("Unavailable repeat intervals are greyed out for these dates")
                         color:Appearance.colors.colOnSurfaceVariant
                         font.pixelSize:Appearance.font.pixelSize.smallest
                     }
