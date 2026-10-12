@@ -1,0 +1,552 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: unlocked committed geometry and input bounds are unchanged
++ actual - expected
+... Skipped lines
+
+  [
+    {
+      alignment: 'free',
+      along: 0,
++     capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+      compact: false,
+      content: {
++       height: 32,
++       width: 104,
+-       height: 30.389344262295083,
+-       width: 98.76536885245902,
+        x: 0,
+        y: 8
+      },
+      customSize: false,
+      depth: 36,
+...
+      size: 1.2,
++     span: 104,
+-     span: 98.76536885245902,
+      vertical: false
+    },
+    {
+      alignment: 'free',
++     along: 80.69999999999999,
++     capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+-     along: 114.76536885245902,
+      compact: false,
+      content: {
++       height: 32,
++       width: 80,
++       x: 80.69999999999999,
+-       height: 30.389344262295083,
+-       width: 75.97336065573771,
+-       x: 114.76536885245902,
+        y: 8
+      },
+      customSize: false,
+      depth: 36,
+      edge: 'top',
+...
+      size: 1.2,
++     span: 80,
+-     span: 75.97336065573771,
+      vertical: false
+    },
+    {
+      alignment: 'free',
++     along: 176.7,
++     capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+-     along: 206.73872950819674,
+      compact: false,
+      content: {
++       height: 32,
++       width: 104,
++       x: 176.7,
+-       height: 30.389344262295083,
+-       width: 98.76536885245902,
+-       x: 206.73872950819674,
+        y: 8
+      },
+      customSize: false,
+      depth: 36,
+      edge: 'top',
+...
+      size: 1.2,
++     span: 104,
+-     span: 98.76536885245902,
+      vertical: false
+    },
+    {
+      alignment: 'free',
++     along: 296.7,
++     capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+-     along: 321.50409836065575,
+      compact: false,
+      content: {
++       height: 38.4,
++       width: 124.8,
++       x: 296.7,
+-       height: 36.467213114754095,
+-       width: 118.51844262295081,
+-       x: 321.50409836065575,
+        y: 8
+      },
+      customSize: true,
+      depth: 36,
+      edge: 'top',
+...
+      size: 1.2,
++     span: 124.8,
+-     span: 118.51844262295081,
+      vertical: false
+    },
+    {
+      alignment: 'free',
++     along: 437.5,
++     capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+-     along: 456.02254098360663,
+      compact: false,
+      content: {
++       height: 32,
++       width: 104,
++       x: 437.5,
+-       height: 30.389344262295083,
+-       width: 98.76536885245902,
+-       x: 456.02254098360663,
+        y: 8
+      },
+      customSize: false,
+      depth: 36,
+      edge: 'top',
+...
+      size: 1.2,
++     span: 104,
+-     span: 98.76536885245902,
+      vertical: false
+    },
+    {
+      alignment: 'free',
++     along: 557.5,
++     capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+-     along: 570.7879098360656,
+      compact: false,
+      content: {
++       height: 32,
++       width: 80,
++       x: 557.5,
+-       height: 30.389344262295083,
+-       width: 75.97336065573771,
+-       x: 570.7879098360656,
+        y: 8
+      },
+      customSize: false,
+      depth: 36,
+      edge: 'top',
+...
+      size: 1.2,
++     span: 80,
+-     span: 75.97336065573771,
+      vertical: false
+    },
+    {
+      alignment: 'free',
++     along: 653.5,
++     capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+-     along: 662.7612704918033,
+      compact: false,
+      content: {
++       height: 32,
++       width: 104,
++       x: 653.5,
+-       height: 30.389344262295083,
+-       width: 98.76536885245902,
+-       x: 662.7612704918033,
+        y: 8
+      },
+      customSize: false,
+      depth: 36,
+      edge: 'top',
+...
+      size: 1.2,
++     span: 104,
+-     span: 98.76536885245902,
+      vertical: false
+    },
+    {
+      alignment: 'free',
++     along: 773.5,
++     capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+-     along: 777.5266393442623,
+      compact: false,
+      content: {
++       height: 32,
++       width: 80,
++       x: 773.5,
+-       height: 30.389344262295083,
+-       width: 75.97336065573771,
+-       x: 777.5266393442623,
+        y: 8
+      },
+      customSize: false,
+      depth: 36,
+      edge: 'top',
+...
+      size: 1.2,
++     span: 80,
+-     span: 75.97336065573771,
+      vertical: false
+    }
+  ]
+
+    at same (file:///home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/scripts/test-abyss-module-locks.mjs:12:52)
+    at file:///home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/scripts/test-abyss-module-locks.mjs:21:2
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [
+    {
+      id: 'legacy0',
+      kind: 'clock',
+      edge: 'top',
+      position: 0,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 0,
+      span: 104,
+      vertical: false,
+      capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+      content: { x: 0, y: 8, width: 104, height: 32 }
+    },
+    {
+      id: 'legacy1',
+      kind: 'weather',
+      edge: 'top',
+      position: 0.1111111111111111,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 80.69999999999999,
+      span: 80,
+      vertical: false,
+      capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+      content: { x: 80.69999999999999, y: 8, width: 80, height: 32 }
+    },
+    {
+      id: 'legacy2',
+      kind: 'clock',
+      edge: 'top',
+      position: 0.2222222222222222,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 176.7,
+      span: 104,
+      vertical: false,
+      capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+      content: { x: 176.7, y: 8, width: 104, height: 32 }
+    },
+    {
+      id: 'legacy4',
+      kind: 'clock',
+      edge: 'top',
+      position: 0.4444444444444444,
+      enabled: true,
+      alignment: 'free',
+      customSize: true,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 296.7,
+      span: 124.8,
+      vertical: false,
+      capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+      content: { x: 296.7, y: 8, width: 124.8, height: 38.4 }
+    },
+    {
+      id: 'legacy6',
+      kind: 'clock',
+      edge: 'top',
+      position: 0.6666666666666666,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 437.5,
+      span: 104,
+      vertical: false,
+      capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+      content: { x: 437.5, y: 8, width: 104, height: 32 }
+    },
+    {
+      id: 'legacy7',
+      kind: 'weather',
+      edge: 'top',
+      position: 0.7777777777777778,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 557.5,
+      span: 80,
+      vertical: false,
+      capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+      content: { x: 557.5, y: 8, width: 80, height: 32 }
+    },
+    {
+      id: 'legacy8',
+      kind: 'clock',
+      edge: 'top',
+      position: 0.8888888888888888,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 653.5,
+      span: 104,
+      vertical: false,
+      capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+      content: { x: 653.5, y: 8, width: 104, height: 32 }
+    },
+    {
+      id: 'legacy9',
+      kind: 'weather',
+      edge: 'top',
+      position: 1,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 773.5,
+      span: 80,
+      vertical: false,
+      capacityConflict: 'Not enough space on this Edge. Move a module or choose a smaller size.',
+      content: { x: 773.5, y: 8, width: 80, height: 32 }
+    }
+  ],
+  expected: [
+    {
+      id: 'legacy0',
+      kind: 'clock',
+      edge: 'top',
+      position: 0,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 0,
+      span: 98.76536885245902,
+      vertical: false,
+      content: {
+        x: 0,
+        y: 8,
+        width: 98.76536885245902,
+        height: 30.389344262295083
+      }
+    },
+    {
+      id: 'legacy1',
+      kind: 'weather',
+      edge: 'top',
+      position: 0.1111111111111111,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 114.76536885245902,
+      span: 75.97336065573771,
+      vertical: false,
+      content: {
+        x: 114.76536885245902,
+        y: 8,
+        width: 75.97336065573771,
+        height: 30.389344262295083
+      }
+    },
+    {
+      id: 'legacy2',
+      kind: 'clock',
+      edge: 'top',
+      position: 0.2222222222222222,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 206.73872950819674,
+      span: 98.76536885245902,
+      vertical: false,
+      content: {
+        x: 206.73872950819674,
+        y: 8,
+        width: 98.76536885245902,
+        height: 30.389344262295083
+      }
+    },
+    {
+      id: 'legacy4',
+      kind: 'clock',
+      edge: 'top',
+      position: 0.4444444444444444,
+      enabled: true,
+      alignment: 'free',
+      customSize: true,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 321.50409836065575,
+      span: 118.51844262295081,
+      vertical: false,
+      content: {
+        x: 321.50409836065575,
+        y: 8,
+        width: 118.51844262295081,
+        height: 36.467213114754095
+      }
+    },
+    {
+      id: 'legacy6',
+      kind: 'clock',
+      edge: 'top',
+      position: 0.6666666666666666,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 456.02254098360663,
+      span: 98.76536885245902,
+      vertical: false,
+      content: {
+        x: 456.02254098360663,
+        y: 8,
+        width: 98.76536885245902,
+        height: 30.389344262295083
+      }
+    },
+    {
+      id: 'legacy7',
+      kind: 'weather',
+      edge: 'top',
+      position: 0.7777777777777778,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 570.7879098360656,
+      span: 75.97336065573771,
+      vertical: false,
+      content: {
+        x: 570.7879098360656,
+        y: 8,
+        width: 75.97336065573771,
+        height: 30.389344262295083
+      }
+    },
+    {
+      id: 'legacy8',
+      kind: 'clock',
+      edge: 'top',
+      position: 0.8888888888888888,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 662.7612704918033,
+      span: 98.76536885245902,
+      vertical: false,
+      content: {
+        x: 662.7612704918033,
+        y: 8,
+        width: 98.76536885245902,
+        height: 30.389344262295083
+      }
+    },
+    {
+      id: 'legacy9',
+      kind: 'weather',
+      edge: 'top',
+      position: 1,
+      enabled: true,
+      alignment: 'free',
+      customSize: false,
+      size: 1.2,
+      depth: 36,
+      influence: 1,
+      compact: false,
+      joinCorner: false,
+      along: 777.5266393442623,
+      span: 75.97336065573771,
+      vertical: false,
+      content: {
+        x: 777.5266393442623,
+        y: 8,
+        width: 75.97336065573771,
+        height: 30.389344262295083
+      }
+    }
+  ],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.2

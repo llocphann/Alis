@@ -1,0 +1,18 @@
+  INFO: Launching config: "/tmp/alis-full-modules-si7gqz9w/shell.qml"
+  INFO: Shell ID: "3ba925ea112b08d6c153fec46becb9b2" Path ID "3ba925ea112b08d6c153fec46becb9b2"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/b5kohj1smt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1145830.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-full-modules-si7gqz9w/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-full-modules-si7gqz9w/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-full-modules-si7gqz9w/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  INFO qml: FULL_MODULE_TYPE distroIcon QQuickMouseArea(0x7fc4c8188a80) available true
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-full-modules-si7gqz9w/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: FULL_MODULE_TYPE activeWindow ActiveWindow_QMLTYPE_938(0x7fc4e4c085a0) available true
+ ERROR qml: ABYSS_FULL_MODULE_NATIVE_FAIL rotated bounds/pivot mismatch activeWindowright {"a":{"x":32.4921875,"y":-0.4921875},"b":{"x":0.4921875,"y":76.4921875},"moduleWidth":32,"moduleHeight":76.984375,"loaderWidth":76.984375,"loaderHeight":32,"loaderX":-22,"loaderY":22,"natural":76.984375} check@qs:@/qs/shell.qml:48
+run@qs:@/qs/shell.qml:76
+expression for onTriggered@qs:@/qs/shell.qml:98
+

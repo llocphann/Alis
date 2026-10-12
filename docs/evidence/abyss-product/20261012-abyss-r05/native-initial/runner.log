@@ -1,0 +1,6 @@
+  INFO: Launching config: "/tmp/alis-full-modules-w36ewrio/shell.qml"
+  INFO: Shell ID: "e04ffeb1af0cb7559fe1b9c6298476ba" Path ID "e04ffeb1af0cb7559fe1b9c6298476ba"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/haiogb1smt/log.qslog"
+ ERROR: Failed to load configuration
+ ERROR:   caused by @shell.qml[92:59]: Unexpected token `...'
+
