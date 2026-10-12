@@ -19,7 +19,7 @@ ContentPage {
         visible: Autostart.isNiri
         icon: "rocket_launch"
         title: Translation.tr("Autostart")
-        description: Translation.tr("Manage applications and custom startup commands separately; the guide explains exactly what iNiR writes to niri.")
+        description: Translation.tr("Manage startup apps and commands written to niri.")
         summary: Translation.tr("Applications · commands · guide")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
@@ -77,7 +77,7 @@ ContentPage {
         StyledText {
             Layout.fillWidth: true
             wrapMode: Text.Wrap
-            text: Translation.tr("App autostart is managed through niri's startup config, which only applies when niri is the active compositor.")
+            text: Translation.tr("App autostart works only while niri is the active compositor.")
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.colors.colOnSurface
         }
@@ -116,7 +116,7 @@ ContentPage {
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
-                text: Translation.tr("Apps and commands here are written to niri's startup file and launched by niri at login — iNiR doesn't start them itself, so they keep running even if the shell restarts.")
+                text: Translation.tr("Niri launches these at login; they keep running after shell restarts.")
                 font.pixelSize: Appearance.font.pixelSize.small
                 color: Appearance.colors.colOnSurface
             }
@@ -186,7 +186,7 @@ ContentPage {
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
-                text: Translation.tr("Toggle an app to launch it at login via niri's spawn-at-startup. Apps already in your startup file outside iNiR's control are shown as \"External\" — edit the file below to change those.")
+                text: Translation.tr("Toggle niri login apps. External entries must be edited in the startup file below.")
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colSubtext
             }
@@ -360,7 +360,7 @@ ContentPage {
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
-                text: Translation.tr("Shell commands run through niri's spawn-sh-at-startup, so pipes, env vars, and && work.")
+                text: Translation.tr("Niri shell commands support pipes, environment variables and &&.")
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colSubtext
             }
