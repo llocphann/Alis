@@ -707,8 +707,7 @@ WindowDialog {
                     width:parent.width
                     horizontalAlignment:Text.AlignHCenter
                     text:root.plannerSelectedCount+" "
-                        + Translation.tr("selected days") + " · "
-                        + Translation.tr("Event (no repeat)")
+                        + Translation.tr("selected days")
                     color:Appearance.colors.colPrimary
                     font.pixelSize:Appearance.font.pixelSize.smallest
                     font.weight:Font.DemiBold
@@ -1329,7 +1328,7 @@ WindowDialog {
             visible: root.embeddedPresentation
             Layout.preferredWidth: root.compactEditor ? 30 : 36
             Layout.preferredHeight: root.compactEditor ? 30 : 36
-            symbol: root.isEditing ? "check" : "add_task"
+            symbol: root.isEditing ? "check" : "event_available"
             selectedState: true
             tooltipText: root.isEditing
                 ? Translation.tr("Save")
