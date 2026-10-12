@@ -98,6 +98,24 @@ ShellRoot {
      click("abyssEditorOptions");settle(edge);check(editor.expandedControls,"Options did not expand")
      control("abyssRoundZeroCorners");control("abyssModuleJoinCorner");control("abyssModuleRounding")
      check(scroll.contentHeight>compact.height,"expanded editor lost its advanced controls")
+     // Scale toggle keeps a full-length slider and clips the animated caption
+     // when a fine-control cell is too narrow. Re-test both states on all Edges.
+     const scaleCaption=item("abyssScaleModulesCaption")
+     const scaleSlider=control("abyssScaleModulesSlider")
+     const scaleToggle=control("abyssScaleModulesToggle")
+     check(scaleCaption.width<=scaleCaption.desiredLabelWidth+1,"scale caption is too wide")
+     check(scaleSlider.width<=editor.editorSliderWidth+.5,"scale slider exceeds uniform width")
+     const wasScaling=editor.edgeWidthAffectsModules[editor.editingEdge]!==false
+     click("abyssScaleModulesToggle");wait(180)
+     check((editor.edgeWidthAffectsModules[editor.editingEdge]!==false)!==wasScaling,"scale toggle did not update draft")
+     const nowScaling=editor.edgeWidthAffectsModules[editor.editingEdge]!==false
+     const shouldShow=nowScaling && scaleCaption.cellWidth>=editor.editorActionSize+
+         editor.editorSliderWidth+scaleCaption.desiredLabelWidth+6
+     check(shouldShow ? scaleCaption.width>0 : scaleCaption.width<1,
+         "scale caption visibility does not respect full slider width")
+     click("abyssScaleModulesToggle");wait(180)
+     check((editor.edgeWidthAffectsModules[editor.editingEdge]!==false)===wasScaling,
+         "scale toggle did not restore draft")
      const expanded={span:body.span,depth:body.depth,area:body.span*body.depth,height:scroll.contentHeight}
      check(n>0||compact.area<expanded.area,"wide compact bar did not reduce its displayed footprint")
      frame(n===0?"expanded-"+edge:null)

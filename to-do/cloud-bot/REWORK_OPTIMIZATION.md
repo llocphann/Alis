@@ -1116,6 +1116,12 @@ run privileged installation just because manual buttons are retired.
   tabs and bounded compact dropdowns; unify six editor slider widths and
   tighten icon/sliders spacing. Keep no changes to stable and qualify four
   Edges, scaling, keyboard and pointer operations.
+  **Follow-up 2026-10-13:** Keep the Scale modules caption clipped and
+  animated only when its responsive fine-control cell can accommodate the
+  complete shared-width slider. At narrow side/high font scales it collapses,
+  preventing the slider from shrinking out of alignment. Focused source and
+  four-Edge native toggle/geometry tests extended; runtime verification remains
+  pending actual Niri/Quickshell execution.
   **Second owner screenshot, 2026-10-12:** Earlier icon/slider-only
   reduction still displayed one-component-per-row with excessive horizontal
   blank space. Rework into shared adaptive 3/2/1-column groups:

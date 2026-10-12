@@ -91,3 +91,16 @@ assert 'Ctrl/Shift-click select · Drag' not in editor
 # Every Editor button has a bounded square hit rectangle, even in fill rows.
 assert editor.count('Layout.maximumWidth:root.editorActionSize') == 15
 assert editor.count('Layout.maximumHeight:root.editorActionSize') == 15
+
+
+# The selected Edge's Scale modules row must reserve enough room for the
+# full, common-width slider before animating in its caption. On compact side
+# toolbars the caption disappears and the slider stays beside its button.
+for name in ["abyssScaleModulesToggle","abyssScaleModulesCaption","abyssScaleModulesSlider"]:
+    assert editor.count('objectName:"'+name+'"') == 1, name
+assert 'id:scaleModulesRow' in editor
+assert 'Layout.fillWidth:false' in editor[editor.index('id:scaleModulesCaption'):]
+assert 'editFineControls.width' in editor
+assert 'cellWidth>=root.editorActionSize+root.editorSliderWidth' in editor
+assert 'desiredLabelWidth+scaleModulesRow.spacing*2' in editor
+assert 'width:parent.width' in editor[editor.index('id:scaleText'):]

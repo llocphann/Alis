@@ -1035,8 +1035,10 @@ Item {
                                             }
                     }
                     RowLayout {
+                        id:scaleModulesRow
                         Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
 AbyssButton {
+                        objectName:"abyssScaleModulesToggle"
                         Layout.maximumHeight:root.editorActionSize
                         Layout.maximumWidth:root.editorActionSize
                         editorSquare:true
@@ -1051,12 +1053,24 @@ AbyssButton {
                                         }
                         Item {
                             id:scaleModulesCaption
+                            objectName:"abyssScaleModulesCaption"
                             clip:true
                             implicitHeight:root.editorActionSize
                             Layout.alignment:Qt.AlignVCenter
+                            Layout.fillWidth:false
                             Layout.minimumWidth:0
+                            // Preserve the shared slider length on narrow cells.
+                            // Only reveal the caption if the full slider fits.
+                            readonly property real desiredLabelWidth:
+                                Math.min(85*Appearance.fontSizeScale,scaleText.implicitWidth)
+                            readonly property real cellWidth:
+                                (editFineControls.width
+                                    - Math.max(0,editFineControls.columns-1)*editFineControls.columnSpacing)
+                                    / Math.max(1,editFineControls.columns)
                             Layout.preferredWidth:root.edgeWidthAffectsModules[root.editingEdge]!==false
-                                ? Math.min(85*Appearance.fontSizeScale,scaleText.implicitWidth) : 0
+                                && cellWidth>=root.editorActionSize+root.editorSliderWidth
+                                    +desiredLabelWidth+scaleModulesRow.spacing*2
+                                ? desiredLabelWidth : 0
                             Behavior on Layout.preferredWidth {
                                 enabled:AbyssStyle.motionEnabled
                                 NumberAnimation { duration:AbyssStyle.motionFast }
@@ -1064,12 +1078,14 @@ AbyssButton {
                             AbyssLabel {
                                 id:scaleText
                                 anchors.left:parent.left;anchors.verticalCenter:parent.verticalCenter
+                                width:parent.width
                                 text:"Scale modules"
                                 elide:Text.ElideRight
                             }
                         }
 
 AbyssSlider {
+                        objectName:"abyssScaleModulesSlider"
                         Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                         
                         
