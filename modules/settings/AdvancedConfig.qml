@@ -18,7 +18,7 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "construction"
         title: Translation.tr("Advanced")
-        description: Translation.tr("Advanced controls are split between color-generation internals and runtime resource instrumentation.")
+        description: Translation.tr("Color-generation controls and runtime diagnostics.")
         summary: Translation.tr("Color generation · resources")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
@@ -223,7 +223,7 @@ ContentPage {
                 onCheckedChanged: root.setCavaValue(
                     "appearance.wallpaperTheming.enableCava", checked, true)
                 StyledToolTip {
-                    text: Translation.tr("Manage the external ~/.config/cava/config block. Internal iNiR visualizers use the options below whether this switch is on or off.")
+                    text: Translation.tr("Manage ~/.config/cava/config; internal visualizers stay independent.")
                 }
             }
 
@@ -345,7 +345,7 @@ ContentPage {
                     onValueChanged: root.setCavaValue(
                         "appearance.cava.waveOpacity", value, false)
                     StyledToolTip {
-                        text: Translation.tr("Default fill opacity for shared wave visualizers. The bar spectrum has its own opacity control.")
+                        text: Translation.tr("Shared wave fill opacity; bar spectrum has its own setting.")
                     }
                 }
 
@@ -430,7 +430,7 @@ ContentPage {
                     Config.setNestedValue("resources.monitorGpu", checked);
                 }
                 StyledToolTip {
-                    text: Translation.tr("Poll GPU usage and temperature. Disable on hybrid laptops to keep the dGPU asleep — also pins Qt to the iGPU on next restart.")
+                    text: Translation.tr("On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.")
                 }
             }
         }
