@@ -76,7 +76,7 @@ assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 6
 # Qt rejects two assignments to the same attached property in one QML item.
 # All six compact sliders must keep exactly one minimum-width binding.
 for line_number, line in enumerate(editor.splitlines(), 1):
-    attached = re.findall(r'\\bLayout\\.[A-Za-z]+\\s*:', line)
+    attached = re.findall(r'Layout[.][A-Za-z]+[ ]*:', line)
     assert len(attached) == len(set(attached)), (
         f"duplicate Layout property on line {line_number}"
     )
