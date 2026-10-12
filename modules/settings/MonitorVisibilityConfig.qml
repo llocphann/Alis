@@ -1375,7 +1375,7 @@ ContentPage {
             NoticeBox {
                 Layout.fillWidth: true
                 materialIcon: "info"
-                text: Translation.tr("Primary monitor controls iNiR's fallback output. Resolution, scale, rotation and advanced display options remain available in Compositor settings.")
+                text: Translation.tr("Primary monitor sets the fallback output; display controls are in Compositor.")
             }
 
             ContentSubsection {
