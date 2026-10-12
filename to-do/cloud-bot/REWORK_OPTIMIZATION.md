@@ -753,7 +753,17 @@ run privileged installation just because manual buttons are retired.
   layout/hierarchy and all functional behavior. Acceptance:
   audited copy inventory and brief English UI labels in every
   Settings family; long translations, small screens and native
-  owner screenshot review. State: NEW/OPEN, not implemented.
+  owner screenshot review. State: IN PROGRESS / OPEN; Abyss pass only.
+
+  **2026-10-12 scoped source milestone (not entire task):** shortened
+  11 Abyss help/description strings, merged the two verbose Modules notes
+  into one actionable line, preserved individual controls and the wallpaper-
+  not-window-capture disclosure. Source `3e524125b`; follow-up test
+  `e045cf075`. 17/17 connector-level static source assertions PASS
+  (not a native or Python test execution). **Still OPEN:** copy inventory
+  and simplification across standalone/Overlay, Waffle, Integrations,
+  Companion and dynamically injected Settings, accessibility/localization,
+  exact-SHA validator and owner visual/scale approval.
 
 - [ ] **SET-R04 — Remove "Use opaque Material appearance" preset button — owner 2026-10-12:**
   [Owner: Alis dev; Rework/removal] Delete the **button** from
@@ -766,7 +776,15 @@ run privileged installation just because manual buttons are retired.
   Preserve each individual opacity/blur/effects/radius setting and
   its saved value; do not trigger the old preset or reset users'
   current appearance on upgrade. Remove dead UI text and update
-  test/translation expectations. State: NEW/OPEN, not implemented.
+  test/translation expectations.
+  **Hoàn thành (bot báo xong) — Owner chưa verified, 2026-10-12.**
+  Removed the batch preset button/handler without touching saved Config
+  or standalone appearance controls: source `86428c775`; guarded with
+  regression assertions in `b7c64013d` and `e045cf075`.
+  Shipped en_US catalog has no stale preset text. All 17 connector-level
+  source assertions PASS at `e045cf075`; these are NOT executed Python,
+  canonical, native or owner acceptance results. Exact-SHA validator,
+  physical Settings inspection and owner acceptance remain pending.
 
 - [x] **ABYSS-R07 — Screen Edge Clock and Date use shared Typography — owner 2026-10-12:**
   [Owner: Alis dev; Rework/font settings] On Top, Bottom,
