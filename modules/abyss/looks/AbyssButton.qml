@@ -35,13 +35,26 @@ AbstractButton {
     }
     opacity: enabled ? (down ? 0.70 : 1) : 0.4
     contentItem: RowLayout {
-        spacing: 6
+        spacing: root.compact || root.text.length === 0 ? 0 : 6
+        // Equal gutters center the glyph in a stretched icon-only button.
+        Item {
+            visible: root.compact || root.text.length === 0
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            Layout.preferredWidth: 0
+        }
         MaterialSymbol {
             visible: root.glyph.length > 0
             text: root.glyph
             iconSize: 20
             color: root.hovered || root.checked ? root.activeInk : root.baseInk
             Layout.alignment: Qt.AlignVCenter
+        }
+        Item {
+            visible: root.compact || root.text.length === 0
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            Layout.preferredWidth: 0
         }
         Text {
             visible: !root.compact && root.text.length > 0

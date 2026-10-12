@@ -1098,6 +1098,11 @@ run privileged installation just because manual buttons are retired.
   screen-edge modules; coordinate with new multi-selection functionality in
   [New features](NEW_FEATURES.md). Source/qualified scoped delivery is complete;
   owner visual acceptance pending.
+  **Owner follow-up 2026-10-12:** Centre icon-only button glyphs, shorten
+  Editor width and Options sliders, replace concise slider captions with
+  accessible glyphs/tooltips and remove keyboard instructions from the
+  footer while keeping existing shortcuts, input and feedback.
+  Source refinement awaiting owner/native four-Edge and scale verification.
 
 - [x] **NET-R01 — Wi-Fi and Bluetooth Popups about 35% smaller — owner request 2026-10-10:**
   Reduce each Popup's displayed footprint by roughly 35% (target about 65%

@@ -62,3 +62,12 @@ for(const nearbyCorner of ['', 'top', 'right', 'bottom', 'left']) {
 ''',label.group(1)],check=True)
 
 print("abyss editor compact action density contract: ok")
+
+# Compact follow-up: centred icon-only buttons; density and semantic captions.
+button = (root / "modules/abyss/looks/AbyssButton.qml").read_text()
+assert button.count('visible: root.compact || root.text.length === 0') == 2
+assert 'component EditorIconHint: Item' in editor
+assert editor.count('EditorIconHint { glyph:') == 6
+assert editor.count('Layout.maximumWidth: 210 * Appearance.fontSizeScale') == 6
+assert 'root.expandedControls ? 1000 : 760' in editor
+assert 'Ctrl/Shift-click select · Drag' not in editor

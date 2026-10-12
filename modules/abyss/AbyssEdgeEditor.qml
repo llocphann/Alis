@@ -15,6 +15,28 @@ import "looks/AbyssPresentation.js" as Presentation
 // Drafts never write Config. Only Done merges this output into the latest profile.
 Item {
     id: root
+    // Compact, non-clickable captions keep slider semantics in tooltips.
+    component EditorIconHint: Item {
+        property string glyph: ""
+        property string description: ""
+        implicitWidth: 30 * Appearance.fontSizeScale
+        implicitHeight: 32 * Appearance.fontSizeScale
+        Accessible.role: Accessible.StaticText
+        Accessible.name: description
+        MaterialSymbol {
+            anchors.centerIn: parent
+            text: glyph
+            iconSize: 20
+            color: Appearance.m3colors.darkmode ? AbyssStyle.textColorMuted : "#1a1a1a"
+        }
+        HoverHandler { id: hintHover }
+        StyledToolTip {
+            text: description
+            useParentHover: false
+            externalHoverState: hintHover.hovered
+            delay: 500
+        }
+    }
     required property string outputName
     required property var moduleLayer
     required property var controller
@@ -633,12 +655,12 @@ Item {
         // busy, the same editor can move to a side Edge with a deeper body and
         // a long vertical span instead of covering the module being edited.
         span: root.toolbarOnHorizontalEdge
-            ? Math.min(root.width-48,root.expandedControls ? 1180 : 900)
+            ? Math.min(root.width-48,root.expandedControls ? 1000 : 760)
             : Math.min(root.height-48,toolbar.implicitHeight+padding*2)
         along: ((root.toolbarOnHorizontalEdge ? root.width : root.height)-span)/2
         depth: root.toolbarOnHorizontalEdge
             ? Math.min(Math.max(80,root.height*.65),toolbar.implicitHeight+padding*2)
-            : Math.min(root.width-48,288*Appearance.fontSizeScale)
+            : Math.min(root.width-48,260*Appearance.fontSizeScale)
         embeddedItem: toolbar
     }
     AbyssBodyHost {
@@ -692,7 +714,7 @@ Item {
             ColumnLayout {
                 id: toolbarColumn
                 width: toolbarScroll.width
-                spacing: 6
+                spacing: 4
 
                 GridLayout {
                     Layout.fillWidth: true;Layout.minimumWidth:0
@@ -862,8 +884,9 @@ Item {
                         Layout.fillWidth: !root.toolbarOnHorizontalEdge;Layout.minimumWidth:0
                         onClicked:root.add(palette.currentValue)
                     }
-                    AbyssLabel { text:"Gap";Layout.fillWidth:true;Layout.minimumWidth:0;wrapMode:Text.WordWrap }
+                    EditorIconHint { glyph:"space_bar";description:"Gap between modules" }
                     AbyssSlider {
+                        Layout.maximumWidth: 210 * Appearance.fontSizeScale
                         unit:"px";from:0;to:32;value:root.gap
                         onMoved:root.gap=value
                         Layout.fillWidth:true;Layout.minimumWidth:0
@@ -883,7 +906,7 @@ Item {
                     rowSpacing:6
                     columnSpacing:6
 
-                    AbyssLabel { text:"Edge";Layout.fillWidth:true;Layout.minimumWidth:0;wrapMode:Text.WordWrap }
+                    EditorIconHint { glyph:"border_outer";description:"Editing Edge" }
                     StyledComboBox {
                         id:edgeChoice
                         model:["top","right","bottom","left"]
@@ -892,8 +915,9 @@ Item {
                         Layout.preferredWidth:root.toolbarOnHorizontalEdge ? 110 : -1
                         Layout.fillWidth:!root.toolbarOnHorizontalEdge;Layout.minimumWidth:0
                     }
-                    AbyssLabel { text:"Shared size";Layout.fillWidth:true;Layout.minimumWidth:0;wrapMode:Text.WordWrap }
+                    EditorIconHint { glyph:"aspect_ratio";description:"Shared module size for this Edge" }
                     AbyssSlider {
+                        Layout.maximumWidth: 210 * Appearance.fontSizeScale
                         from:.6;to:1.8
                         value:Placement.edgeSize(root.draftOptions,root.editingEdge)
                         Layout.fillWidth:true;Layout.minimumWidth:0
@@ -902,7 +926,7 @@ Item {
                     }
                     AbyssButton {
                         text:"Snap to guides";glyph:"grid_4x4"
-                        compact:root.toolbarOnHorizontalEdge
+                        compact:true
                         description:"Snap module movement to alignment guides"
                         checkable:true;checked:root.snapEnabled
                         Layout.fillWidth:!root.toolbarOnHorizontalEdge;Layout.minimumWidth:0
@@ -917,8 +941,9 @@ Item {
                     rowSpacing:6
                     columnSpacing:6
 
-                    AbyssLabel { text:"Edge width";Layout.fillWidth:true;Layout.minimumWidth:0;wrapMode:Text.WordWrap }
+                    EditorIconHint { glyph:"line_weight";description:"Physical Edge width" }
                     AbyssSlider {
+                        Layout.maximumWidth: 210 * Appearance.fontSizeScale
                         unit:"px";from:0;to:40;stepSize:1
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         value:Placement.edgeThickness(
@@ -928,7 +953,7 @@ Item {
                             {[root.editingEdge]:value})
                     }
                     AbyssButton {
-                        text:"Inherit surface";glyph:"layers"
+                        text:"Inherit surface";glyph:"layers";compact:true
                         description:"Inherit the physical surface thickness"
                         Layout.fillWidth:!root.toolbarOnHorizontalEdge;Layout.minimumWidth:0
                         enabled:(root.edgeThicknesses[root.editingEdge] ?? -1)>=0
@@ -971,8 +996,9 @@ Item {
                     visible:root.expandedControls && !root.editingPopups && root.edgeWidthAffectsModules[root.editingEdge]===false
                     Layout.fillWidth:true;Layout.minimumWidth:0
                     columns:root.toolbarWideControls ? 3 : 1
-                    AbyssLabel { text:"Module rounding";Layout.fillWidth:true;Layout.minimumWidth:0;wrapMode:Text.WordWrap }
+                    EditorIconHint { glyph:"rounded_corner";description:"Module rounding radius" }
                     AbyssSlider {
+                        Layout.maximumWidth: 210 * Appearance.fontSizeScale
                         objectName:"abyssModuleRounding"
                         Layout.fillWidth:true;Layout.minimumWidth:0;unit:"px";from:0;to:64;stepSize:1
                         value:(root.edgeModuleRadii[root.editingEdge] ?? -1)<0
@@ -982,7 +1008,8 @@ Item {
                     AbyssButton {
                         text:"Inherit rounding";glyph:"rounded_corner"
                         Layout.fillWidth:true;Layout.minimumWidth:0
-                        compact:!root.toolbarWideControls
+                        compact:true
+                        description:"Inherit shared module rounding"
                         enabled:(root.edgeModuleRadii[root.editingEdge] ?? -1)>=0
                         onClicked:root.edgeModuleRadii=Object.assign({},root.edgeModuleRadii,{[root.editingEdge]:-1})
                     }
@@ -995,15 +1022,16 @@ Item {
                     rowSpacing:6
                     columnSpacing:6
 
-                    AbyssLabel { text:"Overall size";Layout.fillWidth:true;Layout.minimumWidth:0;wrapMode:Text.WordWrap }
+                    EditorIconHint { glyph:"zoom_out_map";description:"Overall module scale" }
                     AbyssSlider {
+                        Layout.maximumWidth: 210 * Appearance.fontSizeScale
                         from:.6;to:1.8;value:root.moduleScale
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         onMoved:root.moduleScale=value
                     }
                     AbyssButton {
                         text:"Expand whole Edge";glyph:"fit_screen"
-                        compact:root.toolbarOnHorizontalEdge
+                        compact:true
                         description:"Expand a single module across the whole Edge; turn off to expand only its local surface."
                         checkable:true
                         Layout.fillWidth:!root.toolbarOnHorizontalEdge;Layout.minimumWidth:0
@@ -1151,6 +1179,7 @@ Item {
                         }
                     }
                     AbyssSlider {
+                        Layout.maximumWidth: 210 * Appearance.fontSizeScale
                         visible:root.expandedControls
                         from:.6;to:1.8
                         value:root.selected?.customSize
@@ -1164,21 +1193,6 @@ Item {
                     }
                 }
 
-                AbyssLabel {
-                    text:!root.expandedControls
-                        ? (root.editingPopups ? "Drag · Enter save · Esc cancel" : "Ctrl/Shift-click select · Drag · Enter save · Esc cancel")
-                        : root.toolbarOnHorizontalEdge
-                        ? (root.editingPopups
-                            ? "Drag IPC preview · Enter save · Esc cancel"
-                            : "Click single · Ctrl-click toggle · Shift-click range · Ctrl+A all · Drag selected group · Enter save · Esc cancel")
-                        : (root.editingPopups
-                            ? "Drag IPC · Enter save · Esc cancel"
-                            : "Click / Ctrl / Shift select · Drag group · Enter save · Esc cancel")
-                    color: Appearance.m3colors.darkmode
-                        ? AbyssStyle.textColorMuted : "#1a1a1a"
-                    Layout.fillWidth:true;Layout.minimumWidth:0
-                    wrapMode:Text.WordWrap
-                }
             }
         }
     }
