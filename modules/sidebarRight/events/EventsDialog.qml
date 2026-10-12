@@ -61,9 +61,9 @@ WindowDialog {
     // daily = one day, weekly = one Monday–Sunday week, monthly = one month,
     // yearly = one calendar year. Disabled choices never clear selected days.
     readonly property bool plannerRepeatConflict: plannerPresentation
-        && !isEditing && plannerSelectedCount > 1
+        && plannerSelectedCount > 1
     function canSelectRepeat(value): bool {
-        return !root.plannerPresentation || root.isEditing
+        return !root.plannerPresentation
             || RepeatPolicy.allowed(root.plannerSelectedDateKeys,value)
     }
     function setRepeatOption(value): void {
@@ -77,8 +77,8 @@ WindowDialog {
     }
     function choosePlannerDay(date,modifiers): void {
         if (!(date instanceof Date) || isNaN(date.getTime())) return
-        // Existing occurrence edits remain single-date edits, never series additions.
-        const multi= root.plannerPresentation && !root.isEditing
+        // In Planner, editing an Event ID edits its complete date group.
+        const multi=root.plannerPresentation
         const ctrl=multi && !!(modifiers & Qt.ControlModifier)
         const shift=multi && !!(modifiers & Qt.ShiftModifier)
         const chosen=DateSelection.choose(root.plannerSelectedDateKeys,
@@ -233,7 +233,7 @@ WindowDialog {
         return JSON.stringify([eventTitle,eventDescription,Number(eventDate),
             eventTime,eventEndTime,allDay,eventCategory,eventPriority,
             reminderMinutes,recurrence,
-            root.plannerPresentation && !root.isEditing
+            root.plannerPresentation
                 ? root.plannerSelectedDateKeys : []])
     }
     function captureFormBaseline(): void {
@@ -348,33 +348,49 @@ WindowDialog {
     }
 
     function loadEvent(event: var): void {
-        root.editingEvent = event
-        root.plannerPage = 0
-        root.editingOccurrenceIndex = event._editOccurrenceIndex ?? 0
-        const selectedSlot = Array.isArray(event.occurrences)
-            ? (event.occurrences[root.editingOccurrenceIndex] || event) : event
-        root.eventTitle = event.title || ""
-        root.eventDescription = event.description || ""
-        const startSource = selectedSlot.startDate || selectedSlot.dateTime
-        const startDt = new Date(startSource)
-        const safeStart = isNaN(startDt.getTime()) ? new Date() : startDt
-        const endDt = selectedSlot.endDate
+        // Resolve the canonical stored Event ID. A clicked Planner tile can
+        // refer to one occurrence or a projected virtual recurrence, but the
+        // editor must restore the complete original multi-date selection.
+        const canonical=Events.list.find(item=>item.id===event?.id)
+            || event?._canonicalEvent || event
+        if (!canonical) return
+        root.editingEvent=canonical
+        root.plannerPage=0
+        root.editingOccurrenceIndex=event?._editOccurrenceIndex ?? 0
+        const slots=Array.isArray(canonical.repeatTemplate)
+            && canonical.repeatTemplate.length>0 ? canonical.repeatTemplate
+            : Array.isArray(canonical.occurrences)
+                && canonical.occurrences.length>0 ? canonical.occurrences
+                : [canonical]
+        const selectedKeys=[...new Set(slots.map(slot=>
+            DateSelection.key(new Date(slot.startDate || slot.dateTime))
+        ).filter(value=>value.length>0))].sort()
+        const selectedSlot=slots[0] || canonical
+        const startDt=new Date(selectedSlot.startDate || selectedSlot.dateTime)
+        const safeStart=isNaN(startDt.getTime()) ? new Date() : startDt
+        const endDt=selectedSlot.endDate
             ? new Date(selectedSlot.endDate)
-            : new Date(safeStart.getTime() + 60 * 60 * 1000)
-        const safeEnd = isNaN(endDt.getTime())
-            ? new Date(safeStart.getTime() + 60 * 60 * 1000) : endDt
-        root.eventDate = safeStart
-        root.eventTime = safeStart.getHours().toString().padStart(2, '0')
-            + ":" + safeStart.getMinutes().toString().padStart(2, '0')
-        root.eventEndTime = safeEnd.getHours().toString().padStart(2, '0')
-            + ":" + safeEnd.getMinutes().toString().padStart(2, '0')
-        root.allDay = event.allDay === true
-        root.eventCategory = event.category || "general"
-        root.eventPriority = event.priority || "normal"
-        root.reminderMinutes = event.reminderMinutes ?? 15
-        root.recurrence = event.recurrence || "none"
-        root.compactOptionGroup = ""
-        root.resetPlannerDateSelection()
+            : new Date(safeStart.getTime()+3600000)
+        const safeEnd=isNaN(endDt.getTime())
+            ? new Date(safeStart.getTime()+3600000) : endDt
+        root._plannerPickingDate=true
+        root.eventTitle=canonical.title || ""
+        root.eventDescription=canonical.description || ""
+        root.eventDate=safeStart
+        root.plannerSelectedDateKeys=selectedKeys.length
+            ? selectedKeys : [DateSelection.key(safeStart)]
+        root.plannerSelectionAnchor=DateSelection.key(safeStart)
+        root.eventTime=safeStart.getHours().toString().padStart(2,'0')
+            +":"+safeStart.getMinutes().toString().padStart(2,'0')
+        root.eventEndTime=safeEnd.getHours().toString().padStart(2,'0')
+            +":"+safeEnd.getMinutes().toString().padStart(2,'0')
+        root.allDay=canonical.allDay===true
+        root.eventCategory=canonical.category || "general"
+        root.eventPriority=canonical.priority || "normal"
+        root.reminderMinutes=canonical.reminderMinutes ?? 15
+        root.recurrence=canonical.recurrence || "none"
+        root.compactOptionGroup=""
+        root._plannerPickingDate=false
         root.captureFormBaseline()
     }
 
@@ -404,6 +420,29 @@ WindowDialog {
 
         const startIso = startDateTime.toISOString()
         const endIso = endDateTime.toISOString()
+        const selectedDays=root.plannerPresentation
+            ? root.plannerSelectedDateKeys : []
+        if (root.plannerPresentation && selectedDays.length>0
+                && !RepeatPolicy.allowed(selectedDays,root.recurrence)) return false
+        const batches=selectedDays.length>1
+            ? DateSelection.ranges(selectedDays,root.eventTime,root.eventEndTime,root.allDay)
+            : null
+        if (selectedDays.length>1 && !batches) return false
+
+        if (root.isEditing && root.plannerPresentation) {
+            // The calendar represents the entire Event ID, not the specific
+            // tile used to open it. One atomic edit retains that ID.
+            const chosen=batches || [{startDate:startIso,endDate:endIso}]
+            return Events.updateEventGroup(root.editingEvent.id,{
+                title:root.eventTitle.trim(),
+                description:root.eventDescription,
+                category:root.eventCategory,
+                priority:root.eventPriority,
+                reminderMinutes:root.reminderMinutes,
+                recurrence:root.recurrence,
+                allDay:root.allDay
+            },chosen)
+        }
 
         if (root.isEditing && Array.isArray(root.editingEvent.occurrences)) {
             // One write preserves the other days and the canonical Todo link.
@@ -436,15 +475,6 @@ WindowDialog {
             })
         }
 
-        const selectedDays=root.plannerPresentation
-            ? root.plannerSelectedDateKeys : []
-        // Multi-day and Repeat can coexist only inside one selected cycle.
-        if (selectedDays.length>1
-                && !RepeatPolicy.allowed(selectedDays,root.recurrence)) return false
-        const batches=selectedDays.length>1
-            ? DateSelection.ranges(selectedDays,root.eventTime,root.eventEndTime,root.allDay)
-            : null
-        if (selectedDays.length>1 && !batches) return false
         return Events.addEvent(
             root.eventTitle.trim(),
             root.eventDescription.trim(),
@@ -671,8 +701,7 @@ WindowDialog {
 
                 StyledText {
                     objectName:"plannerSelectedDaysSummary"
-                    visible:root.plannerPresentation && !root.isEditing
-                        && root.plannerSelectedCount>1
+                    visible:root.plannerPresentation && root.plannerSelectedCount>1
                     width:parent.width
                     horizontalAlignment:Text.AlignHCenter
                     text:root.plannerSelectedCount+" "
@@ -970,15 +999,7 @@ WindowDialog {
                         currentValue: root.recurrence
                         onSelected: (newValue) => root.setRepeatOption(newValue)
                     }
-                    StyledText {
-                        objectName:"plannerRepeatConflictHint"
-                        visible:root.plannerRepeatConflict
-                        width:parent.width
-                        horizontalAlignment:Text.AlignHCenter
-                        text:Translation.tr("Unavailable repeat intervals are greyed out for these dates")
-                        color:Appearance.colors.colOnSurfaceVariant
-                        font.pixelSize:Appearance.font.pixelSize.smallest
-                    }
+
                 }
             }
 
