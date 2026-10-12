@@ -1028,31 +1028,58 @@ Item {
                             onToggled:root.change("joinCorner",checked)
                             }
                             }
-                            StyledComboBox {
-                            baseHeight:28*Appearance.fontSizeScale
-                            Layout.preferredWidth:190*Appearance.fontSizeScale
-                            Layout.maximumWidth:190*Appearance.fontSizeScale
-                            Layout.fillWidth:true;Layout.minimumWidth:0;
-                            
-                            id:alignmentChoice
-                            visible:true
-                            model:[
-                            {label:"Free position",value:"free"},
-                            {label:"Align start",value:"start"},
-                            {label:"Align center",value:"center"},
-                            {label:"Align end",value:"end"}]
-                            textRole:"label";valueRole:"value"
-                            currentIndex:Math.max(0,model.findIndex(
-                            p => p.value===root.selected?.alignment))
-                            displayText:root.multiSelect && root.targets.some(p=>p.alignment!==root.selected?.alignment)
-                            ? "Mixed alignment" : currentText
-                            enabled:root.targets.length>0 && !root.anyTargetLocked
-                            onActivated:root.change("alignment",currentValue)
-                            
-                            
-                            
-                            
-                            }
+                            RowLayout {
+                        id:moduleAlignmentRow
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4*Appearance.fontSizeScale
+                        StyledComboBox {
+                        baseHeight:28*Appearance.fontSizeScale
+                        Layout.preferredWidth:(root.multiSelect ? 126 : 190)*Appearance.fontSizeScale
+                        Layout.maximumWidth:(root.multiSelect ? 126 : 190)*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.minimumWidth:0;
+                        
+                        id:alignmentChoice
+                        visible:true
+                        model:[
+                        {label:"Free position",value:"free"},
+                        {label:"Align start",value:"start"},
+                        {label:"Align center",value:"center"},
+                        {label:"Align end",value:"end"}]
+                        textRole:"label";valueRole:"value"
+                        currentIndex:Math.max(0,model.findIndex(
+                        p => p.value===root.selected?.alignment))
+                        displayText:root.multiSelect && root.targets.some(p=>p.alignment!==root.selected?.alignment)
+                        ? "Mixed alignment" : currentText
+                        enabled:root.targets.length>0 && !root.anyTargetLocked
+                        onActivated:root.change("alignment",currentValue)
+                        
+                        
+                        
+                        
+                        }
+                        AbyssLabel {
+                        Layout.fillWidth:true;Layout.minimumWidth:0
+                        
+                        objectName:"abyssSelectionCount"
+                        visible:root.multiSelect
+                        text:root.targets.length+" selected · "+root.targets.filter(p=>p.locked).length+" locked"
+                        elide:Text.ElideRight
+                        Layout.maximumWidth:140*Appearance.fontSizeScale
+                        }
+                        AbyssButton {
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
+                        Layout.preferredWidth:root.editorActionSize
+                        
+                        objectName:"abyssSelectionClear"
+                        
+                        compact:true
+                        visible:root.multiSelect
+                        text:"Clear selection";glyph:"deselect"
+                        enabled:root.targetIds.length>0
+                        onClicked:root.clearSelection()
+                        }
+                    }
                             GridLayout {
                             id:selectedModuleControls
                             objectName:"abyssEditorSelectedFields"
@@ -1130,32 +1157,7 @@ Item {
                             }
                             }
                             }
-                            RowLayout {
-                            visible:!root.editingPopups && root.multiSelect
-                            Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
-                            AbyssLabel {
-                            Layout.fillWidth:true;Layout.minimumWidth:0
                             
-                            objectName:"abyssSelectionCount"
-                            visible:root.multiSelect
-                            text:root.targets.length+" selected · "+root.targets.filter(p=>p.locked).length+" locked"
-                            wrapMode:Text.WordWrap
-                            }
-                            AbyssButton {
-                            Layout.maximumHeight:root.editorActionSize
-                            Layout.maximumWidth:root.editorActionSize
-                            editorSquare:true
-                            Layout.preferredWidth:root.editorActionSize
-                            
-                            objectName:"abyssSelectionClear"
-                            
-                            compact:true
-                            visible:root.targetIds.length>0
-                            text:"Clear selection";glyph:"deselect"
-                            enabled:root.targetIds.length>0
-                            onClicked:root.clearSelection()
-                            }
-                            }
                     }
 
                     Rectangle {
