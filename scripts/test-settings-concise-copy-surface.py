@@ -261,4 +261,42 @@ for page, hints in RUNTIME_SETTINGS_HELP.items():
         assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
         assert EN_US.get(hint) == hint, (page, hint)
 
+
+# Preserve explanatory safety/behavior constraints while shortening copy:
+# capture never remembers recording mode, image bounds require no AI,
+# H.264 preserves source recordings and failures remain visible.
+TOOLS_WIDGET_HELP = {
+    "ToolsConfig.qml": (
+        "Capture, selection and overlay settings by tool.",
+        "Snip menu remembers action/shape; dedicated shortcuts stay fixed. Recording is never remembered; off defaults to rectangle capture.",
+        "Local image processing estimates object bounds (no AI); may be inaccurate.",
+        "Two-pass H.264 makes a smaller copy; original stays intact. Higher CPU load.",
+        "Show media actions and Pill track changes; in games, manual skips only.",
+    ),
+    "QuickConfig.qml": (
+        "Choose separate capture folders; detailed paths in Tools.",
+        "Wallpaper accent saturation: 100% default; higher is more vivid.",
+        "Load grid on demand; full selector remains available.",
+        "Show reload notices; errors always appear.",
+    ),
+    "DesktopWidgetsConfig.qml": (
+        "Keep widget in its selected screen zone as dimensions change.",
+        "Adapt widget text to wallpaper; off keeps colors stable when moved.",
+        "Custom QML widgets: ~/.config/inir/widgets/ (widget.json and .qml required).",
+        "Use one wallpaper palette for built-in widgets; individual overrides remain.",
+        "Create an editable .qml template with imports and sample layout.",
+    ),
+    "MonitorVisibilityConfig.qml": (
+        "Primary monitor sets the fallback output; display controls are in Compositor.",
+    ),
+    "DockConfig.qml": (
+        "Hover reveals the Dock at the edge; Empty workspace shows it on an empty desktop.",
+    ),
+}
+for page, hints in TOOLS_WIDGET_HELP.items():
+    source = (ROOT / "modules" / "settings" / page).read_text(encoding="utf-8")
+    for hint in hints:
+        assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
+        assert EN_US.get(hint) == hint, (page, hint)
+
 print("Settings concise-copy/shared-surface contract: PASS")
