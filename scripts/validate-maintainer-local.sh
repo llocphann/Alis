@@ -324,6 +324,7 @@ run_check 'Screen Edge grab anchors and safe corners' node scripts/test-abyss-dr
 run_check 'Screen Edge zero-width inner corner geometry' node scripts/test-abyss-zero-corners.mjs
 run_check 'Abyss mandatory structural panels and optional preferences' node scripts/test-abyss-mandatory-panels.mjs
 run_check 'Quick Notes Markdown preview, formatting and attachment safety regression' node scripts/test-quick-notes-markdown-policy.mjs
+run_check 'Quick Notes rail wheel sensitivity and modifier routing regression' node scripts/test-note-rail-wheel-policy.mjs
 run_check 'Abyss unified content opacity migration regression' node scripts/test-abyss-content-opacity-migration.mjs
 run_check 'translation catalog structure' python3 translations/tools/l10n.py audit-all
 run_check 'translation source parity' python3 translations/tools/source-parity.py
