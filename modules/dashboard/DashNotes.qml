@@ -15,10 +15,14 @@ DashCard {
     Layout.fillHeight: true
 
     QuickNotesView {
+        objectName: "quickNotesSharedDashboardView"
         Layout.fillWidth: true
         Layout.fillHeight: true
         surfaceLocalTabSelection: true
         showZettelkastenActions: true
+        // A deliberate, Source-first Markdown Reading switch. The Weekly
+        // Planner's notes column uses this same card/editor implementation.
+        showMarkdownModeSwitch: true
         margin: 0
     }
 }

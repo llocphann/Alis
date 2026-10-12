@@ -159,6 +159,39 @@ float zeroCornerField(float d,vec2 p) {
     if(zeroCorners.w>.5)d=min(d,innerCorner(vec2(low.x,high.y),r));
     return d;
 }
+// Keep the finite 0px corner opening visible when nearby Modules supply
+// a local backing rectangle or a weld through the same field. The shape union
+// above may fill this cutout; a bounded intersection restores its inside arc.
+// No full-edge rectangle, second pass or input region is introduced.
+float clipZeroCorners(float d, vec2 p) {
+    if (dot(zeroCorners, vec4(1.0)) < 0.5) return d;
+    vec4 edges = max(vec4(0.0), insets);
+    float r = max(0.0, min(material.x,
+        min(viewport.x - edges.x - edges.z,
+            viewport.y - edges.y - edges.w) * 0.5));
+    if (r <= 0.0) return d;
+    vec2 low = p - edges.xy;
+    vec2 high = viewport.xy - edges.zw - p;
+    vec2 topRight = vec2(high.x, low.y);
+    vec2 bottomLeft = vec2(low.x, high.y);
+    if (zeroCorners.x > 0.5
+            && all(greaterThanEqual(low, vec2(0.0)))
+            && all(lessThanEqual(low, vec2(r))))
+        d = max(d, innerCorner(low, r));
+    if (zeroCorners.y > 0.5
+            && all(greaterThanEqual(topRight, vec2(0.0)))
+            && all(lessThanEqual(topRight, vec2(r))))
+        d = max(d, innerCorner(topRight, r));
+    if (zeroCorners.z > 0.5
+            && all(greaterThanEqual(high, vec2(0.0)))
+            && all(lessThanEqual(high, vec2(r))))
+        d = max(d, innerCorner(high, r));
+    if (zeroCorners.w > 0.5
+            && all(greaterThanEqual(bottomLeft, vec2(0.0)))
+            && all(lessThanEqual(bottomLeft, vec2(r))))
+        d = max(d, innerCorner(bottomLeft, r));
+    return d;
+}
 float field(vec2 p) {
     vec4 hole=workspaceRect();
     float d=zeroCornerField(-roundedBox(p,hole,material.x),p);
@@ -172,7 +205,7 @@ float field(vec2 p) {
     d=record(d,p,rect28,radii7.x); d=record(d,p,rect29,radii7.y); d=record(d,p,rect30,radii7.z); d=record(d,p,rect31,radii7.w);
     d=record(d,p,rect32,radii8.x); d=record(d,p,rect33,radii8.y); d=record(d,p,rect34,radii8.z); d=record(d,p,rect35,radii8.w);
     d=record(d,p,rect36,radii9.x); d=record(d,p,rect37,radii9.y); d=record(d,p,rect38,radii9.z); d=record(d,p,rect39,radii9.w);
-    return d;
+    return clipZeroCorners(d, p);
 }
 layout(binding=3) uniform sampler2D bodyTexture;
 void main() {

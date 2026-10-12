@@ -27,7 +27,13 @@ Item {
     // The hover corner reads Markdown without taking input focus; all other
     // shared editor hosts preserve their existing Source-first behavior.
     property bool readingOnHover: false
+    // Dashboard/Weekly Planner opt in to an explicit, local Reading/Source
+    // choice. Sidebar stays Source-first, and the Edgebar stays hover-Reading.
+    // Neither mode is saved globally or writes a separate note.
+    property bool allowManualReading: false
     property bool markdownEditing: !root.readingOnHover
+    readonly property bool markdownReading:
+        (root.readingOnHover || root.allowManualReading) && !root.markdownEditing
     property int _markdownFocusEpoch: 0
     property bool verticalDotNavigation: false
     // Quick Notes can coexist on Dashboard, Sidebar Left and the bottom-left
@@ -168,6 +174,15 @@ Item {
         root.focus = false
         if (root.readingOnHover)
             root.markdownEditing = false
+    }
+
+    function enterMarkdownReading(): void {
+        if (!root.allowManualReading || !Notepad.ready)
+            return
+        // Cancel queued async focus and durably flush this exact tab before
+        // hiding Source. The Markdown preview reads those same source bytes.
+        root.releaseEditorFocus()
+        root.markdownEditing = false
     }
 
     function formatMarkdown(kind): bool {
@@ -743,7 +758,7 @@ Item {
                     Flickable {
                         id: markdownReader
                         objectName: "quickNotesMarkdownReading"
-                        visible: root.readingOnHover && !root.markdownEditing
+                        visible: root.markdownReading
                         anchors.fill: parent
                         anchors.margins: root.compactPresentation ? 6 : 8
                         anchors.bottomMargin: (root.compactPresentation ? 6 : 8)
@@ -788,7 +803,7 @@ Item {
 
                     ScrollView {
                         id: scrollView
-                        visible: !root.readingOnHover || root.markdownEditing
+                        visible: !root.markdownReading
                         anchors.fill: parent
                         anchors.margins: root.compactPresentation ? 6 : 8
                         anchors.bottomMargin: (root.compactPresentation ? 6 : 8)

@@ -6,6 +6,8 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.common.functions
+import qs.modules.abyss.looks
 import "WeeklyPlannerPolicy.js" as Planner
 
 Item {
@@ -40,6 +42,23 @@ Item {
     readonly property real columnWidth: Math.max(102 * Appearance.fontSizeScale, (viewport.width - 44) / 7)
     readonly property color ink: Appearance.colors.colOnLayer1
     readonly property color mutedInk: Appearance.colors.colSubtext
+    // Share the Detailed Weather content palette, with a neutral Material
+    // fallback for Waffle. No additional per-day shader or blur pass.
+    readonly property bool abyssPanel: Config.options?.panelFamily === "abyss"
+    readonly property color headerSurface: abyssPanel
+        ? ColorUtils.mix(AbyssStyle.contentLayer, AbyssStyle.accent, .88)
+        : Appearance.colors.colSurfaceContainerHigh
+    readonly property color headerInk: abyssPanel
+        ? ColorUtils.ensureReadable(AbyssStyle.textColor, headerSurface, 4.5)
+        : Appearance.colors.colOnSurface
+    readonly property color headerMutedInk: abyssPanel
+        ? ColorUtils.readableSubtext(headerInk, headerSurface, .7)
+        : Appearance.colors.colOnSurfaceVariant
+    readonly property color headerAccent: abyssPanel
+        ? AbyssStyle.accent : Appearance.colors.colPrimary
+    readonly property color headerTodayInk:
+        ColorUtils.ensureReadable(headerAccent, headerSurface, 4.5)
+    readonly property color headerDivider: Qt.alpha(headerInk, .16)
     signal requestEventsDialog(var event)
     Connections {
         target: root.localBackend
@@ -74,6 +93,7 @@ Item {
         id:action
         property string label: ""
         property string symbol: ""
+        property color buttonInk: root.ink
         implicitHeight: 34
         implicitWidth: label.length ? row.implicitWidth + 18 : 34
         buttonRadius: 12
@@ -82,8 +102,8 @@ Item {
         colBackgroundHover: Appearance.colors.colLayer1Hover
         contentItem: RowLayout {
             id: row;anchors.centerIn: parent;spacing: 5
-            MaterialSymbol {visible:action.symbol.length>0;text:action.symbol;iconSize:18;color:root.ink}
-            StyledText {visible:action.label.length>0;text:action.label;color:root.ink;font.pixelSize:Appearance.font.pixelSize.small}
+            MaterialSymbol {visible:action.symbol.length>0;text:action.symbol;iconSize:18;color:action.buttonInk}
+            StyledText {visible:action.label.length>0;text:action.label;color:action.buttonInk;font.pixelSize:Appearance.font.pixelSize.small}
         }
     }
     ColumnLayout {
@@ -134,7 +154,15 @@ Item {
                         color:root.mutedInk;font.pixelSize:Appearance.font.pixelSize.smallest
                     }
                 }
-                Rectangle {x:0;y:viewport.contentY;width:44;height:root.gridTop;z:20;color:Appearance.colors.colLayer1}
+                Rectangle {
+                    objectName:"plannerHeaderCorner"
+                    x:0;y:viewport.contentY;width:44;height:root.gridTop;z:20
+                    color:root.headerSurface
+                    Rectangle {
+                        x:0;y:43;width:parent.width;height:1
+                        color:root.headerDivider
+                    }
+                }
                 Repeater {
                     model:root.days
                     delegate: Item {
@@ -145,19 +173,40 @@ Item {
                         readonly property bool today:Qt.formatDate(modelData.date,"yyyy-MM-dd")===Qt.formatDate(DateTime.clock.date,"yyyy-MM-dd")
                         Rectangle {anchors.fill:parent;color:dayColumn.today?Qt.alpha(Appearance.colors.colPrimary,.045):"transparent"}
                         Rectangle {
+                            id:dayHeader
+                            objectName:"plannerDayHeader"
                             x:0;y:viewport.contentY;width:parent.width;height:root.gridTop;z:10
-                            color:Appearance.colors.colLayer1
+                            color:root.headerSurface
+                            HoverHandler {id:dayHeaderHover}
+                            Rectangle {
+                                width:parent.width;height:44
+                                visible:dayColumn.today || dayHeaderHover.hovered
+                                color:Qt.alpha(root.headerAccent,dayColumn.today?.12:.07)
+                            }
+                            Rectangle {
+                                x:0;y:0;width:1;height:parent.height
+                                color:root.headerDivider
+                            }
+                            Rectangle {
+                                x:0;y:43;width:parent.width;height:1
+                                color:root.headerDivider
+                            }
                             MouseArea {anchors.fill:parent}
                         }
                         StyledText {
                             x:6;y:viewport.contentY+3;width:parent.width-12;height:38;z:11
                             text:Qt.formatDate(dayColumn.modelData.date,"ddd d MMM")
-                            font.weight:Font.DemiBold;color:dayColumn.today?Appearance.colors.colPrimary:root.ink
+                            font.weight:Font.DemiBold
+                            color:dayColumn.today?root.headerTodayInk:root.headerInk
                             font.pixelSize:Appearance.font.pixelSize.small;elide:Text.ElideRight
                         }
                         Action {
-                            x:2;y:viewport.contentY+40;height:24;z:11
+                            x:2;y:viewport.contentY+44;height:24;z:11
                             label:Translation.tr("All day")
+                            buttonInk:root.headerInk
+                            colBackground:"transparent"
+                            colBackgroundHover:Qt.alpha(root.headerAccent,.14)
+                            colBackgroundToggled:Qt.alpha(root.headerAccent,.20)
                             toggled:root.expandAllDay
                             onClicked:root.expandAllDay=!root.expandAllDay
                         }
@@ -168,7 +217,7 @@ Item {
                                 required property var modelData
                                 required property int index
                                 objectName:"plannerAllDayEvent"
-                                x:4;y:viewport.contentY+66+index*26;width:dayColumn.width-8;height:24;z:11
+                                x:4;y:viewport.contentY+68+index*26;width:dayColumn.width-8;height:24;z:11
                                 buttonRadius:6
                                 colBackground:Qt.alpha(modelData.event.color || Appearance.colors.colPrimary,.18)
                                 Accessible.name:modelData.event.title+(modelData.source==="external"?" · Read-only":"")

@@ -29,6 +29,9 @@ Singleton {
     property var _previousActive: []
     property var _pendingMirror: null
     property var _pendingMirrorRestart: null
+    // Immutable identity of the launched wl-mirror process. UI dropdown
+    // selections are normalized on hotplug and must not mask a disconnect.
+    property var _runningMirrorPair: null
     property var _currentAction: null
     property bool _rollingBack: false
     property bool _stoppingMirror: false
@@ -49,6 +52,12 @@ Singleton {
 
     function normalizeSelections(): void {
         const names = connectedOutputs
+        if (mirrorProcess.running
+                && !DisplayPlan.mirrorPairConnected(names, _runningMirrorPair)) {
+            stopMirror()
+            statusMessage = ""
+            lastError = "Display mirroring stopped because one of its outputs disconnected."
+        }
         if (!names.length) {
             selectedSecondary = ""
             mirrorSource = ""
@@ -63,12 +72,6 @@ Singleton {
         const mirrorTargets = names.filter(name => name !== mirrorSource)
         if (!mirrorTargets.includes(mirrorTarget))
             mirrorTarget = mirrorTargets[0] ?? ""
-        if (mirrorProcess.running
-                && (!names.includes(mirrorSource) || !names.includes(mirrorTarget)
-                    || mirrorSource === mirrorTarget)) {
-            stopMirror()
-            lastError = "Display mirroring stopped because one of its outputs disconnected."
-        }
     }
 
     function setMirrorSource(name): void {
@@ -216,6 +219,14 @@ Singleton {
     }
 
     function _launchMirror(spec): void {
+        // A delayed restart after an expected stop can race with unplugging
+        // either monitor. Never spawn wl-mirror against a vanished output.
+        if (!DisplayPlan.mirrorPairConnected(connectedOutputs, spec)) {
+            statusMessage = ""
+            lastError = "Display mirroring cancelled because its outputs changed."
+            return
+        }
+        _runningMirrorPair = {source: spec.source, target: spec.target}
         mirrorSource = spec.source
         mirrorTarget = spec.target
         mirrorProcess.command = [
@@ -261,6 +272,7 @@ Singleton {
         onExited: exitCode => {
             const expectedStop = root._stoppingMirror
             root._stoppingMirror = false
+            root._runningMirrorPair = null
             if (root._pendingMirrorRestart) {
                 const restart = root._pendingMirrorRestart
                 root._pendingMirrorRestart = null

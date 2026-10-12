@@ -799,6 +799,17 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   State: SOURCE PATCHED / OPEN for native markdown fidelity,
   preview/Source focus, Unicode/IME/undo/restart, mouse/touchpad,
   attachment parity, full canonical and owner UI acceptance.
+  **Cloud continuation (2026-10-12):** dashboard and Weekly Planner
+  now share an explicit keyboard-focusable Reading/Source switch through
+  DashNotes → QuickNotesView → the existing NotepadWidget. Source stays
+  the default; switching to Reading flushes the stable-ID draft and
+  cancels pending editor-focus callbacks; clicking the rendered text
+  returns to Source without replacing the note or attachment pipeline.
+  The Edgebar hover behavior and Sidebar default remain unchanged.
+  Added source and private-native multi-surface regression covering both
+  Dashboard card and Planner notes column. Native owner/installed
+  acceptance and exact-SHA full canonical remain OPEN. This completes
+  a requested source milestone, NOT the entire NOTES-F01.
 
 - [x] **NOTES-F02 — Quick Notes image delivery:** Hadalis `add29d6f8` implements shared
   paste/import, original-byte storage, Markdown persistence and preview with
@@ -816,6 +827,15 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   actual Extend/Primary/Second-only/Mirror, hotplug/failure rollback, `wl-mirror`
   lifetime, PipeWire default sink and Night Light/Anti Flashbang sensitivity.
   Do not claim real Mirror from a synthetic fixture or introduce a second backend.
+  **Cloud source fix, 2026-10-12:** the active wl-mirror process now retains
+  its original source/target as separate immutable runtime identity. Niri
+  hotplug must stop that process before dropdown selections are normalized,
+  including when every output vanishes; deferred mirror restarts revalidate
+  both outputs before spawn. Eight additional pure policy cases cover source,
+  target, all-output disconnect, invalid pairs and valid replacement pairs.
+  This is a *bounded source milestone*, not proof of live wl-mirror, device
+  recovery, PipeWire or Night Light acceptance. Owner/multi-monitor and
+  hardware tests remain OPEN; do not mark UTIL-F01 complete.
 
 - [ ] **SYS-F01 — Non-Arch optional system gateway:** add trusted distro-owned
   provisioning beyond Arch for Hadalird helpers. Keep root gateway/policy separate

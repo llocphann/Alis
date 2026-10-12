@@ -54,7 +54,18 @@ Window {
    external.events=[{uid:"private-import",title:"Read-only import",startDate:instant(14),endDate:instant(15),color:"#65b8c4"}];external.eventsUpdated();wait(100)
    check(planner.days[0].timed.length===3 && planner.days[0].allDay.length===1 && planner.days[1].allDay.length===1,"source projection lost data")
    const viewport=find(planner,"weeklyPlannerViewport")
+   const dayHeaders=all(planner,"plannerDayHeader")
+   const headerCorner=find(planner,"plannerHeaderCorner")
+   check(dayHeaders.length===7 && !!headerCorner,"seven-day connected header surface missing")
+   check(dayHeaders.every(item=>Math.abs(item.width-planner.columnWidth)<.5),
+     "date/all-day header lost shared column geometry")
+   check(dayHeaders.every(item=>String(item.color)===String(planner.headerSurface))
+     && String(headerCorner.color)===String(planner.headerSurface),
+     "day/all-day/corner do not share the Weather content palette")
    viewport.contentY=12*planner.hourHeight;wait(50)
+   check(dayHeaders.every(item=>Math.abs(item.y-viewport.contentY)<.5)
+     && Math.abs(headerCorner.y-viewport.contentY)<.5,
+     "header failed to remain pinned during time-axis scrolling")
    const imported=all(planner,"plannerTimedEvent").find(item=>item.modelData.source==="external")
    const count=root.calls;mouseClick(imported,imported.width/2,imported.height/2);check(root.calls===count,"import opened a mutating editor")
    capture("import-read-only")
