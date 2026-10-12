@@ -80,26 +80,39 @@ function project(local, external, value, firstDay) {
     var days=week(value,firstDay);
     [[local,"local"],[external,"external"]].forEach(function(pair) {
         (pair[0] || []).forEach(function(event) {
-            var base=validDate(event.startDate || event.dateTime);
-            if (!base) return;
-            var baseEnd=validDate(event.endDate);
-            var duration=baseEnd && baseEnd>base ? baseEnd-base : hour;
-            var allDaySpan=event.allDay && baseEnd && baseEnd>base
-                ? Math.max(1,civilIndex(baseEnd)-civilIndex(base)) : 1;
-            var occurrences=starts(event,days,pair[1],event.allDay ? allDaySpan*86400000 : duration);
-            if (occurrences.limited) days.forEach(function(day) {day.projectionLimited=true;});
-            occurrences.dates.forEach(function(occurrence) {
-                var start=event.allDay ? midnight(occurrence) : occurrence;
-                var end=event.allDay ? addDays(start,allDaySpan) : new Date(start.getTime()+duration);
-                days.forEach(function(day,index) {
-                    if (start>=day.end || end<=day.date) return;
-                    var bucket=event.allDay ? day.allDay : day.timed;
-                    if (bucket.length>=512) {day.overflow++;return;}
-                    var from=Math.max(start,day.date), to=Math.min(end,day.end);
-                    bucket.push({key:pair[1]+":"+String(event.id || event.uid || "")+":"+start.getTime()+":"+index,
-                        event:event, source:pair[1], virtual:occurrence.getTime()!==base.getTime(),
-                        start:(from-day.date)/minute, end:(to-day.date)/minute,
-                        startDate:new Date(start), endDate:end, lane:0, lanes:1});
+            var grouped = Array.isArray(event.occurrences) && event.occurrences.length;
+            var ranges = grouped ? event.occurrences : [event];
+            ranges.forEach(function(slot,slotIndex) {
+                var base=validDate(slot.startDate || slot.dateTime);
+                if (!base) return;
+                var baseEnd=validDate(slot.endDate);
+                var duration=baseEnd && baseEnd>base ? baseEnd-base : hour;
+                var allDaySpan=event.allDay && baseEnd && baseEnd>base
+                    ? Math.max(1,civilIndex(baseEnd)-civilIndex(base)) : 1;
+                var occurrenceSource=Object.assign({},event,{
+                    startDate:base.toISOString(),dateTime:base.toISOString(),
+                    endDate:baseEnd && baseEnd>base ? baseEnd.toISOString() : "",
+                    notified:slot.notified===true
+                });
+                var generated=starts(occurrenceSource,days,pair[1],event.allDay
+                    ? allDaySpan*86400000 : duration);
+                if (generated.limited) days.forEach(function(day) {day.projectionLimited=true;});
+                generated.dates.forEach(function(occurrence) {
+                    var start=event.allDay ? midnight(occurrence) : occurrence;
+                    var finish=event.allDay ? addDays(start,allDaySpan)
+                        : new Date(start.getTime()+duration);
+                    days.forEach(function(day,index) {
+                        if (start>=day.end || finish<=day.date) return;
+                        var bucket=event.allDay ? day.allDay : day.timed;
+                        if (bucket.length>=512) {day.overflow++;return;}
+                        var from=Math.max(start,day.date),to=Math.min(finish,day.end);
+                        bucket.push({key:pair[1]+":"+String(event.id || event.uid || "")
+                                +":"+slotIndex+":"+start.getTime()+":"+index,
+                            event:event,source:pair[1],occurrenceIndex:slotIndex,
+                            virtual:occurrence.getTime()!==base.getTime(),
+                            start:(from-day.date)/minute,end:(to-day.date)/minute,
+                            startDate:new Date(start),endDate:finish,lane:0,lanes:1});
+                    });
                 });
             });
         });
