@@ -7,6 +7,7 @@ import qs.modules.common.perimeter
 import qs.modules.common.models
 import qs.modules.common.widgets
 import qs.modules.common.functions
+import qs.modules.abyss.looks
 import qs.modules.sidebarLeft.animeSchedule
 import qs.modules.sidebarLeft.news
 // DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
@@ -31,6 +32,14 @@ Item {
     readonly property color connectedSurfaceColor:
         sidebarLeftBackground.cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0
     readonly property real connectedSurfaceRadius: sidebarLeftBackground.radius
+    // Only the INNER content plate follows the Abyss material. Outer panel,
+    // seam, blur and opacity remain owned by the existing connected host.
+    // Reuse the owner-approved Detailed Weather card palette, with live
+    // theme/wallpaper bindings and unchanged Waffle/ii Material fallback.
+    readonly property bool abyssInnerMaterial: Config.options?.panelFamily === "abyss"
+    readonly property color innerContentSurfaceColor: root.abyssInnerMaterial
+        ? ColorUtils.mix(AbyssStyle.contentLayer, AbyssStyle.accent, .88)
+        : Appearance.colors.colLayer1
     property bool panelVisible: false
     property bool geometryPreviewActive: false
     property string outerSizeMode: "full"
@@ -370,8 +379,10 @@ Item {
                         Math.min(root.activeTabContentHeight,
                             root.height - chromeHeight)))
                 }
+                id: sidebarLeftInnerSurface
+                objectName: "sidebarLeftInnerSurface"
                 radius: Appearance.rounding.normal
-                color: Appearance.colors.colLayer1
+                color: root.innerContentSurfaceColor
                 border.width: 0
                 border.color: "transparent"
                 // Organic morph on style/shape switch (organic-transitions)

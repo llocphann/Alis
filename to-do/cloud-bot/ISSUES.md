@@ -1382,7 +1382,18 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   mode and wallpaper accent changes, all Sidebar Left tabs, hover/focus,
   nested content, partial opacity, narrow widths and 4 edges/scales.
   Add QML source/contrast regression plus live Niri/Quickshell capture
-  and owner approval. State: NEW/OPEN; not implemented.
+  and owner approval. State: SOURCE PATCHED / FOCUSED SOURCE TEST PENDING,
+  installed/owner/native verification OPEN.
+  **Cloud fix (2026-10-12):** changed only the inner SwipeView content
+  plate to the same reactive `AbyssStyle.contentLayer` / `AbyssStyle.accent`
+  mix used by the already owner-verified Detailed Weather cards. The
+  outer connected sidebar surface, shadow, blur, global opacity, panel
+  geometry and non-Abyss layer1 fallback are unchanged. A source
+  regression and optional isolated-Niri QML test assert this separation,
+  live palette rebinding, readable ink and card identity.
+  Follow-up: run actual QML, owner-provided wallpaper/theme cycles and
+  Sidebar Left Intelligence/other tabs on installed multi-output desktop;
+  do not claim visual acceptance or close the issue yet.
 
 - [x] **WTHR-I01 — Detailed Weather Popup background does not follow theme — owner report 2026-10-10:**
   Several component/card backgrounds remain grey rather than adapting to the
