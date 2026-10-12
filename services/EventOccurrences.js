@@ -83,3 +83,68 @@ function upcoming(event,nowValue,throughValue) {
             : a>=now && a<=through && !slot.notified;
     }) || null;
 }
+
+
+/**
+ * Automatic, idempotent migration of legacy single-date local events.
+ *
+ * Keep the original rows in Events.qml's persisted migration backup before
+ * replacing this list; never import or modify an external calendar.
+ * Preserve ID, Todo owner, notification flags and historical timestamps.
+ * When an additional record already owns a linked/detached Todo, keep that
+ * record separate rather than orphaning or stealing the user's task.
+ */
+function migrateLegacy(raw) {
+    if (!Array.isArray(raw)) return {events:[],changed:false,normalized:0,merged:0,skippedLinked:0};
+    var events=[],changed=false,normalized=0,merged=0,skippedLinked=0;
+    raw.forEach(function(original) {
+        if (!original || typeof original!=="object" || Array.isArray(original)) return;
+        var value=original;
+        var isSingle=(!Array.isArray(original.occurrences) || !original.occurrences.length)
+            && (original.recurrence || "none")==="none";
+        if (isSingle) {
+            var slot=entry(original.startDate || original.dateTime,original.endDate,
+                original.notified,original.reminderNotified);
+            if (slot) {
+                value=store(original,[slot]);
+                normalized++;
+                changed=true;
+            }
+        }
+        var destination=-1;
+        for (var i=0;i<events.length;i++) {
+            if (compatible(events[i],value) && entries(events[i]).length<512) {
+                var slotList=entries(value);
+                var existing=entries(events[i]);
+                if (slotList.length && slotList.every(function(slot) {
+                    return !existing.some(function(prev) {
+                        return prev.startDate===slot.startDate && prev.endDate===slot.endDate;
+                    });
+                })) {
+                    destination=i; break;
+                }
+            }
+        }
+        if (destination>=0) {
+            var link=value.todoLink;
+            // Only unlinked or never-provisioned tasks can be consolidated.
+            // "linked", "detached", or provider-bearing tasks keep their
+            // original event ID, no automatic cross-provider mutation.
+            if (link && (link.state!=="pending" || Boolean(link.provider))) {
+                skippedLinked++;
+                events.push(value);
+                return;
+            }
+            var target=events[destination];
+            var combined=store(target,entries(target).concat(entries(value)));
+            var legacy=Array.isArray(target.mergedLegacyIds)
+                ? target.mergedLegacyIds.slice():[];
+            if (!legacy.includes(value.id)) legacy.push(value.id);
+            events[destination]=Object.assign({},combined,{mergedLegacyIds:legacy});
+            changed=true;
+            merged++;
+        } else events.push(value);
+    });
+    return {events:events,changed:changed,normalized:normalized,
+        merged:merged,skippedLinked:skippedLinked};
+}
