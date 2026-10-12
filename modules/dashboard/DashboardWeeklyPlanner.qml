@@ -379,7 +379,7 @@ Item {
                                 Accessible.name:modelData.event.title+(modelData.source==="external"?" · Read-only":"")
                                 contentItem:StyledText {text:allDayButton.modelData.event.title;color:root.ink;elide:Text.ElideRight;font.pixelSize:Appearance.font.pixelSize.smallest}
                                 onClicked:root.editOccurrence(modelData)
-                                StyledToolTip {text:parent.Accessible.name+(parent.modelData.source==="local" && !parent.modelData.virtual && Todo.agendaStatus(parent.modelData.event)?" · "+Todo.agendaStatus(parent.modelData.event):"")}
+                                StyledToolTip {text:parent.Accessible.name}
                             }
                         }
                         StyledText {
@@ -488,16 +488,6 @@ Item {
                                     }
                                     StyledText {
                                         width:parent.width
-                                        visible:text.length>0
-                                        text:timedButton.modelData.source==="local"
-                                            && !timedButton.modelData.virtual
-                                            ? Translation.tr(Todo.agendaStatus(timedButton.modelData.event)) : ""
-                                        color:root.mutedInk
-                                        font.pixelSize:Appearance.font.pixelSize.smallest
-                                        elide:Text.ElideRight
-                                    }
-                                    StyledText {
-                                        width:parent.width
                                         text:Qt.formatTime(timedButton.previewRange
                                             ? new Date(timedButton.previewRange.startIso)
                                             : timedButton.modelData.startDate,"hh:mm")
@@ -595,10 +585,7 @@ Item {
                                 StyledToolTip {
                                     text:parent.Accessible.name+
                                         (parent.modelData.virtual
-                                          ?" · Recurring occurrence: open editor"
-                                          : parent.modelData.source==="local"
-                                              && Todo.agendaStatus(parent.modelData.event)
-                                            ?" · "+Todo.agendaStatus(parent.modelData.event):"")
+                                            ?" · Recurring occurrence: open editor" : "")
                                 }
                             }
                         }
