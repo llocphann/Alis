@@ -1151,7 +1151,7 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "monitor"
         title: Translation.tr("Compositor")
-        description: Translation.tr("Adjust displays, input, layout, animation and window-rule behavior in focused views. Display changes preview live and revert automatically if you don't keep them.")
+        description: Translation.tr("Tune displays, input, layout and rules; unconfirmed display previews revert.")
         summary: Translation.tr("Displays · Input · Layout · Animations · Rules")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
@@ -1293,7 +1293,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Monitor changes are applied as a live preview first. If the new mode is incompatible, settings revert automatically after 15 seconds.")
+                text: Translation.tr("Display previews revert after 15 seconds unless confirmed.")
                 font.pixelSize: Appearance.font.pixelSize.small
                 color: Appearance.colors.colSubtext
                 wrapMode: Text.WordWrap
@@ -1520,7 +1520,7 @@ ContentPage {
         SettingsGroup {
             ContentSubsection {
                 title: Translation.tr("Window gaps")
-                tooltip: Translation.tr("Space from the inner Screen Edge or Bar boundary to tiled windows. Hadalis reserves the Screen Edge thickness separately.")
+                tooltip: Translation.tr("Gap from tiled windows to the Screen Edge/Bar; Edge thickness is reserved separately.")
 
                 ConfigSpinBox {
                     text: Translation.tr("Gap size (px)")
@@ -1573,7 +1573,7 @@ ContentPage {
 
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Automatically maximizes a single tiling window to fill the screen. When a second window appears, the first is restored to its normal width.")
+                text: Translation.tr("Maximize a lone tiled window; restore its size when another opens.")
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
@@ -2796,7 +2796,7 @@ ContentPage {
 
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Niri exposes many more compositor options in raw KDL. This page covers the most common ones safely and validates every change before keeping it.")
+                text: Translation.tr("Common niri options are validated; advanced options remain in raw KDL.")
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
@@ -2860,7 +2860,7 @@ ContentPage {
             }
 
             StyledText {
-                text: Translation.tr("Tune the spring physics for each animation type. Higher stiffness = snappier, higher damping = less bounce.")
+                text: Translation.tr("Higher stiffness reacts faster; damping reduces bounce.")
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colSubtext
                 Layout.fillWidth: true
@@ -2986,7 +2986,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Choose known app presets for common shell actions, or switch a slot to a custom command when you need something more specific.")
+                text: Translation.tr("Choose an app preset or custom command.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
