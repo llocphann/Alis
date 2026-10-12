@@ -47,7 +47,7 @@ ShellRoot {
   id:test;when:false;optional:true
   function check(v,label){root.checks++;if(!v)throw new Error(label)}
   function capture(label){tryVerify(()=>field.item?.ready,5000);wait(40);let done=false;check(field.item.grabToImage(result=>{check(result.saveToFile(Quickshell.env("ZERO_EVIDENCE")+"/"+label+".png"),"write capture");root.frames++;done=true}),"native frame refused");tryVerify(()=>done,5000)}
-  function control(){const item=findChild(editor,"abyssRoundZeroCorners");let view=item.parent;while(view&&view.contentHeight===undefined)view=view.parent;check(!!view,"checkbox scroll viewport");const point=item.mapToItem(view.contentItem,0,0);view.contentY=Math.max(0,Math.min(view.contentHeight-view.height,point.y-view.height/2));wait(60);return item}
+  function control(){if(!editor.expandedControls){mouseClick(findChild(editor,"abyssEditorOptions"));wait(130)}const item=findChild(editor,"abyssRoundZeroCorners");let view=item.parent;while(view&&view.contentHeight===undefined)view=view.parent;check(!!view,"checkbox scroll viewport");const point=item.mapToItem(view.contentItem,0,0);view.contentY=Math.max(0,Math.min(view.contentHeight-view.height,point.y-view.height/2));wait(60);return item}
   function run(){try{
    tryCompare(Config,"ready",true,6000)
    Config.setNestedValues({"performance.reduceAnimations":true,"abyss.effects.blur.enabled":false,"abyss.content.blurRadius":0,"abyss.effects.refraction.enabled":false})

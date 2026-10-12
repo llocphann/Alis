@@ -12,10 +12,9 @@ for needle in [
     "previewBody.joinedEdge",
     "onPreviewPositionChanged: root.scheduleToolbarRelocation()",
     "onPreviewKindChanged: root.scheduleToolbarRelocation()",
-    "Math.max(340,Math.min(460,root.width*.32))",
     "id: toolbarScroll",
-    "columns:root.toolbarOnHorizontalEdge ? 5 : 1",
-    "compactVertical:!root.toolbarOnHorizontalEdge",
+    "columns:root.toolbarWideControls ? 5 : 1",
+    "compactVertical:!root.toolbarWideControls",
 ]:
     assert needle in editor, needle
 
@@ -25,18 +24,21 @@ assert "columns:root.compactVertical ? 1 : 2" in positions
 assert "columns:root.compactVertical ? 1 : 3" in positions
 
 selected=editor[editor.index("id:selectedModuleControls"):]
-columns=re.search(r"\bcolumns:\s*([^\n]+)",selected)
+columns=re.search(r"\bcolumns:\s*([\s\S]+?)\n\s*rowSpacing:",selected)
 assert columns, "selected module controls need an adaptive grid"
 subprocess.run(["node","-e",r'''
 const assert=require('node:assert/strict'),vm=require('node:vm');
-for(const toolbarOnHorizontalEdge of [false,true]) {
+for(const expandedControls of [false,true])for(const toolbarOnHorizontalEdge of [false,true]) {
  for(const fontSizeScale of [.7,1,1.5,2]) {
   let previous=1;
   for(const width of [0,250,400,419,420,600,739,740,900,1099,1100,1400,2200]) {
-   const actual=vm.runInNewContext(process.argv[1],{root:{toolbarOnHorizontalEdge},width,Appearance:{fontSizeScale}});
-   assert([1,2,4,8].includes(actual));assert(actual>=previous);previous=actual;
-   if(!toolbarOnHorizontalEdge)assert.equal(actual,1);
-   if(width<420*fontSizeScale)assert.equal(actual,1);
+   const actual=vm.runInNewContext(process.argv[1],{root:{toolbarOnHorizontalEdge,expandedControls},width,Appearance:{fontSizeScale}});
+   assert([1,2,3,4,8].includes(actual));assert(actual>=previous);previous=actual;
+   if(!expandedControls)assert.equal(actual,width>=460*fontSizeScale ? 4 : 3);
+   else {
+    if(!toolbarOnHorizontalEdge)assert.equal(actual,1);
+    if(width<420*fontSizeScale)assert.equal(actual,1);
+   }
   }
  }
 }

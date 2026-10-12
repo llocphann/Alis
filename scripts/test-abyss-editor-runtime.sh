@@ -37,12 +37,20 @@ ShellRoot {
         // Relocation is intentionally debounced for 90 ms. Let it complete,
         // then wait for real layout polish before deriving a pointer position.
         driver.wait(120)
+        if(!editor.expandedControls) {
+            driver.mouseClick(driver.findChild(editor,"abyssEditorOptions"))
+            driver.wait(120)
+        }
         return root.check(driver.waitForPolish(editor.Window.window,3000),"editor controls did not finish layout")
     }
     function clickControl(item): bool {
         let viewport=item.parent
         while(viewport && viewport.contentHeight===undefined) viewport=viewport.parent
         if(!root.check(!!viewport,"editor control has a real scroll viewport")) return false
+        const contentPoint=item.mapToItem(viewport.contentItem,0,0)
+        viewport.contentY=Math.max(0,Math.min(viewport.contentHeight-viewport.height,
+            contentPoint.y-viewport.height/2))
+        driver.wait(80)
         const point=item.mapToItem(viewport,0,0)
         if(!root.check(point.x>=-.01 && point.y>=-.01
             && point.x+item.width<=viewport.width+.01

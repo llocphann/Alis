@@ -22,9 +22,15 @@ for needle in [
 ]:
     assert needle in editor, needle
 
-# Horizontal editor actions become compact icon controls. Side editor actions
-# retain icon + text for readability in the vertical control rail.
-assert editor.count("compact:root.toolbarOnHorizontalEdge") >= 5
+# Immediate edit actions use compact icons on every Edge; tooltip/accessible
+# names remain textual. Fine tuning is disclosed through the Options control.
+for name in ["abyssLayoutUndo", "abyssLayoutDone", "abyssLayoutCancel", "abyssModulePositionLock", "abyssSelectionEnabled", "abyssSelectionRemove"]:
+    block = editor[editor.index('objectName:"'+name+'"'):]
+    block = block[:block.index("onClicked:")]
+    assert re.search(r"compact:\s*true", block), name
+assert 'property bool expandedControls: false' in editor
+assert 'objectName:"abyssEditorOptions"' in editor
+assert 'objectName:"abyssEditorAdd"' in editor
 assert 'property bool compactActions: false' in positions
 assert 'text:"Reset position";glyph:"restart_alt"' in positions
 assert 'compact:root.compactActions' in positions
