@@ -54,6 +54,10 @@ Window {
    check(picker.displayMode==="static" && picker.entries.length===5,"library lost image files")
    const search=named(picker,"wallpaperSearch"),carousel=named(picker,"wallpaperCarousel")
    check(search.placeholderText==="Search wallpapers" && named(picker,"wallpaperSearchIcon").text==="search","search retained the old prefix or malformed glyph")
+   const folderAction=named(picker,"wallpaperFolder")
+   check(folderAction.description===FileUtils.folderNameForPath(picker.browseFolder)
+     && !folderAction.description.includes("/") && picker.browseFolder===Quickshell.env("WALLPAPER_FIXTURES"),
+     "wallpaper folder hint exposed its full path or lost directory identity")
    for(const name of ["wallpaperMode","wallpaperFolder","wallpaperRefresh","wallpaperClose"]){
     const button=named(picker,name)
     check(!button.outlined && button.background.border.width===0,"search action still has a decorative border")
