@@ -32,7 +32,7 @@ WSettingsPage {
 
     WSettingsInfoBar {
         severity: WSettingsInfoBar.Severity.Info
-        message: Translation.tr("Optional edge navigator, disabled on fresh installs. Hover the configured edge to open it, hover a workspace to inspect it, click cards or windows to focus them, drag windows between cards, and hold × to close. Window snapshots are available on Niri.")
+        message: Translation.tr("Optional edge navigator (off by default). Hover to inspect, click to focus, drag windows, hold × to close. Niri provides snapshots.")
     }
 
     WSettingsCard {
@@ -135,7 +135,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Scroll to navigate")
             icon: "arrow-sync"
-            description: Translation.tr("Use the mouse wheel over the strip to move between workspaces instead of scrolling the thumbnail list")
+            description: Translation.tr("Wheel switches workspaces rather than scrolling thumbnails.")
             checked: Config.options?.workspaceStrip?.scrollNavigation ?? false
             onCheckedChanged: Config.setNestedValue("workspaceStrip.scrollNavigation", checked)
         }
@@ -144,7 +144,7 @@ WSettingsPage {
             visible: Config.options?.workspaceStrip?.scrollNavigation ?? false
             label: Translation.tr("Switch workspace on scroll")
             icon: "desktop"
-            description: Translation.tr("Also focus the workspace in the compositor when scrolling through the strip")
+            description: Translation.tr("Focus the workspace when scrolling the strip.")
             checked: Config.options?.workspaceStrip?.scrollNavigationSwitchWorkspace ?? true
             onCheckedChanged: Config.setNestedValue("workspaceStrip.scrollNavigationSwitchWorkspace", checked)
         }
@@ -167,7 +167,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Window previews")
             icon: "image"
-            description: Translation.tr("Live preview for the active workspace and refreshed snapshots for hidden workspaces")
+            description: Translation.tr("Live active preview; refreshed snapshots for hidden workspaces.")
             checked: Config.options?.workspaceStrip?.showPreviews ?? true
             onCheckedChanged: Config.setNestedValue("workspaceStrip.showPreviews", checked)
         }
@@ -191,7 +191,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Now-playing player")
             icon: "settings"
-            description: Translation.tr("Add a media card at the top of the strip with playback controls when music is playing")
+            description: Translation.tr("Show playback controls in a top media card.")
             checked: Config.options?.workspaceStrip?.showMediaPlayer ?? true
             onCheckedChanged: Config.setNestedValue("workspaceStrip.showMediaPlayer", checked)
         }
