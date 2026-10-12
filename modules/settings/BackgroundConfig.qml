@@ -22,7 +22,7 @@ ContentPage {
         visible: root.isIiActive
         icon: "texture"
         title: Translation.tr("Wallpaper")
-        description: Translation.tr("Choose the source and rotation first, then tune motion, screen behavior or visual effects without scrolling through unrelated controls.")
+        description: Translation.tr("Wallpaper source, rotation, motion and effects.")
         summary: Translation.tr("Source · motion · screens · effects · notifications")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
@@ -68,7 +68,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("You're using Waffle style. Most background settings are in the Waffle Style page. Only the Backdrop section below applies to both styles.")
+                text: Translation.tr("Waffle: use Waffle Style for backgrounds. Backdrop applies to both.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -96,7 +96,7 @@ ContentPage {
 
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("When parallax is active, ii renders the wallpaper internally so workspace motion, widget depth and wallpaper transitions stay synchronized.")
+                text: Translation.tr("Parallax uses internal rendering for synchronized motion.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -1221,7 +1221,7 @@ ContentPage {
                 checked: Config.options?.background?.autoWallpaper?.generateColors ?? true
                 onCheckedChanged: Config.setNestedValue("background.autoWallpaper.generateColors", checked)
                 StyledToolTip {
-                    text: Translation.tr("When enabled, theme colors are recomputed from the new wallpaper (slower). Disable to only swap the image.")
+                    text: Translation.tr("Update theme colors on wallpaper changes (slower).")
                 }
             }
 
@@ -1336,7 +1336,7 @@ ContentPage {
                 StyledText {
                     Layout.fillWidth: true
                     Layout.bottomMargin: 2
-                    text: Translation.tr("Choose where the movement or reveal comes from. Vertical directions work well for tall wallpapers and horizontal directions feel more cinematic on wide monitors.")
+                    text: Translation.tr("Choose wallpaper reveal direction.")
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colSubtext
                     opacity: 0.8
@@ -1745,7 +1745,7 @@ ContentPage {
                     Config.setNestedValue("background.effects.enableAnimatedBlur", checked);
                 }
                 StyledToolTip {
-                    text: Translation.tr("Apply blur effect to video/GIF wallpapers. Has performance impact - disable if you experience lag")
+                    text: Translation.tr("Blur video/GIF wallpapers; may increase GPU load.")
                 }
             }
         }
@@ -2092,7 +2092,7 @@ ContentPage {
                     checked: (Config.options?.background?.backdrop?.fillMode ?? "fill") === "fit"
                     onCheckedChanged: Config.setNestedValue("background.backdrop.fillMode", checked ? "fit" : "fill")
                     StyledToolTip {
-                        text: Translation.tr("Fit the full backdrop inside the screen instead of cropping it. Bars may appear when the image aspect ratio differs from the display.")
+                        text: Translation.tr("Fit the entire backdrop; mismatched aspect ratios may show bars.")
                     }
                 }
 
