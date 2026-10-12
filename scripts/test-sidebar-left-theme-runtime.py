@@ -51,7 +51,8 @@ ShellRoot {
    tryVerify(()=>sidebar.abyssInnerMaterial,3000)
    const inner=findChild(sidebar,"sidebarLeftInnerSurface")
    check(!!inner,"missing shared inner plate")
-   const expected=ColorUtils.mix(AbyssStyle.contentLayer,AbyssStyle.accent,.88)
+   const expected=Qt.alpha(ColorUtils.mix(AbyssStyle.contentLayer,AbyssStyle.accent,.88),
+       AbyssStyle.contentOpacity)
    tryVerify(()=>sameColor(inner.color,expected),3000)
    check(sameColor(sidebar.innerContentSurfaceColor,expected),
      "Abyss plate diverges from Weather Details theme material")
