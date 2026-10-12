@@ -75,5 +75,5 @@ const backend=fs.readFileSync(new URL('../services/Events.qml',import.meta.url),
 assert.ok(backend.includes('const migration=previousBackup?.version===1'));
 assert.ok(backend.includes('root._saveQueued=true'));
 assert.ok(backend.includes('Qt.callLater(root.saveToFile)'));
-assert.ok(backend.includes('occurrenceMigrationBackup:root.occurrenceMigrationBackup'));
+assert.ok(backend.includes('data.occurrenceMigrationBackup=root.occurrenceMigrationBackup'));
 console.log('PASS automatic legacy migration, restart idempotence, original backup, Todo safety and stored chronology');
