@@ -169,4 +169,43 @@ for page, hints in SHARED_SETTINGS_HELP.items():
         assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
         assert EN_US.get(hint) == hint, (page, hint)
 
+
+# Explicit privacy/tooling caveats survive the concise-copy rework, including
+# the Waffle family (whose UI remains a supported Settings frontend).
+AI_AND_INTEGRATION_HELP = {
+    "modules/settings/AiConfig.qml": (
+        "Choose a provider and opt in to voice or privacy-sensitive features.",
+        "Choose local, free online or connected models; availability is discovered automatically.",
+        "Models and API protocol are discovered from the selected provider.",
+        "Add a custom endpoint only if the provider is unsupported.",
+        "OpenAI-compatible: OpenAI, Mistral, Ollama, OpenRouter, vLLM.",
+        "Local only: use on-device models (Ollama, LM Studio).",
+    ),
+    "modules/waffle/settings/pages/WAiPage.qml": (
+        "No custom providers; add one only if unsupported.",
+        "Typed tools preview changes; raw commands require Advanced mode.",
+        "Local only: use on-device models (Ollama, LM Studio).",
+    ),
+    "modules/settings/IntegrationsConfig.qml": (
+        "Paste a compatible ICS/iCal feed URL; no account sign-in within Alis.",
+    ),
+    "modules/settings/GeneralConfigCore.qml": (
+        "Power, cooling, language, input and safety settings.",
+    ),
+    "modules/settings/BackgroundConfig.qml": (
+        "Use a custom backdrop for theme colors; disable Use main wallpaper.",
+    ),
+}
+for path, hints in AI_AND_INTEGRATION_HELP.items():
+    source = (ROOT / path).read_text(encoding="utf-8")
+    for hint in hints:
+        assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (path, hint)
+        assert EN_US.get(hint) == hint, (path, hint)
+
+# Never simplify away the API-key storage disclosure to chase word counts.
+for path in ("modules/settings/AiConfig.qml", "modules/waffle/settings/pages/WAiPage.qml"):
+    source = (ROOT / path).read_text(encoding="utf-8")
+    assert "process environment" in source, path
+    assert "commands or config files" in source, path
+
 print("Settings concise-copy/shared-surface contract: PASS")
