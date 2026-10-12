@@ -7,6 +7,8 @@ import qs.modules.common.widgets
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../../dashboard/WeeklyPlannerPolicy.js" as Planner
+import "EventsWindow.js" as UpcomingWindow
 
 Item {
     id: root
@@ -25,6 +27,9 @@ Item {
     // Compact owners such as the Bar Calendar popup can opt into bottom-left
     // placement without changing Sidebar/other Events surfaces.
     property bool fabLeftAligned: false
+    // Only ClockCalendarContent opts into a local-civil 3-day horizon.
+    // Sidebar/other Events consumers retain the original upcoming view.
+    property bool compactCalendarWindow: false
 
     // Style tokens
     readonly property color colPrimary: Appearance.angelEverywhere ? Appearance.angel.colPrimary
@@ -70,6 +75,9 @@ Item {
 
     function _buildMergedEvents(): var {
         const now = new Date()
+        if (root.compactCalendarWindow)
+            return UpcomingWindow.threeDayEvents(Events.list, CalendarSync.events,
+                DateTime.clock.date, Planner.project)
         const all = []
         const localEvents = Events.getUpcomingEvents(30)
         for (const e of localEvents) {
@@ -205,19 +213,36 @@ Item {
                 // Merged events
                 Repeater {
                     model: root.mergedEvents
-                    
-                    delegate: EventCard {
+
+                    delegate: ColumnLayout {
                         required property var modelData
-                        Layout.fillWidth: true
-                        Layout.margins: 8
-                        event: modelData
-                        isExternal: (modelData?._source ?? "local") === "external"
-                        
-                        onRemoveClicked: {
-                            if (!isExternal) Events.removeEvent(modelData.id)
+                        Layout.fillWidth:true
+                        spacing:4
+
+                        StyledText {
+                            visible:root.compactCalendarWindow && modelData._showDayHeader
+                            Layout.fillWidth:true
+                            Layout.leftMargin:12
+                            Layout.topMargin:6
+                            text:modelData._groupDate
+                                ? Qt.formatDate(modelData._groupDate,"ddd, dd MMM") : ""
+                            font.pixelSize:Appearance.font.pixelSize.small
+                            font.weight:Font.DemiBold
+                            color:root.colSubtext
                         }
-                        onEditClicked: (evt) => {
-                            if (!isExternal) root.openInlineEditor(evt)
+                        EventCard {
+                            Layout.fillWidth:true
+                            Layout.margins:root.compactCalendarWindow ? 6 : 8
+                            compactPresentation:root.compactCalendarWindow
+                            event:modelData
+                            isExternal:(modelData?._source ?? "local")==="external"
+                            onRemoveClicked: {
+                                if (!isExternal) Events.removeEvent(modelData.id)
+                            }
+                            onEditClicked: evt => {
+                                if (!isExternal) root.openInlineEditor(
+                                    modelData._canonicalEvent ?? evt)
+                            }
                         }
                     }
                 }

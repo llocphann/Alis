@@ -7,12 +7,14 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Effects
+import "EventsWindow.js" as UpcomingWindow
 
 Item {
     id: root
     
     required property var event
     property bool isExternal: false
+    property bool compactPresentation: false
     signal removeClicked()
     signal editClicked(var event)
     
@@ -61,10 +63,8 @@ Item {
         return now.toDateString() === root.eventDate.toDateString()
     }
     readonly property bool isAllDay: root.event?.allDay ?? false
-    readonly property bool isPast: root.isAllDay
-        && !isNaN(root.eventEndDate.getTime())
-            ? root.eventEndDate <= new Date()
-            : root.eventDate < new Date()
+    readonly property bool isPast: UpcomingWindow.eventIsPast(
+        root.eventDate, root.eventEndDate, DateTime.clock.date)
     
     StyledRectangularShadow {
         target: cardBg
@@ -100,21 +100,21 @@ Item {
         RowLayout {
             id: cardContent
             anchors.fill: parent
-            anchors.margins: 12
-            anchors.leftMargin: 16
-            spacing: 12
+            anchors.margins: root.compactPresentation ? 8 : 12
+            anchors.leftMargin: root.compactPresentation ? 12 : 16
+            spacing: root.compactPresentation ? 8 : 12
             
             // Category / source icon
             Rectangle {
-                Layout.preferredWidth: 40
-                Layout.preferredHeight: 40
-                radius: 20
+                Layout.preferredWidth: root.compactPresentation ? 30 : 40
+                Layout.preferredHeight: root.compactPresentation ? 30 : 40
+                radius: width / 2
                 color: ColorUtils.transparentize(root.indicatorColor, 0.85)
                 
                 MaterialSymbol {
                     anchors.centerIn: parent
                     text: root.isExternal ? "cloud_sync" : Events.getCategoryIcon(root.event.category)
-                    iconSize: 20
+                    iconSize: root.compactPresentation ? 16 : 20
                     color: root.indicatorColor
                 }
             }

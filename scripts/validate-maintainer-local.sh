@@ -315,6 +315,7 @@ run_check 'Abyss hover scene geometry diagnostic regression' node scripts/test-a
 run_check 'Abyss frame activity diagnostic regression' node scripts/test-abyss-frame-activity-probe.mjs
 run_check 'Dashboard horizontal gesture and stable page order regression' node scripts/test-dashboard-page-policy.mjs
 run_check 'Weekly Planner civil dates, overlap, recurrence and DST regression' node scripts/test-weekly-planner-policy.mjs
+run_check 'Calendar popup three-day civil range and recurrence policy' node scripts/test-calendar-three-day-window.mjs
 run_check 'Agenda one-way task link identity and owned fields' node scripts/test-agenda-todo-policy.mjs
 run_check 'Screen Edge lock reservations and output packing' node scripts/test-abyss-module-locks.mjs
 run_check 'Screen Edge multi-selection transactions' node scripts/test-abyss-multi-selection.mjs

@@ -105,6 +105,7 @@ Item {
             fabSize: 36
             fabMargins: 10
             fabLeftAligned: true
+            compactCalendarWindow: true
         }
 
         Rectangle {
