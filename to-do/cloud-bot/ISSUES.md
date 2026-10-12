@@ -35,6 +35,28 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
 
 ## Current failures and owner reports
 
+- [ ] **UPD-I01 — Installed `inir update` setup parser failure (owner 2026-10-12):**
+  User's installed `~/.config/quickshell/inir/setup` fails near its
+  `-q|--quiet)` case arm at line 2915. The canonical `dev/setup`
+  puts this valid arm on another line (2894) and has a balanced
+  `case...esac` there: do **not** claim the installed file's exact
+  malformed predecessor was observed. Source protection on `dev`:
+  `scripts/inir` prefers a syntax-valid checkout (including
+  `.git` worktrees), refuses broken runtime copies with actionable
+  error (`84ca2fb8d`); `setup` resolves worktree checkouts
+  (`294509b21`); install stage preflights `bash -n setup`
+  **before** copying to the runtime (`a7a30a8ac`).
+  Regression fixture `scripts/test-setup-entrypoint-syntax-recovery.sh`
+  in `6d9e1dc20` covers valid checkout, corrupt installed setup
+  and refusal when no healthy candidate remains. **Open:** exact
+  installed-file lines 2895-2920, `bash -n` on owner host, native
+  self-update/recovery and owner success receipt. Updating the GitHub
+  repo alone cannot replace a broken local executable before it runs.
+  Use the valid Git checkout's `bash ./setup update` to refresh it;
+  do not mutate `stable` or assert the owner install was fixed.
+
+
+
 **Current Dashboard milestone — 2026-10-12:** composed field/slide capture
 PASS16cases/211samples/48PNG and original standalone QML producer PASS both
 Dashboard/Overview hosts, without changed numeric assertions or parent focus.
