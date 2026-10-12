@@ -204,6 +204,34 @@ Window {
    check(inline.plannerSelectedCount===1
        && options.length===5 && options.every(item=>item.enabled),
      "returning to a single day must re-enable all repeat options")
+   // Clicking any occurrence must restore the complete Event ID.
+   const firstStart=new Date(2024,11,31,9,15)
+   const secondStart=new Date(2025,0,2,9,15)
+   const firstEnd=new Date(firstStart.getTime()+3600000)
+   const secondEnd=new Date(secondStart.getTime()+3600000)
+   const originalGroup=[
+     {startDate:firstStart.toISOString(),endDate:firstEnd.toISOString()},
+     {startDate:secondStart.toISOString(),endDate:secondEnd.toISOString()}
+   ]
+   inline.loadEvent({
+     id:785,title:"Wake up Tuesday and Thursday",recurrence:"weekly",
+     allDay:false,category:"general",priority:"normal",reminderMinutes:15,
+     occurrences:originalGroup.map(slot=>({...slot,notified:false})),
+     repeatTemplate:originalGroup,repeatCycleStart:0,_editOccurrenceIndex:1
+   })
+   check(inline.editingEvent.id===785 && inline.isEditing,
+     "clicking occurrence did not open owning Event ID")
+   check(JSON.stringify(inline.plannerSelectedDateKeys)===
+       JSON.stringify(["2024-12-31","2025-01-02"]),
+     "calendar did not restore both Tuesday and Thursday dates")
+   check(inline.plannerSelectedCount===2 && inline.recurrence==="weekly"
+       && inline.canSelectRepeat("weekly") && !inline.canSelectRepeat("daily"),
+     "restored two-day weekly cadence was not eligible")
+   check(!inline.hasUnsavedChanges(),
+     "opening grouped Event ID marked an unchanged draft dirty")
+   inline.choosePlannerDay(new Date(2025,0,2,12),Qt.ControlModifier)
+   check(inline.plannerSelectedCount===1 && inline.isEditing,
+     "editing an Event ID cannot adjust the full date selection")
    inline.resetForm()
    inline.eventDate=slotDate
    inline.eventTime="09:15"
