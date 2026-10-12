@@ -29,12 +29,12 @@ Item {
         anchors { top: parent.top; left: parent.left; right: parent.right; margins: 24 }
         spacing: 16
         StyledText {
-            text: "Alis Companion is temporarily unavailable. Alis installs and updates it automatically; run ./setup update to repair the managed release."
+            text: Translation.tr("Companion unavailable. Run ./setup update, then Recheck Companion.")
             wrapMode: Text.Wrap
             Layout.fillWidth: true
         }
         DialogButton {
-            buttonText: "Recheck Companion"
+            buttonText: Translation.tr("Recheck Companion")
             onClicked: Hadanion.refresh()
         }
     }
