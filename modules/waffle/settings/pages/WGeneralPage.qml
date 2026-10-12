@@ -217,7 +217,7 @@ WSettingsPage {
             visible: CompositorService.isNiri
             label: Translation.tr("Auto-expand a single tiling window")
             icon: "auto"
-            description: Translation.tr("Automatically maximizes a single tiling window to fill the screen. When a second window appears, the first is restored to its normal width.")
+            description: Translation.tr("Maximize a lone tiled window; restore its size when another opens.")
             checked: Config.options?.compositor?.autoExpandSingleTilingWindow ?? false
             onCheckedChanged: Config.setNestedValue("compositor.autoExpandSingleTilingWindow", checked)
         }
