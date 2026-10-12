@@ -68,7 +68,12 @@ assert 'id:edgeChoice' in right and 'objectName:"abyssEditingEdgeDropdown"' in r
 assert 'onClicked:root.add(palette.currentValue)' in left
 assert 'onActivated:root.editingEdge=currentText' in right
 assert 'id:selection' not in editor and 'selectionRegion' not in editor
-assert left.count('objectName:"abyssCompactSelectedModuleActions"') == 1
+assert left.count('objectName:"abyssModuleHeaderActions"') == 1
+assert left.count('objectName:"abyssModuleRoundingAction"') == 1
+assert left.count('id:moduleRoundingRow') == 1
+assert left.count('id:moduleCustomSizeRow') == 1
+assert left.index('id: palette') < left.index('objectName:"abyssModulePositionLock"') < left.index('objectName:"abyssModuleJoinCorner"')
+assert left.index('objectName:"abyssModuleJoinCorner"') < left.index('id:alignmentChoice')
 assert left.count('id:alignmentChoice') == 1
 assert left.count('objectName:"abyssModulePositionLock"') == 1
 assert left.count('objectName:"abyssSelectionEnabled"') == 1
@@ -84,24 +89,33 @@ assert right.count('objectName:"abyssJoinNearbyModules"') == 1
 assert right.count('objectName:"abyssRoundZeroCorners"') == 1
 assert right.index('id:edgeChoice') < right.index('id:scaleModulesRow')
 assert right.index('id:edgeChoice') < right.index('EditorIconHint {')
-assert left.index('id: palette') < left.index('objectName:"abyssCompactSelectedModuleActions"')
-assert left.index('objectName:"abyssCompactSelectedModuleActions"') < left.index('id:selectedModuleControls')
+assert left.index('objectName:"abyssModuleHeaderActions"') < left.index('id:alignmentChoice') < left.index('id:selectedModuleControls')
 assert 'Layout.preferredHeight:64*Appearance.fontSizeScale' in editor
 assert 'Layout.preferredWidth:1*Appearance.fontSizeScale' in editor
 assert 'color:Qt.alpha(AbyssStyle.textColorMuted,.18)' in editor
 assert 'visible:editFineControls.columns===3' in editor
 assert editor.count('AbyssSlider {') == 6
-assert editor.count('Layout.maximumWidth:root.editorActionSize') == 17
+assert editor.count('Layout.maximumWidth:root.editorActionSize') == 18
+assert editor.count('EditorIconHint {') == 3
+assert 'id:edgeGapAndSizeRow' in right and 'id:edgeWidthRow' in right
+assert right.index('objectName:"abyssJoinNearbyModules"') < right.index('id:edgeGapAndSizeRow')
+assert right.index('objectName:"abyssRoundZeroCorners"') < right.index('id:scaleModulesRow')
+assert 'AbyssCheckBox {' not in right
+assert 'checkable:true' in right and 'onToggled:root.edgeRoundZeroCorners' in right
+assert 'Math.min(root.width-48,660*Appearance.fontSizeScale)' in editor
+assert 'Layout.preferredWidth:Math.max(78,(edgeEditorColumn.width-50*Appearance.fontSizeScale)/2)' in editor
+assert left.count('id:moduleRoundingRow') + left.count('id:moduleCustomSizeRow') == 2
+assert right.count('id:edgeGapAndSizeRow') + right.count('id:edgeWidthRow') + right.count('id:scaleModulesRow') == 3
 
 selected_columns=re.search(r"\bcolumns:\s*([^\n]+)",selected)
-assert selected_columns and selected_columns.group(1).strip()=="1", "module-only fields stack vertically"
+assert 'columns:1;rowSpacing:' in selected, "module appearance rows stack vertically"
 subprocess.run(["node","-e",r'''
 const assert=require('node:assert/strict'),vm=require('node:vm');
 for(const toolbarOnHorizontalEdge of [false,true])for(const fontSizeScale of [.7,1,1.5,2]) {
  for(const width of [0,250,400,460,599,649,650,700,900,1400,2200]) {
   const actual=vm.runInNewContext(process.argv[1],
       {root:{toolbarOnHorizontalEdge},width,Appearance:{fontSizeScale}});
-  const expected=toolbarOnHorizontalEdge && width>=650*fontSizeScale?3:1;
+  const expected=toolbarOnHorizontalEdge && width>=570*fontSizeScale?3:1;
   assert.equal(actual,expected);
  }
 }
