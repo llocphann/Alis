@@ -1795,6 +1795,20 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   reproduced false/false for `"critical"`; the focused regression covers
   grouped/popup Critical, normal, unrelated and missing urgency values
   and runs in CI. Native/owner visual verification remains OPEN.
+  **Cloud source repair 2026-10-12 — swipe dismissal identities:** the
+  shared NotificationGroup's slide animation previously read the mutable
+  `root.notifications` at completion and queued callbacks that retained
+  potentially destroyed QML wrappers. A new notification arriving during
+  the exit animation could be dismissed instead of the originally swiped
+  group. NotificationItem similarly dereferenced its recycled
+  `notificationObject` on animation completion. Both now capture stable,
+  nonnegative numeric IDs on gesture start, guard duplicate gestures, and
+  discard only still-live matching IDs at completion; queued group callbacks
+  retain primitive IDs, not QML objects. Source-executed regression simulates
+  changing delegates, arrival during dismissal, removed IDs and replayed
+  gestures; CI includes this bounded suite. This is a source-level
+  correctness fix, not a demonstrated explanation of owner popup lag.
+  Native Quickshell/Niri gesture, focus, and owner acceptance remain OPEN.
 
 - [ ] **HELPER-I01 — Hadalird helper/package state and Polkit focus:** extraction is
   source/package-qualified; owner reported helper status ready. Verify compact

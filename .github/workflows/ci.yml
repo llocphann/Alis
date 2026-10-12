@@ -34,6 +34,7 @@ jobs:
           node scripts/test-notification-hover-hold.mjs
           node scripts/test-notification-dock-badge-policy.mjs
           node scripts/test-notification-critical-urgency-policy.mjs
+          node scripts/test-notification-swipe-dismiss.mjs
 
       - name: Run canonical local validator
         shell: bash

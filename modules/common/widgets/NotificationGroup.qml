@@ -47,6 +47,15 @@ MouseArea { // Notification group area
     readonly property QtObject _contentAnim: Appearance.animation.elementMoveFast
 
     function destroyWithAnimation(left = false) {
+        // Freeze the *identities* at gesture time, not the live group model.
+        // Otherwise a notification arriving during the slide could be
+        // discarded in place of one the user actually swiped.
+        if (destroyAnimation.running) return
+        const ids = (root.notifications ?? [])
+            .map(notif => notif?.notificationId)
+            .filter(id => Number.isInteger(id) && id >= 0)
+        if (ids.length === 0) return
+        destroyAnimation.dismissIds = Array.from(new Set(ids))
         background.anchors.leftMargin = root.xOffset; // Break binding, capture current position
         background.implicitHeight = background.implicitHeight; // Freeze height during dismiss
         root.implicitHeight = root.implicitHeight; // Freeze delegate height in ListView
@@ -64,6 +73,7 @@ MouseArea { // Notification group area
     SequentialAnimation { // Drag finish animation
         id: destroyAnimation
         property bool left: true
+        property var dismissIds: []
         running: false
 
         NumberAnimation {
@@ -75,11 +85,16 @@ MouseArea { // Notification group area
             easing.bezierCurve: Appearance.animation?.elementMoveFast?.bezierCurve ?? [0.2, 0, 0, 1, 1, 1]
         }
         onFinished: () => {
-            root.notifications.forEach((notif) => {
+            const ids = destroyAnimation.dismissIds
+            destroyAnimation.dismissIds = []
+            for (const id of ids) {
+                // Only primitive numeric IDs cross the queued callback.
+                // The original QML wrapper can be destroyed while waiting.
                 Qt.callLater(() => {
-                    Notifications.discardNotification(notif.notificationId);
-                });
-            });
+                    if (Notifications.list.some(notif => notif?.notificationId === id))
+                        Notifications.discardNotification(id)
+                })
+            }
         }
     }
 

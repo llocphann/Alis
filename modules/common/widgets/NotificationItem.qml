@@ -58,6 +58,13 @@ Item { // Notification item area
     implicitHeight: background.implicitHeight
 
     function destroyWithAnimation(left = false) {
+        // An updating ListView may recycle this delegate before its exit
+        // animation completes. Preserve the swiped ID, not modelData's
+        // mutable QML wrapper reference.
+        if (destroyAnimation.running) return
+        const id = root.notificationObject?.notificationId
+        if (!Number.isInteger(id) || id < 0) return
+        destroyAnimation.dismissId = id
         background.anchors.leftMargin = root.xOffset; // Break binding, capture current position
         background.implicitHeight = background.implicitHeight; // Freeze height so it doesn't resize during dismiss
         root.implicitHeight = root.implicitHeight; // Freeze delegate height in ListView
@@ -75,6 +82,7 @@ Item { // Notification item area
     SequentialAnimation { // Drag finish animation
         id: destroyAnimation
         property bool left: true
+        property int dismissId: -1
         running: false
 
         NumberAnimation {
@@ -86,7 +94,10 @@ Item { // Notification item area
             easing.bezierCurve: Appearance.animation?.elementMoveFast?.bezierCurve ?? [0.2, 0, 0, 1, 1, 1]
         }
         onFinished: () => {
-            Notifications.discardNotification(notificationObject.notificationId);
+            const id = destroyAnimation.dismissId
+            destroyAnimation.dismissId = -1
+            if (id >= 0 && Notifications.list.some(notif => notif?.notificationId === id))
+                Notifications.discardNotification(id)
         }
     }
 
