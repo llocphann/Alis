@@ -33,6 +33,25 @@ assert safe["outputs"][0]["measurements"]["toastCount"] == 2
 assert safe["outputs"][0]["measurements"]["toastDesiredHeight"] == 140
 assert len(safe["outputs"][0]["center"]) == 1
 assert "Display X" not in str(safe) and "private" not in str(safe)
+def state(record=False, count=0, center=False):
+    return {"outputId":"screen-hash",
+            "toast":{"recording":record},
+            "measurements":{"toastCount":count},
+            "center":[{"active":center}] if center else []}
+def phase(before, after):
+    return ({"snapshots":[{"outputs":[before]}]},
+            {"snapshots":[{"outputs":[after]}]})
+for label, a, b, expected in [
+    ("record-start", state(), state(record=True), True),
+    ("record-start", state(record=True), state(record=True), False),
+    ("record-stop", state(record=True), state(count=1), True),
+    ("record-stop", state(), state(count=1), False),
+    ("record-stop", state(record=True), state(count=0), False),
+    ("edge-hover", state(), state(center=True), True),
+    ("edge-hover", state(center=True), state(center=True), False),
+    ("edge-hover", state(), state(count=1), False)]:
+    before,after=phase(a,b)
+    assert module.phase_observed(label,before,after) is expected,label
 frames=module.sanitize_frames([{"output":"Display X","count":20,"p95":35,
  "slowEvents":[{"timestampMs":1,"intervalMs":41,
                 "popupMotion":[{"kind":"privateContent"}]}]}])

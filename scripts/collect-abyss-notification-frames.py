@@ -181,15 +181,32 @@ def sample_phase(config, seconds, interval, label):
                 error = (error or "") + " " + type(exc).__name__ + " during stopFrames"
     if error:
         raise RuntimeError(error)
-    observed = any(
-        out["toast"]["recording"] if label == "record-start"
-        else (out["measurements"]["toastCount"] or 0) > 0
-        if label == "record-stop"
-        else bool(out["center"]) or out["toast"]["toastOpen"]
-        for sample in captures for out in sample["outputs"])
     return {"seconds": round(time.monotonic() - start, 3),
-            "snapshots": captures[:40], "frames": frames,
-            "eventObserved": bool(observed)}
+            "snapshots": captures[:40], "frames": frames}
+
+def phase_observed(phase, baseline, event):
+    """Check a *transition on one output*, never an unrelated static popup."""
+    last = baseline.get("snapshots", [])[-1:]  # Resting state near event start.
+    if not last or not event.get("snapshots"):
+        return False
+    before = {o["outputId"]: o for o in last[0]["outputs"]}
+    count = lambda o: o["measurements"].get("toastCount") or 0
+    for sample in event["snapshots"]:
+        for out in sample["outputs"]:
+            prior = before.get(out["outputId"])
+            if prior is None:
+                continue
+            if phase == "record-start" and (not prior["toast"]["recording"]
+                    and out["toast"]["recording"]):
+                return True
+            if phase == "record-stop" and (prior["toast"]["recording"]
+                    and not out["toast"]["recording"] and count(out) > 0):
+                return True
+            if phase == "edge-hover" and (
+                    not any(slot["active"] for slot in prior["center"])
+                    and any(slot["active"] for slot in out["center"])):
+                return True
+    return False
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -222,7 +239,13 @@ def main():
               " on your normal UI within the next " + str(args.seconds) + " seconds",
               flush=True)
         receipt["event"] = sample_phase(args.config, args.seconds, args.interval, args.phase)
-        receipt["status"] = "CAPTURED" if receipt["event"]["eventObserved"] else "EVENT_NOT_OBSERVED"
+        observed = phase_observed(args.phase, receipt["baseline"], receipt["event"])
+        has_frames = any((f["metrics"].get("count") or 0) > 0
+                         for f in receipt["event"]["frames"])
+        receipt["event"]["eventObserved"] = observed
+        receipt["status"] = (
+            "CAPTURED" if observed and has_frames else
+            "NO_FRAME_SAMPLES" if observed else "EVENT_NOT_OBSERVED")
     except (ValueError, RuntimeError, subprocess.SubprocessError, OSError) as exc:
         receipt["status"] = "BLOCKED"
         receipt["failureType"] = type(exc).__name__
