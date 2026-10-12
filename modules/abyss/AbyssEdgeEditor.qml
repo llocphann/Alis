@@ -1053,25 +1053,25 @@ AbyssSlider {
                                                 onMoved:root.moduleScale=value
                             StyledToolTip { text:"Overall module scale" }
                                             }
+                    
+                        // Keep both Edge/module joining toggles next to their scale.
+                        AbyssButton {
+                                                    objectName:"abyssJoinNearbyModules"
+                                                    text:"Join nearby modules";glyph:"join_inner"
+                                                    compact:true;editorSquare:true
+                                                    description:"Join nearby modules: connect neighboring module surfaces on this Edge. Distant groups keep their own bulges and module sizes remain unchanged."
+                                                    checkable:true
+                                                    checked:root.edgeJoinModules[root.editingEdge]===true
+                                                    enabled:root.edgeWidthAffectsModules[root.editingEdge]===false
+                                                    Layout.preferredWidth:root.editorActionSize
+                                                    Layout.preferredHeight:root.editorActionSize
+                                                    Layout.maximumWidth:root.editorActionSize
+                                                    Layout.maximumHeight:root.editorActionSize
+                                                    onToggled:root.edgeJoinModules=Object.assign({},root.edgeJoinModules,{[root.editingEdge]:checked})
+                                                }
                     }
 
-                    RowLayout {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
-                        AbyssButton {
-                            objectName:"abyssJoinNearbyModules"
-                            text:"Join nearby modules";glyph:"join_inner"
-                            compact:true;editorSquare:true
-                            description:"Join nearby modules: connect neighboring module surfaces on this Edge. Distant groups keep their own bulges and module sizes remain unchanged."
-                            checkable:true
-                            checked:root.edgeJoinModules[root.editingEdge]===true
-                            enabled:root.edgeWidthAffectsModules[root.editingEdge]===false
-                            Layout.preferredWidth:root.editorActionSize
-                            Layout.preferredHeight:root.editorActionSize
-                            Layout.maximumWidth:root.editorActionSize
-                            Layout.maximumHeight:root.editorActionSize
-                            onToggled:root.edgeJoinModules=Object.assign({},root.edgeJoinModules,{[root.editingEdge]:checked})
-                        }
-                    }
+                    
                     RowLayout {
                         Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
                         EditorIconHint {
@@ -1102,6 +1102,91 @@ AbyssSlider {
                                                 enabled:root.edgeWidthAffectsModules[root.editingEdge]===false
                                                     && (root.edgeModuleRadii[root.editingEdge] ?? -1)>=0
                                                 onClicked:root.edgeModuleRadii=Object.assign({},root.edgeModuleRadii,{[root.editingEdge]:-1})
+                                            }
+                    }
+                
+                    // Selected module and quick actions share the last grid cell.
+                    RowLayout {
+                        objectName:"abyssCompactSelectedModuleActions"
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
+                        StyledComboBox {
+                                                    baseHeight:28*Appearance.fontSizeScale
+                                                    Layout.preferredWidth:120*Appearance.fontSizeScale
+                                                    Layout.maximumWidth:120*Appearance.fontSizeScale
+                                                Layout.fillWidth:true;Layout.minimumWidth:0;
+                                            
+                                                id:selection
+                                                objectName:"abyssEditorSelection"
+                                            
+                                                model:root.draft.map(p => ({
+                                                    label:Placement.label(p.kind)
+                                                        +(root.multiSelect && root.targetIds.includes(p.id) ? " · Selected" : "")
+                                                        +(p.locked ? " · Locked" : "")
+                                                        +(p.enabled ? "" : " (disabled)"),
+                                                    id:p.id}))
+                                                textRole:"label";valueRole:"id"
+                                                currentIndex:root.draft.findIndex(
+                                                    p => p.id===root.selectedId)
+                                                displayText:root.selected
+                                                    ? Placement.label(root.selected.kind)
+                                                    : "Select a module"
+                                                onActivated:root.select(currentValue)
+                                            
+                                            
+                                            
+                                            
+                                            }
+                        RowLayout {
+                                                Layout.fillWidth:false;Layout.minimumWidth:0;spacing:2
+                                            AbyssButton {
+                                                Layout.maximumHeight:root.editorActionSize
+                                                Layout.maximumWidth:root.editorActionSize
+                                                Layout.preferredWidth:root.editorActionSize
+                                                editorSquare:true
+                                                Layout.fillWidth:false;Layout.minimumWidth:0
+                                            
+                                                objectName:"abyssModulePositionLock"
+                                                text:root.allTargetsLocked ? "Unlock position" : "Lock position"
+                                                glyph:root.allTargetsLocked ? "lock_open" : "lock"
+                                                compact:true
+                                                description:text
+                                                enabled:root.targets.length>0
+                                                Keys.onPressed:event=>{if(event.key===Qt.Key_Return || event.key===Qt.Key_Enter){root.lockSelection();event.accepted=true}}
+                                                onClicked:root.lockSelection()
+                                            }
+                                            AbyssButton {
+                                                Layout.maximumHeight:root.editorActionSize
+                                                Layout.maximumWidth:root.editorActionSize
+                                                Layout.preferredWidth:root.editorActionSize
+                                                editorSquare:true
+                                                Layout.fillWidth:false;Layout.minimumWidth:0
+                                            
+                                                objectName:"abyssSelectionEnabled"
+                                                text:root.allTargetsDisabled
+                                                    ? "Enable" : "Disable"
+                                                glyph:root.allTargetsDisabled
+                                                    ? "visibility" : "visibility_off"
+                                                compact:true
+                                                description:text
+                                                enabled:root.targets.length>0
+                                            
+                                                onClicked:root.batch("enabled",root.allTargetsDisabled)
+                                            }
+                                            AbyssButton {
+                                                Layout.maximumHeight:root.editorActionSize
+                                                Layout.maximumWidth:root.editorActionSize
+                                                Layout.preferredWidth:root.editorActionSize
+                                                editorSquare:true
+                                                Layout.fillWidth:false;Layout.minimumWidth:0
+                                            
+                                                text:"Remove";glyph:"delete"
+                                                objectName:"abyssSelectionRemove"
+                                                compact:true
+                                                description:root.multiSelect ? "Remove selected modules" : "Remove selected module"
+                                                enabled:root.targets.length>0
+                                            
+                                                onClicked:root.batch("remove",true)
+                                            }
                                             }
                     }
                 }
@@ -1141,85 +1226,8 @@ AbyssSlider {
                     columns:!root.toolbarOnHorizontalEdge || width<440*Appearance.fontSizeScale
                         ? 1 : width>=700*Appearance.fontSizeScale ? 3 : 2
                     rowSpacing:3;columnSpacing:4
-                    StyledComboBox {
-                            baseHeight:28*Appearance.fontSizeScale
-                            Layout.preferredWidth:142*Appearance.fontSizeScale
-                            Layout.maximumWidth:142*Appearance.fontSizeScale
-                        Layout.fillWidth:true;Layout.minimumWidth:0;
-                    
-                        id:selection
-                        objectName:"abyssEditorSelection"
-                    
-                        model:root.draft.map(p => ({
-                            label:Placement.label(p.kind)
-                                +(root.multiSelect && root.targetIds.includes(p.id) ? " · Selected" : "")
-                                +(p.locked ? " · Locked" : "")
-                                +(p.enabled ? "" : " (disabled)"),
-                            id:p.id}))
-                        textRole:"label";valueRole:"id"
-                        currentIndex:root.draft.findIndex(
-                            p => p.id===root.selectedId)
-                        displayText:root.selected
-                            ? Placement.label(root.selected.kind)
-                            : "Select a module"
-                        onActivated:root.select(currentValue)
                     
                     
-                    
-                    
-                    }
-                    RowLayout {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
-                    AbyssButton {
-                        Layout.maximumHeight:root.editorActionSize
-                        Layout.maximumWidth:root.editorActionSize
-                        Layout.preferredWidth:root.editorActionSize
-                        editorSquare:true
-                        Layout.fillWidth:false;Layout.minimumWidth:0
-                    
-                        objectName:"abyssModulePositionLock"
-                        text:root.allTargetsLocked ? "Unlock position" : "Lock position"
-                        glyph:root.allTargetsLocked ? "lock_open" : "lock"
-                        compact:true
-                        description:text
-                        enabled:root.targets.length>0
-                        Keys.onPressed:event=>{if(event.key===Qt.Key_Return || event.key===Qt.Key_Enter){root.lockSelection();event.accepted=true}}
-                        onClicked:root.lockSelection()
-                    }
-                    AbyssButton {
-                        Layout.maximumHeight:root.editorActionSize
-                        Layout.maximumWidth:root.editorActionSize
-                        Layout.preferredWidth:root.editorActionSize
-                        editorSquare:true
-                        Layout.fillWidth:false;Layout.minimumWidth:0
-                    
-                        objectName:"abyssSelectionEnabled"
-                        text:root.allTargetsDisabled
-                            ? "Enable" : "Disable"
-                        glyph:root.allTargetsDisabled
-                            ? "visibility" : "visibility_off"
-                        compact:true
-                        description:text
-                        enabled:root.targets.length>0
-                    
-                        onClicked:root.batch("enabled",root.allTargetsDisabled)
-                    }
-                    AbyssButton {
-                        Layout.maximumHeight:root.editorActionSize
-                        Layout.maximumWidth:root.editorActionSize
-                        Layout.preferredWidth:root.editorActionSize
-                        editorSquare:true
-                        Layout.fillWidth:false;Layout.minimumWidth:0
-                    
-                        text:"Remove";glyph:"delete"
-                        objectName:"abyssSelectionRemove"
-                        compact:true
-                        description:root.multiSelect ? "Remove selected modules" : "Remove selected module"
-                        enabled:root.targets.length>0
-                    
-                        onClicked:root.batch("remove",true)
-                    }
-                    }
                     StyledComboBox {
                             baseHeight:28*Appearance.fontSizeScale
                             Layout.preferredWidth:126*Appearance.fontSizeScale
