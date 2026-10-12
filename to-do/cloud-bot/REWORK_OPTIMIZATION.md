@@ -1817,6 +1817,19 @@ run privileged installation just because manual buttons are retired.
   tooltip/selected-name acceptance. No wallpaper application bug was
   claimed repaired.
 
+  **Existing preview ownership (read-only verification):**
+  `WallpaperLauncherList.previewCurrent` debounces highlight (180 ms
+  static, 500 ms animated) and calls `Wallpapers.previewWallpaper`.
+  The service requests `MaterialThemeLoader.previewWallpaperColors` and
+  awww preview. `GlobalStates.onWallpaperLauncherOpenChanged` calls
+  `Wallpapers.cancelWallpaperPreview` on close, while Apply uses
+  `clearWallpaperPreview` before committing the chosen full path.
+  `scripts/test-wallpaper-color-preview-runtime.py` already includes
+  palette/cancel/latest-generation expectations. Source presence is not
+  proof of the owner's visual acceptance or no render glitches. Do not
+  duplicate this path or mark preview verified without exact-source
+  native tests; remaining WALL-R02 acceptance stays open.
+
 - [ ] **WALL-R01 — Rename iNiR Melt transition to Liquid and restore its effect safely — owner request 2026-10-11:**
   [Owner: Alis dev; Rework/transition identity and quality] Rename the
   **user-facing wallpaper transition** currently labeled
