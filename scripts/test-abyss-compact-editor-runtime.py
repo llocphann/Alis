@@ -119,6 +119,31 @@ ShellRoot {
      }
      check(outputCheckbox.checked===editor.outputOnly,
          "scope checkbox differs from shared output value")
+     // Two grouped columns begin with their own text-only dropdowns.
+     // The short dividing line only appears when the panel has room.
+     const modulePicker=control("abyssModuleDropdown")
+     const edgePicker=control("abyssEditingEdgeDropdown")
+     const grouped=item("abyssEditorFineControls")
+     const divider=item("abyssEditorColumnDivider")
+     const moduleColumn=item("abyssEditorModuleColumn")
+     const edgeColumn=item("abyssEditorEdgeColumn")
+     check(modulePicker.visible && edgePicker.visible, "missing Module/Editing Edge dropdown")
+     const inScroll=(item)=>item.mapToItem(scroll.contentItem,0,0)
+     if(grouped.columns===3) {
+      const left=inScroll(modulePicker),right=inScroll(edgePicker)
+      check(left.x<right.x && Math.abs(left.y-right.y)<1.5,
+          "Module and Editing Edge dropdowns are not aligned as column headers")
+      const middle=inScroll(divider)
+      check(divider.visible && divider.width<=2*scale
+          && divider.height<=70*scale,"divider must remain narrow, short and visible")
+      check(middle.x>left.x && middle.x<right.x,
+          "divider is not between the two columns")
+     } else {
+      check(grouped.columns===1 && !divider.visible,
+          "narrow side editor should stack columns and hide divider")
+      check(inScroll(edgeColumn).y>=inScroll(moduleColumn).y+moduleColumn.height-1,
+          "stacked edge controls should follow module controls")
+     }
      const layout={span:body.span,depth:body.depth,area:body.span*body.depth,height:scroll.contentHeight}
      frame(n===0||n===2?"layout-"+n+"-"+edge:null)
      click("abyssModulePositionLock");check(editor.allTargetsLocked,"quick lock did not apply")
