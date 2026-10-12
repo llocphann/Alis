@@ -114,7 +114,7 @@ assert 'readonly property real editorActionSize: 30 * Appearance.fontSizeScale' 
 assert 'readonly property real editorSliderWidth: 158 * Appearance.fontSizeScale' in editor
 assert editor.count('editorCompact:true') == 6
 assert editor.count('Layout.preferredWidth:20*Appearance.fontSizeScale') == 3
-assert editor.count('spacing:2') >= 10
+assert editor.count('spacing:2') >= 9, 'merging rows should not add fake spacing'
 assert 'root.editorSquare ? 17 * Appearance.fontSizeScale' in button
 assert 'objectName:"abyssButtonCenteredGlyph"' in button
 assert 'rightPadding:editorCompact ? 46*Appearance.fontSizeScale : 52' in (root / "modules/abyss/looks/AbyssSlider.qml").read_text()
