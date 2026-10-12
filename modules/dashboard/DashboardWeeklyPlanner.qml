@@ -284,7 +284,7 @@ Item {
                                 colBackground:Qt.alpha(modelData.event.color || Appearance.colors.colPrimary,.18)
                                 Accessible.name:modelData.event.title+(modelData.source==="external"?" · Read-only":"")
                                 contentItem:StyledText {text:allDayButton.modelData.event.title;color:root.ink;elide:Text.ElideRight;font.pixelSize:Appearance.font.pixelSize.smallest}
-                                onClicked:if(modelData.source==="local")root.requestEventsDialog(modelData.event)
+                                onClicked:root.editOccurrence(modelData)
                                 StyledToolTip {text:parent.Accessible.name+(parent.modelData.source==="local" && !parent.modelData.virtual && Todo.agendaStatus(parent.modelData.event)?" · "+Todo.agendaStatus(parent.modelData.event):"")}
                             }
                         }
@@ -319,10 +319,27 @@ Item {
                                 id:timedButton
                                 required property var modelData
                                 objectName:"plannerTimedEvent"
+                                readonly property bool canReschedule: modelData.source==="local"
+                                    && !modelData.virtual && !modelData.event.allDay
+                                    && (modelData.event.recurrence || "none")==="none"
+                                property string gestureMode: ""
+                                property real dragX: 0
+                                property real dragY: 0
+                                readonly property real baseHeight: Math.max(18,
+                                    (modelData.end-modelData.start)/60*root.hourHeight-2)
                                 x:4+modelData.lane*dayColumn.width/modelData.lanes
+                                    +(gestureMode==="move"?dragX:0)
                                 y:root.gridTop+modelData.start/60*root.hourHeight
+                                    +(gestureMode==="bottom"?0:dragY)
                                 width:Math.max(1,dayColumn.width/modelData.lanes-8)
-                                height:Math.max(18,(modelData.end-modelData.start)/60*root.hourHeight-2)
+                                height:Math.max(18,baseHeight
+                                    +(gestureMode==="top"?-dragY:gestureMode==="bottom"?dragY:0))
+                                function finishGesture(mode) {
+                                    if (gestureMode!==mode) return
+                                    const dx=dragX,dy=dragY
+                                    gestureMode="";dragX=0;dragY=0
+                                    root.commitTimedGesture(modelData,mode,dx,dy)
+                                }
                                 buttonRadius:7
                                 colBackground:Qt.alpha(modelData.event.color || Appearance.colors.colPrimary,.2)
                                 colBackgroundHover:Qt.alpha(modelData.event.color || Appearance.colors.colPrimary,.32)
@@ -333,7 +350,50 @@ Item {
                                     StyledText {width:parent.width;visible:text.length>0;text:timedButton.modelData.source==="local" && !timedButton.modelData.virtual ? Translation.tr(Todo.agendaStatus(timedButton.modelData.event)) : "";color:root.mutedInk;font.pixelSize:Appearance.font.pixelSize.smallest;elide:Text.ElideRight}
                                     StyledText {width:parent.width;text:Qt.formatTime(timedButton.modelData.startDate,"hh:mm")+" – "+Qt.formatTime(timedButton.modelData.endDate,"hh:mm");color:root.mutedInk;font.pixelSize:Appearance.font.pixelSize.smallest;elide:Text.ElideRight}
                                 }
-                                onClicked:if(modelData.source==="local")root.requestEventsDialog(modelData.event)
+                                onClicked:root.editOccurrence(modelData)
+                                DragHandler {
+                                    target:null
+                                    enabled:timedButton.canReschedule
+                                    grabPermissions:PointerHandler.CanTakeOverFromItems
+                                    onTranslationChanged:if(active) {
+                                        timedButton.gestureMode="move"
+                                        timedButton.dragX=translation.x
+                                        timedButton.dragY=translation.y
+                                    }
+                                    onActiveChanged:if(!active)timedButton.finishGesture("move")
+                                }
+                                Rectangle {
+                                    objectName:"plannerResizeStart"
+                                    visible:timedButton.canReschedule
+                                    x:0;y:0;width:parent.width;height:7;z:3
+                                    radius:3;color:Qt.alpha(root.ink,.24)
+                                    HoverHandler {cursorShape:Qt.SizeVerCursor}
+                                    DragHandler {
+                                        target:null;xAxis.enabled:false
+                                        grabPermissions:PointerHandler.CanTakeOverFromItems
+                                        onTranslationChanged:if(active) {
+                                            timedButton.gestureMode="top"
+                                            timedButton.dragY=translation.y
+                                        }
+                                        onActiveChanged:if(!active)timedButton.finishGesture("top")
+                                    }
+                                }
+                                Rectangle {
+                                    objectName:"plannerResizeEnd"
+                                    visible:timedButton.canReschedule
+                                    x:0;y:parent.height-7;width:parent.width;height:7;z:3
+                                    radius:3;color:Qt.alpha(root.ink,.24)
+                                    HoverHandler {cursorShape:Qt.SizeVerCursor}
+                                    DragHandler {
+                                        target:null;xAxis.enabled:false
+                                        grabPermissions:PointerHandler.CanTakeOverFromItems
+                                        onTranslationChanged:if(active) {
+                                            timedButton.gestureMode="bottom"
+                                            timedButton.dragY=translation.y
+                                        }
+                                        onActiveChanged:if(!active)timedButton.finishGesture("bottom")
+                                    }
+                                }
                                 StyledToolTip {text:parent.Accessible.name+(parent.modelData.virtual?" · Recurring: edits apply to the saved event":parent.modelData.source==="local" && Todo.agendaStatus(parent.modelData.event)?" · "+Todo.agendaStatus(parent.modelData.event):"")}
                             }
                         }
