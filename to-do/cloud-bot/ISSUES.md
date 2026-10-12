@@ -1764,6 +1764,15 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   includes a legacy Mark-all-read case. CI runs both fast source suites
   before the canonical validator. Native run and owner visual acceptance
   remain pending; NOTIF-I03 stays OPEN.
+  **Follow-up hover-hold guard 2026-10-12:** the shared
+  `NotificationTimeoutHold.sync` threw `TypeError` when an active
+  notification group contained a null/deleted QML wrapper before its
+  cached group was refreshed. Reproduced with a source-executed null
+  entry before editing. Sync now ignores invalid IDs and releases stale
+  holds; no expiry duration, layout or ownership change. A bounded
+  null/duplicate/teardown/reentry regression runs in CI. This proves a
+  source bug, not a confirmed cause of the owner's lag or stuck popups.
+  Exact-SHA native Niri and owner acceptance remain OPEN.
 
 - [ ] **HELPER-I01 — Hadalird helper/package state and Polkit focus:** extraction is
   source/package-qualified; owner reported helper status ready. Verify compact

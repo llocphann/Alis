@@ -11,8 +11,12 @@ Scope {
     property bool active: false
     property var heldIds: []
     function sync(): void {
+        // A debounced popup group can briefly retain deleted QML wrappers.
+        // Discard invalid entries so the previous hover holds still release.
         const next = active
-            ? Array.from(new Set(notifications.map(notif => notif.notificationId))) : []
+            ? Array.from(new Set((notifications ?? [])
+                .map(notif => notif?.notificationId)
+                .filter(id => typeof id === "number" && Number.isFinite(id)))) : []
         heldIds.forEach(id => {
             if (!next.includes(id)) Notifications.resumeTimeout(id, root)
         })
