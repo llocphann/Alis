@@ -395,7 +395,7 @@
   "Automatically checks the iNiR git repository for new versions and shows a notification in the bar.": "Automatically checks the iNiR git repository for new versions and shows a notification in the bar.",
   "Automatically enable Game Mode when apps go fullscreen": "Automatically enable Game Mode when apps go fullscreen",
   "Automatically hide the bar": "Automatically hide the bar",
-  "Automatically maximizes a single tiling window to fill the screen. When a second window appears, the first is restored to its normal width.": "Automatically maximizes a single tiling window to fill the screen. When a second window appears, the first is restored to its normal width.",
+  "Maximize a lone tiled window; restore its size when another opens.": "Maximize a lone tiled window; restore its size when another opens.",
   "Automatically reduced if the clip needs more video budget.": "Automatically reduced if the clip needs more video budget.",
   "Automatically reduced when video needs the budget": "Automatically reduced when video needs the budget",
   "Automatically suppress reload toasts when Game Mode is active": "Automatically suppress reload toasts when Game Mode is active",
