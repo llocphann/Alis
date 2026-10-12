@@ -1,5 +1,10 @@
 # New features
 
+- [ ] **DASH-F04 — Weekly Planner drag and resize local timed events (owner 2026-10-12):** Vertical drag changes start time without changing duration, horizontal drag changes civil date, and top/bottom handles independently resize start/end (15-minute snap). The event must remain the same canonical ID, including Todo linkage. Disable gestures for external/read-only, recurrence-virtual, all-day events, and invalid no-op ranges. Only persist once when gesture ends, not on every pointer frame. Test pointer vs Flickable, crowded lanes, midnight/DST, 4 edge/scale modes, undo/cancel/focus, exact-SHA native and owner acceptance. **Immediate explicit owner priority; OPEN.**
+
+- [ ] **AGENDA-F02 — Smart same-name multi-date Events (owner 2026-10-12):** One canonical local Event can contain separate date/time occurrences, including multiple dates and differing durations. When creating another event with the same normalized title, group it only if the remaining metadata and recurrence policy are compatible; keep incompatible same-name events separate rather than losing meaning. Preserve existing event ID, Todo link, old files, imported-read-only data, notification/reminder state per occurrence and precise editing of an occurrence. Do not silently rewrite or merge historical stored duplicate rows on load. All Calendar/day/month/Weekly Planner/upcoming projections must expose the correct dates. Owner/native, persistence, edit/delete and exact-SHA validation OPEN. **Immediate explicit owner priority.**
+
+
 **Quota checkpoint — 2026-10-12 18:08 ICT:** exact five-hour remaining
 **2%** triggered stop of all owned product/test processes. Weekly remaining
 7% is not the trigger. Source/cache `458ad7197` and evidence `484427acf`
