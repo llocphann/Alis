@@ -43,23 +43,17 @@ Singleton {
     function getDurableTodoUnlinks() {
         return root._durableSnapshotJson.length ? (JSON.parse(root._durableSnapshotJson).todoUnlinks || []) : []
     }
-    function _queueTodoUnlink(event,deleteTask) {
-        const link=event?.todoLink
-        if(!AgendaTodoPolicy.validLink(link) || !link.provider)return
-        const existing=root.todoUnlinks.find(value=>value.key===link.key && value.provider===link.provider)
-        if(existing) {
-            if(deleteTask && !existing.deleteTask)root.todoUnlinks=root.todoUnlinks.map(value=>value===existing?Object.assign({},value,{deleteTask:true}):value)
-        } else root.todoUnlinks=root.todoUnlinks.concat([Object.assign({},link,{eventId:event.id,deleteTask:deleteTask===true})])
-    }
+    // Legacy link metadata and pending operations are retained on disk
+    // verbatim for backward compatibility. Agenda edits/deletions never
+    // create new Todo operations and never modify independent tasks.
+    function _queueTodoUnlink(event,deleteTask) {}
     function finishTodoUnlink(key,provider) {
         const next=root.todoUnlinks.filter(value=>value.key!==key || value.provider!==provider)
         if(next.length===root.todoUnlinks.length)return false
         root.todoUnlinks=next;root.saveToFile();return true
     }
-    function _notifyAgendaLinks() {
-        if(root.getDurableEvents().some(event=>AgendaTodoPolicy.validLink(event.todoLink) && event.todoLink.state!=="detached") || root.getDurableTodoUnlinks().some(link=>AgendaTodoPolicy.validLink(link) && link.provider))
-            Qt.callLater(()=>Todo._scheduleAgenda())
-    }
+    // Retired automatic Agenda → Todo synchronization.
+    function _notifyAgendaLinks() {}
 
     function _reloadFailedWriteCache(): void {
         if (root._reloadAfterSaveFailure)
@@ -316,7 +310,7 @@ Singleton {
                 }
             }
             // The explicit group repeats as a unit, retaining its single
-            // Agenda ID, Todo link, original template and occurrence history.
+            // Event ID, original template and occurrence history.
             // Wait for every selected day to fire before creating the next
             // complete calendar cycle; preserve existing single-day behavior.
             if (Array.isArray(event.repeatTemplate) && event.repeatTemplate.length>1
@@ -414,7 +408,7 @@ Singleton {
 
     function addEvent(title, description, dateTime, category, priority, reminderMinutes, recurrence, endDate, allDay, occurrenceRanges) {
         if (!root.ready) return null
-        // A selected date group is one Agenda with one ID and Todo link,
+        // A selected date group is one independent Agenda Event ID,
         // whether one-time or repeating as a calendar-cycle template.
         const supplied=Array.isArray(occurrenceRanges) ? occurrenceRanges : []
         if (supplied.length>512) return null
@@ -476,7 +470,7 @@ Singleton {
             notified: false,
             reminderNotified: false,
             createdAt: new Date().toISOString(),
-            todoLink: AgendaTodoPolicy.newLink(root.nextId - 1, Date.now(), Math.random().toString(36).slice(2, 14))
+            // Independent Agenda: no generated Todo link or task
         }
         
         if (bulk) {
@@ -495,6 +489,72 @@ Singleton {
         root.eventAdded(event)
         root.saveToFile()
         return event
+    }
+
+    // Edit the entire explicitly-selected Event ID, not just the occurrence
+    // used to open the dialog. Keep prior notifications/history when the
+    // template is unchanged; preserve past fired recurring cycles when
+    // changing a pattern. Never create, update or delete a Todo.
+    function updateEventGroup(id, fields, ranges) {
+        if (!root.ready || !Array.isArray(ranges)
+                || ranges.length<1 || ranges.length>512) return false
+        const position=root.list.findIndex(event=>event.id===id)
+        if (position<0) return false
+        const previous=root.list[position]
+        const mode=fields?.recurrence || "none"
+        const slots=[]
+        for (const span of ranges) {
+            const start=new Date(span?.startDate),end=new Date(span?.endDate)
+            if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())
+                    || end<=start) return false
+            const slot=Occurrences.entry(start,end,false,false)
+            if (slots.some(old=>old.startDate===slot.startDate)) return false
+            slots.push(slot)
+        }
+        slots.sort((a,b)=>a.startDate.localeCompare(b.startDate))
+        if (slots.length>1 && !RepeatPolicy.templateAllowed(slots,mode))
+            return false
+        const original=Array.isArray(previous.repeatTemplate)
+            && previous.repeatTemplate.length>1
+            ? previous.repeatTemplate
+            : Occurrences.entries(previous)
+        const sameMode=(previous.recurrence || "none")===mode
+        const samePattern=original.length===slots.length
+            && original.every((old,i)=>
+                old.startDate===slots[i].startDate
+                && old.endDate===slots[i].endDate)
+        const updates={
+            title:String(fields.title || "").trim(),
+            description:String(fields.description || ""),
+            category:fields.category || "general",
+            priority:fields.priority || "normal",
+            reminderMinutes:fields.reminderMinutes ?? 15,
+            allDay:fields.allDay===true,
+            recurrence:mode
+        }
+        if (!updates.title.length) return false
+        let result=Object.assign({},previous,updates)
+        if (!sameMode || !samePattern) {
+            const history=Array.isArray(previous.repeatTemplate)
+                ? Occurrences.entries(previous)
+                    .slice(0,Math.max(0,Number(previous.repeatCycleStart || 0)))
+                : []
+            result=Occurrences.store(result,history.concat(slots))
+            if (mode!=="none" && slots.length>1) {
+                result.repeatTemplate=slots.map(slot=>({
+                    startDate:slot.startDate,endDate:slot.endDate
+                }))
+                result.repeatCycleStart=history.length
+            } else {
+                delete result.repeatTemplate
+                delete result.repeatCycleStart
+            }
+        }
+        root.list[position]=result
+        root.list=root.list.slice()
+        root.eventUpdated(result)
+        root.saveToFile()
+        return true
     }
 
     // Reschedule one stored occurrence. Protect the series ID, imported
