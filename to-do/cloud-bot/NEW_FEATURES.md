@@ -149,6 +149,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   **State:** NEW/READY for design and source audit, NOT IMPLEMENTED.
   Alis CLI/identity dependency is tracked in Rework/optimization.
   No revived Automation/MegaQML service is required.
+  **Owner priority override — 2026-10-12 (feature #1): FINAL-PHASE / DEFERRED.** Do not select or implement this feature until all other non-deferred New Features, Rework and Issues have been completed. Keep scope and safety/consent gates unchanged; only an explicit maintainer reprioritization can move it earlier.
 
 - [x] **ABYSS-F01 — Per-module Screen Edge position lock — owner request 2026-10-11:**
   [Owner: Alis dev; NEW feature] In **Edit Abyss Layout**, allow the
@@ -780,13 +781,15 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   from user-owned optional payloads and require explicit native authorization.
   Prove package ownership, removal and failure behavior per supported distro;
   never use a user-checkout installer as root or claim untested distro support.
+  **Owner priority override — 2026-10-12 (#12): VERY LAST / DEFERRED.** Non-Arch optional system gateway is almost the final portfolio task: do not select or implement it until all other currently requested New Features, Rework and Issues, including the other deferred features, are complete. Revisit only after an explicit maintainer reprioritization.
 
-- [ ] **Power-profile render quality delivery:** qualify Abyss automatic quality
+- [x] **Power-profile render quality delivery:** qualify Abyss automatic quality
   following and manual mode through live profile changes without reload or lost
   preferences. Hadanion owns Companion's two levels: Performance and Quality
   (former Balanced), safe old-tier migration and shared AI behavior. Hadalis
   retains the Launcher effective-quality indicator and optional host API.
   Do not silently lower manual quality as part of strict-lossless optimization.
+  **Owner verified — 2026-10-12 (maintainer explicit confirmation, feature #13):** Hoàn thành / Owner verified. This newer confirmation supersedes the historical 'owner acceptance pending' text for this task. Preserve prior source, tests, package/hardware evidence and any recorded FAIL/SKIP unchanged; do not infer that unrun checks passed. Reopen only for a new requirement or reported regression.
 
 ## Alis-Companion — centralized features and permissions
 
@@ -815,6 +818,7 @@ source, synthetic fixtures and staged 3D previews must NOT be rebuilt.
   Synthetic protocol QML fixtures already qualified; no live host
   transport, sensors or agent hooks authorized. State: SOURCE-READY,
   LIVE BLOCKED_APPROVAL.
+  **Owner priority override — 2026-10-12 (feature #14): FINAL-PHASE / DEFERRED.** Do not select or implement this feature until all other non-deferred New Features, Rework and Issues have been completed. Keep scope and safety/consent gates unchanged; only an explicit maintainer reprioritization can move it earlier.
 
 - [ ] **AC-F02 — Original 3D cowork laptop (VIS-04):**
   The Aqua and Octo original Blender scenes, 8 added performances per
@@ -827,6 +831,7 @@ source, synthetic fixtures and staged 3D previews must NOT be rebuilt.
   disabled/reduced motion and GPU budget. Do not open portal or spawn
   another actor on mere laptop appearance. Require native owner approval.
   State: PARTIAL SOURCE, LIVE OPEN.
+  **Owner priority override — 2026-10-12 (feature #15): FINAL-PHASE / DEFERRED.** Do not select or implement this feature until all other non-deferred New Features, Rework and Issues have been completed. Keep scope and safety/consent gates unchanged; only an explicit maintainer reprioritization can move it earlier.
 
 - [ ] **AC-F03 — Focus cowork and bounded ambient reactions (VIS P1):**
   Reuse the Alis Focus timer/session for optional reading, book,
@@ -834,6 +839,7 @@ source, synthetic fixtures and staged 3D previews must NOT be rebuilt.
   MPRIS/search/success/failure categories with cooldown, permission
   and opt-out, not raw app content or a second clock. Favor existing
   clips before new authored gestures. State: NEW/consent gated.
+  **Owner priority override — 2026-10-12 (feature #16): FINAL-PHASE / DEFERRED.** Do not select or implement this feature until all other non-deferred New Features, Rework and Issues have been completed. Keep scope and safety/consent gates unchanged; only an explicit maintainer reprioritization can move it earlier.
 
 - [ ] **AC-F04 — User-initiated Pocket plus visual regression authoring (VIS P1):**
   Prove Wayland drag/drop, selected original-file-safe bounded metadata,
@@ -843,12 +849,14 @@ source, synthetic fixtures and staged 3D previews must NOT be rebuilt.
   focus/clip/cast/disabled lifecycle regression matrix. Defer extra
   props/easter eggs until core value and cost are accepted. State:
   NEW/permissions and native proof required.
+  **Owner priority override — 2026-10-12 (feature #17): FINAL-PHASE / DEFERRED.** Do not select or implement this feature until all other non-deferred New Features, Rework and Issues have been completed. Keep scope and safety/consent gates unchanged; only an explicit maintainer reprioritization can move it earlier.
 
 - [ ] **AC-F05 — Non-punitive bond/dialogue (VIS P1):**
   Optional familiarity, mood and preference are separate; no guilt,
   streak decay, surveillance, false intimacy or copied third-party
   character assets/catchphrases. Require clear settings and user consent.
   State: NEW, UX/privacy contract first.
+  **Owner priority override — 2026-10-12 (feature #18): FINAL-PHASE / DEFERRED.** Do not select or implement this feature until all other non-deferred New Features, Rework and Issues have been completed. Keep scope and safety/consent gates unchanged; only an explicit maintainer reprioritization can move it earlier.
 
 - [ ] **AC-F06 — User-consented memory with inspect/edit/forget (AI P1):**
   Existing bounded SQLite consent prototype is DORMANT. Specify identity
@@ -857,6 +865,7 @@ source, synthetic fixtures and staged 3D previews must NOT be rebuilt.
   WAL/backups/external Obsidian/chat deletion semantics. Never infer
   memory silently or promise secure disk erasure from SQL DELETE alone.
   State: NEW/BLOCKED_APPROVAL.
+  **Owner priority override — 2026-10-12 (feature #19): FINAL-PHASE / DEFERRED.** Do not select or implement this feature until all other non-deferred New Features, Rework and Issues have been completed. Keep scope and safety/consent gates unchanged; only an explicit maintainer reprioritization can move it earlier.
 
 - [ ] **AC-F07 — Optional proactive policy (AI P1):**
   Existing fake-clock policy prototype is DORMANT; require explicit
@@ -865,6 +874,7 @@ source, synthetic fixtures and staged 3D previews must NOT be rebuilt.
   idle, reduced motion and shared presentation budget. No background
   model loading or notifications until owner authorizes. State:
   NEW/BLOCKED_APPROVAL.
+  **Owner priority override — 2026-10-12 (feature #20): FINAL-PHASE / DEFERRED.** Do not select or implement this feature until all other non-deferred New Features, Rework and Issues have been completed. Keep scope and safety/consent gates unchanged; only an explicit maintainer reprioritization can move it earlier.
 
 - [ ] **AC-F08 — Grounded Todo/Obsidian reminders (AI P1):**
   Only read typed user-authorized tasks and chosen rows; retain existing
@@ -873,6 +883,7 @@ source, synthetic fixtures and staged 3D previews must NOT be rebuilt.
   reminders or claim user journal was saved from a synthetic fixture.
   The optional Integration journal may not be installed. State:
   SOURCE PARTIAL/INSTALL + PERMISSION GATES.
+  **Owner priority override — 2026-10-12 (feature #21): FINAL-PHASE / DEFERRED.** Do not select or implement this feature until all other non-deferred New Features, Rework and Issues have been completed. Keep scope and safety/consent gates unchanged; only an explicit maintainer reprioritization can move it earlier.
 
 - [ ] **AC-F09 — Shared persona expression without extra movement owner (AI P1):**
   AI may propose bounded text/expression but cannot decide scene
@@ -880,6 +891,7 @@ source, synthetic fixtures and staged 3D previews must NOT be rebuilt.
   use existing visual Director and generic Alis AI provider. Character
   animations must work with AI off or unavailable. State: NEW,
   depends on semantic host contract.
+  **Owner priority override — 2026-10-12 (feature #22): FINAL-PHASE / DEFERRED.** Do not select or implement this feature until all other non-deferred New Features, Rework and Issues have been completed. Keep scope and safety/consent gates unchanged; only an explicit maintainer reprioritization can move it earlier.
 
 - [ ] **AC-F10 — Typed local tools / conditional RAG research (AI P2):**
   Start with read-only typed existing state/repo/doc metadata; any
@@ -891,6 +903,7 @@ source, synthetic fixtures and staged 3D previews must NOT be rebuilt.
   diary, self-modifying persona, Discord/MCP, aggressive sensors and
   broad coding-agent automation remain DEFERRED / OUT OF SCOPE.**
   State: RESEARCH ONLY, further authorization required.
+  **Owner priority override — 2026-10-12 (feature #23): FINAL-PHASE / DEFERRED.** Do not select or implement this feature until all other non-deferred New Features, Rework and Issues have been completed. Keep scope and safety/consent gates unchanged; only an explicit maintainer reprioritization can move it earlier.
 
 ## Alis-Intergration — centralized optional package features
 
@@ -908,28 +921,31 @@ There was NO active TODO directory in the integration repository; these
 outcomes come from its manifest, README, source and outstanding Alis
 host acceptance, not from an invented prior roadmap.
 
-- [ ] **AI-F01 — TLP/Battery existing optional feature acceptance:**
+- [x] **AI-F01 — TLP/Battery existing optional feature acceptance:**
   [Owner: Alis-Intergration main] Verify source-implemented TLP worker,
   vendor probes, charge limits, Radio Device Wizard, permission-scoped
   helpers and Classic/Waffle settings; no root action or profile
   overwrite at install or without user permission. State: IMPLEMENTED
   IN SOURCE, HOST/NATIVE ACCEPTANCE OPEN.
+  **Owner verified — 2026-10-12 (maintainer explicit confirmation, feature #24):** Hoàn thành / Owner verified. This newer confirmation supersedes the historical 'owner acceptance pending' text for this task. Preserve prior source, tests, package/hardware evidence and any recorded FAIL/SKIP unchanged; do not infer that unrun checks passed. Reopen only for a new requirement or reported regression.
 
-- [ ] **AI-F02 — Thinkfan existing optional feature acceptance:**
+- [x] **AI-F02 — Thinkfan existing optional feature acceptance:**
   [Owner: Alis-Intergration main] Verify worker status/rpm/sensors,
   permissions, fail-safe fan control and disabled/missing package
   recovery; never install/enable/change fan service automatically.
   State: SOURCE PRESENT, OWNER HARDWARE QA OPEN.
+  **Owner verified — 2026-10-12 (maintainer explicit confirmation, feature #25):** Hoàn thành / Owner verified. This newer confirmation supersedes the historical 'owner acceptance pending' text for this task. Preserve prior source, tests, package/hardware evidence and any recorded FAIL/SKIP unchanged; do not infer that unrun checks passed. Reopen only for a new requirement or reported regression.
 
-- [ ] **AI-F03 — Obsidian optional theme, Todo and Zettelkasten delivery:**
+- [x] **AI-F03 — Obsidian optional theme, Todo and Zettelkasten delivery:**
   [Owner: Alis-Intergration main] Verify theme, path settings,
   managed/Daily Note task backend, Quick Notes, Zettelkasten images/
   attachments and correct safe vault writes in synthetic fixtures,
   then consented live Obsidian. Keep notes untouched when disabled
   and generic host Todo/Notes available without optional package.
   State: SOURCE PRESENT, OWNER VAULT QA OPEN.
+  **Owner verified — 2026-10-12 (maintainer explicit confirmation, feature #26):** Hoàn thành / Owner verified. This newer confirmation supersedes the historical 'owner acceptance pending' text for this task. Preserve prior source, tests, package/hardware evidence and any recorded FAIL/SKIP unchanged; do not infer that unrun checks passed. Reopen only for a new requirement or reported regression.
 
-- [ ] **AI-F04 — Versioned package lifecycle and host delivery:**
+- [x] **AI-F04 — Versioned package lifecycle and host delivery:**
   [Owner: Alis-Intergration main] Qualify release manifest/API,
   sourceSha-pinned atomic current-link install/update/rollback/
   uninstall, lazy worker lifetime, explicit refresh and helper
@@ -937,6 +953,7 @@ host acceptance, not from an invented prior roadmap.
   cross-repo Alis tests, multi-family QML, DESTDIR/PREFIX and
   absent-dependency cases. Related bugs tracked in Issues, not
   recreated here. State: SOURCE PRESENT, RELEASE GATES OPEN.
+  **Owner verified — 2026-10-12 (maintainer explicit confirmation, feature #27):** Hoàn thành / Owner verified. This newer confirmation supersedes the historical 'owner acceptance pending' text for this task. Preserve prior source, tests, package/hardware evidence and any recorded FAIL/SKIP unchanged; do not infer that unrun checks passed. Reopen only for a new requirement or reported regression.
 
 ## Cross-repository code ownership
 
