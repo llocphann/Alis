@@ -1464,7 +1464,7 @@ run privileged installation just because manual buttons are retired.
   Owner/installed, populated feeds, wl_pointer, fractional/multi-output
   and current exact-SHA canonical remain separate pending gates.
 
-- [x] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**
+- [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**
   [Owner: Alis dev; Rework/Optimization] Improve the perceptual and
   actual responsiveness of Screen Edge modules while editing a layout:
   module drag follows the pointer smoothly with stable timing, snap
@@ -1543,6 +1543,40 @@ run privileged installation just because manual buttons are retired.
   neighbor motion remains smooth. Focused native 84/19/6 PNG PASS; failing
   baseline retained. Source spelling fixtures for editor masks and shared
   Typography were corrected without weakening their behavior contracts.
+  **Owner re-test 2026-10-12 — VIDEO CONFIRMS STILL LAGGING; REOPENED [ ]:**
+  The owner explicitly rejects the actual Edit Abyss Layout smoothness after
+  the previous source/focused-PASS milestone. In the supplied 40-second,
+  1920x1200 H.264 recording `2026-10-12_14.01.54.mp4`, module drag,
+  placement/orientation switches and the connected System Resources
+  expanded/hover Popup presentation exhibit discontinuous visible geometry.
+  Decoded video is 1200 uniformly spaced 30 FPS samples (33.333 ms/sample).
+  Around 26.867→26.900 s, the expanded region switches Top→Left between
+  adjacent recorded frames. Around 29.300→29.333 s, the left-side region
+  becomes a broad horizontal popup/material field between adjacent frames.
+  Around 30.400→30.600 s, its connected content retracts over ~6 frames.
+  These are VIDEO PRESENTATION observations, not measured true Quickshell FPS,
+  QSG swap intervals, compositor latency, or proof of a single code cause.
+  The original upload remains in the owner's ChatGPT conversation and is
+  NOT committed to Git; no private video paths or frames are assumed on
+  the owner desktop. Full timestamp/source-limited audit:
+  [Edit drag and module-popup jank video review](../../docs/abyss/ABYSS_EDIT_DRAG_JANK_VIDEO_REVIEW_2026-10-12.md).
+  **Required separate acceptance gates:** (1) dragged module pointer tracking
+  and neighbor repacking, (2) cross-Edge rotation/connected shape continuity,
+  (3) Popup/expanded-module lifecycle and anchored motion WHILE editing.
+  Compare same module with popup closed/open and other modules stationary,
+  normal/top/left/right/bottom crossing, snap and pinned neighbor cases.
+  Collect bounded exact-installed-SHA physical wl_pointer/input, QML drag
+  callback/geometry/deformation/mask/Popup lifecycle and presented-frame
+  chronology BEFORE asserting root cause or claiming improved FPS.
+  Source paths to instrument: AbyssEdgeEditor.qml.move/onPositionChanged,
+  AbyssLayout.js.geometry/packGeometry/localSurfaces, AbyssBar.qml
+  layoutRecords/renderedRecords/deformations, module dimension rearm,
+  AbyssPerimeter.qml field/input mask and popup host/hover lifecycle.
+  No global FPS or GPU-per-module figure can be inferred from 30 FPS capture.
+  Historical bot-reported source completion and previous scoped PASS remain
+  recorded above, but they DO NOT close this explicitly observed owner
+  regression. State: OPEN / OWNER-REJECTED SMOOTHNESS; no new runtime fix
+  or owner acceptance recorded.
 
 - [ ] **ABYSS-R11 — Screen Edge/module editor:** verify separate 0px-capable widths on all
   four edges, thickness-only versus inherited module sizing, per-module overrides,
