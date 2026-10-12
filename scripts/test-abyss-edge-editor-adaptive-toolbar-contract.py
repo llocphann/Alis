@@ -45,7 +45,8 @@ assert selected_segment.count('id:selection') == 0
 assert selected_segment.count('id:alignmentChoice') == 1
 assert selected_segment.count('text:"Custom size"') == 1
 assert selected_segment.count('objectName:"abyssModuleJoinCorner"') == 1
-assert 'Layout.preferredWidth:120*Appearance.fontSizeScale' in fine_segment
+assert 'Layout.preferredWidth:142*Appearance.fontSizeScale' in fine_segment
+assert fine_segment.count('Layout.preferredWidth:28*Appearance.fontSizeScale') == 3
 assert 'Layout.preferredWidth:190*Appearance.fontSizeScale' in selected_segment
 assert editor.count('AbyssSlider {') == 6
 assert editor.count('Layout.maximumWidth:root.editorActionSize') == 15
