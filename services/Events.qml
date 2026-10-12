@@ -426,15 +426,17 @@ Singleton {
 
     // Reschedule one stored occurrence. Protect the series ID, imported
     // providers and one-way Agenda/Todo relationship from pointer edits.
-    function rescheduleOccurrence(id, index, startIso, endIso) {
+    function rescheduleOccurrence(id, index, startIso, endIso, metadata) {
         if (!root.ready) return false
         const position = root.list.findIndex(e => e.id === id)
         if (position < 0) return false
         const updated = Occurrences.reschedule(root.list[position],index,startIso,endIso)
         if (!updated) return false
-        root.list[position] = updated
+        // Metadata updates and occurrence time edits share one durable write.
+        const merged = Object.assign({},updated,metadata || {})
+        root.list[position] = merged
         root.list = root.list.slice()
-        root.eventUpdated(updated)
+        root.eventUpdated(merged)
         root.saveToFile()
         return true
     }
