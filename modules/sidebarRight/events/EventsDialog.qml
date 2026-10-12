@@ -828,28 +828,28 @@ WindowDialog {
                         visible: !root.compactEditor && !root.plannerPresentation
                         Layout.topMargin: -22
                     }
-            ConfigSelectionArray {
-            visible: !root.compactEditor
-            anchors {
-            left: parent.left
-            right: parent.right
-            leftMargin: root.plannerPresentation ? 0 : 8
-            rightMargin: root.plannerPresentation ? 0 : 8
-            }
-            enableSettingsSearch: false
-            activeLabelOnly: root.plannerPresentation
-            options: [
-            // "Event" maps to the existing one-time/non-recurring
-            // storage value instead of inventing an incompatible mode.
-            { displayName: Translation.tr("Event"), icon: "event", value: "none" },
-            { displayName: Translation.tr("Daily"), icon: "today", value: "daily" },
-            { displayName: Translation.tr("Weekly"), icon: "date_range", value: "weekly" },
-            { displayName: Translation.tr("Monthly"), icon: "calendar_month", value: "monthly" },
-            { displayName: Translation.tr("Yearly"), icon: "event_repeat", value: "yearly" }
-            ]
-            currentValue: root.recurrence
-            onSelected: (newValue) => { root.recurrence = newValue }
-            }
+                    ConfigSelectionArray {
+                        visible: !root.compactEditor
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            leftMargin: root.plannerPresentation ? 0 : 8
+                            rightMargin: root.plannerPresentation ? 0 : 8
+                        }
+                        enableSettingsSearch: false
+                        activeLabelOnly: root.plannerPresentation
+                        options: [
+                            // "Event" maps to the existing one-time/non-recurring
+                            // storage value instead of inventing an incompatible mode.
+                            { displayName: Translation.tr("Event"), icon: "event", value: "none" },
+                            { displayName: Translation.tr("Daily"), icon: "today", value: "daily" },
+                            { displayName: Translation.tr("Weekly"), icon: "date_range", value: "weekly" },
+                            { displayName: Translation.tr("Monthly"), icon: "calendar_month", value: "monthly" },
+                            { displayName: Translation.tr("Yearly"), icon: "event_repeat", value: "yearly" }
+                        ]
+                        currentValue: root.recurrence
+                        onSelected: (newValue) => { root.recurrence = newValue }
+                    }
                 }
             }
 
@@ -897,26 +897,26 @@ WindowDialog {
                         visible: !root.compactEditor && !root.plannerPresentation
                         Layout.topMargin: -22
                     }
-            ConfigSelectionArray {
-            visible: !root.compactEditor
-            anchors {
-            left: parent.left
-            right: parent.right
-            leftMargin: root.plannerPresentation ? 0 : 8
-            rightMargin: root.plannerPresentation ? 0 : 8
-            }
-            enableSettingsSearch: false
-            activeLabelOnly: root.plannerPresentation
-            options: [
-            { displayName: Translation.tr("General"), icon: "event", value: "general" },
-            { displayName: Translation.tr("Birthday"), icon: "cake", value: "birthday" },
-            { displayName: Translation.tr("Meeting"), icon: "groups", value: "meeting" },
-            { displayName: Translation.tr("Deadline"), icon: "flag", value: "deadline" },
-            { displayName: Translation.tr("Reminder"), icon: "notifications", value: "reminder" }
-            ]
-            currentValue: root.eventCategory
-            onSelected: (newValue) => { root.eventCategory = newValue }
-            }
+                    ConfigSelectionArray {
+                        visible: !root.compactEditor
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            leftMargin: root.plannerPresentation ? 0 : 8
+                            rightMargin: root.plannerPresentation ? 0 : 8
+                        }
+                        enableSettingsSearch: false
+                        activeLabelOnly: root.plannerPresentation
+                        options: [
+                            { displayName: Translation.tr("General"), icon: "event", value: "general" },
+                            { displayName: Translation.tr("Birthday"), icon: "cake", value: "birthday" },
+                            { displayName: Translation.tr("Meeting"), icon: "groups", value: "meeting" },
+                            { displayName: Translation.tr("Deadline"), icon: "flag", value: "deadline" },
+                            { displayName: Translation.tr("Reminder"), icon: "notifications", value: "reminder" }
+                        ]
+                        currentValue: root.eventCategory
+                        onSelected: (newValue) => { root.eventCategory = newValue }
+                    }
                 }
             }
 
@@ -964,24 +964,24 @@ WindowDialog {
                         visible: !root.compactEditor && !root.plannerPresentation
                         Layout.topMargin: -22
                     }
-            ConfigSelectionArray {
-            visible: !root.compactEditor
-            anchors {
-            left: parent.left
-            right: parent.right
-            leftMargin: root.plannerPresentation ? 0 : 8
-            rightMargin: root.plannerPresentation ? 0 : 8
-            }
-            enableSettingsSearch: false
-            activeLabelOnly: root.plannerPresentation
-            options: [
-            { displayName: Translation.tr("Low"), icon: "arrow_downward", value: "low" },
-            { displayName: Translation.tr("Normal"), icon: "remove", value: "normal" },
-            { displayName: Translation.tr("High"), icon: "priority_high", value: "high" }
-            ]
-            currentValue: root.eventPriority
-            onSelected: (newValue) => { root.eventPriority = newValue }
-            }
+                    ConfigSelectionArray {
+                        visible: !root.compactEditor
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            leftMargin: root.plannerPresentation ? 0 : 8
+                            rightMargin: root.plannerPresentation ? 0 : 8
+                        }
+                        enableSettingsSearch: false
+                        activeLabelOnly: root.plannerPresentation
+                        options: [
+                            { displayName: Translation.tr("Low"), icon: "arrow_downward", value: "low" },
+                            { displayName: Translation.tr("Normal"), icon: "remove", value: "normal" },
+                            { displayName: Translation.tr("High"), icon: "priority_high", value: "high" }
+                        ]
+                        currentValue: root.eventPriority
+                        onSelected: (newValue) => { root.eventPriority = newValue }
+                    }
                 }
             }
 
@@ -1029,26 +1029,26 @@ WindowDialog {
                         visible: !root.compactEditor && !root.plannerPresentation
                         Layout.topMargin: -22
                     }
-            ConfigSelectionArray {
-            visible: !root.compactEditor
-            anchors {
-            left: parent.left
-            right: parent.right
-            leftMargin: root.plannerPresentation ? 0 : 8
-            rightMargin: root.plannerPresentation ? 0 : 8
-            }
-            enableSettingsSearch: false
-            activeLabelOnly: root.plannerPresentation
-            options: [
-            { displayName: Translation.tr("None"), icon: "notifications_off", value: 0 },
-            { displayName: Translation.tr("5 min"), icon: "alarm", value: 5 },
-            { displayName: Translation.tr("15 min"), icon: "alarm", value: 15 },
-            { displayName: Translation.tr("1 hour"), icon: "alarm", value: 60 },
-            { displayName: Translation.tr("1 day"), icon: "alarm", value: 1440 }
-            ]
-            currentValue: root.reminderMinutes
-            onSelected: (newValue) => { root.reminderMinutes = newValue }
-            }
+                    ConfigSelectionArray {
+                        visible: !root.compactEditor
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            leftMargin: root.plannerPresentation ? 0 : 8
+                            rightMargin: root.plannerPresentation ? 0 : 8
+                        }
+                        enableSettingsSearch: false
+                        activeLabelOnly: root.plannerPresentation
+                        options: [
+                            { displayName: Translation.tr("None"), icon: "notifications_off", value: 0 },
+                            { displayName: Translation.tr("5 min"), icon: "alarm", value: 5 },
+                            { displayName: Translation.tr("15 min"), icon: "alarm", value: 15 },
+                            { displayName: Translation.tr("1 hour"), icon: "alarm", value: 60 },
+                            { displayName: Translation.tr("1 day"), icon: "alarm", value: 1440 }
+                        ]
+                        currentValue: root.reminderMinutes
+                        onSelected: (newValue) => { root.reminderMinutes = newValue }
+                    }
                 }
             }
 
