@@ -1230,8 +1230,8 @@ AbyssSlider {
                     
                     StyledComboBox {
                             baseHeight:28*Appearance.fontSizeScale
-                            Layout.preferredWidth:126*Appearance.fontSizeScale
-                            Layout.maximumWidth:126*Appearance.fontSizeScale
+                            Layout.preferredWidth:190*Appearance.fontSizeScale
+                            Layout.maximumWidth:190*Appearance.fontSizeScale
                         Layout.fillWidth:true;Layout.minimumWidth:0;
                     
                         id:alignmentChoice
