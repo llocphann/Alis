@@ -103,6 +103,14 @@ case "${SKIP_QUICKSHELL}" in
     II_SOURCE="${REPO_ROOT}"
     II_TARGET="${XDG_CONFIG_HOME}/quickshell/inir"
 
+    # A successful update must never replace the installed maintenance
+    # entrypoint with a malformed setup, leaving the next "inir update"
+    # unable to parse its argument dispatcher.
+    if [[ ! -f "${II_SOURCE}/setup" ]] || ! bash -n "${II_SOURCE}/setup"; then
+      tui_error "Refusing to install an invalid setup entrypoint from ${II_SOURCE}"
+      return 1
+    fi
+
     v mkdir -p "$II_TARGET"
 
     # Create backup before update (if this is an update)
