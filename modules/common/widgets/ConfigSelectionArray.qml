@@ -31,6 +31,8 @@ Flow {
     property bool highContrastSelection: false
     property bool useAbyssPillShape: true
     property bool taskNavigation: false
+    // Planner-only: inactive choices remain icon-only; selected choice expands.
+    property bool activeLabelOnly: false
     readonly property bool hovered: _hoverHandler.hovered
 
     signal selected(var newValue)
@@ -161,7 +163,12 @@ Flow {
             rightmost: index === root.options.length - 1
             buttonIcon: modelData.icon || ""
             buttonPreviewKind: modelData.previewKind || ""
-            buttonText: modelData.displayName
+            buttonText: root.activeLabelOnly && !paletteButton.toggled
+                ? "" : modelData.displayName
+            Accessible.name: modelData.displayName
+            ToolTip.visible: root.activeLabelOnly && paletteButton.hovered
+                && !paletteButton.toggled
+            ToolTip.text: modelData.displayName
             highContrastSelection: root.highContrastSelection
             useAbyssPillShape: root.useAbyssPillShape
             abyssTaskNavigation: root.taskNavigation && Config.options?.panelFamily === "abyss"
