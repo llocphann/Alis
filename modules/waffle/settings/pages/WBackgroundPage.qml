@@ -120,7 +120,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Hide main wallpaper in fullscreen")
             icon: "eye-off"
-            description: Translation.tr("Hide the main wallpaper while a fullscreen window is active. The Task View backdrop stays available.")
+            description: Translation.tr("Hide wallpaper behind fullscreen windows; keep the Task View backdrop.")
             checked: root.wBg.hideWhenFullscreen ?? true
             onCheckedChanged: root.setNestedValueWhenReady("waffles.background.hideWhenFullscreen", checked)
         }
@@ -1099,7 +1099,7 @@ WSettingsPage {
                 WSettingsSwitch {
                     label: Translation.tr("Enable blur")
                     icon: "eye"
-                    description: Translation.tr("Blur wallpaper when windows are open. Temporarily hides during wallpaper transitions.")
+                    description: Translation.tr("Blur wallpaper behind windows; pause during transitions.")
                     checked: root.wEffects.enableBlur ?? false
                     onCheckedChanged: root.setNestedValueWhenReady("waffles.background.effects.enableBlur", checked)
                 }
@@ -1108,7 +1108,7 @@ WSettingsPage {
                     visible: root.wBg.enableAnimation ?? true
                     label: Translation.tr("Blur animated wallpapers (videos/GIFs)")
                     icon: "pulse"
-                    description: Translation.tr("Apply blur to animated wallpapers. Independent from window blur. May significantly impact performance.")
+                    description: Translation.tr("Animated wallpaper blur is separate from window blur; high GPU cost.")
                     checked: root.wEffects.enableAnimatedBlur ?? false
                     onCheckedChanged: root.setNestedValueWhenReady("waffles.background.effects.enableAnimatedBlur", checked)
                 }
@@ -1180,7 +1180,7 @@ WSettingsPage {
                     visible: (root.wBackdrop.enable ?? true) && (root.wBackdrop.enableAnimation ?? false)
                     label: Translation.tr("Blur animated wallpapers (videos/GIFs)")
                     icon: "pulse"
-                    description: Translation.tr("Apply blur to animated wallpapers in backdrop. May significantly impact performance.")
+                    description: Translation.tr("Blur animated backdrops; may greatly increase GPU load.")
                     checked: root.wBackdrop.enableAnimatedBlur ?? false
                     onCheckedChanged: root.setNestedValueWhenReady("waffles.background.backdrop.enableAnimatedBlur", checked)
                 }
