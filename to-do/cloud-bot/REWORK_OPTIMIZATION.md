@@ -1119,6 +1119,26 @@ run privileged installation just because manual buttons are retired.
   scales and ordinary versus Shift navigation. State: READY for interaction
   tuning; preferred speed and owner acceptance require native input retest.
 
+  **2026-10-12 source implementation, Owner chưa verified:** Existing
+  `NotepadWidget.qml` note-indicator rail switched tab for every wheel
+  packet from only `angleDelta.y`, including touchpad packets that may have
+  no angle delta. Added pure `NoteRailWheel.js` with pixel-vs-angle
+  normalization (48 px / 120 angle units per note), bounded accumulation,
+  140 ms repeat gate, direction reversal, 240 ms burst reset, end/momentum
+  handling, and Shift-remapped wheel routing; Ctrl/Alt/Meta wheel is left to
+  the owning surface. `NotepadWidget` now consumes handled wheel events,
+  preserves the tab-index boundary, and keeps per-widget gesture state
+  without changing the note text, selected ID or autosave path.
+  Source commits: `3182e0073` and `6d71700f0`; node test
+  `scripts/test-note-rail-wheel-policy.mjs` in `e0c7f972d`; canonical
+  validator wired at `856537845`. **60/60 test assertions PASS** when
+  the exact checked-in JS and adapted committed test logic were executed
+  in an isolated V8 runner; this does NOT claim executing Node itself or
+  native Qt/Niri. **Open owner gates:** physical wheel/touchpad,
+  Shift-held bulk selection, long note rails, compact Edgebar and varying
+  display scale / interaction feel. Leave this task [ ] pending.
+
+
 - [x] **CAL-R01 — Compact Calendar Popup Events to Today / Tomorrow / Day After — owner screenshot 2026-10-11:**
   [Owner: Alis dev; Rework/UX] The **Events pane immediately beside
   the Calendar Popup** should show only Today's, Tomorrow's and
