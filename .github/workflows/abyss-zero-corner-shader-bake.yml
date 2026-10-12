@@ -27,6 +27,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Container root differs from the checkout owner; the baseline
+          # regression deliberately reads an older Git revision.
+          git config --global --add safe.directory "$PWD"
           node scripts/test-abyss-zero-corners.mjs
           QSB="$(command -v qsb || true)"
           if [ -z "$QSB" ]; then QSB=/usr/lib/qt6/bin/qsb; fi
