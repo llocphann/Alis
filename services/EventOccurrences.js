@@ -41,13 +41,15 @@ function compatible(a,b) {
         && (a.priority || "normal")===(b.priority || "normal")
         && Number(a.reminderMinutes ?? 15)===Number(b.reminderMinutes ?? 15)
         && (a.allDay===true)===(b.allDay===true)
-        && (a.recurrence || "none")==="none" && (b.recurrence || "none")==="none";
+        && (a.recurrence || "none")==="none" && (b.recurrence || "none")==="none"
+        && a.todoLink?.state !== "detached";
 }
 function append(existing, incoming) {
     if (!compatible(existing,incoming)) return null;
     var slot=entry(incoming.startDate || incoming.dateTime,incoming.endDate,false,false);
     if (!slot) return null;
     var slots=entries(existing);
+    if (slots.length >= 512) return null;
     if (slots.some(function(s) {return s.startDate===slot.startDate && s.endDate===slot.endDate;}))
         return {event:existing,duplicate:true};
     return {event:store(existing,slots.concat([slot])),duplicate:false};
