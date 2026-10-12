@@ -44,8 +44,10 @@ assert.equal(policy.canJoin('unknown'),false);
 JS
 grep -Fq 'visible:Presentation.canJoin(root.kind)' "$positions" \
     || { printf 'FAIL: popup position editor does not expose Join nearby corner for corner/network kinds\n' >&2; exit 1; }
-for token in '"quickNotes","notificationCenter","notifications"' 'joinedEdge:Presentation.joinedEdge(root.previewKind,'; do
-    grep -Fq "$token" "$editor" || { printf 'FAIL: live editor corner join preview missing: %s\n' "$token" >&2; exit 1; }
+# Popup corner ownership lives in the shared perimeter; the Edit Abyss
+# Layout control only independently positions IPC/OSD surfaces.
+for token in 'buttonText:"IPC"' 'allowedKinds:["osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch"]' 'joinedEdge:Presentation.joinedEdge(root.previewKind,'; do
+    grep -Fq "$token" "$editor" || { printf 'FAIL: IPC-only edit preview contract missing: %s\n' "$token" >&2; exit 1; }
 done
 for token in 'readonly property string configuredJoinedEdge:' 'Presentation.joinedEdge(presentationKind,'; do
     grep -Fq "$token" "$perimeter" || { printf 'FAIL: mature StyledPopup join routing missing: %s\n' "$token" >&2; exit 1; }
