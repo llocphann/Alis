@@ -299,4 +299,20 @@ for page, hints in TOOLS_WIDGET_HELP.items():
         assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
         assert EN_US.get(hint) == hint, (page, hint)
 
+
+# Waffle is a supported, independently selectable Settings frontend.
+WAFFLE_LATE_HELP = {
+    "WModulesPage.qml": ("Waffle modules are inactive; configure them now or switch panel family.", "Changes apply when Waffle becomes active.", "All workspaces and windows; carousel or centered focus.", "Fit the Widgets sidebar to content height.",),
+    "WWorkspaceStripPage.qml": ("Optional edge navigator (off by default). Hover to inspect, click to focus, drag windows, hold × to close. Niri provides snapshots.", "Wheel switches workspaces rather than scrolling thumbnails.", "Show playback controls in a top media card.", "Live active preview; refreshed snapshots for hidden workspaces.", "Focus the workspace when scrolling the strip.",),
+    "WThemesPage.qml": ("Complementary shell colors; external apps remain unchanged.", "Choose light/dark automatically from wallpaper brightness.", "Generate Neovim/LazyVim theme at ~/.config/nvim/lua/plugins/neovim.lua.",),
+    "WBackgroundPage.qml": ("Generate theme colors from the backdrop instead of the main wallpaper.", "Drag to place manually, or use the least busy region.", "Use global clock format or a wallpaper-clock override.",),
+    "WBarPage.qml": ("Waffle-only settings; enable Waffle under Modules.",),
+    "WWaffleStylePage.qml": ("Waffle-only settings; enable Waffle under Modules.",),
+}
+for page, hints in WAFFLE_LATE_HELP.items():
+    source = (ROOT / "modules" / "waffle" / "settings" / "pages" / page).read_text(encoding="utf-8")
+    for hint in hints:
+        assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
+        assert EN_US.get(hint) == hint, (page, hint)
+
 print("Settings concise-copy/shared-surface contract: PASS")
