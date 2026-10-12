@@ -48,6 +48,28 @@ const linked=m.migrateLegacy([
   item(11,'Class','14','linked')]);
 assert.equal(linked.events.length,2,'existing independently linked Todos survive');
 assert.equal(linked.skippedLinked,1);
+const linkedButMissing=m.migrateLegacy([
+  item(20,'Class','12','linked'),
+  item(21,'class','14','linked')
+],[], 'internal');
+assert.equal(linkedButMissing.events.length,1,
+  'linked records with missing actual Todos regroup only after loaded inventory');
+assert.equal(linkedButMissing.merged,1);
+const linkedWithTask=m.migrateLegacy([
+  item(22,'Class','12','linked'),
+  item(23,'class','14','linked')
+],['agenda-0000000023'],'internal');
+assert.equal(linkedWithTask.events.length,2,
+  'real linked Todo identities must survive');
+const foreignProvider=m.migrateLegacy([
+  item(24,'Class','12','pending'),
+  item(25,'class','14','linked',{todoLink:{
+    version:1,key:'agenda-0000000025',state:'linked',provider:'other-provider'
+  }})
+],[],'internal');
+assert.equal(foreignProvider.events.length,2,
+  'links in other Todo backends may not be modified');
+
 const detached=m.migrateLegacy([
   item(12,'Class','12','pending'),
   item(13,'Class','14','detached')]);
@@ -77,7 +99,12 @@ assert.equal(durable.occurrenceMigrationBackup.original.events.length,3);
 assert.equal(durable.events[0].occurrences.length,3);
 assert.equal(m.migrateLegacy(durable.events).events.map(e=>e.id).join(','),'7');
 const backend=fs.readFileSync(new URL('../services/Events.qml',import.meta.url),'utf8');
-assert.ok(backend.includes('const migration=previousBackup?.version===1'));
+assert.ok(backend.includes('const migration=previousBackup?.version>=2'));
+assert.ok(backend.includes('Occurrences.migrateLegacy(events,todoKeys,Todo.agendaProvider)'));
+assert.ok(backend.includes('function _resumeLegacyMigration()'));
+assert.ok(backend.includes('Todo.list.map(item=>item.agenda?.key).filter(Boolean)'));
+assert.ok(backend.includes('version:2'));
+
 assert.ok(backend.includes('root._saveQueued=true'));
 assert.ok(backend.includes('Qt.callLater(root.saveToFile)'));
 assert.ok(backend.includes('data.occurrenceMigrationBackup=root.occurrenceMigrationBackup'));
