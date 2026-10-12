@@ -767,8 +767,12 @@ WindowDialog {
                 Column {
                     id: plannerOptions
                     width: plannerPageHost.width
-                    spacing: root.embeddedPresentation
-                        ? editorFlickable.embeddedGap : 8
+                    spacing: root.plannerPresentation ? 12
+                        : (root.embeddedPresentation ? editorFlickable.embeddedGap : 8)
+                    readonly property real optionCardHeight: root.plannerPresentation
+                        ? Math.max(118,Math.min(154,
+                            (editorFlickable.height - spacing * 3 - 18) / 4))
+                        : 0
                     y: root.plannerPresentation ? 0 : plannerBasics.implicitHeight
                     x: root.plannerPresentation && root.plannerPage===0
                         ? plannerPageHost.width : 0
@@ -777,142 +781,280 @@ WindowDialog {
                         NumberAnimation {duration:230;easing.type:Easing.InOutCubic}
                     }
 
-            // Repeat begins Planner page two; Calendar, All day and
-            // Start/End controls remain on page one.
-            EventSectionHeader {
-                visible: !root.compactEditor
-                text: Translation.tr("Repeat")
-                topPadding: root.embeddedPresentation ? 5 : 16
-            }
-
-            WindowDialogSeparator {
-                visible: !root.compactEditor
-                Layout.topMargin: -22
-            }
-
-            ConfigSelectionArray {
-                visible: !root.compactEditor
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    leftMargin: 8
-                    rightMargin: 8
-                }
-                enableSettingsSearch: false
-                activeLabelOnly: root.plannerPresentation
-                options: [
-                    // "Event" maps to the existing one-time/non-recurring
-                    // storage value instead of inventing an incompatible mode.
-                    { displayName: Translation.tr("Event"), icon: "event", value: "none" },
-                    { displayName: Translation.tr("Daily"), icon: "today", value: "daily" },
-                    { displayName: Translation.tr("Weekly"), icon: "date_range", value: "weekly" },
-                    { displayName: Translation.tr("Monthly"), icon: "calendar_month", value: "monthly" },
-                    { displayName: Translation.tr("Yearly"), icon: "event_repeat", value: "yearly" }
-                ]
-                currentValue: root.recurrence
-                onSelected: (newValue) => { root.recurrence = newValue }
-            }
-
-            // ─── Category Section ─────────────────────────────────────
-            EventSectionHeader {
-                visible: !root.compactEditor
-                text: Translation.tr("Category")
-                topPadding: root.embeddedPresentation ? 6 : 16
-            }
-
-            WindowDialogSeparator {
-                visible: !root.compactEditor
-                Layout.topMargin: -22
-            }
-
-            ConfigSelectionArray {
-                visible: !root.compactEditor
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    leftMargin: 8
-                    rightMargin: 8
-                }
-                enableSettingsSearch: false
-                activeLabelOnly: root.plannerPresentation
-                options: [
-                    { displayName: Translation.tr("General"), icon: "event", value: "general" },
-                    { displayName: Translation.tr("Birthday"), icon: "cake", value: "birthday" },
-                    { displayName: Translation.tr("Meeting"), icon: "groups", value: "meeting" },
-                    { displayName: Translation.tr("Deadline"), icon: "flag", value: "deadline" },
-                    { displayName: Translation.tr("Reminder"), icon: "notifications", value: "reminder" }
-                ]
-                currentValue: root.eventCategory
-                onSelected: (newValue) => { root.eventCategory = newValue }
-            }
-
-            // ─── Priority Section ─────────────────────────────────────
-            EventSectionHeader {
-                visible: !root.compactEditor
-                text: Translation.tr("Priority")
-                topPadding: root.embeddedPresentation ? 6 : 16
-            }
-
-            WindowDialogSeparator {
-                visible: !root.compactEditor
-                Layout.topMargin: -22
-            }
-
-            ConfigSelectionArray {
-                visible: !root.compactEditor
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    leftMargin: 8
-                    rightMargin: 8
-                }
-                enableSettingsSearch: false
-                activeLabelOnly: root.plannerPresentation
-                options: [
-                    { displayName: Translation.tr("Low"), icon: "arrow_downward", value: "low" },
-                    { displayName: Translation.tr("Normal"), icon: "remove", value: "normal" },
-                    { displayName: Translation.tr("High"), icon: "priority_high", value: "high" }
-                ]
-                currentValue: root.eventPriority
-                onSelected: (newValue) => { root.eventPriority = newValue }
-            }
-
-            // ─── Reminder Section ─────────────────────────────────────
-            EventSectionHeader {
-                visible: !root.compactEditor
-                text: Translation.tr("Reminder")
-                topPadding: root.embeddedPresentation ? 6 : 16
-            }
-
-            WindowDialogSeparator {
-                visible: !root.compactEditor
-                Layout.topMargin: -22
-            }
-
-            ConfigSelectionArray {
-                visible: !root.compactEditor
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    leftMargin: 8
-                    rightMargin: 8
-                }
-                enableSettingsSearch: false
-                activeLabelOnly: root.plannerPresentation
-                options: [
-                    { displayName: Translation.tr("None"), icon: "notifications_off", value: 0 },
-                    { displayName: Translation.tr("5 min"), icon: "alarm", value: 5 },
-                    { displayName: Translation.tr("15 min"), icon: "alarm", value: 15 },
-                    { displayName: Translation.tr("1 hour"), icon: "alarm", value: 60 },
-                    { displayName: Translation.tr("1 day"), icon: "alarm", value: 1440 }
-                ]
-                currentValue: root.reminderMinutes
-                onSelected: (newValue) => { root.reminderMinutes = newValue }
-            }
-
-            // Bottom padding
+            // Each module is one calm, equal-height card in the roomy
+            // Planner editor. Four full-width cards use the available height
+            // without forcing oversized pill buttons or leaving dead space.
+            // Repeat: stable, evenly sized option card; no duplicated state.
             Item {
-                visible: !root.compactEditor
+                id: repeatCard
+                width: parent.width
+                height: root.plannerPresentation
+                    ? Math.max(repeatContent.implicitHeight + 26,
+                        plannerOptions.optionCardHeight)
+                    : repeatContent.implicitHeight
+
+                Rectangle {
+                    anchors.fill: parent
+                    visible: root.plannerPresentation
+                    radius: Appearance.rounding.large
+                    color: Appearance.colors.colLayer2
+                    border.width: 1
+                    border.color: Qt.alpha(Appearance.colors.colOutline, .15)
+                }
+
+                Column {
+                    id: repeatContent
+                    width: parent.width - (root.plannerPresentation ? 28 : 0)
+                    anchors.centerIn: parent
+                    spacing: root.plannerPresentation ? 10 : 8
+
+                    Row {
+                        width: parent.width
+                        spacing: root.plannerPresentation ? 8 : 0
+                        MaterialSymbol {
+                            visible: root.plannerPresentation
+                            text: "repeat"
+                            iconSize: 16
+                            color: Appearance.colors.colPrimary
+                        }
+                        EventSectionHeader {
+                            visible: !root.compactEditor
+                            text: Translation.tr("Repeat")
+                            topPadding: root.plannerPresentation
+                                ? 0 : (root.embeddedPresentation ? 6 : 16)
+                        }
+                    }
+                    WindowDialogSeparator {
+                        visible: !root.compactEditor && !root.plannerPresentation
+                        Layout.topMargin: -22
+                    }
+            ConfigSelectionArray {
+            visible: !root.compactEditor
+            anchors {
+            left: parent.left
+            right: parent.right
+            leftMargin: root.plannerPresentation ? 0 : 8
+            rightMargin: root.plannerPresentation ? 0 : 8
+            }
+            enableSettingsSearch: false
+            activeLabelOnly: root.plannerPresentation
+            options: [
+            // "Event" maps to the existing one-time/non-recurring
+            // storage value instead of inventing an incompatible mode.
+            { displayName: Translation.tr("Event"), icon: "event", value: "none" },
+            { displayName: Translation.tr("Daily"), icon: "today", value: "daily" },
+            { displayName: Translation.tr("Weekly"), icon: "date_range", value: "weekly" },
+            { displayName: Translation.tr("Monthly"), icon: "calendar_month", value: "monthly" },
+            { displayName: Translation.tr("Yearly"), icon: "event_repeat", value: "yearly" }
+            ]
+            currentValue: root.recurrence
+            onSelected: (newValue) => { root.recurrence = newValue }
+            }
+                }
+            }
+
+            // Category: stable, evenly sized option card; no duplicated state.
+            Item {
+                id: categoryCard
+                width: parent.width
+                height: root.plannerPresentation
+                    ? Math.max(categoryContent.implicitHeight + 26,
+                        plannerOptions.optionCardHeight)
+                    : categoryContent.implicitHeight
+
+                Rectangle {
+                    anchors.fill: parent
+                    visible: root.plannerPresentation
+                    radius: Appearance.rounding.large
+                    color: Appearance.colors.colLayer2
+                    border.width: 1
+                    border.color: Qt.alpha(Appearance.colors.colOutline, .15)
+                }
+
+                Column {
+                    id: categoryContent
+                    width: parent.width - (root.plannerPresentation ? 28 : 0)
+                    anchors.centerIn: parent
+                    spacing: root.plannerPresentation ? 10 : 8
+
+                    Row {
+                        width: parent.width
+                        spacing: root.plannerPresentation ? 8 : 0
+                        MaterialSymbol {
+                            visible: root.plannerPresentation
+                            text: "sell"
+                            iconSize: 16
+                            color: Appearance.colors.colPrimary
+                        }
+                        EventSectionHeader {
+                            visible: !root.compactEditor
+                            text: Translation.tr("Category")
+                            topPadding: root.plannerPresentation
+                                ? 0 : (root.embeddedPresentation ? 6 : 16)
+                        }
+                    }
+                    WindowDialogSeparator {
+                        visible: !root.compactEditor && !root.plannerPresentation
+                        Layout.topMargin: -22
+                    }
+            ConfigSelectionArray {
+            visible: !root.compactEditor
+            anchors {
+            left: parent.left
+            right: parent.right
+            leftMargin: root.plannerPresentation ? 0 : 8
+            rightMargin: root.plannerPresentation ? 0 : 8
+            }
+            enableSettingsSearch: false
+            activeLabelOnly: root.plannerPresentation
+            options: [
+            { displayName: Translation.tr("General"), icon: "event", value: "general" },
+            { displayName: Translation.tr("Birthday"), icon: "cake", value: "birthday" },
+            { displayName: Translation.tr("Meeting"), icon: "groups", value: "meeting" },
+            { displayName: Translation.tr("Deadline"), icon: "flag", value: "deadline" },
+            { displayName: Translation.tr("Reminder"), icon: "notifications", value: "reminder" }
+            ]
+            currentValue: root.eventCategory
+            onSelected: (newValue) => { root.eventCategory = newValue }
+            }
+                }
+            }
+
+            // Priority: stable, evenly sized option card; no duplicated state.
+            Item {
+                id: priorityCard
+                width: parent.width
+                height: root.plannerPresentation
+                    ? Math.max(priorityContent.implicitHeight + 26,
+                        plannerOptions.optionCardHeight)
+                    : priorityContent.implicitHeight
+
+                Rectangle {
+                    anchors.fill: parent
+                    visible: root.plannerPresentation
+                    radius: Appearance.rounding.large
+                    color: Appearance.colors.colLayer2
+                    border.width: 1
+                    border.color: Qt.alpha(Appearance.colors.colOutline, .15)
+                }
+
+                Column {
+                    id: priorityContent
+                    width: parent.width - (root.plannerPresentation ? 28 : 0)
+                    anchors.centerIn: parent
+                    spacing: root.plannerPresentation ? 10 : 8
+
+                    Row {
+                        width: parent.width
+                        spacing: root.plannerPresentation ? 8 : 0
+                        MaterialSymbol {
+                            visible: root.plannerPresentation
+                            text: "flag"
+                            iconSize: 16
+                            color: Appearance.colors.colPrimary
+                        }
+                        EventSectionHeader {
+                            visible: !root.compactEditor
+                            text: Translation.tr("Priority")
+                            topPadding: root.plannerPresentation
+                                ? 0 : (root.embeddedPresentation ? 6 : 16)
+                        }
+                    }
+                    WindowDialogSeparator {
+                        visible: !root.compactEditor && !root.plannerPresentation
+                        Layout.topMargin: -22
+                    }
+            ConfigSelectionArray {
+            visible: !root.compactEditor
+            anchors {
+            left: parent.left
+            right: parent.right
+            leftMargin: root.plannerPresentation ? 0 : 8
+            rightMargin: root.plannerPresentation ? 0 : 8
+            }
+            enableSettingsSearch: false
+            activeLabelOnly: root.plannerPresentation
+            options: [
+            { displayName: Translation.tr("Low"), icon: "arrow_downward", value: "low" },
+            { displayName: Translation.tr("Normal"), icon: "remove", value: "normal" },
+            { displayName: Translation.tr("High"), icon: "priority_high", value: "high" }
+            ]
+            currentValue: root.eventPriority
+            onSelected: (newValue) => { root.eventPriority = newValue }
+            }
+                }
+            }
+
+            // Reminder: stable, evenly sized option card; no duplicated state.
+            Item {
+                id: reminderCard
+                width: parent.width
+                height: root.plannerPresentation
+                    ? Math.max(reminderContent.implicitHeight + 26,
+                        plannerOptions.optionCardHeight)
+                    : reminderContent.implicitHeight
+
+                Rectangle {
+                    anchors.fill: parent
+                    visible: root.plannerPresentation
+                    radius: Appearance.rounding.large
+                    color: Appearance.colors.colLayer2
+                    border.width: 1
+                    border.color: Qt.alpha(Appearance.colors.colOutline, .15)
+                }
+
+                Column {
+                    id: reminderContent
+                    width: parent.width - (root.plannerPresentation ? 28 : 0)
+                    anchors.centerIn: parent
+                    spacing: root.plannerPresentation ? 10 : 8
+
+                    Row {
+                        width: parent.width
+                        spacing: root.plannerPresentation ? 8 : 0
+                        MaterialSymbol {
+                            visible: root.plannerPresentation
+                            text: "notifications"
+                            iconSize: 16
+                            color: Appearance.colors.colPrimary
+                        }
+                        EventSectionHeader {
+                            visible: !root.compactEditor
+                            text: Translation.tr("Reminder")
+                            topPadding: root.plannerPresentation
+                                ? 0 : (root.embeddedPresentation ? 6 : 16)
+                        }
+                    }
+                    WindowDialogSeparator {
+                        visible: !root.compactEditor && !root.plannerPresentation
+                        Layout.topMargin: -22
+                    }
+            ConfigSelectionArray {
+            visible: !root.compactEditor
+            anchors {
+            left: parent.left
+            right: parent.right
+            leftMargin: root.plannerPresentation ? 0 : 8
+            rightMargin: root.plannerPresentation ? 0 : 8
+            }
+            enableSettingsSearch: false
+            activeLabelOnly: root.plannerPresentation
+            options: [
+            { displayName: Translation.tr("None"), icon: "notifications_off", value: 0 },
+            { displayName: Translation.tr("5 min"), icon: "alarm", value: 5 },
+            { displayName: Translation.tr("15 min"), icon: "alarm", value: 15 },
+            { displayName: Translation.tr("1 hour"), icon: "alarm", value: 60 },
+            { displayName: Translation.tr("1 day"), icon: "alarm", value: 1440 }
+            ]
+            currentValue: root.reminderMinutes
+            onSelected: (newValue) => { root.reminderMinutes = newValue }
+            }
+                }
+            }
+
+            // Bottom padding belongs to the standalone editor only.
+            Item {
+                visible: !root.compactEditor && !root.plannerPresentation
                 width: 1
                 height: 16
             }
