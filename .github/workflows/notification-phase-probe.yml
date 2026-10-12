@@ -1,0 +1,41 @@
+name: Notification phase probe contracts
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "modules/abyss/AbyssPerimeter.qml"
+      - "modules/abyss/content/AbyssNotificationsContent.qml"
+      - "scripts/collect-abyss-notification-frames.py"
+      - "scripts/test-abyss-notification-presentation-probe.py"
+      - ".github/workflows/notification-phase-probe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Local bot regularly pushes unrelated commits. Retain exact-SHA evidence
+# rather than cancelling a bounded probe whenever dev moves again.
+concurrency:
+  group: notification-phase-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate collector syntax and bounded source contracts
+        run: |
+          python3 -m py_compile scripts/collect-abyss-notification-frames.py scripts/test-abyss-notification-presentation-probe.py
+          python3 scripts/test-abyss-notification-presentation-probe.py
+      - name: Validate independent notification behavior contracts
+        run: |
+          node scripts/test-notification-live-timeout-policy.mjs
+          node scripts/test-notification-read-policy.mjs
+          node scripts/test-notification-hover-hold.mjs
+          node scripts/test-notification-dock-badge-policy.mjs
+          node scripts/test-notification-critical-urgency-policy.mjs
+          node scripts/test-notification-swipe-dismiss.mjs
+          node scripts/test-notification-group-key-policy.mjs
