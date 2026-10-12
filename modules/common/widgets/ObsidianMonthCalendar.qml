@@ -13,6 +13,8 @@ Item {
     property var locale: Qt.locale()
     property var calendarCells: []
     property var selectedDate: null
+    // Opt-in overlay; other Calendar owners keep their single-date semantics.
+    property var multiSelectedDates: []
     property bool interactiveDays: false
     property bool showEventDots: false
     // Opt in only for the Popup: existing Sidebar/Dashboard source-color
@@ -33,7 +35,7 @@ Item {
     signal previousMonthRequested()
     signal nextMonthRequested()
     signal todayRequested()
-    signal dayActivated(var date)
+    signal dayActivated(var date, int modifiers)
 
     readonly property real compactCellSize: 30
     readonly property real compactCellSpacing: 4
@@ -304,8 +306,10 @@ Item {
                             Number(dayCell.modelData?.eventCount ?? 0)
                         readonly property var eventColors:
                             dayCell.modelData?.eventColors ?? []
-                        readonly property bool selected: root.sameDay(
-                            dayCell.modelData?.date, root.selectedDate)
+                        readonly property bool selected: root.multiSelectedDates.length>0
+                            ? root.multiSelectedDates.indexOf(
+                                Qt.formatDate(dayCell.modelData?.date,"yyyy-MM-dd"))>=0
+                            : root.sameDay(dayCell.modelData?.date, root.selectedDate)
 
                         Layout.preferredWidth: root.cellSize
                         Layout.preferredHeight: root.cellSize
@@ -314,7 +318,8 @@ Item {
                             ? Appearance.colors.colPrimaryContainer
                             : dayHover.containsMouse
                                 ? root.colHover : "transparent"
-                        opacity: dayCell.modelData?.currentMonth === false ? 0.25 : 1
+                        opacity: dayCell.modelData?.currentMonth === false
+                            && !dayCell.selected ? 0.25 : 1
 
                         StyledText {
                             anchors.centerIn: parent
@@ -391,10 +396,10 @@ Item {
                                 ? Qt.LeftButton : Qt.NoButton
                             cursorShape: root.interactiveDays
                                 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                            onClicked: {
+                            onClicked: mouse => {
                                 if (root.interactiveDays
                                         && dayCell.modelData?.date)
-                                    root.dayActivated(dayCell.modelData.date)
+                                    root.dayActivated(dayCell.modelData.date,mouse.modifiers)
                             }
                         }
                     }

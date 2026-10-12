@@ -394,17 +394,40 @@ Singleton {
         )
     }
 
-    function addEvent(title, description, dateTime, category, priority, reminderMinutes, recurrence, endDate, allDay) {
+    function addEvent(title, description, dateTime, category, priority, reminderMinutes, recurrence, endDate, allDay, occurrenceRanges) {
         if (!root.ready) return null
-        const startIso = dateTime || new Date().toISOString()
+        // Bulk-selected days are one non-recurring Agenda, persisted in one
+        // write with one stable ID and Todo link (not a loop of addEvent).
+        const supplied=Array.isArray(occurrenceRanges) ? occurrenceRanges : []
+        if (supplied.length>512 || (supplied.length>1
+                && (recurrence || "none")!=="none")) return null
+        const explicitSlots=[]
+        if (supplied.length>1) {
+            for (const range of supplied) {
+                const slot=Occurrences.entry(range?.startDate,range?.endDate,false,false)
+                const start=new Date(range?.startDate),end=new Date(range?.endDate)
+                if (!slot || !Number.isFinite(start.getTime())
+                        || !Number.isFinite(end.getTime()) || end<=start
+                        || explicitSlots.some(existing=>
+                            existing.startDate===slot.startDate
+                            && existing.endDate===slot.endDate)) return null
+                explicitSlots.push(slot)
+            }
+            explicitSlots.sort((a,b)=>a.startDate.localeCompare(b.startDate))
+        }
+        const bulk=explicitSlots.length>1
+        const startIso=bulk ? explicitSlots[0].startDate
+            : (dateTime || new Date().toISOString())
+        const firstEnd=bulk ? explicitSlots[0].endDate : (endDate || "")
         // A matching, non-recurring title with compatible metadata denotes a
         // second time slot of the same event, not a second Todo-linked event.
         // Never merge existing records on load or conflate different details.
         const incoming = {title:title || "",description:description || "",
-            startDate:startIso,endDate:endDate || "",category:category || "general",
+            startDate:startIso,endDate:firstEnd,category:category || "general",
             priority:priority || "normal",reminderMinutes:reminderMinutes ?? 15,
             recurrence:recurrence || "none",allDay:allDay === true};
-        const groupIndex = root.list.findIndex(old => Occurrences.compatible(old,incoming))
+        const groupIndex = bulk ? -1
+            : root.list.findIndex(old => Occurrences.compatible(old,incoming))
         if (groupIndex >= 0) {
             const result = Occurrences.append(root.list[groupIndex],incoming)
             if (result) {
@@ -417,7 +440,7 @@ Singleton {
                 return root.list[groupIndex]
             }
         }
-        const event = {
+        let event = {
             id: root.nextId++,
             title: title || "",
             description: description || "",
@@ -425,7 +448,7 @@ Singleton {
             // event metadata is additive so existing JSON/consumers still work.
             dateTime: startIso,
             startDate: startIso,
-            endDate: endDate || "",
+            endDate: firstEnd,
             allDay: allDay === true,
             category: category || "general", // general, birthday, meeting, deadline, reminder
             priority: priority || "normal", // low, normal, high
@@ -437,6 +460,7 @@ Singleton {
             todoLink: AgendaTodoPolicy.newLink(root.nextId - 1, Date.now(), Math.random().toString(36).slice(2, 14))
         }
         
+        if (bulk) event=Occurrences.store(event,explicitSlots)
         root.list.push(event)
         root.list = root.list.slice(0)
         root.eventAdded(event)

@@ -7,6 +7,7 @@ import qs.modules.common.functions
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "EventDateSelection.js" as DateSelection
 import Quickshell
 
 WindowDialog {
@@ -51,8 +52,49 @@ WindowDialog {
         }
         return cells
     }
-    onEventDateChanged: if (plannerPresentation && !isNaN(eventDate.getTime()))
-        plannerViewMonth=new Date(eventDate.getFullYear(),eventDate.getMonth(),1)
+    property var plannerSelectedDateKeys: []
+    property string plannerSelectionAnchor: ""
+    property bool _plannerPickingDate: false
+    readonly property int plannerSelectedCount: plannerSelectedDateKeys.length
+    function resetPlannerDateSelection(): void {
+        const selected=DateSelection.key(root.eventDate)
+        root.plannerSelectedDateKeys=selected ? [selected] : []
+        root.plannerSelectionAnchor=selected
+    }
+    function choosePlannerDay(date,modifiers): void {
+        if (!(date instanceof Date) || isNaN(date.getTime())) return
+        // Existing occurrence edits remain single-date edits, never series additions.
+        const multi= root.plannerPresentation && !root.isEditing
+        const ctrl=multi && !!(modifiers & Qt.ControlModifier)
+        const shift=multi && !!(modifiers & Qt.ShiftModifier)
+        const chosen=DateSelection.choose(root.plannerSelectedDateKeys,
+            root.plannerSelectionAnchor,DateSelection.key(root.eventDate),
+            date,ctrl,shift)
+        if (!chosen) {
+            root.editorWarning=Translation.tr("Select at most 512 days.")
+            return
+        }
+        root._plannerPickingDate=true
+        root.plannerSelectedDateKeys=chosen.keys
+        root.plannerSelectionAnchor=chosen.anchor
+        root.eventDate=DateSelection.localDate(chosen.primary)
+        root._plannerPickingDate=false
+        // Explicit dates and recurrence are mutually exclusive. Do not create
+        // repeating series for each checked date or silently multiply events.
+        if (chosen.keys.length>1 && root.recurrence!=="none")
+            root.recurrence="none"
+        root.editorWarning=""
+    }
+    onEventDateChanged: {
+        if (plannerPresentation && !isNaN(eventDate.getTime()))
+            plannerViewMonth=new Date(eventDate.getFullYear(),eventDate.getMonth(),1)
+        if (!root._plannerPickingDate) root.resetPlannerDateSelection()
+    }
+    onRecurrenceChanged: {
+        // Choosing any Repeat cadence leaves one anchored start date.
+        if (root.recurrence!=="none" && root.plannerSelectedCount>1)
+            root.resetPlannerDateSelection()
+    }
     Connections {
         target: Events
         function onEventAdded(event) {root.plannerCalendarRevision++}
@@ -173,7 +215,9 @@ WindowDialog {
     function formSnapshot(): string {
         return JSON.stringify([eventTitle,eventDescription,Number(eventDate),
             eventTime,eventEndTime,allDay,eventCategory,eventPriority,
-            reminderMinutes,recurrence])
+            reminderMinutes,recurrence,
+            root.plannerPresentation && !root.isEditing
+                ? root.plannerSelectedDateKeys : []])
     }
     function captureFormBaseline(): void {
         _cleanFormSnapshot=formSnapshot()
@@ -282,6 +326,7 @@ WindowDialog {
         root.reminderMinutes = 15
         root.recurrence = "none"
         root.compactOptionGroup = ""
+        root.resetPlannerDateSelection()
         root.captureFormBaseline()
     }
 
@@ -312,6 +357,7 @@ WindowDialog {
         root.reminderMinutes = event.reminderMinutes ?? 15
         root.recurrence = event.recurrence || "none"
         root.compactOptionGroup = ""
+        root.resetPlannerDateSelection()
         root.captureFormBaseline()
     }
 
@@ -373,6 +419,15 @@ WindowDialog {
             })
         }
 
+        const selectedDays=root.plannerPresentation
+            ? root.plannerSelectedDateKeys : []
+        // Only Add Event may supply explicit multi-date ranges; Repeat remains
+        // a single-date recurrence mechanism with its existing behavior.
+        if (selectedDays.length>1 && root.recurrence!=="none") return false
+        const batches=selectedDays.length>1
+            ? DateSelection.ranges(selectedDays,root.eventTime,root.eventEndTime,root.allDay)
+            : null
+        if (selectedDays.length>1 && !batches) return false
         return Events.addEvent(
             root.eventTitle.trim(),
             root.eventDescription.trim(),
@@ -382,7 +437,8 @@ WindowDialog {
             root.reminderMinutes,
             root.recurrence,
             endIso,
-            root.allDay
+            root.allDay,
+            batches
         ) !== null
     }
 
@@ -578,6 +634,7 @@ WindowDialog {
                     today: DateTime.clock.date
                     calendarCells: root.plannerCalendarCells
                     selectedDate: root.eventDate
+                    multiSelectedDates: root.plannerSelectedDateKeys
                     interactiveDays: true
                     showEventDots: true
                     countedEventDots: true
@@ -591,8 +648,23 @@ WindowDialog {
                         root.plannerViewMonth=new Date(root.plannerViewMonth.getFullYear(),
                             root.plannerViewMonth.getMonth()+1,1)
                     }
-                    onTodayRequested: root.eventDate=new Date(DateTime.clock.date)
-                    onDayActivated: date=>root.eventDate=date
+                    onTodayRequested: root.choosePlannerDay(new Date(DateTime.clock.date),0)
+                    onDayActivated: (date,modifiers)=>root.choosePlannerDay(date,modifiers)
+                }
+
+                StyledText {
+                    objectName:"plannerSelectedDaysSummary"
+                    visible:root.plannerPresentation && !root.isEditing
+                        && root.plannerSelectedCount>1
+                    width:parent.width
+                    horizontalAlignment:Text.AlignHCenter
+                    text:root.plannerSelectedCount+" "
+                        + Translation.tr("selected days") + " · "
+                        + Translation.tr("Event (no repeat)")
+                    color:Appearance.colors.colPrimary
+                    font.pixelSize:Appearance.font.pixelSize.smallest
+                    font.weight:Font.DemiBold
+                    elide:Text.ElideRight
                 }
 
                 RowLayout {

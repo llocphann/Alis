@@ -64,7 +64,7 @@ assert 'Accessible.name: modelData.displayName' in choices
 assert 'property date plannerViewMonth: new Date()' in editor
 assert 'ObsidianMonthCalendar {' in editor
 assert 'calendarCells: root.plannerCalendarCells' in editor
-assert 'onDayActivated: date=>root.eventDate=date' in editor
+assert 'onDayActivated: (date,modifiers)=>root.choosePlannerDay(date,modifiers)' in editor
 assert 'Layout.topMargin: root.plannerPresentation ? 10 : 0' in editor
 assert 'visible: root.plannerPresentation' in editor
 assert 'visible: root.isEditing && !root.embeddedPresentation' in editor
@@ -172,3 +172,10 @@ for(const enabled of [false,true]) {
 }
 ''',fn],check=True)
 print("WEEKLY_PLANNER_EXPANDED_EDITOR_AND_RESIZE_HOVER_PASS")
+
+# Multi-date is opt-in only for Planner Add Event; Recurrence is exclusive.
+assert 'multiSelectedDates: root.plannerSelectedDateKeys' in editor
+assert 'selectedDays.length>1 && root.recurrence!=="none"' in editor
+assert 'root.resetPlannerDateSelection()' in editor
+assert 'root.plannerSelectedCount>1' in editor
+assert 'root._plannerPickingDate' in editor
