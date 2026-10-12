@@ -443,10 +443,21 @@ Item {
                                     objectName:"plannerResizeStart"
                                     visible:timedButton.canReschedule
                                     x:0;y:0;width:parent.width;height:Math.min(9,parent.height/3);z:3
-                                    radius:3;color:Qt.alpha(root.ink,.32)
+                                    radius:3;color:"transparent"
+                                    Rectangle {
+                                        anchors.centerIn:parent
+                                        width:Math.min(28,parent.width*.3)
+                                        height:2
+                                        radius:1
+                                        color:root.headerAccent
+                                        opacity:topResizeMouse.containsMouse
+                                            || timedButton.gestureMode==="top" ? .82 : 0
+                                        Behavior on opacity {NumberAnimation {duration:120}}
+                                    }
                                     MouseArea {
                                         id:topResizeMouse
                                         anchors.fill:parent
+                                        hoverEnabled:true
                                         acceptedButtons:Qt.LeftButton
                                         preventStealing:true
                                         cursorShape:Qt.SizeVerCursor
@@ -463,10 +474,21 @@ Item {
                                     visible:timedButton.canReschedule
                                     x:0;y:parent.height-height
                                     width:parent.width;height:Math.min(9,parent.height/3);z:3
-                                    radius:3;color:Qt.alpha(root.ink,.32)
+                                    radius:3;color:"transparent"
+                                    Rectangle {
+                                        anchors.centerIn:parent
+                                        width:Math.min(28,parent.width*.3)
+                                        height:2
+                                        radius:1
+                                        color:root.headerAccent
+                                        opacity:bottomResizeMouse.containsMouse
+                                            || timedButton.gestureMode==="bottom" ? .82 : 0
+                                        Behavior on opacity {NumberAnimation {duration:120}}
+                                    }
                                     MouseArea {
                                         id:bottomResizeMouse
                                         anchors.fill:parent
+                                        hoverEnabled:true
                                         acceptedButtons:Qt.LeftButton
                                         preventStealing:true
                                         cursorShape:Qt.SizeVerCursor
@@ -530,7 +552,16 @@ Item {
                     objectName:"plannerInlineEventsEditor"
                     anchors.fill:parent
                     embeddedPresentation:true
-                    hideEmbeddedScrollBar:true
+                    plannerPresentation:true
+                    hideEmbeddedScrollBar:false
+                    embeddedBackgroundColor: {
+                        const surface=Config.options?.panelFamily==="abyss"
+                            ? AbyssStyle.contentLayer : Appearance.colors.colLayer1
+                        const opacity=Math.max(.3,Math.min(1,
+                            Config.options?.dashboard?.appearance?.cardOpacity ?? 1))
+                        return opacity>=.999 ? surface : ColorUtils.applyAlpha(surface,
+                            opacity*surface.a)
+                    }
                     show:root.sideView==="events"
                     onDismiss:root.closeInlineEventEditor()
                 }

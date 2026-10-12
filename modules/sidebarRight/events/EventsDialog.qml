@@ -13,7 +13,12 @@ WindowDialog {
     id: root
     backgroundHeight: 600
     property bool hideEmbeddedScrollBar: false
-    contentSpacing: root.embeddedPresentation ? 4 : 16
+    // The roomy Dashboard Weekly Planner uses the same embedded dialog
+    // lifecycle as Calendar, but owns an intentionally expanded form layout.
+    property bool plannerPresentation: false
+    readonly property bool compactEditor: embeddedPresentation && !plannerPresentation
+    contentSpacing: root.plannerPresentation ? 12
+        : (root.compactEditor ? 4 : 16)
     embeddedBackgroundColor: Appearance.angelEverywhere
         ? Appearance.angel.colGlassPopup
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
@@ -31,9 +36,9 @@ WindowDialog {
     component EventTextField: MaterialTextField {
         // Material's floating-label padding leaves too little room in the
         // compact editor. Keep a single line and size it for the actual font.
-        implicitHeight: Math.max(root.embeddedPresentation ? 40 : 56,
+        implicitHeight: Math.max(root.compactEditor ? 40 : 52,
             Math.ceil(contentHeight + topPadding + bottomPadding))
-        wrapMode: root.embeddedPresentation ? TextInput.NoWrap : TextInput.Wrap
+        wrapMode: root.compactEditor ? TextInput.NoWrap : TextInput.Wrap
         Binding on topPadding {
             when: root.embeddedPresentation
             value: 8
@@ -49,8 +54,8 @@ WindowDialog {
         property string tooltipText: ""
         property bool selectedState: false
 
-        implicitWidth: root.embeddedPresentation ? 30 : 36
-        implicitHeight: root.embeddedPresentation ? 30 : 36
+        implicitWidth: root.compactEditor ? 30 : 36
+        implicitHeight: root.compactEditor ? 30 : 36
         padding: 0
         hoverEnabled: true
         focusPolicy: Qt.StrongFocus
@@ -81,7 +86,7 @@ WindowDialog {
             MaterialSymbol {
                 anchors.centerIn: parent
                 text: compactButton.symbol
-                iconSize: root.embeddedPresentation ? 15 : 18
+                iconSize: root.compactEditor ? 15 : 18
                 color: compactButton.selectedState
                     ? Appearance.colors.colOnPrimaryContainer
                     : Appearance.colors.colOnSurfaceVariant
@@ -333,21 +338,21 @@ WindowDialog {
     }
 
     WindowDialogTitle {
-        Layout.leftMargin: root.embeddedPresentation ? 6 : 0
-        Layout.rightMargin: root.embeddedPresentation ? 6 : 0
+        Layout.leftMargin: root.plannerPresentation ? 12 : (root.compactEditor ? 6 : 0)
+        Layout.rightMargin: root.plannerPresentation ? 12 : (root.compactEditor ? 6 : 0)
         text: root.isEditing
             ? Translation.tr("Edit Event")
             : (root.embeddedPresentation
                 ? Translation.tr("Add Event")
                 : Translation.tr("New Event"))
-        font.pixelSize: root.embeddedPresentation
+        font.pixelSize: root.compactEditor
             ? Appearance.font.pixelSize.normal
-            : Appearance.font.pixelSize.title
+            : Appearance.font.pixelSize.large
         font.weight: root.embeddedPresentation ? Font.DemiBold : Font.Medium
     }
 
     WindowDialogSeparator {
-        visible: !root.embeddedPresentation
+        visible: !root.compactEditor
     }
 
     StyledText {
@@ -365,16 +370,16 @@ WindowDialog {
         Layout.fillWidth: true
         Layout.fillHeight: true
 
-        readonly property real embeddedGap: Math.max(4,
+        readonly property real embeddedGap: root.plannerPresentation ? 12 : Math.max(4,
             (height - basicInfoColumn.implicitHeight
                 - scheduleColumn.implicitHeight
                 - compactOptionDeck.height) / 2)
 
-        contentHeight: root.embeddedPresentation
+        contentHeight: root.compactEditor
             ? Math.max(height, formColumn.implicitHeight)
-            : formColumn.implicitHeight + 16
-        Layout.leftMargin: root.embeddedPresentation ? 6 : 0
-        Layout.rightMargin: root.embeddedPresentation ? 6 : 0
+            : formColumn.implicitHeight + 18
+        Layout.leftMargin: root.plannerPresentation ? 10 : (root.compactEditor ? 6 : 0)
+        Layout.rightMargin: root.plannerPresentation ? 10 : (root.compactEditor ? 6 : 0)
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
@@ -388,28 +393,28 @@ WindowDialog {
             id: formColumn
             width: parent.width
             spacing: root.embeddedPresentation
-                ? editorFlickable.embeddedGap : 4
+                ? editorFlickable.embeddedGap : 8
 
             // ─── Basic Info Section ───────────────────────────────────
             EventSectionHeader {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 text: Translation.tr("Basic Info")
             }
 
             WindowDialogSeparator {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 Layout.topMargin: -22
             }
 
             Column {
                 id: basicInfoColumn
                 width: parent.width
-                spacing: root.embeddedPresentation ? 4 : 8
-                topPadding: root.embeddedPresentation ? 2 : 8
+                spacing: root.compactEditor ? 4 : 10
+                topPadding: root.compactEditor ? 2 : 8
 
                 EventTextField {
                     id: titleField
-                    width: parent.width - (root.embeddedPresentation ? 8 : 16)
+                    width: parent.width - (root.compactEditor ? 8 : 16)
                     anchors.horizontalCenter: parent.horizontalCenter
                     placeholderText: root.embeddedPresentation
                         ? Translation.tr("Title") + " *"
@@ -424,7 +429,7 @@ WindowDialog {
                 }
 
                 EventTextField {
-                    width: parent.width - (root.embeddedPresentation ? 8 : 16)
+                    width: parent.width - (root.compactEditor ? 8 : 16)
                     anchors.horizontalCenter: parent.horizontalCenter
                     placeholderText: root.embeddedPresentation
                         ? Translation.tr("Note (opt)")
@@ -436,26 +441,26 @@ WindowDialog {
 
             // ─── Date & Time Section ──────────────────────────────────
             EventSectionHeader {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 text: Translation.tr("Date & Time")
                 topPadding: root.embeddedPresentation ? 0 : 16
             }
 
             WindowDialogSeparator {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 Layout.topMargin: -22
             }
 
             Column {
                 id: scheduleColumn
                 width: parent.width
-                spacing: root.embeddedPresentation ? 3 : 6
-                topPadding: root.embeddedPresentation ? 3 : 0
+                spacing: root.compactEditor ? 3 : 10
+                topPadding: root.compactEditor ? 3 : 4
 
                 // Embedded Calendar already owns the date grid above this sheet.
                 // Modal owners keep the self-contained picker.
                 DatePicker {
-                    visible: !root.embeddedPresentation
+                    visible: !root.compactEditor
                     width: parent.width
                     compact: false
                     selectedDate: root.eventDate
@@ -463,7 +468,7 @@ WindowDialog {
                 }
 
                 RowLayout {
-                    visible: root.embeddedPresentation
+                    visible: root.compactEditor
                     width: parent.width - 8
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 4
@@ -498,7 +503,7 @@ WindowDialog {
                 }
 
                 RowLayout {
-                    visible: !root.embeddedPresentation
+                    visible: !root.compactEditor
                     width: parent.width - 8
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 8
@@ -525,13 +530,13 @@ WindowDialog {
 
                 RowLayout {
                     visible: !root.allDay
-                    width: parent.width - (root.embeddedPresentation ? 8 : 0)
+                    width: parent.width - (root.compactEditor ? 8 : 0)
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: root.embeddedPresentation ? 6 : 8
+                    spacing: root.compactEditor ? 6 : 8
 
                     ConfigTimeInput {
                         Layout.fillWidth: true
-                        compact: root.embeddedPresentation
+                        compact: root.compactEditor
                         icon: "schedule"
                         text: Translation.tr("Start")
                         value: root.eventTime
@@ -540,7 +545,7 @@ WindowDialog {
 
                     ConfigTimeInput {
                         Layout.fillWidth: true
-                        compact: root.embeddedPresentation
+                        compact: root.compactEditor
                         icon: "schedule"
                         text: Translation.tr("End")
                         value: root.eventEndTime
@@ -556,7 +561,7 @@ WindowDialog {
             // predictable and avoid crowding the time controls above.
             Item {
                 id: compactOptionDeck
-                visible: root.embeddedPresentation
+                visible: root.compactEditor
                 width: parent.width
                 height: 32
 
@@ -624,18 +629,18 @@ WindowDialog {
             // Repeat is part of scheduling, so keep it next to date/time rather
             // than burying it below category/priority/reminder settings.
             EventSectionHeader {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 text: Translation.tr("Repeat")
                 topPadding: root.embeddedPresentation ? 5 : 16
             }
 
             WindowDialogSeparator {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 Layout.topMargin: -22
             }
 
             ConfigSelectionArray {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 anchors {
                     left: parent.left
                     right: parent.right
@@ -658,18 +663,18 @@ WindowDialog {
 
             // ─── Category Section ─────────────────────────────────────
             EventSectionHeader {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 text: Translation.tr("Category")
                 topPadding: root.embeddedPresentation ? 6 : 16
             }
 
             WindowDialogSeparator {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 Layout.topMargin: -22
             }
 
             ConfigSelectionArray {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 anchors {
                     left: parent.left
                     right: parent.right
@@ -690,18 +695,18 @@ WindowDialog {
 
             // ─── Priority Section ─────────────────────────────────────
             EventSectionHeader {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 text: Translation.tr("Priority")
                 topPadding: root.embeddedPresentation ? 6 : 16
             }
 
             WindowDialogSeparator {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 Layout.topMargin: -22
             }
 
             ConfigSelectionArray {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 anchors {
                     left: parent.left
                     right: parent.right
@@ -720,18 +725,18 @@ WindowDialog {
 
             // ─── Reminder Section ─────────────────────────────────────
             EventSectionHeader {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 text: Translation.tr("Reminder")
                 topPadding: root.embeddedPresentation ? 6 : 16
             }
 
             WindowDialogSeparator {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 Layout.topMargin: -22
             }
 
             ConfigSelectionArray {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 anchors {
                     left: parent.left
                     right: parent.right
@@ -752,7 +757,7 @@ WindowDialog {
 
             // Bottom padding
             Item {
-                visible: !root.embeddedPresentation
+                visible: !root.compactEditor
                 width: 1
                 height: 16
             }
@@ -760,14 +765,14 @@ WindowDialog {
     }
 
     WindowDialogSeparator {
-        visible: !root.embeddedPresentation
+        visible: !root.compactEditor
     }
 
     WindowDialogButtonRow {
-        spacing: root.embeddedPresentation ? 6 : 4
-        Layout.leftMargin: root.embeddedPresentation ? 6 : -8
-        Layout.rightMargin: root.embeddedPresentation ? 6 : -8
-        Layout.bottomMargin: root.embeddedPresentation ? 2 : 0
+        spacing: root.compactEditor ? 6 : 8
+        Layout.leftMargin: root.compactEditor ? 6 : -8
+        Layout.rightMargin: root.compactEditor ? 6 : -8
+        Layout.bottomMargin: root.compactEditor ? 2 : 0
 
         DialogButton {
             visible: root.isEditing && !root.embeddedPresentation
@@ -785,7 +790,7 @@ WindowDialog {
         }
 
         CompactEventOptionButton {
-            visible: root.embeddedPresentation && root.isEditing
+            visible: root.compactEditor && root.isEditing
             Layout.preferredWidth: 30
             Layout.preferredHeight: 30
             enabled: Events.ready
@@ -803,7 +808,7 @@ WindowDialog {
         Item { Layout.fillWidth: true }
 
         DialogButton {
-            visible: !root.embeddedPresentation
+            visible: !root.compactEditor
             padding: 14
             implicitHeight: 36
             buttonText: Translation.tr("Cancel")
@@ -814,7 +819,7 @@ WindowDialog {
         }
 
         CompactEventOptionButton {
-            visible: root.embeddedPresentation
+            visible: root.compactEditor
             Layout.preferredWidth: 30
             Layout.preferredHeight: 30
             symbol: "close"
@@ -826,7 +831,7 @@ WindowDialog {
         }
 
         DialogButton {
-            visible: !root.embeddedPresentation
+            visible: !root.compactEditor
             padding: 14
             implicitHeight: 36
             buttonText: root.isEditing
@@ -844,7 +849,7 @@ WindowDialog {
         }
 
         CompactEventOptionButton {
-            visible: root.embeddedPresentation
+            visible: root.compactEditor
             Layout.preferredWidth: 30
             Layout.preferredHeight: 30
             symbol: root.isEditing ? "check" : "add_task"
