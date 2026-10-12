@@ -54,6 +54,34 @@ Singleton {
         if(next.length===root.todoUnlinks.length)return false
         root.todoUnlinks=next;root.saveToFile();return true
     }
+    // Finish a v1/partially migrated store automatically once the Todo backend
+    // has actually loaded.  A linked metadata flag alone is not proof of a
+    // live task. Do not touch tasks in another provider or missing backends.
+    function _resumeLegacyMigration() {
+        if (!root.ready || !Todo.ready || root.persistenceBusy
+            || root.occurrenceMigrationBackup?.version!==1) return
+        const keys=Todo.list.map(item=>item.agenda?.key).filter(Boolean)
+        const migration=Occurrences.migrateLegacy(root.list,keys,Todo.agendaProvider)
+        if (migration.changed)
+            root.list=migration.events
+        root.occurrenceMigrationBackup=Object.assign({},root.occurrenceMigrationBackup,{
+            version:2,
+            normalized:(root.occurrenceMigrationBackup.normalized||0)+migration.normalized,
+            merged:(root.occurrenceMigrationBackup.merged||0)+migration.merged,
+            skippedLinked:migration.skippedLinked
+        })
+        root.saveToFile()
+    }
+    Connections {
+        target: Todo
+        function onReadyChanged() {
+            if (Todo.ready) Qt.callLater(root._resumeLegacyMigration)
+        }
+    }
+    onPersistenceBusyChanged: if (!persistenceBusy
+        && root.occurrenceMigrationBackup?.version===1 && Todo.ready)
+        Qt.callLater(root._resumeLegacyMigration)
+
     function _notifyAgendaLinks() {
         if(root.getDurableEvents().some(event=>AgendaTodoPolicy.validLink(event.todoLink) && event.todoLink.state!=="detached") || root.getDurableTodoUnlinks().some(link=>AgendaTodoPolicy.validLink(link) && link.provider))
             Qt.callLater(()=>Todo._scheduleAgenda())
@@ -178,19 +206,25 @@ Singleton {
                 // durable snapshot. Never declare in-memory migration durable
                 // until FileView acknowledges the write.
                 const previousBackup=data?.occurrenceMigrationBackup ?? null
-                const migration=previousBackup?.version===1
+                const todoKeys=Todo.ready
+                    ? Todo.list.map(item=>item.agenda?.key).filter(Boolean) : null
+                const migration=previousBackup?.version>=2
                     ? {events:events,changed:false,normalized:0,merged:0,skippedLinked:0}
-                    : Occurrences.migrateLegacy(events)
+                    : Occurrences.migrateLegacy(events,todoKeys,Todo.agendaProvider)
                 root.list=migration.events
                 root.todoUnlinks=unlinks
                 root.nextId=nextId
                 root.occurrenceMigrationBackup=previousBackup
-                if (migration.changed) {
+                if (migration.changed || previousBackup?.version===1 && Todo.ready) {
+                    // Keep the FIRST original snapshot, including when an
+                    // installed v1 migration already ran but left linked rows.
+                    const original=previousBackup?.original
+                        || {events:events,nextId:nextId,todoUnlinks:unlinks}
                     root.occurrenceMigrationBackup={
-                        version:1,
-                        original:{events:events,nextId:nextId,todoUnlinks:unlinks},
-                        normalized:migration.normalized,
-                        merged:migration.merged,
+                        version:Todo.ready ? 2 : 1,
+                        original:original,
+                        normalized:(previousBackup?.normalized || 0)+migration.normalized,
+                        merged:(previousBackup?.merged || 0)+migration.merged,
                         skippedLinked:migration.skippedLinked
                     }
                 }
@@ -200,10 +234,12 @@ Singleton {
                 root._durableSnapshotJson=JSON.stringify({nextId:nextId,events:events,todoUnlinks:unlinks})
                 root.errorMessage=""
                 root.ready = true
-                if (migration.changed) {
+                if (migration.changed || previousBackup?.version===1 && Todo.ready) {
                     root._saveQueued=true
                     Qt.callLater(root.saveToFile)
                 } else root._notifyAgendaLinks()
+                if (root.occurrenceMigrationBackup?.version===1 && Todo.ready)
+                    Qt.callLater(root._resumeLegacyMigration)
                 _log("[Events] Loaded", root.list.length, "events",
                     migration.changed ? "(automatic occurrence migration pending save)" : "")
             } catch (e) {
