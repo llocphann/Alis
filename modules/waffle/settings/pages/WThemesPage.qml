@@ -641,7 +641,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Invert colors (complementary)")
             icon: "dark-theme"
-            description: Translation.tr("Rotate every color 180° on the color wheel. Shell-only: external apps keep their original colors.")
+            description: Translation.tr("Complementary shell colors; external apps remain unchanged.")
             checked: Config.options?.appearance?.colorInvert ?? false
             onCheckedChanged: Config.setNestedValue("appearance.colorInvert", checked)
         }
@@ -702,7 +702,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Auto light/dark from wallpaper")
             icon: "auto"
-            description: Translation.tr("Pick the light or dark scheme from each wallpaper's brightness so text stays readable")
+            description: Translation.tr("Choose light/dark automatically from wallpaper brightness.")
             checked: Config.options?.appearance?.wallpaperTheming?.autoDarkLightMode ?? false
             onCheckedChanged: {
                 Config.setNestedValue("appearance.wallpaperTheming.autoDarkLightMode", checked);
@@ -796,7 +796,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Neovim / LazyVim")
             icon: "terminal"
-            description: Translation.tr("Generate inir.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)")
+            description: Translation.tr("Generate Neovim/LazyVim theme at ~/.config/nvim/lua/plugins/neovim.lua.")
             checked: Config.options?.appearance?.wallpaperTheming?.enableNeovim ?? false
             onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.enableNeovim", checked)
         }
