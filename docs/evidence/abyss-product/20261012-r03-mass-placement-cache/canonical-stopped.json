@@ -1,0 +1,127 @@
+{
+  "source_sha": "484427acf960590ca55bc9c7f6df603c8c31852c",
+  "runner_cwd": "/tmp/alis-canonical-r03-7fcmjmpw/source",
+  "integration_source": "/tmp/alis-canonical-r03-7fcmjmpw/integration",
+  "integration_sha": "4d0aa3f508fdd6bd953696d92bf529f1fb9f4b32",
+  "driver": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/drivers/r03-484427acf960590ca55bc9c7f6df603c8c31852c.sh",
+  "driver_sha256": "8f6735f325d4a0077130d4aba7984cd2a3eff501eaea2b7e45ffa4c1a073d48b",
+  "log": "/tmp/alis-canonical-r03-7fcmjmpw/canonical.log",
+  "terminal": "/tmp/alis-canonical-r03-7fcmjmpw/terminal.log",
+  "receipt": "/tmp/alis-canonical-r03-7fcmjmpw/receipt.json",
+  "private_native": "/tmp/alis-canonical-r03-7fcmjmpw/private",
+  "status": "STOPPED",
+  "parser_path_prefix": "/usr/lib/qt6/bin",
+  "arguments": [
+    "--current-repo",
+    "--strict-qml"
+  ],
+  "driver_pid": 1590613,
+  "started_at": "2026-10-12T10:44:09.835239+00:00",
+  "exit_code": -15,
+  "finished_at": "2026-10-12T11:07:58.935973+00:00",
+  "stop_reason": "FIVE_HOUR_REMAINING_2_PERCENT",
+  "five_hour_remaining_percent": 2,
+  "five_hour_reset_epoch": 1791808655,
+  "continuation_at_utc": "2026-10-12T12:40:35Z",
+  "partial_completed": 305,
+  "partial_pass": 282,
+  "partial_fail": 23,
+  "partial_failures": [
+    {
+      "index": 38,
+      "check": "Python regression: scripts/test-abyss-drag-corners-runtime.py"
+    },
+    {
+      "index": 51,
+      "check": "Python regression: scripts/test-abyss-keyboard-runtime.py"
+    },
+    {
+      "index": 61,
+      "check": "Python regression: scripts/test-abyss-module-locks-runtime.py"
+    },
+    {
+      "index": 62,
+      "check": "Python regression: scripts/test-abyss-multi-selection-runtime.py"
+    },
+    {
+      "index": 67,
+      "check": "Python regression: scripts/test-abyss-panel-material-settings-runtime.py"
+    },
+    {
+      "index": 86,
+      "check": "Python regression: scripts/test-abyss-zero-corners-runtime.py"
+    },
+    {
+      "index": 105,
+      "check": "Python regression: scripts/test-calendar-weather-composition-contract.py"
+    },
+    {
+      "index": 123,
+      "check": "Python regression: scripts/test-dashboard-editor-field-runtime.py"
+    },
+    {
+      "index": 128,
+      "check": "Python regression: scripts/test-dashboard-music-browser-navigation-contract.py"
+    },
+    {
+      "index": 130,
+      "check": "Python regression: scripts/test-dashboard-music-runtime.py"
+    },
+    {
+      "index": 133,
+      "check": "Python regression: scripts/test-dashboard-notes-markdown-runtime.py"
+    },
+    {
+      "index": 142,
+      "check": "Python regression: scripts/test-dashboard-warm-readiness.py"
+    },
+    {
+      "index": 184,
+      "check": "Python regression: scripts/test-material-only-global-style-contract.py"
+    },
+    {
+      "index": 204,
+      "check": "Python regression: scripts/test-popup-anchor-hover-runtime.py"
+    },
+    {
+      "index": 239,
+      "check": "Python regression: scripts/test-settings-task-tabs-runtime.py"
+    },
+    {
+      "index": 244,
+      "check": "Python regression: scripts/test-sidebar-left-theme-runtime.py"
+    },
+    {
+      "index": 273,
+      "check": "Python regression: scripts/test-weather-popup-handoff-runtime.py"
+    },
+    {
+      "index": 275,
+      "check": "Python regression: scripts/test-weekly-planner-runtime.py"
+    },
+    {
+      "index": 287,
+      "check": "shell regression: scripts/test-abyss-dashboard-editing.sh"
+    },
+    {
+      "index": 291,
+      "check": "shell regression: scripts/test-abyss-editor-runtime.sh"
+    },
+    {
+      "index": 292,
+      "check": "shell regression: scripts/test-abyss-ipc-corner.sh"
+    },
+    {
+      "index": 295,
+      "check": "shell regression: scripts/test-abyss-osd-content.sh"
+    },
+    {
+      "index": 300,
+      "check": "shell regression: scripts/test-abyss-shared-content.sh"
+    }
+  ],
+  "full_summary_present": false,
+  "raw_log_sha256": "4656e442a0112c3933dff1ed04875e190731556434bc7625c4ca64b06288741b",
+  "raw_log_bytes": 146419,
+  "driver_matches_frozen_hash": true
+}

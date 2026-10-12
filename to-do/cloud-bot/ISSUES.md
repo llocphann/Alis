@@ -1,22 +1,26 @@
 # Issues/bugs
 
-**Active checkpoint — 2026-10-12:** cloud/local are synchronized through
-`3ea5d892d`; strict-lossless R03 cache source `458ad7197` and qualification
-`484427acf` are pushed. R03 remains OPEN: cached wave/placement outputs are
-exactly qualified, but dense reordering and owner smoothness remain unresolved.
-[Cache evidence and retained failures](../../docs/evidence/abyss-product/20261012-r03-mass-placement-cache/README.md).
-Frozen full clean-clone `484427acf` is RUNNING; no final PASS is claimed.
-Earlier full `7e31685bc` FAIL 373/7/1 and scoped `cfc852bee` 16 PASS/1 FAIL
-remain historical independent receipts. G0 remains offline-only.
+**Quota checkpoint — 2026-10-12 18:08 ICT:** exact five-hour remaining
+**2%** triggered stop of all owned product/test processes. Weekly remaining
+7% is not the trigger. Source/cache `458ad7197` and evidence `484427acf`
+are pushed; valid cloud edits through `be280954e` are preserved locally.
+Frozen full clean-clone `484427acf` is **STOPPED, exit -15**, after
+**305 completed checks: 282 PASS / 23 FAIL**, without a full summary.
+[Raw receipts, frozen driver and focused evidence](../../docs/evidence/abyss-product/20261012-r03-mass-placement-cache/README.md).
+Native failures retain their real FAIL status; nested context is recorded,
+but no root cause or full-source PASS is claimed. Prior 7e31685bc/cfc852bee
+receipts and G0 remain historical/offline; no consumed lineage is replayed.
 
-**Latest direct priority:** finish the current source/qualification milestone,
-then **ABYSS-R08** immediately. Resume the remaining explicit queue afterwards;
-R03 and POP-I01 stay open independently. ABYSS-F02 modifier-only selection is
-already implemented in cowork `77bba9432` with native fixture `d982c7d02`;
-use Ctrl/Shift + click and do not recreate a toolbar mode toggle.
-Only exact five-hour remaining below 3% triggers checkpoint/push and the
-existing single reset+3minute continuation; weekly limits never trigger it.
-Preserve cowork work, owner preferences and independent acceptance gates.
+**Next action after reset:** finish qualification of the current R03 milestone
+by diagnosing the relevant failures, then take **ABYSS-R08 immediately** under
+the latest direct owner priority. R03 remains OPEN for dense reorder jumps
+(the four-module pure case drifts 207 px on a 25 px drag), actual protocol
+tracking and owner smoothness. POP-I01 remains OPEN independently. Continue
+the remaining explicit queue afterwards. ABYSS-F02's modifier-only Ctrl/Shift
+selection already exists in 77bba9432/d982c7d02; do not recreate its toggle.
+The existing heartbeat will continue this chat once at **2026-10-12 19:40:35
+ICT**, exactly this five-hour reset +3 minutes. Preserve owner preferences,
+consent, cowork work and independent installed/multi-output gates.
 
 **Latest explicit owner sequence — 2026-10-12:** after current Abyss
 qualification, investigate **POP-I01 first**, followed by DASH-F01 →

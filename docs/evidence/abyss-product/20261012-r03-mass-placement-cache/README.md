@@ -7,10 +7,13 @@ open**; owner desktop smoothness, installed identity, multi-output/fractional
 input and new exact-SHA canonical acceptance are separate gates.
 
 Frozen full canonical **484427acf960590ca55bc9c7f6df603c8c31852c** is
-RUNNING against the pinned clean Integration 4d0aa3f5; its driver/hash and
-private native context are in `canonical-running.json`. The first native
-press check failed in this nested context; retain the final receipt rather
-than infer PASS from the focused runs. Do not modify the running driver.
+STOPPED when the exact five-hour allowance reached 2% remaining, exit -15.
+It completed **305 checks: 282 PASS / 23 FAIL**, with no full summary, against
+the pinned clean Integration 4d0aa3f5. `canonical-stopped.json` and both raw
+logs retain the partial result and frozen driver/hash; the initial RUNNING
+receipt remains historical. Several native press/focus/geometry cases failed
+in this nested context; causes are not established. Do not infer a full PASS
+from focused runs, or replay the interrupted run as though it completed.
 
 The controller reuses double-precision distance kernels and an identical-input
 mass snapshot. It preserves the original ordered additions, synchronous mass
