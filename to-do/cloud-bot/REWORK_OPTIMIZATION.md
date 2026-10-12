@@ -1106,6 +1106,15 @@ run privileged installation just because manual buttons are retired.
   accessible glyphs/tooltips and remove keyboard instructions from the
   footer while keeping existing shortcuts, input and feedback.
   Source refinement awaiting owner/native four-Edge and scale verification.
+  **Second owner screenshot, 2026-10-12:** Earlier icon/slider-only
+  reduction still displayed one-component-per-row with excessive horizontal
+  blank space. Rework into shared adaptive 3/2/1-column groups:
+  module palette+Add, icon+sliders+context actions, Scale/Join/Round
+  conditions, and grouped selection lock/visibility/remove controls.
+  Place output-only beside Modules/IPC, remove side headings/separators;
+  retain all draft operations, per-Edge semantics, IPC, scroll and tooltips.
+  Source patch proposed on dev; native four-Edge, fractional scaling and
+  owner visual sign-off remain independent gates.
 
 - [x] **NET-R01 — Wi-Fi and Bluetooth Popups about 35% smaller — owner request 2026-10-10:**
   Reduce each Popup's displayed footprint by roughly 35% (target about 65%

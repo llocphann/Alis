@@ -67,7 +67,12 @@ print("abyss editor compact action density contract: ok")
 button = (root / "modules/abyss/looks/AbyssButton.qml").read_text()
 assert button.count('visible: root.compact || root.text.length === 0') == 2
 assert 'component EditorIconHint: Item' in editor
-assert editor.count('EditorIconHint { glyph:') == 6
-assert editor.count('Layout.maximumWidth: 210 * Appearance.fontSizeScale') == 6
-assert 'root.expandedControls ? 1000 : 760' in editor
+assert len(re.findall(r'EditorIconHint\\s*\\{', editor)) == 6
+assert editor.count('AbyssSlider {') == 6
+assert 'objectName:"abyssEditorFineControls"' in editor
+assert 'objectName:"abyssEditorSelectedFields"' in editor
+assert 'columns:!root.toolbarOnHorizontalEdge || width<460*Appearance.fontSizeScale' in editor
+assert 'columns:!root.toolbarOnHorizontalEdge || width<440*Appearance.fontSizeScale' in editor
+assert editor.count('text:"This output only"') == 1
+assert 'root.expandedControls ? 860 : 720' in editor
 assert 'Ctrl/Shift-click select · Drag' not in editor

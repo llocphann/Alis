@@ -655,7 +655,7 @@ Item {
         // busy, the same editor can move to a side Edge with a deeper body and
         // a long vertical span instead of covering the module being edited.
         span: root.toolbarOnHorizontalEdge
-            ? Math.min(root.width-48,root.expandedControls ? 1000 : 760)
+            ? Math.min(root.width-48,root.expandedControls ? 860 : 720)
             : Math.min(root.height-48,toolbar.implicitHeight+padding*2)
         along: ((root.toolbarOnHorizontalEdge ? root.width : root.height)-span)/2
         depth: root.toolbarOnHorizontalEdge
@@ -695,7 +695,7 @@ Item {
         parent: editorBody.contentParent
         anchors.fill: parent
         implicitWidth: root.toolbarOnHorizontalEdge
-            ? toolbarColumn.implicitWidth : 288*Appearance.fontSizeScale
+            ? toolbarColumn.implicitWidth : 260*Appearance.fontSizeScale
         implicitHeight: toolbarColumn.implicitHeight
 
         Flickable {
@@ -789,7 +789,9 @@ Item {
 
                 GridLayout {
                     Layout.fillWidth: true;Layout.minimumWidth:0
-                    columns: root.editingPopups && width>=480*Appearance.fontSizeScale ? 3 : 2
+                    columns:width>=660*Appearance.fontSizeScale
+                        ? (root.editingPopups ? (root.expandedControls ? 4 : 3) : (root.expandedControls ? 3 : 2))
+                        : root.editingPopups && width>=440*Appearance.fontSizeScale ? 3 : 2
                     columnSpacing:6;rowSpacing:6
                     SelectionGroupButton {
                         objectName:"abyssEditorModulesMode"
@@ -817,30 +819,15 @@ Item {
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         onActivated:previewPositions.kind=currentValue
                     }
-                }
-
-                AbyssCheckBox {
-                    visible:root.expandedControls
-                    text:"This output only"
-                    checked:root.outputOnly
-                    Layout.fillWidth:true;Layout.minimumWidth:0
-                    onToggled:root.outputOnly=checked
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true;Layout.minimumWidth:0
-                    height: 1
-                    visible: root.expandedControls && !root.toolbarOnHorizontalEdge
-                    color: Qt.alpha(AbyssStyle.accent,.18)
-                }
-
-                AbyssLabel {
-                    visible: root.expandedControls && !root.toolbarOnHorizontalEdge
-                    text: root.editingPopups
-                        ? "IPC placement" : "Module placement"
-                    font.bold: true
-                    color: Appearance.m3colors.darkmode ? AbyssStyle.textColorMuted : "#1a1a1a"
-                    Layout.fillWidth: true;Layout.minimumWidth:0
+                                        AbyssCheckBox {
+                        Layout.fillWidth:true;Layout.minimumWidth:0
+                        
+                                            visible:root.expandedControls
+                                            text:"This output only"
+                                            checked:root.outputOnly
+                        
+                                            onToggled:root.outputOnly=checked
+                                        }
                 }
 
                 AbyssPositionSettings {
@@ -861,229 +848,266 @@ Item {
                         root.editPosition(positions,kind,outputName,values)
                 }
 
+                // Adaptive field grid: each cell keeps its icon, input and
+                // contextual action together at every supported orientation.
                 GridLayout {
+                    id:editFineControls
+                    objectName:"abyssEditorFineControls"
                     visible:root.expandedControls && !root.editingPopups
                     Layout.fillWidth:true;Layout.minimumWidth:0
-                    columns:root.toolbarWideControls ? 4 : 1
-                    rowSpacing:6
-                    columnSpacing:6
-
-                    StyledComboBox {
-                        id: palette
-                        model: Placement.catalog.map(kind => ({label:Placement.label(kind),kind:kind}))
-                        textRole:"label";valueRole:"kind"
-                        Layout.preferredWidth: root.toolbarOnHorizontalEdge ? 190 : -1
-                        Layout.fillWidth: !root.toolbarOnHorizontalEdge;Layout.minimumWidth:0
+                    columns:!root.toolbarOnHorizontalEdge || width<460*Appearance.fontSizeScale
+                        ? 1 : width>=700*Appearance.fontSizeScale ? 3 : 2
+                    columnSpacing:10;rowSpacing:4
+                    RowLayout {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        StyledComboBox {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:165*Appearance.fontSizeScale
+                        
+                                                id: palette
+                                                model: Placement.catalog.map(kind => ({label:Placement.label(kind),kind:kind}))
+                                                textRole:"label";valueRole:"kind"
+                        
+                        
+                                            }
+                        AbyssButton {
+                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                        
+                                                objectName:"abyssEditorConfirmAdd"
+                                                text:"Add module";glyph:"add"
+                                                compact:true
+                                                description:"Add selected module"
+                                                enabled:root.draft.length<24
+                        
+                                                onClicked:root.add(palette.currentValue)
+                                            }
                     }
-                    AbyssButton {
-                        objectName:"abyssEditorConfirmAdd"
-                        text:"Add module";glyph:"add"
-                        compact:root.toolbarOnHorizontalEdge
-                        description:"Add selected module"
-                        enabled:root.draft.length<24
-                        Layout.fillWidth: !root.toolbarOnHorizontalEdge;Layout.minimumWidth:0
-                        onClicked:root.add(palette.currentValue)
+                    RowLayout {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        EditorIconHint {
+                        Layout.preferredWidth:30*Appearance.fontSizeScale
+                         glyph:"space_bar";description:"Gap between modules" }
+                        AbyssSlider {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:185*Appearance.fontSizeScale
+                        
+                        
+                                                unit:"px";from:0;to:32;value:root.gap
+                                                onMoved:root.gap=value
+                        
+                                            }
                     }
-                    EditorIconHint { glyph:"space_bar";description:"Gap between modules" }
-                    AbyssSlider {
-                        Layout.maximumWidth: 210 * Appearance.fontSizeScale
-                        unit:"px";from:0;to:32;value:root.gap
-                        onMoved:root.gap=value
+                    RowLayout {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        EditorIconHint {
+                        Layout.preferredWidth:30*Appearance.fontSizeScale
+                         glyph:"border_outer";description:"Editing Edge" }
+                        StyledComboBox {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:115*Appearance.fontSizeScale
+                        
+                                                id:edgeChoice
+                                                model:["top","right","bottom","left"]
+                                                currentIndex:model.indexOf(root.editingEdge)
+                                                onActivated:root.editingEdge=currentText
+                        
+                        
+                                            }
+                        AbyssButton {
+                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                        
+                                                text:"Snap to guides";glyph:"grid_4x4"
+                                                compact:true
+                                                description:"Snap module movement to alignment guides"
+                                                checkable:true;checked:root.snapEnabled
+                        
+                                                onToggled:root.snapEnabled=checked
+                                            }
+                    }
+                    RowLayout {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        EditorIconHint {
+                        Layout.preferredWidth:30*Appearance.fontSizeScale
+                         glyph:"aspect_ratio";description:"Shared module size for this Edge" }
+                        AbyssSlider {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:185*Appearance.fontSizeScale
+                        
+                        
+                                                from:.6;to:1.8
+                                                value:Placement.edgeSize(root.draftOptions,root.editingEdge)
+                        
+                                                onMoved:root.edgeSizes=Object.assign(
+                                                    {},root.edgeSizes,{[root.editingEdge]:value})
+                                            }
+                    }
+                    RowLayout {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        EditorIconHint {
+                        Layout.preferredWidth:30*Appearance.fontSizeScale
+                         glyph:"line_weight";description:"Physical Edge width" }
+                        AbyssSlider {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:170*Appearance.fontSizeScale
+                        
+                        
+                                                unit:"px";from:0;to:40;stepSize:1
+                        
+                                                value:Placement.edgeThickness(
+                                                    root.draftOptions,root.editingEdge)
+                                                onMoved:root.edgeThicknesses=Object.assign(
+                                                    {},root.edgeThicknesses,
+                                                    {[root.editingEdge]:value})
+                                            }
+                        AbyssButton {
+                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                        
+                                                text:"Inherit surface";glyph:"layers";compact:true
+                                                description:"Inherit the physical surface thickness"
+                        
+                                                enabled:(root.edgeThicknesses[root.editingEdge] ?? -1)>=0
+                                                onClicked:root.edgeThicknesses=Object.assign(
+                                                    {},root.edgeThicknesses,
+                                                    {[root.editingEdge]:-1})
+                                            }
+                    }
+                    RowLayout {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        AbyssCheckBox {
                         Layout.fillWidth:true;Layout.minimumWidth:0
+                        
+                                            objectName:"abyssRoundZeroCorners"
+                                            visible:root.expandedControls && !root.editingPopups
+                                            enabled:Placement.edgeThickness(root.draftOptions,root.editingEdge)===0
+                                            text:"Round at 0px"
+                        
+                                            checked:root.edgeRoundZeroCorners[root.editingEdge]===true
+                                            onToggled:root.edgeRoundZeroCorners=Object.assign({},root.edgeRoundZeroCorners,{[root.editingEdge]:checked})
+                                            StyledToolTip {text:parent.enabled ? "Uses shared Curvature" : "Set Edge width to 0px"}
+                                        }
                     }
-                }
-
-                Rectangle {
-                    Layout.fillWidth:true;Layout.minimumWidth:0;height:1
-                    visible:root.expandedControls && !root.toolbarOnHorizontalEdge && !root.editingPopups
-                    color:Qt.alpha(AbyssStyle.accent,.12)
-                }
-
-                GridLayout {
-                    visible:root.expandedControls && !root.editingPopups
-                    Layout.fillWidth:true;Layout.minimumWidth:0
-                    columns:root.toolbarWideControls ? 5 : 1
-                    rowSpacing:6
-                    columnSpacing:6
-
-                    EditorIconHint { glyph:"border_outer";description:"Editing Edge" }
-                    StyledComboBox {
-                        id:edgeChoice
-                        model:["top","right","bottom","left"]
-                        currentIndex:model.indexOf(root.editingEdge)
-                        onActivated:root.editingEdge=currentText
-                        Layout.preferredWidth:root.toolbarOnHorizontalEdge ? 110 : -1
-                        Layout.fillWidth:!root.toolbarOnHorizontalEdge;Layout.minimumWidth:0
-                    }
-                    EditorIconHint { glyph:"aspect_ratio";description:"Shared module size for this Edge" }
-                    AbyssSlider {
-                        Layout.maximumWidth: 210 * Appearance.fontSizeScale
-                        from:.6;to:1.8
-                        value:Placement.edgeSize(root.draftOptions,root.editingEdge)
-                        Layout.fillWidth:true;Layout.minimumWidth:0
-                        onMoved:root.edgeSizes=Object.assign(
-                            {},root.edgeSizes,{[root.editingEdge]:value})
-                    }
-                    AbyssButton {
-                        text:"Snap to guides";glyph:"grid_4x4"
+                    RowLayout {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        AbyssButton {
+                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                        
                         compact:true
-                        description:"Snap module movement to alignment guides"
-                        checkable:true;checked:root.snapEnabled
-                        Layout.fillWidth:!root.toolbarOnHorizontalEdge;Layout.minimumWidth:0
-                        onToggled:root.snapEnabled=checked
-                    }
-                }
-
-                GridLayout {
-                    visible:root.expandedControls && !root.editingPopups
-                    Layout.fillWidth:true;Layout.minimumWidth:0
-                    columns:root.toolbarWideControls ? 3 : 1
-                    rowSpacing:6
-                    columnSpacing:6
-
-                    EditorIconHint { glyph:"line_weight";description:"Physical Edge width" }
-                    AbyssSlider {
-                        Layout.maximumWidth: 210 * Appearance.fontSizeScale
-                        unit:"px";from:0;to:40;stepSize:1
+                                            visible:root.expandedControls && !root.editingPopups;
+                                            text:"Width affects modules";glyph:"width"
+                                            description:"Scale inherited modules with this Edge (0px hides them), or change only the bare Edge and retain local module bulges. Custom module sizes stay independent."
+                                            checkable:true;checked:root.edgeWidthAffectsModules[root.editingEdge]!==false
+                                            onToggled:root.edgeWidthAffectsModules=Object.assign({},root.edgeWidthAffectsModules,{[root.editingEdge]:checked})
+                                        }
+                        AbyssLabel {
                         Layout.fillWidth:true;Layout.minimumWidth:0
-                        value:Placement.edgeThickness(
-                            root.draftOptions,root.editingEdge)
-                        onMoved:root.edgeThicknesses=Object.assign(
-                            {},root.edgeThicknesses,
-                            {[root.editingEdge]:value})
+                         text:"Scale modules";elide:Text.ElideRight }
                     }
-                    AbyssButton {
-                        text:"Inherit surface";glyph:"layers";compact:true
-                        description:"Inherit the physical surface thickness"
-                        Layout.fillWidth:!root.toolbarOnHorizontalEdge;Layout.minimumWidth:0
-                        enabled:(root.edgeThicknesses[root.editingEdge] ?? -1)>=0
-                        onClicked:root.edgeThicknesses=Object.assign(
-                            {},root.edgeThicknesses,
-                            {[root.editingEdge]:-1})
+                    RowLayout {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        EditorIconHint {
+                        Layout.preferredWidth:30*Appearance.fontSizeScale
+                         glyph:"zoom_out_map";description:"Overall module scale" }
+                        AbyssSlider {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:170*Appearance.fontSizeScale
+                        
+                        
+                                                from:.6;to:1.8;value:root.moduleScale
+                        
+                                                onMoved:root.moduleScale=value
+                                            }
+                        AbyssButton {
+                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                        
+                                                text:"Expand whole Edge";glyph:"fit_screen"
+                                                compact:true
+                                                description:"Expand a single module across the whole Edge; turn off to expand only its local surface."
+                                                checkable:true
+                        
+                                                enabled:root.draft.filter(
+                                                    p=>p.enabled && p.edge===root.editingEdge).length===1
+                                                checked:root.singleModuleExpansion[root.editingEdge]!=="local"
+                                                onToggled:root.singleModuleExpansion=Object.assign(
+                                                    {},root.singleModuleExpansion,
+                                                    {[root.editingEdge]:checked ? "edge" : "local"})
+                                            }
                     }
-                }
-
-                AbyssCheckBox {
-                    objectName:"abyssRoundZeroCorners"
-                    visible:root.expandedControls && !root.editingPopups
-                    enabled:Placement.edgeThickness(root.draftOptions,root.editingEdge)===0
-                    text:"Round inner corners at 0px"
-                    Layout.fillWidth:true;Layout.minimumWidth:0
-                    checked:root.edgeRoundZeroCorners[root.editingEdge]===true
-                    onToggled:root.edgeRoundZeroCorners=Object.assign({},root.edgeRoundZeroCorners,{[root.editingEdge]:checked})
-                    StyledToolTip {text:parent.enabled ? "Uses shared Curvature" : "Set Edge width to 0px"}
-                }
-
-                AbyssButton {
-                    visible:root.expandedControls && !root.editingPopups;Layout.fillWidth:true;Layout.minimumWidth:0
-                    text:"Width affects modules";glyph:"width"
-                    description:"Scale inherited modules with this Edge (0px hides them), or change only the bare Edge and retain local module bulges. Custom module sizes stay independent."
-                    checkable:true;checked:root.edgeWidthAffectsModules[root.editingEdge]!==false
-                    onToggled:root.edgeWidthAffectsModules=Object.assign({},root.edgeWidthAffectsModules,{[root.editingEdge]:checked})
-                }
-
-                AbyssCheckBox {
-                    objectName:"abyssJoinNearbyModules"
-                    visible:root.expandedControls && !root.editingPopups && root.edgeWidthAffectsModules[root.editingEdge]===false
-                    text:"Join nearby modules"
-                    checked:root.edgeJoinModules[root.editingEdge]===true
-                    Layout.fillWidth:true;Layout.minimumWidth:0
-                    onToggled:root.edgeJoinModules=Object.assign({},root.edgeJoinModules,{[root.editingEdge]:checked})
-                    StyledToolTip {text:"Connect neighboring module surfaces on this Edge. Distant groups keep their own bulges; module sizes stay unchanged."}
-                }
-
-                GridLayout {
-                    visible:root.expandedControls && !root.editingPopups && root.edgeWidthAffectsModules[root.editingEdge]===false
-                    Layout.fillWidth:true;Layout.minimumWidth:0
-                    columns:root.toolbarWideControls ? 3 : 1
-                    EditorIconHint { glyph:"rounded_corner";description:"Module rounding radius" }
-                    AbyssSlider {
-                        Layout.maximumWidth: 210 * Appearance.fontSizeScale
-                        objectName:"abyssModuleRounding"
-                        Layout.fillWidth:true;Layout.minimumWidth:0;unit:"px";from:0;to:64;stepSize:1
-                        value:(root.edgeModuleRadii[root.editingEdge] ?? -1)<0
-                            ? AbyssStyle.neckRadius : root.edgeModuleRadii[root.editingEdge]
-                        onMoved:root.edgeModuleRadii=Object.assign({},root.edgeModuleRadii,{[root.editingEdge]:value})
-                    }
-                    AbyssButton {
-                        text:"Inherit rounding";glyph:"rounded_corner"
+                    RowLayout {
+                        visible:root.edgeWidthAffectsModules[root.editingEdge]===false
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        AbyssCheckBox {
                         Layout.fillWidth:true;Layout.minimumWidth:0
-                        compact:true
-                        description:"Inherit shared module rounding"
-                        enabled:(root.edgeModuleRadii[root.editingEdge] ?? -1)>=0
-                        onClicked:root.edgeModuleRadii=Object.assign({},root.edgeModuleRadii,{[root.editingEdge]:-1})
+                        
+                                            objectName:"abyssJoinNearbyModules"
+                                            visible:root.expandedControls && !root.editingPopups && root.edgeWidthAffectsModules[root.editingEdge]===false
+                                            text:"Join nearby modules"
+                                            checked:root.edgeJoinModules[root.editingEdge]===true
+                        
+                                            onToggled:root.edgeJoinModules=Object.assign({},root.edgeJoinModules,{[root.editingEdge]:checked})
+                                            StyledToolTip {text:"Connect neighboring module surfaces on this Edge. Distant groups keep their own bulges; module sizes stay unchanged."}
+                                        }
+                    }
+                    RowLayout {
+                        visible:root.edgeWidthAffectsModules[root.editingEdge]===false
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        EditorIconHint {
+                        Layout.preferredWidth:30*Appearance.fontSizeScale
+                         glyph:"rounded_corner";description:"Module rounding radius" }
+                        AbyssSlider {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:170*Appearance.fontSizeScale
+                        
+                        
+                                                objectName:"abyssModuleRounding"
+                                                unit:"px";from:0;to:64;stepSize:1
+                                                value:(root.edgeModuleRadii[root.editingEdge] ?? -1)<0
+                                                    ? AbyssStyle.neckRadius : root.edgeModuleRadii[root.editingEdge]
+                                                onMoved:root.edgeModuleRadii=Object.assign({},root.edgeModuleRadii,{[root.editingEdge]:value})
+                                            }
+                        AbyssButton {
+                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                        
+                                                text:"Inherit rounding";glyph:"rounded_corner"
+                        
+                                                compact:true
+                                                description:"Inherit shared module rounding"
+                                                enabled:(root.edgeModuleRadii[root.editingEdge] ?? -1)>=0
+                                                onClicked:root.edgeModuleRadii=Object.assign({},root.edgeModuleRadii,{[root.editingEdge]:-1})
+                                            }
                     }
                 }
 
-                GridLayout {
-                    visible:root.expandedControls && !root.editingPopups
-                    Layout.fillWidth:true;Layout.minimumWidth:0
-                    columns:root.toolbarWideControls ? 3 : 1
-                    rowSpacing:6
-                    columnSpacing:6
-
-                    EditorIconHint { glyph:"zoom_out_map";description:"Overall module scale" }
-                    AbyssSlider {
-                        Layout.maximumWidth: 210 * Appearance.fontSizeScale
-                        from:.6;to:1.8;value:root.moduleScale
+                RowLayout {
+                    visible:!root.editingPopups && root.multiSelect
+                    Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        AbyssLabel {
                         Layout.fillWidth:true;Layout.minimumWidth:0
-                        onMoved:root.moduleScale=value
-                    }
-                    AbyssButton {
-                        text:"Expand whole Edge";glyph:"fit_screen"
-                        compact:true
-                        description:"Expand a single module across the whole Edge; turn off to expand only its local surface."
-                        checkable:true
-                        Layout.fillWidth:!root.toolbarOnHorizontalEdge;Layout.minimumWidth:0
-                        enabled:root.draft.filter(
-                            p=>p.enabled && p.edge===root.editingEdge).length===1
-                        checked:root.singleModuleExpansion[root.editingEdge]!=="local"
-                        onToggled:root.singleModuleExpansion=Object.assign(
-                            {},root.singleModuleExpansion,
-                            {[root.editingEdge]:checked ? "edge" : "local"})
-                    }
-                }
-
-                Rectangle {
-                    Layout.fillWidth:true;Layout.minimumWidth:0;height:1
-                    visible:root.expandedControls && !root.toolbarOnHorizontalEdge && !root.editingPopups
-                    color:Qt.alpha(AbyssStyle.accent,.12)
-                }
-
-                GridLayout {
-                    visible:!root.editingPopups && (root.multiSelect || root.expandedControls)
-                    Layout.fillWidth:true;Layout.minimumWidth:0
-                    columns:width>300*Appearance.fontSizeScale ? 2 : 1
-                    AbyssLabel {
-                        objectName:"abyssSelectionCount"
-                        visible:root.multiSelect
-                        text:root.targets.length+" selected · "+root.targets.filter(p=>p.locked).length+" locked"
-                        Layout.fillWidth:true;Layout.minimumWidth:0;wrapMode:Text.WordWrap
-                    }
-                    AbyssButton {
-                        objectName:"abyssSelectionClear"
-                        Layout.fillWidth:true;Layout.minimumWidth:0
-                        compact:true
-                        visible:root.targetIds.length>0
-                        text:"Clear selection";glyph:"deselect"
-                        enabled:root.targetIds.length>0
-                        onClicked:root.clearSelection()
-                    }
+                        
+                                                objectName:"abyssSelectionCount"
+                                                visible:root.multiSelect
+                                                text:root.targets.length+" selected · "+root.targets.filter(p=>p.locked).length+" locked"
+                                                wrapMode:Text.WordWrap
+                                            }
+                        AbyssButton {
+                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                        
+                                                objectName:"abyssSelectionClear"
+                        
+                                                compact:true
+                                                visible:root.targetIds.length>0
+                                                text:"Clear selection";glyph:"deselect"
+                                                enabled:root.targetIds.length>0
+                                                onClicked:root.clearSelection()
+                                            }
                 }
 
                 GridLayout {
                     id:selectedModuleControls
+                    objectName:"abyssEditorSelectedFields"
                     visible:!root.editingPopups
                     Layout.fillWidth:true;Layout.minimumWidth:0
-                    columns:!root.expandedControls ? (width>=460*Appearance.fontSizeScale ? 4 : 3)
-                        : !root.toolbarOnHorizontalEdge || width<420*Appearance.fontSizeScale ? 1 : width<740*Appearance.fontSizeScale ? 2 : width<1100*Appearance.fontSizeScale ? 4 : 8
-                    rowSpacing:6
-                    columnSpacing:6
-
+                    columns:!root.toolbarOnHorizontalEdge || width<440*Appearance.fontSizeScale
+                        ? 1 : root.expandedControls && width>=700*Appearance.fontSizeScale ? 3 : 2
+                    rowSpacing:4;columnSpacing:10
                     StyledComboBox {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:185*Appearance.fontSizeScale
+                    
                         id:selection
                         objectName:"abyssEditorSelection"
-                        Layout.columnSpan:!root.expandedControls && selectedModuleControls.columns===3 ? 3 : 1
+                    
                         model:root.draft.map(p => ({
                             label:Placement.label(p.kind)
                                 +(root.multiSelect && root.targetIds.includes(p.id) ? " · Selected" : "")
@@ -1097,12 +1121,16 @@ Item {
                             ? Placement.label(root.selected.kind)
                             : "Select a module"
                         onActivated:root.select(currentValue)
-                        Layout.preferredWidth:root.toolbarOnHorizontalEdge ? 190 : -1
-
-                        Layout.maximumWidth:selectedModuleControls.width
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                    
+                    
+                    
+                    
                     }
+                    RowLayout {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
                     AbyssButton {
+                        Layout.fillWidth:true;Layout.minimumWidth:0
+                    
                         objectName:"abyssModulePositionLock"
                         text:root.allTargetsLocked ? "Unlock position" : "Lock position"
                         glyph:root.allTargetsLocked ? "lock_open" : "lock"
@@ -1113,6 +1141,8 @@ Item {
                         onClicked:root.lockSelection()
                     }
                     AbyssButton {
+                        Layout.fillWidth:true;Layout.minimumWidth:0
+                    
                         objectName:"abyssSelectionEnabled"
                         text:root.allTargetsDisabled
                             ? "Enable" : "Disable"
@@ -1121,19 +1151,24 @@ Item {
                         compact:true
                         description:text
                         enabled:root.targets.length>0
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                    
                         onClicked:root.batch("enabled",root.allTargetsDisabled)
                     }
                     AbyssButton {
+                        Layout.fillWidth:true;Layout.minimumWidth:0
+                    
                         text:"Remove";glyph:"delete"
                         objectName:"abyssSelectionRemove"
                         compact:true
                         description:root.multiSelect ? "Remove selected modules" : "Remove selected module"
                         enabled:root.targets.length>0
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                    
                         onClicked:root.batch("remove",true)
                     }
+                    }
                     StyledComboBox {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:160*Appearance.fontSizeScale
+                    
                         id:alignmentChoice
                         visible:root.expandedControls
                         model:[
@@ -1148,38 +1183,28 @@ Item {
                             ? "Mixed alignment" : currentText
                         enabled:root.targets.length>0 && !root.anyTargetLocked
                         onActivated:root.change("alignment",currentValue)
-                        Layout.preferredWidth:root.toolbarOnHorizontalEdge ? 146 : -1
-
-                        Layout.maximumWidth:selectedModuleControls.width
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                    
+                    
+                    
+                    
                     }
+                    RowLayout {
+                        visible:root.expandedControls
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
                     AbyssCheckBox {
+                        Layout.fillWidth:true;Layout.minimumWidth:0
+                    
                         visible:root.expandedControls
                         text:"Custom size"
                         checked:root.allTargetsCustom
                         enabled:root.targets.length>0 && !root.anyTargetLocked
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                    
                         onToggled:root.change("customSize",checked)
                     }
-                    AbyssCheckBox {
-                        objectName:"abyssModuleJoinCorner"
-                        visible:root.expandedControls
-                        text:root.nearbyCorner
-                            ? "Connect to "+root.nearbyCorner+" corner"
-                            : "Join nearby corner"
-                        checked:root.targets.length>0 && root.targets.every(p=>p.joinCorner)
-                        enabled:root.targets.length>0 && (root.targets.every(p=>!!Placement.cornerForModule(
-                            root.moduleLayer.layoutRecords,p.id,root.width,root.height)) || checked)
-                        Layout.fillWidth:true;Layout.minimumWidth:0
-                        onToggled:root.change("joinCorner",checked)
-                        StyledToolTip {
-                            text:root.nearbyCorner
-                                ? "Extend this module's local surface to the corner and attach its popup to both Screen Edges. Module size stays unchanged."
-                                : "The nearest visible module within 160 px of a corner can connect to it."
-                        }
-                    }
                     AbyssSlider {
-                        Layout.maximumWidth: 210 * Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:155*Appearance.fontSizeScale
+                    
+                    
                         visible:root.expandedControls
                         from:.6;to:1.8
                         value:root.selected?.customSize
@@ -1188,8 +1213,28 @@ Item {
                                 root.draftOptions,
                                 root.selected?.edge ?? root.editingEdge)
                         enabled:root.allTargetsCustom && !root.anyTargetLocked
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                    
                         onMoved:root.change("size",value)
+                    }
+                    }
+                    AbyssCheckBox {
+                        Layout.fillWidth:true;Layout.minimumWidth:0
+                    
+                        objectName:"abyssModuleJoinCorner"
+                        visible:root.expandedControls
+                        text:root.nearbyCorner
+                            ? "Connect to "+root.nearbyCorner+" corner"
+                            : "Join nearby corner"
+                        checked:root.targets.length>0 && root.targets.every(p=>p.joinCorner)
+                        enabled:root.targets.length>0 && (root.targets.every(p=>!!Placement.cornerForModule(
+                            root.moduleLayer.layoutRecords,p.id,root.width,root.height)) || checked)
+                    
+                        onToggled:root.change("joinCorner",checked)
+                        StyledToolTip {
+                            text:root.nearbyCorner
+                                ? "Extend this module's local surface to the corner and attach its popup to both Screen Edges. Module size stays unchanged."
+                                : "The nearest visible module within 160 px of a corner can connect to it."
+                        }
                     }
                 }
 
