@@ -45,10 +45,18 @@ agents or task boards.
    ask the maintainer which category to use or which routine task to do next.
 
 Use concise items describing the required result, current state, remaining
-acceptance and a useful evidence/source link. A fix implemented in source stays
-open when the reported desktop behavior is unverified. Mark the remaining gate
-explicitly; do not treat a test PASS as visual/hardware acceptance. A reopened
-bug returns to Issues/bugs with its prior evidence linked.
+acceptance and a useful evidence/source link. **Maintainer status rule
+(2026-10-12): when the bot explicitly reports the entire requested task
+finished, mark it [x] "Hoàn thành (bot báo xong) — Owner chưa verified",
+even when owner visual/native acceptance is still pending.** A known
+completed source implementation is not "unfinished" merely because its
+owner has not tested it. Keep evidence gates separate: report exact-SHA
+PASS/FAIL/SKIP and installed/owner validation factually; never convert
+an unrun or failing test to PASS. Distinguish a completed task from a
+completed *milestone* inside an unfinished larger request: do not check
+off the whole task if a named requested function or follow-up is still
+not implemented. Reopen a completed task only for newly requested
+unfinished scope or a demonstrated regression, citing previous evidence.
 
 ## Select the next task autonomously
 
@@ -72,14 +80,16 @@ backlog work. Unrelated Rework/Issues remain open without preempting actionable
 features solely because they are bugs or older requests.
 
 A task is actionable when its next meaningful step can be performed with current
-access, dependencies and authorization. A source fix awaiting owner desktop,
-hardware or unavailable evidence stays open with that exact dependency recorded.
-Continue the next actionable feature in the explicit sequence. If no feature
+access, dependencies and authorization. A task with genuinely unfinished requested implementation remains open.
+A task the bot reported finished is [x] with owner verification still
+unconfirmed; such validation is tracked as a separate gate, not
+"implementation unfinished". Continue the next actionable feature in
+the explicit sequence. If no feature
 can advance, continue related Rework/Issues, then other actionable Rework/Issues
 using impact, dependencies and existing evidence; neither of those categories
 has a blanket precedence over the other. Recheck waiting items on relevant new
-evidence. Never treat waiting as completion or change a category to bypass
-priority.
+evidence. Never mistake an unfinished implementation for completion, or
+use a status change to bypass task priority.
 
 If a new request arrives during work, classify/update it immediately and reassess.
 Switch promptly for an explicit priority; resolve a failure that blocks the
@@ -96,13 +106,27 @@ than inventing new scope or claiming completion.
 
 ## Completion and archives
 
-Record the completion date and bounded validation when a task is fully complete.
-Keep recent completed items in their category for seven days, then move them
-to a dated file under `docs/archive/chatbot/`. Review this on every continuation
-and before a checkpoint. Archive immediately superseded duplicates and retired
-plans after carrying their unresolved requirements into the active categories.
-Never archive an unresolved acceptance gate as completed merely because its
-source patch is old.
+Use two separate status dimensions:
+- **Implementation:** `[ ]` not finished / `[x]` bot-reported task complete.
+  Checked entries must say **"Hoàn thành (bot báo xong) — Owner chưa verified"**
+  until owner verification is explicitly received. State what was actually
+  delivered and, where known, its source SHA. A partial milestone in a still
+  incomplete task is not a reason to check the parent.
+- **Verification:** `Owner chưa verified` / `Owner verified`, plus factual
+  test evidence (source, focused native, exact-SHA canonical, installed or
+  hardware acceptance). A failed or skipped validation remains a FAIL/SKIP
+  regardless of implementation status, and related open regression issues
+  stay available for continued diagnosis.
+
+When both implementation and owner verification are complete, record the
+actual owner confirmation date. Retain a recently owner-verified completed
+item in its category for seven days, then archive under
+`docs/archive/chatbot/`. Keep completed-but-owner-unverified entries
+visible in the active category until verified, so they can be reviewed
+without being counted as unfinished implementation. Archive
+superseded duplicates or retired plans only after preserving outstanding
+requested work and independent failure evidence. Never invent a completion
+or owner-verification date from a source commit.
 
 Preserve valid maintainer/concurrent status edits. A checked item without a known
 completion date is not yet eligible for age-based archiving; retain it until the

@@ -15,8 +15,11 @@ priority effective 2026-10-12:
 mandatory for both environments: classify actionable requests on receipt, merge
 duplicates/corrections, then select the highest-priority actionable work without
 waiting for the maintainer to choose it. Re-evaluate on new input, "continue"
-and completed milestones. Waiting desktop/hardware gates stay open while other
-authorized work proceeds. The `cloud-bot` folder holds both environments' lists;
+and completed milestones. Waiting desktop/hardware acceptance is tracked independently: a bot-reported
+finished implementation counts as **completed [x] / Owner chưa verified**,
+not an unfinished task merely because the owner has not checked it.
+Actual failed/pending regression work remains identified, without inventing
+PASS. Continue other authorized work. The `cloud-bot` folder holds both environments' lists;
 the application's Todo/Obsidian feature is separate.
 
 Alis dev is the **sole task board** for the core Alis shell,

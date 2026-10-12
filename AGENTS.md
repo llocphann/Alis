@@ -17,7 +17,7 @@ The `cloud-bot` directory name does not create a separate workflow for Local AI.
 7. Waffle is a separate supported shell family. Never classify Waffle as legacy or remove it as ii/Connected Perimeter cleanup.
 8. Prefer behavior/contract tests over implementation-spelling grep assertions. Do not change runtime behavior merely to make a stale test green.
 9. Use `to-do/` as the single active chatbot task entry point. ChatGPT is the only reasoning agent; repository tests and the canonical maintainer validator are the execution/acceptance path. Do not create bot-number, ownership, collision-boundary, separate task-board or handoff bureaucracy. Continue the highest-value unresolved work in one agent context.
-10. On receipt, automatically record/classify every actionable maintainer request into `Issues/bugs`, `Rework/optimization`, or `New features` before implementation. Merge duplicates and corrections; split mixed requests by outcome. Select the next actionable task autonomously using the shared policy below, without asking the maintainer to classify or choose routine work. Effective 2026-10-12, prioritize New features; address related Rework/optimization and Issues/bugs alongside the selected feature in the same single-agent context. Preserve explicit feature sequences and complete the current safe atomic milestone. When no feature can advance, continue related, then other actionable Rework/Issues. Keep unverified source fixes open with their remaining acceptance; archive fully completed items after seven days.
+10. On receipt, automatically record/classify every actionable maintainer request into `Issues/bugs`, `Rework/optimization`, or `New features` before implementation. Merge duplicates and corrections; split mixed requests by outcome. Select the next actionable task autonomously using the shared policy below, without asking the maintainer to classify or choose routine work. Effective 2026-10-12, prioritize New features; address related Rework/optimization and Issues/bugs alongside the selected feature in the same single-agent context. Preserve explicit feature sequences and complete the current safe atomic milestone. When no feature can advance, continue related, then other actionable Rework/Issues. Under the maintainer's 2026-10-12 status rule, a task that the bot explicitly reported finished is **[x] completed — owner NOT VERIFIED** until the owner confirms; do not leave it [ ] solely because owner/native acceptance is outstanding. Keep unfinished scope [ ] and preserve separate exact-SHA tests, FAIL evidence and release gates. Archive owner-verified completed items after seven days; retain completed-but-owner-unverified items visibly until the owner reviews them.
 
 ## Task routing
 
@@ -41,7 +41,9 @@ Read and apply [the shared intake and task-selection policy](to-do/cloud-bot/REA
 after the entry point. Re-evaluate it on new input, every continuation and after
 each completed milestone. Prioritize impact/severity within a category, not file
 position or the newest message alone. Keep a task awaiting unavailable evidence
-open, record what it needs, then continue independent authorized work. A generic
+open only when implementation remains unfinished; a bot-declared finished task
+is checked with "Owner chưa verified" and its unpassed test gates recorded
+separately. A generic
 "continue" means choose the next task from these lists and carry it through the
 required implementation and validation; it does not require another task choice
 from the maintainer.
