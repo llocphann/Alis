@@ -61,4 +61,8 @@ ok(eventsWidget.includes("property bool compactCalendarWindow: false"),"shared E
 ok(calendarContent.includes("compactCalendarWindow: true"),"only Calendar popup requests three dates");
 ok(eventsWidget.includes("Events.getUpcomingEvents(30)"),"legacy consumers retain original horizon");
 ok(agenda.includes("lookaheadDays: 14"),"Dashboard Agenda lookahead unchanged");
+ok(eventsWidget.includes("ScrollBar.AlwaysOff : ScrollBar.AsNeeded"),
+    "Calendar list hides only scroll chrome while retaining Flickable");
+ok(eventsWidget.includes("hideEmbeddedScrollBar: root.compactCalendarWindow"),
+    "Calendar inline editor hides only embedded scrollbar chrome");
 console.log("CALENDAR_THREE_DAY_PASS",checks);

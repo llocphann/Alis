@@ -1119,7 +1119,7 @@ run privileged installation just because manual buttons are retired.
   scales and ordinary versus Shift navigation. State: READY for interaction
   tuning; preferred speed and owner acceptance require native input retest.
 
-- [ ] **CAL-R01 — Compact Calendar Popup Events to Today / Tomorrow / Day After — owner screenshot 2026-10-11:**
+- [x] **CAL-R01 — Compact Calendar Popup Events to Today / Tomorrow / Day After — owner screenshot 2026-10-11:**
   [Owner: Alis dev; Rework/UX] The **Events pane immediately beside
   the Calendar Popup** should show only Today's, Tomorrow's and
   the Day After Tomorrow's events, three **local calendar dates**
@@ -1159,7 +1159,25 @@ run privileged installation just because manual buttons are retired.
   event cards and the Add/Edit/Remove form. Do NOT globally disable
   `EventsWidget` scrolling or hide scrollbars in unrelated Sidebar/
   Dashboard hosts. Test 0/1/many events, narrow/high-DPI windows and
-  scrolling to the final event. State: OPEN; not implemented.
+  scrolling to the final event.
+  **Implemented in source, 2026-10-12:** Alis dev
+  `3f3af8cc5bda987fd651c58c8d074d58d337875f` delivers
+  `compactCalendarWindow` for Calendar Popup only. It uses the
+  shared WeeklyPlanner recurrence/DST/all-day projector over exactly
+  three local calendar dates, groups rows by day, and preserves
+  original Events/CalendarSync objects and canonical Edit/Remove IDs.
+  EventCard gains a caller-only compact mode and correct end-time
+  active/in-progress status. Other EventsWidget users keep the
+  30-day query and Dashboard Agenda retains 14 days. A follow-up
+  scopes invisible scroll chrome to both Calendar Events list
+  and embedded editor without disabling scrolling, and gives its
+  empty state a three-day-specific English label.
+  **Verification:** 23 focused JS projection/time assertions PASS at
+  initial source SHA; the two new scrollbar contracts also passed in
+  the source-level follow-up. Actual Niri/Quickshell native layout,
+  touch/wheel/accessibility, full exact-SHA canonical, hot
+  midnight refresh and owner screenshot acceptance are NOT RUN.
+  **Hoàn thành (bot báo xong) — Owner chưa verified.**
 
 - [ ] **DASH-R03 — Weekly Planner Day/date + All day header material parity — owner screenshot 2026-10-12:**
   [Owner: Alis dev; Rework / Material UX] The 7-column date/day header

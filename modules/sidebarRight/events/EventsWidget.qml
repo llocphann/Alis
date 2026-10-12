@@ -202,7 +202,10 @@ Item {
             clip: true
             
             ScrollBar.vertical: ScrollBar {
-                policy: ScrollBar.AsNeeded
+                // Calendar's narrow Events pane has no visible scroll chrome;
+                // the Flickable keeps wheel/touchpad/touch/keyboard scrolling.
+                policy: root.compactCalendarWindow
+                    ? ScrollBar.AlwaysOff : ScrollBar.AsNeeded
             }
             
             ColumnLayout {
@@ -283,7 +286,9 @@ Item {
                         
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
-                            text: Translation.tr("No upcoming events")
+                            text: root.compactCalendarWindow
+                                ? Translation.tr("No events in the next three days")
+                                : Translation.tr("No upcoming events")
                             font.pixelSize: Appearance.font.pixelSize.normal
                             font.weight: Font.Medium
                             color: root.colText
@@ -311,6 +316,7 @@ Item {
         anchors.fill: parent
         show: root.inlineEditorMode
         embeddedPresentation: true
+        hideEmbeddedScrollBar: root.compactCalendarWindow
         embeddedBackgroundColor: "transparent"
         backgroundHeight: -1
         visible: root.inlineEditorMode
