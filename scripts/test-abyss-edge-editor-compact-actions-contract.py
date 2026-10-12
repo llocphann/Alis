@@ -115,8 +115,11 @@ assert 'objectName:"abyssButtonCenteredGlyph"' in button
 assert 'rightPadding:editorCompact ? 46*Appearance.fontSizeScale : 52' in (root / "modules/abyss/looks/AbyssSlider.qml").read_text()
 assert 'objectName:"abyssEditorFineControls"' in editor
 assert 'objectName:"abyssEditorSelectedFields"' in editor
-assert 'columns:!root.toolbarOnHorizontalEdge || width<460*Appearance.fontSizeScale' in editor
-assert 'columns:!root.toolbarOnHorizontalEdge || width<440*Appearance.fontSizeScale' in editor
+assert 'columns:root.toolbarOnHorizontalEdge' in editor
+assert '&& width>=650*Appearance.fontSizeScale ? 3 : 1' in editor
+assert 'id:moduleEditorColumn' in editor and 'id:edgeEditorColumn' in editor
+assert 'objectName:"abyssEditorColumnDivider"' in editor
+assert 'columns:1' in editor[editor.index('id:selectedModuleControls'):]
 assert editor.count('text:"This output only"') == 1
 assert '750*Appearance.fontSizeScale' in editor
 assert 'Ctrl/Shift-click select · Drag' not in editor
@@ -145,5 +148,8 @@ assert 'enabled:root.edgeWidthAffectsModules[root.editingEdge]===false' in edito
 assert 'root.expandedControls ? 860 : 720' not in editor
 assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 6
 assert editor.count('editorSquare:true') >= 14
-assert 'columnSpacing:4;rowSpacing:3' in editor
-assert 'rowSpacing:3;columnSpacing:4' in editor
+assert 'columnSpacing:10*Appearance.fontSizeScale' in editor
+assert 'rowSpacing:6*Appearance.fontSizeScale' in editor
+assert 'spacing:4*Appearance.fontSizeScale' in editor
+assert editor.count('objectName:"abyssModuleDropdown"') == 1
+assert editor.count('objectName:"abyssEditingEdgeDropdown"') == 1
