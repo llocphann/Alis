@@ -19,6 +19,8 @@ ColumnLayout {
     property bool compactVertical: false
     property bool compactActions: false
     property var allowedKinds: []
+    readonly property bool ipcOnly: allowedKinds.length > 0 && allowedKinds.every(
+        kind => ["osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch"].includes(kind))
     property string nearbyEdge: ""
     signal positionsEdited(var positions,string kind,string outputName,var values)
     property var _pendingImmediatePositions: null
@@ -125,7 +127,7 @@ ColumnLayout {
         AbyssButton {
             text:"Reset position";glyph:"restart_alt"
             compact:root.compactActions
-            description:"Reset popup or IPC position"
+            description:root.ipcOnly ? "Reset IPC position" : "Reset popup or IPC position"
             Layout.fillWidth:root.compactVertical
             onClicked:root.apply(null)
         }
@@ -148,6 +150,8 @@ ColumnLayout {
     SettingsNote {
         text: root.compactVertical
             ? "Override Edge and position for this output."
-            : "Positions follow the source unless overridden. Each popup or IPC indicator can use any Edge, globally or per output; content and input are clamped inside that output."
+            : root.ipcOnly
+                ? "IPC indicators follow their source until overridden. Popups stay attached to Screen Edge modules."
+                : "Positions follow the source unless overridden. Each popup or IPC indicator can use any Edge, globally or per output; content and input are clamped inside that output."
     }
 }
