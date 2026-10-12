@@ -91,27 +91,13 @@ Singleton {
     property var _agendaReceipt: null
     property var _agendaAttempt: null
     property var _agendaFailures: ({})
-    function _scheduleAgenda() { Qt.callLater(root._reconcileAgenda) }
-    function retryAgendaLinks() {
-        root._agendaRetries=0;root.agendaError=""
-        root._agendaFailures=({})
-        if(!root.useObsidian && internal.errorMessage)internal.retrySave()
-        if(root.useObsidian)root.obsidianBackend.reload()
-        if(Events.errorMessage)Events.saveToFile()
-        root._scheduleAgenda()
-    }
-    function agendaStatus(event) {
-        if(!AgendaTodoPolicy.validLink(event?.todoLink))return ""
-        if(event.todoLink.state==="detached")return Events.todoUnlinks.some(link=>link.key===event.todoLink.key && link.deleteTask)?"To-do removal pending":""
-        const link=event.todoLink
-        if(link.provider && link.provider!==root.agendaProvider)return "To-do in another source"
-        const sourceVisible=!root.useObsidian || root.useLegacyManagedNote || link.sourceDate===root.obsidianBackend.sourceDate
-        if(link.taskMissing || (link.state==="linked" && sourceVisible && root.ready && !root.list.some(item=>item.agenda?.key===link.key)))return "To-do removed"
-        if(link.state!=="linked" || link.fingerprint!==AgendaTodoPolicy.fingerprint(event))return "To-do pending"
-        if(!root.useObsidian && !root.list.some(item=>item.agenda?.key===link.key))return "To-do removed"
-        return "Linked To-do"
-    }
+    // Agenda and Todo now operate as independent stores. Historical
+    // agenda metadata remains readable but reconciliation is retired.
+    function _scheduleAgenda() {}
+    function retryAgendaLinks() {}
+    function agendaStatus(event) { return "" }
     function _reconcileAgenda() {
+        return // Deprecated: never sync or detach independently owned tasks.
         if(!Events.ready || Events.persistenceBusy || agendaRetry.running)return
         const events=Events.getDurableEvents()
         const eligible=events.filter(event=>AgendaTodoPolicy.validLink(event.todoLink) && event.todoLink.state!=="detached")
@@ -214,11 +200,9 @@ Singleton {
     onBusyChanged:if(!root.busy)root._scheduleAgenda()
     onAgendaProviderChanged: {root._agendaReceipt=null;root._scheduleAgenda()}
     function _deferAgendaDeletion(item) {
-        if(!item?.agenda || !root.ready || root.busy)return false
-        const event=Events.list.find(value=>value.todoLink?.key===item.agenda.key)
-        if(!event)return false
-        Events.unlinkTodo(event.id,true)
-        return true
+        // A Todo can always be deleted independently, even when it carries
+        // legacy Agenda metadata. Never cascade to Events or queue an unlink.
+        return false
     }
 
     // Compatibility paths remain the internal store paths. New UI must use
@@ -416,8 +400,6 @@ Singleton {
     }
 
     function deleteTask(taskId) {
-        const linked=root.list.find(item=>String(item.id ?? "")===String(taskId ?? ""))
-        if(root._deferAgendaDeletion(linked))return true
         if (!root.useObsidian) {
             if (root._migrationInFlight)
                 return false
@@ -462,7 +444,6 @@ Singleton {
     }
 
     function deleteItem(index) {
-        if(root._deferAgendaDeletion(root._itemAt(index)))return true
         if (!root.useObsidian) {
             if (root._migrationInFlight)
                 return false
