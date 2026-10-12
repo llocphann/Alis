@@ -106,6 +106,7 @@ Item {
             fabMargins: 10
             fabLeftAligned: true
             compactCalendarWindow: true
+            showAddButton: false
         }
 
         Rectangle {
@@ -139,16 +140,17 @@ Item {
                 selectedDate: eventsPane.inlineEditorMode
                     ? eventsPane.inlineEditorDate
                     : root.selectedEventDate
-                interactiveDays: eventsPane.inlineEditorMode
-                    || root.eventDateSelectionEnabled
+                interactiveDays: true
                 onPreviousMonthRequested: root.monthShift--
                 onNextMonthRequested: root.monthShift++
                 onTodayRequested: root.monthShift = 0
                 onDayActivated: date => {
                     if (eventsPane.inlineEditorMode)
                         eventsPane.setInlineEditorDate(date)
-                    else
+                    else {
+                        eventsPane.openInlineEditor(date)
                         root.eventDateSelected(date)
+                    }
                 }
             }
         }
