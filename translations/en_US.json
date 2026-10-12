@@ -5732,5 +5732,12 @@
   "Install Hadalird; enable this integration in Settings → Integrations.": "Install Hadalird; enable this integration in Settings → Integrations.",
   "Install Hadalird; enable Obsidian in Settings → Integrations.": "Install Hadalird; enable Obsidian in Settings → Integrations.",
   "Install Hadalird; enable Thinkfan in Settings → Integrations.": "Install Hadalird; enable Thinkfan in Settings → Integrations.",
-  "Install Hadalird; enable TLP in Settings → Integrations.": "Install Hadalird; enable TLP in Settings → Integrations."
+  "Install Hadalird; enable TLP in Settings → Integrations.": "Install Hadalird; enable TLP in Settings → Integrations.",
+  "Set rendering policy, then adjust specific effects.": "Set rendering policy, then adjust specific effects.",
+  "Light mode is experimental; start with a light preset (Angel Light, Latte or Sakura).": "Light mode is experimental; start with a light preset (Angel Light, Latte or Sakura).",
+  "Changes preview live; adjust individual colors as needed.": "Changes preview live; adjust individual colors as needed.",
+  "Arrange persistent surfaces here or on the desktop; both use live layout.": "Arrange persistent surfaces here or on the desktop; both use live layout.",
+  "Waffle-only settings; choose Waffle in Modules → Panel Style.": "Waffle-only settings; choose Waffle in Modules → Panel Style.",
+  "Waffle wallpaper, taskbar, themes and switching.": "Waffle wallpaper, taskbar, themes and switching.",
+  "Backdrop appears behind Niri Overview (Mod+Tab).": "Backdrop appears behind Niri Overview (Mod+Tab)."
 }
