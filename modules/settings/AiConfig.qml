@@ -32,7 +32,7 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "neurology"
         title: Translation.tr("AI")
-        description: Translation.tr("Connect a provider, choose the assistant behavior, then opt into privacy-sensitive or voice features only when you need them.")
+        description: Translation.tr("Choose a provider and opt in to voice or privacy-sensitive features.")
         summary: Translation.tr("Setup · providers · behavior · privacy · voice")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
@@ -156,7 +156,7 @@ ContentPage {
                 StyledText {
                     Layout.fillWidth: true
                     Layout.leftMargin: 4
-                    text: Translation.tr("Choose local privacy, a currently free online model, or connect a provider. Model IDs and capabilities are discovered for you.")
+                    text: Translation.tr("Choose local, free online or connected models; availability is discovered automatically.")
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colSubtext
                     wrapMode: Text.WordWrap
@@ -282,7 +282,7 @@ ContentPage {
             StyledText {
                 Layout.fillWidth: true
                 Layout.leftMargin: 4
-                text: Translation.tr("Choose a provider. iNiR discovers its current models and the correct API protocol automatically.")
+                text: Translation.tr("Models and API protocol are discovered from the selected provider.")
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colSubtext
                 wrapMode: Text.WordWrap
@@ -603,7 +603,7 @@ ContentPage {
 
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
-                    text: Translation.tr("Curated providers are managed above. Add a custom endpoint only when it is not already supported.")
+                    text: Translation.tr("Add a custom endpoint only if the provider is unsupported.")
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     color: Appearance.colors.colSubtext
                     wrapMode: Text.WordWrap
@@ -762,7 +762,7 @@ ContentPage {
                         StyledText {
                             Layout.fillWidth: true
                             visible: providerForm.selectedFormat === "openai"
-                            text: Translation.tr("Compatible with OpenAI, Mistral, Ollama, OpenRouter, vLLM, and any OpenAI-compatible endpoint.")
+                            text: Translation.tr("OpenAI-compatible: OpenAI, Mistral, Ollama, OpenRouter, vLLM.")
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             color: Appearance.colors.colSubtext
                             wrapMode: Text.WordWrap
@@ -1050,7 +1050,7 @@ ContentPage {
         SettingsGroup {
             ContentSubsection {
                 title: Translation.tr("Allow AI features")
-                tooltip: Translation.tr("Local only restricts the assistant to models running on this machine, such as Ollama or LM Studio")
+                tooltip: Translation.tr("Local only: use on-device models (Ollama, LM Studio).")
 
                 ConfigSelectionArray {
                     enableSettingsSearch: false
