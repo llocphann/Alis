@@ -38,7 +38,8 @@ Item {
     // theme/wallpaper bindings and unchanged Waffle/ii Material fallback.
     readonly property bool abyssInnerMaterial: Config.options?.panelFamily === "abyss"
     readonly property color innerContentSurfaceColor: root.abyssInnerMaterial
-        ? ColorUtils.mix(AbyssStyle.contentLayer, AbyssStyle.accent, .88)
+        ? Qt.alpha(ColorUtils.mix(AbyssStyle.contentLayer, AbyssStyle.accent, .88),
+            AbyssStyle.contentOpacity)
         : Appearance.colors.colLayer1
     property bool panelVisible: false
     property bool geometryPreviewActive: false
