@@ -1773,6 +1773,18 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   null/duplicate/teardown/reentry regression runs in CI. This proves a
   source bug, not a confirmed cause of the owner's lag or stuck popups.
   Exact-SHA native Niri and owner acceptance remain OPEN.
+  **Cloud source regression 2026-10-12 — Dock badge aliases:** the
+  Dock supplies compositor app ID and desktop-entry name to
+  `Notifications.countForApp`, but the original implementation returned
+  after the FIRST matching app-name group. In a source-executed example
+  with 2 popup notifications under one alias and 3 under another, badge
+  count was 2 rather than 5; `markReadForApp` still clears all 5.
+  Count now sums distinct matching cached app-name groups while
+  preserving the existing 100ms grouped-render policy. An isolated
+  production-function regression covers aliases, unrelated groups,
+  normalized spellings, empty IDs, and mark-read parity; the CI
+  fast-policy step runs it. Only source-level count correctness is
+  confirmed; owner UI, live arrival and exact-SHA native validation OPEN.
 
 - [ ] **HELPER-I01 — Hadalird helper/package state and Polkit focus:** extraction is
   source/package-qualified; owner reported helper status ready. Verify compact

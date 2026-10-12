@@ -328,11 +328,16 @@ Singleton {
         const keys = (identifiers ?? []).map(root._normalizeAppKey).filter(k => k.length > 0)
         if (keys.length === 0) return 0
         const groups = root.popupGroupsByAppName
+        // The Dock passes both the compositor appId and desktop-entry name.
+        // Notifications from the same app may have arrived under *either*
+        // identity, so stopping at the first matching app-name group makes
+        // its unread badge smaller than the entries markReadForApp clears.
+        let total = 0
         for (const appName in groups) {
             if (keys.indexOf(root._normalizeAppKey(appName)) !== -1)
-                return groups[appName].notifications?.length ?? 0
+                total += (groups[appName].notifications?.length ?? 0)
         }
-        return 0
+        return total
     }
 
     function markReadForApp(identifiers) {
