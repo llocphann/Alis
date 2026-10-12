@@ -67,14 +67,21 @@ assert 'calendarCells: root.plannerCalendarCells' in editor
 assert 'onDayActivated: (date,modifiers)=>root.choosePlannerDay(date,modifiers)' in editor
 # Selecting Repeat must never discard a multi-date Add Event draft.
 assert 'readonly property bool plannerRepeatConflict: plannerPresentation' in editor
-assert '&& !isEditing && plannerSelectedCount > 1' in editor
+assert '&& plannerSelectedCount > 1' in editor
 assert 'function canSelectRepeat(value): bool' in editor
 assert 'function setRepeatOption(value): void' in editor
 assert 'if (!root.canSelectRepeat(value)) return' in editor
 assert 'root.resetPlannerDateSelection()' not in editor.split('onRecurrenceChanged:',1)[1].split('    Connections {',1)[0]
 assert editor.count('enabled: root.canSelectRepeat(')==4
 assert 'objectName:"plannerRepeatChoices"' in editor
-assert 'objectName:"plannerRepeatConflictHint"' in editor
+assert 'objectName:"plannerRepeatConflictHint"' not in editor
+assert 'function loadEvent(event: var): void' in editor
+assert 'canonical.repeatTemplate' in editor
+assert 'canonical.occurrences' in editor
+assert 'root.plannerSelectedDateKeys=selectedKeys.length' in editor
+assert 'root.editingEvent=canonical' in editor
+assert 'Events.updateEventGroup(root.editingEvent.id' in editor
+assert 'root.plannerPresentation && selectedDays.length>0' in editor
 assert 'onSelected: (newValue) => root.setRepeatOption(newValue)' in editor
 assert '!root.canSelectRepeat(root.recurrence)' in editor
 assert 'RepeatPolicy.allowed(root.plannerSelectedDateKeys,value)' in editor
