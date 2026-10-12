@@ -83,6 +83,30 @@ assert 'symbol: root.plannerPage===0 ? "arrow_forward" : "arrow_back"' in editor
 assert 'onClicked: root.changePlannerPage(root.plannerPage===0 ? 1 : 0)' in editor
 assert 'root.plannerPage = 0' in editor
 assert editor.count('objectName: "plannerEventPageNavigation"')==1
+
+# Page-two spacing is composed as four equal, subtle cards instead of one
+# short top-aligned stack and a large empty area. Under reduced height the
+# intrinsic content wins, so the page is still scrollable.
+page_two=editor.split('id: plannerOptions',1)[1].split('} // plannerOptions',1)[0]
+assert 'optionCardHeight: root.plannerPresentation' in page_two
+assert 'Math.max(118,Math.min(154,' in page_two
+assert '(editorFlickable.height - spacing * 3 - 18) / 4' in page_two
+assert 'spacing: root.plannerPresentation ? 12' in page_two
+for kind in ('repeat','category','priority','reminder'):
+    assert 'id: '+kind+'Card' in page_two
+    assert 'id: '+kind+'Content' in page_two
+    assert 'Math.max('+kind+'Content.implicitHeight + 26,' in page_two
+assert page_two.count('visible: root.plannerPresentation') >= 8
+assert page_two.count('radius: Appearance.rounding.large')==4
+assert page_two.count('color: Appearance.colors.colLayer2')==4
+assert page_two.count('activeLabelOnly: root.plannerPresentation')==4
+assert page_two.count('ConfigSelectionArray {')==4, "Do not duplicate editable options"
+assert 'currentValue: root.recurrence' in page_two
+assert 'currentValue: root.eventCategory' in page_two
+assert 'currentValue: root.eventPriority' in page_two
+assert 'currentValue: root.reminderMinutes' in page_two
+assert 'visible: !root.compactEditor && !root.plannerPresentation' in page_two, "Modal separators stay available"
+
 # Narrow Planner footer: both corner action groups must sit inside equal
 # 12 px gutters, not inherit WindowDialogButtonRow's -8 px modal overhang.
 footer=editor.split('    WindowDialogButtonRow {',1)[1].split('        DialogButton {',1)[0]
