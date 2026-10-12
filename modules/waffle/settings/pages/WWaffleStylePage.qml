@@ -28,7 +28,7 @@ WSettingsPage {
     WSettingsInfoBar {
         visible: !root.isWaffleActive
         severity: WSettingsInfoBar.Severity.Info
-        message: Translation.tr("These settings only apply when using the Windows 11 (Waffle) panel style. Go to Modules to enable it.")
+        message: Translation.tr("Waffle-only settings; enable Waffle under Modules.")
     }
 
     WSettingsSection {
