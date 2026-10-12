@@ -29,7 +29,7 @@ import qs.modules.abyss.looks
 import "original"
 ShellRoot {
  id:root;property int checks:0;property int frames:0;property bool original:false
- property var insets:({left:16,top:0,right:16,bottom:16});property var choice:({})
+ property var insets:({left:16,top:0,right:16,bottom:16});property var choice:({});property var moduleRecords:[]
  Component.onCompleted:Quickshell.watchFiles=false
  FileView {id:disk;path:Config.filePath;watchChanges:true;property var snapshot:null;onLoaded:{try{snapshot=JSON.parse(text())}catch(error){snapshot=null}}}
  AbyssSurfaceController {id:liquid}
@@ -42,7 +42,7 @@ ShellRoot {
   }
  }
  Component {id:old;OriginalField {edgeInsets:root.insets}}
- Component {id:current;AbyssField {edgeInsets:root.insets;roundZeroCorners:root.choice}}
+ Component {id:current;AbyssField {edgeInsets:root.insets;roundZeroCorners:root.choice;records:root.moduleRecords}}
  TestCase {
   id:test;when:false;optional:true
   function check(v,label){root.checks++;if(!v)throw new Error(label)}
@@ -64,6 +64,10 @@ ShellRoot {
     }
     root.insets={left:16,top:16,right:16,bottom:16};root.choice={top:true,right:true,bottom:true,left:true};root.original=true;capture("nonzero-old");root.original=false;capture("nonzero-on")
     root.insets={left:0,top:0,right:0,bottom:0};root.choice={top:true,right:false,bottom:false,left:false};capture("mixed-top");root.choice={top:true,right:true,bottom:false,left:false};capture("mixed-top-right")
+    // Two real-size local backings that obscure both top 0px curves in the old shader.
+    root.insets={left:0,top:0,right:0,bottom:0};root.moduleRecords=[{surface:{x:-50,y:-50,width:195,height:170},radius:0},{surface:{x:855,y:-50,width:195,height:170},radius:0}]
+    root.choice={};capture("modules-top-off");root.choice={top:true};capture("modules-top-on")
+    root.moduleRecords=[]
     GlobalStates.deferredPanelsReady=true;GlobalStates.abyssEditing=true;wait(100)
     const initial=JSON.stringify(editor.edgeRoundZeroCorners)
     for(const edge of ["top","right","bottom","left"]){
@@ -109,6 +113,12 @@ ShellRoot {
    w,h=off.size;box=(0,120,w,h-120) if edge in ['left','right'] else (120,0,w-120,h)
    assert ImageChops.difference(off.crop(box),on.crop(box)).getbbox(alpha_only=False) is None,'0px side gained a full strip';checks+=1
  assert ImageChops.difference(images['nonzero-old'],images['nonzero-on']).getbbox(alpha_only=False) is None,'nonzero choice changes original pixels';checks+=1
+ # Modules obscure the old top arcs; both left/right inner openings must reappear.
+ baseline=images['modules-top-off'];restored=images['modules-top-on'];w,h=baseline.size
+ for box in [(0,0,85,85),(w-85,0,w,85)]:
+  assert ImageChops.difference(baseline.crop(box),restored.crop(box)).getbbox(alpha_only=False),'module-covered top corner did not change'
+  checks+=1
+ assert ImageChops.difference(baseline.crop((250,0,w-250,h)),restored.crop((250,0,w-250,h))).getbbox(alpha_only=False) is None,'corner clipping altered middle of output';checks+=1
  # Adding Right owns BR, while already-owned TR remains byte-identical.
  w,h=images['mixed-top'].size;box=(w-100,0,w,100)
  assert ImageChops.difference(images['mixed-top'].crop(box),images['mixed-top-right'].crop(box)).getbbox(alpha_only=False) is None,'shared corner double-draw';checks+=1

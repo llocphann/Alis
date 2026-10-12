@@ -1,0 +1,75 @@
+name: Bake Abyss R02 Corner Shader
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "modules/abyss/looks/AbyssField.frag"
+      - ".github/workflows/abyss-zero-corner-shader-bake.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    container: debian:sid
+    steps:
+      - name: Install deterministic shader tools
+        run: |
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git ca-certificates python3 qt6-shader-baker nodejs
+      - name: Checkout exact source revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify source regression and bake reproducibly
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/test-abyss-zero-corners.mjs
+          QSB="$(command -v qsb || true)"
+          if [ -z "$QSB" ]; then QSB=/usr/lib/qt6/bin/qsb; fi
+          "$QSB" --qt6 -o /tmp/AbyssField.frag.qsb modules/abyss/looks/AbyssField.frag
+          "$QSB" --qt6 -o /tmp/AbyssField.check.qsb modules/abyss/looks/AbyssField.frag
+          cmp /tmp/AbyssField.frag.qsb /tmp/AbyssField.check.qsb
+          "$QSB" --dump /tmp/AbyssField.frag.qsb >/dev/null
+      - name: Publish QSB only if dev still has this source
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, json, os
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          repo=os.environ['GITHUB_REPOSITORY']
+          token=os.environ['GITHUB_TOKEN']
+          api=f'https://api.github.com/repos/{repo}'
+          source='modules/abyss/looks/AbyssField.frag'
+          target=source+'.qsb'
+          headers={'Accept':'application/vnd.github+json',
+                   'Authorization':f'Bearer {token}',
+                   'X-GitHub-Api-Version':'2022-11-28',
+                   'User-Agent':'alis-abyss-r02-qsb-bake'}
+          def req(method,path,payload=None):
+              body=None if payload is None else json.dumps(payload).encode()
+              with urlopen(Request(api+path,body,headers=headers,method=method)) as response:
+                  return json.load(response)
+          expected=Path(source).read_bytes()
+          remote=req('GET',f'/contents/{source}?ref=dev')
+          if base64.b64decode(remote['content'])!=expected:
+              raise SystemExit('dev source changed during bake; refusing stale QSB')
+          baked=Path('/tmp/AbyssField.frag.qsb').read_bytes()
+          current=req('GET',f'/contents/{target}?ref=dev')
+          if base64.b64decode(current['content'])==baked:
+              print('Current dev QSB already matches the source')
+          else:
+              result=req('PUT',f'/contents/{target}',{
+                  'message':'build(abyss): bake R02 module-safe corner QSB',
+                  'content':base64.b64encode(baked).decode(),
+                  'sha':current['sha'],'branch':'dev'})
+              print('published_qsb_commit='+result['commit']['sha'])
+          PY

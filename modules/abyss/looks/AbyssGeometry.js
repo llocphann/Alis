@@ -249,17 +249,17 @@ function smoothUnion(a, b, k) {
     var h = Math.max(k-Math.abs(a-b),0)/k;
     return Math.min(a,b)-h*h*k*0.25;
 }
-function distance(x, y, width, height, insets, radius, records, softness, recordRadius, roundZeroCorners) {
+function distance(x, y, width, height, insets, radius, records, softness, recordRadius, roundZeroCorners, cornerWidthInsets) {
     var left=insets.left>0 ? insets.left : -64, top=insets.top>0 ? insets.top : -64;
     var right=insets.right>0 ? insets.right : -64, bottom=insets.bottom>0 ? insets.bottom : -64;
     var d = -roundedDistance(x,y,{x:left,y:top,width:width-left-right,height:height-top-bottom},radius);
-    d=zeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners);
+    d=zeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
     for (var i=0;i<records.length;i++) {
         var rec=records[i];
         if (rec.surface.width>0 && rec.surface.height>0)
             d=smoothUnion(d,roundedDistance(x,y,rec.surface,rec.radius ?? recordRadius ?? radius),softness);
     }
-    return d;
+    return clipZeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
 }
 
 function barZones(layout, vertical, modules) {
@@ -309,14 +309,32 @@ function innerCornerDistance(u,v,r) {
     var a=Math.hypot(u-r,v),b=Math.hypot(u,v-r);
     return u>r && v>r ? Math.min(a,b) : u>r ? a : b;
 }
-function zeroCornerField(d,x,y,width,height,insets,radius,choices) {
+function zeroCornerField(d,x,y,width,height,insets,radius,choices,cornerWidthInsets) {
     if(!choices || !(choices.top || choices.right || choices.bottom || choices.left))return d;
-    var mask=zeroCornerMask(insets,choices);
+    var mask=zeroCornerMask(cornerWidthInsets ?? insets,choices);
     if(!mask.some(function(enabled) {return enabled;}))return d;
     var left=Math.max(0,insets.left),right=Math.max(0,insets.right),top=Math.max(0,insets.top),bottom=Math.max(0,insets.bottom);
     var r=Math.max(0,Math.min(radius,(width-left-right)/2,(height-top-bottom)/2));
     if(r<=0)return d;
     var u=[x-left,width-right-x,width-right-x,x-left],v=[y-top,y-top,height-bottom-y,height-bottom-y];
     mask.forEach(function(enabled,i) {if(enabled)d=Math.min(d,innerCornerDistance(u[i],v[i],r));});
+    return d;
+}
+
+// R02 regression: module/local-backdrop unions must not fill the workspace
+// cutout of an enabled 0px corner. Clip only the finite quarter square,
+// leaving module geometry, input regions and every other pixel unchanged.
+function clipZeroCornerField(d,x,y,width,height,insets,radius,choices,cornerWidthInsets) {
+    if(!choices || !(choices.top || choices.right || choices.bottom || choices.left))return d;
+    var mask=zeroCornerMask(cornerWidthInsets ?? insets,choices);
+    if(!mask.some(function(enabled) {return enabled;}))return d;
+    var left=Math.max(0,insets.left),right=Math.max(0,insets.right),top=Math.max(0,insets.top),bottom=Math.max(0,insets.bottom);
+    var r=Math.max(0,Math.min(radius,(width-left-right)/2,(height-top-bottom)/2));
+    if(r<=0)return d;
+    var u=[x-left,width-right-x,width-right-x,x-left],v=[y-top,y-top,height-bottom-y,height-bottom-y];
+    mask.forEach(function(enabled,i) {
+        if(enabled && u[i]>=0 && u[i]<=r && v[i]>=0 && v[i]<=r)
+            d=Math.max(d,innerCornerDistance(u[i],v[i],r));
+    });
     return d;
 }

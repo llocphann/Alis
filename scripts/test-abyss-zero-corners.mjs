@@ -30,4 +30,35 @@ for(const edge of ['top','right','bottom','left']){
  check(L.optionsForOutput({outputLayouts:writes['abyss.modules.outputLayouts']},'A').edgeRoundZeroCorners[edge]===true,'output save/restart retains chosen flag');
  check(L.saveProfile(base,'A',[],8,false,undefined,undefined,undefined,undefined,undefined,undefined,undefined,flags)['abyss.modules.edgeRoundZeroCorners'][edge]===true,'global save retains flag');
 }
+
+// Reproduction of the owner's missing top corners: local module backing
+// extends through the finite corner square and used to erase the curve.
+for (const corner of ['top-left','top-right','bottom-right','bottom-left']) {
+ const right=corner.includes('right'),bottom=corner.includes('bottom');
+ const width=400,height=240,r=34;
+ const x=right?width-28:28,y=bottom?height-28:28;
+ const insideX=right?width-2:2,insideY=bottom?height-2:2;
+ const module={surface:{x:right?width-175:-25,y:bottom?height-145:-25,width:200,height:170},radius:0};
+ const physical={left:0,top:0,right:0,bottom:0};
+ const chosen={[(bottom?'bottom':'top')]:true};
+ const disabled=G.distance(x,y,width,height,physical,r,[module],24,0,{});
+ const enabled=G.distance(x,y,width,height,physical,r,[module],24,0,chosen);
+ check(disabled<0,corner+' fixture must be filled by the module before R02');
+ check(enabled>0,corner+' 0px workspace cutout remains clear over module backing');
+ check(G.distance(insideX,insideY,width,height,physical,r,[module],24,0,chosen)<0,
+   corner+' physical outer pixel remains painted');
+ check(G.distance(x,y,width,height,physical,r,[module],24,0,{[(bottom?'top':'bottom')]:true})===disabled,
+   corner+' unrelated Edge checkbox does not clip local module');
+}
+// A module-expanded inset is not the configured 0px width. The option must
+// still take effect while maintaining the same painted-inset geometry.
+{
+ const painted={left:0,top:56,right:0,bottom:0},widths={left:0,top:0,right:0,bottom:0};
+ const rec={surface:{x:-25,y:-25,width:180,height:160},radius:0};
+ const noChoice=G.distance(28,84,400,240,painted,34,[rec],24,0,{});
+ const selected=G.distance(28,84,400,240,painted,34,[rec],24,0,{top:true},widths);
+ check(noChoice<0 && selected>0,'0px top choice survives module-expanded render inset');
+ check(G.zeroCornerMask(widths,{top:true})[0] && !G.zeroCornerMask(painted,{top:true})[0],
+   'configured and effective widths are distinguished');
+}
 console.log('ABYSS_ZERO_CORNERS_PASS',checks);

@@ -807,11 +807,16 @@ Scope {
                 enabled: AbyssStyle.motionEnabled
                 NumberAnimation { duration: AbyssStyle.motionNormal; easing.type: Easing.OutCubic }
             }
-            readonly property var nativeInsets: {
-                const result = ModuleLayout.edgeInsetsForModules([],bar.layoutOptions,Appearance.fontSizeScale,AbyssStyle.perimeterThickness,AbyssStyle.barThickness,false)
-                return bar.visible ? ModuleLayout.edgeInsetsForModules(bar.placements,bar.layoutOptions,Appearance.fontSizeScale,
-                    AbyssStyle.perimeterThickness,AbyssStyle.barThickness,false) : result
-            }
+            // Module strips can expand the painted inset without changing the
+            // user's physical Edge width. R02 corner ownership reads the latter.
+            readonly property var configuredInsets: ModuleLayout.edgeInsetsForModules(
+                [],bar.layoutOptions,Appearance.fontSizeScale,
+                AbyssStyle.perimeterThickness,AbyssStyle.barThickness,false)
+            readonly property var nativeInsets: bar.visible
+                ? ModuleLayout.edgeInsetsForModules(bar.placements,bar.layoutOptions,
+                    Appearance.fontSizeScale,AbyssStyle.perimeterThickness,
+                    AbyssStyle.barThickness,false)
+                : configuredInsets
             AbyssSurfaceController {
                 id: liquid
                 outputName: window.outputName
@@ -1479,6 +1484,7 @@ Scope {
                 visible: window.presented || window.physicalOsdResident
                 edgeInsets: window.paintInsets
                 roundZeroCorners: window.presented ? bar.layoutOptions.edgeRoundZeroCorners ?? {} : {}
+                cornerWidthInsets: window.configuredInsets
                 records: window.presented ? liquid.records : window.physicalOsdResident ? [osd.record] : []
                 waveTexture: liquid.waves.texture
                 waterLink: companionExtension.waterLink

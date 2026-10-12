@@ -19,6 +19,9 @@ Item {
     property var waterLink: null
     property var edgeInsets: ({left:8,top:8,right:8,bottom:8})
     property var roundZeroCorners: ({})
+    // Configured Edge widths, not module-expanded paint insets, own 0px choices.
+    // Default retains the geometry-only fixture contract.
+    property var cornerWidthInsets: root.edgeInsets
     readonly property int capacity: 40
     // Qt's QSB reflection cache can render a recreated effect while its new
     // manager still reports Uncompiled. Gate input on a presented frame and
@@ -64,7 +67,7 @@ Item {
         readonly property var bodyTexture:wallpaperImage
         readonly property vector4d insets: Qt.vector4d(root.edgeInsets.left,root.edgeInsets.top,root.edgeInsets.right,root.edgeInsets.bottom)
         readonly property vector4d zeroCorners: {
-            const flags=Geometry.zeroCornerMask(root.edgeInsets,root.roundZeroCorners)
+            const flags=Geometry.zeroCornerMask(root.cornerWidthInsets ?? root.edgeInsets,root.roundZeroCorners)
             return Qt.vector4d(flags[0]?1:0,flags[1]?1:0,flags[2]?1:0,flags[3]?1:0)
         }
         readonly property vector4d material: Qt.vector4d(AbyssStyle.perimeterRadius,AbyssStyle.connectionDepth,AbyssStyle.neckRadius,AbyssStyle.highlightStrength)
