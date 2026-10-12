@@ -324,6 +324,10 @@ Singleton {
                 const future=RepeatPolicy.nextCycle(event.repeatTemplate,
                     event.recurrence,currentTime)
                 if (future && future.length) {
+                    // Projection uses this boundary to avoid projecting each
+                    // archived cycle again while keeping every selected weekday
+                    // alive until the entire current cycle has elapsed.
+                    event.repeatCycleStart=slots.length
                     slots.push(...future)
                     changed=true
                 }
@@ -483,6 +487,7 @@ Singleton {
                 event.repeatTemplate=explicitSlots.map(slot=>({
                     startDate:slot.startDate,endDate:slot.endDate
                 }))
+                event.repeatCycleStart=0
             }
         }
         root.list.push(event)
