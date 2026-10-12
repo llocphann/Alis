@@ -20,6 +20,10 @@ assert 'contentHeight: root.compactEditor' in editor, "expanded content scrolls 
 assert 'visible: root.compactEditor' in editor, "Calendar deck remains compact"
 assert 'visible: !root.compactEditor' in editor, "Planner shows full labelled form controls"
 assert 'activeLabelOnly: root.plannerPresentation' in editor
+choices=(r/"modules/common/widgets/ConfigSelectionArray.qml").read_text()
+assert 'property bool activeLabelOnly: false' in choices, "opt-in only"
+assert 'root.activeLabelOnly && !paletteButton.toggled' in choices
+assert 'Accessible.name: modelData.displayName' in choices
 assert 'property date plannerViewMonth: new Date()' in editor
 assert 'ObsidianMonthCalendar {' in editor
 assert 'calendarCells: root.plannerCalendarCells' in editor
