@@ -1,5 +1,7 @@
 # New features
 
+**Owner withdrawal — 2026-10-13:** `AGENDA-F01` (automatic Agenda → To-do creation) has been removed from the active backlog; both domains now work independently. Original task and evidence are [archived](../../docs/archive/chatbot/2026-10-13/AGENDA-F01_RETIRED.md). No automation/linking should be resurrected. Preserve historical user records. The 2026-10-12 linking plans below are superseded historical notes.
+
 **Owner correction — 2026-10-12 22:22 ICT, CURRENT POLICY (supersedes earlier migration notes below):** Automatic legacy Events migration was explicitly **withdrawn** by owner. Source commit `477603bbd685` removes `Occurrences.migrateLegacy`, `Events._resumeLegacyMigration`, versioned migration bootstrapping and the migration test. The Events loader now reads stored event rows unchanged; unknown JSON root metadata (including any existing original-event backup) is transparently preserved during later saves. Do **not** automatically merge/normalize old events or restore previously merged events; do not delete owners' data. Existing multi-date `occurrences`, create/edit, reminder and Todo logic remain. `scripts/test-events-no-automatic-migration.mjs` replaces the obsolete test. In Weekly Planner, All day/Delete/Cancel/Save are icon-only with tooltips as in Calendar Popup; full textual controls remain in standalone modal only. Repeat/Category/Priority/Reminder keep a stable `buttonText` and animate a clipped label viewport; active opens left-to-right, inactive retracts right-to-left. Source implementation done; installed SHA, Qt rendering, rapid toggling, click/reopen and CI/owner acceptance remain OPEN. No UI migration button.
 
 
@@ -201,6 +203,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   **Owner priority override — 2026-10-12 (feature #1): FINAL-PHASE / DEFERRED.** Do not select or implement this feature until all other non-deferred New Features, Rework and Issues have been completed. Keep scope and safety/consent gates unchanged; only an explicit maintainer reprioritization can move it earlier.
 
 - [x] **ABYSS-F01 — Per-module Screen Edge position lock — owner request 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Previous "Owner chưa verified" and remaining native/canonical test gates below are historical technical evidence, not pending owner signoff for this task.
   [Owner: Alis dev; NEW feature] In **Edit Abyss Layout**, allow the
   user to independently **Lock position / Unlock position** for
   each Screen Edge module. Show a compact lock control near the
@@ -284,6 +287,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **ABYSS-F02 — Edit Abyss Layout Screen Edge module multi-selection — owner request 2026-10-10:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Previous "Owner chưa verified" and remaining native/canonical test gates below are historical technical evidence, not pending owner signoff for this task.
   Support modifier-based multiple selection for Screen Edge modules while
   **Edit Abyss Layout** is active.
   **Owner correction 2026-10-12 — OPEN follow-up:** remove the toolbar
@@ -353,6 +357,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
 
 
 - [x] **DASH-F03 — Checkbox to show/hide Music tab scrollbars in Dashboard Settings — owner request 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Previous "Owner chưa verified" and remaining native/canonical test gates below are historical technical evidence, not pending owner signoff for this task.
   [Owner: Alis dev; New Feature] Add exactly **one independent
   checkbox** in **Settings → Dashboard → Music**, such as
   **"Show Music scrollbars"**, backed by a persistent Boolean
@@ -456,7 +461,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   Dashboard, Music, Weekly Planner, preserving existing order, active
   tab, page slide, warm/loading semantics and both standalone and
   Abyss/Overview-hosted Dashboard. Coordinate new ordering with
-  `DASH-F02`, one-way Agenda task linking with `AGENDA-F01`
+  `DASH-F02`, the now-independent Agenda/To-do behavior (retired `AGENDA-F01`)
   and event persistence gate `CAL-I01`. Do not conflate this new
   **page** with the already existing Agenda/Todo/Calendar canvas widgets.
 
@@ -541,6 +546,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   multi-output/fractional/input acceptance remain OPEN; continue `DASH-F02`.
 
 - [x] **DASH-F02 — Drag-reorder Dashboard tab indicators in Edit Dashboard Layout — owner request 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Previous "Owner chưa verified" and remaining native/canonical test gates below are historical technical evidence, not pending owner signoff for this task.
   [Owner: Alis dev; New Feature] In **Edit Dashboard Layout**, drag
   page indicators (dots) to reorder entire Dashboard **tabs/pages**,
   including Dashboard, Music and the new Weekly Planner (DASH-F01).
@@ -582,11 +588,12 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   four saved images, actual JSON readback and headless restart PASS.
   [Source-byte receipt, failures and raw evidence](../../docs/evidence/abyss-product/20261012-dashboard-tab-order/README.md).
   Final committed-SHA canonical and owner/installed, all edges/families,
-  multi-output/physical touchpad gates OPEN. Continue `AGENDA-F01` after this
-  source milestone; do not close waiting acceptance or repeat unrelated Issues.
+  multi-output/physical touchpad gates OPEN. `AGENDA-F01` was subsequently withdrawn by owner; after this
+  historical source milestone, do not close waiting acceptance or repeat unrelated Issues.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **CAL-F01 — Calendar Popup agenda indicators and configurable maximum — owner screenshots 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Previous "Owner chưa verified" and remaining native/canonical test gates below are historical technical evidence, not pending owner signoff for this task.
   [Owner: Alis dev; New Feature] Display compact event/Agenda
   indicator dots below the relevant dates in the **Calendar Popup**,
   matching the owner's Dashboard Calendar reference (third image).
@@ -631,77 +638,6 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   and English source strings; test is not yet run on a Wayland worker.
   State: SOURCE PATCHED / OPEN for focused/native Niri visual,
   Settings persistence, recurrence/long-name/month-edge and owner QA.
-  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
-
-- [x] **AGENDA-F01 — Creating an Agenda automatically creates one linked To-do (not vice versa) — owner request 2026-10-11:**
-  [Owner: Alis dev; New Feature] **Local Agenda/Event creation
-  ⇒ exactly one corresponding Todo item**, automatically after
-  durable event creation. **Independent Todo creation ⇒ no Agenda**,
-  no calendar reservation, no implied reminder. The linked task
-  shares sensible title/date/time/details but keeps its own
-  completed/pending state; completing Todo must NOT cancel the
-  scheduled Agenda or vice versa. Show a clear linked relationship
-  across Calendar Popup, Dashboard Agenda/Todo and Weekly Planner,
-  without rendering the same event twice or sending duplicate alarms.
-
-  Data design must live at the canonical `services/Events.qml`
-  + `services/Todo.qml` mutation/adapter boundary, not in
-  separate popup forms. Events persist numeric IDs and Todo
-  can use internal JSON/txt or opt-in Obsidian Markdown backend;
-  specify stable event→task ID / occurrence link schema,
-  versioned migration, idempotent reconciliation on failed/
-  delayed writes, retries and process restart. **CAL-I01**
-  separately tracks Event disk persistence: do not create
-  phantom Todos from events that were not durably saved.
-  If Todo is not ready/busy/unsupported, show a pending-link
-  warning and bounded safe retry, not silent loss or creation
-  of duplicates. Respect user-chosen Obsidian backend/privacy,
-  permissions and existing external Markdown task edits.
-
-  Define owned-field sync for title/date/time changes while
-  preserving independent Todo notes and completion; explicit
-  non-destructive delete/unlink policy and safe recurrence
-  semantics (one item per eligible created occurrence, no
-  runaway duplication). Existing historical Agenda/Todo data
-  preserved; any backfill must be opt-in and previewable.
-  Imported external `CalendarSync`/ICS events are read-only
-  and should NOT auto-generate tasks merely due to sync.
-
-  Acceptance: create via Calendar Popup, Dashboard and Planner
-  yields one linked Todo; Todo-only creates none; edit/delete,
-  recurrence, completion, repeated save/retry, crash between
-  stores, cancel/undo, internal vs Obsidian and package absent,
-  restart and cross-surface updates are deterministic and
-  preserve user files. Add source/fixture and owner native QA.
-  State: SOURCE IMPLEMENTED / focused PASS — 2026-10-12, after
-  `DASH-F01`/`DASH-F02` source milestones. Versioned per-created-occurrence
-  keys and a durable unlink/delete outbox live in Events; Todo consumes actual
-  event/task acknowledgements. Provider/source-date are pinned before mutation;
-  no historical/imported-event backfill, inverse Todo→Agenda or task resurrection.
-  Title/date/time/details update while task completion/notes remain independent.
-  Event deletion/unlink retains task; explicit task deletion detaches durably
-  first. Pending feedback and three bounded optional-worker retries replace
-  indefinite polling; explicit retry restores failed actual writes.
-  Shared Calendar/Planner/Dashboard relationship UI includes Retry/Unlink with
-  Enter/Space/pointer control; virtual recurrence projection carries no false
-  saved-task badge. Optional workers belong to Alis-Intergration main
-  `4d0aa3f508fdd6bd953696d92bf529f1fb9f4b32` (package0.2.2), without owner install.
-  Focused PASS: pure142; internal8 processes/24checks; Events-only bootstrap3
-  actual processes/disk readbacks; internal persistence6/77 and Events6/59;
-  optional bridge16 processes/48checks across both note modes; UI28checks/
-  8captures with actual shared stores and private compositor allocation.
-  [Source hashes, raw failures/fix-forwards, readbacks and acceptance limits](../../docs/evidence/abyss-product/20261012-agenda-internal/README.md).
-  First data prerequisite: Events exposes only acknowledged, cloned durable
-  snapshots and save failure/busy feedback; Agenda→Todo must consume that
-  boundary, never `eventAdded` or an optimistic FileView cache. Actual headless
-  PASS6 startup/restart processes, 45 QML checks and 6 independent JSON
-  readbacks: coalescing, deferred refresh, denied save, explicit/cached retry
-  and no phantom acknowledgements. [Pinned prerequisite evidence](../../docs/evidence/abyss-product/20261012-events-durable-boundary/README.md).
-  Stopped canonical `f94de0535` predates this feature. Fresh committed exact-SHA
-  full qualification, source-switch/midnight and older-package retry cases,
-  installed identity, owner Calendar/Dashboard/Planner creation and actual
-  external-vault acceptance remain OPEN. Continue ABYSS-F01 while preserving
-  these gates; source/focused evidence alone does not complete the feature.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [ ] **NOTES-F01 — Quick Notes Markdown Reading and editable Source/Live mode — owner request 2026-10-11:**
@@ -882,6 +818,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   a requested source milestone, NOT the entire NOTES-F01.
 
 - [x] **NOTES-F02 — Quick Notes image delivery:** Hadalis `add29d6f8` implements shared
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Previous "Owner chưa verified" and remaining native/canonical test gates below are historical technical evidence, not pending owner signoff for this task.
   paste/import, original-byte storage, Markdown persistence and preview with
   stable asynchronous note ownership. Hadalird `b0c975a7f40bdf531012be326bc728f5c014b696`
   (0.2.1) exports referenced images to the selected Obsidian vault's configured
