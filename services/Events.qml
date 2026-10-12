@@ -267,33 +267,45 @@ Singleton {
         
         for (let i = 0; i < eventCount; i++) {
             const event = root.list[i]
-            if (!event.dateTime) continue
-            
-            const eventTime = new Date(event.dateTime).getTime()
-            const reminderMinutes = event.reminderMinutes ?? 0
-            const reminderTime = eventTime - (reminderMinutes * 60 * 1000)
-            
-            // Check for reminder notification (before event)
-            if (reminderMinutes > 0 && !event.reminderNotified && currentTime >= reminderTime && currentTime < eventTime) {
-                root.list[i].reminderNotified = true
-                root.reminderTriggered(event, reminderMinutes)
-                needsSave = true
-            }
-            
-            // Check for event time notification
-            if (!event.notified && currentTime >= eventTime) {
-                root.list[i].notified = true
-                root.eventTriggered(event)
-                needsSave = true
-                
-                // Handle recurrence - create next occurrence
-                if (event.recurrence && event.recurrence !== "none") {
-                    root.createNextRecurrence(event, currentTime)
+            const slots = Occurrences.entries(event)
+            let changed = false
+            for (let index = 0; index < slots.length; ++index) {
+                const slot = slots[index]
+                const startMs = new Date(slot.startDate).getTime()
+                if (!Number.isFinite(startMs)) continue
+                const reminderMinutes = event.reminderMinutes ?? 0
+                const reminderTime = startMs - reminderMinutes * 60000
+                const notificationEvent = Object.assign({},event,{
+                    dateTime:slot.startDate,startDate:slot.startDate,
+                    endDate:slot.endDate,occurrenceIndex:index
+                })
+                if (reminderMinutes > 0 && !slot.reminderNotified
+                        && currentTime >= reminderTime && currentTime < startMs) {
+                    slot.reminderNotified = true
+                    root.reminderTriggered(notificationEvent,reminderMinutes)
+                    changed = true
+                }
+                if (!slot.notified && currentTime >= startMs) {
+                    slot.notified = true
+                    root.eventTriggered(notificationEvent)
+                    changed = true
+                    if (slots.length===1 && !Array.isArray(event.occurrences)
+                            && event.recurrence && event.recurrence!=="none")
+                        root.createNextRecurrence(event,currentTime)
                 }
             }
+            if (changed) {
+                root.list[i] = Array.isArray(event.occurrences)
+                    ? Occurrences.store(event,slots)
+                    : Object.assign({},event,{notified:slots[0].notified,
+                        reminderNotified:slots[0].reminderNotified})
+                needsSave = true
+            }
         }
-        
-        if (needsSave) root.saveToFile()
+        if (needsSave) {
+            root.list = root.list.slice()
+            root.saveToFile()
+        }
     }
 
     function createNextRecurrence(event, afterTime) {
@@ -485,48 +497,27 @@ Singleton {
     }
 
     function getEventsForDate(date) {
-        const targetDate = new Date(date)
-        targetDate.setHours(0, 0, 0, 0)
-        
-        return root.list.filter(event => {
-            const eventDate = new Date(event.startDate || event.dateTime)
-            eventDate.setHours(0, 0, 0, 0)
-            // All-day events remain visible for their date even after the
-            // midnight reminder/trigger has fired.
-            return eventDate.getTime() === targetDate.getTime()
-                && (!event.notified || event.allDay === true)
-        })
+        return root.list.filter(event => Occurrences.intersectsDay(event,date,false))
     }
-    
-    // Get ALL events for a date (including notified/past) - for history view
+
+    // History and calendar dots include previously fired occurrences.
     function getAllEventsForDate(date) {
-        const targetDate = new Date(date)
-        targetDate.setHours(0, 0, 0, 0)
-        
-        return root.list.filter(event => {
-            const eventDate = new Date(event.startDate || event.dateTime)
-            eventDate.setHours(0, 0, 0, 0)
-            return eventDate.getTime() === targetDate.getTime()
-        })
+        return root.list.filter(event => Occurrences.intersectsDay(event,date,true))
     }
 
     function getUpcomingEvents(days) {
         const now = new Date()
-        const future = new Date()
+        const future = new Date(now)
         future.setDate(future.getDate() + (days || 7))
-        const startTimes = new Map()
-        
-        return root.list.filter(event => {
-            const eventDate = new Date(event.startDate || event.dateTime)
-            startTimes.set(event, eventDate.getTime())
-            if (event.allDay === true) {
-                const end = event.endDate
-                    ? new Date(event.endDate)
-                    : new Date(eventDate.getTime() + 86400000)
-                return end > now && eventDate <= future
-            }
-            return eventDate >= now && eventDate <= future && !event.notified
-        }).sort((a, b) => startTimes.get(a) - startTimes.get(b))
+        return root.list.map(event => {
+            const slot = Occurrences.upcoming(event,now,future)
+            return slot ? Object.assign({},event,{
+                _canonicalEvent:event,
+                dateTime:slot.startDate,startDate:slot.startDate,
+                endDate:slot.endDate
+            }) : null
+        }).filter(Boolean).sort((a,b) =>
+            new Date(a.startDate)-new Date(b.startDate))
     }
 
     function markAsNotified(id) {
