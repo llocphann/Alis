@@ -157,34 +157,124 @@ Item {
         property string label: ""
         property string symbol: ""
         property color buttonInk: root.ink
-        implicitHeight: 34
-        implicitWidth: label.length ? row.implicitWidth + 18 : 34
-        buttonRadius: 12
-        Accessible.name: label.length ? label : symbol
-        colBackground: toggled ? Appearance.colors.colSecondaryContainer : "transparent"
-        colBackgroundHover: Appearance.colors.colLayer1Hover
-        contentItem: RowLayout {
-            id: row;anchors.centerIn: parent;spacing: 5
-            MaterialSymbol {visible:action.symbol.length>0;text:action.symbol;iconSize:18;color:action.buttonInk}
-            StyledText {visible:action.label.length>0;text:action.label;color:action.buttonInk;font.pixelSize:Appearance.font.pixelSize.small}
+        implicitHeight:34 * Appearance.fontSizeScale
+        implicitWidth:label.length
+            ? actionRow.implicitWidth + 18 * Appearance.fontSizeScale
+            : 34 * Appearance.fontSizeScale
+        buttonRadius:12 * Appearance.fontSizeScale
+        Accessible.name:label.length ? label : symbol
+        colBackground:toggled ? Appearance.colors.colSecondaryContainer : "transparent"
+        colBackgroundHover:Appearance.colors.colLayer1Hover
+        // Qt Controls gives contentItem the available button rectangle.
+        // Centre the actual glyph/text row within it for equal margins.
+        contentItem: Item {
+            implicitWidth:actionRow.implicitWidth
+            implicitHeight:actionRow.implicitHeight
+            Row {
+                id:actionRow
+                anchors.centerIn:parent
+                spacing:5 * Appearance.fontSizeScale
+                MaterialSymbol {
+                    objectName:"plannerActionGlyph"
+                    visible:action.symbol.length>0
+                    text:action.symbol
+                    iconSize:18 * Appearance.fontSizeScale
+                    color:action.buttonInk
+                }
+                StyledText {
+                    visible:action.label.length>0
+                    text:action.label
+                    color:action.buttonInk
+                    font.pixelSize:Appearance.font.pixelSize.small
+                }
+            }
         }
     }
     ColumnLayout {
-        anchors.fill: parent
-        spacing: 6
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 4
-            Action {symbol:"chevron_left";Accessible.name:Translation.tr("Previous week");onClicked:root.changeWeek(-1)}
-            Action {label:Translation.tr("Today");onClicked:root.showToday()}
-            Action {symbol:"chevron_right";Accessible.name:Translation.tr("Next week");onClicked:root.changeWeek(1)}
-            StyledText {
-                Layout.fillWidth: true
-                text: Qt.formatDate(root.days[0].date,"d MMM") + " – " + Qt.formatDate(root.days[6].date,"d MMM yyyy")
-                color:root.ink;elide:Text.ElideRight;font.weight:Font.DemiBold
+        anchors.fill:parent
+        spacing:6
+        ColumnLayout {
+            Layout.fillWidth:true
+            spacing:2 * Appearance.fontSizeScale
+            Item {
+                id:plannerToolbar
+                objectName:"plannerToolbar"
+                Layout.fillWidth:true
+                Layout.preferredHeight:34 * Appearance.fontSizeScale
+                // Anchor to the toolbar midpoint, independently of unequal
+                // left navigation and right action widths. Stack when tight.
+                readonly property bool compact:width < weekNav.width + weekTools.width
+                    + Math.max(180 * Appearance.fontSizeScale, weekHeading.implicitWidth)
+                    + 20 * Appearance.fontSizeScale
+                Row {
+                    id:weekNav
+                    anchors.left:parent.left
+                    anchors.verticalCenter:parent.verticalCenter
+                    spacing:4 * Appearance.fontSizeScale
+                    Action {
+                        objectName:"plannerPreviousWeek"
+                        symbol:"chevron_left"
+                        Accessible.name:Translation.tr("Previous week")
+                        onClicked:root.changeWeek(-1)
+                    }
+                    Action {label:Translation.tr("Today");onClicked:root.showToday()}
+                    Action {
+                        objectName:"plannerNextWeek"
+                        symbol:"chevron_right"
+                        Accessible.name:Translation.tr("Next week")
+                        onClicked:root.changeWeek(1)
+                    }
+                }
+                StyledText {
+                    id:weekHeading
+                    objectName:"plannerWeekHeading"
+                    anchors.centerIn:parent
+                    width:Math.max(0,parent.width
+                        - 2*Math.max(weekNav.width,weekTools.width)
+                        - 20*Appearance.fontSizeScale)
+                    height:parent.height
+                    visible:!plannerToolbar.compact
+                    text:Qt.formatDate(root.days[0].date,"d MMM") + " – "
+                        + Qt.formatDate(root.days[6].date,"d MMM yyyy")
+                    horizontalAlignment:Text.AlignHCenter
+                    font.weight:Font.Bold
+                    font.pixelSize:Appearance.font.pixelSize.normal
+                    color:root.headerTodayInk
+                    elide:Text.ElideRight
+                }
+                Row {
+                    id:weekTools
+                    anchors.right:parent.right
+                    anchors.verticalCenter:parent.verticalCenter
+                    spacing:4 * Appearance.fontSizeScale
+                    Action {
+                        objectName:"plannerTodoAction"
+                        symbol:"checklist"
+                        Accessible.name:Translation.tr("To Do")
+                        toggled:root.sideView==="todo"
+                        onClicked:root.sideView=root.sideView==="todo"?"":"todo"
+                    }
+                    Action {
+                        objectName:"plannerNotesAction"
+                        symbol:"sticky_note_2"
+                        Accessible.name:Translation.tr("Quick Notes")
+                        toggled:root.sideView==="notes"
+                        onClicked:root.sideView=root.sideView==="notes"?"":"notes"
+                    }
+                }
             }
-            Action {symbol:"checklist";Accessible.name:Translation.tr("To Do");toggled:root.sideView==="todo";onClicked:root.sideView=root.sideView==="todo"?"":"todo"}
-            Action {symbol:"sticky_note_2";Accessible.name:Translation.tr("Quick Notes");toggled:root.sideView==="notes";onClicked:root.sideView=root.sideView==="notes"?"":"notes"}
+            StyledText {
+                objectName:"plannerCompactWeekHeading"
+                visible:plannerToolbar.compact
+                Layout.fillWidth:true
+                Layout.preferredHeight:visible ? 24*Appearance.fontSizeScale : 0
+                text:weekHeading.text
+                horizontalAlignment:Text.AlignHCenter
+                font.weight:Font.Bold
+                font.pixelSize:Appearance.font.pixelSize.normal
+                color:root.headerTodayInk
+                elide:Text.ElideRight
+            }
         }
         GridLayout {
             Layout.fillWidth: true
@@ -258,9 +348,11 @@ Item {
                             MouseArea {anchors.fill:parent}
                         }
                         StyledText {
+                            objectName:"plannerDayTitle"
                             x:6;y:viewport.contentY+3;width:parent.width-12;height:38;z:11
                             text:Qt.formatDate(dayColumn.modelData.date,"ddd d MMM")
-                            font.weight:Font.DemiBold
+                            horizontalAlignment:Text.AlignHCenter
+                            font.weight:Font.Bold
                             color:dayColumn.today?root.headerTodayInk:root.headerInk
                             font.pixelSize:Appearance.font.pixelSize.small;elide:Text.ElideRight
                         }

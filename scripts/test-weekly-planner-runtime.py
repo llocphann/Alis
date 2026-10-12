@@ -66,6 +66,32 @@ Window {
      "the pinned date/All-day headings obscure the transparent timeline background")
    check(String(planner.headerInk)===String(planner.ink),
      "heading labels no longer use the timeline's text palette")
+   // Heading centres are tested in toolbar space, not just in the space
+   // between asymmetrically sized navigation and action groups.
+   const toolbar=find(planner,"plannerToolbar")
+   const weekHeading=find(planner,"plannerWeekHeading")
+   const dayTitles=all(planner,"plannerDayTitle")
+   check(!!toolbar && !!weekHeading && dayTitles.length===7,
+     "weekly planner header labels missing")
+   check(Math.abs(weekHeading.mapToItem(toolbar,weekHeading.width/2,weekHeading.height/2).x-toolbar.width/2)<1,
+     "week title is not centred across the toolbar")
+   check(weekHeading.horizontalAlignment===Text.AlignHCenter
+     && weekHeading.font.weight===Font.Bold
+     && String(weekHeading.color)===String(planner.headerTodayInk),
+     "week title lost bold, centred theme-accent styling")
+   check(dayTitles.every(item=>item.horizontalAlignment===Text.AlignHCenter
+     && item.font.weight===Font.Bold
+     && Math.abs(item.x+item.width/2-(item.parent.width/2))<1),
+     "weekday titles must be bold and centred in their columns")
+   for (const name of ["plannerPreviousWeek","plannerNextWeek","plannerTodoAction","plannerNotesAction"]) {
+     const button=find(planner,name)
+     check(!!button,"missing planner action "+name)
+     const glyph=find(button.contentItem,"plannerActionGlyph")
+     check(!!glyph && glyph.visible,"missing planner action glyph "+name)
+     const middle=glyph.mapToItem(button,glyph.width/2,glyph.height/2)
+     check(Math.abs(middle.x-button.width/2)<1 && Math.abs(middle.y-button.height/2)<1,
+       "planner action glyph not centred: "+name)
+   }
    viewport.contentY=12*planner.hourHeight;wait(50)
    check(dayHeaders.every(item=>Math.abs(item.y-viewport.contentY)<.5)
      && Math.abs(headerCorner.y-viewport.contentY)<.5,
@@ -82,6 +108,13 @@ Window {
    capture("overlap-slots")
    const weekDate=planner.days[0].date.getTime();planner.changeWeek(1);check(planner.days[0].date.getTime()>weekDate,"Next week failed");planner.changeWeek(-1);check(planner.days[0].date.getTime()===weekDate,"Previous week failed")
    planner.forceActiveFocus();keyClick(Qt.Key_PageDown);check(planner.days[0].date.getTime()>weekDate,"keyboard week navigation failed");keyClick(Qt.Key_PageUp)
+   root.allocatedWidth=320;root.allocatedHeight=410;wait(100)
+   const compactHeading=find(planner,"plannerCompactWeekHeading")
+   check(!!compactHeading && compactHeading.visible && !weekHeading.visible,
+     "compact toolbar must keep the week title visible on a second line")
+   check(compactHeading.horizontalAlignment===Text.AlignHCenter
+     && compactHeading.font.weight===Font.Bold,
+     "compact week title lost centred bold styling")
    root.allocatedWidth=480;root.allocatedHeight=410;wait(100)
    capture("narrow-resized")
    check(viewport.contentWidth>viewport.width && viewport.height>0,"narrow view clipped seven columns: "+JSON.stringify({scene:scene.width,planner:planner.width,viewport:viewport.width,content:viewport.contentWidth,height:viewport.height}))
