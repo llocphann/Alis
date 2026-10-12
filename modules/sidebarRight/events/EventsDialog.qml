@@ -16,6 +16,16 @@ WindowDialog {
     // The roomy Dashboard Weekly Planner uses the same embedded dialog
     // lifecycle as Calendar, but owns an intentionally expanded form layout.
     property bool plannerPresentation: false
+    // Only the Dashboard Weekly Planner uses paged editing.
+    // Other owners retain their original one-page modal/compact form.
+    property int plannerPage: 0
+    function changePlannerPage(nextPage): void {
+        if (!root.plannerPresentation) return
+        const next=Math.max(0,Math.min(1,Math.trunc(nextPage)))
+        if (root.plannerPage===next) return
+        root.plannerPage=next
+        editorFlickable.contentY=0
+    }
     property date plannerViewMonth: new Date()
     property int plannerCalendarRevision: 0
     readonly property var plannerCalendarCells: {
@@ -260,6 +270,7 @@ WindowDialog {
     function resetForm(): void {
         root.editingEvent = null
         root.editingOccurrenceIndex = 0
+        root.plannerPage = 0
         root.eventTitle = ""
         root.eventDescription = ""
         root.eventDate = new Date()
@@ -276,6 +287,7 @@ WindowDialog {
 
     function loadEvent(event: var): void {
         root.editingEvent = event
+        root.plannerPage = 0
         root.editingOccurrenceIndex = event._editOccurrenceIndex ?? 0
         const selectedSlot = Array.isArray(event.occurrences)
             ? (event.occurrences[root.editingOccurrenceIndex] || event) : event
@@ -430,8 +442,36 @@ WindowDialog {
         Column {
             id: formColumn
             width: parent.width
-            spacing: root.embeddedPresentation
-                ? editorFlickable.embeddedGap : 8
+            spacing: 0
+
+            // In Planner mode the two existing sections move horizontally
+            // under a shared clipping viewport. Other owners keep both
+            // sections stacked without duplicating form state or controls.
+            Item {
+                id: plannerPageHost
+                width: parent.width
+                clip: root.plannerPresentation
+                height: root.plannerPresentation
+                    ? (root.plannerPage===0
+                        ? plannerBasics.implicitHeight : plannerOptions.implicitHeight)
+                    : plannerBasics.implicitHeight+plannerOptions.implicitHeight
+                Behavior on height {
+                    enabled: root.plannerPresentation && Appearance.animationsEnabled
+                    NumberAnimation {duration:200;easing.type:Easing.OutCubic}
+                }
+
+                Column {
+                    id: plannerBasics
+                    width: plannerPageHost.width
+                    spacing: root.embeddedPresentation
+                        ? editorFlickable.embeddedGap : 8
+                    x: root.plannerPresentation && root.plannerPage===1
+                        ? -plannerPageHost.width : 0
+                    y: 0
+                    Behavior on x {
+                        enabled: root.plannerPresentation && Appearance.animationsEnabled
+                        NumberAnimation {duration:230;easing.type:Easing.InOutCubic}
+                    }
 
             // ─── Basic Info Section ───────────────────────────────────
             EventSectionHeader {
@@ -722,8 +762,23 @@ WindowDialog {
                 }
             }
 
-            // Repeat is part of scheduling, so keep it next to date/time rather
-            // than burying it below category/priority/reminder settings.
+                } // plannerBasics
+
+                Column {
+                    id: plannerOptions
+                    width: plannerPageHost.width
+                    spacing: root.embeddedPresentation
+                        ? editorFlickable.embeddedGap : 8
+                    y: root.plannerPresentation ? 0 : plannerBasics.implicitHeight
+                    x: root.plannerPresentation && root.plannerPage===0
+                        ? plannerPageHost.width : 0
+                    Behavior on x {
+                        enabled: root.plannerPresentation && Appearance.animationsEnabled
+                        NumberAnimation {duration:230;easing.type:Easing.InOutCubic}
+                    }
+
+            // Repeat begins Planner page two; Calendar, All day and
+            // Start/End controls remain on page one.
             EventSectionHeader {
                 visible: !root.compactEditor
                 text: Translation.tr("Repeat")
@@ -861,6 +916,8 @@ WindowDialog {
                 width: 1
                 height: 16
             }
+                } // plannerOptions
+            } // plannerPageHost
         }
     }
 
@@ -909,6 +966,20 @@ WindowDialog {
                     root.dismiss()
                 }
             }
+        }
+
+        // Exactly one square navigation action is shown: forward on page
+        // one, backward on page two. It does not save or discard the draft.
+        CompactEventOptionButton {
+            objectName: "plannerEventPageNavigation"
+            visible: root.plannerPresentation
+            Layout.preferredWidth: 36
+            Layout.preferredHeight: 36
+            symbol: root.plannerPage===0 ? "arrow_forward" : "arrow_back"
+            tooltipText: root.plannerPage===0
+                ? Translation.tr("Next: Event options")
+                : Translation.tr("Back: Event details")
+            onClicked: root.changePlannerPage(root.plannerPage===0 ? 1 : 0)
         }
 
         Item { Layout.fillWidth: true }
