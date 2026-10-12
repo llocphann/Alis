@@ -817,6 +817,28 @@ run privileged installation just because manual buttons are retired.
   dynamic/optional Companion and Integration plugin UI, small screens,
   accessibility/translation search and installed owner visual acceptance.
 
+  **2026-10-12 late continuation — Waffle and optional wrapper scope:**
+  After checking current `dev` (local bot delivering Utilities and notification
+  source independently), shortened 17 Waffle page help occurrences in Modules,
+  Workspace Strip, Themes, Background, Bar and Style. Additional 7 shared
+  Effects/Custom Theme/Shell Layout/Waffle parent strings were shortened.
+  The Companion fallback is concise and translated; Obsidian Theme, Obsidian
+  Todo, Thinkfan and Waffle TLP absent-package notices now use English
+  `Translation.tr` with the same loading/retry behavior. Source commits
+  `dfd1221be`, `45f8e5d4e`, `4622145a9`, `47825981b`, `573fa92f4`,
+  `69fca0b62`, `8df9fbacb`, `d0cf4c0a2`, `f9c6c8b5b`,
+  `7456fad67`, `a7097093a`, `702577a80`, `9594e0dc0`,
+  `4b97a1548` and `48d963b31`; locale keys added at `37e18d0b3`
+  and `c7438973f`. Focused source-copy tests added at `875922cb4`,
+  `536d24c41` and `71d1b7e9b` and preserve loader/retry
+  references. Connector checks on the source snapshots:
+  Waffle/optional 23/23 source+English key PASS and shared 7/7 PASS;
+  these are **not** execution of the Python contract or a canonical
+  desktop/QML acceptance. The dynamically loaded third-party plugin's
+  own contents remain outside this host-only pass. Keep this [ ] OPEN
+  until full Settings inventory, source-level test execution, native
+  responsiveness/small-screen/accessibility and owner review are complete.
+
 - [x] **SET-R04 — Remove "Use opaque Material appearance" preset button — owner 2026-10-12:**
   [Owner: Alis dev; Rework/removal] Delete the **button** from
   `modules/abyss/settings/AbyssStyleSettings.qml` completely.
