@@ -27,6 +27,7 @@ Item {
     // Compact owners such as the Bar Calendar popup can opt into bottom-left
     // placement without changing Sidebar/other Events surfaces.
     property bool fabLeftAligned: false
+    property bool showAddButton: true
     // Only ClockCalendarContent opts into a local-civil 3-day horizon.
     // Sidebar/other Events consumers retain the original upcoming view.
     property bool compactCalendarWindow: false
@@ -298,7 +299,9 @@ Item {
                             Layout.alignment: Qt.AlignHCenter
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
-                            text: Translation.tr("Tap + to add your first event")
+                            text: root.showAddButton
+                                ? Translation.tr("Tap + to add your first event")
+                                : Translation.tr("Select a day in the Calendar to add an event")
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: root.colSubtext
                             wrapMode: Text.WordWrap
@@ -326,14 +329,14 @@ Item {
     // FAB to add event
     StyledRectangularShadow {
         target: fabButton
-        visible: !root.inlineEditorMode
+        visible: root.showAddButton && !root.inlineEditorMode
         radius: fabButton.buttonRadius
         blur: 0.6 * Appearance.sizes.elevationMargin
     }
     
     FloatingActionButton {
         id: fabButton
-        visible: !root.inlineEditorMode
+        visible: root.showAddButton && !root.inlineEditorMode
         anchors.left: root.fabLeftAligned ? parent.left : undefined
         anchors.right: root.fabLeftAligned ? undefined : parent.right
         anchors.bottom: parent.bottom
