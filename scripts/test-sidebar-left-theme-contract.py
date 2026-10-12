@@ -12,6 +12,9 @@ checks=[
   "same color blend as Weather Details"),
  ('ColorUtils.mix(AbyssStyle.contentLayer, AbyssStyle.accent, .88)' in weather,
   "approved reference still intact"),
+ ('Qt.alpha(ColorUtils.mix(AbyssStyle.contentLayer, AbyssStyle.accent, .88),\n'
+  '            AbyssStyle.contentOpacity)' in sidebar,
+  "exact saved content opacity, including 0, overrides tint-mix alpha"),
  ('objectName: "sidebarLeftInnerSurface"' in sidebar,"native-test identity"),
  ('color: root.innerContentSurfaceColor' in sidebar,"inner plate uses shared material"),
  ('sidebarLeftBackground.cardStyle ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0'
