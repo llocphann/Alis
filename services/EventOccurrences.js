@@ -94,7 +94,7 @@ function upcoming(event,nowValue,throughValue) {
  * When an additional record already owns a linked/detached Todo, keep that
  * record separate rather than orphaning or stealing the user's task.
  */
-function migrateLegacy(raw) {
+function migrateLegacy(raw, activeTodoKeys, activeProvider) {
     if (!Array.isArray(raw)) return {events:[],changed:false,normalized:0,merged:0,skippedLinked:0};
     var events=[],changed=false,normalized=0,merged=0,skippedLinked=0;
     raw.forEach(function(original) {
@@ -127,10 +127,15 @@ function migrateLegacy(raw) {
         }
         if (destination>=0) {
             var link=value.todoLink;
-            // Only unlinked or never-provisioned tasks can be consolidated.
-            // "linked", "detached", or provider-bearing tasks keep their
-            // original event ID, no automatic cross-provider mutation.
-            if (link && (link.state!=="pending" || Boolean(link.provider))) {
+            // Protect actual linked tasks, not merely stale link metadata.
+            // On the first load Todo may not be ready; defer linked records
+            // instead of guessing that an empty task list means no tasks.
+            var hasActiveTasks=Array.isArray(activeTodoKeys);
+            var missingLinkedTask=link && link.state==="linked"
+                && hasActiveTasks && link.provider===activeProvider
+                && activeTodoKeys.indexOf(link.key)<0;
+            var safePending= !link || (link.state==="pending" && !link.provider);
+            if (!safePending && !missingLinkedTask) {
                 skippedLinked++;
                 events.push(value);
                 return;
