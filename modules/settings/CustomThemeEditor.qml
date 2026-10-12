@@ -209,7 +209,7 @@ ColumnLayout {
                     }
                     StyledText {
                         Layout.fillWidth: true
-                        text: Translation.tr("Changes apply live. Start broad, check the preview, then edit individual colors only if needed.")
+                        text: Translation.tr("Changes preview live; adjust individual colors as needed.")
                         font.pixelSize: Appearance.font.pixelSize.smaller
                         color: Appearance.colors.colOnPrimaryContainer
                         opacity: 0.82
@@ -359,7 +359,7 @@ ColumnLayout {
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: Translation.tr("Light mode is experimental and may look broken. For best results, use a light preset like Angel Light, Catppuccin Latte, or Sakura.")
+                    text: Translation.tr("Light mode is experimental; start with a light preset (Angel Light, Latte or Sakura).")
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     color: Appearance.colors.colSubtext
                     wrapMode: Text.WordWrap
