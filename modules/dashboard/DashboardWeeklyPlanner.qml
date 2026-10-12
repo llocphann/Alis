@@ -31,6 +31,7 @@ Item {
     onSideViewChanged: storeBrowser()
     onPresentationActiveChanged: if (_initialized && presentationActive && followToday) selectedDate=DateTime.clock.date
     property bool expandAllDay: false
+    property int activeDragDay: -1
     property real hourHeight: 52 * Appearance.fontSizeScale
     property int _eventsRevision: 0
     readonly property int firstDay: Qt.locale().firstDayOfWeek % 7
@@ -229,6 +230,7 @@ Item {
                     model:root.days
                     delegate: Item {
                         id:dayColumn
+                        z:root.activeDragDay===index ? 50 : 0
                         required property var modelData
                         required property int index
                         x:44+index*root.columnWidth;width:root.columnWidth;height:viewport.contentHeight
@@ -328,6 +330,9 @@ Item {
                                 property real pressX: 0
                                 property real pressY: 0
                                 property bool gestureMoved: false
+                                readonly property var previewRange: gestureMode.length>0 && gestureMoved
+                                    ? Gesture.rangeForGesture(modelData,gestureMode,dragX,dragY,
+                                        root.columnWidth,root.hourHeight) : null
                                 readonly property real baseHeight: Math.max(18,
                                     (modelData.end-modelData.start)/60*root.hourHeight-2)
                                 x:4+modelData.lane*dayColumn.width/modelData.lanes
@@ -358,6 +363,7 @@ Item {
                                     gestureMoved=false
                                     dragX=0;dragY=0
                                     pressX=point.x;pressY=point.y
+                                    root.activeDragDay=dayColumn.index
                                 }
                                 function updateGesture(mode,source,mouse) {
                                     if (!canReschedule || gestureMode!==mode) return
@@ -372,10 +378,12 @@ Item {
                                     if (gestureMode!==mode) return
                                     const dx=dragX,dy=dragY,shouldCommit=gestureMoved
                                     gestureMode="";dragX=0;dragY=0
+                                    root.activeDragDay=-1
                                     if (shouldCommit) root.commitTimedGesture(modelData,mode,dx,dy)
                                 }
                                 function cancelGesture() {
                                     gestureMode="";dragX=0;dragY=0;gestureMoved=false
+                                    root.activeDragDay=-1
                                 }
                                 Column {
                                     anchors.fill:parent;anchors.margins:4;clip:true
@@ -398,8 +406,12 @@ Item {
                                     }
                                     StyledText {
                                         width:parent.width
-                                        text:Qt.formatTime(timedButton.modelData.startDate,"hh:mm")
-                                            +" – "+Qt.formatTime(timedButton.modelData.endDate,"hh:mm")
+                                        text:Qt.formatTime(timedButton.previewRange
+                                            ? new Date(timedButton.previewRange.startIso)
+                                            : timedButton.modelData.startDate,"hh:mm")
+                                            +" – "+Qt.formatTime(timedButton.previewRange
+                                            ? new Date(timedButton.previewRange.endIso)
+                                            : timedButton.modelData.endDate,"hh:mm")
                                         color:root.mutedInk
                                         font.pixelSize:Appearance.font.pixelSize.smallest
                                         elide:Text.ElideRight
