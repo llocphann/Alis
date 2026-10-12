@@ -40,7 +40,10 @@ assert.equal(JSON.stringify(original.todoLink),JSON.stringify(shifted.todoLink))
 const projected=P.project([shifted],[],'2026-10-14T12:00:00Z',1);
 const row=projected.flatMap(day=>day.timed).find(row=>row.occurrenceIndex===1);
 assert.ok(row && row.event.id===original.id);
-assert.equal(projected.flatMap(day=>day.timed).length,1);
+// Both 12 Oct and 15 Oct are within this displayed Monday-Sunday week.
+assert.equal(projected.flatMap(day=>day.timed).length,2);
+assert.deepEqual(projected.flatMap(day=>day.timed)
+  .map(item=>item.occurrenceIndex).sort(),[0,1]);
 const move=G.rangeForGesture(row,'move',102,52,102,52);
 assert.equal(new Date(move.startIso)-new Date(row.startDate),25*3600000);
 const top=G.rangeForGesture(row,'top',0,13,102,52);
