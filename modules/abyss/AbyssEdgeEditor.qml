@@ -782,74 +782,96 @@ Item {
                     color:Appearance.colors.colError
                 }
 
+                // One clear toolbar line on horizontal Edges: tabs at left,
+                // output selection and scope at right. Narrow side-Edge
+                // layouts stack the same two groups without clipping.
                 GridLayout {
-                    Layout.fillWidth: true;Layout.minimumWidth:0
-                    columns:width>=660*Appearance.fontSizeScale
-                        ? (root.editingPopups ? 5 : 3)
-                        : root.editingPopups && width>=440*Appearance.fontSizeScale ? 3 : 2
-                    columnSpacing:4;rowSpacing:4
-                    SelectionGroupButton {
-                        objectName:"abyssEditorModulesMode"
-                        buttonIcon:"widgets";buttonText:"Modules";toggled:!root.editingPopups
-                        horizontalPadding:4*Appearance.fontSizeScale
-                        verticalPadding:2*Appearance.fontSizeScale
-                        baseHeight:28*Appearance.fontSizeScale
-                        Layout.fillWidth:false;Layout.minimumWidth:0
-                        Layout.preferredWidth:92*Appearance.fontSizeScale
-                        onClicked:root.editingPopups=false
-                    }
-                    SelectionGroupButton {
-                        objectName:"abyssEditorIpcMode"
-                        buttonIcon:"open_in_new";buttonText:"IPC";toggled:root.editingPopups
-                        horizontalPadding:4*Appearance.fontSizeScale
-                        verticalPadding:2*Appearance.fontSizeScale
-                        baseHeight:28*Appearance.fontSizeScale
-                        Layout.fillWidth:false;Layout.minimumWidth:0
-                        Layout.preferredWidth:58*Appearance.fontSizeScale
-                        onClicked:root.editingPopups=true
-                    }
-                    StyledComboBox {
+                    id: editorModeHeader
+                    objectName: "abyssEditorModeHeader"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    columns: width >= 500*Appearance.fontSizeScale ? 2 : 1
+                    columnSpacing: 8
+                    rowSpacing: 4
+
+                    RowLayout {
+                        objectName: "abyssEditorModeTabs"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        spacing: 4
+                        SelectionGroupButton {
+                            objectName:"abyssEditorModulesMode"
+                            buttonIcon:"widgets";buttonText:"Modules";toggled:!root.editingPopups
+                            horizontalPadding:4*Appearance.fontSizeScale
+                            verticalPadding:2*Appearance.fontSizeScale
                             baseHeight:28*Appearance.fontSizeScale
-                            Layout.preferredWidth:128*Appearance.fontSizeScale
-                            Layout.maximumWidth:128*Appearance.fontSizeScale
+                            Layout.preferredWidth:92*Appearance.fontSizeScale
+                            onClicked:root.editingPopups=false
+                        }
+                        SelectionGroupButton {
+                            objectName:"abyssEditorIpcMode"
+                            buttonIcon:"open_in_new";buttonText:"IPC";toggled:root.editingPopups
+                            horizontalPadding:4*Appearance.fontSizeScale
+                            verticalPadding:2*Appearance.fontSizeScale
+                            baseHeight:28*Appearance.fontSizeScale
+                            Layout.preferredWidth:58*Appearance.fontSizeScale
+                            onClicked:root.editingPopups=true
+                        }
+                    }
+
+                    RowLayout {
+                        objectName: "abyssEditorOutputScope"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                        spacing: 8
+                        Item { Layout.fillWidth: true; Layout.minimumWidth: 0 }
+                        StyledComboBox {
+                            id:ipcOutputChoice
+                            objectName:"abyssEditorIpcOutput"
+                            // Shared output scope is useful in both Modules and IPC.
+                            visible:true
+                            baseHeight:28*Appearance.fontSizeScale
+                            Layout.preferredWidth:116*Appearance.fontSizeScale
+                            Layout.maximumWidth:116*Appearance.fontSizeScale
+                            textRole:"label";valueRole:"value"
+                            model:[{label:"All outputs",value:""},
+                                {label:root.outputName,value:root.outputName}]
+                            currentIndex:root.outputOnly ? 1 : 0
+                            onActivated:root.outputOnly=currentValue!==""
+                            StyledToolTip {text:"Edit this output or all outputs"}
+                        }
+                        AbyssCheckBox {
+                            objectName:"abyssEditorOutputOnly"
+                            Layout.fillWidth:false
+                            Layout.minimumWidth:0
+                            text:"This output only"
+                            checked:root.outputOnly
+                            onToggled:root.outputOnly=checked
+                        }
+                    }
+                }
+
+                // IPC content selector belongs inside IPC, not between tabs
+                // and their shared output-scope controls.
+                RowLayout {
+                    visible:root.editingPopups
+                    Layout.fillWidth:true
+                    Layout.minimumWidth:0
+                    StyledComboBox {
                         id:ipcKindChoice
-                        Layout.columnSpan:parent.columns===2 ? 2 : 1
                         objectName:"abyssEditorIpcKind"
                         visible:root.editingPopups
+                        baseHeight:28*Appearance.fontSizeScale
+                        Layout.preferredWidth:150*Appearance.fontSizeScale
+                        Layout.maximumWidth:150*Appearance.fontSizeScale
                         model:[{label:"All OSDs",value:"osd"},{label:"Volume",value:"volume"},
                             {label:"Brightness",value:"brightness"},{label:"Microphone",value:"mic"},
                             {label:"Media",value:"mediaOsd"},{label:"Keyboard",value:"keyboardLayout"},
                             {label:"Voice search",value:"voiceSearch"}]
                         textRole:"label";valueRole:"value"
                         currentIndex:model.findIndex(p=>p.value===previewPositions.kind)
-                        Layout.fillWidth:false;Layout.minimumWidth:0
                         onActivated:previewPositions.kind=currentValue
-                    }
-                                        AbyssCheckBox {
-                        Layout.fillWidth:false;Layout.minimumWidth:0
-                        
-                                            visible:true
-                                            text:"This output only"
-                                            checked:root.outputOnly
-                        
-                                            onToggled:root.outputOnly=checked
-                                        }
-                    // The IPC editor can override this output or all outputs.
-                    // Keep scope next to kind, mirroring This output only.
-                    StyledComboBox {
-                        id:ipcOutputChoice
-                        objectName:"abyssEditorIpcOutput"
-                        visible:root.editingPopups
-                        baseHeight:28*Appearance.fontSizeScale
-                        Layout.fillWidth:false;Layout.minimumWidth:0
-                        Layout.preferredWidth:116*Appearance.fontSizeScale
-                        Layout.maximumWidth:116*Appearance.fontSizeScale
-                        textRole:"label";valueRole:"value"
-                        model:[{label:"All outputs",value:""},
-                            {label:root.outputName,value:root.outputName}]
-                        currentIndex:root.outputOnly ? 1 : 0
-                        onActivated:root.outputOnly=currentValue!==""
-                        StyledToolTip {text:"IPC position scope: this output or all outputs"}
                     }
                 }
 
