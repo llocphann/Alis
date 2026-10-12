@@ -92,7 +92,14 @@ ShellRoot {
                 if (!check(!body.ready,"reopen unload")) return
                 if (!check(moduleLayer.layoutRecords.length === 2 && moduleLayer.inputRegions.length === 2,"module-only input regions follow cross-edge placement")) return
                 if (!check(moduleLayer.deformations.length === 0,"resting modules do not dent the flat Screen Edge")) return
-                if (!check(moduleLayer.inputRegions.every(region => region.width > 0 && region.height > 0 && region.width <= 200 && region.height <= 100),"no fullscreen module input")) return
+                if (!check(moduleLayer.moduleIds.every((id,index) => {
+                    const module=moduleLayer.itemForId(id),region=moduleLayer.inputRegions[index]
+                    return module && region && region.width>0 && region.height>0
+                        && region.x===Math.floor(module.x) && region.y===Math.floor(module.y)
+                        && region.width===Math.ceil(module.x+module.width)-Math.floor(module.x)
+                        && region.height===Math.ceil(module.y+module.height)-Math.floor(module.y)
+                        && region.width<moduleLayer.width && region.height<moduleLayer.height
+                }),"no fullscreen module input")) return
                 const clock = moduleLayer.itemForId("clock")
                 const clockRegion = moduleLayer.inputRegions[moduleLayer.moduleIds.indexOf("clock")]
                 if (!check(clock && clockRegion &&
