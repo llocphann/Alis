@@ -2,7 +2,7 @@
 
 **Status:** OPEN — owner confirms the 2026-10-10 cloud fixes did not work.  
 **Next executor:** local development chatbot with the actual Niri/Quickshell desktop.  
-**Authoritative task:** [Popup/Edgebar closes while hovered](../../to-do/cloud-bot/ISSUES.md). This document is technical evidence, not a second task board.  
+**Authoritative task:** [POP-I01 — Screen Edge / Popup Bridge Hover Continuity](../../to-do/cloud-bot/ISSUES.md). This document is technical evidence, not a second task board.  
 **Repository branch:** dev only; NEVER modify stable.
 
 ## Source baseline and complete rollback

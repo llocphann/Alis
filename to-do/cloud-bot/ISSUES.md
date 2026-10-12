@@ -421,6 +421,9 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   verified initial/resting size and owner acceptance.
 
 - [ ] **AC-I04 — Companion-enabled Screen Edge module hover regression — owner report 2026-10-11:**
+  **Related independent general bridge issue:** POP-I01 in this file.
+  AC-I04 concerns Companion-specific failure to *open* the Popup on hover;
+  POP-I01 concerns an already-open Popup *closing* during bridge travel.
   [Owners: Alis `dev` host + Alis-Companion `main`] With **Companion
   enabled/open**, Screen Edge modules stop opening their connected Popups
   on pointer **hover**, although clicking the same module still works.
@@ -480,7 +483,19 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   rejected host hover/bridge patches remain reverted. No owner install
   or Companion G0 replay occurred.
 
-- [ ] **Popup/Edgebar closes while hovered — received/updated 2026-10-10:**
+- [ ] **POP-I01 — Screen Edge / Popup Bridge Hover Continuity — received/updated 2026-10-10:**
+  **Task identity and scope (owner-assigned code 2026-10-12):** Main hover
+  regression: an already-open Popup/Edgebar must NOT disappear while the
+  pointer moves or dwells on the visible connection/bridge between its
+  owning Screen Edge module, connector and Popup body, in either direction.
+  Cover all supported Popup families and all four edges. Dismiss normally
+  only after the pointer has actually left all owning interactive areas,
+  respecting pinned/click-open/keyboard lifetime rules and click-through.
+  Keep this general hover/bridge defect separate from **AC-I04**, which
+  addresses Companion-enabled interception of module hover activation.
+  **State: OPEN — not declared fixed; owner desktop acceptance pending.**
+  Historical investigations, rejected/reverted approaches and exact-source
+  evidence remain below unchanged.
   **Owner update, 2026-10-10 evening — LOCAL DESKTOP CHATBOT NEXT:**
   The owner retested TWO successive cloud hover/bridge fixes and explicitly
   reported **no improvement** (latest video: `2026-10-10_21.21.26.mp4`,
