@@ -17,6 +17,8 @@ Singleton {
     property string filePath: Directories.eventsPath
     property var list: []
     property var todoUnlinks: []
+    // Full pre-migration snapshot retained in the durable JSON; no extra UI.
+    property var occurrenceMigrationBackup: null
     property int nextId: 1
     property bool ready: false
     property bool _saving: false
@@ -146,6 +148,7 @@ Singleton {
                 root._durableSnapshotJson=""
                 root.list = []
                 root.todoUnlinks = []
+                root.occurrenceMigrationBackup = null
                 root.nextId = 1
                 root.ready = true
                 return
@@ -166,16 +169,43 @@ Singleton {
                     }
                 }
                 const storedNextId = Number(data?.nextId)
-                root.list = events
-                root.todoUnlinks=Array.isArray(data?.todoUnlinks)?data.todoUnlinks:[]
-                root.nextId = Number.isInteger(storedNextId) && storedNextId > maxId
+                const nextId = Number.isInteger(storedNextId) && storedNextId > maxId
                     ? storedNextId : maxId + 1
+                const unlinks=Array.isArray(data?.todoUnlinks)?data.todoUnlinks:[]
+                // The migration runs automatically at initial load, once per
+                // persisted file, before Todo can reconcile any changed links.
+                // Full original records are kept for recovery in the same
+                // durable snapshot. Never declare in-memory migration durable
+                // until FileView acknowledges the write.
+                const previousBackup=data?.occurrenceMigrationBackup ?? null
+                const migration=previousBackup?.version===1
+                    ? {events:events,changed:false,normalized:0,merged:0,skippedLinked:0}
+                    : Occurrences.migrateLegacy(events)
+                root.list=migration.events
+                root.todoUnlinks=unlinks
+                root.nextId=nextId
+                root.occurrenceMigrationBackup=previousBackup
+                if (migration.changed) {
+                    root.occurrenceMigrationBackup={
+                        version:1,
+                        original:{events:events,nextId:nextId,todoUnlinks:unlinks},
+                        normalized:migration.normalized,
+                        merged:migration.merged,
+                        skippedLinked:migration.skippedLinked
+                    }
+                }
                 root._lastSavedJson=fileContents
-                root._durableSnapshotJson=JSON.stringify({nextId:root.nextId,events:root.list,todoUnlinks:root.todoUnlinks})
-                root._notifyAgendaLinks()
+                // Disk was read successfully; its original contents remain the
+                // only acknowledged record until the migrated write completes.
+                root._durableSnapshotJson=JSON.stringify({nextId:nextId,events:events,todoUnlinks:unlinks})
                 root.errorMessage=""
                 root.ready = true
-                _log("[Events] Loaded", root.list.length, "events")
+                if (migration.changed) {
+                    root._saveQueued=true
+                    Qt.callLater(root.saveToFile)
+                } else root._notifyAgendaLinks()
+                _log("[Events] Loaded", root.list.length, "events",
+                    migration.changed ? "(automatic occurrence migration pending save)" : "")
             } catch (e) {
                 console.warn("[Events] Failed to parse file:", e)
                 // An unreadable store is not an empty Agenda. Keep the last
@@ -554,7 +584,9 @@ Singleton {
             schemaVersion: 2,
             nextId: root.nextId,
             events: root.list,
-            todoUnlinks: root.todoUnlinks
+            todoUnlinks: root.todoUnlinks,
+            ...(root.occurrenceMigrationBackup
+                ? {occurrenceMigrationBackup:root.occurrenceMigrationBackup} : {})
         }
         const serialized = JSON.stringify(data, null, 2)
         // Unchanged bytes emit no saved() signal. Do not acquire a write
