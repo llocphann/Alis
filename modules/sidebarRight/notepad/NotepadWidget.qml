@@ -9,6 +9,7 @@ import QtQuick.Dialogs
 import Quickshell
 import Quickshell.Io
 import "MarkdownNote.js" as MarkdownNote
+import "NoteRailWheel.js" as NoteRailWheel
 
 Item {
     id: root
@@ -36,6 +37,7 @@ Item {
         (root.readingOnHover || root.allowManualReading) && !root.markdownEditing
     property int _markdownFocusEpoch: 0
     property bool verticalDotNavigation: false
+    property var _noteRailWheelState: NoteRailWheel.idle()
     // Quick Notes can coexist on Dashboard, Sidebar Left and the bottom-left
     // corner. In that mode each surface keeps the stable ID of the note it is
     // actually displaying instead of letting another surface's currentTab
@@ -723,11 +725,26 @@ Item {
                     }
 
                     WheelHandler {
+                        target: null
+                        orientation: Qt.Vertical
                         acceptedDevices:
                             PointerDevice.Mouse | PointerDevice.TouchPad
+                        enabled: Notepad.ready && root.verticalDotNavigation
                         onWheel: event => {
-                            const next = root.displayedTabIndex
-                                + (event.angleDelta.y < 0 ? 1 : -1)
+                            const result = NoteRailWheel.advance(
+                                root._noteRailWheelState, {
+                                    pixelDelta: event.pixelDelta,
+                                    angleDelta: event.angleDelta,
+                                    phase: event.phase,
+                                    shifted: !!(event.modifiers & Qt.ShiftModifier),
+                                    blocked: !!(event.modifiers
+                                        & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
+                                }, Date.now())
+                            root._noteRailWheelState = result.state
+                            event.accepted = result.accepted
+                            if (!result.step)
+                                return
+                            const next = root.displayedTabIndex + result.step
                             if (next >= 0 && next < root.tabCount)
                                 root.switchToTab(next)
                         }
