@@ -921,6 +921,7 @@ Item {
 
                     ColumnLayout {
                         id:moduleEditorColumn
+                        Layout.alignment:Qt.AlignTop
                         objectName:"abyssEditorModuleColumn"
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         Layout.preferredWidth:editFineControls.columns===3
@@ -1181,6 +1182,7 @@ Item {
 
                     ColumnLayout {
                         id:edgeEditorColumn
+                        Layout.alignment:Qt.AlignTop
                         objectName:"abyssEditorEdgeColumn"
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         Layout.preferredWidth:editFineControls.columns===3
