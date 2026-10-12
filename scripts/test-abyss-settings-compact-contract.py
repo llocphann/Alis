@@ -24,4 +24,9 @@ for owner in ('objectName:"abyssPanelOpacity"', 'objectName:"abyssPanelBlur"'):
     assert owner in s, owner
 assert 'Config.setNestedValue("abyss.effects.blur.enabled",checked)' in s
 assert 'Config.setNestedValue("abyss.effects.refraction.enabled",checked)' in s
+# SET-R03: one brief Module hint replaces the original two paragraphs.
+assert 'Arrange modules in Live Editor; use Custom size to override individual modules.' in s
+assert 'Their media, resource, clock, tray and workspace settings remain shared.' not in s
+assert 'Per-output sizes, snapping guides and start/center/end groups' not in s
+assert 'Glass uses wallpaper, not window capture.' in s
 print("quick action row + Abyss modules grid contract: ok")
