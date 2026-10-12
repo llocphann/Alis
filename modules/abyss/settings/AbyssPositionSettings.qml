@@ -170,6 +170,9 @@ ColumnLayout {
         onToggled:root.change("joinCorner",checked)
     }
     SettingsNote {
+        // Embedded IPC editor intentionally has no explanatory paragraph.
+        // Full settings pages retain their help text.
+        visible: !root.compactIpcEditor
         text: root.compactVertical
             ? "Override Edge and position for this output."
             : root.ipcOnly
