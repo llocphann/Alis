@@ -27,7 +27,9 @@ for(const edge of ['top','right','bottom','left'])for(const [w,h] of [[1920,1080
   check(layout.capacityNotices(actual,w,h,font).length===1,'one repair target replaces rejected input');
  } else {
   const expected=baseline.geometry(baseline.normalize(entries,edge),w,h,options,font).map(p=>({...p,compact:!!entries.find(e=>e.id===p.id).compact}));
-  same(actual,expected,'fitting full-size unlocked geometry preserves packing and input bounds');
+  same(actual.map(p=>({id:p.id,span:p.span,compact:p.compact,depth:p.depth})),expected.map(p=>({id:p.id,span:p.span,compact:p.compact,depth:p.depth})),'corner clearance preserves full content sizes and identities');
+  valid(actual,w,h);
+  check(actual.every(p=>p.along>=p.edgeStart-1e-7&&p.along+p.span<=p.edgeEnd+1e-7&&p.edgeStart>0),'R01 replaces flush endpoints with bounded clearance');
  }
 }
 function valid(records,w,h){
@@ -88,14 +90,14 @@ for(const edge of ['top','right','bottom','left'])for(const [w,h] of [[1920,1080
  same(layout.resolve(layoutOptions(layout.saveProfile(profiles,'A',locked,8,false)),'C',[]),locked,'global restart retains locks');
 }
 function layoutOptions(writes){return Object.fromEntries(Object.entries(writes).map(([key,value])=>[key.replace('abyss.modules.',''),value]));}
-const options={extents:{full:480,mover:80},gap:8,edgeThickness:16,editing:true};
+const options={extents:{full:466,mover:80},gap:8,edgeThickness:16,editing:true};
 let full=layout.normalize([{id:'full',kind:'clock',edge:'top',position:.5},{id:'mover',kind:'timer',edge:'bottom',position:.5}],'top');
 full=layout.setLocked(full,'full',true,480,320,options,1);
 const impossible=layout.checkedMove(full,'mover',240,8,480,320,options,1,false);
 check(impossible.rejected,'full edge rejects insertion rather than moving its lock');same(impossible.placements,full,'rejected move is a transaction no-op');
 const tooSmall=geometry(full,300,320,options);check(layout.conflicts(tooSmall).length>0,'output shrink exposes conflict');valid(tooSmall,300,320);
 check(full[0].locked&&full[0].lockPosition===.5,'fallback never unlocks or rewrites the source anchor');
-same(geometry(full,480,320,options).find(p=>p.id==='full').along,0,'returning output restores reserved position');
+same(geometry(full,480,320,options).find(p=>p.id==='full').along,7,'returning output restores reserved position with corner clearance');
 const hidden=layout.normalize([{...full[0],enabled:false}], 'top');check(geometry(hidden,480,320,options).length===0&&hidden[0].locked,'disabled lock survives without reserving invisible space');
 check(geometry([full[0]],480,320,{...options,editing:false,extents:{full:0}}).length===0,'measured-empty locked module does not reserve phantom gaps');
 check(geometry([full[0]],480,320,{...options,edgeThicknesses:{top:0}}).length===0,'coupled zero-width releases a hidden lock');

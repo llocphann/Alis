@@ -1,0 +1,8 @@
+{
+  "modules/abyss/looks/AbyssLayout.js": "ab363b20a081f52ca4616c6b3eaa1981be8508199900ffa1abde06494274291e",
+  "modules/abyss/bar/AbyssBar.qml": "f3b0de717c058093079183b718ff187a9f75706763da6c5d8207e702ad7e0894",
+  "modules/abyss/AbyssEdgeEditor.qml": "d712ac2260d86396be359c4da067b40da0f29721eeb62cf8dacd4182741fb44d",
+  "modules/abyss/AbyssPerimeter.qml": "f6402f426df72fa3d35560b43707c29a5d1bd6777fc663c1ac140976eb058154",
+  "scripts/test-abyss-drag-corners.mjs": "d38ff2f7990c0f75b1c123831946b64a61d18d361306b23f205bccd2b956cc96",
+  "scripts/test-abyss-drag-corners-runtime.py": "330f7cf7df7e11879786cedd2bb7f6ef16c7f6f4a5604387cfca70721560171c"
+}

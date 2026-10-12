@@ -886,7 +886,7 @@ run privileged installation just because manual buttons are retired.
   indeterminate privileged action. State: OPEN, security/packaging
   design and explicit native install permission required.
 
-- [ ] **ABYSS-R01 — Comfortable corner clearance in Edit Abyss Layout:**
+- [x] **ABYSS-R01 — Comfortable corner clearance in Edit Abyss Layout:**
   The user wants Screen Edge modules **visually close to, but never
   actually flush against**, physical screen corners while
   **Edit Abyss Layout** is active. Replace the current true-endpoint
@@ -908,8 +908,15 @@ run privileged installation just because manual buttons are retired.
   collision packing, multi-selection work, small-monitor clipping,
   full Edit → Save/Cancel → reopen consistency and correct
   normal-mode rendering after the edited layout is committed.
-  State: OPEN; design/source/unit/native visual tests and owner
-  acceptance pending.
+  **Hoàn thành (bot báo xong) — Owner chưa verified, 2026-10-12.**
+  Curvature/type-derived modest content inset, dynamic perpendicular-corner
+  clearance and inset snap guides are implemented; decorative joins retain
+  their original physical reach. Normalized centers and locked reservations
+  survive save/reopen. Focused geometry 729, locks 7166, multi-selection 1482,
+  native pointer 78/17, native locks 62/26 and native multi 55/13 PASS.
+  [Evidence](../../docs/evidence/abyss-product/20261012-abyss-drag-corners/README.md).
+  Owner, wl_pointer, fractional/multi-output and full canonical gates remain
+  pending separately.
 
 ## Existing UI and layout
 
@@ -1430,7 +1437,7 @@ run privileged installation just because manual buttons are retired.
   Owner/installed, populated feeds, wl_pointer, fractional/multi-output
   and current exact-SHA canonical remain separate pending gates.
 
-- [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**
+- [x] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**
   [Owner: Alis dev; Rework/Optimization] Improve the perceptual and
   actual responsiveness of Screen Edge modules while editing a layout:
   module drag follows the pointer smoothly with stable timing, snap
@@ -1495,6 +1502,15 @@ run privileged installation just because manual buttons are retired.
   owner-observed before/after drag capture on the exact tested runtime,
   matched sampling conditions and separate judgments for dragged-module
   tracking vs neighbor displacement before closing ABYSS-R03.
+  **Hoàn thành (bot báo xong) — Owner chưa verified, 2026-10-12.**
+  Grab-point retention, edge hysteresis, direct primary tracking, unlocked
+  neighbor animation, actual rendered field/handle/input geometry and coalesced
+  extent measurements are implemented. Final native Qt pointer gesture PASS
+  78 checks/17 frames, pin and multi-selection restart regressions PASS.
+  [Evidence](../../docs/evidence/abyss-product/20261012-abyss-drag-corners/README.md).
+  Matched owner before/after, physical wl_pointer latency/percentiles and
+  installed-owner perceived smoothness are still unverified; no FPS/resource
+  improvement is claimed. Existing canonical FAIL/STOPPED gates remain factual.
 
 - [ ] **Screen Edge/module editor:** verify separate 0px-capable widths on all
   four edges, thickness-only versus inherited module sizing, per-module overrides,

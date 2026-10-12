@@ -1,0 +1,21 @@
+  INFO: Launching config: "/tmp/alis-drag-corners-ewlya1i7/shell.qml"
+  INFO: Shell ID: "849094486b376e7f7ec172867963516b" Path ID "849094486b376e7f7ec172867963516b"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/30yo0l2smt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1163786.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-drag-corners-ewlya1i7/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-drag-corners-ewlya1i7/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-drag-corners-ewlya1i7/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-drag-corners-ewlya1i7/state/quickshell/states.json failed: File does not exist.
+ DEBUG qml: Failed to load persistent states file: 2
+ DEBUG qml: [Persistent] File not found, creating new file.
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/alis-drag-corners-ewlya1i7/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fa38e336e40)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-drag-corners-ewlya1i7/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+ ERROR qml: ABYSS_DRAG_CORNERS_NATIVE_FAIL off-center press recenters primary check@qs:@/qs/shell.qml:27
+run@qs:@/qs/shell.qml:39
+expression for onTriggered@qs:@/qs/shell.qml:70

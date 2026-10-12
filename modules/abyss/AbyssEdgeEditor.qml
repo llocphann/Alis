@@ -34,6 +34,7 @@ Item {
     property var _lastSelection: null
     property var _dragOrigin: null
     property var _dragRecords: null
+    property var _dragContext: null
     property var _dragRequest: null
     property int _dragToken: 0
     property bool _groupReflowQueued: false
@@ -78,7 +79,7 @@ Item {
     readonly property var selected: draft.find(p => p.id === selectedId)
     readonly property var layoutConflicts: Placement.conflicts(moduleLayer.layoutRecords)
     readonly property var draftOptions: Object.assign({},Config.options?.abyss?.modules,{gap:gap,edgeSizes:edgeSizes,size:moduleScale,
-        singleModuleExpansion:singleModuleExpansion,edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeThickness:AbyssStyle.perimeterThickness})
+        singleModuleExpansion:singleModuleExpansion,edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius})
 
     function toolbarEdgeScore(edge): real {
         let score = (edge === toolbarEdge ? -4 : 0)
@@ -218,27 +219,30 @@ Item {
         const p=draft.find(p=>p.id===id)
         if(!p)return
         const options=Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true})
-        draft=Placement.setLocked(draft,id,!p.locked,width,height,options,Appearance.fontSizeScale)
+        draft=Placement.setLocked(draft,id,!p.locked,width,height,options,Appearance.fontSizeScale,moduleLayer.renderedRecords)
         feedback=""
     }
     function batch(action,value): void {
         if(_dragging){feedback="Finish moving the module group before editing its settings";return}
         rememberHistory()
         const options=Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true})
-        const result=Placement.checkedBatch(draft,targetIds,action,value,width,height,options,Appearance.fontSizeScale)
+        const result=Placement.checkedBatch(draft,targetIds,action,value,width,height,options,Appearance.fontSizeScale,moduleLayer.renderedRecords)
         feedback=result.rejected || ""
         if(result.rejected)return
         draft=result.placements
         if(action==="remove")refreshHandles()
     }
     function lockSelection(): void {batch("locked",!allTargetsLocked)}
-    function startDrag(id): void {
+    function startDrag(id,x=NaN,y=NaN): void {
         rememberHistory();_dragToken++;_dragRequest=null
         _dragOrigin=JSON.parse(JSON.stringify(draft))
-        _dragRecords=JSON.parse(JSON.stringify(moduleLayer.layoutRecords));_dragging=true
+        _dragRecords=JSON.parse(JSON.stringify(moduleLayer.renderedRecords ?? moduleLayer.layoutRecords));_dragging=true
+        const own=_dragRecords.find(record=>record.id===id)
+        _dragContext=own && Number.isFinite(x) && Number.isFinite(y) ? Placement.dragContext(own,x,y) : null
         feedback=""
     }
-    function clearDrag(): void {_dragToken++;_dragOrigin=null;_dragRecords=null;_dragRequest=null;_dragging=false}
+    function clearDrag(): void {
+        _dragContext=null;_dragToken++;_dragOrigin=null;_dragRecords=null;_dragRequest=null;_dragging=false}
     function reflowGroup(): void {
         if(_groupReflowQueued || !_dragging || !multiSelect || !_dragRequest || _groupReflowBudget<=0)return
         _groupReflowQueued=true
@@ -354,12 +358,15 @@ Item {
         if(!multiSelect)selectedId = id
         if(!reflow)_groupReflowBudget=3
         if(multiSelect && _dragging)_dragRequest={id:id,x:x,y:y,snap:snap}
-        const options = Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true})
+        const point=_dragging && _dragContext ? Placement.dragPoint(_dragContext,x,y,width,height,Appearance.fontSizeScale) : null
+        if(point){x=point.x;y=point.y}
+        const options = Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true,dragEdge:point?.edge})
         const result=multiSelect
             ? Placement.checkedGroupMove(_dragOrigin || draft,targetIds,id,x,y,width,height,options,Appearance.fontSizeScale,snap && snapEnabled,_dragRecords)
             : Placement.checkedMove(draft,id,x,y,width,height,options,Appearance.fontSizeScale,snap && snapEnabled)
         feedback=result.rejected || ""
         if(result.rejected){guides=[];if(multiSelect && _dragOrigin)draft=_dragOrigin;return}
+        if(point)_dragContext=Object.assign({},_dragContext,{edge:point.edge})
         draft=result.placements;guides=result.guides
         editingEdge = draft.find(p => p.id===id)?.edge ?? editingEdge
         root.scheduleToolbarRelocation()
@@ -443,8 +450,16 @@ Item {
             id: handle
             objectName:"abyssModuleHandle"
             required property string modelData
-            readonly property var record: root.moduleLayer.layoutRecords.find(p => p.id === modelData)
-            readonly property Region inputRegion: Region { item:handle;width:root.editingPopups || !handle.visible ? 0 : handle.width }
+            readonly property var record: (root.moduleLayer.renderedRecords ?? root.moduleLayer.layoutRecords).find(p => p.id === modelData)
+            readonly property Region inputRegion: Region {
+                x:Math.floor(handle.x);y:Math.floor(handle.y)
+                width:root.editingPopups || !handle.visible ? 0 : Math.ceil(handle.x+handle.width)-Math.floor(handle.x)
+                height:root.editingPopups || !handle.visible ? 0 : Math.ceil(handle.y+handle.height)-Math.floor(handle.y)
+            }
+            function invalidateRegion(): void {if(inputRegion)inputRegion.changed()}
+            onXChanged:invalidateRegion();onYChanged:invalidateRegion()
+            onWidthChanged:invalidateRegion();onHeightChanged:invalidateRegion()
+            onVisibleChanged:invalidateRegion()
             x: record?.content.x ?? 0; y: record?.content.y ?? 0
             width: record?.content.width ?? 0; height: record?.content.height ?? 0
             visible: record !== undefined && !record.capacityConflict && !root.editingPopups
@@ -482,7 +497,10 @@ Item {
                 onPressed:mouse=>{
                     root.select(handle.modelData,!!(mouse.modifiers & Qt.ControlModifier))
                     handle.forceActiveFocus()
-                    if(!(mouse.modifiers & Qt.ControlModifier))root.startDrag(handle.modelData)
+                    if(!(mouse.modifiers & Qt.ControlModifier)){
+                        const point=mapToItem(root,mouse.x,mouse.y)
+                        root.startDrag(handle.modelData,point.x,point.y)
+                    }
                     if(handle.record?.locked)root.feedback="Unlock this module before moving it"
                 }
                 onReleased:root.endDrag()

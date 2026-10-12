@@ -721,6 +721,7 @@ Scope {
                 liquidController: liquid
                 edge: root.barEdge
                 editing: editor.visible
+                draggedIds: editor._dragging ? editor.targetIds : []
                 draftPlacements: editor.visible ? editor.draft : null
                 draftOptions: editor.visible ? editor.draftOptions : null
                 visible: window.presented && field.ready && (window.editorOpen || root.barOnOutput(window.outputName))

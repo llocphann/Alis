@@ -223,7 +223,7 @@ for(const edge of ['top','right','bottom','left']) {
     for(const alignment of ['start','center','end']) {
         const group=geometry(aligned.map(p=>({...p,alignment})),1920,1200,{gap:8,extents:{a:100,b:100}},1);
         assert.equal(group[1].along-group[0].along,108,'aligned groups preserve order and gap');
-        assert.equal(group[0].along,alignment==='start'?0:alignment==='end'?length-208:(length-208)/2);
+        assert.equal(group[0].along,alignment==='start'?group[0].edgeStart:alignment==='end'?group[0].edgeEnd-208:(length-208)/2);
     }
 }
 const solo=normalize([{id:'clock',kind:'clock',edge:'top',position:.2}], 'top');
@@ -238,18 +238,18 @@ for(const [w,h] of [[1920,1200],[853.5,479.25],[480,320]]) {
   for(const position of [0,1]) {
    const placements=normalize([{id:'corner',kind:'clock',edge,position}],edge);
    const record=geometry(placements,w,h,{extents:{corner:60}},1)[0];
-   assert.equal(record.along,position===0?0:length-record.span,'free placements reach both physical corners');
-   const along=position===0?record.span/2:length-record.span/2;
+   assert.equal(record.along,position===0?record.edgeStart:record.edgeEnd-record.span,'free placements stop at modest corner clearance');
+   const along=position===0?record.edgeStart+record.span/2:record.edgeEnd-record.span/2;
    const x=horizontal?along:(edge==='left'?8:w-8);
    const y=horizontal?(edge==='top'?8:h-8):along;
    const snapped=snapMove(placements,'corner',x,y,w,h,{extents:{corner:60}},1);
-   assert.equal(snapped.guides[0].along,position===0?0:length,'snap guides reach the actual edge endpoint');
+   assert.equal(snapped.guides[0].along,position===0?record.edgeStart:record.edgeEnd,'snap guides preserve content clearance');
    const restored=geometry(snapped.placements,w,h,{extents:{corner:60}},1)[0];
    assert(Math.abs(restored.along-record.along)<1e-9,'drag/snap/save geometry agree at fractional corner coordinates');
    assert(cornerForModule([record],'corner',w,h),'corner join remains available at the endpoint');
   }
  }
 }
-console.log('PASS: normalized module packing, physical corner endpoints/snaps, all edges/scales, output profiles, disabled state and bounded malformed input');
+console.log('PASS: normalized module packing, corner-safe content endpoints/snaps, all edges/scales, output profiles, disabled state and bounded malformed input');
 """
 subprocess.run(["node", "-e", program], cwd=root, check=True)

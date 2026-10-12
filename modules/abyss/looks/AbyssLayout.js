@@ -93,44 +93,46 @@ function moduleSize(placement, options) {
         ? bounded(options?.edgeThickness,16,10,40) : edgeThickness(options,placement.edge);
     return (placement.customSize ? placement.size : edgeSize(options,placement.edge)*inheritedWidth/16)*bounded(options?.size,1,.6,1.8);
 }
-function project(x, y, width, height) {
+function project(x, y, width, height, preferredEdge) {
     var distances = [y,width-x,height-y,x];
     var index = distances.indexOf(Math.min.apply(null,distances));
-    var edge = ["top","right","bottom","left"][index];
+    var edge = ["top","right","bottom","left"].indexOf(preferredEdge)>=0 ? preferredEdge : ["top","right","bottom","left"][index];
+    index=["top","right","bottom","left"].indexOf(edge);
     return {edge:edge,position:bounded((index%2===0 ? x : y)/Math.max(1,index%2===0 ? width : height),.5,0,1)};
 }
-function move(placements, id, x, y, width, height) {
+function move(placements, id, x, y, width, height, preferredEdge) {
     if (placements.some(function(p) { return p.id===id && p.locked; })) return normalize(placements,"top");
-    var location = project(x,y,width,height);
+    var location = project(x,y,width,height,preferredEdge);
     return normalize(placements.map(function(p) { return p.id===id ? Object.assign({},p,location,{alignment:"free"}) : p; }),"top");
 }
 // Snap to the output center, end margins, and adjacent modules at the configured gap.
 // Guides are presentation data only; positions stay normalized for other resolutions.
 function snapMove(placements, id, x, y, width, height, options, fontScale) {
     if (placements.some(function(p) { return p.id===id && p.locked; })) return {placements:normalize(placements,"top"),guides:[],rejected:"Unlock this module before moving it"};
-    var moved = move(placements,id,x,y,width,height);
+    var moved = move(placements,id,x,y,width,height,options?.dragEdge);
     var selected = moved.find(function(p) { return p.id===id; });
     if (!selected) return {placements:moved,guides:[]};
     var horizontal = selected.edge==="top" || selected.edge==="bottom";
     var length = horizontal ? width : height;
-    var margin = 0, usable = length;
+    var usable = length;
     var records = geometry(moved,width,height,options,fontScale);
     var own = records.find(function(p) { return p.id===id; });
     if (!own || usable<=0) return {placements:moved,guides:[]};
-    var center = margin+selected.position*usable;
+    var low=own.edgeStart,high=own.edgeEnd;
+    var center = selected.position*usable;
     var gap = bounded(options?.gap,8,0,32);
     var targets = [{center:length/2,line:length/2,label:"Center"},
-        {center:margin+own.span/2,line:margin,label:"Start"},
-        {center:length-margin-own.span/2,line:length-margin,label:"End"}];
+        {center:low+own.span/2,line:low,label:"Start"},
+        {center:high-own.span/2,line:high,label:"End"}];
     geometry(moved.filter(function(p) { return p.id!==id; }),width,height,options,fontScale)
         .filter(function(p) { return p.edge===selected.edge; }).forEach(function(p) {
         targets.push({center:p.along-gap-own.span/2,line:p.along-gap,label:Math.round(gap)+" px gap"});
         targets.push({center:p.along+p.span+gap+own.span/2,line:p.along+p.span+gap,label:Math.round(gap)+" px gap"});
     });
-    var target = targets.filter(function(t) { return t.center-own.span/2>=margin && t.center+own.span/2<=length-margin; })
+    var target = targets.filter(function(t) { return t.center-own.span/2>=low && t.center+own.span/2<=high; })
         .sort(function(a,b) { return Math.abs(a.center-center)-Math.abs(b.center-center); })[0];
     if (!target || Math.abs(target.center-center)>10) return {placements:moved,guides:[]};
-    moved = moved.map(function(p) { return p.id===id ? Object.assign({},p,{position:(target.center-margin)/usable}) : p; });
+    moved = moved.map(function(p) { return p.id===id ? Object.assign({},p,{position:target.center/usable}) : p; });
     var actual = geometry(moved,width,height,options,fontScale).find(function(p) { return p.id===id; });
     // Do not show a misleading guide when collision packing prevented this snap.
     return {placements:moved,guides:Math.abs(actual.along+actual.span/2-target.center)<1
@@ -138,8 +140,8 @@ function snapMove(placements, id, x, y, width, height, options, fontScale) {
 }
 // Capture the displayed center and compression, not a neighbor-dependent aligned
 // group's future position. Anchors are normalized independently on each output.
-function setLocked(placements,id,locked,width,height,options,fontScale) {
-    var records=locked ? geometry(placements,width,height,options,fontScale) : [];
+function setLocked(placements,id,locked,width,height,options,fontScale,displayedRecords) {
+    var records=locked ? (displayedRecords || geometry(placements,width,height,options,fontScale)) : [];
     return normalize(placements.map(function(p) {
         if(p.id!==id) return p;
         var record=records.find(function(r) {return r.id===id;});
@@ -169,7 +171,7 @@ function checkedMove(placements,id,x,y,width,height,options,fontScale,snap) {
     var p=placements.find(function(p) {return p.id===id;});
     if(!p)return {placements:placements,guides:[],rejected:"This module is no longer available"};
     if(p?.locked)return {placements:placements,guides:[],rejected:"Unlock this module before moving it"};
-    var result=snap ? snapMove(placements,id,x,y,width,height,options,fontScale) : {placements:move(placements,id,x,y,width,height),guides:[]};
+    var result=snap ? snapMove(placements,id,x,y,width,height,options,fontScale) : {placements:move(placements,id,x,y,width,height,options?.dragEdge),guides:[]};
     var failures=conflicts(geometry(result.placements,width,height,options,fontScale));
     if(failures.length)return {placements:placements,guides:[],rejected:failures[0]};
     return result;
@@ -181,7 +183,7 @@ function selectedModules(placements,ids) {
     var unique=Array.from(new Set(Array.from(ids || [])));
     return {ids:unique,items:unique.map(function(id) {return placements.find(function(p) {return p.id===id;});})};
 }
-function checkedBatch(placements,ids,action,value,width,height,options,fontScale) {
+function checkedBatch(placements,ids,action,value,width,height,options,fontScale,displayedRecords) {
     var selection=selectedModules(placements,ids),items=selection.items;
     function deny(message) {return {placements:placements,rejected:message};}
     if(!items.length)return deny("Select a module first");
@@ -191,7 +193,7 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
         return deny("Unlock every selected module before changing its placement or size");
     if(["remove","locked","enabled","joinCorner"].concat(placementKeys).indexOf(action)<0)
         return deny("This action cannot be applied to modules");
-    var records=(action==="locked" || action==="joinCorner") && value ? geometry(placements,width,height,options,fontScale) : [];
+    var records=(action==="locked" || action==="joinCorner") && value ? (displayedRecords || geometry(placements,width,height,options,fontScale)) : [];
     if(action==="joinCorner" && value && items.some(function(p) {
         return !cornerForModule(records,p.id,width,height);
     }))return deny("Every selected module must be beside a corner to connect the group");
@@ -232,7 +234,7 @@ function checkedGroupMove(placements,ids,primaryId,x,y,width,height,options,font
         .sort(function(a,b) {return a.along-b.along || a.id.localeCompare(b.id);});
     if(source.length!==items.length || source.some(function(p) {return p.span<=0;}))
         return deny("Enable and show every selected module before dragging the group");
-    var location=project(x,y,width,height),horizontal=location.edge==="top" || location.edge==="bottom";
+    var location=project(x,y,width,height,options?.dragEdge),horizontal=location.edge==="top" || location.edge==="bottom";
     var length=horizontal ? width : height;
     var candidate=placements.map(function(p) {return selection.ids.indexOf(p.id)>=0
         ? Object.assign({},p,{edge:location.edge,alignment:"free",position:(source.findIndex(function(r) {return r.id===p.id;})+1)/(items.length+1)}) : p;});
@@ -244,22 +246,39 @@ function checkedGroupMove(placements,ids,primaryId,x,y,width,height,options,font
         if(i)cursor+=Math.max(0,source[i].along-source[i-1].along-source[i-1].span);
         offsets.push({id:source[i].id,along:cursor,span:record.span});cursor+=record.span;
     }
-    if(cursor>length+1e-6)return deny("The selected group cannot fit on this Edge");
+    var bounds=destination.find(function(r) {return r.id===primaryId;});
+    var low=bounds?.edgeStart ?? cornerInset(options,fontScale,length),high=bounds?.edgeEnd ?? length-low;
+    if(cursor>high-low+1e-6)return deny("The selected group cannot fit on this Edge");
     var primary=offsets.find(function(p) {return p.id===primaryId;});
-    var start=Math.max(0,Math.min(length-cursor,location.position*length-primary.along-primary.span/2)),guides=[];
+    var start=Math.max(low,Math.min(high-cursor,location.position*length-primary.along-primary.span/2)),guides=[];
     if(snap) {
-        var targets=[{start:0,line:0,label:"Start"},{start:(length-cursor)/2,line:length/2,label:"Center"},
-            {start:length-cursor,line:length,label:"End"}];
+        var targets=[{start:low,line:low,label:"Start"},{start:(length-cursor)/2,line:length/2,label:"Center"},
+            {start:high-cursor,line:high,label:"End"}];
         var gap=bounded(options?.gap,8,0,32);
         geometry(placements.filter(function(p) {return selection.ids.indexOf(p.id)<0;}),width,height,options,fontScale)
             .filter(function(p) {return p.edge===location.edge;}).forEach(function(p) {
                 targets.push({start:p.along-gap-cursor,line:p.along-gap,label:Math.round(gap)+" px gap"});
                 targets.push({start:p.along+p.span+gap,line:p.along+p.span+gap,label:Math.round(gap)+" px gap"});
             });
-        var target=targets.filter(function(t) {return t.start>=0 && t.start+cursor<=length;})
+        var target=targets.filter(function(t) {return t.start>=low && t.start+cursor<=high;})
             .sort(function(a,b) {return Math.abs(a.start-start)-Math.abs(b.start-start);})[0];
         if(target && Math.abs(target.start-start)<=10){start=target.start;guides=[{horizontal:horizontal,along:target.line,label:target.label}];}
     }
+    // Fit the whole group into one free band rather than letting a neighbor
+    // split its members during the normal collision pass. Keep every outsider's
+    // placement/lock intent intact; reject if no contiguous band is available.
+    var outsiders=geometry(placements.filter(function(p) {return selection.ids.indexOf(p.id)<0;}),width,height,options,fontScale)
+        .filter(function(r) {return r.edge===location.edge&&!r.capacityConflict;})
+        .sort(function(a,b) {return a.along-b.along;});
+    var bands=[],cursorEnd=low,spacing=bounded(options?.gap,8,0,32);
+    outsiders.forEach(function(r) {bands.push({start:cursorEnd,end:Math.max(cursorEnd,r.along-spacing)});cursorEnd=Math.max(cursorEnd,r.along+r.span+spacing);});
+    bands.push({start:cursorEnd,end:high});
+    var fits=bands.filter(function(b) {return b.end-b.start>=cursor-1e-7;})
+        .map(function(b) {return Math.max(b.start,Math.min(b.end-cursor,start));})
+        .sort(function(a,b) {return Math.abs(a-start)-Math.abs(b-start) || a-b;});
+    if(!fits.length)return deny("The group is blocked here. Move it to free space or move modules separately.");
+    if(Math.abs(fits[0]-start)>.05)guides=[];
+    start=fits[0];
     candidate=normalize(candidate.map(function(p) {
         var offset=offsets.find(function(r) {return r.id===p.id;});
         return offset ? Object.assign({},p,{position:(start+offset.along+offset.span/2)/length}) : p;
@@ -376,8 +395,9 @@ function clearanceInsets(insets, localRecords, edge, along, span) {
 }
 // Solve contiguous unlocked groups in the free intervals between immutable
 // reservations. A bounded dynamic program preserves their relative order and
-// chooses the closest feasible packing, including the existing 1% size floor.
-function packLockedEdge(list,sizes,length,gap,options,horizontal) {
+// chooses the closest feasible full-size packing, without automatic shrinking.
+function packLockedEdge(list,sizes,length,gap,options,horizontal,low,high) {
+    low=low ?? 0;high=high ?? length;
     function record(p,start,span,scale) {
         return Object.assign({},p,{along:start,span:span,layoutScale:scale,vertical:!horizontal,
             depth:bounded(options?.depth,36,22,64)*p.depth,
@@ -391,10 +411,10 @@ function packLockedEdge(list,sizes,length,gap,options,horizontal) {
         } else free.push({p:p,size:sizes[i],center:p.position*length});
     });
     locked.sort(function(a,b) {return a.along-b.along || a.id.localeCompare(b.id);});
-    var end=-gap;
+    var end=low-gap;
     for(var i=0;i<locked.length;i++) {
         var own=locked[i];
-        if(own.along<-1e-7 || own.along+own.span>length+1e-7)
+        if(own.along<low-1e-7 || own.along+own.span>high+1e-7)
             return {error:"A locked module no longer fits this output. Undo the size change or unlock it."};
         if(own.along<end-1e-7)
             return {error:"Locked modules overlap at this size. Undo the size change or unlock them."};
@@ -404,13 +424,13 @@ function packLockedEdge(list,sizes,length,gap,options,horizontal) {
     ["start","center","end"].forEach(function(alignment) {
         var group=free.filter(function(item) {return item.p.alignment===alignment;});
         var span=group.reduce(function(sum,item) {return sum+item.size;},0)+Math.max(0,group.length-1)*gap;
-        var cursor=alignment==="start" ? 0 : alignment==="end" ? length-span : (length-span)/2;
+        var cursor=alignment==="start" ? low : alignment==="end" ? high-span : (length-span)/2;
         group.forEach(function(item) {item.center=cursor+item.size/2;cursor+=item.size+gap;});
     });
     free.sort(function(a,b) {return a.center-b.center || a.p.id.localeCompare(b.p.id);});
-    var intervals=[],cursor=0;
+    var intervals=[],cursor=low;
     locked.forEach(function(p) {intervals.push({start:cursor,end:Math.max(cursor,p.along-gap)});cursor=p.along+p.span+gap;});
-    intervals.push({start:Math.min(length,cursor),end:length});
+    intervals.push({start:Math.min(high,cursor),end:high});
     function pack(start,count,interval) {
         if(!count)return {records:[],cost:0};
         var group=free.slice(start,start+count),total=group.reduce(function(sum,p) {return sum+p.size;},0);
@@ -445,14 +465,13 @@ function packLockedEdge(list,sizes,length,gap,options,horizontal) {
     if(!states[free.length])return {error:"Not enough space around locked modules. Undo this change or unlock a module."};
     return {records:locked.concat(states[free.length].records).sort(function(a,b) {return a.along-b.along || a.id.localeCompare(b.id);})};
 }
-function geometry(placements, width, height, options, fontScale) {
+function packGeometry(placements, width, height, options, fontScale, bounds) {
     var result = [];
     ["top","right","bottom","left"].forEach(function(edge) {
         var horizontal = edge === "top" || edge === "bottom";
         var length = horizontal ? width : height;
-        // The full edge is editable. Foreground bounds and collision packing
-        // keep controls on screen without a permanent corner exclusion zone.
-        var margin = 0, gap = bounded(options?.gap,8,0,32);
+        var low=bounds[edge].start,high=length-bounds[edge].end;
+        var gap = bounded(options?.gap,8,0,32);
         // A measured empty module must not keep a zero-span placement:
         // even a zero-sized record consumes gaps and can leave a tiny
         // deformation at Screen Edges. Preserve edit-mode placeholders.
@@ -473,25 +492,25 @@ function geometry(placements, width, height, options, fontScale) {
         // Capacity is an explicit placement constraint, never a font/icon
         // scaling policy. A failed layout preserves its saved placements.
         var scale = 1;
-        var capacityError=total+gap*(list.length-1)>length-2*margin+1e-7
+        var capacityError=total+gap*(list.length-1)>high-low+1e-7
             ? "Not enough space on this Edge. Move a module or choose a smaller size." : "";
-        var lockedResult=list.some(function(p) {return p.locked;}) ? packLockedEdge(list,sizes,length,gap,options,horizontal) : null;
+        var lockedResult=list.some(function(p) {return p.locked;}) ? packLockedEdge(list,sizes,length,gap,options,horizontal,low,high) : null;
         if(lockedResult?.records)capacityError="";
         var records=lockedResult?.records;
         if(!records) {
         // Each aligned group keeps its internal order; free placements keep their
         // requested position. Resolve collisions once across the entire edge.
-        var targets = list.map(function(p,index) { return margin+p.position*(length-2*margin)-sizes[index]*scale/2; });
+        var targets = list.map(function(p,index) { return p.position*length-sizes[index]*scale/2; });
         ["start","center","end"].forEach(function(alignment) {
             var indices = list.map(function(p,i) { return p.alignment===alignment ? i : -1; }).filter(function(i) { return i>=0; });
             var groupSpan = indices.reduce(function(sum,i) { return sum+sizes[i]*scale; },0)+Math.max(0,indices.length-1)*gap;
-            var start = alignment==="start" ? margin : alignment==="end" ? length-margin-groupSpan : (length-groupSpan)/2;
+            var start = alignment==="start" ? low : alignment==="end" ? high-groupSpan : (length-groupSpan)/2;
             indices.forEach(function(i) { targets[i]=start;start+=sizes[i]*scale+gap; });
         });
         var order = list.map(function(p,index) { return {placement:p,index:index}; }).sort(function(a,b) {
             return targets[a.index]-targets[b.index] || a.placement.id.localeCompare(b.placement.id);
         });
-        var cursor = margin;
+        var cursor = low;
         records = order.map(function(entry) {
             var p=entry.placement,index=entry.index;
             var size = sizes[index]*scale;
@@ -501,9 +520,9 @@ function geometry(placements, width, height, options, fontScale) {
                 depth:bounded(options?.depth,36,22,64)*p.depth,
                 compact:p.compact});
         });
-        var end = length-margin;
+        var end = high;
         for (var i=records.length-1;i>=0;i--) {
-            records[i].along = Math.max(margin,Math.min(records[i].along,end-records[i].span));
+            records[i].along = Math.max(low,Math.min(records[i].along,end-records[i].span));
             end = records[i].along-gap;
         }
         // Infeasible output changes retain anchors/lock flags in saved data.
@@ -515,6 +534,7 @@ function geometry(placements, width, height, options, fontScale) {
             return Object.assign({},p,{capacityConflict:capacityError || lockedResult.error});
         });
         records.forEach(function(p) {
+            p.edgeStart=low;p.edgeEnd=high;
             var inset = 8, cross = 32*bounded(fontScale,1,.7,2)*moduleSize(p,options)*(p.layoutScale ?? scale);
             p.content = horizontal ? {x:p.along,y:edge==="top"?inset:height-inset-cross,width:p.span,height:cross}
                 : {x:edge==="left"?inset:width-inset-cross,y:p.along,width:cross,height:p.span};
@@ -565,4 +585,54 @@ function cornerForModule(records,id,width,height) {
             && (start ? p.along<own.along : p.along+p.span>own.along+own.span);
     });
     return closer ? "" : corner;
+}
+
+// Small corner token, derived from the existing curvature and type scale.
+// Additional clearance is allocated only when perpendicular controls collide.
+function cornerInset(options,fontScale,length) {
+    return Math.min(Math.max(0,length)/8,bounded(Math.min(
+        bounded(options?.cornerRadius,28,0,80)/4,8*bounded(fontScale,1,.7,2)),7,4,12));
+}
+function geometry(placements,width,height,options,fontScale) {
+    var bounds={};
+    ["top","right","bottom","left"].forEach(function(edge) {
+        var inset=cornerInset(options,fontScale,edge==="top"||edge==="bottom" ? width : height);
+        bounds[edge]={start:inset,end:inset};
+    });
+    var corners=[["top","left","start","start"],["top","right","end","start"],
+        ["bottom","left","start","end"],["bottom","right","end","end"]];
+    var gap=bounded(options?.gap,8,0,32),records=[];
+    for(var pass=0;pass<8;pass++) {
+        records=packGeometry(placements,width,height,options,fontScale,bounds);
+        var changed=false;
+        corners.forEach(function(pair) {
+            records.filter(function(r) {return r.edge===pair[0]&&!r.capacityConflict;}).forEach(function(a) {
+                records.filter(function(r) {return r.edge===pair[1]&&!r.capacityConflict;}).forEach(function(b) {
+                    var x=a.content,y=b.content;
+                    if(x.x>=y.x+y.width+gap || y.x>=x.x+x.width+gap || x.y>=y.y+y.height+gap || y.y>=x.y+x.height+gap)return;
+                    var h=y.width+8+gap,v=x.height+8+gap;
+                    if(h>bounds[pair[0]][pair[2]]){bounds[pair[0]][pair[2]]=h;changed=true;}
+                    if(v>bounds[pair[1]][pair[3]]){bounds[pair[1]][pair[3]]=v;changed=true;}
+                });
+            });
+        });
+        if(!changed)return records;
+    }
+    return packGeometry(placements,width,height,options,fontScale,bounds);
+}
+// Preserve the grab point in the full component's coordinates across rotation.
+// The active Edge has a small hysteresis band, avoiding corner tie oscillation.
+function dragContext(record,x,y) {
+    var c=record.content,dx=x-c.x-c.width/2,dy=y-c.y-c.height/2;
+    return {edge:record.edge,originX:x,originY:y,along:record.vertical ? (record.edge==="left"?-dy:dy) : dx,
+        cross:record.vertical ? (record.edge==="left"?dx:-dx) : dy};
+}
+function dragPoint(context,x,y,width,height,fontScale) {
+    var edges=["top","right","bottom","left"],distances=[y,width-x,height-y,x];
+    var nearest=distances.indexOf(Math.min.apply(null,distances)),current=edges.indexOf(context.edge);
+    var stationary=Number.isFinite(context.originX) && Math.hypot(x-context.originX,y-context.originY)<4*bounded(fontScale,1,.7,2);
+    var edge=current>=0 && (stationary || distances[current]<=distances[nearest]+14*bounded(fontScale,1,.7,2)) ? context.edge : edges[nearest];
+    var dx=edge==="left"?context.cross:edge==="right"?-context.cross:context.along;
+    var dy=edge==="left"?-context.along:edge==="right"?context.along:context.cross;
+    return {edge:edge,x:x-dx,y:y-dy};
 }
