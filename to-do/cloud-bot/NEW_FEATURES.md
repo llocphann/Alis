@@ -3,7 +3,9 @@
 **2026-10-12 14:40 ICT quota checkpoint — five-hour remaining 1%:** product and
 native-test work stopped under the owner's below-3% rule; weekly limits are
 not the trigger. Source `cfc852bee` and all valid cowork edits are preserved.
-R05, R03/R01, R02, R06/R07 are source-completed / Owner chưa verified.
+R05, R01, R02, R06/R07 are source-completed / Owner chưa verified.
+R03 has been reopened by the new owner drag/popup-jank video; prior scoped
+source/evidence remain historical and do not close the reported outcome.
 [Exact-source scoped qualification](../../docs/evidence/abyss-product/20261012-cfc852bee-focused/README.md)
 is 16 PASS / 1 FAIL across 17 completed checks; Dashboard partial-capture
 sampling still FAILS and its cause is not established. The full frozen
@@ -14,10 +16,11 @@ owner failure; no hover product fix. Next expand that actual-protocol collector.
 Continue **POP-I01 → DASH-F01 → ABYSS-R08 → ABYSS-F02 → NOTES-R01 →
 ABYSS-R09 → CAL-R01 → NOTES-F01 → DASH-R03** after reset. Latest owner
 message explicitly retains **ABYSS-R03**; its existing stable task code and
-source-completed/owner-unverified state are preserved, without creating a
-duplicate task. F02 modifier-only Ctrl/Shift + click refinement is still OPEN;
-remove the toolbar toggle during its implementation. One continuation is to be
-scheduled for **2026-10-12 14:36:24 ICT**, reset +3 minutes. Keep G0 offline,
+new reopened state from cowork 9c3102e66 are preserved, without creating a
+duplicate task. Diagnose that current-group regression alongside related hover. F02 modifier-only Ctrl/Shift + click refinement is still OPEN;
+remove the toolbar toggle during its implementation. The checkpoint crossed the previous reset; a fresh usage read at
+14:41 ICT reports five-hour 97% remaining. Continue immediately: **no new
+timer was created**, and the existing consumed timer remains paused. Keep G0 offline,
 consent/preferences and all owner/installed/multi-output gates unchanged.
 
 
