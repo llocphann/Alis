@@ -509,7 +509,8 @@ WindowDialog {
                 ObsidianMonthCalendar {
                     id: plannerMonthCalendar
                     visible: root.plannerPresentation
-                    width: parent.width
+                    width: Math.min(parent.width, Math.max(250, implicitWidth))
+                    anchors.horizontalCenter: parent.horizontalCenter
                     viewingDate: root.plannerViewMonth
                     today: DateTime.clock.date
                     calendarCells: root.plannerCalendarCells
