@@ -1,8 +1,10 @@
 # Rework/optimization
 
-- [ ] **CAL-R02 — Calendar Popup date-click Add Events (owner 2026-10-12):** Remove the "+" FAB only in Calendar Popup; click any displayed calendar day to open its inline Add Event editor with that civil date prefilled. Editing a date preserves other draft fields. Keep other EventsWidget instances, keyboard, Cancel and outside click behavior. Source: `ClockCalendarContent.qml`, `EventsWidget.qml`, commits `0caa2e60f`/`23c32b0e2`. Native exact-SHA, four-edge popup and owner acceptance OPEN.
+**Source completion checkpoint — 2026-10-12, Owner chưa verified:** CAL-R02 `0caa2e60f`/`23c32b0e2` removes the Calendar-specific Add FAB and date-click opens the same inline Add pane; ABYSS-R13 `7b9cb4fae`/`34ece9d67` retains only IPC/OSD independent placements. These are bot-reported source completions, **not** owner/native PASS. Legacy popup records remain untouched; real 4-edge keyboard/pointer, hover, Cancel and input acceptance remain OPEN.
 
-- [ ] **ABYSS-R13 — Edit Abyss Layout IPC-only placement options (owner 2026-10-12):** Remove individual Popup relocation choices from this editor because popups follow Screen Edge modules, while retaining IPC/OSD position previews, per-output overrides and Undo/Done/Cancel. Do not erase legacy stored position data or change popup host ownership. Source: `AbyssEdgeEditor.qml` at `7b9cb4fae`; QML native/owner and installed four-edge acceptance OPEN.
+- [x] **CAL-R02 — Calendar Popup date-click Add Events (owner 2026-10-12):** Remove the "+" FAB only in Calendar Popup; click any displayed calendar day to open its inline Add Event editor with that civil date prefilled. Editing a date preserves other draft fields. Keep other EventsWidget instances, keyboard, Cancel and outside click behavior. Source: `ClockCalendarContent.qml`, `EventsWidget.qml`, commits `0caa2e60f`/`23c32b0e2`. Native exact-SHA, four-edge popup and owner acceptance OPEN.
+
+- [x] **ABYSS-R13 — Edit Abyss Layout IPC-only placement options (owner 2026-10-12):** Remove individual Popup relocation choices from this editor because popups follow Screen Edge modules, while retaining IPC/OSD position previews, per-output overrides and Undo/Done/Cancel. Do not erase legacy stored position data or change popup host ownership. Source: `AbyssEdgeEditor.qml` at `7b9cb4fae`; QML native/owner and installed four-edge acceptance OPEN.
 
 
 **Quota checkpoint — 2026-10-12 18:08 ICT:** exact five-hour remaining
