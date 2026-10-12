@@ -159,4 +159,22 @@ assert.ok(owner.list[0].occurrences.slice(3).every(slot=>new Date(slot.startDate
 processDue();
 assert.equal(owner.list[0].occurrences.length,6,"second poll generated duplicate cycle");
 assert.equal(writes,1,"unchanged due state must not rewrite the store");
+// The display must continue projecting every selected weekday after the first
+// day in a repeating week fired; historical cycles must not double-project.
+const P=vm.runInNewContext(read("modules/dashboard/WeeklyPlannerPolicy.js")
+  +";({project})",{});
+const originalSlots=[slot(2026,10,12),slot(2026,10,14)];
+const testSeries={id:512,title:"Projected group",recurrence:"weekly",
+  allDay:false,repeatTemplate:originalSlots,repeatCycleStart:0,
+  occurrences:originalSlots.map((v,i)=>({...v,notified:i===0}))};
+const viewed=P.project([testSeries],[],new Date(2026,9,19,12),1);
+assert.equal(viewed.flatMap(day=>day.timed).length,2,
+  "an already-fired weekday of the current group vanished from future weeks");
+const coming=R.nextCycle(originalSlots,"weekly",new Date(2026,9,15));
+const nextSeries={...testSeries,repeatCycleStart:2,
+  occurrences:testSeries.occurrences.map(slot=>({...slot,notified:true}))
+    .concat(coming.map(slot=>({...slot,notified:false})))};
+const further=P.project([nextSeries],[],new Date(2026,9,26,12),1);
+assert.equal(further.flatMap(day=>day.timed).length,2,
+  "archived recurrence cycles double-projected future weekdays");
 console.log("WEEKLY_PLANNER_MULTIDATE_PASS: modifier choice, cycle eligibility, recurring groups, DST and identity");
