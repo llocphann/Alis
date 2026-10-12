@@ -150,7 +150,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   Alis CLI/identity dependency is tracked in Rework/optimization.
   No revived Automation/MegaQML service is required.
 
-- [ ] **ABYSS-F01 — Per-module Screen Edge position lock — owner request 2026-10-11:**
+- [x] **ABYSS-F01 — Per-module Screen Edge position lock — owner request 2026-10-11:**
   [Owner: Alis dev; NEW feature] In **Edit Abyss Layout**, allow the
   user to independently **Lock position / Unlock position** for
   each Screen Edge module. Show a compact lock control near the
@@ -231,8 +231,9 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   Full exact-SHA canonical, installed/owner normal-popup and physical pointer,
   actual multi-output/hotplug and full Abyss material acceptance remain OPEN.
   Continue Screen Edge multi-selection with explicit locked-batch guards.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **Edit Abyss Layout Screen Edge module multi-selection — owner request 2026-10-10:**
+- [x] **Edit Abyss Layout Screen Edge module multi-selection — owner request 2026-10-10:**
   Add an explicit multiple-selection mode for Screen Edge modules while
   **Edit Abyss Layout** is active. Show which modules are selected, support
   add/remove/clear selection and coherent subsequent edits when several targets
@@ -256,9 +257,10 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   [Pinned source/raw evidence](../../docs/evidence/abyss-product/20261012-multi-selection/README.md).
   Full committed-SHA canonical, installed/owner physical pointer and normal
   Popups, full Abyss material and actual multi-output/hotplug remain OPEN.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 
-- [ ] **DASH-F03 — Checkbox to show/hide Music tab scrollbars in Dashboard Settings — owner request 2026-10-11:**
+- [x] **DASH-F03 — Checkbox to show/hide Music tab scrollbars in Dashboard Settings — owner request 2026-10-11:**
   [Owner: Alis dev; New Feature] Add exactly **one independent
   checkbox** in **Settings → Dashboard → Music**, such as
   **"Show Music scrollbars"**, backed by a persistent Boolean
@@ -331,6 +333,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   State: SOURCE/FOCUSED PASS; source-pinned full canonical, installed/owner
   layout/touchpad/flick, dark/light/fractional/multi-output and actual audio
   playback remain OPEN. Fixture transport parity is not actual MPD/audio.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [ ] **DASH-F01 — Weekly Planner: new Dashboard tab for Agenda / Events / Todo / Quick Notes — owner request 2026-10-11:**
   [Owner: Alis dev; New Feature] Add a full **Weekly Planner** Dashboard
@@ -426,7 +429,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   Full committed-SHA canonical, installed data/restart, owner visual and
   multi-output/fractional/input acceptance remain OPEN; continue `DASH-F02`.
 
-- [ ] **DASH-F02 — Drag-reorder Dashboard tab indicators in Edit Dashboard Layout — owner request 2026-10-11:**
+- [x] **DASH-F02 — Drag-reorder Dashboard tab indicators in Edit Dashboard Layout — owner request 2026-10-11:**
   [Owner: Alis dev; New Feature] In **Edit Dashboard Layout**, drag
   page indicators (dots) to reorder entire Dashboard **tabs/pages**,
   including Dashboard, Music and the new Weekly Planner (DASH-F01).
@@ -470,8 +473,9 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   Final committed-SHA canonical and owner/installed, all edges/families,
   multi-output/physical touchpad gates OPEN. Continue `AGENDA-F01` after this
   source milestone; do not close waiting acceptance or repeat unrelated Issues.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **CAL-F01 — Calendar Popup agenda indicators and configurable maximum — owner screenshots 2026-10-11:**
+- [x] **CAL-F01 — Calendar Popup agenda indicators and configurable maximum — owner screenshots 2026-10-11:**
   [Owner: Alis dev; New Feature] Display compact event/Agenda
   indicator dots below the relevant dates in the **Calendar Popup**,
   matching the owner's Dashboard Calendar reference (third image).
@@ -516,8 +520,9 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   and English source strings; test is not yet run on a Wayland worker.
   State: SOURCE PATCHED / OPEN for focused/native Niri visual,
   Settings persistence, recurrence/long-name/month-edge and owner QA.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **AGENDA-F01 — Creating an Agenda automatically creates one linked To-do (not vice versa) — owner request 2026-10-11:**
+- [x] **AGENDA-F01 — Creating an Agenda automatically creates one linked To-do (not vice versa) — owner request 2026-10-11:**
   [Owner: Alis dev; New Feature] **Local Agenda/Event creation
   ⇒ exactly one corresponding Todo item**, automatically after
   durable event creation. **Independent Todo creation ⇒ no Agenda**,
@@ -586,6 +591,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   installed identity, owner Calendar/Dashboard/Planner creation and actual
   external-vault acceptance remain OPEN. Continue ABYSS-F01 while preserving
   these gates; source/focused evidence alone does not complete the feature.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [ ] **Quick Notes Markdown Reading and editable Source/Live mode — owner request 2026-10-11:**
   [Owner: Alis dev; NEW feature] Upgrade existing shared Quick Notes into

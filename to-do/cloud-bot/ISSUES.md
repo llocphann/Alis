@@ -22,7 +22,7 @@ Next related diagnosis retains the actual toolbar119,-376,782,395 (bottom19px
 inside canvas), Recording missing inner marker and private-native timeout state;
 do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
 
-- [ ] **DASH-I10 — Cleared Queue delegates briefly read undefined tracks — discovered 2026-10-12:**
+- [x] **DASH-I10 — Cleared Queue delegates briefly read undefined tracks — discovered 2026-10-12:**
   DASH-F03's empty-list test exposes actual title/artist/artUrl TypeError while
   removed Queue delegates briefly outlive their modelData. Preserve valid rows
   and use empty text/art for this disposal state; disable unavailable/negative-
@@ -31,8 +31,9 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   TypeError/ReferenceError/binding/assignment/load errors.
   [Raw scoped evidence](../../docs/evidence/abyss-product/20261012-music-scrollbar/README.md).
   Exact-SHA canonical and owner/installed gates remain OPEN.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **DASH-I09 — Hidden header actions change widget canvas height on Edit — diagnosed 2026-10-12:**
+- [x] **DASH-I09 — Hidden header actions change widget canvas height on Edit — diagnosed 2026-10-12:**
   Related Planner/tab reorder and Dashboard layout. Frozen0465 trace preserves
   body content932.8×590 while the header/column implicit height grows44→50;
   widget canvas933×546 becomes933×540 after Edit. With showHeader false the
@@ -54,8 +55,9 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   [Raw source-pinned qualification](../../docs/evidence/abyss-product/20261012-dashboard-field-capture/README.md).
   Earlier failed sampling remains immutable; new full canonical and
   installed/owner/material/multi-output acceptance remain OPEN.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **DASH-I08 — Music paints custom scrollbar thumb on fitting/empty lists — discovered 2026-10-12:**
+- [x] **DASH-I08 — Music paints custom scrollbar thumb on fitting/empty lists — discovered 2026-10-12:**
   Related DASH-F03. Actual private-native empty Results has contentHeight0,
   size1, visible true and custom thumb opacity.45. Replacing Qt's styled
   contentItem lost its overflow/fade state; AsNeeded alone retains the control.
@@ -66,8 +68,9 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   include all six short/empty lists and actual wide horizontal no-overflow.
   [Raw scoped evidence](../../docs/evidence/abyss-product/20261012-music-scrollbar/README.md).
   Exact-SHA canonical and owner/installed gates remain OPEN.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **ABYSS-I03 — Group drag changes gaps when crossing Edge orientation — discovered 2026-10-12:**
+- [x] **ABYSS-I03 — Group drag changes gaps when crossing Edge orientation — discovered 2026-10-12:**
   Related multi-selection: the destination's mature renderer reports a new
   span after the first group proposal, so recomputing source gaps with that span
   distorted spacing. Snapshot rendered source records; bounded coalesced reflow
@@ -77,8 +80,9 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   fix-forward PASS55checks/13foreground captures and independent JSON restart.
   [Evidence](../../docs/evidence/abyss-product/20261012-multi-selection/README.md).
   State: SOURCE/FOCUSED FIXED; exact-SHA canonical/installed/owner OPEN.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **ABYSS-I02 — Edit layout copies Qt signal members into saved Edge maps — discovered 2026-10-12:**
+- [x] **ABYSS-I02 — Edit layout copies Qt signal members into saved Edge maps — discovered 2026-10-12:**
   Related `ABYSS-F01`. Actual private-native global Done after output-only
   save/Undo failed while assigning read-only `objectNameChanged`; generic
   Object.assign of typed JsonObject maps included Qt signals. Production
@@ -92,8 +96,9 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   output pointer oracle PASS, with unchanged click bounds and no auto-scroll
   substituted for this diagnosis. [Evidence](../../docs/evidence/abyss-product/20261012-module-locks/README.md).
   State: SOURCE/FOCUSED FIXED; exact-SHA canonical/installed/owner OPEN.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **AGENDA-I01 — Linked task reconciliation and keyboard retry stalls — discovered 2026-10-12:**
+- [x] **AGENDA-I01 — Linked task reconciliation and keyboard retry stalls — discovered 2026-10-12:**
   Related `AGENDA-F01`: queued no-op Event save could hold a stale write lease;
   optional QVariant sequence cleared the UI despite correct task files; Enter
   on Retry propagated into EventCard. Source0465ffc5a consumes idle-lease
@@ -102,8 +107,9 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   actual store/QML bridge/UI fix-forward results remain in
   [Agenda evidence](../../docs/evidence/abyss-product/20261012-agenda-internal/README.md).
   State: SOURCE/FOCUSED FIXED; full0465 FAIL359/7/1 on separate fixtures; owner/installed OPEN.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **DASH-I07 — Tab-order conflict baseline must survive Undo Reset — source review 2026-10-12:**
+- [x] **DASH-I07 — Tab-order conflict baseline must survive Undo Reset — source review 2026-10-12:**
   Related `DASH-F02`: resetting an edit accepts the newest saved order, but
   undoing that Reset must restore the earlier conflict baseline as well as
   the older draft. Otherwise Done could overwrite a concurrent save. The
@@ -112,8 +118,9 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   Latest actual native PASS preserves both refused Done and concurrent saved
   order after Undo Reset. [Evidence](../../docs/evidence/abyss-product/20261012-dashboard-tab-order/README.md).
   State: SOURCE/FOCUSED FIXED; committed canonical/owner gates OPEN.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **DASH-I06 — Transient page label during hidden-tab model updates — discovered 2026-10-12:**
+- [x] **DASH-I06 — Transient page label during hidden-tab model updates — discovered 2026-10-12:**
   Related `DASH-F02` native fractional test passes drag/transaction checks but
   detects `Unable to assign [undefined] to QString` while Music is removed:
   its old delegate briefly outlives the new stable-ID array. The shared label
@@ -121,8 +128,9 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   a bogus label during model disposal. Latest actual native at measured DPR1.25
   PASS warning-free. [Evidence](../../docs/evidence/abyss-product/20261012-dashboard-tab-order/README.md).
   State: SOURCE/FOCUSED FIXED; committed canonical/owner gates OPEN.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **DASH-I05 — Music scrollbar preference missing from typed Config — discovered 2026-10-12:**
+- [x] **DASH-I05 — Music scrollbar preference missing from typed Config — discovered 2026-10-12:**
   Related to `DASH-F01`/`DASH-F02` shared Dashboard acceptance. The new Music
   Settings checkbox/defaults refer to `dashboard.music.showScrollbars`, but the
   typed JsonObject does not declare it; actual native Settings emits "Cannot
@@ -133,8 +141,9 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   PASS without that warning. [Bounded evidence](../../docs/evidence/abyss-product/20261012-weekly-planner/README.md).
   State: SOURCE/FOCUSED FIXED; final committed-SHA canonical and installed
   owner Settings persistence remain OPEN.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **TODO-I01 — Internal Todo save completion may block later JSON persistence — discovered 2026-10-12:**
+- [x] **TODO-I01 — Internal Todo save completion may block later JSON persistence — discovered 2026-10-12:**
   [Alis dev; data integrity] Source `37461128a` starts `_jsonSaving` for
   `FileView.setText` but releases it in `onLoaded`; no `onSaved`/`onSaveFailed`
   exists. This matches the confirmed Config/Calendar acknowledgement failure.
@@ -153,8 +162,9 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   [Source hashes, original loss and all raw evidence](../../docs/evidence/abyss-product/20261012-todo-persistence/README.md).
   State: SOURCE FIXED / OPEN for committed canonical and owner persistence;
   Agenda→Todo may now proceed on this repaired canonical backend.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **CFG-I02 — Config migration/custom-widget injection blocks later saves — discovered/fixed in source 2026-10-11:**
+- [x] **CFG-I02 — Config migration/custom-widget injection blocks later saves — discovered/fixed in source 2026-10-11:**
   [Owner: Alis dev; priority: configuration integrity] Exact baseline
   `b44899d504d106b7a6d65ff16030f583fb3b526d` completes migration, then
   unguarded same-byte custom reinjection blocks later saves: live .73
@@ -173,6 +183,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   is FAIL 350/1/1 on the separate Weather initial-reveal fixture. No owner
   data/preferences or windows were touched.
   [Committed canonical receipt](../../docs/evidence/abyss-product/20261012-2dbb678a9/README.md).
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [ ] **ABYSS-I01 — Panel background blur appears coupled to Panel opacity — owner report 2026-10-11:**
   [Owner: Alis dev; Bug / material rendering] User reports

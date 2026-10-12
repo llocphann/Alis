@@ -591,7 +591,7 @@ dev even when implementation belongs to Alis-Intergration `main`.
 Do not remove functionality, break direct Settings navigation or silently
 run privileged installation just because manual buttons are retired.
 
-- [ ] **SET-R02 — Redesign all Settings task sub-tabs for Abyss Panel — owner screenshots 2026-10-11:**
+- [x] **SET-R02 — Redesign all Settings task sub-tabs for Abyss Panel — owner screenshots 2026-10-11:**
   [Owner: Alis dev; Rework/UX] All *secondary in-page task tabs* in
   Settings currently use the old compact, separate dark pill/chip
   styling. Redesign the entire shared tab family to visually belong
@@ -662,6 +662,7 @@ run privileged installation just because manual buttons are retired.
   [Source hashes, inventory, images and raw checks](../../docs/evidence/abyss-product/20261012-settings-task-tabs/README.md).
   State: SOURCE IMPLEMENTED / focused native PASS.
   Owner visual/physical review and committed canonical remain OPEN.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [ ] **ABYSS-R06 — Remove toggles for mandatory Abyss runtime modules — owner 2026-10-12:**
   [Owner: Alis dev; Rework] When Abyss Panel is selected, structural modules
@@ -748,7 +749,7 @@ run privileged installation just because manual buttons are retired.
   locales, small screens, focus/popup hitboxes, owner native
   visual signoff. State: NEW/OPEN, not implemented.
 
-- [ ] **SET-R01 — Eliminate redundant Settings-to-Settings navigation buttons:**
+- [x] **SET-R01 — Eliminate redundant Settings-to-Settings navigation buttons:**
   The maintainer wants **no Settings action whose only purpose is to switch
   to another Settings tab/page**. Perform a complete source/UI audit of
   `modules/settings/**`, Waffle Settings pages and the shared Settings
@@ -795,6 +796,7 @@ run privileged installation just because manual buttons are retired.
   [Action inventory, hashes and native evidence](../../docs/evidence/abyss-product/20261012-settings-redirect/README.md).
   State: SOURCE IMPLEMENTED / OPEN for committed canonical, owner both-theme
   UI/keyboard/Escape, saved selection and physical/multi-output acceptance.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [ ] **INT-R01 — Move TLP and Thinkfan Settings into Integrations → Settings:**
   [Owners: Alis dev host + Alis-Intergration main optional views]
@@ -1275,7 +1277,7 @@ run privileged installation just because manual buttons are retired.
   obtain owner visual signoff.
   State: OPEN; corrected checkbox specification only, NOT IMPLEMENTED.
 
-- [ ] **ABYSS-R04 — Unified Panel and Content card opacity slider — owner request 2026-10-11:**
+- [x] **ABYSS-R04 — Unified Panel and Content card opacity slider — owner request 2026-10-11:**
   [Owner: Alis dev; Rework/Settings] In Abyss **Surface** Settings,
   **Content card opacity** and **Panel background opacity** should
   have ONE shared opacity slider, rather than two independent sliders.
@@ -1346,6 +1348,7 @@ run privileged installation just because manual buttons are retired.
   with nonempty custom data and requires a separate new committed run.
   State: OPEN for owner visual/theme/typography,
   per-surface contrast, animation and multiple-output acceptance.
+  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [ ] **ABYSS-R05 — Preserve the full module design when placed on Left/Right Screen Edges — owner requirement 2026-10-12:**
   [Owner: Alis dev; Rework / four-edge visual and geometry parity]
