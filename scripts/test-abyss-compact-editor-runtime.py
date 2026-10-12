@@ -85,6 +85,14 @@ ShellRoot {
     for(const edge of ["top","right","bottom","left"]){
      editor.expandedControls=false;editor.editingPopups=false;editor.select("a");settle(edge)
      const body=item("abyssEdgeEditorBody"),scroll=item("abyssEdgeEditorScroll")
+     const done=item("abyssLayoutDone")
+     const glyph=findChild(done,"abyssButtonCenteredGlyph")
+     check(!!glyph,"missing icon-only centered glyph")
+     const middle=glyph.mapToItem(done,glyph.width/2,glyph.height/2)
+     check(Math.abs(middle.x-done.width/2)<.6 && Math.abs(middle.y-done.height/2)<.6,
+         "icon-only glyph not centered in its button")
+     check(done.width<=editor.editorActionSize+.6 && done.height<=editor.editorActionSize+.6,
+         "editor button exceeds compact square size")
      tryVerify(()=>body.presented&&body.ready,3000)
      check(!editor.layoutConflicts.length,"fixture exceeds actual available module capacity")
      for(const name of ["abyssLayoutUndo","abyssLayoutCancel","abyssLayoutDone","abyssEditorOptions","abyssEditorSelection","abyssModulePositionLock","abyssSelectionEnabled","abyssSelectionRemove"])

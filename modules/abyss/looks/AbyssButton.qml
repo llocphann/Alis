@@ -19,8 +19,8 @@ AbstractButton {
     readonly property color activeInk: Appearance.m3colors.darkmode
         ? AbyssStyle.accent : "#000000"
     hoverEnabled: true
-    implicitHeight: editorSquare && iconOnly ? 32 * Appearance.fontSizeScale : 36
-    implicitWidth: editorSquare && iconOnly ? 32 * Appearance.fontSizeScale
+    implicitHeight: editorSquare && iconOnly ? 30 * Appearance.fontSizeScale : 36
+    implicitWidth: editorSquare && iconOnly ? 30 * Appearance.fontSizeScale
         : Math.max(36, contentItem.implicitWidth + 24)
     Accessible.name: description
     Accessible.role: Accessible.Button
@@ -28,9 +28,11 @@ AbstractButton {
     font.pixelSize: AbyssStyle.fontSize
     leftPadding: editorSquare && iconOnly ? 0 : 12
     rightPadding: editorSquare && iconOnly ? 0 : 12
+    topPadding: editorSquare && iconOnly ? 0 : padding
+    bottomPadding: editorSquare && iconOnly ? 0 : padding
     background: Rectangle {
         radius: root.editorSquare && root.iconOnly
-            ? Math.min(height/2, 9 * Appearance.fontSizeScale) : height/2
+            ? Math.min(height/2, 8 * Appearance.fontSizeScale) : height/2
         color: Qt.alpha(AbyssStyle.accent,root.down ? .24 : root.checked ? .2 : root.hovered ? .12 : .05)
         border.width: root.visualFocus ? 2 : root.outlined ? 1 : 0
         border.color: Qt.alpha(AbyssStyle.accent,root.activeFocus ? .8 : root.hovered || root.checked ? .35 : .15)
@@ -42,10 +44,11 @@ AbstractButton {
         implicitWidth: root.iconOnly ? 19 : labelledRow.implicitWidth
         implicitHeight: root.iconOnly ? 19 : Math.max(20,labelledRow.implicitHeight)
         MaterialSymbol {
+            objectName:"abyssButtonCenteredGlyph"
             anchors.centerIn: parent
             visible: root.iconOnly && root.glyph.length > 0
             text: root.glyph
-            iconSize: root.editorSquare ? 18 : 20
+            iconSize: root.editorSquare ? 17 * Appearance.fontSizeScale : 20
             color: root.hovered || root.checked ? root.activeInk : root.baseInk
         }
         RowLayout {

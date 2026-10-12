@@ -78,8 +78,16 @@ assert 'id:scaleModulesCaption' in editor
 assert 'Behavior on Layout.preferredWidth' in editor
 assert 'root.edgeWidthAffectsModules[root.editingEdge]!==false' in editor
 assert 'description:"Choose a module to add"' not in editor
-assert 'Layout.preferredWidth:105*Appearance.fontSizeScale' in editor
-assert 'Layout.preferredWidth:70*Appearance.fontSizeScale' in editor
+assert 'Layout.preferredWidth:92*Appearance.fontSizeScale' in editor
+assert 'Layout.preferredWidth:58*Appearance.fontSizeScale' in editor
+assert 'readonly property real editorActionSize: 30 * Appearance.fontSizeScale' in editor
+assert 'readonly property real editorSliderWidth: 144 * Appearance.fontSizeScale' in editor
+assert editor.count('editorCompact:true') == 6
+assert editor.count('Layout.preferredWidth:20*Appearance.fontSizeScale') == 5
+assert editor.count('spacing:2') >= 10
+assert 'root.editorSquare ? 17 * Appearance.fontSizeScale' in button
+assert 'objectName:"abyssButtonCenteredGlyph"' in button
+assert 'rightPadding:editorCompact ? 46*Appearance.fontSizeScale : 52' in (root / "modules/abyss/looks/AbyssSlider.qml").read_text()
 assert 'objectName:"abyssEditorFineControls"' in editor
 assert 'objectName:"abyssEditorSelectedFields"' in editor
 assert 'columns:!root.toolbarOnHorizontalEdge || width<460*Appearance.fontSizeScale' in editor

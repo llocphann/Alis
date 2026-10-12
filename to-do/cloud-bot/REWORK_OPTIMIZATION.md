@@ -1109,6 +1109,16 @@ run privileged installation just because manual buttons are retired.
   accessible glyphs/tooltips and remove keyboard instructions from the
   footer while keeping existing shortcuts, input and feedback.
   Source refinement awaiting owner/native four-Edge and scale verification.
+  **2026-10-13 compact polish follow-up:** further standardize icon-only
+  controls as centered 30px rounded-square targets, preserve the centered
+  MaterialSymbol across scaled fonts, reduce Modules/IPC tab widths to 92/58px,
+  shrink Editor dropdown triggers, and unify six slider tracks to the same
+  144px preferred/max length with a narrower editor-specific value gutter.
+  Tighten icon-to-slider spacing to 2px, keep the Scale modules caption
+  clipped/animated while its slider remains full width, and retain no
+  redundant top Add action. Source-level contracts extended with a native Qt
+  centered-glyph check; owner visual and actual Niri/Quickshell gates remain
+  unverified.
   **Third owner refinement (2026-10-12):** Remove redundant top Add action
   while retaining Add within Options; animate hiding the Scale modules label
   when off and bring the module-scale slider beside its toggle. Use a true

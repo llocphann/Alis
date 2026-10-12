@@ -6,14 +6,16 @@ Slider {
     id: root
     from: 0; to: 1
     property string unit:"%"
+    // Editor-only value gutter; other slider consumers keep original metrics.
+    property bool editorCompact:false
     property real displayScale:unit === "%" ? 100 : 1
     readonly property string valueText:Math.round(value*displayScale)+" "+unit
     readonly property color sliderInk: Appearance.m3colors.darkmode
         ? AbyssStyle.textColor : "#000000"
     readonly property color sliderMutedInk: Appearance.m3colors.darkmode
         ? AbyssStyle.textColorMuted : "#1a1a1a"
-    rightPadding:52
-    implicitHeight: 32
+    rightPadding:editorCompact ? 46*Appearance.fontSizeScale : 52
+    implicitHeight: editorCompact ? 30*Appearance.fontSizeScale : 32
     background: Rectangle {
         x: root.leftPadding; y: (root.height-height)/2
         width: root.availableWidth; height: 2
