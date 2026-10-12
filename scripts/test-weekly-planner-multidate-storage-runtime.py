@@ -53,14 +53,14 @@ ShellRoot {
                         "missing or repeating batch occurrences")
                     root.check(created.startDate==="2032-10-18T09:00:00.000Z",
                         "batch first occurrence not sorted/compatible")
-                    root.check(!!created.todoLink && !!created.todoLink.key,
-                        "one stable agenda-to-todo link was not generated")
+                    root.check(!created.todoLink,
+                        "Agenda created a linked Todo despite independent stores")
                     const repeating=Events.addEvent("Weekly grouped fixture","private",
                         "2032-10-18T09:00:00Z","meeting","normal",15,"weekly",
                         "2032-10-18T10:00:00Z",false,spans)
                     root.check(!!repeating && repeating.occurrences.length===3
                         && repeating.repeatTemplate.length===3
-                        && repeating.todoLink.key!==created.todoLink.key
+                        && !repeating.todoLink
                         && Events.list.length===2 && Events.nextId===oldId+2,
                         "compatible Weekly must persist one template and one ID")
                     const before=Events.nextId
@@ -86,11 +86,11 @@ ShellRoot {
                         past[0].endDate,false,past)
                     root.check(!!cyclic && Events.list.length===3,
                         "past recurrence not created")
-                    const originalLink=cyclic.todoLink.key
+                    const originalId=cyclic.id
                     Events.checkDueEvents()
                     const advanced=Events.list.find(event=>event.id===cyclic.id)
-                    root.check(!!advanced && advanced.todoLink.key===originalLink
-                        && advanced.occurrences.length===6
+                    root.check(!!advanced && advanced.id===originalId
+                        && !advanced.todoLink && advanced.occurrences.length===6
                         && advanced.occurrences.slice(0,3).every(slot=>slot.notified)
                         && advanced.occurrences.slice(3).every(slot=>!slot.notified),
                         "recurring group was not advanced under the same ID")
@@ -104,9 +104,23 @@ ShellRoot {
                         && saved[1].repeatTemplate.length===3
                         && saved[2].occurrences.length===6,
                         "grouped recurring and nonrecurring events not durably stored")
-                    root.check(saved.every((event,index)=>
-                        event.todoLink.key===Events.list[index].todoLink.key),
-                        "recurring batch changed its Todo identity")
+                    root.check(saved.every(event=>!event.todoLink),
+                        "Agenda unexpectedly created any Todo link")
+                    // Editing the entire series must preserve Event ID and
+                    // restore every original date without adding a new event.
+                    const target=Events.list[0]
+                    const beforeId=target.id
+                    const edited=Events.updateEventGroup(target.id,{
+                        title:"Multi-date updated",description:"private",
+                        category:"meeting",priority:"normal",
+                        reminderMinutes:15,recurrence:"none",allDay:false
+                    },target.occurrences.map(slot=>({
+                        startDate:slot.startDate,endDate:slot.endDate
+                    })))
+                    root.check(edited && Events.list.length===3
+                        && Events.list[0].id===beforeId
+                        && Events.list[0].occurrences.length===3,
+                        "whole Event ID edit lost selected dates or generated a second event")
                     console.info("PLANNER_MULTIDATE_STORAGE_PASS",root.checks)
                     Qt.quit()
                 }
@@ -152,6 +166,7 @@ with tempfile.TemporaryDirectory(prefix="alis-planner-multidate-") as temp:
     assert saved[0]["recurrence"]=="none"
     assert saved[1]["recurrence"]=="weekly" and len(saved[1]["repeatTemplate"])==3
     assert len(saved[2]["occurrences"])==6
-    assert len({row["todoLink"]["key"] for row in saved})==3
+    assert all("todoLink" not in row for row in saved)
+    assert len({row["id"] for row in saved})==3
     print(next(line for line in result.stdout.splitlines()
                if "PLANNER_MULTIDATE_STORAGE_PASS" in line))
