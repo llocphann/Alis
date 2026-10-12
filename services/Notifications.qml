@@ -288,8 +288,12 @@ Singleton {
             }
             groups[appName].notifications.push(notif)
             groups[appName].time = root.latestTimeForApp[appName] || notif.time
-            // Check critical urgency
-            if (notif.urgency === "Critical") {
+            // Wrappers store urgency as a string, while real notifications
+            // can expose the enum. Accept both forms consistently with
+            // NotificationItem, including the common lowercase "critical".
+            const urgency = notif.urgency
+            if (urgency === NotificationUrgency.Critical
+                    || String(urgency ?? "").toLowerCase() === "critical") {
                 groups[appName].hasCritical = true
             }
         }

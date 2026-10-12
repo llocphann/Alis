@@ -1785,6 +1785,16 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   normalized spellings, empty IDs, and mark-read parity; the CI
   fast-policy step runs it. Only source-level count correctness is
   confirmed; owner UI, live arrival and exact-SHA native validation OPEN.
+  **Cloud source regression 2026-10-12 — Critical groups:** a real wrapper
+  stores urgency as a string (often lowercase `critical`), but the shared
+  notification grouper compared exactly `"Critical"`, while Waffle's
+  transient group compared only the enum value. Both omitted the Critical
+  group treatment for lowercase strings, unlike `NotificationItem`.
+  These predicates now accept both enum and case-insensitive string
+  forms; no visual tokens or layout changed. Source-executed baseline
+  reproduced false/false for `"critical"`; the focused regression covers
+  grouped/popup Critical, normal, unrelated and missing urgency values
+  and runs in CI. Native/owner visual verification remains OPEN.
 
 - [ ] **HELPER-I01 — Hadalird helper/package state and Polkit focus:** extraction is
   source/package-qualified; owner reported helper status ready. Verify compact

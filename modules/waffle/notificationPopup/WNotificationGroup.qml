@@ -23,7 +23,9 @@ Item {
     readonly property var notifications: notificationGroup?.notifications ?? []
     readonly property int notificationCount: notifications.length
     readonly property bool multipleNotifications: notificationCount > 1
-    readonly property bool hasCritical: notifications.some(n => n.urgency === NotificationUrgency.Critical)
+    readonly property bool hasCritical: notifications.some(n => n &&
+        (n.urgency === NotificationUrgency.Critical
+            || String(n.urgency ?? "").toLowerCase() === "critical"))
     property bool expanded: false
     
     implicitHeight: background.height
