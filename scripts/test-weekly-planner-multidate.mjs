@@ -125,4 +125,38 @@ assert.equal(R.templateAllowed([slot(2026,10,13),slot(2026,10,20)],"weekly"),fal
 assert.equal(R.templateAllowed([slot(2026,10,13),slot(2026,10,20)],"monthly"),true);
 assert.match(read("modules/dashboard/WeeklyPlannerPolicy.js"),/date!==null/,
  "week projection must omit nonexistent calendar dates");
+// Exercise the actual service's due-event implementation, not a copy.
+const E=vm.runInNewContext(read("services/EventOccurrences.js")+";({entries,store})",{});
+const checkDueSource=service.split("    function checkDueEvents() {",2)[1]
+  ?.split("    function createNextRecurrence(event, afterTime) {",1)[0];
+assert.ok(checkDueSource,"Events.checkDueEvents implementation missing");
+const due=new Function("root","Occurrences","RepeatPolicy",
+  "return function checkDueEvents() {"+checkDueSource);
+const today=new Date(),monday=new Date(today.getFullYear(),today.getMonth(),today.getDate(),9);
+monday.setDate(monday.getDate()-(monday.getDay()+6)%7-14);
+const past=[0,2,3].map(offset=>{
+ const start=new Date(monday);start.setDate(start.getDate()+offset);
+ const end=new Date(start);end.setHours(end.getHours()+1);
+ return {startDate:start.toISOString(),endDate:end.toISOString()};
+});
+const fixture={id:411,title:"Repeat cycle",recurrence:"weekly",allDay:false,
+  reminderMinutes:0,todoLink:{key:"agenda-kept"},repeatTemplate:past,
+  occurrences:past.map(slot=>({...slot,notified:false,reminderNotified:false}))};
+let writes=0,triggers=0;
+const owner={ready:true,list:[fixture],saveToFile(){writes++},
+ eventTriggered(){triggers++},reminderTriggered(){},
+ createNextRecurrence(){throw new Error("Legacy single-date path invoked");}};
+const processDue=due(owner,E,R);
+processDue();
+assert.equal(owner.list.length,1,"recurrence must not create extra IDs");
+assert.equal(owner.list[0].id,411);
+assert.equal(owner.list[0].todoLink.key,"agenda-kept");
+assert.equal(writes,1,"multi-day recurrence must be one durable write");
+assert.equal(triggers,3,"all selected days must fire once");
+assert.equal(owner.list[0].occurrences.length,6,
+  "next complete weekly group not generated");
+assert.ok(owner.list[0].occurrences.slice(3).every(slot=>new Date(slot.startDate)>today));
+processDue();
+assert.equal(owner.list[0].occurrences.length,6,"second poll generated duplicate cycle");
+assert.equal(writes,1,"unchanged due state must not rewrite the store");
 console.log("WEEKLY_PLANNER_MULTIDATE_PASS: modifier choice, cycle eligibility, recurring groups, DST and identity");
