@@ -315,7 +315,7 @@ Item {
                         }
                         Repeater {
                             model:dayColumn.modelData.timed
-                            delegate:RippleButton {
+                            delegate:Rectangle {
                                 id:timedButton
                                 required property var modelData
                                 objectName:"plannerTimedEvent"
@@ -325,6 +325,9 @@ Item {
                                 property string gestureMode: ""
                                 property real dragX: 0
                                 property real dragY: 0
+                                property real pressX: 0
+                                property real pressY: 0
+                                property bool gestureMoved: false
                                 readonly property real baseHeight: Math.max(18,
                                     (modelData.end-modelData.start)/60*root.hourHeight-2)
                                 x:4+modelData.lane*dayColumn.width/modelData.lanes
@@ -334,67 +337,143 @@ Item {
                                 width:Math.max(1,dayColumn.width/modelData.lanes-8)
                                 height:Math.max(18,baseHeight
                                     +(gestureMode==="top"?-dragY:gestureMode==="bottom"?dragY:0))
+                                radius:7
+                                color:Qt.alpha(modelData.event.color || Appearance.colors.colPrimary,
+                                    eventMouse.containsMouse ? .32 : .2)
+                                border.width:activeFocus ? 1 : 0
+                                border.color:Appearance.colors.colPrimary
+                                activeFocusOnTab:true
+                                Accessible.role:Accessible.Button
+                                Accessible.name:modelData.event.title+" · "+
+                                    Qt.formatDateTime(modelData.startDate,"ddd hh:mm t")+
+                                    (modelData.source==="external"?" · Read-only"
+                                     : canReschedule?" · Drag to move, resize edges"
+                                     :" · Open to edit")
+                                Keys.onReturnPressed:root.editOccurrence(modelData)
+                                Keys.onSpacePressed:root.editOccurrence(modelData)
+                                function startGesture(mode,source,mouse) {
+                                    if (!canReschedule) return
+                                    const point=source.mapToItem(viewport.contentItem,mouse.x,mouse.y)
+                                    gestureMode=mode
+                                    gestureMoved=false
+                                    dragX=0;dragY=0
+                                    pressX=point.x;pressY=point.y
+                                }
+                                function updateGesture(mode,source,mouse) {
+                                    if (!canReschedule || gestureMode!==mode) return
+                                    const point=source.mapToItem(viewport.contentItem,mouse.x,mouse.y)
+                                    const dx=point.x-pressX,dy=point.y-pressY
+                                    if (!gestureMoved && Math.hypot(dx,dy)<6) return
+                                    gestureMoved=true
+                                    dragX=mode==="move" ? dx : 0
+                                    dragY=dy
+                                }
                                 function finishGesture(mode) {
                                     if (gestureMode!==mode) return
-                                    const dx=dragX,dy=dragY
+                                    const dx=dragX,dy=dragY,shouldCommit=gestureMoved
                                     gestureMode="";dragX=0;dragY=0
-                                    root.commitTimedGesture(modelData,mode,dx,dy)
+                                    if (shouldCommit) root.commitTimedGesture(modelData,mode,dx,dy)
                                 }
-                                buttonRadius:7
-                                colBackground:Qt.alpha(modelData.event.color || Appearance.colors.colPrimary,.2)
-                                colBackgroundHover:Qt.alpha(modelData.event.color || Appearance.colors.colPrimary,.32)
-                                Accessible.name:modelData.event.title+" · "+Qt.formatDateTime(modelData.startDate,"ddd hh:mm t")+(modelData.source==="external"?" · Read-only":"")
-                                contentItem:Column {
-                                    clip:true
-                                    StyledText {width:parent.width;text:timedButton.modelData.event.title;color:root.ink;font.weight:Font.Medium;font.pixelSize:Appearance.font.pixelSize.smallest;elide:Text.ElideRight}
-                                    StyledText {width:parent.width;visible:text.length>0;text:timedButton.modelData.source==="local" && !timedButton.modelData.virtual ? Translation.tr(Todo.agendaStatus(timedButton.modelData.event)) : "";color:root.mutedInk;font.pixelSize:Appearance.font.pixelSize.smallest;elide:Text.ElideRight}
-                                    StyledText {width:parent.width;text:Qt.formatTime(timedButton.modelData.startDate,"hh:mm")+" – "+Qt.formatTime(timedButton.modelData.endDate,"hh:mm");color:root.mutedInk;font.pixelSize:Appearance.font.pixelSize.smallest;elide:Text.ElideRight}
+                                function cancelGesture() {
+                                    gestureMode="";dragX=0;dragY=0;gestureMoved=false
                                 }
-                                onClicked:root.editOccurrence(modelData)
-                                DragHandler {
-                                    target:null
-                                    enabled:timedButton.canReschedule
-                                    grabPermissions:PointerHandler.CanTakeOverFromItems
-                                    onTranslationChanged:if(active) {
-                                        timedButton.gestureMode="move"
-                                        timedButton.dragX=translation.x
-                                        timedButton.dragY=translation.y
+                                Column {
+                                    anchors.fill:parent;anchors.margins:4;clip:true
+                                    StyledText {
+                                        width:parent.width
+                                        text:timedButton.modelData.event.title
+                                        color:root.ink;font.weight:Font.Medium
+                                        font.pixelSize:Appearance.font.pixelSize.smallest
+                                        elide:Text.ElideRight
                                     }
-                                    onActiveChanged:if(!active)timedButton.finishGesture("move")
+                                    StyledText {
+                                        width:parent.width
+                                        visible:text.length>0
+                                        text:timedButton.modelData.source==="local"
+                                            && !timedButton.modelData.virtual
+                                            ? Translation.tr(Todo.agendaStatus(timedButton.modelData.event)) : ""
+                                        color:root.mutedInk
+                                        font.pixelSize:Appearance.font.pixelSize.smallest
+                                        elide:Text.ElideRight
+                                    }
+                                    StyledText {
+                                        width:parent.width
+                                        text:Qt.formatTime(timedButton.modelData.startDate,"hh:mm")
+                                            +" – "+Qt.formatTime(timedButton.modelData.endDate,"hh:mm")
+                                        color:root.mutedInk
+                                        font.pixelSize:Appearance.font.pixelSize.smallest
+                                        elide:Text.ElideRight
+                                    }
+                                }
+                                // One pointer owner for body movement. In particular, do not
+                                // combine RippleButton's internal MouseArea with DragHandler.
+                                // Stop Flickable stealing a pressed event; background scrolling
+                                // is unaffected when the pointer is outside an event.
+                                MouseArea {
+                                    id:eventMouse
+                                    objectName:"plannerEventMoveArea"
+                                    anchors.fill:parent;z:2
+                                    acceptedButtons:Qt.LeftButton
+                                    preventStealing:true
+                                    hoverEnabled:true
+                                    cursorShape:timedButton.canReschedule
+                                        ? Qt.OpenHandCursor : Qt.PointingHandCursor
+                                    onPressed:mouse=>timedButton.startGesture("move",eventMouse,mouse)
+                                    onPositionChanged:mouse=>{
+                                        if (pressed) timedButton.updateGesture("move",eventMouse,mouse)
+                                    }
+                                    onReleased:timedButton.finishGesture("move")
+                                    onCanceled:timedButton.cancelGesture()
+                                    onClicked:if (!timedButton.gestureMoved)
+                                        root.editOccurrence(timedButton.modelData)
                                 }
                                 Rectangle {
                                     objectName:"plannerResizeStart"
                                     visible:timedButton.canReschedule
-                                    x:0;y:0;width:parent.width;height:7;z:3
-                                    radius:3;color:Qt.alpha(root.ink,.24)
-                                    HoverHandler {cursorShape:Qt.SizeVerCursor}
-                                    DragHandler {
-                                        target:null;xAxis.enabled:false
-                                        grabPermissions:PointerHandler.CanTakeOverFromItems
-                                        onTranslationChanged:if(active) {
-                                            timedButton.gestureMode="top"
-                                            timedButton.dragY=translation.y
+                                    x:0;y:0;width:parent.width;height:Math.min(9,parent.height/3);z:3
+                                    radius:3;color:Qt.alpha(root.ink,.32)
+                                    MouseArea {
+                                        id:topResizeMouse
+                                        anchors.fill:parent
+                                        acceptedButtons:Qt.LeftButton
+                                        preventStealing:true
+                                        cursorShape:Qt.SizeVerCursor
+                                        onPressed:mouse=>timedButton.startGesture("top",topResizeMouse,mouse)
+                                        onPositionChanged:mouse=>{
+                                            if (pressed)timedButton.updateGesture("top",topResizeMouse,mouse)
                                         }
-                                        onActiveChanged:if(!active)timedButton.finishGesture("top")
+                                        onReleased:timedButton.finishGesture("top")
+                                        onCanceled:timedButton.cancelGesture()
                                     }
                                 }
                                 Rectangle {
                                     objectName:"plannerResizeEnd"
                                     visible:timedButton.canReschedule
-                                    x:0;y:parent.height-7;width:parent.width;height:7;z:3
-                                    radius:3;color:Qt.alpha(root.ink,.24)
-                                    HoverHandler {cursorShape:Qt.SizeVerCursor}
-                                    DragHandler {
-                                        target:null;xAxis.enabled:false
-                                        grabPermissions:PointerHandler.CanTakeOverFromItems
-                                        onTranslationChanged:if(active) {
-                                            timedButton.gestureMode="bottom"
-                                            timedButton.dragY=translation.y
+                                    x:0;y:parent.height-height
+                                    width:parent.width;height:Math.min(9,parent.height/3);z:3
+                                    radius:3;color:Qt.alpha(root.ink,.32)
+                                    MouseArea {
+                                        id:bottomResizeMouse
+                                        anchors.fill:parent
+                                        acceptedButtons:Qt.LeftButton
+                                        preventStealing:true
+                                        cursorShape:Qt.SizeVerCursor
+                                        onPressed:mouse=>timedButton.startGesture("bottom",bottomResizeMouse,mouse)
+                                        onPositionChanged:mouse=>{
+                                            if (pressed)timedButton.updateGesture("bottom",bottomResizeMouse,mouse)
                                         }
-                                        onActiveChanged:if(!active)timedButton.finishGesture("bottom")
+                                        onReleased:timedButton.finishGesture("bottom")
+                                        onCanceled:timedButton.cancelGesture()
                                     }
                                 }
-                                StyledToolTip {text:parent.Accessible.name+(parent.modelData.virtual?" · Recurring: edits apply to the saved event":parent.modelData.source==="local" && Todo.agendaStatus(parent.modelData.event)?" · "+Todo.agendaStatus(parent.modelData.event):"")}
+                                StyledToolTip {
+                                    text:parent.Accessible.name+
+                                        (parent.modelData.virtual
+                                          ?" · Recurring occurrence: open editor"
+                                          : parent.modelData.source==="local"
+                                              && Todo.agendaStatus(parent.modelData.event)
+                                            ?" · "+Todo.agendaStatus(parent.modelData.event):"")
+                                }
                             }
                         }
                         Rectangle {
