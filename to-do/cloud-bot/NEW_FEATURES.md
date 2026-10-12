@@ -289,6 +289,16 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   **Not yet qualified:** canonical exact-SHA regression, actual
   Niri/Quickshell Ctrl/Shift pointer and keyboard gesture, toolbar/hit
   region behavior at fractional/vertical edges, and owner acceptance.
+  **Drag regression discovered and repaired (2026-10-12):** An
+  ordinary mouse-down on an already selected handle was collapsing the
+  multi-selection before `checkedGroupMove` began. Keep selected groups
+  unchanged through a real drag; defer single-target collapse until mouse
+  release without movement. Prevent pointer jitter from becoming an
+  accidental drag with a bounded motion threshold. Repaired the native
+  group drag fixture with explicit selection-retention and click-collapse
+  assertions, plus pure `AbyssSelection.js` decision tests. This is a
+  source milestone; actual private Niri gesture/owner validation remains
+  outstanding.
   **Hoàn thành (bot báo xong) — Owner chưa verified (2026-10-12):**
   The full requested source implementation, including the later owner
   Ctrl/Shift-click correction and removal of the mode toggle, is delivered

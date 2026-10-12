@@ -111,6 +111,19 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   Exact-SHA canonical and owner/installed gates remain OPEN.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
+- [x] **ABYSS-I07 — Multi-select drag collapses on mouse-down (discovered 2026-10-12):**
+  The modifier-selection implementation in `AbyssEdgeEditor.qml`
+  selected the clicked handle unconditionally on mouse-down; with two
+  modules selected, that removed the group before `startDrag` and
+  `checkedGroupMove`. The fix defers single-click collapse when pressing
+  an already-selected group member, preserves the group during drag and
+  collapses only on release without pointer movement. Ctrl/Shift selection
+  stays immediate; small pointer jitter cannot become an accidental drag.
+  New source policy and native fixture guard selection retention and
+  ordinary click collapse. Related: ABYSS-F02 / ABYSS-R03.
+  **Hoàn thành (bot báo xong) — Owner chưa verified.** Pure JS checks on
+  exact helper blob PASS; QML/Niri and full canonical exact-SHA were NOT RUN.
+
 - [x] **ABYSS-I03 — Group drag changes gaps when crossing Edge orientation — discovered 2026-10-12:**
   Related multi-selection: the destination's mature renderer reports a new
   span after the first group proposal, so recomputing source gaps with that span

@@ -22,6 +22,12 @@ function select(ids, primary, anchor, id, ordered, ctrl, shift) {
     return {ids:[id],primary:id,anchor:id}
 }
 
+// Keep a selected group intact on pointer press; the normal click only
+// collapses it on release when no drag happened.
+function deferCollapseOnPress(ids, id, ctrl, shift) {
+    return !ctrl && !shift && ids.length > 1 && ids.includes(id)
+}
+
 function orderedIds(draft) {
     const edgeOrder={top:0,right:1,bottom:2,left:3}
     return draft.filter(value=>!!value && typeof value.id === "string")

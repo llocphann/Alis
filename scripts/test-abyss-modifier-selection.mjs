@@ -19,7 +19,7 @@ const draft=[
     {id:"c",edge:"top",position:.5}
 ];
 const order=canon(ctx.orderedIds(draft));
-expect(order,["a","c","b","x","z"],"edge/date-independent spatial order");
+expect(order,["a","c","b","z","x"],"edge/date-independent spatial order");
 let state={ids:[],primary:"",anchor:""};
 const action=(id,ctrl=false,shift=false)=>state=canon(ctx.select(state.ids,state.primary,state.anchor,id,order,ctrl,shift));
 action("a");
@@ -36,10 +36,10 @@ action("a");
 action("b",false,true);
 expect(state,{ids:["a","c","b"],primary:"b",anchor:"a"},"Shift-click selects entire visual interval");
 action("x",false,true);
-expect(state,{ids:["a","c","b","x"],primary:"x",anchor:"a"},"Shift-click keeps initial anchor");
+expect(state,{ids:["a","c","b","z","x"],primary:"x",anchor:"a"},"Shift-click keeps initial anchor");
 action("c");
 action("x",true,true);
-expect(state,{ids:["c","b","x"],primary:"x",anchor:"c"},"Ctrl+Shift-click extends existing set");
+expect(state,{ids:["c","b","z","x"],primary:"x",anchor:"c"},"Ctrl+Shift-click extends existing set");
 action("z");
 expect(state,{ids:["z"],primary:"z",anchor:"z"},"ordinary click collapses multiple selection");
 action("missing",true,true);
@@ -49,13 +49,26 @@ expect(canon(draft),[
     {id:"x",edge:"left",position:.2},{id:"a",edge:"top",position:.1},
     {id:"c",edge:"top",position:.5}
 ],"selection does not mutate draft");
+expect(ctx.deferCollapseOnPress(["a","b"],"a",false,false),true,
+    "mousedown on selected group must defer collapse for dragging");
+expect(ctx.deferCollapseOnPress(["a","b"],"c",false,false),false,
+    "mousedown on unselected handle selects just that handle");
+expect(ctx.deferCollapseOnPress(["a","b"],"a",true,false),false,
+    "Ctrl-click must toggle selection immediately");
+expect(ctx.deferCollapseOnPress(["a","b"],"a",false,true),false,
+    "Shift-click must select a range immediately");
+expect(ctx.deferCollapseOnPress(["a"],"a",false,false),false,
+    "single handle press needs no deferred collapse");
 const editor=fs.readFileSync(new URL("../modules/abyss/AbyssEdgeEditor.qml",import.meta.url),"utf8");
 for(const [match,label] of [
   ['import "looks/AbyssSelection.js" as ModuleSelection',"shared helper imported"],
   ['onPressed:mouse=>{',"pointer handler present"],
   ['const ctrl=!!(mouse.modifiers & Qt.ControlModifier)',"Ctrl pointer modifier present"],
   ['const shift=!!(mouse.modifiers & Qt.ShiftModifier)',"Shift pointer modifier present"],
-  ['root.select(handle.modelData,ctrl,shift)',"pointer directly selects without toggle"],
+  ['if(!deferCollapse)root.select(handle.modelData,ctrl,shift)',"pointer selects directly unless preserving group drag"],
+  ['deferCollapse=ModuleSelection.deferCollapseOnPress(root.targetIds,',"group drag preserve hook"],
+  ['if(deferCollapse && !movedBeyondThreshold)',"click collapses only after release"],
+  ['const delta=Math.hypot(point.x-pressRootX,point.y-pressRootY)',"pointer drag threshold"],
   ['root.select(handle.modelData,!!(event.modifiers & Qt.ControlModifier)',"keyboard accessible modifier selection"],
   ['readonly property bool multiSelect: targetIds.length>1',"multi status inferred"],
   ['selectedIds=ModuleSelection.orderedIds(draft)',"Ctrl+A starts without toggle"]

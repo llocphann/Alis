@@ -94,8 +94,15 @@ ShellRoot {
     check(editor.targetIds.length===2,"ordinary click did not collapse range back to a single anchor")
     const offset=rec("b").along-rec("a").along
     drag("a","top",editor.width*.3);capture("horizontal-drag")
+    check(editor.targetIds.length===2,"selected group collapsed on drag press")
     check(!editor.feedback&&Math.abs(rec("b").along-rec("a").along-offset)<.1,"same Edge group drag distorted rendered spacing")
     const group=JSON.stringify(editor.draft)
+    // A click on an already selected handle (without dragging) must still
+    // collapse a group to a single ordinary selection.
+    mouseClick(handle("a"));check(editor.targetIds.length===1&&editor.selectedId==="a",
+        "ordinary click did not collapse existing group on release")
+    mouseClick(handle("b"),handle("b").width/2,handle("b").height/2,Qt.LeftButton,Qt.ControlModifier)
+    check(editor.targetIds.length===2,"Ctrl-click did not restore group after ordinary click")
     const lock=control("abyssModulePositionLock");lock.forceActiveFocus();keyClick(Qt.Key_Return);wait(80)
     check(editor.allTargetsLocked&&lock.text==="Unlock position","Enter did not lock exact group")
     const locked=JSON.stringify(editor.draft)

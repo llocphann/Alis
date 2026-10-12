@@ -503,22 +503,47 @@ Item {
                 id: drag
                 anchors.fill: parent
                 cursorShape:handle.record?.locked ? Qt.ArrowCursor : pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                property bool deferCollapse: false
+                property bool movedBeyondThreshold: false
+                property real pressRootX: 0
+                property real pressRootY: 0
                 onPressed:mouse=>{
                     const ctrl=!!(mouse.modifiers & Qt.ControlModifier)
                     const shift=!!(mouse.modifiers & Qt.ShiftModifier)
-                    root.select(handle.modelData,ctrl,shift)
+                    // Do not collapse an existing multi-selection on mouse-down:
+                    // that destroys the group before checkedGroupMove can drag it.
+                    deferCollapse=ModuleSelection.deferCollapseOnPress(root.targetIds,
+                        handle.modelData,ctrl,shift)
+                    movedBeyondThreshold=false
+                    const point=mapToItem(root,mouse.x,mouse.y)
+                    pressRootX=point.x
+                    pressRootY=point.y
+                    if(!deferCollapse)root.select(handle.modelData,ctrl,shift)
                     handle.forceActiveFocus()
-                    if(!ctrl && !shift){
-                        const point=mapToItem(root,mouse.x,mouse.y)
+                    if(!ctrl && !shift)
                         root.startDrag(handle.modelData,point.x,point.y)
-                    }
                     if(handle.record?.locked)root.feedback="Unlock this module before moving it"
                 }
-                onReleased:root.endDrag()
-                onCanceled:root.endDrag()
+                onReleased:mouse=>{
+                    root.endDrag()
+                    if(deferCollapse && !movedBeyondThreshold)
+                        root.select(handle.modelData)
+                    deferCollapse=false
+                    movedBeyondThreshold=false
+                }
+                onCanceled:{
+                    root.endDrag()
+                    deferCollapse=false
+                    movedBeyondThreshold=false
+                }
                 onPositionChanged: mouse => {
                     if (!pressed || !root._dragging) return
                     const point = mapToItem(root,mouse.x,mouse.y)
+                    if(!movedBeyondThreshold) {
+                        const delta=Math.hypot(point.x-pressRootX,point.y-pressRootY)
+                        if(delta<Math.max(6,8*Appearance.fontSizeScale))return
+                        movedBeyondThreshold=true
+                    }
                     root.move(handle.modelData,point.x,point.y,!(mouse.modifiers & Qt.ShiftModifier))
                 }
             }
