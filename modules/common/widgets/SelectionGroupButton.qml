@@ -45,7 +45,12 @@ GroupButton {
     // Opt-in for Planner: keep the source label mounted and reveal its clipped
     // width left-to-right. Collapse retracts the right edge without dropping text.
     property bool revealActiveLabelOnly: false
-    readonly property bool labelExpanded: !root.revealActiveLabelOnly || root.toggled
+    // The group coordinates which label expands, independently of the
+    // highlighted selection. Keeps rightward selection swaps deterministic.
+    property bool selectedLabelExpanded: root.toggled
+    readonly property bool labelExpanded: !root.revealActiveLabelOnly
+        || root.selectedLabelExpanded
+    clip: root.revealActiveLabelOnly
     property bool leftmost: false
     property bool rightmost: false
     readonly property bool showZzzPreview: false
@@ -69,12 +74,15 @@ GroupButton {
         ? Qt.alpha(Appearance.colors.colPrimary,.26) : Appearance.colors.colSecondaryContainerActive
 
     contentItem: RowLayout {
+        // Keep the icon fixed at the leading edge while the clipped text
+        // viewport slides open from left to right (and retracts from the right).
         spacing: root.buttonIcon?.length > 0 && root.buttonText?.length > 0
             && root.labelExpanded ? 4 : 0
+        clip: root.revealActiveLabelOnly
 
         Behavior on spacing {
             enabled: Appearance.animationsEnabled
-            animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+            NumberAnimation { duration: 160; easing.type: Easing.InOutCubic }
         }
 
         Item {
@@ -121,7 +129,7 @@ GroupButton {
 
             Behavior on implicitWidth {
                 enabled: Appearance.animationsEnabled
-                animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
+                NumberAnimation { duration: 190; easing.type: Easing.InOutCubic }
             }
             TextMetrics {
                 id: textMetrics

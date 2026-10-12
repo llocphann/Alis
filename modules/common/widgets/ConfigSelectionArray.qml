@@ -34,6 +34,21 @@ Flow {
     property bool taskNavigation: false
     // Planner-only: inactive choices remain icon-only; selected choice expands.
     property bool activeLabelOnly: false
+    // Shrink previous label first, then reveal the new one; avoids Flow
+    // competing width animations when choosing buttons left-to-right.
+    property var revealedSelection: null
+    clip: root.activeLabelOnly
+    Timer {
+        id: revealNextSelection
+        interval: 190
+        repeat: false
+        onTriggered: root.revealedSelection=root.currentValue
+    }
+    onCurrentValueChanged: {
+        if (!root.activeLabelOnly) return
+        root.revealedSelection=null
+        revealNextSelection.restart()
+    }
     readonly property bool hovered: _hoverHandler.hovered
 
     signal selected(var newValue)
@@ -104,6 +119,8 @@ Flow {
     }
 
     Component.onCompleted: {
+        root.revealedSelection=root.currentValue
+        revealNextSelection.stop()
         if (!enableSettingsSearch)
             return;
         if (typeof SettingsSearchRegistry === "undefined")
@@ -168,6 +185,9 @@ Flow {
             // animation, so quick selection changes cannot lose the label.
             buttonText: modelData.displayName
             revealActiveLabelOnly: root.activeLabelOnly
+            selectedLabelExpanded: root.activeLabelOnly
+                ? root.revealedSelection != null
+                    && root.revealedSelection == modelData.value : paletteButton.toggled
             Accessible.name: modelData.displayName
             ToolTip.visible: root.activeLabelOnly && paletteButton.hovered
                 && !paletteButton.toggled
@@ -176,9 +196,19 @@ Flow {
             useAbyssPillShape: root.useAbyssPillShape
             abyssTaskNavigation: root.taskNavigation && Config.options?.panelFamily === "abyss"
             enabled: !root.taskNavigation || modelData?.enabled !== false
+            // Five buttons fit one row even at narrow Planner panel widths.
+            // Reserve fixed icon-only slots before allocating selected text.
+            horizontalPadding: root.activeLabelOnly
+                ? Math.max(5,6 * Appearance.fontSizeScale)
+                : (root.taskNavigation ? 14 * Appearance.fontSizeScale : 11)
             maxTextWidth: root.taskNavigation
                 ? Math.max(0, root.width - horizontalPadding * 2
-                    - (buttonIcon.length > 0 ? Appearance.font.pixelSize.normal + 4 : 0)) : 180
+                    - (buttonIcon.length > 0 ? Appearance.font.pixelSize.normal + 4 : 0))
+                : root.activeLabelOnly
+                    ? Math.max(0,root.width - root.options.length
+                        * (Appearance.font.pixelSize.normal + 2 * horizontalPadding
+                            + root.spacing) - 10)
+                    : 180
             enableImplicitWidthAnimation: !root.taskNavigation
             enableImplicitHeightAnimation: !root.taskNavigation
             Keys.onLeftPressed: event => { event.accepted = root.moveTaskFocus(index, -1) }
