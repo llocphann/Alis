@@ -1,5 +1,20 @@
 # Issues/bugs
 
+- [x] **ABYSS-I08 — P0 Edit Abyss Layout QML fails to load (owner log, 2026-10-13):**
+  Installed `dev` source `d3d2bc4ecb5b06320d3b2a0a71c09055966c7626`
+  reports `AbyssEdgeEditor.qml:917:157: Property value set multiple times`
+  and parent `AbyssPerimeter.qml:726: Type AbyssEdgeEditor unavailable`.
+  Exact source confirms six compact sliders each declared
+  `Layout.minimumWidth` twice (`0` and `75*Appearance.fontSizeScale`).
+  Source commit `166518c3e283e82b80355ccab5507bddaddb6bc8` removes all
+  six redundant zero bindings without changing slider range or responsive
+  widths; `c2e6bc8e7eff691b7640747be90b664f9e4399e0` corrects the
+  duplicate-property regression matcher. Reinspected six rows and found
+  no repeated `Layout.*` bindings on any QML source line.
+  **Hoàn thành (bot báo xong) — Owner chưa verified.**
+  Focused source inspection PASS; native Quickshell/Niri reload, installed
+  SHA verification and full maintainer validation remain unrun/pending.
+
 **Quota checkpoint — 2026-10-12 18:08 ICT:** exact five-hour remaining
 **2%** triggered stop of all owned product/test processes. Weekly remaining
 7% is not the trigger. Source/cache `458ad7197` and evidence `484427acf`
