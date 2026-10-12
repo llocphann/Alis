@@ -502,7 +502,9 @@ Singleton {
         const original=Array.isArray(previous.repeatTemplate)
             && previous.repeatTemplate.length>1
             ? previous.repeatTemplate
-            : Occurrences.entries(previous)
+            : Array.isArray(previous.selectedTemplate)
+                && previous.selectedTemplate.length>0
+                ? previous.selectedTemplate : Occurrences.entries(previous)
         const sameMode=(previous.recurrence || "none")===mode
         const samePattern=original.length===slots.length
             && original.every((old,i)=>
@@ -530,9 +532,18 @@ Singleton {
                     startDate:slot.startDate,endDate:slot.endDate
                 }))
                 result.repeatCycleStart=history.length
+                delete result.selectedTemplate
             } else {
                 delete result.repeatTemplate
                 delete result.repeatCycleStart
+                // If a repeating Event is converted to one-time, its
+                // historical fired occurrences remain for history, but the
+                // editor re-selects only the explicitly chosen current dates.
+                if (history.length>0) {
+                    result.selectedTemplate=slots.map(slot=>({
+                        startDate:slot.startDate,endDate:slot.endDate
+                    }))
+                } else delete result.selectedTemplate
             }
         }
         root.list[position]=result
