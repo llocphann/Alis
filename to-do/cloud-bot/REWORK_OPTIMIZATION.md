@@ -793,6 +793,30 @@ run privileged installation just because manual buttons are retired.
   native small-screen, accessibility, permission-warning and owner review;
   SET-R03 stays [ ] OPEN.
 
+  **2026-10-12 continued Rework milestone (source-only, no runtime claim):**
+  45 additional descriptions abbreviated: Services 5, Interface 6,
+  Autostart 5, Niri 7, Themes 3, Bar 3, Tools 5, Quick 4,
+  Desktop Widgets 5, Monitor Visibility 1, Dock 1.
+  Implementation: `ac23efed9`, `f73458e42`, `c42f460f9`,
+  `b3ea019c8`, `9a79e3b4b`, `e427f8e3a`, `3b68c5500`,
+  `cb3d89ec3`, `82a1cbaff`, `bbc2e6897`, `908d3b47f`.
+  Translation additions in `507043a45` and `61add959d` retain
+  legacy keys to avoid breaking other users of older English strings.
+  The source contract now guards these 45 strings at `ee86c091c`
+  and `ad9ffb240`. At source `ad9ffb240`, connector-level read-only
+  assertions found **85/85 PASS, 0 FAIL** across 22 UI files for
+  the complete current cross-family concise-copy test dictionary.
+  This is **NOT** execution of the Python contract, QML parser,
+  full exact-SHA canonical test or live desktop. Local Git CLI
+  cannot resolve github.com in this environment, so no remote
+  clone/validator PASS has been observed. Preserve safety and behavior
+  disclaimers (notification history, 15-second display revert,
+  niri-owned autostart, screenshot local/no-AI limitations, original
+  recording retention and restart requirements).
+  SET-R03 remains OPEN: comprehensive on-screen copy inventory,
+  dynamic/optional Companion and Integration plugin UI, small screens,
+  accessibility/translation search and installed owner visual acceptance.
+
 - [x] **SET-R04 — Remove "Use opaque Material appearance" preset button — owner 2026-10-12:**
   [Owner: Alis dev; Rework/removal] Delete the **button** from
   `modules/abyss/settings/AbyssStyleSettings.qml` completely.
