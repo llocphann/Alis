@@ -1029,6 +1029,31 @@ host acceptance, not from an invented prior roadmap.
   recreated here. State: SOURCE PRESENT, RELEASE GATES OPEN.
   **Owner verified — 2026-10-12 (maintainer explicit confirmation, feature #27):** Hoàn thành / Owner verified. This newer confirmation supersedes the historical 'owner acceptance pending' text for this task. Preserve prior source, tests, package/hardware evidence and any recorded FAIL/SKIP unchanged; do not infer that unrun checks passed. Reopen only for a new requirement or reported regression.
 
+- [ ] **COMP-F01 — Install/update Companion automatically with Alis — owner clarification 2026-10-12:**
+  [Owner: Alis dev; New feature / installation integration] Alis must
+  install and update Companion itself rather than prompting users to clone,
+  choose or manually install the separate source repository.
+  Retain the separate `Alis-Companion` source and its immutable runtime
+  releases, pin a known-compatible source SHA in Alis, preserve the active
+  release on build failure, and use the normal Alis install/update/reinstall
+  lifecycle. Leave optional AI permissions and activation preference off
+  until the owner chooses them; never run a third-party build as root or
+  rewrite an owner's separate Companion checkout.
+  **Implementation milestone (source, 2026-10-12):** A pinned
+  `scripts/companion-manager.py` manager now runs during
+  `./setup install`, `reinstall`, `update` (including no-op and
+  package-managed update entry points). It delegates to the Companion
+  immutable/atomic installer, validates the activated source identity,
+  rejects foreign remotes and unsafe checkouts, and keeps setup from
+  claiming success after a failed sync. Settings no longer links to an
+  external manual installer. Offline synthetic lifecycle fixture added.
+  **Still OPEN:** exact-SHA canonical and actual first-time Rust build;
+  source/API/runtime startup, installed identity/restart/rollback, low
+  connectivity, owner acceptance. Staged system package `make install`,
+  Nix and Arch installation do not provision an arbitrary desktop user's
+  home; package-managed user provisioning needs separate packaging work
+  before claiming universal Alis auto-install. Do not mark owner verified.
+
 ## Cross-repository code ownership
 
 All task selection, classification, status, progress and completion for

@@ -1,19 +1,53 @@
-# Optional Companion: Hadanion
+# Alis Companion — integrated install, independently maintained source
 
-Companion development has moved to [llocphann/Hadanion](https://github.com/llocphann/Hadanion). Hadalis does not ship the Companion renderer, Blender assets, behavior daemon, Companion chat service or feature-owned development tools.
+Companion is an **integrated Alis feature**. Its implementation remains in
+[Alis-Companion](https://github.com/llocphann/Alis-Companion), while the Alis
+installer owns the user-visible install and update lifecycle.
 
-Install Hadanion separately following its README, then run `inir ipc hadanion refresh` or restart Hadalis. Enable it in Settings → Companion. It is optional and remains off by default; existing settings are preserved. Hadalis can boot and use its AI tab, Todo, Obsidian and Abyss surfaces without Hadanion.
+## Installing and updating
 
-Host API 1 consists of `services/Hadanion.qml`, `modules/abyss/HadanionSurface.qml`, finite read-only discovery, an optional Settings loader and the existing surface water/input/popup lease interfaces. No core QML file statically imports an external Companion module. Loading requires a compatible, complete package, enabled preference and Abyss family. Disabling unloads the session/output objects and their native child.
+Running `./setup install`, `./setup reinstall` or `./setup update` manages
+Companion automatically — **no separate Git clone, checkbox, Companion install
+command, or manual update is needed**. The selected compatible commit is recorded
+in `sdata/companion-revision.txt`; `scripts/companion-manager.py` obtains this
+exact revision in a dedicated cache and runs the Companion package's own build
+and immutable-release installer. Even a no-op core update repairs a missing
+Companion installation. Source fetch/build failures are reported as setup errors,
+not as successful full Alis installations.
 
-Runtime discovery checks a local developer override at `optional/hadanion/`, then `${XDG_DATA_HOME:-$HOME/.local/share}/hadanion/current`. The Hadanion installer owns versioned releases and the atomic current link; Hadalis installation/update never downloads or bundles it. A system-installed Hadalis does not need write access to its shell directory to use the user package.
+This desktop-user install uses `~/.local/share/hadanion` or `XDG_DATA_HOME`,
+and the managed source uses the user's `XDG_CACHE_HOME/alis/companion`.
+Installation never writes to an owner's separate Companion source checkout,
+requests root privileges for Companion, or modifies an existing foreign checkout.
+The external repository is pinned rather than tracking an unreviewed moving
+`main` revision. A later Alis update can advance the compatible source SHA.
 
-Compatibility remains for `abyss.companion`, `abyss.companionMind`, Settings slot 37, `wull chat/status`, Super+Alt+Comma and the private `inir/wull/chat.sqlite3` transcript. These retained names do not mean the implementation still belongs to Hadalis.
+The Companion package publishes under versioned `hadanion/releases/<sha>`
+directories and atomically updates `hadanion/current`. An unsuccessful build
+does not activate an incomplete release or delete old releases/user data.
+After update, Alis refreshes Companion IPC when possible or restarts its shell.
 
-General GGUF discovery/supervision now lives in `scripts/ai/` and remains available to the AI tab. Hadanion uses the shared text-session API and explicit journal helper inputs. User journal paths and permissions are unchanged.
+**System package installation boundary:** staged/system `make install`,
+Arch and Nix package builds are package-manager-owned and must remain offline,
+noninteractive, and DESTDIR-safe. Their installer hooks do not yet bootstrap
+Companion into an arbitrary user's HOME; for those installations, running
+`./setup update` as the desktop user performs Companion synchronization.
+Do not claim system package auto-install acceptance until its own package/dependency
+or first-user-setup route is implemented and tested.
 
-Companion work is now centrally tracked in
-[Alis dev TODO](../to-do/README.md), including visual/AI implementation
-and host acceptance. Alis-Companion retains the implementation source,
-technical contracts, evidence and immutable prior-checklist snapshots,
-but no separate active planning/status queue.
+## Runtime and permissions
+
+The core uses API 1 via `services/Hadanion.qml`,
+`modules/abyss/HadanionSurface.qml`, finite package discovery and a lazy
+Settings adapter. Although installation is automatic, **Companion activation
+and optional AI/model/Obsidian/memory permissions are not automatic**.
+Aqua/Octo remains controlled by the user's existing
+`abyss.companion.enabled` preference. No LLM is installed or launched at setup.
+
+Settings → Companion presents the installed extension, or a repair message if
+the compatible release cannot load. Retained IPC names (`wull`, `hadanion`),
+existing user settings and private transcripts remain compatible.
+
+Alis's canonical task board is [to-do/](../to-do/README.md). The standalone
+Companion repository retains source, versioned implementation and tests, not
+a separate active task board.

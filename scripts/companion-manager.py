@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+"""Install Alis-Companion as a managed part of Alis's user setup/update lifecycle.
+
+The source stays in Alis-Companion, but the user never needs to clone or
+install it separately. No implicit AI inference, model download or vault access.
+"""
+import argparse
+import fcntl
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+ALIS_ROOT = Path(__file__).resolve().parents[1]
+CANONICAL_REMOTE = "https://github.com/llocphann/Alis-Companion.git"
+REQUIRED = {
+    "session": "HadalisSession.qml",
+    "output": "HadalisOutput.qml",
+    "settings": "modules/settings/CompanionConfig.qml",
+    "binary": "native/bin/inir-companiond",
+}
+
+
+class CompanionInstallError(RuntimeError):
+    pass
+
+
+def run(*command, cwd=None, capture=False):
+    result = subprocess.run(command, cwd=cwd, text=True, check=True,
+                            stdout=subprocess.PIPE if capture else None)
+    return result.stdout.strip() if capture else ""
+
+
+def installed_revision(data_home):
+    data_root = data_home / "hadanion"
+    current = data_root / "current"
+    if not current.is_symlink():
+        return ""
+    try:
+        release = current.resolve(strict=True)
+        if not release.is_relative_to((data_root / "releases").resolve()):
+            return ""
+        manifest = release / "manifest.json"
+        if manifest.stat().st_size > 16384:
+            return ""
+        info = json.loads(manifest.read_text())
+        if info.get("id") != "hadanion" or type(info.get("hostApi")) is not int or info["hostApi"] != 1:
+            return ""
+        if any(info.get(key) != rel or not (release / rel).is_file() for key, rel in REQUIRED.items()):
+            return ""
+        if not os.access(release / REQUIRED["binary"], os.X_OK):
+            return ""
+        sha = info.get("sourceSha", "")
+        return sha if isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{40}", sha) else ""
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return ""
+
+
+def source_checkout(cache, remote, revision):
+    # A private, dedicated checkout: never reset the owner's repository.
+    checkout = cache / "source"
+    if checkout.is_symlink():
+        raise CompanionInstallError("Managed Companion checkout must not be a symlink")
+    if checkout.exists():
+        if not (checkout / ".git").is_dir():
+            raise CompanionInstallError("Managed Companion source path is not a Git checkout")
+        if run("git", "remote", "get-url", "origin", cwd=checkout, capture=True) != remote:
+            raise CompanionInstallError("Refusing to update an unexpected Companion remote")
+        if run("git", "status", "--porcelain", "--untracked-files=all", cwd=checkout, capture=True):
+            raise CompanionInstallError("Managed Companion checkout has local modifications; refusing overwrite")
+        run("git", "fetch", "--depth", "1", "origin", revision, cwd=checkout)
+        run("git", "checkout", "--detach", revision, cwd=checkout)
+    else:
+        with tempfile.TemporaryDirectory(prefix=".source-", dir=cache) as temporary:
+            target = Path(temporary) / "repo"
+            run("git", "clone", "--no-checkout", "--depth", "1",
+                "--single-branch", "--branch", "main", remote, str(target))
+            run("git", "fetch", "--depth", "1", "origin", revision, cwd=target)
+            run("git", "checkout", "--detach", revision, cwd=target)
+            target.rename(checkout)
+    if run("git", "rev-parse", "HEAD", cwd=checkout, capture=True) != revision:
+        raise CompanionInstallError("Fetched Companion identity differs from Alis's pinned revision")
+    if run("git", "status", "--porcelain", "--untracked-files=all", cwd=checkout, capture=True):
+        raise CompanionInstallError("Managed Companion source must remain clean")
+    info = json.loads((checkout / "manifest.json").read_text())
+    if info.get("id") != "hadanion" or info.get("hostApi") != 1:
+        raise CompanionInstallError("Incompatible Alis-Companion host API")
+    for key, rel in REQUIRED.items():
+        if info.get(key) != rel:
+            raise CompanionInstallError("Unexpected Companion runtime entrypoint")
+    return checkout
+
+
+def sync(remote, revision, data_home, cache):
+    if os.geteuid() == 0:
+        raise CompanionInstallError("Companion must be installed as the desktop user, never as root")
+    if not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise CompanionInstallError("Companion revision must be a full 40-character commit SHA")
+    cache.mkdir(parents=True, exist_ok=True)
+    if cache.is_symlink():
+        raise CompanionInstallError("Managed Companion cache must not be a symlink")
+    lock = cache / ".install.lock"
+    if lock.is_symlink():
+        raise CompanionInstallError("Refusing foreign Companion installation lock")
+    with lock.open("a") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        if installed_revision(data_home) == revision:
+            print("Alis-Companion is already installed at the pinned revision " + revision[:12])
+            return
+        checkout = source_checkout(cache, remote, revision)
+        print("Building Alis-Companion " + revision[:12] + " under the desktop account", flush=True)
+        # Reuse Companion's own immutable-release/atomic-current installer.
+        # A failed build leaves the previous active release intact.
+        run("make", "-C", str(checkout), "install")
+        if installed_revision(data_home) != revision:
+            raise CompanionInstallError("Companion installer did not activate the expected release")
+        print("Alis-Companion integrated successfully (" + revision[:12] + ")", flush=True)
+    # Runtime refresh is best effort; setup update also restarts the Alis shell.
+    launcher = shutil.which("inir")
+    if launcher:
+        try:
+            subprocess.run([launcher, "ipc", "hadanion", "refresh"], timeout=5,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=["sync", "status"])
+    parser.add_argument("--repo-url", default=CANONICAL_REMOTE,
+                        help="Explicit local fixture source for offline developer tests")
+    parser.add_argument("--revision", default=None, help="Explicit pinned revision override for offline tests")
+    args = parser.parse_args()
+    revision = args.revision or (ALIS_ROOT / "sdata/companion-revision.txt").read_text().strip()
+    data_home = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local/share")
+    cache_home = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
+    cache = cache_home / "alis/companion"
+    if args.action == "status":
+        print(json.dumps({"expected": revision, "installed": installed_revision(data_home),
+                          "ready": installed_revision(data_home) == revision}))
+        return
+    sync(args.repo_url, revision, data_home, cache)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (CompanionInstallError, OSError, subprocess.CalledProcessError,
+            ValueError, json.JSONDecodeError) as exc:
+        print("Alis-Companion integration failed: " + str(exc), file=sys.stderr)
+        raise SystemExit(1)
