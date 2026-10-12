@@ -1744,6 +1744,18 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   multiple outputs, video and external backend failure acceptance.
   **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Wallpaper ready-slot/fallback product source repair and focused apply/recovery tests reported complete; owner live Liquid/Melt-path behavior remains unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
+- [x] **UTIL-I02 — Mirror status misreports selected devices/manual Stop (source diagnosis 2026-10-12):**
+  `DisplayMode.qml` previously formed `onStarted` text from mutable UI
+  dropdown selections and suppressed all expected-stop status, including a
+  direct user Stop request. Track the launch-time identity and direct Stop
+  intent independently; present actual process source/target on start,
+  a stopped acknowledgement on manual exit, and do not overwrite a
+  newer Apply/hotplug status. Related: UTIL-F01. Source:
+  Alis dev `fa935f2f8ef06e1e71d42a38f42641ff7db2cbca`.
+  The pure JS policy/execution fixture has **34 assertions PASS** on exact
+  modified source; full canonical native/wl-mirror/owner acceptance NOT RUN.
+  **Hoàn thành (bot báo xong) — Owner chưa verified.**
+
 - [ ] **UTIL-I01 — Cheatsheet close opens Update popup:** qualify the repaired independent
   close/visibility ownership through first and repeated slide-out. No unrelated
   Update popup should appear or dismiss over it.

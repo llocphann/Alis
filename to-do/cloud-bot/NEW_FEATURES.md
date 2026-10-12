@@ -890,6 +890,15 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   This is a *bounded source milestone*, not proof of live wl-mirror, device
   recovery, PipeWire or Night Light acceptance. Owner/multi-monitor and
   hardware tests remain OPEN; do not mark UTIL-F01 complete.
+  **Status accuracy repair, 2026-10-12 — Alis dev `fa935f2f8ef06e1e71d42a38f42641ff7db2cbca`:**
+  Mirror start now reports the immutable launched source/target instead of
+  possibly reselected dropdown values. Explicit user Stop announces mirror
+  termination; internal Apply/hotplug stops leave their own status intact
+  and a subsequent Apply supersedes a pending manual Stop. The same
+  DisplayModePlan JS fixture was executed directly on the exact modified
+  source with **34 focused assertions PASS** (planning, rollback, mirror
+  pairs/status); physical Niri/wl-mirror, hotplug and canonical native
+  validation were NOT RUN. UTIL-F01 remains OPEN.
 
 - [ ] **SYS-F01 — Non-Arch optional system gateway:** add trusted distro-owned
   provisioning beyond Arch for Hadalird helpers. Keep root gateway/policy separate
