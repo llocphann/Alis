@@ -532,7 +532,7 @@ ContentPage {
 
         StyledText {
             Layout.fillWidth: true
-            text: Translation.tr("Choose the screen region this widget should occupy. The widget stays attached to that zone when its size or the screen geometry changes.")
+            text: Translation.tr("Keep widget in its selected screen zone as dimensions change.")
             color: Appearance.colors.colSubtext
             font.pixelSize: Appearance.font.pixelSize.smaller
             wrapMode: Text.WordWrap
@@ -1641,7 +1641,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Apply one wallpaper-generated color preset to every built-in desktop widget. You can still tune any widget individually below.")
+                text: Translation.tr("Use one wallpaper palette for built-in widgets; individual overrides remain.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 wrapMode: Text.WordWrap
@@ -1657,7 +1657,7 @@ ContentPage {
                 onToggledByUser: checked => Config.setNestedValue(
                     "background.widgets.adaptColorsToWallpaperPosition", checked)
                 StyledToolTip {
-                    text: Translation.tr("Sample the wallpaper behind each widget to adjust readable ink and semantic foreground choices. Off keeps colors stable when widgets move.")
+                    text: Translation.tr("Adapt widget text to wallpaper; off keeps colors stable when moved.")
                 }
             }
 
@@ -4839,7 +4839,7 @@ ContentPage {
             // Description
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("QML widgets you create or install. Place widget folders in ~/.config/inir/widgets/ — each needs a widget.json manifest and a .qml file.")
+                text: Translation.tr("Custom QML widgets: ~/.config/inir/widgets/ (widget.json and .qml required).")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -4941,7 +4941,7 @@ ContentPage {
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: Translation.tr("Creates a template with all imports, services, and an example layout. Edit the .qml file to customize.")
+                    text: Translation.tr("Create an editable .qml template with imports and sample layout.")
                     color: Appearance.colors.colSubtext
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     wrapMode: Text.WordWrap
