@@ -96,10 +96,17 @@ function project(local, external, value, firstDay) {
                 var duration=baseEnd && baseEnd>base ? baseEnd-base : hour;
                 var allDaySpan=event.allDay && baseEnd && baseEnd>base
                     ? Math.max(1,civilIndex(baseEnd)-civilIndex(base)) : 1;
+                // A repeating multi-day group is one pattern. Project every
+                // day of its currently active cycle even when an earlier day
+                // has already fired. Archive cycles render as history only.
+                var activeGroup=Array.isArray(event.repeatTemplate)
+                    && event.repeatTemplate.length>1
+                    && (event.recurrence || "none")!=="none"
+                    && slotIndex>=Number(event.repeatCycleStart || 0);
                 var occurrenceSource=Object.assign({},event,{
                     startDate:base.toISOString(),dateTime:base.toISOString(),
                     endDate:baseEnd && baseEnd>base ? baseEnd.toISOString() : "",
-                    notified:slot.notified===true
+                    notified:slot.notified===true && !activeGroup
                 });
                 var generated=starts(occurrenceSource,days,pair[1],event.allDay
                     ? allDaySpan*86400000 : duration);
