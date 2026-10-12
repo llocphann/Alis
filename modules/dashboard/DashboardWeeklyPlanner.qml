@@ -10,6 +10,7 @@ import qs.modules.sidebarRight.events
 import qs.modules.common.functions
 import qs.modules.abyss.looks
 import "WeeklyPlannerPolicy.js" as Planner
+import "PlannerGesture.js" as Gesture
 
 Item {
     id: root
@@ -119,6 +120,21 @@ Item {
     }
     function changeWeek(count): void {followToday=false;selectedDate=Planner.addDays(selectedDate,count*7)}
     function showToday(): void {followToday=true;selectedDate=new Date();scrollWorkingHours()}
+    function commitTimedGesture(row, mode, dx, dy): void {
+        if (typeof root.localBackend.rescheduleOccurrence !== "function") return
+        const candidate=Gesture.rangeForGesture(row,mode,dx,dy,
+            root.columnWidth,root.hourHeight)
+        if (!candidate) return
+        if (!root.localBackend.rescheduleOccurrence(row.event.id,
+                row.occurrenceIndex,candidate.startIso,candidate.endIso))
+            console.warn("[WeeklyPlanner] Timed event gesture not saved")
+    }
+    function editOccurrence(row): void {
+        if (row.source!=="local") return
+        root.requestEventsDialog(Object.assign({},row.event,{
+            _editOccurrenceIndex:row.occurrenceIndex
+        }))
+    }
     function scrollWorkingHours(): void {
         viewport.contentY=Math.min(Math.max(0,viewport.contentHeight-viewport.height),hourHeight*8)
     }
