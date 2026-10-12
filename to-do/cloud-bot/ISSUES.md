@@ -1391,6 +1391,13 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   geometry and non-Abyss layer1 fallback are unchanged. A source
   regression and optional isolated-Niri QML test assert this separation,
   live palette rebinding, readable ink and card identity.
+  **2026-10-12 follow-up (cloud):** an uncovered alpha edge case remained:
+  mixing the partially transparent Abyss content layer with a fully
+  opaque accent left 12% alpha even when the user's Content opacity was
+  0%. The inner card now keeps the same tint RGB while its alpha follows
+  `AbyssStyle.contentOpacity` exactly. Source and isolated QML tests
+  explicitly cover opacity 0, 0.25, 0.78 and 1; native owner acceptance
+  and full exact-SHA canonical remain OPEN, not claimed to pass.
   Follow-up: run actual QML, owner-provided wallpaper/theme cycles and
   Sidebar Left Intelligence/other tabs on installed multi-output desktop;
   do not claim visual acceptance or close the issue yet.
