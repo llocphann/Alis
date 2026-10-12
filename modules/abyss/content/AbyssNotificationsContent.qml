@@ -21,6 +21,10 @@ Item {
     property real settledPopupHeight: 0
     property bool popupLayoutReady: false
     readonly property real desiredHeight: root.settledPopupHeight
+    // Read-only and only consumed on explicit diagnostic IPC snapshot:
+    // distinguish ListView's provisional layout from the committed size.
+    readonly property real measuredPopupHeight:
+        Number(popupLoader.item?.contentHeight ?? 0)
     function schedulePopupMeasurement(): void {
         if (root.center || !(Notifications.popupList?.length > 0))
             return

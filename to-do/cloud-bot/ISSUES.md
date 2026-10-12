@@ -440,6 +440,17 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   next owner action: sync dev, install QML, reproduce the 21:55
   recording steps, confirm tall sidebar never appears, observe
   layout stability AND whether perceived animation lag has ended.
+  **Cloud diagnostic delivery 2026-10-12:** the existing opt-in
+  `abyssHoverProbe.snapshot` now includes bounded, read-only notification
+  toast requested/settled/raw heights, open/resident/reveal phase and
+  Recording/Center flags for each output, with no paths or message bodies.
+  `scripts/collect-abyss-notification-frames.py` validates installed QML
+  parity, captures baseline and owner-triggered event on the SAME opt-in
+  QQuickWindow frame/50ms heartbeat probe while interleaving bounded
+  timestamped sanitized snapshots. It never starts/stops recording or
+  changes UI configuration; reports when the requested event was NOT
+  observed. This is diagnostic infrastructure only, NOT a verified FPS
+  improvement or root cause. Owner/local native evidence still required.
   Preserve the separately reverted hover/bridge work.
   **Original video and independent bug report:** Owner video
   `2026-10-10_21.55.09.mp4` (1920×1200, 30fps, ~8.73s,
@@ -1368,6 +1379,14 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   triggers are smooth with notifications and recording still functional and
   confirmed by the owner. Link: generalized presentation jank is tracked in
   [Rework](REWORK_OPTIMIZATION.md). State: OPEN, native evidence pending.
+  **2026-10-12 cloud instrumentation:** use the opt-in, finite
+  `scripts/collect-abyss-notification-frames.py --phase record-start`
+  or `--phase edge-hover` on an installed identical-SHA Abyss session;
+  separately use `--phase record-stop` for NOTIF-I01. It correlates
+  sanitized recording/toast phase transitions and Center popup state with
+  the SAME-window frame-swapped and Qt heartbeat timestamps. Explicit
+  receipt distinguishes event not observed / IPC failure / stale install.
+  No owner frame timing yet; causal diagnosis and acceptance remain OPEN.
 
 - [ ] **SIDE-I01 — Sidebar Left inner content color does not match the active Abyss theme — owner screenshots 2026-10-12:**
   [Owner: Alis dev; Bug / Material theme parity] The inner content/body

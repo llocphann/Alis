@@ -561,6 +561,25 @@ Scope {
                                 w:content.width,h:content.height} : null
                         }
                     }),
+                    // NOTIF-I01/I02: sampled only on explicit opt-in IPC.
+                    // No notification text, filename, image, process command,
+                    // screenshot pixels or other user contents are exposed.
+                    notificationPresentation:{
+                        toastCount:Notifications.popupList.length,
+                        inhibited:Boolean(Notifications.popupInhibited),
+                        recording:Boolean(RecorderStatus.isRecording),
+                        centerOpen:Boolean(GlobalStates.notificationCenterOpen),
+                        toastOpen:Boolean(notification.open),
+                        toastResident:Boolean(notification.visualResident),
+                        toastRevealProgress:Number(notification.progress ?? 0),
+                        toastEdge:String(notification.edge ?? ""),
+                        toastSpan:Number(notification.span ?? 0),
+                        toastDepth:Number(notification.depth ?? 0),
+                        toastAlong:Number(notification.along ?? 0),
+                        toastDesiredHeight:Number(notification.contentItem.item?.desiredHeight ?? 0),
+                        toastMeasuredHeight:Number(notification.contentItem.item?.measuredPopupHeight ?? 0),
+                        toastLayoutReady:Boolean(notification.contentItem.item?.popupLayoutReady)
+                    },
                     genericPopup:{
                         activeKind:String(popup.activeKind ?? ""),
                         desiredKind:String(popup.desiredKind ?? ""),
