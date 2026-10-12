@@ -753,7 +753,7 @@ run privileged installation just because manual buttons are retired.
   layout/hierarchy and all functional behavior. Acceptance:
   audited copy inventory and brief English UI labels in every
   Settings family; long translations, small screens and native
-  owner screenshot review. State: IN PROGRESS / OPEN; Abyss pass only.
+  owner screenshot review. State: IN PROGRESS / OPEN; scoped Abyss, Sidebar and Waffle passes.
 
   **2026-10-12 scoped source milestone (not entire task):** shortened
   11 Abyss help/description strings, merged the two verbose Modules notes
@@ -765,7 +765,17 @@ run privileged installation just because manual buttons are retired.
   Companion and dynamically injected Settings, accessibility/localization,
   exact-SHA validator and owner visual/scale approval.
 
-- [ ] **SET-R04 — Remove "Use opaque Material appearance" preset button — owner 2026-10-12:**
+  **2026-10-12 additional cross-family pass:** shortened Sidebar corner/
+  hover tooltips (`3210cc2f2`), Waffle General (`42a7360cd`),
+  Background (`4fba99955`) and Interface (`209684dd6`) help text;
+  synchronized English catalog (`62b2cd27c`, `829e6a60b`,
+  `1d85bd00d`) and added regression guards (`32d3cd9be`,
+  `9a536d996`). At GitHub HEAD `9a536d996`, 30/30 static source
+  assertions PASS, 0 FAIL. Python/QML, canonical, native and owner
+  acceptance have NOT been executed or claimed. SET-R03 remains OPEN
+  for the rest of the Settings page inventory and native visual review.
+
+- [x] **SET-R04 — Remove "Use opaque Material appearance" preset button — owner 2026-10-12:**
   [Owner: Alis dev; Rework/removal] Delete the **button** from
   `modules/abyss/settings/AbyssStyleSettings.qml` completely.
   This button performs a real batch `Config.setNestedValues`
