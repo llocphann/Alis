@@ -2436,8 +2436,8 @@ open_detached_qml_window() {
 }
 
 resolve_setup_dir() {
-    if [[ -x "$launcher_root/setup" && -f "$launcher_root/shell.qml" ]]
-            && bash -n "$launcher_root/setup" 2>/dev/null; then
+    if [[ -x "$launcher_root/setup" && -f "$launcher_root/shell.qml" ]] &&
+            bash -n "$launcher_root/setup" 2>/dev/null; then
         printf '%s' "$launcher_root"
         return
     fi
@@ -2458,8 +2458,8 @@ resolve_setup_dir() {
     # Git worktrees store .git as a file, not a directory. Recover from
     # either checkout layout when a copied runtime setup is outdated/broken.
     if [[ -n "$stored_repo" && ( -d "${stored_repo}/.git" || -f "${stored_repo}/.git" )
-            && -x "${stored_repo}/setup" && -f "${stored_repo}/shell.qml" ]]
-            && bash -n "${stored_repo}/setup" 2>/dev/null; then
+            && -x "${stored_repo}/setup" && -f "${stored_repo}/shell.qml" ]] &&
+            bash -n "${stored_repo}/setup" 2>/dev/null; then
         printf '%s' "$stored_repo"
         return
     fi
