@@ -441,7 +441,7 @@ ContentPage {
                 Layout.topMargin: 4
                 Layout.leftMargin: 4
                 Layout.rightMargin: 4
-                text: Translation.tr("Paste an ICS/iCal URL from Google Calendar, Outlook, or any CalDAV provider. No account login needed — just the calendar URL.")
+                text: Translation.tr("Paste a compatible ICS/iCal feed URL; no account sign-in within Alis.")
                 font.pixelSize: Appearance.font.pixelSize.smallest
                 color: Appearance.colors.colSubtext
                 wrapMode: Text.WordWrap
