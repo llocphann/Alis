@@ -208,4 +208,57 @@ for path in ("modules/settings/AiConfig.qml", "modules/waffle/settings/pages/WAi
     assert "process environment" in source, path
     assert "commands or config files" in source, path
 
+
+# SET-R03: additional core Settings groups preserve semantics when copy is brief:
+# Niri's 15-second revert, manual notification counters, owned/external
+# autostarts, compositor scope and reduced-motion/theme caveats.
+RUNTIME_SETTINGS_HELP = {
+    "ServicesConfig.qml": (
+        "System, network, search, updates and data sources.",
+        "Run setup in a terminal for full output; off updates silently with bar status.",
+        "Enter city or coordinates; blank uses IP. Weather: wttr.in/Open-Meteo; air quality: Open-Meteo.",
+        "Check for shell updates and notify on the bar.",
+        "Tolerates typos but may misread acronyms (e.g., GIMP).",
+    ),
+    "InterfaceConfig.qml": (
+        "Panels, notifications, widgets and floating tools.",
+        "Sync badges with live popup count, including externally cleared alerts; off uses manual count.",
+        "Hover bottom-right for history; assigned compositor hot corners take priority.",
+        "Mark history read and retract matching toasts (shared read flag).",
+        "No timezones yet; add or reorder regional suggestions.",
+        "Silence daily popups; notifications remain in history.",
+    ),
+    "AutostartConfig.qml": (
+        "Manage startup apps and commands written to niri.",
+        "Niri launches these at login; they keep running after shell restarts.",
+        "App autostart works only while niri is the active compositor.",
+        "Toggle niri login apps. External entries must be edited in the startup file below.",
+        "Niri shell commands support pipes, environment variables and &&.",
+    ),
+    "NiriConfig.qml": (
+        "Tune displays, input, layout and rules; unconfirmed display previews revert.",
+        "Common niri options are validated; advanced options remain in raw KDL.",
+        "Maximize a lone tiled window; restore its size when another opens.",
+        "Display previews revert after 15 seconds unless confirmed.",
+        "Choose an app preset or custom command.",
+        "Gap from tiled windows to the Screen Edge/Bar; Edge thickness is reserved separately.",
+        "Higher stiffness reacts faster; damping reduces bounce.",
+    ),
+    "ThemesConfig.qml": (
+        "Material colors, typography, motion and advanced themes.",
+        "Choose light/dark from wallpaper brightness; overrides manual mode on wallpaper change.",
+        "Use complementary shell colors; external apps retain their colors.",
+    ),
+    "BarConfig.qml": (
+        "Shared shadow for Edge, popups, Dock, Sidebar and Dashboard; hidden in fullscreen/lock.",
+        "Classic Material settings; Waffle has separate taskbar controls.",
+        "Horizontal and vertical module layouts are separate; visibility is shared.",
+    ),
+}
+for page, hints in RUNTIME_SETTINGS_HELP.items():
+    source = (ROOT / "modules" / "settings" / page).read_text(encoding="utf-8")
+    for hint in hints:
+        assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
+        assert EN_US.get(hint) == hint, (page, hint)
+
 print("Settings concise-copy/shared-surface contract: PASS")
