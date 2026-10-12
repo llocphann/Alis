@@ -344,4 +344,18 @@ tlp_hint = "Install Hadalird; enable TLP in Settings → Integrations."
 assert f"Translation.tr({json.dumps(tlp_hint, ensure_ascii=False)})" in waffle_tlp_source
 assert EN_US.get(tlp_hint) == tlp_hint
 
+
+# Shared Themes/Effects and Waffle parent must retain concise and safe help.
+OTHER_SETTINGS_HELP = {
+    "EffectsConfig.qml": ("Set rendering policy, then adjust specific effects.",),
+    "CustomThemeEditor.qml": ("Light mode is experimental; start with a light preset (Angel Light, Latte or Sakura).", "Changes preview live; adjust individual colors as needed.",),
+    "ShellLayoutConfig.qml": ("Arrange persistent surfaces here or on the desktop; both use live layout.",),
+    "WaffleConfig.qml": ("Waffle-only settings; choose Waffle in Modules → Panel Style.", "Waffle wallpaper, taskbar, themes and switching.", "Backdrop appears behind Niri Overview (Mod+Tab).",),
+}
+for page, hints in OTHER_SETTINGS_HELP.items():
+    source = (ROOT / "modules" / "settings" / page).read_text(encoding="utf-8")
+    for hint in hints:
+        assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
+        assert EN_US.get(hint) == hint, (page, hint)
+
 print("Settings concise-copy/shared-surface contract: PASS")
