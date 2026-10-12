@@ -15,7 +15,13 @@ var abyssPanels = [
     "iiControlPanel", "iiDashboard", "iiRegionSelector", "iiTilingOverlay", "iiWallpaperSelector",
     "iiWallpaperLauncher", "iiCoverflowSelector", "iiShellUpdate", "iiRecordingOsd"
 ];
-// Seen-but-disabled panels remain disabled on subsequent visits. A family's
+function mandatoryPanels(family) { return normalize(family)==="abyss" ? ["abyssPerimeter"] : []; }
+function reconcileMandatory(family,enabled) {
+    var result=Array.from(enabled || []);
+    mandatoryPanels(family).forEach(function(id) {if(result.indexOf(id)<0)result.push(id);});
+    return result;
+}
+// Seen-but-disabled optional panels remain disabled on subsequent visits. A family's
 // first explicit visit enables its own defaults, without reviving shared panels
 // the user disabled in another family.
 function ensure(family, base, enabled, known, visited) {
@@ -32,6 +38,8 @@ function ensure(family, base, enabled, known, visited) {
             result.enabled.push(id);
         if (unseen) result.known.push(id);
     }
+    result.enabled=reconcileMandatory(family,result.enabled);
+    mandatoryPanels(family).forEach(function(id) {if(result.known.indexOf(id)<0)result.known.push(id);});
     return result;
 }
 

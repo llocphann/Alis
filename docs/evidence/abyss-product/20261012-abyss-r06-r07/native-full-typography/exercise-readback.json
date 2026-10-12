@@ -1,0 +1,23 @@
+{
+  "enabledPanels": [
+    "abyssPerimeter"
+  ],
+  "typography": {
+    "mainFont": "DejaVu Sans",
+    "monospaceFont": "JetBrainsMono Nerd Font",
+    "sizeScale": 1.25,
+    "syncWithSystem": true,
+    "titleFont": "Gabarito",
+    "variableAxes": {
+      "grad": 150,
+      "wdth": 105,
+      "wght": 300
+    }
+  },
+  "legacyClock": {
+    "dateFontFamily": "DejaVu Sans Mono",
+    "datePixelSize": 31,
+    "timeFontFamily": "DejaVu Sans Mono",
+    "timePixelSize": 39
+  }
+}

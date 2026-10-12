@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-mandatory-type-ljnnum_2/shell.qml"
+  INFO: Shell ID: "6bd64a2d1611d87522a96619860d59bb" Path ID "6bd64a2d1611d87522a96619860d59bb"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/ujep1n3smt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1184663.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-mandatory-type-ljnnum_2/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-mandatory-type-ljnnum_2/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-mandatory-type-ljnnum_2/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: ABYSS_MANDATORY_TYPE_NATIVE_PASS restart 9 checks 0 frames

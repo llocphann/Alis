@@ -1,0 +1,5 @@
+  INFO: Launching config: "/tmp/alis-mandatory-type-7kp0e5j4/shell.qml"
+  INFO: Shell ID: "34e141d0ad727b0bf7c68d93d3a8cbe0" Path ID "34e141d0ad727b0bf7c68d93d3a8cbe0"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/ynbpwg3smt/log.qslog"
+ ERROR: Failed to load configuration
+ ERROR:   caused by @shell.qml[23:103]: Unexpected token `;'

@@ -460,50 +460,57 @@ ContentPage {
                 }
             }
 
-            ContentSubsection {
-                title: Translation.tr("Clock")
+            SettingsNote { visible:Config.options?.panelFamily==="abyss";text:Translation.tr("Clock follows Typography") }
+            Loader {
+                Layout.fillWidth:true
+                active:Config.options?.panelFamily!=="abyss"
+                sourceComponent:Component {
+                    ContentSubsection {
+                        title: Translation.tr("Clock")
 
-                ConfigRow {
-                    uniform: true
+                        ConfigRow {
+                            uniform: true
 
-                    FontSelector {
-                        id: timeFontSelector
-                        label: Translation.tr("Time font")
-                        icon: "schedule"
-                        selectedFont: Config.options?.bar?.clock?.timeFontFamily ?? ""
-                        onSelectedFontChanged: Config.setNestedValue("bar.clock.timeFontFamily", selectedFont)
-                    }
+                            FontSelector {
+                                id: timeFontSelector
+                                label: Translation.tr("Time font")
+                                icon: "schedule"
+                                selectedFont: Config.options?.bar?.clock?.timeFontFamily ?? ""
+                                onSelectedFontChanged: Config.setNestedValue("bar.clock.timeFontFamily", selectedFont)
+                            }
 
-                    ConfigSpinBox {
-                        icon: "format_size"
-                        text: Translation.tr("Time size (px)")
-                        value: Config.options?.bar?.clock?.timePixelSize ?? 0
-                        from: 0
-                        to: 64
-                        stepSize: 1
-                        onValueChanged: Config.setNestedValue("bar.clock.timePixelSize", value)
-                    }
-                }
+                            ConfigSpinBox {
+                                icon: "format_size"
+                                text: Translation.tr("Time size (px)")
+                                value: Config.options?.bar?.clock?.timePixelSize ?? 0
+                                from: 0
+                                to: 64
+                                stepSize: 1
+                                onValueChanged: Config.setNestedValue("bar.clock.timePixelSize", value)
+                            }
+                        }
 
-                ConfigRow {
-                    uniform: true
+                        ConfigRow {
+                            uniform: true
 
-                    FontSelector {
-                        id: dateFontSelector
-                        label: Translation.tr("Date font")
-                        icon: "font_download"
-                        selectedFont: Config.options?.bar?.clock?.dateFontFamily ?? ""
-                        onSelectedFontChanged: Config.setNestedValue("bar.clock.dateFontFamily", selectedFont)
-                    }
+                            FontSelector {
+                                id: dateFontSelector
+                                label: Translation.tr("Date font")
+                                icon: "font_download"
+                                selectedFont: Config.options?.bar?.clock?.dateFontFamily ?? ""
+                                onSelectedFontChanged: Config.setNestedValue("bar.clock.dateFontFamily", selectedFont)
+                            }
 
-                    ConfigSpinBox {
-                        icon: "format_size"
-                        text: Translation.tr("Date size (px)")
-                        value: Config.options?.bar?.clock?.datePixelSize ?? 0
-                        from: 0
-                        to: 64
-                        stepSize: 1
-                        onValueChanged: Config.setNestedValue("bar.clock.datePixelSize", value)
+                            ConfigSpinBox {
+                                icon: "format_size"
+                                text: Translation.tr("Date size (px)")
+                                value: Config.options?.bar?.clock?.datePixelSize ?? 0
+                                from: 0
+                                to: 64
+                                stepSize: 1
+                                onValueChanged: Config.setNestedValue("bar.clock.datePixelSize", value)
+                            }
+                        }
                     }
                 }
             }

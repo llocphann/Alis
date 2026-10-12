@@ -1,0 +1,21 @@
+  INFO: Launching config: "/tmp/alis-mandatory-type-edri9j4v/shell.qml"
+  INFO: Shell ID: "ce8ef4c9f8f97e778ef2811ad30c52e9" Path ID "ce8ef4c9f8f97e778ef2811ad30c52e9"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/a3dp3l3smt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1183341.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-mandatory-type-edri9j4v/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-mandatory-type-edri9j4v/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-mandatory-type-edri9j4v/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-mandatory-type-edri9j4v/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/alis-mandatory-type-edri9j4v/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-mandatory-type-edri9j4v/state/quickshell/states.json failed: File does not exist.
+ DEBUG qml: Failed to load persistent states file: 2
+ DEBUG qml: [Persistent] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fdce235c880)
+  WARN scene: QML IpcHandler at @modules/abyss/critical/ShellAbyssCriticalPanels.qml[80:5]: Handler was registered but will not be used because another handler is registered for target abyssHostProbe
+ ERROR qml: ABYSS_MANDATORY_TYPE_NATIVE_FAIL Property 'replaceAll' of object DejaVu Sans is not a function run@qs:@/qs/shell.qml:50
+expression for onTriggered@qs:@/qs/shell.qml:68

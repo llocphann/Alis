@@ -228,7 +228,7 @@ ColumnLayout {
                 columnSpacing: 10
 
                 Repeater {
-                    model: FamilyPolicy.abyssPanels.filter(id => id.startsWith("abyss"))
+                    model: FamilyPolicy.abyssPanels.filter(id => id.startsWith("abyss") && !FamilyPolicy.mandatoryPanels("abyss").includes(id))
                     SettingsSwitch {
                         required property string modelData
                         Layout.fillWidth: true

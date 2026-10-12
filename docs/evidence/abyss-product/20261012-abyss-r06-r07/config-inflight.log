@@ -1,0 +1,1 @@
+CONFIG_WRITE_RACE_PASS in-memory and persisted state survive all four overlapping saves

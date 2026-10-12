@@ -109,9 +109,9 @@ Item {
 
     LazyLoader {
         id: perimeterLoader
+        objectName:"abyssPerimeterLoader"
         active: Config.ready
             && root.perimeterInitialMountReady
-            && (Config.options?.enabledPanels ?? []).includes("abyssPerimeter")
             && !root.diagnosticPerimeterUnmounted
         source: "../AbyssPerimeter.qml"
     }

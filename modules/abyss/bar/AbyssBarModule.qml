@@ -77,7 +77,7 @@ Item {
             : root.kind === "shellUpdate" ? update : root.kind === "weather" ? weather : taskbar
     }
     Component { id: resources; Shared.Resources {} }
-    Component { id: clock; Shared.ClockWidget { showDate: Config.options?.bar?.verbose ?? true } }
+    Component { id: clock; Shared.ClockWidget { sharedTypography:true; showDate: Config.options?.bar?.verbose ?? true } }
     Component { id: media; Shared.Media { edgeHostedExpansion: true } }
     Component { id: battery; Shared.BatteryIndicator {} }
     // Launcher follows the same ownership model as Battery: the source control

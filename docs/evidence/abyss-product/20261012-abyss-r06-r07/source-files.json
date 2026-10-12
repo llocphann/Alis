@@ -1,0 +1,11 @@
+{
+  "modules/abyss/bar/AbyssBarModule.qml": "a77919149fce53a6909668aff0bdd2a0cf54ce654364f60836c9bac432cc1619",
+  "modules/abyss/critical/ShellAbyssCriticalPanels.qml": "cd7002233f4cf168a762af553a842fd1fc633a33e2dd96ab878971f828b7be09",
+  "modules/abyss/settings/AbyssStyleSettings.qml": "7c3334a6c1b50a0d77218517a3dca43e4e22f8c422972482b68e40abd2d4a33a",
+  "modules/bar/ClockWidget.qml": "e673aa2e574b228c081a7daeca770fe5589a63842c6b3841ca91cdd24f57b727",
+  "modules/common/Config.qml": "1f34dc53db7d2577435433ebda5d8a9379d3cf5801eb78ade885dd9523545fd9",
+  "modules/common/PanelFamilyPolicy.js": "8e8270c011eb7bb21ccd494ca4adc1f5203ee501d45196a6cffb65c3b44182b7",
+  "modules/settings/BarConfig.qml": "4280c693e170c022a7e6ccb406d750711071ec57771aa53be6e76648770170ad",
+  "scripts/test-abyss-mandatory-panels.mjs": "628338415ce56add8dfe5eb2fc4f90e7b380f9df68b1c16311b5e75ed5b75466",
+  "scripts/test-abyss-mandatory-typography-runtime.py": "39a4036888365703cd01f9475fe3b8faaf742e41be4ceae039fb95f2fe4616ec"
+}

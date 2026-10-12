@@ -1,0 +1,88 @@
+  INFO: Launching config: "/tmp/alis-mandatory-type-a6y1kbg7/shell.qml"
+  INFO: Shell ID: "3b566289cf4ed26bbbcf82b95679084c" Path ID "3b566289cf4ed26bbbcf82b95679084c"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/v9cppi3smt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1182278.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-mandatory-type-a6y1kbg7/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-mandatory-type-a6y1kbg7/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-mandatory-type-a6y1kbg7/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-mandatory-type-a6y1kbg7/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/alis-mandatory-type-a6y1kbg7/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-mandatory-type-a6y1kbg7/state/quickshell/states.json failed: File does not exist.
+ DEBUG qml: Failed to load persistent states file: 2
+ DEBUG qml: [Persistent] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fee5398eb00)
+[Weather] private test location/status redacted
+[Weather] private test location/status redacted
+[Weather] private test location/status redacted
+ DEBUG qml: [ShellUpdates] Loading repo path from version.json...
+ DEBUG qml: [ShellUpdates] No repo_path in version.json, searching for repository...
+ DEBUG qml: [ShellUpdates] Repository not found, using config dir: /tmp/alis-mandatory-type-a6y1kbg7/.
+ DEBUG qml: [ShellUpdates] Update feature will not be available
+ DEBUG qml: [ShellUpdates] Git available: false
+[Weather] private test location/status redacted
+ ERROR qml: ABYSS_MANDATORY_TYPE_NATIVE_FAIL QtQuickTest::fail tryVerify@qrc:/qt-project.org/imports/QtTest/TestCase.qml:603
+run@qs:@/qs/shell.qml:36
+expression for onTriggered@qs:@/qs/shell.qml:68
+  WARN scene: @modules/bar/StyledPopup.qml[571:9]: Unable to assign [undefined] to QuickshellScreenInfo*
+  WARN scene: @modules/bar/StyledPopup.qml[571:9]: Unable to assign [undefined] to QuickshellScreenInfo*
+  WARN scene: @modules/bar/StyledPopup.qml[571:9]: Unable to assign [undefined] to QuickshellScreenInfo*
+  WARN scene: @modules/bar/StyledPopup.qml[571:9]: Unable to assign [undefined] to QuickshellScreenInfo*
+  WARN scene: @modules/bar/StyledPopup.qml[571:9]: Unable to assign [undefined] to QuickshellScreenInfo*
+  WARN scene: @modules/bar/StyledPopup.qml[571:9]: Unable to assign [undefined] to QuickshellScreenInfo*
+  WARN scene: @modules/bar/StyledPopup.qml[571:9]: Unable to assign [undefined] to QuickshellScreenInfo*
+  WARN scene: @modules/bar/StyledPopup.qml[571:9]: Unable to assign [undefined] to QuickshellScreenInfo*
+  WARN scene: @modules/bar/StyledPopup.qml[571:9]: Unable to assign [undefined] to QuickshellScreenInfo*
+  WARN scene: @modules/bar/Workspaces.qml[226:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/Workspaces.qml[132:5]: Unable to assign [undefined] to QString
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[144:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[260:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/StyledPopup.qml[361:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[578:9]: Unable to assign [undefined] to qs::wayland::layershell::WlrLayer::Enum
+  WARN scene: @modules/bar/StyledPopup.qml[35:5]: Unable to assign [undefined] to QQuickItem*
+  WARN scene: @modules/bar/StyledPopup.qml[144:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[260:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/StyledPopup.qml[361:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[578:9]: Unable to assign [undefined] to qs::wayland::layershell::WlrLayer::Enum
+  WARN scene: @modules/bar/StyledPopup.qml[35:5]: Unable to assign [undefined] to QQuickItem*
+  WARN scene: @modules/bar/StyledPopup.qml[144:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[260:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/StyledPopup.qml[361:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[578:9]: Unable to assign [undefined] to qs::wayland::layershell::WlrLayer::Enum
+  WARN scene: @modules/bar/StyledPopup.qml[35:5]: Unable to assign [undefined] to QQuickItem*
+  WARN scene: @modules/bar/StyledPopup.qml[144:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[260:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/StyledPopup.qml[361:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[578:9]: Unable to assign [undefined] to qs::wayland::layershell::WlrLayer::Enum
+  WARN scene: @modules/bar/StyledPopup.qml[35:5]: Unable to assign [undefined] to QQuickItem*
+  WARN scene: @modules/bar/StyledPopup.qml[144:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[260:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/StyledPopup.qml[361:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[578:9]: Unable to assign [undefined] to qs::wayland::layershell::WlrLayer::Enum
+  WARN scene: @modules/bar/StyledPopup.qml[35:5]: Unable to assign [undefined] to QQuickItem*
+  WARN scene: @modules/bar/StyledPopup.qml[144:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[260:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/StyledPopup.qml[361:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[578:9]: Unable to assign [undefined] to qs::wayland::layershell::WlrLayer::Enum
+  WARN scene: @modules/bar/StyledPopup.qml[35:5]: Unable to assign [undefined] to QQuickItem*
+  WARN scene: @modules/bar/StyledPopup.qml[144:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[260:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/StyledPopup.qml[361:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[578:9]: Unable to assign [undefined] to qs::wayland::layershell::WlrLayer::Enum
+  WARN scene: @modules/bar/StyledPopup.qml[35:5]: Unable to assign [undefined] to QQuickItem*
+  WARN scene: @modules/bar/StyledPopup.qml[144:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[260:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/StyledPopup.qml[361:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[578:9]: Unable to assign [undefined] to qs::wayland::layershell::WlrLayer::Enum
+  WARN scene: @modules/bar/StyledPopup.qml[35:5]: Unable to assign [undefined] to QQuickItem*
+  WARN scene: @modules/bar/StyledPopup.qml[144:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[260:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/StyledPopup.qml[361:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[578:9]: Unable to assign [undefined] to qs::wayland::layershell::WlrLayer::Enum
+  WARN scene: @modules/bar/StyledPopup.qml[35:5]: Unable to assign [undefined] to QQuickItem*

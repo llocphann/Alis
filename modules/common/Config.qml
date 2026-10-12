@@ -160,11 +160,22 @@ Singleton {
         root._pendingReload = false;
     }
 
+    function _reconcileMandatoryPanels(): void {
+        const current=Array.from(root.options?.enabledPanels ?? [])
+        const required=FamilyPolicy.reconcileMandatory(root.options?.panelFamily,current)
+        if(JSON.stringify(current)===JSON.stringify(required))return
+        root._recordPendingMutation("enabledPanels",required)
+        root._applyNestedKey("enabledPanels",required)
+        root._applyToMirror("enabledPanels",required)
+        fileWriteTimer.restart()
+    }
+
     function setNestedValue(nestedKey, value) {
         _beginLocalMutation();
         _recordPendingMutation(nestedKey, value);
         _applyNestedKey(nestedKey, value);
         _applyToMirror(nestedKey, value);
+        _reconcileMandatoryPanels();
         fileWriteTimer.restart();
         root._bumpRevision();
         root.configChanged();
@@ -182,6 +193,7 @@ Singleton {
             _applyToMirror(paths[i], updates[paths[i]]);
         }
         if (paths.length > 0) {
+            _reconcileMandatoryPanels();
             fileWriteTimer.restart();
             root._bumpRevision();
             root.configChanged();
@@ -554,6 +566,7 @@ Singleton {
                 root._styleMigrationWritePending = true;
                 root.setNestedValues(styleMigration);
             }
+            root._reconcileMandatoryPanels();
             root._bumpRevision();
             root.ready = true;
             if (wasReload)

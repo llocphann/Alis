@@ -673,7 +673,7 @@ run privileged installation just because manual buttons are retired.
   Owner visual/physical review and committed canonical remain OPEN.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **ABYSS-R06 — Remove toggles for mandatory Abyss runtime modules — owner 2026-10-12:**
+- [x] **ABYSS-R06 — Remove toggles for mandatory Abyss runtime modules — owner 2026-10-12:**
   [Owner: Alis dev; Rework] When Abyss Panel is selected, structural modules
   required for rendering/interaction must be treated as **always enabled**
   and removed from the visible Modules toggle list. Optional modules
@@ -697,7 +697,15 @@ run privileged installation just because manual buttons are retired.
   are absent from the toggle UI; optional hosts still toggle;
   no loss of field, input, fullscreen OSD or startup when old
   profiles disable a required ID. Test migration, switch Abyss/Waffle,
-  restart, live Niri on multiple outputs. State: NEW/OPEN, not implemented.
+  restart, live Niri on multiple outputs.
+  **Hoàn thành (bot báo xong) — Owner chưa verified, 2026-10-12.**
+  Pre-implementation dependency inventory selects only Perimeter as mandatory.
+  Policy, Config load/live mutations and actual critical runtime enforce it;
+  its toggle is absent. Optional/security/package preferences and Waffle remain
+  independent. Policy 117, family and three Config regressions PASS;
+  combined native 165 checks/25 frames/2 processes PASS, actual field readiness.
+  [Inventory/evidence](../../docs/evidence/abyss-product/20261012-abyss-r06-r07/README.md).
+  Owner/installed/multi-output/fractional and full canonical remain pending.
 
 - [ ] **SET-R03 — Short, essential help text across all Settings — owner 2026-10-12:**
   [Owner: Alis dev; Rework/UI copy] Review **every** Settings page
@@ -733,7 +741,7 @@ run privileged installation just because manual buttons are retired.
   current appearance on upgrade. Remove dead UI text and update
   test/translation expectations. State: NEW/OPEN, not implemented.
 
-- [ ] **ABYSS-R07 — Screen Edge Clock and Date use shared Typography — owner 2026-10-12:**
+- [x] **ABYSS-R07 — Screen Edge Clock and Date use shared Typography — owner 2026-10-12:**
   [Owner: Alis dev; Rework/font settings] On Top, Bottom,
   Left AND Right Abyss Screen Edges, Clock/Date must inherit
   the main Settings → Typography font family and size scale,
@@ -756,7 +764,15 @@ run privileged installation just because manual buttons are retired.
   on all four edges and survives restart; no independent Clock/Date
   font/size controls in Abyss settings; test multiple scales,
   locales, small screens, focus/popup hitboxes, owner native
-  visual signoff. State: NEW/OPEN, not implemented.
+  visual signoff.
+  **Hoàn thành (bot báo xong) — Owner chưa verified, 2026-10-12.**
+  Abyss's resident full Clock uses shared Typography family/large-small tokens
+  on four Edges, with one global scale. Separate font/px controls are absent;
+  legacy consumer behavior and saved values remain. Native two fonts × three
+  scales × four Edges, Settings object inspection and JSON restart PASS within
+  combined 165 checks/25 frames. Translation parity PASS.
+  [Evidence](../../docs/evidence/abyss-product/20261012-abyss-r06-r07/README.md).
+  Owner/installed, fractional/multi-output and full canonical remain pending.
 
 - [x] **SET-R01 — Eliminate redundant Settings-to-Settings navigation buttons:**
   The maintainer wants **no Settings action whose only purpose is to switch

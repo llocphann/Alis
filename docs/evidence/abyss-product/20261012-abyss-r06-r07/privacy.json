@@ -1,0 +1,12 @@
+[
+  {
+    "public": "native-full-typography/exercise.log",
+    "private_raw": ".git/maintainer-validation/mandatory-type-raw/native-full-typography/exercise.log",
+    "raw_sha256": "ca0dbff7b61f61a2a7ee1725748ddc4be36f94fb899763fa4c0e6dd4b1064971"
+  },
+  {
+    "public": "native-parser-fixed/exercise.log",
+    "private_raw": ".git/maintainer-validation/mandatory-type-raw/native-parser-fixed/exercise.log",
+    "raw_sha256": "9ebfc3e7b1cd4540820f45d2a1047c6aa0ab97a1044bafbab8345b60038cceb4"
+  }
+]
