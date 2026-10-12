@@ -121,6 +121,15 @@ ShellRoot {
                         && Events.list[0].id===beforeId
                         && Events.list[0].occurrences.length===3,
                         "whole Event ID edit lost selected dates or generated a second event")
+                    root.phase=2
+                } else if(root.phase===2 && !Events.persistenceBusy) {
+                    const durable=Events.getDurableEvents()
+                    root.check(durable.length===3
+                        && durable[0].title==="Multi-date updated"
+                        && durable[0].id===Events.list[0].id
+                        && durable[0].occurrences.length===3
+                        && !durable[0].todoLink,
+                        "whole-event edit did not reach acknowledged durable storage")
                     console.info("PLANNER_MULTIDATE_STORAGE_PASS",root.checks)
                     Qt.quit()
                 }
@@ -163,6 +172,7 @@ with tempfile.TemporaryDirectory(prefix="alis-planner-multidate-") as temp:
         raise SystemExit(1)
     saved=json.loads(storage.read_text())["events"]
     assert len(saved)==3 and len(saved[0]["occurrences"])==3
+    assert saved[0]["title"]=="Multi-date updated"
     assert saved[0]["recurrence"]=="none"
     assert saved[1]["recurrence"]=="weekly" and len(saved[1]["repeatTemplate"])==3
     assert len(saved[2]["occurrences"])==6
