@@ -76,7 +76,10 @@ assert editor.count('enabled: root.canSelectRepeat(')==4
 assert 'objectName:"plannerRepeatChoices"' in editor
 assert 'objectName:"plannerRepeatConflictHint"' in editor
 assert 'onSelected: (newValue) => root.setRepeatOption(newValue)' in editor
-assert 'root.plannerRepeatConflict && root.recurrence!=="none"' in editor
+assert '!root.canSelectRepeat(root.recurrence)' in editor
+assert 'RepeatPolicy.allowed(root.plannerSelectedDateKeys,value)' in editor
+assert 'multi && !RepeatPolicy.allowed(chosen.keys,root.recurrence)' in editor
+assert 'RepeatPolicy.allowed(selectedDays,root.recurrence)' in editor
 selection=(r/"modules/common/widgets/ConfigSelectionArray.qml").read_text()
 assert 'enabled: modelData?.enabled !== false' in selection
 assert '|| !paletteButton.enabled' in selection
