@@ -1209,7 +1209,7 @@ WSettingsPage {
                     visible: root.wBackdrop.enable ?? true
                     label: Translation.tr("Derive theme colors from backdrop")
                     icon: "eyedropper"
-                    description: Translation.tr("Generate theme colors from the backdrop wallpaper instead of the main wallpaper")
+                    description: Translation.tr("Generate theme colors from the backdrop instead of the main wallpaper.")
                     checked: Config.options?.appearance?.wallpaperTheming?.useBackdropForColors ?? false
                     onCheckedChanged: {
                         if (!root.settingsHandlersReady)
@@ -1325,7 +1325,7 @@ WSettingsPage {
                     WSettingsRow {
                         label: Translation.tr("Placement")
                         icon: "drag_pan"
-                        description: Translation.tr("Use Draggable to place it manually, or let Waffle choose the least busy region")
+                        description: Translation.tr("Drag to place manually, or use the least busy region.")
                     }
 
                     WSettingsChoiceGroup {
@@ -1371,7 +1371,7 @@ WSettingsPage {
                     WSettingsDropdown {
                         label: Translation.tr("Time format")
                         icon: "schedule"
-                        description: Translation.tr("Follow the global clock format or override it for the wallpaper clock")
+                        description: Translation.tr("Use global clock format or a wallpaper-clock override.")
                         currentValue: root.wClock.timeFormat ?? "system"
                         options: [
                             { value: "system", displayName: Translation.tr("Follow system") },
