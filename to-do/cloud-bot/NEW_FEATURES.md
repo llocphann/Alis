@@ -799,6 +799,17 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   State: SOURCE PATCHED / OPEN for native markdown fidelity,
   preview/Source focus, Unicode/IME/undo/restart, mouse/touchpad,
   attachment parity, full canonical and owner UI acceptance.
+  **Cloud continuation (2026-10-12):** dashboard and Weekly Planner
+  now share an explicit keyboard-focusable Reading/Source switch through
+  DashNotes → QuickNotesView → the existing NotepadWidget. Source stays
+  the default; switching to Reading flushes the stable-ID draft and
+  cancels pending editor-focus callbacks; clicking the rendered text
+  returns to Source without replacing the note or attachment pipeline.
+  The Edgebar hover behavior and Sidebar default remain unchanged.
+  Added source and private-native multi-surface regression covering both
+  Dashboard card and Planner notes column. Native owner/installed
+  acceptance and exact-SHA full canonical remain OPEN. This completes
+  a requested source milestone, NOT the entire NOTES-F01.
 
 - [x] **NOTES-F02 — Quick Notes image delivery:** Hadalis `add29d6f8` implements shared
   paste/import, original-byte storage, Markdown persistence and preview with

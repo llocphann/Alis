@@ -22,6 +22,18 @@ Item {
     property bool showZettelkastenActions: true
     property bool verticalDotNavigation: false
     property bool readingOnHover: false
+    // Only Dashboard cards request the visible manual Markdown mode control.
+    // Keep Sidebar Left and corner Quick Notes untouched by default.
+    property bool showMarkdownModeSwitch: false
+    readonly property bool markdownReading: notepad.markdownReading
+    function toggleMarkdownMode(): void {
+        if (!root.showMarkdownModeSwitch)
+            return
+        if (notepad.markdownReading)
+            root.focusEditor()
+        else
+            notepad.enterMarkdownReading()
+    }
 
     implicitHeight: root.preferredHeight
 
@@ -100,6 +112,43 @@ Item {
             }
 
             RippleButton {
+                id: markdownModeSwitch
+                objectName: "quickNotesMarkdownModeSwitch"
+                visible: root.showMarkdownModeSwitch
+                implicitWidth: root.veryNarrowHeader ? 69 : 91
+                implicitHeight: root.constrainedHeight ? 28 : 30
+                buttonRadius: 9
+                focusPolicy: Qt.StrongFocus
+                colBackground: root.markdownReading
+                    ? Appearance.colors.colSecondaryContainer
+                    : Appearance.colors.colLayer1
+                colBackgroundHover: Appearance.colors.colLayer2Hover
+                Accessible.name: root.markdownReading
+                    ? Translation.tr("Source Editing")
+                    : Translation.tr("Markdown Reading")
+                onClicked: root.toggleMarkdownMode()
+
+                contentItem: RowLayout {
+                    anchors.centerIn: parent
+                    spacing: 3
+                    MaterialSymbol {
+                        text: root.markdownReading ? "edit_note" : "menu_book"
+                        iconSize: 15
+                        color: root.colText
+                    }
+                    StyledText {
+                        text: root.markdownReading
+                            ? Translation.tr("Source")
+                            : Translation.tr("Reading")
+                        color: root.colText
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                    }
+                }
+
+                StyledToolTip { text: markdownModeSwitch.Accessible.name }
+            }
+
+            RippleButton {
                 visible: root.showZettelkastenActions
                     && !root.narrowHeader
                 implicitWidth: root.constrainedHeight ? 28 : 30
@@ -165,6 +214,7 @@ Item {
             compactPresentation: true
             verticalDotNavigation: root.verticalDotNavigation
             readingOnHover: root.readingOnHover
+            allowManualReading: root.showMarkdownModeSwitch
             surfaceLocalTabSelection: root.surfaceLocalTabSelection
             margin: 0
             onEditorActivated: root.editorActivated()
