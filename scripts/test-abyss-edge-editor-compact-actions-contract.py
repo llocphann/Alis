@@ -73,6 +73,23 @@ assert 'component EditorIconHint: Item' in editor
 assert len(re.findall(r'EditorIconHint\s*\{', editor)) == 5
 assert editor.count('AbyssSlider {') == 6
 assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 6
+# Qt rejects two assignments to the same attached property in one QML item.
+# All six compact sliders must keep exactly one minimum-width binding.
+for line_number, line in enumerate(editor.splitlines(), 1):
+    attached = re.findall(r'\\bLayout\\.[A-Za-z]+\\s*:', line)
+    assert len(attached) == len(set(attached)), (
+        f"duplicate Layout property on line {line_number}"
+    )
+slider_rows = [
+    line for line in editor.splitlines()
+    if 'Layout.preferredWidth:root.editorSliderWidth' in line
+]
+assert len(slider_rows) == 6
+assert all(
+    row.count('Layout.minimumWidth:') == 1
+    and 'Layout.minimumWidth:75*Appearance.fontSizeScale' in row
+    for row in slider_rows
+), "each compact slider needs one minimum width"
 assert editor.count('editorSquare:true') >= 10
 assert 'id:scaleModulesCaption' in editor
 assert 'Behavior on Layout.preferredWidth' in editor

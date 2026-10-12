@@ -914,7 +914,7 @@ Item {
                          glyph:"space_bar";description:"Gap between modules" }
                         AbyssSlider {
                         editorCompact:true
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                         
                         
                                                 unit:"px";from:0;to:32;value:root.gap
@@ -961,7 +961,7 @@ Item {
                          glyph:"aspect_ratio";description:"Shared module size for this Edge" }
                         AbyssSlider {
                         editorCompact:true
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                         
                         
                                                 from:.6;to:1.8
@@ -978,7 +978,7 @@ Item {
                          glyph:"line_weight";description:"Physical Edge width" }
                         AbyssSlider {
                         editorCompact:true
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                         
                         
                                                 unit:"px";from:0;to:40;stepSize:1
@@ -1091,7 +1091,7 @@ AbyssButton {
 AbyssSlider {
                         editorCompact:true
                         objectName:"abyssScaleModulesSlider"
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                         
                         
                                                 from:.6;to:1.8;value:root.moduleScale
@@ -1124,7 +1124,7 @@ AbyssSlider {
                          glyph:"rounded_corner";description:"Module rounding radius" }
                         AbyssSlider {
                         editorCompact:true
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                         
                         
                                                 objectName:"abyssModuleRounding"
@@ -1303,7 +1303,7 @@ AbyssSlider {
                     }
                     AbyssSlider {
                         editorCompact:true
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                     
                     
                         visible:root.expandedControls
