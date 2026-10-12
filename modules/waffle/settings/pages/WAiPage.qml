@@ -271,7 +271,7 @@ WSettingsPage {
             visible: providersCard.extraModels.length === 0
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            text: Translation.tr("No custom providers. Curated providers are managed above; add a custom endpoint only when it is not already supported.")
+            text: Translation.tr("No custom providers; add one only if unsupported.")
             font.pixelSize: Looks.font.pixelSize.small
             color: Looks.colors.subfg
         }
@@ -492,7 +492,7 @@ WSettingsPage {
         WSettingsRow {
             label: Translation.tr("AI tools")
             icon: "settings-cog-multiple"
-            description: Translation.tr("Shell tools use typed actions and configuration previews. Raw commands are isolated in Advanced mode.")
+            description: Translation.tr("Typed tools preview changes; raw commands require Advanced mode.")
         }
 
         WSettingsChoiceGroup {
@@ -533,7 +533,7 @@ WSettingsPage {
         WSettingsRow {
             label: Translation.tr("Allow AI features")
             icon: "shield"
-            description: Translation.tr("Local only restricts the assistant to models running on this machine, such as Ollama or LM Studio")
+            description: Translation.tr("Local only: use on-device models (Ollama, LM Studio).")
         }
 
         WSettingsChoiceGroup {
