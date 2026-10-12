@@ -513,8 +513,10 @@ Singleton {
         future.setDate(future.getDate() + (days || 7))
         return root.list.map(event => {
             const slot = Occurrences.upcoming(event,now,future)
+            const index = slot ? Occurrences.entries(event).findIndex(candidate =>
+                candidate.startDate===slot.startDate && candidate.endDate===slot.endDate) : -1
             return slot ? Object.assign({},event,{
-                _canonicalEvent:event,
+                _canonicalEvent:Object.assign({},event,{_editOccurrenceIndex:Math.max(0,index)}),
                 dateTime:slot.startDate,startDate:slot.startDate,
                 endDate:slot.endDate
             }) : null
