@@ -1068,7 +1068,17 @@ run privileged installation just because manual buttons are retired.
   Settings and edit surfaces at varying scales and light/dark themes. State:
   READY for UI audit; owner visual acceptance pending.
 
-- [ ] **ABYSS-R08 — Compact Edit Abyss Layout control bar — owner request 2026-10-10:**
+- [x] **ABYSS-R08 — Compact Edit Abyss Layout control bar — owner request 2026-10-10:**
+  **Hoàn thành (bot báo xong) — Owner chưa verified, 2026-10-12.**
+  Source `86af17627` is pushed: compact defaults on four Edges, discoverable
+  immediate actions, disclosed full tuning, quick IPC selector, bounded
+  scrolling/minimum widths and retained drafts. No selection toggle.
+  Clean exact-source scoped 8 PASS; actual Qt 1454 checks/24 field frames,
+  drag 84/19 and legacy editor PASS. Focused locks62/26, multi59/12,
+  zero74/26 +33 GPU comparisons PASS. Failed variants retained.
+  [Evidence](../../docs/evidence/abyss-product/20261012-r08-compact-editor/README.md).
+  Owner/installed, physical pointer, true fractional/multiple outputs and
+  current full canonical gates remain separate. R03 and POP-I01 stay open.
   **Priority reconfirmed 2026-10-12:** next immediately after the current
   ABYSS-R03 source/qualification milestone, ahead of the former next-item
   queue. Keep R03's remaining work and independent failed/owner gates open.
@@ -1077,8 +1087,8 @@ run privileged installation just because manual buttons are retired.
   per-edge editing, Cancel/Undo/Done, input targets and narrow-screen access.
   Test four edges, long labels, expanded edit controls and interaction with
   screen-edge modules; coordinate with new multi-selection functionality in
-  [New features](NEW_FEATURES.md). State: READY for compact design; native
-  input/layout and owner visual acceptance pending.
+  [New features](NEW_FEATURES.md). Source/qualified scoped delivery is complete;
+  owner visual acceptance pending.
 
 - [x] **NET-R01 — Wi-Fi and Bluetooth Popups about 35% smaller — owner request 2026-10-10:**
   Reduce each Popup's displayed footprint by roughly 35% (target about 65%

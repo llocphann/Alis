@@ -1,0 +1,84 @@
+{
+  "source_sha": "86af176271d7f70ba28596a447cdb23125ea7c3c",
+  "source": "/tmp/alis-r08-qualified-4z2dapvx/source",
+  "artifact_root": "/tmp/alis-r08-qualified-4z2dapvx",
+  "status": "PASS",
+  "started_at": "2026-10-12T13:38:03.652585+00:00",
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-r08-qualified-4z2dapvx/1-test-abyss-edge-editor-adaptive-toolbar-contract.py.log",
+      "result": "PASS"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-edge-editor-compact-actions-contract.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-r08-qualified-4z2dapvx/2-test-abyss-edge-editor-compact-actions-contract.py.log",
+      "result": "PASS"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-edge-editor-compact-side-contract.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-r08-qualified-4z2dapvx/3-test-abyss-edge-editor-compact-side-contract.py.log",
+      "result": "PASS"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-edge-editor-toolbar-contract.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-r08-qualified-4z2dapvx/4-test-abyss-edge-editor-toolbar-contract.py.log",
+      "result": "PASS"
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test-abyss-modifier-selection.mjs"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-r08-qualified-4z2dapvx/5-test-abyss-modifier-selection.mjs.log",
+      "result": "PASS"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-compact-editor-runtime.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-r08-qualified-4z2dapvx/6-test-abyss-compact-editor-runtime.py.log",
+      "result": "PASS"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-drag-corners-runtime.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-r08-qualified-4z2dapvx/7-test-abyss-drag-corners-runtime.py.log",
+      "result": "PASS"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-abyss-editor-runtime.sh"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-r08-qualified-4z2dapvx/8-test-abyss-editor-runtime.sh.log",
+      "result": "PASS"
+    }
+  ],
+  "finished_at": "2026-10-12T13:39:39.423765+00:00",
+  "full_canonical": false,
+  "source_remains_clean": true
+}

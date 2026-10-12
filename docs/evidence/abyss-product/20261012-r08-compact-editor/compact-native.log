@@ -1,0 +1,28 @@
+  INFO: Launching config: "/tmp/alis-compact-editor-7f0ndsbh/shell.qml"
+  INFO: Shell ID: "788d6f1adc19e9de8c832f80d8ede85f" Path ID "788d6f1adc19e9de8c832f80d8ede85f"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/sr021g7rsmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1773903.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-compact-editor-7f0ndsbh/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-compact-editor-7f0ndsbh/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[125:5]: Read of /tmp/alis-compact-editor-7f0ndsbh/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-compact-editor-7f0ndsbh/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-compact-editor-7f0ndsbh/state/quickshell/states.json failed: File does not exist.
+ DEBUG qml: Failed to load persistent states file: 2
+ DEBUG qml: [Persistent] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f5ce27cdae0)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-compact-editor-7f0ndsbh/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: [Weather] Getting location from IP...
+  INFO qml: [Weather] Location: [redacted]
+ DEBUG qml: [ShellUpdates] Loading repo path from version.json...
+ DEBUG qml: [ShellUpdates] No repo_path in version.json, searching for repository...
+ DEBUG qml: [ShellUpdates] Repository not found, using config dir: /tmp/alis-compact-editor-7f0ndsbh/.
+ DEBUG qml: [ShellUpdates] Update feature will not be available
+ DEBUG qml: [ShellUpdates] Git available: false
+  INFO qml: [Weather] Updated: 27°C [redacted]
+  INFO qml: [Weather] Air quality updated: 44 EAQI
+  INFO qml: ABYSS_COMPACT_EDITOR_PASS 1454 checks 24 frames [{"viewport":[800,800],"fontScale":1,"dark":true,"edge":"top","compact":{"span":752,"depth":179,"area":134608,"height":139},"expanded":{"span":752,"depth":520,"area":391040,"height":710}},{"viewport":[800,800],"fontScale":1,"dark":true,"edge":"right","compact":{"span":265,"depth":288,"area":76320,"height":225},"expanded":{"span":752,"depth":288,"area":216576,"height":1367}},{"viewport":[800,800],"fontScale":1,"dark":true,"edge":"bottom","compact":{"span":752,"depth":179,"area":134608,"height":139},"expanded":{"span":752,"depth":520,"area":391040,"height":710}},{"viewport":[800,800],"fontScale":1,"dark":true,"edge":"left","compact":{"span":265,"depth":288,"area":76320,"height":225},"expanded":{"span":752,"depth":288,"area":216576,"height":1367}},{"viewport":[420,440],"fontScale":1,"dark":true,"edge":"top","compact":{"span":372,"depth":265,"area":98580,"height":225},"expanded":{"span":372,"depth":286,"area":106392,"height":1340}},{"viewport":[420,440],"fontScale":1,"dark":true,"edge":"right","compact":{"span":265,"depth":288,"area":76320,"height":225},"expanded":{"span":392,"depth":288,"area":112896,"height":1367}},{"viewport":[420,440],"fontScale":1,"dark":true,"edge":"bottom","compact":{"span":372,"depth":265,"area":98580,"height":225},"expanded":{"span":372,"depth":286,"area":106392,"height":1340}},{"viewport":[420,440],"fontScale":1,"dark":true,"edge":"left","compact":{"span":265,"depth":288,"area":76320,"height":225},"expanded":{"span":392,"depth":288,"area":112896,"height":1367}},{"viewport":[320,240],"fontScale":1.5,"dark":false,"edge":"top","compact":{"span":272,"depth":156,"area":42432,"height":479},"expanded":{"span":272,"depth":156,"area":42432,"height":1780}},{"viewport":[320,240],"fontScale":1.5,"dark":false,"edge":"right","compact":{"span":192,"depth":272,"area":52224,"height":421},"expanded":{"span":192,"depth":272,"area":52224,"height":1662}},{"viewport":[320,240],"fontScale":1.5,"dark":false,"edge":"bottom","compact":{"span":272,"depth":156,"area":42432,"height":479},"expanded":{"span":272,"depth":156,"area":42432,"height":1780}},{"viewport":[320,240],"fontScale":1.5,"dark":false,"edge":"left","compact":{"span":192,"depth":272,"area":52224,"height":421},"expanded":{"span":192,"depth":272,"area":52224,"height":1662}}]

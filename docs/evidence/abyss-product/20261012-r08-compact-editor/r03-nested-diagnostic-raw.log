@@ -1,0 +1,23 @@
+  INFO: Launching config: "/tmp/alis-drag-corners-p35hy_yt/shell.qml"
+  INFO: Shell ID: "707121c85d99f503a34e9d4092a476ce" Path ID "707121c85d99f503a34e9d4092a476ce"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/ujt01eyosmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.1717889.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-drag-corners-p35hy_yt/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-drag-corners-p35hy_yt/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-drag-corners-p35hy_yt/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-drag-corners-p35hy_yt/state/quickshell/states.json failed: File does not exist.
+ DEBUG qml: Failed to load persistent states file: 2
+ DEBUG qml: [Persistent] File not found, creating new file.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-drag-corners-p35hy_yt/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f24cf77f5a0)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-drag-corners-p35hy_yt/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: R03_BEFORE_PRESS {"scene":{"w":429,"h":1038},"window":{"w":429,"h":1038,"visible":true},"handle":{"x":8,"y":8,"w":138,"h":32,"visible":false,"enabled":true},"toolbar":{"visible":true,"evicted":false,"along":36,"inward":0,"span":357,"depth":716,"shrunk":false,"content":{"x":56,"y":368,"width":317,"height":676}},"sourceRegions":0,"selected":[]}
+  INFO qml: R03_AFTER_PRESS {"dragging":false,"context":null,"selected":[]}
+ ERROR qml: ABYSS_DRAG_CORNERS_NATIVE_FAIL native press did not capture grab point check@qs:@/qs/shell.qml:27
+run@qs:@/qs/shell.qml:37
+expression for onTriggered@qs:@/qs/shell.qml:76
