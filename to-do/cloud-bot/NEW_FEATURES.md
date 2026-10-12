@@ -267,7 +267,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   Continue Screen Edge multi-selection with explicit locked-batch guards.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **ABYSS-F02 — Edit Abyss Layout Screen Edge module multi-selection — owner request 2026-10-10:**
+- [x] **ABYSS-F02 — Edit Abyss Layout Screen Edge module multi-selection — owner request 2026-10-10:**
   Support modifier-based multiple selection for Screen Edge modules while
   **Edit Abyss Layout** is active.
   **Owner correction 2026-10-12 — OPEN follow-up:** remove the toolbar
@@ -289,7 +289,18 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   **Not yet qualified:** canonical exact-SHA regression, actual
   Niri/Quickshell Ctrl/Shift pointer and keyboard gesture, toolbar/hit
   region behavior at fractional/vertical edges, and owner acceptance.
-  This records an implementation milestone, not native PASS or task closure.
+  **Hoàn thành (bot báo xong) — Owner chưa verified (2026-10-12):**
+  The full requested source implementation, including the later owner
+  Ctrl/Shift-click correction and removal of the mode toggle, is delivered
+  as Alis dev `77bba943292b039f8d8d48ede0617ae024c4d2b0`, with the
+  additional native modifier gesture fixture update at
+  `d982c7d0217928acf07052eb2d35aae2618fc262`. Seven focused pure
+  JavaScript cases were executed directly on the actual helper blob
+  `0c1697a0a559694f25b28f52413a2e66d6e4cb0c`, PASS.
+  The owner has NOT verified pointer/keyboard feel, and the actual Niri
+  fixture/canonical exact-SHA validator were NOT RUN in this connector
+  environment. Preserve historical source, native and verification
+  evidence above; outstanding owner/installed/native gates remain separate.
   Show which modules are selected, support
   add/remove/clear selection and coherent subsequent edits when several targets
   are selected. Keep normal non-edit behavior intact; define guarded batch
