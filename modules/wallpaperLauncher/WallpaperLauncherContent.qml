@@ -109,7 +109,7 @@ FocusScope {
                     Keys.onEscapePressed:GlobalStates.wallpaperLauncherOpen=false
                 }
                 AbyssButton {objectName:"wallpaperMode";outlined:false;glyph:root.mode==="static" ? "image" : "movie";description:root.mode==="static" ? "Show animated wallpapers" : "Show images";onClicked:root.setMode(root.mode==="static" ? "animated" : "static")}
-                AbyssButton {objectName:"wallpaperFolder";outlined:false;glyph:"folder_open";description:root.browseFolder || "Choose wallpaper folder";onClicked:folderPicker.open()}
+                AbyssButton {objectName:"wallpaperFolder";outlined:false;glyph:"folder_open";description:root.browseFolder.length > 0 ? FileUtils.folderNameForPath(root.browseFolder) : "Choose wallpaper folder";onClicked:folderPicker.open()}
                 AbyssButton {objectName:"wallpaperRefresh";outlined:false;glyph:"refresh";description:"Refresh wallpapers";enabled:!root.loading;onClicked:root.refreshLibrary(true)}
                 AbyssButton {objectName:"wallpaperClose";outlined:false;glyph:"close";description:"Close wallpaper selector";onClicked:GlobalStates.wallpaperLauncherOpen=false}
             }
