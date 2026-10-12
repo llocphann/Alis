@@ -95,6 +95,54 @@ def source_checkout(cache, remote, revision):
     return checkout
 
 
+def owner_file(data_home):
+    return data_home / "hadanion/.alis-owned.json"
+
+
+def record_owner(data_home, revision):
+    marker = owner_file(data_home)
+    if marker.is_symlink():
+        raise CompanionInstallError("Refusing foreign Companion ownership marker")
+    with tempfile.NamedTemporaryFile(mode="w", dir=marker.parent,
+                                     prefix=".alis-owned-", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+        try:
+            os.chmod(tmp_path, 0o600)
+            json.dump({"owner": "Alis", "sourceSha": revision}, tmp)
+            tmp.write("\n")
+            tmp.flush()
+            os.fsync(tmp.fileno())
+        except BaseException:
+            tmp_path.unlink(missing_ok=True)
+            raise
+    try:
+        os.replace(tmp_path, marker)
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+
+def uninstall_owned(data_home):
+    if os.geteuid() == 0:
+        raise CompanionInstallError("Refusing Companion uninstall as root")
+    marker = owner_file(data_home)
+    if marker.is_symlink() or not marker.is_file():
+        print("No Alis-owned Companion release; independent installations preserved")
+        return
+    info = json.loads(marker.read_text())
+    revision = info.get("sourceSha", "")
+    if info.get("owner") != "Alis" or not isinstance(revision, str) or not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise CompanionInstallError("Untrusted Companion ownership marker")
+    current = data_home / "hadanion/current"
+    if not current.exists() and not current.is_symlink():
+        marker.unlink()
+        return
+    if installed_revision(data_home) != revision:
+        raise CompanionInstallError("Active Companion differs from Alis-managed SHA; preserving it")
+    current.unlink()
+    marker.unlink()
+    print("Detached Alis-owned Companion, preserving releases and personal data")
+
+
 def sync(remote, revision, data_home, cache):
     if os.geteuid() == 0:
         raise CompanionInstallError("Companion must be installed as the desktop user, never as root")
@@ -109,6 +157,7 @@ def sync(remote, revision, data_home, cache):
     with lock.open("a") as handle:
         fcntl.flock(handle, fcntl.LOCK_EX)
         if installed_revision(data_home) == revision:
+            record_owner(data_home, revision)
             print("Alis-Companion is already installed at the pinned revision " + revision[:12])
             return
         checkout = source_checkout(cache, remote, revision)
@@ -118,6 +167,7 @@ def sync(remote, revision, data_home, cache):
         run("make", "-C", str(checkout), "install")
         if installed_revision(data_home) != revision:
             raise CompanionInstallError("Companion installer did not activate the expected release")
+        record_owner(data_home, revision)
         print("Alis-Companion integrated successfully (" + revision[:12] + ")", flush=True)
     # Runtime refresh is best effort; setup update also restarts the Alis shell.
     launcher = shutil.which("inir")
@@ -131,7 +181,7 @@ def sync(remote, revision, data_home, cache):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["sync", "status"])
+    parser.add_argument("action", choices=["sync", "status", "uninstall"])
     parser.add_argument("--repo-url", default=CANONICAL_REMOTE,
                         help="Explicit local fixture source for offline developer tests")
     parser.add_argument("--revision", default=None, help="Explicit pinned revision override for offline tests")
@@ -143,6 +193,9 @@ def main():
     if args.action == "status":
         print(json.dumps({"expected": revision, "installed": installed_revision(data_home),
                           "ready": installed_revision(data_home) == revision}))
+        return
+    if args.action == "uninstall":
+        uninstall_owned(data_home)
         return
     sync(args.repo_url, revision, data_home, cache)
 

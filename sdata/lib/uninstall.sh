@@ -937,6 +937,11 @@ run_uninstall() {
         return 1
     fi
 
+    # Only detach an exact-SHA Alis-owned Companion; preserve user data.
+    if ! python3 "${REPO_ROOT}/scripts/companion-manager.py" uninstall; then
+        tui_warn "Companion was independently modified; it was preserved."
+    fi
+
     # Remove iNiR-exclusive files (always safe)
     uninstall_remove_inir_only
     uninstall_reload_user_systemd
@@ -1023,6 +1028,11 @@ run_uninstall_quick() {
     if ! uninstall_remove_thinkfan_bridge; then
         tui_error "ThinkFan bridge cleanup failed; no user files were removed."
         return 1
+    fi
+
+    # Quick uninstall follows the same managed-only Companion ownership rule.
+    if ! python3 "${REPO_ROOT}/scripts/companion-manager.py" uninstall; then
+        tui_warn "Companion was independently modified; it was preserved."
     fi
 
     # Remove only iNiR-exclusive files

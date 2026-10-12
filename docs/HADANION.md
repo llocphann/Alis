@@ -26,6 +26,9 @@ The Companion package publishes under versioned `hadanion/releases/<sha>`
 directories and atomically updates `hadanion/current`. An unsuccessful build
 does not activate an incomplete release or delete old releases/user data.
 After update, Alis refreshes Companion IPC when possible or restarts its shell.
+`./setup uninstall` detaches only a release whose recorded Alis ownership
+and active source SHA still match, retaining versioned releases, personal data
+and any independently modified Companion installation.
 
 **System package installation boundary:** staged/system `make install`,
 Arch and Nix package builds are package-manager-owned and must remain offline,

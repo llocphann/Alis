@@ -113,4 +113,14 @@ with tempfile.TemporaryDirectory(prefix="alis-companion-managed-") as td:
     current.symlink_to(root/"source",target_is_directory=True)
     assert sync(second,ok=False).returncode != 0
     assert current.resolve()==source.resolve(), "foreign symlink must be preserved"
-print("PASS: managed Companion pinned auto-install, offline no-op, remote isolation, failure rollback and safe repair")
+    detach=[sys.executable,str(MANAGER),"uninstall","--revision",second]
+    assert cmd(*detach,env=env,ok=False).returncode != 0
+    assert current.resolve()==source.resolve()
+    current.unlink()
+    current.symlink_to(Path("releases")/second)
+    assert (root/"data/hadanion/.alis-owned.json").exists()
+    cmd(*detach,env=env)
+    assert not current.exists() and not current.is_symlink()
+    assert (root/"data/hadanion/releases"/first).exists()
+    assert (root/"data/hadanion/releases"/second).exists()
+print("PASS: pin, idempotence, remote guard, failure rollback, repair and managed-only uninstall")
