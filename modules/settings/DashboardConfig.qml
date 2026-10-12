@@ -46,7 +46,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("The dashboard only applies when using the Material (ii) panel style. Go to Modules → Panel Style to switch.")
+                text: Translation.tr("Dashboard requires Material (ii). Select it under Modules → Panel Style.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -202,7 +202,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Open the Dashboard and click Edit widgets to move modules freely or resize them from any edge or corner. Outside Edit mode, module geometry is locked.")
+                text: Translation.tr("Dashboard → Edit widgets lets you move or resize modules; outside Edit mode, layout is locked.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -210,7 +210,7 @@ ContentPage {
 
             ConfigSwitch {
                 text: Translation.tr("Snap modules to grid")
-                description: Translation.tr("Move and resize freely, then snap the final placement to the Dashboard grid when you release the pointer")
+                description: Translation.tr("Snap moved or resized modules to the grid on release.")
                 checked: Config.options?.dashboard?.canvas?.snap ?? true
                 onCheckedChanged:
                     Config.setNestedValue("dashboard.canvas.snap", checked)
@@ -218,7 +218,7 @@ ContentPage {
 
             ConfigSwitch {
                 text: Translation.tr("Auto-adjust affected module sizes")
-                description: Translation.tr("Only while resizing: allow affected modules to shrink or grow to preserve spacing. Drag and drop never changes other module sizes.")
+                description: Translation.tr("Resizing can adjust neighbors; moving modules never changes their sizes.")
                 checked:
                     Config.options?.dashboard?.canvas?.autoAdjustSize ?? true
                 onCheckedChanged:
