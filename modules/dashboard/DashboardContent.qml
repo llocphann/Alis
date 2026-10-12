@@ -92,11 +92,21 @@ Item {
             _agendaDialogShown = false
             return true
         }
+        if (currentPageId==="weeklyPlanner" && plannerPage.item?.sideView==="events") {
+            plannerPage.item.closeInlineEventEditor()
+            return true
+        }
         if (dashboardCanvas.editMode) {
             dashboardCanvas.cancelEditMode()
             return true
         }
         return currentPageId === "music" && (musicPage.item?.restoreBrowserColumns() ?? false)
+    }
+
+    function openPlannerEventEditor(arg): void {
+        // Only Planner uses the embedded Events column; all other Agenda
+        // surfaces retain the existing modal route.
+        plannerPage.item?.openInlineEventEditor(arg)
     }
 
     function openAgendaDialog(arg) {
@@ -229,7 +239,7 @@ Item {
                     active:root.plannerVisited && (root.presentationActive || root.warmContent)
                     sourceComponent:DashboardWeeklyPlanner {
                         presentationActive:root.presentationActive && root.currentPageId==="weeklyPlanner"
-                        onRequestEventsDialog:event=>root.openAgendaDialog(event)
+                        onRequestEventsDialog:event=>root.openPlannerEventEditor(event)
                     }
                 }
                 // Pointer handlers leave clicks and vertical scrolling to those widgets.

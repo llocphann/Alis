@@ -87,6 +87,24 @@ Window {
    capture("narrow-todo")
    planner.sideView="notes";wait(150);check(find(planner,"plannerSharedSidePanel").item!==null,"shared Quick Notes pane failed to load");check(viewport.height>=110 && find(planner,"plannerSharedSidePanel").height<=root.allocatedHeight*.4,"Notes removed the usable week viewport")
    capture("narrow-notes")
+   const slotDate=new Date(2024,11,31,9,15)
+   planner.openInlineEventEditor({plannerDate:slotDate});wait(150)
+   const inline=find(planner,"plannerInlineEventsEditor")
+   check(planner.sideView==="events" && !!inline && inline.embeddedPresentation,
+     "Planner did not open an embedded Events column")
+   check(inline.show && inline.hideEmbeddedScrollBar,"embedded scrolling presentation lost")
+   check(Qt.formatDate(inline.eventDate,"yyyy-MM-dd")==="2024-12-31"
+       && inline.eventTime==="09:15" && inline.eventEndTime==="10:15",
+     "clicked 09:15 slot lost local date or end-time prefill")
+   inline.eventTitle="Unsaved private draft"
+   planner.sideView="todo";wait(60)
+   planner.sideView="events";wait(60)
+   check(inline.eventTitle==="Unsaved private draft",
+     "switching Events/Todo discarded the unsaved form")
+   inline.dismiss();wait(50)
+   check(planner.sideView==="" && !planner._inlineEventsLoaded,
+     "Cancel did not dismiss the Events column")
+   capture("narrow-inline-events")
    planner.sideView="";root.allocatedWidth=1180;root.allocatedHeight=740;wait(100)
    planner.selectedDate=new Date(2024,2,10,12);wait(50)
    check(planner.days.some(day=>day.minutes===1380),"native spring week lost the 23-hour civil day")

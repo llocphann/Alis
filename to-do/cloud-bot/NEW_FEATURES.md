@@ -444,6 +444,19 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   `REWORK_OPTIMIZATION.md` (DASH-R03).
   **State of this follow-up:** NOT IMPLEMENTED / OPEN, despite
   the earlier Weekly Planner grid and shared Todo/Notes native PASS.
+  **Incremental source milestone — 2026-10-12 (still OPEN):**
+  Weekly Planner now uses the existing embedded `EventsDialog` as an
+  expandable column alongside the shared Todo/Notes panel; the normal
+  Dashboard Agenda path is unchanged. It preserves slot prefill and
+  canonical Events add/update/remove, hides only the inline scrollbar
+  chrome while retaining scrolling, and keeps unfinished local Event
+  form state loaded when switching temporarily to Todo or Notes.
+  Escape and Cancel close the inline editor. A private Niri regression
+  fixture now exercises narrow layout, 09:15 prefill, draft retention
+  across panel switches and Cancel. It was **NOT RUN** in the connector
+  environment. Keep source/live-save, focus, outside-click,
+  narrow/fractional, installed/restart and owner acceptance gates OPEN.
+
   **Owner refinement — 2026-10-12 (Quick Notes Markdown parity):**
   The `notes` expanded column inside Weekly Planner must expose
   the same Markdown Reading / Source Editing choice, Ctrl+B/Ctrl+I/

@@ -6,6 +6,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.sidebarRight.events
 import qs.modules.common.functions
 import qs.modules.abyss.looks
 import "WeeklyPlannerPolicy.js" as Planner
@@ -19,6 +20,8 @@ Item {
     property date selectedDate: new Date()
     property bool followToday: true
     property string sideView: ""
+    property bool _inlineEventsLoaded: false
+    property var _pendingInlineEvent: null
     property bool _initialized: false
     readonly property string todayKey: Qt.formatDate(DateTime.clock.date,"yyyy-MM-dd")
     onTodayKeyChanged: if (_initialized && followToday) selectedDate=DateTime.clock.date
@@ -71,7 +74,42 @@ Item {
         function onEventsUpdated() {root._eventsRevision++}
     }
     function storeBrowser(): void {
-        if (_initialized) GlobalStates.dashboardPlannerBrowser={date:selectedDate.toISOString(),followToday:followToday,sideView:sideView}
+        if (_initialized) GlobalStates.dashboardPlannerBrowser={
+            date:selectedDate.toISOString(),followToday:followToday,
+            sideView:sideView==="events"?"":sideView
+        }
+    }
+    function openInlineEventEditor(arg): void {
+        _pendingInlineEvent=arg
+        _inlineEventsLoaded=true
+        sideView="events"
+        applyPendingInlineEvent()
+    }
+    function applyPendingInlineEvent(): void {
+        const form=inlineEventsPanel.item
+        if (!form || _pendingInlineEvent===null) return
+        const arg=_pendingInlineEvent
+        const date=arg?.plannerDate instanceof Date ? arg.plannerDate
+            : (arg instanceof Date ? arg : null)
+        if (date) {
+            form.resetForm()
+            form.eventDate=date
+            if (arg?.plannerDate instanceof Date) {
+                form.eventTime=Qt.formatTime(date,"hh:mm")
+                form.eventEndTime=Qt.formatTime(new Date(date.getTime()+3600000),"hh:mm")
+            }
+        } else if (arg) {
+            form.loadEvent(arg)
+        } else {
+            form.resetForm()
+        }
+        _pendingInlineEvent=null
+        form.focusEditor()
+    }
+    function closeInlineEventEditor(): void {
+        _pendingInlineEvent=null
+        if (sideView==="events") sideView=""
+        _inlineEventsLoaded=false
     }
     function changeWeek(count): void {followToday=false;selectedDate=Planner.addDays(selectedDate,count*7)}
     function showToday(): void {followToday=true;selectedDate=new Date();scrollWorkingHours()}
@@ -295,9 +333,33 @@ Item {
                 Layout.minimumHeight:0
                 Layout.maximumHeight:root.width<760?Math.min(230,root.height*.4):Infinity
                 clip:true
-                visible:root.sideView.length>0
+                visible:root.sideView==="todo" || root.sideView==="notes"
                 active:visible
                 sourceComponent:root.sideView==="todo"?todoPanel:notesPanel
+            }
+            Loader {
+                id:inlineEventsPanel
+                objectName:"plannerInlineEventsLoader"
+                Layout.fillHeight:root.width>=760
+                Layout.fillWidth:root.width<760
+                Layout.preferredWidth:root.width<760?root.width:310*Appearance.fontSizeScale
+                Layout.minimumWidth:0
+                Layout.maximumWidth:root.width
+                Layout.preferredHeight:root.width<760?Math.min(230,root.height*.4):-1
+                Layout.minimumHeight:0
+                Layout.maximumHeight:root.width<760?Math.min(230,root.height*.4):Infinity
+                clip:true
+                visible:root.sideView==="events"
+                active:root._inlineEventsLoaded
+                sourceComponent:EventsDialog {
+                    objectName:"plannerInlineEventsEditor"
+                    anchors.fill:parent
+                    embeddedPresentation:true
+                    hideEmbeddedScrollBar:true
+                    show:root.sideView==="events"
+                    onDismiss:root.closeInlineEventEditor()
+                }
+                onLoaded:root.applyPendingInlineEvent()
             }
         }
     }
@@ -307,7 +369,7 @@ Item {
         const saved=GlobalStates.dashboardPlannerBrowser
         if(saved.date)selectedDate=new Date(saved.date)
         followToday=saved.followToday ?? true
-        sideView=saved.sideView ?? ""
+        sideView=["todo","notes"].includes(saved.sideView)?saved.sideView:""
         _initialized=true
         if(followToday)selectedDate=DateTime.clock.date
         storeBrowser()

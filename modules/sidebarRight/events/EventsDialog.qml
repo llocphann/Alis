@@ -12,6 +12,7 @@ import Quickshell
 WindowDialog {
     id: root
     backgroundHeight: 600
+    property bool hideEmbeddedScrollBar: false
     contentSpacing: root.embeddedPresentation ? 4 : 16
     embeddedBackgroundColor: Appearance.angelEverywhere
         ? Appearance.angel.colGlassPopup
@@ -191,7 +192,10 @@ WindowDialog {
     }
 
     function focusEditor(): void {
-        Qt.callLater(() => titleField.forceActiveFocus())
+        Qt.callLater(() => {
+            if (root.show && root.visible && root.enabled)
+                titleField.forceActiveFocus()
+        })
     }
 
     function resetForm(): void {
@@ -329,7 +333,9 @@ WindowDialog {
         boundsBehavior: Flickable.StopAtBounds
 
         ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AsNeeded
+            // Hiding the indicator does not disable wheel, touch or keyboard scroll.
+            policy: root.hideEmbeddedScrollBar
+                ? ScrollBar.AlwaysOff : ScrollBar.AsNeeded
         }
 
         Column {
