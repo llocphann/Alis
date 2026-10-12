@@ -148,13 +148,6 @@ ColumnLayout {
             Percent { text:"Refraction strength";configKey:"abyss.effects.refraction.strength";fallback:6;maximum:16 }
             Percent { text:"Rim highlight";configKey:"abyss.effects.surfaceHighlight";fallback:.45 }
             Percent { text:"Glow";configKey:"abyss.effects.glow.strength";fallback:.08;maximum:.3 }
-            RippleButton {
-                buttonText:"Use opaque Material appearance";implicitHeight:36;Layout.fillWidth:true
-                onClicked:Config.setNestedValues({"abyss.surface.opacity":1,"abyss.content.opacity":1,"abyss.content.blurRadius":0,"abyss.waves.enabled":false,
-                    "abyss.effects.blur.enabled":false,"abyss.effects.refraction.enabled":false,
-                    "abyss.effects.glow.strength":0,"abyss.effects.surfaceHighlight":0,
-                    "abyss.perimeter.radius":Config.options?.appearance?.screenEdge?.radius ?? 25})
-            }
         }
     }
     SettingsCardSection {
