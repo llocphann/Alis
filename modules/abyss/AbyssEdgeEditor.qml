@@ -1069,12 +1069,19 @@ Item {
                             
                             objectName:"abyssModuleRoundingAction"
                             text:"Inherit rounding";glyph:"rounded_corner"
-                            
-                            compact:true
-                            description:"Inherit shared module rounding"
+                            compact:true;checkable:true
+                            description:checked
+                                ? "Inherited module rounding. Toggle off to use a custom radius."
+                                : "Custom module rounding. Toggle on to inherit shared curvature."
+                            checked:(root.edgeModuleRadii[root.editingEdge] ?? -1)<0
                             enabled:root.edgeWidthAffectsModules[root.editingEdge]===false
-                            && (root.edgeModuleRadii[root.editingEdge] ?? -1)>=0
-                            onClicked:root.edgeModuleRadii=Object.assign({},root.edgeModuleRadii,{[root.editingEdge]:-1})
+                            onToggled: {
+                                const radius=root.edgeModuleRadii[root.editingEdge] ?? -1
+                                root.edgeModuleRadii=Object.assign({},root.edgeModuleRadii,{
+                                    [root.editingEdge]:checked ? -1
+                                        : (radius>=0 ? radius : AbyssStyle.neckRadius)
+                                })
+                            }
                             }
                             AbyssSlider {
                             editorCompact:true
