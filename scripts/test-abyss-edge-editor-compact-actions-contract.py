@@ -59,7 +59,7 @@ for needle in [
 
 # Exercise the real binding for both the unjoined and nearby-Edge states;
 # whitespace or a multiline conditional must not change this contract.
-label=re.search(r'text:\s*(root\.nearbyCorner\s*\?[\s\S]*?)\n\s*checked:',editor)
+label=re.search(r'text:\s*(root\.nearbyCorner\s*\?[\s\S]*?:\s*"Join nearby corner")',editor)
 assert label, "join action must expose a contextual text binding"
 subprocess.run(["node","-e",r'''
 const assert=require('node:assert/strict'),vm=require('node:vm');
@@ -122,8 +122,15 @@ assert '750*Appearance.fontSizeScale' in editor
 assert 'Ctrl/Shift-click select · Drag' not in editor
 
 # Every Editor button has a bounded square hit rectangle, even in fill rows.
-assert editor.count('Layout.maximumWidth:root.editorActionSize') == 15
-assert editor.count('Layout.maximumHeight:root.editorActionSize') == 15
+assert editor.count('Layout.maximumWidth:root.editorActionSize') == 17
+assert editor.count('Layout.maximumHeight:root.editorActionSize') == 17
+for name,action in [('abyssModuleCustomSizeToggle','customSize'),('abyssModuleJoinCorner','joinCorner')]:
+    part=editor[editor.index('objectName:"'+name+'"'):]
+    part=part[:part.index('onToggled:')+len('onToggled:root.change("'+action+'",checked)')]
+    assert 'compact:true;editorSquare:true;checkable:true' in part, name
+    assert 'checked:' in part and 'enabled:' in part, name
+    assert 'onToggled:root.change("'+action+'",checked)' in part, name
+assert 'id:selection' not in editor and 'selectionRegion' not in editor
 
 
 # The editor's fine-controls grid keeps nine stable slots in all states.

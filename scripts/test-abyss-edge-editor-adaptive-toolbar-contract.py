@@ -31,37 +31,44 @@ assert 'visible:root.showKindSelector || root.showOutputSelector' in positions
 assert 'visible:root.showKindSelector' in positions
 assert 'visible:root.showOutputSelector' in positions
 assert positions.count('202*Appearance.fontSizeScale') == 4
-assert 'ipcOutputRegion' in editor and 'ipcOutputRegion,selectionRegion' in editor
+assert 'ipcOutputRegion' in editor and 'ipcOutputRegion,edgeRegion' in editor
+assert 'selectionRegion' not in editor
 assert 'root.editingPopups ? 5 : 3' in editor
 assert 'Layout.preferredWidth:116*Appearance.fontSizeScale' in editor
 
 fine=editor[editor.index("id:editFineControls"):]
 fine_columns=re.search(r"\bcolumns:\s*([\s\S]+?)\n\s*columnSpacing:",fine)
 assert fine_columns, "fine controls must expose adaptive columns"
-# Dense horizontal layout: the fine controls occupy a complete 3-by-3
-# grid, while the per-module selected fields consume one complete 3-cell row.
-# Moving the selector and action strip does not alter any QML IDs or signals.
+# A single add-module palette remains. Existing modules are selected by
+# clicking/dragging their Screen Edge handles, not by a duplicate dropdown.
+# All module actions keep their object names and handlers after regrouping.
 fine_start=editor.index("id:editFineControls")
 selected_start=editor.index("id:selectedModuleControls")
 fine_segment=editor[fine_start:selected_start]
 selected_segment=editor[selected_start:]
-assert fine_segment.count('id:scaleModulesRow') == 1
-assert fine_segment.count('objectName:"abyssJoinNearbyModules"') == 1
-assert fine_segment.index('id:scaleModulesRow') < fine_segment.index('objectName:"abyssJoinNearbyModules"') < fine_segment.index('objectName:"abyssModuleRounding"')
+assert 'id: palette' in fine_segment
+assert 'onClicked:root.add(palette.currentValue)' in fine_segment
+assert 'id:selection' not in editor
+assert 'selectionRegion' not in editor
 assert fine_segment.count('objectName:"abyssCompactSelectedModuleActions"') == 1
-assert fine_segment.count('id:selection') == 1
+assert fine_segment.count('id:alignmentChoice') == 1
 assert fine_segment.count('objectName:"abyssModulePositionLock"') == 1
 assert fine_segment.count('objectName:"abyssSelectionEnabled"') == 1
 assert fine_segment.count('objectName:"abyssSelectionRemove"') == 1
-assert selected_segment.count('id:selection') == 0
-assert selected_segment.count('id:alignmentChoice') == 1
-assert selected_segment.count('text:"Custom size"') == 1
+assert fine_segment.count('id:scaleModulesRow') == 1
+assert fine_segment.count('objectName:"abyssJoinNearbyModules"') == 1
+assert selected_segment.count('objectName:"abyssModuleRounding"') == 1
+assert selected_segment.count('objectName:"abyssModuleCustomSizeToggle"') == 1
 assert selected_segment.count('objectName:"abyssModuleJoinCorner"') == 1
-assert 'Layout.preferredWidth:142*Appearance.fontSizeScale' in fine_segment
-assert fine_segment.count('Layout.preferredWidth:28*Appearance.fontSizeScale') == 3
-assert 'Layout.preferredWidth:190*Appearance.fontSizeScale' in selected_segment
+assert 'AbyssCheckBox {' not in selected_segment
+assert 'onToggled:root.change("customSize",checked)' in selected_segment
+assert 'onToggled:root.change("joinCorner",checked)' in selected_segment
+assert 'checkable:true' in selected_segment
+assert fine_segment.index('id: palette') < fine_segment.index('objectName:"abyssCompactSelectedModuleActions"') < fine_segment.index('id:alignmentChoice')
+assert fine_segment.index('id:edgeChoice') < fine_segment.index('id:scaleModulesRow')
+assert selected_segment.index('objectName:"abyssModuleRounding"') < selected_segment.index('objectName:"abyssModuleCustomSizeToggle"') < selected_segment.index('objectName:"abyssModuleJoinCorner"')
 assert editor.count('AbyssSlider {') == 6
-assert editor.count('Layout.maximumWidth:root.editorActionSize') == 15
+assert editor.count('Layout.maximumWidth:root.editorActionSize') == 17
 
 selected=editor[editor.index("id:selectedModuleControls"):]
 columns=re.search(r"\bcolumns:\s*([\s\S]+?)\n\s*rowSpacing:",selected)
