@@ -1802,6 +1802,21 @@ run privileged installation just because manual buttons are retired.
   wallpaper application bug, native visual and owner acceptance
   are NOT covered by this commit. State: PARTIAL SOURCE PATCH; OPEN.
 
+  **2026-10-12 follow-up — folder action tooltip only:** In addition to
+  the existing file/card basename rendering, `WallpaperLauncherContent.qml`
+  now presents only `FileUtils.folderNameForPath(browseFolder)` in the folder
+  action tooltip, not the full chosen directory. It continues to store/use
+  the complete normalized folder path for scanning, dialog preselection
+  and applying selected media. Source `652e3633f`; native carousel fixture
+  extended at `ec25ea603` to assert the basename hint and unchanged
+  `WALLPAPER_FIXTURES` identity. Refetched source check at
+  `23f8cbac3`: **9/9 static invariants PASS**, across launcher, library,
+  grid/coverflow and fixture source. This is not a native or full
+  canonical PASS. Still OPEN: preview/owner visual evidence, duplicate
+  basenames, animated media and multiple output tests, and remaining
+  tooltip/selected-name acceptance. No wallpaper application bug was
+  claimed repaired.
+
 - [ ] **WALL-R01 — Rename iNiR Melt transition to Liquid and restore its effect safely — owner request 2026-10-11:**
   [Owner: Alis dev; Rework/transition identity and quality] Rename the
   **user-facing wallpaper transition** currently labeled
