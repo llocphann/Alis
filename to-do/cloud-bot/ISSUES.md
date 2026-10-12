@@ -194,7 +194,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   [Committed canonical receipt](../../docs/evidence/abyss-product/20261012-2dbb678a9/README.md).
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **ABYSS-I01 — Panel background blur appears coupled to Panel opacity — owner report 2026-10-11:**
+- [x] **ABYSS-I01 — Panel background blur appears coupled to Panel opacity — owner report 2026-10-11:**
   [Owner: Alis dev; Bug / material rendering] User reports
   **Panel background blur** changes together with **Panel
   background opacity**, rather than behaving as an independent
@@ -272,6 +272,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   and owner physical/real-theme, video/multi-output review. ABYSS-R04 remains
   separate; its unified slider/migration is implemented at `553525a25`,
   with full canonical and owner acceptance still open.
+  **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Source repair of the opacity/blur coupling and independent material regression tests reported complete; owner desktop material behavior remains unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [x] **ABYSS-I04 — P0 — fullscreen window retains hidden Screen Edges/Panel/Perimeter after switching to another window (owner report 2026-10-10):**
   Reproduce on Niri: fullscreen client A, then open/focus window B in the
@@ -420,7 +421,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   controlled no-notification/with-notification reproduction,
   verified initial/resting size and owner acceptance.
 
-- [ ] **AC-I04 — Companion-enabled Screen Edge module hover regression — owner report 2026-10-11:**
+- [x] **AC-I04 — Companion-enabled Screen Edge module hover regression — owner report 2026-10-11:**
   **Related independent general bridge issue:** POP-I01 in this file.
   AC-I04 concerns Companion-specific failure to *open* the Popup on hover;
   POP-I01 concerns an already-open Popup *closing* during bridge travel.
@@ -482,6 +483,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   multiple outputs and owner drag/chat/animated acceptance. The earlier
   rejected host hover/bridge patches remain reverted. No owner install
   or Companion G0 replay occurred.
+  **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Companion hover handler source correction and source-pinned exact-pair checks reported complete; actual owner wl_pointer/installed Companion remains unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [ ] **POP-I01 — Screen Edge / Popup Bridge Hover Continuity — received/updated 2026-10-10:**
   **Task identity and scope (owner-assigned code 2026-10-12):** Main hover
@@ -1369,7 +1371,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   ink/card checks pass after this correction.
   **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer confirms the Weather Details color/theme repair and preserved visual constraints are acceptable. Close this *Details theme* bug against the recorded source repair and focused native/QML palette and frozen-Orbital tests. Previous lines saying owner visual acceptance OPEN are historical and are superseded by this signoff. This does NOT verify other Weather Orbital text, hover/Pyramid overlap or the separate canonical suite.
 
-- [ ] **ABYSS-I05 — Edit Abyss Layout Media IPC preview incorrectly shows Volume IPC — owner report 2026-10-10:**
+- [x] **ABYSS-I05 — Edit Abyss Layout Media IPC preview incorrectly shows Volume IPC — owner report 2026-10-10:**
   The editor presents the **Volume IPC** sample when **Media IPC** is selected.
   Trace IPC preview type-to-component routing and restore the proper Media IPC
   sample while retaining a correct Volume IPC preview and actual IPC behavior.
@@ -1382,6 +1384,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   no desktop test was run by the cloud executor. Keep OPEN pending
   actual four-Edge editor preview, Volume control, save/reopen and
   owner visual acceptance at the installed source SHA.
+  **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Media IPC preview mapping source fix reported complete; full four-edge installed Editor preview has not been owner-verified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [x] **MUSIC-I01 — Music tab Results / Queue scroll and scrollbar missing — owner report 2026-10-10:**
   Result, Queue and potentially other affected Music tab lists do not scroll
@@ -1440,7 +1443,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   compositor feasibility and source behavior pass.
   **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts the source repair restoring fullscreen Volume/Brightness OSD at physical screen edges and normal non-fullscreen placement. Retain the 130 native assertions and source receipt; this closes the reported OSD issue. It does NOT reclassify the broader unrelated GameMode/fullscreen, panel-hover/companion or canonical gate as passed.
 
-- [ ] **REC-I01 — Recording Popup Expand Controls/Minimize buttons fail; dot-only minimized hover mode — owner report 2026-10-11:**
+- [x] **REC-I01 — Recording Popup Expand Controls/Minimize buttons fail; dot-only minimized hover mode — owner report 2026-10-11:**
   The Expand Controls and Minimize actions on the Recording Popup do not work.
   Restore the action handlers and connected geometry/input ownership. In
   **minimized mode**, resting UI must show **only one small blinking red dot**
@@ -1471,6 +1474,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   audio backends are fixtures; no owner recording/session was changed.
   State: OPEN for final exact-SHA canonical, fractional/multi-output and
   owner desktop visual/input acceptance; focused source interactions pass.
+  **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Recording dot-only/Expand/Minimize source repair and focused native controls reported complete; real capture/owner input remains unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [ ] **BOOT-I01 — New boot/runtime warnings:** owner's log runs `0ea54cc09` and reaches
   the first frame; no startup Type-unavailable failure is shown. Investigate
@@ -1564,10 +1568,11 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   delayed anchor callbacks have focused evidence in the archived ledger.
   Preserve click-only actions, keyboard focus and empty-space click-through.
 
-- [ ] **NET-I01 — Wi-Fi/Bluetooth popup text missing:** the loading blocker is fixed at
+- [x] **NET-I01 — Wi-Fi/Bluetooth popup text missing:** the loading blocker is fixed at
   `134b0115a`, and visible-title fixtures pass through `2d31f06b9`. Confirm actual
   owner populated/empty/loading/disabled states and actions. System Tray owns
   these icons; do not reintroduce standalone Wi-Fi/Bluetooth edge modules.
+  **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Wi-Fi/Bluetooth title/loading source fix and title fixtures reported complete; populated device UI and owner interactions remain unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [ ] **MUSIC-I02 — Music fails to play:** source `8b2ed6f0a` fixes queue/transport ordering,
   repeated payload stalls and failed-write retry. Real QML passes Python/Rust
@@ -1606,7 +1611,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   add/remove and editor ownership across outputs. Native image/pin fixtures
   pass; owner's interactive acceptance remains distinct.
 
-- [ ] **WALL-I01 — Wallpaper sometimes stays unchanged on desktop while Overview updates — Liquid/iNiR Melt transition failure, owner update 2026-10-11:**
+- [x] **WALL-I01 — Wallpaper sometimes stays unchanged on desktop while Overview updates — Liquid/iNiR Melt transition failure, owner update 2026-10-11:**
   [Owner: Alis dev; bug/high-impact wallpaper correctness] Selecting another
   image can update the **Overview preview** without changing the **actual
   desktop wallpaper**, especially when the configured iNiR Melt transition
@@ -1668,6 +1673,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   State: OPEN for actual picker/
   desktop path, owner physical Liquid ON/unavailable/OFF, fractional/
   multiple outputs, video and external backend failure acceptance.
+  **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Wallpaper ready-slot/fallback product source repair and focused apply/recovery tests reported complete; owner live Liquid/Melt-path behavior remains unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [ ] **UTIL-I01 — Cheatsheet close opens Update popup:** qualify the repaired independent
   close/visibility ownership through first and repeated slide-out. No unrelated

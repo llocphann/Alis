@@ -766,7 +766,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   preview/Source focus, Unicode/IME/undo/restart, mouse/touchpad,
   attachment parity, full canonical and owner UI acceptance.
 
-- [ ] **NOTES-F02 — Quick Notes image delivery:** Hadalis `add29d6f8` implements shared
+- [x] **NOTES-F02 — Quick Notes image delivery:** Hadalis `add29d6f8` implements shared
   paste/import, original-byte storage, Markdown persistence and preview with
   stable asynchronous note ownership. Hadalird `b0c975a7f40bdf531012be326bc728f5c014b696`
   (0.2.1) exports referenced images to the selected Obsidian vault's configured
@@ -774,6 +774,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   pass, including delayed tab switching, selection, restart and collisions.
   Confirm installed versions and explicit owner paste/export with source/drafts
   retained. No fixture writes to a personal vault or reads personal clipboard.
+  **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Quick Notes image paste/import/export source delivery and its synthetic filesystem/real-QML tests reported complete; owner real paste/vault attachment flow remains unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [ ] **UTIL-F01 — Utilities feature delivery:** source already provides Monitor
   Arrangement, Display Mode, Sound Output and Night Light/Anti Flashbang pages

@@ -1208,7 +1208,7 @@ run privileged installation just because manual buttons are retired.
   on the exact tested SHA. State: OPEN; diagnosis, implementation
   and native owner smoothness acceptance pending.
 
-- [ ] **DASH-R04 — Edit Dashboard toolbar slide — received/updated 2026-10-10:** pushed
+- [x] **DASH-R04 — Edit Dashboard toolbar slide — received/updated 2026-10-10:** pushed
   `8c673129b58dbde73bf31c82df25c1085bf63e15` slides full-size connected controls
   from the attachment using the shared motion token. Input follows the clipped
   reveal; exit retains its footprint and releases input immediately. Native
@@ -1225,6 +1225,7 @@ run privileged installation just because manual buttons are retired.
   [New raw images/receipt](../../docs/evidence/abyss-product/20261012-dashboard-field-capture/README.md).
   Earlier unfocused sampling FAIL is retained; owner palette/material,
   installed/multi-output and exact newer full-canonical gates remain OPEN.
+  **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Edit Dashboard toolbar motion implementation and subsequent native composed-route/motion checks reported complete; owner material/desktop visual review remains unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [ ] **ABYSS-R10 — Abyss Waves:** verify round crest-only geometry, no trough erosion or
   needle peaks, restrained breaker/whitewater, continuous distance attenuation,
@@ -1565,11 +1566,12 @@ run privileged installation just because manual buttons are retired.
   Source/focused native tests already cover these behaviors; owner video/input
   acceptance is pending. Playback correctness is tracked only in Issues/bugs.
 
-- [ ] **REC-R01 — Recording presentation:** `fafb4687b` connects one shared control set
+- [x] **REC-R01 — Recording presentation:** `fafb4687b` connects one shared control set
   to the Abyss field/allocator/input mask while retaining ii/Waffle presentation.
   Native tests pass four-edge controls, drag, connection hover, auto-hide/recovery,
   Stop callback and idle/secondary-output allocation. Confirm owner appearance
   and an actual recording/stop. No owner recording was started/stopped in fixtures.
+  **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Shared Recording presentation source delivery and four-edge native fixture coverage reported complete; owner actual recording/appearance remains unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [ ] **WALL-R02 — Wallpaper picker polish, filename-only labels and live theme preview — owner update 2026-10-11:**
   [Owner: Alis dev; Rework] Qualify the connected thumbnail selector
@@ -1776,7 +1778,7 @@ test scripts and historical receipts remain in each source repository.
   fixture-only tests. State: real-model assessment OPEN.
   [AI source](https://github.com/llocphann/Alis-Companion/blob/732136ef65bb3c84d9339207210c955759a85b76/to-do/cloud-bot/WULL_LOCAL_AI.md).
 
-- [ ] **AI-R01 — Existing optional Integration Settings UI parity:**
+- [x] **AI-R01 — Existing optional Integration Settings UI parity:**
   [Owner: Alis-Intergration main] Qualify existing TlpPowerSettings and
   Waffle equivalents, ThinkfanSettings, ObsidianThemeSettings and
   ObsidianTodoSettings for theme, readable labels, initial loading,
@@ -1786,6 +1788,7 @@ test scripts and historical receipts remain in each source repository.
   actions. State: source implemented, owner visual/host qualification OPEN.
 
 ## Documentation maintenance
+  **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Optional Integration Settings UI source implementation reported complete; this separate UI parity item was not explicitly among the owner's #24-27 verified feature IDs, so remains owner-unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [x] **TASK-R01 — Categorized tasks and shared AI workflow — completed 2026-10-10:**
   three active lists replace chronological/duplicate ledgers; 26 superseded
@@ -1798,3 +1801,4 @@ test scripts and historical receipts remain in each source repository.
   checks pass. This is documentation validation, not runtime/desktop acceptance.
   Retain this recent completion until 2026-10-17, then move it to the dated
   chatbot archive.
+  **Completion classification — 2026-10-12: Hoàn thành (bot báo xong) — Owner chưa verified.** The task explicitly reports the shared workflow and documentation migration completed on 2026-10-10; prior documentation contract PASS does not represent a separate owner signoff. Retain the original seven-day archive note without inventing an owner-verification date.
