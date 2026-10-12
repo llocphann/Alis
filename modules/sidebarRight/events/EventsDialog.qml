@@ -113,6 +113,22 @@ WindowDialog {
     property int reminderMinutes: 15
     property string recurrence: "none"
     property string compactOptionGroup: ""
+    // Keep a serialized baseline for the embedded Events draft while its
+    // view stays loaded behind the Todo and Quick Notes columns.
+    property string editorWarning: ""
+    property string _cleanFormSnapshot: ""
+    function formSnapshot(): string {
+        return JSON.stringify([eventTitle,eventDescription,Number(eventDate),
+            eventTime,eventEndTime,allDay,eventCategory,eventPriority,
+            reminderMinutes,recurrence])
+    }
+    function captureFormBaseline(): void {
+        _cleanFormSnapshot=formSnapshot()
+        editorWarning=""
+    }
+    function hasUnsavedChanges(): bool {
+        return _cleanFormSnapshot.length>0 && formSnapshot()!==_cleanFormSnapshot
+    }
 
     function compactOptionsFor(group) {
         if (group === "repeat") {
@@ -211,6 +227,7 @@ WindowDialog {
         root.reminderMinutes = 15
         root.recurrence = "none"
         root.compactOptionGroup = ""
+        root.captureFormBaseline()
     }
 
     function loadEvent(event: var): void {
@@ -236,6 +253,7 @@ WindowDialog {
         root.reminderMinutes = event.reminderMinutes ?? 15
         root.recurrence = event.recurrence || "none"
         root.compactOptionGroup = ""
+        root.captureFormBaseline()
     }
 
     function saveEvent(): bool {
@@ -311,6 +329,15 @@ WindowDialog {
 
     WindowDialogSeparator {
         visible: !root.embeddedPresentation
+    }
+
+    StyledText {
+        visible:root.embeddedPresentation && root.editorWarning.length>0
+        Layout.fillWidth:true;Layout.leftMargin:6;Layout.rightMargin:6
+        text:root.editorWarning
+        color:Appearance.colors.colError
+        wrapMode:Text.WordWrap
+        font.pixelSize:Appearance.font.pixelSize.small
     }
 
     // Scrollable content
@@ -789,6 +816,8 @@ WindowDialog {
                 if (root.saveEvent()) {
                     root.resetForm()
                     root.dismiss()
+                } else {
+                    root.editorWarning=Translation.tr("The event could not be saved. Check that it still exists.")
                 }
             }
         }
@@ -807,6 +836,8 @@ WindowDialog {
                 if (root.saveEvent()) {
                     root.resetForm()
                     root.dismiss()
+                } else {
+                    root.editorWarning=Translation.tr("The event could not be saved. Check that it still exists.")
                 }
             }
         }

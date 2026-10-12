@@ -468,7 +468,13 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   Escape and Cancel close the inline editor. A private Niri regression
   fixture now exercises narrow layout, 09:15 prefill, draft retention
   across panel switches and Cancel. It was **NOT RUN** in the connector
-  environment. Keep source/live-save, focus, outside-click,
+  environment. **2026-10-12 additional source repair:** the embedded
+  Events form now records the canonical prefilled/loaded fields as a
+  baseline. A different event/slot click while that form is dirty
+  preserves its draft, returns to Events from Todo/Notes and displays
+  a Save/Cancel warning instead of overwriting it. Failed saves
+  also show a warning. The private-Niri fixture now covers this
+  transition, also **NOT RUN**. Keep source/live-save, focus, outside-click,
   narrow/fractional, installed/restart and owner acceptance gates OPEN.
 
   **Owner refinement — 2026-10-12 (Quick Notes Markdown parity):**

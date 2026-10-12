@@ -96,7 +96,9 @@ Window {
    check(Qt.formatDate(inline.eventDate,"yyyy-MM-dd")==="2024-12-31"
        && inline.eventTime==="09:15" && inline.eventEndTime==="10:15",
      "clicked 09:15 slot lost local date or end-time prefill")
+   check(!inline.hasUnsavedChanges(),"slot prefill was marked dirty before any edits")
    inline.eventTitle="Unsaved private draft"
+   check(inline.hasUnsavedChanges(),"unsaved title was not marked dirty")
    const priorWeek=planner.days[0].date.getTime()
    planner.forceActiveFocus();keyClick(Qt.Key_PageDown)
    check(planner.days[0].date.getTime()===priorWeek,
@@ -105,6 +107,11 @@ Window {
    planner.sideView="events";wait(60)
    check(inline.eventTitle==="Unsaved private draft",
      "switching Events/Todo discarded the unsaved form")
+   planner.openInlineEventEditor({plannerDate:new Date(2024,11,31,15,45)});wait(40)
+   check(inline.eventTitle==="Unsaved private draft",
+     "new slot silently replaced an unsaved event draft")
+   check(inline.editorWarning.length>0 && inline.eventTime==="09:15",
+     "guard failed to show Save/Cancel warning or preserved time")
    inline.dismiss();wait(50)
    check(planner.sideView==="" && !planner._inlineEventsLoaded,
      "Cancel did not dismiss the Events column")

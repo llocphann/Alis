@@ -80,6 +80,15 @@ Item {
         }
     }
     function openInlineEventEditor(arg): void {
+        // New slot/event requests cannot silently replace an unsaved form.
+        // The same form stays loaded behind the Todo/Notes columns.
+        const current=inlineEventsPanel.item
+        if (current && current.hasUnsavedChanges()) {
+            sideView="events"
+            current.editorWarning=Translation.tr("Save or Cancel the current event before opening another.")
+            current.focusEditor()
+            return
+        }
         _pendingInlineEvent=arg
         _inlineEventsLoaded=true
         sideView="events"
@@ -103,6 +112,7 @@ Item {
         } else {
             form.resetForm()
         }
+        form.captureFormBaseline()
         _pendingInlineEvent=null
         form.focusEditor()
     }
