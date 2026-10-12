@@ -28,6 +28,7 @@ Item {
     signal popupHoveredRequested(string kind, string edge, real along)
     signal popupHoverStateChanged(string kind, string edge, real along, bool hovered)
     signal interaction(string edge, real along, real span, real strength)
+    signal layoutRepairRequested()
     readonly property var zones: Geometry.barZones(
         (root.vertical ? Config.options?.bar?.verticalLayout : Config.options?.bar?.layout) ?? {},
         root.vertical, Config.options?.bar?.modules ?? {})
@@ -37,7 +38,8 @@ Item {
     property var inputRegions: []
     property int revision: 0
     // Optional local expansion shares the output field; it has no extra painter.
-    readonly property var deformations: Layout.localSurfaces(layoutRecords,width,height,layoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness)
+    readonly property var capacityNotices: editing ? [] : Layout.capacityNotices(layoutRecords,width,height,Appearance.fontSizeScale)
+    readonly property var deformations: Layout.localSurfaces(layoutRecords.concat(capacityNotices),width,height,layoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness)
 
     property var moduleIds: []
     function syncModuleIds(): void {
@@ -101,7 +103,8 @@ Item {
             outputName: root.outputName
             vertical: placement?.edge === "left" || placement?.edge === "right"
             compact: placement?.compact ?? false
-            enabled: !root.editing
+            visible: geometry !== undefined && !geometry.capacityConflict
+            enabled: !root.editing && visible
             x: geometry?.content.x ?? 0; y: geometry?.content.y ?? 0
             width: geometry?.content.width ?? 0; height: geometry?.content.height ?? 0
             onInteraction: strength => { if (geometry) root.interaction(geometry.edge,geometry.along+geometry.span/2,geometry.span,strength*geometry.influence) }
@@ -116,6 +119,40 @@ Item {
                 if (geometry)
                     root.popupHoverStateChanged(kind,geometry.edge,geometry.along+geometry.span/2,hovered)
             }
+        }
+    }
+    Repeater {
+        model: root.capacityNotices
+        onItemAdded: (index,item) => {
+            root.inputRegions=root.inputRegions.concat([item.inputRegion]);root.revision++
+        }
+        onItemRemoved: (index,item) => {
+            root.inputRegions=root.inputRegions.filter(region=>region!==item.inputRegion);root.revision++
+        }
+        RippleButton {
+            id: notice
+            required property var modelData
+            objectName: "abyssCapacityNotice_"+modelData.edge
+            x: modelData.content.x; y: modelData.content.y
+            width: modelData.content.width; height: modelData.content.height
+            buttonRadius: Appearance.rounding.small
+            padding: 0
+            focusPolicy: Qt.StrongFocus
+            Accessible.name: Translation.tr(modelData.message)+" "+Translation.tr("Edit layout")
+            readonly property Region inputRegion: Region {
+                x: Math.floor(notice.x); y: Math.floor(notice.y)
+                width: notice.visible ? Math.ceil(notice.x+notice.width)-Math.floor(notice.x) : 0
+                height: notice.visible ? Math.ceil(notice.y+notice.height)-Math.floor(notice.y) : 0
+            }
+            onClicked: root.layoutRepairRequested()
+            contentItem: MaterialSymbol {
+                text: "warning"
+                color: Appearance.colors.colError
+                iconSize: Math.min(20*Appearance.fontSizeScale,notice.width-4)
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+            StyledToolTip {text:notice.Accessible.name}
         }
     }
 }

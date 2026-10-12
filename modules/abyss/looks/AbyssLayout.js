@@ -15,7 +15,9 @@ function extent(kind, vertical) {
     var sizes = {utilButtons:36,distroIcon:88,
         activeWindow:178,resources:178,media:166,workspaces:192,clock:104,battery:72,
         tray:72,timer:68,shellUpdate:86,weather:80,taskbar:40};
-    return vertical ? (kind === "workspaces" ? 192 : kind === "clock" ? 86 : kind === "tray" ? 72 : 42) : (sizes[kind] || 48);
+    // A side Edge rotates this same full design, so its along-axis extent
+    // remains the horizontal width. It never chooses a compact substitute.
+    return sizes[kind] || 48;
 }
 function normalize(list, fallbackEdge) {
     var seen = {};
@@ -157,7 +159,10 @@ function lockPlacement(p,record,locked,width,height,options,fontScale) {
 }
 function conflicts(records) {
     var result=[];
-    records.forEach(function(p) {if(p.lockConflict && result.indexOf(p.lockConflict)<0)result.push(p.lockConflict);});
+    records.forEach(function(p) {
+        var message=p.capacityConflict || p.lockConflict;
+        if(message && result.indexOf(message)<0)result.push(message);
+    });
     return result;
 }
 function checkedMove(placements,id,x,y,width,height,options,fontScale,snap) {
@@ -204,7 +209,10 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
         });
     proposed=normalize(proposed,"top");
     var failures=conflicts(geometry(proposed,width,height,options,fontScale));
-    if(failures.length)return deny(failures[0]);
+    // A saved overfull layout can be repaired in several steps. Removing,
+    // disabling or unlocking must remain available until the final layout fits.
+    var repair=action==="remove" || (action==="enabled" && !value) || (action==="locked" && !value);
+    if(failures.length && !repair)return deny(failures[0]);
     return {placements:proposed,rejected:""};
 }
 // Move a same-Edge group as one transaction using the production geometry.
@@ -308,6 +316,7 @@ function edgeInsetsForModules(placements, options, fontScale, thickness, minimum
     return insets;
 }
 function localSurfaces(records, width, height, options, fontScale, minimum) {
+    records=records.filter(function(p) {return !p.capacityConflict;});
     var surfaces=records.filter(function(p) {
         return edgeThickness(options,p.edge)===0 || options?.edgeWidthAffectsModules?.[p.edge]===false || options?.singleModuleExpansion?.[p.edge]==="local"
             && records.filter(function(other) { return other.edge===p.edge; }).length===1;
@@ -372,7 +381,7 @@ function packLockedEdge(list,sizes,length,gap,options,horizontal) {
     function record(p,start,span,scale) {
         return Object.assign({},p,{along:start,span:span,layoutScale:scale,vertical:!horizontal,
             depth:bounded(options?.depth,36,22,64)*p.depth,
-            compact:p.compact || (!horizontal && p.kind!=="clock") || scale<.65});
+            compact:p.compact});
     }
     var locked=[],free=[];
     list.forEach(function(p,i) {
@@ -406,14 +415,14 @@ function packLockedEdge(list,sizes,length,gap,options,horizontal) {
         if(!count)return {records:[],cost:0};
         var group=free.slice(start,start+count),total=group.reduce(function(sum,p) {return sum+p.size;},0);
         var available=interval.end-interval.start-gap*(count-1);
-        if(available<total*.01-1e-7)return null;
-        var scale=Math.min(1,Math.max(.01,available/Math.max(1e-9,total)));
+        if(available<total-1e-7)return null;
+        var scale=1;
         var cursor=interval.start;
         var records=group.map(function(item) {
             var span=item.size*scale,start=Math.max(cursor,item.center-span/2);
             cursor=start+span+gap;return record(item.p,start,span,scale);
         });
-        var end=interval.end,cost=(1-scale)*total/4;
+        var end=interval.end,cost=0;
         for(var i=records.length-1;i>=0;i--) {
             var p=records[i];p.along=Math.max(interval.start,Math.min(p.along,end-p.span));end=p.along-gap;
             cost+=Math.abs(p.along+p.span/2-group[i].center);
@@ -461,9 +470,13 @@ function geometry(placements, width, height, options, fontScale) {
         });
         var total = sizes.reduce(function(sum,n) { return sum+n; },0);
         if (!list.length || length < 1) return;
-        gap = Math.min(gap,Math.max(0,(length-2*margin)/(list.length*4)));
-        var scale = Math.min(1,Math.max(0.01,(length-2*margin-gap*(list.length-1))/Math.max(1,total)));
+        // Capacity is an explicit placement constraint, never a font/icon
+        // scaling policy. A failed layout preserves its saved placements.
+        var scale = 1;
+        var capacityError=total+gap*(list.length-1)>length-2*margin+1e-7
+            ? "Not enough space on this Edge. Move a module or choose a smaller size." : "";
         var lockedResult=list.some(function(p) {return p.locked;}) ? packLockedEdge(list,sizes,length,gap,options,horizontal) : null;
+        if(lockedResult?.records)capacityError="";
         var records=lockedResult?.records;
         if(!records) {
         // Each aligned group keeps its internal order; free placements keep their
@@ -486,7 +499,7 @@ function geometry(placements, width, height, options, fontScale) {
             cursor = start+size+gap;
             return Object.assign({},p,{along:start,span:size,vertical:!horizontal,
                 depth:bounded(options?.depth,36,22,64)*p.depth,
-                compact:p.compact || (!horizontal && p.kind!=="clock") || scale<0.65});
+                compact:p.compact});
         });
         var end = length-margin;
         for (var i=records.length-1;i>=0;i--) {
@@ -494,16 +507,38 @@ function geometry(placements, width, height, options, fontScale) {
             end = records[i].along-gap;
         }
         // Infeasible output changes retain anchors/lock flags in saved data.
-        // Show deterministic ordinary packing with a visible conflict instead
-        // of overlapping controls; the editor refuses to persist this fallback.
+        // Reject the Edge as a whole with one repair notice, never silently
+        // shrink, overlap or drop arbitrary members from the saved layout.
         if(lockedResult?.error)records=records.map(function(p) {return Object.assign({},p,{lockConflict:lockedResult.error});});
         }
+        if(capacityError || lockedResult?.error)records=records.map(function(p) {
+            return Object.assign({},p,{capacityConflict:capacityError || lockedResult.error});
+        });
         records.forEach(function(p) {
             var inset = 8, cross = 32*bounded(fontScale,1,.7,2)*moduleSize(p,options)*(p.layoutScale ?? scale);
             p.content = horizontal ? {x:p.along,y:edge==="top"?inset:height-inset-cross,width:p.span,height:cross}
                 : {x:edge==="left"?inset:width-inset-cross,y:p.along,width:cross,height:p.span};
             result.push(p);
         });
+    });
+    return result;
+}
+
+// Rejected saved layouts keep every module in the editor inventory. A single
+// exact input/paint footprint on the affected Edge opens that existing editor.
+function capacityNotices(records,width,height,fontScale) {
+    var result=[],seen={};
+    records.forEach(function(p) {
+        if(!p.capacityConflict || seen[p.edge])return;
+        seen[p.edge]=true;
+        var horizontal=p.edge==="top" || p.edge==="bottom",length=horizontal?width:height;
+        var crossLength=horizontal?height:width;
+        var size=Math.min(32*bounded(fontScale,1,.7,2),Math.max(1,length-16),Math.max(1,crossLength-16));
+        var along=(length-size)/2,inset=Math.min(8,Math.max(0,(crossLength-size)/2));
+        var content=horizontal?{x:along,y:p.edge==="top"?inset:height-inset-size,width:size,height:size}
+            :{x:p.edge==="left"?inset:width-inset-size,y:along,width:size,height:size};
+        result.push({id:"capacity_"+p.edge,edge:p.edge,vertical:!horizontal,along:along,span:size,
+            content:content,customSize:true,size:1,joinCorner:false,message:p.capacityConflict});
     });
     return result;
 }

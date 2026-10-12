@@ -444,10 +444,10 @@ Item {
             objectName:"abyssModuleHandle"
             required property string modelData
             readonly property var record: root.moduleLayer.layoutRecords.find(p => p.id === modelData)
-            readonly property Region inputRegion: Region { item:handle;width:root.editingPopups ? 0 : handle.width }
+            readonly property Region inputRegion: Region { item:handle;width:root.editingPopups || !handle.visible ? 0 : handle.width }
             x: record?.content.x ?? 0; y: record?.content.y ?? 0
             width: record?.content.width ?? 0; height: record?.content.height ?? 0
-            visible: record !== undefined && !root.editingPopups
+            visible: record !== undefined && !record.capacityConflict && !root.editingPopups
             activeFocusOnTab:true
             Accessible.role:Accessible.Button
             Accessible.name:Placement.label(record?.kind)+(record?.locked ? " · Locked" : "")

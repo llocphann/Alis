@@ -9,7 +9,6 @@ import qs.modules.bar as Shared
 import qs.modules.bar.weather
 import qs.modules.abyss.looks
 import qs.modules.abyss.content
-import qs.modules.verticalBar as Vertical
 
 // Mature feature controls, with popup ownership discovered from this ancestor.
 Item {
@@ -22,6 +21,11 @@ Item {
     property bool vertical: false
     property bool compact: false
     property real contentScale: 1
+    // Physical orientation never chooses another feature implementation.
+    // Keep the horizontal design/controls resident and rotate that one item.
+    readonly property bool contentVertical: attachedEdge === "left" || attachedEdge === "right"
+    readonly property real contentRotation: attachedEdge === "left" ? -90
+        : attachedEdge === "right" ? 90 : 0
     readonly property var feature: content.item
     property var companionPopup: null
     function registerCompanionPopup(popup): void {
@@ -37,12 +41,10 @@ Item {
         // animation must never reserve an empty Edge slot after they hide.
         if ((kind === "timer" || kind === "shellUpdate") && !item.contentAvailable)
             return 0
-        if (kind === "activeWindow") return vertical ? 48
-            : Math.min(item.maxContentWidth ?? 220,
+        if (kind === "activeWindow") return Math.min(item.maxContentWidth ?? 220,
                 Math.max(60,item.contentImplicitWidth))
-        if (kind === "taskbar") return vertical ? Math.max(40,item.dockItems.length*item.itemPitch+item.contentInset)
-            : Math.min(320,Math.max(40,item.dockItems.length*item.itemPitch+item.contentInset))
-        return vertical ? item.implicitHeight : item.implicitWidth
+        if (kind === "taskbar") return Math.min(320,Math.max(40,item.dockItems.length*item.itemPitch+item.contentInset))
+        return item.implicitWidth
     }
     readonly property bool hovered: hoverTracker.hovered
     signal interaction(real strength)
@@ -56,14 +58,18 @@ Item {
     PointHandler { acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton; onActiveChanged: root.interaction(active ? 1 : -.3) }
     Loader {
         id: content
-        anchors.centerIn: parent
-        width: root.vertical ? 32*Appearance.fontSizeScale : root.width/Math.max(.01,root.contentScale)
-        height: root.vertical ? root.height/Math.max(.01,root.contentScale) : 32*Appearance.fontSizeScale
+        // Explicit real-valued centering avoids anchor-line rounding at
+        // fractional extents, which moves a rotated hit rectangle by .5px.
+        x: (root.width-width)/2
+        y: (root.height-height)/2
+        width: (root.contentVertical ? root.height : root.width)/Math.max(.01,root.contentScale)
+        height: 32*Appearance.fontSizeScale
         scale: root.contentScale
-        sourceComponent: root.kind === "resources" ? (root.vertical ? verticalResources : resources)
-            : root.kind === "clock" ? (root.vertical ? verticalClock : clock)
-            : root.kind === "media" ? (root.vertical ? verticalMedia : media)
-            : root.kind === "battery" ? (root.vertical ? verticalBattery : battery)
+        rotation: root.contentRotation
+        sourceComponent: root.kind === "resources" ? resources
+            : root.kind === "clock" ? clock
+            : root.kind === "media" ? media
+            : root.kind === "battery" ? battery
             : root.kind === "workspaces" ? workspaces : root.kind === "distroIcon" ? distro
             : root.kind === "activeWindow" ? activeWindow : root.kind === "tray" ? tray
             : root.kind === "utilButtons" ? utilities
@@ -71,21 +77,9 @@ Item {
             : root.kind === "shellUpdate" ? update : root.kind === "weather" ? weather : taskbar
     }
     Component { id: resources; Shared.Resources {} }
-    Component { id: verticalResources; Vertical.Resources {} }
-    Component { id: clock; Shared.ClockWidget { showDate: !root.compact && (Config.options?.bar?.verbose ?? true) } }
-    Component {
-        id: verticalClock
-        MouseArea {
-            implicitHeight: clock.implicitHeight; implicitWidth: 32
-            hoverEnabled: true; acceptedButtons: Qt.NoButton
-            Vertical.VerticalClockWidget { id: clock; anchors.fill: parent }
-            Shared.ClockCalendarPopup { hoverTarget: parent }
-        }
-    }
+    Component { id: clock; Shared.ClockWidget { showDate: Config.options?.bar?.verbose ?? true } }
     Component { id: media; Shared.Media { edgeHostedExpansion: true } }
-    Component { id: verticalMedia; Vertical.VerticalMedia { edgeHostedExpansion: true } }
     Component { id: battery; Shared.BatteryIndicator {} }
-    Component { id: verticalBattery; Vertical.BatteryIndicator {} }
     // Launcher follows the same ownership model as Battery: the source control
     // owns one mature StyledPopup, and Abyss only rehosts that popup into the
     // output field. No GlobalStates generic-popup handoff is involved.
@@ -115,7 +109,7 @@ Item {
     Component {
         id: tray
         Shared.SysTray {
-            vertical: root.vertical
+            vertical: false
             showSeparator: false
             showOverflowMenu: true
             onHoverPopupRequested: kind => root.hoverRequest(kind)
@@ -126,8 +120,8 @@ Item {
     Component {
         id: utilities
         Shared.UtilButtons {
-            vertical: root.vertical
-            compactRequested: root.compact
+            vertical: false
+            compactRequested: false
             showUtilitiesLauncher:
                 Config.options?.bar?.utilButtons?.showUtilitiesLauncher ?? true
             onUtilitiesRequested: root.request("utilities")
@@ -138,19 +132,19 @@ Item {
             }
         }
     }
-    Component { id: timer; Shared.TimerIndicator { vertical: root.vertical } }
-    Component { id: update; Shared.ShellUpdateIndicator { vertical: root.vertical } }
-    Component { id: weather; WeatherBar { vertical: root.vertical } }
+    Component { id: timer; Shared.TimerIndicator { vertical: false } }
+    Component { id: update; Shared.ShellUpdateIndicator { vertical: false } }
+    Component { id: weather; WeatherBar { vertical: false } }
     Component {
         id: workspaces
         Shared.Workspaces {
-            vertical: root.vertical
+            vertical: false
             MouseArea {
                 anchors.fill: parent; acceptedButtons: Qt.RightButton
                 onPressed: GlobalStates.toggleOverview(root.outputName)
             }
         }
     }
-    Component { id: taskbar; Shared.BarTaskbar { vertical: root.vertical; barPosition: root.attachedEdge; parentWindow: root.QsWindow.window; slotSize: 32 } }
+    Component { id: taskbar; Shared.BarTaskbar { vertical: false; barPosition: root.attachedEdge; parentWindow: root.QsWindow.window; slotSize: 32 } }
 
 }

@@ -119,8 +119,18 @@ const saved = JSON.stringify(initial);
 for (const [w,h] of [[1920,1200],[1536,960],[960,600],[480,320]]) {
     for (const edge of ['top','right','bottom','left']) {
         const placements=initial.map(p=>({...p,edge}));
-        const records=geometry(placements,w,h,{gap:12},1.5);
-        assert.equal(records.length,placements.length);
+        const allRecords=geometry(placements,w,h,{gap:12},1.5);
+        assert.equal(allRecords.length,placements.length,'rejected members remain in the saved/editor inventory');
+        const records=allRecords.filter(p=>!p.capacityConflict);
+        if(records.length!==allRecords.length) {
+            assert(allRecords.every(p=>p.capacityConflict),'reject the overfull Edge as one explicit layout');
+            assert(allRecords.every(p=>p.span===extent(p.kind,false)*1.5*moduleSize(p,{})), 'capacity never shrinks configured designs');
+            assert.equal(localSurfaces(allRecords,w,h,{edgeWidthAffectsModules:{[edge]:false}},1.5,48).length,0,'rejected modules do not paint ghost backing');
+            const notices=capacityNotices(allRecords,w,h,1.5);
+            assert.equal(notices.length,1,'one visible repair action owns the rejected Edge');
+            const c=notices[0].content;
+            assert(c.x>=0&&c.y>=0&&c.x+c.width<=w+.001&&c.y+c.height<=h+.001,'repair target stays on output');
+        }
         for (let i=0;i<records.length;i++) {
             const r=records[i],c=r.content;
             assert(c.x>=0 && c.y>=0 && c.x+c.width<=w+.001 && c.y+c.height<=h+.001);

@@ -727,6 +727,7 @@ Scope {
                 anchors.fill: parent
                 HoverHandler { id: barHover; onHoveredChanged: { if (hovered) { barClose.stop(); root.setBarRevealed(window.outputName,true) } else barClose.restart() } }
                 onInteraction: (edge,along,span,strength) => liquid.impulse(edge,along,span,strength)
+                onLayoutRepairRequested: GlobalStates.startAbyssEditing(window.outputName)
                 onPopupRequested: (kind,edge,along) => {
                     companionExtension.yieldToUser()
                     const same = GlobalStates.abyssPopupKind === kind

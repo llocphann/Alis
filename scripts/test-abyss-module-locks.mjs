@@ -11,19 +11,29 @@ let checks=0;
 function check(ok,label){checks++;assert.ok(ok,label);}
 function same(actual,wanted,label){checks++;assert.deepEqual(JSON.parse(JSON.stringify(actual)),JSON.parse(JSON.stringify(wanted)),label);}
 function geometry(items,w,h,options){return layout.geometry(items,w,h,options,1);}
-// Default unlocked layout keeps the committed pre-feature paint/input geometry.
+// R05 intentionally replaces vertical compact extents and rejects overfull
+// layouts. Keep the original captured reference immutable; its fitting packing
+// still checks unchanged bounds after supplying the requested full extents.
+baseline.extent=layout.extent;
 for(const edge of ['top','right','bottom','left'])for(const [w,h] of [[1920,1080],[853.5,479.25],[320,180]])for(const font of [.7,1,1.5,2])for(const alignment of ['free','start','center','end']){
  const entries=Array.from({length:10},(_,i)=>({id:'legacy'+i,kind:i%2?'weather':'clock',edge,position:i/9,alignment,enabled:i!==3,customSize:i===4,size:1.2}));
  const options={gap:16,edgeThickness:16,extents:{legacy5:0},editing:false};
  const actual=layout.geometry(layout.normalize(entries,edge),w,h,options,font).map(p=>{
   const copy={...p};delete copy.locked;delete copy.lockPosition;delete copy.lockScale;return copy;
  });
- same(actual,baseline.geometry(baseline.normalize(entries,edge),w,h,options,font),'unlocked committed geometry and input bounds are unchanged');
+ if(layout.conflicts(actual).length) {
+  check(actual.every(p=>p.capacityConflict),'overfull unlocked Edge is explicitly rejected');
+  check(actual.every(p=>p.span===layout.extent(p.kind,false)*font*layout.moduleSize(p,options)),'rejection never compresses a full design');
+  check(layout.capacityNotices(actual,w,h,font).length===1,'one repair target replaces rejected input');
+ } else {
+  const expected=baseline.geometry(baseline.normalize(entries,edge),w,h,options,font).map(p=>({...p,compact:!!entries.find(e=>e.id===p.id).compact}));
+  same(actual,expected,'fitting full-size unlocked geometry preserves packing and input bounds');
+ }
 }
 function valid(records,w,h){
  for(const edge of ['top','right','bottom','left']){
   const length=['top','bottom'].includes(edge)?w:h;
-  const entries=records.filter(p=>p.edge===edge).sort((a,b)=>a.along-b.along);
+  const entries=records.filter(p=>p.edge===edge&&!p.capacityConflict).sort((a,b)=>a.along-b.along);
   for(let i=0;i<entries.length;i++){
    const p=entries[i];check(Number.isFinite(p.along)&&p.along>=-1e-7&&p.along+p.span<=length+1e-7,'module remains on output');
    if(i)check(entries[i-1].along+entries[i-1].span<=p.along+1e-7,'neighbors never overlap');
@@ -52,7 +62,15 @@ for(const edge of ['top','right','bottom','left'])for(const [w,h] of [[1920,1080
    entries=layout.checkedMove(locked,'b',x,y,w,h,options,1,true).placements;
   }
   const records=geometry(entries,w,h,options),own=records.find(p=>p.id==='a');
-  check(!layout.conflicts(records).length,'feasible edits do not invoke fallback');
+  if(layout.conflicts(records).length) {
+   check(records.filter(p=>p.edge===edge).every(p=>p.capacityConflict),'uncompressed locked interval rejects the affected Edge explicitly');
+   check(layout.localSurfaces(records,w,h,{...options,edgeWidthAffectsModules:{[edge]:false}},1,48).every(p=>p.edge!==edge),'rejected interval never paints a phantom module');
+   same(entries.find(p=>p.id==='a'),a,'rejected candidate preserves the saved pin');
+   const unchanged=geometry(locked,w,h,options).find(p=>p.id==='a');
+   check(Math.abs(unchanged.along-before.along)<1e-7&&Math.abs(unchanged.span-before.span)<1e-7,'original accepted pin remains unchanged');
+   continue;
+  }
+  check(!layout.conflicts(records).length,'fitting uncompressed edits stay feasible');
   check(Math.abs(own.along-before.along)<1e-7&&Math.abs(own.span-before.span)<1e-7,'locked reservation never moves on '+operation);
   same(entries.find(p=>p.id==='a'),a,'neighbor operations preserve stored lock/edge/alignment');valid(records,w,h);
  }
@@ -89,6 +107,15 @@ for(let trial=0;trial<180;trial++){
  const opts={gap:Math.floor(next()*20),edgeThickness:16,editing:true,extents:{}};
  let entries=layout.normalize(Array.from({length:2+trial%9},(_,i)=>({id:'p'+i,kind:'clock',edge,position:next(),alignment:'free'})),edge);
  for(const p of entries)opts.extents[p.id]=24+next()*90;
+ const initialRecords=geometry(entries,w,h,opts);
+ if(layout.conflicts(initialRecords).length){
+  const before=JSON.stringify(entries);
+  const rejected=layout.checkedBatch(entries,entries.filter((_,i)=>i%3===0).map(p=>p.id),'locked',true,w,h,opts,1);
+  check(!!rejected.rejected,'overfull generated layout cannot capture new pins');
+  same(rejected.placements,entries,'rejected lock leaves every source entry intact');
+  check(JSON.stringify(entries)===before&&layout.capacityNotices(initialRecords,w,h,1).length===1,'generated capacity failure is explicit and non-destructive');
+  continue;
+ }
  for(const p of entries.filter((_,i)=>i%3===0))entries=layout.setLocked(entries,p.id,true,w,h,opts,1);
  const baseline=geometry(entries,w,h,opts);check(!layout.conflicts(baseline).length,'captured feasible locks stay feasible');valid(baseline,w,h);
  const unlocked=entries.find(p=>!p.locked);

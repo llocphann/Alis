@@ -1359,7 +1359,7 @@ run privileged installation just because manual buttons are retired.
   per-surface contrast, animation and multiple-output acceptance.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **ABYSS-R05 — Preserve the full module design when placed on Left/Right Screen Edges — owner requirement 2026-10-12:**
+- [x] **ABYSS-R05 — Preserve the full module design when placed on Left/Right Screen Edges — owner requirement 2026-10-12:**
   [Owner: Alis dev; Rework / four-edge visual and geometry parity]
   **ALL Screen Edge modules** must retain the same **non-compact
   component design, visible content, proportions, controls, icon/text
@@ -1420,8 +1420,15 @@ run privileged installation just because manual buttons are retired.
   multiple monitors and small screen limits. Add deterministic
   geometry/orientation and source QML tests, followed by real
   Niri/Quickshell before/after captures and owner visual signoff.
-  State: NEW/OPEN — requirement recorded; no source implementation
-  or native acceptance claimed in this entry.
+  **Hoàn thành (bot báo xong) — Owner chưa verified, 2026-10-12.**
+  All 13 kinds keep their resident full component with ±90° orientation,
+  precise fractional pivot and configured size. Crowded edges reject explicitly
+  with retained inventory, bounded repair action and zero hidden input.
+  Focused policy 3772, locks 6262, multi-selection 1610 and native
+  683 checks/106 frames/65 PNG PASS. Evidence:
+  [R05](../../docs/evidence/abyss-product/20261012-abyss-r05/README.md).
+  Owner/installed, populated feeds, wl_pointer, fractional/multi-output
+  and current exact-SHA canonical remain separate pending gates.
 
 - [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**
   [Owner: Alis dev; Rework/Optimization] Improve the perceptual and
