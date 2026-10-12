@@ -189,7 +189,7 @@ ContentPage {
                 }
                 ContentSubsection {
                     title: Translation.tr("Reveal behavior")
-                    tooltip: Translation.tr("When the dock shows. Hover hides it until you reach the screen edge; Empty workspace keeps it visible on an empty desktop.")
+                    tooltip: Translation.tr("Hover reveals the Dock at the edge; Empty workspace shows it on an empty desktop.")
 
                     ConfigSelectionArray {
                         currentValue: Config.options?.dock?.hoverToReveal ?? true
