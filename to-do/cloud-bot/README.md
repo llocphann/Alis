@@ -16,6 +16,12 @@ outcomes; their position is not an instruction to finish every Issue first.
 "Alongside" means coordinated work in this single-agent context, not separate
 agents or task boards.
 
+**Latest direct scheduling override, 2026-10-12:** finish the current safe
+ABYSS-R03 source/qualification milestone, then take **ABYSS-R08 — Compact
+Edit Abyss Layout Control Bar** immediately. This overrides the next item
+of the previous explicit queue; it does not close remaining R03, POP-I01
+or owner/native acceptance. Resume the remaining explicit queue afterwards.
+
 **Maintainer scheduling override (2026-10-12, authoritative 27-item
 New Features numbering in NEW_FEATURES.md):**
 - **Owner verified / completed:** #13 (Power-profile render quality)

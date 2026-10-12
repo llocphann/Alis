@@ -6,6 +6,12 @@ This is a partial responsiveness milestone. **ABYSS-R03 and POP-I01 remain
 open**; owner desktop smoothness, installed identity, multi-output/fractional
 input and new exact-SHA canonical acceptance are separate gates.
 
+Frozen full canonical **484427acf960590ca55bc9c7f6df603c8c31852c** is
+RUNNING against the pinned clean Integration 4d0aa3f5; its driver/hash and
+private native context are in `canonical-running.json`. The first native
+press check failed in this nested context; retain the final receipt rather
+than infer PASS from the focused runs. Do not modify the running driver.
+
 The controller reuses double-precision distance kernels and an identical-input
 mass snapshot. It preserves the original ordered additions, synchronous mass
 updates, solver cadence, sample count and wave appearance. The generic
@@ -49,3 +55,14 @@ partial after an eight-second flush timeout and contains impossible durations;
 `profiler-receipt.json` pins its retained raw path/hash. Its timing aggregates
 must not be used as measurements. Deferred mass updates and coalesced native
 input-region signals were not applied. G0 remains offline-only and unchanged.
+
+An additional deterministic geometry diagnostic remains unresolved:
+`dense-sort-diagnostic.json` packs four full-size modules including a fixed
+pin. A 25 px primary move can produce a 207 px extra displacement when its
+requested center crosses a neighbor's old nominal center. This is a pure
+production-layout result, not an exact owner/native replay or a performance
+measurement. The cache milestone does not fix this ordering behavior.
+Investigate reserving the dragged primary's requested geometry while moving
+eligible neighbors, preserving locked reservations, snap, release, Undo and
+Save/Cancel. The latest owner priority makes R08 the next milestone after
+the current qualification; coordinate this remaining R03 defect with it.

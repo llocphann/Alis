@@ -1064,6 +1064,9 @@ run privileged installation just because manual buttons are retired.
   READY for UI audit; owner visual acceptance pending.
 
 - [ ] **ABYSS-R08 — Compact Edit Abyss Layout control bar — owner request 2026-10-10:**
+  **Priority reconfirmed 2026-10-12:** next immediately after the current
+  ABYSS-R03 source/qualification milestone, ahead of the former next-item
+  queue. Keep R03's remaining work and independent failed/owner gates open.
   Redesign controls for BOTH horizontal and vertical edit orientations to
   occupy less room while preserving discoverable actions, module context,
   per-edge editing, Cancel/Undo/Done, input targets and narrow-screen access.
@@ -1639,6 +1642,13 @@ run privileged installation just because manual buttons are retired.
   [Evidence](../../docs/evidence/abyss-product/20261012-r03-mass-placement-cache/README.md).
   STILL OPEN for dense actual wl_pointer tracking, owner video smoothness
   and current exact-SHA qualification; POP-I01 remains independent.
+  A deterministic four-module layout shows 207 px additional displacement
+  for a 25 px drag when old nominal centers reorder; this is pure geometry,
+  not an owner replay. Primary reservation/release semantics still need a
+  repair and lock/group/native proof. Frozen clean-clone `484427acf` is
+  RUNNING; first nested-context native press FAIL is retained. Latest owner
+  priority selects R08 after this qualification milestone, with remaining
+  R03 work coordinated alongside its editor changes.
   **2026-10-12 focused partial source repair — STILL OPEN:** actual private
   virtual-pointer drag exposed source hover remaining true while the module
   is disabled for Edit, holding Resources popup open. Separate source input

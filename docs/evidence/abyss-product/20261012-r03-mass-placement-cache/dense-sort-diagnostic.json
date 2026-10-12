@@ -1,0 +1,148 @@
+{
+  "classification": "PURE_GEOMETRY_DIAGNOSTIC_NOT_NATIVE_OWNER_ACCEPTANCE",
+  "initial": {
+    "id": "large",
+    "kind": "resources",
+    "edge": "top",
+    "position": 0.045,
+    "enabled": true,
+    "alignment": "free",
+    "customSize": false,
+    "size": 1,
+    "depth": 36,
+    "influence": 1,
+    "compact": false,
+    "joinCorner": false,
+    "locked": false,
+    "along": 59,
+    "span": 320,
+    "layoutScale": 1,
+    "vertical": false,
+    "edgeStart": 7,
+    "edgeEnd": 1853,
+    "content": {
+      "x": 59,
+      "y": 8,
+      "width": 320,
+      "height": 32
+    }
+  },
+  "entries": [
+    {
+      "id": "start",
+      "kind": "distroIcon",
+      "edge": "top",
+      "position": 0.008,
+      "enabled": true,
+      "alignment": "free",
+      "customSize": false,
+      "size": 1,
+      "depth": 1,
+      "influence": 1,
+      "compact": false,
+      "joinCorner": false,
+      "locked": false
+    },
+    {
+      "id": "large",
+      "kind": "resources",
+      "edge": "top",
+      "position": 0.045,
+      "enabled": true,
+      "alignment": "free",
+      "customSize": false,
+      "size": 1,
+      "depth": 1,
+      "influence": 1,
+      "compact": false,
+      "joinCorner": false,
+      "locked": false
+    },
+    {
+      "id": "small",
+      "kind": "clock",
+      "edge": "top",
+      "position": 0.128,
+      "enabled": true,
+      "alignment": "free",
+      "customSize": false,
+      "size": 1,
+      "depth": 1,
+      "influence": 1,
+      "compact": false,
+      "joinCorner": false,
+      "locked": false
+    },
+    {
+      "id": "pin",
+      "kind": "workspaces",
+      "edge": "top",
+      "position": 0.75,
+      "enabled": true,
+      "alignment": "free",
+      "customSize": false,
+      "size": 1,
+      "depth": 1,
+      "influence": 1,
+      "compact": false,
+      "joinCorner": false,
+      "locked": true,
+      "lockPosition": 0.75,
+      "lockScale": 1
+    }
+  ],
+  "options": {
+    "editing": true,
+    "extents": {
+      "start": 44,
+      "large": 320,
+      "small": 90,
+      "pin": 40
+    },
+    "gap": 8
+  },
+  "cases": [
+    {
+      "dx": 0,
+      "shown": 59,
+      "expected": 59,
+      "drift": 0
+    },
+    {
+      "dx": 8,
+      "shown": 67,
+      "expected": 67,
+      "drift": 0
+    },
+    {
+      "dx": 17,
+      "shown": 76,
+      "expected": 76,
+      "drift": 0
+    },
+    {
+      "dx": 18,
+      "shown": 76.99999999999997,
+      "expected": 77,
+      "drift": -2.842170943040401e-14
+    },
+    {
+      "dx": 25,
+      "shown": 291.08000000000004,
+      "expected": 84,
+      "drift": 207.08000000000004
+    },
+    {
+      "dx": 40,
+      "shown": 291.08000000000004,
+      "expected": 99,
+      "drift": 192.08000000000004
+    },
+    {
+      "dx": 220,
+      "shown": 291.08000000000004,
+      "expected": 279,
+      "drift": 12.080000000000041
+    }
+  ]
+}
