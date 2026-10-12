@@ -774,9 +774,10 @@ WindowDialog {
             enabled: Events.ready
             padding: 14
             implicitHeight: 36
-            buttonText: Translation.tr("Delete")
+            buttonText: root.editingEvent?.occurrences?.length > 1
+                ? Translation.tr("Delete this date") : Translation.tr("Delete")
             onClicked: {
-                if (Events.removeEvent(root.editingEvent.id)) {
+                if (Events.removeOccurrence(root.editingEvent.id, root.editingOccurrenceIndex)) {
                     root.resetForm()
                     root.dismiss()
                 }
@@ -789,9 +790,10 @@ WindowDialog {
             Layout.preferredHeight: 30
             enabled: Events.ready
             symbol: "delete"
-            tooltipText: Translation.tr("Delete")
+            tooltipText: root.editingEvent?.occurrences?.length > 1
+                ? Translation.tr("Delete this date") : Translation.tr("Delete")
             onClicked: {
-                if (Events.removeEvent(root.editingEvent.id)) {
+                if (Events.removeOccurrence(root.editingEvent.id, root.editingOccurrenceIndex)) {
                     root.resetForm()
                     root.dismiss()
                 }
