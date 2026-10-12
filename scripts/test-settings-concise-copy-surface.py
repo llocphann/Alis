@@ -125,4 +125,48 @@ for page, hints in WAFFLE_HELP.items():
         assert hint in source, (page, hint)
         assert EN_US.get(hint) == hint, (page, hint)
 
+
+# SET-R03 continued: standalone/Overlay Settings copy has concise, translated
+# labels. This contract checks the rendered lookup string, not a comment or a
+# loose substring; controls, handlers and config keys remain separately owned.
+SHARED_SETTINGS_HELP = {
+    "DashboardConfig.qml": (
+        "Dashboard requires Material (ii). Select it under Modules → Panel Style.",
+        "Dashboard → Edit widgets lets you move or resize modules; outside Edit mode, layout is locked.",
+        "Snap moved or resized modules to the grid on release.",
+        "Resizing can adjust neighbors; moving modules never changes their sizes.",
+    ),
+    "ModulesConfig.qml": (
+        "Manage modules, terminals and interface behavior.",
+        "Overlay opens Settings above the shell for live previews.",
+        "Overlay replaces the separate Settings window. Restart required.",
+        "Blur wallpaper behind Settings; 0 disables the effect.",
+    ),
+    "AdvancedConfig.qml": (
+        "Color-generation controls and runtime diagnostics.",
+        "Manage ~/.config/cava/config; internal visualizers stay independent.",
+        "On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.",
+        "Shared wave fill opacity; bar spectrum has its own setting.",
+    ),
+    "SidebarsConfig.qml": (
+        "Sidebar content stays loaded between openings.",
+        "Sidebar layout, widgets, media and edge behavior.",
+        "Open sidebars from screen corners.",
+    ),
+    "BackgroundConfig.qml": (
+        "Choose wallpaper reveal direction.",
+        "Wallpaper source, rotation, motion and effects.",
+        "Parallax uses internal rendering for synchronized motion.",
+        "Waffle: use Waffle Style for backgrounds. Backdrop applies to both.",
+        "Fit the entire backdrop; mismatched aspect ratios may show bars.",
+        "Update theme colors on wallpaper changes (slower).",
+        "Blur video/GIF wallpapers; may increase GPU load.",
+    ),
+}
+for page, hints in SHARED_SETTINGS_HELP.items():
+    source = (ROOT / "modules" / "settings" / page).read_text(encoding="utf-8")
+    for hint in hints:
+        assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
+        assert EN_US.get(hint) == hint, (page, hint)
+
 print("Settings concise-copy/shared-surface contract: PASS")
