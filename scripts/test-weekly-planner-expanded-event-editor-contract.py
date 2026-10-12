@@ -19,9 +19,14 @@ assert 'root.plannerPresentation ? 12 : Math.max(4,' in editor, "no stretched em
 assert 'contentHeight: root.compactEditor' in editor, "expanded content scrolls naturally"
 assert 'visible: root.compactEditor' in editor, "Calendar deck remains compact"
 assert 'visible: !root.compactEditor' in editor, "Planner shows full labelled form controls"
-assert 'activeLabelOnly: root.plannerPresentation' in editor
+assert editor.count('activeLabelOnly: false') == 4, "All Planner choices display icon + text"
+assert editor.count('wrapFullLabels: root.plannerPresentation') == 4, "Planner chips wrap at narrow widths"
 choices=(r/"modules/common/widgets/ConfigSelectionArray.qml").read_text()
 assert 'property bool activeLabelOnly: false' in choices, "opt-in only"
+assert 'property bool wrapFullLabels: false' in choices, "Planner-only opt-in"
+assert 'spacing: root.wrapFullLabels ? 7 : 2' in choices
+assert 'horizontalPadding: root.wrapFullLabels' in choices
+assert 'enableImplicitWidthAnimation: !root.taskNavigation && !root.wrapFullLabels' in choices
 assert 'buttonText: modelData.displayName' in choices
 assert 'revealActiveLabelOnly: root.activeLabelOnly' in choices
 assert 'property var revealedSelection: null' in choices
@@ -99,7 +104,8 @@ for kind in ('repeat','category','priority','reminder'):
 assert page_two.count('visible: root.plannerPresentation') >= 8
 assert page_two.count('radius: Appearance.rounding.large')==4
 assert page_two.count('color: Appearance.colors.colLayer2')==4
-assert page_two.count('activeLabelOnly: root.plannerPresentation')==4
+assert page_two.count('activeLabelOnly: false')==4
+assert page_two.count('wrapFullLabels: root.plannerPresentation')==4
 assert page_two.count('ConfigSelectionArray {')==4, "Do not duplicate editable options"
 assert 'currentValue: root.recurrence' in page_two
 assert 'currentValue: root.eventCategory' in page_two

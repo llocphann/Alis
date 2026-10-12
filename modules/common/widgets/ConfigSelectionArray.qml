@@ -11,7 +11,8 @@ import qs.modules.common.functions
 Flow {
     id: root
     Layout.fillWidth: true
-    spacing: 2
+    // Planner full-label chips wrap across rows when the option card is narrow.
+    spacing: root.wrapFullLabels ? 7 : 2
     // Integración con buscador global de Settings
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
@@ -32,8 +33,10 @@ Flow {
     property bool highContrastSelection: false
     property bool useAbyssPillShape: true
     property bool taskNavigation: false
-    // Planner-only: inactive choices remain icon-only; selected choice expands.
+    // Legacy optional selected-only labels. Planner Event options use complete
+    // icon + text for every choice, with stable widths and multi-row Flow.
     property bool activeLabelOnly: false
+    property bool wrapFullLabels: false
     // Shrink previous label first, then reveal the new one; avoids Flow
     // competing width animations when choosing buttons left-to-right.
     property var revealedSelection: null
@@ -198,9 +201,11 @@ Flow {
             enabled: !root.taskNavigation || modelData?.enabled !== false
             // Five buttons fit one row even at narrow Planner panel widths.
             // Reserve fixed icon-only slots before allocating selected text.
-            horizontalPadding: root.activeLabelOnly
-                ? Math.max(5,6 * Appearance.fontSizeScale)
-                : (root.taskNavigation ? 14 * Appearance.fontSizeScale : 11)
+            horizontalPadding: root.wrapFullLabels
+                ? Math.max(6,7 * Appearance.fontSizeScale)
+                : root.activeLabelOnly
+                    ? Math.max(5,6 * Appearance.fontSizeScale)
+                    : (root.taskNavigation ? 14 * Appearance.fontSizeScale : 11)
             maxTextWidth: root.taskNavigation
                 ? Math.max(0, root.width - horizontalPadding * 2
                     - (buttonIcon.length > 0 ? Appearance.font.pixelSize.normal + 4 : 0))
@@ -208,9 +213,15 @@ Flow {
                     ? Math.max(0,root.width - root.options.length
                         * (Appearance.font.pixelSize.normal + 2 * horizontalPadding
                             + root.spacing) - 10)
-                    : 180
-            enableImplicitWidthAnimation: !root.taskNavigation
-            enableImplicitHeightAnimation: !root.taskNavigation
+                    : root.wrapFullLabels
+                        ? Math.max(0,root.width - 2 * horizontalPadding
+                            - (buttonIcon.length > 0
+                                ? Appearance.font.pixelSize.normal + 4 : 0) - 4)
+                        : 180
+            // Every label is always visible; avoid width bounces that reflow
+            // adjacent chips unexpectedly when selection changes.
+            enableImplicitWidthAnimation: !root.taskNavigation && !root.wrapFullLabels
+            enableImplicitHeightAnimation: !root.taskNavigation && !root.wrapFullLabels
             Keys.onLeftPressed: event => { event.accepted = root.moveTaskFocus(index, -1) }
             Keys.onRightPressed: event => { event.accepted = root.moveTaskFocus(index, 1) }
             Keys.onPressed: event => {

@@ -837,7 +837,8 @@ WindowDialog {
                             rightMargin: root.plannerPresentation ? 0 : 8
                         }
                         enableSettingsSearch: false
-                        activeLabelOnly: root.plannerPresentation
+                        activeLabelOnly: false
+                        wrapFullLabels: root.plannerPresentation
                         options: [
                             // "Event" maps to the existing one-time/non-recurring
                             // storage value instead of inventing an incompatible mode.
@@ -906,7 +907,8 @@ WindowDialog {
                             rightMargin: root.plannerPresentation ? 0 : 8
                         }
                         enableSettingsSearch: false
-                        activeLabelOnly: root.plannerPresentation
+                        activeLabelOnly: false
+                        wrapFullLabels: root.plannerPresentation
                         options: [
                             { displayName: Translation.tr("General"), icon: "event", value: "general" },
                             { displayName: Translation.tr("Birthday"), icon: "cake", value: "birthday" },
@@ -973,7 +975,8 @@ WindowDialog {
                             rightMargin: root.plannerPresentation ? 0 : 8
                         }
                         enableSettingsSearch: false
-                        activeLabelOnly: root.plannerPresentation
+                        activeLabelOnly: false
+                        wrapFullLabels: root.plannerPresentation
                         options: [
                             { displayName: Translation.tr("Low"), icon: "arrow_downward", value: "low" },
                             { displayName: Translation.tr("Normal"), icon: "remove", value: "normal" },
@@ -1038,7 +1041,8 @@ WindowDialog {
                             rightMargin: root.plannerPresentation ? 0 : 8
                         }
                         enableSettingsSearch: false
-                        activeLabelOnly: root.plannerPresentation
+                        activeLabelOnly: false
+                        wrapFullLabels: root.plannerPresentation
                         options: [
                             { displayName: Translation.tr("None"), icon: "notifications_off", value: 0 },
                             { displayName: Translation.tr("5 min"), icon: "alarm", value: 5 },
