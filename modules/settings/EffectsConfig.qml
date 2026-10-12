@@ -13,7 +13,7 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "blur_on"
         title: Translation.tr("Effects")
-        description: Translation.tr("Choose the rendering policy first, then override only the areas that need different behavior.")
+        description: Translation.tr("Set rendering policy, then adjust specific effects.")
         summary: Translation.tr("Glass · per-area policy · motion")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
