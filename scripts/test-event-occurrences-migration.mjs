@@ -70,7 +70,7 @@ const durable=JSON.parse(JSON.stringify({
 }));
 assert.equal(durable.occurrenceMigrationBackup.original.events.length,3);
 assert.equal(durable.events[0].occurrences.length,3);
-assert.deepEqual(m.migrateLegacy(durable.events).events.map(e=>e.id),[7]);
+assert.equal(m.migrateLegacy(durable.events).events.map(e=>e.id).join(','),'7');
 const backend=fs.readFileSync(new URL('../services/Events.qml',import.meta.url),'utf8');
 assert.ok(backend.includes('const migration=previousBackup?.version===1'));
 assert.ok(backend.includes('root._saveQueued=true'));
