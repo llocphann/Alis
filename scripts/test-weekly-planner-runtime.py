@@ -61,7 +61,11 @@ Window {
      "date/all-day header lost shared column geometry")
    check(dayHeaders.every(item=>String(item.color)===String(planner.headerSurface))
      && String(headerCorner.color)===String(planner.headerSurface),
-     "day/all-day/corner do not share the Weather content palette")
+     "day/all-day/corner do not share the timeline surface")
+   check(planner.headerSurface.a===0,
+     "the pinned date/All-day headings obscure the transparent timeline background")
+   check(String(planner.headerInk)===String(planner.ink),
+     "heading labels no longer use the timeline's text palette")
    viewport.contentY=12*planner.hourHeight;wait(50)
    check(dayHeaders.every(item=>Math.abs(item.y-viewport.contentY)<.5)
      && Math.abs(headerCorner.y-viewport.contentY)<.5,
