@@ -584,10 +584,10 @@ Singleton {
             schemaVersion: 2,
             nextId: root.nextId,
             events: root.list,
-            todoUnlinks: root.todoUnlinks,
-            ...(root.occurrenceMigrationBackup
-                ? {occurrenceMigrationBackup:root.occurrenceMigrationBackup} : {})
+            todoUnlinks: root.todoUnlinks
         }
+        if (root.occurrenceMigrationBackup)
+            data.occurrenceMigrationBackup=root.occurrenceMigrationBackup
         const serialized = JSON.stringify(data, null, 2)
         // Unchanged bytes emit no saved() signal. Do not acquire a write
         // lease for a no-op, or the following real edit will remain queued.
