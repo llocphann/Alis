@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import "AgendaTodoPolicy.js" as AgendaTodoPolicy
 import "EventOccurrences.js" as Occurrences
+import "EventRepeatPolicy.js" as RepeatPolicy
 
 Singleton {
     id: root
@@ -314,6 +315,19 @@ Singleton {
                         root.createNextRecurrence(event,currentTime)
                 }
             }
+            // The explicit group repeats as a unit, retaining its single
+            // Agenda ID, Todo link, original template and occurrence history.
+            // Wait for every selected day to fire before creating the next
+            // complete calendar cycle; preserve existing single-day behavior.
+            if (Array.isArray(event.repeatTemplate) && event.repeatTemplate.length>1
+                    && event.recurrence!=="none" && slots.every(slot=>slot.notified)) {
+                const future=RepeatPolicy.nextCycle(event.repeatTemplate,
+                    event.recurrence,currentTime)
+                if (future && future.length) {
+                    slots.push(...future)
+                    changed=true
+                }
+            }
             if (changed) {
                 root.list[i] = Array.isArray(event.occurrences)
                     ? Occurrences.store(event,slots)
@@ -396,11 +410,10 @@ Singleton {
 
     function addEvent(title, description, dateTime, category, priority, reminderMinutes, recurrence, endDate, allDay, occurrenceRanges) {
         if (!root.ready) return null
-        // Bulk-selected days are one non-recurring Agenda, persisted in one
-        // write with one stable ID and Todo link (not a loop of addEvent).
+        // A selected date group is one Agenda with one ID and Todo link,
+        // whether one-time or repeating as a calendar-cycle template.
         const supplied=Array.isArray(occurrenceRanges) ? occurrenceRanges : []
-        if (supplied.length>512 || (supplied.length>1
-                && (recurrence || "none")!=="none")) return null
+        if (supplied.length>512) return null
         const explicitSlots=[]
         if (supplied.length>1) {
             for (const range of supplied) {
@@ -414,6 +427,8 @@ Singleton {
                 explicitSlots.push(slot)
             }
             explicitSlots.sort((a,b)=>a.startDate.localeCompare(b.startDate))
+            if (!RepeatPolicy.templateAllowed(explicitSlots,recurrence || "none"))
+                return null
         }
         const bulk=explicitSlots.length>1
         const startIso=bulk ? explicitSlots[0].startDate
@@ -460,7 +475,16 @@ Singleton {
             todoLink: AgendaTodoPolicy.newLink(root.nextId - 1, Date.now(), Math.random().toString(36).slice(2, 14))
         }
         
-        if (bulk) event=Occurrences.store(event,explicitSlots)
+        if (bulk) {
+            event=Occurrences.store(event,explicitSlots)
+            if ((recurrence || "none")!=="none") {
+                // Immutable civil-time template: further cycles are generated
+                // from these originals, not the previous shifted cycle.
+                event.repeatTemplate=explicitSlots.map(slot=>({
+                    startDate:slot.startDate,endDate:slot.endDate
+                }))
+            }
+        }
         root.list.push(event)
         root.list = root.list.slice(0)
         root.eventAdded(event)
