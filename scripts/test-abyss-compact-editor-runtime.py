@@ -95,8 +95,30 @@ ShellRoot {
          "editor button exceeds compact square size")
      tryVerify(()=>body.presented&&body.ready,3000)
      check(!editor.layoutConflicts.length,"fixture exceeds actual available module capacity")
-     for(const name of ["abyssLayoutUndo","abyssLayoutCancel","abyssLayoutDone","abyssEditorConfirmAdd","abyssEditorSelection","abyssModulePositionLock","abyssSelectionEnabled","abyssSelectionRemove"])
+     for(const name of ["abyssLayoutUndo","abyssLayoutCancel","abyssLayoutDone","abyssEditorConfirmAdd","abyssModulePositionLock","abyssSelectionEnabled","abyssSelectionRemove"])
       control(name)
+     // The selected-module dropdown was intentionally removed. The only
+     // module picker is the add-module palette; module selection remains on
+     // Screen Edge handles. Scope controls stay available in both tabs.
+     check(!findChild(editor,"abyssEditorSelection"),"duplicate module dropdown returned")
+     const header=item("abyssEditorModeHeader")
+     const tabs=control("abyssEditorModeTabs")
+     const scope=control("abyssEditorOutputScope")
+     const sharedOutput=control("abyssEditorIpcOutput")
+     const outputCheckbox=control("abyssEditorOutputOnly")
+     const origin=(item)=>item.mapToItem(scroll.contentItem,0,0)
+     if(header.columns===2) {
+      check(Math.abs(origin(tabs).y-origin(scope).y)<1,
+          "tabs and output scope do not share the first row")
+      check(origin(tabs).x<origin(sharedOutput).x
+          && origin(sharedOutput).x<origin(outputCheckbox).x,
+          "first row is not tabs-left / dropdown-checkbox-right")
+     } else {
+      check(origin(scope).y>=origin(tabs).y+tabs.height-1,
+          "narrow scope controls should stack below the tabs")
+     }
+     check(outputCheckbox.checked===editor.outputOnly,
+         "scope checkbox differs from shared output value")
      const layout={span:body.span,depth:body.depth,area:body.span*body.depth,height:scroll.contentHeight}
      frame(n===0||n===2?"layout-"+n+"-"+edge:null)
      click("abyssModulePositionLock");check(editor.allTargetsLocked,"quick lock did not apply")
@@ -135,6 +157,11 @@ ShellRoot {
      const chooser=control("abyssEditorIpcKind")
      const outputPicker=control("abyssEditorIpcOutput")
      const placement=item("abyssEditorIpcPlacement")
+     const ipcNote=findChild(placement,"abyssIpcPlacementHelpNote")
+     check(!!ipcNote && !ipcNote.visible,
+         "compact IPC explanatory text should not occupy layout space")
+     check(sharedOutput.visible && outputCheckbox.visible,
+         "shared output scope should stay visible in IPC")
      check(chooser.count===7,"quick IPC selector exposes popup relocation")
      check(outputPicker.count===2,"IPC scope selector must offer current and all outputs")
      check(outputPicker.currentIndex===(editor.outputOnly?1:0),
