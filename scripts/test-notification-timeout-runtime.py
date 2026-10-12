@@ -152,8 +152,13 @@ ShellRoot {
    root.advance(15)
   } else if(root.stage===15 && elapsed>450) {
    if(!root.check(root.find("critical-persistent")?.popup,"uncapped critical is still visible"))return
+   // The render/group cache is deliberately stale. Retract the live
+   // notification rather than trusting the last debounced popupList.
+   Notifications.popupList=[]
    Notifications.timeoutAll()
-   if(!root.check(!root.find("critical-persistent")?.popup,"explicit retract remains available"))return
+   if(!root.check(!root.find("critical-persistent")?.popup,"stale cache left a live popup visible"))return
+   if(!root.check(root.find("critical-persistent")?.timer===null,
+      "stale cache left a timer after retract"))return
    Config.setNestedValue("notifications.ignoreAppTimeout",false)
    root.send("transient",350,"normal",true);root.advance(16)
   } else if(root.stage===16 && root.find("transient")) {

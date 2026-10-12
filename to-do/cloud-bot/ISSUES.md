@@ -1734,6 +1734,18 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   Niri reload success was subsequently retired and must remain silent; failures
   stay actionable. Verify Notification/Activity dimensions and existing Notes/
   To-do/Timers/Activities routes without duplicating their backends.
+  **Cloud repair 2026-10-12 (source milestone):** `timeoutAll` formerly
+  read `popupList`, which is an asynchronously debounced 100ms display cache;
+  a newly-arrived popup could be absent from that list during a quiet-policy
+  transition. Now snapshot all live `root.list` notifications with `popup`
+  true, cancel each active timer and emit the same timeout signal, then hide
+  only their transient popup flag. History objects, already-hidden entries,
+  persisted IDs and hover ownership remain unchanged. A bounded Node
+  regression covers stale/empty cache, multiple live and hidden entries,
+  idempotent retraction and no extraneous notifications. The existing
+  private-D-Bus native expiry test now injects a stale-cache regression
+  case. This is a SOURCE fix only until focused native, exact-SHA canonical
+  and installed/owner Notification Popup/Center checks succeed.
 
 - [ ] **HELPER-I01 — Hadalird helper/package state and Polkit focus:** extraction is
   source/package-qualified; owner reported helper status ready. Verify compact

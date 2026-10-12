@@ -597,14 +597,21 @@ Singleton {
     }
 
     function timeoutAll() {
-        root.popupList.forEach((notif) => {
+        // popupList is debounced for group rendering and may be 100 ms behind
+        // the actual list. A quiet-policy/center transition in that window
+        // must still dismiss freshly arrived popups without deleting history.
+        // Snapshot the live wrappers so signal observers cannot change the
+        // set while we process the existing timeout/hover lifecycle.
+        const livePopups = root.list.filter(notif => notif && notif.popup);
+        livePopups.forEach(notif => {
             root.cancelTimeout(notif.notificationId);
             root.timeout(notif.notificationId);
-        })
-        root.popupList.forEach((notif) => {
+        });
+        livePopups.forEach(notif => {
             notif.popup = false;
         });
-        triggerListChange();
+        if (livePopups.length > 0)
+            triggerListChange();
     }
 
     function _isViewLikeAction(text): bool {
