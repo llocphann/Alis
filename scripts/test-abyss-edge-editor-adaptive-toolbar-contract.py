@@ -33,7 +33,23 @@ assert 'visible:root.showOutputSelector' in positions
 assert positions.count('202*Appearance.fontSizeScale') == 4
 assert 'ipcOutputRegion' in editor and 'ipcOutputRegion,edgeRegion' in editor
 assert 'selectionRegion' not in editor
-assert 'root.editingPopups ? 5 : 3' in editor
+# First row stays two aligned groups on horizontal Edges:
+# left: Modules / IPC tabs; right: output dropdown + This output only.
+head=editor.split('id: editorModeHeader',1)[1].split('id:ipcKindChoice',1)[0]
+assert 'objectName: "abyssEditorModeHeader"' in editor
+assert 'columns: width >= 500*Appearance.fontSizeScale ? 2 : 1' in head
+assert 'objectName: "abyssEditorModeTabs"' in head
+assert 'objectName: "abyssEditorOutputScope"' in head
+assert head.index('objectName:"abyssEditorModulesMode"') < head.index('objectName:"abyssEditorIpcMode"')
+assert head.index('objectName: "abyssEditorOutputScope"') < head.index('id:ipcOutputChoice') < head.index('objectName:"abyssEditorOutputOnly"')
+assert 'Layout.alignment: Qt.AlignRight | Qt.AlignVCenter' in head
+assert 'visible:true' in head.split('id:ipcOutputChoice',1)[1]
+assert 'visible:root.editingPopups' in editor.split('id:ipcKindChoice',1)[1].split('AbyssPositionSettings {',1)[0]
+assert editor.count('id:ipcOutputChoice') == 1
+assert editor.count('id:ipcKindChoice') == 1
+assert editor.count('text:"This output only"') == 1
+assert 'visible: !root.compactIpcEditor' in positions.split('SettingsNote {')[-1]
+
 assert 'Layout.preferredWidth:116*Appearance.fontSizeScale' in editor
 
 fine=editor[editor.index("id:editFineControls"):]
