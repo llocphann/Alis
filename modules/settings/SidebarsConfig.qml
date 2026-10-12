@@ -553,7 +553,7 @@ ContentPage {
         SettingsGroup {
             ContentSubsection {
                 title: Translation.tr("Side edge open")
-                tooltip: Config.options?.panelFamily === "abyss" ? "Hover the middle of the left or right Screen Edge. Move into the sidebar to keep it open; moving away closes a hover-opened sidebar." : Translation.tr("Open the left or right sidebar by touching that screen edge")
+                tooltip: Config.options?.panelFamily === "abyss" ? "Hover a side Screen Edge; enter the sidebar to keep it open." : Translation.tr("Open the left or right sidebar by touching that screen edge")
 
                 ConfigRow {
                     uniform: true
@@ -617,7 +617,7 @@ ContentPage {
                         }
 
                         StyledToolTip {
-                            text: Translation.tr("When the previous option is off and this is on,\nyou can still hover the corner's end to open sidebar,\nand the remaining area can be used for volume/brightness scroll")
+                            text: Translation.tr("Hover the corner tip; scroll controls remain available elsewhere.")
                         }
                     }
                     ConfigSpinBox {
@@ -631,7 +631,7 @@ ContentPage {
                             Config.setNestedValue("sidebar.cornerOpen.clicklessCornerVerticalOffset", value);
                         }
                         StyledToolTip {
-                            text: Translation.tr("Why this is cool:\nFor non-0 values, it won't trigger when you reach the\nscreen corner along the horizontal edge, but it will when\nyou do along the vertical edge")
+                            text: Translation.tr("Offset corner hover vertically to avoid horizontal-edge triggers.")
                         }
                     }
                 }
