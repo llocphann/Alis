@@ -46,7 +46,14 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   missing the required partial interval. Keep that full-field result FAIL;
   original slide sampling is unchanged and remains unqualified.
   [Raw scoped evidence](../../docs/evidence/abyss-product/20261012-dashboard-hidden-header/README.md).
-  Frozen complete FAIL, newer full-field/canonical and owner/installed OPEN.
+  **Capture-enabled fix-forward:** optional capture-directory invocation now
+  focuses only its own private Niri for image verification and restores the
+  previous parent target; normal tests remain unfocused by default. Original
+  full-field assertions/ranges/deadlines PASS16cases/211motion samples,
+  48boundedPNG, Dashboard/Overview x4edges x2sizes; parent focus restored.
+  [Raw source-pinned qualification](../../docs/evidence/abyss-product/20261012-dashboard-field-capture/README.md).
+  Earlier failed sampling remains immutable; new full canonical and
+  installed/owner/material/multi-output acceptance remain OPEN.
 
 - [ ] **DASH-I08 — Music paints custom scrollbar thumb on fitting/empty lists — discovered 2026-10-12:**
   Related DASH-F03. Actual private-native empty Results has contentHeight0,

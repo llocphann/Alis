@@ -4,6 +4,8 @@ import json, os, tempfile
 from pathlib import Path
 from native_test_session import private_wayland, run_qs
 ROOT=Path(os.environ.get("HADALIS_DASHBOARD_TEST_ROOT",str(Path(__file__).resolve().parents[1]))).resolve()
+CAPTURE=Path(os.environ["ALIS_DASHBOARD_FIELD_CAPTURE_DIR"]).resolve() if os.environ.get("ALIS_DASHBOARD_FIELD_CAPTURE_DIR") else None
+if CAPTURE:CAPTURE.mkdir(parents=True,exist_ok=True)
 with tempfile.TemporaryDirectory(prefix="hadalis-dashboard-editor-field-") as name:
  folder=Path(name)
  for entry in ["modules","services","GlobalStates.qml","qmldir","assets","scripts","defaults","translations"]:(folder/entry).symlink_to(ROOT/entry)
@@ -26,6 +28,10 @@ ShellRoot {
  property string caseName:""
  property int capturedFrames:0
  property int motionSamples:0
+ property string captureDirectory:Quickshell.env("ALIS_DASHBOARD_FIELD_CAPTURE_DIR")
+ property string savedCase:""
+ property int savedCaseFrames:0
+ property int savedFrames:0
  property var slideTrace:[]
  property var observedPopup:null
  property var observedCanvas:null
@@ -82,7 +88,17 @@ ShellRoot {
   function find(item,p){if(p(item))return item;for(const c of item.children??[]){const x=find(c,p);if(x)return x}return null}
   function flushFrame(){
    const before=root.capturedFrames
-   check(surface.grabToImage(result=>{root.capturedFrames++}),"editor field capture refused")
+   check(surface.grabToImage(result=>{
+    root.capturedFrames++
+    if(root.savedCase!==root.caseName){root.savedCase=root.caseName;root.savedCaseFrames=0}
+    const p=root.observedPopup?.revealProgress ?? 0
+    if(root.captureDirectory.length && root.slidePhase.length && p>0 && p<1 && root.savedCaseFrames<3){
+     const path=root.captureDirectory+"/slide-"+root.savedFrames+".png"
+     check(result.saveToFile(path),"could not save captured slide frame")
+     root.savedCaseFrames++;root.savedFrames++
+     console.info("SLIDE_IMAGE",root.caseName,root.slidePhase,p,path)
+    }
+   }),"editor field capture refused")
    tryVerify(()=>root.capturedFrames>before,3000)
   }
   function sampleSlide(popup,canvas,dimensions){
@@ -229,12 +245,18 @@ ShellRoot {
  Timer {interval:100;running:true;onTriggered:test.runChecks()}
 }
 ''')
- with private_wayland(folder) as env:
+ with private_wayland(folder,capture_focus=CAPTURE is not None) as env:
   if env is None:print("SKIP: Dashboard field requires private Niri");raise SystemExit(0)
   config=folder/"config/illogical-impulse";config.mkdir(parents=True,exist_ok=True)
   value=json.loads((ROOT/"defaults/config.json").read_text());value["panelFamily"]="abyss";value["abyss"]["companion"]["enabled"]=False
   (config/"config.json").write_text(json.dumps(value));env["QSG_RHI_BACKEND"]="opengl"
+  if CAPTURE:env["ALIS_DASHBOARD_FIELD_CAPTURE_DIR"]=str(CAPTURE)
   result=run_qs(folder,env,timeout=80)
+  if CAPTURE:
+   (CAPTURE/"native.log").write_text(result.stdout)
+   (CAPTURE/"process.json").write_text(json.dumps({"exit_code":result.returncode,"captures":len(list(CAPTURE.glob("slide-*.png")))},indent=2)+"\n")
+   focus=folder/"native-test-capture-focus.json"
+   if focus.exists():(CAPTURE/"focus.json").write_bytes(focus.read_bytes())
   if result.returncode or "DASHBOARD_FIELD_PASS" not in result.stdout or any(s in result.stdout for s in ["DASHBOARD_FIELD_FAIL","ReferenceError:","TypeError:","Binding loop","Failed to load configuration"]):
    print("Dashboard native process exit:",result.returncode);print(result.stdout);raise SystemExit(1)
   for line in result.stdout.splitlines():

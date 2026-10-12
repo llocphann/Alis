@@ -1,0 +1,626 @@
+[
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Dashboard",
+      "top"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005822814814814814,
+    "path": "initial/slide-0.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Dashboard",
+      "top"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23727600000000001,
+    "path": "initial/slide-1.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Dashboard",
+      "top"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23601274257600002,
+    "path": "initial/slide-2.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Dashboard",
+      "right"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005822814814814814,
+    "path": "initial/slide-3.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Dashboard",
+      "right"
+    ],
+    "phase": "open-partial",
+    "progress": 0.14814814814814814,
+    "path": "initial/slide-4.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Dashboard",
+      "right"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23713201740800002,
+    "path": "initial/slide-5.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Dashboard",
+      "bottom"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005324,
+    "path": "initial/slide-6.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Dashboard",
+      "bottom"
+    ],
+    "phase": "open-partial",
+    "progress": 0.2312438518518518,
+    "path": "initial/slide-7.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Dashboard",
+      "bottom"
+    ],
+    "phase": "open-partial",
+    "progress": 0.34828513019300966,
+    "path": "initial/slide-8.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Dashboard",
+      "left"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005822814814814814,
+    "path": "initial/slide-9.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Dashboard",
+      "left"
+    ],
+    "phase": "open-partial",
+    "progress": 0.14814814814814814,
+    "path": "initial/slide-10.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Dashboard",
+      "left"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23713201740800002,
+    "path": "initial/slide-11.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Overview",
+      "top"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005822814814814814,
+    "path": "initial/slide-12.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Overview",
+      "top"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23727600000000001,
+    "path": "initial/slide-13.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Overview",
+      "top"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23713201740800002,
+    "path": "initial/slide-14.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Overview",
+      "right"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005324,
+    "path": "initial/slide-15.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Overview",
+      "right"
+    ],
+    "phase": "open-partial",
+    "progress": 0.14374800000000001,
+    "path": "initial/slide-16.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Overview",
+      "right"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23110352965671327,
+    "path": "initial/slide-17.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Overview",
+      "bottom"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005324,
+    "path": "initial/slide-18.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Overview",
+      "bottom"
+    ],
+    "phase": "open-partial",
+    "progress": 0.14374800000000001,
+    "path": "initial/slide-19.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Overview",
+      "bottom"
+    ],
+    "phase": "open-partial",
+    "progress": 0.49006651851851846,
+    "path": "initial/slide-20.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Overview",
+      "left"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005324,
+    "path": "initial/slide-21.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Overview",
+      "left"
+    ],
+    "phase": "open-partial",
+    "progress": 0.14374800000000001,
+    "path": "initial/slide-22.png"
+  },
+  {
+    "case": [
+      [
+        1280,
+        900
+      ],
+      "Overview",
+      "left"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23110352965671327,
+    "path": "initial/slide-23.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Dashboard",
+      "top"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005822814814814814,
+    "path": "initial/slide-24.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Dashboard",
+      "top"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23727600000000001,
+    "path": "initial/slide-25.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Dashboard",
+      "top"
+    ],
+    "phase": "open-partial",
+    "progress": 0.5,
+    "path": "initial/slide-26.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Dashboard",
+      "right"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005324,
+    "path": "initial/slide-27.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Dashboard",
+      "right"
+    ],
+    "phase": "open-partial",
+    "progress": 0.2312438518518518,
+    "path": "initial/slide-28.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Dashboard",
+      "right"
+    ],
+    "phase": "open-partial",
+    "progress": 0.49006651851851846,
+    "path": "initial/slide-29.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Dashboard",
+      "bottom"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005822814814814814,
+    "path": "initial/slide-30.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Dashboard",
+      "bottom"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23727600000000001,
+    "path": "initial/slide-31.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Dashboard",
+      "bottom"
+    ],
+    "phase": "open-partial",
+    "progress": 0.35620040188857066,
+    "path": "initial/slide-32.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Dashboard",
+      "left"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005822814814814814,
+    "path": "initial/slide-33.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Dashboard",
+      "left"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23727600000000001,
+    "path": "initial/slide-34.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Dashboard",
+      "left"
+    ],
+    "phase": "open-partial",
+    "progress": 0.35620040188857066,
+    "path": "initial/slide-35.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Overview",
+      "top"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005822814814814814,
+    "path": "initial/slide-36.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Overview",
+      "top"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23727600000000001,
+    "path": "initial/slide-37.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Overview",
+      "top"
+    ],
+    "phase": "open-partial",
+    "progress": 0.3545620596005926,
+    "path": "initial/slide-38.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Overview",
+      "right"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005324,
+    "path": "initial/slide-39.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Overview",
+      "right"
+    ],
+    "phase": "open-partial",
+    "progress": 0.2312438518518518,
+    "path": "initial/slide-40.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Overview",
+      "right"
+    ],
+    "phase": "open-partial",
+    "progress": 0.34828513019300966,
+    "path": "initial/slide-41.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Overview",
+      "bottom"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005324,
+    "path": "initial/slide-42.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Overview",
+      "bottom"
+    ],
+    "phase": "open-partial",
+    "progress": 0.2312438518518518,
+    "path": "initial/slide-43.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Overview",
+      "bottom"
+    ],
+    "phase": "open-partial",
+    "progress": 0.48721295193424413,
+    "path": "initial/slide-44.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Overview",
+      "left"
+    ],
+    "phase": "open-partial",
+    "progress": 0.005822814814814814,
+    "path": "initial/slide-45.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Overview",
+      "left"
+    ],
+    "phase": "open-partial",
+    "progress": 0.23727600000000001,
+    "path": "initial/slide-46.png"
+  },
+  {
+    "case": [
+      [
+        720,
+        650
+      ],
+      "Overview",
+      "left"
+    ],
+    "phase": "open-partial",
+    "progress": 0.4970885925925926,
+    "path": "initial/slide-47.png"
+  }
+]

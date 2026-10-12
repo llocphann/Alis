@@ -1183,6 +1183,14 @@ run privileged installation just because manual buttons are retired.
   in the exact `10311cd96` canonical run, whose overall result is FAIL 327/8/1.
   State: source/focused-qualified; owner appearance acceptance still pending.
   [Durable focused evidence](../../docs/evidence/abyss-product/20261010-hover-checkpoint/hadalis-dashboard-toolbar-slide-motion-20261010.log).
+  **2026-10-12 current capture qualification:** after DashboardHeader0becc72ab
+  dimension repair, original composed-route/slide oracles PASS16cases,
+  211native motion samples/48PNG on source-pinned working bytes. Explicit
+  image-verification invocation focuses only its own private Niri and restores
+  the previous parent target; default tests keep their non-focusing behavior.
+  [New raw images/receipt](../../docs/evidence/abyss-product/20261012-dashboard-field-capture/README.md).
+  Earlier unfocused sampling FAIL is retained; owner palette/material,
+  installed/multi-output and exact newer full-canonical gates remain OPEN.
 
 - [ ] **Abyss Waves:** verify round crest-only geometry, no trough erosion or
   needle peaks, restrained breaker/whitewater, continuous distance attenuation,

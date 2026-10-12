@@ -1,0 +1,13 @@
+{
+  "status": "SOURCE_FOCUSED_PASS",
+  "parent_sha": "e73252359abe352db678ad6d0bef548954632ec5",
+  "native_cases": 16,
+  "native_motion_samples": 211,
+  "captured_pngs": 48,
+  "exit_code": 0,
+  "focus_protocol_checks": 5,
+  "focus_restored": false,
+  "canonical": "NOT_RUN_FOR_FINAL_SOURCE",
+  "owner": "OPEN",
+  "material": "OPEN"
+}

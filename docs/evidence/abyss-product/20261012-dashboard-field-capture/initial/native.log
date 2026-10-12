@@ -1,0 +1,155 @@
+  INFO: Launching config: "/tmp/hadalis-dashboard-editor-field-h1knr0zc/shell.qml"
+  INFO: Shell ID: "eb0bb630ab93ae3daf27f4ccff4bdded" Path ID "eb0bb630ab93ae3daf27f4ccff4bdded"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/jhmmaqwrmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1055547.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-editor-field-h1knr0zc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-h1knr0zc/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CHECKS_START
+  INFO qml: CONFIG_READY
+  INFO qml: CASE_START [[1280,900],"Dashboard","top"]
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/hadalis-dashboard-editor-field-h1knr0zc/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/hadalis-dashboard-editor-field-h1knr0zc/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[371:5]: Read of /tmp/hadalis-dashboard-editor-field-h1knr0zc/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/hadalis-dashboard-editor-field-h1knr0zc/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/Notepad.qml[196:5]: Read of /tmp/hadalis-dashboard-editor-field-h1knr0zc/state/quickshell/user/notepad-tabs.json failed: File does not exist.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f22c38e1ee0)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-h1knr0zc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notepad.qml[246:5]: Read of /tmp/hadalis-dashboard-editor-field-h1knr0zc/state/quickshell/user/notepad.txt failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","top"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","top"] open-partial 0.005822814814814814 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-0.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","top"] open-partial 0.23727600000000001 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-1.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","top"] open-partial 0.23601274257600002 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-2.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","top"] open-full 0.232882
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","top"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Dashboard","top"]
+  INFO qml: CASE_START [[1280,900],"Dashboard","right"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","right"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","right"] open-partial 0.005822814814814814 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-3.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","right"] open-partial 0.14814814814814814 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-4.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","right"] open-partial 0.23713201740800002 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-5.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","right"] open-full 0.23601274257600002
+  INFO qml: [Weather] Getting location from IP...
+  INFO qml: [Weather] Location: [redacted]
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","right"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Dashboard","right"]
+  INFO qml: CASE_START [[1280,900],"Dashboard","bottom"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","bottom"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","bottom"] open-partial 0.005324 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-6.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","bottom"] open-partial 0.2312438518518518 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-7.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","bottom"] open-partial 0.34828513019300966 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-8.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","bottom"] open-full 0.33300880302812624
+  INFO qml: [Weather] Updated: 27°C [redacted]
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","bottom"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Dashboard","bottom"]
+  INFO qml: CASE_START [[1280,900],"Dashboard","left"]
+  INFO qml: [Weather] Air quality updated: 48 EAQI
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","left"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","left"] open-partial 0.005822814814814814 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-9.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","left"] open-partial 0.14814814814814814 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-10.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","left"] open-partial 0.23713201740800002 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-11.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","left"] open-full 0.232882
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","left"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Dashboard","left"]
+  INFO qml: CASE_START [[1280,900],"Overview","top"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","top"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","top"] open-partial 0.005822814814814814 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-12.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","top"] open-partial 0.23727600000000001 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-13.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","top"] open-partial 0.23713201740800002 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-14.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","top"] open-full 0.23601274257600002
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","top"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Overview","top"]
+  INFO qml: CASE_START [[1280,900],"Overview","right"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","right"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","right"] open-partial 0.005324 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-15.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","right"] open-partial 0.14374800000000001 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-16.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","right"] open-partial 0.23110352965671327 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-17.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","right"] open-full 0.23001270958459255
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","right"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Overview","right"]
+  INFO qml: CASE_START [[1280,900],"Overview","bottom"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","bottom"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","bottom"] open-partial 0.005324 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-18.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","bottom"] open-partial 0.14374800000000001 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-19.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","bottom"] open-partial 0.49006651851851846 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-20.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","bottom"] open-full 0.5890263865645652
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","bottom"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Overview","bottom"]
+  INFO qml: CASE_START [[1280,900],"Overview","left"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","left"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","left"] open-partial 0.005324 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-21.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","left"] open-partial 0.14374800000000001 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-22.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","left"] open-partial 0.23110352965671327 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-23.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","left"] open-full 0.23001270958459255
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","left"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Overview","left"]
+  INFO qml: CASE_START [[720,650],"Dashboard","top"]
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","top"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[720,650],"Dashboard","top"] open-partial 0.005822814814814814 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-24.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Dashboard","top"] open-partial 0.23727600000000001 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-25.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Dashboard","top"] open-partial 0.5 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-26.png
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","top"] open-full 0.49963607407407407
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","top"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Dashboard","top"]
+  INFO qml: CASE_START [[720,650],"Dashboard","right"]
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","right"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[720,650],"Dashboard","right"] open-partial 0.005324 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-27.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Dashboard","right"] open-partial 0.2312438518518518 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-28.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Dashboard","right"] open-partial 0.49006651851851846 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-29.png
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","right"] open-full 0.4897098226954842
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","right"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Dashboard","right"]
+  INFO qml: CASE_START [[720,650],"Dashboard","bottom"]
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","bottom"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[720,650],"Dashboard","bottom"] open-partial 0.005822814814814814 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-30.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Dashboard","bottom"] open-partial 0.23727600000000001 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-31.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Dashboard","bottom"] open-partial 0.35620040188857066 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-32.png
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","bottom"] open-full 0.34985874348422497
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","bottom"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Dashboard","bottom"]
+  INFO qml: CASE_START [[720,650],"Dashboard","left"]
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","left"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[720,650],"Dashboard","left"] open-partial 0.005822814814814814 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-33.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Dashboard","left"] open-partial 0.23727600000000001 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-34.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Dashboard","left"] open-partial 0.35620040188857066 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-35.png
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","left"] open-full 0.34985874348422497
+  INFO qml: SLIDE_PHASE [[720,650],"Dashboard","left"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Dashboard","left"]
+  INFO qml: CASE_START [[720,650],"Overview","top"]
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","top"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[720,650],"Overview","top"] open-partial 0.005822814814814814 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-36.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Overview","top"] open-partial 0.23727600000000001 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-37.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Overview","top"] open-partial 0.3545620596005926 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-38.png
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","top"] open-full 0.34985874348422497
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","top"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Overview","top"]
+  INFO qml: CASE_START [[720,650],"Overview","right"]
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","right"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[720,650],"Overview","right"] open-partial 0.005324 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-39.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Overview","right"] open-partial 0.2312438518518518 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-40.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Overview","right"] open-partial 0.34828513019300966 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-41.png
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","right"] open-full 0.3420843923182442
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","right"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Overview","right"]
+  INFO qml: CASE_START [[720,650],"Overview","bottom"]
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","bottom"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[720,650],"Overview","bottom"] open-partial 0.005324 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-42.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Overview","bottom"] open-partial 0.2312438518518518 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-43.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Overview","bottom"] open-partial 0.48721295193424413 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-44.png
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","bottom"] open-full 0.4682303886949355
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","bottom"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Overview","bottom"]
+  INFO qml: CASE_START [[720,650],"Overview","left"]
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","left"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[720,650],"Overview","left"] open-partial 0.005822814814814814 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-45.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Overview","left"] open-partial 0.23727600000000001 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-46.png
+  INFO qml: SLIDE_IMAGE [[720,650],"Overview","left"] open-partial 0.4970885925925926 /home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/docs/evidence/abyss-product/20261012-dashboard-field-capture/initial/slide-47.png
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","left"] open-full 0.49074074074074076
+  INFO qml: SLIDE_PHASE [[720,650],"Overview","left"] close-full 1
+  INFO qml: CASE_DONE [[720,650],"Overview","left"]
+  INFO qml: DASHBOARD_FIELD_PASS 16 composed routes/edges/sizes: dimensions above-field Add Undo Cancel Done input-release 211 native slide/reversal samples

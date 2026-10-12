@@ -30,6 +30,15 @@ desktop acceptance gates. Do not resume the former Issues → Rework → Feature
 order or close unverified Issues because their source is implemented.
 
 
+**2026-10-12 09:34 ICT owner continuation:** the five-hour window is now
+0%used, next reset14:33:24ICT. The consumed stop checkpoint below remains
+historical; no additional timer was created before this human continuation.
+Composed Dashboard/Overview dimension/slide capture now focusedPASS16cases/
+211motion samples/48PNG with previous focus restored and unchanged oracles;
+[qualification](../../docs/evidence/abyss-product/20261012-dashboard-field-capture/README.md).
+Continue related remaining canonical failures, then fresh frozen full run;
+source/focused and owner/installed gates remain separate.
+
 **2026-10-12 06:53 ICT quota checkpoint:** stop all product/test work because
 only the exact five-hour window remains1%; weekly62%used is not a stop trigger.
 Reset09:29:29ICT; continue once at09:32:29ICT. Source cohorts now implemented:
