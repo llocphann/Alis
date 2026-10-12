@@ -1,0 +1,82 @@
+Dashboard native process exit: 0
+  INFO: Launching config: "/tmp/hadalis-dashboard-editor-field-7ukk6dez/shell.qml"
+  INFO: Shell ID: "00e6717fd8c1fc9800621beda5be5d33" Path ID "00e6717fd8c1fc9800621beda5be5d33"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/00as306smt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1319303.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: CHECKS_START
+  INFO qml: CONFIG_READY
+  INFO qml: CASE_START [[1280,900],"Dashboard","top"]
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[371:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/Notepad.qml[196:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/notepad-tabs.json failed: File does not exist.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fb07b6e30c0)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notepad.qml[246:5]: Read of /tmp/hadalis-dashboard-editor-field-7ukk6dez/state/quickshell/user/notepad.txt failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","top"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","top"] open-partial 0.005324 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-0.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","top"] open-partial 0.14374800000000001 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-1.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","top"] open-partial 0.23110352965671327 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-2.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","top"] open-full 0.23001270958459255
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","top"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Dashboard","top"]
+  INFO qml: CASE_START [[1280,900],"Dashboard","right"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","right"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","right"] open-partial 0.005324 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-3.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","right"] open-partial 0.14374800000000001 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-4.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","right"] open-partial 0.23110352965671327 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-5.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","right"] open-full 0.22139471371377775
+[Weather] private location redacted; original log hash/path in raw-log.json
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","right"] close-full 1
+[Weather] private location redacted; original log hash/path in raw-log.json
+  INFO qml: CASE_DONE [[1280,900],"Dashboard","right"]
+  INFO qml: CASE_START [[1280,900],"Dashboard","bottom"]
+[Weather] private location redacted; original log hash/path in raw-log.json
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","bottom"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","bottom"] open-partial 0.005324 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-6.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","bottom"] open-partial 0.14374800000000001 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-7.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","bottom"] open-partial 0.23110352965671327 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-8.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","bottom"] open-full 0.22696155829903975
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","bottom"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Dashboard","bottom"]
+  INFO qml: CASE_START [[1280,900],"Dashboard","left"]
+[Weather] private location redacted; original log hash/path in raw-log.json
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","left"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","left"] open-partial 0.005822814814814814 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-9.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","left"] open-partial 0.23727600000000001 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-10.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Dashboard","left"] open-partial 0.23601274257600002 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-11.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","left"] open-full 0.232882
+  INFO qml: SLIDE_PHASE [[1280,900],"Dashboard","left"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Dashboard","left"]
+  INFO qml: CASE_START [[1280,900],"Overview","top"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","top"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","top"] open-partial 0.005324 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-12.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","top"] open-partial 0.14374800000000001 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-13.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","top"] open-partial 0.23110352965671327 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-14.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","top"] open-full 0.23001270958459255
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","top"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Overview","top"]
+  INFO qml: CASE_START [[1280,900],"Overview","right"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","right"] open-partial 0
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","right"] open-partial 0.005822814814814814 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-15.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","right"] open-partial 0.14814814814814814 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-16.png
+  INFO qml: SLIDE_IMAGE [[1280,900],"Overview","right"] open-partial 0.5 /tmp/alis-focused-final-m1fn2uwv/dashboard-field/slide-17.png
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","right"] open-full 0.5962764390083731
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","right"] close-full 1
+  INFO qml: CASE_DONE [[1280,900],"Overview","right"]
+  INFO qml: CASE_START [[1280,900],"Overview","bottom"]
+  INFO qml: SLIDE_PHASE [[1280,900],"Overview","bottom"] open-partial 0
+ ERROR qml: DASHBOARD_FIELD_FAIL [[1280,900],"Overview","bottom"]: toolbar slide did not reach partial reveal [{"phase":"before-grab","ms":0,"p":0,"requested":true,"animations":true,"edit":true,"body":1,"captures":101},{"phase":"signal/open-partial","ms":23,"p":0.0007278518518518517,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":35,"p":0.005822814814814814,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":52,"p":0.018518518518518517,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":70,"p":0.04455748148148148,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":82,"p":0.08780800000000002,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":102,"p":0.14814814814814814,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":124,"p":0.23727600000000001,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":137,"p":0.35645985185185186,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":152,"p":0.5,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":164,"p":0.6514611851851851,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":185,"p":0.7687561481481481,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":197,"p":0.8518518518518519,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":213,"p":0.9152908148148149,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":234,"p":0.957408,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":245,"p":0.9814814814814815,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":263,"p":0.994676,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":275,"p":0.9993931851851852,"requested":true,"animations":true},{"phase":"signal/open-partial","ms":296,"p":1,"requested":true,"animations":true},{"phase":"after-grab","ms":1919,"p":1,"captures":102},{"phase":"before-grab","ms":1927,"p":1,"requested":true,"animations":true,"edit":true,"body":1,"captures":102},{"phase":"after-grab","ms":2942,"p":1,"captures":103},{"phase":"before-grab","ms":2951,"p":1,"requested":true,"animations":true,"edit":true,"body":1,"captures":103},{"phase":"after-grab","ms":3910,"p":1,"captures":104}] advanceSlide@qs:@/qs/shell.qml:132
+checkSlide@qs:@/qs/shell.qml:137
+runChecks@qs:@/qs/shell.qml:228
+expression for onTriggered@qs:@/qs/shell.qml:234
+

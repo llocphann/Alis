@@ -1,5 +1,26 @@
 # Issues/bugs
 
+**2026-10-12 14:40 ICT quota checkpoint — five-hour remaining 1%:** product and
+native-test work stopped under the owner's below-3% rule; weekly limits are
+not the trigger. Source `cfc852bee` and all valid cowork edits are preserved.
+R05, R03/R01, R02, R06/R07 are source-completed / Owner chưa verified.
+[Exact-source scoped qualification](../../docs/evidence/abyss-product/20261012-cfc852bee-focused/README.md)
+is 16 PASS / 1 FAIL across 17 completed checks; Dashboard partial-capture
+sampling still FAILS and its cause is not established. The full frozen
+7e31685bc result remains FAIL373/7/1; no newer full canonical PASS exists.
+[POP-I01 native-pointer diagnostic](../../docs/evidence/abyss-product/20261012-pop-i01-native-pointer/README.md)
+only qualifies one private Top Clock transfer, which did not reproduce the
+owner failure; no hover product fix. Next expand that actual-protocol collector.
+Continue **POP-I01 → DASH-F01 → ABYSS-R08 → ABYSS-F02 → NOTES-R01 →
+ABYSS-R09 → CAL-R01 → NOTES-F01 → DASH-R03** after reset. Latest owner
+message explicitly retains **ABYSS-R03**; its existing stable task code and
+source-completed/owner-unverified state are preserved, without creating a
+duplicate task. F02 modifier-only Ctrl/Shift + click refinement is still OPEN;
+remove the toolbar toggle during its implementation. One continuation is to be
+scheduled for **2026-10-12 14:36:24 ICT**, reset +3 minutes. Keep G0 offline,
+consent/preferences and all owner/installed/multi-output gates unchanged.
+
+
 **Latest explicit owner sequence — 2026-10-12:** after current Abyss
 qualification, investigate **POP-I01 first**, followed by DASH-F01 →
 ABYSS-R08 → ABYSS-F02 → NOTES-R01 → ABYSS-R09 → CAL-R01 → NOTES-F01 →
@@ -22,9 +43,9 @@ PASS16cases/211samples/48PNG and original standalone QML producer PASS both
 Dashboard/Overview hosts, without changed numeric assertions or parent focus.
 [Scoped probes and original producer receipt](../../docs/evidence/abyss-product/20261012-dashboard-toolbar-polish/README.md).
 Ancestor395px toolbar failure cause remains unknown; frozen FAIL/STOPPED and
-new full-canonical gates stay factual. Explicit owner sequence now selects
-ABYSS-R05 -> R03/R01 -> R02 -> R06/R07, then stop. Preserve cowork completion
-classification and distinct owner-unverified evidence gates.
+new full-canonical gates stay factual. That historical owner sequence selected R05 -> R03/R01 -> R02 -> R06/R07;
+the latest continuation above supersedes its former stop. Preserve cowork
+completion classification and distinct owner-unverified evidence gates.
 
 
 **2026-10-12 06:53 ICT checkpoint:** frozen593368c15 STOPPED at five-hour1%,

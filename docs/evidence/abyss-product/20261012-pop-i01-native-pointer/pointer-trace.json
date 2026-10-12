@@ -1,0 +1,684 @@
+{
+  "classification": "diagnostic real private compositor protocol input; not owner acceptance/product repair",
+  "source_sha": "cfc852beef19d33de51f84520cf3eb26d9b485af",
+  "records": [
+    {
+      "stage": "ready",
+      "snapshot": {
+        "timestamp": 1791785644143,
+        "family": "abyss",
+        "shellEntryReady": true,
+        "deferredPanelsReady": true,
+        "compositorNiri": true,
+        "outputCount": 1,
+        "outputs": [
+          {
+            "output": "winit",
+            "windowVisible": true,
+            "presented": true,
+            "editorOpen": false,
+            "fullscreenCovered": false,
+            "fieldReady": true,
+            "framePresented": true,
+            "barVisible": true,
+            "barEnabled": true,
+            "barOnOutput": true,
+            "barEditing": false,
+            "barHover": false,
+            "probeMaskProxy": false,
+            "probeUnmapped": false,
+            "barInputRegionCount": 1,
+            "editorRegionCount": 6,
+            "liquidPresented": true,
+            "liquidPopupsOpen": false,
+            "barPopupHoverLease": false,
+            "popupSlots": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "genericPopup": {
+              "activeKind": "",
+              "desiredKind": "",
+              "resident": false,
+              "requestedOpen": false,
+              "progress": 0,
+              "inputBounds": {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0
+              },
+              "triggerHover": false,
+              "focusHeld": false
+            },
+            "modules": [
+              {
+                "id": "clock",
+                "kind": "clock",
+                "constructed": true,
+                "visible": true,
+                "enabled": true,
+                "hovered": false,
+                "featureHovered": null,
+                "featureContainsMouse": null,
+                "rect": {
+                  "x": 582,
+                  "y": 8,
+                  "w": 138,
+                  "h": 32
+                },
+                "input": {
+                  "x": 582,
+                  "y": 8,
+                  "w": 138,
+                  "h": 32
+                },
+                "popup": {
+                  "anchorReady": true,
+                  "liquidOwner": true,
+                  "liquidControllerMatches": true,
+                  "windowBound": true,
+                  "screenBound": true,
+                  "moduleHoverActive": false,
+                  "anchorHover": false,
+                  "requestedVisible": false,
+                  "presentationActive": false,
+                  "hosted": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "stage": "source",
+      "sent": [
+        651.0,
+        24.0,
+        1860,
+        1102
+      ],
+      "snapshot": {
+        "timestamp": 1791785645188,
+        "family": "abyss",
+        "shellEntryReady": true,
+        "deferredPanelsReady": true,
+        "compositorNiri": true,
+        "outputCount": 1,
+        "outputs": [
+          {
+            "output": "winit",
+            "windowVisible": true,
+            "presented": true,
+            "editorOpen": false,
+            "fullscreenCovered": false,
+            "fieldReady": true,
+            "framePresented": true,
+            "barVisible": true,
+            "barEnabled": true,
+            "barOnOutput": true,
+            "barEditing": false,
+            "barHover": true,
+            "probeMaskProxy": false,
+            "probeUnmapped": false,
+            "barInputRegionCount": 1,
+            "editorRegionCount": 6,
+            "liquidPresented": true,
+            "liquidPopupsOpen": true,
+            "barPopupHoverLease": true,
+            "popupSlots": [
+              {
+                "kind": "clock",
+                "order": 1,
+                "active": true,
+                "requestedVisible": true,
+                "semanticHold": false,
+                "lingerVisible": true,
+                "humanVisibleRequest": true,
+                "rawVisibleRequest": true,
+                "hoverActivates": true,
+                "notificationHover": null,
+                "moduleHover": true,
+                "anchorHover": true,
+                "anchorScenePoint": {
+                  "x": 651,
+                  "y": 24
+                },
+                "bodyHover": false,
+                "contentHover": false,
+                "contentScenePoint": null,
+                "hoverGeometry": {
+                  "edge": "top",
+                  "joinedEdge": "",
+                  "outputWidth": 1860,
+                  "outputHeight": 1102,
+                  "connectionInsets": {
+                    "top": 48,
+                    "right": 16,
+                    "bottom": 16,
+                    "left": 16
+                  },
+                  "rawSurface": {
+                    "x": 332.5,
+                    "y": -50,
+                    "w": 637,
+                    "h": 384
+                  },
+                  "joinedSurface": {
+                    "x": 332.5,
+                    "y": -50,
+                    "w": 637,
+                    "h": 384
+                  },
+                  "pointHit": null
+                },
+                "hosted": true,
+                "bodyAcceptsInput": true,
+                "bodyReady": true,
+                "hoverParentEnabled": true,
+                "nativeRegionRegistered": true,
+                "stripCount": 50,
+                "bounds": {
+                  "x": 332.5,
+                  "y": 48,
+                  "w": 637,
+                  "h": 286
+                },
+                "content": {
+                  "x": 346.5,
+                  "y": 62,
+                  "w": 609,
+                  "h": 258
+                }
+              },
+              null,
+              null,
+              null
+            ],
+            "genericPopup": {
+              "activeKind": "",
+              "desiredKind": "",
+              "resident": false,
+              "requestedOpen": false,
+              "progress": 0,
+              "inputBounds": {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0
+              },
+              "triggerHover": false,
+              "focusHeld": false
+            },
+            "modules": [
+              {
+                "id": "clock",
+                "kind": "clock",
+                "constructed": true,
+                "visible": true,
+                "enabled": true,
+                "hovered": true,
+                "featureHovered": null,
+                "featureContainsMouse": null,
+                "rect": {
+                  "x": 582,
+                  "y": 8,
+                  "w": 138,
+                  "h": 32
+                },
+                "input": {
+                  "x": 582,
+                  "y": 8,
+                  "w": 138,
+                  "h": 32
+                },
+                "popup": {
+                  "anchorReady": true,
+                  "liquidOwner": true,
+                  "liquidControllerMatches": true,
+                  "windowBound": true,
+                  "screenBound": true,
+                  "moduleHoverActive": true,
+                  "anchorHover": true,
+                  "requestedVisible": true,
+                  "presentationActive": true,
+                  "hosted": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "stage": "bridge",
+      "sent": [
+        651.0,
+        51.0,
+        1860,
+        1102
+      ],
+      "snapshot": {
+        "timestamp": 1791785646227,
+        "family": "abyss",
+        "shellEntryReady": true,
+        "deferredPanelsReady": true,
+        "compositorNiri": true,
+        "outputCount": 1,
+        "outputs": [
+          {
+            "output": "winit",
+            "windowVisible": true,
+            "presented": true,
+            "editorOpen": false,
+            "fullscreenCovered": false,
+            "fieldReady": true,
+            "framePresented": true,
+            "barVisible": true,
+            "barEnabled": true,
+            "barOnOutput": true,
+            "barEditing": false,
+            "barHover": false,
+            "probeMaskProxy": false,
+            "probeUnmapped": false,
+            "barInputRegionCount": 1,
+            "editorRegionCount": 6,
+            "liquidPresented": true,
+            "liquidPopupsOpen": true,
+            "barPopupHoverLease": true,
+            "popupSlots": [
+              {
+                "kind": "clock",
+                "order": 1,
+                "active": true,
+                "requestedVisible": true,
+                "semanticHold": false,
+                "lingerVisible": true,
+                "humanVisibleRequest": true,
+                "rawVisibleRequest": true,
+                "hoverActivates": true,
+                "notificationHover": null,
+                "moduleHover": false,
+                "anchorHover": false,
+                "anchorScenePoint": null,
+                "bodyHover": false,
+                "contentHover": true,
+                "contentScenePoint": {
+                  "x": 651,
+                  "y": 51
+                },
+                "hoverGeometry": {
+                  "edge": "top",
+                  "joinedEdge": "",
+                  "outputWidth": 1860,
+                  "outputHeight": 1102,
+                  "connectionInsets": {
+                    "top": 48,
+                    "right": 16,
+                    "bottom": 16,
+                    "left": 16
+                  },
+                  "rawSurface": {
+                    "x": 332.5,
+                    "y": -50,
+                    "w": 637,
+                    "h": 384
+                  },
+                  "joinedSurface": {
+                    "x": 332.5,
+                    "y": -50,
+                    "w": 637,
+                    "h": 384
+                  },
+                  "pointHit": {
+                    "inInputBounds": true,
+                    "inShoulderStrip": false,
+                    "inSourceRegion": false,
+                    "inRawSurfaceBounds": true
+                  }
+                },
+                "hosted": true,
+                "bodyAcceptsInput": true,
+                "bodyReady": true,
+                "hoverParentEnabled": true,
+                "nativeRegionRegistered": true,
+                "stripCount": 50,
+                "bounds": {
+                  "x": 332.5,
+                  "y": 48,
+                  "w": 637,
+                  "h": 286
+                },
+                "content": {
+                  "x": 346.5,
+                  "y": 62,
+                  "w": 609,
+                  "h": 258
+                }
+              },
+              null,
+              null,
+              null
+            ],
+            "genericPopup": {
+              "activeKind": "",
+              "desiredKind": "",
+              "resident": false,
+              "requestedOpen": false,
+              "progress": 0,
+              "inputBounds": {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0
+              },
+              "triggerHover": false,
+              "focusHeld": false
+            },
+            "modules": [
+              {
+                "id": "clock",
+                "kind": "clock",
+                "constructed": true,
+                "visible": true,
+                "enabled": true,
+                "hovered": false,
+                "featureHovered": null,
+                "featureContainsMouse": null,
+                "rect": {
+                  "x": 582,
+                  "y": 8,
+                  "w": 138,
+                  "h": 32
+                },
+                "input": {
+                  "x": 582,
+                  "y": 8,
+                  "w": 138,
+                  "h": 32
+                },
+                "popup": {
+                  "anchorReady": true,
+                  "liquidOwner": true,
+                  "liquidControllerMatches": true,
+                  "windowBound": true,
+                  "screenBound": true,
+                  "moduleHoverActive": false,
+                  "anchorHover": false,
+                  "requestedVisible": true,
+                  "presentationActive": true,
+                  "hosted": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "stage": "body",
+      "sent": [
+        651.0,
+        191.0,
+        1860,
+        1102
+      ],
+      "snapshot": {
+        "timestamp": 1791785647261,
+        "family": "abyss",
+        "shellEntryReady": true,
+        "deferredPanelsReady": true,
+        "compositorNiri": true,
+        "outputCount": 1,
+        "outputs": [
+          {
+            "output": "winit",
+            "windowVisible": true,
+            "presented": true,
+            "editorOpen": false,
+            "fullscreenCovered": false,
+            "fieldReady": true,
+            "framePresented": true,
+            "barVisible": true,
+            "barEnabled": true,
+            "barOnOutput": true,
+            "barEditing": false,
+            "barHover": false,
+            "probeMaskProxy": false,
+            "probeUnmapped": false,
+            "barInputRegionCount": 1,
+            "editorRegionCount": 6,
+            "liquidPresented": true,
+            "liquidPopupsOpen": true,
+            "barPopupHoverLease": true,
+            "popupSlots": [
+              {
+                "kind": "clock",
+                "order": 1,
+                "active": true,
+                "requestedVisible": true,
+                "semanticHold": false,
+                "lingerVisible": true,
+                "humanVisibleRequest": true,
+                "rawVisibleRequest": true,
+                "hoverActivates": true,
+                "notificationHover": null,
+                "moduleHover": false,
+                "anchorHover": false,
+                "anchorScenePoint": null,
+                "bodyHover": false,
+                "contentHover": true,
+                "contentScenePoint": {
+                  "x": 651,
+                  "y": 191
+                },
+                "hoverGeometry": {
+                  "edge": "top",
+                  "joinedEdge": "",
+                  "outputWidth": 1860,
+                  "outputHeight": 1102,
+                  "connectionInsets": {
+                    "top": 48,
+                    "right": 16,
+                    "bottom": 16,
+                    "left": 16
+                  },
+                  "rawSurface": {
+                    "x": 332.5,
+                    "y": -50,
+                    "w": 637,
+                    "h": 384
+                  },
+                  "joinedSurface": {
+                    "x": 332.5,
+                    "y": -50,
+                    "w": 637,
+                    "h": 384
+                  },
+                  "pointHit": {
+                    "inInputBounds": true,
+                    "inShoulderStrip": false,
+                    "inSourceRegion": false,
+                    "inRawSurfaceBounds": true
+                  }
+                },
+                "hosted": true,
+                "bodyAcceptsInput": true,
+                "bodyReady": true,
+                "hoverParentEnabled": true,
+                "nativeRegionRegistered": true,
+                "stripCount": 50,
+                "bounds": {
+                  "x": 332.5,
+                  "y": 48,
+                  "w": 637,
+                  "h": 286
+                },
+                "content": {
+                  "x": 346.5,
+                  "y": 62,
+                  "w": 609,
+                  "h": 258
+                }
+              },
+              null,
+              null,
+              null
+            ],
+            "genericPopup": {
+              "activeKind": "",
+              "desiredKind": "",
+              "resident": false,
+              "requestedOpen": false,
+              "progress": 0,
+              "inputBounds": {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0
+              },
+              "triggerHover": false,
+              "focusHeld": false
+            },
+            "modules": [
+              {
+                "id": "clock",
+                "kind": "clock",
+                "constructed": true,
+                "visible": true,
+                "enabled": true,
+                "hovered": false,
+                "featureHovered": null,
+                "featureContainsMouse": null,
+                "rect": {
+                  "x": 582,
+                  "y": 8,
+                  "w": 138,
+                  "h": 32
+                },
+                "input": {
+                  "x": 582,
+                  "y": 8,
+                  "w": 138,
+                  "h": 32
+                },
+                "popup": {
+                  "anchorReady": true,
+                  "liquidOwner": true,
+                  "liquidControllerMatches": true,
+                  "windowBound": true,
+                  "screenBound": true,
+                  "moduleHoverActive": false,
+                  "anchorHover": false,
+                  "requestedVisible": true,
+                  "presentationActive": true,
+                  "hosted": true
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "stage": "outside",
+      "sent": [
+        930.0,
+        881.6,
+        1860,
+        1102
+      ],
+      "snapshot": {
+        "timestamp": 1791785648296,
+        "family": "abyss",
+        "shellEntryReady": true,
+        "deferredPanelsReady": true,
+        "compositorNiri": true,
+        "outputCount": 1,
+        "outputs": [
+          {
+            "output": "winit",
+            "windowVisible": true,
+            "presented": true,
+            "editorOpen": false,
+            "fullscreenCovered": false,
+            "fieldReady": true,
+            "framePresented": true,
+            "barVisible": true,
+            "barEnabled": true,
+            "barOnOutput": true,
+            "barEditing": false,
+            "barHover": false,
+            "probeMaskProxy": false,
+            "probeUnmapped": false,
+            "barInputRegionCount": 1,
+            "editorRegionCount": 6,
+            "liquidPresented": true,
+            "liquidPopupsOpen": false,
+            "barPopupHoverLease": false,
+            "popupSlots": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "genericPopup": {
+              "activeKind": "",
+              "desiredKind": "",
+              "resident": false,
+              "requestedOpen": false,
+              "progress": 0,
+              "inputBounds": {
+                "x": 0,
+                "y": 0,
+                "w": 0,
+                "h": 0
+              },
+              "triggerHover": false,
+              "focusHeld": false
+            },
+            "modules": [
+              {
+                "id": "clock",
+                "kind": "clock",
+                "constructed": true,
+                "visible": true,
+                "enabled": true,
+                "hovered": false,
+                "featureHovered": null,
+                "featureContainsMouse": null,
+                "rect": {
+                  "x": 582,
+                  "y": 8,
+                  "w": 138,
+                  "h": 32
+                },
+                "input": {
+                  "x": 582,
+                  "y": 8,
+                  "w": 138,
+                  "h": 32
+                },
+                "popup": {
+                  "anchorReady": true,
+                  "liquidOwner": true,
+                  "liquidControllerMatches": true,
+                  "windowBound": true,
+                  "screenBound": true,
+                  "moduleHoverActive": false,
+                  "anchorHover": false,
+                  "requestedVisible": false,
+                  "presentationActive": false,
+                  "hosted": false
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

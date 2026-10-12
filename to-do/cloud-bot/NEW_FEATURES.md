@@ -1,5 +1,26 @@
 # New features
 
+**2026-10-12 14:40 ICT quota checkpoint — five-hour remaining 1%:** product and
+native-test work stopped under the owner's below-3% rule; weekly limits are
+not the trigger. Source `cfc852bee` and all valid cowork edits are preserved.
+R05, R03/R01, R02, R06/R07 are source-completed / Owner chưa verified.
+[Exact-source scoped qualification](../../docs/evidence/abyss-product/20261012-cfc852bee-focused/README.md)
+is 16 PASS / 1 FAIL across 17 completed checks; Dashboard partial-capture
+sampling still FAILS and its cause is not established. The full frozen
+7e31685bc result remains FAIL373/7/1; no newer full canonical PASS exists.
+[POP-I01 native-pointer diagnostic](../../docs/evidence/abyss-product/20261012-pop-i01-native-pointer/README.md)
+only qualifies one private Top Clock transfer, which did not reproduce the
+owner failure; no hover product fix. Next expand that actual-protocol collector.
+Continue **POP-I01 → DASH-F01 → ABYSS-R08 → ABYSS-F02 → NOTES-R01 →
+ABYSS-R09 → CAL-R01 → NOTES-F01 → DASH-R03** after reset. Latest owner
+message explicitly retains **ABYSS-R03**; its existing stable task code and
+source-completed/owner-unverified state are preserved, without creating a
+duplicate task. F02 modifier-only Ctrl/Shift + click refinement is still OPEN;
+remove the toolbar toggle during its implementation. One continuation is to be
+scheduled for **2026-10-12 14:36:24 ICT**, reset +3 minutes. Keep G0 offline,
+consent/preferences and all owner/installed/multi-output gates unchanged.
+
+
 Work first under the [shared priority effective 2026-10-12](README.md), with
 related [Issues/bugs](ISSUES.md) and [Rework/optimization](REWORK_OPTIMIZATION.md)
 handled alongside the selected feature in the same single-agent context.
@@ -31,8 +52,9 @@ Full qualification/owner gates
 remain open across these feature milestones. Frozen Agenda source0465 completed
 FAIL359/7/1; [raw exact receipt](../../docs/evidence/abyss-product/20261012-0465ffc5a/README.md)
 keeps that result independent of lock and multi-selection work.
-Implement **DASH-F01 → DASH-F02 → AGENDA-F01 → ABYSS-F01 → Screen Edge
-multi-selection** in that order. Carry out their related data/input repairs and
+Historical delivery sequence was **DASH-F01 → DASH-F02 → AGENDA-F01 →
+ABYSS-F01 → Screen Edge multi-selection**; the latest explicit sequence above
+now controls further work. Carry out their related data/input repairs and
 Rework/optimization alongside delivery, preserving remaining canonical and
 desktop acceptance gates. Do not resume the former Issues → Rework → Features
 order or close unverified Issues because their source is implemented.

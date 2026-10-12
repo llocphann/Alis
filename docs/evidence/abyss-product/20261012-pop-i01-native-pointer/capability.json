@@ -1,0 +1,10 @@
+{
+  "private_display": "wayland-2",
+  "parent_display": "wayland-1",
+  "exit_code": 0,
+  "stdout": "READY compositor virtual pointer\n",
+  "stderr": "",
+  "motion_sent": false,
+  "focus_requested": false,
+  "classification": "private compositor capability only; no Popup test or repair"
+}

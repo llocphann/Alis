@@ -1,0 +1,191 @@
+{
+  "source_sha": "cfc852beef19d33de51f84520cf3eb26d9b485af",
+  "source": "/tmp/alis-focused-final-m1fn2uwv/source",
+  "base": "/tmp/alis-focused-final-m1fn2uwv",
+  "status": "FAIL",
+  "classification": "focused exact-source clean-clone, not full canonical",
+  "started_at": "2026-10-12T05:59:12.067572+00:00",
+  "results": [
+    {
+      "command": [
+        "node",
+        "scripts/test-abyss-full-size-modules.mjs"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-full-size-modules.log",
+      "sha256": "8b82d1bd6bce494b1c9db3a66ed76ad0b971cc124f3f3b67011927ac50363fc4",
+      "environment": {}
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test-abyss-drag-corners.mjs"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-drag-corners.log",
+      "sha256": "3947fa80e57aa74549c3cc7df1cb1caadbe26086918bb859420fd240f2d07821",
+      "environment": {}
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test-abyss-zero-corners.mjs"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-zero-corners.log",
+      "sha256": "667c1063812fff5a0a4c96a00f2a89b456dab81865fbadf8c78a8b6e21a5bd7b",
+      "environment": {}
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test-abyss-module-locks.mjs"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-module-locks.log",
+      "sha256": "2be8e2273548c2f846cbab1ed8d418c5e38677e3825ac11af2972c5380729280",
+      "environment": {}
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test-abyss-multi-selection.mjs"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-multi-selection.log",
+      "sha256": "8d8c9dbfde19be2e8760e90cc743cfe1107aece8c727151e97aa2c3e627f95d6",
+      "environment": {}
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test-abyss-mandatory-panels.mjs"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-mandatory-panels.log",
+      "sha256": "f99e92b382d4ca30ed399220baf769788a5298e1ef2836d9091bdc9f9cb37b8f",
+      "environment": {}
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-input-region-contract.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-input-region-contract.log",
+      "sha256": "e1e1a175d1588b21467f08feb878b6dfd627b4cc2113dbe97e8ebaf99296cc6b",
+      "environment": {}
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-bar-module-scaling.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-bar-module-scaling.log",
+      "sha256": "b5fc615c7d099ac637d2a68917948ff9adfde4cc122419632346d903e5dac119",
+      "environment": {}
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-module-layout.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-module-layout.log",
+      "sha256": "282da5813315394cfa79078388f1d49b2d1375249b490d06d72d26bd040bae39",
+      "environment": {}
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-geometry-contract.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-geometry-contract.log",
+      "sha256": "d10a33614c457c0b06c67f929ed6ff7956dede97d302e5cb606392eada4c3988",
+      "environment": {}
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-family-contract.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-family-contract.log",
+      "sha256": "30c89ed9529b7cfb8a1c602736dfcc3661e105e0e8ba6f11bb61ef12e6e938e8",
+      "environment": {}
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-abyss-runtime-contract.sh"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-runtime-contract.log",
+      "sha256": "ef2481c75675b6ebb7510a11fa81ba1402ea808a2cd89c7e807aca10fb63066e",
+      "environment": {}
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-full-size-modules-runtime.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-full-size-modules-runtime.log",
+      "sha256": "edc784ea78e46973f1ec7870e3c77e14af4ba9c21bc6cf6e276f44fca809b0c5",
+      "environment": {
+        "ALIS_FULL_MODULE_CAPTURE_DIR": "/tmp/alis-focused-final-m1fn2uwv/orientation"
+      }
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-drag-corners-runtime.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-drag-corners-runtime.log",
+      "sha256": "c94493eb15079e3c8637f674706eaf6872dd50c0cd6eea9ac5e0d57027b47fd2",
+      "environment": {
+        "ALIS_DRAG_CAPTURE_DIR": "/tmp/alis-focused-final-m1fn2uwv/drag"
+      }
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-zero-corners-runtime.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-zero-corners-runtime.log",
+      "sha256": "b84e18b21476b907b1d2f6237feeee04a45fa11b2447adfa8424d3835b39f2e6",
+      "environment": {
+        "ALIS_ZERO_CAPTURE_DIR": "/tmp/alis-focused-final-m1fn2uwv/zero"
+      }
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-mandatory-typography-runtime.py"
+      ],
+      "exit_code": 0,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-abyss-mandatory-typography-runtime.log",
+      "sha256": "fb9ba11efdfe0edd36137a81c724de2c82f45fa6aca3eb1afbf96f7312c124d2",
+      "environment": {
+        "ALIS_TYPE_CAPTURE_DIR": "/tmp/alis-focused-final-m1fn2uwv/typography"
+      }
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-dashboard-editor-field-runtime.py"
+      ],
+      "exit_code": 1,
+      "log": "/tmp/alis-focused-final-m1fn2uwv/test-dashboard-editor-field-runtime.log",
+      "sha256": "67514e0cc63b7d8e5901a051d881f8a4d05cdd0125946b8bd68005bb892898a9",
+      "environment": {
+        "ALIS_DASHBOARD_FIELD_CAPTURE_DIR": "/tmp/alis-focused-final-m1fn2uwv/dashboard-field"
+      }
+    }
+  ],
+  "finished_at": "2026-10-12T06:00:23.275606+00:00"
+}
