@@ -2012,7 +2012,7 @@ ContentPage {
                         }
                     }
                     StyledToolTip {
-                        text: Translation.tr("Generate theme colors from the backdrop wallpaper instead of the main wallpaper.\nRequires a custom backdrop wallpaper (not 'Use main wallpaper').")
+                        text: Translation.tr("Use a custom backdrop for theme colors; disable Use main wallpaper.")
                     }
                 }
 
