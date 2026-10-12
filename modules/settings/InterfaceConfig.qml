@@ -25,7 +25,7 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "bottom_app_bar"
         title: Translation.tr("Panels")
-        description: Translation.tr("Configure control-panel, notification, widget and floating-tool surfaces in context.")
+        description: Translation.tr("Panels, notifications, widgets and floating tools.")
         summary: Translation.tr("Control panel · notifications · widgets · tools")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
@@ -625,7 +625,7 @@ ContentPage {
                     Config.setNestedValue("notifications.quietHours.enable", checked)
                 }
                 StyledToolTip {
-                    text: Translation.tr("Hold back notification popups during a daily window. They still reach the notification history.")
+                    text: Translation.tr("Silence daily popups; notifications remain in history.")
                 }
             }
 
@@ -693,7 +693,7 @@ ContentPage {
                     Config.setNestedValue("notifications.useLegacyCounter", !checked)
                 }
                 StyledToolTip {
-                    text: Translation.tr("Automatically sync notification badge with actual popup count.\nFixes issue where externally cleared notifications (e.g., Discord) don't update the badge.\nDisable to use the classic manual counter behavior.")
+                    text: Translation.tr("Sync badges with live popup count, including externally cleared alerts; off uses manual count.")
                 }
             }
 
@@ -733,7 +733,7 @@ ContentPage {
             NoticeBox {
                 Layout.fillWidth: true
                 materialIcon: "south_east"
-                text: Translation.tr("Hover the physical bottom-right corner to reveal notification history. Orbit and native compositor hot corners keep priority when they own the same corner.")
+                text: Translation.tr("Hover bottom-right for history; assigned compositor hot corners take priority.")
             }
 
             ConfigSwitch {
@@ -842,7 +842,7 @@ ContentPage {
                 onCheckedChanged:
                     Config.setNestedValue("notificationCenter.markReadOnOpen", checked)
                 StyledToolTip {
-                    text: Translation.tr("Marks notification history read and retracts its transient toast copies. The current notification backend uses one popup/read flag for both states.")
+                    text: Translation.tr("Mark history read and retract matching toasts (shared read flag).")
                 }
             }
 
@@ -1996,7 +1996,7 @@ ContentPage {
                             }
                             StyledText {
                                 Layout.fillWidth: true
-                                text: Translation.tr("No timezones added. The widget automatically shows suggestions based on your region. Add them below to customize, reorder or remove them.")
+                                text: Translation.tr("No timezones yet; add or reorder regional suggestions.")
                                 font.pixelSize: Appearance.font.pixelSize.smaller
                                 color: Appearance.colors.colSubtext
                                 wrapMode: Text.WordWrap
