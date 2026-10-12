@@ -22,7 +22,16 @@ assert 'visible: !root.compactEditor' in editor, "Planner shows full labelled fo
 assert 'activeLabelOnly: root.plannerPresentation' in editor
 choices=(r/"modules/common/widgets/ConfigSelectionArray.qml").read_text()
 assert 'property bool activeLabelOnly: false' in choices, "opt-in only"
-assert 'root.activeLabelOnly && !paletteButton.toggled' in choices
+assert 'buttonText: modelData.displayName' in choices
+assert 'revealActiveLabelOnly: root.activeLabelOnly' in choices
+assert 'root.activeLabelOnly && !paletteButton.toggled' not in choices
+reveal=(r/"modules/common/widgets/SelectionGroupButton.qml").read_text()
+assert 'readonly property bool labelExpanded: !root.revealActiveLabelOnly || root.toggled' in reveal
+assert 'root.labelExpanded' in reveal
+assert 'visible: root.buttonText?.length > 0' in reveal
+assert 'visible: opacity > 0' not in reveal.split('id: textItem',1)[0].split('implicitWidth: root.buttonText?.length > 0 && root.labelExpanded',1)[1]
+assert 'Text.ElideNone : Text.ElideRight' in reveal
+assert 'Math.min(textItem.implicitWidth, root.maxTextWidth) : 0' in reveal
 assert 'Accessible.name: modelData.displayName' in choices
 assert 'property date plannerViewMonth: new Date()' in editor
 assert 'ObsidianMonthCalendar {' in editor
@@ -30,7 +39,17 @@ assert 'calendarCells: root.plannerCalendarCells' in editor
 assert 'onDayActivated: date=>root.eventDate=date' in editor
 assert 'Layout.topMargin: root.plannerPresentation ? 10 : 0' in editor
 assert 'visible: root.plannerPresentation' in editor
-assert 'visible: root.isEditing && !root.compactEditor' in editor, "Remove button must appear in Planner edit"
+assert 'visible: root.isEditing && !root.embeddedPresentation' in editor
+assert 'visible: root.embeddedPresentation && root.isEditing' in editor
+assert 'visible: root.embeddedPresentation' in editor
+assert 'visible: !root.embeddedPresentation' in editor
+assert 'symbol: root.allDay ? "event_available" : "event_busy"' in editor
+assert 'Layout.preferredWidth: root.compactEditor ? 30 : 36' in editor
+assert 'Layout.preferredHeight: root.compactEditor ? 30 : 36' in editor
+assert 'root.allDay = !root.allDay' in editor
+assert 'symbol: "delete"' in editor
+assert 'symbol: "close"' in editor
+assert 'symbol: root.isEditing ? "check" : "add_task"' in editor
 assert 'enabled: !root.allDay' in editor, "All-day and aligned Start/End share a planner row"
 assert 'embeddedPresentation: true' in calendar and 'plannerPresentation:true' not in calendar, "Calendar untouched"
 for kind,mouse in [('Start','topResizeMouse'),('End','bottomResizeMouse')]:
