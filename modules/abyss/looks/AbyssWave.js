@@ -75,6 +75,49 @@ function setMass(state, records) {
         }
     });
 }
+// Controller records are plain numeric geometry. Reuse only the expensive
+// distance kernel; add each record's mass/progress in the original order and
+// with the original double-precision operations. Keep the generic API above
+// unchanged for callers with observable getters.
+function setMassCached(state, records, cache) {
+    var input=[state.count,state.length];
+    records.forEach(function(record) {
+        if (!record.mass || !record.progress) return;
+        input.push(arc(record.edge,record.along+record.span/2,state.width,state.height),
+            Math.max(40,record.span*.55),record.mass,record.progress);
+    });
+    var signature=input.join(":");
+    if (cache.massSignature===signature && cache.massSnapshot) {
+        // Restore rather than returning untouched: internal consumers may have
+        // changed array contents since the last mass update.
+        for (var i=0;i<state.count;i++) state.mass[i]=cache.massSnapshot[i];
+        return;
+    }
+    state.mass.fill(1);
+    var used = new Map();
+    records.forEach(function(record) {
+        if (!record.mass || !record.progress) return;
+        var center = arc(record.edge,record.along+record.span/2,state.width,state.height);
+        var width = Math.max(40,record.span*.55);
+        var key = [state.count,state.length,center,width].join(":");
+        var weights = cache.get(key);
+        if (!weights) {
+            weights = Array(state.count);
+            for (var i=0;i<state.count;i++) {
+                var d=circularDistance(i*state.length/state.count,center,state.length)/width;
+                weights[i]=Math.exp(-d*d*2);
+            }
+        }
+        used.set(key,weights);
+        for (var i=0;i<state.count;i++)
+            state.mass[i]=Math.min(5,state.mass[i]+Math.min(4,record.mass)*record.progress*weights[i]);
+    });
+    // No growing history: retain only kernels used by this geometry snapshot.
+    cache.clear();
+    used.forEach(function(weights,key) { cache.set(key,weights); });
+    cache.massSignature=signature;
+    cache.massSnapshot=state.mass.slice();
+}
 function impulse(state, edge, along, span, strength, mass) {
     var p=state.parameters;
     var center=arc(edge,along,state.width,state.height)%state.length;

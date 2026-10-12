@@ -7,6 +7,7 @@ import qs.modules.abyss.looks
 import "looks/AbyssGeometry.js" as Geometry
 import "looks/AbyssPyramidMotion.js" as PyramidMotion
 import "looks/AbyssWave.js" as Wave
+import "looks/AbyssPlacementMemo.js" as PlacementMemo
 
 // This host never paints a panel. Its geometry record is consumed by the one
 // output field. Hover popups may include their drawn connection to the Edge;
@@ -97,7 +98,9 @@ Item {
     property real stackProximity: 24
     property int activationOrder: 0
     property int placementPriority: identity === "dialog" ? 2 : ["utility","edgeEditor"].includes(identity) ? 1 : identity === "dock" ? -1 : 0
-    readonly property var placement: controller?.bodyPlacements?.[identity] ?? null
+    readonly property var placementMemo: ({})
+    readonly property var placement: PlacementMemo.stable(placementMemo,
+        controller?.bodyPlacements?.[identity] ?? null)
     readonly property bool placementVisible: placement?.visible !== false
     // A temporarily evicted body retracts using its last valid geometry, keeps
     // its loaded feature/draft, and can reopen in place when space returns.

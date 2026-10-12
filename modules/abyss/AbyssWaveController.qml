@@ -13,6 +13,7 @@ Item {
     readonly property int sampleCount: AbyssStyle.quality === "performance" ? 128 : 256
     readonly property var parameters: Wave.parameters(Config.options?.abyss?.waves)
     property var simulation: null
+    property var massKernels: new Map()
     property string mode: "SLEEPING"
     property int revision: 0
     property real crestPeak: 0
@@ -28,11 +29,12 @@ Item {
     readonly property bool integrationAllowed: motionAllowed || audioAllowed
     signal configurationChanged()
     function reset(): void {
+        massKernels = new Map()
         simulation = Wave.create(sampleCount,outputWidth,outputHeight,parameters)
         // Disarm the shader synchronously; a hidden/offscreen Canvas may not
         // produce another paint after its last animation clock has stopped.
         crestPeak = 0
-        Wave.setMass(simulation,records)
+        Wave.setMassCached(simulation,records,massKernels)
         mode = "SLEEPING"
         revision++
         configurationChanged()
@@ -78,7 +80,7 @@ Item {
         }
         configurationChanged()
     }
-    onRecordsChanged: if (simulation) Wave.setMass(simulation,records)
+    onRecordsChanged: if (simulation) Wave.setMassCached(simulation,records,massKernels)
     onRevisionChanged: samples.requestPaint()
     Component.onCompleted: reset()
     Timer {
