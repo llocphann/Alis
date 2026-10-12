@@ -60,7 +60,7 @@ new canonical from actual fresh committed SHA after repairs. All stated
 owner/installed/material/multi-output and Companion gates remain OPEN.
 
 
-- [ ] **Alis Quickshell deep performance profiler — owner request 2026-10-11:**
+- [ ] **PERF-F01 — Alis Quickshell deep performance profiler — owner request 2026-10-11:**
   Add an opt-in, bounded debug suite to trace actual Alis resource costs:
   CPU, GPU, RAM/PSS/RSS, frame pacing and QML/JavaScript/render hotspots,
   with per-module/per-popup attribution ONLY where instrumentation or
@@ -240,7 +240,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   Continue Screen Edge multi-selection with explicit locked-batch guards.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [x] **Edit Abyss Layout Screen Edge module multi-selection — owner request 2026-10-10:**
+- [x] **ABYSS-F02 — Edit Abyss Layout Screen Edge module multi-selection — owner request 2026-10-10:**
   Add an explicit multiple-selection mode for Screen Edge modules while
   **Edit Abyss Layout** is active. Show which modules are selected, support
   add/remove/clear selection and coherent subsequent edits when several targets
@@ -600,7 +600,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   these gates; source/focused evidence alone does not complete the feature.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **Quick Notes Markdown Reading and editable Source/Live mode — owner request 2026-10-11:**
+- [ ] **NOTES-F01 — Quick Notes Markdown Reading and editable Source/Live mode — owner request 2026-10-11:**
   [Owner: Alis dev; NEW feature] Upgrade existing shared Quick Notes into
   a genuine **Markdown note reader and editor** without replacing the
   canonical Notepad tab/content/autosave model. The user wants
@@ -766,7 +766,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   preview/Source focus, Unicode/IME/undo/restart, mouse/touchpad,
   attachment parity, full canonical and owner UI acceptance.
 
-- [ ] **Quick Notes image delivery:** Hadalis `add29d6f8` implements shared
+- [ ] **NOTES-F02 — Quick Notes image delivery:** Hadalis `add29d6f8` implements shared
   paste/import, original-byte storage, Markdown persistence and preview with
   stable asynchronous note ownership. Hadalird `b0c975a7f40bdf531012be326bc728f5c014b696`
   (0.2.1) exports referenced images to the selected Obsidian vault's configured
@@ -775,21 +775,21 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   Confirm installed versions and explicit owner paste/export with source/drafts
   retained. No fixture writes to a personal vault or reads personal clipboard.
 
-- [ ] **Utilities feature delivery:** source already provides Monitor
+- [ ] **UTIL-F01 — Utilities feature delivery:** source already provides Monitor
   Arrangement, Display Mode, Sound Output and Night Light/Anti Flashbang pages
   with bottom-centered dots/swipe and existing display/audio backends. Verify
   actual Extend/Primary/Second-only/Mirror, hotplug/failure rollback, `wl-mirror`
   lifetime, PipeWire default sink and Night Light/Anti Flashbang sensitivity.
   Do not claim real Mirror from a synthetic fixture or introduce a second backend.
 
-- [ ] **Non-Arch optional system gateway:** add trusted distro-owned
+- [ ] **SYS-F01 — Non-Arch optional system gateway:** add trusted distro-owned
   provisioning beyond Arch for Hadalird helpers. Keep root gateway/policy separate
   from user-owned optional payloads and require explicit native authorization.
   Prove package ownership, removal and failure behavior per supported distro;
   never use a user-checkout installer as root or claim untested distro support.
   **Owner priority override — 2026-10-12 (#12): VERY LAST / DEFERRED.** Non-Arch optional system gateway is almost the final portfolio task: do not select or implement it until all other currently requested New Features, Rework and Issues, including the other deferred features, are complete. Revisit only after an explicit maintainer reprioritization.
 
-- [x] **Power-profile render quality delivery:** qualify Abyss automatic quality
+- [x] **POWER-F01 — Power-profile render quality delivery:** qualify Abyss automatic quality
   following and manual mode through live profile changes without reload or lost
   preferences. Hadanion owns Companion's two levels: Performance and Quality
   (former Balanced), safe old-tier migration and shared AI behavior. Hadalis

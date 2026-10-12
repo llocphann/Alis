@@ -273,7 +273,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   separate; its unified slider/migration is implemented at `553525a25`,
   with full canonical and owner acceptance still open.
 
-- [x] **P0 — fullscreen window retains hidden Screen Edges/Panel/Perimeter after switching to another window (owner report 2026-10-10):**
+- [x] **ABYSS-I04 — P0 — fullscreen window retains hidden Screen Edges/Panel/Perimeter after switching to another window (owner report 2026-10-10):**
   Reproduce on Niri: fullscreen client A, then open/focus window B in the
   same active workspace. Screen Edges, Abyss Panel and Perimeter reportedly
   disappear even though B is the foreground normal window. Source diagnosis:
@@ -330,7 +330,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   acceptance is the basis for checking off this task. Archive after
   the normal seven-day retention window.
 
-- [ ] **Notification Center post-notification Popup has wrong size/placement and lags — owner report 2026-10-10 21:55 ICT:**
+- [ ] **NOTIF-I01 — Notification Center post-notification Popup has wrong size/placement and lags — owner report 2026-10-10 21:55 ICT:**
   **Owner follow-up 2026-10-10: normal post-alert Center sizing is now OK;
   stopping screen recording and receiving the `Recording saved` notification
   still makes the transient popup lag.** This is a narrower unresolved
@@ -1134,7 +1134,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   justified by this archive.
 
 
-- [ ] **Canonical validation — updated 2026-10-12:** latest complete frozen
+- [ ] **VAL-I01 — Canonical validation — updated 2026-10-12:** latest complete frozen
   clean-clone `0465ffc5ad7d7a6b9b1347f45a2b9c6ca1e798a5`, paired with optional
   Integration `4d0aa3f508fdd6bd953696d92bf529f1fb9f4b32`, **FAIL, exit1:
   359PASS / 7FAIL / 1SKIP**. Failing fixtures: Dashboard editor field;
@@ -1299,7 +1299,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   Current canonical passes that contract; owner Polkit/focus acceptance is open.
   A previous or focused PASS never closes the overall gate.
 
-- [ ] **Notification Popup stutter on Notification Edgebar hover and Recording start — owner report 2026-10-10:**
+- [ ] **NOTIF-I02 — Notification Popup stutter on Notification Edgebar hover and Recording start — owner report 2026-10-10:**
   Two distinct triggers need independent reproductions: (1) while a
   Notification Popup is open, hovering its Notification Edgebar opens the
   attached surface and causes visible stutter; (2) clicking **Record** starts
@@ -1344,7 +1344,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   Add QML source/contrast regression plus live Niri/Quickshell capture
   and owner approval. State: NEW/OPEN; not implemented.
 
-- [x] **Detailed Weather Popup background does not follow theme — owner report 2026-10-10:**
+- [x] **WTHR-I01 — Detailed Weather Popup background does not follow theme — owner report 2026-10-10:**
   Several component/card backgrounds remain grey rather than adapting to the
   selected theme. Audit `modules/bar/weather/WeatherPopupContent.qml` and
   child theme bindings, including inherited/default backgrounds. Correct
@@ -1369,7 +1369,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   ink/card checks pass after this correction.
   **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer confirms the Weather Details color/theme repair and preserved visual constraints are acceptable. Close this *Details theme* bug against the recorded source repair and focused native/QML palette and frozen-Orbital tests. Previous lines saying owner visual acceptance OPEN are historical and are superseded by this signoff. This does NOT verify other Weather Orbital text, hover/Pyramid overlap or the separate canonical suite.
 
-- [ ] **Edit Abyss Layout Media IPC preview incorrectly shows Volume IPC — owner report 2026-10-10:**
+- [ ] **ABYSS-I05 — Edit Abyss Layout Media IPC preview incorrectly shows Volume IPC — owner report 2026-10-10:**
   The editor presents the **Volume IPC** sample when **Media IPC** is selected.
   Trace IPC preview type-to-component routing and restore the proper Media IPC
   sample while retaining a correct Volume IPC preview and actual IPC behavior.
@@ -1383,7 +1383,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   actual four-Edge editor preview, Volume control, save/reopen and
   owner visual acceptance at the installed source SHA.
 
-- [x] **Music tab Results / Queue scroll and scrollbar missing — owner report 2026-10-10:**
+- [x] **MUSIC-I01 — Music tab Results / Queue scroll and scrollbar missing — owner report 2026-10-10:**
   Result, Queue and potentially other affected Music tab lists do not scroll
   and show no scrollbar. Repair content height/viewport/event routing and
   render theme-consistent scrollbar when content overflows. Check wheel,
@@ -1404,7 +1404,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   compact/expanded visual/input acceptance; focused source scrolling passes.
   **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts restored vertical scrolling and overflow scrollbars for Dashboard Music Results, Queue and companion list views. Focused native six-list scrolling/drag/keyboard fixture (exit 0) retained above. This closes the original *broken Music scrollbar* bug, NOT the future checkbox to hide them (DASH-F03), horizontal-only tab navigation (DASH-R02), unrelated playback/audio bugs or independent canonical validation.
 
-- [x] **Volume/Brightness OSD missing in fullscreen; Physical Screen Edge fallback — owner report 2026-10-11:**
+- [x] **OSD-I01 — Volume/Brightness OSD missing in fullscreen; Physical Screen Edge fallback — owner report 2026-10-11:**
   Under real fullscreen, changing volume or brightness does not display its
   corresponding IPC/OSD/Popup. Restore transient Volume and Brightness feedback
   while keeping the app genuinely fullscreen. When normal Abyss Screen Edge
@@ -1440,7 +1440,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   compositor feasibility and source behavior pass.
   **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts the source repair restoring fullscreen Volume/Brightness OSD at physical screen edges and normal non-fullscreen placement. Retain the 130 native assertions and source receipt; this closes the reported OSD issue. It does NOT reclassify the broader unrelated GameMode/fullscreen, panel-hover/companion or canonical gate as passed.
 
-- [ ] **Recording Popup Expand Controls/Minimize buttons fail; dot-only minimized hover mode — owner report 2026-10-11:**
+- [ ] **REC-I01 — Recording Popup Expand Controls/Minimize buttons fail; dot-only minimized hover mode — owner report 2026-10-11:**
   The Expand Controls and Minimize actions on the Recording Popup do not work.
   Restore the action handlers and connected geometry/input ownership. In
   **minimized mode**, resting UI must show **only one small blinking red dot**
@@ -1472,7 +1472,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   State: OPEN for final exact-SHA canonical, fractional/multi-output and
   owner desktop visual/input acceptance; focused source interactions pass.
 
-- [ ] **New boot/runtime warnings:** owner's log runs `0ea54cc09` and reaches
+- [ ] **BOOT-I01 — New boot/runtime warnings:** owner's log runs `0ea54cc09` and reaches
   the first frame; no startup Type-unavailable failure is shown. Investigate
   `qt.svg` unresolved paint server `a`, oversized SVG buffer, DelegateModel cancel
   `18 0`, repeated Wayland text-input disable and portal app-ID registration.
@@ -1510,7 +1510,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   Actual owner event data and installed runtime were not changed.
   **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts the Calendar Events persistence repair. The separately retained focused native 149-check result covers Add/Edit/Remove real disk readback, coalescing and denied-write retry. This closes the event-storage defect; do NOT infer that the new Calendar event dots, three-day Popup scope or Agenda→Todo feature has been implemented, and the overall canonical check stays independent.
 
-- [x] **Calendar Popup Add/Edit Events text fields too small; event Remove button clipped — owner report 2026-10-10:**
+- [x] **CAL-I02 — Calendar Popup Add/Edit Events text fields too small; event Remove button clipped — owner report 2026-10-10:**
   Restore readable Title/Description fields and a fully visible Remove click
   target at normal/scaled fonts in compact Calendar panes. **Source repair
   and focused native checks complete on 2026-10-11; owner acceptance OPEN.**
@@ -1538,7 +1538,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   Popup Add/Edit/Save/Remove is accepted on the owner desktop.
   **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts the Calendar Add/Edit form geometry, readable inputs and contained Remove action. Retain the focused native 137-check layout receipt and Calendar storage acceptance. This closes the compact form sizing issue only, not the Calendar Popup indicators, Events three-day filter or shared canonical result.
 
-- [ ] **Weather popup overlap / Calendar-Weather Pyramid flicker — owner update 2026-10-10:**
+- [ ] **WTHR-I02 — Weather popup overlap / Calendar-Weather Pyramid flicker — owner update 2026-10-10:**
   New case: rapidly hover between Calendar Popup and Weather Popup; Weather
   intermittently flashes. PyramidPopup coordination is a *suspected*, not
   established, cause. Inspect actual `AbyssPyramidCoordinator.qml` scheduling,
@@ -1552,31 +1552,31 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   owner visual acceptance. Verify first hover, repeated reversal, Orbit/Details
   clipping, exit and reopen with the actual installed source identity.
 
-- [ ] **Orbital Weather light-mode text:** hourly times/labels must use readable
+- [ ] **WTHR-I03 — Orbital Weather light-mode text:** hourly times/labels must use readable
   theme foreground colors. Qualify light and dark mode with the owner's image
   `/tmp/codex-clipboard-f953ac4b-1666-4bb5-8c16-b22920b1ee93.png`; remove the
   redundant hover tooltip instead of repeating the wheel's information.
 
-- [ ] **Hover popups sometimes require clicks or stay open:** qualify cold
+- [ ] **POP-I02 — Hover popups sometimes require clicks or stay open:** qualify cold
   boot and ordinary hover independently of Edit Layout and Waffle → Abyss
   remount. Verify every affected module, source-to-body transfer, reentry and
   final leave. Connected bridge input is repaired at `be8902259`; cold hover and
   delayed anchor callbacks have focused evidence in the archived ledger.
   Preserve click-only actions, keyboard focus and empty-space click-through.
 
-- [ ] **Wi-Fi/Bluetooth popup text missing:** the loading blocker is fixed at
+- [ ] **NET-I01 — Wi-Fi/Bluetooth popup text missing:** the loading blocker is fixed at
   `134b0115a`, and visible-title fixtures pass through `2d31f06b9`. Confirm actual
   owner populated/empty/loading/disabled states and actions. System Tray owns
   these icons; do not reintroduce standalone Wi-Fi/Bluetooth edge modules.
 
-- [ ] **Music fails to play:** source `8b2ed6f0a` fixes queue/transport ordering,
+- [ ] **MUSIC-I02 — Music fails to play:** source `8b2ed6f0a` fixes queue/transport ordering,
   repeated payload stalls and failed-write retry. Real QML passes Python/Rust
   protocol fixtures; private real MPD plays synthetic WAV/FLAC and recovers from
   decoder failure using a null output. Confirm audible owner PipeWire playback,
   Stop → long idle → Play, queue/delete, Shuffle/Repeat and actual problematic
   FLAC files. Do not alter owner music bytes, queue or output routing as a test.
 
-- [ ] **Volume +/- and DSP crackle — owner update 2026-10-10:**
+- [ ] **AUDIO-I01 — Volume +/- and DSP crackle — owner update 2026-10-10:**
   Intermittent audible distortion occurs when an EQ DSP-bearing Popup opens
   during active media playback. The suggested cause (preset automatically
   reapplied on each Popup open/close) remains an UNVERIFIED hypothesis.
@@ -1588,25 +1588,25 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   CAVA warm/lifecycle fixtures are bounded source evidence; real audio, device
   and owner acceptance remain OPEN. Avoid changing owner presets during probes.
 
-- [ ] **Edit Widgets / Dashboard Layout offset:** verify the connected toolbar
+- [ ] **DASH-I11 — Edit Widgets / Dashboard Layout offset:** verify the connected toolbar
   stays outside the workspace with real widget dimensions. Exercise desktop
   and Dashboard/Overview editors, all/hidden widgets, occupied moves/resizes,
   packed restores, small viewport, Add, Cancel/Undo/Reset and save/reopen.
   Keep a finite workspace, readable minimums and unaffected neighboring cards.
   Owner reference: `/tmp/codex-clipboard-e908c001-f054-442e-a2bf-73cd2e70cd64.png`.
 
-- [ ] **Modules cannot reach corners / IPC editing joins:** verify corner
+- [ ] **ABYSS-I06 — Modules cannot reach corners / IPC editing joins:** verify corner
   placement and edge clearance with modules, IPC previews and nearby surfaces.
   Keep the preview open despite normal OSD timeout; check Cancel/Done and
   per-output persistence. Source fixes do not replace physical input acceptance.
 
-- [ ] **Clipboard and pinned Notes/Timers:** confirm copied images render
+- [ ] **CLIP-I01 — Clipboard and pinned Notes/Timers:** confirm copied images render
   correctly after refresh/reopen; Clipboard History must not toggle or flicker
   Dashboard whether it was initially open or closed. Verify Notes/Timers pin,
   add/remove and editor ownership across outputs. Native image/pin fixtures
   pass; owner's interactive acceptance remains distinct.
 
-- [ ] **Wallpaper sometimes stays unchanged on desktop while Overview updates — Liquid/iNiR Melt transition failure, owner update 2026-10-11:**
+- [ ] **WALL-I01 — Wallpaper sometimes stays unchanged on desktop while Overview updates — Liquid/iNiR Melt transition failure, owner update 2026-10-11:**
   [Owner: Alis dev; bug/high-impact wallpaper correctness] Selecting another
   image can update the **Overview preview** without changing the **actual
   desktop wallpaper**, especially when the configured iNiR Melt transition
@@ -1669,18 +1669,18 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   desktop path, owner physical Liquid ON/unavailable/OFF, fractional/
   multiple outputs, video and external backend failure acceptance.
 
-- [ ] **Cheatsheet close opens Update popup:** qualify the repaired independent
+- [ ] **UTIL-I01 — Cheatsheet close opens Update popup:** qualify the repaired independent
   close/visibility ownership through first and repeated slide-out. No unrelated
   Update popup should appear or dismiss over it.
 
-- [ ] **Notification timeout and retained history:** verify expiry, hover pause,
+- [ ] **NOTIF-I03 — Notification timeout and retained history:** verify expiry, hover pause,
   resume and history refresh without resetting an existing timeout or pin.
   Preserve freely positioned notifications; retire obsolete Anchor controls.
   Niri reload success was subsequently retired and must remain silent; failures
   stay actionable. Verify Notification/Activity dimensions and existing Notes/
   To-do/Timers/Activities routes without duplicating their backends.
 
-- [ ] **Hadalird helper/package state and Polkit focus:** extraction is
+- [ ] **HELPER-I01 — Hadalird helper/package state and Polkit focus:** extraction is
   source/package-qualified; owner reported helper status ready. Verify compact
   Settings status, restart/refresh, explicit install/reinstall/update/rollback/
   remove and retained data. Verify Polkit above embedded/native/Waffle Settings,
@@ -1855,7 +1855,7 @@ test scripts and historical receipts remain in each source repository.
 
 ## Correctness and release acceptance
 
-- [ ] **Lifecycle/input on the installed candidate:** boot without unavailable
+- [ ] **REL-I01 — Lifecycle/input on the installed candidate:** boot without unavailable
   types/duplicate IDs; cold/warm open, fullscreen enter/exit, lock/unlock,
   suspend/resume, output removal/hotplug and fractional/transformed outputs.
   Keep Overlay input limited to real interactive bodies; no transparent blocker
@@ -1865,7 +1865,7 @@ test scripts and historical receipts remain in each source repository.
   desktop context-menu close/reopen, Quick Notes editor leases, configured hot
   corners and Overview priority. Keep Calendar/Weather responsive at small scales.
 
-- [ ] **Feature/package identity and failure behavior:** exact installed/source
+- [ ] **REL-I02 — Feature/package identity and failure behavior:** exact installed/source
   SHA, relocatable install/update/uninstall, required runtime dependencies and
   optional absence/error recovery. Exercise missing/offline/incompatible optional
   packages, actual selected TLP/Thinkfan/Obsidian behavior after user enablement,

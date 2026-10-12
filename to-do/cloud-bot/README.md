@@ -46,6 +46,21 @@ New Features numbering in NEW_FEATURES.md):**
 | Alongside the selected feature | [Rework/optimization](REWORK_OPTIMIZATION.md) | Related redesign, UI simplification, CPU/RAM/GPU reduction and responsiveness improvements. |
 | Alongside the selected feature | [Issues/bugs](ISSUES.md) | Related broken behavior, regressions, actionable warnings and correctness/release checks. |
 
+## Stable task codes
+
+Every **top-level** checkbox item in the three active Cloud/Local AI task
+lists has one stable, globally unique code `DOMAIN-I##` (Issues),
+`DOMAIN-R##` (Rework/optimization), or `DOMAIN-F##` (New features).
+Keep existing identifiers and historic evidence unchanged. Assign a new,
+unused code on intake; merge duplicate reports into the existing coded
+item instead of creating another ID. Never renumber when reordering,
+changing priority, reopening, completing, owner-verifying or archiving.
+Keep severity markers such as `P0` as part of the original title,
+not as replacement identifiers. Existing nested `P1–P13` under
+`PERF-F01` and `R1–R10` under `BRAND-R01` are scoped substep
+labels (e.g. `PERF-F01/P1`); they are not unnumbered top-level tasks.
+Cross-reference tasks by their stable codes even if headings change.
+
 ## Every incoming request
 
 1. Read the latest instruction and current task lists before implementing.

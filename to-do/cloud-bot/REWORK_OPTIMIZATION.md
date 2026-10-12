@@ -28,7 +28,7 @@ qualification; no RAM/CPU/GPU percentage measured/claimed. Keep G0dc4d5ecfe118
 INCONCLUSIVE offline-only; do not replay lineage or reduce strict RGBA. Stop
 all work at exact five-hour1%; resume once09:32:29ICT after its reset3minutes.
 
-- [ ] **Abyss Panel motion stutter — received/updated 2026-10-10:**
+- [ ] **ABYSS-R09 — Abyss Panel motion stutter — received/updated 2026-10-10:**
   Specific owner Notification Edgebar-hover and Recording-start stutters have
   independent reproductions in [Issues](ISSUES.md); keep this broad
   presentation optimization separate from those correctness investigations.
@@ -549,7 +549,7 @@ all work at exact five-hour1%; resume once09:32:29ICT after its reset3minutes.
   **Lag still OPEN.**
 
 
-- [ ] **Strict-lossless CPU/RAM/GPU reductions:** re-audit latest `dev` and
+- [ ] **OPT-R01 — Strict-lossless CPU/RAM/GPU reductions:** re-audit latest `dev` and
   promote high-value findings only after behavior, read/dependency order,
   identity/NOTIFY and lifecycle parity. Keep hidden services/lightweight warm
   surfaces fast to reopen, with heavy unused work asleep. Prefer strict lossless
@@ -557,7 +557,7 @@ all work at exact five-hour1%; resume once09:32:29ICT after its reset3minutes.
   Measure comparable cold/warm/idle/active CPU, RSS, GPU/frames and latency;
   allocation or operation counts are not whole-shell resource percentages.
 
-- [ ] **Audio Spectrum processing:** investigate the Round 49 profile-factor
+- [ ] **AUDIO-R01 — Audio Spectrum processing:** investigate the Round 49 profile-factor
   reuse candidate. Source count/profile/stereo/clamped strength are frame-invariant
   until configuration or shape changes. A candidate is prepared only in
   [the stop checkpoint's unpromoted candidate](../../docs/evidence/abyss-product/20261010-hover-checkpoint/unpromoted/bar-cava-candidate.qml)
@@ -580,13 +580,13 @@ all work at exact five-hour1%; resume once09:32:29ICT after its reset3minutes.
   Both stage receipts preserve their scope and source hashes. Candidate remains
   UNPROMOTED; product and owner settings are unchanged.
 
-- [ ] **Remaining optimization candidates:** read the current audit tail,
+- [ ] **OPT-R02 — Remaining optimization candidates:** read the current audit tail,
   distinguish CONFIRMED/HIGH CONFIDENCE from hypotheses and retire duplicates.
   Recent Notepad normalization, Overview record lookup and shared Search prefix
   findings still require their native reactivity/identity and measurement gates.
   Preserve filter-before-map observable reads in existing Abyss reductions.
 
-- [ ] **Frozen visual qualification:** G0 `dc4d5ecfe118` remains
+- [ ] **VIS-R01 — Frozen visual qualification:** G0 `dc4d5ecfe118` remains
   `INCONCLUSIVE_CAPTURE_VARIANCE`. Analyze only saved receipt/PNG data offline;
   do not replay consumed lineage or lower strict RGBA. Do not change quality
   tiers on an unexplained translucent-pixel variance. Owner multi-output and
@@ -936,7 +936,7 @@ run privileged installation just because manual buttons are retired.
 
 ## Existing UI and layout
 
-- [ ] **Quickshell typography consistency — owner request 2026-10-10:**
+- [ ] **TYPE-R01 — Quickshell typography consistency — owner request 2026-10-10:**
   Standardize inconsistent text appearance across Quickshell: review font
   family/fallback, size, weight, text color, alignment, line height and theme
   roles. Reuse shared text tokens without removing intentional heading/body
@@ -944,7 +944,7 @@ run privileged installation just because manual buttons are retired.
   Settings and edit surfaces at varying scales and light/dark themes. State:
   READY for UI audit; owner visual acceptance pending.
 
-- [ ] **Compact Edit Abyss Layout control bar — owner request 2026-10-10:**
+- [ ] **ABYSS-R08 — Compact Edit Abyss Layout control bar — owner request 2026-10-10:**
   Redesign controls for BOTH horizontal and vertical edit orientations to
   occupy less room while preserving discoverable actions, module context,
   per-edge editing, Cancel/Undo/Done, input targets and narrow-screen access.
@@ -953,7 +953,7 @@ run privileged installation just because manual buttons are retired.
   [New features](NEW_FEATURES.md). State: READY for compact design; native
   input/layout and owner visual acceptance pending.
 
-- [x] **Wi-Fi and Bluetooth Popups about 35% smaller — owner request 2026-10-10:**
+- [x] **NET-R01 — Wi-Fi and Bluetooth Popups about 35% smaller — owner request 2026-10-10:**
   Reduce each Popup's displayed footprint by roughly 35% (target about 65%
   of previous width/height where viable). Preserve readable status/rows,
   usable hit targets, connection/discovery, loading/error/empty states and
@@ -969,7 +969,7 @@ run privileged installation just because manual buttons are retired.
   scrolling, long names, password/pairing, scales and owner signoff OPEN.
   **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts the compact Wi-Fi/Bluetooth Popup design delivered by the 260×330 source patch. This closes the owner-requested size/appearance rework. The previous line describing absent full local Wayland testing is historical and does not become a claimed native PASS; network connectivity/loading, other popup behavior, multi-edge/fractional scale and regression testing remain ordinary independent validation requirements.
 
-- [x] **Monitor Arrangement tiles about 30% smaller — owner request 2026-10-10:**
+- [x] **MON-R01 — Monitor Arrangement tiles about 30% smaller — owner request 2026-10-10:**
   Reduce UI monitor tiles by roughly 30% (about 70% of former displayed width/
   height), never real display resolution or compositor placement. Maintain
   correct aspect labels, selection/dragging, snapping, multi-monitor layouts,
@@ -991,7 +991,7 @@ run privileged installation just because manual buttons are retired.
   State: SOURCE PATCHED; owner screenshot, scale and multi-output acceptance OPEN.
   **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts the resized monitor tiles and removed blank space above/below the tab-indicator region from the two documented source commits. Close this size/spacing rework. Keep actual output placement unchanged; the earlier lack of exhaustive local drag/hotplug/multi-output testing remains an evidence limitation, not a newly asserted native PASS.
 
-- [ ] **Quick Notes Edgebar scrolling sensitivity — owner request 2026-10-10:**
+- [ ] **NOTES-R01 — Quick Notes Edgebar scrolling sensitivity — owner request 2026-10-10:**
   Tune wheel/touchpad scroll speed for predictable navigation, including
   Shift-held scrolling while performing bulk selection. Inspect modifier/event
   routing and nested scroll containers; preserve range selection, existing
@@ -1208,7 +1208,7 @@ run privileged installation just because manual buttons are retired.
   on the exact tested SHA. State: OPEN; diagnosis, implementation
   and native owner smoothness acceptance pending.
 
-- [ ] **Edit Dashboard toolbar slide — received/updated 2026-10-10:** pushed
+- [ ] **DASH-R04 — Edit Dashboard toolbar slide — received/updated 2026-10-10:** pushed
   `8c673129b58dbde73bf31c82df25c1085bf63e15` slides full-size connected controls
   from the attachment using the shared motion token. Input follows the clipped
   reveal; exit retains its footprint and releases input immediately. Native
@@ -1226,7 +1226,7 @@ run privileged installation just because manual buttons are retired.
   Earlier unfocused sampling FAIL is retained; owner palette/material,
   installed/multi-output and exact newer full-canonical gates remain OPEN.
 
-- [ ] **Abyss Waves:** verify round crest-only geometry, no trough erosion or
+- [ ] **ABYSS-R10 — Abyss Waves:** verify round crest-only geometry, no trough erosion or
   needle peaks, restrained breaker/whitewater, continuous distance attenuation,
   stable same/opposite-direction interaction and idle sleep. Preserve one shared
   wave-strength control/migration, optional/default-off waves and reduced motion.
@@ -1535,14 +1535,14 @@ run privileged installation just because manual buttons are retired.
   installed-owner perceived smoothness are still unverified; no FPS/resource
   improvement is claimed. Existing canonical FAIL/STOPPED gates remain factual.
 
-- [ ] **Screen Edge/module editor:** verify separate 0px-capable widths on all
+- [ ] **ABYSS-R11 — Screen Edge/module editor:** verify separate 0px-capable widths on all
   four edges, thickness-only versus inherited module sizing, per-module overrides,
   joined nearby modules when width does not affect them, nearest-corner joins
   and adjustable module curvature. Editor owns sizing with one-module partial/
   whole-edge choice, guides/snapping and saved per-output drafts. Dragging should
   not reload heavy content or persist the full config on each pointer event.
 
-- [ ] **Connected presentation:** finish owner appearance acceptance for Popup,
+- [ ] **ABYSS-R12 — Connected presentation:** finish owner appearance acceptance for Popup,
   Sidebar, Dock, Dashboard, Settings, OSK and IPC on every edge and scale. Keep
   anchored full-size reveal/retract, readable reflow and older-body slide-close
   when allocation cannot fit. Center Sidebars on physical left/right edges;
@@ -1550,7 +1550,7 @@ run privileged installation just because manual buttons are retired.
   Remove redundant tooltips, stray borders and repeated row fills while retaining
   intended enclosing-panel opacity/blur and click ripples.
 
-- [ ] **Settings refinement:** compact iOS-like parent/child navigation, Abyss
+- [ ] **SET-R05 — Settings refinement:** compact iOS-like parent/child navigation, Abyss
   before Waffle, no duplicate destinations/headings or generated More groups,
   one editor entry beside Lock, stable order/search/deep links and complete lazy
   pages. Keep meaningful slider units and avoid multiplying Dashboard opacity
@@ -1558,20 +1558,20 @@ run privileged installation just because manual buttons are retired.
   footprint. Waffle remains supported; historical ii/
   style values serve safe migration/content reuse, not a removed live theme.
 
-- [ ] **Dashboard Music presentation:** qualify horizontal page slide and
+- [ ] **DASH-R05 — Dashboard Music presentation:** qualify horizontal page slide and
   centered dots on the controls/uptime row; Genre/Folders tabs and multi-selection,
   folder drilldown and combined result column, shared Media/EQ DSP, bottom-anchored
   upward Queue expansion, Lyrics auto-hide and responsive remaining widths.
   Source/focused native tests already cover these behaviors; owner video/input
   acceptance is pending. Playback correctness is tracked only in Issues/bugs.
 
-- [ ] **Recording presentation:** `fafb4687b` connects one shared control set
+- [ ] **REC-R01 — Recording presentation:** `fafb4687b` connects one shared control set
   to the Abyss field/allocator/input mask while retaining ii/Waffle presentation.
   Native tests pass four-edge controls, drag, connection hover, auto-hide/recovery,
   Stop callback and idle/secondary-output allocation. Confirm owner appearance
   and an actual recording/stop. No owner recording was started/stopped in fixtures.
 
-- [ ] **Wallpaper picker polish, filename-only labels and live theme preview — owner update 2026-10-11:**
+- [ ] **WALL-R02 — Wallpaper picker polish, filename-only labels and live theme preview — owner update 2026-10-11:**
   [Owner: Alis dev; Rework] Qualify the connected thumbnail selector
   against the supplied reference, restrained search icon, borderless action
   buttons and Abyss-styled tooltips. Remove `>wallpaper`, `(grid)` and
@@ -1653,7 +1653,7 @@ run privileged installation just because manual buttons are retired.
 
 ## Product identity, CLI and upgrade compatibility
 
-- [ ] **Rebrand iNiR/Hadalis public surfaces to Alis — owner request 2026-10-11:**
+- [ ] **BRAND-R01 — Rebrand iNiR/Hadalis public surfaces to Alis — owner request 2026-10-11:**
   "Rebranch" here means a full **product rebrand**, not a Git branch-history
   rewrite. The future public shell should consistently show **Alis** from
   first installation to normal daily operation. Preserve historical sources,
@@ -1787,7 +1787,7 @@ test scripts and historical receipts remain in each source repository.
 
 ## Documentation maintenance
 
-- [x] **Categorized tasks and shared AI workflow — completed 2026-10-10:**
+- [x] **TASK-R01 — Categorized tasks and shared AI workflow — completed 2026-10-10:**
   three active lists replace chronological/duplicate ledgers; 26 superseded
   documents are archived with evidence/current research preserved. AGENTS and
   all current entry points apply the same policy to Local and Cloud AI: classify
