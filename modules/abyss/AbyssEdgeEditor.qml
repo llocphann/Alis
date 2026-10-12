@@ -728,7 +728,7 @@ Item {
                         onClicked:root.editingPopups=false
                     }
                     SelectionGroupButton {
-                        buttonIcon:"open_in_new";buttonText:"Popups / IPC";toggled:root.editingPopups
+                        buttonIcon:"open_in_new";buttonText:"IPC";toggled:root.editingPopups
                         onClicked:root.editingPopups=true
                     }
                     Item { Layout.fillWidth:true }
@@ -750,7 +750,7 @@ Item {
                 AbyssLabel {
                     visible: !root.toolbarOnHorizontalEdge
                     text: root.editingPopups
-                        ? "Popup / IPC placement" : "Module placement"
+                        ? "IPC placement" : "Module placement"
                     font.bold: true
                     color: Appearance.m3colors.darkmode ? AbyssStyle.textColorMuted : "#1a1a1a"
                     Layout.fillWidth: true
@@ -767,9 +767,9 @@ Item {
                     outputSelectionEnabled:false
                     outputName:root.outputOnly ? root.outputName : ""
                     nearbyEdge:root.previewNearbyCorner
-                    allowedKinds:["clock","resources","battery","media","weather","wifi","utilities","launcher",
-                        "quickNotes","notificationCenter","notifications",
-                        "volume","brightness","mic","mediaOsd","keyboardLayout"]
+                    // Popups follow their owning Screen Edge modules; only IPC/OSD
+                    // indicators have independent positions in this editor.
+                    allowedKinds:["osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch"]
                     onPositionsEdited:(positions,kind,outputName,values)=>
                         root.editPosition(positions,kind,outputName,values)
                 }
@@ -1095,10 +1095,10 @@ Item {
                 AbyssLabel {
                     text:root.toolbarOnHorizontalEdge
                         ? (root.editingPopups
-                            ? "Drag preview · Enter save · Esc cancel"
+                            ? "Drag IPC preview · Enter save · Esc cancel"
                             : "Click single · Ctrl-click toggle · Shift-click range · Ctrl+A all · Drag selected group · Enter save · Esc cancel")
                         : (root.editingPopups
-                            ? "Drag · Enter save · Esc cancel"
+                            ? "Drag IPC · Enter save · Esc cancel"
                             : "Click / Ctrl / Shift select · Drag group · Enter save · Esc cancel")
                     color: Appearance.m3colors.darkmode
                         ? AbyssStyle.textColorMuted : "#1a1a1a"
