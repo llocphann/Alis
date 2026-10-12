@@ -94,7 +94,7 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "palette"
         title: Translation.tr("Themes")
-        description: Translation.tr("Tune Material colors first; typography, motion and expert theme tooling stay in their own focused views.")
+        description: Translation.tr("Material colors, typography, motion and advanced themes.")
         summary: Translation.tr("Colors · typography · motion · advanced")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
@@ -677,7 +677,7 @@ ContentPage {
                 checked: Config.options?.appearance?.colorInvert ?? false
                 onCheckedChanged: Config.setNestedValue("appearance.colorInvert", checked)
                 StyledToolTip {
-                    text: Translation.tr("Rotate every color 180° on the color wheel, producing the complementary palette. Shell-only: terminals, GTK and other external apps keep their original colors.")
+                    text: Translation.tr("Use complementary shell colors; external apps retain their colors.")
                 }
             }
         }
@@ -732,7 +732,7 @@ ContentPage {
                 checked: Config.options?.appearance?.wallpaperTheming?.autoDarkLightMode ?? false
                 onCheckedChanged: Config.setNestedValue("appearance.wallpaperTheming.autoDarkLightMode", checked)
                 StyledToolTip {
-                    text: Translation.tr("Pick the light or dark scheme from each wallpaper's brightness so text stays readable. Applies on every wallpaper change, overriding the manual dark-mode toggle.")
+                    text: Translation.tr("Choose light/dark from wallpaper brightness; overrides manual mode on wallpaper change.")
                 }
             }
         }
