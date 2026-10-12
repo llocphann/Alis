@@ -144,6 +144,21 @@ ShellRoot {
       check(inScroll(edgeColumn).y>=inScroll(moduleColumn).y+moduleColumn.height-1,
           "stacked edge controls should follow module controls")
      }
+     // Related Module/Edge controls must share the same physical toolbar row.
+     const sameRow=(a,b,label)=>check(
+       Math.abs(inScroll(control(a)).y-inScroll(control(b)).y)<1.5,
+       label+" controls should occupy one row")
+     sameRow("abyssModuleDropdown","abyssModulePositionLock","Module header")
+     sameRow("abyssModuleDropdown","abyssModuleJoinCorner","Module corner")
+     sameRow("abyssEditingEdgeDropdown","abyssJoinNearbyModules","Edge header")
+     sameRow("abyssModuleRoundingAction","abyssModuleRounding","Rounding")
+     const round0=control("abyssRoundZeroCorners")
+     check(round0.checkable && round0.width<=editor.editorActionSize+.6,
+           "Round at 0px should be an icon toggle")
+     check(control("abyssModuleRoundingAction").checkable,
+           "Inherited module rounding should be a toggle")
+     check(!editor.toolbarOnHorizontalEdge || body.span<=660*scale+.6,
+           "Horizontal Edit Abyss Layout width was not reduced")
      const layout={span:body.span,depth:body.depth,area:body.span*body.depth,height:scroll.contentHeight}
      frame(n===0||n===2?"layout-"+n+"-"+edge:null)
      click("abyssModulePositionLock");check(editor.allTargetsLocked,"quick lock did not apply")
