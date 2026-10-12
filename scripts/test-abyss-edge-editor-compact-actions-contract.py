@@ -121,12 +121,12 @@ assert 'rightPadding:editorCompact ? 46*Appearance.fontSizeScale : 52' in (root 
 assert 'objectName:"abyssEditorFineControls"' in editor
 assert 'objectName:"abyssEditorSelectedFields"' in editor
 assert 'columns:root.toolbarOnHorizontalEdge' in editor
-assert '&& width>=650*Appearance.fontSizeScale ? 3 : 1' in editor
+assert '&& width>=570*Appearance.fontSizeScale ? 3 : 1' in editor
 assert 'id:moduleEditorColumn' in editor and 'id:edgeEditorColumn' in editor
 assert 'objectName:"abyssEditorColumnDivider"' in editor
 assert 'columns:1' in editor[editor.index('id:selectedModuleControls'):]
 assert editor.count('text:"This output only"') == 1
-assert '750*Appearance.fontSizeScale' in editor
+assert '660*Appearance.fontSizeScale' in editor
 assert 'Ctrl/Shift-click select · Drag' not in editor
 
 # Every Editor button has a bounded square hit rectangle, even in fill rows.
