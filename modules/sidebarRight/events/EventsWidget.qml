@@ -241,7 +241,11 @@ Item {
                             event:modelData
                             isExternal:(modelData?._source ?? "local")==="external"
                             onRemoveClicked: {
-                                if (!isExternal) Events.removeEvent(modelData.id)
+                                if (!isExternal) {
+                                    const source = modelData._canonicalEvent ?? modelData
+                                    Events.removeOccurrence(modelData.id,
+                                        source._editOccurrenceIndex ?? 0)
+                                }
                             }
                             onEditClicked: evt => {
                                 if (!isExternal) root.openInlineEditor(
