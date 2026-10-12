@@ -6,14 +6,17 @@ Other work remains actionable when no selected feature can advance.
 [The canonical audit](../../docs/optimization/STRICT_LOSSLESS_GPU_RAM_CPU_AUDIT.md)
 holds technical research; this file holds pending outcomes.
 
-**Immediate owner scope — 2026-10-12:** finish the current Dashboard
-control/layout qualification milestone, then complete **ABYSS-R05 →
-ABYSS-R03 + ABYSS-R01 → ABYSS-R02 → ABYSS-R06 + ABYSS-R07**.
-This explicit sequence supersedes the general feature-first queue for this run.
-Handle only prerequisite/related defects alongside these groups, preserve
-cowork edits and owner settings, and **stop after these requested groups**.
-Do not continue Planner refinements or the rest of the backlog after delivery.
-Keep exact-source tests and Owner chưa verified separate under the shared rule.
+**Latest owner scope — 2026-10-12:** finish qualification of the current
+Dashboard and delivered **R05 → R03/R01 → R02 → R06/R07** group, then
+continue **POP-I01 → DASH-F01 → ABYSS-R08 → ABYSS-F02 → NOTES-R01 →
+ABYSS-R09 → CAL-R01 → NOTES-F01 → DASH-R03**. The owner explicitly
+revoked the previous stop-after-Abyss instruction: **do not stop after that
+group**. Handle their related prerequisites in the same single-agent context;
+preserve cowork edits, owner preferences and independent verification gates.
+ABYSS-F02 is reopened for modifier-based selection: **Ctrl + click / Shift +
+click**, without a toolbar mode toggle. Coordinate that correction with R08.
+Only exact five-hour remaining below 3% triggers the existing quota checkpoint
+and one reset+3minute continuation policy; weekly limits never trigger it.
 
 ## Resource use and responsiveness
 

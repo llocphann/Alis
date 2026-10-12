@@ -1,5 +1,13 @@
 # Issues/bugs
 
+**Latest explicit owner sequence — 2026-10-12:** after current Abyss
+qualification, investigate **POP-I01 first**, followed by DASH-F01 →
+ABYSS-R08 → ABYSS-F02 → NOTES-R01 → ABYSS-R09 → CAL-R01 → NOTES-F01 →
+DASH-R03. Continue without the former stop-after-Abyss rule; handle related
+repairs alongside each named item. Preserve rejected hover experiments and
+native/owner evidence gates; do not repeat their source-only claims.
+
+
 Consolidated on 2026-10-10 from the [former task ledgers](../../docs/archive/chatbot/2026-10-10/README.md).
 Open items include remaining acceptance of source fixes; they do not all mean
 that implementation is missing. Refetch current `dev` before diagnosing.

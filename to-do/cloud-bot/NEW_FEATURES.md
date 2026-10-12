@@ -6,11 +6,13 @@ handled alongside the selected feature in the same single-agent context.
 Source-implemented features below still need their stated delivery/owner gates;
 do not reimplement them solely because a checkbox is open.
 
-**Latest explicit owner priority — 2026-10-12:** after the current Dashboard
-milestone, execute the named [Abyss rework sequence](REWORK_OPTIMIZATION.md):
-R05 → R03/R01 → R02 → R06/R07, then stop. These named groups take precedence
-for this run. Weekly Planner's new inline Events refinement remains unfinished
-and is deferred by this explicit priority; do not check its parent as complete.
+**Latest explicit owner priority — 2026-10-12:** finish the current Abyss
+qualification, then **POP-I01 → DASH-F01 → ABYSS-R08 → ABYSS-F02 →
+NOTES-R01 → ABYSS-R09 → CAL-R01 → NOTES-F01 → DASH-R03**, continuing
+without the former stop-after-group rule. Their category identities remain
+separate; this explicit sequence overrides the general feature-first queue.
+ABYSS-F02 now requires **Ctrl/Shift + click only**, with no toolbar mode toggle;
+its prior toggle-based milestone stays historical and the refinement is OPEN.
 
 **Immediate owner priority — updated 2026-10-12:** qualify completed feature source milestones after
 DASH-F01/F02 source milestones. Weekly Planner `f62f24361`, tab reorder
@@ -240,9 +242,16 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   Continue Screen Edge multi-selection with explicit locked-batch guards.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [x] **ABYSS-F02 — Edit Abyss Layout Screen Edge module multi-selection — owner request 2026-10-10:**
-  Add an explicit multiple-selection mode for Screen Edge modules while
-  **Edit Abyss Layout** is active. Show which modules are selected, support
+- [ ] **ABYSS-F02 — Edit Abyss Layout Screen Edge module multi-selection — owner request 2026-10-10:**
+  Support modifier-based multiple selection for Screen Edge modules while
+  **Edit Abyss Layout** is active.
+  **Owner correction 2026-10-12 — OPEN follow-up:** remove the toolbar
+  selection-mode toggle. Normal click selects a module; Ctrl + click and
+  Shift + click build/toggle coherent multiple selections. Keep accessible
+  keyboard selection, batch/drag guards, visual selection and Undo/Cancel/Save;
+  transient selection must not persist as a setting. Prior implementation
+  and evidence below are retained, not proof this new interaction is delivered.
+  Show which modules are selected, support
   add/remove/clear selection and coherent subsequent edits when several targets
   are selected. Keep normal non-edit behavior intact; define guarded batch
   actions instead of silently changing unrelated modules. Test horizontal and
