@@ -4,7 +4,6 @@ import qs.modules.common
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import "AgendaTodoPolicy.js" as AgendaTodoPolicy
 import "EventOccurrences.js" as Occurrences
 import "EventRepeatPolicy.js" as RepeatPolicy
 
@@ -40,20 +39,8 @@ Singleton {
     function getDurableEvents() {
         return root._durableSnapshotJson.length ? JSON.parse(root._durableSnapshotJson).events : []
     }
-    function getDurableTodoUnlinks() {
-        return root._durableSnapshotJson.length ? (JSON.parse(root._durableSnapshotJson).todoUnlinks || []) : []
-    }
-    // Legacy link metadata and pending operations are retained on disk
-    // verbatim for backward compatibility. Agenda edits/deletions never
-    // create new Todo operations and never modify independent tasks.
-    function _queueTodoUnlink(event,deleteTask) {}
-    function finishTodoUnlink(key,provider) {
-        const next=root.todoUnlinks.filter(value=>value.key!==key || value.provider!==provider)
-        if(next.length===root.todoUnlinks.length)return false
-        root.todoUnlinks=next;root.saveToFile();return true
-    }
-    // Retired automatic Agenda → Todo synchronization.
-    function _notifyAgendaLinks() {}
+    // Historical todoUnlinks and per-event todoLink are read and serialized
+    // unchanged. No Agenda mutation is forwarded to the Todo backend.
 
     function _reloadFailedWriteCache(): void {
         if (root._reloadAfterSaveFailure)
@@ -79,7 +66,6 @@ Singleton {
         root._saveFailed=false
         root.errorMessage=""
         root.eventsPersisted(root.getDurableEvents())
-        root._notifyAgendaLinks()
         if (saveAgain) {
             root._saveQueued=true
             Qt.callLater(root.saveToFile)
@@ -189,7 +175,6 @@ Singleton {
                 })
                 root.errorMessage=""
                 root.ready=true
-                root._notifyAgendaLinks()
                 _log("[Events] Loaded",root.list.length,"events")
             } catch (e) {
                 console.warn("[Events] Failed to parse file:", e)
@@ -469,7 +454,7 @@ Singleton {
             recurrence: recurrence || "none", // none, daily, weekly, monthly, yearly
             notified: false,
             reminderNotified: false,
-            createdAt: new Date().toISOString(),
+            createdAt: new Date().toISOString()
             // Independent Agenda: no generated Todo link or task
         }
         
@@ -595,7 +580,6 @@ Singleton {
         if (!root.ready) return false
         const index = root.list.findIndex(e => e.id === id)
         if (index !== -1) {
-            root._queueTodoUnlink(root.list[index])
             root.list.splice(index, 1)
             root.list = root.list.slice(0)
             root.eventRemoved(id)
@@ -603,20 +587,6 @@ Singleton {
             return true
         }
         return false
-    }
-
-    function setTodoLink(id, key, patch) {
-        const event = root.list.find(value => value.id === id)
-        if (!event || !AgendaTodoPolicy.validLink(event.todoLink) || event.todoLink.key !== key)
-            return false
-        return root.updateEvent(id, {todoLink: Object.assign({}, event.todoLink, patch)})
-    }
-
-    function unlinkTodo(id,deleteTask) {
-        const event = root.list.find(value => value.id === id)
-        root._queueTodoUnlink(event,deleteTask)
-        return event && AgendaTodoPolicy.validLink(event.todoLink)
-            ? root.setTodoLink(id, event.todoLink.key, {state:"detached"}) : false
     }
 
     function updateEvent(id, updates) {
