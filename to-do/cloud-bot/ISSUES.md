@@ -1822,6 +1822,17 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   gestures; CI includes this bounded suite. This is a source-level
   correctness fix, not a demonstrated explanation of owner popup lag.
   Native Quickshell/Niri gesture, focus, and owner acceptance remain OPEN.
+  **Cloud source repair 2026-10-12 — arbitrary application names:** the
+  notification grouping and latest-time caches used plain object maps,
+  which inherited JS keys including `constructor`, `toString`, and
+  `__proto__`. Source execution reproduced `TypeError` grouping a
+  notification whose appName matched any of these, independently of the
+  owner's reported performance complaints. Both appName-keyed maps now
+  use `Object.create(null)`, retaining the same grouping, urgency, and
+  ordering semantics for normal names while handling special keys safely.
+  Focused source-executed tests exercise the production group, cache
+  update and repeat refresh with these names. This is NOT evidence for
+  popup-jank root cause; native tests/owner acceptance stay OPEN.
 
 - [ ] **HELPER-I01 — Hadalird helper/package state and Polkit focus:** extraction is
   source/package-qualified; owner reported helper status ready. Verify compact

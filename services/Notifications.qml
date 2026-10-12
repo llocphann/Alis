@@ -257,7 +257,7 @@ Singleton {
         root.popupList = root.list.filter((notif) => notif.popup)
 
         // Update latest time for each app
-        const newLatestTime = {}
+        const newLatestTime = Object.create(null)
         root.list.forEach((notif) => {
             if (!newLatestTime[notif.appName] || notif.time > newLatestTime[notif.appName]) {
                 newLatestTime[notif.appName] = notif.time
@@ -273,7 +273,11 @@ Singleton {
     }
 
     function _groupsForListOptimized(list) {
-        const groups = {}
+        // DBus appName is an untrusted free-form string. Plain object maps
+        // inherit constructor/toString/__proto__, causing an invalid group
+        // lookup and TypeError when a legitimate app uses one of those names.
+        // Null-prototype maps retain the existing dictionary API and sorting.
+        const groups = Object.create(null)
         for (let i = 0; i < list.length; i++) {
             const notif = list[i]
             const appName = notif.appName
