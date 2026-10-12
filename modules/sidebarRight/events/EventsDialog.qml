@@ -16,6 +16,43 @@ WindowDialog {
     // The roomy Dashboard Weekly Planner uses the same embedded dialog
     // lifecycle as Calendar, but owns an intentionally expanded form layout.
     property bool plannerPresentation: false
+    property date plannerViewMonth: new Date()
+    property int plannerCalendarRevision: 0
+    readonly property var plannerCalendarCells: {
+        if (!root.plannerPresentation) return []
+        root.plannerCalendarRevision
+        const year=root.plannerViewMonth.getFullYear()
+        const month=root.plannerViewMonth.getMonth()
+        const first=new Date(year,month,1)
+        const offset=(first.getDay()+6)%7
+        const start=new Date(year,month,1-offset)
+        const cells=[]
+        for (let i=0;i<42;i++) {
+            const date=new Date(start)
+            date.setDate(start.getDate()+i)
+            const local=Events.getAllEventsForDate(date)
+            const external=CalendarSync.getEventsForDate(date) || []
+            cells.push({date:date,day:date.getDate(),
+                currentMonth:date.getMonth()===month && date.getFullYear()===year,
+                today:date.toDateString()===DateTime.clock.date.toDateString(),
+                eventCount:local.length+external.length,
+                eventColors:local.map(()=>Appearance.colors.colPrimary)
+                    .concat(external.map(e=>e.sourceColor || Appearance.colors.colPrimary))})
+        }
+        return cells
+    }
+    onEventDateChanged: if (plannerPresentation && !isNaN(eventDate.getTime()))
+        plannerViewMonth=new Date(eventDate.getFullYear(),eventDate.getMonth(),1)
+    Connections {
+        target: Events
+        function onEventAdded(event) {root.plannerCalendarRevision++}
+        function onEventUpdated(event) {root.plannerCalendarRevision++}
+        function onEventRemoved(id) {root.plannerCalendarRevision++}
+    }
+    Connections {
+        target: CalendarSync
+        function onEventsUpdated() {root.plannerCalendarRevision++}
+    }
     readonly property bool compactEditor: embeddedPresentation && !plannerPresentation
     contentSpacing: root.plannerPresentation ? 12
         : (root.compactEditor ? 4 : 16)
@@ -339,6 +376,7 @@ WindowDialog {
 
     WindowDialogTitle {
         Layout.leftMargin: root.plannerPresentation ? 12 : (root.compactEditor ? 6 : 0)
+        Layout.topMargin: root.plannerPresentation ? 10 : 0
         Layout.rightMargin: root.plannerPresentation ? 12 : (root.compactEditor ? 6 : 0)
         text: root.isEditing
             ? Translation.tr("Edit Event")
@@ -385,7 +423,7 @@ WindowDialog {
 
         ScrollBar.vertical: ScrollBar {
             // Hiding the indicator does not disable wheel, touch or keyboard scroll.
-            policy: root.hideEmbeddedScrollBar
+            policy: root.hideEmbeddedScrollBar || root.plannerPresentation
                 ? ScrollBar.AlwaysOff : ScrollBar.AsNeeded
         }
 
@@ -460,11 +498,37 @@ WindowDialog {
                 // Embedded Calendar already owns the date grid above this sheet.
                 // Modal owners keep the self-contained picker.
                 DatePicker {
-                    visible: !root.compactEditor
+                    visible: !root.embeddedPresentation
                     width: parent.width
                     compact: false
                     selectedDate: root.eventDate
                     onDateSelected: (date) => { root.eventDate = date }
+                }
+
+                // Exact shared visual component from Calendar Popup.
+                ObsidianMonthCalendar {
+                    id: plannerMonthCalendar
+                    visible: root.plannerPresentation
+                    width: parent.width
+                    viewingDate: root.plannerViewMonth
+                    today: DateTime.clock.date
+                    calendarCells: root.plannerCalendarCells
+                    selectedDate: root.eventDate
+                    interactiveDays: true
+                    showEventDots: true
+                    countedEventDots: true
+                    maxEventDots: Math.max(0,Math.min(5,
+                        Number(Config.options?.calendar?.maxEventDots ?? 3)))
+                    onPreviousMonthRequested: {
+                        root.plannerViewMonth=new Date(root.plannerViewMonth.getFullYear(),
+                            root.plannerViewMonth.getMonth()-1,1)
+                    }
+                    onNextMonthRequested: {
+                        root.plannerViewMonth=new Date(root.plannerViewMonth.getFullYear(),
+                            root.plannerViewMonth.getMonth()+1,1)
+                    }
+                    onTodayRequested: root.eventDate=new Date(DateTime.clock.date)
+                    onDayActivated: date=>root.eventDate=date
                 }
 
                 RowLayout {
@@ -503,55 +567,88 @@ WindowDialog {
                 }
 
                 RowLayout {
-                    visible: !root.compactEditor
-                    width: parent.width - 8
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 8
-
-                    MaterialSymbol {
-                        text: "event_available"
-                        iconSize: 16
-                        color: Appearance.colors.colOnSurfaceVariant
-                    }
+                    visible: root.plannerPresentation
+                    width: parent.width
+                    spacing: 6
 
                     StyledText {
-                        Layout.fillWidth: true
                         text: Translation.tr("All day")
                         color: Appearance.colors.colOnSurface
                         font.pixelSize: Appearance.font.pixelSize.small
                     }
-
                     StyledSwitch {
-                        scale: 0.58
+                        Layout.preferredWidth: 34
+                        scale: .58
                         checked: root.allDay
-                        onToggled: root.allDay = checked
+                        onToggled: root.allDay=checked
+                    }
+                    Item {Layout.preferredWidth: 4}
+                    ConfigTimeInput {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 74
+                        enabled: !root.allDay
+                        compact: true
+                        icon: ""
+                        text: Translation.tr("Start")
+                        value: root.eventTime
+                        onTimeChanged: newTime=>root.eventTime=newTime
+                    }
+                    ConfigTimeInput {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 74
+                        enabled: !root.allDay
+                        compact: true
+                        icon: ""
+                        text: Translation.tr("End")
+                        value: root.eventEndTime
+                        onTimeChanged: newTime=>root.eventEndTime=newTime
                     }
                 }
 
                 RowLayout {
-                    visible: !root.allDay
-                    width: parent.width - (root.compactEditor ? 8 : 0)
+                    visible: !root.embeddedPresentation
+                    width: parent.width - 8
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: root.compactEditor ? 6 : 8
-
-                    ConfigTimeInput {
-                        Layout.fillWidth: true
-                        compact: root.compactEditor
-                        icon: "schedule"
-                        text: Translation.tr("Start")
-                        value: root.eventTime
-                        onTimeChanged: (newTime) => { root.eventTime = newTime }
+                    spacing: 8
+                    MaterialSymbol {
+                        text:"event_available"
+                        iconSize:16
+                        color:Appearance.colors.colOnSurfaceVariant
                     }
-
+                    StyledText {
+                        Layout.fillWidth:true
+                        text:Translation.tr("All day")
+                        color:Appearance.colors.colOnSurface
+                        font.pixelSize:Appearance.font.pixelSize.small
+                    }
+                    StyledSwitch {
+                        scale:.58
+                        checked:root.allDay
+                        onToggled:root.allDay=checked
+                    }
+                }
+                RowLayout {
+                    visible: !root.embeddedPresentation || root.compactEditor
+                    width: parent.width-(root.compactEditor ? 8 : 0)
+                    anchors.horizontalCenter:parent.horizontalCenter
+                    spacing:root.compactEditor ? 6 : 8
                     ConfigTimeInput {
-                        Layout.fillWidth: true
-                        compact: root.compactEditor
-                        icon: "schedule"
-                        text: Translation.tr("End")
-                        value: root.eventEndTime
-                        onTimeChanged: (newTime) => {
-                            root.eventEndTime = newTime
-                        }
+                        Layout.fillWidth:true
+                        visible:!root.allDay
+                        compact:root.compactEditor
+                        icon:"schedule"
+                        text:Translation.tr("Start")
+                        value:root.eventTime
+                        onTimeChanged:newTime=>root.eventTime=newTime
+                    }
+                    ConfigTimeInput {
+                        Layout.fillWidth:true
+                        visible:!root.allDay
+                        compact:root.compactEditor
+                        icon:"schedule"
+                        text:Translation.tr("End")
+                        value:root.eventEndTime
+                        onTimeChanged:newTime=>root.eventEndTime=newTime
                     }
                 }
             }
@@ -648,6 +745,7 @@ WindowDialog {
                     rightMargin: 8
                 }
                 enableSettingsSearch: false
+                activeLabelOnly: root.plannerPresentation
                 options: [
                     // "Event" maps to the existing one-time/non-recurring
                     // storage value instead of inventing an incompatible mode.
@@ -682,6 +780,7 @@ WindowDialog {
                     rightMargin: 8
                 }
                 enableSettingsSearch: false
+                activeLabelOnly: root.plannerPresentation
                 options: [
                     { displayName: Translation.tr("General"), icon: "event", value: "general" },
                     { displayName: Translation.tr("Birthday"), icon: "cake", value: "birthday" },
@@ -714,6 +813,7 @@ WindowDialog {
                     rightMargin: 8
                 }
                 enableSettingsSearch: false
+                activeLabelOnly: root.plannerPresentation
                 options: [
                     { displayName: Translation.tr("Low"), icon: "arrow_downward", value: "low" },
                     { displayName: Translation.tr("Normal"), icon: "remove", value: "normal" },
@@ -744,6 +844,7 @@ WindowDialog {
                     rightMargin: 8
                 }
                 enableSettingsSearch: false
+                activeLabelOnly: root.plannerPresentation
                 options: [
                     { displayName: Translation.tr("None"), icon: "notifications_off", value: 0 },
                     { displayName: Translation.tr("5 min"), icon: "alarm", value: 5 },
@@ -775,7 +876,7 @@ WindowDialog {
         Layout.bottomMargin: root.compactEditor ? 2 : 0
 
         DialogButton {
-            visible: root.isEditing && !root.embeddedPresentation
+            visible: root.isEditing && !root.compactEditor
             enabled: Events.ready
             padding: 14
             implicitHeight: 36
