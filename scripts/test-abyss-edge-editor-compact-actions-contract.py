@@ -77,7 +77,12 @@ assert 'anchors.centerIn: parent' in button
 assert 'property bool editorSquare: false' in button
 assert 'root.editorSquare && root.iconOnly' in button
 assert 'component EditorIconHint: Item' in editor
-assert len(re.findall(r'EditorIconHint\s*\{', editor)) == 5
+assert len(re.findall(r'EditorIconHint\s*\{', editor)) == 4
+assert 'objectName:"abyssEditingEdgeDropdown"' in editor
+assert 'objectName:"abyssModuleDropdown"' in editor
+# Dropdowns are their column headers and must not have a leading glyph.
+edge_column=editor[editor.index('id:edgeEditorColumn'):]
+assert edge_column.index('id:edgeChoice') < edge_column.index('EditorIconHint {')
 assert editor.count('AbyssSlider {') == 6
 assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 6
 # Qt rejects two assignments to the same attached property in one QML item.
@@ -108,7 +113,7 @@ assert 'Layout.preferredWidth:58*Appearance.fontSizeScale' in editor
 assert 'readonly property real editorActionSize: 30 * Appearance.fontSizeScale' in editor
 assert 'readonly property real editorSliderWidth: 158 * Appearance.fontSizeScale' in editor
 assert editor.count('editorCompact:true') == 6
-assert editor.count('Layout.preferredWidth:20*Appearance.fontSizeScale') == 5
+assert editor.count('Layout.preferredWidth:20*Appearance.fontSizeScale') == 4
 assert editor.count('spacing:2') >= 10
 assert 'root.editorSquare ? 17 * Appearance.fontSizeScale' in button
 assert 'objectName:"abyssButtonCenteredGlyph"' in button
@@ -136,7 +141,7 @@ for name,action in [('abyssModuleCustomSizeToggle','customSize'),('abyssModuleJo
 assert 'id:selection' not in editor and 'selectionRegion' not in editor
 
 
-# The editor's fine-controls grid keeps nine stable slots in all states.
+# Both editor columns preserve their control IDs and reactive state.
 # Scale modules and Join nearby modules are icon-only with hover help;
 # the controls do not disappear or reflow on the per-Edge scaling toggle.
 for name in ["abyssScaleModulesToggle","abyssScaleModulesSlider","abyssJoinNearbyModules","abyssModuleRounding"]:
