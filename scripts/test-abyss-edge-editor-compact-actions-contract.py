@@ -67,7 +67,7 @@ print("abyss editor compact action density contract: ok")
 button = (root / "modules/abyss/looks/AbyssButton.qml").read_text()
 assert button.count('visible: root.compact || root.text.length === 0') == 2
 assert 'component EditorIconHint: Item' in editor
-assert len(re.findall(r'EditorIconHint\\s*\\{', editor)) == 6
+assert len(re.findall(r'EditorIconHint\s*\{', editor)) == 6
 assert editor.count('AbyssSlider {') == 6
 assert 'objectName:"abyssEditorFineControls"' in editor
 assert 'objectName:"abyssEditorSelectedFields"' in editor

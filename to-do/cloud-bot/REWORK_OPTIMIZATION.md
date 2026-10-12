@@ -1113,7 +1113,7 @@ run privileged installation just because manual buttons are retired.
   conditions, and grouped selection lock/visibility/remove controls.
   Place output-only beside Modules/IPC, remove side headings/separators;
   retain all draft operations, per-Edge semantics, IPC, scroll and tooltips.
-  Source patch proposed on dev; native four-Edge, fractional scaling and
+  Source commit `b13e4a7dd` on dev; native four-Edge, fractional scaling and
   owner visual sign-off remain independent gates.
 
 - [x] **NET-R01 — Wi-Fi and Bluetooth Popups about 35% smaller — owner request 2026-10-10:**
