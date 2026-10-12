@@ -1229,6 +1229,18 @@ run privileged installation just because manual buttons are retired.
   cannot run that fixture, so it is **NOT RUN**. Await owner Niri
   screenshots, light/dark and fractional/multi-output/long-date checks.
   Task remains OPEN; no native or owner approval is implied.
+  **Owner correction 2026-10-12 (two screenshots, supersedes Weather-palette
+  target above):** date headings, sticky corner and All-day band must show
+  the **same background as the time grid below**, not a separate opaque
+  Weather-themed card. The timeline itself uses transparent day cells over
+  the Dashboard. Source `0c712d629` therefore sets `headerSurface` to
+  transparent, makes the heading ink follow the timeline ink, and retains
+  day/today/hover highlights, dividers and seven-column positioning.
+  Private Niri fixture has a new alpha=0 and shared-ink assertion at
+  `bb03f6097`; it is **not run yet** on the committed source.
+  Responsive/theme/contrast and owner installed screenshots remain OPEN;
+  do not claim native or visual acceptance.
+
 
 - [ ] **DASH-R02 — Horizontal-only Dashboard gesture page navigation — owner request 2026-10-11:**
   [Owner: Alis dev; Rework/UX] **Only horizontal left/right swipe
