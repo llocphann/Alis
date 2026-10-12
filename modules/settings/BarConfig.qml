@@ -85,7 +85,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("These settings apply to the Classic Material panel family. Waffle keeps its own taskbar settings.")
+                text: Translation.tr("Classic Material settings; Waffle has separate taskbar controls.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -250,7 +250,7 @@ ContentPage {
 
             SettingsNote {
                 icon: "info"
-                text: Translation.tr("These shadow controls apply to the Screen Edge, Bar popups, Dock, Sidebar and Dashboard. The screen edge stays visible on the desktop and maximized windows; true fullscreen and lock screen hide it.")
+                text: Translation.tr("Shared shadow for Edge, popups, Dock, Sidebar and Dashboard; hidden in fullscreen/lock.")
             }
         }
     }
@@ -651,7 +651,7 @@ ContentPage {
             SettingsNote {
                 visible: !root.abyssContent
                 icon: root.isVertical ? "view_column" : "view_stream"
-                text: Translation.tr("Top/Bottom and Left/Right keep separate module layouts; module visibility remains shared.")
+                text: Translation.tr("Horizontal and vertical module layouts are separate; visibility is shared.")
             }
 
             ContentSubsection {
