@@ -224,7 +224,9 @@ Flow {
             highContrastSelection: root.highContrastSelection
             useAbyssPillShape: root.useAbyssPillShape
             abyssTaskNavigation: root.taskNavigation && Config.options?.panelFamily === "abyss"
-            enabled: !root.taskNavigation || modelData?.enabled !== false
+            // This opt-in flag also applies to ordinary (non-task) selectors.
+            // Disabled delegates reject pointer and keyboard interaction.
+            enabled: modelData?.enabled !== false
             // Five buttons fit one row even at narrow Planner panel widths.
             // Reserve fixed icon-only slots before allocating selected text.
             horizontalPadding: root.wrapFullLabels
@@ -265,10 +267,11 @@ Flow {
                 event.accepted = root.taskNavigation
                 if (event.accepted) paletteButton.clicked()
             }
-            opacity: modelData?.dimmed === true ? 0.45 : 1
+            opacity: modelData?.dimmed === true || !paletteButton.enabled
+                ? 0.42 : 1
             toggled: (root.currentValue != null && root.currentValue == modelData.value) ?? false
             onClicked: {
-                root.selected(modelData.value);
+                if (paletteButton.enabled) root.selected(modelData.value)
             }
         }
     }

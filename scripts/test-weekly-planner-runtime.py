@@ -146,12 +146,39 @@ Window {
        && inline.plannerSelectedDateKeys.includes("2025-01-04"),
      "Shift+Click failed to select the inclusive range")
    check(inline.hasUnsavedChanges(),"multi-day selection did not mark form dirty")
-   inline.recurrence="weekly"
-   check(inline.plannerSelectedCount===1,
-     "Repeat Weekly must collapse explicit date selection")
-   inline.choosePlannerDay(new Date(2025,0,7,12),Qt.ControlModifier)
+   const preservedDays=JSON.stringify(inline.plannerSelectedDateKeys)
+   check(inline.plannerRepeatConflict && !inline.canSelectRepeat("weekly")
+     && inline.canSelectRepeat("none"),
+     "multi-date must keep Event enabled but disable recurring choices")
+   const repeatChoices=find(inline,"plannerRepeatChoices")
+   check(!!repeatChoices,"Planner Repeat selector missing")
+   const choices=repeatChoices.children.filter(item=>item?.modelData?.value !== undefined)
+   check(choices.length===5 && choices[0].enabled
+     && choices.slice(1).every(item=>!item.enabled && item.opacity<.5),
+     "conflicting Repeat buttons must be disabled and grey, not just ignored")
+   inline.setRepeatOption("weekly")
+   check(inline.recurrence==="none"
+     && JSON.stringify(inline.plannerSelectedDateKeys)===preservedDays,
+     "disabled Repeat selection erased selected days")
+   inline.recurrence="monthly"
+   check(inline.recurrence==="none"
+     && JSON.stringify(inline.plannerSelectedDateKeys)===preservedDays,
+     "invalid direct Repeat assignment erased selected days")
+   inline.choosePlannerDay(new Date(2025,0,7,12),0)
+   check(inline.plannerSelectedCount===1 && !inline.plannerRepeatConflict
+     && choices.slice(1).every(item=>item.enabled && item.opacity===1),
+     "returning to one day must restore all Repeat choices")
+   inline.setRepeatOption("weekly")
+   check(inline.recurrence==="weekly","Repeat should work with one day")
+   const beforeBlocked=JSON.stringify(inline.plannerSelectedDateKeys)
+   inline.choosePlannerDay(new Date(2025,0,8,12),Qt.ControlModifier)
+   check(JSON.stringify(inline.plannerSelectedDateKeys)===beforeBlocked
+     && inline.recurrence==="weekly",
+     "multi-day selection while repeating must not mutate the form")
+   inline.setRepeatOption("none")
+   inline.choosePlannerDay(new Date(2025,0,8,12),Qt.ControlModifier)
    check(inline.plannerSelectedCount===2 && inline.recurrence==="none",
-     "Adding an explicit date must disable the previously selected Repeat cadence")
+     "turning Repeat off must unlock explicit multi-day selection")
    inline.resetForm()
    inline.eventDate=slotDate
    inline.eventTime="09:15"

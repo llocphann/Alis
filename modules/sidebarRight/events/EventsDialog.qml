@@ -56,6 +56,17 @@ WindowDialog {
     property string plannerSelectionAnchor: ""
     property bool _plannerPickingDate: false
     readonly property int plannerSelectedCount: plannerSelectedDateKeys.length
+    // Explicit dates and a recurrence generator are mutually exclusive.
+    // Disable contradictory choices without destroying a date selection.
+    readonly property bool plannerRepeatConflict: plannerPresentation
+        && !isEditing && plannerSelectedCount > 1
+    function canSelectRepeat(value): bool {
+        return value === "none" || !root.plannerRepeatConflict
+    }
+    function setRepeatOption(value): void {
+        if (!root.canSelectRepeat(value)) return
+        root.recurrence = value
+    }
     function resetPlannerDateSelection(): void {
         const selected=DateSelection.key(root.eventDate)
         root.plannerSelectedDateKeys=selected ? [selected] : []
@@ -74,15 +85,17 @@ WindowDialog {
             root.editorWarning=Translation.tr("Select at most 512 days.")
             return
         }
+        // Preserve an already active Repeat cadence if the user attempts
+        // a conflicting Ctrl/Shift multi-day selection.
+        if (chosen.keys.length>1 && root.recurrence!=="none") {
+            root.editorWarning=Translation.tr("Set Repeat to Event before selecting multiple days.")
+            return
+        }
         root._plannerPickingDate=true
         root.plannerSelectedDateKeys=chosen.keys
         root.plannerSelectionAnchor=chosen.anchor
         root.eventDate=DateSelection.localDate(chosen.primary)
         root._plannerPickingDate=false
-        // Explicit dates and recurrence are mutually exclusive. Do not create
-        // repeating series for each checked date or silently multiply events.
-        if (chosen.keys.length>1 && root.recurrence!=="none")
-            root.recurrence="none"
         root.editorWarning=""
     }
     onEventDateChanged: {
@@ -91,9 +104,10 @@ WindowDialog {
         if (!root._plannerPickingDate) root.resetPlannerDateSelection()
     }
     onRecurrenceChanged: {
-        // Choosing any Repeat cadence leaves one anchored start date.
-        if (root.recurrence!=="none" && root.plannerSelectedCount>1)
-            root.resetPlannerDateSelection()
+        // Guard direct/programmatic changes too: reject invalid Repeat,
+        // never clear the user's checked days or their unsaved event draft.
+        if (root.plannerRepeatConflict && root.recurrence!=="none")
+            root.recurrence="none"
     }
     Connections {
         target: Events
@@ -297,7 +311,7 @@ WindowDialog {
     }
 
     function setCompactOption(group, value): void {
-        if (group === "repeat") root.recurrence = value
+        if (group === "repeat") root.setRepeatOption(value)
         else if (group === "category") root.eventCategory = value
         else if (group === "priority") root.eventPriority = value
         else root.reminderMinutes = value
@@ -925,6 +939,7 @@ WindowDialog {
                         Layout.topMargin: -22
                     }
                     ConfigSelectionArray {
+                        objectName:"plannerRepeatChoices"
                         visible: !root.compactEditor
                         anchors {
                             left: parent.left
@@ -937,16 +952,29 @@ WindowDialog {
                         wrapFullLabels: root.plannerPresentation
                         centerWrappedRows: root.plannerPresentation
                         options: [
-                            // "Event" maps to the existing one-time/non-recurring
-                            // storage value instead of inventing an incompatible mode.
+                            // Multi-date is explicit non-recurring storage;
+                            // disable the four incompatible cadence generators.
                             { displayName: Translation.tr("Event"), icon: "event", value: "none" },
-                            { displayName: Translation.tr("Daily"), icon: "today", value: "daily" },
-                            { displayName: Translation.tr("Weekly"), icon: "date_range", value: "weekly" },
-                            { displayName: Translation.tr("Monthly"), icon: "calendar_month", value: "monthly" },
-                            { displayName: Translation.tr("Yearly"), icon: "event_repeat", value: "yearly" }
+                            { displayName: Translation.tr("Daily"), icon: "today", value: "daily",
+                                enabled: root.canSelectRepeat("daily") },
+                            { displayName: Translation.tr("Weekly"), icon: "date_range", value: "weekly",
+                                enabled: root.canSelectRepeat("weekly") },
+                            { displayName: Translation.tr("Monthly"), icon: "calendar_month", value: "monthly",
+                                enabled: root.canSelectRepeat("monthly") },
+                            { displayName: Translation.tr("Yearly"), icon: "event_repeat", value: "yearly",
+                                enabled: root.canSelectRepeat("yearly") }
                         ]
                         currentValue: root.recurrence
-                        onSelected: (newValue) => { root.recurrence = newValue }
+                        onSelected: (newValue) => root.setRepeatOption(newValue)
+                    }
+                    StyledText {
+                        objectName:"plannerRepeatConflictHint"
+                        visible:root.plannerRepeatConflict
+                        width:parent.width
+                        horizontalAlignment:Text.AlignHCenter
+                        text:Translation.tr("Select one day to enable Repeat")
+                        color:Appearance.colors.colOnSurfaceVariant
+                        font.pixelSize:Appearance.font.pixelSize.smallest
                     }
                 }
             }

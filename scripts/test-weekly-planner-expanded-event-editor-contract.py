@@ -65,6 +65,22 @@ assert 'property date plannerViewMonth: new Date()' in editor
 assert 'ObsidianMonthCalendar {' in editor
 assert 'calendarCells: root.plannerCalendarCells' in editor
 assert 'onDayActivated: (date,modifiers)=>root.choosePlannerDay(date,modifiers)' in editor
+# Selecting Repeat must never discard a multi-date Add Event draft.
+assert 'readonly property bool plannerRepeatConflict: plannerPresentation' in editor
+assert '&& !isEditing && plannerSelectedCount > 1' in editor
+assert 'function canSelectRepeat(value): bool' in editor
+assert 'function setRepeatOption(value): void' in editor
+assert 'if (!root.canSelectRepeat(value)) return' in editor
+assert 'root.resetPlannerDateSelection()' not in editor.split('onRecurrenceChanged:',1)[1].split('    Connections {',1)[0]
+assert editor.count('enabled: root.canSelectRepeat(')==4
+assert 'objectName:"plannerRepeatChoices"' in editor
+assert 'objectName:"plannerRepeatConflictHint"' in editor
+assert 'onSelected: (newValue) => root.setRepeatOption(newValue)' in editor
+assert 'root.plannerRepeatConflict && root.recurrence!=="none"' in editor
+selection=(r/"modules/common/widgets/ConfigSelectionArray.qml").read_text()
+assert 'enabled: modelData?.enabled !== false' in selection
+assert '|| !paletteButton.enabled' in selection
+assert 'if (paletteButton.enabled) root.selected(modelData.value)' in selection
 assert 'Layout.topMargin: root.plannerPresentation ? 10 : 0' in editor
 assert 'visible: root.plannerPresentation' in editor
 assert 'visible: root.isEditing && !root.embeddedPresentation' in editor

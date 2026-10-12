@@ -61,8 +61,18 @@ const service=read("services/Events.qml");
 const occurrences=read("services/EventOccurrences.js");
 assert.match(calendar,/signal dayActivated\(var date, int modifiers\)/);
 assert.match(calendar,/root\.dayActivated\(dayCell\.modelData\.date,mouse\.modifiers\)/);
-assert.match(dialog,/root\.recurrence!=="none" && root\.plannerSelectedCount>1/);
+assert.match(dialog,/root\.plannerRepeatConflict && root\.recurrence!=="none"/);
 assert.match(dialog,/chosen\.keys\.length>1 && root\.recurrence!=="none"/);
+assert.doesNotMatch(dialog.split("onRecurrenceChanged:",2)[1].split("Connections {",1)[0],
+  /resetPlannerDateSelection/, "Repeat must never discard checked dates");
+assert.equal((dialog.match(/enabled: root\.canSelectRepeat\(/g)||[]).length,4,
+  "four recurring options must reactively disable");
+assert.match(dialog,/onSelected: \(newValue\) => root\.setRepeatOption\(newValue\)/);
+assert.match(dialog,/if \(!root\.canSelectRepeat\(value\)\) return/);
+const selector=read("modules/common/widgets/ConfigSelectionArray.qml");
+assert.match(selector,/enabled: modelData\?\.enabled !== false/);
+assert.match(selector,/\|\| !paletteButton\.enabled/);
+assert.match(selector,/if \(paletteButton\.enabled\) root\.selected\(modelData\.value\)/);
 assert.match(dialog,/const multi= root\.plannerPresentation && !root\.isEditing/);
 assert.match(dialog,/selectedDays\.length>1 && root\.recurrence!=="none"/);
 assert.match(dialog,/DateSelection\.ranges\(selectedDays/);
