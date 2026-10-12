@@ -869,10 +869,16 @@ WindowDialog {
     }
 
     WindowDialogButtonRow {
+        // WindowDialogButtonRow defaults to -8 px horizontal margins, which
+        // clips the corner buttons inside the narrow embedded Planner pane.
+        // Use symmetric, positive insets only for this embedded presentation;
+        // keep the Calendar Popup and standalone modal geometry unchanged.
         spacing: root.compactEditor ? 6 : 8
-        Layout.leftMargin: root.compactEditor ? 6 : -8
-        Layout.rightMargin: root.compactEditor ? 6 : -8
-        Layout.bottomMargin: root.compactEditor ? 2 : 0
+        Layout.fillWidth: true
+        Layout.leftMargin: root.plannerPresentation ? 12 : (root.compactEditor ? 6 : -8)
+        Layout.rightMargin: root.plannerPresentation ? 12 : (root.compactEditor ? 6 : -8)
+        Layout.topMargin: root.plannerPresentation ? 6 : 0
+        Layout.bottomMargin: root.plannerPresentation ? 12 : (root.compactEditor ? 2 : 0)
 
         DialogButton {
             visible: root.isEditing && !root.embeddedPresentation
