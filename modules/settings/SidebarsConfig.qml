@@ -26,7 +26,7 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "side_navigation"
         title: Translation.tr("Sidebars")
-        description: Translation.tr("Configure the sidebars in focused views: layout, widgets, media panels and edge opening behavior.")
+        description: Translation.tr("Sidebar layout, widgets, media and edge behavior.")
         summary: Translation.tr("General \u00b7 Left \u00b7 Right \u00b7 Media \u00b7 Opening")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
@@ -89,7 +89,7 @@ ContentPage {
 
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Sidebar content is preserved after first use so searches, conversations and navigation resume where you left them.")
+                text: Translation.tr("Sidebar content stays loaded between openings.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 wrapMode: Text.WordWrap
@@ -580,7 +580,7 @@ ContentPage {
             ContentSubsection {
                 visible: Config.options?.panelFamily !== "abyss"
                 title: Translation.tr("Corner open")
-                tooltip: Translation.tr("Allows you to open sidebars by clicking or hovering screen corners regardless of bar position")
+                tooltip: Translation.tr("Open sidebars from screen corners.")
                 ConfigRow {
                     uniform: true
                     SettingsSwitch {
