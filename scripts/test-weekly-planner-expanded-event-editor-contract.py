@@ -24,9 +24,22 @@ choices=(r/"modules/common/widgets/ConfigSelectionArray.qml").read_text()
 assert 'property bool activeLabelOnly: false' in choices, "opt-in only"
 assert 'buttonText: modelData.displayName' in choices
 assert 'revealActiveLabelOnly: root.activeLabelOnly' in choices
+assert 'property var revealedSelection: null' in choices
+assert 'revealNextSelection.restart()' in choices
+assert 'onTriggered: root.revealedSelection=root.currentValue' in choices
+assert 'interval: 190' in choices
+assert 'selectedLabelExpanded: root.activeLabelOnly' in choices
+assert 'horizontalPadding: root.activeLabelOnly' in choices
+assert 'maxTextWidth: root.taskNavigation' in choices
+assert 'clip: root.activeLabelOnly' in choices
 assert 'root.activeLabelOnly && !paletteButton.toggled' not in choices
 reveal=(r/"modules/common/widgets/SelectionGroupButton.qml").read_text()
-assert 'readonly property bool labelExpanded: !root.revealActiveLabelOnly || root.toggled' in reveal
+assert 'property bool selectedLabelExpanded: root.toggled' in reveal
+assert 'readonly property bool labelExpanded: !root.revealActiveLabelOnly' in reveal
+assert '|| root.selectedLabelExpanded' in reveal
+assert 'clip: root.revealActiveLabelOnly' in reveal
+assert 'clip: root.revealActiveLabelOnly' in reveal.split('contentItem: RowLayout {',1)[1]
+assert 'NumberAnimation { duration: 190; easing.type: Easing.InOutCubic }' in reveal
 assert 'root.labelExpanded' in reveal
 assert 'visible: root.buttonText?.length > 0' in reveal
 assert 'visible: opacity > 0' not in reveal.split('id: textItem',1)[0].split('implicitWidth: root.buttonText?.length > 0 && root.labelExpanded',1)[1]
@@ -50,6 +63,26 @@ assert 'root.allDay = !root.allDay' in editor
 assert 'symbol: "delete"' in editor
 assert 'symbol: "close"' in editor
 assert 'symbol: root.isEditing ? "check" : "add_task"' in editor
+# Planner pages are in one clipped, animated viewport: form controls remain
+# mounted so switching between details and options cannot destroy draft fields.
+assert 'property int plannerPage: 0' in editor
+assert 'function changePlannerPage(nextPage): void' in editor
+assert 'editorFlickable.contentY=0' in editor
+assert 'id: plannerPageHost' in editor
+assert 'clip: root.plannerPresentation' in editor
+assert 'id: plannerBasics' in editor
+assert 'id: plannerOptions' in editor
+assert editor.index('id: plannerBasics') < editor.index('id: basicInfoColumn')
+assert editor.index('id: plannerOptions') < editor.index('text: Translation.tr("Repeat")')
+assert 'id: plannerOptions' in editor and 'id: compactOptionDeck' in editor
+assert 'x: root.plannerPresentation && root.plannerPage===1' in editor
+assert 'x: root.plannerPresentation && root.plannerPage===0' in editor
+assert 'objectName: "plannerEventPageNavigation"' in editor
+assert 'visible: root.plannerPresentation' in editor
+assert 'symbol: root.plannerPage===0 ? "arrow_forward" : "arrow_back"' in editor
+assert 'onClicked: root.changePlannerPage(root.plannerPage===0 ? 1 : 0)' in editor
+assert 'root.plannerPage = 0' in editor
+assert editor.count('objectName: "plannerEventPageNavigation"')==1
 # Narrow Planner footer: both corner action groups must sit inside equal
 # 12 px gutters, not inherit WindowDialogButtonRow's -8 px modal overhang.
 footer=editor.split('    WindowDialogButtonRow {',1)[1].split('        DialogButton {',1)[0]
