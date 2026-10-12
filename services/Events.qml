@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "AgendaTodoPolicy.js" as AgendaTodoPolicy
+import "EventOccurrences.js" as Occurrences
 
 Singleton {
     id: root
@@ -364,6 +365,26 @@ Singleton {
     function addEvent(title, description, dateTime, category, priority, reminderMinutes, recurrence, endDate, allDay) {
         if (!root.ready) return null
         const startIso = dateTime || new Date().toISOString()
+        // A matching, non-recurring title with compatible metadata denotes a
+        // second time slot of the same event, not a second Todo-linked event.
+        // Never merge existing records on load or conflate different details.
+        const incoming = {title:title || "",description:description || "",
+            startDate:startIso,endDate:endDate || "",category:category || "general",
+            priority:priority || "normal",reminderMinutes:reminderMinutes ?? 15,
+            recurrence:recurrence || "none",allDay:allDay === true};
+        const groupIndex = root.list.findIndex(old => Occurrences.compatible(old,incoming))
+        if (groupIndex >= 0) {
+            const result = Occurrences.append(root.list[groupIndex],incoming)
+            if (result) {
+                if (!result.duplicate) {
+                    root.list[groupIndex] = result.event
+                    root.list = root.list.slice()
+                    root.eventUpdated(result.event)
+                    root.saveToFile()
+                }
+                return root.list[groupIndex]
+            }
+        }
         const event = {
             id: root.nextId++,
             title: title || "",
@@ -389,6 +410,21 @@ Singleton {
         root.eventAdded(event)
         root.saveToFile()
         return event
+    }
+
+    // Reschedule one stored occurrence. Protect the series ID, imported
+    // providers and one-way Agenda/Todo relationship from pointer edits.
+    function rescheduleOccurrence(id, index, startIso, endIso) {
+        if (!root.ready) return false
+        const position = root.list.findIndex(e => e.id === id)
+        if (position < 0) return false
+        const updated = Occurrences.reschedule(root.list[position],index,startIso,endIso)
+        if (!updated) return false
+        root.list[position] = updated
+        root.list = root.list.slice()
+        root.eventUpdated(updated)
+        root.saveToFile()
+        return true
     }
 
     function removeEvent(id) {
@@ -423,7 +459,23 @@ Singleton {
         if (!root.ready) return false
         const index = root.list.findIndex(e => e.id === id)
         if (index !== -1) {
-            root.list[index] = Object.assign({}, root.list[index], updates)
+            let updated = Object.assign({}, root.list[index], updates)
+            // Older callers still edit startDate/endDate directly. Preserve
+            // additional dates instead of replacing the whole series.
+            if (Array.isArray(root.list[index].occurrences)
+                && !Object.prototype.hasOwnProperty.call(updates,"occurrences")
+                && ("startDate" in updates || "dateTime" in updates || "endDate" in updates)) {
+                const slots = Occurrences.entries(root.list[index])
+                const first = slots[0]
+                if (first) {
+                    first.startDate = updates.startDate || updates.dateTime || first.startDate
+                    first.endDate = updates.endDate || first.endDate
+                    first.notified = updates.notified === true
+                    first.reminderNotified = updates.reminderNotified === true
+                    updated = Occurrences.store(updated,slots)
+                }
+            }
+            root.list[index] = updated
             root.list = root.list.slice(0)
             root.eventUpdated(root.list[index])
             root.saveToFile()
