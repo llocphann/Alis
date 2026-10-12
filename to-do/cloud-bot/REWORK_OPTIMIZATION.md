@@ -1091,7 +1091,17 @@ run privileged installation just because manual buttons are retired.
   light/dark, long weekday/date translations, foreground contrast,
   scroll anchoring and actual Niri screenshots. Coordinate with
   DASH-F01's new in-Dashboard expandable Edit Events column.
-  State: NEW/OPEN; not implemented.
+  **Source milestone 2026-10-12 — not yet accepted:** Weekly Planner
+  date, All day and sticky corner share the same Detailed Weather palette:
+  `AbyssStyle.contentLayer`, accent and contrast-safe ink, with a
+  Material fallback outside Abyss. Selected/today/hover feedback and
+  contiguous dividers do not add shader or blur passes. Source grid, DST,
+  event projection and scroll hit testing remain unchanged. Existing
+  private-Niri runtime fixture now checks seven aligned headers, pinned
+  scrolling and surface color agreement; the GitHub-only environment
+  cannot run that fixture, so it is **NOT RUN**. Await owner Niri
+  screenshots, light/dark and fractional/multi-output/long-date checks.
+  Task remains OPEN; no native or owner approval is implied.
 
 - [ ] **DASH-R02 — Horizontal-only Dashboard gesture page navigation — owner request 2026-10-11:**
   [Owner: Alis dev; Rework/UX] **Only horizontal left/right swipe
