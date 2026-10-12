@@ -49,11 +49,18 @@ function starts(event, days, source, duration) {
         var firstMonth = (earliest.getFullYear()-base.getFullYear())*12+earliest.getMonth()-base.getMonth();
         var lastMonth = (through.getFullYear()-base.getFullYear())*12+through.getMonth()-base.getMonth();
         range(Math.max(1,firstMonth-1),lastMonth+1,function(m) {
-            var monthly=new Date(base);monthly.setMonth(base.getMonth()+m);return monthly;
+            var month=new Date(base.getFullYear(),base.getMonth()+m,1,12);
+            var monthly=new Date(month.getFullYear(),month.getMonth(),base.getDate(),
+                base.getHours(),base.getMinutes(),base.getSeconds(),base.getMilliseconds());
+            // Missing 29/30/31 in a shorter month skips this cycle.
+            return monthly.getMonth()===month.getMonth() ? monthly : null;
         });
     } else if (recurrence === "yearly") {
         range(Math.max(1,earliest.getFullYear()-base.getFullYear()-1),through.getFullYear()-base.getFullYear()+1,function(y) {
-            var yearly=new Date(base);yearly.setFullYear(base.getFullYear()+y);return yearly;
+            var yearly=new Date(base.getFullYear()+y,base.getMonth(),base.getDate(),
+                base.getHours(),base.getMinutes(),base.getSeconds(),base.getMilliseconds());
+            // Feb 29 repeats only in leap years.
+            return yearly.getMonth()===base.getMonth() ? yearly : null;
         });
     }
     return {dates:dates,limited:limited};
@@ -97,7 +104,7 @@ function project(local, external, value, firstDay) {
                 var generated=starts(occurrenceSource,days,pair[1],event.allDay
                     ? allDaySpan*86400000 : duration);
                 if (generated.limited) days.forEach(function(day) {day.projectionLimited=true;});
-                generated.dates.forEach(function(occurrence) {
+                generated.dates.filter(function(date){return date!==null;}).forEach(function(occurrence) {
                     var start=event.allDay ? midnight(occurrence) : occurrence;
                     var finish=event.allDay ? addDays(start,allDaySpan)
                         : new Date(start.getTime()+duration);
