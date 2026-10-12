@@ -14,9 +14,16 @@ function threeDayEvents(local, external, currentDate, projectWeek) {
                 || String(a.key).localeCompare(String(b.key)));
         rows.forEach((row,position) => {
             const original = row.event;
+            // Legacy single-instance/recurring records must retain their exact
+            // canonical object identity. Only grouped Events need a per-date
+            // edit index wrapper; the original store stays unchanged.
+            const canonical = Array.isArray(original.occurrences)
+                && original.occurrences.length
+                ? Object.assign({},original,{_editOccurrenceIndex:row.occurrenceIndex})
+                : original;
             output.push(Object.assign({}, original, {
                 _source:row.source,
-                _canonicalEvent:Object.assign({},original,{_editOccurrenceIndex:row.occurrenceIndex}),
+                _canonicalEvent:canonical,
                 _dayOffset:index,
                 _groupDate:day.date,
                 _showDayHeader:position===0,
