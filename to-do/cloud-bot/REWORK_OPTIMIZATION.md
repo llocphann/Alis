@@ -1535,6 +1535,11 @@ run privileged installation just because manual buttons are retired.
   Matched owner before/after, physical wl_pointer latency/percentiles and
   installed-owner perceived smoothness are still unverified; no FPS/resource
   improvement is claimed. Existing canonical FAIL/STOPPED gates remain factual.
+  Follow-up: actual native resize reproduced a transient corner overrun.
+  Dimension/orientation changes now settle safely on their Edge; ordinary
+  neighbor motion remains smooth. Focused native 84/19/6 PNG PASS; failing
+  baseline retained. Source spelling fixtures for editor masks and shared
+  Typography were corrected without weakening their behavior contracts.
 
 - [ ] **ABYSS-R11 — Screen Edge/module editor:** verify separate 0px-capable widths on all
   four edges, thickness-only versus inherited module sizing, per-module overrides,

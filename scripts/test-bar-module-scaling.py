@@ -37,7 +37,7 @@ def main() -> None:
         "modules/bar/BarContent.qml": ("moduleGap:", "buttonPadding: 5 * " + SCALE),
         "modules/bar/BarGroup.qml": ("property real padding: 8 * " + SCALE, "moduleSpacing: (root.vertical ? 12 : 4) * " + SCALE),
         "modules/bar/Workspaces.qml": ("requestedWorkspaceButtonWidth: Math.round(26 * " + SCALE + ")", "workspaceStripBudget:", "Math.floor(root.workspaceStripBudget / Math.max(1, root.columnsShown))"),
-        "modules/bar/ClockWidget.qml": ("_timePixelSize * " + SCALE, "_datePixelSize * " + SCALE),
+        "modules/bar/ClockWidget.qml": ("_timePixelSize * root.typographyScale", "_datePixelSize * root.typographyScale", "sharedTypography ? 1 : " + SCALE, "property bool sharedTypography: false"),
         "modules/bar/Media.qml": ("implicitSize: Math.round(22 * " + SCALE + ")",),
         "modules/bar/Resource.qml": ("implicitSize: Math.round(20 * " + SCALE + ")", "lineWidth: Math.round(Appearance.rounding.unsharpen * " + SCALE + ")"),
         "modules/bar/BatteryIndicator.qml": ("valueBarWidth: Math.round(30 * " + SCALE + ")",),

@@ -107,8 +107,8 @@ Item {
             }
             onXChanged: invalidateInputRegion()
             onYChanged: invalidateInputRegion()
-            onWidthChanged: invalidateInputRegion()
-            onHeightChanged: invalidateInputRegion()
+            onWidthChanged: {invalidateInputRegion();settleDimensionChange()}
+            onHeightChanged: {invalidateInputRegion();settleDimensionChange()}
             onVisibleChanged: invalidateInputRegion()
             onEnabledChanged: invalidateInputRegion()
             readonly property var geometry: root.layoutRecords.find(rec => rec.id === modelData)
@@ -117,7 +117,7 @@ Item {
             popupJoinedEdge: placement?.joinCorner ? Layout.adjacentEdge(geometry,root.width,root.height) : ""
             contentScale: (geometry?.span ?? 0)/Math.max(1,naturalSpan)
             onNaturalSpanChanged: root.measure(modelData,naturalSpan)
-            Component.onCompleted: {root.measure(modelData,naturalSpan);Qt.callLater(()=>motionReady=true)}
+            Component.onCompleted: {root.measure(modelData,naturalSpan);Qt.callLater(rearmMotion)}
             kind: placement?.kind ?? "clock"
             outputName: root.outputName
             vertical: placement?.edge === "left" || placement?.edge === "right"
@@ -125,10 +125,22 @@ Item {
             visible: geometry !== undefined && !geometry.capacityConflict
             enabled: !root.editing && visible
             property bool motionReady: false
-            readonly property bool animatePlacement: motionReady && Appearance.animationsEnabled
+            property string motionEdge: ""
+            property real motionWidth: -1
+            property real motionHeight: -1
+            function rearmMotion(): void {
+                motionEdge=attachedEdge;motionWidth=width;motionHeight=height;motionReady=true
+            }
+            function settleDimensionChange(): void {
+                motionReady=false
+                xMotion.complete();yMotion.complete()
+                Qt.callLater(rearmMotion)
+            }
+            onAttachedEdgeChanged:settleDimensionChange()
+            readonly property bool animatePlacement: motionReady && motionEdge===attachedEdge && motionWidth===width && motionHeight===height && Appearance.animationsEnabled
                 && !placement?.locked && !root.draggedIds.includes(modelData)
-            Behavior on x { enabled:module.animatePlacement; NumberAnimation { duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
-            Behavior on y { enabled:module.animatePlacement; NumberAnimation { duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
+            Behavior on x { enabled:module.animatePlacement; NumberAnimation { id:xMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
+            Behavior on y { enabled:module.animatePlacement; NumberAnimation { id:yMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
             x: geometry?.content.x ?? 0; y: geometry?.content.y ?? 0
             width: geometry?.content.width ?? 0; height: geometry?.content.height ?? 0
             onInteraction: strength => { if (geometry) root.interaction(geometry.edge,geometry.along+geometry.span/2,geometry.span,strength*geometry.influence) }

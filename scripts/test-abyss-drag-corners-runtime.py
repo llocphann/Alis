@@ -68,6 +68,12 @@ ShellRoot {
    check(a.feature===types[0]&&b.feature===types[1],"drag reloaded mature components")
    Config.setNestedValue("performance.reduceAnimations",true);editor.selectedId="b"
    editor.change("position",.64);frame();check(Math.abs(b.x-rec("b").content.x)<.1,"reduced motion retains an unexpected tween")
+   editor.toggleLock("pin");Config.setNestedValue("performance.reduceAnimations",false)
+   editor.selectedId="b";editor.change("position",.98);tryVerify(()=>Math.abs(b.x-rec("b").content.x)<.1,2000)
+   editor.change("customSize",true);editor.change("size",1.1);frame("resize")
+   check(b.x+b.width<=rec("b").edgeEnd+.1,"resize animation clips full content through corner bounds")
+   editor.change("edge","right");frame("edge-transfer")
+   check(Math.abs(b.x-rec("b").content.x)<.1&&Math.abs(b.y-rec("b").content.y)<.1,"orientation transfer animates detached through workspace")
    editor.clearSelection();editor.draft=Layout.normalize([{id:"a",kind:"clock",edge:"top",position:0,enabled:true},{id:"b",kind:"clock",edge:"left",position:0,enabled:true}],"top");editor.refreshHandles();wait(80);frame("corner")
    const x=rec("a").content,y=rec("b").content
    check(x.x+x.width+8<=y.x+.1||y.x+y.width+8<=x.x+.1||x.y+x.height+8<=y.y+.1||y.y+y.height+8<=x.y+.1,"corner controls overlap")

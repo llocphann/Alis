@@ -19,17 +19,25 @@ for token in (
     'inputRegion.changed()',
     'onXChanged: invalidateInputRegion()',
     'onYChanged: invalidateInputRegion()',
-    'onWidthChanged: invalidateInputRegion()',
-    'onHeightChanged: invalidateInputRegion()',
     'onEnabledChanged: invalidateInputRegion()',
     'root.inputRegions = root.inputRegions.concat([item.inputRegion])',
     'enabled: !root.editing',
 ):
     assert token in bar, f"missing explicit module pointer mask contract: {token}"
+import re
+for signal in ('onWidthChanged', 'onHeightChanged'):
+    assert re.search(signal+r':\s*(?:\{)?\s*invalidateInputRegion\(\)',bar), 'dimension changes must invalidate the actual mask'
 assert 'Region { item: module }' not in bar
 assert 'Region { regions: window.presented && field.ready && bar.visible ? bar.inputRegions : [] }' in perimeter
 assert 'Region { regions: window.presented && field.ready && editor.visible ? editor.regions : [] }' in perimeter
-assert 'readonly property Region inputRegion: Region { item:handle;' in editor
+assert 'Region { item:handle;' not in editor
+for token in ('x:Math.floor(handle.x)', 'y:Math.floor(handle.y)',
+              'Math.ceil(handle.x+handle.width)-Math.floor(handle.x)',
+              'Math.ceil(handle.y+handle.height)-Math.floor(handle.y)',
+              'root.editingPopups || !handle.visible ? 0', 'inputRegion.changed()',
+              'onXChanged:invalidateRegion()', 'onYChanged:invalidateRegion()',
+              'onWidthChanged:invalidateRegion()', 'onHeightChanged:invalidateRegion()'):
+    assert token in editor, f'missing explicit animated editor hit-region contract: {token}'
 assert 'normal-mode pointer region must track real rendered module geometry' in runtime
 assert 'normal-mode input region must recover without recreating modules' in runtime
 assert 'moving a module must refresh the already-bound input Region' in runtime

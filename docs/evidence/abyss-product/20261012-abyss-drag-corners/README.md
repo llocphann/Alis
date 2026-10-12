@@ -39,3 +39,20 @@ and blocked group-transfer failures remain retained. No original oracle was
 silently relabeled PASS. Real wl_pointer, matched owner before/after motion,
 fractional/multi-output and final canonical gates remain pending. Private capture
 focus is requested only for images; other regression windows do not focus.
+
+
+## Resize/orientation safety follow-up
+
+A new native case reproduced a real transient corner overrun during size
+changes. The final guard finishes position motion when dimensions or orientation
+change, keeping the full controls on their Edge; ordinary neighbor movement
+remains animated. Baseline failure is retained in native-resize-baseline.
+Native-safe-resize PASS 84 checks/19 frames/6 PNG includes actual pointer,
+no corner overrun, no detached cross-workspace orientation tween and existing
+Save/Cancel checks. This is focused evidence after source 7e31685bc, not a
+retroactive PASS for its frozen canonical run.
+
+Two implementation-spelling fixtures now accept explicit animated editor
+regions and the opt-in Typography scale, while retaining legacy scaling/mask
+invalidation contracts. Their focused checks PASS; full canonical identity must
+remain attached to the actual source that ran.

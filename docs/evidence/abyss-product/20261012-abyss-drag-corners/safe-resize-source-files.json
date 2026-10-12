@@ -1,0 +1,6 @@
+{
+  "modules/abyss/bar/AbyssBar.qml": "74a95b76063c182b53a8bdeece924548fc687dd1f80cc9a11ec862cbfb4dab17",
+  "scripts/test-abyss-drag-corners-runtime.py": "b3fababb18e2505eb45b23634679f26a41f77046265a8f952bc638e74afae9ea",
+  "scripts/test-abyss-input-region-contract.py": "b412a92e093414eee5d71a459c00a23f553fcdd04993b9ccc88c8bb69c2faa01",
+  "scripts/test-bar-module-scaling.py": "687201a138e3e0414d1863c66b1cf0c8ac2ef53d6e6bddbde474b25d2c1f1ca5"
+}
