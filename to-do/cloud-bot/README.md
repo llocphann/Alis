@@ -16,6 +16,30 @@ outcomes; their position is not an instruction to finish every Issue first.
 "Alongside" means coordinated work in this single-agent context, not separate
 agents or task boards.
 
+**Maintainer scheduling override (2026-10-12, authoritative 27-item
+New Features numbering in NEW_FEATURES.md):**
+- **Owner verified / completed:** #13 (Power-profile render quality)
+  and #24–27 (Integration TLP/Battery, Thinkfan, Obsidian, package
+  lifecycle). Mark those [x] with **Owner verified**, not
+  "Owner chưa verified"; this is owner-reported product acceptance,
+  not evidence that unrelated canonical/hardware/release tests passed.
+- **FINAL-PHASE / DEFERRED:** #1 (Deep Performance Profiler) and
+  #14–23 (all AC-F01..AC-F10 Companion features) are postponed
+  until **all other non-deferred** actionable New Features, Rework
+  and Issues are finished. Do not take their research, source
+  implementation or optional integration work as the next task
+  just because they are first in the file. Keep consent gates.
+- **VERY LAST / DEFERRED:** #12 (Non-Arch optional gateway) should
+  be done almost last, **after the final-phase group above** and
+  every other outstanding task, unless the maintainer explicitly
+  changes priority.
+- The **immediate active New Features** are #5 DASH-F01
+  Weekly Planner, #9 Quick Notes Markdown, #10 Quick Notes image
+  delivery and #11 Utilities delivery. Follow normal impact and
+  dependencies for their related Rework/Issues. New incoming work
+  remains ahead of all deferred items until completed. This overrides
+  generic feature-first sequencing without deleting any tasks.
+
 | Priority | Category | Scope |
 | --- | --- | --- |
 | First | [New features](NEW_FEATURES.md) | Capabilities that the product does not yet provide, including feature delivery still awaiting acceptance. Follow explicit feature sequences. |
@@ -61,8 +85,10 @@ unfinished scope or a demonstrated regression, citing previous evidence.
 ## Select the next task autonomously
 
 The maintainer's explicit immediate priority, stop or deferral comes first.
-Otherwise select an actionable, unresolved New feature, then address its related
-Rework and Issues as part of delivering and qualifying that feature:
+**Exclude every FINAL-PHASE / VERY-LAST deferred feature above from autonomous
+selection until its prerequisites (all other work) have been satisfied.**
+Otherwise select an actionable, unresolved non-deferred New feature, then address
+its related Rework and Issues as part of delivering and qualifying that feature:
 
 | Category | Selection within the category |
 | --- | --- |

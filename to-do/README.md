@@ -4,7 +4,9 @@
 Read [AGENTS.md](../AGENTS.md), refetch `dev`, then apply the maintainer's
 priority effective 2026-10-12:
 
-1. [New features](cloud-bot/NEW_FEATURES.md), preserving the explicit feature sequence.
+1. [New features](cloud-bot/NEW_FEATURES.md), preserving the maintainer's
+   explicit exclusions: #1 and #14–23 deferred until all other work,
+   and #12 (Non-Arch gateway) very last. #13 and #24–27 are Owner verified.
 2. [Rework/optimization](cloud-bot/REWORK_OPTIMIZATION.md) and
    [Issues/bugs](cloud-bot/ISSUES.md) related to the selected feature, handled
    alongside it. Continue the current safe atomic milestone; keep all three
