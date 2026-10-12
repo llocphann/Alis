@@ -122,6 +122,8 @@ Item {
         return viewport.contentX!==before
     }
     Keys.onPressed: event => {
+        // Unhandled editor keys must never navigate the week underneath a form.
+        if (root.sideView === "events") { event.accepted = false; return }
         if (event.key === Qt.Key_PageUp) {changeWeek(-1);event.accepted=true}
         else if (event.key === Qt.Key_PageDown) {changeWeek(1);event.accepted=true}
         else if (event.key === Qt.Key_Home) {showToday();event.accepted=true}

@@ -39,6 +39,7 @@ Item {
 
     readonly property bool navigationAllowed: root.presentationActive && pageIds.length > 1
         && !root.editMode && !root._agendaDialogShown && !(musicPage.item?.playlistDialogVisible ?? false)
+        && !(plannerPage.item?.sideView === "events")
     property var _pageWheelState: PagePolicy.idle()
     function resetPageWheel(): void {
         pageWheelIdle.stop()

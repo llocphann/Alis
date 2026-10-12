@@ -97,6 +97,10 @@ Window {
        && inline.eventTime==="09:15" && inline.eventEndTime==="10:15",
      "clicked 09:15 slot lost local date or end-time prefill")
    inline.eventTitle="Unsaved private draft"
+   const priorWeek=planner.days[0].date.getTime()
+   planner.forceActiveFocus();keyClick(Qt.Key_PageDown)
+   check(planner.days[0].date.getTime()===priorWeek,
+     "PageDown navigated the Planner behind an open Events form")
    planner.sideView="todo";wait(60)
    planner.sideView="events";wait(60)
    check(inline.eventTitle==="Unsaved private draft",
