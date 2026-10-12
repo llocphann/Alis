@@ -1,5 +1,8 @@
 # Rework/optimization
 
+**Owner follow-up — 2026-10-12, Weekly Planner Event editor/resize UI:** `DashboardWeeklyPlanner.qml` now selects roomy `EventsDialog.qml` planner form and `DashTodo`-matching background; Calendar Popup continues compact. Top/bottom resize indicators are 2 px tall, at most 28 px wide, invisible until hover or resize, while preserving 9 px pointer hit areas. Automatic legacy occurrences conversion is handled by `services/Events.qml` on file load without a button; see AGENDA-F02 backlog and regression tests. Source patched; native pointer/render validation and owner acceptance OPEN.
+
+
 **Source completion checkpoint — 2026-10-12, Owner chưa verified:** CAL-R02 `0caa2e60f`/`23c32b0e2` removes the Calendar-specific Add FAB and date-click opens the same inline Add pane; ABYSS-R13 `7b9cb4fae`/`34ece9d67` retains only IPC/OSD independent placements. These are bot-reported source completions, **not** owner/native PASS. Legacy popup records remain untouched; real 4-edge keyboard/pointer, hover, Cancel and input acceptance remain OPEN.
 
 - [x] **CAL-R02 — Calendar Popup date-click Add Events (owner 2026-10-12):** Remove the "+" FAB only in Calendar Popup; click any displayed calendar day to open its inline Add Event editor with that civil date prefilled. Editing a date preserves other draft fields. Keep other EventsWidget instances, keyboard, Cancel and outside click behavior. Source: `ClockCalendarContent.qml`, `EventsWidget.qml`, commits `0caa2e60f`/`23c32b0e2`. Native exact-SHA, four-edge popup and owner acceptance OPEN.

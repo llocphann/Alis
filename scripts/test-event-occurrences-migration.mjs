@@ -62,6 +62,11 @@ assert.equal(m.migrateLegacy([
 assert.equal(m.migrateLegacy([
   item(17,'Class','12',null,{startDate:'bad',dateTime:'bad'})
 ]).changed,false,'invalid source time is retained for repair');
+const brokenFirst=m.migrateLegacy([
+  item(18,'Class','12',null,{startDate:'bad',dateTime:'bad'}),
+  item(19,'Class','14',null)
+]);
+assert.equal(brokenFirst.events.length,2,'bad first date must not absorb healthy following event');
 assert.equal(m.migrateLegacy([]).changed,false);
 const backup={version:1,original:{events:originals,nextId:18,todoUnlinks:[]}};
 const durable=JSON.parse(JSON.stringify({
