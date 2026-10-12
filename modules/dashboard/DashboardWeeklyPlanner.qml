@@ -553,7 +553,7 @@ Item {
                     anchors.fill:parent
                     embeddedPresentation:true
                     plannerPresentation:true
-                    hideEmbeddedScrollBar:false
+                    hideEmbeddedScrollBar:true
                     embeddedBackgroundColor: {
                         const surface=Config.options?.panelFamily==="abyss"
                             ? AbyssStyle.contentLayer : Appearance.colors.colLayer1
