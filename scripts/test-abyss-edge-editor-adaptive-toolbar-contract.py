@@ -54,66 +54,55 @@ assert 'Layout.preferredWidth:116*Appearance.fontSizeScale' in editor
 
 fine=editor[editor.index("id:editFineControls"):]
 fine_columns=re.search(r"\bcolumns:\s*([\s\S]+?)\n\s*columnSpacing:",fine)
-assert fine_columns, "fine controls must expose adaptive columns"
-# A single add-module palette remains. Existing modules are selected by
-# clicking/dragging their Screen Edge handles, not by a duplicate dropdown.
-# All module actions keep their object names and handlers after regrouping.
-fine_start=editor.index("id:editFineControls")
-selected_start=editor.index("id:selectedModuleControls")
-fine_segment=editor[fine_start:selected_start]
-selected_segment=editor[selected_start:]
-assert 'id: palette' in fine_segment
-assert 'onClicked:root.add(palette.currentValue)' in fine_segment
-assert 'id:selection' not in editor
-assert 'selectionRegion' not in editor
-assert fine_segment.count('objectName:"abyssCompactSelectedModuleActions"') == 1
-assert fine_segment.count('id:alignmentChoice') == 1
-assert fine_segment.count('objectName:"abyssModulePositionLock"') == 1
-assert fine_segment.count('objectName:"abyssSelectionEnabled"') == 1
-assert fine_segment.count('objectName:"abyssSelectionRemove"') == 1
-assert fine_segment.count('id:scaleModulesRow') == 1
-assert fine_segment.count('objectName:"abyssJoinNearbyModules"') == 1
-assert selected_segment.count('objectName:"abyssModuleRounding"') == 1
-assert selected_segment.count('objectName:"abyssModuleCustomSizeToggle"') == 1
-assert selected_segment.count('objectName:"abyssModuleJoinCorner"') == 1
-assert 'AbyssCheckBox {' not in selected_segment
-assert 'onToggled:root.change("customSize",checked)' in selected_segment
-assert 'onToggled:root.change("joinCorner",checked)' in selected_segment
-assert 'checkable:true' in selected_segment
-assert fine_segment.index('id: palette') < fine_segment.index('objectName:"abyssCompactSelectedModuleActions"') < fine_segment.index('id:alignmentChoice')
-assert fine_segment.index('id:edgeChoice') < fine_segment.index('id:scaleModulesRow')
-assert selected_segment.index('objectName:"abyssModuleRounding"') < selected_segment.index('objectName:"abyssModuleCustomSizeToggle"') < selected_segment.index('objectName:"abyssModuleJoinCorner"')
+assert fine_columns, "two-column controls must expose a responsive layout"
+
+# The first row, Modules/IPC with shared output scope, is unchanged.
+# Below it: two content columns with a short divider, no leading dropdown icons.
+left=editor[editor.index('id:moduleEditorColumn'):editor.index('objectName:"abyssEditorColumnDivider"')]
+right=editor[editor.index('id:edgeEditorColumn'):]
+selected=left[left.index('id:selectedModuleControls'):]
+assert 'objectName:"abyssEditorModuleColumn"' in left
+assert 'objectName:"abyssEditorEdgeColumn"' in right
+assert 'id: palette' in left and 'objectName:"abyssModuleDropdown"' in left
+assert 'id:edgeChoice' in right and 'objectName:"abyssEditingEdgeDropdown"' in right
+assert 'onClicked:root.add(palette.currentValue)' in left
+assert 'onActivated:root.editingEdge=currentText' in right
+assert 'id:selection' not in editor and 'selectionRegion' not in editor
+assert left.count('objectName:"abyssCompactSelectedModuleActions"') == 1
+assert left.count('id:alignmentChoice') == 1
+assert left.count('objectName:"abyssModulePositionLock"') == 1
+assert left.count('objectName:"abyssSelectionEnabled"') == 1
+assert left.count('objectName:"abyssSelectionRemove"') == 1
+assert left.count('objectName:"abyssModuleRounding"') == 1
+assert left.count('objectName:"abyssModuleCustomSizeToggle"') == 1
+assert left.count('objectName:"abyssModuleJoinCorner"') == 1
+assert 'AbyssCheckBox {' not in selected
+assert 'onToggled:root.change("customSize",checked)' in selected
+assert 'onToggled:root.change("joinCorner",checked)' in selected
+assert right.count('id:scaleModulesRow') == 1
+assert right.count('objectName:"abyssJoinNearbyModules"') == 1
+assert right.count('objectName:"abyssRoundZeroCorners"') == 1
+assert right.index('id:edgeChoice') < right.index('id:scaleModulesRow')
+assert right.index('id:edgeChoice') < right.index('EditorIconHint {')
+assert left.index('id: palette') < left.index('objectName:"abyssCompactSelectedModuleActions"')
+assert left.index('objectName:"abyssCompactSelectedModuleActions"') < left.index('id:selectedModuleControls')
+assert 'Layout.preferredHeight:64*Appearance.fontSizeScale' in editor
+assert 'Layout.preferredWidth:1*Appearance.fontSizeScale' in editor
+assert 'color:Qt.alpha(AbyssStyle.textColorMuted,.18)' in editor
+assert 'visible:editFineControls.columns===3' in editor
 assert editor.count('AbyssSlider {') == 6
 assert editor.count('Layout.maximumWidth:root.editorActionSize') == 17
 
-selected=editor[editor.index("id:selectedModuleControls"):]
-columns=re.search(r"\bcolumns:\s*([\s\S]+?)\n\s*rowSpacing:",selected)
-assert columns, "selected module controls need an adaptive grid"
-subprocess.run(["node","-e",r'''
-const assert=require('node:assert/strict'),vm=require('node:vm');
-for(const toolbarOnHorizontalEdge of [false,true]) {
- for(const fontSizeScale of [.7,1,1.5,2]) {
-  let previous=1;
-  for(const width of [0,250,400,419,420,600,739,740,900,1099,1100,1400,2200]) {
-   const actual=vm.runInNewContext(process.argv[1],{root:{toolbarOnHorizontalEdge},width,Appearance:{fontSizeScale}});
-   const expected=!toolbarOnHorizontalEdge || width<440*fontSizeScale
-       ? 1 : width>=700*fontSizeScale ? 3 : 2;
-   assert([1,2,3].includes(actual));assert.equal(actual,expected);
-   assert(actual>=previous);previous=actual;
-  }
- }
-}
-''',columns.group(1)],check=True)
-
+selected_columns=re.search(r"\bcolumns:\s*([^\n]+)",selected)
+assert selected_columns and selected_columns.group(1).strip()=="1", "module-only fields stack vertically"
 subprocess.run(["node","-e",r'''
 const assert=require('node:assert/strict'),vm=require('node:vm');
 for(const toolbarOnHorizontalEdge of [false,true])for(const fontSizeScale of [.7,1,1.5,2]) {
- let previous=1;
- for(const width of [0,250,400,460,600,699,700,900,1400]) {
-  const actual=vm.runInNewContext(process.argv[1],{root:{toolbarOnHorizontalEdge},width,Appearance:{fontSizeScale}});
-  const expected=!toolbarOnHorizontalEdge||width<460*fontSizeScale ? 1
-     : width>=700*fontSizeScale ? 3 : 2;
-  assert.equal(actual,expected);assert(actual>=previous);previous=actual;
+ for(const width of [0,250,400,460,599,649,650,700,900,1400,2200]) {
+  const actual=vm.runInNewContext(process.argv[1],
+      {root:{toolbarOnHorizontalEdge},width,Appearance:{fontSizeScale}});
+  const expected=toolbarOnHorizontalEdge && width>=650*fontSizeScale?3:1;
+  assert.equal(actual,expected);
  }
 }
 ''',fine_columns.group(1)],check=True)
