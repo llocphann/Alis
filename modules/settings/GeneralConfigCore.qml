@@ -13,7 +13,7 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "browse"
         title: Translation.tr("System")
-        description: Translation.tr("System settings are grouped by the thing you are trying to change, including power, cooling, locale, input and safety.")
+        description: Translation.tr("Power, cooling, language, input and safety settings.")
         summary: Translation.tr("Audio · power · fan control · locale · input · safety")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
