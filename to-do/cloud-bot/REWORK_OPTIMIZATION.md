@@ -753,7 +753,7 @@ run privileged installation just because manual buttons are retired.
   layout/hierarchy and all functional behavior. Acceptance:
   audited copy inventory and brief English UI labels in every
   Settings family; long translations, small screens and native
-  owner screenshot review. State: IN PROGRESS / OPEN; scoped Abyss, Sidebar and Waffle passes.
+  owner screenshot review. State: IN PROGRESS / OPEN; partial Abyss, standalone, Sidebar, Waffle, AI and Integration passes.
 
   **2026-10-12 scoped source milestone (not entire task):** shortened
   11 Abyss help/description strings, merged the two verbose Modules notes
@@ -774,6 +774,24 @@ run privileged installation just because manual buttons are retired.
   assertions PASS, 0 FAIL. Python/QML, canonical, native and owner
   acceptance have NOT been executed or claimed. SET-R03 remains OPEN
   for the rest of the Settings page inventory and native visual review.
+
+  **2026-10-12 continuation — scoped standalone/AI milestone:**
+  Revised 22 long UI descriptions across Dashboard, Modules, Advanced,
+  Sidebars and Background (sources `3e8f02f13`, `6645b8d14`,
+  `e19d95229`, `34f424479`, `0bad688c6`).
+  Revised 12 further source occurrences across AI, Waffle AI,
+  Integrations, System and Background (`064d3a248`, `5f56a0a48`,
+  `296457794`, `f0bd19ea0`, `ba425d9cf`).
+  English key parity updated at `916164ccf` and `61fb9f8cd`; safety
+  wording about local-only inference, Advanced raw commands, environment-only
+  API-key delivery, GPU cost and restart was preserved.
+  Regression source at `e4c0c6b1a` and `c3817ef79`. GitHub source-head
+  `c3817ef79`: 34/34 new source-plus-locale static assertions PASS,
+  0 FAIL across nine page files. **No executed Python, Qt, canonical or
+  owner/native test is claimed.** Remaining: full settings-copy audit
+  including dynamically injected/Companion pages, translation/source search,
+  native small-screen, accessibility, permission-warning and owner review;
+  SET-R03 stays [ ] OPEN.
 
 - [x] **SET-R04 — Remove "Use opaque Material appearance" preset button — owner 2026-10-12:**
   [Owner: Alis dev; Rework/removal] Delete the **button** from
