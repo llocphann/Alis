@@ -16,7 +16,7 @@ function threeDayEvents(local, external, currentDate, projectWeek) {
             const original = row.event;
             output.push(Object.assign({}, original, {
                 _source:row.source,
-                _canonicalEvent:original,
+                _canonicalEvent:Object.assign({},original,{_editOccurrenceIndex:row.occurrenceIndex}),
                 _dayOffset:index,
                 _groupDate:day.date,
                 _showDayHeader:position===0,
