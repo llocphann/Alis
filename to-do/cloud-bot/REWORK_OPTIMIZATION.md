@@ -43,8 +43,10 @@
 **Source completion checkpoint — 2026-10-12, Owner chưa verified:** CAL-R02 `0caa2e60f`/`23c32b0e2` removes the Calendar-specific Add FAB and date-click opens the same inline Add pane; ABYSS-R13 `7b9cb4fae`/`34ece9d67` retains only IPC/OSD independent placements. These are bot-reported source completions, **not** owner/native PASS. Legacy popup records remain untouched; real 4-edge keyboard/pointer, hover, Cancel and input acceptance remain OPEN.
 
 - [x] **CAL-R02 — Calendar Popup date-click Add Events (owner 2026-10-12):** Remove the "+" FAB only in Calendar Popup; click any displayed calendar day to open its inline Add Event editor with that civil date prefilled. Editing a date preserves other draft fields. Keep other EventsWidget instances, keyboard, Cancel and outside click behavior. Source: `ClockCalendarContent.qml`, `EventsWidget.qml`, commits `0caa2e60f`/`23c32b0e2`. Native exact-SHA, four-edge popup and owner acceptance OPEN.
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
 
 - [x] **ABYSS-R13 — Edit Abyss Layout IPC-only placement options (owner 2026-10-12):** Remove individual Popup relocation choices from this editor because popups follow Screen Edge modules, while retaining IPC/OSD position previews, per-output overrides and Undo/Done/Cancel. Do not erase legacy stored position data or change popup host ownership. Source: `AbyssEdgeEditor.qml` at `7b9cb4fae`; QML native/owner and installed four-edge acceptance OPEN.
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
 
 
 **Quota checkpoint — 2026-10-12 18:08 ICT:** exact five-hour remaining
@@ -673,6 +675,7 @@ Do not remove functionality, break direct Settings navigation or silently
 run privileged installation just because manual buttons are retired.
 
 - [x] **SET-R02 — Redesign all Settings task sub-tabs for Abyss Panel — owner screenshots 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   [Owner: Alis dev; Rework/UX] All *secondary in-page task tabs* in
   Settings currently use the old compact, separate dark pill/chip
   styling. Redesign the entire shared tab family to visually belong
@@ -746,6 +749,7 @@ run privileged installation just because manual buttons are retired.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **ABYSS-R06 — Remove toggles for mandatory Abyss runtime modules — owner 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   [Owner: Alis dev; Rework] When Abyss Panel is selected, structural modules
   required for rendering/interaction must be treated as **always enabled**
   and removed from the visible Modules toggle list. Optional modules
@@ -885,6 +889,7 @@ run privileged installation just because manual buttons are retired.
   responsiveness/small-screen/accessibility and owner review are complete.
 
 - [x] **SET-R04 — Remove "Use opaque Material appearance" preset button — owner 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   [Owner: Alis dev; Rework/removal] Delete the **button** from
   `modules/abyss/settings/AbyssStyleSettings.qml` completely.
   This button performs a real batch `Config.setNestedValues`
@@ -906,6 +911,7 @@ run privileged installation just because manual buttons are retired.
   physical Settings inspection and owner acceptance remain pending.
 
 - [x] **ABYSS-R07 — Screen Edge Clock and Date use shared Typography — owner 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   [Owner: Alis dev; Rework/font settings] On Top, Bottom,
   Left AND Right Abyss Screen Edges, Clock/Date must inherit
   the main Settings → Typography font family and size scale,
@@ -939,6 +945,7 @@ run privileged installation just because manual buttons are retired.
   Owner/installed, fractional/multi-output and full canonical remain pending.
 
 - [x] **SET-R01 — Eliminate redundant Settings-to-Settings navigation buttons:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   The maintainer wants **no Settings action whose only purpose is to switch
   to another Settings tab/page**. Perform a complete source/UI audit of
   `modules/settings/**`, Waffle Settings pages and the shared Settings
@@ -1067,6 +1074,7 @@ run privileged installation just because manual buttons are retired.
   design and explicit native install permission required.
 
 - [x] **ABYSS-R01 — Comfortable corner clearance in Edit Abyss Layout:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   The user wants Screen Edge modules **visually close to, but never
   actually flush against**, physical screen corners while
   **Edit Abyss Layout** is active. Replace the current true-endpoint
@@ -1109,6 +1117,7 @@ run privileged installation just because manual buttons are retired.
   READY for UI audit; owner visual acceptance pending.
 
 - [x] **ABYSS-R08 — Compact Edit Abyss Layout control bar — owner request 2026-10-10:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   **Owner visual refinement 2026-10-13 (dev source, native acceptance OPEN):**
   Keep fine controls always visible; remove show/hide Options action;
   extend the six editor sliders 144→158 font-scaled px and contract the
@@ -1246,6 +1255,7 @@ run privileged installation just because manual buttons are retired.
 
 
 - [x] **CAL-R01 — Compact Calendar Popup Events to Today / Tomorrow / Day After — owner screenshot 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   [Owner: Alis dev; Rework/UX] The **Events pane immediately beside
   the Calendar Popup** should show only Today's, Tomorrow's and
   the Day After Tomorrow's events, three **local calendar dates**
@@ -1494,6 +1504,7 @@ run privileged installation just because manual buttons are retired.
   and native owner smoothness acceptance pending.
 
 - [x] **DASH-R04 — Edit Dashboard toolbar slide — received/updated 2026-10-10:** pushed
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   `8c673129b58dbde73bf31c82df25c1085bf63e15` slides full-size connected controls
   from the attachment using the shared motion token. Input follows the clipped
   reveal; exit retains its footprint and releases input immediately. Native
@@ -1520,6 +1531,7 @@ run privileged installation just because manual buttons are retired.
   restrained. Detailed wave controls belong to Custom; show numeric audio strength.
 
 - [x] **ABYSS-R02 — Checkbox to preserve rounded INNER workspace corners at 0px Edge width — owner clarification 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   [Owner: Alis dev; Rework] **FINAL OWNER-APPROVED GEOMETRY INTENT:**
   When an Edge in **Edit Abyss Layout** is configured with effective
   **Edge width = 0px**, offer exactly **one independent CHECKBOX option**
@@ -1603,6 +1615,7 @@ run privileged installation just because manual buttons are retired.
   exact-SHA canonical remain separate pending gates.
 
 - [x] **ABYSS-R04 — Unified Panel and Content card opacity slider — owner request 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   [Owner: Alis dev; Rework/Settings] In Abyss **Surface** Settings,
   **Content card opacity** and **Panel background opacity** should
   have ONE shared opacity slider, rather than two independent sliders.
@@ -1676,6 +1689,7 @@ run privileged installation just because manual buttons are retired.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **ABYSS-R05 — Preserve the full module design when placed on Left/Right Screen Edges — owner requirement 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   [Owner: Alis dev; Rework / four-edge visual and geometry parity]
   **ALL Screen Edge modules** must retain the same **non-compact
   component design, visible content, proportions, controls, icon/text
@@ -1916,6 +1930,7 @@ run privileged installation just because manual buttons are retired.
   acceptance is pending. Playback correctness is tracked only in Issues/bugs.
 
 - [x] **REC-R01 — Recording presentation:** `fafb4687b` connects one shared control set
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   to the Abyss field/allocator/input mask while retaining ii/Waffle presentation.
   Native tests pass four-edge controls, drag, connection hover, auto-hide/recovery,
   Stop callback and idle/secondary-output allocation. Confirm owner appearance
@@ -2156,6 +2171,7 @@ test scripts and historical receipts remain in each source repository.
   [AI source](https://github.com/llocphann/Alis-Companion/blob/732136ef65bb3c84d9339207210c955759a85b76/to-do/cloud-bot/WULL_LOCAL_AI.md).
 
 - [x] **AI-R01 — Existing optional Integration Settings UI parity:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   [Owner: Alis-Intergration main] Qualify existing TlpPowerSettings and
   Waffle equivalents, ThinkfanSettings, ObsidianThemeSettings and
   ObsidianTodoSettings for theme, readable labels, initial loading,
@@ -2168,6 +2184,7 @@ test scripts and historical receipts remain in each source repository.
   **Completion classification — 2026-10-12 (maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** Optional Integration Settings UI source implementation reported complete; this separate UI parity item was not explicitly among the owner's #24-27 verified feature IDs, so remains owner-unverified. Previously recorded full-canonical FAIL/SKIP, partial native coverage and independent unresolved regressions remain factual; no fresh PASS or physical owner approval is claimed.
 
 - [x] **TASK-R01 — Categorized tasks and shared AI workflow — completed 2026-10-10:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
   three active lists replace chronological/duplicate ledgers; 26 superseded
   documents are archived with evidence/current research preserved. AGENTS and
   all current entry points apply the same policy to Local and Cloud AI: classify
