@@ -116,7 +116,7 @@ function migrateLegacy(raw) {
             if (compatible(events[i],value) && entries(events[i]).length<512) {
                 var slotList=entries(value);
                 var existing=entries(events[i]);
-                if (slotList.length && slotList.every(function(slot) {
+                if (existing.length && slotList.length && slotList.every(function(slot) {
                     return !existing.some(function(prev) {
                         return prev.startDate===slot.startDate && prev.endDate===slot.endDate;
                     });
