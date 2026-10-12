@@ -6,6 +6,12 @@ handled alongside the selected feature in the same single-agent context.
 Source-implemented features below still need their stated delivery/owner gates;
 do not reimplement them solely because a checkbox is open.
 
+**Latest explicit owner priority — 2026-10-12:** after the current Dashboard
+milestone, execute the named [Abyss rework sequence](REWORK_OPTIMIZATION.md):
+R05 → R03/R01 → R02 → R06/R07, then stop. These named groups take precedence
+for this run. Weekly Planner's new inline Events refinement remains unfinished
+and is deferred by this explicit priority; do not check its parent as complete.
+
 **Immediate owner priority — updated 2026-10-12:** qualify completed feature source milestones after
 DASH-F01/F02 source milestones. Weekly Planner `f62f24361`, tab reorder
 `f94de0535` and Events durable acknowledgement prerequisite `ccd750167`

@@ -1,0 +1,27 @@
+  INFO: Launching config: "/tmp/alis-toolbar-polish-__yf4tsb/shell.qml"
+  INFO: Shell ID: "a6d72edf285101e63e48e4a1e06efc0c" Path ID "a6d72edf285101e63e48e4a1e06efc0c"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/7otm26xrmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1064865.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-toolbar-polish-__yf4tsb/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-toolbar-polish-__yf4tsb/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[760:5]: Read of /tmp/alis-toolbar-polish-__yf4tsb/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[447:5]: Read of /tmp/alis-toolbar-polish-__yf4tsb/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[371:5]: Read of /tmp/alis-toolbar-polish-__yf4tsb/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-toolbar-polish-__yf4tsb/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f64bc653880)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-toolbar-polish-__yf4tsb/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN scene: QML FileView at @services/Notepad.qml[196:5]: Read of /tmp/alis-toolbar-polish-__yf4tsb/state/quickshell/user/notepad-tabs.json failed: File does not exist.
+  WARN scene: QML FileView at @services/Notepad.qml[246:5]: Read of /tmp/alis-toolbar-polish-__yf4tsb/state/quickshell/user/notepad.txt failed: File does not exist.
+  INFO qml: DASHBOARD_TOOLBAR_POLISH before-render {"host":0,"bodyWidth":906,"bodyHeight":1070,"record":{"edge":"bottom","content":{"x":48,"y":352,"width":810,"height":690},"surface":{"x":28,"y":332,"width":850,"height":788},"depth":730,"targetDepth":730,"progress":1,"span":850,"along":28},"toolbar":{"width":782,"height":115,"desiredHeight":115,"p":{"x":14,"y":-129}},"children":[{"type":"QQuickColumnLayout(0x7f64bc5e2e00)","width":760,"height":93,"implicitWidth":1032,"implicitHeight":93,"visible":true},{"type":"QQuickColumnLayout(0x7f64bc5f5400)","width":760,"height":70,"implicitWidth":1032,"implicitHeight":70,"visible":true},{"type":"QQuickGridLayout(0x7f64bc5f5500)","width":314,"height":34,"implicitWidth":314,"implicitHeight":34,"columns":8,"visible":true},{"type":"QQuickRowLayout(0x7f64a5040b00)","width":82,"height":15,"implicitWidth":82,"implicitHeight":15,"visible":true},{"type":"QQuickRowLayout(0x7f64a514f700)","width":65,"height":15,"implicitWidth":65,"implicitHeight":15,"visible":true},{"type":"QQuickRowLayout(0x7f64a011f300)","width":104,"height":15,"implicitWidth":104,"implicitHeight":15,"visible":true},{"type":"QQuickRowLayout(0x7f64a0122f00)","width":106,"height":15,"implicitWidth":106,"implicitHeight":15,"visible":true},{"type":"QQuickRowLayout(0x7f64a0127c00)","width":97,"height":15,"implicitWidth":97,"implicitHeight":15,"visible":true},{"type":"QQuickRowLayout(0x7f64a012c800)","width":65,"height":15,"implicitWidth":65,"implicitHeight":15,"visible":true},{"type":"QQuickRowLayout(0x7f64a0137400)","width":97,"height":15,"implicitWidth":97,"implicitHeight":15,"visible":true},{"type":"QQuickRowLayout(0x7f649549b000)","width":77,"height":15,"implicitWidth":77,"implicitHeight":15,"visible":true},{"type":"QQuickRowLayout(0x7f64954bcc00)","width":80,"height":15,"implicitWidth":80,"implicitHeight":15,"visible":true},{"type":"QQuickRowLayout(0x7f64954dc800)","width":74,"height":15,"implicitWidth":74,"implicitHeight":15,"visible":true}]}
+  WARN scene: QML ProxyFloatingWindow (parent or ancestor of ProxyWindowContentItem) at @shell.qml[-1:-1]: grabToImage: item has no QML engine
+ ERROR qml: DASHBOARD_EDIT_FAIL 0 toolbar frame refused
+  INFO qml: [Weather] Getting location from IP...
+  INFO qml: [Weather] [location redacted]
+  INFO qml: [Weather] [location redacted]
+  INFO qml: [Weather] Air quality updated: 48 EAQI

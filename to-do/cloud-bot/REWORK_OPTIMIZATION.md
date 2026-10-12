@@ -6,6 +6,15 @@ Other work remains actionable when no selected feature can advance.
 [The canonical audit](../../docs/optimization/STRICT_LOSSLESS_GPU_RAM_CPU_AUDIT.md)
 holds technical research; this file holds pending outcomes.
 
+**Immediate owner scope — 2026-10-12:** finish the current Dashboard
+control/layout qualification milestone, then complete **ABYSS-R05 →
+ABYSS-R03 + ABYSS-R01 → ABYSS-R02 → ABYSS-R06 + ABYSS-R07**.
+This explicit sequence supersedes the general feature-first queue for this run.
+Handle only prerequisite/related defects alongside these groups, preserve
+cowork edits and owner settings, and **stop after these requested groups**.
+Do not continue Planner refinements or the rest of the backlog after delivery.
+Keep exact-source tests and Owner chưa verified separate under the shared rule.
+
 ## Resource use and responsiveness
 
 

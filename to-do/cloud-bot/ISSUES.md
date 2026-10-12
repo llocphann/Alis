@@ -9,6 +9,15 @@ evidence and acceptance gates; this file is not a blanket first-work queue.
 
 ## Current failures and owner reports
 
+**Current Dashboard milestone — 2026-10-12:** composed field/slide capture
+PASS16cases/211samples/48PNG and original standalone QML producer PASS both
+Dashboard/Overview hosts, without changed numeric assertions or parent focus.
+[Scoped probes and original producer receipt](../../docs/evidence/abyss-product/20261012-dashboard-toolbar-polish/README.md).
+Ancestor395px toolbar failure cause remains unknown; frozen FAIL/STOPPED and
+new full-canonical gates stay factual. Explicit owner sequence now selects
+ABYSS-R05 -> R03/R01 -> R02 -> R06/R07, then stop. Preserve cowork completion
+classification and distinct owner-unverified evidence gates.
+
 
 **2026-10-12 06:53 ICT checkpoint:** frozen593368c15 STOPPED at five-hour1%,
 318completed311PASS/7FAIL/0SKIP; [raw failures/driver](../../docs/evidence/abyss-product/20261012-593368c15-stopped/README.md).

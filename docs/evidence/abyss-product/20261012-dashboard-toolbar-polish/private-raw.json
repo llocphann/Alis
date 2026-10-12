@@ -1,0 +1,20 @@
+{
+  "diagnostic/native.log": {
+    "raw_sha256": "be1de5a28363ff0433baf03cfaa647bae318e95172256cefa2026eb1e6aa085f",
+    "private_path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/dashboard-toolbar-polish-raw/diagnostic/native.log",
+    "public_log": "diagnostic/native-redacted.log",
+    "redacted_lines": 2
+  },
+  "rendered/native.log": {
+    "raw_sha256": "0076fd5ae48f140d9cbaad78bdf01c9dc550286ce339f5b76779941ad1e309d1",
+    "private_path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/dashboard-toolbar-polish-raw/rendered/native.log",
+    "public_log": "rendered/native-redacted.log",
+    "redacted_lines": 2
+  },
+  "original/native.log": {
+    "raw_sha256": "84911ef565e36ca50eca6fa99d290a99255d74a10ddef4a02265869a63e1a62c",
+    "private_path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/dashboard-toolbar-polish-raw/original/native.log",
+    "public_log": "original/native-redacted.log",
+    "redacted_lines": 2
+  }
+}
