@@ -12,7 +12,7 @@ Flow {
     id: root
     Layout.fillWidth: true
     // Planner full-label chips wrap across rows when the option card is narrow.
-    spacing: root.wrapFullLabels ? 7 : 2
+    spacing: root.wrapFullLabels ? 5 : 2
     // Integración con buscador global de Settings
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
@@ -37,6 +37,32 @@ Flow {
     // icon + text for every choice, with stable widths and multi-row Flow.
     property bool activeLabelOnly: false
     property bool wrapFullLabels: false
+    // Center each naturally wrapped row without changing any non-Planner
+    // selector or adding duplicate option widgets.
+    property bool centerWrappedRows: false
+    function centerWrappedOptionRows(): void {
+        if (!root.centerWrappedRows || root.width<=0) return
+        const rows=[]
+        for(let i=0;i<optionRepeater.count;i++){
+            const button=optionRepeater.itemAt(i)
+            if (!button || !button.visible) continue
+            let group=rows.find(row=>Math.abs(row.y-button.y)<1)
+            if (!group) {
+                group={y:button.y,items:[]}
+                rows.push(group)
+            }
+            group.items.push(button)
+        }
+        for(const row of rows){
+            const minX=Math.min(...row.items.map(button=>button.x))
+            const maxX=Math.max(...row.items.map(button=>button.x+button.width))
+            const delta=(root.width-(maxX-minX))/2-minX
+            if(Math.abs(delta)>.1)
+                for(const button of row.items) button.x+=delta
+        }
+    }
+    onPositioningComplete: if (root.centerWrappedRows)
+        Qt.callLater(root.centerWrappedOptionRows)
     // Shrink previous label first, then reveal the new one; avoids Flow
     // competing width animations when choosing buttons left-to-right.
     property var revealedSelection: null
@@ -202,7 +228,7 @@ Flow {
             // Five buttons fit one row even at narrow Planner panel widths.
             // Reserve fixed icon-only slots before allocating selected text.
             horizontalPadding: root.wrapFullLabels
-                ? Math.max(6,7 * Appearance.fontSizeScale)
+                ? Math.max(4,5 * Appearance.fontSizeScale)
                 : root.activeLabelOnly
                     ? Math.max(5,6 * Appearance.fontSizeScale)
                     : (root.taskNavigation ? 14 * Appearance.fontSizeScale : 11)

@@ -15,8 +15,15 @@ assert 'AbyssStyle.contentLayer : Appearance.colors.colLayer1' in planner
 assert 'AbyssStyle.contentLayer : Appearance.colors.colLayer1' in todo
 assert 'property bool plannerPresentation: false' in editor
 assert 'readonly property bool compactEditor: embeddedPresentation && !plannerPresentation' in editor
-assert 'root.plannerPresentation ? 12 : Math.max(4,' in editor, "no stretched empty gap"
-assert 'contentHeight: root.compactEditor' in editor, "expanded content scrolls naturally"
+assert 'root.plannerPresentation ? 12 : Math.max(4,' in editor, "compact gaps remain"
+assert 'readonly property real visibleItemHeight:' in editor
+assert 'readonly property int visibleItemCount:' in editor
+assert '(editorFlickable.height-visibleItemHeight)' in editor
+assert 'Math.max(editorFlickable.height,root.plannerPage===0' in editor
+assert 'responsive: root.plannerPresentation' in editor
+assert 'width: root.plannerPresentation ? parent.width' in editor
+assert 'root.plannerPresentation\n            ? Math.max(height, formColumn.implicitHeight)' in editor
+assert 'contentHeight: root.plannerPresentation' in editor, "Planner fits the page and preserves genuine overflow"
 assert 'visible: root.compactEditor' in editor, "Calendar deck remains compact"
 assert 'visible: !root.compactEditor' in editor, "Planner shows full labelled form controls"
 assert editor.count('activeLabelOnly: false') == 4, "All Planner choices display icon + text"
@@ -24,7 +31,10 @@ assert editor.count('wrapFullLabels: root.plannerPresentation') == 4, "Planner c
 choices=(r/"modules/common/widgets/ConfigSelectionArray.qml").read_text()
 assert 'property bool activeLabelOnly: false' in choices, "opt-in only"
 assert 'property bool wrapFullLabels: false' in choices, "Planner-only opt-in"
-assert 'spacing: root.wrapFullLabels ? 7 : 2' in choices
+assert 'property bool centerWrappedRows: false' in choices
+assert 'onPositioningComplete: if (root.centerWrappedRows)' in choices
+assert editor.count('centerWrappedRows: root.plannerPresentation') == 4
+assert 'spacing: root.wrapFullLabels ? 5 : 2' in choices
 assert 'horizontalPadding: root.wrapFullLabels' in choices
 assert 'enableImplicitWidthAnimation: !root.taskNavigation && !root.wrapFullLabels' in choices
 assert 'buttonText: modelData.displayName' in choices
@@ -94,13 +104,12 @@ assert editor.count('objectName: "plannerEventPageNavigation"')==1
 # intrinsic content wins, so the page is still scrollable.
 page_two=editor.split('id: plannerOptions',1)[1].split('} // plannerOptions',1)[0]
 assert 'optionCardHeight: root.plannerPresentation' in page_two
-assert 'Math.max(118,Math.min(154,' in page_two
-assert '(editorFlickable.height - spacing * 3 - 18) / 4' in page_two
-assert 'spacing: root.plannerPresentation ? 12' in page_two
+assert 'Math.max(0,(editorFlickable.height-spacing*3-4)/4)' in page_two
+assert 'spacing: root.plannerPresentation ? 7' in page_two
 for kind in ('repeat','category','priority','reminder'):
     assert 'id: '+kind+'Card' in page_two
     assert 'id: '+kind+'Content' in page_two
-    assert 'Math.max('+kind+'Content.implicitHeight + 26,' in page_two
+    assert 'Math.max('+kind+'Content.implicitHeight + 12,' in page_two
 assert page_two.count('visible: root.plannerPresentation') >= 8
 assert page_two.count('radius: Appearance.rounding.large')==4
 assert page_two.count('color: Appearance.colors.colLayer2')==4
@@ -133,4 +142,33 @@ for kind,mouse in [('Start','topResizeMouse'),('End','bottomResizeMouse')]:
     assert 'opacity:'+mouse+'.containsMouse' in segment
     assert 'hoverEnabled:true' in segment
 assert 'Qt.alpha(root.ink,.32)' not in planner.split('objectName:"plannerResizeStart"',1)[1].split('objectName:"plannerResizeEnd"',1)[0]
+
+# Evaluate the actual QML centering algorithm using two independently
+# wrapped rows. Other selectors must remain unchanged with opt-in disabled.
+fn = choices.split("function centerWrappedOptionRows(): void {",1)[1].split(
+    "onPositioningComplete:",1)[0]
+assert "const delta=(root.width-(maxX-minX))/2-minX" in fn
+subprocess.run(["node","-e",r'''
+const assert=require("node:assert/strict"),vm=require("node:vm");
+const raw=process.argv[1];
+const source="function centerWrappedOptionRows() {"+raw;
+for(const enabled of [false,true]) {
+ const items=[
+ {x:0,y:0,width:68,visible:true},{x:73,y:0,width:78,visible:true},
+ {x:156,y:0,width:86,visible:true},{x:0,y:34,width:92,visible:true},
+ {x:97,y:34,width:83,visible:true}
+ ];
+ const root={centerWrappedRows:enabled,width:280};
+ const optionRepeater={count:items.length,itemAt:i=>items[i]};
+ vm.runInNewContext(source+"; centerWrappedOptionRows()",{root,optionRepeater});
+ if(enabled){
+  for(const group of [items.slice(0,3),items.slice(3,5)]){
+   const left=group[0].x,right=group[group.length-1].x+group[group.length-1].width;
+   assert(Math.abs((left+right)/2-140)<0.0001);
+  }
+ }else{
+  assert.equal(items[0].x,0);assert.equal(items[3].x,0);
+ }
+}
+''',fn],check=True)
 print("WEEKLY_PLANNER_EXPANDED_EDITOR_AND_RESIZE_HOVER_PASS")

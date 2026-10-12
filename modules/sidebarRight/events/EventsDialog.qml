@@ -425,9 +425,10 @@ WindowDialog {
                 - scheduleColumn.implicitHeight
                 - compactOptionDeck.height) / 2)
 
-        contentHeight: root.compactEditor
+        contentHeight: root.plannerPresentation
             ? Math.max(height, formColumn.implicitHeight)
-            : formColumn.implicitHeight + 18
+            : root.compactEditor ? Math.max(height, formColumn.implicitHeight)
+                : formColumn.implicitHeight + 18
         Layout.leftMargin: root.plannerPresentation ? 10 : (root.compactEditor ? 6 : 0)
         Layout.rightMargin: root.plannerPresentation ? 10 : (root.compactEditor ? 6 : 0)
         clip: true
@@ -452,7 +453,7 @@ WindowDialog {
                 width: parent.width
                 clip: root.plannerPresentation
                 height: root.plannerPresentation
-                    ? (root.plannerPage===0
+                    ? Math.max(editorFlickable.height,root.plannerPage===0
                         ? plannerBasics.implicitHeight : plannerOptions.implicitHeight)
                     : plannerBasics.implicitHeight+plannerOptions.implicitHeight
                 Behavior on height {
@@ -463,8 +464,25 @@ WindowDialog {
                 Column {
                     id: plannerBasics
                     width: plannerPageHost.width
-                    spacing: root.embeddedPresentation
-                        ? editorFlickable.embeddedGap : 8
+                    // Distribute spare height among the existing sections
+                    // rather than leaving an empty area below the Calendar.
+                    readonly property real visibleItemHeight: {
+                        let total=0
+                        for(const child of plannerBasics.children)
+                            if(child.visible && child.height>0) total+=child.height
+                        return total
+                    }
+                    readonly property int visibleItemCount: {
+                        let count=0
+                        for(const child of plannerBasics.children)
+                            if(child.visible && child.height>0) count++
+                        return count
+                    }
+                    spacing: root.plannerPresentation
+                        ? Math.max(8,Math.min(26,
+                            (editorFlickable.height-visibleItemHeight)
+                                / Math.max(1,visibleItemCount-1)))
+                        : root.embeddedPresentation ? editorFlickable.embeddedGap : 8
                     x: root.plannerPresentation && root.plannerPage===1
                         ? -plannerPageHost.width : 0
                     y: 0
@@ -549,8 +567,13 @@ WindowDialog {
                 ObsidianMonthCalendar {
                     id: plannerMonthCalendar
                     visible: root.plannerPresentation
-                    width: Math.min(parent.width, Math.max(250, implicitWidth))
+                    // Direct width avoids a responsive implicitWidth cycle.
+                    width: root.plannerPresentation ? parent.width
+                        : Math.min(parent.width, Math.max(250, implicitWidth))
                     anchors.horizontalCenter: parent.horizontalCenter
+                    responsive: root.plannerPresentation
+                    responsiveMinCellSize: 30
+                    responsiveMaxCellSize: 42
                     viewingDate: root.plannerViewMonth
                     today: DateTime.clock.date
                     calendarCells: root.plannerCalendarCells
@@ -767,11 +790,12 @@ WindowDialog {
                 Column {
                     id: plannerOptions
                     width: plannerPageHost.width
-                    spacing: root.plannerPresentation ? 12
+                    spacing: root.plannerPresentation ? 7
                         : (root.embeddedPresentation ? editorFlickable.embeddedGap : 8)
+                    // Divide the available viewport between cards; retain a
+                    // content-driven minimum only when a small screen demands it.
                     readonly property real optionCardHeight: root.plannerPresentation
-                        ? Math.max(118,Math.min(154,
-                            (editorFlickable.height - spacing * 3 - 18) / 4))
+                        ? Math.max(0,(editorFlickable.height-spacing*3-4)/4)
                         : 0
                     y: root.plannerPresentation ? 0 : plannerBasics.implicitHeight
                     x: root.plannerPresentation && root.plannerPage===0
@@ -789,7 +813,7 @@ WindowDialog {
                 id: repeatCard
                 width: parent.width
                 height: root.plannerPresentation
-                    ? Math.max(repeatContent.implicitHeight + 26,
+                    ? Math.max(repeatContent.implicitHeight + 12,
                         plannerOptions.optionCardHeight)
                     : repeatContent.implicitHeight
 
@@ -804,9 +828,9 @@ WindowDialog {
 
                 Column {
                     id: repeatContent
-                    width: parent.width - (root.plannerPresentation ? 28 : 0)
+                    width: parent.width - (root.plannerPresentation ? 18 : 0)
                     anchors.centerIn: parent
-                    spacing: root.plannerPresentation ? 10 : 8
+                    spacing: root.plannerPresentation ? 6 : 8
 
                     Row {
                         width: parent.width
@@ -839,6 +863,7 @@ WindowDialog {
                         enableSettingsSearch: false
                         activeLabelOnly: false
                         wrapFullLabels: root.plannerPresentation
+                        centerWrappedRows: root.plannerPresentation
                         options: [
                             // "Event" maps to the existing one-time/non-recurring
                             // storage value instead of inventing an incompatible mode.
@@ -859,7 +884,7 @@ WindowDialog {
                 id: categoryCard
                 width: parent.width
                 height: root.plannerPresentation
-                    ? Math.max(categoryContent.implicitHeight + 26,
+                    ? Math.max(categoryContent.implicitHeight + 12,
                         plannerOptions.optionCardHeight)
                     : categoryContent.implicitHeight
 
@@ -874,9 +899,9 @@ WindowDialog {
 
                 Column {
                     id: categoryContent
-                    width: parent.width - (root.plannerPresentation ? 28 : 0)
+                    width: parent.width - (root.plannerPresentation ? 18 : 0)
                     anchors.centerIn: parent
-                    spacing: root.plannerPresentation ? 10 : 8
+                    spacing: root.plannerPresentation ? 6 : 8
 
                     Row {
                         width: parent.width
@@ -909,6 +934,7 @@ WindowDialog {
                         enableSettingsSearch: false
                         activeLabelOnly: false
                         wrapFullLabels: root.plannerPresentation
+                        centerWrappedRows: root.plannerPresentation
                         options: [
                             { displayName: Translation.tr("General"), icon: "event", value: "general" },
                             { displayName: Translation.tr("Birthday"), icon: "cake", value: "birthday" },
@@ -927,7 +953,7 @@ WindowDialog {
                 id: priorityCard
                 width: parent.width
                 height: root.plannerPresentation
-                    ? Math.max(priorityContent.implicitHeight + 26,
+                    ? Math.max(priorityContent.implicitHeight + 12,
                         plannerOptions.optionCardHeight)
                     : priorityContent.implicitHeight
 
@@ -942,9 +968,9 @@ WindowDialog {
 
                 Column {
                     id: priorityContent
-                    width: parent.width - (root.plannerPresentation ? 28 : 0)
+                    width: parent.width - (root.plannerPresentation ? 18 : 0)
                     anchors.centerIn: parent
-                    spacing: root.plannerPresentation ? 10 : 8
+                    spacing: root.plannerPresentation ? 6 : 8
 
                     Row {
                         width: parent.width
@@ -977,6 +1003,7 @@ WindowDialog {
                         enableSettingsSearch: false
                         activeLabelOnly: false
                         wrapFullLabels: root.plannerPresentation
+                        centerWrappedRows: root.plannerPresentation
                         options: [
                             { displayName: Translation.tr("Low"), icon: "arrow_downward", value: "low" },
                             { displayName: Translation.tr("Normal"), icon: "remove", value: "normal" },
@@ -993,7 +1020,7 @@ WindowDialog {
                 id: reminderCard
                 width: parent.width
                 height: root.plannerPresentation
-                    ? Math.max(reminderContent.implicitHeight + 26,
+                    ? Math.max(reminderContent.implicitHeight + 12,
                         plannerOptions.optionCardHeight)
                     : reminderContent.implicitHeight
 
@@ -1008,9 +1035,9 @@ WindowDialog {
 
                 Column {
                     id: reminderContent
-                    width: parent.width - (root.plannerPresentation ? 28 : 0)
+                    width: parent.width - (root.plannerPresentation ? 18 : 0)
                     anchors.centerIn: parent
-                    spacing: root.plannerPresentation ? 10 : 8
+                    spacing: root.plannerPresentation ? 6 : 8
 
                     Row {
                         width: parent.width
@@ -1043,6 +1070,7 @@ WindowDialog {
                         enableSettingsSearch: false
                         activeLabelOnly: false
                         wrapFullLabels: root.plannerPresentation
+                        centerWrappedRows: root.plannerPresentation
                         options: [
                             { displayName: Translation.tr("None"), icon: "notifications_off", value: 0 },
                             { displayName: Translation.tr("5 min"), icon: "alarm", value: 5 },
