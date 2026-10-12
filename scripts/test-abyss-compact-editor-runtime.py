@@ -133,7 +133,22 @@ ShellRoot {
      frame(n===0?"layout-options-"+edge:null)
      click("abyssEditorIpcMode");settle(edge);check(editor.editingPopups,"IPC mode was lost")
      const chooser=control("abyssEditorIpcKind")
+     const outputPicker=control("abyssEditorIpcOutput")
+     const placement=item("abyssEditorIpcPlacement")
      check(chooser.count===7,"quick IPC selector exposes popup relocation")
+     check(outputPicker.count===2,"IPC scope selector must offer current and all outputs")
+     check(outputPicker.currentIndex===(editor.outputOnly?1:0),
+         "IPC scope picker not synced with checkbox")
+     check(!placement.showKindSelector && !placement.showOutputSelector
+         && placement.compactIpcEditor,"redundant IPC position dropdowns are not hidden")
+     check(placement.outputName===(editor.outputOnly?editor.outputName:""),
+         "IPC placement scope differs from the header")
+     editor.outputOnly=false;wait(60)
+     check(outputPicker.currentIndex===0 && placement.outputName==="",
+         "global IPC scope did not reach placement")
+     editor.outputOnly=true;wait(60)
+     check(outputPicker.currentIndex===1 && placement.outputName===editor.outputName,
+         "output-local IPC scope not restored")
      chooser.forceActiveFocus();keyClick(Qt.Key_Home);keyClick(Qt.Key_Down);keyClick(Qt.Key_Down);wait(50)
      check(editor.previewKind==="brightness","keyboard IPC selector did not update real preview")
      tryVerify(()=>editor.previewHost.ready,3000)

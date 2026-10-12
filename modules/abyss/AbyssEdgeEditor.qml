@@ -683,11 +683,12 @@ Item {
     readonly property Region previewRegion: Region { x:previewBody.inputBounds.x;y:previewBody.inputBounds.y;width:previewBody.inputBounds.width;height:previewBody.inputBounds.height }
     readonly property Region toolbarRegion: Region { item: toolbar }
     readonly property Region ipcKindRegion: Region { item:ipcKindChoice.popup.contentItem; width:ipcKindChoice.popup.visible ? ipcKindChoice.popup.contentItem.width : 0 }
+    readonly property Region ipcOutputRegion: Region { item:ipcOutputChoice.popup.contentItem; width:ipcOutputChoice.popup.visible ? ipcOutputChoice.popup.contentItem.width : 0 }
     readonly property Region paletteRegion: Region { item: palette.popup.contentItem; width: palette.popup.visible ? palette.popup.contentItem.width : 0 }
     readonly property Region selectionRegion: Region { item: selection.popup.contentItem; width: selection.popup.visible ? selection.popup.contentItem.width : 0 }
     readonly property Region edgeRegion: Region { item: edgeChoice.popup.contentItem; width: edgeChoice.popup.visible ? edgeChoice.popup.contentItem.width : 0 }
     readonly property Region alignmentRegion: Region { item: alignmentChoice.popup.contentItem; width: alignmentChoice.popup.visible ? alignmentChoice.popup.contentItem.width : 0 }
-    readonly property var regions: inputRegions.concat([toolbarRegion,paletteRegion,ipcKindRegion,selectionRegion,edgeRegion,alignmentRegion,previewRegion],root.editingPopups ? previewPositions.inputRegions : [])
+    readonly property var regions: inputRegions.concat([toolbarRegion,paletteRegion,ipcKindRegion,ipcOutputRegion,selectionRegion,edgeRegion,alignmentRegion,previewRegion],root.editingPopups ? previewPositions.inputRegions : [])
     Item {
         id: toolbar
         parent: editorBody.contentParent
@@ -785,7 +786,7 @@ Item {
                 GridLayout {
                     Layout.fillWidth: true;Layout.minimumWidth:0
                     columns:width>=660*Appearance.fontSizeScale
-                        ? (root.editingPopups ? 4 : 3)
+                        ? (root.editingPopups ? 5 : 3)
                         : root.editingPopups && width>=440*Appearance.fontSizeScale ? 3 : 2
                     columnSpacing:4;rowSpacing:4
                     SelectionGroupButton {
@@ -826,7 +827,7 @@ Item {
                         onActivated:previewPositions.kind=currentValue
                     }
                                         AbyssCheckBox {
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                        Layout.fillWidth:false;Layout.minimumWidth:0
                         
                                             visible:true
                                             text:"This output only"
@@ -834,10 +835,28 @@ Item {
                         
                                             onToggled:root.outputOnly=checked
                                         }
+                    // The IPC editor can override this output or all outputs.
+                    // Keep scope next to kind, mirroring This output only.
+                    StyledComboBox {
+                        id:ipcOutputChoice
+                        objectName:"abyssEditorIpcOutput"
+                        visible:root.editingPopups
+                        baseHeight:28*Appearance.fontSizeScale
+                        Layout.fillWidth:false;Layout.minimumWidth:0
+                        Layout.preferredWidth:116*Appearance.fontSizeScale
+                        Layout.maximumWidth:116*Appearance.fontSizeScale
+                        textRole:"label";valueRole:"value"
+                        model:[{label:"All outputs",value:""},
+                            {label:root.outputName,value:root.outputName}]
+                        currentIndex:root.outputOnly ? 1 : 0
+                        onActivated:root.outputOnly=currentValue!==""
+                        StyledToolTip {text:"IPC position scope: this output or all outputs"}
+                    }
                 }
 
                 AbyssPositionSettings {
                     id:previewPositions
+                    objectName:"abyssEditorIpcPlacement"
                     visible:root.editingPopups
                     kind:"volume"
                     compactVertical:!root.toolbarWideControls
@@ -845,6 +864,9 @@ Item {
                     commitImmediately:false
                     positions:root.draftPositions
                     outputSelectionEnabled:false
+                    showKindSelector:false
+                    showOutputSelector:false
+                    compactIpcEditor:true
                     outputName:root.outputOnly ? root.outputName : ""
                     nearbyEdge:root.previewNearbyCorner
                     // Popups follow their owning Screen Edge modules; only IPC/OSD

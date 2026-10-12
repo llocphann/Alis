@@ -22,6 +22,18 @@ assert "Math.min(820,root.width*.55" not in editor
 assert "property bool compactVertical: false" in positions
 assert "columns:root.compactVertical ? 1 : 2" in positions
 assert "columns:root.compactVertical ? 1 : 3" in positions
+# The editor has one visible IPC kind picker; output scope joins the tabs.
+assert 'objectName:"abyssEditorIpcKind"' in editor
+assert 'objectName:"abyssEditorIpcOutput"' in editor
+assert 'showKindSelector:false' in editor and 'showOutputSelector:false' in editor
+assert 'compactIpcEditor:true' in editor
+assert 'visible:root.showKindSelector || root.showOutputSelector' in positions
+assert 'visible:root.showKindSelector' in positions
+assert 'visible:root.showOutputSelector' in positions
+assert positions.count('202*Appearance.fontSizeScale') == 4
+assert 'ipcOutputRegion' in editor and 'ipcOutputRegion,selectionRegion' in editor
+assert 'root.editingPopups ? 5 : 3' in editor
+assert 'Layout.preferredWidth:116*Appearance.fontSizeScale' in editor
 
 fine=editor[editor.index("id:editFineControls"):]
 fine_columns=re.search(r"\bcolumns:\s*([\s\S]+?)\n\s*columnSpacing:",fine)

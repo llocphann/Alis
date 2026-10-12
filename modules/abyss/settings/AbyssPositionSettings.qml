@@ -10,12 +10,16 @@ import "../looks/AbyssPresentation.js" as Presentation
 ColumnLayout {
     id: root
     Layout.fillWidth: true
-    spacing: 8
+    spacing:root.compactIpcEditor ? 5 : 8
     property string kind: "popup"
     property string outputName: ""
     property var positions: Config.options?.abyss?.positions ?? []
     property bool commitImmediately: true
     property bool outputSelectionEnabled: true
+    // The embedded IPC editor places kind and output scope in its toolbar.
+    property bool showKindSelector: true
+    property bool showOutputSelector: true
+    property bool compactIpcEditor: false
     property bool compactVertical: false
     property bool compactActions: false
     property var allowedKinds: []
@@ -62,12 +66,14 @@ ColumnLayout {
     readonly property Region edgeRegion: Region { item:edgeChoice.popup.contentItem;width:edgeChoice.popup.visible ? edgeChoice.popup.contentItem.width : 0 }
     readonly property Region alignmentRegion: Region { item:alignmentChoice.popup.contentItem;width:alignmentChoice.popup.visible ? alignmentChoice.popup.contentItem.width : 0 }
     GridLayout {
+        visible:root.showKindSelector || root.showOutputSelector
         Layout.fillWidth:true
         columns:root.compactVertical ? 1 : 2
         rowSpacing:6
         columnSpacing:6
         StyledComboBox {
             id:kindChoice
+            visible:root.showKindSelector
             Layout.fillWidth:true
             textRole:"label";valueRole:"value"
             model:[{label:"All Edge Bar popups",value:"popup"},{label:"Calendar",value:"clock"},
@@ -93,7 +99,8 @@ ColumnLayout {
         StyledComboBox {
             id:outputChoice
             enabled:root.outputSelectionEnabled
-            visible: root.outputSelectionEnabled || !root.compactVertical
+            visible:root.showOutputSelector
+                && (root.outputSelectionEnabled || !root.compactVertical)
             Layout.fillWidth:true
             textRole:"label";valueRole:"value"
             model:[{label:"All outputs",value:""}].concat(Quickshell.screens.map(s => ({label:s.name,value:s.name})))
@@ -104,11 +111,16 @@ ColumnLayout {
     GridLayout {
         Layout.fillWidth:true
         columns:root.compactVertical ? 1 : 3
-        rowSpacing:6
-        columnSpacing:6
+        rowSpacing:root.compactIpcEditor ? 4 : 6
+        columnSpacing:root.compactIpcEditor ? 4 : 6
         StyledComboBox {
             id:edgeChoice
-            Layout.fillWidth:true
+            Layout.fillWidth:!root.compactIpcEditor
+            Layout.minimumWidth:0
+            Layout.preferredWidth:root.compactIpcEditor
+                ? 202*Appearance.fontSizeScale : -1
+            Layout.maximumWidth:root.compactIpcEditor
+                ? 202*Appearance.fontSizeScale : Infinity
             textRole:"label";valueRole:"value"
             model:[{label:"Follow source edge",value:"source"},{label:"Top Edge",value:"top"},
                 {label:"Right Edge",value:"right"},{label:"Bottom Edge",value:"bottom"},{label:"Left Edge",value:"left"}]
@@ -117,7 +129,12 @@ ColumnLayout {
         }
         StyledComboBox {
             id:alignmentChoice
-            Layout.fillWidth:true
+            Layout.fillWidth:!root.compactIpcEditor
+            Layout.minimumWidth:0
+            Layout.preferredWidth:root.compactIpcEditor
+                ? 202*Appearance.fontSizeScale : -1
+            Layout.maximumWidth:root.compactIpcEditor
+                ? 202*Appearance.fontSizeScale : Infinity
             textRole:"label";valueRole:"value"
             model:[{label:"Follow source position",value:"source"},{label:"Align start",value:"start"},
                 {label:"Align center",value:"center"},{label:"Align end",value:"end"},{label:"Custom position",value:"custom"}]
@@ -126,9 +143,14 @@ ColumnLayout {
         }
         AbyssButton {
             text:"Reset position";glyph:"restart_alt"
-            compact:root.compactActions
+            compact:root.compactActions || root.compactIpcEditor
+            editorSquare:root.compactIpcEditor
             description:root.ipcOnly ? "Reset IPC position" : "Reset popup or IPC position"
-            Layout.fillWidth:root.compactVertical
+            Layout.fillWidth:root.compactVertical && !root.compactIpcEditor
+            Layout.preferredWidth:root.compactIpcEditor
+                ? 30*Appearance.fontSizeScale : -1
+            Layout.maximumWidth:root.compactIpcEditor
+                ? 30*Appearance.fontSizeScale : Infinity
             onClicked:root.apply(null)
         }
     }

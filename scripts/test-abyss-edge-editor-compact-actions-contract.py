@@ -36,6 +36,12 @@ assert 'objectName:"abyssEditorConfirmAdd"' in editor
 assert 'property bool compactActions: false' in positions
 assert 'text:"Reset position";glyph:"restart_alt"' in positions
 assert 'compact:root.compactActions' in positions
+assert 'editorSquare:root.compactIpcEditor' in positions
+assert 'objectName:"abyssEditorIpcOutput"' in editor
+assert 'objectName:"abyssEditorIpcPlacement"' in editor
+assert 'currentIndex:root.outputOnly ? 1 : 0' in editor
+assert 'onActivated:root.outputOnly=currentValue!==""' in editor
+assert 'outputName:root.outputOnly ? root.outputName : ""' in editor
 assert 'description:root.ipcOnly ? "Reset IPC position"' in positions
 # Popup placement choices must not be exposed by this screen-edge editor.
 match = re.search(r'allowedKinds:\s*\[([^]]+)\]', editor)
