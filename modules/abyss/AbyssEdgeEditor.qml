@@ -19,14 +19,14 @@ Item {
     component EditorIconHint: Item {
         property string glyph: ""
         property string description: ""
-        implicitWidth: 30 * Appearance.fontSizeScale
-        implicitHeight: 32 * Appearance.fontSizeScale
+        implicitWidth: 24 * Appearance.fontSizeScale
+        implicitHeight: root.editorActionSize
         Accessible.role: Accessible.StaticText
         Accessible.name: description
         MaterialSymbol {
             anchors.centerIn: parent
             text: glyph
-            iconSize: 20
+            iconSize: 17
             color: Appearance.m3colors.darkmode ? AbyssStyle.textColorMuted : "#1a1a1a"
         }
         HoverHandler { id: hintHover }
@@ -37,6 +37,8 @@ Item {
             delay: 500
         }
     }
+    readonly property real editorActionSize: 32 * Appearance.fontSizeScale
+    readonly property real editorSliderWidth: 150 * Appearance.fontSizeScale
     required property string outputName
     required property var moduleLayer
     required property var controller
@@ -727,52 +729,59 @@ Item {
 
                         elide: Text.ElideRight
                     }
-                    GridLayout {
-                        Layout.fillWidth: true;Layout.minimumWidth:0
-                        columns: Math.max(1,Math.min(root.editingPopups ? 5 : 6,Math.floor((width+6)/42)))
-                        columnSpacing: 6
-                        rowSpacing: 6
+                    RowLayout {
+                        Layout.alignment:Qt.AlignRight
+                        Layout.fillWidth:false
+                        spacing:4
                         AbyssButton {
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
                             objectName:"abyssLayoutUndo"
                             text:"Undo";glyph:"undo";compact:true
-                            Layout.fillWidth:true;Layout.minimumWidth:0
+                            Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
                             enabled:root.undoStack.length>0
                             onClicked:root.undo()
                         }
                         AbyssButton {
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
                             text: "Reset"; glyph: "restart_alt"; compact: true
                             description: "Reset layout draft"
-                            Layout.fillWidth:true;Layout.minimumWidth:0
+                            Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
                             onClicked: root.reset()
                         }
                         AbyssButton {
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
                             objectName:"abyssEditorOptions"
                             text:"Options";glyph:"tune";compact:true
                             description:root.expandedControls ? "Hide layout options" : "Show layout options"
                             checkable:true;checked:root.expandedControls
-                            Layout.fillWidth:true;Layout.minimumWidth:0
+                            Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
                             onToggled:root.expandedControls=checked
                         }
+
                         AbyssButton {
-                            objectName:"abyssEditorAdd"
-                            visible:!root.editingPopups
-                            text:"Add module";glyph:"add";compact:true
-                            description:"Choose a module to add"
-                            Layout.fillWidth:true;Layout.minimumWidth:0
-                            onClicked:{root.expandedControls=true;palette.forceActiveFocus()}
-                        }
-                        AbyssButton {
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
                             objectName:"abyssLayoutCancel"
                             text: "Cancel"; glyph: "close"; compact: true
                             description: "Cancel editing"
-                            Layout.fillWidth:true;Layout.minimumWidth:0
+                            Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
                             onClicked: root.finish(false)
                         }
                         AbyssButton {
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
                             objectName:"abyssLayoutDone"
                             text: "Done"; glyph: "check"; compact: true
                             description: "Save layout changes"
-                            Layout.fillWidth:true;Layout.minimumWidth:0
+                            Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
                             enabled:!root.layoutConflicts.length
                             onClicked: root.finish(true)
                         }
@@ -792,20 +801,31 @@ Item {
                     columns:width>=660*Appearance.fontSizeScale
                         ? (root.editingPopups ? (root.expandedControls ? 4 : 3) : (root.expandedControls ? 3 : 2))
                         : root.editingPopups && width>=440*Appearance.fontSizeScale ? 3 : 2
-                    columnSpacing:6;rowSpacing:6
+                    columnSpacing:4;rowSpacing:4
                     SelectionGroupButton {
                         objectName:"abyssEditorModulesMode"
                         buttonIcon:"widgets";buttonText:"Modules";toggled:!root.editingPopups
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                        horizontalPadding:6*Appearance.fontSizeScale
+                        verticalPadding:3*Appearance.fontSizeScale
+                        baseHeight:30*Appearance.fontSizeScale
+                        Layout.fillWidth:false;Layout.minimumWidth:0
+                        Layout.preferredWidth:105*Appearance.fontSizeScale
                         onClicked:root.editingPopups=false
                     }
                     SelectionGroupButton {
                         objectName:"abyssEditorIpcMode"
                         buttonIcon:"open_in_new";buttonText:"IPC";toggled:root.editingPopups
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                        horizontalPadding:6*Appearance.fontSizeScale
+                        verticalPadding:3*Appearance.fontSizeScale
+                        baseHeight:30*Appearance.fontSizeScale
+                        Layout.fillWidth:false;Layout.minimumWidth:0
+                        Layout.preferredWidth:70*Appearance.fontSizeScale
                         onClicked:root.editingPopups=true
                     }
                     StyledComboBox {
+                            baseHeight:30*Appearance.fontSizeScale
+                            Layout.preferredWidth:138*Appearance.fontSizeScale
+                            Layout.maximumWidth:138*Appearance.fontSizeScale
                         id:ipcKindChoice
                         Layout.columnSpan:parent.columns===2 ? 2 : 1
                         objectName:"abyssEditorIpcKind"
@@ -816,7 +836,7 @@ Item {
                             {label:"Voice search",value:"voiceSearch"}]
                         textRole:"label";valueRole:"value"
                         currentIndex:model.findIndex(p=>p.value===previewPositions.kind)
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                        Layout.fillWidth:false;Layout.minimumWidth:0
                         onActivated:previewPositions.kind=currentValue
                     }
                                         AbyssCheckBox {
@@ -857,11 +877,14 @@ Item {
                     Layout.fillWidth:true;Layout.minimumWidth:0
                     columns:!root.toolbarOnHorizontalEdge || width<460*Appearance.fontSizeScale
                         ? 1 : width>=700*Appearance.fontSizeScale ? 3 : 2
-                    columnSpacing:10;rowSpacing:4
+                    columnSpacing:6;rowSpacing:4
                     RowLayout {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
                         StyledComboBox {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:165*Appearance.fontSizeScale
+                            baseHeight:30*Appearance.fontSizeScale
+                            Layout.preferredWidth:142*Appearance.fontSizeScale
+                            Layout.maximumWidth:142*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.minimumWidth:0;
                         
                                                 id: palette
                                                 model: Placement.catalog.map(kind => ({label:Placement.label(kind),kind:kind}))
@@ -870,7 +893,10 @@ Item {
                         
                                             }
                         AbyssButton {
-                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
+                        Layout.preferredWidth:root.editorActionSize
                         
                                                 objectName:"abyssEditorConfirmAdd"
                                                 text:"Add module";glyph:"add"
@@ -882,12 +908,12 @@ Item {
                                             }
                     }
                     RowLayout {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
                         EditorIconHint {
-                        Layout.preferredWidth:30*Appearance.fontSizeScale
+                        Layout.preferredWidth:24*Appearance.fontSizeScale
                          glyph:"space_bar";description:"Gap between modules" }
                         AbyssSlider {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:185*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                         
                         
                                                 unit:"px";from:0;to:32;value:root.gap
@@ -896,12 +922,15 @@ Item {
                                             }
                     }
                     RowLayout {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
                         EditorIconHint {
-                        Layout.preferredWidth:30*Appearance.fontSizeScale
+                        Layout.preferredWidth:24*Appearance.fontSizeScale
                          glyph:"border_outer";description:"Editing Edge" }
                         StyledComboBox {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:115*Appearance.fontSizeScale
+                            baseHeight:30*Appearance.fontSizeScale
+                            Layout.preferredWidth:96*Appearance.fontSizeScale
+                            Layout.maximumWidth:96*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.minimumWidth:0;
                         
                                                 id:edgeChoice
                                                 model:["top","right","bottom","left"]
@@ -911,7 +940,10 @@ Item {
                         
                                             }
                         AbyssButton {
-                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
+                        Layout.preferredWidth:root.editorActionSize
                         
                                                 text:"Snap to guides";glyph:"grid_4x4"
                                                 compact:true
@@ -922,12 +954,12 @@ Item {
                                             }
                     }
                     RowLayout {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
                         EditorIconHint {
-                        Layout.preferredWidth:30*Appearance.fontSizeScale
+                        Layout.preferredWidth:24*Appearance.fontSizeScale
                          glyph:"aspect_ratio";description:"Shared module size for this Edge" }
                         AbyssSlider {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:185*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                         
                         
                                                 from:.6;to:1.8
@@ -938,12 +970,12 @@ Item {
                                             }
                     }
                     RowLayout {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
                         EditorIconHint {
-                        Layout.preferredWidth:30*Appearance.fontSizeScale
+                        Layout.preferredWidth:24*Appearance.fontSizeScale
                          glyph:"line_weight";description:"Physical Edge width" }
                         AbyssSlider {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:170*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                         
                         
                                                 unit:"px";from:0;to:40;stepSize:1
@@ -955,7 +987,10 @@ Item {
                                                     {[root.editingEdge]:value})
                                             }
                         AbyssButton {
-                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
+                        Layout.preferredWidth:root.editorActionSize
                         
                                                 text:"Inherit surface";glyph:"layers";compact:true
                                                 description:"Inherit the physical surface thickness"
@@ -967,7 +1002,7 @@ Item {
                                             }
                     }
                     RowLayout {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
                         AbyssCheckBox {
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         
@@ -980,38 +1015,11 @@ Item {
                                             onToggled:root.edgeRoundZeroCorners=Object.assign({},root.edgeRoundZeroCorners,{[root.editingEdge]:checked})
                                             StyledToolTip {text:parent.enabled ? "Uses shared Curvature" : "Set Edge width to 0px"}
                                         }
-                    }
-                    RowLayout {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
-                        AbyssButton {
-                        Layout.preferredWidth:40*Appearance.fontSizeScale
-                        
-                        compact:true
-                                            visible:root.expandedControls && !root.editingPopups;
-                                            text:"Width affects modules";glyph:"width"
-                                            description:"Scale inherited modules with this Edge (0px hides them), or change only the bare Edge and retain local module bulges. Custom module sizes stay independent."
-                                            checkable:true;checked:root.edgeWidthAffectsModules[root.editingEdge]!==false
-                                            onToggled:root.edgeWidthAffectsModules=Object.assign({},root.edgeWidthAffectsModules,{[root.editingEdge]:checked})
-                                        }
-                        AbyssLabel {
-                        Layout.fillWidth:true;Layout.minimumWidth:0
-                         text:"Scale modules";elide:Text.ElideRight }
-                    }
-                    RowLayout {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
-                        EditorIconHint {
-                        Layout.preferredWidth:30*Appearance.fontSizeScale
-                         glyph:"zoom_out_map";description:"Overall module scale" }
-                        AbyssSlider {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:170*Appearance.fontSizeScale
-                        
-                        
-                                                from:.6;to:1.8;value:root.moduleScale
-                        
-                                                onMoved:root.moduleScale=value
-                                            }
-                        AbyssButton {
-                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                    AbyssButton {
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
+                        Layout.preferredWidth:root.editorActionSize
                         
                                                 text:"Expand whole Edge";glyph:"fit_screen"
                                                 compact:true
@@ -1027,8 +1035,54 @@ Item {
                                             }
                     }
                     RowLayout {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
+AbyssButton {
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
+                        Layout.preferredWidth:root.editorActionSize
+                        
+                        compact:true
+                                            
+                                            text:"Width affects modules";glyph:"width"
+                                            description:"Scale inherited modules with this Edge (0px hides them), or change only the bare Edge and retain local module bulges. Custom module sizes stay independent."
+                                            checkable:true;checked:root.edgeWidthAffectsModules[root.editingEdge]!==false
+                                            onToggled:root.edgeWidthAffectsModules=Object.assign({},root.edgeWidthAffectsModules,{[root.editingEdge]:checked})
+                                        }
+                        Item {
+                            id:scaleModulesCaption
+                            clip:true
+                            implicitHeight:root.editorActionSize
+                            Layout.alignment:Qt.AlignVCenter
+                            Layout.minimumWidth:0
+                            Layout.preferredWidth:root.edgeWidthAffectsModules[root.editingEdge]!==false
+                                ? Math.min(85*Appearance.fontSizeScale,scaleText.implicitWidth) : 0
+                            Behavior on Layout.preferredWidth {
+                                enabled:AbyssStyle.motionEnabled
+                                NumberAnimation { duration:AbyssStyle.motionFast }
+                            }
+                            AbyssLabel {
+                                id:scaleText
+                                anchors.left:parent.left;anchors.verticalCenter:parent.verticalCenter
+                                text:"Scale modules"
+                                elide:Text.ElideRight
+                            }
+                        }
+
+AbyssSlider {
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
+                        
+                        
+                                                from:.6;to:1.8;value:root.moduleScale
+                        
+                                                onMoved:root.moduleScale=value
+                            StyledToolTip { text:"Overall module scale" }
+                                            }
+                    }
+
+                    RowLayout {
                         visible:root.edgeWidthAffectsModules[root.editingEdge]===false
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
                         AbyssCheckBox {
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         
@@ -1043,12 +1097,12 @@ Item {
                     }
                     RowLayout {
                         visible:root.edgeWidthAffectsModules[root.editingEdge]===false
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
                         EditorIconHint {
-                        Layout.preferredWidth:30*Appearance.fontSizeScale
+                        Layout.preferredWidth:24*Appearance.fontSizeScale
                          glyph:"rounded_corner";description:"Module rounding radius" }
                         AbyssSlider {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:170*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                         
                         
                                                 objectName:"abyssModuleRounding"
@@ -1058,7 +1112,10 @@ Item {
                                                 onMoved:root.edgeModuleRadii=Object.assign({},root.edgeModuleRadii,{[root.editingEdge]:value})
                                             }
                         AbyssButton {
-                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
+                        Layout.preferredWidth:root.editorActionSize
                         
                                                 text:"Inherit rounding";glyph:"rounded_corner"
                         
@@ -1072,7 +1129,7 @@ Item {
 
                 RowLayout {
                     visible:!root.editingPopups && root.multiSelect
-                    Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                    Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
                         AbyssLabel {
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         
@@ -1082,7 +1139,10 @@ Item {
                                                 wrapMode:Text.WordWrap
                                             }
                         AbyssButton {
-                        Layout.preferredWidth:40*Appearance.fontSizeScale
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        editorSquare:true
+                        Layout.preferredWidth:root.editorActionSize
                         
                                                 objectName:"abyssSelectionClear"
                         
@@ -1101,9 +1161,12 @@ Item {
                     Layout.fillWidth:true;Layout.minimumWidth:0
                     columns:!root.toolbarOnHorizontalEdge || width<440*Appearance.fontSizeScale
                         ? 1 : root.expandedControls && width>=700*Appearance.fontSizeScale ? 3 : 2
-                    rowSpacing:4;columnSpacing:10
+                    rowSpacing:4;columnSpacing:6
                     StyledComboBox {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:185*Appearance.fontSizeScale
+                            baseHeight:30*Appearance.fontSizeScale
+                            Layout.preferredWidth:152*Appearance.fontSizeScale
+                            Layout.maximumWidth:152*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.minimumWidth:0;
                     
                         id:selection
                         objectName:"abyssEditorSelection"
@@ -1127,9 +1190,13 @@ Item {
                     
                     }
                     RowLayout {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
                     AbyssButton {
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        Layout.preferredWidth:root.editorActionSize
+                        editorSquare:true
+                        Layout.fillWidth:false;Layout.minimumWidth:0
                     
                         objectName:"abyssModulePositionLock"
                         text:root.allTargetsLocked ? "Unlock position" : "Lock position"
@@ -1141,7 +1208,11 @@ Item {
                         onClicked:root.lockSelection()
                     }
                     AbyssButton {
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        Layout.preferredWidth:root.editorActionSize
+                        editorSquare:true
+                        Layout.fillWidth:false;Layout.minimumWidth:0
                     
                         objectName:"abyssSelectionEnabled"
                         text:root.allTargetsDisabled
@@ -1155,7 +1226,11 @@ Item {
                         onClicked:root.batch("enabled",root.allTargetsDisabled)
                     }
                     AbyssButton {
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                        Layout.maximumHeight:root.editorActionSize
+                        Layout.maximumWidth:root.editorActionSize
+                        Layout.preferredWidth:root.editorActionSize
+                        editorSquare:true
+                        Layout.fillWidth:false;Layout.minimumWidth:0
                     
                         text:"Remove";glyph:"delete"
                         objectName:"abyssSelectionRemove"
@@ -1167,7 +1242,10 @@ Item {
                     }
                     }
                     StyledComboBox {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:160*Appearance.fontSizeScale
+                            baseHeight:30*Appearance.fontSizeScale
+                            Layout.preferredWidth:134*Appearance.fontSizeScale
+                            Layout.maximumWidth:134*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.minimumWidth:0;
                     
                         id:alignmentChoice
                         visible:root.expandedControls
@@ -1190,7 +1268,7 @@ Item {
                     }
                     RowLayout {
                         visible:root.expandedControls
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4
+                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:3
                     AbyssCheckBox {
                         Layout.fillWidth:true;Layout.minimumWidth:0
                     
@@ -1202,7 +1280,7 @@ Item {
                         onToggled:root.change("customSize",checked)
                     }
                     AbyssSlider {
-                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.maximumWidth:155*Appearance.fontSizeScale
+                        Layout.fillWidth:true;Layout.minimumWidth:0;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
                     
                     
                         visible:root.expandedControls

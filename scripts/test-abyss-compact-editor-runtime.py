@@ -87,7 +87,7 @@ ShellRoot {
      const body=item("abyssEdgeEditorBody"),scroll=item("abyssEdgeEditorScroll")
      tryVerify(()=>body.presented&&body.ready,3000)
      check(!editor.layoutConflicts.length,"fixture exceeds actual available module capacity")
-     for(const name of ["abyssLayoutUndo","abyssLayoutCancel","abyssLayoutDone","abyssEditorOptions","abyssEditorSelection","abyssModulePositionLock","abyssSelectionEnabled","abyssSelectionRemove","abyssEditorAdd"])
+     for(const name of ["abyssLayoutUndo","abyssLayoutCancel","abyssLayoutDone","abyssEditorOptions","abyssEditorSelection","abyssModulePositionLock","abyssSelectionEnabled","abyssSelectionRemove"])
       control(name)
      const compact={span:body.span,depth:body.depth,area:body.span*body.depth,height:scroll.contentHeight}
      frame(n===0||n===2?"compact-"+n+"-"+edge:null)
@@ -117,7 +117,7 @@ ShellRoot {
    root.testWidth=800;root.testHeight=800;Config.setNestedValue("appearance.typography.sizeScale",1);editor.outputName="A";wait(100)
    editor.editingPopups=false;editor.expandedControls=false;editor.select("a");settle("bottom")
    const count=editor.draft.length
-   click("abyssEditorAdd");settle("bottom");check(editor.expandedControls,"Add did not disclose module palette")
+   click("abyssEditorOptions");settle("bottom");check(editor.expandedControls,"Options did not disclose module palette")
    click("abyssEditorConfirmAdd");wait(100);check(editor.draft.length===count+1,"visible Add did not add a module")
    click("abyssSelectionRemove");wait(100);check(editor.draft.length===count,"quick Remove did not remove selected module")
    click("abyssLayoutUndo");wait(100);check(editor.draft.length===count+1,"Undo did not restore removed module")

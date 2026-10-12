@@ -1109,6 +1109,13 @@ run privileged installation just because manual buttons are retired.
   accessible glyphs/tooltips and remove keyboard instructions from the
   footer while keeping existing shortcuts, input and feedback.
   Source refinement awaiting owner/native four-Edge and scale verification.
+  **Third owner refinement (2026-10-12):** Remove redundant top Add action
+  while retaining Add within Options; animate hiding the Scale modules label
+  when off and bring the module-scale slider beside its toggle. Use a true
+  centered 32px rounded-square icon-only editor button, smaller Modules/IPC
+  tabs and bounded compact dropdowns; unify six editor slider widths and
+  tighten icon/sliders spacing. Keep no changes to stable and qualify four
+  Edges, scaling, keyboard and pointer operations.
   **Second owner screenshot, 2026-10-12:** Earlier icon/slider-only
   reduction still displayed one-component-per-row with excessive horizontal
   blank space. Rework into shared adaptive 3/2/1-column groups:

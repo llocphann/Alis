@@ -30,7 +30,8 @@ for name in ["abyssLayoutUndo", "abyssLayoutDone", "abyssLayoutCancel", "abyssMo
     assert re.search(r"compact:\s*true", block), name
 assert 'property bool expandedControls: false' in editor
 assert 'objectName:"abyssEditorOptions"' in editor
-assert 'objectName:"abyssEditorAdd"' in editor
+assert 'objectName:"abyssEditorAdd"' not in editor
+assert 'objectName:"abyssEditorConfirmAdd"' in editor
 assert 'property bool compactActions: false' in positions
 assert 'text:"Reset position";glyph:"restart_alt"' in positions
 assert 'compact:root.compactActions' in positions
@@ -65,10 +66,20 @@ print("abyss editor compact action density contract: ok")
 
 # Compact follow-up: centred icon-only buttons; density and semantic captions.
 button = (root / "modules/abyss/looks/AbyssButton.qml").read_text()
-assert button.count('visible: root.compact || root.text.length === 0') == 2
+assert 'anchors.centerIn: parent' in button
+assert 'property bool editorSquare: false' in button
+assert 'root.editorSquare && root.iconOnly' in button
 assert 'component EditorIconHint: Item' in editor
-assert len(re.findall(r'EditorIconHint\s*\{', editor)) == 6
+assert len(re.findall(r'EditorIconHint\s*\{', editor)) == 5
 assert editor.count('AbyssSlider {') == 6
+assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 6
+assert editor.count('editorSquare:true') >= 10
+assert 'id:scaleModulesCaption' in editor
+assert 'Behavior on Layout.preferredWidth' in editor
+assert 'root.edgeWidthAffectsModules[root.editingEdge]!==false' in editor
+assert 'description:"Choose a module to add"' not in editor
+assert 'Layout.preferredWidth:105*Appearance.fontSizeScale' in editor
+assert 'Layout.preferredWidth:70*Appearance.fontSizeScale' in editor
 assert 'objectName:"abyssEditorFineControls"' in editor
 assert 'objectName:"abyssEditorSelectedFields"' in editor
 assert 'columns:!root.toolbarOnHorizontalEdge || width<460*Appearance.fontSizeScale' in editor
@@ -76,3 +87,7 @@ assert 'columns:!root.toolbarOnHorizontalEdge || width<440*Appearance.fontSizeSc
 assert editor.count('text:"This output only"') == 1
 assert 'root.expandedControls ? 860 : 720' in editor
 assert 'Ctrl/Shift-click select · Drag' not in editor
+
+# Every Editor button has a bounded square hit rectangle, even in fill rows.
+assert editor.count('Layout.maximumWidth:root.editorActionSize') == 15
+assert editor.count('Layout.maximumHeight:root.editorActionSize') == 15
