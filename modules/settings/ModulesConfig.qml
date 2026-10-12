@@ -88,7 +88,7 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "extension"
         title: "Shell & interface"
-        description: Translation.tr("Choose which shell modules run, pick your default terminal and tune interface behavior in focused views.")
+        description: Translation.tr("Manage modules, terminals and interface behavior.")
         summary: Translation.tr("Panels · Terminal · Modules · Interface")
         currentValue: modulesPage.activeSection
         onSelected: value => modulesPage.activeSection = value
@@ -897,7 +897,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Choose how the Settings window opens. Overlay mode renders settings as a layer on top of the shell, so you can see changes to the bar, sidebars, and background in real time.")
+                text: Translation.tr("Overlay opens Settings above the shell for live previews.")
                 color: Appearance.colors.colOnSurfaceVariant
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -909,7 +909,7 @@ ContentPage {
                 checked: Config.options?.settingsUi?.overlayMode ?? false
                 onCheckedChanged: Config.setNestedValue("settingsUi.overlayMode", checked)
                 StyledToolTip {
-                    text: Translation.tr("When enabled, Settings opens as a floating overlay inside the shell instead of a separate window. This lets you preview changes instantly.\nRequires a shell restart to take effect.")
+                    text: Translation.tr("Overlay replaces the separate Settings window. Restart required.")
                 }
             }
 
@@ -950,7 +950,7 @@ ContentPage {
                     stepSize: 10
                     onValueChanged: Config.setNestedValue("settingsUi.overlayAppearance.backdropBlur", value)
                     StyledToolTip {
-                        text: Translation.tr("Blur the wallpaper behind the Settings overlay while it is open, using the same glass the rest of the shell paints. 0 turns it off and costs nothing.")
+                        text: Translation.tr("Blur wallpaper behind Settings; 0 disables the effect.")
                     }
                 }
 
