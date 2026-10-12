@@ -30,7 +30,7 @@ assert 'text:"Reset position";glyph:"restart_alt"' in positions
 assert 'compact:root.compactActions' in positions
 assert 'description:root.ipcOnly ? "Reset IPC position"' in positions
 # Popup placement choices must not be exposed by this screen-edge editor.
-match = re.search(r'allowedKinds:\\s*\\[([^]]+)\\]', editor)
+match = re.search(r'allowedKinds:\s*\[([^]]+)\]', editor)
 assert match, "Editor must constrain independently positioned indicators"
 choices = re.findall(r'"([^"]+)"', match.group(1))
 assert set(choices) == {"osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch"}, choices
