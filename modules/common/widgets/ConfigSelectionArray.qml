@@ -164,8 +164,10 @@ Flow {
             rightmost: index === root.options.length - 1
             buttonIcon: modelData.icon || ""
             buttonPreviewKind: modelData.previewKind || ""
-            buttonText: root.activeLabelOnly && !paletteButton.toggled
-                ? "" : modelData.displayName
+            // Stable source text: SelectionGroupButton owns the clipping
+            // animation, so quick selection changes cannot lose the label.
+            buttonText: modelData.displayName
+            revealActiveLabelOnly: root.activeLabelOnly
             Accessible.name: modelData.displayName
             ToolTip.visible: root.activeLabelOnly && paletteButton.hovered
                 && !paletteButton.toggled

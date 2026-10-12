@@ -17,8 +17,9 @@ Singleton {
     property string filePath: Directories.eventsPath
     property var list: []
     property var todoUnlinks: []
-    // Full pre-migration snapshot retained in the durable JSON; no extra UI.
-    property var occurrenceMigrationBackup: null
+    // Retain unknown top-level keys from existing Events files untouched.
+    // This preserves old backups without running any migration or rewriting them.
+    property var retainedStorageFields: ({})
     property int nextId: 1
     property bool ready: false
     property bool _saving: false
@@ -54,34 +55,6 @@ Singleton {
         if(next.length===root.todoUnlinks.length)return false
         root.todoUnlinks=next;root.saveToFile();return true
     }
-    // Finish a v1/partially migrated store automatically once the Todo backend
-    // has actually loaded.  A linked metadata flag alone is not proof of a
-    // live task. Do not touch tasks in another provider or missing backends.
-    function _resumeLegacyMigration() {
-        if (!root.ready || !Todo.ready || root.persistenceBusy
-            || root.occurrenceMigrationBackup?.version!==1) return
-        const keys=Todo.list.map(item=>item.agenda?.key).filter(Boolean)
-        const migration=Occurrences.migrateLegacy(root.list,keys,Todo.agendaProvider)
-        if (migration.changed)
-            root.list=migration.events
-        root.occurrenceMigrationBackup=Object.assign({},root.occurrenceMigrationBackup,{
-            version:2,
-            normalized:(root.occurrenceMigrationBackup.normalized||0)+migration.normalized,
-            merged:(root.occurrenceMigrationBackup.merged||0)+migration.merged,
-            skippedLinked:migration.skippedLinked
-        })
-        root.saveToFile()
-    }
-    Connections {
-        target: Todo
-        function onReadyChanged() {
-            if (Todo.ready) Qt.callLater(root._resumeLegacyMigration)
-        }
-    }
-    onPersistenceBusyChanged: if (!persistenceBusy
-        && root.occurrenceMigrationBackup?.version===1 && Todo.ready)
-        Qt.callLater(root._resumeLegacyMigration)
-
     function _notifyAgendaLinks() {
         if(root.getDurableEvents().some(event=>AgendaTodoPolicy.validLink(event.todoLink) && event.todoLink.state!=="detached") || root.getDurableTodoUnlinks().some(link=>AgendaTodoPolicy.validLink(link) && link.provider))
             Qt.callLater(()=>Todo._scheduleAgenda())
@@ -176,7 +149,7 @@ Singleton {
                 root._durableSnapshotJson=""
                 root.list = []
                 root.todoUnlinks = []
-                root.occurrenceMigrationBackup = null
+                root.retainedStorageFields = ({})
                 root.nextId = 1
                 root.ready = true
                 return
@@ -200,48 +173,29 @@ Singleton {
                 const nextId = Number.isInteger(storedNextId) && storedNextId > maxId
                     ? storedNextId : maxId + 1
                 const unlinks=Array.isArray(data?.todoUnlinks)?data.todoUnlinks:[]
-                // The migration runs automatically at initial load, once per
-                // persisted file, before Todo can reconcile any changed links.
-                // Full original records are kept for recovery in the same
-                // durable snapshot. Never declare in-memory migration durable
-                // until FileView acknowledges the write.
-                const previousBackup=data?.occurrenceMigrationBackup ?? null
-                const todoKeys=Todo.ready
-                    ? Todo.list.map(item=>item.agenda?.key).filter(Boolean) : null
-                const migration=previousBackup?.version>=2
-                    ? {events:events,changed:false,normalized:0,merged:0,skippedLinked:0}
-                    : Occurrences.migrateLegacy(events,todoKeys,Todo.agendaProvider)
-                root.list=migration.events
+                // Load existing files verbatim. Never automatically group,
+                // normalize, migrate, or delete previously persisted Events.
+                // Preserve legacy/unknown top-level JSON metadata on save.
+                const retained=({})
+                for (const key of Object.keys(data)) {
+                    if (key!=="schemaVersion" && key!=="nextId"
+                            && key!=="events" && key!=="todoUnlinks")
+                        Object.defineProperty(retained,key,{
+                            value:data[key],enumerable:true,writable:true,configurable:true
+                        })
+                }
+                root.retainedStorageFields=retained
+                root.list=events
                 root.todoUnlinks=unlinks
                 root.nextId=nextId
-                root.occurrenceMigrationBackup=previousBackup
-                if (migration.changed || previousBackup?.version===1 && Todo.ready) {
-                    // Keep the FIRST original snapshot, including when an
-                    // installed v1 migration already ran but left linked rows.
-                    const original=previousBackup?.original
-                        || {events:events,nextId:nextId,todoUnlinks:unlinks}
-                    root.occurrenceMigrationBackup={
-                        version:Todo.ready ? 2 : 1,
-                        original:original,
-                        normalized:(previousBackup?.normalized || 0)+migration.normalized,
-                        merged:(previousBackup?.merged || 0)+migration.merged,
-                        skippedLinked:migration.skippedLinked
-                    }
-                }
                 root._lastSavedJson=fileContents
-                // Disk was read successfully; its original contents remain the
-                // only acknowledged record until the migrated write completes.
-                root._durableSnapshotJson=JSON.stringify({nextId:nextId,events:events,todoUnlinks:unlinks})
+                root._durableSnapshotJson=JSON.stringify({
+                    nextId:nextId,events:events,todoUnlinks:unlinks
+                })
                 root.errorMessage=""
-                root.ready = true
-                if (migration.changed || previousBackup?.version===1 && Todo.ready) {
-                    root._saveQueued=true
-                    Qt.callLater(root.saveToFile)
-                } else root._notifyAgendaLinks()
-                if (root.occurrenceMigrationBackup?.version===1 && Todo.ready)
-                    Qt.callLater(root._resumeLegacyMigration)
-                _log("[Events] Loaded", root.list.length, "events",
-                    migration.changed ? "(automatic occurrence migration pending save)" : "")
+                root.ready=true
+                root._notifyAgendaLinks()
+                _log("[Events] Loaded",root.list.length,"events")
             } catch (e) {
                 console.warn("[Events] Failed to parse file:", e)
                 // An unreadable store is not an empty Agenda. Keep the last
@@ -624,14 +578,12 @@ Singleton {
             root._saveQueued = true
             return
         }
-        const data = {
+        const data = Object.assign({},root.retainedStorageFields,{
             schemaVersion: 2,
             nextId: root.nextId,
             events: root.list,
             todoUnlinks: root.todoUnlinks
-        }
-        if (root.occurrenceMigrationBackup)
-            data.occurrenceMigrationBackup=root.occurrenceMigrationBackup
+        })
         const serialized = JSON.stringify(data, null, 2)
         // Unchanged bytes emit no saved() signal. Do not acquire a write
         // lease for a no-op, or the following real edit will remain queued.

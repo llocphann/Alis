@@ -42,6 +42,10 @@ GroupButton {
     // such as the TLP category browser can request a tidy left-aligned list
     // without changing alignment shell-wide.
     property bool leftAlignContent: false
+    // Opt-in for Planner: keep the source label mounted and reveal its clipped
+    // width left-to-right. Collapse retracts the right edge without dropping text.
+    property bool revealActiveLabelOnly: false
+    readonly property bool labelExpanded: !root.revealActiveLabelOnly || root.toggled
     property bool leftmost: false
     property bool rightmost: false
     readonly property bool showZzzPreview: false
@@ -65,7 +69,8 @@ GroupButton {
         ? Qt.alpha(Appearance.colors.colPrimary,.26) : Appearance.colors.colSecondaryContainerActive
 
     contentItem: RowLayout {
-        spacing: root.buttonIcon?.length > 0 && root.buttonText?.length > 0 ? 4 : 0
+        spacing: root.buttonIcon?.length > 0 && root.buttonText?.length > 0
+            && root.labelExpanded ? 4 : 0
 
         Behavior on spacing {
             enabled: Appearance.animationsEnabled
@@ -106,22 +111,18 @@ GroupButton {
 
         Item {
             Layout.minimumWidth: 0
-            implicitWidth: root.buttonText?.length > 0
+            implicitWidth: root.buttonText?.length > 0 && root.labelExpanded
                 ? Math.min(textItem.implicitWidth, root.maxTextWidth) : 0
             implicitHeight: textMetrics.height // Force height to that of regular text
-            opacity: root.buttonText?.length > 0 ? 1 : 0
-            visible: opacity > 0
+            // Do not unmount or fade a label during selection changes: fading
+            // and visible:opacity>0 could drop the text on rapid toggles.
+            visible: root.buttonText?.length > 0
             clip: true
 
             Behavior on implicitWidth {
                 enabled: Appearance.animationsEnabled
                 animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
             }
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-            }
-
             TextMetrics {
                 id: textMetrics
                 font.family: Appearance.font.family.main
@@ -130,11 +131,18 @@ GroupButton {
 
             StyledText {
                 id: textItem
-                anchors.fill: parent
-                horizontalAlignment: root.leftAlignContent
+                // The glyphs remain at full natural width behind a clipping
+                // viewport. Animating the viewport edge reveals left->right
+                // and collapses right->left without intermediate ellipses.
+                x: 0
+                y: 0
+                width: root.revealActiveLabelOnly
+                    ? Math.min(implicitWidth, root.maxTextWidth) : parent.width
+                height: parent.height
+                horizontalAlignment: root.revealActiveLabelOnly || root.leftAlignContent
                     ? Text.AlignLeft : Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                elide: Text.ElideRight
+                elide: root.revealActiveLabelOnly ? Text.ElideNone : Text.ElideRight
                 maximumLineCount: 1
                 color: root.abyssTaskNavigation
                     ? (root.toggled ? SettingsMaterialPreset.taskTabSelectedInk : SettingsMaterialPreset.taskTabInk)

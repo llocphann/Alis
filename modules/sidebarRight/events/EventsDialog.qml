@@ -572,16 +572,14 @@ WindowDialog {
                     width: parent.width
                     spacing: 6
 
-                    StyledText {
-                        text: Translation.tr("All day")
-                        color: Appearance.colors.colOnSurface
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-                    StyledSwitch {
-                        Layout.preferredWidth: 34
-                        scale: .58
-                        checked: root.allDay
-                        onToggled: root.allDay=checked
+                    CompactEventOptionButton {
+                        Layout.preferredWidth: 36
+                        Layout.preferredHeight: 36
+                        symbol: root.allDay ? "event_available" : "event_busy"
+                        selectedState: root.allDay
+                        tooltipText: Translation.tr("All day") + " · "
+                            + (root.allDay ? Translation.tr("On") : Translation.tr("Off"))
+                        onClicked: root.allDay = !root.allDay
                     }
                     Item {Layout.preferredWidth: 4}
                     ConfigTimeInput {
@@ -877,7 +875,7 @@ WindowDialog {
         Layout.bottomMargin: root.compactEditor ? 2 : 0
 
         DialogButton {
-            visible: root.isEditing && !root.compactEditor
+            visible: root.isEditing && !root.embeddedPresentation
             enabled: Events.ready
             padding: 14
             implicitHeight: 36
@@ -892,9 +890,9 @@ WindowDialog {
         }
 
         CompactEventOptionButton {
-            visible: root.compactEditor && root.isEditing
-            Layout.preferredWidth: 30
-            Layout.preferredHeight: 30
+            visible: root.embeddedPresentation && root.isEditing
+            Layout.preferredWidth: root.compactEditor ? 30 : 36
+            Layout.preferredHeight: root.compactEditor ? 30 : 36
             enabled: Events.ready
             symbol: "delete"
             tooltipText: root.editingEvent?.occurrences?.length > 1
@@ -910,7 +908,7 @@ WindowDialog {
         Item { Layout.fillWidth: true }
 
         DialogButton {
-            visible: !root.compactEditor
+            visible: !root.embeddedPresentation
             padding: 14
             implicitHeight: 36
             buttonText: Translation.tr("Cancel")
@@ -921,9 +919,9 @@ WindowDialog {
         }
 
         CompactEventOptionButton {
-            visible: root.compactEditor
-            Layout.preferredWidth: 30
-            Layout.preferredHeight: 30
+            visible: root.embeddedPresentation
+            Layout.preferredWidth: root.compactEditor ? 30 : 36
+            Layout.preferredHeight: root.compactEditor ? 30 : 36
             symbol: "close"
             tooltipText: Translation.tr("Cancel")
             onClicked: {
@@ -933,7 +931,7 @@ WindowDialog {
         }
 
         DialogButton {
-            visible: !root.compactEditor
+            visible: !root.embeddedPresentation
             padding: 14
             implicitHeight: 36
             buttonText: root.isEditing
@@ -951,9 +949,9 @@ WindowDialog {
         }
 
         CompactEventOptionButton {
-            visible: root.compactEditor
-            Layout.preferredWidth: 30
-            Layout.preferredHeight: 30
+            visible: root.embeddedPresentation
+            Layout.preferredWidth: root.compactEditor ? 30 : 36
+            Layout.preferredHeight: root.compactEditor ? 30 : 36
             symbol: root.isEditing ? "check" : "add_task"
             selectedState: true
             tooltipText: root.isEditing

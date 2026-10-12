@@ -316,7 +316,7 @@ run_check 'Abyss frame activity diagnostic regression' node scripts/test-abyss-f
 run_check 'Dashboard horizontal gesture and stable page order regression' node scripts/test-dashboard-page-policy.mjs
 run_check 'Weekly Planner civil dates, overlap, recurrence and DST regression' node scripts/test-weekly-planner-policy.mjs
 run_check 'Multi-date Events grouping and Weekly Planner drag/resize policy' node scripts/test-event-occurrences-policy.mjs
-run_check 'Automatic legacy Event migration and Todo safety' node scripts/test-event-occurrences-migration.mjs
+run_check 'Events persisted data preservation without automatic migration' node scripts/test-events-no-automatic-migration.mjs
 run_check 'Calendar popup three-day civil range and recurrence policy' node scripts/test-calendar-three-day-window.mjs
 run_check 'Agenda one-way task link identity and owned fields' node scripts/test-agenda-todo-policy.mjs
 run_check 'Screen Edge lock reservations and output packing' node scripts/test-abyss-module-locks.mjs
