@@ -50,6 +50,16 @@ assert 'root.allDay = !root.allDay' in editor
 assert 'symbol: "delete"' in editor
 assert 'symbol: "close"' in editor
 assert 'symbol: root.isEditing ? "check" : "add_task"' in editor
+# Narrow Planner footer: both corner action groups must sit inside equal
+# 12 px gutters, not inherit WindowDialogButtonRow's -8 px modal overhang.
+footer=editor.split('    WindowDialogButtonRow {',1)[1].split('        DialogButton {',1)[0]
+assert 'Layout.fillWidth: true' in footer
+assert 'Layout.leftMargin: root.plannerPresentation ? 12 : (root.compactEditor ? 6 : -8)' in footer
+assert 'Layout.rightMargin: root.plannerPresentation ? 12 : (root.compactEditor ? 6 : -8)' in footer
+assert 'Layout.topMargin: root.plannerPresentation ? 6 : 0' in footer
+assert 'Layout.bottomMargin: root.plannerPresentation ? 12 : (root.compactEditor ? 2 : 0)' in footer
+assert editor.count('Layout.preferredWidth: root.compactEditor ? 30 : 36') >= 3
+assert editor.count('Layout.preferredHeight: root.compactEditor ? 30 : 36') >= 3
 assert 'enabled: !root.allDay' in editor, "All-day and aligned Start/End share a planner row"
 assert 'embeddedPresentation: true' in calendar and 'plannerPresentation:true' not in calendar, "Calendar untouched"
 for kind,mouse in [('Start','topResizeMouse'),('End','bottomResizeMouse')]:
