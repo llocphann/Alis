@@ -5,7 +5,7 @@ function valid(value) {
     return Number.isFinite(d.getTime()) ? d : null;
 }
 function nameKey(value) {
-    return String(value || "").trim().replace(/\\s+/g, " ").toLocaleLowerCase();
+    return String(value || "").trim().replace(/\s+/g, " ").toLocaleLowerCase();
 }
 function entry(start, end, notified, reminded) {
     var a = valid(start), b = valid(end);
