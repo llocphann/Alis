@@ -315,4 +315,33 @@ for page, hints in WAFFLE_LATE_HELP.items():
         assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
         assert EN_US.get(hint) == hint, (page, hint)
 
+
+# Optional plugin wrappers retain loader/retry behavior while help is localized.
+OPTIONAL_SETTINGS_HELP = {
+    "CompanionConfig.qml": ("Companion unavailable. Run ./setup update, then Recheck Companion.", "Recheck Companion",),
+    "ObsidianThemeSettings.qml": ("Install Hadalird; enable this integration in Settings → Integrations.",),
+    "ObsidianTodoSettings.qml": ("Install Hadalird; enable Obsidian in Settings → Integrations.",),
+    "ThinkfanSettings.qml": ("Install Hadalird; enable Thinkfan in Settings → Integrations.",),
+}
+for page, hints in OPTIONAL_SETTINGS_HELP.items():
+    source = (ROOT / "modules" / "settings" / page).read_text(encoding="utf-8")
+    for hint in hints:
+        assert f"Translation.tr({json.dumps(hint, ensure_ascii=False)})" in source, (page, hint)
+        assert EN_US.get(hint) == hint, (page, hint)
+companion_source = (ROOT / "modules/settings/CompanionConfig.qml").read_text(encoding="utf-8")
+assert "active: Hadanion.available" in companion_source
+assert "source: Hadanion.settingsSource" in companion_source
+assert "onClicked: Hadanion.refresh()" in companion_source
+for name, dynamic_source in (
+    ("ThinkfanSettings.qml", 'Hadalird.settingsSource("thinkfan")'),
+    ("ObsidianThemeSettings.qml", 'Hadalird.settingsSource("obsidian")'),
+    ("ObsidianTodoSettings.qml", 'Hadalird.settingsSource("obsidianTodo")'),
+):
+    source = (ROOT / "modules/settings" / name).read_text(encoding="utf-8")
+    assert dynamic_source in source, name
+waffle_tlp_source = (ROOT / "modules/waffle/settings/pages/WTlpPage.qml").read_text(encoding="utf-8")
+tlp_hint = "Install Hadalird; enable TLP in Settings → Integrations."
+assert f"Translation.tr({json.dumps(tlp_hint, ensure_ascii=False)})" in waffle_tlp_source
+assert EN_US.get(tlp_hint) == tlp_hint
+
 print("Settings concise-copy/shared-surface contract: PASS")
