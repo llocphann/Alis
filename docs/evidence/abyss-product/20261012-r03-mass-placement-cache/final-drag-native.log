@@ -1,0 +1,19 @@
+  INFO: Launching config: "/tmp/alis-drag-corners-5t4qwq67/shell.qml"
+  INFO: Shell ID: "6fb934955b6cc36553289fd0e17e8bca" Path ID "6fb934955b6cc36553289fd0e17e8bca"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/3xyxdwismt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1584876.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-drag-corners-5t4qwq67/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-drag-corners-5t4qwq67/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Events.qml[124:5]: Read of /tmp/alis-drag-corners-5t4qwq67/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-drag-corners-5t4qwq67/state/quickshell/states.json failed: File does not exist.
+ DEBUG qml: Failed to load persistent states file: 2
+ DEBUG qml: [Persistent] File not found, creating new file.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-drag-corners-5t4qwq67/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f87eb595780)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-drag-corners-5t4qwq67/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: ABYSS_DRAG_CORNERS_NATIVE_PASS 84 checks 19 frames; [{"elapsedMs":53,"primary":127.20000000000002,"target":127.20000000000002,"neighbor":311.52,"neighborTarget":311.52},{"elapsedMs":105,"primary":142.20000000000002,"target":142.20000000000002,"neighbor":311.52,"neighborTarget":311.52},{"elapsedMs":158,"primary":157.20000000000002,"target":157.20000000000002,"neighbor":311.52,"neighborTarget":311.52},{"elapsedMs":211,"primary":172.20000000000002,"target":172.20000000000002,"neighbor":315.21775246355685,"neighborTarget":318.20000000000005},{"elapsedMs":264,"primary":188.20000000000005,"target":188.20000000000005,"neighbor":325.7254848874683,"neighborTarget":334.20000000000005},{"elapsedMs":317,"primary":203.20000000000005,"target":203.20000000000005,"neighbor":338.71993789467894,"neighborTarget":349.20000000000005},{"elapsedMs":370,"primary":218.20000000000005,"target":218.20000000000005,"neighbor":357.43069778615927,"neighborTarget":364.20000000000005},{"elapsedMs":423,"primary":233.20000000000005,"target":233.20000000000005,"neighbor":373.4165374220518,"neighborTarget":379.20000000000005},{"elapsedMs":481,"primary":248.20000000000005,"target":248.20000000000005,"neighbor":388.67844598421135,"neighborTarget":394.20000000000005},{"elapsedMs":533,"primary":263.20000000000005,"target":263.20000000000005,"neighbor":400.03827037311817,"neighborTarget":409.20000000000005},{"elapsedMs":586,"primary":278.20000000000005,"target":278.20000000000005,"neighbor":417.78093990597785,"neighborTarget":424.20000000000005},{"elapsedMs":655,"primary":293.20000000000005,"target":293.20000000000005,"neighbor":424.31731267029704,"neighborTarget":439.20000000000005}]

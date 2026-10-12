@@ -1,0 +1,9 @@
+{
+  "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/r03-qml-profiler/trace.qtd",
+  "bytes": 250810363,
+  "sha256": "f846d176140bcaec4dc826f0f2acf98dea8296ddf7ec18c31ee4b5a1eab37057",
+  "status": "PARTIAL_INVALID_TIMINGS",
+  "flush_timeout_seconds": 8,
+  "performance_percentages_authorized": false,
+  "note": "Partial XML has impossible negative/oversized durations. Binding counts are diagnostic only; no inclusive timing attribution."
+}

@@ -1,0 +1,8 @@
+  INFO: Launching config: "/tmp/alis-mass-oracle-z63hdsqy/shell.qml"
+  INFO: Shell ID: "d21419be7d251cda7a4d7401bfb25bac" Path ID "d21419be7d251cda7a4d7401bfb25bac"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/vonxorismt/log.qslog"
+  WARN: --- WARNING ---
+  WARN: WAYLAND_DISPLAY is present but QT_QPA_PLATFORM is "offscreen"
+  WARN: If you are actually running wayland, set QT_QPA_PLATFORM to "wayland" or most functionality will be broken.
+  INFO: Configuration Loaded
+  INFO qml: ABYSS_MASS_MEMO_QV4_PASS 433526 exact checks; mass/evolution/crests/cache lifecycle

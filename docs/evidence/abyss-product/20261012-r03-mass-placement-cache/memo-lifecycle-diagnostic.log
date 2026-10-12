@@ -1,0 +1,13 @@
+  INFO: Launching config: "/tmp/alis-placement-memo-o30sgjy6/shell.qml"
+  INFO: Shell ID: "b975b4552efbcfe97e112d9024dcdf8f" Path ID "b975b4552efbcfe97e112d9024dcdf8f"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/sshx0qismt/log.qslog"
+  WARN: --- WARNING ---
+  WARN: WAYLAND_DISPLAY is present but QT_QPA_PLATFORM is "offscreen"
+  WARN: If you are actually running wayland, set QT_QPA_PLATFORM to "wayland" or most functionality will be broken.
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-1.2134.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-placement-memo-o30sgjy6/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-placement-memo-o30sgjy6/state/quickshell/user/gamemode_active failed: File does not exist.
+ ERROR qml: ABYSS_PLACEMENT_MEMO_RUNTIME_FAIL previous destroyed hosts retained entries: {"step":2,"baseline":0,"size":8,"keys":[1,2,3,4,5,6,7,8],"destroyed":8} check@qs:@/qs/shell.qml:11
+expression for onTriggered@qs:@/qs/shell.qml:22

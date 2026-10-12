@@ -1629,6 +1629,16 @@ run privileged installation just because manual buttons are retired.
   and current exact-SHA canonical remain separate pending gates.
 
 - [ ] **ABYSS-R03 — Smooth module movement and repacking on Screen Edges — owner request/reconfirmed 2026-10-11 13:36 ICT:**
+  **2026-10-12 strict-lossless partial milestone, source `458ad7197`:**
+  after synchronizing cloud/local `58853ae54`, reuse exact synchronous wave
+  kernels/mass snapshots and equal plain-data body placements. Host-owned
+  caches avoid the rejected global registry's destruction leak. Qt/QV4
+  433526 exact checks, 821 lifecycle checks/160 hosts, native drag 84/19,
+  body retention/focus and GPU wave checks PASS. Initial focus FAIL and
+  rejected variants retained; no accepted CPU/GPU/RAM percentage claimed.
+  [Evidence](../../docs/evidence/abyss-product/20261012-r03-mass-placement-cache/README.md).
+  STILL OPEN for dense actual wl_pointer tracking, owner video smoothness
+  and current exact-SHA qualification; POP-I01 remains independent.
   **2026-10-12 focused partial source repair — STILL OPEN:** actual private
   virtual-pointer drag exposed source hover remaining true while the module
   is disabled for Edit, holding Resources popup open. Separate source input

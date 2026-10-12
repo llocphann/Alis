@@ -1,0 +1,22 @@
+{
+  "base_sha": "58853ae54708387e4dbd9b59621bf997ad79d3be",
+  "dirty_candidate": true,
+  "sha256": {
+    "modules/abyss/AbyssBodyHost.qml": "dd6854d8da5d632d400b3f307c698026bcc823b7e840965c82ecfda732abca8c",
+    "modules/abyss/AbyssWaveController.qml": "d2a49db7c00ac4e7dfab25153981b40a11ac9f8d6bc0d1cc6b34b5066fde7caf",
+    "modules/abyss/looks/AbyssWave.js": "e9cea17b0a5f612c0691d94bd4b315f2d98ac7df5d327bffe8699b6c70d827a9",
+    "modules/abyss/looks/AbyssPlacementMemo.js": "37b6122dab10966741251b5bb850ccc849b01f821080a6a511d6a062141ea33a",
+    "scripts/test-abyss-placement-memo-runtime.py": "73a227980fd05af42cede7608e8b218d7e6d5317836222f3df0d1905bfbaba2c",
+    "scripts/test-abyss-wave-mass-cache.py": "18082605ab57975e5773d4c55cae58d333059048d5f133f9e9f2430fda366ebe"
+  },
+  "product_sha": "458ad719747d853ac73751d8a5dc1440f846b89d",
+  "dirty_candidate_at_test_time": true,
+  "final_test_scope": [
+    "mass-oracle.log",
+    "memo-lifecycle.log",
+    "final-drag.log",
+    "final-test-abyss-body-placement.sh.log",
+    "final-test-abyss-multi-styled-popup.sh.log",
+    "final-test-abyss-wave-runtime.sh.log"
+  ]
+}
