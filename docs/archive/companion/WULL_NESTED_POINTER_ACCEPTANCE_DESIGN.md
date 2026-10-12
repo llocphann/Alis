@@ -16,9 +16,9 @@ The October 1 production geometry receipts on `336726d7...` and
 `fca39532...` both recorded four-edge containment of the actual centered
 production QML. Focused native/perimeter qualification recorded 8/8 PASS
 on `c10b669f...`. The new nested-Niri receipts
-`docs/wull-nested-niri-20261001T152505Z-d938e783-24af1766f3eb.json`
+`docs/archive/companion/receipts/2026-10-01/wull-nested-niri-20261001T152505Z-d938e783-24af1766f3eb.json`
 and
-`docs/wull-production-layer-20261001T152511Z-c5413658-24af1766f3eb.json`
+`docs/archive/companion/receipts/2026-10-01/wull-production-layer-20261001T152511Z-c5413658-24af1766f3eb.json`
 both recorded PASS on exact source
 `24af1766f3eb7fc7abb2a381efba962ea51ed42d`.
 Those nested receipts established an owned private compositor, one active
@@ -200,7 +200,7 @@ whole-shell resources or permission to narrow the production input mask.
 ## Missing wdotool: reviewed native-only wlrctl alternative
 
 The first opt-in pointer receipt
-`docs/wull-pointer-acceptance-20261001T155651Z-c552449b-304d6ab601b1.json`
+`docs/archive/companion/receipts/2026-10-01/wull-pointer-acceptance-20261001T155651Z-c552449b-304d6ab601b1.json`
 on source `304d6ab601b130c11756de2f4ac7059cdda5507b`
 is `INCONCLUSIVE` with `native_wdotool_missing_no_input_injected`.
 The parent refused to start the nested pointer trial, and its
@@ -254,7 +254,7 @@ on a tool-availability failure.
 ## First real nested click failure and target-coordinate diagnostic
 
 The maintainer's first real native input run published
-`docs/wull-pointer-acceptance-20261001T161301Z-8af536c9-115ab32a9825.json`
+`docs/archive/companion/receipts/2026-10-01/wull-pointer-acceptance-20261001T161301Z-8af536c9-115ab32a9825.json`
 on exact source `115ab32a98251453edc76c84bdc8558068186aab`.
 It is **FAILED**, not accepted: nested Niri and private endpoint identity
 passed, disabled-center underlay control passed, enabled-outside-host
@@ -322,7 +322,7 @@ The new coordinate-verified pointer run still needs local execution.
 ## Coordinate-qualified real top-edge PASS; private candidate A/B staged
 
 The new exact-source real production receipt
-`docs/wull-pointer-acceptance-20261001T161911Z-4d87f846-391d8e81d461.json`
+`docs/archive/companion/receipts/2026-10-01/wull-pointer-acceptance-20261001T161911Z-4d87f846-391d8e81d461.json`
 was published on source
 `391d8e81d4617a6dbdb1199d009db4e0970ce073` and is **PASS**.
 The separately owned one-output nested Niri had distinct verified
@@ -419,7 +419,7 @@ and shipped default-off Wull have not been changed.
 ## Private top-edge A/B PASS; bottom-edge qualification staged
 
 The new maintainer-owned real comparison receipt
-`docs/wull-mask-candidate-20261001T165308Z-a3bc585f-124f02155679.json`
+`docs/archive/companion/receipts/2026-10-01/wull-mask-candidate-20261001T165308Z-a3bc585f-124f02155679.json`
 on exact source `124f02155679949e60a810e54a9c216fbfd2fabe`
 has overall **PASS** on one top edge with scale=1 and a single
 privately owned nested Niri output. The original production full
@@ -443,7 +443,7 @@ or a reason to edit production already. Production Wull and
 Next source-only staged gate: a guarded private **bottom edge**
 A/B trial. A prior exact-source postchange offscreen production
 geometry receipt
-`docs/wull-production-geometry-20261001T151838Z-fd6d4452-fca3953264b1.json`
+`docs/archive/companion/receipts/2026-10-01/wull-production-geometry-20261001T151838Z-fd6d4452-fca3953264b1.json`
 observed the centered Wull body on all four edges:
 top/bottom full host 112x98, body BBOX (18,3,76,92);
 left/right full host 98x112, rotated body BBOX (3,18,92,76).
@@ -498,7 +498,7 @@ and canonical-wide gates remain outstanding.
 
 The temporary-clone run has produced a new real,
 unique exact-source report
-`docs/wull-mask-candidate-20261001T170950Z-105fd7a8-1518db798d10.json`,
+`docs/archive/companion/receipts/2026-10-01/wull-mask-candidate-20261001T170950Z-105fd7a8-1518db798d10.json`,
 source `1518db798d1012592cdbceb29115cceb72cffd9b`,
 overall **INCONCLUSIVE**. The full-host production
 disabled-center and enabled-exterior controls both aligned
@@ -570,7 +570,7 @@ default-off and `stable` remain unchanged.
 ## Retrospective old-log classification can now publish sanitized evidence from isolated clone
 
 The earlier dynamic private top candidate report
-`docs/wull-mask-candidate-20261001T170950Z-105fd7a8-1518db798d10.json`
+`docs/archive/companion/receipts/2026-10-01/wull-mask-candidate-20261001T170950Z-105fd7a8-1518db798d10.json`
 is still **INCONCLUSIVE** on its first candidate exterior coordinate
 witness. No second real top pass and no bottom real receipt have been
 published as of the source-only next gate. The old private underlay log
@@ -597,7 +597,7 @@ explicit no-input/no-production-change annotations. It never
 publishes or prints raw screen coordinates, raw logs, usernames,
 session paths, screenshots or private runtime endpoints.
 Its distinct fixed-name JSON report is
-`docs/wull-pointer-drift-20261001T170950Z-105fd7a8-1518db798d10.json`.
+`docs/archive/companion/receipts/2026-10-01/wull-pointer-drift-20261001T170950Z-105fd7a8-1518db798d10.json`.
 It refuses to overwrite an existing report.
 
 The clone-only publisher synchronizes by **fast-forward** on fresh
@@ -640,7 +640,7 @@ log classification has been received. Do not introduce
 ## Retrospective drift verified; new pre-candidate witness and output-geometry guard
 
 New real read-only retrospective evidence was published on `dev`:
-`docs/wull-pointer-drift-20261001T170950Z-105fd7a8-1518db798d10.json`
+`docs/archive/companion/receipts/2026-10-01/wull-pointer-drift-20261001T170950Z-105fd7a8-1518db798d10.json`
 at publisher source `5164395aea401bcfcd79fa8e74622d34fe5fceb5`.
 The source-verified classifier consumed exactly three old, previously
 private, underlay left-button witnesses from the
@@ -728,7 +728,7 @@ probe. See https://github.com/cushycush/wdotool .
 ## New exact-source dynamic TOP A/B PASS with pre-remap discrimination; BOTTOM next
 
 The new real independently owned single-output nested-Niri report
-`docs/wull-mask-candidate-20261001T173129Z-ce33db3c-8efa0b7d7341.json`
+`docs/archive/companion/receipts/2026-10-01/wull-mask-candidate-20261001T173129Z-ce33db3c-8efa0b7d7341.json`
 has `source_sha=8efa0b7d73418af9fc52b117199e2a691e0158ac`,
 `status=pass`, and
 `native_pointer_backend=forced_wlr_protocols_wdotool`.
@@ -758,7 +758,7 @@ No shipped production QML mask, default-off behavior
 or host user configuration was changed.
 
 The earlier dynamic-generator
-`docs/wull-mask-candidate-20261001T170950Z-105fd7a8-1518db798d10.json`
+`docs/archive/companion/receipts/2026-10-01/wull-mask-candidate-20261001T170950Z-105fd7a8-1518db798d10.json`
 remains **INCONCLUSIVE** after a first candidate exterior
 off-target click, and its old-log retrospective diagnosis
 documents large two-axis drift. The new independent
@@ -794,7 +794,7 @@ remain unqualified. Keep production Region and
 ## REAL bottom private A/B PASS; standalone right candidate next
 
 The NEW independently verified actual Niri pointer receipt is
-`docs/wull-mask-bottom-20261001T173542Z-10d599c4-9ac701f650dc.json`,
+`docs/archive/companion/receipts/2026-10-01/wull-mask-bottom-20261001T173542Z-10d599c4-9ac701f650dc.json`,
 `source_sha=9ac701f650dce381487fa00a56f24520c5c83289`,
 `status=pass`,
 `scope=owned_single_output_nested_niri_bottom_candidate_mask_A_B`,
@@ -821,7 +821,7 @@ production input Region, user host config or `stable`.
 This adds independent real evidence for the BOTTOM
 horizontal mask, in addition to the separately source-
 pinned latest dynamic TOP private candidate PASS
-`docs/wull-mask-candidate-20261001T173129Z-ce33db3c-8efa0b7d7341.json`.
+`docs/archive/companion/receipts/2026-10-01/wull-mask-candidate-20261001T173129Z-ce33db3c-8efa0b7d7341.json`.
 The older top trial's categorically proven transient
 off-target wdotool underlay click remains an unresolved
 reliability observation; later PASS trials do NOT prove
@@ -886,7 +886,7 @@ gates remain separate and pending.
 ## REAL right private A/B PASS; independent left-side candidate staged
 
 New exact-source sanitized real pointer report:
-`docs/wull-mask-right-20261001T174248Z-cd6a3010-cdbe02bbcd61.json`,
+`docs/archive/companion/receipts/2026-10-01/wull-mask-right-20261001T174248Z-cd6a3010-cdbe02bbcd61.json`,
 `source_sha=cdbe02bbcd61720f07852fd7eb62929d14004188`,
 `status=pass`, scoped ONLY to
 `owned_single_output_nested_niri_right_candidate_mask_A_B`
@@ -984,7 +984,7 @@ and canonical validation remain separate.
 ## First real LEFT run INCONCLUSIVE at final empty margin; five-witness no-input gate
 
 Independent LEFT private-side mask report
-`docs/wull-mask-left-20261001T175020Z-5a11aa42-5b72e0e3294c.json`
+`docs/archive/companion/receipts/2026-10-01/wull-mask-left-20261001T175020Z-5a11aa42-5b72e0e3294c.json`
 was actually published on `dev` from exact
 `source_sha=5b72e0e3294c32276c306b3c6911fd9fa4e79fb1`
 with `status=inconclusive`, NOT PASS,
@@ -1091,7 +1091,7 @@ original private log, no untracked
 files, and the exact public enum/boolean
 schema, and publishes exactly one
 uniquely named new redacted result to
-`docs/wull-pointer-left-margin-drift-20261001T175020Z-5a11aa42-5b72e0e3294c.json`.
+`docs/archive/companion/receipts/2026-10-01/wull-pointer-left-margin-drift-20261001T175020Z-5a11aa42-5b72e0e3294c.json`.
 Its non-forced concurrent Git retry
 may rebase ONLY its own single
 unpublished redacted receipt commit
@@ -1152,13 +1152,13 @@ remain separately unqualified.
 ## Existing left margin drift classified; guarded before-body differential now staged
 
 The old single-output LEFT edge source-pinned A/B receipt remains
-`docs/wull-mask-left-20261001T175020Z-5a11aa42-5b72e0e3294c.json`
+`docs/archive/companion/receipts/2026-10-01/wull-mask-left-20261001T175020Z-5a11aa42-5b72e0e3294c.json`
 (`5b72e0e3294c32276c306b3c6911fd9fa4e79fb1`),
 **INCONCLUSIVE** only at final empty-host-margin coordinate witness;
 the first seven real controls and complete owned cleanup passed.
 The actual old-log categorical report has NOW been independently
 published as
-`docs/wull-pointer-left-margin-drift-20261001T175020Z-5a11aa42-5b72e0e3294c.json`.
+`docs/archive/companion/receipts/2026-10-01/wull-pointer-left-margin-drift-20261001T175020Z-5a11aa42-5b72e0e3294c.json`.
 It confirms five prior private left-button underlay witnesses
 with source-pinned geometry relationships and a final margin event
 offset `ninety_six_or_more` pixels in maximum relative axis,
@@ -1280,7 +1280,7 @@ validation remain separate.
 ## Full four-edge size=1 private BBOX pointer coverage verified; curved silhouette qualification separated
 
 The NEW exact-source real LEFT differential A/B receipt
-`docs/wull-mask-left-20261001T180740Z-22d0c52b-df1cb0eef52e.json`
+`docs/archive/companion/receipts/2026-10-01/wull-mask-left-20261001T180740Z-22d0c52b-df1cb0eef52e.json`
 has `source_sha=df1cb0eef52e4089833704c32510d65239c5ae41`,
 `status=pass`, verified
 `native_pointer_backend=forced_wlr_protocols_wdotool`,
@@ -1311,9 +1311,9 @@ configuration or real production mask was changed.
 
 The four separately published latest source-pinned
 real PRIVATE dynamic BBOX trials now cover
-TOP `docs/wull-mask-candidate-20261001T173129Z-ce33db3c-8efa0b7d7341.json`,
-BOTTOM `docs/wull-mask-bottom-20261001T173542Z-10d599c4-9ac701f650dc.json`,
-RIGHT `docs/wull-mask-right-20261001T174248Z-cd6a3010-cdbe02bbcd61.json`,
+TOP `docs/archive/companion/receipts/2026-10-01/wull-mask-candidate-20261001T173129Z-ce33db3c-8efa0b7d7341.json`,
+BOTTOM `docs/archive/companion/receipts/2026-10-01/wull-mask-bottom-20261001T173542Z-10d599c4-9ac701f650dc.json`,
+RIGHT `docs/archive/companion/receipts/2026-10-01/wull-mask-right-20261001T174248Z-cd6a3010-cdbe02bbcd61.json`,
 and the latest LEFT receipt above. This is
 **one independent single-output Niri, size=1
 PASS per edge** for a PRIVATE source-shadow
@@ -1893,7 +1893,7 @@ mask edit.
 
 The EXACT published, independently source-pinned host-local
 INERT evidence
-`docs/wull-motion-inert-20261001T182922Z-d5584c0e-3e27fdeb5c43.json`
+`docs/archive/companion/receipts/2026-10-01/wull-motion-inert-20261001T182922Z-d5584c0e-3e27fdeb5c43.json`
 (Git blob
 `7a7b9f3024a8eba8523551b84a1e79a4f7caaf5a`,
 `source_sha=3e27fdeb5c43b0a0cbad6c09f02c979bcaa4da07`)
@@ -2229,7 +2229,7 @@ checkpoint.
 ## Observed actual-QML frozen 24-pose acceptance and next dynamic sampling boundary (2026-10-02)
 
 The maintainer reran the repaired inert contract, then the explicit private offscreen Quickshell runner in a fresh clean owned dev clone. Unique published receipt:
-\`docs/wull-qt-motion-20261001T185752Z-53e5c5cc-72ac0580b12e.json\` (Git blob \`dc2f36b525ef7e412869f155153dc4e48720f898\`), exact pre-publication source \`72ac0580b12e08c88e74f69ac919e30a93f481f4\`; report-only publication commit \`dae62a2e74a2ba2df86c98d62fea9f73db8efc74\`. It states \`status=pass\`, 24 unique verified frozen QML poses, all 12 neutral source-static BBOXes inside their corresponding host, and real Qt parent scaling consistent at all three scales. Local Quickshell version was \`0.3.1\`; the Qt library version was not recorded. The fail-closed phase predicate requires \`motionEnabled=false\`, zero bob/sway/squash/lean/tip perturbations and explicit \`stateStretch=0\` (neutral) or \`1\` (target) per sample. This is actual Qt \`mapToItem\` evidence, not replay of the earlier Python transform formula.
+\`docs/archive/companion/receipts/2026-10-01/wull-qt-motion-20261001T185752Z-53e5c5cc-72ac0580b12e.json\` (Git blob \`dc2f36b525ef7e412869f155153dc4e48720f898\`), exact pre-publication source \`72ac0580b12e08c88e74f69ac919e30a93f481f4\`; report-only publication commit \`dae62a2e74a2ba2df86c98d62fea9f73db8efc74\`. It states \`status=pass\`, 24 unique verified frozen QML poses, all 12 neutral source-static BBOXes inside their corresponding host, and real Qt parent scaling consistent at all three scales. Local Quickshell version was \`0.3.1\`; the Qt library version was not recorded. The fail-closed phase predicate requires \`motionEnabled=false\`, zero bob/sway/squash/lean/tip perturbations and explicit \`stateStretch=0\` (neutral) or \`1\` (target) per sample. This is actual Qt \`mapToItem\` evidence, not replay of the earlier Python transform formula.
 
 All three tested parent scales 0.65, 1 and 1.5 reported the SAME categorical stretched result: path-tip point OUTSIDE the static body region and the host on TOP; transformed body-item axis-aligned BBOX OUTSIDE the initial static body BBOX on ALL FOUR edges; transformed body-item BBOX OUTSIDE the host on TOP and BOTTOM. The transformed item BBOX is an overapproximation of the painted Bézier silhouette; neither a BOTTOM visible-path clipping claim nor an exact body-shaped click region follows from these box flags. Comparing scaled host and body in the same Qt coordinate system resolves the former invalid *unscaled* scale=1.5 arithmetic comparison. Parent scale consistency does not certify fractional-output rendering, compositor placement or input Region refresh.
 
@@ -2242,7 +2242,7 @@ NO NEW POINTER OR PRODUCTION MASK TEST is authorized merely by this 24/24 frozen
 
 ## Sampled dynamic actual-QML motion fixture: staged, NOT yet run (2026-10-02)
 
-A separate new frozen-pose report has appeared: \`docs/wull-qt-motion-20261001T190302Z-a0fcad4b-5f5331d7fb6d.json\` at exact source \`5f5331d7fb6d1b689f245e630e0eebfe56fb8b4d\`, status PASS, 24/24, Quickshell 0.3.1 and the SAME per-edge/per-scale categorical findings as the earlier published frozen baseline (\`72ac0580b12e08c88e74f69ac919e30a93f481f4\`). A source comparison from the first frozen source to the second source shows documentation, first receipt and the new **offscreen-only** dynamic fixture added; the original Wull renderer/host/bridge were unchanged. This is one additional matching frozen-pose run, not dynamic motion repeatability evidence.
+A separate new frozen-pose report has appeared: \`docs/archive/companion/receipts/2026-10-01/wull-qt-motion-20261001T190302Z-a0fcad4b-5f5331d7fb6d.json\` at exact source \`5f5331d7fb6d1b689f245e630e0eebfe56fb8b4d\`, status PASS, 24/24, Quickshell 0.3.1 and the SAME per-edge/per-scale categorical findings as the earlier published frozen baseline (\`72ac0580b12e08c88e74f69ac919e30a93f481f4\`). A source comparison from the first frozen source to the second source shows documentation, first receipt and the new **offscreen-only** dynamic fixture added; the original Wull renderer/host/bridge were unchanged. This is one additional matching frozen-pose run, not dynamic motion repeatability evidence.
 
 The next separately qualified gate has been SOURCE STAGED only; no local dynamic report exists yet:
 - \`scripts/wull-fixtures/motion-envelope/shell.qml\` exact blob \`0fede26c2dc370234ae1b1702afdca3ea05e33e0\`. It instantiates the existing unmodified \`AbyssCompanion\` and \`WaterDropletBody\` QML on four edges at parent scales 0.65/1.0/1.5, first confirms neutral and frozen stretch=1 reference coordinates while motion is disabled, then enables motion only on these PRIVATE fixture instances. Over controlled stretch and release phases, a 40 ms Qt timer samples actual transformed body-item four-corner bounding boxes, the transformed Bézier tip and host scale mapping. Each phase requires observed motion enabled, intermediate and near-target stretch samples, and independent nonzero bob/sway witnesses for EACH of 12 hosts. It records categories for the sampled body box/tip outside host and sampled body-box extension past that host's frozen target. The latter may arise from any of the sampled animated transforms: do not label it proven spring-only overshoot.
@@ -2282,7 +2282,7 @@ These revisions have SOURCE-AGREEMENT inspection only; there is NO published `do
 
 ## Retained actual dynamic Qt PASS published; paint/host boundary must precede any dynamic mask candidate
 
-Source-verified checkpoint 2026-10-02: the original offscreen dynamic Qt fixture completed all eight stages at source `4caccd2058f1b3089ec398a131241f800eaae890`. The old parser's JavaScript JSON `1.0` → `1` / Python `str(1)` frozen-reference bug was corrected only in the private runner (blob `9cab00fca46212c819ac7308cfc0d6923d1139d3`), with new regression tests. The owner actually ran both inert contracts and read-only, source-pinned reclassification of the retained old log, producing `MODEL_STATUS=pass`. A separate exact-origin retrospective receipt was then published in `docs/wull-qt-dynamic-retained-4caccd2058f1-scale-parser.json`, commit `556e7643bca1f672feef6ed5d879ffff73f861c4`, blob `54a153d717b10056d156e4724d80cb759cf5941d`. The owner's next clean clone already observed that commit and correctly stopped with `GATE=RECEIPT_ALREADY_EXISTS`; no second run, duplicate receipt or overwrite is required.
+Source-verified checkpoint 2026-10-02: the original offscreen dynamic Qt fixture completed all eight stages at source `4caccd2058f1b3089ec398a131241f800eaae890`. The old parser's JavaScript JSON `1.0` → `1` / Python `str(1)` frozen-reference bug was corrected only in the private runner (blob `9cab00fca46212c819ac7308cfc0d6923d1139d3`), with new regression tests. The owner actually ran both inert contracts and read-only, source-pinned reclassification of the retained old log, producing `MODEL_STATUS=pass`. A separate exact-origin retrospective receipt was then published in `docs/archive/companion/receipts/2026-10-01/wull-qt-dynamic-retained-4caccd2058f1-scale-parser.json`, commit `556e7643bca1f672feef6ed5d879ffff73f861c4`, blob `54a153d717b10056d156e4724d80cb759cf5941d`. The owner's next clean clone already observed that commit and correctly stopped with `GATE=RECEIPT_ALREADY_EXISTS`; no second run, duplicate receipt or overwrite is required.
 
 ACTUAL receipt scope: four edges × scales 0.65, 1.0, 1.5 × controlled stretch/release sampled phases; 80 samples PER case PER phase, no missing categorical witnesses. At each scale, the OBSERVED transformed *body-item AABB* reaches beyond the host for TOP and BOTTOM placement in both phases, and beyond that host's frozen-pose bounds for ALL FOUR placements in both phases. The sampled mapped path-tip point is outside the host for TOP in stretch, but no such release-phase tip category is recorded. These are **OR-ed sampled category flags**, NOT synchronized geometry snapshots, pixel paint bounds, compositor clipping/visibility observations, quantitative overshoot magnitudes or guaranteed extrema. `global_spring_extrema_proven=false`, `native_backend_traces=not_run`, `wayland_pointer_hover=not_run`, `canonical_validation=not_run`; original Quickshell was 0.3.1 and original Qt patch version was not recorded. The retrospective publication explicitly preserves the old source SHA and says no Qt rerun occurred.
 
