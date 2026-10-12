@@ -451,6 +451,14 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   changes UI configuration; reports when the requested event was NOT
   observed. This is diagnostic infrastructure only, NOT a verified FPS
   improvement or root cause. Owner/local native evidence still required.
+  **Exact-SHA focused contracts:** commit
+  `895603ff780ee2d829e8a4ed073040fdbe83fcf7` completed
+  [Notification phase probe contracts](https://github.com/llocphann/Alis/actions/runs/38234196986)
+  with Python syntax/source/phase tests and existing notification regressions
+  PASS. This PASS does NOT assert a native Niri frame trace or resolve lag.
+  Usage, source/installed identity preflight, privacy boundary and
+  not-observed outcome are described in
+  [the collector runbook](../../docs/abyss/NOTIFICATION_PHASE_CAPTURE.md).
   Preserve the separately reverted hover/bridge work.
   **Original video and independent bug report:** Owner video
   `2026-10-10_21.55.09.mp4` (1920×1200, 30fps, ~8.73s,
