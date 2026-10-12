@@ -11,7 +11,7 @@ for needle in [
     'text: "Cancel"; glyph: "close"; compact: true',
     'text: "Done"; glyph: "check"',
     'buttonIcon:"widgets";buttonText:"Modules"',
-    'buttonIcon:"open_in_new";buttonText:"Popups / IPC"',
+    'buttonIcon:"open_in_new";buttonText:"IPC"',
     'compactActions:root.toolbarOnHorizontalEdge',
     'text:"Add module";glyph:"add"',
     'text:"Snap to guides";glyph:"grid_4x4"',
@@ -28,7 +28,13 @@ assert editor.count("compact:root.toolbarOnHorizontalEdge") >= 5
 assert 'property bool compactActions: false' in positions
 assert 'text:"Reset position";glyph:"restart_alt"' in positions
 assert 'compact:root.compactActions' in positions
-assert 'description:"Reset popup or IPC position"' in positions
+assert 'description:root.ipcOnly ? "Reset IPC position"' in positions
+# Popup placement choices must not be exposed by this screen-edge editor.
+match = re.search(r'allowedKinds:\\s*\\[([^]]+)\\]', editor)
+assert match, "Editor must constrain independently positioned indicators"
+choices = re.findall(r'"([^"]+)"', match.group(1))
+assert set(choices) == {"osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch"}, choices
+assert '"clock"' not in choices and '"notificationCenter"' not in choices
 
 # Ambiguous scope/placement semantics intentionally stay textual.
 for needle in [
