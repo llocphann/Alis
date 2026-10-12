@@ -26,6 +26,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fish jq rsync
 
+      - name: Verify notification retention and Mark-all-read policies
+        shell: bash
+        run: |
+          node scripts/test-notification-live-timeout-policy.mjs
+          node scripts/test-notification-read-policy.mjs
+
       - name: Run canonical local validator
         shell: bash
         run: |

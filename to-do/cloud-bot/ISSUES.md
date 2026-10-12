@@ -1753,6 +1753,17 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   private-D-Bus native expiry test now injects a stale-cache regression
   case. This is a SOURCE fix only until focused native, exact-SHA canonical
   and installed/owner Notification Popup/Center checks succeed.
+  **Follow-up source repair 2026-10-12:** `markAllRead` reset only
+  `_manualUnreadCounter` in legacy mode, leaving the same already-read
+  popups visible with running timers. It now clears the counter when legacy
+  is enabled **and**, for both modes, cancels the authoritative live
+  popup timers/flags without removing persisted history. The update only
+  triggers a list refresh when a popup actually changed. Added isolated
+  source-executed tests for both counter modes, stale popup caches,
+  preexisting history and idempotence; the private D-Bus runtime test
+  includes a legacy Mark-all-read case. CI runs both fast source suites
+  before the canonical validator. Native run and owner visual acceptance
+  remain pending; NOTIF-I03 stays OPEN.
 
 - [ ] **HELPER-I01 — Hadalird helper/package state and Polkit focus:** extraction is
   source/package-qualified; owner reported helper status ready. Verify compact

@@ -165,7 +165,20 @@ ShellRoot {
    if(!root.check(root.find("transient")?.isTransient,"real transient hint reaches the service"))return
    root.advance(17)
   } else if(root.stage===17 && !root.find("transient")) {
-   console.info("NOTIFICATION_TIMEOUT_PASS app-ms configured-ms two-output hover remaining lifetime arrival retirement history critical transient")
+   // Legacy mode must clear exactly the same live popup/timer resources as
+   // modern mode, even though its unread count comes from a manual counter.
+   Config.setNestedValue("notifications.useLegacyCounter",true)
+   root.send("legacy-mark-read",2200);root.advance(19)
+  } else if(root.stage===19 && root.find("legacy-mark-read")) {
+   const n=root.find("legacy-mark-read")
+   if(!root.check(n.popup && !!n.timer && Notifications._manualUnreadCounter>0,
+      "legacy fixture never acquired popup + timer + unread"))return
+   Notifications.markAllRead()
+   if(!root.check(n.popup===false && n.timer===null,
+      "legacy mark-all-read retained an already-read popup or active timer"))return
+   if(!root.check(Notifications.unread===0 && root.find("legacy-mark-read")===n,
+      "legacy mark-all-read lost history or kept an unread counter"))return
+   console.info("NOTIFICATION_TIMEOUT_PASS app-ms configured-ms hover remaining lifetime history critical transient legacy-read")
    Qt.quit();root.failed=true
   }
  }}

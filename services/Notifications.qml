@@ -505,19 +505,23 @@ Singleton {
     }
 
     function markAllRead() {
-        if (Config.options?.notifications?.useLegacyCounter ?? false) {
-            // Legacy mode: just reset the manual counter
+        // The legacy switch changes how unread is counted, not which
+        // notifications are marked read. Previously it cleared only the
+        // numeric counter and left old popups + active timers on-screen.
+        if (Config.options?.notifications?.useLegacyCounter ?? false)
             root._manualUnreadCounter = 0;
-        } else {
-            // New mode: mark all popup notifications as read by removing popup flag
-            root.list.forEach((notif) => {
-                if (notif.popup) {
-                    root.cancelTimeout(notif.notificationId);
-                    notif.popup = false;
-                }
-            });
+
+        let changed = false;
+        // The live list is authoritative; popupList is a delayed group cache.
+        root.list.forEach((notif) => {
+            if (notif && notif.popup) {
+                root.cancelTimeout(notif.notificationId);
+                notif.popup = false;
+                changed = true;
+            }
+        });
+        if (changed)
             triggerListChange();
-        }
     }
 
     function discardNotification(id) {
