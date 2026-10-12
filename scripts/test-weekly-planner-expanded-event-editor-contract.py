@@ -103,7 +103,8 @@ assert 'Layout.preferredHeight: root.compactEditor ? 30 : 36' in editor
 assert 'root.allDay = !root.allDay' in editor
 assert 'symbol: "delete"' in editor
 assert 'symbol: "close"' in editor
-assert 'symbol: root.isEditing ? "check" : "add_task"' in editor
+assert 'symbol: root.isEditing ? "check" : "event_available"' in editor
+assert 'Translation.tr("Event (no repeat)")' not in editor
 # Planner pages are in one clipped, animated viewport: form controls remain
 # mounted so switching between details and options cannot destroy draft fields.
 assert 'property int plannerPage: 0' in editor
