@@ -54,7 +54,7 @@ ColumnLayout {
     }
     SettingsTaskNavigator {
         icon:"water";title:"Abyss"
-        description:"The Material layout you know, carried by one continuous Screen Edge."
+        description:"Screen Edge appearance and behavior."
         currentValue:root.activeSection
         onSelected:value=>root.activeSection=value
         visible:options.length > 1
@@ -93,7 +93,7 @@ ColumnLayout {
                 options:[{displayName:"Primary output",value:"primary"},{displayName:"All outputs",value:"all"}]
                 onSelected:value=>root.spectrumChange("multiMonitorMode",value)
             }
-            SettingsNote { text:"Audio moves the same Screen Edge surface. It shares the existing analyzer, runs only during playback on visible outputs, and clears when paused, hidden or reduced motion is enabled. Interaction waves can remain off." }
+            SettingsNote { text:"Uses the shared audio analyzer; sleeps when paused, hidden or reduced motion is enabled." }
         }
     }
     SettingsCardSection {
@@ -139,7 +139,7 @@ ColumnLayout {
                 value:AbyssStyle.configuredContentBlurRadius;valueText:Math.round(value)+" px"
                 onMoved:Config.setNestedValue("abyss.content.blurRadius",value)
             }
-            SettingsNote { text:"Panel backgrounds and content cards share one opacity, including 0. Screen Edge opacity and panel blur remain separate. Performance quality and disabled effects preserve the saved blur radius." }
+            SettingsNote { text:"Panels and cards share opacity; blur stays independent and its saved value is preserved." }
             ConfigSwitch {
                 text:"Refraction (Quality)";autoToggle:false
                 checked:Config.options?.abyss?.effects?.refraction?.enabled ?? false
@@ -172,7 +172,7 @@ ColumnLayout {
             AbyssWavePreview {}
             ConfigSwitch {
                 text:"Traveling popup waves";autoToggle:false
-                description:"Opening and closing a panel sends waves in both directions along the Screen Edges. They share wave size, speed, propagation and strength."
+                description:"Panel transitions send waves along Screen Edges."
                 visible:(Config.options?.abyss?.waves?.preset ?? "balanced") === "custom"
                 checked:Config.options?.abyss?.waves?.popupTravel ?? true
                 onToggledByUser:checked=>Config.setNestedValue("abyss.waves.popupTravel",checked)
@@ -191,7 +191,7 @@ ColumnLayout {
                 valueText:Math.round(value*100)+" %"
                 onMoved:Config.setNestedValue("abyss.waves.whitewater",value)
             }
-            SettingsNote { text:"Ripples and rounded crests rise above the resting Edge. Whitewater follows moving steep crests, and is disabled with effects or Performance quality." }
+            SettingsNote { text:"Whitewater follows wave crests; unavailable with effects off or Performance quality." }
             WaveControl { text:"Wave size";parameter:"amplitude" }
             WaveControl { text:"Propagation distance";parameter:"propagation" }
             WaveControl { text:"Wave speed";parameter:"speed" }
@@ -206,7 +206,7 @@ ColumnLayout {
                 checked:Config.options?.abyss?.waves?.idle ?? false
                 onToggledByUser:checked=>Config.setNestedValue("abyss.waves.idle",checked)
             }
-            SettingsNote { text:"Idle ripples update at 10 Hz and sleep between disturbances. The preview uses the desktop solver; reduced motion also applies here." }
+            SettingsNote { text:"Idle ripples sleep between disturbances; reduced motion applies." }
         }
     }
     SettingsCardSection {
@@ -237,8 +237,7 @@ ColumnLayout {
                     }
                 }
             }
-            SettingsNote { text:"Place modules on any edge with Live Editor. Their media, resource, clock, tray and workspace settings remain shared." }
-            SettingsNote { text:"Modules inherit their Edge size. Enable Custom size in Live Editor to override one module. Per-output sizes, snapping guides and start/center/end groups are available there." }
+            SettingsNote { text:"Arrange modules in Live Editor; use Custom size to override individual modules." }
             AbyssOutputSelector { configPath:"bar.screenList";title:"Module outputs" }
         }
     }
@@ -247,7 +246,7 @@ ColumnLayout {
         visible:root.activeSection==="popups"
         SettingsGroup {
             SettingsNote {
-                text:"Popups retain their existing layouts and follow the edge of their source module. Quick Notes / Timers and Notifications / Activity are Edge Bar surfaces: they participate in the same output field, Edge placement and collision rules while retaining their mature content."
+                text:"Popups follow their source Edge. Notes, Timers and Notifications share Edge placement."
             }
             AbyssPositionSettings {}
 
@@ -293,7 +292,7 @@ ColumnLayout {
         title:"Live Editor";icon:"edit";settingsTaskSection:"editor"
         visible:root.activeSection==="editor"
         SettingsGroup {
-            SettingsNote { text:"Settings closes while you place modules on the desktop. Done saves; Cancel restores the saved layout. Choose a profile per output or use the layout as the global default." }
+            SettingsNote { text:"Done saves; Cancel restores. Choose a global or per-output layout." }
         }
     }
     SettingsCardSection {
@@ -318,7 +317,7 @@ ColumnLayout {
         visible:root.activeSection==="performance"
         SettingsSwitch {
             text:"Follow power profile"
-            description:"Use Performance in Power Saver, Balanced in Balanced, and Quality in Performance."
+            description:"Match Abyss quality to the power profile."
             autoToggle:false;checked:Config.options?.abyss?.autoQuality ?? false
             onToggledByUser:checked=>Config.setNestedValue("abyss.autoQuality",checked)
         }
@@ -329,7 +328,7 @@ ColumnLayout {
                 options:[{displayName:"Performance",value:"performance"},{displayName:"Balanced",value:"balanced"},{displayName:"Quality",value:"quality"}]
                 onSelected:value=>Config.setNestedValue("abyss.quality",value)
             }
-            SettingsNote { text:"Performance uses 128 wave samples. Balanced and Quality use 256. The solver stops after settling and while the output is hidden or locked. Wallpaper glass uses a static image; application pixels are not captured." }
+            SettingsNote { text:"Wave samples: 128 Performance, 256 Balanced/Quality. Glass uses wallpaper, not window capture." }
             ConfigSwitch {
                 text:"Visible during fullscreen";autoToggle:false
                 checked:Config.options?.abyss?.perimeter?.visibleInFullscreen ?? false
