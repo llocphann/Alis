@@ -27,7 +27,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("These settings only apply when using the Windows 11 (Waffle) panel style. Go to Modules → Panel Style to enable it.")
+                text: Translation.tr("Waffle-only settings; choose Waffle in Modules → Panel Style.")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -52,7 +52,7 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "window"
         title: Translation.tr("Waffle Style")
-        description: Translation.tr("Tune the Windows 11 style surfaces in focused views: wallpaper, taskbar, theming and family switching.")
+        description: Translation.tr("Waffle wallpaper, taskbar, themes and switching.")
         summary: Translation.tr("Wallpaper \u00b7 Taskbar \u00b7 Style \u00b7 Transition")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
@@ -181,7 +181,7 @@ ContentPage {
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Backdrop is the wallpaper shown during Niri's native overview (Mod+Tab). It's always rendered in the background layer.")
+                text: Translation.tr("Backdrop appears behind Niri Overview (Mod+Tab).")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
