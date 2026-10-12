@@ -827,6 +827,15 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   actual Extend/Primary/Second-only/Mirror, hotplug/failure rollback, `wl-mirror`
   lifetime, PipeWire default sink and Night Light/Anti Flashbang sensitivity.
   Do not claim real Mirror from a synthetic fixture or introduce a second backend.
+  **Cloud source fix, 2026-10-12:** the active wl-mirror process now retains
+  its original source/target as separate immutable runtime identity. Niri
+  hotplug must stop that process before dropdown selections are normalized,
+  including when every output vanishes; deferred mirror restarts revalidate
+  both outputs before spawn. Eight additional pure policy cases cover source,
+  target, all-output disconnect, invalid pairs and valid replacement pairs.
+  This is a *bounded source milestone*, not proof of live wl-mirror, device
+  recovery, PipeWire or Night Light acceptance. Owner/multi-monitor and
+  hardware tests remain OPEN; do not mark UTIL-F01 complete.
 
 - [ ] **SYS-F01 — Non-Arch optional system gateway:** add trusted distro-owned
   provisioning beyond Arch for Hadalird helpers. Keep root gateway/policy separate

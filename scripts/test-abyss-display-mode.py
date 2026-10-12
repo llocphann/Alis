@@ -56,9 +56,21 @@ assert.deepEqual(activeNames({
  'HDMI-A-1':{logical:{x:1920,y:0}}
 }),['HDMI-A-1','eDP-1']);
 
+// Hotplug must be evaluated against the pair actually launched, even when
+// the UI would normalize a missing source/target to another connected screen.
+const runningPair={source:'eDP-1',target:'HDMI-A-1'};
+assert.equal(mirrorPairConnected(names,runningPair),true);
+assert.equal(mirrorPairConnected(['eDP-1','DP-1'],runningPair),false);
+assert.equal(mirrorPairConnected(['HDMI-A-1','DP-1'],runningPair),false);
+assert.equal(mirrorPairConnected([],runningPair),false);
+assert.equal(mirrorPairConnected(names,{source:'DP-1',target:'DP-1'}),false);
+assert.equal(mirrorPairConnected(names,null),false);
+assert.equal(mirrorPairConnected(['eDP-1','DP-1'],{source:'eDP-1',target:'DP-1'}),true);
+assert.equal(mirrorPairConnected(names,{source:'',target:'DP-1'}),false);
+
 const original=JSON.stringify(names);
 plan('extend',names,'eDP-1','','','');
 assert.equal(JSON.stringify(names),original,'planner does not mutate caller output lists');
-console.log('PASS: display-mode target planning, safe ordering and rollback');
+console.log('PASS: display-mode planning, safe rollback and running-mirror hotplug identity');
 """
 subprocess.run(["node", "-e", program], cwd=root, check=True)

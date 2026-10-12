@@ -57,3 +57,13 @@ function restore(names, previouslyActive, preferredPrimary) {
     if (!targets.length) targets = [primary(names,preferredPrimary)];
     return {ok:true,error:"",actions:orderedActions(names,targets),targets:targets};
 }
+
+// Validate the actual running wl-mirror pair, not a UI selection that may be
+// rewritten when Niri reports a hotplug. Reject stale queued restarts too.
+function mirrorPairConnected(names,pair) {
+    if (!pair) return false;
+    names = normalizedNames(names);
+    const source=String(pair.source || ""),target=String(pair.target || "");
+    return !!source && !!target && source !== target
+        && names.includes(source) && names.includes(target);
+}
