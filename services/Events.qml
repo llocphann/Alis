@@ -591,20 +591,28 @@ Singleton {
     }
 
     function getUpcomingEvents(days) {
-        const now = new Date()
-        const future = new Date(now)
-        future.setDate(future.getDate() + (days || 7))
-        return root.list.map(event => {
-            const slot = Occurrences.upcoming(event,now,future)
-            const index = slot ? Occurrences.entries(event).findIndex(candidate =>
-                candidate.startDate===slot.startDate && candidate.endDate===slot.endDate) : -1
-            return slot ? Object.assign({},event,{
-                _canonicalEvent:Object.assign({},event,{_editOccurrenceIndex:Math.max(0,index)}),
-                dateTime:slot.startDate,startDate:slot.startDate,
-                endDate:slot.endDate
-            }) : null
-        }).filter(Boolean).sort((a,b) =>
-            new Date(a.startDate)-new Date(b.startDate))
+        const now=new Date()
+        const future=new Date(now)
+        future.setDate(future.getDate()+(days||7))
+        return root.list.flatMap(event=> {
+            const slots=Occurrences.entries(event)
+            const entries=[]
+            for (let index=0;index<slots.length;index++) {
+                const slot=slots[index]
+                const start=new Date(slot.startDate)
+                const end=new Date(slot.endDate)
+                const show=event.allDay===true
+                    ? end>now && start<=future
+                    : start>=now && start<=future && !slot.notified
+                if (!show) continue
+                entries.push(Object.assign({},event,{
+                    _canonicalEvent:Object.assign({},event,{_editOccurrenceIndex:index}),
+                    dateTime:slot.startDate,startDate:slot.startDate,
+                    endDate:slot.endDate
+                }))
+            }
+            return entries
+        }).sort((a,b)=>new Date(a.startDate)-new Date(b.startDate))
     }
 
     function markAsNotified(id) {
