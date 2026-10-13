@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Private-Niri perimeter indicator layout, overflow and source color regression."""
+"""Private-Niri perimeter indicator layout, 12-dot cap and source color regression."""
 import json
 import shutil
 import tempfile
@@ -72,16 +72,15 @@ ShellRoot {
       check(shown.length===expected,
         edgeName+" dot count wrong on day "+i+" at per-edge limit "+limit)
     }
-    check(overflow.length===1 &&
-      overflow[0].visible===(limit>0 && samples[i]>limit*4),
-      "overflow cue wrong on day "+i+" at max "+limit*4)
+    check(overflow.length===0,
+      "counted calendar must not render a + overflow marker on day "+i)
    }
   }
   function runChecks(){try{
    tryCompare(Config,"ready",true,6000)
    for(const max of [0,1,2,3])inspect(max)
    console.info("CALENDAR_EVENT_DOTS_NATIVE_PASS",root.checks,
-     "checks: 42 days, 3 dots on each Bottom/Right/Top/Left, overflow after 12")
+     "checks: 42 days, max 3 dots on each Bottom/Right/Top/Left; no overflow marker")
   }catch(error){console.error("CALENDAR_EVENT_DOTS_NATIVE_FAIL",error.message,error.stack)}Qt.quit()}
  }
  Timer{interval:100;running:true;onTriggered:test.runChecks()}

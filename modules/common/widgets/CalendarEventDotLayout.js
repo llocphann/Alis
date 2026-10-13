@@ -12,5 +12,5 @@ function layoutDots(count, maxPerEdge, colors, fallback) {
     const edges = [[], [], [], []];
     for (let i = 0; i < shown; i++)
         edges[Math.floor(i / limit)].push(colors?.[i] ?? fallback);
-    return {edges:edges, overflow:limit > 0 && total > shown, total:total, shown:shown};
+    return {edges:edges, total:total, shown:shown};
 }

@@ -429,23 +429,6 @@ Item {
                                 }
                             }
                         }
-                        // Event 13+ is represented without consuming dot space.
-                        StyledText {
-                            objectName: "calendarEventOverflow"
-                            anchors.top: parent.top
-                            anchors.right: parent.right
-                            anchors.topMargin: 0
-                            anchors.rightMargin: 0
-                            visible: root.showEventDots && root.countedEventDots
-                                && (dayCell.dotLayout?.overflow ?? false)
-                            text: "+"
-                            font.pixelSize: 9
-                            font.weight: Font.DemiBold
-                            color: dayCell.selected
-                                ? Appearance.colors.colOnPrimaryContainer
-                                : root.colAccent
-                        }
-
                         MouseArea {
                             id: dayHover
                             anchors.fill: parent

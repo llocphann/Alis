@@ -25,7 +25,9 @@ for i,name in enumerate(["Bottom","Right","Top","Left"]):
     require(f"dayCell.dotLayout?.edges[{i}]" in renderer,"missing "+name+" distribution")
 require(renderer.count('objectName: "calendarEventDot"')==4,"dot delegates must retain identity")
 require("dayCell.eventColors.slice(0, 3)" in renderer,"legacy source-color dots changed")
-require("dayCell.dotLayout?.overflow ?? false" in renderer,"13+ overflow cue missing")
+require('objectName: "calendarEventOverflow"' not in renderer,
+    "counted calendar must not render a + overflow marker")
+require("overflow:" not in policy, "indicator layout must not expose unused overflow state")
 require("Math.floor(i / limit)" in policy and "limit * 4" in policy,"pure counterclockwise packing missing")
 require("spacing: root.countedEventDots ? 3 : 1" in renderer,"legacy dot spacing changed")
 require("Math.min(3," in popup and "Math.min(3," in editor,"counted hosts must cap at 3")

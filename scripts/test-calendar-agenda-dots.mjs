@@ -52,6 +52,8 @@ const colors = Array.from({length:15}, () => "#65b8c4");
 const eight = layout.layoutDots(8,3,colors,"#65b8c4");
 assert.deepEqual(JSON.parse(JSON.stringify(eight.edges.map(edge=>edge.length))),
     [3,3,2,0], "8 dots must wrap Bottom -> Right -> Top");
-assert.equal(layout.layoutDots(12,3,colors,"#65b8c4").overflow,false);
-assert.equal(layout.layoutDots(13,3,colors,"#65b8c4").overflow,true);
+assert.equal(layout.layoutDots(12,3,colors,"#65b8c4").shown,12);
+assert.equal(layout.layoutDots(13,3,colors,"#65b8c4").shown,12);
+assert.equal(layout.layoutDots(30,3,colors,"#65b8c4").shown,12);
+assert.equal("overflow" in layout.layoutDots(30,3,colors,"#65b8c4"),false);
 console.log("CALENDAR_AGENDA_DOTS_PASS: grouped slots, midnight, notified, move/remove, 12-dot perimeter");
