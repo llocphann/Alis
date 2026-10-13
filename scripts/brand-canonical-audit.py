@@ -67,6 +67,16 @@ def main() -> int:
         scanned += 1
         for kind, regex in PATTERNS.items():
             for match in regex.finditer(text):
+                # Citations to historical upstream source code are deliberately
+                # retained; they are not executable runtime identifiers.
+                line_start = text.rfind("\n", 0, match.start()) + 1
+                line_end = text.find("\n", match.end())
+                source_line = text[line_start:line_end if line_end >= 0 else None]
+                if kind == "launcher" and (
+                    "github.com/snowarch/inir" in source_line
+                    or "github.com/snowarch/iNiR" in source_line
+                ):
+                    continue
                 total_by_kind[kind] += 1
                 if len(examples[kind]) < args.limit:
                     line = text.count("\n", 0, match.start()) + 1
