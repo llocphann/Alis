@@ -668,19 +668,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "inir-inputd"
+name = "alis-inputd"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
  "evdev",
- "inir-protocol",
+ "alis-protocol",
  "libc",
  "serde_json",
 ]
 
 [[package]]
-name = "inir-mpdd"
+name = "alis-mpdd"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -693,7 +693,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "inir-native"
+name = "alis-native"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -707,14 +707,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "inir-protocol"
+name = "alis-protocol"
 version = "0.1.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
-name = "inir-theme"
+name = "alis-theme"
 version = "0.1.0"
 dependencies = [
  "anyhow",

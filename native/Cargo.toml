@@ -1,11 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/inir-protocol",
-    "inir-inputd",
-    "inir-mpdd",
-    "inir-native",
-    "inir-theme",
+    "crates/alis-protocol",
+    "alis-inputd",
+    "alis-mpdd",
+    "alis-native",
+    "alis-theme",
 ]
 
 [workspace.package]
