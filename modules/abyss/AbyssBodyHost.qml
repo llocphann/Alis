@@ -460,7 +460,9 @@ Item {
         }
         if (open) Qt.callLater(() => { if (root.open) root.react(true) })
     }
+    property int escapeKeyCount: 0
     Keys.onEscapePressed: event => {
+        root.escapeKeyCount++
         // Escape bubbling out of a Dashboard widget must cancel its editable
         // draft before the generic body host requests a window close. A child
         // can own activeFocus, bypassing the perimeter's outer key handler.
