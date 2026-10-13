@@ -34,15 +34,15 @@ function apply(events,operations,occurrences) {
     const updated=[],removed=[];
     const result=events.map(function(event) {
         const prefix=String(event.id)+":";
-        if (![...changes.keys()].some(key=>key.startsWith(prefix))) return event;
+        if (!operations.some(op=>op.id===event.id)) return event;
         const slots=occurrences.entries(event);
         const next=[];
         for (let i=0;i<slots.length;i++) {
             const op=changes.get(prefix+i);
             if (op?.remove===true) continue;
             next.push(op
-                ? {...slots[i],startDate:op.startDate,endDate:op.endDate,
-                    notified:false,reminderNotified:false}
+                ? Object.assign({},slots[i],{startDate:op.startDate,endDate:op.endDate,
+                    notified:false,reminderNotified:false})
                 : slots[i]);
         }
         if (!next.length) {

@@ -10,7 +10,7 @@ function key(row) {
 function ordered(days) {
     const unique=new Set(),rows=[];
     for (const day of days || []) {
-        for (const row of [...(day.allDay || []),...(day.timed || [])]) {
+        for (const row of (day.allDay || []).concat(day.timed || [])) {
             const id=key(row);
             if (!id || unique.has(id)) continue;
             unique.add(id);rows.push(row);
@@ -28,12 +28,12 @@ function choose(rows,selected,anchor,target,ctrl,shift) {
     if (shift) {
         const start=Math.max(0,options.indexOf(anchor));
         const range=options.slice(Math.min(start,end),Math.max(start,end)+1);
-        const merged=ctrl ? [...(selected || []),...range] : range;
-        return {keys:[...new Set(merged)],anchor:options[start]};
+        const merged=ctrl ? (selected || []).concat(range) : range;
+        return {keys:Array.from(new Set(merged)),anchor:options[start]};
     }
     if (ctrl) {
         const next=(selected || []).includes(id)
-            ? selected.filter(value=>value!==id) : [...(selected || []),id];
+            ? selected.filter(value=>value!==id) : (selected || []).concat([id]);
         return {keys:next,anchor:id};
     }
     return {keys:[id],anchor:id};
