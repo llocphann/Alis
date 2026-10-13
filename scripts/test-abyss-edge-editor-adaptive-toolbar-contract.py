@@ -53,8 +53,13 @@ assert 'visible: !root.compactIpcEditor' in positions.split('SettingsNote {')[-1
 assert 'Layout.preferredWidth:116*Appearance.fontSizeScale' in editor
 
 fine=editor[editor.index("id:editFineControls"):]
-fine_columns=re.search(r"\bcolumns:\s*([\s\S]+?)\n\s*columnSpacing:",fine)
-assert fine_columns, "two-column controls must expose a responsive layout"
+fine_two_column=re.search(r"readonly property bool useTwoColumns:\s*([\s\S]+?)\n\s*columns:useTwoColumns",fine)
+assert fine_two_column, "the column decision must come from the outer toolbar viewport"
+assert 'columns:useTwoColumns ? 3 : 1' in fine
+assert fine.count('Layout.preferredWidth:editFineControls.useTwoColumns') == 2
+assert fine.count('Math.max(0,(toolbarScroll.width-24*Appearance.fontSizeScale)/2)') == 2
+assert 'editFineControls.width-24' not in fine
+assert '&& width>=570*Appearance.fontSizeScale ? 3 : 1' not in fine
 
 # The first row, Modules/IPC with shared output scope, is unchanged.
 # Below it: two content columns with a short divider, no leading dropdown icons.
@@ -93,7 +98,7 @@ assert left.index('objectName:"abyssModuleHeaderActions"') < left.index('id:alig
 assert 'Layout.preferredHeight:64*Appearance.fontSizeScale' in editor
 assert 'Layout.preferredWidth:1*Appearance.fontSizeScale' in editor
 assert 'color:Qt.alpha(AbyssStyle.textColorMuted,.18)' in editor
-assert 'visible:editFineControls.columns===3' in editor
+assert 'visible:editFineControls.useTwoColumns' in editor
 assert editor.count('AbyssSlider {') == 6
 assert editor.count('Layout.maximumWidth:root.editorActionSize') == 18
 assert editor.count('EditorIconHint {') == 3
@@ -112,14 +117,15 @@ assert 'columns:1;rowSpacing:' in selected, "module appearance rows stack vertic
 subprocess.run(["node","-e",r'''
 const assert=require('node:assert/strict'),vm=require('node:vm');
 for(const toolbarOnHorizontalEdge of [false,true])for(const fontSizeScale of [.7,1,1.5,2]) {
- for(const width of [0,250,400,460,599,649,650,700,900,1400,2200]) {
-  const actual=vm.runInNewContext(process.argv[1],
-      {root:{toolbarOnHorizontalEdge},width,Appearance:{fontSizeScale}});
-  const expected=toolbarOnHorizontalEdge && width>=570*fontSizeScale?3:1;
-  assert.equal(actual,expected);
+ for(const width of [0,250,400,519,520,570,599,650,700,900,1400,2200]) {
+  const two=vm.runInNewContext(process.argv[1],
+      {root:{toolbarOnHorizontalEdge},toolbarScroll:{width},Appearance:{fontSizeScale}});
+  const expected=toolbarOnHorizontalEdge && width>=520*fontSizeScale;
+  assert.equal(two,expected);
+  assert.equal(two?3:1,expected?3:1);
  }
 }
-''',fine_columns.group(1)],check=True)
+''',fine_two_column.group(1)],check=True)
 
 # A clamped viewport must scroll regardless of its physical Edge. Evaluate
 # the real binding at fit/overflow boundaries, rather than its old spelling.

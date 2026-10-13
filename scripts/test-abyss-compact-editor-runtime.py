@@ -129,7 +129,13 @@ ShellRoot {
      const edgeColumn=item("abyssEditorEdgeColumn")
      check(modulePicker.visible && edgePicker.visible, "missing Module/Editing Edge dropdown")
      const inScroll=(item)=>item.mapToItem(scroll.contentItem,0,0)
-     if(grouped.columns===3) {
+     // Regression: the prior self-referential GridLayout.width condition
+     // silently collapsed TOP/BOTTOM toolbars to one column on startup.
+     const expectedTwo=editor.toolbarOnHorizontalEdge
+         && scroll.width>=520*scale
+     check(grouped.columns===(expectedTwo?3:1),
+         "horizontal toolbar has enough viewport width but collapsed to one column")
+     if(expectedTwo) {
       const left=inScroll(modulePicker),right=inScroll(edgePicker)
       check(left.x<right.x && Math.abs(left.y-right.y)<1.5,
           "Module and Editing Edge dropdowns are not aligned as column headers")

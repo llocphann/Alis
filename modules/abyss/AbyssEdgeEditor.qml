@@ -914,8 +914,12 @@ Item {
                     objectName:"abyssEditorFineControls"
                     visible:!root.editingPopups
                     Layout.fillWidth:true;Layout.minimumWidth:0
-                    columns:root.toolbarOnHorizontalEdge
-                        && width>=570*Appearance.fontSizeScale ? 3 : 1
+                    // Derive column count from the fixed viewport, NOT this GridLayout's
+                    // own width. Its implicit width changes with column count, so a
+                    // self-referential breakpoint can latch to one column after load.
+                    readonly property bool useTwoColumns: root.toolbarOnHorizontalEdge
+                        && toolbarScroll.width>=520*Appearance.fontSizeScale
+                    columns:useTwoColumns ? 3 : 1
                     columnSpacing:10*Appearance.fontSizeScale
                     rowSpacing:6*Appearance.fontSizeScale
 
@@ -924,9 +928,9 @@ Item {
                         Layout.alignment:Qt.AlignTop
                         objectName:"abyssEditorModuleColumn"
                         Layout.fillWidth:true;Layout.minimumWidth:0
-                        Layout.preferredWidth:editFineControls.columns===3
-                            ? (editFineControls.width-24*Appearance.fontSizeScale)/2
-                            : editFineControls.width
+                        Layout.preferredWidth:editFineControls.useTwoColumns
+                            ? Math.max(0,(toolbarScroll.width-24*Appearance.fontSizeScale)/2)
+                            : Math.max(0,toolbarScroll.width)
                         spacing:4*Appearance.fontSizeScale
                             RowLayout {
                             objectName:"abyssModuleHeaderActions"
@@ -1162,7 +1166,7 @@ Item {
 
                     Rectangle {
                         objectName:"abyssEditorColumnDivider"
-                        visible:editFineControls.columns===3
+                        visible:editFineControls.useTwoColumns
                         Layout.alignment:Qt.AlignHCenter | Qt.AlignVCenter
                         Layout.preferredWidth:1*Appearance.fontSizeScale
                         Layout.preferredHeight:64*Appearance.fontSizeScale
@@ -1175,9 +1179,9 @@ Item {
                         Layout.alignment:Qt.AlignTop
                         objectName:"abyssEditorEdgeColumn"
                         Layout.fillWidth:true;Layout.minimumWidth:0
-                        Layout.preferredWidth:editFineControls.columns===3
-                            ? (editFineControls.width-24*Appearance.fontSizeScale)/2
-                            : editFineControls.width
+                        Layout.preferredWidth:editFineControls.useTwoColumns
+                            ? Math.max(0,(toolbarScroll.width-24*Appearance.fontSizeScale)/2)
+                            : Math.max(0,toolbarScroll.width)
                         spacing:4*Appearance.fontSizeScale
                             RowLayout {
                             objectName:"abyssEdgeHeaderActions"

@@ -121,7 +121,10 @@ assert 'rightPadding:editorCompact ? 46*Appearance.fontSizeScale : 52' in (root 
 assert 'objectName:"abyssEditorFineControls"' in editor
 assert 'objectName:"abyssEditorSelectedFields"' in editor
 assert 'columns:root.toolbarOnHorizontalEdge' in editor
-assert '&& width>=570*Appearance.fontSizeScale ? 3 : 1' in editor
+assert 'toolbarScroll.width>=520*Appearance.fontSizeScale' in editor
+assert 'columns:useTwoColumns ? 3 : 1' in editor
+assert 'Layout.preferredWidth:editFineControls.useTwoColumns' in editor
+assert 'editFineControls.width-24' not in editor
 assert 'id:moduleEditorColumn' in editor and 'id:edgeEditorColumn' in editor
 assert 'objectName:"abyssEditorColumnDivider"' in editor
 assert 'columns:1' in editor[editor.index('id:selectedModuleControls'):]
