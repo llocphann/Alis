@@ -153,6 +153,23 @@ LazyLoader {
         _hostedController = _liquidController
         _hostedController.presentPopup(root)
     }
+    // User-requested close: keep the resident panel through the normal
+    // slide-under retract tail instead of snapping it/fading it out.
+    // Forced owner eviction still uses dismissPresentation() below.
+    function retractPresentation(): void {
+        companionLease = null
+        _liquidDismissed = true
+        _liquidSemanticHold = false
+        _bodyHovered = false
+        _contentHovered = false
+        hoverTransferTimer.stop()
+        if (_lingerVisible)
+            _beginRetract()
+        else
+            offsetScale = 1
+        requestClose()
+    }
+
     function dismissPresentation(): void {
         companionLease = null
         _liquidDismissed = true
