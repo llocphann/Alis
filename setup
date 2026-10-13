@@ -967,7 +967,7 @@ show_status() {
     tui_table_row "Remote State" "$remote_state" 18 36
     tui_table_row "Local Changes" "$runtime_state" 18 36
     tui_table_row "Runtime Path" "$runtime_dir_display" 18 36
-    tui_table_row "Launcher" "inir run" 18 36
+    tui_table_row "Launcher" "alis run (inir compatible)" 18 36
     [[ -n "$repo_path_display" ]] && tui_table_row "Repo Path" "$repo_path_display" 18 36
     if [[ "$update_strategy" == "package-manager" ]]; then
         [[ -n "$update_hint" ]] && tui_table_row "Update Cmd" "$update_hint" 18 36
@@ -1044,6 +1044,9 @@ show_status() {
     local pending=$(count_pending_migrations 2>/dev/null || echo "0")
     if [[ "$pending" -gt 0 ]]; then
         tui_check_warn "$pending pending migration(s)"
+        local pending_ids
+        pending_ids="$(get_pending_migrations 2>/dev/null || true)"
+        [[ -z "$pending_ids" ]] || tui_info "Pending IDs: $pending_ids"
         tui_info "Run './setup migrate' to review"
     else
         tui_check_ok "No pending migrations"
@@ -1081,7 +1084,7 @@ show_status() {
 ###############################################################################
 show_info() {
     echo ""
-    tui_hero_card "iNiR System Information" \
+    tui_hero_card "Alis System Information" \
         "The useful stuff: platform, runtime, launcher, and the shell state that usually matters when something gets weird." \
         "This is the quick dashboard. Doctor is the one that actually gets its hands dirty."
 
@@ -1246,7 +1249,7 @@ show_info() {
 ###############################################################################
 run_config() {
     echo ""
-    tui_title "iNiR Configuration"
+    tui_title "Alis Configuration"
     echo ""
 
     local config_dir
@@ -2893,7 +2896,7 @@ run_update() {
 ###############################################################################
 run_doctor() {
     echo ""
-    tui_hero_card "iNiR Doctor" \
+    tui_hero_card "Alis Doctor" \
         "Diagnosing and auto-fixing your shell setup."
     show_setup_context_card "Doctor Context"
     run_doctor_with_fixes

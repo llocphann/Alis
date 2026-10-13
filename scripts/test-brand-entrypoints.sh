@@ -36,6 +36,9 @@ for shell in bash fish zsh; do
     esac
 done
 grep -Fq 'tui_hero_card "Alis setup"' "$repo/setup" || fail "setup TUI still uses legacy product name"
+grep -Fq 'Alis — your niri shell' "$repo/sdata/lib/tui.sh" || fail 'status banner still carries previous public name'
+if grep -Fq 'iNiR — your niri shell' "$repo/sdata/lib/tui.sh"; then fail 'legacy status banner was not retired'; fi
+grep -Fq 'Pending IDs: $pending_ids' "$repo/setup" || fail 'status fails to identify pending migrations'
 if grep -Fq 'Syncing iNiR...' "$repo/setup"; then fail "updater still displays old public name"; fi
 grep -Fq "Installed Alis Rust runtime" "$repo/native/scripts/install-runtime.sh" || fail "Rust installer banner still uses previous brand"
 grep -Fq "tui_alert \"success\" \"Update complete\"" "$repo/setup" || fail "updater success banner missing"

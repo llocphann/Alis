@@ -442,31 +442,31 @@ tui_banner() {
             --align center \
             --width 50 \
             --padding "1 0" \
-            "██╗██╗      ███╗   ██╗██╗██████╗ ██╗" \
-            "██║██║      ████╗  ██║██║██╔══██╗██║" \
-            "██║██║█████╗██╔██╗ ██║██║██████╔╝██║" \
-            "██║██║╚════╝██║╚██╗██║██║██╔══██╗██║" \
-            "██║██║      ██║ ╚████║██║██║  ██║██║" \
-            "╚═╝╚═╝      ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝"
-        echo "iNiR — your niri shell" | gum style \
+            " █████╗ ██╗     ██╗███████╗" \
+            "██╔══██╗██║     ██║██╔════╝" \
+            "███████║██║     ██║███████╗" \
+            "██╔══██║██║     ██║╚════██║" \
+            "██║  ██║███████╗██║███████║" \
+            "╚═╝  ╚═╝╚══════╝╚═╝╚══════╝"
+        echo "Alis — your niri shell" | gum style \
             --foreground "$(_tui_color_value muted)" \
             --align center \
             --width 50
     else
-        local tagline="iNiR — your niri shell"
-        # Banner art is 38 chars wide + 3 spaces indent = 41 visible cols
-        local art_width=41
+        local tagline="Alis — your niri shell"
+        # Alis banner art is approximately 34 display columns
+        local art_width=34
         local tag_pad=$(( (art_width - ${#tagline}) / 2 ))
         (( tag_pad < 0 )) && tag_pad=0
 
         echo -e "${STY_PURPLE}${STY_BOLD}"
         cat << 'EOF'
-   ██╗██╗      ███╗   ██╗██╗██████╗ ██╗
-   ██║██║      ████╗  ██║██║██╔══██╗██║
-   ██║██║█████╗██╔██╗ ██║██║██████╔╝██║
-   ██║██║╚════╝██║╚██╗██║██║██╔══██╗██║
-   ██║██║      ██║ ╚████║██║██║  ██║██║
-   ╚═╝╚═╝      ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝╚═╝
+   █████╗ ██╗     ██╗███████╗
+  ██╔══██╗██║     ██║██╔════╝
+  ███████║██║     ██║███████╗
+  ██╔══██║██║     ██║╚════██║
+  ██║  ██║███████╗██║███████║
+  ╚═╝  ╚═╝╚══════╝╚═╝╚══════╝
 EOF
         echo -e "${STY_RST}"
         printf "%*s%b%s%b\n" "$tag_pad" "" "$STY_FAINT" "$tagline" "$STY_RST"
