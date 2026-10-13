@@ -253,6 +253,15 @@ Scope {
             transform: Translate { y: contentLoader.panelTranslateY }
 
             focus: GlobalStates.dashboardOpen
+            // Window-level shortcut still works after clicking a toolbar button
+            // that takes activeFocus away from this Loader.
+            Shortcut {
+                sequences: ["Escape"]
+                context: Qt.WindowShortcut
+                enabled: GlobalStates.dashboardOpen
+                    && (contentLoader.item?.editMode ?? false)
+                onActivated: contentLoader.item?.handleEscape()
+            }
             Keys.onPressed: (event) => {
                 if (event.key === Qt.Key_Escape) {
                     if (!contentLoader.item?.handleEscape())
