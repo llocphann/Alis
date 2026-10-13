@@ -191,7 +191,7 @@ pkgs.stdenvNoCC.mkDerivation {
       install -m0755 "${nativeBackend}/bin/$binary" "$runtime/native/bin/$binary"
     done
 
-    chmod +x "$runtime/setup" "$runtime/scripts/alis" "$runtime/scripts/alis"
+    chmod +x "$runtime/setup" "$runtime/scripts/alis"
     find "$runtime/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} +
 
     # The source tree intentionally targets Arch, where helpers live under
@@ -330,7 +330,6 @@ EOF
       assets/applications/alis-settings.desktop > "$out/share/applications/alis-settings.desktop"
     chmod 0644 \
       "$out/share/applications/alis.desktop" \
-      "$out/share/applications/alis-settings.desktop" \
       "$out/share/applications/alis-settings.desktop"
     install -Dm644 assets/icons/desktop-symbolic.svg \
       "$out/share/icons/hicolor/scalable/apps/alis.svg"
