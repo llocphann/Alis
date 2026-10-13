@@ -66,6 +66,8 @@ ShellRoot {
    capture("abyss")
    Config.setNestedValue("panelFamily","waffle")
    tryVerify(()=>!sidebar.abyssInnerMaterial,3000)
+   // The mode flag changes before the existing Rectangle color animation ends.
+   tryVerify(()=>sameColor(inner.color,Appearance.colors.colLayer1),3000)
    check(sameColor(inner.color,Appearance.colors.colLayer1),
      "non-Abyss sidebar no longer uses its old material")
    capture("waffle")
