@@ -8,7 +8,9 @@ function safeReading(source) {
         if (index % 2) return part;
         return part.replace(/!\[([^\]\r\n]*)\](?:\((?:\\.|[^)\r\n])*\)|\[[^\]\r\n]*\])?/g,
                 function(_, alt) { return "[Image: " + alt + "]"; })
-            .replace(/</g, "&lt;");
+            // Strict allowlist: permit only Quick Notes underline/alignment
+            // tags; arbitrary HTML (notably remote <img>) stays escaped.
+            .replace(/<(?!\/?u>|\/p>|p align="(?:left|right|center|justify)">)/g, "&lt;");
     }).join("");
 }
 
@@ -18,23 +20,49 @@ function format(source, first, last, kind) {
     var a = Math.max(0, Math.min(raw.length, Number(first) || 0));
     var b = Math.max(a, Math.min(raw.length, Number(last) || 0));
     var selected = raw.slice(a, b);
+
+    var alignment = kind.startsWith("align-") ? kind.slice(6) : "";
+    if (["left", "right", "center", "justify"].includes(alignment)) {
+        // Alignment acts on whole source paragraphs, even with no selection.
+        var from = raw.lastIndexOf("\n", Math.max(0, a - 1)) + 1;
+        var lastPosition = b > a && raw[b - 1] === "\n" ? b - 1 : b;
+        var breakAt = raw.indexOf("\n", lastPosition);
+        var to = breakAt < 0 ? raw.length : breakAt;
+        var lines = raw.slice(from, to).split("\n");
+        var changed = lines.map(function(line) {
+            if (!line.trim()) return line;
+            var match = /^<p align="(?:left|center|right|justify)">([\s\S]*)<\/p>$/.exec(line);
+            var content = match ? match[1] : line;
+            return alignment === "left" ? content
+                : '<p align="' + alignment + '">' + content + '</p>';
+        }).join("\n");
+        if (changed === raw.slice(from, to)) return null;
+        return {from:from, to:to, insert:changed,
+            selectionStart:from, selectionEnd:from+changed.length};
+    }
+
     if (kind === "link") {
         return {from:a, to:b, insert:"[" + selected + "](https://)",
             selectionStart:selected.length ? a + 3 + selected.length : a + 1,
             selectionEnd:selected.length ? a + 11 + selected.length : a + 1};
     }
-    var marker = kind === "bold" ? "**" : kind === "italic" ? "*" : kind === "code" ? "\x60" : "";
+    var marker = kind === "bold" ? "**" : kind === "italic" ? "*"
+        : kind === "underline" ? "<u>" : kind === "code" ? "\x60" : "";
     if (!marker) return null;
-    var n = marker.length;
-    if (a >= n && raw.slice(a-n, a) === marker && raw.slice(b, b+n) === marker) {
-        return {from:a-n, to:b+n, insert:selected,
+    var closing = kind === "underline" ? "</u>" : marker;
+    var n = marker.length, endLength = closing.length;
+    if (a >= n && raw.slice(a-n, a) === marker
+            && raw.slice(b, b+endLength) === closing) {
+        return {from:a-n, to:b+endLength, insert:selected,
             selectionStart:a-n, selectionEnd:a-n+selected.length};
     }
-    if (selected.length >= 2*n && selected.startsWith(marker) && selected.endsWith(marker)) {
-        var inner = selected.slice(n, -n);
-        return {from:a, to:b, insert:inner, selectionStart:a, selectionEnd:a+inner.length};
+    if (selected.length >= n+endLength && selected.startsWith(marker)
+            && selected.endsWith(closing)) {
+        var inner = selected.slice(n, -endLength);
+        return {from:a, to:b, insert:inner,
+            selectionStart:a, selectionEnd:a+inner.length};
     }
-    return {from:a, to:b, insert:marker + selected + marker,
+    return {from:a, to:b, insert:marker + selected + closing,
         selectionStart:a+n, selectionEnd:a+n+selected.length};
 }
 
