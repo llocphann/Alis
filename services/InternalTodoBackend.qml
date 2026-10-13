@@ -4,7 +4,6 @@ import qs.modules.common
 import Quickshell;
 import Quickshell.Io;
 import QtQuick;
-import "AgendaTodoPolicy.js" as AgendaTodoPolicy
 
 /**
  * Internal Hadalis to-do persistence backend.
@@ -96,7 +95,9 @@ Scope {
             for (const field of ["description","date","startTime","endTime","startDate","endDate"])
                 if(typeof item[field] === "string")clean[field]=item[field]
             if(typeof item.allDay === "boolean")clean.allDay=item.allDay
-            if (item.agenda?.version === 1 && AgendaTodoPolicy.validLink({version:1,key:item.agenda.key,state:"linked"})) {
+            // Keep historical task metadata without restoring Agenda linking.
+            if (item.agenda?.version === 1 && typeof item.agenda.key === "string"
+                    && /^agenda-[a-z0-9-]{8,96}$/.test(item.agenda.key)) {
                 clean.agenda = Object.assign({},item.agenda)
             }
             normalized.push(clean)
@@ -116,25 +117,6 @@ Scope {
 
     function addTask(desc) {
         return addItem({ "content": desc, "done": false })
-    }
-
-    function ensureAgenda(event) {
-        if (!root.ready || root.persistenceBusy) return false
-        const key=event.todoLink.key
-        const index=root.list.findIndex(item=>item.agenda?.key===key)
-        const next=AgendaTodoPolicy.linkedItem(event,index>=0?root.list[index]:null)
-        if(index>=0 && JSON.stringify(next)===JSON.stringify(root.list[index])) return true
-        const items=root.list.slice()
-        if(index>=0)items[index]=next;else items.push(next)
-        root.list=items;root._persistAll();return true
-    }
-    function unlinkAgenda(key) {
-        if(!root.ready || root.persistenceBusy)return false
-        const index=root.list.findIndex(item=>item.agenda?.key===key)
-        if(index<0)return true
-        const items=root.list.slice();const item=Object.assign({},items[index])
-        delete item.agenda;items[index]=item
-        root.list=items;root._persistAll();return true
     }
 
     function markDone(index) {
