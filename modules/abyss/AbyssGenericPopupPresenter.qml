@@ -57,12 +57,17 @@ Item {
                 || root.desiredKind !== root.activeKind)
             return
         retractTimer.stop()
+        // A reopened request cancels retraction immediately, but content may
+        // still be waiting for the shared deferred-loader readiness gate.
+        if (!body.ready)
+            return
         if (!AbyssStyle.motionEnabled) {
             root.offsetScale = 0
             return
         }
         Qt.callLater(() => {
-            if (root.resident && root.desiredKind === root.activeKind)
+            if (root.resident && body.ready
+                    && root.desiredKind === root.activeKind)
                 root.offsetScale = 0
         })
     }

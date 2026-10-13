@@ -455,11 +455,19 @@ ContentPage {
                 return
             }
             if (root.draggingLayoutOutput.length === 0 && !root.monitorLayoutBusy)
-                Qt.callLater(() => root.syncMonitorLayoutSnapshot(false))
+                layoutSnapshotRefresh.restart()
         }
     }
 
-    Component.onCompleted: Qt.callLater(() => root.syncMonitorLayoutSnapshot(false))
+    // Embedded Utilities can create and destroy this page in the same turn.
+    // An owned timer disappears with the page instead of calling a dead VM
+    // context from an anonymous global callLater callback.
+    Timer {
+        id: layoutSnapshotRefresh
+        interval: 0
+        onTriggered: root.syncMonitorLayoutSnapshot(false)
+    }
+    Component.onCompleted: layoutSnapshotRefresh.restart()
 
     function desktopWidgetOutputNames(): var {
         const names = connectedScreenNames().slice()

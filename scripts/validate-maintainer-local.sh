@@ -319,6 +319,7 @@ run_check 'Native static Panel reveal without content resizing' python3 scripts/
 run_check 'Native dynamic Toast/OSD/Utility and reparented form reveal' python3 scripts/test-abyss-dynamic-content-size-runtime.py
 run_check 'Native shared-field optimized/unoptimized exact GPU parity' python3 scripts/test-abyss-field-support-runtime.py
 run_check 'Native shared-field fractional light/mask exact GPU parity' python3 scripts/test-abyss-field-support-runtime.py --light --scale 1.5
+run_check 'Native generic Popup delayed-loader reveal and cancellation' python3 scripts/test-abyss-generic-reveal-readiness-runtime.py
 run_check 'Dashboard horizontal gesture and stable page order regression' node scripts/test-dashboard-page-policy.mjs
 run_check 'Weekly Planner civil dates, overlap, recurrence and DST regression' node scripts/test-weekly-planner-policy.mjs
 run_check 'Weekly Planner Ctrl/Shift multi-date and compatible Repeat cycles' node scripts/test-weekly-planner-multidate.mjs
