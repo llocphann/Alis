@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 use serde_json::json;
 
 #[derive(Debug, Parser)]
-#[command(about = "Dormant one-shot native helpers for Hadalis")]
+#[command(about = "Dormant one-shot native helpers for Alis")]
 struct Args {
     #[command(subcommand)]
     command: Command,

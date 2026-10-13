@@ -33,7 +33,7 @@ impl StreamMode {
 }
 
 #[derive(Debug, Parser)]
-#[command(about = "Dormant native keyboard input backend for Hadalis")]
+#[command(about = "Dormant native keyboard input backend for Alis")]
 struct Args {
     /// Match the current Python lock-state probe: print one snapshot and exit.
     #[arg(long)]

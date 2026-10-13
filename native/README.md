@@ -1,6 +1,6 @@
-# Hadalis native runtime
+# Alis native runtime
 
-Hadalis uses this Rust workspace as its production backend. Python implementations remain installed as an explicit rollback path, not the default selector.
+Alis uses this Rust workspace as its production backend. Python implementations remain installed as an explicit rollback path, not the default selector.
 
 The workspace builds `inir-inputd`, `inir-mpdd`, `inir-native` and `inir-theme`. The optional Companion state/scheduling backend (`inir-companiond`) is now built and installed separately by [Hadanion](https://github.com/llocphann/Hadanion). A source checkout can also use `native/target/release/` for development validation.
 

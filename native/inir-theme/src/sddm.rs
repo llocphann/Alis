@@ -12,11 +12,11 @@ use crate::palette::Palette;
 const THEME_DIR: &str = "/usr/share/sddm/themes/ii-pixel";
 const THEME_CONF_TEMPLATE: &str = r#"[SddmTheme]
 Name=ii-pixel
-Description=iNiR SDDM login screen — Material You dynamic colors
+Description=Alis SDDM login screen — Material You dynamic colors
 Type=sddm-theme
-Author=iNiR project
+Author=Alis project
 Version=1.0
-Website=https://github.com/snowarch/iNiR
+Website=https://github.com/llocphann/Alis
 Screenshot=
 MainScript=Main.qml
 ConfigFile=theme.conf
@@ -26,7 +26,7 @@ background=assets/background.png
 defaultBackground=assets/background.png
 blurRadius=50
 
-# iNiR Material You colors — updated automatically by inir-theme on wallpaper change"#;
+# Alis Material You colors — updated automatically by inir-theme on wallpaper change"#;
 
 fn home_from_getent(user: &str) -> Option<PathBuf> {
     let output = Command::new("getent")

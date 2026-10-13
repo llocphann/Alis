@@ -31,7 +31,7 @@ trait ReadWrite: Read + Write {}
 impl<T: Read + Write> ReadWrite for T {}
 
 #[derive(Debug, Parser)]
-#[command(about = "Dormant persistent MPD backend for Hadalis")]
+#[command(about = "Dormant persistent MPD backend for Alis")]
 struct Args {
     #[arg(long, default_value = "127.0.0.1")]
     host: String,
