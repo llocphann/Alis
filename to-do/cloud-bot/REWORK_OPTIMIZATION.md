@@ -1122,7 +1122,8 @@ run privileged installation just because manual buttons are retired.
   Settings and edit surfaces at varying scales and light/dark themes. State:
   READY for UI audit; owner visual acceptance pending.
 
-- [ ] **ABYSS-R08 — Compact Edit Abyss Layout control bar — owner request 2026-10-10:**
+- [x] **ABYSS-R08 — Compact Edit Abyss Layout control bar — owner request 2026-10-10:**
+  **Owner verified — 2026-10-13 (explicit maintainer approval):** The maintainer accepted the compact Edit Abyss Layout design, including the latest Modules/IPC width refinements and left/right IPC alignment updates. Mark the implementation complete and owner-verified. Earlier per-iteration “owner OPEN” wording below is historical and superseded for owner visual acceptance only; source-specific CI/canonical, physical Niri/Quickshell, fractional/multi-output, input and other technical gates remain independent and retain their observed PASS/FAIL/SKIP/OPEN statuses. Do not infer a test PASS from this approval.
   **Owner side IPC alignment follow-up — 2026-10-13 (source delivered; native/owner OPEN):**
   On left/right toolbar, the eDP-1 output picker starts too far right of
   the IPC Kind/Edge/Position dropdowns, and those three stop short of the
