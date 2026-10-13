@@ -18,7 +18,7 @@ if [[ "${ALIS_LEGACY_PUBLIC:-0}" == 1 && "${ALIS_INTERNAL_CLI:-0}" != 1 ]]; then
     }; then
         :
     else
-        printf "The 'inir' command is temporarily disabled. Use 'alis' instead.\\n" >&2
+        printf "The 'inir' command is temporarily disabled. Use 'alis' instead.\n" >&2
         exit 64
     fi
 fi
