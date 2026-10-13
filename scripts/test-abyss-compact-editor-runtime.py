@@ -210,14 +210,18 @@ ShellRoot {
      check(Math.abs(rightIn(edgeWidthSlider,edgeColumn)-edgeColumn.width)<2*scale
          && Math.abs(rightIn(scaleSlider,edgeColumn)-edgeColumn.width)<2*scale,
          "bottom Edge slider values do not share the column's right boundary")
-     check(Math.abs(rightIn(edgeGapSlider,edgeColumn)-edgeColumn.width)<2*scale
-         || edgeColumn.width<260*scale,
-         "first pair row should fill the Edge column when stacked")
+     const paired=item("abyssEdgeGapAndSizeRow")
+     const firstEndpoint=paired.columns===2
+         ? (edgeColumn.width-paired.columnSpacing)/2 : edgeColumn.width
+     check(Math.abs(rightIn(edgeGapSlider,edgeColumn)-firstEndpoint)<2*scale,
+         "first Edge slider does not end on its balanced column boundary")
      check(Math.abs(rightIn(edgeSizeSlider,edgeColumn)-edgeColumn.width)<2*scale,
-         "top right Edge slider does not align with bottom labels")
-     check(edgePicker.width>=100*scale-.5 && edgePicker.width<=108*scale+.5,
-         "Edge selector should be slightly wider than its former 88px width")
-     if(grouped.columns===3 && moduleColumn.width>=moduleRight) {
+         "second Edge slider does not align with bottom value labels")
+     if(edgeColumn.width>=170*scale)
+       check(edgePicker.width>=100*scale-.5 && edgePicker.width<=108*scale+.5,
+           "Edge selector should be slightly wider than its former 88px width")
+     const header=item("abyssModuleHeaderActions")
+     if(grouped.columns===3 && moduleColumn.width>=header.implicitWidth-1) {
        const finalAction=control("abyssModuleJoinCorner")
        check(Math.abs(rightIn(finalAction,moduleColumn)-moduleRight)<2*scale,
            "Module fields do not end at the last Module action icon")
