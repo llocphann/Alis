@@ -30,4 +30,16 @@ for package in "$repo/distro/arch/inir-shell/PKGBUILD" "$repo/distro/arch/inir-s
 done
 grep -Fq 'makeWrapper "$runtime/scripts/alis" "$out/bin/alis"' "$repo/nix/package.nix" || fail "Nix Alis launcher missing"
 grep -Fq 'install -m755 scripts/alis "$(DESTDIR)$(BINDIR)/alis"' "$repo/Makefile" || fail "Makefile Alis launcher missing"
-printf "PASS: Alis alias, completions, and first-run identity contracts\n"
+stage="$tmp/make-stage"
+make -s install-bin "DESTDIR=$stage" "PREFIX=/usr" || fail "Make Alis launcher installation"
+[[ -x "$stage/usr/bin/alis" ]] || fail "installed Alis launcher not executable"
+make -s uninstall-bin "DESTDIR=$stage" "PREFIX=/usr" || fail "Make Alis launcher uninstall"
+[[ ! -e "$stage/usr/bin/alis" ]] || fail "managed Alis launcher was not removed"
+printf "foreign user command\n" > "$stage/usr/bin/alis"
+if make -s install-bin "DESTDIR=$stage" "PREFIX=/usr" >/dev/null 2>&1; then
+    fail "Make install overwrote foreign Alis launcher"
+fi
+[[ "$(cat "$stage/usr/bin/alis")" == "foreign user command" ]] || fail "foreign Alis launcher was modified"
+make -s uninstall-bin "DESTDIR=$stage" "PREFIX=/usr" || fail "Make uninstall with foreign command"
+[[ "$(cat "$stage/usr/bin/alis")" == "foreign user command" ]] || fail "Make uninstall removed foreign Alis launcher"
+printf "PASS: Alis alias, completions, first-run and install ownership contracts\n"
