@@ -1,0 +1,90 @@
+{
+  "area:abyss": {
+    "color": "4361EE",
+    "description": "Abyss panels, edges and surface geometry"
+  },
+  "area:dashboard": {
+    "color": "228BE6",
+    "description": "Dashboard and Weekly Planner"
+  },
+  "area:calendar": {
+    "color": "0F766E",
+    "description": "Calendar and events"
+  },
+  "area:companion": {
+    "color": "9C36B5",
+    "description": "Companion 3D, AI and visual behavior"
+  },
+  "area:integration": {
+    "color": "2F9E44",
+    "description": "External integrations and helpers"
+  },
+  "area:media": {
+    "color": "E67700",
+    "description": "Media, sound, DSP and playback"
+  },
+  "area:notes": {
+    "color": "12B886",
+    "description": "Quick Notes and markdown editing"
+  },
+  "area:performance": {
+    "color": "D6336C",
+    "description": "CPU, GPU, RAM and frame performance"
+  },
+  "area:platform": {
+    "color": "495057",
+    "description": "Shell lifecycle, installation and infrastructure"
+  },
+  "area:popups": {
+    "color": "1971C2",
+    "description": "Popup behavior and pointer ownership"
+  },
+  "area:notifications": {
+    "color": "E8590C",
+    "description": "Notifications and edgebar"
+  },
+  "area:settings": {
+    "color": "5C7CFA",
+    "description": "Settings and configuration"
+  },
+  "area:ui": {
+    "color": "748FFC",
+    "description": "Shared UI, typography and themes"
+  },
+  "area:utilities": {
+    "color": "087F8C",
+    "description": "Utilities and system controls"
+  },
+  "area:wallpaper": {
+    "color": "C2255C",
+    "description": "Wallpaper and transitions"
+  },
+  "area:weather": {
+    "color": "1098AD",
+    "description": "Weather and calendar-hover visual behavior"
+  },
+  "area:todo": {
+    "color": "20C997",
+    "description": "Todo and task persistence"
+  },
+  "area:workflow": {
+    "color": "7048E8",
+    "description": "Repository workflow and task governance"
+  },
+  "status:deferred": {
+    "color": "E8A317",
+    "description": "Scheduled for a later phase"
+  },
+  "status:blocked": {
+    "color": "B42318",
+    "description": "Blocked by unmet external or technical gate"
+  },
+  "status:awaiting-owner": {
+    "color": "C49B06",
+    "description": "Bot complete, pending owner verification"
+  },
+  "complexity:high": {
+    "color": "7C3AED",
+    "description": "High-complexity task spanning rendering, lifecycle, performance or architecture"
+  }
+}
