@@ -27,7 +27,7 @@ Requirement precedence:
 
 Working rules:
 
-- **Local and Cloud development AI follow the same [intake and selection policy](to-do/cloud-bot/README.md).** Classify actionable requests on receipt, merge repeats/corrections and choose the next task autonomously in Issues/bugs → Rework/optimization → New features order, ranking severity/actionability within each category. An explicit immediate priority from the maintainer takes precedence.
+- **Local and Cloud AI use [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen) as the only active task tracker.** Deduplicate by stable code, follow the latest owner priorities, then actionable non-deferred features and their related rework/bugs. No task Markdown ledgers.
 - Work directly on **`dev`**. Do not create or switch to another branch unless the maintainer explicitly requests it.
 - Refetch the latest **`dev`** before every significant audit and immediately before every write/ref update. Use `stable` only when a behavioral comparison is actually needed; never merge into or mutate `stable` as part of normal development.
 - Re-read the current target file and its caller/consumer before changing architecture.
@@ -103,7 +103,7 @@ future perimeter/connected-surface optimization, read
 [the archived migration notes](docs/archive/surfaces/IRIS_INTEGRATION_COMPLETE.md). New work should focus on optimization,
 bug fixing and refinement rather than reopening the migration.
 
-Optimization research is centralized under [docs/optimization](docs/optimization/README.md); pending implementation is tracked in [Rework/optimization](to-do/cloud-bot/REWORK_OPTIMIZATION.md). Superseded documents are indexed in [the archive](docs/archive/README.md).
+Optimization research is centralized under [docs/optimization](docs/optimization/README.md); pending implementation is tracked in [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen). Superseded documents are indexed in [the archive](docs/archive/README.md).
 
 **Fullscreen Bar lifecycle lock (maintainer-approved 2026-09-19):**
 
@@ -169,11 +169,11 @@ Further equalizer presentation experiments are planned/deferred rather than curr
 
 ## 3. v1.0 release blockers
 
-Active correctness/release gates live in [Issues/bugs](to-do/cloud-bot/ISSUES.md); presentation and performance work lives in [Rework/optimization](to-do/cloud-bot/REWORK_OPTIMIZATION.md). See [canonical validation](docs/VALIDATION.md) for SHA-pinned local checks and separate maintainer desktop acceptance.
+Active correctness, release, presentation and performance tasks are tracked in [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen), with stable task codes. See [canonical validation](docs/VALIDATION.md) for SHA-pinned local checks and separate maintainer desktop acceptance.
 
 ## 3.1 Latest maintainer runtime findings
 
-Current open/reconciliation tasks start at [to-do/README.md](to-do/README.md), ordered Issues/bugs → Rework/optimization → New features. Original source-complete notes and past checkpoints remain in [the archive](docs/archive/README.md).
+Current open/reconciliation tasks start in [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen), following [AGENTS.md](AGENTS.md) priorities. Original source-complete notes and past checkpoints remain in [the archive](docs/archive/README.md).
 
 ## 4. Connected-surface architecture contract
 
@@ -228,7 +228,7 @@ Rules:
 
 ## 6. v1.0 hardening tasks — P1
 
-See [Issues/bugs](to-do/cloud-bot/ISSUES.md) for correctness and release acceptance, then [Rework/optimization](to-do/cloud-bot/REWORK_OPTIMIZATION.md) for refinement.
+See [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen) for correctness, release acceptance and refinement.
 
 ## 7. Local release validation — P0 gate
 
@@ -265,8 +265,8 @@ Do not spend the 1.0 cycle on:
 To avoid future contradictions:
 
 - keep this README focused on **current** v1.0 requirements, invariants and release gates;
-- classify every maintainer request in [the chatbot task categories](to-do/README.md), merge duplicates and work Issues/bugs → Rework/optimization → New features unless explicitly reprioritized;
-- use [the documentation index](docs/README.md) for current references and [the archive](docs/archive/README.md) for retired/completed history; archive fully completed tasks after seven days and retain unresolved acceptance in the active lists;
+- classify each actionable maintainer request in GitHub Issues by its stable feature/rework/bug code, deduplicate and follow the owner's latest priority;
+- use [the documentation index](docs/README.md) for references and [the archive](docs/archive/README.md) for historical evidence; keep unfinished/bot-complete-unverified work in open GitHub Issues;
 - treat the Material-only Global Theme rule as canonical anywhere older documentation still describes multiple Global Themes;
 - do not pin transient implementation status to old commit hashes here;
 - put historical changes in `CHANGELOG.md` / Git history;
@@ -277,9 +277,9 @@ If the maintainer gives a newer explicit instruction, that instruction supersede
 
 ## 11. Current unfinished handoff
 
-Start at [to-do/README.md](to-do/README.md), then Issues/bugs, Rework/optimization and New features in that order. Old checkpoints/prompts are historical; always verify current `dev`.
+Start at [GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen) and [AGENTS.md](AGENTS.md); older Markdown task lists are historical pointers only. Always verify current `dev`.
 
 ## 12. New-conversation continuation
 
-For both Local and Cloud AI, read `AGENTS.md`, [to-do/README.md](to-do/README.md), the shared intake/selection policy and current `dev`. Automatically reconcile the new request with the category lists, select the highest-priority actionable task and continue within authorized scope. Do not start from superseded historical prompts or SHAs.
+For both Local and Cloud AI, read `AGENTS.md`, [open GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen) and current `dev`. Search/update the matching Issue, follow priorities, and continue within authorized scope. Do not start from superseded historical prompts or SHAs.
 
