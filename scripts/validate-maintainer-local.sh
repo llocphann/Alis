@@ -315,6 +315,7 @@ run_check 'Abyss hover scene geometry diagnostic regression' node scripts/test-a
 run_check 'Abyss frame activity diagnostic regression' node scripts/test-abyss-frame-activity-probe.mjs
 run_check 'Shared tooltip hover/click lifecycle contract' python3 scripts/test-popup-tooltip-hover-contract.py
 run_check 'Native default/custom/styled/Waffle tooltip content lifecycle' python3 scripts/test-tooltip-content-runtime.py
+run_check 'Native Sidebar reveal without content resizing' python3 scripts/test-abyss-sidebar-content-size-runtime.py
 run_check 'Dashboard horizontal gesture and stable page order regression' node scripts/test-dashboard-page-policy.mjs
 run_check 'Weekly Planner civil dates, overlap, recurrence and DST regression' node scripts/test-weekly-planner-policy.mjs
 run_check 'Weekly Planner Ctrl/Shift multi-date and compatible Repeat cycles' node scripts/test-weekly-planner-multidate.mjs

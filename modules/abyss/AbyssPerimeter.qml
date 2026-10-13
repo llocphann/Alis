@@ -1033,6 +1033,8 @@ Scope {
             }
             AbyssBodyHost {
                 id: leftPanel
+                // Reveal clips a final-size Sidebar; controls never reflow per frame.
+                stableContentSize: true
                 identity: "leftPanel"
                 controller: liquid
                 anchors.fill: parent
@@ -1055,6 +1057,8 @@ Scope {
             }
             AbyssBodyHost {
                 id: rightPanel
+                // Reveal clips a final-size Sidebar; controls never reflow per frame.
+                stableContentSize: true
                 identity: "rightPanel"
                 controller: liquid
                 anchors.fill: parent
