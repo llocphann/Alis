@@ -83,8 +83,21 @@ Item {
     Shortcut {
         sequences: ["Escape"]
         context: Qt.WindowShortcut
-        enabled: root.editing && root.revealRequested
-        onActivated: root.canvasController.cancelEditMode()
+        // The toolbar is a sibling of the body after reparenting. Its focused
+        // buttons do not bubble Escape through AbyssBodyHost, so this shortcut
+        // covers that separate focus tree from the start of Edit Mode (not just
+        // after the opening animation has reached 99%).
+        enabled: root.editing && (root.body?.open ?? false)
+        onActivated: {
+            if (!(root.canvasController?.editMode ?? false))
+                return
+            const dashboard = root.body?.contentItem?.item
+            if (dashboard?.handleEscape?.()) {
+                // Once the toolbar hides, give focus back to the Dashboard
+                // body so a second Escape follows its normal close path.
+                root.body?.forceActiveFocus()
+            }
+        }
     }
     DashboardEditToolbar {
         id: toolbar
