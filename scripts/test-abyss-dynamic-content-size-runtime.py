@@ -59,7 +59,10 @@ ShellRoot {
  FloatingWindow {
   visible:true;implicitWidth:1200;implicitHeight:920;color:"#111820"
   Item {
-   id:scene;anchors.fill:parent
+   // Geometry qualification uses a controlled canvas. A nested compositor
+   // may constrain its native window below the requested implicit size; that
+   // must not cap both intrinsic-size scenarios to the same allocator target.
+   id:scene;width:1200;height:920
    Item {
     id:home;width:500;height:600
     readonly property var liquidController:controller
@@ -76,6 +79,7 @@ ShellRoot {
     edge:root.side;padding:14;externalProgress:root.reveal
     animatePresentation:false;animatePlacementChanges:false
     stableContentSize:root.fixedSize
+    largeSurface:root.mode==="utility"
     open:root.mode==="dialogBody" ? controller.activeDialog!==null : root.shown
     embeddedItem:root.mode==="dialogBody" ? controller.activeDialog : null
     contentKind:root.mode==="osd" ? "volume" : root.selectedKind
