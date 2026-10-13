@@ -1,13 +1,6 @@
 # Hadalis documentation
 
-Chatbot work starts at [to-do/README.md](../to-do/README.md), in this order:
-[Issues/bugs](../to-do/cloud-bot/ISSUES.md),
-[Rework/optimization](../to-do/cloud-bot/REWORK_OPTIMIZATION.md), then
-[New features](../to-do/cloud-bot/NEW_FEATURES.md).
-The [shared Local and Cloud AI policy](../to-do/cloud-bot/README.md) requires
-classification on receipt, autonomous task selection, deduplication and dated
-archives. Both environments use these same lists. Technical documents describe
-the product; they are not additional task lists.
+**All active work lives in [Alis GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen).** Local and Cloud AI share that tracker; [AGENTS.md](../AGENTS.md) specifies deduplication, code prefixes, priorities and Owner verification. These technical documents are references, not task lists.
 
 ## Current reference
 
@@ -26,8 +19,7 @@ the product; they are not additional task lists.
 [The archive](archive/README.md) contains superseded plans, completed migration
 notes, old task checkpoints and retired translations. Old root document paths
 retain short compatibility links where historical references still use them.
-Use the current task categories for status and the owning repository for optional
-implementation work.
+Use GitHub Issues for task status; optional implementation remains in its owning repository.
 
 Raw [evidence](evidence/) and [Companion receipts](wull-visual/) retain their
 original paths, source revisions and acceptance boundaries. Archiving a document
