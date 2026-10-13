@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import qs.modules.common
 import qs.modules.dashboard
 import qs.modules.abyss.looks
@@ -41,6 +42,20 @@ Item {
     readonly property real revealedHeight: height*revealProgress
     visible: revealProgress > 0
     enabled: revealRequested && visible && (body?.acceptsInput ?? false)
+    // The toolbar sits above the Dashboard body; the body's pointer mask
+    // never covers it. Publish its own native Region to the Abyss field.
+    readonly property rect toolbarInputBounds: root.enabled
+        ? Qt.rect(root.x, root.y + root.slideOffset,
+            root.width, root.revealedHeight)
+        : Qt.rect(0, 0, 0, 0)
+    readonly property Region toolbarInputRegion: Region {
+        x: Math.floor(root.toolbarInputBounds.x)
+        y: Math.floor(root.toolbarInputBounds.y)
+        width: root.toolbarInputBounds.width > 0
+            ? Math.ceil(root.toolbarInputBounds.x + root.toolbarInputBounds.width) - x : 0
+        height: root.toolbarInputBounds.height > 0
+            ? Math.ceil(root.toolbarInputBounds.y + root.toolbarInputBounds.height) - y : 0
+    }
     clip: true
     Behavior on revealProgress {
         enabled: Appearance.animationsEnabled
@@ -60,9 +75,16 @@ Item {
             along:root.x,span:root.width,depth:root.revealedHeight,
             progress:root.revealProgress}) : null
         surfaceSettled: root.revealRequested && root.revealProgress === 1
-        inputBounds: root.enabled
-            ? Qt.rect(root.x,root.y+root.slideOffset,root.width,root.revealedHeight)
-            : Qt.rect(0,0,0,0)
+        inputBounds: root.toolbarInputBounds
+        nativeInputRegion: root.toolbarInputRegion
+    }
+    // Editing consumes the first Escape just like clicking Cancel. Leave the
+    // second Escape to the owning Dashboard surface's normal close shortcut.
+    Shortcut {
+        sequences: ["Escape"]
+        context: Qt.WindowShortcut
+        enabled: root.editing && root.revealRequested
+        onActivated: root.canvasController.cancelEditMode()
     }
     DashboardEditToolbar {
         id: toolbar
