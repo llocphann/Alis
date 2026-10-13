@@ -1,5 +1,24 @@
 # Issues/bugs
 
+- [ ] **CAL-I03 — Agenda indicators overflow below Calendar dates — owner request 2026-10-13:**
+  In counted Calendar day cells, display at most three source-colored
+  indicators at Bottom, then distribute additional events counterclockwise:
+  Right (4–6), Top (7–9), Left (10–12), with three maximum per edge.
+  On 13+ show a subtle `+` in the unused top-right corner rather than
+  overlapping indicators. Keep date number, selected-day background,
+  event updates, and external/local colors readable in 30px cells.
+  The existing `calendar.maxEventDots` option now controls dots PER EDGE:
+  default 3, range 0–3; saved legacy 4/5 values clamp to 3. No migration
+  or event store changes. Sidebar/Dashboard non-counted calendars retain
+  their legacy three source-color dots.
+  **Source milestone — 2026-10-13:** shared
+  `CalendarEventDotLayout.js` (Bottom → Right → Top → Left),
+  counted QML four-edge renderer, Popup/Planner edit cap and Calendar
+  Settings/English copy, focused pure policy + source contract + native
+  private-Niri checks. **OPEN:** exact-commit Node/CI, actual Niri/
+  Quickshell 4-edge layout at small/fractional sizes, focus/hover,
+  day-13+ overflow, restart persistence and owner visual acceptance.
+
 - [ ] **DASH-I12 — Weekly Planner drag moves agenda dots but leaves Edit Event date focus stale — owner screenshots 2026-10-13:**
   When a local timed Event is dragged to a different civil day while its
   inline Edit Event pane remains open, the agenda indicators update from

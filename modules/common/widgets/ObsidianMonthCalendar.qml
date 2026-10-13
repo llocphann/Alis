@@ -4,6 +4,7 @@ import qs.modules.common
 import qs.services
 import QtQuick
 import QtQuick.Layouts
+import "CalendarEventDotLayout.js" as DotLayout
 
 Item {
     id: root
@@ -20,8 +21,9 @@ Item {
     // Opt in only for the Popup: existing Sidebar/Dashboard source-color
     // dots retain their original distinct-color presentation by default.
     property bool countedEventDots: false
+    // Per-edge capacity for Bottom -> Right -> Top -> Left.
     property int maxEventDots: 3
-    readonly property int effectiveMaxEventDots: Math.max(0, Math.min(5, root.maxEventDots))
+    readonly property int effectiveMaxEventDots: Math.max(0, Math.min(3, root.maxEventDots))
     // Popup consumers keep the compact 30px cells. Sidebar/Dashboard opt into
     // responsive sizing so the same visual language can use available width
     // without turning into a second Calendar style.
@@ -306,6 +308,10 @@ Item {
                             Number(dayCell.modelData?.eventCount ?? 0)
                         readonly property var eventColors:
                             dayCell.modelData?.eventColors ?? []
+                        readonly property var dotLayout: root.countedEventDots
+                            ? DotLayout.layoutDots(dayCell.eventCount,
+                                root.effectiveMaxEventDots,dayCell.eventColors,
+                                root.colAccent) : null
                         readonly property bool selected: root.multiSelectedDates.length>0
                             ? root.multiSelectedDates.indexOf(
                                 Qt.formatDate(dayCell.modelData?.date,"yyyy-MM-dd"))>=0
@@ -326,6 +332,8 @@ Item {
                             anchors.verticalCenterOffset:
                                 root.showEventDots && dayCell.eventCount > 0
                                     && (!root.countedEventDots || root.effectiveMaxEventDots > 0)
+                                    && (!root.countedEventDots
+                                        || dayCell.eventCount <= root.effectiveMaxEventDots)
                                     ? -2 : 0
                             text: String(dayCell.modelData?.day ?? "")
                             color: dayCell.selected
@@ -341,53 +349,101 @@ Item {
                                     ? Font.DemiBold : Font.Normal
                         }
 
+                        // Counterclockwise perimeter dots, starting at Bottom.
+                        // Non-counted Sidebar/Dashboard calendars remain legacy.
                         Row {
+                            objectName: "calendarEventDotBottom"
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 2
-                            // Counted dots belong to Calendar Popup only; do not
-                            // alter the Sidebar/Dashboard legacy dot spacing.
                             spacing: root.countedEventDots ? 3 : 1
                             visible: root.showEventDots && dayCell.eventCount > 0
                                 && (!root.countedEventDots || root.effectiveMaxEventDots > 0)
-
                             Repeater {
                                 model: {
-                                    if (!root.countedEventDots) {
-                                        // Preserve current Sidebar/Dashboard behavior.
-                                        if (dayCell.eventColors?.length > 0)
-                                            return dayCell.eventColors.slice(0, 3)
-                                        return [root.colAccent]
-                                    }
-                                    const count = Math.min(Math.max(0, dayCell.eventCount),
-                                        root.effectiveMaxEventDots)
-                                    const colors = []
-                                    for (let i = 0; i < count; ++i)
-                                        colors.push(dayCell.eventColors[i] ?? root.colAccent)
-                                    return colors
+                                    if (root.countedEventDots)
+                                        return dayCell.dotLayout?.edges[0] ?? []
+                                    if (dayCell.eventColors?.length > 0)
+                                        return dayCell.eventColors.slice(0, 3)
+                                    return [root.colAccent]
                                 }
-
                                 delegate: Rectangle {
                                     objectName: "calendarEventDot"
                                     required property var modelData
-                                    width: 3
-                                    height: 3
-                                    radius: 1.5
+                                    width: 3; height: 3; radius: 1.5
                                     color: modelData
                                 }
                             }
-
-                            // Extra events are still visible as a compact + cue;
-                            // the complete count remains in the day model.
-                            StyledText {
-                                objectName: "calendarEventOverflow"
-                                visible: root.countedEventDots
-                                    && dayCell.eventCount > root.effectiveMaxEventDots
-                                text: "+"
-                                font.pixelSize: 9
-                                font.weight: Font.DemiBold
-                                color: root.colAccent
+                        }
+                        Column {
+                            objectName: "calendarEventDotRight"
+                            anchors.right: parent.right
+                            anchors.rightMargin: 2
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 3
+                            visible: root.showEventDots && root.countedEventDots
+                                && (dayCell.dotLayout?.edges[1]?.length ?? 0) > 0
+                            Repeater {
+                                model: dayCell.dotLayout?.edges[1] ?? []
+                                delegate: Rectangle {
+                                    objectName: "calendarEventDot"
+                                    required property var modelData
+                                    width: 3; height: 3; radius: 1.5
+                                    color: modelData
+                                }
                             }
+                        }
+                        Row {
+                            objectName: "calendarEventDotTop"
+                            anchors.top: parent.top
+                            anchors.topMargin: 2
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            spacing: 3
+                            visible: root.showEventDots && root.countedEventDots
+                                && (dayCell.dotLayout?.edges[2]?.length ?? 0) > 0
+                            Repeater {
+                                model: dayCell.dotLayout?.edges[2] ?? []
+                                delegate: Rectangle {
+                                    objectName: "calendarEventDot"
+                                    required property var modelData
+                                    width: 3; height: 3; radius: 1.5
+                                    color: modelData
+                                }
+                            }
+                        }
+                        Column {
+                            objectName: "calendarEventDotLeft"
+                            anchors.left: parent.left
+                            anchors.leftMargin: 2
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 3
+                            visible: root.showEventDots && root.countedEventDots
+                                && (dayCell.dotLayout?.edges[3]?.length ?? 0) > 0
+                            Repeater {
+                                model: dayCell.dotLayout?.edges[3] ?? []
+                                delegate: Rectangle {
+                                    objectName: "calendarEventDot"
+                                    required property var modelData
+                                    width: 3; height: 3; radius: 1.5
+                                    color: modelData
+                                }
+                            }
+                        }
+                        // Event 13+ is represented without consuming dot space.
+                        StyledText {
+                            objectName: "calendarEventOverflow"
+                            anchors.top: parent.top
+                            anchors.right: parent.right
+                            anchors.topMargin: 0
+                            anchors.rightMargin: 0
+                            visible: root.showEventDots && root.countedEventDots
+                                && (dayCell.dotLayout?.overflow ?? false)
+                            text: "+"
+                            font.pixelSize: 9
+                            font.weight: Font.DemiBold
+                            color: dayCell.selected
+                                ? Appearance.colors.colOnPrimaryContainer
+                                : root.colAccent
                         }
 
                         MouseArea {

@@ -24,7 +24,7 @@ Item {
         1
     )
     readonly property bool eventEditorActive: eventsPane.inlineEditorMode
-    readonly property int maxEventDots: Math.max(0, Math.min(5,
+    readonly property int maxEventDots: Math.max(0, Math.min(3,
         Number(Config.options?.calendar?.maxEventDots ?? 3)))
     property int _localEventRevision: 0
     property int _externalEventRevision: 0

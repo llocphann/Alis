@@ -719,7 +719,7 @@ WindowDialog {
                     interactiveDays: true
                     showEventDots: true
                     countedEventDots: true
-                    maxEventDots: Math.max(0,Math.min(5,
+                    maxEventDots: Math.max(0,Math.min(3,
                         Number(Config.options?.calendar?.maxEventDots ?? 3)))
                     onPreviousMonthRequested: {
                         root.plannerViewMonth=new Date(root.plannerViewMonth.getFullYear(),

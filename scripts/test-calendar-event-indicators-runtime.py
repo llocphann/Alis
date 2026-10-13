@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Private-Niri QML event dot count and overflow regression (no owner calendar data)."""
+"""Private-Niri perimeter indicator layout, overflow and source color regression."""
 import json
 import shutil
 import tempfile
@@ -31,7 +31,7 @@ ShellRoot {
  property int checks:0
  property var cells: Array.from({length:42}, (_,i) => ({
   date:new Date(2026,9,i+1),day:(i%31)+1,currentMonth:true,today:i===3,
-  eventCount:[0,1,3,9,5][i] ?? 0,
+  eventCount:[0,1,2,3,4,6,7,9,10,12,13,20][i] ?? 0,
   eventColors:Array.from({length:9},(_,k)=>k%2 ? "#c978ce" : "#42b9a9")
  }))
  Component.onCompleted:Quickshell.watchFiles=false
@@ -56,23 +56,32 @@ ShellRoot {
    root.maxDots=limit;wait(80)
    const allDays=root.all(calendar,item=>item.objectName==="calendarEventDayCell")
    check(allDays.length===42,"calendar must retain 42 day cells: "+allDays.length)
-   const samples=[0,1,3,9,5]
+   const samples=[0,1,2,3,4,6,7,9,10,12,13,20]
    for(let i=0;i<samples.length;i++){
     const cell=allDays.find(day=>day.index===i)
     check(!!cell,"missing day "+i)
     const dots=root.all(cell,item=>item.objectName==="calendarEventDot")
     const overflow=root.all(cell,item=>item.objectName==="calendarEventOverflow")
-    check(dots.length===Math.min(samples[i],limit),
-      "wrong dots on day "+i+" at max "+limit+": "+dots.length)
+    check(dots.length===Math.min(samples[i],limit*4),
+      "wrong dots on day "+i+" at per-edge max "+limit+": "+dots.length)
+    for(const [edgeIndex,edgeName] of ["Bottom","Right","Top","Left"].entries()) {
+      const host=root.all(cell,item=>item.objectName==="calendarEventDot"+edgeName)[0]
+      check(!!host,"missing "+edgeName+" host on day "+i)
+      const shown=root.all(host,item=>item.objectName==="calendarEventDot")
+      const expected=Math.max(0,Math.min(limit,samples[i]-edgeIndex*limit))
+      check(shown.length===expected,
+        edgeName+" dot count wrong on day "+i+" at per-edge limit "+limit)
+    }
     check(overflow.length===1 &&
-      overflow[0].visible===(limit>0 && samples[i]>limit),
-      "overflow cue wrong on day "+i+" at max "+limit)
+      overflow[0].visible===(limit>0 && samples[i]>limit*4),
+      "overflow cue wrong on day "+i+" at max "+limit*4)
    }
   }
   function runChecks(){try{
    tryCompare(Config,"ready",true,6000)
-   for(const max of [0,1,3,5])inspect(max)
-   console.info("CALENDAR_EVENT_DOTS_NATIVE_PASS",root.checks,"checks: 42 days, 0/1/3/5 dots, overflow")
+   for(const max of [0,1,2,3])inspect(max)
+   console.info("CALENDAR_EVENT_DOTS_NATIVE_PASS",root.checks,
+     "checks: 42 days, 3 dots on each Bottom/Right/Top/Left, overflow after 12")
   }catch(error){console.error("CALENDAR_EVENT_DOTS_NATIVE_FAIL",error.message,error.stack)}Qt.quit()}
  }
  Timer{interval:100;running:true;onTriggered:test.runChecks()}

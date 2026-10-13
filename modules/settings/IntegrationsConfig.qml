@@ -246,11 +246,11 @@ ContentPage {
 
             ConfigSpinBox {
                 icon: "event"
-                text: Translation.tr("Maximum indicators per day")
-                description: Translation.tr("Calendar Popup event dots (0 hides them; maximum 5)")
-                value: Config.options?.calendar?.maxEventDots ?? 3
+                text: Translation.tr("Maximum indicators per edge")
+                description: Translation.tr("Calendar event dots (0 hides them; up to 3 per edge, 12 per day)")
+                value: Math.max(0,Math.min(3,Config.options?.calendar?.maxEventDots ?? 3))
                 from: 0
-                to: 5
+                to: 3
                 stepSize: 1
                 onValueChanged: Config.setNestedValue("calendar.maxEventDots", value)
             }
