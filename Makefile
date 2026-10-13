@@ -179,6 +179,12 @@ install-icon:
 
 install-desktop:
 	@mkdir -p "$(DESTDIR)$(APPLICATIONS_DIR)"
+	@for app in alis.desktop alis-settings.desktop; do \
+		target="$(DESTDIR)$(APPLICATIONS_DIR)/$$app"; \
+		if [ -L "$$target" ] || { [ -e "$$target" ] && ! grep -Fxq "X-Alis-Managed=true" "$$target"; }; then \
+			printf "Refusing to overwrite user-owned Alis desktop entry: %s\n" "$$target" >&2; exit 1; \
+		fi; \
+	done
 	@sed 's|^Exec=inir|Exec=$(BINDIR)/inir|' assets/applications/inir.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/inir.desktop"
 	@sed 's|^Exec=inir|Exec=$(BINDIR)/inir|' assets/applications/inir-settings.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/inir-settings.desktop"
 	@sed 's|^Exec=alis|Exec=$(BINDIR)/alis|' assets/applications/alis.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/alis.desktop"
@@ -229,7 +235,15 @@ uninstall-icon:
 	@if [ -z "$(DESTDIR)" ]; then gtk-update-icon-cache -q "$(SHAREDIR)/icons/hicolor" 2>/dev/null || true; fi
 
 uninstall-desktop:
-	@rm -f "$(DESTDIR)$(APPLICATIONS_DIR)/inir.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/inir-settings.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/alis.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/alis-settings.desktop"
+	@rm -f "$(DESTDIR)$(APPLICATIONS_DIR)/inir.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/inir-settings.desktop"
+	@for app in alis.desktop alis-settings.desktop; do \
+		target="$(DESTDIR)$(APPLICATIONS_DIR)/$$app"; \
+		if [ -f "$$target" ] && [ ! -L "$$target" ] && grep -Fxq "X-Alis-Managed=true" "$$target"; then \
+			rm -f "$$target"; \
+		elif [ -e "$$target" ] || [ -L "$$target" ]; then \
+			printf "Preserving user-owned Alis desktop entry: %s\n" "$$target" >&2; \
+		fi; \
+	done
 	@if [ -z "$(DESTDIR)" ]; then update-desktop-database -q "$(APPLICATIONS_DIR)" 2>/dev/null || true; fi
 
 uninstall-docs:
