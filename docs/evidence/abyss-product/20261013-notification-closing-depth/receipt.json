@@ -1,0 +1,28 @@
+{
+  "exact_source_sha": "55570d8b806c6f687dbf1698f10147a42b36ab59",
+  "negative_source_sha": "7c1906e66fe915cfd7adfac5f17c4b9c1235384f",
+  "negative_result": "FAIL expected: empty list snapped closing target depth",
+  "native_closing": "PASS 9",
+  "weather_handoff": "PASS 1155; focused Qt fixture only",
+  "source_checks": [
+    {
+      "command": [
+        "node",
+        "scripts/test-abyss-notification-transition.mjs"
+      ],
+      "exit_code": 0,
+      "log": "test-abyss-notification-transition.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-notification-presentation-probe.py"
+      ],
+      "exit_code": 0,
+      "log": "test-abyss-notification-presentation-probe.log"
+    }
+  ],
+  "full_canonical": "NOT_STARTED",
+  "paired_pointer_after": "WORKTREE based on 7c1906e66; original driver omitted dirty flag; not exact-source",
+  "scope": "isolated synthetic notification presentation; no encoder/audio capture or installed-owner acceptance"
+}

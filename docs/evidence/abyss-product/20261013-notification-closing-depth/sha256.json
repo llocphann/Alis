@@ -1,0 +1,19 @@
+{
+  "exact-55570-closing-pass.log": "56f2e1fe1ed6a93de7fb5fb6ad95c404896d13e8113630c7f595a6266af88000",
+  "exact-55570-weather-pass.log": "a46eda371fbe4da96d2917f61c9d77befe051a1c079454f75ad0ab0edb7a3b06",
+  "exact-closing-test.py": "18b78cd421947c1d27e193bddf5b4513f01e1cb5cb3d75eafe151d5a702643de",
+  "first-fixture-fail.log": "991c89f2859a600ea62b3db1844b9425857a7fea80e3bea47db0bf4e436cacd5",
+  "fixture-settled-worktree-pass.log": "56f2e1fe1ed6a93de7fb5fb6ad95c404896d13e8113630c7f595a6266af88000",
+  "negative-7c190-fail.log": "b5990e4281a983af2fc3bda8c84224897bceb6ab796fd142a397cb6f9afed79b",
+  "negative-control-test.py": "6be024a82034c9a6fb86440a1f17ecc679d6856ef2a3646c5a30913f46b21bbe",
+  "README.md": "52bfe557ebd786e78646cadb744175ccc75de6db058ec2c9d4664732e0c11f34",
+  "receipt.json": "b09e3b373dfb27e70d349f89d00a46f1eab5dd49a4696d8e650ef30d2f340df6",
+  "test-abyss-notification-presentation-probe.log": "1f7d8334220772197f2492322a9023cbab1f4d3d9a92c2b2c015a7d2d2edf6ec",
+  "test-abyss-notification-transition.log": "5891fb9567ad2d2d577e18b99d3f59b78474988135665e73c5783f3cc8218ef2",
+  "pointer-after-worktree/native.log": "0f5161b9b1559570becad54b4bcd8e403354f537c34da33fdb0e773e6961d312",
+  "pointer-after-worktree/probe.py": "762a7e7b18ead60f0563a15cc974bfa31202d3ca6d22dfed156848eed514bd5b",
+  "pointer-after-worktree/result.json": "29610debab9d449e1c42e4636e4fd5d5b8d78ce250713e46796f7f39272099c9",
+  "pointer-before/native.log": "31e35939ab947aa3b1a2ed166c82281460ae6aa25be2c0b24fb8393c3896933a",
+  "pointer-before/probe.py": "132497c74eacf224c7099342354f9d92fed180c78535f1fd1829aa7506d80f8c",
+  "pointer-before/result.json": "a3e7e44346d8e4f7d2d84350ebd68be57d73a43e7dcf248af8acbe1a334a225d"
+}
