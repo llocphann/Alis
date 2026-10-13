@@ -5,7 +5,10 @@ repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp -d)"
 trap 'rm -rf -- "$tmp"' EXIT
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
-mkdir -p "$tmp/bin" "$tmp/home"
+mkdir -p "$tmp/bin" "$tmp/home/.config/inir"
+# The real CLI help reads the installed version context; keep this fixture
+# self-contained rather than requiring an owner's existing $HOME state.
+printf '%s\\n' '{"version":"0.0-test","installMode":"repo-copy"}' > "$tmp/home/.config/inir/version.json"
 cp "$repo/scripts/inir" "$tmp/bin/inir"
 cp "$repo/scripts/alis" "$tmp/bin/alis"
 ln -s "$repo/scripts/lib" "$tmp/bin/lib"
