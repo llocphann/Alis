@@ -927,8 +927,22 @@ Item {
                                 if (Notepad.ready && event.modifiers === Qt.ControlModifier) {
                                     const formatKind = event.key === Qt.Key_B ? "bold"
                                         : event.key === Qt.Key_I ? "italic"
+                                        : event.key === Qt.Key_U ? "underline"
                                         : event.key === Qt.Key_K ? "link" : ""
                                     if (formatKind && root.formatMarkdown(formatKind)) {
+                                        event.accepted = true
+                                        return
+                                    }
+                                }
+                                // Explicit Control+Shift shortcuts apply alignment to
+                                // the current paragraph or selected paragraphs.
+                                if (Notepad.ready
+                                        && event.modifiers === (Qt.ControlModifier | Qt.ShiftModifier)) {
+                                    const alignKind = event.key === Qt.Key_L ? "align-left"
+                                        : event.key === Qt.Key_E ? "align-center"
+                                        : event.key === Qt.Key_R ? "align-right"
+                                        : event.key === Qt.Key_J ? "align-justify" : ""
+                                    if (alignKind && root.formatMarkdown(alignKind)) {
                                         event.accepted = true
                                         return
                                     }
