@@ -195,7 +195,7 @@ Bar.StyledPopup {
                     root.leaveEditorMode()
                 } else {
                     root.escapeArmed = false
-                    root.dismissPresentation()
+                    root.retractPresentation()
                 }
             }
         }
