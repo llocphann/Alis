@@ -261,6 +261,7 @@ PY
   install -Dm644 "$srcroot/assets/applications/alis.desktop" "$pkgdir/usr/share/applications/alis.desktop"
   install -Dm644 "$srcroot/assets/applications/alis-settings.desktop" "$pkgdir/usr/share/applications/alis-settings.desktop"
   install -Dm644 "$srcroot/assets/icons/desktop-symbolic.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/inir.svg"
+  install -Dm644 "$srcroot/assets/icons/desktop-symbolic.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/alis.svg"
   install -Dm644 "$srcroot/distro/arch/inir-shell/inir-quickshell-rebuild.hook" \
     "$pkgdir/usr/share/libalpm/hooks/inir-quickshell-rebuild.hook"
   install -Dm644 "$srcroot/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"

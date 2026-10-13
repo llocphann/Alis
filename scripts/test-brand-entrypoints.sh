@@ -26,6 +26,8 @@ grep -Fxq "NoDisplay=true" "$repo/assets/applications/inir-settings.desktop" || 
 grep -Fxq "NoDisplay=true" "$repo/assets/applications/inir.desktop" || fail "legacy shell launcher visible"
 grep -Fxq "X-Alis-Managed=true" "$repo/assets/applications/alis.desktop" || fail "Alis desktop ownership marker missing"
 grep -Fq "Exec=alis settings" "$repo/assets/applications/alis-settings.desktop" || fail "Alis settings app ID missing"
+grep -Fxq "Icon=alis" "$repo/assets/applications/alis-settings.desktop" || fail "Alis icon ID missing"
+grep -Fq 'apps/alis.svg"' "$repo/nix/package.nix" || fail "Nix icon alias not packaged"
 grep -Fq "Exec=alis service restart" "$repo/assets/applications/alis.desktop" || fail "Alis shell app ID missing"
 grep -Fq 'Translation.tr("Welcome to Alis")' "$repo/welcome.qml" || fail "wizard"
 grep -Fq "first_run.txt" "$repo/services/FirstRunExperience.qml" || fail "first-run marker"

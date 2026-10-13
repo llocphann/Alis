@@ -60,6 +60,7 @@ expected_files=(
   "$stage$prefix/share/applications/alis.desktop"
   "$stage$prefix/share/applications/alis-settings.desktop"
   "$stage$prefix/share/icons/hicolor/scalable/apps/inir.svg"
+  "$stage$prefix/share/icons/hicolor/scalable/apps/alis.svg"
   "$stage$prefix/share/doc/inir-shell/README.md"
   "$stage$prefix/share/doc/inir-shell/AUDIO_MEDIA.md"
   "$stage$prefix/share/doc/inir-shell/INSTALL.md"

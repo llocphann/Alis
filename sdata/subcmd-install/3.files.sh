@@ -244,6 +244,14 @@ case "${SKIP_QUICKSHELL}" in
     if [[ -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" ]]; then
       install_file "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "${INIR_ICON_DIR}/inir.svg"
       log_success "Launcher icon installed"
+      _alis_icon="${INIR_ICON_DIR}/alis.svg"
+      if [[ -e "$_alis_icon" || -L "$_alis_icon" ]]; then
+        if [[ ! -f "$_alis_icon" || -L "$_alis_icon" ]] || ! cmp -s "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "$_alis_icon"; then
+          log_warning "Preserving user-owned Alis icon: $_alis_icon"
+        fi
+      else
+        install_file "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "$_alis_icon"
+      fi
     fi
 
     if [[ -f "${REPO_ROOT}/assets/applications/inir.desktop" ]]; then

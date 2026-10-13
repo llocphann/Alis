@@ -347,6 +347,8 @@ EOF
       "$out/share/applications/alis-settings.desktop"
     install -Dm644 assets/icons/desktop-symbolic.svg \
       "$out/share/icons/hicolor/scalable/apps/inir.svg"
+    install -Dm644 assets/icons/desktop-symbolic.svg \
+      "$out/share/icons/hicolor/scalable/apps/alis.svg"
 
     install -Dm644 README.md "$docs/README.md"
     for doc in docs/*.md; do
