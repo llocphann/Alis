@@ -42,7 +42,13 @@ assert 'Layout.alignment:Qt.AlignVCenter' in header
 assert 'elide:Text.ElideRight' in header
 assert '10*Appearance.fontSizeScale' in header
 assert 'toolbarScroll.width>=205*Appearance.fontSizeScale ? 2 : 1' not in editor
-assert 'compactSideSelectorWidth:root.sideIpcDropdownWidth' in editor
+assert 'compactSideSelectorWidth:root.sideIpcSelectorWidth' in editor
+assert 'readonly property real sideIpcSelectorWidth: sideIpcDropdownWidth' in editor
+assert '+ 6 * Appearance.fontSizeScale + headerActionSize' in editor
+assert 'Layout.fillWidth: root.toolbarOnHorizontalEdge' in editor
+assert 'Layout.preferredWidth: root.toolbarOnHorizontalEdge' in editor
+assert 'Layout.maximumWidth: root.toolbarOnHorizontalEdge' in editor
+assert 'Qt.AlignLeft | Qt.AlignVCenter' in editor
 assert positions.count('root.compactSideSelectorWidth') == 6
 assert 'property real compactSideSelectorWidth: 136*Appearance.fontSizeScale' in positions
 assert 'Layout.preferredWidth:root.toolbarOnHorizontalEdge' in editor
@@ -100,7 +106,9 @@ assert 'objectName: "abyssEditorModeTabs"' in head
 assert 'objectName: "abyssEditorOutputScope"' in head
 assert head.index('objectName:"abyssEditorModulesMode"') < head.index('objectName:"abyssEditorIpcMode"')
 assert head.index('objectName: "abyssEditorOutputScope"') < head.index('id:ipcOutputChoice') < head.index('objectName:"abyssEditorOutputOnly"')
-assert 'Layout.alignment: Qt.AlignRight | Qt.AlignVCenter' in head
+assert 'Layout.alignment: root.toolbarOnHorizontalEdge' in head
+assert '(Qt.AlignRight | Qt.AlignVCenter)' in head
+assert '(Qt.AlignLeft | Qt.AlignVCenter)' in head
 assert 'columns:2' in head
 assert 'Layout.alignment:root.toolbarOnHorizontalEdge' in head
 assert 'visible:true' in head.split('id:ipcOutputChoice',1)[1]
@@ -223,5 +231,22 @@ for(const toolbarOnHorizontalEdge of [false,true]) {
  }
 }
 ''',policy.group(1)],check=True)
+
+# Both side positions start at the same origin. The three IPC selectors
+# terminate at the same right-hand coordinate as output selector + scope icon.
+subprocess.run(["node","-e",r'''
+const assert=require("node:assert/strict");
+for(const scale of [.75,1,1.25,1.75,2]) {
+ for(const viewport of [175,200,220,260,400]) {
+  const action=24*scale;
+  const output=Math.min(136*scale,Math.max(86*scale,
+    viewport-(action+10*scale)));
+  const ipc=output+6*scale+action;
+  const left=12*scale;
+  assert.ok(ipc>output);
+  assert.equal(left+ipc,left+output+6*scale+action);
+ }
+}
+'''],check=True)
 
 print("abyss editor adaptive side-toolbar contract: ok")

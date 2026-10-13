@@ -1123,6 +1123,17 @@ run privileged installation just because manual buttons are retired.
   READY for UI audit; owner visual acceptance pending.
 
 - [ ] **ABYSS-R08 — Compact Edit Abyss Layout control bar — owner request 2026-10-10:**
+  **Owner side IPC alignment follow-up — 2026-10-13 (source delivered; native/owner OPEN):**
+  On left/right toolbar, the eDP-1 output picker starts too far right of
+  the IPC Kind/Edge/Position dropdowns, and those three stop short of the
+  right edge of the `This output only` toggle. Align the output scope
+  row to the selectors' common left origin. Extend the three IPC trigger
+  widths by the scope gap and toggle width, so their right edges reach the
+  toggle's right edge; keep the output picker itself narrower to leave
+  room for the toggle. Preserve opened menus, selection-dependent state,
+  top/bottom toolbar layout and scope persistence. Source and contract
+  delivered; physical Quickshell/Niri, fractional scale, and owner acceptance
+  are still OPEN.
   **Owner left/right screenshot correction — 2026-10-13 (source delivered; native/owner OPEN):**
   Put Edit layout/title and all four actions into a single RowLayout, with
   title elision rather than a second action row. Switch `This output only`

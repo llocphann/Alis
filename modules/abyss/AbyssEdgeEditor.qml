@@ -41,11 +41,14 @@ Item {
     // Only the side toolbar's top action row gets smaller square buttons.
     readonly property real headerActionSize: toolbarOnHorizontalEdge
         ? editorActionSize : 24 * Appearance.fontSizeScale
-    // Side scope and all IPC selector triggers share the same width.
+    // On side Edges the narrower output picker shares its left edge with
+    // IPC selectors, whose right edge matches the output-only toggle.
     readonly property real sideIpcDropdownWidth: Math.min(
         136 * Appearance.fontSizeScale,
         Math.max(86 * Appearance.fontSizeScale,
             toolbarScroll.width - (headerActionSize + 10 * Appearance.fontSizeScale)))
+    readonly property real sideIpcSelectorWidth: sideIpcDropdownWidth
+        + 6 * Appearance.fontSizeScale + headerActionSize
     required property string outputName
     required property var moduleLayer
     required property var controller
@@ -869,9 +872,17 @@ Item {
 
                     RowLayout {
                         objectName: "abyssEditorOutputScope"
-                        Layout.fillWidth: true
+                        // Fix right-aligned, fill-width scope row offset on
+                        // the left/right Edges. Leave horizontal Edges alone.
+                        Layout.fillWidth: root.toolbarOnHorizontalEdge
                         Layout.minimumWidth: 0
-                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                        Layout.preferredWidth: root.toolbarOnHorizontalEdge
+                            ? -1 : root.sideIpcSelectorWidth
+                        Layout.maximumWidth: root.toolbarOnHorizontalEdge
+                            ? Infinity : root.sideIpcSelectorWidth
+                        Layout.alignment: root.toolbarOnHorizontalEdge
+                            ? (Qt.AlignRight | Qt.AlignVCenter)
+                            : (Qt.AlignLeft | Qt.AlignVCenter)
                         spacing:root.toolbarOnHorizontalEdge ? 8 : 4
                         Item {
                             visible:root.toolbarOnHorizontalEdge
@@ -891,8 +902,8 @@ Item {
                             // Shared output scope is useful in both Modules and IPC.
                             visible:true
                             baseHeight:28*Appearance.fontSizeScale
-                            // Output, IPC kind, Edge and alignment triggers
-                            // end at one x-position on left/right toolbars.
+                            // IPC selectors extend through the toggle's right edge;
+                            // output selection stops just before the toggle.
                             Layout.preferredWidth:root.toolbarOnHorizontalEdge
                                 ? 116*Appearance.fontSizeScale : root.sideIpcDropdownWidth
                             Layout.maximumWidth:root.toolbarOnHorizontalEdge
@@ -936,7 +947,7 @@ Item {
                     kind:"volume"
                     compactVertical:!root.toolbarWideControls
                     compactSideToolbar:!root.toolbarOnHorizontalEdge
-                    compactSideSelectorWidth:root.sideIpcDropdownWidth
+                    compactSideSelectorWidth:root.sideIpcSelectorWidth
                     compactCornerHost:root.toolbarOnHorizontalEdge ? null : editorModeTabs
                     compactActions:root.toolbarOnHorizontalEdge
                     commitImmediately:false
