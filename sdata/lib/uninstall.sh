@@ -350,6 +350,35 @@ uninstall_create_backup() {
     echo "$backup_dir"
 }
 
+# BRAND-R01 public app IDs are managed additively. Never delete a foreign
+# executable, desktop file, custom icon or data namespace sharing an Alis name.
+uninstall_remove_alis_public_entries() {
+    local launcher="${XDG_BIN_HOME}/alis"
+    if [[ -f "$launcher" && ! -L "$launcher" ]] &&
+        grep -Fq '# Alis is the public command while the proven iNiR runtime owns the session.' "$launcher"; then
+        rm -f -- "$launcher"
+    fi
+
+    local desktop
+    for desktop in \
+        "${XDG_DATA_HOME}/applications/alis.desktop" \
+        "${XDG_DATA_HOME}/applications/alis-settings.desktop"; do
+        if [[ -f "$desktop" && ! -L "$desktop" ]] &&
+            grep -Fxq 'X-Alis-Managed=true' "$desktop"; then
+            rm -f -- "$desktop"
+        fi
+    done
+
+    local icon="${XDG_DATA_HOME}/icons/hicolor/scalable/apps/alis.svg"
+    local source_icon="${REPO_ROOT:-}/assets/icons/desktop-symbolic.svg"
+    if [[ -f "$icon" && ! -L "$icon" && -f "$source_icon" ]] &&
+        cmp -s -- "$icon" "$source_icon"; then
+        rm -f -- "$icon"
+    fi
+    # Optional XDG alis -> inir data aliases deliberately remain user-owned.
+    # They are only removed by explicit scripts/brand-namespace-rollback.sh.
+}
+
 uninstall_remove_inir_only() {
     local removed=0
     local _start=$SECONDS
@@ -387,6 +416,8 @@ uninstall_remove_inir_only() {
             fi
         done
     fi
+
+    uninstall_remove_alis_public_entries
 
     # Clean up empty quickshell directory only if no other configs exist
     if ! has_other_quickshell_configs; then
