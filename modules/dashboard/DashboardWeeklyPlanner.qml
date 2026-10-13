@@ -308,8 +308,8 @@ Item {
                 contentHeight:root.gridTop+root.maximumMinutes/60*root.hourHeight
                 boundsBehavior:Flickable.StopAtBounds
                 flickableDirection:Flickable.HorizontalAndVerticalFlick
-                ScrollBar.vertical: ScrollBar {policy:ScrollBar.AsNeeded}
-                ScrollBar.horizontal: ScrollBar {policy:ScrollBar.AsNeeded}
+                ScrollBar.vertical: ScrollBar {policy:ScrollBar.AlwaysOff}
+                ScrollBar.horizontal: ScrollBar {policy:ScrollBar.AlwaysOff}
                 Repeater {
                     model: Math.ceil(root.maximumMinutes/60)
                     delegate: StyledText {

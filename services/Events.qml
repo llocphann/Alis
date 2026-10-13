@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "EventOccurrences.js" as Occurrences
+import "EventBatchPolicy.js" as EventBatch
 import "EventRepeatPolicy.js" as RepeatPolicy
 
 Singleton {
@@ -566,6 +567,19 @@ Singleton {
         root.list[position] = merged
         root.list = root.list.slice()
         root.eventUpdated(merged)
+        root.saveToFile()
+        return true
+    }
+
+    // Atomic Weekly Planner group edits: validate every operation before
+    // changing any canonical event; emit updates and persist once.
+    function applyPlannerOccurrenceBatch(operations) {
+        if (!root.ready) return false
+        const result=EventBatch.apply(root.list,operations,Occurrences)
+        if (!result) return false
+        root.list=result.list
+        for (const event of result.updated) root.eventUpdated(event)
+        for (const id of result.removed) root.eventRemoved(id)
         root.saveToFile()
         return true
     }
