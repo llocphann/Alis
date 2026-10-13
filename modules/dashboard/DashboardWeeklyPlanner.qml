@@ -513,7 +513,7 @@ Item {
                                 onClicked:root.editOccurrence(modelData)
                                 property bool dragMoved:false
                                 property bool dragArmed:false
-                                property real pressX:0
+                                property real dragOriginContentX:0
                                 property real dragX:0
                                 MouseArea {
                                     id:allDayMouse
@@ -528,12 +528,12 @@ Item {
                                             && !(mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier))
                                         if (!allDayButton.dragArmed) return
                                         const point=allDayMouse.mapToItem(viewport.contentItem,mouse.x,mouse.y)
-                                        allDayButton.pressX=point.x
+                                        allDayButton.dragOriginContentX=point.x
                                     }
                                     onPositionChanged:mouse=>{
                                         if (!pressed || !allDayButton.dragArmed) return
                                         const point=allDayMouse.mapToItem(viewport.contentItem,mouse.x,mouse.y)
-                                        const dx=point.x-allDayButton.pressX
+                                        const dx=point.x-allDayButton.dragOriginContentX
                                         if (!allDayButton.dragMoved && Math.abs(dx)<6) return
                                         allDayButton.dragMoved=true;allDayButton.dragX=dx
                                         if (!root.isEventSelected(allDayButton.modelData)
