@@ -1,16 +1,16 @@
-# iNiR Widget SDK
+# Alis Widget SDK
 
-Custom desktop widgets that run on the iNiR shell. Full QML access to 73 services,
+Custom desktop widgets that run on the Alis shell. Full QML access to 73 services,
 130+ UI components, and the entire Appearance token system.
 
-Widgets live in `~/.config/inir/widgets/<name>/` and are loaded automatically.
+Widgets live in `~/.config/alis/widgets/<name>/` and are loaded automatically.
 
 ## Quick Start
 
 ```bash
-inir customWidgets create my-widget    # generates scaffold
-# edit ~/.config/inir/widgets/my-widget/MyWidget.qml
-inir customWidgets reload              # hot-reload without restart
+alis customWidgets create my-widget    # generates scaffold
+# edit ~/.config/alis/widgets/my-widget/MyWidget.qml
+alis customWidgets reload              # hot-reload without restart
 ```
 
 Or copy the reference widget from `defaults/widgets/example-widget/`.
@@ -18,7 +18,7 @@ Or copy the reference widget from `defaults/widgets/example-widget/`.
 ## File Structure
 
 ```
-~/.config/inir/widgets/my-widget/
+~/.config/alis/widgets/my-widget/
   widget.json       # manifest (name, icon, configKeys, resize behavior)
   MyWidget.qml      # main component — extends AbstractBackgroundWidget
   (any other .qml files, images, scripts)
@@ -324,7 +324,7 @@ StyledSpinBox {
 
 ## Config System
 
-Widget config persists in `~/.config/inir/config.json` under
+Widget config persists in `~/.config/alis/config.json` under
 `background.widgets.custom.<widget-id>`.
 
 ### Reading
@@ -527,5 +527,5 @@ editPopoverContent: Component {
 - For ResourceUsage, call `ensureRunning()` or the data will be stale/zero
 - Use `FadeLoader { shown: condition }` for smooth show/hide of optional sections
 - The widget runs in the same QML engine as the shell — same trust model as a shell extension
-- Test with `inir customWidgets reload` (no restart needed)
-- Check for errors: `inir logs | grep -i error`
+- Test with `alis customWidgets reload` (no restart needed)
+- Check for errors: `alis logs | grep -i error`

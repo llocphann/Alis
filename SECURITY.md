@@ -16,12 +16,12 @@ Do not include passwords, API tokens, private configuration values, or other cre
 
 ## Privilege model
 
-The main Alis shell (compatible with iNiR runtime IDs) runs as the logged-in user. However, the repository also ships narrowly scoped privileged helpers for operations that require system-level access.
+The main Alis shell (compatible with Alis runtime IDs) runs as the logged-in user. However, the repository also ships narrowly scoped privileged helpers for operations that require system-level access.
 
 Current privileged integration surfaces include:
 
-- `/usr/libexec/inir-battery-charge-limit`, authorized through the `org.inir.battery-charge-limit` polkit action for managed TLP/power settings.
-- `/usr/libexec/inir-thinkfan`, authorized through the `org.inir.thinkfan` polkit action for managed ThinkFan service ownership/control integration.
+- `/usr/libexec/alis-battery-charge-limit`, authorized through the `org.alis.battery-charge-limit` polkit action for managed TLP/power settings.
+- `/usr/libexec/alis-thinkfan`, authorized through the `org.alis.thinkfan` polkit action for managed ThinkFan service ownership/control integration.
 
 The corresponding polkit policies authorize these exact root-owned helper paths without an authentication prompt **only for the active local session**. Inactive and non-local subjects are denied by default. The helpers remain the privilege boundary: their accepted arguments, file writes and service operations must stay narrowly validated, and packaging must keep the helper/policy files root-owned and non-writable by ordinary users. Treat these helpers and policy definitions as security-sensitive code; do not broaden the promptless actions beyond the existing validated operations.
 
