@@ -272,10 +272,10 @@ sync_user_alis_service_from_repo_if_present() {
 }
 
 ensure_user_alis_service_enabled() {
-    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/inir.service" ||
-          -L "${XDG_CONFIG_HOME}/systemd/user/inir.service" ]] ||
-          { command -v systemctl >/dev/null && systemctl --user is-active --quiet inir.service; }; then
-        log_error "Legacy inir.service still owns this session. Run scripts/brand-canonical-cutover.sh --dry-run before enabling Alis."
+    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/alis.service" ||
+          -L "${XDG_CONFIG_HOME}/systemd/user/alis.service" ]] ||
+          { command -v systemctl >/dev/null && systemctl --user is-active --quiet alis.service; }; then
+        log_error "Legacy alis.service still owns this session. Run scripts/brand-canonical-cutover.sh --dry-run before enabling Alis."
         return 2
     fi
     if ! command -v systemctl >/dev/null 2>&1; then
@@ -1657,8 +1657,8 @@ run_logs() {
 # Install
 ###############################################################################
 run_install() {
-    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/inir.service" ]] ||
-        { command -v systemctl >/dev/null && systemctl --user is-active --quiet inir.service; }; then
+    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/alis.service" ]] ||
+        { command -v systemctl >/dev/null && systemctl --user is-active --quiet alis.service; }; then
         tui_error "Legacy shell service detected. Normal install is blocked to prevent a second shell owner. Stage Alis and run the explicit canonical cutover."
         return 2
     fi
@@ -2202,9 +2202,9 @@ refresh_sddm_theme_on_update() {
 }
 
 run_update() {
-    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/inir.service" ]] ||
-        { command -v systemctl >/dev/null && systemctl --user is-active --quiet inir.service; }; then
-        tui_error "Legacy inir.service still exists. Do not update into a second active shell; first complete the explicit Alis cutover."
+    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/alis.service" ]] ||
+        { command -v systemctl >/dev/null && systemctl --user is-active --quiet alis.service; }; then
+        tui_error "Legacy alis.service still exists. Do not update into a second active shell; first complete the explicit Alis cutover."
         return 2
     fi
     # Short-circuit to the simulated walkthrough — no git pull, no rsync,
