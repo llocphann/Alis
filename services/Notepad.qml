@@ -40,6 +40,24 @@ Singleton {
         }
     }
 
+    // Default Note N titles track their position, never their creation count.
+    // Custom titles, stable IDs and note text remain unchanged.
+    function _renumberDefaultTitles(value) {
+        const result = value.slice()
+        let changed = false
+        for (let i = 0; i < result.length; i++) {
+            const title = String(result[i]?.title ?? "")
+            if (!/^Note \d+$/.test(title))
+                continue
+            const expected = `Note ${i + 1}`
+            if (title !== expected) {
+                result[i] = Object.assign({}, result[i], { title: expected })
+                changed = true
+            }
+        }
+        return { tabs: result, changed: changed }
+    }
+
     function _normalizeTabs(value) {
         if (!Array.isArray(value)) return []
         const normalized = []
@@ -66,7 +84,10 @@ Singleton {
                 text: String(tab.text ?? "")
             })
         }
-        return normalized
+        const renamed = root._renumberDefaultTitles(normalized)
+        if (renamed.changed)
+            root._normalizedTabsNeedSave = true
+        return renamed.tabs
     }
 
     function indexForTabId(tabId) {
@@ -107,7 +128,7 @@ Singleton {
         const requested = String(title ?? "").trim()
         const name = requested.length > 0 ? requested : `Note ${t.length + 1}`
         t.push(root._makeTab(name, ""))
-        tabs = t
+        tabs = root._renumberDefaultTitles(t).tabs
         currentTab = t.length - 1
         _save()
         return true
@@ -120,7 +141,7 @@ Singleton {
         const previousCurrent = currentTab
         const t = tabs.slice()
         t.splice(index, 1)
-        tabs = t
+        tabs = root._renumberDefaultTitles(t).tabs
 
         // Preserve the same logical active note when a tab before it is
         // removed. Removing the active tab selects the next note when possible,
