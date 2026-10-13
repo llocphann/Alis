@@ -1,5 +1,5 @@
 {
-  description = "Hadalis desktop shell runtime, packaged for NixOS and Home Manager";
+  description = "Alis desktop shell runtime, packaged for NixOS and Home Manager";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -24,17 +24,21 @@
         {
           default = package;
           inir = package;
+          alis = package;
         });
 
       nixosModules.default = nixosModule;
       nixosModules.inir = nixosModule;
+      nixosModules.alis = nixosModule;
 
       homeModules.default = homeModule;
       homeModules.inir = homeModule;
+      homeModules.alis = homeModule;
 
       # Conventional alias most Home Manager setups look for.
       homeManagerModules.default = homeModule;
       homeManagerModules.inir = homeModule;
+      homeManagerModules.alis = homeModule;
 
       formatter = forAllSystems (pkgs: pkgs.nixpkgs-fmt);
     };

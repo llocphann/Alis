@@ -95,6 +95,12 @@ grep -Fq 'treeSitterLibrary = "${treeSitterLib}/lib/libtree-sitter.so";' "$workf
   || fail 'Nix Workflow parser no longer exposes its runtime library path'
 grep -Fq 'inir-workflow-parser = workflowParser;' "$flake" \
   || fail 'flake no longer exports the standalone Workflow parser capability'
+grep -Fq 'nixosModules.alis = nixosModule;' "$flake" \
+  || fail 'public NixOS module alias missing'
+grep -Fq 'homeModules.alis = homeModule;' "$flake" \
+  || fail 'public Home Manager module alias missing'
+grep -Fq '          alis = package;' "$flake" \
+  || fail 'public Alis flake package alias missing'
 grep -Fq 'inir-with-workflow-parser = packageWithWorkflowParser;' "$flake" \
   || fail 'flake no longer exports the parser-capable Hadalis variant'
 grep -Fq 'nix build .#inir-with-workflow-parser --print-build-logs' "$nix_workflow" \

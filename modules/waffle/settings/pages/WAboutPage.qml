@@ -45,7 +45,7 @@ WSettingsPage {
 
                 WText {
                     anchors.centerIn: parent
-                    text: "iN"
+                    text: "Al"
                     font.pixelSize: Looks.font.pixelSize.xlarger
                     font.weight: Looks.font.weight.stronger
                     color: Looks.colors.accentFg
@@ -57,7 +57,7 @@ WSettingsPage {
                 spacing: 4
                 
                 WText {
-                    text: "iNiR"
+                    text: "Alis"
                     font.pixelSize: Looks.font.pixelSize.xlarger * 1.4
                     font.weight: Looks.font.weight.stronger
                 }
@@ -132,18 +132,18 @@ WSettingsPage {
         
         WSettingsButton {
             label: Translation.tr("GitHub Repository")
-            description: "github.com/snowarch/inir"
+            description: "github.com/llocphann/Alis"
             icon: "globe-search"
             buttonText: Translation.tr("Open")
-            onButtonClicked: Qt.openUrlExternally("https://github.com/snowarch/inir")
+            onButtonClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis")
         }
 
         WSettingsButton {
             label: Translation.tr("Documentation")
-            description: "github.com/snowarch/inir/wiki"
+            description: "github.com/llocphann/Alis/tree/dev/docs"
             icon: "library"
             buttonText: Translation.tr("Open")
-            onButtonClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/wiki")
+            onButtonClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis/tree/dev/docs")
         }
         
         WSettingsButton {

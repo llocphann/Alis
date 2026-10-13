@@ -2,15 +2,15 @@
 
 > Experimental. The Arch installer remains the primary supported installation path.
 
-Hadalis ships Nix packaging for the existing `inir` runtime/launcher identity. The current flake supports `x86_64-linux` and `aarch64-linux` and exports:
+Alis ships Nix packaging with public `alis` CLI and compatibility `inir` runtime identity. The current flake supports `x86_64-linux` and `aarch64-linux` and exports:
 
 | Output | Purpose |
 |---|---|
-| `packages.<system>.default` | Packaged Hadalis/iNiR runtime and `inir` launcher |
-| `packages.<system>.inir` | Alias of the default package |
-| `nixosModules.default` / `nixosModules.inir` | NixOS module for the package and user service |
-| `homeModules.default` / `homeModules.inir` | Home Manager module |
-| `homeManagerModules.default` / `homeManagerModules.inir` | Conventional Home Manager aliases |
+| `packages.<system>.default` / `packages.<system>.alis` | Alis package with `alis` CLI and legacy `inir` support |
+| `packages.<system>.inir` | Legacy alias of the same package |
+| `nixosModules.default` / `nixosModules.alis` / `nixosModules.inir` | NixOS module for the same single user service |
+| `homeModules.default` / `homeModules.alis` / `homeModules.inir` | Home Manager module |
+| `homeManagerModules.default` / `homeManagerModules.alis` / `homeManagerModules.inir` | Conventional Home Manager aliases |
 | `formatter.<system>` | `nixpkgs-fmt` |
 
 The flake does **not** run `./setup install` or `./setup update`. Nix owns the packaged files and the shell runs from the immutable store path.
@@ -19,29 +19,29 @@ The package and modules are ordinary expressions under `nix/`, so flakes are opt
 
 The repository does not currently commit a `flake.lock`. A direct `nix build .#inir` or `nix flake check` from this checkout therefore resolves the `nixos-unstable` input at evaluation time rather than providing a repository-owned nixpkgs snapshot. Consumer configurations that add Hadalis as an input normally get reproducibility from their own committed lock file. For a standalone/release build that must be reproducible, pin or lock the outer Nix configuration instead of assuming this checkout has a fixed nixpkgs revision.
 
-The package also installs the iNiR Shell and iNiR Settings desktop entries plus the symbolic application icon under its Nix output. Their `Exec` commands point directly at the wrapped `$out/bin/inir` launcher, so application-menu launches receive the same runtime dependency and QML environment as terminal/service launches.
+The package installs visible Alis desktop entries and icon with hidden legacy iNiR entries. Public `Exec` commands point to wrapped `$out/bin/alis`, so application-menu launches receive the same runtime dependency and QML environment as terminal/service launches.
 
 The packaged README and the complete Markdown reference set from `docs/` are available under `$out/share/doc/inir/`. This keeps installation, configuration, module, troubleshooting, and maintainer references available even when the immutable package is used without a source checkout.
 
+**Public configuration:** New setups should use `programs.alis`, which aliases to `programs.inir`. Existing configs remain supported; both map to one `inir.service` during compatibility. Configure one prefix at a time.
+
 ## Without flakes
 
-Point a source variable at a Hadalis checkout or a source pinned with your preferred Nix fetcher:
+Point a source variable at an Alis checkout or a pinned source:
 
 ```nix
 { pkgs, ... }:
 let
-  hadalisSrc = /path/to/Hadalis;
+  alisSrc = /path/to/Alis;
 in
 {
   imports = [
-    (import (hadalisSrc + "/nix/nixos-module.nix"))
+    (import (alisSrc + "/nix/nixos-module.nix"))
   ];
 
-  programs.inir = {
-
-**Alis public option namespace:** New configurations may use `programs.alis` instead of `programs.inir` (the latter remains supported via a Nix module alias). Both names resolve to a single `inir.service` in the current compatibility phase. Do not declare both prefixes in the same configuration; use one canonical public prefix per deployment. Existing `programs.inir` setups need no forced migration.
+  programs.alis = {
     enable = true;
-    package = pkgs.callPackage (hadalisSrc + "/nix/package.nix") { inherit pkgs; };
+    package = pkgs.callPackage (alisSrc + "/nix/package.nix") { inherit pkgs; };
     service.compositor = "niri";
   };
 }
@@ -52,22 +52,22 @@ For Home Manager, import `nix/home-module.nix` instead. `programs.inir.package` 
 
 ## With flakes and niri-flake
 
-Add Hadalis and niri-flake as inputs:
+Add Alis and niri-flake as inputs:
 
 ```nix
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     niri.url = "github:sodiboo/niri-flake";
-    hadalis.url = "github:llocphann/Hadalis";
+    alis.url = "github:llocphann/Alis";
   };
 }
 ```
 
-The unqualified Hadalis input follows this repository's default `stable` branch. To test the active development branch explicitly:
+The unqualified Alis input follows this repository's default `stable` branch. To test the active development branch explicitly:
 
 ```nix
-hadalis.url = "github:llocphann/Hadalis/dev";
+alis.url = "github:llocphann/Alis/dev";
 ```
 
 Import the NixOS module together with niri-flake:
@@ -76,7 +76,7 @@ Import the NixOS module together with niri-flake:
 { config, inputs, ... }: {
   imports = [
     inputs.niri.nixosModules.niri
-    inputs.hadalis.nixosModules.inir
+    inputs.alis.nixosModules.alis
   ];
 
   programs.niri.enable = true;
@@ -135,7 +135,7 @@ Import the Home Manager module from the same Hadalis input:
 ```nix
 { inputs, ... }: {
   imports = [
-    inputs.hadalis.homeModules.inir
+    inputs.alis.homeModules.alis
   ];
 
   programs.inir = {
@@ -196,7 +196,7 @@ For Nix-managed installations, `inir update` is not the package update path. Upd
 For example, with a flake lock:
 
 ```bash
-nix flake update hadalis
+nix flake update alis
 sudo nixos-rebuild switch --flake .#<host>
 ```
 
