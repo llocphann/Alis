@@ -46,8 +46,8 @@ assert surface.count("CompactSurfaceRow {") == 2
 assert surface.count("ConfigSwitch {") == 0
 assert surface.count("toggleIcon:") == 5
 assert surface.count("onToggledByUser:") == 5
-assert 'objectName:"abyssPanelOpacityFollow"' in surface
-assert 'objectName:"abyssPanelBlurFollow"' in surface
+assert 'toggleObjectName:"abyssPanelOpacityFollow"' in surface
+assert 'toggleObjectName:"abyssPanelBlurFollow"' in surface
 for key in (
     "abyss.surface.opacity", "abyss.perimeter.radius",
     "abyss.surface.softness", "abyss.effects.blur.radius",
