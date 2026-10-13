@@ -43,7 +43,7 @@ MouseArea {
 
     Accessible.role: Accessible.Button
     Accessible.name: ShellUpdates.isUpdating
-        ? Translation.tr("Updating iNiR") : Translation.tr("iNiR update available")
+        ? Translation.tr("Updating Alis") : Translation.tr("Alis update available")
     Accessible.focusable: root.visible && !ShellUpdates.isUpdating
 
     readonly property color accentColor: Appearance.colors.colPrimary
@@ -198,7 +198,7 @@ MouseArea {
                     StyledText {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: !ShellUpdates.isUpdating
-                        text: Translation.tr("iNiR Update")
+                        text: Translation.tr("Alis Update")
                         font {
                             weight: Font.Medium
                             pixelSize: Appearance.font.pixelSize.normal

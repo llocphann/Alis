@@ -350,10 +350,10 @@ Singleton {
             ]}]
         },
         {
-            name: "iNiR Shell",
+            name: "Alis Shell",
             children: [{ keybinds: [
-                { mods: ["Super"], key: "Space", comment: "iNiR Overview" },
-                { mods: ["Super"], key: "G", comment: "iNiR Overlay" },
+                { mods: ["Super"], key: "Space", comment: "Alis Overview" },
+                { mods: ["Super"], key: "G", comment: "Alis Overlay" },
                 { mods: ["Super"], key: "V", comment: "Clipboard" },
                 { mods: ["Super"], key: "Comma", comment: "Settings" },
                 { mods: ["Super"], key: "Slash", comment: "Cheatsheet" },

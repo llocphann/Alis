@@ -109,8 +109,8 @@ Singleton {
         ? "Updates Managed Externally"
         : "Updates Unavailable"
     readonly property string unavailableMessage: managedExternally
-        ? "This iNiR installation is managed outside the runtime copy. Use your package manager or installation workflow to update it."
-        : "Repository not found. The update system cannot locate the iNiR git repository."
+        ? "This Alis installation is managed outside the runtime copy. Use your package manager or installation workflow to update it."
+        : "Repository not found. The update system cannot locate the Alis git repository."
     readonly property string unavailableHint: managedExternally
         ? "Update diagnostics are still available, but in-shell self-update is disabled for this installation mode."
         : "Run './setup doctor' in your terminal to diagnose the issue, or use the diagnose command below."
@@ -124,7 +124,7 @@ Singleton {
                 body: root.unavailableHint,
                 urgency: NotificationUrgency.Normal,
                 timeout: 10000,
-                appName: "iNiR Shell"
+                appName: "Alis Shell"
             })
             print("[ShellUpdates] Notification sent: Updates unavailable")
         }
@@ -142,11 +142,11 @@ Singleton {
         const version = root.remoteVersion.length > 0 ? (" v" + root.remoteVersion) : ""
         const commits = root.commitsBehind > 0 ? (root.commitsBehind + " commits behind") : "New version available"
         Notifications.notify({
-            summary: "iNiR Update Available" + version,
+            summary: "Alis Update Available" + version,
             body: commits + ". Click the update indicator in the bar or open Settings → Services.",
             urgency: NotificationUrgency.Normal,
             timeout: 15000,
-            appName: "iNiR Shell"
+            appName: "Alis Shell"
         })
         Config.setNestedValue("shellUpdates.lastNotifiedCommit", remoteCommit)
         print("[ShellUpdates] Notification sent: Update available" + version)
@@ -269,7 +269,7 @@ Singleton {
         const termTail =
             "echo; " +
             "if [ $rc -eq 0 ]; then " +
-                "echo 'All good — iNiR updated successfully. The shell will restart on its own.'; " +
+                "echo 'All good — Alis updated successfully. The shell will restart on its own.'; " +
                 "echo 'You can close this window whenever you want.'; " +
             "else " +
                 "echo \"failed:$rc\" > '" + statusPath + "'; " +
@@ -292,7 +292,7 @@ Singleton {
             const termBin = (termSlot.length > 0 ? termSlot : "kitty").trim().split(/\s+/)[0]
             ShellExec.execDetachedArgs(
                 [termBin, "-e", "/usr/bin/bash", "-c", bashCmd],
-                "Update iNiR", repoDir)
+                "Update Alis", repoDir)
             print("[ShellUpdates] Update launched in terminal (" + termBin + ") from: " + repoDir)
         } else {
             // Detached background — same path as before the terminal toggle existed.
@@ -885,14 +885,14 @@ Singleton {
                 // Notify after 3 consecutive failures (persistent problem)
                 if (root.consecutiveFetchErrors >= 3 && !root.fetchErrorNotificationShown) {
                     root.fetchErrorNotificationShown = true
-                    const title = "iNiR Update Check Failed"
+                    const title = "Alis Update Check Failed"
                     const body = "Cannot reach remote repository. Check your internet connection or run './setup doctor'."
                     Notifications.notify({
                         summary: title,
                         body: body,
                         urgency: NotificationUrgency.Low,
                         timeout: 8000,
-                        appName: "iNiR Shell"
+                        appName: "Alis Shell"
                     })
                     print("[ShellUpdates] Notification sent: Persistent fetch errors")
                 }

@@ -595,7 +595,7 @@ Scope {
                                     body: "Diagnostics printed to console. Run: qs log -c inir | tail -50",
                                     urgency: NotificationUrgency.Normal,
                                     timeout: 8000,
-                                    appName: "iNiR Shell"
+                                    appName: "Alis Shell"
                                 })
                             }
 
