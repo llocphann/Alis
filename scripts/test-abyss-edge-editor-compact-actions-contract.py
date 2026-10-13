@@ -35,6 +35,9 @@ assert 'objectName:"abyssEditorAdd"' not in editor
 assert 'objectName:"abyssEditorConfirmAdd"' in editor
 assert 'property bool compactActions: false' in positions
 assert 'text:"Reset position";glyph:"restart_alt"' in positions
+assert 'visible:!root.compactIpcEditor' in positions
+assert 'description: root.editingPopups ? "Reset selected IPC position" : "Reset layout draft"' in editor
+assert 'onClicked: root.editingPopups ? root.resetIpcPosition() : root.reset()' in editor
 assert 'compact:root.compactActions' in positions
 assert 'editorSquare:root.compactIpcEditor' in positions
 assert 'objectName:"abyssEditorIpcOutput"' in editor
@@ -43,6 +46,9 @@ assert 'currentIndex:root.outputOnly ? 1 : 0' in editor
 assert 'onActivated:root.outputOnly=currentValue!==""' in editor
 assert 'outputName:root.outputOnly ? root.outputName : ""' in editor
 assert 'description:root.ipcOnly ? "Reset IPC position"' in positions
+assert 'objectName:"abyssIpcJoinCornerToggle"' in positions
+assert 'compact:true;editorSquare:true;checkable:true' in positions
+assert 'onToggled:root.change("joinCorner",checked)' in positions
 # Popup placement choices must not be exposed by this screen-edge editor.
 match = re.search(r'allowedKinds:\s*\[([^]]+)\]', editor)
 assert match, "Editor must constrain independently positioned indicators"

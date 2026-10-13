@@ -209,6 +209,28 @@ ShellRoot {
      check(sharedOutput.visible && outputCheckbox.visible,
          "shared output scope should stay visible in IPC")
      check(chooser.count===7,"quick IPC selector exposes popup relocation")
+     const selectorRow=item("abyssIpcSelectorsRow")
+     const edgeCombo=control("abyssIpcEdgeDropdown")
+     const alignCombo=control("abyssIpcAlignmentDropdown")
+     const ipcJoin=control("abyssIpcJoinCornerToggle")
+     check(ipcJoin.checkable,"IPC join nearby corner must be a toggle")
+     const coords=item=>item.mapToItem(scroll.contentItem,0,0)
+     if(!placement.compactVertical) {
+      check(selectorRow.columns===4,"IPC horizontal row must contain three dropdowns plus corner toggle")
+      const controls=[chooser,edgeCombo,alignCombo]
+      const ys=controls.map(c=>coords(c).y),widths=controls.map(c=>c.width)
+      check(Math.max(...ys)-Math.min(...ys)<1.5,"IPC dropdowns not on one line")
+      check(Math.max(...widths)-Math.min(...widths)<1.5,"IPC dropdown widths differ")
+      check(Math.abs(coords(ipcJoin).y-ys[0])<1.5,"IPC corner toggle not aligned")
+     } else check(selectorRow.columns===1,"narrow IPC selectors should stack")
+     const moduleDraft=JSON.stringify(editor.draft)
+     placement.change("edge","right");wait(60)
+     check(editor.positionEdits.some(e=>e.kind===editor.previewKind && e.values?.edge==="right"),
+         "IPC draft position edit did not register")
+     click("abyssLayoutReset");wait(60)
+     check(editor.positionEdits.some(e=>e.kind===editor.previewKind && e.values===null),
+         "header reset did not reset selected IPC kind and output")
+     check(JSON.stringify(editor.draft)===moduleDraft,"IPC reset should not touch Module draft")
      check(outputPicker.count===2,"IPC scope selector must offer current and all outputs")
      check(outputPicker.currentIndex===(editor.outputOnly?1:0),
          "IPC scope picker not synced with checkbox")

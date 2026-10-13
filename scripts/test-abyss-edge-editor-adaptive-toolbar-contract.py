@@ -21,21 +21,33 @@ for needle in [
 assert "Math.min(820,root.width*.55" not in editor
 assert "property bool compactVertical: false" in positions
 assert "columns:root.compactVertical ? 1 : 2" in positions
-assert "columns:root.compactVertical ? 1 : 3" in positions
+assert 'id: ipcPositionSelectorRow' in positions
+assert 'objectName: "abyssIpcSelectorsRow"' in positions
+assert 'columns:root.compactIpcEditor' in positions
+assert '? (root.compactVertical ? 1 : 4)' in positions
+assert 'id:compactKindChoice' in positions
+assert 'property alias compactKindCombo: compactKindChoice' in positions
+assert positions.count('Layout.preferredWidth:root.compactIpcEditor') == 3
 # The editor has one visible IPC kind picker; output scope joins the tabs.
-assert 'objectName:"abyssEditorIpcKind"' in editor
+assert 'objectName:"abyssEditorIpcKind"' in positions
+assert 'objectName:"abyssIpcEdgeDropdown"' in positions
+assert 'objectName:"abyssIpcAlignmentDropdown"' in positions
 assert 'objectName:"abyssEditorIpcOutput"' in editor
 assert 'showKindSelector:false' in editor and 'showOutputSelector:false' in editor
 assert 'compactIpcEditor:true' in editor
 assert 'visible:root.showKindSelector || root.showOutputSelector' in positions
 assert 'visible:root.showKindSelector' in positions
 assert 'visible:root.showOutputSelector' in positions
-assert positions.count('202*Appearance.fontSizeScale') == 4
+assert '202*Appearance.fontSizeScale' not in positions
+assert positions.count('root.compactSelectorWidth') == 6
+assert 'objectName:"abyssIpcJoinCornerToggle"' in positions
+assert 'visible:!root.compactIpcEditor && Presentation.canJoin(root.kind)' in positions
+assert 'onToggled:root.change("joinCorner",checked)' in positions
 assert 'ipcOutputRegion' in editor and 'ipcOutputRegion,edgeRegion' in editor
 assert 'selectionRegion' not in editor
 # First row stays two aligned groups on horizontal Edges:
 # left: Modules / IPC tabs; right: output dropdown + This output only.
-head=editor.split('id: editorModeHeader',1)[1].split('id:ipcKindChoice',1)[0]
+head=editor.split('id: editorModeHeader',1)[1].split('AbyssPositionSettings {',1)[0]
 assert 'objectName: "abyssEditorModeHeader"' in editor
 assert 'columns: width >= 500*Appearance.fontSizeScale ? 2 : 1' in head
 assert 'objectName: "abyssEditorModeTabs"' in head
@@ -44,9 +56,13 @@ assert head.index('objectName:"abyssEditorModulesMode"') < head.index('objectNam
 assert head.index('objectName: "abyssEditorOutputScope"') < head.index('id:ipcOutputChoice') < head.index('objectName:"abyssEditorOutputOnly"')
 assert 'Layout.alignment: Qt.AlignRight | Qt.AlignVCenter' in head
 assert 'visible:true' in head.split('id:ipcOutputChoice',1)[1]
-assert 'visible:root.editingPopups' in editor.split('id:ipcKindChoice',1)[1].split('AbyssPositionSettings {',1)[0]
+assert 'id:ipcKindChoice' not in editor
+assert 'previewPositions.compactKindCombo.popup.contentItem' in editor
 assert editor.count('id:ipcOutputChoice') == 1
-assert editor.count('id:ipcKindChoice') == 1
+assert positions.count('id:compactKindChoice') == 1
+assert 'function resetIpcPosition(): void' in editor
+assert 'previewPositions.apply(null)' in editor
+assert 'root.editingPopups ? root.resetIpcPosition() : root.reset()' in editor
 assert editor.count('text:"This output only"') == 1
 assert 'visible: !root.compactIpcEditor' in positions.split('SettingsNote {')[-1]
 
