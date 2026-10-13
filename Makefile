@@ -169,7 +169,12 @@ install-systemd:
 	@chmod 644 "$(DESTDIR)$(SYSTEMD_USER_DIR)/inir.service"
 
 install-icon:
+	@target="$(DESTDIR)$(ICON_DIR)/alis.svg"; \
+		if [ -L "$$target" ] || { [ -e "$$target" ] && ! cmp -s assets/icons/desktop-symbolic.svg "$$target"; }; then \
+			printf "Refusing to overwrite user-owned Alis icon: %s\n" "$$target" >&2; exit 1; \
+		fi
 	@install -Dm644 assets/icons/desktop-symbolic.svg "$(DESTDIR)$(ICON_DIR)/inir.svg"
+	@install -Dm644 assets/icons/desktop-symbolic.svg "$(DESTDIR)$(ICON_DIR)/alis.svg"
 	@if [ -z "$(DESTDIR)" ]; then gtk-update-icon-cache -q "$(SHAREDIR)/icons/hicolor" 2>/dev/null || true; fi
 
 install-desktop:
@@ -214,6 +219,12 @@ uninstall-systemd:
 	@rm -f "$(DESTDIR)$(SYSTEMD_USER_DIR)/inir.service"
 
 uninstall-icon:
+	@target="$(DESTDIR)$(ICON_DIR)/alis.svg"; \
+		if [ -f "$$target" ] && [ ! -L "$$target" ] && cmp -s assets/icons/desktop-symbolic.svg "$$target"; then \
+			rm -f "$$target"; \
+		elif [ -e "$$target" ] || [ -L "$$target" ]; then \
+			printf "Preserving user-owned Alis icon: %s\n" "$$target" >&2; \
+		fi
 	@rm -f "$(DESTDIR)$(ICON_DIR)/inir.svg"
 	@if [ -z "$(DESTDIR)" ]; then gtk-update-icon-cache -q "$(SHAREDIR)/icons/hicolor" 2>/dev/null || true; fi
 
