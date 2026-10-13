@@ -1,14 +1,14 @@
 post_install() {
   cat <<'EOF'
-Hadalis has been installed.
+Alis has been installed.
 
 Recommended next steps for each user who will run the shell:
   - Initialize or migrate the per-user config compatibility layout with:
-      inir migrate
-  - Start the shell manually with: inir run
+      alis migrate
+  - Start the shell manually with: alis run
   - Or wire the user service to the detected compositor and start it with:
-      inir service enable
-      inir service start
+      alis service enable
+      alis service start
 
 Pacman does not modify user home directories. The live QML compatibility path is:
   ~/.config/illogical-impulse/config.json
@@ -25,11 +25,11 @@ EOF
 
 post_upgrade() {
   cat <<'EOF'
-Hadalis has been upgraded.
+Alis has been upgraded.
 
 Recommended next steps for each affected user:
-  - Apply required per-user migrations with: inir migrate
-  - Restart the shell with: inir restart
+  - Apply required per-user migrations with: alis migrate
+  - Restart the shell with: alis restart
   - Package-managed installs use pacman for package updates.
 
 Pacman does not mutate user home directories, so config migrations are performed
@@ -44,7 +44,7 @@ pre_remove() {
 
 post_remove() {
   cat <<'EOF'
-Hadalis has been removed.
+Alis has been removed.
 
 Pacman does not modify per-user systemd state. If an account previously ran
 'inir service enable' without first running 'inir service disable', remove any
