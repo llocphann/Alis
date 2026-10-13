@@ -460,7 +460,20 @@ Item {
         }
         if (open) Qt.callLater(() => { if (root.open) root.react(true) })
     }
-    Keys.onEscapePressed: root.closeRequested()
+    Keys.onEscapePressed: event => {
+        // Escape bubbling out of a Dashboard widget must cancel its editable
+        // draft before the generic body host requests a window close. A child
+        // can own activeFocus, bypassing the perimeter's outer key handler.
+        const dashboard = root.identity === "dashboard" ? content.item : null
+        if ((dashboard?.editMode ?? false)
+                && typeof dashboard.handleEscape === "function"
+                && dashboard.handleEscape()) {
+            event.accepted = true
+            return
+        }
+        root.closeRequested()
+        event.accepted = true
+    }
     Behavior on visualPlacementAlong {
         enabled: root.animatePlacementChanges && root.placementMotionReady
             && AbyssStyle.motionEnabled
