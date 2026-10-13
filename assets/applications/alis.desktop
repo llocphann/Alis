@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Alis Shell
+Comment=Alis desktop shell session
+Exec=alis service restart
+Icon=alis
+Terminal=false
+NoDisplay=true
+Categories=System;
+X-Alis-Managed=true

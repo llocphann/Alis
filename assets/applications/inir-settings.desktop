@@ -5,4 +5,5 @@ Comment=Open Alis settings
 Exec=inir settings
 Icon=inir
 Terminal=false
+NoDisplay=true
 Categories=Settings;
