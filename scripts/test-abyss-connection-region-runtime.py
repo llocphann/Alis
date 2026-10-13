@@ -26,7 +26,10 @@ ShellRoot {
  FloatingWindow {
   visible:true;implicitWidth:1000;implicitHeight:740;color:"#111820"
   Item {
-   id:scene;anchors.fill:parent
+   // This is a fixed-coordinate Region cohort oracle. A nested compositor can
+   // cap its native window; keep the requested geometry domain independent of
+   // that cap so tangent movements do not become allocator-clamped no-ops.
+   id:scene;width:1000;height:740
    Repeater {
     id:hosts;model:["top","right","bottom","left"]
     delegate:AbyssBodyHost {
