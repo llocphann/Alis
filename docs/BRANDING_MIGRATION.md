@@ -36,9 +36,9 @@ This is an implementation inventory, not a declaration of completion. The public
 
 The alias preflight refuses real files, directories, dangling symlinks and foreign symlinks at any destination *before* creating any link. A failed link creation removes only links this attempt created, provided their targets still match. It never copies or deletes legacy data, updates configuration contents, changes Quickshell's `ShellId`, or modifies a systemd unit. The shell continues using the legacy paths.
 
-To undo an applied alias manually, confirm it is a symlink pointing to the adjacent `inir` directory, then **unlink only that `alis` symlink** as the affected user (not its target). Do not delete the original `inir` directory. This is not a complete future migration of the runtime/state namespace, and it is not an automated owner-verified rollback.
+Undo an applied alias with `bash scripts/brand-namespace-rollback.sh --dry-run` to inspect the exact paths first. Run the explicit `--apply` option only after checking the results. The utility preflights all XDG destinations, refuses a foreign symlink or real directory, then unlinks *only* aliases pointing directly to `inir`. It never deletes an original `inir` directory. Manual unlink remains possible after independently verifying each alias. This is not a complete future migration of the runtime/state namespace, and it is not an automated owner-verified rollback.
 
-Test coverage: `scripts/test-alis-namespace-alias.sh` uses isolated XDG roots to check fresh install no-op, preservation of sentinel bytes, idempotence, foreign/dangling symlink refusal, and conflict preflight.
+Test coverage: `scripts/test-alis-namespace-alias.sh` and `scripts/test-brand-namespace-rollback.sh` use isolated XDG roots to check fresh install no-op, data preservation, idempotence, foreign/dangling symlink refusal, conflict preflight, dry run and reversible alias-only rollback.
 
 ## Owner desktop evidence
 

@@ -18,6 +18,8 @@ on:
       - "scripts/completions/alis.*"
       - "scripts/test-brand-entrypoints.sh"
       - "scripts/test-alis-namespace-alias.sh"
+      - "scripts/brand-namespace-rollback.sh"
+      - "scripts/test-brand-namespace-rollback.sh"
       - "sdata/migrations/061-alis-namespace-alias.sh"
       - "assets/applications/*.desktop"
       - "assets/icons/desktop-symbolic.svg"
@@ -44,6 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           bash -n scripts/alis scripts/brand-owner-audit.sh scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh
+          bash -n scripts/brand-namespace-rollback.sh scripts/test-brand-namespace-rollback.sh
           bash -n sdata/migrations/061-alis-namespace-alias.sh sdata/subcmd-install/3.files.sh setup
           test ! -e assets/systemd/alis.service
           grep -Fq 'ShellId inir' shell.qml
@@ -52,7 +55,9 @@ jobs:
         run: bash scripts/test-brand-entrypoints.sh
       - name: Optional lossless namespace aliases
         shell: bash
-        run: bash scripts/test-alis-namespace-alias.sh
+        run: |
+          bash scripts/test-alis-namespace-alias.sh
+          bash scripts/test-brand-namespace-rollback.sh
       - name: Immutable Arch snapshot includes Alis entrypoints
         shell: bash
         run: |
