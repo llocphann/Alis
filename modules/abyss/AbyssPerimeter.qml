@@ -589,6 +589,8 @@ Scope {
                         toastEdge:String(notification.edge ?? ""),
                         toastSpan:Number(notification.span ?? 0),
                         toastDepth:Number(notification.depth ?? 0),
+                        toastPaintDepth:Number(notification.record?.depth ?? 0),
+                        toastTargetDepth:Number(notification.targetRecord?.depth ?? 0),
                         toastAlong:Number(notification.along ?? 0),
                         toastDesiredHeight:Number(notification.contentItem.item?.desiredHeight ?? 0),
                         toastMeasuredHeight:Number(notification.contentItem.item?.measuredPopupHeight ?? 0),

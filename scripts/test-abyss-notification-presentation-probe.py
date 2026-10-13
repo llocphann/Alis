@@ -14,6 +14,7 @@ b=perimeter.index("genericPopup:{",a)
 block=perimeter[a:b]
 for key in ["toastCount","inhibited","recording","centerOpen","toastOpen",
             "toastResident","toastRevealProgress","toastSpan","toastDepth",
+            "toastPaintDepth","toastTargetDepth",
             "toastAlong","toastDesiredHeight","toastMeasuredHeight","toastLayoutReady"]:
     assert key + ":" in block, key
 for forbidden in ["notification.body","notification.summary","notification.image",

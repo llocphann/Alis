@@ -77,7 +77,7 @@ def sanitize_snapshot(receipt):
                        "toastResident", "toastLayoutReady")},
             "measurements": {key: number(n.get(key)) for key in
                              ("toastCount", "toastRevealProgress", "toastSpan",
-                              "toastDepth", "toastAlong", "toastDesiredHeight",
+                              "toastDepth", "toastPaintDepth", "toastTargetDepth", "toastAlong", "toastDesiredHeight",
                               "toastMeasuredHeight")},
             "edge": str(n.get("toastEdge", "")) if
                     n.get("toastEdge") in ("top", "bottom", "left", "right") else "",
