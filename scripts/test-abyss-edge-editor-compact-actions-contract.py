@@ -90,7 +90,7 @@ assert 'objectName:"abyssModuleDropdown"' in editor
 edge_column=editor[editor.index('id:edgeEditorColumn'):]
 assert edge_column.index('id:edgeChoice') < edge_column.index('EditorIconHint {')
 assert editor.count('AbyssSlider {') == 6
-assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 4
+assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 0
 # Qt rejects two assignments to the same attached property in one QML item.
 # All six compact sliders must keep exactly one minimum-width binding.
 for line_number, line in enumerate(editor.splitlines(), 1):
@@ -98,16 +98,12 @@ for line_number, line in enumerate(editor.splitlines(), 1):
     assert len(attached) == len(set(attached)), (
         f"duplicate Layout property on line {line_number}"
     )
-slider_rows = [
-    line for line in editor.splitlines()
-    if 'Layout.preferredWidth:root.editorSliderWidth' in line
-]
-assert len(slider_rows) == 4
-assert all(
-    row.count('Layout.minimumWidth:') == 1
-    and 'Layout.minimumWidth:75*Appearance.fontSizeScale' in row
-    for row in slider_rows
-), "each compact slider needs one minimum width"
+# Six sliders keep a single minimum binding each; the Module pair
+# derives its maximum from the module action row rather than a 158px cap.
+assert editor.count('Layout.minimumWidth:75*Appearance.fontSizeScale') == 6
+assert editor.count('Layout.preferredWidth:Math.max(75*Appearance.fontSizeScale,') == 2
+assert editor.count('moduleEditorColumn.controlsSpan-root.editorActionSize-2*Appearance.fontSizeScale)') == 4
+assert editor.count('Layout.maximumWidth:root.editorSliderWidth') == 0
 assert editor.count('editorSquare:true') >= 10
 assert 'id:scaleModulesCaption' not in editor
 assert 'id:scaleText' not in editor
@@ -121,10 +117,11 @@ assert 'objectName:"abyssEditorHeaderActions"' in editor
 assert 'objectName:"abyssEditorTitle"' in editor
 assert 'Layout.preferredWidth:58*Appearance.fontSizeScale' in editor
 assert 'readonly property real editorActionSize: 30 * Appearance.fontSizeScale' in editor
-assert 'readonly property real editorSliderWidth: 158 * Appearance.fontSizeScale' in editor
+assert 'readonly property real controlsSpan:Math.max(0,' in editor
+assert 'Math.min(width,moduleHeaderActions.implicitWidth)' in editor
 assert editor.count('editorCompact:true') == 6
 assert editor.count('Layout.preferredWidth:20*Appearance.fontSizeScale') == 3
-assert editor.count('spacing:2') >= 9, 'merging rows should not add fake spacing'
+assert editor.count('spacing:2') >= 8, 'merging rows should not add fake spacing'
 assert 'root.editorSquare ? 17 * Appearance.fontSizeScale' in button
 assert 'objectName:"abyssButtonCenteredGlyph"' in button
 assert 'rightPadding:editorCompact ? 46*Appearance.fontSizeScale : 52' in (root / "modules/abyss/looks/AbyssSlider.qml").read_text()
@@ -161,8 +158,16 @@ for name in ["abyssScaleModulesToggle","abyssScaleModulesSlider","abyssJoinNearb
     assert editor.count('objectName:"'+name+'"') == 1, name
 assert 'glyph:"join_inner"' in editor
 assert 'id:scaleModulesRow' in editor
-assert editor.count('Layout.preferredWidth:Math.max(78,(edgeEditorColumn.width-50*Appearance.fontSizeScale)/2)') == 2
-assert editor.count('Layout.maximumWidth:135*Appearance.fontSizeScale') == 2
+assert editor.count('Layout.preferredWidth:110*Appearance.fontSizeScale') == 2
+assert editor.count('Layout.preferredWidth:190*Appearance.fontSizeScale') == 2
+assert 'Layout.maximumWidth:135*Appearance.fontSizeScale' not in editor
+assert 'objectName:"abyssEdgeGapAndSizeRow"' in editor
+assert 'edgeEditorColumn.width>=260*Appearance.fontSizeScale ? 2 : 1' in editor
+assert 'objectName:"abyssModulePositionDropdown"' in editor
+assert 'objectName:"abyssModuleCustomSizeSlider"' in editor
+for name in ('abyssEdgeGapSlider','abyssEdgeSizeSlider','abyssEdgeWidthSlider'):
+    assert editor.count('objectName:"'+name+'"') == 1
+assert 'Layout.preferredWidth:104*Appearance.fontSizeScale' in editor
 assert 'objectName:"abyssModuleHeaderActions"' in editor
 assert 'objectName:"abyssModuleRoundingAction"' in editor
 assert 'objectName:"abyssRoundZeroCorners"' in editor
@@ -174,7 +179,7 @@ assert editor.count('AbyssCheckBox {') == 1
 assert 'visible:root.edgeWidthAffectsModules[root.editingEdge]===false' not in editor
 assert 'enabled:root.edgeWidthAffectsModules[root.editingEdge]===false' in editor
 assert 'root.expandedControls ? 860 : 720' not in editor
-assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 4
+assert editor.count('Layout.preferredWidth:root.editorSliderWidth') == 0
 assert editor.count('editorSquare:true') >= 14
 assert 'columnSpacing:10*Appearance.fontSizeScale' in editor
 assert 'rowSpacing:6*Appearance.fontSizeScale' in editor

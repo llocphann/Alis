@@ -153,7 +153,13 @@ assert right.index('objectName:"abyssRoundZeroCorners"') < right.index('id:scale
 assert 'AbyssCheckBox {' not in right
 assert 'checkable:true' in right and 'onToggled:root.edgeRoundZeroCorners' in right
 assert 'root.ipcToolbarSpan : 660*Appearance.fontSizeScale' in editor
-assert 'Layout.preferredWidth:Math.max(78,(edgeEditorColumn.width-50*Appearance.fontSizeScale)/2)' in editor
+assert right.count('Layout.preferredWidth:110*Appearance.fontSizeScale') == 2
+assert right.count('Layout.preferredWidth:190*Appearance.fontSizeScale') == 2
+assert 'columns:root.toolbarOnHorizontalEdge' in right
+assert 'edgeEditorColumn.width>=260*Appearance.fontSizeScale ? 2 : 1' in right
+assert 'Math.min(width,moduleHeaderActions.implicitWidth)' in left
+assert 'Layout.preferredWidth:moduleEditorColumn.controlsSpan' in left
+assert 'Layout.maximumWidth:moduleEditorColumn.controlsSpan' in left
 assert left.count('id:moduleRoundingRow') + left.count('id:moduleCustomSizeRow') == 2
 assert right.count('id:edgeGapAndSizeRow') + right.count('id:edgeWidthRow') + right.count('id:scaleModulesRow') == 3
 
