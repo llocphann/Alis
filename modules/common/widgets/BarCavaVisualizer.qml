@@ -45,6 +45,11 @@ Item {
     property var _levels: []
     property var _selectedScratch: []
     property var _smoothScratch: []
+    // Frequency shaping depends on geometry/config, never on amplitudes.
+    // Keep just one vector per owner; frame buffers and publication stay intact.
+    readonly property var _profileCache: ({
+        count: -1, profile: "", stereo: false, strength: 0, factors: []
+    })
     // Alternate two stable frame buffers so _levels still receives a new
     // object identity (and therefore notifies delegates) without allocating a
     // fresh JS array on every CAVA frame.
@@ -88,6 +93,28 @@ Item {
         return 1
     }
 
+    function _profileFactors(count, strength): var {
+        const cache = root._profileCache
+        const profile = root.frequencyProfile
+        const stereo = root.mirroredStereo
+        if (cache.count !== count || cache.profile !== profile
+                || cache.stereo !== stereo || cache.strength !== strength) {
+            const factors = cache.factors
+            factors.length = count
+            for (let i = 0; i < count; ++i) {
+                const domain = count > 1 ? i / (count - 1) : 0.5
+                const frequency = stereo ? Math.abs(domain * 2 - 1) : domain
+                const weight = root._profileWeight(frequency)
+                factors[i] = 1 + (weight - 1) * strength
+            }
+            cache.count = count
+            cache.profile = profile
+            cache.stereo = stereo
+            cache.strength = strength
+        }
+        return cache.factors
+    }
+
     function _processedSource(): var {
         const source = root.points ?? []
         const count = source.length ?? 0
@@ -98,15 +125,12 @@ Item {
         selected.length = count
         const strength = Math.max(0, Math.min(1, root.accentStrength))
         const applyProfile = strength > 0 && root.frequencyProfile !== "flat"
+        const factors = applyProfile ? root._profileFactors(count, strength) : null
 
         for (let i = 0; i < count; ++i) {
             let value = Number(source[i]) || 0
             if (applyProfile) {
-                const domain = count > 1 ? i / (count - 1) : 0.5
-                const frequency = root.mirroredStereo
-                    ? Math.abs(domain * 2 - 1) : domain
-                const weight = root._profileWeight(frequency)
-                value *= 1 + (weight - 1) * strength
+                value *= factors[i]
             }
             selected[i] = value
         }
