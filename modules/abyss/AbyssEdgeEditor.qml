@@ -876,8 +876,11 @@ Item {
                             // Shared output scope is useful in both Modules and IPC.
                             visible:true
                             baseHeight:28*Appearance.fontSizeScale
-                            Layout.preferredWidth:(root.toolbarOnHorizontalEdge ? 116 : 94)*Appearance.fontSizeScale
-                            Layout.maximumWidth:(root.toolbarOnHorizontalEdge ? 116 : 94)*Appearance.fontSizeScale
+                            // Reserve room for the full scope checkbox on side
+                            // bodies (220px content width at the default scale).
+                            Layout.preferredWidth:(root.toolbarOnHorizontalEdge ? 116 : 86)*Appearance.fontSizeScale
+                            Layout.maximumWidth:(root.toolbarOnHorizontalEdge ? 116 : 86)*Appearance.fontSizeScale
+                            popupMinimumWidth:root.toolbarOnHorizontalEdge ? 0 : 116*Appearance.fontSizeScale
                             textRole:"label";valueRole:"value"
                             model:[{label:"All outputs",value:""},
                                 {label:root.outputName,value:root.outputName}]

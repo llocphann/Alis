@@ -37,7 +37,7 @@ assert 'root.headerActionSize' in editor
 assert 'columns: root.toolbarOnHorizontalEdge' in editor
 assert 'toolbarScroll.width>=205*Appearance.fontSizeScale ? 2 : 1' in editor
 assert 'toolbarScroll.width >= 200*Appearance.fontSizeScale' in editor
-assert '(root.toolbarOnHorizontalEdge ? 116 : 94)*Appearance.fontSizeScale' in editor
+assert '(root.toolbarOnHorizontalEdge ? 116 : 86)*Appearance.fontSizeScale' in editor
 assert positions.count('popupMinimumWidth:root.compactSideToolbar') == 3
 combo = (root / "modules/common/widgets/StyledComboBox.qml").read_text()
 assert 'property real popupMinimumWidth: 0' in combo
@@ -95,7 +95,7 @@ assert 'root.editingPopups ? root.resetIpcPosition() : root.reset()' in editor
 assert editor.count('text:"This output only"') == 1
 assert 'visible: !root.compactIpcEditor' in positions.split('SettingsNote {')[-1]
 
-assert '(root.toolbarOnHorizontalEdge ? 116 : 94)*Appearance.fontSizeScale' in editor
+assert '(root.toolbarOnHorizontalEdge ? 116 : 86)*Appearance.fontSizeScale' in editor
 
 fine=editor[editor.index("id:editFineControls"):]
 fine_two_column=re.search(r"readonly property bool useTwoColumns:\s*([\s\S]+?)\n\s*columns:useTwoColumns",fine)
