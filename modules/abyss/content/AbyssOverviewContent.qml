@@ -10,6 +10,9 @@ Item {
     property var participant: null
     readonly property bool taskView: GlobalStates.overviewMode === "taskview"
     readonly property bool editMode: !taskView && (overview.item?.editing ?? false)
+    function handleEscape(): bool {
+        return !root.taskView && (overview.item?.handleEscape?.() ?? false)
+    }
     readonly property real topControlReserve: editor.desiredHeight+16
     readonly property bool applicationDragActive: overview.item?.applicationDragActive ?? false
     readonly property real desiredHeight: taskView ? Math.min(650,(participant?.height ?? 1080)*.5)
