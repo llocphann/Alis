@@ -6,12 +6,28 @@ import vm from "node:vm";
 const read=path=>fs.readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const service=read("services/Events.qml");
 const todo=read("services/Todo.qml");
+const internal=read("services/InternalTodoBackend.qml");
+const dashboardTodo=read("modules/dashboard/DashTodo.qml");
 const card=read("modules/sidebarRight/events/EventCard.qml");
 const planner=read("modules/dashboard/DashboardWeeklyPlanner.qml");
 const editor=read("modules/sidebarRight/events/EventsDialog.qml");
 assert.doesNotMatch(service,/AgendaTodoPolicy|newLink\(|_notifyAgendaLinks|_queueTodoUnlink|setTodoLink\(|unlinkTodo\(/);
 assert.doesNotMatch(todo,/_reconcileAgenda|_startExternalAgenda|_deferAgendaDeletion|ensureAgenda\(|retryAgendaLinks|agendaStatus\(|agendaError|_scheduleAgenda/);
 assert.doesNotMatch(service,/todoLink\s*:\s*AgendaTodoPolicy|_queueTodoUnlink|setTodoLink\(/);
+assert.doesNotMatch(todo,/onAgendaMutationFinished|agendaMutationFinished/);
+assert.doesNotMatch(internal,/AgendaTodoPolicy|function ensureAgenda\\(|function unlinkAgenda\\(/);
+assert.doesNotMatch(dashboardTodo,/modelData\\.agenda|text:"link"/);
+// Historical task metadata is retained as inert data, never translated into a new link.
+const normalizeStart=internal.indexOf("    function _normalizeList(value) {");
+const normalizeEnd=internal.indexOf("    function addItem(item) {",normalizeStart);
+assert.ok(normalizeStart>=0 && normalizeEnd>normalizeStart);
+const normalize=new Function("return "+internal.substring(normalizeStart,normalizeEnd))();
+const legacyTask={content:"Saved task",done:true,notes:"Mine",agenda:{
+  version:1,key:"agenda-legacy-test-001",eventId:23}};
+const historic=normalize([legacyTask]);
+assert.deepEqual(JSON.parse(JSON.stringify(historic[0].agenda)),legacyTask.agenda,
+  "existing Agenda metadata is preserved without any sync worker");
+assert.equal(fs.existsSync(new URL("../services/AgendaTodoPolicy.js",import.meta.url)),false);
 assert.doesNotMatch(card,/AgendaTodoLink/);
 assert.doesNotMatch(planner,/Todo\.agendaStatus/);
 assert.doesNotMatch(editor,/plannerRepeatConflictHint/);
