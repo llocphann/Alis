@@ -326,6 +326,10 @@ function edgeInsetsForModules(placements, options, fontScale, thickness, minimum
     var insets = {};
     ["top","right","bottom","left"].forEach(function(edge) {
         insets[edge]=edgeThickness(options,edge,thickness);
+        // A configured 0px Edge has no continuous paint strip. Its modules
+        // already supply localSurfaces; only Wayland reservations span the
+        // whole side to keep application windows clear of that foreground.
+        if(!reservation && insets[edge]===0)return;
         var enabled = placements.filter(function(p) { return p.enabled && p.edge===edge && moduleSize(p,options)>0; });
         if (!enabled.length) return;
         // Wayland reserves a whole edge. Local paint still reserves enough room

@@ -65,7 +65,14 @@ ShellRoot {
     for(const edge of ["top","right","bottom","left"]){
      root.insets=Object.assign({left:16,top:16,right:16,bottom:16},{[edge]:0});root.choice={};root.original=true;capture(edge+"-old");root.original=false;capture(edge+"-off")
      root.choice={[edge]:true}
-     for(const radius of [12,34,64]){Config.setNestedValue("abyss.perimeter.radius",radius);capture(edge+"-on-"+radius)}
+     for(const radius of [12,34,64]){
+      Config.setNestedValue("abyss.perimeter.radius",radius)
+      root.moduleRecords=[];root.choice={};capture(edge+"-empty-off-"+radius);root.choice={[edge]:true};capture(edge+"-empty-on-"+radius)
+      const horizontal=edge==="top"||edge==="bottom",start=(horizontal?scene.width:scene.height)/2-80
+      const rect=edge==="top"?{x:start,y:-50,width:160,height:140}:edge==="bottom"?{x:start,y:scene.height-90,width:160,height:140}:edge==="left"?{x:-50,y:start,width:140,height:160}:{x:scene.width-90,y:start,width:140,height:160}
+      root.moduleRecords=[{surface:rect,radius:29}];root.choice={};capture(edge+"-body-off-"+radius);root.choice={[edge]:true};capture(edge+"-body-on-"+radius)
+     }
+     root.moduleRecords=[]
      Config.setNestedValue("abyss.perimeter.radius",34)
     }
     root.insets={left:16,top:16,right:16,bottom:16};root.choice={top:true,right:true,bottom:true,left:true};root.original=true;capture("nonzero-old");root.original=false;capture("nonzero-on")
@@ -124,17 +131,22 @@ ShellRoot {
  for edge in ['top','right','bottom','left']:
   old=images[edge+'-old'];off=images[edge+'-off'];assert ImageChops.difference(old,off).getbbox(alpha_only=False) is None,edge+' OFF changed original RGBA';checks+=1
   for r in [12,34,64]:
-   on=images[edge+'-on-'+str(r)];assert ImageChops.difference(off,on).getbbox(alpha_only=False),edge+' ON lacks curve';checks+=1
-   w,h=off.size;box=(0,120,w,h-120) if edge in ['left','right'] else (120,0,w-120,h)
-   assert ImageChops.difference(off.crop(box),on.crop(box)).getbbox(alpha_only=False) is None,'0px side gained a full strip';checks+=1
+   empty_off=images[f'{edge}-empty-off-{r}'];empty_on=images[f'{edge}-empty-on-{r}']
+   assert ImageChops.difference(empty_off,empty_on).getbbox(alpha_only=False) is None,'empty flag drew corner geometry or shadow';checks+=1
+   body_off=images[f'{edge}-body-off-{r}'];body_on=images[f'{edge}-body-on-{r}']
+   assert ImageChops.difference(body_off,body_on).getbbox(alpha_only=False),'actual contact did not round';checks+=1
+   w,h=body_on.size
+   for box in [(0,0,32,32),(w-32,0,w,32),(0,h-32,32,h),(w-32,h-32,w,h)]:
+    assert ImageChops.difference(body_off.crop(box),body_on.crop(box)).getbbox(alpha_only=False) is None,'actual contact added a detached screen-corner shadow';checks+=1
+  assert ImageChops.difference(images[f'{edge}-body-on-12'],images[f'{edge}-body-on-64']).getbbox(alpha_only=False),'global Surface Curvature did not reach actual contact';checks+=1
  assert ImageChops.difference(images['nonzero-old'],images['nonzero-on']).getbbox(alpha_only=False) is None,'nonzero choice changes original pixels';checks+=1
- # Modules obscure the old top arcs; both left/right inner openings must reappear.
+ # Local module endpoint contours round; the physical corners stay unchanged.
  baseline=images['modules-top-off'];restored=images['modules-top-on'];w,h=baseline.size
- for box in [(0,0,85,85),(w-85,0,w,85)]:
-  assert ImageChops.difference(baseline.crop(box),restored.crop(box)).getbbox(alpha_only=False),'module-covered top corner did not change'
-  checks+=1
- assert ImageChops.difference(baseline.crop((250,0,w-250,h)),restored.crop((250,0,w-250,h))).getbbox(alpha_only=False) is None,'corner clipping altered middle of output';checks+=1
- # Adding Right owns BR, while already-owned TR remains byte-identical.
+ for box in [(145,0,190,55),(810,0,855,55)]:
+  assert ImageChops.difference(baseline.crop(box),restored.crop(box)).getbbox(alpha_only=False),'actual module contact did not curve';checks+=1
+ for box in [(0,0,32,32),(w-32,0,w,32)]:
+  assert ImageChops.difference(baseline.crop(box),restored.crop(box)).getbbox(alpha_only=False) is None,'module acquired a separate corner patch';checks+=1
+ # Empty adjacent selections paint no detached patches or shared-corner shadow.
  w,h=images['mixed-top'].size;box=(w-100,0,w,100)
  assert ImageChops.difference(images['mixed-top'].crop(box),images['mixed-top-right'].crop(box)).getbbox(alpha_only=False) is None,'shared corner double-draw';checks+=1
  (dest/'pixel-receipt.json').write_text(json.dumps({'checks':checks,'pngs':len(images),'off_or_nonzero_rgba_exact':True,'shared_corner_rgba_exact':True},indent=2)+'\n')

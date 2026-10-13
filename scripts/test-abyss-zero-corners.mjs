@@ -13,16 +13,6 @@ for(let bits=0;bits<16;bits++)for(let on=0;on<16;on++)for(const r of [12,34,64])
   if(bits===0)check(Object.is(G.distance(x,y,400,240,ins,r,[],24,24,choices),baseline),'nonzero edges ignore zero-corner option');
  }
 }
-for(const r of [12,34,64])for(let step=1;step<90;step++){
- const angle=step*Math.PI/180,u=r-r*Math.cos(angle),v=r-r*Math.sin(angle);
- check(Math.abs(G.innerCornerDistance(u,v,r))<1e-9,'quarter arc has exact circular tangency');
- check(G.innerCornerDistance(u*.9,v*.9,r)<0,'monitor-corner side is painted');
- check(G.innerCornerDistance(u+r*.05,v+r*.05,r)>0,'workspace side remains clear');
-}
-for(const r of [12,34,64])for(const [u,v] of [[1.5*r,.5*r],[.5*r,1.5*r],[1.5*r,1.5*r]]){
- const a=Math.hypot(u-r,v),b=Math.hypot(u,v-r),expected=u>r&&v>r?Math.min(a,b):u>r?a:b;
- check(G.innerCornerDistance(u,v,r)===expected,'outside-quarter distances cannot paint a false ring');
-}
 for(const edge of ['top','right','bottom','left']){
  const base={edgeRoundZeroCorners:{top:false},outputLayouts:[{outputName:'B',placements:[],edgeRoundZeroCorners:{left:true},future:'keep'}]},flags={[edge]:true};
  const writes=L.saveProfile(base,'A',[],8,true,undefined,undefined,undefined,undefined,undefined,undefined,undefined,flags);
@@ -31,34 +21,23 @@ for(const edge of ['top','right','bottom','left']){
  check(L.saveProfile(base,'A',[],8,false,undefined,undefined,undefined,undefined,undefined,undefined,undefined,flags)['abyss.modules.edgeRoundZeroCorners'][edge]===true,'global save retains flag');
 }
 
-// Reproduction of the owner's missing top corners: local module backing
-// extends through the finite corner square and used to erase the curve.
-for (const corner of ['top-left','top-right','bottom-right','bottom-left']) {
- const right=corner.includes('right'),bottom=corner.includes('bottom');
- const width=400,height=240,r=34;
- const x=right?width-28:28,y=bottom?height-28:28;
- const insideX=right?width-2:2,insideY=bottom?height-2:2;
- const module={surface:{x:right?width-175:-25,y:bottom?height-145:-25,width:200,height:170},radius:0};
- const physical={left:0,top:0,right:0,bottom:0};
- const chosen={[(bottom?'bottom':'top')]:true};
- const disabled=G.distance(x,y,width,height,physical,r,[module],24,0,{});
- const enabled=G.distance(x,y,width,height,physical,r,[module],24,0,chosen);
- check(disabled<0,corner+' fixture must be filled by the module before R02');
- check(enabled>0,corner+' 0px workspace cutout remains clear over module backing');
- check(G.distance(insideX,insideY,width,height,physical,r,[module],24,0,chosen)<0,
-   corner+' physical outer pixel remains painted');
- check(G.distance(x,y,width,height,physical,r,[module],24,0,{[(bottom?'top':'bottom')]:true})===disabled,
-   corner+' unrelated Edge checkbox does not clip local module');
+// The owner retired detached corner patches. With no actual body there is
+// no extra surface or shadow, regardless of a saved zero-width flag.
+for(const radius of [12,34,64])for(let y=0;y<240;y+=3)for(let x=0;x<400;x+=5){
+ const ins={left:0,top:0,right:0,bottom:0};
+ check(Object.is(G.distance(x+.5,y+.5,400,240,ins,radius,[],24,29,{top:true,right:true,bottom:true,left:true}),
+  old.distance(x+.5,y+.5,400,240,ins,radius,[],24,29)), 'empty contacts drew surplus corner geometry');
 }
-// A module-expanded inset is not the configured 0px width. The option must
-// still take effect while maintaining the same painted-inset geometry.
-{
- const painted={left:0,top:56,right:0,bottom:0},widths={left:0,top:0,right:0,bottom:0};
- const rec={surface:{x:-25,y:-25,width:180,height:160},radius:0};
- const noChoice=G.distance(28,84,400,240,painted,34,[rec],24,0,{});
- const selected=G.distance(28,84,400,240,painted,34,[rec],24,0,{top:true},widths);
- check(noChoice<0 && selected>0,'0px top choice survives module-expanded render inset');
- check(G.zeroCornerMask(widths,{top:true})[0] && !G.zeroCornerMask(painted,{top:true})[0],
-   'configured and effective widths are distinguished');
+for(const edge of ['top','right','bottom','left']){
+ const options={edgeThicknesses:{[edge]:0},edgeWidthAffectsModules:{[edge]:true}};
+ const modules=L.normalize([{id:'one',kind:'clock',edge,position:.3,customSize:true,size:1},{id:'two',kind:'clock',edge,position:.7,customSize:true,size:1}],edge);
+ check(L.edgeInsetsForModules(modules,options,1,16,48,false)[edge]===0,'0px paint expanded into a full module strip');
+ check(L.edgeInsetsForModules(modules,options,1,16,48,true)[edge]>=48,'0px paint fix removed compositor reservations');
+ check(L.localSurfaces(L.geometry(modules,400,240,options,1),400,240,options,1,48).length===2,'0px paint lost local module backings');
 }
+// Curvature uses the global Surface radius, not the body-specific radius.
+const ins={left:0,top:0,right:0,bottom:0},record={surface:{x:150,y:-50,width:120,height:140},radius:29};
+const small=G.distance(140.5,.5,400,240,ins,12,[record],24,29,{top:true});
+const large=G.distance(140.5,.5,400,240,ins,64,[record],24,29,{top:true});
+check(small!==large,'Surface Curvature did not change the actual contact');
 console.log('ABYSS_ZERO_CORNERS_PASS',checks);

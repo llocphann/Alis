@@ -2,6 +2,7 @@
 """Local GPU field contacts: off-state exact RGBA, moving curves and native masks."""
 import argparse
 import json
+import math
 import os
 import subprocess
 import tempfile
@@ -93,6 +94,24 @@ ShellRoot {
     root.records=[body("top",140,120,90,30),body("right",250,120,90,30),body("bottom",250,120,90,30),body("left",140,120,90,30)]
     pair("nonzero-"+width)
    }
+   root.insets={left:0,top:0,right:0,bottom:0};root.before=false
+   // Isolate geometry from the physically new contact's outside shadow.
+   Config.setNestedValues({"abyss.surface.opacity":1,"abyss.content.opacity":1,"abyss.effects.shadowStrength":0,"abyss.effects.glow.strength":0,"abyss.effects.surfaceHighlight":0})
+   for(const edge of ["top","right","bottom","left"])for(const bodyRadius of [-1,0,12,38,64])for(const curvature of [12,34,64]){
+    Config.setNestedValue("abyss.perimeter.radius",curvature)
+    const record=body(edge,140,220,48,bodyRadius<0?undefined:bodyRadius)
+    root.records=[record];root.choices={}
+    const label="thin-"+edge+"-"+bodyRadius+"-"+curvature
+    grab(label+"-off");root.choices={[edge]:true};grab(label+"-on")
+   }
+   Config.setNestedValues({"abyss.surface.opacity":.78,"abyss.content.opacity":-1,"abyss.effects.shadowStrength":.24,"abyss.effects.glow.strength":.08,"abyss.effects.surfaceHighlight":.45})
+   for(const edge of ["top","right","bottom","left"])for(const bodyRadius of [-1,12,38]){
+    Config.setNestedValue("abyss.perimeter.radius",64)
+    root.records=[body(edge,140,220,48,bodyRadius<0?undefined:bodyRadius)]
+    const label="shadow-"+edge+"-"+bodyRadius
+    root.choices={};grab(label+"-off");root.choices={[edge]:true};grab(label+"-on")
+   }
+   Config.setNestedValue("abyss.perimeter.radius",34)
    root.insets={left:0,top:0,right:0,bottom:0}
    root.edge="top";root.records=[body("top",8,120,90,34)];root.choices={top:true};grab("corner-cut")
    root.choices={};root.records=[body("top",250,120,90,0)];pair("zero-radius")
@@ -117,6 +136,11 @@ ShellRoot {
             print(result.stdout)
             raise SystemExit(1)
         from PIL import Image
+        def pixels(box, capture):
+            # grabToImage uses the output's device pixel ratio. Fixture geometry
+            # is always 850x480 logical pixels, including fractional scaling.
+            sx,sy=capture.width/850,capture.height/480
+            return (math.ceil(box[0]*sx),math.ceil(box[1]*sy),math.floor(box[2]*sx),math.floor(box[3]*sy))
         exact = ['zero-empty', 'mixed-empty', 'regular-empty', 'zero-detached', 'mixed-detached', 'regular-detached', 'zero-radius']
         exact += [f'{edge}-{start}-off' for edge in ['top', 'right', 'bottom', 'left'] for start in [140,250]]
         exact += [f'nonzero-{width}' for width in [1,10,16,40]]
@@ -127,4 +151,37 @@ ShellRoot {
             for start in [140,250]:
                 with Image.open(args.output/f'{edge}-{start}-before.png') as a, Image.open(args.output/f'{edge}-{start}-after.png') as b:
                     assert a.convert('RGBA').tobytes() != b.convert('RGBA').tobytes(), f'Contact missing: {edge} {start}'
-        print(f'PHYSICAL_CONTACT_RENDER_PASS {len(exact)} exact disabled/nonzero RGBA pairs, 8 moving four-edge enabled contacts and corner clipping')
+                with Image.open(args.output/f'{edge}-{start}-off-after.png') as off, Image.open(args.output/f'{edge}-{start}-after.png') as on:
+                    w,h=850,480
+                    for box in [(0,0,32,32),(w-32,0,w,32),(0,h-32,32,h),(w-32,h-32,w,h)]:
+                        box=pixels(box,on)
+                        assert off.crop(box).convert('RGBA').tobytes()==on.crop(box).convert('RGBA').tobytes(), 'Detached corner geometry/shadow: '+edge
+
+        lower_pairs=0
+        for edge in ['top','right','bottom','left']:
+            for body_radius in [-1,0,12,38,64]:
+                effective=min(29 if body_radius<0 else body_radius,49)
+                first=max(0,48-effective)+1
+                for curvature in [12,34,64]:
+                    label=f'thin-{edge}-{body_radius}-{curvature}'
+                    with Image.open(args.output/(label+'-off.png')) as off, Image.open(args.output/(label+'-on.png')) as on:
+                        w,h=850,480
+                        box=(116,first,384,74) if edge=='top' else (116,h-74,384,h-first) if edge=='bottom' else (first,116,74,384) if edge=='left' else (w-74,116,w-first,384)
+                        box=pixels(box,on)
+                        assert off.crop(box).convert('RGBA').tobytes()==on.crop(box).convert('RGBA').tobytes(), 'Inherited/custom lower corner geometry changed: '+label
+                        lower_pairs+=1
+        shadow_pairs=0
+        for edge in ['top','right','bottom','left']:
+            for body_radius in [-1,12,38]:
+                first=48-(29 if body_radius<0 else body_radius)+2
+                label=f'shadow-{edge}-{body_radius}'
+                with Image.open(args.output/(label+'-off.png')) as off, Image.open(args.output/(label+'-on.png')) as on:
+                    w,h=850,480
+                    # The new upper contact may cast shadow into its surrounding
+                    # space. The near-body lower corner retains its own SDF.
+                    box=(128,first,372,74) if edge=='top' else (128,h-74,372,h-first) if edge=='bottom' else (first,128,74,372) if edge=='left' else (w-74,128,w-first,372)
+                    box=pixels(box,on)
+                    assert off.crop(box).convert('RGBA').tobytes()==on.crop(box).convert('RGBA').tobytes(), 'Lower body shadow changed: '+label
+                    shadow_pairs+=1
+
+        print(f'PHYSICAL_CONTACT_RENDER_PASS {len(exact)} exact disabled/nonzero RGBA pairs, 8 moving four-edge enabled contacts, corner clipping, {lower_pairs} inherited/custom lower-corner silhouette pairs and {shadow_pairs} near-body shadow pairs')

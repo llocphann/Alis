@@ -50,7 +50,8 @@ function popupShoulders(width,height,insets,edge,record,radius,softness,recordRa
         : (h ? height-surface.y : width-surface.x);
     var touches=leading ? (h ? surface.y : surface.x)<=0
         : (h ? surface.y+surface.height>=height : surface.x+surface.width>=width);
-    var contactRadius=touches && contactEnabled ? Math.max(0,Math.min(popupRadius,(h ? surface.width : surface.height)/2,physicalDepth)) : 0;
+    var contactRadius=touches && contactEnabled ? physicalContactRadius(
+        surface,radius,popupRadius,h ? surface.width : surface.height,physicalDepth) : 0;
     var reach=Math.max(0,softness,contactRadius);
     if(reach<=0)return [];
     var normalReach=Math.max(0,softness,contactRadius-Math.max(0,insets[edge]));
@@ -67,23 +68,16 @@ function popupShoulders(width,height,insets,edge,record,radius,softness,recordRa
     var right=insets.right>0 ? insets.right : -64;
     var bottom=insets.bottom>0 ? insets.bottom : -64;
     var workspaceRect={x:left,y:top,width:width-left-right,height:height-top-bottom};
-    var zeroMask=zeroCornerMask(cornerWidthInsets ?? insets,roundZeroCorners);
-    var cutCorners=zeroMask.some(function(value) {return value;});
-    // 0px corner fields can fuse with the new contact beyond the corner arc.
-    // Scan that finite support exactly; only the far, monotone intervals use
-    // the binary search, so no empty gap is bridged by a native rectangle.
-    var cornerSupport=radius+(cutCorners ? softness : 0);
+    // An adjacent real Edge can make the workspace boundary non-monotone.
+    // Scan its finite support exactly instead of bridging an empty pixel gap.
+    var cornerSupport=radius+softness;
     var cornerStart=(h ? insets.left : insets.top)+cornerSupport;
     var cornerEnd=extent-(h ? insets.right : insets.bottom)-cornerSupport;
-    if(cutCorners && (start-reach<cornerStart || end+reach>cornerEnd))
-        normalReach=Math.max(normalReach,cornerSupport-Math.max(0,insets[edge]));
     var painted=function(tangent,cross) {
         var x=h ? tangent+.5 : cross+.5;
         var y=h ? cross+.5 : tangent+.5;
         var d=-roundedDistance(x,y,workspaceRect,radius);
-        if(cutCorners)d=zeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
-        d=smoothUnion(d,surfaceDistance(x,y,width,height,surface,popupRadius,contactEdges),softness);
-        if(cutCorners)d=clipZeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
+        d=smoothUnion(d,surfaceDistance(x,y,width,height,surface,popupRadius,contactEdges,radius),softness);
         return d<0;
     };
     var append=function(first,last,cross) {
@@ -273,46 +267,57 @@ function smoothUnion(a, b, k) {
 // Its concave quarter circle meets that boundary and the body's side with
 // continuous tangents; no output-wide strip or fixed screen-corner patch.
 function contactCornerDistance(tangent,normal,start,end,radius) {
-    if(!(radius>0) || normal<0 || normal>radius)return Infinity;
+    if(!(radius>0))return Infinity;
     var q=Math.min(tangent-start+radius,end+radius-tangent);
-    if(q<0)return Infinity;
+    // Finite distance outside the two endpoints keeps AA and shadow attached
+    // to the actual contour rather than cutting them off at an invisible box.
+    if(normal<0)return Math.hypot(Math.min(q,0),normal);
+    if(normal>radius)return Math.min(Math.hypot(Math.min(q,0),normal),
+        Math.hypot(Math.max(radius-q,0),normal-radius));
+    if(q<0)return Math.hypot(q,normal);
     var circle=radius-Math.hypot(q,normal-radius);
     var clip=Math.max(-q,-normal,normal-radius);
     return Math.max(circle,clip);
 }
-function physicalContactDistance(x,y,width,height,rect,radius,enabledEdges) {
+function physicalContactRadius(rect,radius,bodyRadius,span,depth) {
+    // The concave contact must end on the body's straight side, before the
+    // inherited/custom bottom rounding begins. Otherwise their union produces
+    // a protruding tip and a different shadow near the module's lower corner.
+    var rounded=Math.max(0,Math.min(bodyRadius,rect.width/2,rect.height/2));
+    return Math.max(0,Math.min(radius,span/2,depth-rounded));
+}
+function physicalContactDistance(x,y,width,height,rect,radius,enabledEdges,bodyRadius) {
     if(!enabledEdges)return Infinity;
     var d=Infinity;
     if(enabledEdges[0] && rect.y<=0 && rect.y+rect.height>0)
         d=Math.min(d,contactCornerDistance(x,y,rect.x,rect.x+rect.width,
-            Math.min(radius,rect.width/2,rect.y+rect.height)));
+            physicalContactRadius(rect,radius,bodyRadius ?? 0,rect.width,rect.y+rect.height)));
     if(enabledEdges[2] && rect.y+rect.height>=height && rect.y<height)
         d=Math.min(d,contactCornerDistance(x,height-y,rect.x,rect.x+rect.width,
-            Math.min(radius,rect.width/2,height-rect.y)));
+            physicalContactRadius(rect,radius,bodyRadius ?? 0,rect.width,height-rect.y)));
     if(enabledEdges[3] && rect.x<=0 && rect.x+rect.width>0)
         d=Math.min(d,contactCornerDistance(y,x,rect.y,rect.y+rect.height,
-            Math.min(radius,rect.height/2,rect.x+rect.width)));
+            physicalContactRadius(rect,radius,bodyRadius ?? 0,rect.height,rect.x+rect.width)));
     if(enabledEdges[1] && rect.x+rect.width>=width && rect.x<width)
         d=Math.min(d,contactCornerDistance(y,width-x,rect.y,rect.y+rect.height,
-            Math.min(radius,rect.height/2,width-rect.x)));
+            physicalContactRadius(rect,radius,bodyRadius ?? 0,rect.height,width-rect.x)));
     return d;
 }
-function surfaceDistance(x,y,width,height,rect,radius,enabledEdges) {
+function surfaceDistance(x,y,width,height,rect,radius,enabledEdges,contactRadius) {
     return Math.min(roundedDistance(x,y,rect,radius),
-        physicalContactDistance(x,y,width,height,rect,radius,enabledEdges));
+        physicalContactDistance(x,y,width,height,rect,contactRadius ?? radius,enabledEdges,radius));
 }
 function distance(x, y, width, height, insets, radius, records, softness, recordRadius, roundZeroCorners, cornerWidthInsets) {
     var left=insets.left>0 ? insets.left : -64, top=insets.top>0 ? insets.top : -64;
     var right=insets.right>0 ? insets.right : -64, bottom=insets.bottom>0 ? insets.bottom : -64;
     var d = -roundedDistance(x,y,{x:left,y:top,width:width-left-right,height:height-top-bottom},radius);
-    d=zeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
     var contactEdges=physicalContactMask(cornerWidthInsets ?? insets,roundZeroCorners);
     for (var i=0;i<records.length;i++) {
         var rec=records[i];
         if (rec.surface.width>0 && rec.surface.height>0)
-            d=smoothUnion(d,surfaceDistance(x,y,width,height,rec.surface,rec.radius ?? recordRadius ?? radius,contactEdges),softness);
+            d=smoothUnion(d,surfaceDistance(x,y,width,height,rec.surface,rec.radius ?? recordRadius ?? radius,contactEdges,radius),softness);
     }
-    return clipZeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
+    return d;
 }
 
 function barZones(layout, vertical, modules) {
@@ -359,40 +364,4 @@ function zeroCornerMask(insets,choices) {
     var on=function(edge) {return choices?.[edge]===true && insets[edge]===0;};
     return [on("top")||on("left"),on("top")||on("right"),
         on("bottom")||on("right"),on("bottom")||on("left")];
-}
-function innerCornerDistance(u,v,r) {
-    // Exact distance to the finite quarter arc. A max/intersection SDF
-    // underestimates outside this quadrant, painting a false circular shadow.
-    if(u<=r && v<=r)return r-Math.hypot(u-r,v-r);
-    var a=Math.hypot(u-r,v),b=Math.hypot(u,v-r);
-    return u>r && v>r ? Math.min(a,b) : u>r ? a : b;
-}
-function zeroCornerField(d,x,y,width,height,insets,radius,choices,cornerWidthInsets) {
-    if(!choices || !(choices.top || choices.right || choices.bottom || choices.left))return d;
-    var mask=zeroCornerMask(cornerWidthInsets ?? insets,choices);
-    if(!mask.some(function(enabled) {return enabled;}))return d;
-    var left=Math.max(0,insets.left),right=Math.max(0,insets.right),top=Math.max(0,insets.top),bottom=Math.max(0,insets.bottom);
-    var r=Math.max(0,Math.min(radius,(width-left-right)/2,(height-top-bottom)/2));
-    if(r<=0)return d;
-    var u=[x-left,width-right-x,width-right-x,x-left],v=[y-top,y-top,height-bottom-y,height-bottom-y];
-    mask.forEach(function(enabled,i) {if(enabled)d=Math.min(d,innerCornerDistance(u[i],v[i],r));});
-    return d;
-}
-
-// R02 regression: module/local-backdrop unions must not fill the workspace
-// cutout of an enabled 0px corner. Clip only the finite quarter square,
-// leaving module geometry, input regions and every other pixel unchanged.
-function clipZeroCornerField(d,x,y,width,height,insets,radius,choices,cornerWidthInsets) {
-    if(!choices || !(choices.top || choices.right || choices.bottom || choices.left))return d;
-    var mask=zeroCornerMask(cornerWidthInsets ?? insets,choices);
-    if(!mask.some(function(enabled) {return enabled;}))return d;
-    var left=Math.max(0,insets.left),right=Math.max(0,insets.right),top=Math.max(0,insets.top),bottom=Math.max(0,insets.bottom);
-    var r=Math.max(0,Math.min(radius,(width-left-right)/2,(height-top-bottom)/2));
-    if(r<=0)return d;
-    var u=[x-left,width-right-x,width-right-x,x-left],v=[y-top,y-top,height-bottom-y,height-bottom-y];
-    mask.forEach(function(enabled,i) {
-        if(enabled && u[i]>=0 && u[i]<=r && v[i]>=0 && v[i]<=r)
-            d=Math.max(d,innerCornerDistance(u[i],v[i],r));
-    });
-    return d;
 }

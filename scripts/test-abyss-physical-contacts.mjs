@@ -10,7 +10,8 @@ const allContacts=[true,true,true,true];
 function scene(edge,t,n){return edge==='top'?[t,n]:edge==='bottom'?[t,h-n]:edge==='left'?[n,t]:[w-n,t]}
 function rect(edge,start,span,depth){return edge==='top'?{x:start,y:-50,width:span,height:depth+50}:edge==='bottom'?{x:start,y:h-depth,width:span,height:depth+50}:edge==='left'?{x:-50,y:start,width:depth+50,height:span}:{x:w-depth,y:start,width:depth+50,height:span}}
 for(const edge of ['top','bottom','left','right'])for(const start of [67.5,121.25,255])for(const span of [64,140])for(const depth of [8,24,120])for(const radius of [0,12,34,64]){
- const body=rect(edge,start,span,depth),r=Math.min(radius,span/2,depth);
+ const body=rect(edge,start,span,depth),bodyRadius=Math.min(radius,span/2,(depth+50)/2);
+ const r=Math.max(0,Math.min(radius,span/2,depth-bodyRadius));
  for(let i=1;i<24;i++){
   if(r>0){
    // Independent circle geometry: a moving boundary, not fixed screen corners.
@@ -23,7 +24,7 @@ for(const edge of ['top','bottom','left','right'])for(const start of [67.5,121.2
    check(G.surfaceDistance(...p,w,h,body,radius,allContacts)<0,'false interior seam at body contact');
   }
   const p=scene(edge,start-100,i);
-  check(G.physicalContactDistance(...p,w,h,body,radius,allContacts)===Infinity,'contact escaped local footprint');
+  check(G.physicalContactDistance(...p,w,h,body,radius,allContacts)>24,'contact escaped local footprint');
  }
  if(r>0){
   const small=.0001*r;
@@ -44,6 +45,17 @@ for(const edge of ['top','bottom','left','right'])for(const start of [67.5,121.2
    }
   }
  }
+}
+// A shallow inherited/custom rounded module cannot grow a tip over its lower
+// corner. Independent body distance owns that entire corner and its shadow.
+for(const edge of ['top','bottom','left','right'])for(const bodyRadius of [0,12,29,38,64])for(const curvature of [12,34,64]){
+ const body=rect(edge,140,220,48),effective=Math.min(bodyRadius,110,49),straight=Math.max(0,48-effective);
+ for(let n=Math.ceil(straight)+.25;n<72;n+=.5)for(const t of [139.9,136,145,160,359.9,364]){
+  const p=scene(edge,t,n),distance=G.surfaceDistance(...p,w,h,body,bodyRadius,allContacts,curvature);
+  check(Object.is(distance,G.roundedDistance(...p,body,bodyRadius)),`contact changed inherited lower corner/shadow ${edge} ${bodyRadius} ${curvature} ${t} ${n}`);
+ }
+ const cap=G.physicalContactRadius(body,curvature,bodyRadius,220,48);
+ check(cap<=straight,'contact crossed the inherited straight-side limit');
 }
 const detached={x:120,y:100,width:240,height:180};
 for(let y=0;y<480;y+=7)for(let x=0;x<854;x+=9){

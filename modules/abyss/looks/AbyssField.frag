@@ -134,28 +134,32 @@ float fuse(float a, float b) {
     return min(a,b)-h*h*k*0.25;
 }
 float contactCorner(vec2 point,float start,float end,float radius) {
-    if(radius<=0.0 || point.y<0.0 || point.y>radius) return 1e20;
+    if(radius<=0.0) return 1e20;
     float q=min(point.x-start+radius,end+radius-point.x);
-    if(q<0.0) return 1e20;
+    if(point.y<0.0)return length(vec2(min(q,0.0),point.y));
+    if(point.y>radius)return min(length(vec2(min(q,0.0),point.y)),
+        length(vec2(max(radius-q,0.0),point.y-radius)));
+    if(q<0.0)return length(vec2(q,point.y));
     float circle=radius-length(vec2(q,point.y-radius));
     float clip=max(-q,max(-point.y,point.y-radius));
     return max(circle,clip);
 }
-float physicalContact(vec2 p,vec4 rect,float radius) {
+float physicalContact(vec2 p,vec4 rect,float radius,float bodyRadius) {
     float d=1e20;
+    float rounding=max(0.0,min(bodyRadius,min(rect.z,rect.w)*.5));
     if(contactEdges.x>.5 && rect.y<=0.0 && rect.y+rect.w>0.0)
-        d=min(d,contactCorner(p,rect.x,rect.x+rect.z,min(radius,min(rect.z*.5,rect.y+rect.w))));
+        d=min(d,contactCorner(p,rect.x,rect.x+rect.z,max(0.0,min(radius,min(rect.z*.5,rect.y+rect.w-rounding)))));
     if(contactEdges.z>.5 && rect.y+rect.w>=viewport.y && rect.y<viewport.y)
-        d=min(d,contactCorner(vec2(p.x,viewport.y-p.y),rect.x,rect.x+rect.z,min(radius,min(rect.z*.5,viewport.y-rect.y))));
+        d=min(d,contactCorner(vec2(p.x,viewport.y-p.y),rect.x,rect.x+rect.z,max(0.0,min(radius,min(rect.z*.5,viewport.y-rect.y-rounding)))));
     if(contactEdges.w>.5 && rect.x<=0.0 && rect.x+rect.z>0.0)
-        d=min(d,contactCorner(p.yx,rect.y,rect.y+rect.w,min(radius,min(rect.w*.5,rect.x+rect.z))));
+        d=min(d,contactCorner(p.yx,rect.y,rect.y+rect.w,max(0.0,min(radius,min(rect.w*.5,rect.x+rect.z-rounding)))));
     if(contactEdges.y>.5 && rect.x+rect.z>=viewport.x && rect.x<viewport.x)
-        d=min(d,contactCorner(vec2(p.y,viewport.x-p.x),rect.y,rect.y+rect.w,min(radius,min(rect.w*.5,viewport.x-rect.x))));
+        d=min(d,contactCorner(vec2(p.y,viewport.x-p.x),rect.y,rect.y+rect.w,max(0.0,min(radius,min(rect.w*.5,viewport.x-rect.x-rounding)))));
     return d;
 }
 float record(float d, vec2 p, vec4 rect, float radius) {
     if(rect.z <= 0.0 || rect.w <= 0.0) return d;
-    return fuse(d,min(roundedBox(p,rect,radius),physicalContact(p,rect,radius)));
+    return fuse(d,min(roundedBox(p,rect,radius),physicalContact(p,rect,material.x,radius)));
 }
 vec4 workspaceRect() {
     // A disabled Edge lies outside the render target, including its AA/rim
@@ -163,59 +167,9 @@ vec4 workspaceRect() {
     vec4 edges=mix(vec4(-64.0),insets,step(vec4(0.001),insets));
     return vec4(edges.xy,viewport.xy-edges.xy-edges.zw);
 }
-float innerCorner(vec2 uv,float r) {
-    if(uv.x<=r && uv.y<=r)return r-length(uv-vec2(r));
-    float a=length(vec2(uv.x-r,uv.y)),b=length(vec2(uv.x,uv.y-r));
-    return uv.x>r && uv.y>r ? min(a,b) : uv.x>r ? a : b;
-}
-float zeroCornerField(float d,vec2 p) {
-    if(dot(zeroCorners,vec4(1.0))<0.5)return d;
-    vec4 edges=max(vec4(0.0),insets);
-    float r=max(0.0,min(material.x,min(viewport.x-edges.x-edges.z,viewport.y-edges.y-edges.w)*0.5));
-    if(r<=0.0)return d;
-    vec2 low=p-edges.xy,high=viewport.xy-edges.zw-p;
-    if(zeroCorners.x>.5)d=min(d,innerCorner(low,r));
-    if(zeroCorners.y>.5)d=min(d,innerCorner(vec2(high.x,low.y),r));
-    if(zeroCorners.z>.5)d=min(d,innerCorner(high,r));
-    if(zeroCorners.w>.5)d=min(d,innerCorner(vec2(low.x,high.y),r));
-    return d;
-}
-// Keep the finite 0px corner opening visible when nearby Modules supply
-// a local backing rectangle or a weld through the same field. The shape union
-// above may fill this cutout; a bounded intersection restores its inside arc.
-// No full-edge rectangle, second pass or input region is introduced.
-float clipZeroCorners(float d, vec2 p) {
-    if (dot(zeroCorners, vec4(1.0)) < 0.5) return d;
-    vec4 edges = max(vec4(0.0), insets);
-    float r = max(0.0, min(material.x,
-        min(viewport.x - edges.x - edges.z,
-            viewport.y - edges.y - edges.w) * 0.5));
-    if (r <= 0.0) return d;
-    vec2 low = p - edges.xy;
-    vec2 high = viewport.xy - edges.zw - p;
-    vec2 topRight = vec2(high.x, low.y);
-    vec2 bottomLeft = vec2(low.x, high.y);
-    if (zeroCorners.x > 0.5
-            && all(greaterThanEqual(low, vec2(0.0)))
-            && all(lessThanEqual(low, vec2(r))))
-        d = max(d, innerCorner(low, r));
-    if (zeroCorners.y > 0.5
-            && all(greaterThanEqual(topRight, vec2(0.0)))
-            && all(lessThanEqual(topRight, vec2(r))))
-        d = max(d, innerCorner(topRight, r));
-    if (zeroCorners.z > 0.5
-            && all(greaterThanEqual(high, vec2(0.0)))
-            && all(lessThanEqual(high, vec2(r))))
-        d = max(d, innerCorner(high, r));
-    if (zeroCorners.w > 0.5
-            && all(greaterThanEqual(bottomLeft, vec2(0.0)))
-            && all(lessThanEqual(bottomLeft, vec2(r))))
-        d = max(d, innerCorner(bottomLeft, r));
-    return d;
-}
 float field(vec2 p) {
     vec4 hole=workspaceRect();
-    float d=zeroCornerField(-roundedBox(p,hole,material.x),p);
+    float d=-roundedBox(p,hole,material.x);
     d=record(d,p,rect0,radii0.x); d=record(d,p,rect1,radii0.y); d=record(d,p,rect2,radii0.z); d=record(d,p,rect3,radii0.w);
     d=record(d,p,rect4,radii1.x); d=record(d,p,rect5,radii1.y); d=record(d,p,rect6,radii1.z); d=record(d,p,rect7,radii1.w);
     d=record(d,p,rect8,radii2.x); d=record(d,p,rect9,radii2.y); d=record(d,p,rect10,radii2.z); d=record(d,p,rect11,radii2.w);
@@ -226,7 +180,7 @@ float field(vec2 p) {
     d=record(d,p,rect28,radii7.x); d=record(d,p,rect29,radii7.y); d=record(d,p,rect30,radii7.z); d=record(d,p,rect31,radii7.w);
     d=record(d,p,rect32,radii8.x); d=record(d,p,rect33,radii8.y); d=record(d,p,rect34,radii8.z); d=record(d,p,rect35,radii8.w);
     d=record(d,p,rect36,radii9.x); d=record(d,p,rect37,radii9.y); d=record(d,p,rect38,radii9.z); d=record(d,p,rect39,radii9.w);
-    return clipZeroCorners(d, p);
+    return d;
 }
 layout(binding=3) uniform sampler2D bodyTexture;
 void main() {
