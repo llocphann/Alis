@@ -156,17 +156,24 @@ Item {
     property var anchorEdges: Edges.Top
     property var anchorGravity: anchorEdges
 
-    property Item contentItem: StyledToolTipContent {
-        id: contentItem
-        anchors.centerIn: parent
-        text: root.text
-        shown: false
-        position: root.anchorEdges === Edges.Top ? "top"
-                : root.anchorEdges === Edges.Left ? "left"
-                : root.anchorEdges === Edges.Right ? "right"
-                : "bottom"
-        horizontalPadding: root.horizontalPadding
-        verticalPadding: root.verticalPadding
+    // A literal default Item is constructed even when a derived tooltip
+    // overrides contentItem. Evaluate this factory only when its binding wins,
+    // preserving the direct-call default without allocating a hidden second tree.
+    property Item contentItem: defaultContent.createObject(root, {parent: null})
+    Component {
+        id: defaultContent
+        StyledToolTipContent {
+            id: contentItem
+            anchors.centerIn: parent
+            text: root.text
+            shown: false
+            position: root.anchorEdges === Edges.Top ? "top"
+                    : root.anchorEdges === Edges.Left ? "left"
+                    : root.anchorEdges === Edges.Right ? "right"
+                    : "bottom"
+            horizontalPadding: root.horizontalPadding
+            verticalPadding: root.verticalPadding
+        }
     }
 
     // Whether we can use PopupWindow (requires QsWindow, i.e. PanelWindow context)
