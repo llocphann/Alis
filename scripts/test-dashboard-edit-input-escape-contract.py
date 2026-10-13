@@ -13,6 +13,8 @@ content = read("modules/dashboard/DashboardContent.qml")
 toolbar = read("modules/dashboard/DashboardEditToolbar.qml")
 canvas = read("modules/dashboard/DashboardCanvas.qml")
 standalone = read("modules/dashboard/Dashboard.qml")
+overview = read("modules/overview/OverviewDashboard.qml")
+overview_host = read("modules/abyss/content/AbyssOverviewContent.qml")
 
 # A field-owned editor above the body requires its own shaped Wayland input.
 # A fullscreen mask would steal clicks from underlying windows.
@@ -32,20 +34,29 @@ body = content[content.index("function handleEscape(): bool {"):
                content.index("function openPlannerEventEditor(")]
 assert body.index("dashboardCanvas.cancelEditMode()") < body.index("if (_agendaDialogShown)")
 assert "dashboardHeader.cancelPageDrag()" in body
-assert 'sequences: ["Escape"]' in editor
-assert "enabled: root.editing && (root.body?.open ?? false)" in editor
-assert "root.body?.forceActiveFocus()" in editor
-assert "dashboard?.handleEscape?.()" in editor
-assert "root.editing && root.revealRequested" not in editor
+# The owning window, not its reparented toolbar, owns Escape.
+assert 'sequences: ["Escape"]' not in editor
+assert 'sequences: ["Escape"]' in perimeter
+assert 'context: Qt.WindowShortcut' in perimeter
+assert 'autoRepeat: false' in perimeter
+assert 'function cancelDashboardEditFromEscape(): bool' in perimeter
+assert 'perimeterEscapeFallback.forceActiveFocus()' in perimeter
+assert 'onActivated: window.cancelDashboardEditFromEscape()' in perimeter
+assert 'onActivatedAmbiguously:' in perimeter
+assert 'dashboardEscapeCancelPending' in perimeter
 assert "function handleEscape(): bool {" in embedded
 assert "return content.handleEscape()" in embedded
-assert "dashboardBody.contentItem.item.handleEscape()" in perimeter
-assert perimeter.index("dashboardBody.contentItem.item.handleEscape()") < perimeter.index(
-    "GlobalStates.dashboardOpen = false", perimeter.index("Keys.onEscapePressed:"))
+assert 'const dashboard = dashboardBody.presented ? dashboardBody.contentItem?.item : null' in perimeter
+assert 'target.handleEscape()' in perimeter
+assert perimeter.index('if (window.cancelDashboardEditFromEscape())') < perimeter.index(
+    'GlobalStates.dashboardOpen = false', perimeter.index('Keys.onEscapePressed:'))
 assert "contentLoader.item?.handleEscape()" in standalone
 assert "panelRoot.hide()" in standalone
 assert "function cancelEditMode()" in canvas
 assert "root._draftEntries = null" in canvas
+assert 'enabled: root.editing && root.popupPresented && !root.externalEditToolbar' in overview
+assert 'function handleEscape(): bool' in overview_host
+assert 'overview.item?.handleEscape?.()' in overview_host
 
 # The QML focus path inside the body previously closed immediately, before
 # the outer Perimeter's cancellation handler could see the event.
@@ -61,9 +72,11 @@ assert "event.accepted = true" in host_escape
 
 # Both the output-field fallback and standalone window should preserve focus
 # after Cancel so the next Escape can reach the normal close path.
-assert "dashboardBody.forceActiveFocus()" in perimeter
+assert "perimeterEscapeFallback.forceActiveFocus()" in perimeter
 assert "contentLoader.forceActiveFocus()" in standalone
-assert "root.body?.forceActiveFocus()" in editor
+assert "onActivatedAmbiguously:" in standalone
+assert standalone.index('        Shortcut {') < standalone.index('        // Backdrop click to close')
+assert "dashboard?.handleEscape?.()" not in editor
 
 # Action buttons must remain centered, keyboard-reachable and functional.
 for token in (
