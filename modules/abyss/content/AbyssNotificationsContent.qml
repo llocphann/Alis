@@ -57,7 +57,10 @@ Item {
             if (Notifications.popupList.length === 0) {
                 popupMeasureTimer.stop()
                 root.popupLayoutReady=false
-                root.settledPopupHeight=0
+                // Keep the last measured dimensions while the host retracts.
+                // Its Loader destroys this content after the closing surface
+                // disappears; clearing now snaps a taller banner to the minimum
+                // depth before the first closing animation frame is presented.
             } else root.schedulePopupMeasurement()
         }
     }
