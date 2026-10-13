@@ -11,6 +11,7 @@ import qs.modules.common.functions
 import qs.modules.abyss.looks
 import "WeeklyPlannerPolicy.js" as Planner
 import "PlannerGesture.js" as Gesture
+import "PlannerSelection.js" as Selection
 
 Item {
     id: root
@@ -26,12 +27,73 @@ Item {
     property bool _initialized: false
     readonly property string todayKey: Qt.formatDate(DateTime.clock.date,"yyyy-MM-dd")
     onTodayKeyChanged: if (_initialized && followToday) selectedDate=DateTime.clock.date
-    onSelectedDateChanged: storeBrowser()
+    onSelectedDateChanged: {clearEventSelection();storeBrowser()}
     onFollowTodayChanged: storeBrowser()
     onSideViewChanged: storeBrowser()
     onPresentationActiveChanged: if (_initialized && presentationActive && followToday) selectedDate=DateTime.clock.date
     property bool expandAllDay: false
     property int activeDragDay: -1
+    property var selectedEventKeys: []
+    property string selectionAnchorKey: ""
+    property bool deleteConfirmation: false
+    property var activeGroupGesture: null
+    onSelectedEventKeysChanged: deleteConfirmation=false
+    readonly property var selectableEventRows: Selection.ordered(root.days)
+    readonly property var selectedEventRows: root.selectableEventRows.filter(
+        row=>root.selectedEventKeys.includes(Selection.key(row)))
+    function isEventSelected(row): bool {
+        return root.selectedEventKeys.includes(Selection.key(row))
+    }
+    function clearEventSelection(): void {
+        root.selectedEventKeys=[]
+        root.selectionAnchorKey=""
+        root.deleteConfirmation=false
+        root.activeGroupGesture=null
+    }
+    function gestureTargets(row) {
+        if (!Selection.canSelect(row)) return []
+        return root.isEventSelected(row) && root.selectedEventRows.length>1
+            ? root.selectedEventRows : [row]
+    }
+    function clickPlannerEvent(row,modifiers): void {
+        const ctrl=!!(modifiers & Qt.ControlModifier)
+        const shift=!!(modifiers & Qt.ShiftModifier)
+        if (ctrl || shift) {
+            const result=Selection.choose(root.selectableEventRows,
+                root.selectedEventKeys,root.selectionAnchorKey,row,ctrl,shift)
+            if (!result) return
+            root.selectedEventKeys=result.keys
+            root.selectionAnchorKey=result.anchor
+        } else if (!root.isEventSelected(row)
+                || root.selectedEventKeys.length===0) {
+            root.clearEventSelection()
+            root.editOccurrence(row)
+        }
+    }
+    function confirmOrDeleteSelected(): void {
+        if (!root.selectedEventRows.length) return
+        if (!root.deleteConfirmation) {root.deleteConfirmation=true;return}
+        if (typeof root.localBackend.applyPlannerOccurrenceBatch!=="function")
+            return
+        const actions=root.selectedEventRows.map(row=>({
+            id:row.event.id,occurrenceIndex:row.occurrenceIndex,remove:true
+        }))
+        if (root.localBackend.applyPlannerOccurrenceBatch(actions))
+            root.clearEventSelection()
+        else root.deleteConfirmation=false
+    }
+    function handleSelectionKey(event): bool {
+        if (event.key===Qt.Key_Escape && root.selectedEventKeys.length>0) {
+            root.clearEventSelection()
+            return true
+        }
+        if ((event.key===Qt.Key_Delete || event.key===Qt.Key_Backspace)
+                && root.selectedEventRows.length>0) {
+            root.confirmOrDeleteSelected()
+            return true
+        }
+        return false
+    }
     property real hourHeight: 52 * Appearance.fontSizeScale
     property int _eventsRevision: 0
     readonly property int firstDay: Qt.locale().firstDayOfWeek % 7
@@ -122,25 +184,46 @@ Item {
     function changeWeek(count): void {followToday=false;selectedDate=Planner.addDays(selectedDate,count*7)}
     function showToday(): void {followToday=true;selectedDate=new Date();scrollWorkingHours()}
     function commitTimedGesture(row, mode, dx, dy): void {
-        if (typeof root.localBackend.rescheduleOccurrence !== "function") return
-        const candidate=Gesture.rangeForGesture(row,mode,dx,dy,
-            root.columnWidth,root.hourHeight)
-        if (!candidate) return
-        if (!root.localBackend.rescheduleOccurrence(row.event.id,
-                row.occurrenceIndex,candidate.startIso,candidate.endIso)) {
-            console.warn("[WeeklyPlanner] Timed event gesture not saved")
-            return
+        const targets=root.gestureTargets(row)
+        if (!targets.length) return
+        const changes=[]
+        for (const target of targets) {
+            const range=Gesture.rangeForSelection(target,mode,dx,dy,
+                root.columnWidth,root.hourHeight)
+            if (!range) return
+            changes.push({id:target.event.id,occurrenceIndex:target.occurrenceIndex,
+                startIso:range.startIso,endIso:range.endIso})
         }
-        // The calendar dots already react to Events.eventUpdated, but the
-        // open Edit Event form owns its own selected-day highlight. Reconcile
-        // that focus only after the canonical occurrence was actually saved.
-        // Do not reload the form: doing so would erase an unsaved title/note.
+        const candidate=changes[0]
+        if (targets.length>1) {
+            if (typeof root.localBackend.applyPlannerOccurrenceBatch!=="function"
+                    || !root.localBackend.applyPlannerOccurrenceBatch(changes)) {
+                console.warn("[WeeklyPlanner] Group gesture rejected; no events changed")
+                return
+            }
+        } else {
+            if (typeof root.localBackend.rescheduleOccurrence !== "function") return
+            if (!root.localBackend.rescheduleOccurrence(row.event.id,
+                    row.occurrenceIndex,candidate.startIso,candidate.endIso)) {
+                console.warn("[WeeklyPlanner] Timed event gesture not saved")
+                return
+            }
+        }
+        root.clearEventSelection()
+        // Preserve unsaved title/note; reconcile only a matching edited slot.
         const form=inlineEventsPanel.item
-        if (form && form.isEditing
-                && form.editingEvent?.id===row.event.id
-                && form.editingOccurrenceIndex===row.occurrenceIndex)
-            form.syncMovedOccurrence(row.event.id,row.startDate,
-                candidate.startIso,candidate.endIso)
+        if (form && form.isEditing) {
+            for (const target of targets) {
+                if (form.editingEvent?.id===target.event.id
+                        && form.editingOccurrenceIndex===target.occurrenceIndex) {
+                    const changed=changes.find(change=>change.id===target.event.id
+                        && change.occurrenceIndex===target.occurrenceIndex)
+                    form.syncMovedOccurrence(target.event.id,target.startDate,
+                        changed.startIso,changed.endIso)
+                    break
+                }
+            }
+        }
     }
     function editOccurrence(row): void {
         if (row.source!=="local") return
@@ -158,6 +241,7 @@ Item {
     }
     Keys.onPressed: event => {
         // Unhandled editor keys must never navigate the week underneath a form.
+        if (root.handleSelectionKey(event)) {event.accepted=true;return}
         if (root.sideView === "events") { event.accepted = false; return }
         if (event.key === Qt.Key_PageUp) {changeWeek(-1);event.accepted=true}
         else if (event.key === Qt.Key_PageDown) {changeWeek(1);event.accepted=true}
@@ -259,6 +343,17 @@ Item {
                     anchors.right:parent.right
                     anchors.verticalCenter:parent.verticalCenter
                     spacing:4 * Appearance.fontSizeScale
+                    Action {
+                        objectName:"plannerDeleteSelected"
+                        visible:root.selectedEventRows.length>0
+                        label:root.deleteConfirmation
+                            ? "Confirm delete ("+root.selectedEventRows.length+")"
+                            : "Delete ("+root.selectedEventRows.length+")"
+                        symbol:"delete"
+                        buttonInk:root.deleteConfirmation
+                            ? Appearance.colors.colError : root.headerInk
+                        onClicked:root.confirmOrDeleteSelected()
+                    }
                     Action {
                         objectName:"plannerTodoAction"
                         symbol:"checklist"
@@ -417,7 +512,10 @@ Item {
                         MouseArea {
                             objectName:"plannerCreateSlot"
                             x:0;y:root.gridTop;width:parent.width;height:dayColumn.modelData.minutes/60*root.hourHeight
-                            onClicked:mouse=>root.requestEventsDialog({plannerDate:new Date(dayColumn.modelData.date.getTime()+Math.floor(mouse.y/root.hourHeight*4)*15*60000)})
+                            onClicked:mouse=>{
+                                root.clearEventSelection()
+                                root.requestEventsDialog({plannerDate:new Date(dayColumn.modelData.date.getTime()+Math.floor(mouse.y/root.hourHeight*4)*15*60000)})
+                            }
                         }
                         Repeater {
                             model:dayColumn.modelData.timed
