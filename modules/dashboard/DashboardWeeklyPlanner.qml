@@ -523,31 +523,44 @@ Item {
                                 id:timedButton
                                 required property var modelData
                                 objectName:"plannerTimedEvent"
-                                readonly property bool canReschedule: modelData.source==="local"
-                                    && !modelData.virtual && !modelData.event.allDay
-                                    && (modelData.event.recurrence || "none")==="none"
+                                readonly property bool canReschedule: Selection.canSelect(modelData)
+                                    && !modelData.event.allDay
                                 property string gestureMode: ""
                                 property real dragX: 0
                                 property real dragY: 0
                                 property real pressX: 0
                                 property real pressY: 0
                                 property bool gestureMoved: false
+                                readonly property var groupPreview:
+                                    root.activeGroupGesture?.keys?.includes(Selection.key(modelData))
+                                        ? root.activeGroupGesture : null
+                                readonly property string effectiveMode:gestureMode.length>0
+                                    ? gestureMode : groupPreview?.mode ?? ""
+                                readonly property real effectiveDx:gestureMode.length>0
+                                    ? dragX : groupPreview?.dx ?? 0
+                                readonly property real effectiveDy:gestureMode.length>0
+                                    ? dragY : groupPreview?.dy ?? 0
                                 readonly property var previewRange: gestureMode.length>0 && gestureMoved
                                     ? Gesture.rangeForGesture(modelData,gestureMode,dragX,dragY,
+                                        root.columnWidth,root.hourHeight)
+                                    : groupPreview ? Gesture.rangeForGesture(modelData,
+                                        groupPreview.mode,groupPreview.dx,groupPreview.dy,
                                         root.columnWidth,root.hourHeight) : null
                                 readonly property real baseHeight: Math.max(18,
                                     (modelData.end-modelData.start)/60*root.hourHeight-2)
                                 x:4+modelData.lane*dayColumn.width/modelData.lanes
-                                    +(gestureMode==="move"?dragX:0)
+                                    +(effectiveMode==="move"?effectiveDx:0)
                                 y:root.gridTop+modelData.start/60*root.hourHeight
-                                    +(gestureMode==="bottom"?0:dragY)
+                                    +(effectiveMode==="bottom"?0:effectiveDy)
                                 width:Math.max(1,dayColumn.width/modelData.lanes-8)
                                 height:Math.max(18,baseHeight
-                                    +(gestureMode==="top"?-dragY:gestureMode==="bottom"?dragY:0))
+                                    +(effectiveMode==="top"?-effectiveDy
+                                        :effectiveMode==="bottom"?effectiveDy:0))
                                 radius:7
                                 color:Qt.alpha(modelData.event.color || Appearance.colors.colPrimary,
                                     eventMouse.containsMouse ? .32 : .2)
-                                border.width:activeFocus ? 1 : 0
+                                border.width:root.isEventSelected(modelData) ? 2
+                                    : activeFocus ? 1 : 0
                                 border.color:Appearance.colors.colPrimary
                                 activeFocusOnTab:true
                                 Accessible.role:Accessible.Button
@@ -558,8 +571,13 @@ Item {
                                      :" · Open to edit")
                                 Keys.onReturnPressed:root.editOccurrence(modelData)
                                 Keys.onSpacePressed:root.editOccurrence(modelData)
+                                Keys.onPressed:event=>{
+                                    if (root.handleSelectionKey(event)) event.accepted=true
+                                }
                                 function startGesture(mode,source,mouse) {
-                                    if (!canReschedule) return
+                                    gestureMoved=false
+                                    if (!canReschedule
+                                            || (mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier))) return
                                     const point=source.mapToItem(viewport.contentItem,mouse.x,mouse.y)
                                     gestureMode=mode
                                     gestureMoved=false
@@ -575,17 +593,24 @@ Item {
                                     gestureMoved=true
                                     dragX=mode==="move" ? dx : 0
                                     dragY=dy
+                                    if (!root.isEventSelected(modelData)
+                                            && root.selectedEventKeys.length>0)
+                                        root.clearEventSelection()
+                                    const targets=root.gestureTargets(modelData)
+                                    root.activeGroupGesture={keys:targets.map(row=>Selection.key(row)),
+                                        mode:mode,dx:dragX,dy:dragY}
                                 }
                                 function finishGesture(mode) {
                                     if (gestureMode!==mode) return
                                     const dx=dragX,dy=dragY,shouldCommit=gestureMoved
                                     gestureMode="";dragX=0;dragY=0
+                                    root.activeGroupGesture=null
                                     root.activeDragDay=-1
                                     if (shouldCommit) root.commitTimedGesture(modelData,mode,dx,dy)
                                 }
                                 function cancelGesture() {
                                     gestureMode="";dragX=0;dragY=0;gestureMoved=false
-                                    root.activeDragDay=-1
+                                    root.activeGroupGesture=null;root.activeDragDay=-1
                                 }
                                 Column {
                                     anchors.fill:parent;anchors.margins:4;clip:true
@@ -628,8 +653,14 @@ Item {
                                     }
                                     onReleased:timedButton.finishGesture("move")
                                     onCanceled:timedButton.cancelGesture()
-                                    onClicked:if (!timedButton.gestureMoved)
+                                    onClicked:mouse=>{
+                                        if (!timedButton.gestureMoved)
+                                            root.clickPlannerEvent(timedButton.modelData,mouse.modifiers)
+                                    }
+                                    onDoubleClicked:{
+                                        root.clearEventSelection()
                                         root.editOccurrence(timedButton.modelData)
+                                    }
                                 }
                                 Rectangle {
                                     objectName:"plannerResizeStart"
@@ -659,6 +690,10 @@ Item {
                                         }
                                         onReleased:timedButton.finishGesture("top")
                                         onCanceled:timedButton.cancelGesture()
+                                        onClicked:mouse=>{
+                                            if (!timedButton.gestureMoved)
+                                                root.clickPlannerEvent(timedButton.modelData,mouse.modifiers)
+                                        }
                                     }
                                 }
                                 Rectangle {
@@ -690,6 +725,10 @@ Item {
                                         }
                                         onReleased:timedButton.finishGesture("bottom")
                                         onCanceled:timedButton.cancelGesture()
+                                        onClicked:mouse=>{
+                                            if (!timedButton.gestureMoved)
+                                                root.clickPlannerEvent(timedButton.modelData,mouse.modifiers)
+                                        }
                                     }
                                 }
                                 StyledToolTip {
