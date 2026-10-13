@@ -1,0 +1,16 @@
+{
+  "source_sha": "180b9682e803197ce6c1ca1ee81ed6add842f5f0",
+  "source_path": "/tmp/alis-popup-region-exact-20261013",
+  "driver_path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-region-canonical/180b9682e803197ce6c1ca1ee81ed6add842f5f0.sh",
+  "driver_sha256": "a8a4f77147367384e0c05e5e0c38153fc7e6c2a4fa7b79659a51040dc230f5af",
+  "log_path": "/tmp/alis-region-canonical-180b9682e803197ce6c1ca1ee81ed6add842f5f0.log",
+  "status": "FAIL",
+  "exit_code": 1,
+  "passed": 386,
+  "failed": 21,
+  "skipped": 1,
+  "completed_checks": 407,
+  "frozen-driver.sh_sha256": "a8a4f77147367384e0c05e5e0c38153fc7e6c2a4fa7b79659a51040dc230f5af",
+  "canonical.log_sha256": "238a7e30e6dc9447b3c89fbb8aaf9d2db78ce6acf86bfa9a1fff265a759b2af3",
+  "outer-driver.log_sha256": "e4bb88403ef527412cf28a747868dfe911cb0ef626015a7938c03ae59f5d0ddc"
+}
