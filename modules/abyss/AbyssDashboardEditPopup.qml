@@ -78,27 +78,8 @@ Item {
         inputBounds: root.toolbarInputBounds
         nativeInputRegion: root.toolbarInputRegion
     }
-    // Editing consumes the first Escape just like clicking Cancel. Leave the
-    // second Escape to the owning Dashboard surface's normal close shortcut.
-    Shortcut {
-        sequences: ["Escape"]
-        context: Qt.WindowShortcut
-        // The toolbar is a sibling of the body after reparenting. Its focused
-        // buttons do not bubble Escape through AbyssBodyHost, so this shortcut
-        // covers that separate focus tree from the start of Edit Mode (not just
-        // after the opening animation has reached 99%).
-        enabled: root.editing && (root.body?.open ?? false)
-        onActivated: {
-            if (!(root.canvasController?.editMode ?? false))
-                return
-            const dashboard = root.body?.contentItem?.item
-            if (dashboard?.handleEscape?.()) {
-                // Once the toolbar hides, give focus back to the Dashboard
-                // body so a second Escape follows its normal close path.
-                root.body?.forceActiveFocus()
-            }
-        }
-    }
+    // Escape belongs to the Perimeter PanelWindow, never this reparented
+    // editor. Having both WindowShortcuts for Overview makes them ambiguous.
     DashboardEditToolbar {
         id: toolbar
         width: root.width
