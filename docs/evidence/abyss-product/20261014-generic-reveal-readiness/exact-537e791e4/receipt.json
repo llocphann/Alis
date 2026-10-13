@@ -1,0 +1,43 @@
+{
+  "source_sha": "537e791e492d4cef5a49bdc2d742a59ef688ef38",
+  "scope": "focused clean exact source; no new canonical/installed/owner acceptance",
+  "checks": [
+    {
+      "name": "generic-ready",
+      "command": [
+        "python3",
+        "scripts/test-abyss-generic-reveal-readiness-runtime.py"
+      ],
+      "nested": false,
+      "exit_code": 0
+    },
+    {
+      "name": "dynamic-direct",
+      "command": [
+        "python3",
+        "scripts/test-abyss-dynamic-content-size-runtime.py"
+      ],
+      "nested": false,
+      "exit_code": 0
+    },
+    {
+      "name": "dynamic-nested",
+      "command": [
+        "python3",
+        "scripts/test-abyss-dynamic-content-size-runtime.py"
+      ],
+      "nested": true,
+      "exit_code": 0
+    },
+    {
+      "name": "utilities",
+      "command": [
+        "bash",
+        "scripts/test-abyss-utilities-popup.sh"
+      ],
+      "nested": true,
+      "exit_code": 0
+    }
+  ],
+  "clean_source_after": ""
+}

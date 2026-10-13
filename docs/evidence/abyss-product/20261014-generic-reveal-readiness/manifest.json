@@ -1,0 +1,22 @@
+{
+  "source_sha": "537e791e492d4cef5a49bdc2d742a59ef688ef38",
+  "sha256": {
+    "fixture-initial.py": "9d0ef630dd9dfe61cf4f5b98b3bdaebce261d417e452fc3406dde44127bf2b86",
+    "negative-before47-native.log": "c6d62a859028d613bae46990b461fa772f5bffa227ed1c27242520d3d5f51605",
+    "negative-before47-receipt.json": "cb1b7655feaa81a98ad49f09e30dc285ae02c8d44aea1669aa741329070171f3",
+    "negative-before47.log": "40c21c40213615d3bbddbe879d5451758fb6fac89aca3486f5c7c87b5fcc29ee",
+    "README.md": "30f4907c9ca31799a0774a8714dd222768ad873f40287f959adce18503fe0c9b",
+    "utilities-lifetime.log": "0649eba88f35d198d09740ad4452fdcad5064dd03c90b1b78f2cdc2dbe09611a",
+    "worktree-fixed-fixture.log": "f0ba1b167deb001efef96fb82fed620baaa487552d4796e1da055f2e80d603b8",
+    "worktree-monitor-lifetime.log": "918ca195149ccccc672574215808c846c869ecbc26d7b9843f1cf2f3d386194d",
+    "worktree-native.log": "3edbd25804e13a35cd2c638b68030b5b4f302cf000adbc2ae4fa121d6ee880e0",
+    "exact-537e791e4/dynamic-direct-native.log": "cdebdea8ab2dc17c414ad1ff74bed5929d1af0005deb759c77a026f60ed7dd2c",
+    "exact-537e791e4/dynamic-direct.log": "210b831d13a482286c0566e0aa37884ecb3fb258491b6c9a1a404d3a3466dfd9",
+    "exact-537e791e4/dynamic-nested-native.log": "2cd3c7cfba0e0a22791276f7e571822767ee645fd102d24166e99ec0e082bac7",
+    "exact-537e791e4/dynamic-nested.log": "210b831d13a482286c0566e0aa37884ecb3fb258491b6c9a1a404d3a3466dfd9",
+    "exact-537e791e4/generic-ready-native.log": "d532162b5ae4217dd44e15693f96eccee3f4ed9badfa9e53619773ba2605412b",
+    "exact-537e791e4/generic-ready.log": "672d4f5cae705ca92517862262ce6a73885d16896330cb3a7953b0638f822c7a",
+    "exact-537e791e4/receipt.json": "be224e3c633db581f2a4845b2059319df995562814cc74e95ad3adbfd209f8f2",
+    "exact-537e791e4/utilities.log": "0649eba88f35d198d09740ad4452fdcad5064dd03c90b1b78f2cdc2dbe09611a"
+  }
+}

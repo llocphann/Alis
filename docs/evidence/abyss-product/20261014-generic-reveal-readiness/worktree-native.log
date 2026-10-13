@@ -1,0 +1,13 @@
+  INFO: Launching config: "/tmp/alis-generic-reveal-6vdq2l2f/shell.qml"
+  INFO: Shell ID: "43a738b558594eb446901a9b602366c6" Path ID "43a738b558594eb446901a9b602366c6"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/kv1yt57vmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1588713.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-generic-reveal-6vdq2l2f/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-generic-reveal-6vdq2l2f/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-generic-reveal-6vdq2l2f/state/quickshell/user/gamemode_active failed: File does not exist.
+ ERROR qml: GENERIC_REVEAL_READY_FAIL empty content painted a surface normal/reduced=false check@qs:@/qs/shell.qml:25
+noEarlyPlate@qs:@/qs/shell.qml:29
+run@qs:@/qs/shell.qml:37
+expression for onTriggered@qs:@/qs/shell.qml:63

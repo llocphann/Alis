@@ -1,0 +1,15 @@
+  INFO: Launching config: "/tmp/alis-generic-reveal-wn97je5d/shell.qml"
+  INFO: Shell ID: "b9d239f6249de224d5054ee493ef28b5" Path ID "b9d239f6249de224d5054ee493ef28b5"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/4p2y197vmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1589778.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-generic-reveal-wn97je5d/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-generic-reveal-wn97je5d/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-generic-reveal-wn97je5d/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN: QQmlVMEMetaObject: Internal error - attempted to evaluate a function in an invalid context
+  WARN scene: @modules/settings/MonitorVisibilityConfig.qml[462:-1]: TypeError: Property 'syncMonitorLayoutSnapshot' of object MonitorVisibilityConfig_QMLTYPE_918(0x7efd1a7248e0) is not a function (exception occurred during delayed function evaluation)
+  WARN: QQmlVMEMetaObject: Internal error - attempted to evaluate a function in an invalid context
+  WARN scene: @modules/settings/MonitorVisibilityConfig.qml[462:-1]: TypeError: Property 'syncMonitorLayoutSnapshot' of object MonitorVisibilityConfig_QMLTYPE_918(0x7efd1be30be0) is not a function (exception occurred during delayed function evaluation)
+  INFO qml: GENERIC_REVEAL_READY_PASS 28 delayed/cancelled/ready content, normal/reduced motion and release

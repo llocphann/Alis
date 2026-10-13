@@ -1,0 +1,5 @@
+{
+  "source_sha": "47e1316ed399219f69b76583667a3bd0e54f2a52",
+  "fixture": "identical final worktree readiness fixture copied as untracked driver; baseline runtime unchanged",
+  "exit_code": 1
+}
