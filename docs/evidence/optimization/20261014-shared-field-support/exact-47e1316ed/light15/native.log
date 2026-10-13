@@ -1,0 +1,15 @@
+  INFO: Launching config: "/tmp/alis-field-support-niofsckt/shell.qml"
+  INFO: Shell ID: "de86ab0156f0edd77d1d55a509e801e0" Path ID "de86ab0156f0edd77d1d55a509e801e0"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/24ew9w4vmt/log.qslog"
+  WARN: --- WARNING ---
+  WARN: WAYLAND_DISPLAY is present but QT_QPA_PLATFORM is "offscreen"
+  WARN: If you are actually running wayland, set QT_QPA_PLATFORM to "wayland" or most functionality will be broken.
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-1.9240.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-field-support-niofsckt/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-field-support-niofsckt/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN: This plugin does not support setting window masks
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-field-support-niofsckt/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: FIELD_SUPPORT_CAPTURE_PASS 78

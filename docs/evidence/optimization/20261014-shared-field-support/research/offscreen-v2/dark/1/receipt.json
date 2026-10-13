@@ -1,0 +1,14 @@
+{
+  "exit_code": 0,
+  "scale": 1,
+  "light": false,
+  "original_sha": "55b1fd183876543d51e8d36394c155b5c9c50a35",
+  "candidate_source": {
+    "runtime_source_sha": "b72b2e41811b424509b6efc666d805ffcd6a46ad",
+    "unpromoted": true,
+    "baseline_source_sha256": "bee998ff8e9af9237fc0171def07637062d97ec50cb1bbc87947800ca105d362",
+    "candidate_sha256": "5ed9d2014ccb3247c3c438c403689d5cd9fa94441e08fc9c2fc7c372d0b82f3b",
+    "candidate_qsb_sha256": "1e42a3469b04328080f7d63da1f8c86a9a264ab05f79a481e3d5756e4f57129e"
+  },
+  "scope": "research-only native OpenGL offscreen shader paired readback, synthetic wallpaper/wave/contact, no Wayland/owner/performance/Companion G0 claim"
+}

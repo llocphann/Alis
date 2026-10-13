@@ -1,0 +1,35 @@
+{
+  "source_sha": "47e1316ed399219f69b76583667a3bd0e54f2a52",
+  "scope": "focused exact clean source, no canonical/installed/owner/G0 acceptance",
+  "cases": [
+    {
+      "name": "dark1",
+      "exit_code": 0
+    },
+    {
+      "name": "light1",
+      "exit_code": 0
+    },
+    {
+      "name": "dark15",
+      "exit_code": 0
+    },
+    {
+      "name": "light15",
+      "exit_code": 0
+    },
+    {
+      "name": "shader-lifecycle",
+      "exit_code": 0
+    },
+    {
+      "name": "physical-contact-model",
+      "exit_code": 0
+    },
+    {
+      "name": "input",
+      "exit_code": 0
+    }
+  ],
+  "clean_source_after": ""
+}

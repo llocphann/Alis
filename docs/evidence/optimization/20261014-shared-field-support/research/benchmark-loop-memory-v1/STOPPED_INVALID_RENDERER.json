@@ -1,0 +1,1 @@
+{"status":"STOPPED_INVALID_RENDERER","reason":"48/48 strict shader pairs FAIL; every candidate capture transparent. Failed graphics pipeline state. Benchmark was started before inspecting parity result and stopped; do not treat any GPU measurements as improvement.","driver_exit":130}

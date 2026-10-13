@@ -1,0 +1,37 @@
+{
+  "name": "40-1-before",
+  "count": 40,
+  "mode": "before",
+  "order": 1,
+  "pid": 1488661,
+  "exit": 0,
+  "before": {
+    "time": 64450.960807198,
+    "cpu_seconds": 1.28,
+    "gfx_ns": 154629151,
+    "gpu_clients": [
+      "1940"
+    ],
+    "rss_kib": 474136
+  },
+  "after": {
+    "time": 64457.968779632,
+    "cpu_seconds": 1.79,
+    "gfx_ns": 4116287515,
+    "gpu_clients": [
+      "1940"
+    ],
+    "rss_kib": 472796
+  },
+  "native": {
+    "frames": 635,
+    "ticks": 777,
+    "api": 3
+  },
+  "runtime_source_sha": "55b1fd183876543d51e8d36394c155b5c9c50a35",
+  "candidate_qsb_sha256": "8c919ce0ddea0f54fc24c4c244e41674e3ef5579b5ddbb52dfdf8fd0a90a2f60",
+  "cpu_s": 0.51,
+  "gfx_ms": 3961.658364,
+  "gfx_ms_per_frame": 6.238832069291338,
+  "sample_elapsed": 7.0079724340030225
+}

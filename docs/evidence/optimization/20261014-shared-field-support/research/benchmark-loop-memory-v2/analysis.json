@@ -1,0 +1,89 @@
+{
+  "4": {
+    "before": {
+      "gpu_ms_per_frame": 1.3957053161703075,
+      "pss_kib": 301141.5,
+      "private_dirty_kib": 266334.0,
+      "initial_and_warm_cpu_seconds": 1.26,
+      "seven_second_cpu_seconds": 0.45999999999999996,
+      "frames": [
+        641,
+        642,
+        643,
+        644
+      ]
+    },
+    "after": {
+      "gpu_ms_per_frame": 1.2111318262201682,
+      "pss_kib": 249266.5,
+      "private_dirty_kib": 214434.0,
+      "initial_and_warm_cpu_seconds": 1.17,
+      "seven_second_cpu_seconds": 0.48,
+      "frames": [
+        639,
+        640,
+        641,
+        641
+      ]
+    },
+    "scope": "isolated moving shared-field micro workload, 1600x1000 OpenGL offscreen,4 alternating pairs; no owner/whole-shell attribution"
+  },
+  "16": {
+    "before": {
+      "gpu_ms_per_frame": 2.506943537495102,
+      "pss_kib": 300463.0,
+      "private_dirty_kib": 265536.0,
+      "initial_and_warm_cpu_seconds": 1.2650000000000001,
+      "seven_second_cpu_seconds": 0.48,
+      "frames": [
+        638,
+        641,
+        641,
+        640
+      ]
+    },
+    "after": {
+      "gpu_ms_per_frame": 1.636061615580986,
+      "pss_kib": 254398.0,
+      "private_dirty_kib": 219504.0,
+      "initial_and_warm_cpu_seconds": 1.18,
+      "seven_second_cpu_seconds": 0.485,
+      "frames": [
+        640,
+        640,
+        638,
+        639
+      ]
+    },
+    "scope": "isolated moving shared-field micro workload, 1600x1000 OpenGL offscreen,4 alternating pairs; no owner/whole-shell attribution"
+  },
+  "40": {
+    "before": {
+      "gpu_ms_per_frame": 5.324808214666436,
+      "pss_kib": 297922.5,
+      "private_dirty_kib": 263086.0,
+      "initial_and_warm_cpu_seconds": 1.26,
+      "seven_second_cpu_seconds": 0.525,
+      "frames": [
+        635,
+        635,
+        637,
+        633
+      ]
+    },
+    "after": {
+      "gpu_ms_per_frame": 2.839984103603803,
+      "pss_kib": 249705.0,
+      "private_dirty_kib": 214852.0,
+      "initial_and_warm_cpu_seconds": 1.18,
+      "seven_second_cpu_seconds": 0.5,
+      "frames": [
+        639,
+        636,
+        638,
+        639
+      ]
+    },
+    "scope": "isolated moving shared-field micro workload, 1600x1000 OpenGL offscreen,4 alternating pairs; no owner/whole-shell attribution"
+  }
+}

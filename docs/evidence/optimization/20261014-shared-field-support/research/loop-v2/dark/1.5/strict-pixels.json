@@ -1,0 +1,486 @@
+{
+  "pairs": [
+    {
+      "pair": "bottom-1-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "bca7f303ea3f6cf5cb52c70635f6d9966db04255c7b8338d4329515af04a4909",
+      "after_sha256": "bca7f303ea3f6cf5cb52c70635f6d9966db04255c7b8338d4329515af04a4909"
+    },
+    {
+      "pair": "bottom-1-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "7acfb63736ee037ba81bae9a3a41cdbc6d7660bb51bdb9582149e4a10c8b7772",
+      "after_sha256": "7acfb63736ee037ba81bae9a3a41cdbc6d7660bb51bdb9582149e4a10c8b7772"
+    },
+    {
+      "pair": "bottom-1-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "9a959ffb661e54b1a5d344eab5a82cf1aba0c793660dc5de67ace42945756342",
+      "after_sha256": "9a959ffb661e54b1a5d344eab5a82cf1aba0c793660dc5de67ace42945756342"
+    },
+    {
+      "pair": "bottom-16-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "01dd880503fcf2334e9b6a6a0d79fb400548f2573fb4eaa110a53b0536690b95",
+      "after_sha256": "01dd880503fcf2334e9b6a6a0d79fb400548f2573fb4eaa110a53b0536690b95"
+    },
+    {
+      "pair": "bottom-16-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "a696c437d5719e796a98c12cb4eb49d2b0f0339ea0c337b23873f3c124dfc3b8",
+      "after_sha256": "a696c437d5719e796a98c12cb4eb49d2b0f0339ea0c337b23873f3c124dfc3b8"
+    },
+    {
+      "pair": "bottom-16-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "76aae07d44256d69216e52fdd439872a5e41f466288f47721432408ac26bfb3c",
+      "after_sha256": "76aae07d44256d69216e52fdd439872a5e41f466288f47721432408ac26bfb3c"
+    },
+    {
+      "pair": "bottom-4-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "886521efa4cacedd96e1391386eadece12ee0e74a442cab2a0aa068baa5ab732",
+      "after_sha256": "886521efa4cacedd96e1391386eadece12ee0e74a442cab2a0aa068baa5ab732"
+    },
+    {
+      "pair": "bottom-4-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "47ed4f525927ba263983bb848d8aa29c86b5a92339d8f458fa4ba188e46e8f4f",
+      "after_sha256": "47ed4f525927ba263983bb848d8aa29c86b5a92339d8f458fa4ba188e46e8f4f"
+    },
+    {
+      "pair": "bottom-4-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "e57c46e22b8413cc1d6048ea2ea7d901c7da0ebb1779eb199029ae5a9129d9a1",
+      "after_sha256": "e57c46e22b8413cc1d6048ea2ea7d901c7da0ebb1779eb199029ae5a9129d9a1"
+    },
+    {
+      "pair": "bottom-40-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "cc03097248a22d1bfde6f1ee065e6c575c101ae53aeee5f291a2564a09397a05",
+      "after_sha256": "cc03097248a22d1bfde6f1ee065e6c575c101ae53aeee5f291a2564a09397a05"
+    },
+    {
+      "pair": "bottom-40-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "2b04dc505dcf2efeb71b9396bfc3c21b9af76c826ba126d430cfde61d4584033",
+      "after_sha256": "2b04dc505dcf2efeb71b9396bfc3c21b9af76c826ba126d430cfde61d4584033"
+    },
+    {
+      "pair": "bottom-40-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "23079bb1f693f5432da456612e69cbe87cc0f125b7a2b9d0a71c353e07c15695",
+      "after_sha256": "23079bb1f693f5432da456612e69cbe87cc0f125b7a2b9d0a71c353e07c15695"
+    },
+    {
+      "pair": "left-1-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "28ef2c7fa91a853427e067adbd4e46cf8e99886c538021d9ef97e450737393a8",
+      "after_sha256": "28ef2c7fa91a853427e067adbd4e46cf8e99886c538021d9ef97e450737393a8"
+    },
+    {
+      "pair": "left-1-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "fed6a90254e1df73e1bb7a5c16ef7df23332b94a04cb0884792ad188f98faa7f",
+      "after_sha256": "fed6a90254e1df73e1bb7a5c16ef7df23332b94a04cb0884792ad188f98faa7f"
+    },
+    {
+      "pair": "left-1-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "b61fb94d8b5ec000882742478d6a1e8b1d3828f4830e3af0cc47705d8a1c1ea9",
+      "after_sha256": "b61fb94d8b5ec000882742478d6a1e8b1d3828f4830e3af0cc47705d8a1c1ea9"
+    },
+    {
+      "pair": "left-16-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "20bb60ecbecd5963f77896e812cb3f9e6915f12f39b1be58d8ce0a588abaa1dc",
+      "after_sha256": "20bb60ecbecd5963f77896e812cb3f9e6915f12f39b1be58d8ce0a588abaa1dc"
+    },
+    {
+      "pair": "left-16-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "5dde7670604305701e048472c3c866ae905e2a38284c0704a76aa22447ef76a2",
+      "after_sha256": "5dde7670604305701e048472c3c866ae905e2a38284c0704a76aa22447ef76a2"
+    },
+    {
+      "pair": "left-16-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "c4f7c40ef8d3d2cbafce130d9ad12bbf451909c9a8746f53db6a48b192732494",
+      "after_sha256": "c4f7c40ef8d3d2cbafce130d9ad12bbf451909c9a8746f53db6a48b192732494"
+    },
+    {
+      "pair": "left-4-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "ba78162ccea00af19f47f73198eab57428ada5175c65bea03ef98a836d9c269f",
+      "after_sha256": "ba78162ccea00af19f47f73198eab57428ada5175c65bea03ef98a836d9c269f"
+    },
+    {
+      "pair": "left-4-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "5da66c25d1a6fe23c43801b64185b7c92c07b4b3025f4e954ca2bde9836f2a79",
+      "after_sha256": "5da66c25d1a6fe23c43801b64185b7c92c07b4b3025f4e954ca2bde9836f2a79"
+    },
+    {
+      "pair": "left-4-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "250738e93e5c8f8e0d0b39488d0ecdbb7dcb19c1a775bb928363253771a2e2b4",
+      "after_sha256": "250738e93e5c8f8e0d0b39488d0ecdbb7dcb19c1a775bb928363253771a2e2b4"
+    },
+    {
+      "pair": "left-40-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "2e7b8291d816e0c48b805b2a5f6b21f15fc277bcc461d2cd51b677fc9afd2fe5",
+      "after_sha256": "2e7b8291d816e0c48b805b2a5f6b21f15fc277bcc461d2cd51b677fc9afd2fe5"
+    },
+    {
+      "pair": "left-40-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "b513c98146b2236e77ab9fc3e3aad76d252d55fcd5c76464f3db1331509108c4",
+      "after_sha256": "b513c98146b2236e77ab9fc3e3aad76d252d55fcd5c76464f3db1331509108c4"
+    },
+    {
+      "pair": "left-40-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "75d5f1aea376b0e1e9337afc008f2d561a78203e60034836aa9b38bdf6e22887",
+      "after_sha256": "75d5f1aea376b0e1e9337afc008f2d561a78203e60034836aa9b38bdf6e22887"
+    },
+    {
+      "pair": "right-1-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "84c97462e0ba66efee0f334e971bc550beeb334092182323b5142c923ea4753e",
+      "after_sha256": "84c97462e0ba66efee0f334e971bc550beeb334092182323b5142c923ea4753e"
+    },
+    {
+      "pair": "right-1-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "c09a5ab1aea1c02860c8f8ee9177c21a0c35828063214eeca670acf3ec33d8c5",
+      "after_sha256": "c09a5ab1aea1c02860c8f8ee9177c21a0c35828063214eeca670acf3ec33d8c5"
+    },
+    {
+      "pair": "right-1-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "bcdf7b4f4764f27364e820cfe7e888ac5357e3cab214f2580e1d8776d2c5603e",
+      "after_sha256": "bcdf7b4f4764f27364e820cfe7e888ac5357e3cab214f2580e1d8776d2c5603e"
+    },
+    {
+      "pair": "right-16-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "458369af5c5966c2ac4751826138412227efca9c91cdbb541173e328dab39828",
+      "after_sha256": "458369af5c5966c2ac4751826138412227efca9c91cdbb541173e328dab39828"
+    },
+    {
+      "pair": "right-16-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "4c0fd8f2309ec6dad9a6dd7f031b3a426da88ab1fa674a9bd283d3d11d3b2914",
+      "after_sha256": "4c0fd8f2309ec6dad9a6dd7f031b3a426da88ab1fa674a9bd283d3d11d3b2914"
+    },
+    {
+      "pair": "right-16-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "7b23e64d554c4dd08a9a306716f2be11e31dfca98fbc0a1dd08971cacd637af9",
+      "after_sha256": "7b23e64d554c4dd08a9a306716f2be11e31dfca98fbc0a1dd08971cacd637af9"
+    },
+    {
+      "pair": "right-4-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "62a1a612253bdee7f69c9183621130417dfba943602d451a9a1b6dbca30c4124",
+      "after_sha256": "62a1a612253bdee7f69c9183621130417dfba943602d451a9a1b6dbca30c4124"
+    },
+    {
+      "pair": "right-4-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "c3256361a4fe3680212b46565183d1f80d6603dd552742a00ef3ffb6895f05b4",
+      "after_sha256": "c3256361a4fe3680212b46565183d1f80d6603dd552742a00ef3ffb6895f05b4"
+    },
+    {
+      "pair": "right-4-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "8fa892f2a7ea65bb0f1ce87c69f87a49edb5f8c9ad2c001db5e8ec90cac85ccf",
+      "after_sha256": "8fa892f2a7ea65bb0f1ce87c69f87a49edb5f8c9ad2c001db5e8ec90cac85ccf"
+    },
+    {
+      "pair": "right-40-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "1164b170c061aba98aa71ecbc3ffc72c05020fafaad1621671f7ccbe519f30fd",
+      "after_sha256": "1164b170c061aba98aa71ecbc3ffc72c05020fafaad1621671f7ccbe519f30fd"
+    },
+    {
+      "pair": "right-40-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "7681dd89cfdfe4e52bb626243ddd61dc02d701378f2cc823520522c263d762a1",
+      "after_sha256": "7681dd89cfdfe4e52bb626243ddd61dc02d701378f2cc823520522c263d762a1"
+    },
+    {
+      "pair": "right-40-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "02a65ebc278d5cde0bff280644ba3e9ed603b8af15c309b7e4bce67f9942072d",
+      "after_sha256": "02a65ebc278d5cde0bff280644ba3e9ed603b8af15c309b7e4bce67f9942072d"
+    },
+    {
+      "pair": "top-1-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "3ae7402860c6a32df51d98f0225315ba383a6647d2e22a669511e6fdd3b71713",
+      "after_sha256": "3ae7402860c6a32df51d98f0225315ba383a6647d2e22a669511e6fdd3b71713"
+    },
+    {
+      "pair": "top-1-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "9369d60b02600c923f27f2324b7296255eb557aad4ac3cbb6d9a6184329378bb",
+      "after_sha256": "9369d60b02600c923f27f2324b7296255eb557aad4ac3cbb6d9a6184329378bb"
+    },
+    {
+      "pair": "top-1-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "5564f3ea6bedd263e4f83d925331045f91d48e9e39634ec9ff3f34366271c337",
+      "after_sha256": "5564f3ea6bedd263e4f83d925331045f91d48e9e39634ec9ff3f34366271c337"
+    },
+    {
+      "pair": "top-16-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "fd7b68ea60184c05085a8899d3c6edd6a2ca0e2db1fdc5a1fedd24472b295425",
+      "after_sha256": "fd7b68ea60184c05085a8899d3c6edd6a2ca0e2db1fdc5a1fedd24472b295425"
+    },
+    {
+      "pair": "top-16-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "eda0734350c6126adf045ab8f8c3a570e1fd2b142f49a7f130a04f72f20528c0",
+      "after_sha256": "eda0734350c6126adf045ab8f8c3a570e1fd2b142f49a7f130a04f72f20528c0"
+    },
+    {
+      "pair": "top-16-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "9573f432c1a240b6230521b8a43db0e515653ae2ce494177c9e0c01d9843704d",
+      "after_sha256": "9573f432c1a240b6230521b8a43db0e515653ae2ce494177c9e0c01d9843704d"
+    },
+    {
+      "pair": "top-4-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "25455e1030e24c25bdf932f51b0f6205f956ace3ee2dc51df95249827830e625",
+      "after_sha256": "25455e1030e24c25bdf932f51b0f6205f956ace3ee2dc51df95249827830e625"
+    },
+    {
+      "pair": "top-4-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "18535935d1111e03c3cbcc17aa64c358f9e38be5108e1996b351163e9f1a2030",
+      "after_sha256": "18535935d1111e03c3cbcc17aa64c358f9e38be5108e1996b351163e9f1a2030"
+    },
+    {
+      "pair": "top-4-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "cd58b5295dfaf8a4e430123d87eda3c0884a896507cceab1328680f2b04d4ef2",
+      "after_sha256": "cd58b5295dfaf8a4e430123d87eda3c0884a896507cceab1328680f2b04d4ef2"
+    },
+    {
+      "pair": "top-40-0.08",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "1598924631a65483dbd15ab7f377d942c55b5110286194e60c93dec0c541035d",
+      "after_sha256": "1598924631a65483dbd15ab7f377d942c55b5110286194e60c93dec0c541035d"
+    },
+    {
+      "pair": "top-40-0.42",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "4ffd0e36924d28061b2f1fa1de3c79bcc87c866fdf82ffce859b19c5c86bc627",
+      "after_sha256": "4ffd0e36924d28061b2f1fa1de3c79bcc87c866fdf82ffce859b19c5c86bc627"
+    },
+    {
+      "pair": "top-40-1",
+      "equal": true,
+      "size": [
+        960,
+        540
+      ],
+      "before_sha256": "de0d312dc20d5c32f6cbb72bbc9f7335a3344608dacac6406ef943a5bdb2e8fb",
+      "after_sha256": "de0d312dc20d5c32f6cbb72bbc9f7335a3344608dacac6406ef943a5bdb2e8fb"
+    }
+  ],
+  "failures": [],
+  "oracle": "whole exact PNG RGBA bytes; no normalization or excluded area"
+}

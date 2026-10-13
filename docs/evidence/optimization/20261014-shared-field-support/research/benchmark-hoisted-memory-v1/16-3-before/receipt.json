@@ -1,0 +1,53 @@
+{
+  "name": "16-3-before",
+  "count": 16,
+  "mode": "before",
+  "order": 3,
+  "pid": 1494188,
+  "exit": 0,
+  "before": {
+    "smaps_rollup": {
+      "Rss": 471900,
+      "Pss": 299160,
+      "Pss_Anon": 264280,
+      "Pss_File": 34864,
+      "Private_Clean": 1312,
+      "Private_Dirty": 264296
+    },
+    "time": 65125.912343306,
+    "cpu_seconds": 1.25,
+    "gfx_ns": 190707863,
+    "gpu_clients": [
+      "1962"
+    ],
+    "rss_kib": 471900
+  },
+  "after": {
+    "smaps_rollup": {
+      "Rss": 470732,
+      "Pss": 297992,
+      "Pss_Anon": 263112,
+      "Pss_File": 34864,
+      "Private_Clean": 1312,
+      "Private_Dirty": 263128
+    },
+    "time": 65132.91822612,
+    "cpu_seconds": 1.74,
+    "gfx_ns": 1793484884,
+    "gpu_clients": [
+      "1962"
+    ],
+    "rss_kib": 470732
+  },
+  "native": {
+    "frames": 638,
+    "ticks": 784,
+    "api": 3
+  },
+  "runtime_source_sha": "55b1fd183876543d51e8d36394c155b5c9c50a35",
+  "candidate_qsb_sha256": "55545dc814b418e31c57e25a2e35e13264cf0c9f8da3866ae6333351e505bcd9",
+  "cpu_s": 0.49,
+  "gfx_ms": 1602.777021,
+  "gfx_ms_per_frame": 2.5121896880877745,
+  "sample_elapsed": 7.005882813995413
+}

@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "scale": 1,
+  "light": false,
+  "original_sha": "55b1fd183876543d51e8d36394c155b5c9c50a35",
+  "candidate_source": {
+    "runtime_source_sha": "b72b2e41811b424509b6efc666d805ffcd6a46ad",
+    "unpromoted": true,
+    "baseline_source_sha256": "bee998ff8e9af9237fc0171def07637062d97ec50cb1bbc87947800ca105d362",
+    "candidate_sha256": "eb279e2524520743ee88d8c3cedd6cc2a366deacc8d65753a166f36fe7c9de30",
+    "candidate_qsb_sha256": "55545dc814b418e31c57e25a2e35e13264cf0c9f8da3866ae6333351e505bcd9",
+    "bounds": "abs point/rect, radius and Curvature <=32768; otherwise original distance path. Same1px conservative arithmetic margin."
+  },
+  "scope": "research-only native OpenGL offscreen shader paired readback, synthetic wallpaper/wave/contact, no Wayland/owner/performance/Companion G0 claim"
+}

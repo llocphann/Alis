@@ -1,0 +1,7 @@
+{
+  "checks": 250000,
+  "skipped": 161256,
+  "maxBoundOvershoot": 1.8189894035458565e-12,
+  "sourceSha": "55b1fd183876543d51e8d36394c155b5c9c50a35",
+  "scope": "seeded JS numeric support model, exact union-result check; not native GLSL Float32 or GPU/owner acceptance"
+}

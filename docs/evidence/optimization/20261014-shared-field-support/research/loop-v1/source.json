@@ -1,0 +1,8 @@
+{
+  "runtime_source_sha": "b72b2e41811b424509b6efc666d805ffcd6a46ad",
+  "unpromoted": true,
+  "baseline_source_sha256": "bee998ff8e9af9237fc0171def07637062d97ec50cb1bbc87947800ca105d362",
+  "candidate_sha256": "61b2d87ad074e2ea3d5baf1a34d6a33b164ba1aca44009ab15df1a412232e989",
+  "candidate_qsb_sha256": "3ca21b8d592ef2544e417fc278ee58353845c876b4e0f90b675f5c716234f532",
+  "bounds": "abs point/rect, radius and Curvature <=32768; otherwise original distance path. Same1px conservative arithmetic margin."
+}

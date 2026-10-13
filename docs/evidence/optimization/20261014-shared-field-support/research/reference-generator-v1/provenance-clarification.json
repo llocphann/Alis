@@ -1,0 +1,6 @@
+{
+  "note": "The inherited source.json/candidate_source metadata describes loop-v2, but this reference-control driver explicitly copies ReferenceField.frag.qsb. Preserve original receipt; this clarification records the actual tested override.",
+  "actual_reference_qsb_sha256": "8655c691de2ce1622ef4a61ec3bef8467a44ca2d903238bb5fd9a31801d1bf67",
+  "actual_reference_source_sha256": "def336f580e8ee20aff0d4c1809ef3fa0491d486f3f3f1ab6b87d6550adf5d44",
+  "driver_sha256": "66c7e732397e0f337ce9a9684f06ca33d22533427a5e8d7b806507f0cdc68758"
+}
