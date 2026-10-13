@@ -4,6 +4,14 @@
 **Reason:** Owner explicitly removed automatic Agenda → To-do linking. Agenda and To-do are now independent. Historical per-event `todoLink` and stored `todoUnlinks` should be preserved without mutating a user's saved events/tasks; live linking/reconciliation must remain disabled.
 **Follow-up:** Audit any remaining unused UI/policy, obsolete tests, disabled APIs, integration provider and stale docs independently; do not reintroduce automatic linking. Archive keeps the original task history and evidence references.
 
+## Retired-code cleanup — 2026-10-13
+
+- **Alis dev**: removed the inactive Agenda linking policy, live InternalTodoBackend ensure/unlink mutators, Todo façade compatibility stubs/obsolete signal handler and Dashboard linked-task badge. The independence regression now checks these removals and preservation of stored legacy task metadata. Source checkpoint: `2c613ec865ab75545103bd020142f384d92795ac`.
+- **Alis-Intergration main**: removed `AgendaTaskMutation.qml`, `obsidian_agenda.py`, its obsolete mutation-specific tests and dangling QML export, plus the Agenda mutation APIs from both Todo backends. Legacy `agenda_metadata.split` remains **read-only** in ordinary Markdown Todo parsing, keeping existing task data accessible without recreating, syncing or deleting tasks. Source checkpoint: `86a7e45ae6538f03cc3d53bf1f6d3df485fc0119`.
+- **Related issue:** `AGENDA-I01` retired to [its own archive](AGENDA-I01_RETIRED.md), not accepted as a live linking feature.
+- **Safety:** `events.json` historical `todoLink`, `todoUnlinks` and unknown root metadata are preserved; old internal Todo items and Obsidian task notes are not automatically migrated, unlinked or rewritten by this cleanup. Both domains remain independent.
+- **Validation limit:** source-structure inspections and isolated JavaScript checks for independent multi-date Event create/edit and historical Todo normalization passed. Full Node suite, Python repository suite, real Qt/Niri tests and installed source acceptance were **not run** in this GitHub-only execution environment. Do not upgrade their results to PASS.
+
 ## Original task entry (historical, superseded)
 
 - [x] **AGENDA-F01 — Creating an Agenda automatically creates one linked To-do (not vice versa) — owner request 2026-10-11:**
