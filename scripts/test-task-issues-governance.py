@@ -27,7 +27,7 @@ for required in ("search", "Issues", "Awaiting Owner verification",
                  "close as completed", "Markdown"):
     assert required.lower() in agent.lower(), f"AGENTS.md missing {required}"
 
-assert all(x in agent for x in ("\`bug\`", "\`enhancement\`", "\`documentation\`",
+assert all(x in agent for x in ("`bug`", "`enhancement`", "`documentation`",
                                "complexity:high", "area:*", "status:awaiting-owner"))
 
 palette = json.loads((ROOT / ".github/issue-label-palette.json").read_text(encoding="utf-8"))
