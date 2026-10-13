@@ -67,7 +67,9 @@ ShellRoot {
    Config.setNestedValues({"performance.reduceAnimations":true,"abyss.effects.blur.enabled":false,"abyss.content.blurRadius":0,"abyss.effects.refraction.enabled":false})
    if(Quickshell.env("CONTACT_LIGHT")==="1"){
     Appearance.m3colors.darkmode=false
+    Appearance.m3colors.m3background="#faf3e8"
     Appearance.m3colors.m3surface="#faf3e8"
+    Appearance.m3colors.m3surfaceContainerLow="#f3eadd"
     Appearance.m3colors.m3surfaceContainer="#eee4d9"
     Appearance.m3colors.m3primary="#285f71"
    }
