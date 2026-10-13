@@ -125,6 +125,20 @@ Scope {
             outputs: outputs
         })
     }
+    // Read-only, on-demand diagnostic for Dashboard Escape ownership.
+    // It never changes focus, edits data, or installs a background timer.
+    IpcHandler {
+        target: "dashboardEscProbe"
+        function snapshot(): string {
+            return JSON.stringify({
+                timestamp: Date.now(),
+                family: String(Config.options?.panelFamily ?? ""),
+                outputs: (root.outputHosts ?? []).map(host =>
+                    host?.dashboardEscapeProbe ? host.dashboardEscapeProbe()
+                        : {unavailable: true})
+            })
+        }
+    }
     IpcHandler {
         target: "abyssHoverProbe"
         function snapshot(): string { return root.hoverProbeSnapshot() }
@@ -711,6 +725,27 @@ Scope {
             // editor sub-item: Quick Notes, drag handles and toolbar buttons
             // can all own QQuickItem focus. Keep only ONE shortcut per output.
             property bool dashboardEscapeCancelPending: false
+            property int dashboardEscapeCancelCount: 0
+            property int dashboardEscapeFallbackCount: 0
+            property real dashboardEscapeLastCancelMs: 0
+            function dashboardEscapeProbe(): var {
+                return {
+                    output: window.outputName,
+                    presented: Boolean(window.presented),
+                    active: Boolean(window.active),
+                    focusItem: String(window.activeFocusItem?.objectName ?? ""),
+                    fallbackActiveFocus: Boolean(perimeterEscapeFallback.activeFocus),
+                    requestedKeyboardFocus: Number(window.WlrLayershell.keyboardFocus),
+                    dashboardOpen: Boolean(dashboardBody.open),
+                    dashboardReady: Boolean(dashboardBody.ready),
+                    dashboardEditMode: Boolean(dashboardBody.contentItem?.item?.editMode),
+                    bodyEscapeCount: dashboardBody.escapeKeyCount,
+                    fallbackEscapeCount: window.dashboardEscapeFallbackCount,
+                    ownerShortcutEnabled: dashboardEditEscapeShortcut.enabled,
+                    cancelCount: window.dashboardEscapeCancelCount,
+                    lastCancelMs: window.dashboardEscapeLastCancelMs
+                }
+            }
             function cancelDashboardEditFromEscape(): bool {
                 if (window.dashboardEscapeCancelPending)
                     return true
@@ -723,6 +758,8 @@ Scope {
                 window.dashboardEscapeCancelPending = true
                 try {
                     target.handleEscape()
+                    window.dashboardEscapeCancelCount++
+                    window.dashboardEscapeLastCancelMs = Date.now()
                     // Preserve keyboard ownership for the next physical press.
                     perimeterEscapeFallback.forceActiveFocus()
                     console.info("[DashboardEscape] edit canceled; surface="
@@ -733,6 +770,7 @@ Scope {
                 return true
             }
             Shortcut {
+                id: dashboardEditEscapeShortcut
                 sequences: ["Escape"]
                 context: Qt.WindowShortcut
                 autoRepeat: false
@@ -751,6 +789,7 @@ Scope {
                 focus: aux.presented || clipboardBody.presented || leftPanel.presented
                     || rightPanel.presented || popup.presented || dashboardBody.presented
                 Keys.onEscapePressed: event => {
+                    window.dashboardEscapeFallbackCount++
                     if (window.cancelDashboardEditFromEscape()) {
                         event.accepted = true
                         return
