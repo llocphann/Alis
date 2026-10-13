@@ -20,6 +20,10 @@ ColumnLayout {
     property bool showKindSelector: true
     property bool showOutputSelector: true
     property bool compactIpcEditor: false
+    // Compact IPC presents type, Edge, alignment and corner toggle together.
+    property alias compactKindCombo: compactKindChoice
+    readonly property real compactSelectorWidth: Math.max(72*Appearance.fontSizeScale,
+        (width - 48*Appearance.fontSizeScale)/3)
     property bool compactVertical: false
     property bool compactActions: false
     property var allowedKinds: []
@@ -109,18 +113,40 @@ ColumnLayout {
         }
     }
     GridLayout {
+        id: ipcPositionSelectorRow
+        objectName: "abyssIpcSelectorsRow"
         Layout.fillWidth:true
-        columns:root.compactVertical ? 1 : 3
+        columns:root.compactIpcEditor
+            ? (root.compactVertical ? 1 : 4)
+            : (root.compactVertical ? 1 : 3)
         rowSpacing:root.compactIpcEditor ? 4 : 6
-        columnSpacing:root.compactIpcEditor ? 4 : 6
+        columnSpacing:root.compactIpcEditor ? 6 : 6
+        StyledComboBox {
+            id:compactKindChoice
+            objectName:"abyssEditorIpcKind"
+            visible:root.compactIpcEditor
+            Layout.fillWidth:root.compactIpcEditor
+            Layout.minimumWidth:0
+            Layout.preferredWidth:root.compactIpcEditor ? root.compactSelectorWidth : -1
+            Layout.maximumWidth:root.compactIpcEditor && !root.compactVertical
+                ? root.compactSelectorWidth : Infinity
+            textRole:"label";valueRole:"value"
+            model:[{label:"All OSDs",value:"osd"},{label:"Volume",value:"volume"},
+                {label:"Brightness",value:"brightness"},{label:"Microphone",value:"mic"},
+                {label:"Media",value:"mediaOsd"},{label:"Keyboard",value:"keyboardLayout"},
+                {label:"Voice search",value:"voiceSearch"}]
+            currentIndex:model.findIndex(option=>option.value===root.kind)
+            onActivated:root.kind=currentValue
+        }
         StyledComboBox {
             id:edgeChoice
-            Layout.fillWidth:!root.compactIpcEditor
+            objectName:"abyssIpcEdgeDropdown"
+            Layout.fillWidth:true
             Layout.minimumWidth:0
             Layout.preferredWidth:root.compactIpcEditor
-                ? 202*Appearance.fontSizeScale : -1
-            Layout.maximumWidth:root.compactIpcEditor
-                ? 202*Appearance.fontSizeScale : Infinity
+                ? root.compactSelectorWidth : -1
+            Layout.maximumWidth:root.compactIpcEditor && !root.compactVertical
+                ? root.compactSelectorWidth : Infinity
             textRole:"label";valueRole:"value"
             model:[{label:"Follow source edge",value:"source"},{label:"Top Edge",value:"top"},
                 {label:"Right Edge",value:"right"},{label:"Bottom Edge",value:"bottom"},{label:"Left Edge",value:"left"}]
@@ -129,12 +155,13 @@ ColumnLayout {
         }
         StyledComboBox {
             id:alignmentChoice
-            Layout.fillWidth:!root.compactIpcEditor
+            objectName:"abyssIpcAlignmentDropdown"
+            Layout.fillWidth:true
             Layout.minimumWidth:0
             Layout.preferredWidth:root.compactIpcEditor
-                ? 202*Appearance.fontSizeScale : -1
-            Layout.maximumWidth:root.compactIpcEditor
-                ? 202*Appearance.fontSizeScale : Infinity
+                ? root.compactSelectorWidth : -1
+            Layout.maximumWidth:root.compactIpcEditor && !root.compactVertical
+                ? root.compactSelectorWidth : Infinity
             textRole:"label";valueRole:"value"
             model:[{label:"Follow source position",value:"source"},{label:"Align start",value:"start"},
                 {label:"Align center",value:"center"},{label:"Align end",value:"end"},{label:"Custom position",value:"custom"}]
@@ -142,6 +169,7 @@ ColumnLayout {
             onActivated:root.change("alignment",currentValue)
         }
         AbyssButton {
+            visible:!root.compactIpcEditor
             text:"Reset position";glyph:"restart_alt"
             compact:root.compactActions || root.compactIpcEditor
             editorSquare:root.compactIpcEditor
@@ -153,6 +181,23 @@ ColumnLayout {
                 ? 30*Appearance.fontSizeScale : Infinity
             onClicked:root.apply(null)
         }
+        AbyssButton {
+            objectName:"abyssIpcJoinCornerToggle"
+            visible:root.compactIpcEditor && Presentation.canJoin(root.kind)
+            text:"Join nearby corner";glyph:"join_inner"
+            compact:true;editorSquare:true;checkable:true
+            description:root.nearbyEdge
+                ? "Join this IPC indicator to the nearby "+root.nearbyEdge+" Edge"
+                : "Connect this IPC indicator to the nearest visible corner"
+            Layout.fillWidth:false
+            Layout.preferredWidth:30*Appearance.fontSizeScale
+            Layout.preferredHeight:30*Appearance.fontSizeScale
+            Layout.maximumWidth:30*Appearance.fontSizeScale
+            Layout.maximumHeight:30*Appearance.fontSizeScale
+            enabled:root.commitImmediately || root.nearbyEdge.length>0 || checked
+            checked:root.position.joinCorner===true
+            onToggled:root.change("joinCorner",checked)
+        }
     }
     WindowDialogSlider {
         text:"Position along Edge";Layout.fillWidth:true
@@ -163,7 +208,7 @@ ColumnLayout {
     }
     AbyssCheckBox {
         Layout.fillWidth:true
-        visible:Presentation.canJoin(root.kind)
+        visible:!root.compactIpcEditor && Presentation.canJoin(root.kind)
         text:"Join nearby corner"+(root.nearbyEdge ? " · "+root.nearbyEdge+" Edge" : "")
         enabled:root.commitImmediately || root.nearbyEdge.length>0 || checked
         checked:root.position.joinCorner===true

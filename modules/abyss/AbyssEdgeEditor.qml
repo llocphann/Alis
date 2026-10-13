@@ -91,7 +91,7 @@ Item {
     readonly property bool toolbarOnHorizontalEdge:
         toolbarEdge === "top" || toolbarEdge === "bottom"
     readonly property bool toolbarWideControls:
-        toolbarOnHorizontalEdge && toolbarScroll.width>=640*Appearance.fontSizeScale
+        toolbarOnHorizontalEdge && toolbarScroll.width>=520*Appearance.fontSizeScale
     property var guides: []
     property bool snapEnabled: true
     property bool outputOnly: true
@@ -339,6 +339,12 @@ Item {
         _historyReady=false
         clearDrag()
         GlobalStates.abyssEditing = false
+    }
+    // Reset only the current IPC kind/output override; remain in draft until Done.
+    // Modules mode continues to reset the full module layout as before.
+    function resetIpcPosition(): void {
+        if (!editingPopups) return
+        previewPositions.apply(null)
     }
     function reset(): void {
         clearDrag();rememberHistory()
@@ -682,7 +688,11 @@ Item {
     }
     readonly property Region previewRegion: Region { x:previewBody.inputBounds.x;y:previewBody.inputBounds.y;width:previewBody.inputBounds.width;height:previewBody.inputBounds.height }
     readonly property Region toolbarRegion: Region { item: toolbar }
-    readonly property Region ipcKindRegion: Region { item:ipcKindChoice.popup.contentItem; width:ipcKindChoice.popup.visible ? ipcKindChoice.popup.contentItem.width : 0 }
+    readonly property Region ipcKindRegion: Region {
+        item:previewPositions.compactKindCombo.popup.contentItem
+        width:previewPositions.compactKindCombo.popup.visible
+            ? previewPositions.compactKindCombo.popup.contentItem.width : 0
+    }
     readonly property Region ipcOutputRegion: Region { item:ipcOutputChoice.popup.contentItem; width:ipcOutputChoice.popup.visible ? ipcOutputChoice.popup.contentItem.width : 0 }
     readonly property Region paletteRegion: Region { item: palette.popup.contentItem; width: palette.popup.visible ? palette.popup.contentItem.width : 0 }
     readonly property Region edgeRegion: Region { item: edgeChoice.popup.contentItem; width: edgeChoice.popup.visible ? edgeChoice.popup.contentItem.width : 0 }
@@ -744,9 +754,9 @@ Item {
                         Layout.maximumWidth:root.editorActionSize
                         editorSquare:true
                             text: "Reset"; glyph: "restart_alt"; compact: true
-                            description: "Reset layout draft"
+                            description: root.editingPopups ? "Reset selected IPC position" : "Reset layout draft"
                             Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
-                            onClicked: root.reset()
+                            onClicked: root.editingPopups ? root.resetIpcPosition() : root.reset()
                         }
 
 
@@ -861,29 +871,9 @@ Item {
                     }
                 }
 
-                // IPC content selector belongs inside IPC, not between tabs
-                // and their shared output-scope controls.
-                RowLayout {
-                    visible:root.editingPopups
-                    Layout.fillWidth:true
-                    Layout.minimumWidth:0
-                    StyledComboBox {
-                        id:ipcKindChoice
-                        objectName:"abyssEditorIpcKind"
-                        visible:root.editingPopups
-                        baseHeight:28*Appearance.fontSizeScale
-                        Layout.preferredWidth:150*Appearance.fontSizeScale
-                        Layout.maximumWidth:150*Appearance.fontSizeScale
-                        model:[{label:"All OSDs",value:"osd"},{label:"Volume",value:"volume"},
-                            {label:"Brightness",value:"brightness"},{label:"Microphone",value:"mic"},
-                            {label:"Media",value:"mediaOsd"},{label:"Keyboard",value:"keyboardLayout"},
-                            {label:"Voice search",value:"voiceSearch"}]
-                        textRole:"label";valueRole:"value"
-                        currentIndex:model.findIndex(p=>p.value===previewPositions.kind)
-                        onActivated:previewPositions.kind=currentValue
-                    }
-                }
-
+                // IPC type, source Edge and alignment share one row inside
+                // AbyssPositionSettings. This editor no longer duplicates
+                // position selectors in a separate, top-aligned component.
                 AbyssPositionSettings {
                     id:previewPositions
                     objectName:"abyssEditorIpcPlacement"
