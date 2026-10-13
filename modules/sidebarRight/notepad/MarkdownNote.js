@@ -29,16 +29,37 @@ function format(source, first, last, kind) {
         var breakAt = raw.indexOf("\n", lastPosition);
         var to = breakAt < 0 ? raw.length : breakAt;
         var lines = raw.slice(from, to).split("\n");
-        var changed = lines.map(function(line) {
-            if (!line.trim()) return line;
+        var info = [], rendered = [], oldPos = from, newPos = from;
+        lines.forEach(function(line) {
             var match = /^<p align="(?:left|center|right|justify)">([\s\S]*)<\/p>$/.exec(line);
             var content = match ? match[1] : line;
-            return alignment === "left" ? content
-                : '<p align="' + alignment + '">' + content + '</p>';
-        }).join("\n");
+            var previousPrefix = match ? line.indexOf(">") + 1 : 0;
+            var nextPrefix = alignment === "left" || !line.trim() ? ""
+                : '<p align="' + alignment + '">';
+            var next = !line.trim() ? line
+                : alignment === "left" ? content : nextPrefix + content + "</p>";
+            info.push({ oldStart:oldPos, oldEnd:oldPos + line.length,
+                newStart:newPos, oldPrefix:previousPrefix,
+                newPrefix:nextPrefix.length, contentLength:content.length });
+            rendered.push(next);
+            oldPos += line.length + 1;
+            newPos += next.length + 1;
+        });
+        var changed = rendered.join("\n");
         if (changed === raw.slice(from, to)) return null;
+        function mapCursor(position) {
+            for (var i = 0; i < info.length; i++) {
+                var section = info[i];
+                if (position <= section.oldEnd) {
+                    var contentOffset = Math.max(0, Math.min(section.contentLength,
+                        position - section.oldStart - section.oldPrefix));
+                    return section.newStart + section.newPrefix + contentOffset;
+                }
+            }
+            return from + changed.length;
+        }
         return {from:from, to:to, insert:changed,
-            selectionStart:from, selectionEnd:from+changed.length};
+            selectionStart:mapCursor(a), selectionEnd:mapCursor(b)};
     }
 
     if (kind === "link") {
