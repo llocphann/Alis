@@ -1,6 +1,6 @@
 name: Feature request
 description: Suggest a new Alis capability
-labels: ["type:feature"]
+labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
