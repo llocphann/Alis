@@ -1488,6 +1488,7 @@ Scope {
             // independent PanelWindow is never loaded while Abyss is active.
             AbyssBodyHost {
                 id: toastBody
+                stableContentSize: true
                 identity: "toast"
                 controller: liquid
                 anchors.fill: parent
@@ -1512,6 +1513,7 @@ Scope {
             }
             AbyssBodyHost {
                 id: osd
+                stableContentSize: true
                 identity: "osd"
                 controller: liquid
                 anchors.fill: parent
@@ -1553,6 +1555,7 @@ Scope {
             }
             AbyssBodyHost {
                 id: utility
+                stableContentSize: true
                 property string retainedKind: "session"
                 z: 15
                 identity: "utility"
@@ -1577,6 +1580,7 @@ Scope {
             }
             AbyssBodyHost {
                 id: dialogBody
+                stableContentSize: true
                 z: 20
                 identity: "dialog"
                 controller: liquid

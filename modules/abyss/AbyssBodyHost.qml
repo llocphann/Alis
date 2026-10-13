@@ -595,10 +595,15 @@ Item {
                 ? fullRect.x-root.record.content.x : 0
             y: root.pyramidPresentationActive
                 ? fullRect.y-root.record.content.y : 0
+            // Reparented dialogs use this canvas directly instead of the
+            // Loader. Both paths must keep their final dimensions behind the
+            // reveal clip; otherwise the dialog form reflows on every frame.
             width: root.pyramidPresentationActive
-                ? fullRect.width : contentFrame.width
+                ? fullRect.width : (root.stableContentSize
+                    ? root.targetRecord.content.width : contentFrame.width)
             height: root.pyramidPresentationActive
-                ? fullRect.height : contentFrame.height
+                ? fullRect.height : (root.stableContentSize
+                    ? root.targetRecord.content.height : contentFrame.height)
         }
     }
     Loader {
