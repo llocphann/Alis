@@ -1,0 +1,16 @@
+  INFO: Launching config: "/tmp/alis-physical-contact-render-c3bzbmco/shell.qml"
+  INFO: Shell ID: "677a19ce84c5c24accbcf5e0de9d68c5" Path ID "677a19ce84c5c24accbcf5e0de9d68c5"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/olhnlvnumt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1095876.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/alis-physical-contact-render-c3bzbmco/config/illogical-impulse/config.json failed: File does not exist.
+ DEBUG qml: [Config] File not found, creating new file.
+  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/alis-physical-contact-render-c3bzbmco/config/illogical-impulse/config.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-physical-contact-render-c3bzbmco/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-physical-contact-render-c3bzbmco/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fe36ad79220)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-physical-contact-render-c3bzbmco/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: PHYSICAL_CONTACT_CASES [{"name":"top-140","edge":"top","start":140,"span":120,"depth":90,"radius":30},{"name":"top-250","edge":"top","start":250,"span":120,"depth":90,"radius":30},{"name":"right-140","edge":"right","start":140,"span":120,"depth":90,"radius":30},{"name":"right-250","edge":"right","start":250,"span":120,"depth":90,"radius":30},{"name":"bottom-140","edge":"bottom","start":140,"span":120,"depth":90,"radius":30},{"name":"bottom-250","edge":"bottom","start":250,"span":120,"depth":90,"radius":30},{"name":"left-140","edge":"left","start":140,"span":120,"depth":90,"radius":30},{"name":"left-250","edge":"left","start":250,"span":120,"depth":90,"radius":30}]
+  INFO qml: PHYSICAL_CONTACT_RENDER_PASS 406 checks 199 GPU captures

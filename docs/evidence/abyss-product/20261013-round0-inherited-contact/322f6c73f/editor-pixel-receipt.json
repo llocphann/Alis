@@ -1,0 +1,6 @@
+{
+  "checks": 86,
+  "pngs": 62,
+  "off_or_nonzero_rgba_exact": true,
+  "shared_corner_rgba_exact": true
+}

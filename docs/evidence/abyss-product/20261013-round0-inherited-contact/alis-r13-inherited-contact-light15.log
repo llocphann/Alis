@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/scripts/test-abyss-physical-contact-render.py", line 163, in <module>
+    assert off.crop(box).convert('RGBA').tobytes()==on.crop(box).convert('RGBA').tobytes(), 'Inherited/custom lower corner geometry changed: '+label
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Inherited/custom lower corner geometry changed: thin-top--1-34

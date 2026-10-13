@@ -1,0 +1,116 @@
+{
+  "sha": "de8a9db8d6d7db76152549423eadd035f9171a3f",
+  "clone": "/tmp/alis-round0-focused-de8a9db8d",
+  "driver_sha256": "18da4e107f9844910bed562a04e9db7e3da23a3106cffa7636e6b15a654df620",
+  "commands": [
+    [
+      "node",
+      "scripts/test-abyss-physical-contacts.mjs"
+    ],
+    [
+      "node",
+      "scripts/test-abyss-zero-corners.mjs"
+    ],
+    [
+      "python3",
+      "scripts/test-abyss-module-layout.py"
+    ],
+    [
+      "python3",
+      "scripts/test-abyss-geometry-contract.py"
+    ],
+    [
+      "python3",
+      "scripts/test-abyss-connection-region-runtime.py"
+    ],
+    [
+      "python3",
+      "scripts/test-abyss-physical-contact-render.py",
+      "--output",
+      "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-round0-focused-de8a9db8d/dark"
+    ],
+    [
+      "python3",
+      "scripts/test-abyss-physical-contact-render.py",
+      "--light",
+      "--scale",
+      "1.5",
+      "--output",
+      "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-round0-focused-de8a9db8d/light15"
+    ],
+    [
+      "python3",
+      "scripts/test-abyss-zero-corners-runtime.py"
+    ],
+    [
+      "python3",
+      "scripts/test-popup-anchor-hover-runtime.py"
+    ]
+  ],
+  "results": [
+    {
+      "command": [
+        "node",
+        "scripts/test-abyss-physical-contacts.mjs"
+      ],
+      "exit": 0,
+      "log": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-round0-focused-de8a9db8d/0.log"
+    },
+    {
+      "command": [
+        "node",
+        "scripts/test-abyss-zero-corners.mjs"
+      ],
+      "exit": 0,
+      "log": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-round0-focused-de8a9db8d/1.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-module-layout.py"
+      ],
+      "exit": 0,
+      "log": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-round0-focused-de8a9db8d/2.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-geometry-contract.py"
+      ],
+      "exit": 0,
+      "log": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-round0-focused-de8a9db8d/3.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-connection-region-runtime.py"
+      ],
+      "exit": 0,
+      "log": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-round0-focused-de8a9db8d/4.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-physical-contact-render.py",
+        "--output",
+        "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-round0-focused-de8a9db8d/dark"
+      ],
+      "exit": 0,
+      "log": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-round0-focused-de8a9db8d/5.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-physical-contact-render.py",
+        "--light",
+        "--scale",
+        "1.5",
+        "--output",
+        "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-round0-focused-de8a9db8d/light15"
+      ],
+      "exit": 1,
+      "log": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-round0-focused-de8a9db8d/6.log"
+    }
+  ],
+  "status": "FAIL"
+}
