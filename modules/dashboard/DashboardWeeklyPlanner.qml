@@ -480,12 +480,72 @@ Item {
                                 required property var modelData
                                 required property int index
                                 objectName:"plannerAllDayEvent"
-                                x:4;y:viewport.contentY+68+index*26;width:dayColumn.width-8;height:24;z:11
+                                x:4+(dragMoved?dragX
+                                    : root.activeGroupGesture?.mode==="move"
+                                        && root.activeGroupGesture?.keys?.includes(
+                                            Selection.key(modelData))
+                                        ? root.activeGroupGesture.dx : 0)
+                                y:viewport.contentY+68+index*26;width:dayColumn.width-8;height:24;z:11
                                 buttonRadius:6
-                                colBackground:Qt.alpha(modelData.event.color || Appearance.colors.colPrimary,.18)
+                                colBackground:Qt.alpha(modelData.event.color || Appearance.colors.colPrimary,
+                                    root.isEventSelected(modelData) ? .42 : .18)
                                 Accessible.name:modelData.event.title+(modelData.source==="external"?" · Read-only":"")
                                 contentItem:StyledText {text:allDayButton.modelData.event.title;color:root.ink;elide:Text.ElideRight;font.pixelSize:Appearance.font.pixelSize.smallest}
                                 onClicked:root.editOccurrence(modelData)
+                                property bool dragMoved:false
+                                property bool dragArmed:false
+                                property real pressX:0
+                                property real dragX:0
+                                MouseArea {
+                                    id:allDayMouse
+                                    anchors.fill:parent;z:12
+                                    hoverEnabled:true;preventStealing:true
+                                    acceptedButtons:Qt.LeftButton
+                                    cursorShape:Selection.canSelect(allDayButton.modelData)
+                                        ? Qt.OpenHandCursor : Qt.PointingHandCursor
+                                    onPressed:mouse=>{
+                                        allDayButton.dragMoved=false;allDayButton.dragX=0
+                                        allDayButton.dragArmed=Selection.canSelect(allDayButton.modelData)
+                                            && !(mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier))
+                                        if (!allDayButton.dragArmed) return
+                                        const point=allDayMouse.mapToItem(viewport.contentItem,mouse.x,mouse.y)
+                                        allDayButton.pressX=point.x
+                                    }
+                                    onPositionChanged:mouse=>{
+                                        if (!pressed || !allDayButton.dragArmed) return
+                                        const point=allDayMouse.mapToItem(viewport.contentItem,mouse.x,mouse.y)
+                                        const dx=point.x-allDayButton.pressX
+                                        if (!allDayButton.dragMoved && Math.abs(dx)<6) return
+                                        allDayButton.dragMoved=true;allDayButton.dragX=dx
+                                        if (!root.isEventSelected(allDayButton.modelData)
+                                                && root.selectedEventKeys.length>0)
+                                            root.clearEventSelection()
+                                        const targets=root.gestureTargets(allDayButton.modelData)
+                                        root.activeGroupGesture={keys:targets.map(row=>Selection.key(row)),
+                                            mode:"move",dx:dx,dy:0}
+                                        root.activeDragDay=dayColumn.index
+                                    }
+                                    onReleased:{
+                                        const moved=allDayButton.dragMoved
+                                        const dx=allDayButton.dragX
+                                        allDayButton.dragArmed=false;allDayButton.dragX=0
+                                        root.activeGroupGesture=null;root.activeDragDay=-1
+                                        if (moved) root.commitTimedGesture(allDayButton.modelData,"move",dx,0)
+                                    }
+                                    onCanceled:{
+                                        allDayButton.dragMoved=false;allDayButton.dragArmed=false
+                                        allDayButton.dragX=0;root.activeGroupGesture=null
+                                        root.activeDragDay=-1
+                                    }
+                                    onClicked:mouse=>{
+                                        if (!allDayButton.dragMoved)
+                                            root.clickPlannerEvent(allDayButton.modelData,mouse.modifiers)
+                                    }
+                                    onDoubleClicked:{
+                                        root.clearEventSelection()
+                                        root.editOccurrence(allDayButton.modelData)
+                                    }
+                                }
                                 StyledToolTip {text:parent.Accessible.name}
                             }
                         }
