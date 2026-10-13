@@ -228,6 +228,16 @@ Item {
             root.rawPresentationRecord,AbyssStyle.perimeterRadius,
             AbyssStyle.connectionDepth,AbyssStyle.neckRadius) : []
     property var connectionRegions: []
+    // Instantiator creates/removes a synchronous cohort. Publish its complete
+    // native region list once, before returning to input dispatch, rather than
+    // rebuilding the composite mask after each individual shoulder strip.
+    readonly property var connectionRegionState: ({objects: []})
+    function publishConnectionRegions(): void {
+        const objects=root.connectionRegionState.objects
+        if(objects.length!==root.connectionRects.length)return
+        for(let i=0;i<objects.length;i++)if(!objects[i])return
+        root.connectionRegions=objects.slice()
+    }
     readonly property Region nativeInputRegion: Region {
         Region {
             x: Math.floor(root.inputBounds.x); y: Math.floor(root.inputBounds.y)
@@ -248,10 +258,14 @@ Item {
             width: rect?.width ?? 0; height: rect?.height ?? 0
         }
         onObjectAdded: (index,object) => {
-            root.connectionRegions=root.connectionRegions.concat([object])
+            root.connectionRegionState.objects[index]=object
+            root.publishConnectionRegions()
         }
         onObjectRemoved: (index,object) => {
-            root.connectionRegions=root.connectionRegions.filter(region=>region!==object)
+            const objects=root.connectionRegionState.objects
+            const at=objects.indexOf(object)
+            if(at>=0)objects.splice(at,1)
+            root.publishConnectionRegions()
         }
     }
     signal closeRequested()
