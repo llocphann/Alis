@@ -129,10 +129,14 @@ ShellRoot {
             outputs = json.loads(subprocess.check_output(['niri', 'msg', '--json', 'outputs'], env=env, text=True))
             subprocess.run(['niri', 'msg', 'output', next(iter(outputs)), 'scale', str(args.scale)], env=env, check=True, capture_output=True)
         env.update(CONTACT_OUTPUT=str(args.output), CONTACT_LIGHT='1' if args.light else '0', QSG_RHI_BACKEND='opengl')
-        result = run_qs(folder, env, timeout=55)
+        # The expanded inherited-rounding matrix captures 199 images (versus
+        # the previous 55), including fractional-scale readbacks. Keep each
+        # frame's existing readiness deadline and all exact pixel assertions.
+        result = run_qs(folder, env, timeout=120)
         (args.output / 'native.log').write_text(result.stdout)
         bad = ['PHYSICAL_CONTACT_RENDER_FAIL', 'TypeError:', 'ReferenceError:', 'Binding loop', 'Failed to load configuration']
         if result.returncode or 'PHYSICAL_CONTACT_RENDER_PASS' not in result.stdout or any(t in result.stdout for t in bad):
+            print('PHYSICAL_CONTACT_NATIVE_EXIT',result.returncode)
             print(result.stdout)
             raise SystemExit(1)
         from PIL import Image
