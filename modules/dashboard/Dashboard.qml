@@ -260,7 +260,10 @@ Scope {
                 context: Qt.WindowShortcut
                 enabled: GlobalStates.dashboardOpen
                     && (contentLoader.item?.editMode ?? false)
-                onActivated: contentLoader.item?.handleEscape()
+                onActivated: {
+                    if (contentLoader.item?.handleEscape())
+                        contentLoader.forceActiveFocus()
+                }
             }
             Keys.onPressed: (event) => {
                 if (event.key === Qt.Key_Escape) {
