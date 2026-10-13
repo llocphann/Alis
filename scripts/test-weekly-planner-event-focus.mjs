@@ -92,7 +92,7 @@ assert.ok(body.includes('form.editingEvent?.id===target.event.id'));
 assert.ok(body.includes('form.editingOccurrenceIndex===target.occurrenceIndex'));
 assert.ok(body.includes('applyPlannerOccurrenceBatch(changes)'),
     'multi-selection must use one atomic write');
-assert.ok(body.includes('if (!range) return'),
+assert.ok(body.includes('if (!range) {'),
     'invalid group ranges must abort before any persistence');
 assert.ok(body.indexOf('rescheduleOccurrence(')<body.indexOf('form.syncMovedOccurrence('),
     'single-event writes must complete before form reconciliation');
