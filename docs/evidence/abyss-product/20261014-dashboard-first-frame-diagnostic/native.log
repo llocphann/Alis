@@ -1,0 +1,16 @@
+  INFO: Launching config: "/tmp/alis-dashboard-first-frame-u18xq5jr/shell.qml"
+  INFO: Shell ID: "aa9ac4ef2cabedd578b3c66cb9769544" Path ID "aa9ac4ef2cabedd578b3c66cb9769544"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/bkgypf8vmt/log.qslog"
+  WARN: --- WARNING ---
+  WARN: WAYLAND_DISPLAY is present but QT_QPA_PLATFORM is "offscreen"
+  WARN: If you are actually running wayland, set QT_QPA_PLATFORM to "wayland" or most functionality will be broken.
+ ERROR: Failed to load configuration
+ ERROR:   caused by @shell.qml[13:2]: Type DiagnosticDashboard unavailable
+ ERROR:   caused by @variants/DiagnosticDashboard.qml[295:17]: Type DashboardContent unavailable
+ ERROR:   caused by @modules/dashboard/DashboardContent.qml[212:17]: Type DashboardCanvas unavailable
+ ERROR:   caused by @modules/dashboard/DashboardCanvas.qml[1894:37]: Type DashNotes unavailable
+ ERROR:   caused by @modules/dashboard/DashNotes.qml[17:5]: Type QuickNotesView unavailable
+ ERROR:   caused by @modules/sidebarRight/notepad/QuickNotesView.qml[164:9]: Type NotepadWidget unavailable
+ ERROR:   caused by @modules/sidebarRight/notepad/NotepadWidget.qml[912:29]: Type TextInputContextMenu unavailable
+ ERROR:   caused by @modules/common/widgets/TextInputContextMenu.qml[123:5]: Type ContextMenu unavailable
+ ERROR:   caused by @modules/common/widgets/ContextMenu.qml[97:9]: No PanelWindow backend loaded.

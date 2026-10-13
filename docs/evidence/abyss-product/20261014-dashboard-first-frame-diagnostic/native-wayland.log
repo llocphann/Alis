@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-dashboard-first-frame-5eck0lsn/shell.qml"
+  INFO: Shell ID: "6a179db2a6db3242cb1f4a093312dfc6" Path ID "6a179db2a6db3242cb1f4a093312dfc6"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/qwgy5h8vmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1608195.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-first-frame-5eck0lsn/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-first-frame-5eck0lsn/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-dashboard-first-frame-5eck0lsn/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f0e739389c0)

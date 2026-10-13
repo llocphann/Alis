@@ -1,0 +1,18 @@
+  INFO: Launching config: "/tmp/alis-dashboard-first-frame-ych0qi_b/shell.qml"
+  INFO: Shell ID: "42b793981db52e17303b380ad529b482" Path ID "42b793981db52e17303b380ad529b482"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/cuhytl8vmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1609404.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-first-frame-ych0qi_b/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-first-frame-ych0qi_b/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-dashboard-first-frame-ych0qi_b/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fe6b2330b00)
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/alis-dashboard-first-frame-ych0qi_b/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/alis-dashboard-first-frame-ych0qi_b/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-dashboard-first-frame-ych0qi_b/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-first-frame-ych0qi_b/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: DASH_FIRST_FRAME_DIAGNOSTIC {"events":[{"stage":"delayed-paint","time":1791928147319,"offset":32,"presented":false,"frames":0}],"frames":[{"time":1791928147388,"offset":32,"presented":true,"content":true}]}
