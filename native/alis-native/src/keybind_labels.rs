@@ -66,8 +66,8 @@ const KB_ACTION_MAP: &[(&str, &str)] = &[
 const KB_IPC_MAP: &[((&str, &str), &str)] = &[
     (("altSwitcher", "next"), "Next window"),
     (("altSwitcher", "previous"), "Previous window"),
-    (("overlay", "toggle"), "iNiR Overlay"),
-    (("overview", "toggle"), "iNiR Overview"),
+    (("overlay", "toggle"), "Alis Overlay"),
+    (("overview", "toggle"), "Alis Overview"),
     (("clipboard", "toggle"), "Clipboard"),
     (("lock", "activate"), "Lock screen"),
     (("region", "screenshot"), "Screenshot region"),
@@ -112,16 +112,16 @@ use regex::Regex;
 use std::sync::LazyLock;
 
 static IPC_CALL: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"spawn\s+"(?:[^"]*/)?inir"\s+"ipc"\s+"call"\s+"([\w-]+)"\s+"([\w-]+)""#).unwrap()
+    Regex::new(r#"spawn\s+"(?:[^"]*/)?alis"\s+"ipc"\s+"call"\s+"([\w-]+)"\s+"([\w-]+)""#).unwrap()
 });
 static SPECIAL_COMMAND: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r#"spawn\s+"(?:[^"]*/)?inir"\s+"(settings|terminal|close-window|browser)"(?:\s|;|$)"#,
+        r#"spawn\s+"(?:[^"]*/)?alis"\s+"(settings|terminal|close-window|browser)"(?:\s|;|$)"#,
     )
     .unwrap()
 });
 static GENERAL_COMMAND: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r#"spawn\s+"(?:[^"]*/)?inir"\s+"([\w-]+)"\s+"([\w-]+)""#).unwrap());
+    LazyLock::new(|| Regex::new(r#"spawn\s+"(?:[^"]*/)?alis"\s+"([\w-]+)"\s+"([\w-]+)""#).unwrap());
 static WORKSPACE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(focus-workspace|move-column-to-workspace)\s+(\d+)").unwrap());
 static SIZE: LazyLock<Regex> =
@@ -140,7 +140,7 @@ fn contains_any(text: &str, words: &[&str]) -> bool {
     words.iter().any(|word| text.contains(word))
 }
 
-fn inir_action(action: &str) -> Option<(String, String)> {
+fn alis_action(action: &str) -> Option<(String, String)> {
     if let Some(caps) = IPC_CALL.captures(action) {
         return Some((caps[1].to_owned(), caps[2].to_owned()));
     }
@@ -188,7 +188,7 @@ pub(super) fn action_description(action: &str) -> String {
         );
     }
     if action.starts_with("spawn") {
-        if let Some((target, function)) = inir_action(action) {
+        if let Some((target, function)) = alis_action(action) {
             return KB_IPC_MAP
                 .iter()
                 .find(|((t, f), _)| *t == target && *f == function)
@@ -264,7 +264,7 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
     if contains_any(
         &desc,
         &[
-            "inir ",
+            "alis ",
             "clipboard",
             "lock screen",
             "wallpaper",
@@ -273,9 +273,9 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
             "panel style",
         ],
     ) {
-        return "iNiR Shell";
+        return "Alis Shell";
     }
-    if let Some((target, _)) = inir_action(action) {
+    if let Some((target, _)) = alis_action(action) {
         if [
             "overlay",
             "overview",
@@ -289,7 +289,7 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
         ]
         .contains(&target.as_str())
         {
-            return "iNiR Shell";
+            return "Alis Shell";
         }
         if target == "altSwitcher" {
             return "Window Switcher";
@@ -302,7 +302,7 @@ pub(super) fn action_category(description: &str, action: &str) -> &'static str {
         }
     }
     if SHELL_CATEGORY.is_match(&act) {
-        return "iNiR Shell";
+        return "Alis Shell";
     }
     if desc.contains("window") && (desc.contains("next") || desc.contains("previous")) {
         return "Window Switcher";
@@ -431,9 +431,9 @@ mod tests {
             ("focus-workspace 3", "Focus workspace 3", "Workspaces"),
             ("set-column-width \"-10%\"", "Shrink column 10%", "Resize"),
             (
-                "spawn \"inir\" \"ipc\" \"call\" \"clipboard\" \"toggle\"",
+                "spawn \"alis\" \"ipc\" \"call\" \"clipboard\" \"toggle\"",
                 "Clipboard",
-                "iNiR Shell",
+                "Alis Shell",
             ),
             (
                 "spawn \"wpctl\" \"set-volume\" \"@DEFAULT_AUDIO_SINK@\" \"5%+\"",

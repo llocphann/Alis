@@ -49,11 +49,11 @@ struct Args {
     #[arg(long)]
     compat: bool,
 
-    /// Forward the legacy CLI contract to a running inir-mpdd Unix socket.
+    /// Forward the legacy CLI contract to a running alis-mpdd Unix socket.
     #[arg(long)]
     client_compat: bool,
 
-    /// Subscribe to MPD idle events through a running inir-mpdd Unix socket.
+    /// Subscribe to MPD idle events through a running alis-mpdd Unix socket.
     #[arg(long)]
     subscribe: bool,
 
@@ -1745,7 +1745,7 @@ fn run_client_compat(args: &[String], socket: &Path) -> i32 {
         Ok(stream) => stream,
         Err(error) => {
             eprintln!(
-                "inir-mpdd: daemon socket unavailable at {}: {error}",
+                "alis-mpdd: daemon socket unavailable at {}: {error}",
                 socket.display()
             );
             return 75;
@@ -1753,25 +1753,25 @@ fn run_client_compat(args: &[String], socket: &Path) -> i32 {
     };
 
     if let Err(error) = write_json_line(&mut stream, &request) {
-        eprintln!("inir-mpdd: daemon request write failed: {error:#}");
+        eprintln!("alis-mpdd: daemon request write failed: {error:#}");
         return 75;
     }
 
     let mut reader = BufReader::new(stream);
     let mut line = String::new();
     if let Err(error) = reader.read_line(&mut line) {
-        eprintln!("inir-mpdd: daemon response read failed: {error}");
+        eprintln!("alis-mpdd: daemon response read failed: {error}");
         return 75;
     }
     if line.is_empty() {
-        eprintln!("inir-mpdd: daemon closed before replying");
+        eprintln!("alis-mpdd: daemon closed before replying");
         return 75;
     }
 
     let response: Value = match serde_json::from_str(line.trim()) {
         Ok(response) => response,
         Err(error) => {
-            eprintln!("inir-mpdd: invalid daemon response: {error}");
+            eprintln!("alis-mpdd: invalid daemon response: {error}");
             return 75;
         }
     };
@@ -1782,7 +1782,7 @@ fn run_client_compat(args: &[String], socket: &Path) -> i32 {
             .and_then(Value::as_str)
             .unwrap_or("mpd_daemon_operation_failed");
         if error == "endpoint_mismatch" {
-            eprintln!("inir-mpdd: daemon endpoint does not match requested MPD endpoint");
+            eprintln!("alis-mpdd: daemon endpoint does not match requested MPD endpoint");
             return 75;
         }
         let payload = json!({"connected": false, "error": error});
@@ -1804,7 +1804,7 @@ fn run_client_compat(args: &[String], socket: &Path) -> i32 {
             0
         }
         Err(error) => {
-            eprintln!("inir-mpdd: daemon result serialization failed: {error}");
+            eprintln!("alis-mpdd: daemon result serialization failed: {error}");
             75
         }
     }
@@ -1855,7 +1855,7 @@ fn default_socket_path() -> PathBuf {
     std::env::var_os("XDG_RUNTIME_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("/tmp"))
-        .join("inir")
+        .join("alis")
         .join("mpd.sock")
 }
 
@@ -1940,7 +1940,7 @@ fn main() -> Result<()> {
         let stream = match connection {
             Ok(stream) => stream,
             Err(error) => {
-                eprintln!("inir-mpdd: accept failed: {error}");
+                eprintln!("alis-mpdd: accept failed: {error}");
                 continue;
             }
         };
@@ -1948,7 +1948,7 @@ fn main() -> Result<()> {
         let subscribers = subscribers.clone();
         thread::spawn(move || {
             if let Err(error) = handle_client(stream, manager, subscribers) {
-                eprintln!("inir-mpdd: client error: {error:#}");
+                eprintln!("alis-mpdd: client error: {error:#}");
             }
         });
     }
@@ -1979,7 +1979,7 @@ mod tests {
             .expect("system clock")
             .as_nanos();
         std::env::temp_dir().join(format!(
-            "inir-mpdd-{label}-{}-{nonce}.sock",
+            "alis-mpdd-{label}-{}-{nonce}.sock",
             std::process::id()
         ))
     }
@@ -2104,7 +2104,7 @@ mod tests {
         use clap::Parser as _;
 
         let args = super::Args::try_parse_from([
-            "inir-mpdd",
+            "alis-mpdd",
             "--compat",
             "status",
             "127.0.0.1",

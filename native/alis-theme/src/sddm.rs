@@ -26,7 +26,7 @@ background=assets/background.png
 defaultBackground=assets/background.png
 blurRadius=50
 
-# Alis Material You colors — updated automatically by inir-theme on wallpaper change"#;
+# Alis Material You colors — updated automatically by alis-theme on wallpaper change"#;
 
 fn home_from_getent(user: &str) -> Option<PathBuf> {
     let output = Command::new("getent")
@@ -60,7 +60,7 @@ fn config_path(home: &Path) -> PathBuf {
     env::var_os("XDG_CONFIG_HOME")
         .map(PathBuf::from)
         .unwrap_or_else(|| home.join(".config"))
-        .join("inir/config.json")
+        .join("alis/config.json")
 }
 
 fn read_config(home: &Path) -> Option<Value> {

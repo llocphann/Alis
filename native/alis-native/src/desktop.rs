@@ -34,7 +34,7 @@ fn atomic_write(path: &Path, content: &str) -> Result<()> {
     let parent = path.parent().unwrap_or_else(|| Path::new("."));
     fs::create_dir_all(parent)?;
     let temporary = parent.join(format!(
-        ".{}.inir-native-{}.tmp",
+        ".{}.alis-native-{}.tmp",
         path.file_name()
             .and_then(|name| name.to_str())
             .unwrap_or("config"),

@@ -249,7 +249,7 @@ fn main() -> Result<()> {
             "harmonize_threshold": args.harmonize_threshold,
             "color_strength": args.color_strength,
             "blend_bg_fg": args.blend_bg_fg,
-            "generated_by": "inir-theme"
+            "generated_by": "alis-theme"
         });
         write_json(path, &meta)?;
     }
@@ -276,7 +276,7 @@ fn main() -> Result<()> {
             image: source_path.as_deref(),
         })?;
         if rendered > 0
-            && std::env::var_os("INIR_THEME_SKIP_SDDM_SYNC").is_none()
+            && std::env::var_os("ALIS_THEME_SKIP_SDDM_SYNC").is_none()
             && let Err(error) = sync_if_installed(&app_palette)
         {
             eprintln!("[sddm-pixel] Native sync failed: {error:#}");
@@ -285,7 +285,7 @@ fn main() -> Result<()> {
 
     if args.debug {
         eprintln!(
-            "inir-theme: seed={} mode={} scheme={} material_roles={} terminal_roles={}",
+            "alis-theme: seed={} mode={} scheme={} material_roles={} terminal_roles={}",
             source_seed.to_hex(),
             if dark { "dark" } else { "light" },
             scheme,
@@ -304,14 +304,14 @@ mod tests {
 
     #[test]
     fn metadata_source_selection_requires_input() {
-        let parsed = Args::try_parse_from(["inir-theme", "--color", "#4181EE"]);
+        let parsed = Args::try_parse_from(["alis-theme", "--color", "#4181EE"]);
         assert!(parsed.is_ok());
     }
 
     #[test]
     fn underscore_terminal_flags_match_python_cli() {
         let parsed = Args::try_parse_from([
-            "inir-theme",
+            "alis-theme",
             "--color",
             "#4181EE",
             "--term_saturation",
