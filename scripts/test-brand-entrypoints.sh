@@ -35,6 +35,10 @@ for shell in bash fish zsh; do
         zsh) grep -Fxq "#compdef alis" <<<"$output" || fail "zsh registration" ;;
     esac
 done
+grep -Fq 'tui_hero_card "Alis setup"' "$repo/setup" || fail "setup TUI still uses legacy product name"
+if grep -Fq 'Syncing iNiR...' "$repo/setup"; then fail "updater still displays old public name"; fi
+grep -Fq "Installed Alis Rust runtime" "$repo/native/scripts/install-runtime.sh" || fail "Rust installer banner still uses previous brand"
+grep -Fq "tui_alert \"success\" \"Update complete\"" "$repo/setup" || fail "updater success banner missing"
 grep -Fq "Name=Alis Shell" "$repo/assets/applications/inir.desktop" || fail "desktop entry"
 grep -Fq "Name=Alis Settings" "$repo/assets/applications/inir-settings.desktop" || fail "settings desktop entry"
 grep -Fxq "NoDisplay=true" "$repo/assets/applications/inir-settings.desktop" || fail "legacy settings launcher visible"

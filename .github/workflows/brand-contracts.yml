@@ -6,6 +6,8 @@ on:
     paths:
       - ".github/workflows/brand-contracts.yml"
       - "scripts/alis"
+      - "setup"
+      - "native/scripts/install-runtime.sh"
       - "flake.nix"
       - "nix/module-common.nix"
       - "nix/home-module.nix"

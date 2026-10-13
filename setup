@@ -72,7 +72,7 @@ cleanup() {
 ###############################################################################
 run_migrate() {
     echo ""
-    tui_title "iNiR Migrations"
+    tui_title "Alis Migrations"
     echo ""
 
     sync_launcher_from_repo
@@ -482,7 +482,7 @@ show_setup_context_card() {
 
 show_help() {
     echo ""
-    tui_hero_card "iNiR setup" \
+    tui_hero_card "Alis setup" \
         "Install, sync, repair, inspect, and unfuck the shell without guessing which entrypoint owns what." \
         "Use inir for daily runtime control. Use ./setup when you want the maintenance brain."
 
@@ -530,7 +530,7 @@ show_help() {
     tui_section_end
 
     tui_section_start "Good defaults"
-    tui_list_item "./setup install      Install iNiR once"
+    tui_list_item "./setup install      Install Alis once"
     tui_list_item "./setup update       Pull, sync, and restart"
     tui_list_item "./setup doctor       Diagnose weird runtime breakage"
     tui_list_item "./setup status       See what is installed and what is drifting"
@@ -2113,7 +2113,7 @@ run_update_simulated() {
 
     # Step 2 — verbose op: header + simulated per-file lines
     _step_phase_header 2 "Syncing files"
-    tui_info "Syncing iNiR..."
+    tui_info "Syncing Alis..."
     sleep 1
     tui_check_ok "scripts/inir         (current)"
     tui_check_ok "modules/bar          (3 files updated)"
@@ -2403,7 +2403,7 @@ run_update() {
     local repo_commit=$(get_repo_commit)
 
     _step_phase_header 2 "Syncing files"
-    tui_info "Syncing iNiR..."
+    tui_info "Syncing Alis..."
 
     II_SOURCE="${REPO_ROOT}"
     II_TARGET="${XDG_CONFIG_HOME}/quickshell/inir"
@@ -2884,7 +2884,7 @@ run_update() {
     _write_update_status "success"
 
     echo ""
-    tui_alert "success" "Update complete" "Version $repo_ver ($repo_commit) synced and verified.\nRun './setup rollback' if something breaks."
+    tui_alert "success" "Update complete" "Version $repo_ver ($repo_commit) synced and verified."$'\n'"Run './setup rollback' if something breaks."
 
 }
 
