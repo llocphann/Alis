@@ -18,6 +18,14 @@ assert "root.activeGroupGesture={keys:targets.map(row=>Selection.key(row))" in u
 assert "root.isEventSelected(modelData) ? 2" in ui
 assert "root.clickPlannerEvent(timedButton.modelData,mouse.modifiers)" in ui
 assert "root.clickPlannerEvent(allDayButton.modelData,mouse.modifiers)" in ui
+# RippleButton derives from QtQuick.Controls.Button; pressX/pressY are FINAL.
+# Redeclaring them makes the entire DashboardWeeklyPlanner type unavailable.
+all_day=ui.split('delegate: RippleButton {',1)[1].split('StyledToolTip {text:parent.Accessible.name}',1)[0]
+assert 'property real pressX:' not in all_day, "cannot override Button FINAL pressX"
+assert 'property real pressY:' not in all_day, "cannot override Button FINAL pressY"
+assert 'property real dragOriginContentX:0' in all_day
+assert 'allDayButton.dragOriginContentX=point.x' in all_day
+assert 'point.x-allDayButton.dragOriginContentX' in all_day
 assert 'objectName:"plannerDeleteSelected"' in ui
 assert "root.confirmOrDeleteSelected()" in ui
 assert "event.key===Qt.Key_Delete || event.key===Qt.Key_Backspace" in ui
