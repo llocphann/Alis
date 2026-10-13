@@ -1,5 +1,7 @@
 # New features
 
+**Owner acceptance update — 2026-10-13:** `DASH-F04`, `AGENDA-F02`, `DASH-F01` and `COMP-F01` are now **[x] Owner verified** on the maintainer's explicit request. Older OPEN/owner-pending statements below are historical and do not override this acceptance. Retain any separate exact-SHA, native, CI, package and release test FAIL/SKIP/pending facts; do not report unrun checks as PASS.
+
 **Owner withdrawal — 2026-10-13:** `AGENDA-F01` (automatic Agenda → To-do creation) has been removed from the active backlog; both domains now work independently. Original task and evidence are [archived](../../docs/archive/chatbot/2026-10-13/AGENDA-F01_RETIRED.md). No automation/linking should be resurrected. Preserve historical user records. The 2026-10-12 linking plans below are superseded historical notes.
 
 **Owner correction — 2026-10-12 22:22 ICT, CURRENT POLICY (supersedes earlier migration notes below):** Automatic legacy Events migration was explicitly **withdrawn** by owner. Source commit `477603bbd685` removes `Occurrences.migrateLegacy`, `Events._resumeLegacyMigration`, versioned migration bootstrapping and the migration test. The Events loader now reads stored event rows unchanged; unknown JSON root metadata (including any existing original-event backup) is transparently preserved during later saves. Do **not** automatically merge/normalize old events or restore previously merged events; do not delete owners' data. Existing multi-date `occurrences`, create/edit, reminder and Todo logic remain. `scripts/test-events-no-automatic-migration.mjs` replaces the obsolete test. In Weekly Planner, All day/Delete/Cancel/Save are icon-only with tooltips as in Calendar Popup; full textual controls remain in standalone modal only. Repeat/Category/Priority/Reminder keep a stable `buttonText` and animate a clipped label viewport; active opens left-to-right, inactive retracts right-to-left. Source implementation done; installed SHA, Qt rendering, rapid toggling, click/reopen and CI/owner acceptance remain OPEN. No UI migration button.
@@ -13,11 +15,13 @@
 
 **Immediate four-request delivery checkpoint — 2026-10-12:** Source commits through `7549773751` add Planner drag/resize policy, native gesture handles and occurrence-level persistence, plus compatible same-name grouping into one canonical Event ID with independent dates, notifications, editing and per-date deletion. New files `services/EventOccurrences.js`, `modules/dashboard/PlannerGesture.js` and `scripts/test-event-occurrences-policy.mjs`; the canonical validator now calls the pure test. V8 source-policy probes: 19 focused assertions + 7 pre-existing projector regression assertions and 9 source-wiring checks PASS on inspected blobs. These are NOT Node, Qt, private-Niri, committed-SHA canonical or owner acceptance; CI pending at write time. Keep DASH-F04 / AGENDA-F02 OPEN pending pointer behavior, slow scrolling, per-date restore, multi-output, real reminder delivery and confirmation; historical same-title records are not silently migrated.
 
-- [ ] **DASH-F04 — Weekly Planner drag and resize local timed events (owner 2026-10-12):** Vertical drag changes start time without changing duration, horizontal drag changes civil date, and top/bottom handles independently resize start/end (15-minute snap). The Event must retain its canonical ID; historical link metadata stays inert and no Agenda/To-do synchronization is allowed. Disable gestures for external/read-only, recurrence-virtual, all-day events, and invalid no-op ranges. Only persist once when gesture ends, not on every pointer frame. Test pointer vs Flickable, crowded lanes, midnight/DST, 4 edge/scale modes, undo/cancel/focus, exact-SHA native and owner acceptance. **Immediate explicit owner priority; OPEN.**
+- [x] **DASH-F04 — Weekly Planner drag and resize local timed events (owner 2026-10-12):** Vertical drag changes start time without changing duration, horizontal drag changes civil date, and top/bottom handles independently resize start/end (15-minute snap). The Event must retain its canonical ID; historical link metadata stays inert and no Agenda/To-do synchronization is allowed. Disable gestures for external/read-only, recurrence-virtual, all-day events, and invalid no-op ranges. Only persist once when gesture ends, not on every pointer frame. Test pointer vs Flickable, crowded lanes, midnight/DST, 4 edge/scale modes, undo/cancel/focus, exact-SHA native and owner acceptance. **Owner acceptance recorded on 2026-10-13; preserve remaining independent technical validation gates.**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Weekly Planner Event drag/resize behavior accepted. Earlier owner regression and OPEN/Owner chưa verified descriptions are superseded for owner acceptance. Preserve exact-SHA tests, desktop/CI evidence and any FAIL/SKIP/pending gates as independent technical records; no unrun test is claimed PASS.
 
-**DASH-F04 owner regression — 2026-10-12 19:53 ICT (STILL OPEN):** Owner screenshot shows populated Weekly Planner but explicitly reports that Events cannot be dragged/resized. This does NOT determine the running installed SHA, local-vs-imported/virtual event identity, physical wl_pointer delivery or root cause. Source audit at `023307e02` found the timed delegate used `RippleButton`, whose internal `buttonMouseArea` consumes down/release and always calls `root.click()`, competing with the event's nested `DragHandler` and parent `Flickable`. **New candidate source fix** `161265d97` replaces timed event delegates with single-owner `Rectangle` + three exclusive `MouseArea` pointer regions (body/top/bottom), `preventStealing` and viewport-coordinate deltas; `4a8280a2f` elevates the dragged day and previews updated time. `c472a3580` adds a pointer-ownership regression contract. V8 source-policy checks PASS (pure JS only). Prior CI `023307e02` FAILED (342 PASS/51 FAIL/2 SKIP), including a **wrong test expectation** for two grouped dates and loss of canonical object identity in Calendar projection, fixed in `e079f4693`/`7cb45cc29`; unrelated native tests require real Quickshell or missing CI dependencies, not claimed fixed. Exact committed SHA Node/CI, Qt parser, installed-SHA identity, physical pointer gesture, drag between crowded columns, snap, nested scrolling, recurrence/read-only handling and owner retest remain **OPEN / UNVERIFIED**. Do not close based on screenshot or source patches. Preserve current agenda JSON and do not change imported event data.
+**Historical DASH-F04 owner regression — 2026-10-12 19:53 ICT (superseded for owner acceptance on 2026-10-13):** Owner screenshot shows populated Weekly Planner but explicitly reports that Events cannot be dragged/resized. This does NOT determine the running installed SHA, local-vs-imported/virtual event identity, physical wl_pointer delivery or root cause. Source audit at `023307e02` found the timed delegate used `RippleButton`, whose internal `buttonMouseArea` consumes down/release and always calls `root.click()`, competing with the event's nested `DragHandler` and parent `Flickable`. **New candidate source fix** `161265d97` replaces timed event delegates with single-owner `Rectangle` + three exclusive `MouseArea` pointer regions (body/top/bottom), `preventStealing` and viewport-coordinate deltas; `4a8280a2f` elevates the dragged day and previews updated time. `c472a3580` adds a pointer-ownership regression contract. V8 source-policy checks PASS (pure JS only). Prior CI `023307e02` FAILED (342 PASS/51 FAIL/2 SKIP), including a **wrong test expectation** for two grouped dates and loss of canonical object identity in Calendar projection, fixed in `e079f4693`/`7cb45cc29`; unrelated native tests require real Quickshell or missing CI dependencies, not claimed fixed. Exact committed SHA Node/CI, Qt parser, installed-SHA identity, physical pointer gesture, drag between crowded columns, snap, nested scrolling, recurrence/read-only handling remain **OPEN / UNVERIFIED** as independent technical checks; the earlier owner-retest requirement is superseded by the 2026-10-13 owner acceptance. Preserve current agenda JSON and do not change imported event data.
 
-- [ ] **AGENDA-F02 — Smart same-name multi-date Events (owner 2026-10-12):** One canonical local Event can contain separate date/time occurrences, including multiple dates and differing durations. When creating another event with the same normalized title, group it only if the remaining metadata and recurrence policy are compatible; keep incompatible same-name events separate rather than losing meaning. Preserve existing Event IDs, any historical todoLink metadata verbatim (read-only), old files, imported-read-only data, notification/reminder state per occurrence and precise occurrence editing; never create or update a To-do. Do not silently rewrite or merge historical stored duplicate rows on load. All Calendar/day/month/Weekly Planner/upcoming projections must expose the correct dates. Owner/native, persistence, edit/delete and exact-SHA validation OPEN. **Immediate explicit owner priority.**
+- [x] **AGENDA-F02 — Smart same-name multi-date Events (owner 2026-10-12):** One canonical local Event can contain separate date/time occurrences, including multiple dates and differing durations. When creating another event with the same normalized title, group it only if the remaining metadata and recurrence policy are compatible; keep incompatible same-name events separate rather than losing meaning. Preserve existing Event IDs, any historical todoLink metadata verbatim (read-only), old files, imported-read-only data, notification/reminder state per occurrence and precise occurrence editing; never create or update a To-do. Do not silently rewrite or merge historical stored duplicate rows on load. All Calendar/day/month/Weekly Planner/upcoming projections must expose the correct dates. Owner verified on 2026-10-13; native, persistence, edit/delete and exact-SHA test gates retain their actual recorded status.
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Smart same-name multi-date Events accepted. Earlier OPEN/owner-pending milestones are historical. Retain actual persistence, calendar projection, native, exact-SHA and release test results separately, without upgrading unrun or failed checks.
 
 
 **Quota checkpoint — 2026-10-12 18:08 ICT:** exact five-hour remaining
@@ -432,7 +436,8 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   playback remain OPEN. Fixture transport parity is not actual MPD/audio.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
-- [ ] **DASH-F01 — Weekly Planner: new Dashboard tab for Agenda / Events / Todo / Quick Notes — owner request 2026-10-11:**
+- [x] **DASH-F01 — Weekly Planner: new Dashboard tab for Agenda / Events / Todo / Quick Notes — owner request 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Weekly Planner Dashboard accepted, including the requested Agenda/Events, Todo and Quick Notes workflows. Earlier OPEN/not-implemented notes and owner-pending gates below are historical checkpoints; preserve separate native, exact-SHA, installed and multi-output test status as recorded.
   [Owner: Alis dev; New Feature] Add a full **Weekly Planner** Dashboard
   page inspired by the owner's first screenshot (Obsidian Day Planner-like
   week-at-a-glance: 7 dated day columns and vertical hourly timeline).
@@ -498,9 +503,9 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   Escape, unsaved edits, no focus leakage, and owner screenshot.
   Coordinate Day/date and All day header material in
   `REWORK_OPTIMIZATION.md` (DASH-R03).
-  **State of this follow-up:** NOT IMPLEMENTED / OPEN, despite
+  **Historical state before subsequent source patches (2026-10-12):** NOT IMPLEMENTED / OPEN, despite
   the earlier Weekly Planner grid and shared Todo/Notes native PASS.
-  **Incremental source milestone — 2026-10-12 (still OPEN):**
+  **Historical incremental source milestone — 2026-10-12 (pre-owner-acceptance):**
   Weekly Planner now uses the existing embedded `EventsDialog` as an
   expandable column alongside the shared Todo/Notes panel; the normal
   Dashboard Agenda path is unchanged. It preserves slot prefill and
@@ -517,7 +522,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   a Save/Cancel warning instead of overwriting it. Failed saves
   also show a warning. The private-Niri fixture now covers this
   transition, also **NOT RUN**. Keep source/live-save, focus, outside-click,
-  narrow/fractional, installed/restart and owner acceptance gates OPEN.
+  narrow/fractional and installed/restart technical gates OPEN; owner acceptance is confirmed as of 2026-10-13.
 
   **Owner refinement — 2026-10-12 (Quick Notes Markdown parity):**
   The `notes` expanded column inside Weekly Planner must expose
@@ -542,7 +547,7 @@ owner/installed/material/multi-output and Companion gates remain OPEN.
   basic render loop. Original Queue animation failures and bounded probes are
   retained; this does not qualify the owner's render loop or upgrade earlier
   canonical failures. [Source-byte receipt and all raw evidence](../../docs/evidence/abyss-product/20261012-weekly-planner/README.md).
-  Full committed-SHA canonical, installed data/restart, owner visual and
+  Full committed-SHA canonical, installed data/restart, previously pending owner visual and
   multi-output/fractional/input acceptance remain OPEN; continue `DASH-F02`.
 
 - [x] **DASH-F02 — Drag-reorder Dashboard tab indicators in Edit Dashboard Layout — owner request 2026-10-11:**
@@ -1032,7 +1037,8 @@ host acceptance, not from an invented prior roadmap.
   recreated here. State: SOURCE PRESENT, RELEASE GATES OPEN.
   **Owner verified — 2026-10-12 (maintainer explicit confirmation, feature #27):** Hoàn thành / Owner verified. This newer confirmation supersedes the historical 'owner acceptance pending' text for this task. Preserve prior source, tests, package/hardware evidence and any recorded FAIL/SKIP unchanged; do not infer that unrun checks passed. Reopen only for a new requirement or reported regression.
 
-- [ ] **COMP-F01 — Install/update Companion automatically with Alis — owner clarification 2026-10-12:**
+- [x] **COMP-F01 — Install/update Companion automatically with Alis — owner clarification 2026-10-12:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Automatic Alis-Companion install/update feature accepted. Historical owner-pending language below is superseded; independent exact-SHA build, installed first-run, package-managed distribution, rollback and release qualification remain accurately documented and are not automatically PASS.
   [Owner: Alis dev; New feature / installation integration] Alis must
   install and update Companion itself rather than prompting users to clone,
   choose or manually install the separate source repository.
@@ -1050,12 +1056,12 @@ host acceptance, not from an invented prior roadmap.
   rejects foreign remotes and unsafe checkouts, and keeps setup from
   claiming success after a failed sync. Settings no longer links to an
   external manual installer. Offline synthetic lifecycle fixture added.
-  **Still OPEN:** exact-SHA canonical and actual first-time Rust build;
+  **Independent technical/package gates remain OPEN (not owner acceptance):** exact-SHA canonical and actual first-time Rust build;
   source/API/runtime startup, installed identity/restart/rollback, low
-  connectivity, owner acceptance. Staged system package `make install`,
+  connectivity. Staged system package `make install`,
   Nix and Arch installation do not provision an arbitrary desktop user's
   home; package-managed user provisioning needs separate packaging work
-  before claiming universal Alis auto-install. Do not mark owner verified.
+  before claiming universal Alis auto-install. This packaging qualification is separate from the owner's 2026-10-13 feature acceptance.
 
 ## Cross-repository code ownership
 
