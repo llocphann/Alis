@@ -194,6 +194,15 @@ case "${SKIP_QUICKSHELL}" in
       log_error "Missing canonical Alis runtime launcher"
       return 1
     fi
+    # The canonical unit may not be installed/enabled while an old user
+    # service can still start. The owner-gated handoff handles upgrades.
+    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/inir.service" ||
+          -L "${XDG_CONFIG_HOME}/systemd/user/inir.service" ]] ||
+          { command -v systemctl >/dev/null &&
+            systemctl --user cat inir.service >/dev/null 2>&1; }; then
+      log_error "Legacy inir.service is still installed; refusing parallel Alis service. Use the explicit canonical cutover procedure."
+      return 2
+    fi
     local _service_refresh_status=1
     local _service_dir="${XDG_CONFIG_HOME}/systemd/user"
     local _service_asset="${REPO_ROOT}/assets/systemd/alis.service"
