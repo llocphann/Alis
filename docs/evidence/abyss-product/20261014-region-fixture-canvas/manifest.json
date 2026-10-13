@@ -1,0 +1,22 @@
+{
+  "source_sha": "683f4ca6e68a6319bfb9df8ad57e33e1780b319a",
+  "sha256": {
+    "before-direct-native.log": "84fee254cdc98c72116b084996ce2e7ca7bbe1edd4df996ec392606f292a290d",
+    "before-direct-receipt.json": "70a15a75d6eb49eb40e28587dcb38c0fcdaf6b3c77c982301c74d7a2b4963bb9",
+    "before-direct.log": "c612127524b8c705a4df6736eb516998fc936332f643a1dc8a47a8666e8b4579",
+    "before-nested-native.log": "e97b2a375c654bdcb64330387578fff20852778429eda65c47070a7884c70426",
+    "before-nested-receipt.json": "ac78db0a4007f7ce5bc33070f40c9216a93adac6b0de9579816c1e29aef4bff2",
+    "before-nested.log": "7ce397f4854290f34b57cc3818a68f0bea7764abd16620d36eeb11817d77c94b",
+    "fixed-direct-native.log": "2c8bd3268e67429580c2d56ab35e2c184004f01072e1dddcbf1841623cf9bd8b",
+    "fixed-direct.log": "c612127524b8c705a4df6736eb516998fc936332f643a1dc8a47a8666e8b4579",
+    "fixed-nested-native.log": "dff4eb3f61b3f8f5cf75ea4629ccc61b8e64f919ee524a9df9299ecce38874ab",
+    "fixed-nested.log": "c612127524b8c705a4df6736eb516998fc936332f643a1dc8a47a8666e8b4579",
+    "fixture-before.py": "7171e6f25a2d419d5ab9ec72916b1181b3dc47c41cb890b1800fbe61aba6407a",
+    "README.md": "56b72018b4e6ad58260f7db418bd227c20f283274b9ceadb75fd9012ff6ee1f6",
+    "exact-683f4ca6e/direct-native.log": "279acb17eb273841d395c3403c7ea8808cc428de1a15e70d93dcbe6ba2f47986",
+    "exact-683f4ca6e/direct.log": "c612127524b8c705a4df6736eb516998fc936332f643a1dc8a47a8666e8b4579",
+    "exact-683f4ca6e/nested-native.log": "dfce6887ae393d5e667ba3b75b3e19ff714c5219d80fe8edefa601637639beea",
+    "exact-683f4ca6e/nested.log": "c612127524b8c705a4df6736eb516998fc936332f643a1dc8a47a8666e8b4579",
+    "exact-683f4ca6e/receipt.json": "b97e2e1f4db263ee89b1396ac4420ca9650ca52acf22a2d7b78653d7e6538d3a"
+  }
+}

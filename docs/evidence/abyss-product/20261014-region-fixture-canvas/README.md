@@ -1,0 +1,5 @@
+# Region cohort controlled-canvas fixture
+
+Fixture-only source683f4ca6e68a6319bfb9df8ad57e33e1780b319a. Unchanged537e passes488768 coverage/lifetime checks directly, but FAILs tangent-publication count in the nested context used by the full canonical. The fixture inherited a compositor-capped native window; its fixed-coordinate tangent/size requests could become clamped no-ops instead of exercising the intended geometry.
+
+The oracle canvas now stays1000×740 independently of native window caps. Assertions, cases, coalescing/publication limits and per-operation wait bounds are unchanged; production Region/geometry/controller code is unchanged. Exact clean source passes488768 checks,772 publications,23040 Regions and768 open/close cohorts both direct and nested; all old FAIL and new raw output retained. No parent focus, installed/physical small-output, resource-gain or full canonical PASS is claimed. The47e full result remains FAIL385/46/2 listed skips and is not rewritten by this focused fixture repair.

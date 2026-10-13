@@ -1,0 +1,15 @@
+{
+  "source_sha": "683f4ca6e68a6319bfb9df8ad57e33e1780b319a",
+  "cases": [
+    {
+      "name": "direct",
+      "exit_code": 0
+    },
+    {
+      "name": "nested",
+      "exit_code": 0
+    }
+  ],
+  "clean_source_after": "",
+  "scope": "focused exact native Region cohort geometry oracle, controlled canvas; not physical small-output acceptance or new canonical PASS"
+}
