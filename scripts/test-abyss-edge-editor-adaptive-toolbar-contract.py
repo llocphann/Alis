@@ -66,8 +66,16 @@ for dimension in ['compactKindTriggerWidth', 'compactEdgeTriggerWidth', 'compact
     assert f'readonly property real {dimension}:' in positions
     assert positions.count('root.' + dimension) == 2
 assert 'Math.min(root.width-48,root.editingPopups' in editor
-assert 'root.ipcToolbarSpan : 660*Appearance.fontSizeScale' in editor
-assert '520*Appearance.fontSizeScale + 2*editorBody.padding' in editor
+assert 'root.ipcToolbarSpan : root.moduleToolbarSpan' in editor
+assert 'readonly property real moduleToolbarSpan:' in editor
+assert 'moduleHeaderActions.implicitWidth + (270 + 2*10 + 1)*Appearance.fontSizeScale' in editor
+assert 'readonly property real ipcSelectorSpan:' in editor
+assert 'Math.max(450*Appearance.fontSizeScale,ipcSelectorSpan)' in editor
+assert 'toolbarScroll.width >= (editingPopups' in editor
+assert '? ipcSelectorSpan : 520*Appearance.fontSizeScale)' in editor
+assert 'root.compactIpcEditor ? "Source edge" : "Follow source edge"' in positions
+assert 'root.compactIpcEditor ? "Source position" : "Follow source position"' in positions
+assert 'value:"source"' in positions
 assert 'objectName:"abyssIpcJoinCornerToggle"' in positions
 assert 'visible:!root.compactIpcEditor && Presentation.canJoin(root.kind)' in positions
 assert 'onToggled:root.change("joinCorner",checked)' in positions
@@ -78,7 +86,7 @@ assert 'selectionRegion' not in editor
 head=editor.split('id: editorModeHeader',1)[1].split('AbyssPositionSettings {',1)[0]
 assert 'objectName: "abyssEditorModeHeader"' in editor
 assert 'columns: root.toolbarOnHorizontalEdge' in head
-assert 'toolbarScroll.width >= 500*Appearance.fontSizeScale ? 2 : 1' in head
+assert 'toolbarScroll.width >= 450*Appearance.fontSizeScale ? 2 : 1' in head
 assert 'objectName: "abyssEditorModeTabs"' in head
 assert 'objectName: "abyssEditorOutputScope"' in head
 assert head.index('objectName:"abyssEditorModulesMode"') < head.index('objectName:"abyssEditorIpcMode"')
@@ -102,7 +110,10 @@ fine_two_column=re.search(r"readonly property bool useTwoColumns:\s*([\s\S]+?)\n
 assert fine_two_column, "the column decision must come from the outer toolbar viewport"
 assert 'columns:useTwoColumns ? 3 : 1' in fine
 assert fine.count('Layout.preferredWidth:editFineControls.useTwoColumns') == 2
-assert fine.count('Math.max(0,(toolbarScroll.width-24*Appearance.fontSizeScale)/2)') == 2
+assert fine.count('Math.max(0,(toolbarScroll.width-24*Appearance.fontSizeScale)/2)') == 0
+assert 'Layout.fillWidth:!editFineControls.useTwoColumns' in fine
+assert '? moduleHeaderActions.implicitWidth' in fine
+assert '? 270*Appearance.fontSizeScale' in fine
 assert 'editFineControls.width-24' not in fine
 assert '&& width>=570*Appearance.fontSizeScale ? 3 : 1' not in fine
 
@@ -152,7 +163,7 @@ assert right.index('objectName:"abyssJoinNearbyModules"') < right.index('id:edge
 assert right.index('objectName:"abyssRoundZeroCorners"') < right.index('id:scaleModulesRow')
 assert 'AbyssCheckBox {' not in right
 assert 'checkable:true' in right and 'onToggled:root.edgeRoundZeroCorners' in right
-assert 'root.ipcToolbarSpan : 660*Appearance.fontSizeScale' in editor
+assert 'root.ipcToolbarSpan : root.moduleToolbarSpan' in editor
 assert right.count('Layout.preferredWidth:110*Appearance.fontSizeScale') == 2
 assert right.count('Layout.preferredWidth:190*Appearance.fontSizeScale') == 2
 assert 'columns:root.toolbarOnHorizontalEdge' in right

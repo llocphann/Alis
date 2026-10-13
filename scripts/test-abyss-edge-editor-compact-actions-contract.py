@@ -136,7 +136,9 @@ assert 'id:moduleEditorColumn' in editor and 'id:edgeEditorColumn' in editor
 assert 'objectName:"abyssEditorColumnDivider"' in editor
 assert 'columns:1' in editor[editor.index('id:selectedModuleControls'):]
 assert editor.count('text:"This output only"') == 1
-assert '660*Appearance.fontSizeScale' in editor
+assert 'readonly property real moduleToolbarSpan:' in editor
+assert 'readonly property real ipcToolbarSpan:' in editor
+assert 'root.ipcToolbarSpan : root.moduleToolbarSpan' in editor
 assert 'Ctrl/Shift-click select · Drag' not in editor
 
 # Every Editor button has a bounded square hit rectangle, even in fill rows.
@@ -173,7 +175,7 @@ assert 'objectName:"abyssModuleRoundingAction"' in editor
 assert 'objectName:"abyssRoundZeroCorners"' in editor
 assert 'id:edgeGapAndSizeRow' in editor
 assert 'id:edgeWidthRow' in editor
-assert 'root.ipcToolbarSpan : 660*Appearance.fontSizeScale' in editor
+assert 'root.ipcToolbarSpan : root.moduleToolbarSpan' in editor
 assert 'columns:1;rowSpacing:4*Appearance.fontSizeScale' in editor
 assert editor.count('AbyssCheckBox {') == 1
 assert 'visible:root.edgeWidthAffectsModules[root.editingEdge]===false' not in editor

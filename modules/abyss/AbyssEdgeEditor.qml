@@ -93,17 +93,26 @@ Item {
     readonly property bool toolbarOnHorizontalEdge:
         toolbarEdge === "top" || toolbarEdge === "bottom"
     readonly property bool toolbarWideControls:
-        toolbarOnHorizontalEdge && toolbarScroll.width>=520*Appearance.fontSizeScale
-    // The IPC toolbar can be narrower than the Modules toolbar. Keep enough
-    // content width for the longest labels, the corner action, and the four-
-    // column selector gaps, but not an unused fixed-width tail.
-    readonly property real ipcToolbarSpan: Math.max(
-        520*Appearance.fontSizeScale + 2*editorBody.padding + 4*Appearance.fontSizeScale,
+        toolbarOnHorizontalEdge && toolbarScroll.width >= (editingPopups
+            ? ipcSelectorSpan : 520*Appearance.fontSizeScale)
+    // The Module side is only as wide as its picker + action icons. The Edge
+    // side keeps room for two readable sliders and their value gutters.
+    // Both widths are independent of the body's resulting span, avoiding a
+    // layout-size feedback loop when the toolbar relocates.
+    readonly property real moduleToolbarSpan: Math.max(
+        520*Appearance.fontSizeScale,
+        moduleHeaderActions.implicitWidth + (270 + 2*10 + 1)*Appearance.fontSizeScale)
+        + 2*editorBody.padding
+    // The compact IPC labels fit side by side without the previous
+    // minimum 520px content track, which only produced an empty tail.
+    readonly property real ipcSelectorSpan:
         previewPositions.compactKindWidth
             + previewPositions.compactEdgeWidth
             + previewPositions.compactAlignmentWidth
             + (30 + 3*6 + 8)*Appearance.fontSizeScale
-            + 2*editorBody.padding)
+    readonly property real ipcToolbarSpan:
+        Math.max(450*Appearance.fontSizeScale,ipcSelectorSpan)
+            + 2*editorBody.padding
     property var guides: []
     property bool snapEnabled: true
     property bool outputOnly: true
@@ -672,7 +681,7 @@ Item {
         // a long vertical span instead of covering the module being edited.
         span: root.toolbarOnHorizontalEdge
             ? Math.min(root.width-48,root.editingPopups
-                ? root.ipcToolbarSpan : 660*Appearance.fontSizeScale)
+                ? root.ipcToolbarSpan : root.moduleToolbarSpan)
             : Math.min(root.height-48,toolbar.implicitHeight+padding*2)
         along: ((root.toolbarOnHorizontalEdge ? root.width : root.height)-span)/2
         depth: root.toolbarOnHorizontalEdge
@@ -824,7 +833,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     columns: root.toolbarOnHorizontalEdge
-                        && toolbarScroll.width >= 500*Appearance.fontSizeScale ? 2 : 1
+                        && toolbarScroll.width >= 450*Appearance.fontSizeScale ? 2 : 1
                     columnSpacing: 8
                     rowSpacing: 4
 
@@ -954,9 +963,12 @@ Item {
                         // space beyond the Module picker/action toolbar.
                         readonly property real controlsSpan:Math.max(0,
                             Math.min(width,moduleHeaderActions.implicitWidth))
-                        Layout.fillWidth:true;Layout.minimumWidth:0
+                        // On wide Edges, stop this column at the final
+                        // module action instead of allocating half the toolbar.
+                        Layout.fillWidth:!editFineControls.useTwoColumns
+                        Layout.minimumWidth:0
                         Layout.preferredWidth:editFineControls.useTwoColumns
-                            ? Math.max(0,(toolbarScroll.width-24*Appearance.fontSizeScale)/2)
+                            ? moduleHeaderActions.implicitWidth
                             : Math.max(0,toolbarScroll.width)
                         spacing:4*Appearance.fontSizeScale
                             RowLayout {
@@ -1224,9 +1236,11 @@ Item {
                         id:edgeEditorColumn
                         Layout.alignment:Qt.AlignTop
                         objectName:"abyssEditorEdgeColumn"
+                        // Edge controls take any extra track width, preserving
+                        // their slider endpoints when Module width contracts.
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         Layout.preferredWidth:editFineControls.useTwoColumns
-                            ? Math.max(0,(toolbarScroll.width-24*Appearance.fontSizeScale)/2)
+                            ? 270*Appearance.fontSizeScale
                             : Math.max(0,toolbarScroll.width)
                         spacing:4*Appearance.fontSizeScale
                             RowLayout {

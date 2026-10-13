@@ -154,6 +154,12 @@ ShellRoot {
           && divider.height<=70*scale,"divider must remain narrow, short and visible")
       check(middle.x>left.x && middle.x<right.x,
           "divider is not between the two columns")
+      const actions=item("abyssModuleHeaderActions")
+      const end=actions.mapToItem(scroll.contentItem,actions.width,0).x
+      check(middle.x-end<=19*scale,
+          "Module column still has excess blank space before the divider")
+      check(moduleColumn.width <= actions.implicitWidth+1,
+          "Module column must stop near its actual action-row width")
      } else {
       check(grouped.columns===1 && !divider.visible,
           "narrow side editor should stack columns and hide divider")
@@ -173,8 +179,9 @@ ShellRoot {
            "Round at 0px should be an icon toggle")
      check(control("abyssModuleRoundingAction").checkable,
            "Inherited module rounding should be a toggle")
-     check(!editor.toolbarOnHorizontalEdge || body.span<=660*scale+.6,
-           "Horizontal Edit Abyss Layout width was not reduced")
+     if(editor.toolbarOnHorizontalEdge && scene.width>720*scale)
+      check(body.span < 650*scale,
+        "Horizontal Module toolbar retains avoidable blank span")
      const layout={span:body.span,depth:body.depth,area:body.span*body.depth,height:scroll.contentHeight}
      frame(n===0||n===2?"layout-"+n+"-"+edge:null)
      click("abyssModulePositionLock");check(editor.allTargetsLocked,"quick lock did not apply")
@@ -289,8 +296,16 @@ ShellRoot {
       for(let i=0;i<widths.length;i++)
        check(Math.abs(widths[i]-fitted[i])<1.5,
          "IPC dropdown is not content-sized "+JSON.stringify({actual:widths,expected:fitted}))
-      check(widths[0]<widths[1] && widths[1]<widths[2],
-        "IPC dropdowns must be sized independently for their own longest labels")
+      check(placement.compactKindWidth>0
+            && placement.compactEdgeWidth>0
+            && placement.compactAlignmentWidth>0,
+        "IPC selectors must measure their actual options")
+      check(edgeCombo.model[0].label==="Source edge"
+            && alignCombo.model[0].label==="Source position",
+        "IPC inline labels should be shorter without changing their saved values")
+      if(scene.width>720*scale)
+       check(item("abyssEdgeEditorBody").span<600*scale,
+         "IPC toolbar retains avoidable empty horizontal width")
       check(Math.abs(coords(ipcJoin).y-ys[0])<1.5,"IPC corner toggle not aligned")
       if(scene.width-48>=editor.ipcToolbarSpan)
        check(Math.abs(item("abyssEdgeEditorBody").span-editor.ipcToolbarSpan)<1.5,

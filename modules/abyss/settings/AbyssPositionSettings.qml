@@ -187,7 +187,7 @@ ColumnLayout {
                 ? root.compactEdgeTriggerWidth : Infinity
             popupMinimumWidth:root.compactSideToolbar ? root.compactEdgeWidth : 0
             textRole:"label";valueRole:"value"
-            model:[{label:"Follow source edge",value:"source"},{label:"Top Edge",value:"top"},
+            model:[{label:root.compactIpcEditor ? "Source edge" : "Follow source edge",value:"source"},{label:"Top Edge",value:"top"},
                 {label:"Right Edge",value:"right"},{label:"Bottom Edge",value:"bottom"},{label:"Left Edge",value:"left"}]
             currentIndex:Math.max(0,model.findIndex(p => p.value===(root.position.edge ?? "source")))
             onActivated:root.change("edge",currentValue)
@@ -205,7 +205,7 @@ ColumnLayout {
                 ? root.compactAlignmentTriggerWidth : Infinity
             popupMinimumWidth:root.compactSideToolbar ? root.compactAlignmentWidth : 0
             textRole:"label";valueRole:"value"
-            model:[{label:"Follow source position",value:"source"},{label:"Align start",value:"start"},
+            model:[{label:root.compactIpcEditor ? "Source position" : "Follow source position",value:"source"},{label:"Align start",value:"start"},
                 {label:"Align center",value:"center"},{label:"Align end",value:"end"},{label:"Custom position",value:"custom"}]
             currentIndex:Math.max(0,model.findIndex(p => p.value===(root.position.alignment ?? "source")))
             onActivated:root.change("alignment",currentValue)
