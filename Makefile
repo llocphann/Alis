@@ -3,29 +3,29 @@ BINDIR = $(PREFIX)/bin
 SHAREDIR = $(PREFIX)/share
 APPLICATIONS_DIR = $(SHAREDIR)/applications
 ICON_DIR = $(SHAREDIR)/icons/hicolor/scalable/apps
-SHELL_INSTALL_DIR = $(SHAREDIR)/quickshell/inir
-DOC_DIR = $(SHAREDIR)/doc/inir-shell
-LICENSE_DIR = $(SHAREDIR)/licenses/inir-shell
+SHELL_INSTALL_DIR = $(SHAREDIR)/quickshell/alis
+DOC_DIR = $(SHAREDIR)/doc/alis-shell
+LICENSE_DIR = $(SHAREDIR)/licenses/alis-shell
 SYSTEMD_USER_DIR ?= $(PREFIX)/lib/systemd/user
 LIBEXECDIR ?= /usr/libexec
 POLKIT_ACTIONS_DIR ?= /usr/share/polkit-1/actions
 TLP_CONFDIR ?= /etc/tlp.d
-INIR_SYSTEM_SHAREDIR ?= /usr/share/inir
-BATTERY_HELPER = $(LIBEXECDIR)/inir-battery-charge-limit
-BATTERY_POLICY = $(POLKIT_ACTIONS_DIR)/org.inir.battery-charge-limit.policy
-BATTERY_DROPIN = $(TLP_CONFDIR)/99-inir-battery-charge-limit.conf
-TLP_SETTINGS_DROPIN = $(TLP_CONFDIR)/99-inir-tlp-settings.conf
-TLP_SETTINGS_SCHEMA = $(INIR_SYSTEM_SHAREDIR)/tlp-settings-schema.json
-THINKFAN_HELPER = $(LIBEXECDIR)/inir-thinkfan
-THINKFAN_POLICY = $(POLKIT_ACTIONS_DIR)/org.inir.thinkfan.policy
-PACKAGE_UPDATE_HINT = sudo make install PREFIX="$(PREFIX)" SYSTEMD_USER_DIR="$(SYSTEMD_USER_DIR)" LIBEXECDIR="$(LIBEXECDIR)" POLKIT_ACTIONS_DIR="$(POLKIT_ACTIONS_DIR)" TLP_CONFDIR="$(TLP_CONFDIR)" INIR_SYSTEM_SHAREDIR="$(INIR_SYSTEM_SHAREDIR)"
+ALIS_SYSTEM_SHAREDIR ?= /usr/share/alis
+BATTERY_HELPER = $(LIBEXECDIR)/alis-battery-charge-limit
+BATTERY_POLICY = $(POLKIT_ACTIONS_DIR)/org.alis.battery-charge-limit.policy
+BATTERY_DROPIN = $(TLP_CONFDIR)/99-alis-battery-charge-limit.conf
+TLP_SETTINGS_DROPIN = $(TLP_CONFDIR)/99-alis-tlp-settings.conf
+TLP_SETTINGS_SCHEMA = $(ALIS_SYSTEM_SHAREDIR)/tlp-settings-schema.json
+THINKFAN_HELPER = $(LIBEXECDIR)/alis-thinkfan
+THINKFAN_POLICY = $(POLKIT_ACTIONS_DIR)/org.alis.thinkfan.policy
+PACKAGE_UPDATE_HINT = sudo make install PREFIX="$(PREFIX)" SYSTEMD_USER_DIR="$(SYSTEMD_USER_DIR)" LIBEXECDIR="$(LIBEXECDIR)" POLKIT_ACTIONS_DIR="$(POLKIT_ACTIONS_DIR)" TLP_CONFDIR="$(TLP_CONFDIR)" ALIS_SYSTEM_SHAREDIR="$(ALIS_SYSTEM_SHAREDIR)"
 
 .PHONY: all build test-local test-native-production test-doctor-routing test-optional-audio-deps test-update-tlp-contracts test-news-contract test-equalizer-contracts test-perimeter-contracts test-weather-contracts test-docs test-install-lifecycle test-prefix-install test-package-docs test-package-metadata test-package-hooks test-battery-helper test-thinkfan-helper install install-bin install-shell install-native install-systemd install-icon install-desktop install-docs install-license install-battery-helper install-thinkfan-helper uninstall uninstall-bin uninstall-shell uninstall-systemd uninstall-icon uninstall-desktop uninstall-docs uninstall-license uninstall-battery-helper uninstall-thinkfan-helper
 
 all: build
 
 build:
-	@bash -n scripts/inir
+	@bash -n scripts/alis
 	@bash -n scripts/alis
 	@bash -n scripts/test-local-distribution.sh
 	@bash -n setup
@@ -83,40 +83,40 @@ test-install-lifecycle:
 test-prefix-install:
 	@stage="$$(mktemp -d)"; \
 		trap 'rm -rf -- "$$stage"' EXIT; \
-		$(MAKE) -s install-bin install-shell install-native install-desktop install-docs DESTDIR="$$stage" PREFIX=/opt/inir; \
-		runtime="$$stage/opt/inir/share/quickshell/inir"; \
-		docs="$$stage/opt/inir/share/doc/inir-shell"; \
+		$(MAKE) -s install-bin install-shell install-native install-desktop install-docs DESTDIR="$$stage" PREFIX=/opt/alis; \
+		runtime="$$stage/opt/alis/share/quickshell/alis"; \
+		docs="$$stage/opt/alis/share/doc/alis-shell"; \
 		test -f "$$runtime/shell.qml"; \
 		test -f "$$runtime/qmldir"; \
-		for binary in inir-inputd inir-mpdd inir-native inir-theme; do test -x "$$runtime/native/bin/$$binary"; done; \
+		for binary in alis-inputd alis-mpdd alis-native alis-theme; do test -x "$$runtime/native/bin/$$binary"; done; \
 		test -f "$$docs/README.md"; \
 		test -f "$$docs/AUDIO_MEDIA.md"; \
 		test -f "$$docs/INSTALL.md"; \
 		test -f "$$docs/PACKAGES.md"; \
 		test -f "$$docs/RELEASING.md"; \
-		grep -Fq 'system_config_dir="$${INIR_SYSTEM_RUNTIME_DIR:-/opt/inir/share/quickshell/inir}"' "$$stage/opt/inir/bin/inir"; \
-		grep -Fq 'system_config_dir="$${INIR_SYSTEM_RUNTIME_DIR:-/opt/inir/share/quickshell/inir}"' "$$runtime/scripts/inir"; \
-		grep -Fq 'RUNTIME_DIR_SYSTEM_LOCAL="$${INIR_SYSTEM_RUNTIME_DIR_LOCAL:-/opt/inir/share/quickshell/inir}"' "$$runtime/sdata/lib/versioning.sh"; \
+		grep -Fq 'system_config_dir="$${ALIS_SYSTEM_RUNTIME_DIR:-/opt/alis/share/quickshell/alis}"' "$$stage/opt/alis/bin/alis"; \
+		grep -Fq 'system_config_dir="$${ALIS_SYSTEM_RUNTIME_DIR:-/opt/alis/share/quickshell/alis}"' "$$runtime/scripts/alis"; \
+		grep -Fq 'RUNTIME_DIR_SYSTEM_LOCAL="$${ALIS_SYSTEM_RUNTIME_DIR_LOCAL:-/opt/alis/share/quickshell/alis}"' "$$runtime/sdata/lib/versioning.sh"; \
 		grep -Fq 'get_installed_update_strategy 2>/dev/null || true' "$$runtime/setup"; \
-		python3 -c 'import json, pathlib, sys; data=json.loads(pathlib.Path(sys.argv[1]).read_text()); assert data["version"] == pathlib.Path("VERSION").read_text().strip(); assert data["installMode"] == "package-managed"; assert data["updateStrategy"] == "package-manager"; assert data["packageManager"] == "manual"; assert "PREFIX=\"/opt/inir\"" in data["packageUpdateHint"]' "$$runtime/version.json"; \
-		grep -Fxq 'Exec=/opt/inir/bin/alis service restart' "$$stage/opt/inir/share/applications/inir.desktop"; \
-		grep -Fxq 'Exec=/opt/inir/bin/alis settings' "$$stage/opt/inir/share/applications/inir-settings.desktop"
+		python3 -c 'import json, pathlib, sys; data=json.loads(pathlib.Path(sys.argv[1]).read_text()); assert data["version"] == pathlib.Path("VERSION").read_text().strip(); assert data["installMode"] == "package-managed"; assert data["updateStrategy"] == "package-manager"; assert data["packageManager"] == "manual"; assert "PREFIX=\"/opt/alis\"" in data["packageUpdateHint"]' "$$runtime/version.json"; \
+		grep -Fxq 'Exec=/opt/alis/bin/alis service restart' "$$stage/opt/alis/share/applications/alis.desktop"; \
+		grep -Fxq 'Exec=/opt/alis/bin/alis settings' "$$stage/opt/alis/share/applications/alis-settings.desktop"
 
 test-package-docs:
 	@grep -Fq 'for doc in docs/*.md; do' Makefile
-	@grep -Fq 'for doc in "$$srcroot"/docs/*.md; do' distro/arch/inir-shell/PKGBUILD
-	@grep -Fq 'for doc in "$$srcroot"/docs/*.md; do' distro/arch/inir-shell-git/PKGBUILD
+	@grep -Fq 'for doc in "$$srcroot"/docs/*.md; do' distro/arch/alis-shell/PKGBUILD
+	@grep -Fq 'for doc in "$$srcroot"/docs/*.md; do' distro/arch/alis-shell-git/PKGBUILD
 	@grep -Fq 'for doc in docs/*.md; do' nix/package.nix
-	@grep -Fq 'install -Dm644 LICENSE "$$out/share/licenses/inir/LICENSE"' nix/package.nix
+	@grep -Fq 'install -Dm644 LICENSE "$$out/share/licenses/alis/LICENSE"' nix/package.nix
 
 test-package-metadata:
 	@repo_version="$$(tr -d '[:space:]' < VERSION)"; \
-		git_version="$$(grep -m1 '^pkgver=' distro/arch/inir-shell-git/PKGBUILD | cut -d= -f2-)"; \
+		git_version="$$(grep -m1 '^pkgver=' distro/arch/alis-shell-git/PKGBUILD | cut -d= -f2-)"; \
 		case "$$git_version" in \
 			"$$repo_version".r*) ;; \
-			*) printf 'inir-shell-git pkgver seed %s does not follow VERSION %s\n' "$$git_version" "$$repo_version" >&2; exit 1 ;; \
+			*) printf 'alis-shell-git pkgver seed %s does not follow VERSION %s\n' "$$git_version" "$$repo_version" >&2; exit 1 ;; \
 		esac; \
-		srcinfo_version="$$(sed -n 's/^[[:space:]]*pkgver = //p' distro/arch/inir-shell-git/.SRCINFO | head -1)"; \
+		srcinfo_version="$$(sed -n 's/^[[:space:]]*pkgver = //p' distro/arch/alis-shell-git/.SRCINFO | head -1)"; \
 		test "$$srcinfo_version" = "$$git_version"
 
 test-package-hooks:
@@ -129,23 +129,20 @@ test-battery-helper test-thinkfan-helper:
 install-bin:
 	@mkdir -p "$(DESTDIR)$(BINDIR)"
 	@target="$(DESTDIR)$(BINDIR)/alis"; \
-		if [ -L "$$target" ] || { [ -e "$$target" ] && ! grep -Fq "# Alis is the public command while the proven iNiR runtime owns the session." "$$target"; }; then \
+		if [ -L "$$target" ] || { [ -e "$$target" ] && ! grep -Fq "# Canonical CLI and runtime name is Alis." "$$target"; }; then \
 			printf "Refusing to overwrite user-owned Alis launcher: %s\n" "$$target" >&2; exit 1; \
 		fi
-	@sed 's|^system_config_dir=.*|system_config_dir="$${INIR_SYSTEM_RUNTIME_DIR:-$(SHELL_INSTALL_DIR)}"|' \
-		scripts/inir > "$(DESTDIR)$(BINDIR)/inir"
-	@chmod 755 "$(DESTDIR)$(BINDIR)/inir"
 	@install -m755 scripts/alis "$(DESTDIR)$(BINDIR)/alis"
 
 install-shell:
 	@python3 sdata/lib/runtime-payload.py copy --root . --target "$(DESTDIR)$(SHELL_INSTALL_DIR)"
-	@chmod +x "$(DESTDIR)$(SHELL_INSTALL_DIR)/setup" "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts/inir" "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts/alis"
+	@chmod +x "$(DESTDIR)$(SHELL_INSTALL_DIR)/setup" "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts/alis" "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts/alis"
 	@find "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts" -type f \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} +
 	@sed -i \
-		's|^system_config_dir=.*|system_config_dir="$${INIR_SYSTEM_RUNTIME_DIR:-$(SHELL_INSTALL_DIR)}"|' \
-		"$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts/inir"
+		's|^system_config_dir=.*|system_config_dir="$${ALIS_SYSTEM_RUNTIME_DIR:-$(SHELL_INSTALL_DIR)}"|' \
+		"$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts/alis"
 	@sed -i \
-		's|^RUNTIME_DIR_SYSTEM_LOCAL=.*|RUNTIME_DIR_SYSTEM_LOCAL="$${INIR_SYSTEM_RUNTIME_DIR_LOCAL:-$(SHELL_INSTALL_DIR)}"|' \
+		's|^RUNTIME_DIR_SYSTEM_LOCAL=.*|RUNTIME_DIR_SYSTEM_LOCAL="$${ALIS_SYSTEM_RUNTIME_DIR_LOCAL:-$(SHELL_INSTALL_DIR)}"|' \
 		"$(DESTDIR)$(SHELL_INSTALL_DIR)/sdata/lib/versioning.sh"
 	@python3 -c 'from pathlib import Path; p=Path("$(DESTDIR)$(SHELL_INSTALL_DIR)/setup"); t=p.read_text(); m="sync_launcher_from_repo() {\n"; assert t.count(m) == 1, "expected one sync_launcher_from_repo definition"; g=m+"    if [[ \"$$(get_installed_update_strategy 2>/dev/null || true)\" == \"package-manager\" ]]; then\n        return 0\n    fi\n"; p.write_text(t.replace(m, g, 1))'
 	@version="$$(cat VERSION)"; \
@@ -163,17 +160,16 @@ install-native:
 
 install-systemd:
 	@mkdir -p "$(DESTDIR)$(SYSTEMD_USER_DIR)"
-	@sed -e 's|^ExecStart=.*|ExecStart=$(BINDIR)/inir run --session|' \
-		-e 's|^ExecStopPost=-.*|ExecStopPost=-$(BINDIR)/inir cleanup-orphans|' \
-		assets/systemd/inir.service > "$(DESTDIR)$(SYSTEMD_USER_DIR)/inir.service"
-	@chmod 644 "$(DESTDIR)$(SYSTEMD_USER_DIR)/inir.service"
+	@sed -e 's|^ExecStart=.*|ExecStart=$(BINDIR)/alis run --session|' \
+		-e 's|^ExecStopPost=-.*|ExecStopPost=-$(BINDIR)/alis cleanup-orphans|' \
+		assets/systemd/alis.service > "$(DESTDIR)$(SYSTEMD_USER_DIR)/alis.service"
+	@chmod 644 "$(DESTDIR)$(SYSTEMD_USER_DIR)/alis.service"
 
 install-icon:
 	@target="$(DESTDIR)$(ICON_DIR)/alis.svg"; \
 		if [ -L "$$target" ] || { [ -e "$$target" ] && ! cmp -s assets/icons/desktop-symbolic.svg "$$target"; }; then \
 			printf "Refusing to overwrite user-owned Alis icon: %s\n" "$$target" >&2; exit 1; \
 		fi
-	@install -Dm644 assets/icons/desktop-symbolic.svg "$(DESTDIR)$(ICON_DIR)/inir.svg"
 	@install -Dm644 assets/icons/desktop-symbolic.svg "$(DESTDIR)$(ICON_DIR)/alis.svg"
 	@if [ -z "$(DESTDIR)" ]; then gtk-update-icon-cache -q "$(SHAREDIR)/icons/hicolor" 2>/dev/null || true; fi
 
@@ -185,11 +181,9 @@ install-desktop:
 			printf "Refusing to overwrite user-owned Alis desktop entry: %s\n" "$$target" >&2; exit 1; \
 		fi; \
 	done
-	@sed 's|^Exec=alis|Exec=$(BINDIR)/alis|' assets/applications/inir.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/inir.desktop"
-	@sed 's|^Exec=alis|Exec=$(BINDIR)/alis|' assets/applications/inir-settings.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/inir-settings.desktop"
 	@sed 's|^Exec=alis|Exec=$(BINDIR)/alis|' assets/applications/alis.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/alis.desktop"
 	@sed 's|^Exec=alis|Exec=$(BINDIR)/alis|' assets/applications/alis-settings.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/alis-settings.desktop"
-	@chmod 644 "$(DESTDIR)$(APPLICATIONS_DIR)/inir.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/inir-settings.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/alis.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/alis-settings.desktop"
+	@chmod 644 "$(DESTDIR)$(APPLICATIONS_DIR)/alis.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/alis-settings.desktop"
 	@if [ -z "$(DESTDIR)" ]; then update-desktop-database -q "$(APPLICATIONS_DIR)" 2>/dev/null || true; fi
 
 install-docs:
@@ -211,18 +205,18 @@ install: build install-bin install-shell install-native install-systemd install-
 
 uninstall-bin:
 	@target="$(DESTDIR)$(BINDIR)/alis"; \
-		if [ -f "$$target" ] && [ ! -L "$$target" ] && grep -Fq "# Alis is the public command while the proven iNiR runtime owns the session." "$$target"; then \
+		if [ -f "$$target" ] && [ ! -L "$$target" ] && grep -Fq "# Canonical CLI and runtime name is Alis." "$$target"; then \
 			rm -f "$$target"; \
 		elif [ -e "$$target" ] || [ -L "$$target" ]; then \
 			printf "Preserving user-owned Alis launcher: %s\n" "$$target" >&2; \
 		fi
-	@rm -f "$(DESTDIR)$(BINDIR)/inir"
+	@rm -f "$(DESTDIR)$(BINDIR)/alis"
 
 uninstall-shell:
 	@rm -rf "$(DESTDIR)$(SHELL_INSTALL_DIR)"
 
 uninstall-systemd:
-	@rm -f "$(DESTDIR)$(SYSTEMD_USER_DIR)/inir.service"
+	@rm -f "$(DESTDIR)$(SYSTEMD_USER_DIR)/alis.service"
 
 uninstall-icon:
 	@target="$(DESTDIR)$(ICON_DIR)/alis.svg"; \
@@ -231,11 +225,11 @@ uninstall-icon:
 		elif [ -e "$$target" ] || [ -L "$$target" ]; then \
 			printf "Preserving user-owned Alis icon: %s\n" "$$target" >&2; \
 		fi
-	@rm -f "$(DESTDIR)$(ICON_DIR)/inir.svg"
+	@rm -f "$(DESTDIR)$(ICON_DIR)/alis.svg"
 	@if [ -z "$(DESTDIR)" ]; then gtk-update-icon-cache -q "$(SHAREDIR)/icons/hicolor" 2>/dev/null || true; fi
 
 uninstall-desktop:
-	@rm -f "$(DESTDIR)$(APPLICATIONS_DIR)/inir.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/inir-settings.desktop"
+	@rm -f "$(DESTDIR)$(APPLICATIONS_DIR)/alis.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/alis-settings.desktop"
 	@for app in alis.desktop alis-settings.desktop; do \
 		target="$(DESTDIR)$(APPLICATIONS_DIR)/$$app"; \
 		if [ -f "$$target" ] && [ ! -L "$$target" ] && grep -Fxq "X-Alis-Managed=true" "$$target"; then \
