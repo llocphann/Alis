@@ -87,7 +87,9 @@ Item {
     Shortcut {
         sequences: ["Escape"]
         context: Qt.WindowShortcut
-        enabled: root.editing && root.popupPresented
+        // The embedded Abyss path uses the owning Perimeter WindowShortcut.
+        // Retain this for independently hosted Overview only.
+        enabled: root.editing && root.popupPresented && !root.externalEditToolbar
         onActivated: root.handleEscape()
     }
     function focusSearchInput(): void { searchWidget.focusSearchInput() }
