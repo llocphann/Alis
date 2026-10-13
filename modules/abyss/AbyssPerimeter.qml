@@ -709,8 +709,15 @@ Scope {
             }
             Item {
                 anchors.fill: parent
-                focus: aux.presented || clipboardBody.presented || leftPanel.presented || rightPanel.presented || popup.presented
+                focus: aux.presented || clipboardBody.presented || leftPanel.presented
+                    || rightPanel.presented || popup.presented || dashboardBody.presented
                 Keys.onEscapePressed: {
+                    // First Escape cancels the Dashboard edit draft. The next
+                    // key press follows the existing Dashboard close behavior.
+                    if (dashboardBody.contentItem?.item?.editMode
+                            && dashboardBody.contentItem.item.handleEscape()) {
+                        return
+                    }
                     window.closePopup()
                     if (root.utilityKind) root.closeUtility()
                     GlobalStates.closeSidebarLeft()
