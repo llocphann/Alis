@@ -1,60 +1,31 @@
-name: Feature Request
-description: Suggest a Hadalis feature or improvement
+name: Feature or improvement
+description: Suggest an Alis feature or a refinement
 labels: ["enhancement"]
 body:
-  - type: textarea
-    id: problem
+  - type: markdown
     attributes:
-      label: Problem
-      description: What limitation or workflow problem are you trying to solve
-      placeholder: I cannot configure a module differently for a specific perimeter placement
-    validations:
-      required: true
-
-  - type: textarea
-    id: solution
-    attributes:
-      label: Proposed solution
-      description: Describe the behavior you want without assuming a specific implementation
-    validations:
-      required: true
-
+      value: |
+        Search [Alis Issues](https://github.com/llocphann/Alis/issues) before submitting a new request. One outcome per Issue; details should be just enough to implement and verify it.
   - type: dropdown
-    id: scope
+    id: kind
     attributes:
-      label: Scope
-      description: Which Hadalis area is primarily affected
+      label: Type
       options:
-        - Perimeter / module placement
-        - Top or bottom surface
-        - Left or right sidebar
-        - Dock
-        - Settings / configuration
-        - Notifications
-        - Media / weather / status module
-        - System or hardware integration
-        - Install / update / packaging
-        - Developer tooling / documentation
-        - Other
+        - New feature
+        - Rework / optimization
     validations:
       required: true
-
   - type: textarea
-    id: alternatives
+    id: goal
     attributes:
-      label: Alternatives considered
-      description: Other approaches or existing configuration you considered
-
-  - type: checkboxes
-    id: contribution
-    attributes:
-      label: Contribution
-      options:
-        - label: I can submit a pull request against `dev`
-        - label: I can help test this feature
-
+      label: Goal
+      description: What should change for the user?
+    validations:
+      required: true
   - type: textarea
-    id: context
+    id: done
     attributes:
-      label: Additional context
-      description: Mockups, references, hardware/service constraints, or other relevant details
+      label: Done when (optional)
+      description: Essential behavior, constraints or edge cases; attach a reference image if useful.
+    validations:
+      required: false
