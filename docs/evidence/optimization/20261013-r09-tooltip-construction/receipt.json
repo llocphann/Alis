@@ -1,0 +1,12 @@
+{
+  "source_sha": "fe80d90b37c69ef3f11c5e54c93919bdac92a562",
+  "baseline_sha": "28bf63b935fa4da5883b946d9a38fcb06e2e048d",
+  "native_content": "PASS 112 at clean exact source; explicit external-hover adapter, not physical pointer acceptance",
+  "gpu_1x": "PASS 16 checks / 8 strict native QImage and PNG RGBA pairs",
+  "gpu_1_5x": "FAIL final light-custom strict QImage equality; 7/8 captured pairs match; cause not established",
+  "construction_lifetime": "instrumented copied exact source: before-styled30/default30; after-styled30/default0; direct plain10 before+10 after construct and destruct completely",
+  "full_canonical": "NOT_STARTED",
+  "owner_installed": "not verified; installed source remains earlier de8a9db8d",
+  "earliest_profile": "first full-JS trace header has invalid sentinel traceStart; not timing evidence. Frozen raw retained at .git/maintainer-validation/20261013-r09-qml-trace/warm-motion.qtd",
+  "binding_profile": "source28bf63b93 clean, profile header valid; deliberate Dashboard motion100 changed frames; includes profiler overhead and idle swap gaps, not matched optimization measurement"
+}

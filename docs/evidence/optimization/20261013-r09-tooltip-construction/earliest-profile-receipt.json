@@ -1,0 +1,6 @@
+{
+  "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-r09-qml-trace/warm-motion.qtd",
+  "sha256": "2aee616263e5c06b0c59030023574a8f730ad9aaa50fa7508d64b7dacfa4db08",
+  "bytes": 191082757,
+  "classification": "invalid trace header / profiler overhead; no timing or resource claim"
+}

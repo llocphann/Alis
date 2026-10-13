@@ -1,0 +1,15 @@
+  INFO: Launching config: "/tmp/alis-tooltip-content-39lltge1/shell.qml"
+  INFO: Shell ID: "2ab9fe54cb42814d15834be2ef76e5ad" Path ID "2ab9fe54cb42814d15834be2ef76e5ad"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/12ap46rumt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1179410.sock
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-tooltip-content-39lltge1/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-tooltip-content-39lltge1/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-tooltip-content-39lltge1/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: TOOLTIP_LIVE plain {"shown":true,"visible":true,"parent":"item","tipVisible":true,"internal":true}
+  INFO qml: TOOLTIP_LIVE styled {"shown":false,"visible":false,"parent":"null","tipVisible":true,"internal":false}
+ ERROR qml: TOOLTIP_CONTENT_FAIL moving/reanchoring tooltip lost presentation check@qs:@/qs/shell.qml:26
+run@qs:@/qs/shell.qml:46
+expression for onTriggered@qs:@/qs/shell.qml:62

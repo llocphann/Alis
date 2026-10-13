@@ -1,0 +1,17 @@
+# Ordinary motion: tooltip construction and baseline tracing
+
+Source: `fe80d90b37c69ef3f11c5e54c93919bdac92a562`, compared with `28bf63b935fa4da5883b946d9a38fcb06e2e048d`. The shared tooltip base previously constructed a literal default visual subtree even when Styled/Waffle/custom content replaced it. A Component factory now evaluates only if that default binding is used. Direct default content remains available at completed construction, with the same initially null visual parent, live text/position bindings and ownership.
+
+## Qualification
+
+Clean-source native lifecycle PASS112 covers dark/light, default/custom/Styled/Waffle content, fonts/dimensions, rehosting, moving anchors, explicit hover/press adapters, reparenting, hide and content identity. Physical wl_pointer hover is a separate gate. Instrumented copies of both committed source versions construct/destroy30 unused default subtrees for30 old Styled tooltips and zero for30 new Styled tooltips;10 plain defaults on each version still construct and destroy completely. This is a structural count, not measured RAM/CPU savings.
+
+At1x,8 paired tooltip bodies in the same native Qt scene pass16 checks and exact QImage/PNG RGBA equality. At1.5x the final light-custom pair FAILs strict equality;7 of8 captures match. All raw captures and the failure remain. Cause is not established. No epsilon, image normalization, pixel removal or oracle weakening was applied. Full canonical is not run, and installed desktop/multi-output/Owner acceptance are separate.
+
+Earlier separate-process captures were inconsistent: the first fixture also sampled before the260ms contextual animation completed. Subsequent settled captures still differed by a few channel values. The paired scene resolves the1x comparison but does not turn the1.5 FAIL into PASS. Early native tests incorrectly assumed an initial visual parent and a shown property on Waffle content; baseline reproductions exposed those fixture mistakes. The final lifecycle test preserves null parenting and uses Waffle's real presentation visibility. The initial candidate's different default parent was corrected before commit.
+
+## Baseline root-cause clues, with limits
+
+The valid binding/creating/scenegraph Qt profile is an isolated local GPU/private no-focus Niri run at28bf63b93. It contains100 deliberately changed Dashboard frames, ordinary Popup wl_pointer transfers and programmatic Dashboard reversals, with Waves/Companion/Spectrum disabled. Dashboard's first post-expiry content activation includes a152ms inclusive binding cascade with heavy component construction. Popup motion repeatedly invalidates BodyHost geometry/shoulders, controller records and native Regions. Inclusive durations overlap and profiler instrumentation adds overhead; these identify research paths rather than a measured resource share or sole cause of owner warm stutter.
+
+The long126/128ms Dashboard swap intervals coincide with progress0 and an idle-to-open request; they cannot be reported as active animation frame drops. Warm heartbeat has no gap over100ms. The initial full-JavaScript trace has an invalid start sentinel and is retained locally with its source/hash; it is not timing evidence. Native/owner smoothness, matched before/after hardware counters and active interval classification are not established by this partial source milestone. No whole-task completion or percentage improvement is claimed.

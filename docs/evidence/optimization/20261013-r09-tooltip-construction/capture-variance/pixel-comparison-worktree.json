@@ -1,0 +1,98 @@
+[
+  {
+    "name": "dark-custom.png",
+    "before": [
+      122,
+      25
+    ],
+    "after": [
+      122,
+      25
+    ],
+    "exact_rgba": true
+  },
+  {
+    "name": "dark-plain.png",
+    "before": [
+      231,
+      25
+    ],
+    "after": [
+      231,
+      25
+    ],
+    "exact_rgba": true
+  },
+  {
+    "name": "dark-styled.png",
+    "before": [
+      574,
+      37
+    ],
+    "after": [
+      574,
+      37
+    ],
+    "exact_rgba": false
+  },
+  {
+    "name": "dark-waffle.png",
+    "before": [
+      231,
+      35
+    ],
+    "after": [
+      231,
+      35
+    ],
+    "exact_rgba": true
+  },
+  {
+    "name": "light-custom.png",
+    "before": [
+      122,
+      25
+    ],
+    "after": [
+      122,
+      25
+    ],
+    "exact_rgba": true
+  },
+  {
+    "name": "light-plain.png",
+    "before": [
+      231,
+      25
+    ],
+    "after": [
+      231,
+      25
+    ],
+    "exact_rgba": true
+  },
+  {
+    "name": "light-styled.png",
+    "before": [
+      574,
+      37
+    ],
+    "after": [
+      574,
+      37
+    ],
+    "exact_rgba": false
+  },
+  {
+    "name": "light-waffle.png",
+    "before": [
+      231,
+      35
+    ],
+    "after": [
+      231,
+      35
+    ],
+    "exact_rgba": true
+  }
+]

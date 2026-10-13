@@ -1,0 +1,1083 @@
+{
+  "source_sha": "28bf63b935fa4da5883b946d9a38fcb06e2e048d",
+  "dirty": "",
+  "scope": "local GPU private no-focus Niri; actual popup wl_pointer, programmatic Dashboard; Waves/Companion/Spectrum off; Qt profiler adds overhead; not owner or matched performance acceptance",
+  "rows": [
+    {
+      "stage": "profile-start",
+      "receipt": {
+        "started": 1791905065214
+      }
+    },
+    {
+      "stage": "0/0/resources",
+      "timeMs": 1791905065285
+    },
+    {
+      "stage": "0/0/clock",
+      "timeMs": 1791905065768
+    },
+    {
+      "stage": "0/0/weather",
+      "timeMs": 1791905066199
+    },
+    {
+      "stage": "0/0/resources",
+      "timeMs": 1791905066633
+    },
+    {
+      "stage": "0/1/resources",
+      "timeMs": 1791905067051
+    },
+    {
+      "stage": "0/1/clock",
+      "timeMs": 1791905067466
+    },
+    {
+      "stage": "0/1/weather",
+      "timeMs": 1791905067900
+    },
+    {
+      "stage": "0/1/resources",
+      "timeMs": 1791905068334
+    },
+    {
+      "stage": "0/2/resources",
+      "timeMs": 1791905068768
+    },
+    {
+      "stage": "0/2/clock",
+      "timeMs": 1791905069183
+    },
+    {
+      "stage": "0/2/weather",
+      "timeMs": 1791905069618
+    },
+    {
+      "stage": "0/2/resources",
+      "timeMs": 1791905070052
+    },
+    {
+      "stage": "dashboard/0",
+      "receipt": {
+        "open": true,
+        "t": 1791905071218
+      }
+    },
+    {
+      "stage": "dashboard/1",
+      "receipt": {
+        "open": false,
+        "t": 1791905071664
+      }
+    },
+    {
+      "stage": "dashboard/2",
+      "receipt": {
+        "open": true,
+        "t": 1791905072108
+      }
+    },
+    {
+      "stage": "dashboard/3",
+      "receipt": {
+        "open": false,
+        "t": 1791905072549
+      }
+    },
+    {
+      "stage": "dashboard/4",
+      "receipt": {
+        "open": true,
+        "t": 1791905072992
+      }
+    },
+    {
+      "stage": "dashboard/5",
+      "receipt": {
+        "open": false,
+        "t": 1791905073434
+      }
+    },
+    {
+      "stage": "profile-stop",
+      "receipt": {
+        "stopped": 1791905074627
+      }
+    }
+  ],
+  "traces": [
+    {
+      "stage": "popups/0",
+      "trace": [
+        {
+          "output": "winit",
+          "sample": "QQuickWindow frameSwapped wall-clock intervals (ms)",
+          "count": 239,
+          "exhausted": false,
+          "min": 4,
+          "p50": 17,
+          "p95": 31,
+          "p99": 185,
+          "max": 440,
+          "mean": 21.594142259414227,
+          "over16ms": 144,
+          "over33ms": 9,
+          "idleGapsOver100ms": 3,
+          "slowEvents": [
+            {
+              "timestampMs": 1791905065752,
+              "intervalMs": 185,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": true,
+              "popupMotion": [
+                {
+                  "kind": "resources",
+                  "revealProgress": 1,
+                  "requestedVisible": true
+                }
+              ],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 0,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            },
+            {
+              "timestampMs": 1791905066227,
+              "intervalMs": 42,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": true,
+              "popupMotion": [
+                {
+                  "kind": "weather",
+                  "revealProgress": 0.0007278518518518684,
+                  "requestedVisible": true
+                },
+                {
+                  "kind": "clock",
+                  "revealProgress": 1,
+                  "requestedVisible": false
+                }
+              ],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 0,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            },
+            {
+              "timestampMs": 1791905066386,
+              "intervalMs": 36,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": true,
+              "popupMotion": [
+                {
+                  "kind": "weather",
+                  "revealProgress": 0.6514611851851851,
+                  "requestedVisible": true
+                },
+                {
+                  "kind": "clock",
+                  "revealProgress": 0.9554425185185185,
+                  "requestedVisible": false
+                }
+              ],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 0,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            },
+            {
+              "timestampMs": 1791905066653,
+              "intervalMs": 34,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": true,
+              "popupMotion": [
+                {
+                  "kind": "weather",
+                  "revealProgress": 1,
+                  "requestedVisible": false
+                },
+                {
+                  "kind": "resources",
+                  "revealProgress": 0.0007278518518518684,
+                  "requestedVisible": true
+                }
+              ],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 0,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            },
+            {
+              "timestampMs": 1791905067056,
+              "intervalMs": 34,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": true,
+              "popupMotion": [
+                {
+                  "kind": "resources",
+                  "revealProgress": 1,
+                  "requestedVisible": true
+                }
+              ],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 0,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            },
+            {
+              "timestampMs": 1791905067476,
+              "intervalMs": 393,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": true,
+              "popupMotion": [
+                {
+                  "kind": "clock",
+                  "revealProgress": 0,
+                  "requestedVisible": true
+                },
+                {
+                  "kind": "resources",
+                  "revealProgress": 1,
+                  "requestedVisible": false
+                }
+              ],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 0,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            },
+            {
+              "timestampMs": 1791905068342,
+              "intervalMs": 36,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": true,
+              "popupMotion": [
+                {
+                  "kind": "resources",
+                  "revealProgress": 0,
+                  "requestedVisible": true
+                },
+                {
+                  "kind": "weather",
+                  "revealProgress": 1,
+                  "requestedVisible": false
+                }
+              ],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 0,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            },
+            {
+              "timestampMs": 1791905069193,
+              "intervalMs": 440,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": true,
+              "popupMotion": [
+                {
+                  "kind": "resources",
+                  "revealProgress": 1,
+                  "requestedVisible": false
+                },
+                {
+                  "kind": "clock",
+                  "revealProgress": 0,
+                  "requestedVisible": true
+                }
+              ],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 0,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            },
+            {
+              "timestampMs": 1791905070066,
+              "intervalMs": 42,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": true,
+              "popupMotion": [
+                {
+                  "kind": "weather",
+                  "revealProgress": 1,
+                  "requestedVisible": false
+                },
+                {
+                  "kind": "resources",
+                  "revealProgress": 0.0007278518518518684,
+                  "requestedVisible": true
+                }
+              ],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 0,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            }
+          ],
+          "panelNonzeroFrames": 0,
+          "panelProgressChangedFrames": 0,
+          "popupOpenFrames": 240,
+          "barProgressChangedFrames": 0,
+          "heartbeatSampleCount": 104,
+          "heartbeatOver100Ms": 1,
+          "heartbeatMaxIntervalMs": 128,
+          "heartbeatLateEvents": [
+            {
+              "timestampMs": 1791905065759,
+              "intervalMs": 128
+            }
+          ],
+          "heartbeatHistory": [
+            {
+              "timestampMs": 1791905065298,
+              "intervalMs": null
+            },
+            {
+              "timestampMs": 1791905065349,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1791905065392,
+              "intervalMs": 43
+            },
+            {
+              "timestampMs": 1791905065440,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905065488,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905065536,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905065583,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905065631,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905065759,
+              "intervalMs": 128
+            },
+            {
+              "timestampMs": 1791905065803,
+              "intervalMs": 44
+            },
+            {
+              "timestampMs": 1791905065851,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905065900,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905065947,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905065995,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905066043,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905066090,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905066137,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905066185,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905066238,
+              "intervalMs": 53
+            },
+            {
+              "timestampMs": 1791905066284,
+              "intervalMs": 46
+            },
+            {
+              "timestampMs": 1791905066331,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905066390,
+              "intervalMs": 59
+            },
+            {
+              "timestampMs": 1791905066428,
+              "intervalMs": 38
+            },
+            {
+              "timestampMs": 1791905066474,
+              "intervalMs": 46
+            },
+            {
+              "timestampMs": 1791905066522,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905066569,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905066615,
+              "intervalMs": 46
+            },
+            {
+              "timestampMs": 1791905066666,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1791905066714,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905066763,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905066818,
+              "intervalMs": 55
+            },
+            {
+              "timestampMs": 1791905066859,
+              "intervalMs": 41
+            },
+            {
+              "timestampMs": 1791905066905,
+              "intervalMs": 46
+            },
+            {
+              "timestampMs": 1791905066952,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905067001,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905067070,
+              "intervalMs": 69
+            },
+            {
+              "timestampMs": 1791905067118,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905067167,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905067214,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905067263,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905067310,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905067359,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905067407,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905067454,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905067505,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1791905067552,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905067602,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1791905067649,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905067697,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905067745,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905067791,
+              "intervalMs": 46
+            },
+            {
+              "timestampMs": 1791905067839,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905067912,
+              "intervalMs": 73
+            },
+            {
+              "timestampMs": 1791905067961,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905068009,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905068057,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905068104,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905068155,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1791905068199,
+              "intervalMs": 44
+            },
+            {
+              "timestampMs": 1791905068246,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905068293,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905068345,
+              "intervalMs": 52
+            },
+            {
+              "timestampMs": 1791905068392,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905068441,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905068488,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905068537,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905068586,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905068630,
+              "intervalMs": 44
+            },
+            {
+              "timestampMs": 1791905068678,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905068730,
+              "intervalMs": 52
+            },
+            {
+              "timestampMs": 1791905068790,
+              "intervalMs": 60
+            },
+            {
+              "timestampMs": 1791905068837,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905068885,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905068933,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905068981,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905069029,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905069076,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905069125,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905069173,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905069224,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1791905069271,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905069321,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1791905069368,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905069416,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905069463,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905069509,
+              "intervalMs": 46
+            },
+            {
+              "timestampMs": 1791905069557,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905069631,
+              "intervalMs": 74
+            },
+            {
+              "timestampMs": 1791905069679,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905069728,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905069775,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905069823,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905069872,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905069917,
+              "intervalMs": 45
+            },
+            {
+              "timestampMs": 1791905069965,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905070012,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905070066,
+              "intervalMs": 54
+            },
+            {
+              "timestampMs": 1791905070111,
+              "intervalMs": 45
+            },
+            {
+              "timestampMs": 1791905070160,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905070207,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905070256,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905070305,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905070349,
+              "intervalMs": 44
+            },
+            {
+              "timestampMs": 1791905070397,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905070438,
+              "intervalMs": 41
+            }
+          ],
+          "heartbeatHistoryExhausted": false,
+          "caveat": "swap wall-clock gaps include idle gaps; 50ms Qt timer lateness is only event-loop correlation, not GPU/compositor proof"
+        }
+      ]
+    },
+    {
+      "stage": "dashboard",
+      "trace": [
+        {
+          "output": "winit",
+          "sample": "QQuickWindow frameSwapped wall-clock intervals (ms)",
+          "count": 136,
+          "exhausted": false,
+          "min": 1,
+          "p50": 17,
+          "p95": 26,
+          "p99": 126,
+          "max": 128,
+          "mean": 18.455882352941178,
+          "over16ms": 76,
+          "over33ms": 4,
+          "idleGapsOver100ms": 2,
+          "slowEvents": [
+            {
+              "timestampMs": 1791905072113,
+              "intervalMs": 126,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": false,
+              "popupMotion": [],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 0,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            },
+            {
+              "timestampMs": 1791905072528,
+              "intervalMs": 34,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": false,
+              "popupMotion": [],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 1,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            },
+            {
+              "timestampMs": 1791905072590,
+              "intervalMs": 35,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": false,
+              "popupMotion": [],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 0.7126098284383933,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            },
+            {
+              "timestampMs": 1791905073000,
+              "intervalMs": 128,
+              "barVisible": true,
+              "barProgress": 1,
+              "liquidPopupsOpen": false,
+              "popupMotion": [],
+              "leftPanelProgress": 0,
+              "rightPanelProgress": 0,
+              "dashboardProgress": 0,
+              "controlPanelProgress": 0,
+              "settingsProgress": 0
+            }
+          ],
+          "panelNonzeroFrames": 119,
+          "panelProgressChangedFrames": 100,
+          "popupOpenFrames": 0,
+          "barProgressChangedFrames": 0,
+          "heartbeatSampleCount": 54,
+          "heartbeatOver100Ms": 0,
+          "heartbeatMaxIntervalMs": 64,
+          "heartbeatLateEvents": [],
+          "heartbeatHistory": [
+            {
+              "timestampMs": 1791905071257,
+              "intervalMs": null
+            },
+            {
+              "timestampMs": 1791905071319,
+              "intervalMs": 62
+            },
+            {
+              "timestampMs": 1791905071383,
+              "intervalMs": 64
+            },
+            {
+              "timestampMs": 1791905071431,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905071479,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905071527,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905071574,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905071622,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905071672,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1791905071719,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905071768,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905071815,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905071863,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905071911,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905071959,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905072006,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905072054,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905072112,
+              "intervalMs": 58
+            },
+            {
+              "timestampMs": 1791905072151,
+              "intervalMs": 39
+            },
+            {
+              "timestampMs": 1791905072199,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905072247,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905072294,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905072346,
+              "intervalMs": 52
+            },
+            {
+              "timestampMs": 1791905072391,
+              "intervalMs": 45
+            },
+            {
+              "timestampMs": 1791905072422,
+              "intervalMs": 31
+            },
+            {
+              "timestampMs": 1791905072454,
+              "intervalMs": 32
+            },
+            {
+              "timestampMs": 1791905072507,
+              "intervalMs": 53
+            },
+            {
+              "timestampMs": 1791905072567,
+              "intervalMs": 60
+            },
+            {
+              "timestampMs": 1791905072615,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905072662,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905072711,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905072759,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905072806,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905072855,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905072902,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905072950,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905073001,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1791905073046,
+              "intervalMs": 45
+            },
+            {
+              "timestampMs": 1791905073096,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1791905073143,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1791905073193,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1791905073242,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905073287,
+              "intervalMs": 45
+            },
+            {
+              "timestampMs": 1791905073329,
+              "intervalMs": 42
+            },
+            {
+              "timestampMs": 1791905073379,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1791905073434,
+              "intervalMs": 55
+            },
+            {
+              "timestampMs": 1791905073484,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1791905073532,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905073580,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905073628,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905073676,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905073725,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1791905073771,
+              "intervalMs": 46
+            },
+            {
+              "timestampMs": 1791905073819,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1791905073867,
+              "intervalMs": 48
+            }
+          ],
+          "heartbeatHistoryExhausted": false,
+          "caveat": "swap wall-clock gaps include idle gaps; 50ms Qt timer lateness is only event-loop correlation, not GPU/compositor proof"
+        }
+      ]
+    }
+  ],
+  "profiler_exit": 0
+}

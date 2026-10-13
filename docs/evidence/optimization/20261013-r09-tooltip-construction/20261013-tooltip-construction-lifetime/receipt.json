@@ -1,0 +1,18 @@
+{
+  "before_sha": "28bf63b935fa4da5883b946d9a38fcb06e2e048d",
+  "after_sha": "fe80d90b37c69ef3f11c5e54c93919bdac92a562",
+  "copied_source_instrumented": "only default content constructor/destructor logs added",
+  "native_exit": 0,
+  "counts": {
+    "DEFAULT_CTOR": {
+      "before-styled": 30,
+      "before-plain": 10,
+      "after-plain": 10
+    },
+    "DEFAULT_DTOR": {
+      "before-styled": 30,
+      "before-plain": 10,
+      "after-plain": 10
+    }
+  }
+}

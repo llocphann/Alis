@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-tooltip-content-tgj3f85v/shell.qml"
+  INFO: Shell ID: "28be226de048f461d1edd1361b216ad7" Path ID "28be226de048f461d1edd1361b216ad7"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/d0fpegrumt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1185805.sock
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-tooltip-content-tgj3f85v/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-tooltip-content-tgj3f85v/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-tooltip-content-tgj3f85v/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: TOOLTIP_CONTENT_PASS 112 default/custom/styled/Waffle, dark/light, dimensions/fonts, moving anchor, press/reparent/hide and identity

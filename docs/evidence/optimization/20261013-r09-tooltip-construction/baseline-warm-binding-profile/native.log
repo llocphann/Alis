@@ -1,0 +1,98 @@
+  INFO: Launching config: "/tmp/alis-r09-qml-profile-3ehgfmak/shell.qml"
+  INFO: Shell ID: "c3e7f8aa53cf0e223ccfdc3033aa1745" Path ID "c3e7f8aa53cf0e223ccfdc3033aa1745"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/zs2pisqumt/log.qslog"
+QML debugging is enabled. Only use this in a safe environment.
+ DEBUG: QML Debugger: Waiting for connection on port 38005...
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1170007.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-r09-qml-profile-3ehgfmak/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-r09-qml-profile-3ehgfmak/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-r09-qml-profile-3ehgfmak/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-r09-qml-profile-3ehgfmak/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-r09-qml-profile-3ehgfmak/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f17b9d74960)
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: [Abyss] Cold Niri perimeter re-created after first native frame
+  INFO qml: [Weather] Getting location from IP...
+  INFO qml: [Weather] Location: [redacted]
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/alis-r09-qml-profile-3ehgfmak/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/alis-r09-qml-profile-3ehgfmak/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+ DEBUG: Profiling started.
+ DEBUG qml: [ShellUpdates] Loading repo path from version.json...
+ DEBUG qml: [ShellUpdates] No repo_path in version.json, searching for repository...
+ DEBUG qml: [ShellUpdates] Repository not found, using config dir: /tmp/alis-r09-qml-profile-3ehgfmak/.
+ DEBUG qml: [ShellUpdates] Update feature will not be available
+ DEBUG qml: [ShellUpdates] Git available: false
+  INFO qml: [Weather] Updated: 27°C [redacted]
+ DEBUG: Profiling ended.
+  WARN scene: @modules/bar/StyledPopup.qml[616:9]: Unable to assign [undefined] to QuickshellScreenInfo*
+  WARN scene: @modules/bar/StyledPopup.qml[319:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[616:9]: Unable to assign [undefined] to QuickshellScreenInfo*
+  WARN scene: @modules/bar/StyledPopup.qml[319:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[616:9]: Unable to assign [undefined] to QuickshellScreenInfo*
+  WARN scene: @modules/bar/StyledPopup.qml[319:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/ClippedFilledCircularProgress.qml[44:9]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/ClippedFilledCircularProgress.qml[44:9]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/ClippedFilledCircularProgress.qml[44:9]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/ClippedFilledCircularProgress.qml[44:9]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/ResourceUsageMonitor.qml[17:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/GlassBackground.qml[18:5]: Unable to assign [undefined] to QString
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/common/widgets/PopupToolTip.qml[173:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/abyss/bar/AbyssBar.qml[96:17]: Unable to assign [undefined] to int
+  WARN scene: @modules/abyss/bar/AbyssBar.qml[98:17]: Unable to assign [undefined] to int
+  WARN scene: @modules/abyss/bar/AbyssBar.qml[126:13]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[331:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/abyss/bar/AbyssBar.qml[96:17]: Unable to assign [undefined] to int
+  WARN scene: @modules/abyss/bar/AbyssBar.qml[98:17]: Unable to assign [undefined] to int
+  WARN scene: @modules/abyss/bar/AbyssBar.qml[126:13]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[331:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/abyss/bar/AbyssBar.qml[96:17]: Unable to assign [undefined] to int
+  WARN scene: @modules/abyss/bar/AbyssBar.qml[98:17]: Unable to assign [undefined] to int
+  WARN scene: @modules/abyss/bar/AbyssBar.qml[126:13]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[331:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[146:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[281:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/StyledPopup.qml[401:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[623:9]: Unable to assign [undefined] to qs::wayland::layershell::WlrLayer::Enum
+  WARN scene: @modules/bar/StyledPopup.qml[35:5]: Unable to assign [undefined] to QQuickItem*
+  WARN scene: @modules/bar/StyledPopup.qml[146:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[281:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/StyledPopup.qml[401:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[623:9]: Unable to assign [undefined] to qs::wayland::layershell::WlrLayer::Enum
+  WARN scene: @modules/bar/StyledPopup.qml[35:5]: Unable to assign [undefined] to QQuickItem*
+  WARN scene: @modules/bar/StyledPopup.qml[146:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[281:5]: Unable to assign [undefined] to double
+  WARN scene: @modules/bar/StyledPopup.qml[401:5]: Unable to assign [undefined] to bool
+  WARN scene: @modules/bar/StyledPopup.qml[623:9]: Unable to assign [undefined] to qs::wayland::layershell::WlrLayer::Enum
+  WARN scene: @modules/bar/StyledPopup.qml[35:5]: Unable to assign [undefined] to QQuickItem*

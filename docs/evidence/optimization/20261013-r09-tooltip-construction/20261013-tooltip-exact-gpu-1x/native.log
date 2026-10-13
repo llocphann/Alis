@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-tooltip-paired-q5zdowlx/shell.qml"
+  INFO: Shell ID: "76ad67664ab33145286d55af1ee703e0" Path ID "76ad67664ab33145286d55af1ee703e0"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/jkmpxxrumt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1195627.sock
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-tooltip-paired-q5zdowlx/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-tooltip-paired-q5zdowlx/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-tooltip-paired-q5zdowlx/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: TOOLTIP_PAIRED_GPU_PASS 16 8 exact native QImage pairs

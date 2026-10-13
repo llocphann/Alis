@@ -1,0 +1,16 @@
+  INFO: Launching config: "/tmp/alis-tooltip-content-mrtt5fkc/shell.qml"
+  INFO: Shell ID: "65b3add239e109a1c9ffe14edbd9b26b" Path ID "65b3add239e109a1c9ffe14edbd9b26b"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/hlbpt9rumt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1181405.sock
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-tooltip-content-mrtt5fkc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-tooltip-content-mrtt5fkc/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: TOOLTIP_SHOW_STATE plain {"hover":true,"internal":true,"suppressed":false,"visible":true,"parentVisible":true,"shown":true}
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-tooltip-content-mrtt5fkc/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: TOOLTIP_SHOW_STATE styled {"hover":true,"internal":true,"suppressed":false,"visible":true,"parentVisible":true,"shown":true}
+  INFO qml: TOOLTIP_SHOW_STATE waffle {"hover":true,"internal":true,"suppressed":false,"visible":true,"parentVisible":true}
+ ERROR qml: TOOLTIP_CONTENT_FAIL QtQuickTest::fail tryVerify@qrc:/qt-project.org/imports/QtTest/TestCase.qml:603
+run@qs:@/qs/shell.qml:41
+expression for onTriggered@qs:@/qs/shell.qml:66

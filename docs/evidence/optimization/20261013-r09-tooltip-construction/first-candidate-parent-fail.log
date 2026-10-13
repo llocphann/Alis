@@ -1,0 +1,13 @@
+  INFO: Launching config: "/tmp/alis-tooltip-content-cvzovan0/shell.qml"
+  INFO: Shell ID: "f126000f3a42960086a756b3a178a117" Path ID "f126000f3a42960086a756b3a178a117"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/9g8pa3rumt/log.qslog"
+  INFO: Configuration Loaded
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1177326.sock
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-tooltip-content-cvzovan0/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-tooltip-content-cvzovan0/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-tooltip-content-cvzovan0/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+ ERROR qml: TOOLTIP_CONTENT_FAIL initial content ownership changed check@qs:@/qs/shell.qml:26
+run@qs:@/qs/shell.qml:35
+expression for onTriggered@qs:@/qs/shell.qml:62
