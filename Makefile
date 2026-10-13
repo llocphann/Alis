@@ -129,8 +129,8 @@ test-battery-helper test-thinkfan-helper:
 install-bin:
 	@mkdir -p "$(DESTDIR)$(BINDIR)"
 	@target="$(DESTDIR)$(BINDIR)/alis"; \
-		if [ -L "$target" ] || { [ -e "$target" ] && ! grep -Fq "# Alis is the public command while the proven iNiR runtime owns the session." "$target"; }; then \
-			printf "Refusing to overwrite user-owned Alis launcher: %s\n" "$target" >&2; exit 1; \
+		if [ -L "$$target" ] || { [ -e "$$target" ] && ! grep -Fq "# Alis is the public command while the proven iNiR runtime owns the session." "$$target"; }; then \
+			printf "Refusing to overwrite user-owned Alis launcher: %s\n" "$$target" >&2; exit 1; \
 		fi
 	@sed 's|^system_config_dir=.*|system_config_dir="$${INIR_SYSTEM_RUNTIME_DIR:-$(SHELL_INSTALL_DIR)}"|' \
 		scripts/inir > "$(DESTDIR)$(BINDIR)/inir"
@@ -198,10 +198,10 @@ install: build install-bin install-shell install-native install-systemd install-
 
 uninstall-bin:
 	@target="$(DESTDIR)$(BINDIR)/alis"; \
-		if [ -f "$target" ] && [ ! -L "$target" ] && grep -Fq "# Alis is the public command while the proven iNiR runtime owns the session." "$target"; then \
-			rm -f "$target"; \
-		elif [ -e "$target" ] || [ -L "$target" ]; then \
-			printf "Preserving user-owned Alis launcher: %s\n" "$target" >&2; \
+		if [ -f "$$target" ] && [ ! -L "$$target" ] && grep -Fq "# Alis is the public command while the proven iNiR runtime owns the session." "$$target"; then \
+			rm -f "$$target"; \
+		elif [ -e "$$target" ] || [ -L "$$target" ]; then \
+			printf "Preserving user-owned Alis launcher: %s\n" "$$target" >&2; \
 		fi
 	@rm -f "$(DESTDIR)$(BINDIR)/inir"
 
