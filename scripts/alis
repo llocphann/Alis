@@ -7,7 +7,7 @@ set -euo pipefail
 case "${1:-}" in
     run|start|restart)
         if command -v systemctl >/dev/null 2>&1 &&
-           systemctl --user is-active --quiet inir.service; then
+           systemctl --user is-active --quiet alis.service; then
             printf '%s\n' 'The previous shell service is still active. Refusing a second Alis session; complete the canonical service cutover.' >&2
             exit 65
         fi
