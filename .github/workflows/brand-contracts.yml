@@ -15,6 +15,8 @@ on:
       - "nix/home-module.nix"
       - "nix/nixos-module.nix"
       - "modules/settings/About.qml"
+      - "assets/icons/alis-owner-avatar.jpg"
+      - "scripts/test-brand-about-identity.py"
       - "modules/waffle/settings/pages/WAboutPage.qml"
       - "distro/arch/inir-shell/*.install"
       - "distro/arch/inir-shell-git/*.install"
@@ -74,6 +76,9 @@ jobs:
       - name: R5 single-owner ShellId and service compatibility
         shell: bash
         run: bash scripts/test-brand-single-owner.sh
+      - name: Material and Waffle About identity and owner avatar
+        shell: bash
+        run: python3 scripts/test-brand-about-identity.py
       - name: Public CLI, menu IDs and staged Make ownership
         shell: bash
         run: bash scripts/test-brand-entrypoints.sh

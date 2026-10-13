@@ -144,7 +144,7 @@ ContentPage {
                         height: 60
                         sourceSize.width: 60
                         sourceSize.height: 60
-                        source: Quickshell.shellPath("assets/icons/sf.jpg")
+                        source: Quickshell.shellPath("assets/icons/alis-owner-avatar.jpg")
                         fillMode: Image.PreserveAspectFit
                         layer.enabled: Appearance.effectsEnabled
 
@@ -292,6 +292,46 @@ ContentPage {
         title: Translation.tr("Based on")
 
         SettingsGroup {
+            // Preserve upstream iNiR attribution under Based on, not as the
+            // primary product identity.
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 20
+                Layout.topMargin: 10
+                Layout.bottomMargin: 10
+
+                Item {
+                    width: 64
+                    height: 64
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        text: "widgets"
+                        iconSize: 56
+                        color: Appearance.colors.colPrimary
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.alignment: Qt.AlignVCenter
+
+                    StyledText {
+                        text: "iNiR"
+                        font.pixelSize: Appearance.font.pixelSize.title
+                    }
+
+                    StyledText {
+                        text: "[https://github.com/snowarch/iNiR](https://github.com/snowarch/iNiR)"
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: Appearance.colors.colPrimary
+                        textFormat: Text.MarkdownText
+                        onLinkActivated: (link) => Qt.openUrlExternally(link)
+
+                        PointingHandLinkHover {}
+                    }
+                }
+            }
+
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 20
@@ -351,7 +391,7 @@ ContentPage {
 
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("This project is a fork of end-4's illogical-impulse, adapted for the Niri compositor.")
+                text: "Alis builds on iNiR's Niri/Quickshell foundation and end-4's illogical-impulse."
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -361,6 +401,12 @@ ContentPage {
                 Layout.fillWidth: true
                 Layout.topMargin: 10
                 spacing: 5
+
+                RippleButtonWithIcon {
+                    materialIcon: "open_in_new"
+                    mainText: "iNiR"
+                    onClicked: Qt.openUrlExternally("https://github.com/snowarch/iNiR")
+                }
 
                 RippleButtonWithIcon {
                     materialIcon: "open_in_new"

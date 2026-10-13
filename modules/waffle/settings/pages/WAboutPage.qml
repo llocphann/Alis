@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import qs.services
@@ -27,31 +28,49 @@ WSettingsPage {
             Layout.bottomMargin: 4
             spacing: 18
             
-            MascotImage {
-                id: aboutMascot
-                Layout.preferredWidth: 116
-                Layout.preferredHeight: 116
-                surface: "about"
-                pose: "about-confident"
-            }
-
+            // Shared offline Alis owner avatar. The file is kept in the repo,
+            // so About never depends on an external image request.
             Rectangle {
-                Layout.preferredWidth: 72
-                Layout.preferredHeight: 72
+                Layout.preferredWidth: 84
+                Layout.preferredHeight: 84
                 Layout.alignment: Qt.AlignVCenter
-                visible: !aboutMascot.active
-                radius: Looks.radius.medium
-                color: Looks.colors.accent
+                radius: width / 2
+                color: "transparent"
+                border.width: 2
+                border.color: Looks.colors.accent
+
+                Image {
+                    id: aboutAvatar
+                    anchors.centerIn: parent
+                    width: 76
+                    height: 76
+                    source: Quickshell.shellPath("assets/icons/alis-owner-avatar.jpg")
+                    sourceSize.width: 76
+                    sourceSize.height: 76
+                    fillMode: Image.PreserveAspectCrop
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        maskEnabled: true
+                        maskSource: ShaderEffectSource {
+                            sourceItem: Rectangle {
+                                width: 76
+                                height: 76
+                                radius: 38
+                            }
+                        }
+                    }
+                }
 
                 WText {
                     anchors.centerIn: parent
+                    visible: aboutAvatar.status !== Image.Ready
                     text: "Al"
                     font.pixelSize: Looks.font.pixelSize.xlarger
                     font.weight: Looks.font.weight.stronger
-                    color: Looks.colors.accentFg
+                    color: Looks.colors.accent
                 }
             }
-            
+
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 4
@@ -147,14 +166,6 @@ WSettingsPage {
         }
         
         WSettingsButton {
-            label: Translation.tr("Original Project (end-4)")
-            description: "github.com/end-4/dots-hyprland"
-            icon: "open"
-            buttonText: Translation.tr("Open")
-            onButtonClicked: Qt.openUrlExternally("https://github.com/end-4/dots-hyprland")
-        }
-        
-        WSettingsButton {
             label: Translation.tr("Quickshell Documentation")
             description: "quickshell.outfoxxed.me"
             icon: "globe-search"
@@ -163,27 +174,43 @@ WSettingsPage {
         }
     }
     
-    // Credits
+    // Explicit upstream credits: the main brand and links above remain Alis.
     WSettingsCard {
-        title: Translation.tr("Credits")
+        title: Translation.tr("Based on")
         icon: "people"
-        
+
+        WSettingsButton {
+            label: "iNiR"
+            description: "github.com/snowarch/iNiR"
+            icon: "open"
+            buttonText: Translation.tr("Open")
+            onButtonClicked: Qt.openUrlExternally("https://github.com/snowarch/iNiR")
+        }
+
+        WSettingsButton {
+            label: "illogical-impulse"
+            description: "github.com/end-4/dots-hyprland"
+            icon: "open"
+            buttonText: Translation.tr("Open")
+            onButtonClicked: Qt.openUrlExternally("https://github.com/end-4/dots-hyprland")
+        }
+
         ColumnLayout {
             Layout.fillWidth: true
             Layout.leftMargin: 0
             Layout.rightMargin: 0
             Layout.bottomMargin: 6
             spacing: 12
-            
+
             WText {
                 Layout.fillWidth: true
-                text: Translation.tr("Based on illogical-impulse by end-4, adapted for the Niri compositor.")
+                text: "Alis builds on iNiR's Niri/Quickshell foundation and end-4's illogical-impulse."
                 wrapMode: Text.WordWrap
                 font.pixelSize: Looks.font.pixelSize.normal
                 color: Looks.colors.subfg
                 lineHeight: 1.3
             }
-            
+
             WText {
                 Layout.fillWidth: true
                 text: Translation.tr("Special thanks to the Quickshell and Niri communities.")
@@ -194,7 +221,7 @@ WSettingsPage {
             }
         }
     }
-    
+
     // System Info
     WSettingsCard {
         title: Translation.tr("System Info")

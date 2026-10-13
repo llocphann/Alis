@@ -102,3 +102,11 @@ Regression: `bash scripts/test-brand-legacy-cli.sh`. Existing R9/R10 cold-login 
 - The unit `inir.service` and its private launcher path stay unchanged as the only session/tray owner, until a separately verified atomic runtime cutover. Never install a second `alis.service` alongside it.
 
 **Owner test:** after the upgrade, inspect `alis status`, `alis help`, `alis settings`, `alis service status`, Niri keybinds and any pinned old shortcuts; then cold-login and confirm exactly one Quickshell session/tray watcher. No owner state was modified by CI.
+
+## BRAND-R01 About identity and attribution (2026-10-14)
+
+The Material `modules/settings/About.qml` and Waffle `modules/waffle/settings/pages/WAboutPage.qml` show **Alis** as the current product, link to `llocphann/Alis` for documentation and issues, and use the locally packaged `assets/icons/alis-owner-avatar.jpg` asset sourced from the owner's About screenshot. No runtime network fetch or configuration migration is required to show the avatar.
+
+Both settings variants include a **Based on** section crediting iNiR (`snowarch/iNiR`) and illogical-impulse (`end-4/dots-hyprland`). These historical source URLs belong only to upstream credits, not to the product's update/support links. The system/distro card remains independent. Runtime compatibility names, services, the persisted config schema and the single Quickshell session owner remain unchanged.
+
+The screenshot-sourced avatar image is approximately 59×59 pixels. Replace that static asset with an owner-provided high-resolution original if available; do not upscale it in source control. Run `python3 scripts/test-brand-about-identity.py` to check these assets and strings; physical Material/Waffle About rendering awaits R10 owner verification.
