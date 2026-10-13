@@ -79,6 +79,17 @@ Item {
     readonly property rect connectedSurfaceRect: Qt.rect(dashContainer.x, dashContainer.y, dashContainer.width, dashContainer.height)
     readonly property color connectedSurfaceColor: Appearance.colors.colLayer0
 
+    function handleEscape(): bool {
+        return dashboardContent.handleEscape()
+    }
+    // The Overview window owns key focus, but the edit bar can take it when
+    // clicked. Catch the first Escape across either focus target.
+    Shortcut {
+        sequences: ["Escape"]
+        context: Qt.WindowShortcut
+        enabled: root.editing && root.popupPresented
+        onActivated: root.handleEscape()
+    }
     function focusSearchInput(): void { searchWidget.focusSearchInput() }
     function disableExpandAnimation(): void { searchWidget.disableExpandAnimation() }
     function cancelSearch(): void { searchWidget.cancelSearch() }
