@@ -15,19 +15,37 @@ MIGRATION_DESCRIPTION="Adds back the wl-paste text watcher when 50-startup.kdl o
 MIGRATION_TARGET_FILE="~/.config/niri/config.d/50-startup.kdl"
 MIGRATION_REQUIRED=true
 
-_cliphist_startup_file="${HOME}/.config/niri/config.d/50-startup.kdl"
+_cliphist_startup_file="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.d/50-startup.kdl"
+_cliphist_monolithic_file="${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
 _text_watcher='spawn-at-startup "bash" "-c" "wl-paste --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store \&"'
+
+# Migrations 051/054 normalize startup to "wl-paste --no-newline --type
+# text". Matching only "wl-paste --type text" causes a false pending 034
+# even though there is already a healthy text watcher. Inspect active
+# spawn lines, never commented examples or unrelated prose.
+_cliphist_active_typed_watcher() {
+    local file="$1" watcher_type="$2"
+    [[ -f "$file" ]] || return 1
+    awk -v target_type="$watcher_type" '
+        /^[[:space:]]*\/\// { next }
+        /^[[:space:]]*(spawn-at-startup|spawn-sh-at-startup)[[:space:]]/ && /wl-paste/ {
+            if ($0 ~ ("wl-paste.*--type[[:space:]]+" target_type "([[:space:]]|$)")) found=1
+        }
+        END { exit (found ? 0 : 1) }
+    ' "$file"
+}
 
 migration_check() {
     [[ -f "$_cliphist_startup_file" ]] || return 1
 
-    # Any text watcher at all means 032 owns this file, not us.
-    if grep -q 'wl-paste --type text' "$_cliphist_startup_file" 2>/dev/null; then
-        return 1
-    fi
+    # An active text watcher in either Niri startup location already
+    # fulfills 034, including the canonical --no-newline form from 051.
+    _cliphist_active_typed_watcher "$_cliphist_startup_file" text && return 1
+    _cliphist_active_typed_watcher "$_cliphist_monolithic_file" text && return 1
 
-    # Only repair a file that is otherwise wired for clipboard history.
-    grep -q 'wl-paste --type image' "$_cliphist_startup_file" 2>/dev/null
+    # Only repair a configured image-only clipboard history, not a disabled
+    # watcher or a commented-out example.
+    _cliphist_active_typed_watcher "$_cliphist_startup_file" image
 }
 
 migration_preview() {
@@ -40,8 +58,9 @@ migration_preview() {
 
 migration_apply() {
     [[ -f "$_cliphist_startup_file" ]] || return 1
-
-    sed -i -E "\|wl-paste --type image|i\\${_text_watcher}" "$_cliphist_startup_file"
-
-    grep -q 'wl-paste --type text' "$_cliphist_startup_file"
+    # Applying an already-satisfied historical migration must be harmless,
+    # including when the canonical --no-newline watcher is present.
+    migration_check || return 0
+    sed -i -E "\|wl-paste --type image|i\\${_text_watcher}" "$_cliphist_startup_file" || return 1
+    _cliphist_active_typed_watcher "$_cliphist_startup_file" text
 }

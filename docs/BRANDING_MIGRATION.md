@@ -66,6 +66,10 @@ The reported local error `~/.config/quickshell/inir/setup: line 2951: e ;;` does
 
 Recover an already corrupt local copy from a **healthy checkout** by using the helper directly; invoking the broken installed `setup` cannot repair itself. Back up the original file and inspect any user changes before replacing it. No other user data or preferences need to be reset.
 
+## Migration 034 vs. 051 (R10 owner report)
+
+After a successful update to `c8db67392`, Status displayed `034-cliphist-text-watcher` as pending even though the clipboard watcher had been normalized by migration 051. The historical 034 check searched for the literal `wl-paste --type text`, missing the canonical `wl-paste --no-newline --type text` form. Migration 034 now recognizes active text watchers in both startup and monolithic Niri configs, ignores commented watcher examples, respects intentionally disabled history and is idempotent when a watcher already exists. This avoids creating a second clipboard writer. The isolated regression `scripts/test-cliphist-migration-034.sh` covers the reported post-051 state, the original missing-text repair, disabled history and monolithic fallback. No live Niri config was changed.
+
 ## Standalone automated regression lane
 
 GitHub Actions workflow `.github/workflows/brand-contracts.yml` runs a bounded, desktop-independent set of CLI, app ID, staged installer ownership, XDG namespace alias and pinned Arch snapshot contracts on `dev`. Its first confirmed successful run was [38430739766](https://github.com/llocphann/Alis/actions/runs/38430739766) at SHA `cf81808b8c8377d24f5fa917866edd47c2a7e5f5`. This gives independent evidence even when the full desktop/Niri canonical validator cannot execute in hosted CI; it **does not** replace owner visual acceptance, package installation on real hardware, or rollback validation.

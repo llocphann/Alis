@@ -32,6 +32,8 @@ on:
       - "sdata/lib/uninstall.sh"
       - "scripts/test-brand-uninstall.sh"
       - "sdata/migrations/061-alis-namespace-alias.sh"
+      - "sdata/migrations/034-cliphist-text-watcher.sh"
+      - "scripts/test-cliphist-migration-034.sh"
       - "assets/applications/*.desktop"
       - "assets/icons/desktop-symbolic.svg"
       - "Makefile"
@@ -58,12 +60,15 @@ jobs:
           set -euo pipefail
           bash -n scripts/alis scripts/brand-owner-audit.sh scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh scripts/test-alis-desktop-update.sh sdata/lib/sync-alis-desktop.sh scripts/test-brand-single-owner.sh scripts/test-brand-upgrade-rollback.sh scripts/test-brand-owner-audit.sh scripts/test-setup-sync-atomic.sh sdata/lib/safe-setup-sync.sh
           bash -n scripts/brand-namespace-rollback.sh scripts/test-brand-namespace-rollback.sh scripts/test-brand-uninstall.sh
-          bash -n sdata/migrations/061-alis-namespace-alias.sh sdata/subcmd-install/3.files.sh setup
+          bash -n sdata/migrations/061-alis-namespace-alias.sh sdata/migrations/034-cliphist-text-watcher.sh scripts/test-cliphist-migration-034.sh sdata/subcmd-install/3.files.sh setup
           test ! -e assets/systemd/alis.service
           grep -Fq 'ShellId inir' shell.qml
       - name: Setup entrypoint atomic recovery and syntax guard
         shell: bash
         run: bash scripts/test-setup-sync-atomic.sh
+      - name: Historical clipboard migration order regression
+        shell: bash
+        run: bash scripts/test-cliphist-migration-034.sh
       - name: R5 single-owner ShellId and service compatibility
         shell: bash
         run: bash scripts/test-brand-single-owner.sh
