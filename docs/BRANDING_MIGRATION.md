@@ -93,3 +93,12 @@ Use **`alis` exclusively** for interactive terminal commands, including `alis st
 This is an **interface restriction, not a destructive rename**. It becomes effective after the installed public launcher is updated (repo-copy setup/update, Arch package upgrade, Make reinstall or Nix rebuild). Direct `scripts/inir` invocation is still an internal compatibility entrypoint; public shell completions and documentation should promote `alis`. Rollback of this gate is reverting this source change and refreshing the installed launcher; do not delete/move user preferences or overwrite foreign `~/.cache/alis`.
 
 Regression: `bash scripts/test-brand-legacy-cli.sh`. Existing R9/R10 cold-login and owner visual checks remain required; never mark #64 owner verified solely from this contract.
+
+### Update, Niri and desktop entry compatibility
+
+- Repo-copy update now uses `alis` for its verified post-update shell restart. Fresh Niri keybinds and the optional Fcitx5 autostart use the Alis command, not the newly disabled public `inir` launcher.
+- When updating existing Niri keybind/startup commands that still point at `/bin/inir` or `spawn-at-startup "inir"`, the updater makes a one-time `*.brand-cli.bak` copy of relevant *ordinary* Niri config files before changing those command positions. It does not follow symlinks when creating this backup; audit and restore owner-customized keybinds manually as needed.
+- Old hidden desktop IDs (`inir.desktop` and `inir-settings.desktop`) stay installed for pinned-shortcut compatibility, but their `Exec` entries now route through `alis` in repository, Make, Nix and installer/repo-copy outputs. New desktop IDs remain `alis.desktop` and `alis-settings.desktop`.
+- The unit `inir.service` and its private launcher path stay unchanged as the only session/tray owner, until a separately verified atomic runtime cutover. Never install a second `alis.service` alongside it.
+
+**Owner test:** after the upgrade, inspect `alis status`, `alis help`, `alis settings`, `alis service status`, Niri keybinds and any pinned old shortcuts; then cold-login and confirm exactly one Quickshell session/tray watcher. No owner state was modified by CI.
