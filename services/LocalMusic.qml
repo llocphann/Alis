@@ -862,7 +862,7 @@ Singleton {
                     const value = line.substring(separator + 1)
                     if (key === "mode")
                         mode = value
-                    else if (key === "inir-mpdd")
+                    else if (key === "alis-mpdd")
                         mpdReady = value === "ready"
                 }
             }
