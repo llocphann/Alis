@@ -18,6 +18,12 @@ Repo-managed `./setup install` and update flows apply required migrations automa
 
 This compatibility layout is part of the in-progress namespace cutover. Do not remove the legacy QML path or its migration support until the runtime itself has moved off `illogical-impulse` and that cutover has been validated.
 
+### Optional Alis directory aliases
+
+The optional migration `061-alis-namespace-alias` can create `alis` symlinks to already existing `inir` directories under the user's XDG config, cache, data and state homes. It **does not rename or copy** any directory: the current live runtime, migration registry, and saved preferences continue using their original paths. Run `alis migrate` and explicitly accept the optional migration after checking its preview. Fresh installs lacking those directories are left untouched. If a destination is already a real file/directory or an unrelated symlink, the migration refuses all changes rather than overwriting it.
+
+To reverse the optional alias, verify that the affected `alis` path is a symlink to `inir`, then remove only the symlink—not the directory it points to. Do not use recursive deletion. A full `inir` → `alis` primary-directory conversion must wait for a coordinated ShellId/service/runtime migration and owner verification.
+
 Changes you make in the file are picked up automatically within 50ms. No restart needed.
 
 ### Fresh-install profile

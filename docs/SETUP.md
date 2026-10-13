@@ -147,6 +147,8 @@ For externally managed installs, `rollback` does not try to restore repo-managed
 
 Review and apply pending config migrations. Migrations are changes to user configs (keybinds, layer rules, etc.) required by new features.
 
+The opt-in `061-alis-namespace-alias` is a special non-destructive compatibility migration. It provides optional `alis` directory aliases for pre-existing `inir` XDG roots, after preflight collision checks; it does not move configs, rewrite state or start a second service. Use `alis migrate` to review it, or skip it and continue using `inir` paths normally. See [the namespace audit](BRANDING_MIGRATION.md#optional-namespace-aliases-r6-compatibility-milestone).
+
 What happens:
 
 - Shows list of pending migrations
