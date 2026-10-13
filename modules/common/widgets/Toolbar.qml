@@ -39,7 +39,7 @@ Item {
         anchors.fill: parent
         visible: !root.transparent
         fallbackColor: Appearance.colors.colSurfaceContainer
-        inirColor: Appearance.inir.colLayer2
+        alisColor: Appearance.alis.colLayer2
         auroraTransparency: Appearance.aurora.overlayTransparentize
         screenX: root.screenX
         screenY: root.screenY

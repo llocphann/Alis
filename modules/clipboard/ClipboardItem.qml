@@ -43,7 +43,7 @@ RippleButton {
     implicitWidth: rowLayout.implicitWidth + root.buttonHorizontalPadding * 2
     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+        : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.small
     // M3 consistent colors: transparent by default, layer3 on hover/select, primaryContainer on press
     // zzz previously used paperAlt (bg2) for both hover AND isSelected — a
     // near-neutral surface tone with no hue/saturation shift, so an item in
@@ -60,28 +60,28 @@ RippleButton {
                     : "transparent")))
         : (root.down || root.keyboardDown)
         ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-            : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colPrimaryContainerActive)
+            : Appearance.alisEverywhere ? Appearance.alis.colPrimaryActive : Appearance.colors.colPrimaryContainerActive)
         : (root.isSelected
             ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                : Appearance.inirEverywhere ? Appearance.inir.colLayer3
+                : Appearance.alisEverywhere ? Appearance.alis.colLayer3
                 : Appearance.colors.colLayer3)
             : ((root.hovered || root.focus)
                 ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer3Hover
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer3Hover
                     : Appearance.colors.colLayer3Hover)
                 : "transparent"))
     colBackgroundHover: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.12)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer3Hover
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer3Hover
         : Appearance.auroraEverywhere ? Appearance.colors.colLayer3Hover
         : Appearance.colors.colLayer3Hover
     colRipple: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.28)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive
+        : Appearance.alisEverywhere ? Appearance.alis.colPrimaryActive
         : Appearance.auroraEverywhere ? Appearance.colors.colLayer3Active
         : Appearance.colors.colPrimaryContainerActive
 
-    property string highlightPrefix: `<u><font color="${Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary}">`
+    property string highlightPrefix: `<u><font color="${Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.alisEverywhere ? Appearance.alis.colPrimary : Appearance.colors.colPrimary}">`
     property string highlightSuffix: `</font></u>`
     function highlightContent(content, query) {
         if (!query || query.length === 0 || content == query || fontType === "monospace")
@@ -188,7 +188,7 @@ RippleButton {
                 text: root.materialSymbol
                 iconSize: 30
                 color: Appearance.zzzEverywhere ? Appearance.zzz.ink
-                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                    : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnSurface
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -202,7 +202,7 @@ RippleButton {
                 text: root.bigText
                 font.pixelSize: Appearance.font.pixelSize.larger
                 color: Appearance.zzzEverywhere ? Appearance.zzz.ink
-                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                    : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnSurface
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -220,7 +220,7 @@ RippleButton {
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.zzzEverywhere
                     ? ((root.down || root.keyboardDown) ? Appearance.zzz.onSignal : Appearance.zzz.inkMuted)
-                    : (root.isSelected || root.hovered || root.focus) ? (Appearance.inirEverywhere ? Appearance.inir.colOnLayer3 : Appearance.colors.colOnLayer3) : (Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext)
+                    : (root.isSelected || root.hovered || root.focus) ? (Appearance.alisEverywhere ? Appearance.alis.colOnLayer3 : Appearance.colors.colOnLayer3) : (Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext)
                 visible: root.itemType && root.itemType != Translation.tr("App")
                 text: root.itemType
             }
@@ -232,10 +232,10 @@ RippleButton {
                         implicitWidth: activeText.implicitHeight
                         implicitHeight: activeText.implicitHeight
                         radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-                            : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                            : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.full
                         Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
                         color: Appearance.zzzEverywhere ? Appearance.zzz.sticker
-                            : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                            : Appearance.alisEverywhere ? Appearance.alis.colPrimary : Appearance.colors.colPrimary
                         Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                         MaterialSymbol {
                             id: activeText
@@ -243,7 +243,7 @@ RippleButton {
                             text: "check"
                             font.pixelSize: Appearance.font.pixelSize.normal
                             color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker
-                                : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary
+                                : Appearance.alisEverywhere ? Appearance.alis.colOnPrimary : Appearance.colors.colOnPrimary
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
                                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -268,7 +268,7 @@ RippleButton {
                     font.family: Appearance.font.family[root.fontType]
                     color: Appearance.zzzEverywhere
                         ? ((root.down || root.keyboardDown) ? Appearance.zzz.onSignal : Appearance.zzz.ink)
-                        : (root.isSelected || root.hovered || root.focus) ? (Appearance.inirEverywhere ? Appearance.inir.colOnLayer3 : Appearance.colors.colOnLayer3) : (Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface)
+                        : (root.isSelected || root.hovered || root.focus) ? (Appearance.alisEverywhere ? Appearance.alis.colOnLayer3 : Appearance.colors.colOnLayer3) : (Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnSurface)
                     horizontalAlignment: Text.AlignLeft
                     elide: Text.ElideRight
                     text: `${root.displayContent}`
@@ -299,7 +299,7 @@ RippleButton {
             id: clickAction
             font.pixelSize: Appearance.font.pixelSize.normal
             color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
-                : Appearance.inirEverywhere ? Appearance.inir.colOnSelection : Appearance.colors.colOnPrimaryContainer
+                : Appearance.alisEverywhere ? Appearance.alis.colOnSelection : Appearance.colors.colOnPrimaryContainer
             Behavior on color {
                 enabled: Appearance.animationsEnabled
                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -329,12 +329,12 @@ RippleButton {
                     implicitHeight: 32
                     implicitWidth: 32
                     buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-                        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+                        : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.small
 
                     colBackgroundHover: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
-                        : Appearance.inirEverywhere ? Appearance.inir.colLayer3Hover : Appearance.colors.colLayer4Hover
+                        : Appearance.alisEverywhere ? Appearance.alis.colLayer3Hover : Appearance.colors.colLayer4Hover
                     colRipple: Appearance.zzzEverywhere ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.26)
-                        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryActive : Appearance.colors.colLayer4Active
+                        : Appearance.alisEverywhere ? Appearance.alis.colPrimaryActive : Appearance.colors.colLayer4Active
 
                     contentItem: Item {
                         id: actionContentItem
@@ -346,7 +346,7 @@ RippleButton {
                                 text: actionButton.materialIconName
                                 font.pixelSize: Appearance.font.pixelSize.large
                                 color: Appearance.zzzEverywhere ? Appearance.zzz.ink
-                                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                                    : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnSurface
                                 Behavior on color {
                                     enabled: Appearance.animationsEnabled
                                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

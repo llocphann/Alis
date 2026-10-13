@@ -20,18 +20,18 @@ Item {
 
     // Style tokens
     readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
-        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-    readonly property color colTextSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+        : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer1
+    readonly property color colTextSecondary: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
     readonly property color colBg: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colLayer1
     readonly property color colBgHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1Hover
     readonly property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
+        : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.verysmall
 
     Flickable {
         id: flickable
@@ -140,17 +140,17 @@ Item {
                     ActionTile {
                         tileIcon: "screenshot_region"
                         label: Translation.tr("Region")
-                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "screenshot"])
+                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "region", "screenshot"])
                     }
                     ActionTile {
                         tileIcon: "videocam"
                         label: Translation.tr("Record")
-                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "record"])
+                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "region", "record"])
                     }
                     ActionTile {
                         tileIcon: "text_fields"
                         label: Translation.tr("OCR")
-                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "ocr"])
+                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "region", "ocr"])
                     }
                     ActionTile {
                         visible: CompositorService.isNiri
@@ -193,7 +193,7 @@ Item {
                     ActionTile {
                         tileIcon: "settings"
                         label: Translation.tr("Settings")
-                        onClicked: ShellExec.execDetachedArgs([Quickshell.shellPath("scripts/inir"), "settings"], "Open Alis settings")
+                        onClicked: ShellExec.execDetachedArgs([Quickshell.shellPath("scripts/alis"), "settings"], "Open Alis settings")
                     }
                     ActionTile {
                         tileIcon: "tune"
