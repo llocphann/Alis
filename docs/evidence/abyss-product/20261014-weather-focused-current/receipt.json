@@ -1,0 +1,12 @@
+{
+  "source_sha": "e029b94552a40b2998711e0ccf08f8cf528ace94",
+  "exit": 0,
+  "scope": "unchanged native four-edge Weather/Clock handoff, isolated config/private no-focus Wayland; diagnostic only",
+  "result": "FOCUSED_PASS",
+  "observations": 1136,
+  "limits": [
+    "native.log contains the existing driver filtered stdout, not the full run_qs log",
+    "This fresh direct-private result is not a rerun of the failed canonical nested context and does not establish its cause.",
+    "No installed/owner/canonical/multi-output acceptance."
+  ]
+}
