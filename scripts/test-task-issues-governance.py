@@ -26,10 +26,17 @@ for required in ("search", "Issues", "Awaiting Owner verification",
                  "close as completed", "Markdown"):
     assert required.lower() in agent.lower(), f"AGENTS.md missing {required}"
 
-for name in (".github/ISSUE_TEMPLATE/bug_report.yml",
-             ".github/ISSUE_TEMPLATE/feature_request.yml"):
+assert "type:feature" in agent and "type:rework" in agent and "type:bug" in agent
+assert "area:*" in agent and "status:awaiting-owner" in agent
+
+for name, expected_type in (
+    (".github/ISSUE_TEMPLATE/bug_report.yml", "type:bug"),
+    (".github/ISSUE_TEMPLATE/feature_request.yml", "type:feature"),
+    (".github/ISSUE_TEMPLATE/rework_request.yml", "type:rework"),
+):
     form = (ROOT / name).read_text(encoding="utf-8")
     assert ISSUES in form, f"{name}: duplicate-check link missing"
+    assert f'labels: ["{expected_type}"]' in form, f"{name}: wrong type label"
     assert form.count("required: true") <= 2, f"{name}: issue intake too verbose"
 
-print("ALIS_ISSUE_WORKFLOW_PASS (5 pointers, agent workflow, 2 concise forms)")
+print("ALIS_ISSUE_WORKFLOW_PASS (5 pointers, agent policy, 3 labeled forms)")
