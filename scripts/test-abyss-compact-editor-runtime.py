@@ -220,8 +220,17 @@ ShellRoot {
       const controls=[chooser,edgeCombo,alignCombo]
       const ys=controls.map(c=>coords(c).y),widths=controls.map(c=>c.width)
       check(Math.max(...ys)-Math.min(...ys)<1.5,"IPC dropdowns not on one line")
-      check(Math.max(...widths)-Math.min(...widths)<1.5,"IPC dropdown widths differ")
+      const fitted=[placement.compactKindWidth,placement.compactEdgeWidth,
+                    placement.compactAlignmentWidth]
+      for(let i=0;i<widths.length;i++)
+       check(Math.abs(widths[i]-fitted[i])<1.5,
+         "IPC dropdown is not content-sized "+JSON.stringify({actual:widths,expected:fitted}))
+      check(widths[0]<widths[1] && widths[1]<widths[2],
+        "IPC dropdowns must be sized independently for their own longest labels")
       check(Math.abs(coords(ipcJoin).y-ys[0])<1.5,"IPC corner toggle not aligned")
+      if(scene.width-48>=editor.ipcToolbarSpan)
+       check(Math.abs(item("abyssEdgeEditorBody").span-editor.ipcToolbarSpan)<1.5,
+         "IPC toolbar span includes avoidable blank width")
      } else check(selectorRow.columns===1,"narrow IPC selectors should stack")
      const moduleDraft=JSON.stringify(editor.draft)
      placement.change("edge","right");wait(60)

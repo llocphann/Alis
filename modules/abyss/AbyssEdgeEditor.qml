@@ -92,6 +92,16 @@ Item {
         toolbarEdge === "top" || toolbarEdge === "bottom"
     readonly property bool toolbarWideControls:
         toolbarOnHorizontalEdge && toolbarScroll.width>=520*Appearance.fontSizeScale
+    // The IPC toolbar can be narrower than the Modules toolbar. Keep enough
+    // content width for the longest labels, the corner action, and the four-
+    // column selector gaps, but not an unused fixed-width tail.
+    readonly property real ipcToolbarSpan: Math.max(
+        520*Appearance.fontSizeScale + 2*editorBody.padding + 4*Appearance.fontSizeScale,
+        previewPositions.compactKindWidth
+            + previewPositions.compactEdgeWidth
+            + previewPositions.compactAlignmentWidth
+            + (30 + 3*6 + 8)*Appearance.fontSizeScale
+            + 2*editorBody.padding)
     property var guides: []
     property bool snapEnabled: true
     property bool outputOnly: true
@@ -659,7 +669,8 @@ Item {
         // busy, the same editor can move to a side Edge with a deeper body and
         // a long vertical span instead of covering the module being edited.
         span: root.toolbarOnHorizontalEdge
-            ? Math.min(root.width-48,660*Appearance.fontSizeScale)
+            ? Math.min(root.width-48,root.editingPopups
+                ? root.ipcToolbarSpan : 660*Appearance.fontSizeScale)
             : Math.min(root.height-48,toolbar.implicitHeight+padding*2)
         along: ((root.toolbarOnHorizontalEdge ? root.width : root.height)-span)/2
         depth: root.toolbarOnHorizontalEdge

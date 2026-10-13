@@ -39,7 +39,15 @@ assert 'visible:root.showKindSelector || root.showOutputSelector' in positions
 assert 'visible:root.showKindSelector' in positions
 assert 'visible:root.showOutputSelector' in positions
 assert '202*Appearance.fontSizeScale' not in positions
-assert positions.count('root.compactSelectorWidth') == 6
+assert 'root.compactSelectorWidth' not in positions
+assert 'FontMetrics {' in positions
+assert 'compactSelectorMetrics.advanceWidth(option.label)' in positions
+for dimension in ['compactKindWidth', 'compactEdgeWidth', 'compactAlignmentWidth']:
+    assert f'readonly property real {dimension}:' in positions
+    assert positions.count('root.' + dimension) == 2
+assert 'Math.min(root.width-48,root.editingPopups' in editor
+assert 'root.ipcToolbarSpan : 660*Appearance.fontSizeScale' in editor
+assert '520*Appearance.fontSizeScale + 2*editorBody.padding' in editor
 assert 'objectName:"abyssIpcJoinCornerToggle"' in positions
 assert 'visible:!root.compactIpcEditor && Presentation.canJoin(root.kind)' in positions
 assert 'onToggled:root.change("joinCorner",checked)' in positions
@@ -123,7 +131,7 @@ assert right.index('objectName:"abyssJoinNearbyModules"') < right.index('id:edge
 assert right.index('objectName:"abyssRoundZeroCorners"') < right.index('id:scaleModulesRow')
 assert 'AbyssCheckBox {' not in right
 assert 'checkable:true' in right and 'onToggled:root.edgeRoundZeroCorners' in right
-assert 'Math.min(root.width-48,660*Appearance.fontSizeScale)' in editor
+assert 'root.ipcToolbarSpan : 660*Appearance.fontSizeScale' in editor
 assert 'Layout.preferredWidth:Math.max(78,(edgeEditorColumn.width-50*Appearance.fontSizeScale)/2)' in editor
 assert left.count('id:moduleRoundingRow') + left.count('id:moduleCustomSizeRow') == 2
 assert right.count('id:edgeGapAndSizeRow') + right.count('id:edgeWidthRow') + right.count('id:scaleModulesRow') == 3

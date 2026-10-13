@@ -22,8 +22,24 @@ ColumnLayout {
     property bool compactIpcEditor: false
     // Compact IPC presents type, Edge, alignment and corner toggle together.
     property alias compactKindCombo: compactKindChoice
-    readonly property real compactSelectorWidth: Math.max(72*Appearance.fontSizeScale,
-        (width - 48*Appearance.fontSizeScale)/3)
+    // Size each trigger for its own longest choice. Do not derive the
+    // widths from this ColumnLayout's width: that depends on the children's
+    // implicit widths and can collapse the three IPC fields to ~72 px.
+    FontMetrics {
+        id: compactSelectorMetrics
+        font.pixelSize: Appearance.font.pixelSize.small
+    }
+    function compactContentWidth(options): real {
+        let widest = 0
+        for (const option of options)
+            widest = Math.max(widest, compactSelectorMetrics.advanceWidth(option.label))
+        // StyledComboBox: 12px text inset, 6px gap, arrow and 8px right inset.
+        return Math.ceil(widest + 32*Appearance.fontSizeScale
+            + Appearance.font.pixelSize.normal)
+    }
+    readonly property real compactKindWidth: compactContentWidth(compactKindChoice.model)
+    readonly property real compactEdgeWidth: compactContentWidth(edgeChoice.model)
+    readonly property real compactAlignmentWidth: compactContentWidth(alignmentChoice.model)
     property bool compactVertical: false
     property bool compactActions: false
     property var allowedKinds: []
@@ -125,11 +141,11 @@ ColumnLayout {
             id:compactKindChoice
             objectName:"abyssEditorIpcKind"
             visible:root.compactIpcEditor
-            Layout.fillWidth:root.compactIpcEditor
+            Layout.fillWidth:root.compactVertical
             Layout.minimumWidth:0
-            Layout.preferredWidth:root.compactIpcEditor ? root.compactSelectorWidth : -1
+            Layout.preferredWidth:root.compactIpcEditor ? root.compactKindWidth : -1
             Layout.maximumWidth:root.compactIpcEditor && !root.compactVertical
-                ? root.compactSelectorWidth : Infinity
+                ? root.compactKindWidth : Infinity
             textRole:"label";valueRole:"value"
             model:[{label:"All OSDs",value:"osd"},{label:"Volume",value:"volume"},
                 {label:"Brightness",value:"brightness"},{label:"Microphone",value:"mic"},
@@ -141,12 +157,12 @@ ColumnLayout {
         StyledComboBox {
             id:edgeChoice
             objectName:"abyssIpcEdgeDropdown"
-            Layout.fillWidth:true
+            Layout.fillWidth:!root.compactIpcEditor || root.compactVertical
             Layout.minimumWidth:0
             Layout.preferredWidth:root.compactIpcEditor
-                ? root.compactSelectorWidth : -1
+                ? root.compactEdgeWidth : -1
             Layout.maximumWidth:root.compactIpcEditor && !root.compactVertical
-                ? root.compactSelectorWidth : Infinity
+                ? root.compactEdgeWidth : Infinity
             textRole:"label";valueRole:"value"
             model:[{label:"Follow source edge",value:"source"},{label:"Top Edge",value:"top"},
                 {label:"Right Edge",value:"right"},{label:"Bottom Edge",value:"bottom"},{label:"Left Edge",value:"left"}]
@@ -156,12 +172,12 @@ ColumnLayout {
         StyledComboBox {
             id:alignmentChoice
             objectName:"abyssIpcAlignmentDropdown"
-            Layout.fillWidth:true
+            Layout.fillWidth:!root.compactIpcEditor || root.compactVertical
             Layout.minimumWidth:0
             Layout.preferredWidth:root.compactIpcEditor
-                ? root.compactSelectorWidth : -1
+                ? root.compactAlignmentWidth : -1
             Layout.maximumWidth:root.compactIpcEditor && !root.compactVertical
-                ? root.compactSelectorWidth : Infinity
+                ? root.compactAlignmentWidth : Infinity
             textRole:"label";valueRole:"value"
             model:[{label:"Follow source position",value:"source"},{label:"Align start",value:"start"},
                 {label:"Align center",value:"center"},{label:"Align end",value:"end"},{label:"Custom position",value:"custom"}]

@@ -1122,8 +1122,9 @@ run privileged installation just because manual buttons are retired.
   Settings and edit surfaces at varying scales and light/dark themes. State:
   READY for UI audit; owner visual acceptance pending.
 
-- [x] **ABYSS-R08 — Compact Edit Abyss Layout control bar — owner request 2026-10-10:**
-  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Accepted. Earlier "Owner chưa verified" is historical; preserve any independent native/CI/hardware failures or skips as recorded.
+- [ ] **ABYSS-R08 — Compact Edit Abyss Layout control bar — owner request 2026-10-10:**
+  **Owner IPC dropdown resizing follow-up — 2026-10-13 (new scope; owner verification OPEN):** Use font-measured maximum label widths separately for kind, source Edge and alignment instead of three identical width-limited triggers. Fit the horizontal IPC editor span to these controls and its header, removing the empty tail; preserve responsive side/narrow stacking, input regions, draft edits and four-Edge Modules dimensions. Source change delivered on dev; focused native Niri/Quickshell rendering (small screens, font scale, all Edges), canonical validator, and owner screenshot verification remain OPEN.
+  **Prior iteration Owner verified — 2026-10-13 (maintainer explicit confirmation):** Earlier accepted layout remains historical; this newly requested IPC sizing refinement is not yet owner verified. Independent native/CI/hardware failures or skips remain as recorded.
   **Owner visual refinement 2026-10-13 (dev source, native acceptance OPEN):**
   Keep fine controls always visible; remove show/hide Options action;
   extend the six editor sliders 144→158 font-scaled px and contract the
