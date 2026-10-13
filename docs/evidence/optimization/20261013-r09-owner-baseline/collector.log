@@ -1,0 +1,6 @@
+rows 145 blocks 5 stable True failure None
+0 [{'count': 359, 'p50': 17, 'p95': 22, 'p99': 46, 'max': 120, 'panelProgressChangedFrames': 27, 'popupOpenFrames': 266, 'heartbeatOver100Ms': 2, 'heartbeatMaxIntervalMs': 139}]
+1 [{'count': 361, 'p50': 17, 'p95': 20, 'p99': 48, 'max': 57, 'panelProgressChangedFrames': 30, 'popupOpenFrames': 145, 'heartbeatOver100Ms': 0, 'heartbeatMaxIntervalMs': 85}]
+2 [{'count': 349, 'p50': 17, 'p95': 19, 'p99': 34, 'max': 220, 'panelProgressChangedFrames': 0, 'popupOpenFrames': 0, 'heartbeatOver100Ms': 1, 'heartbeatMaxIntervalMs': 285}]
+3 [{'count': 357, 'p50': 17, 'p95': 20, 'p99': 36, 'max': 99, 'panelProgressChangedFrames': 0, 'popupOpenFrames': 137, 'heartbeatOver100Ms': 0, 'heartbeatMaxIntervalMs': 80}]
+4 [{'count': 355, 'p50': 17, 'p95': 24, 'p99': 52, 'max': 107, 'panelProgressChangedFrames': 47, 'popupOpenFrames': 0, 'heartbeatOver100Ms': 2, 'heartbeatMaxIntervalMs': 193}]

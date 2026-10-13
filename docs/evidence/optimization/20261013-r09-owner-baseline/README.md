@@ -1,0 +1,9 @@
+# Read-only owner desktop baseline
+
+The owner intentionally opened/closed Dashboard and ordinary Popups during this bounded30-second capture, then reported **no visible stutter in that particular window**. Installed identity stayed atde8a9db8d with the same process. Four critical installed Perimeter/Field/QSB/tooltip hashes match that source before and after; this is not exhaustive package identity or acceptance of later source.
+
+Five six-second opt-in frame-probe windows record actual Panel progress changes and Popup activity, Qt heartbeat and swaps. One-second structural snapshots and0.2-second Linux process/DRM samples add diagnostic overhead. Three file descriptors shared one DRM client ID; it is counted once. No shell restart, focus action, configuration write, audio capture, notification text or user screenshot was requested by the collector.
+
+Over30.31s, the shell consumed11.96 process CPU seconds and9.536 graphics-engine seconds; RSS changed from1184.7 to1220.5MiB. These are one observed baseline, not savings, GPU/compositor present timestamps or attributable leaks. They must not be added to GPU memory counters to estimate total RAM. Recorded120/220/99/107ms swap gaps often have zero Panel progress, or occur at a semantic transition before reveal. They cannot all be classified as active animation frame drops. Owner feedback is preserved alongside the slow intervals.
+
+A subsequent12s user-only perf capture contains57 samples (no lost samples), without deliberately driven interaction. It is too small and a different activity window to establish CPU shares or an optimization effect. The first report attempted external debug-symbol resolution; that owned report was terminated, then completed with external resolution disabled. Raw address-only frame-pointer samples and the local report remain diagnostic data. No matched optimized run or resource percentage improvement is claimed.

@@ -1,0 +1,16 @@
+  INFO: Launching config: "/tmp/alis-sidebar-theme-c94zatxp/shell.qml"
+  INFO: Shell ID: "4b1e3f4c467325d09d1b3f07363296a6" Path ID "4b1e3f4c467325d09d1b3f07363296a6"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/0ubqhitumt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1228371.sock
+dbus-daemon[1228391]: [session uid=1000 pid=1228391 pidfd=5] Activating service name='org.gtk.vfs.Daemon' requested by ':1.2' (uid=1000 pid=1228392 comm="qs -p /tmp/alis-sidebar-theme-c94zatxp --no-color")
+dbus-daemon[1228391]: [session uid=1000 pid=1228391 pidfd=5] Successfully activated service 'org.gtk.vfs.Daemon'
+fusermount3: failed to access mountpoint /run/user/1000/gvfs: Permission denied
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-sidebar-theme-c94zatxp/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-sidebar-theme-c94zatxp/state/quickshell/user/gamemode_active failed: File does not exist.
+ ERROR qml: SIDEBAR_LEFT_THEME_NATIVE_FAIL non-Abyss sidebar no longer uses its old material check@qs:@/qs/shell.qml:25
+testRun@qs:@/qs/shell.qml:58
+expression for onTriggered@qs:@/qs/shell.qml:80
+A connection to the bus can't be made
+

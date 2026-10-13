@@ -1,0 +1,11 @@
+  INFO: Launching config: "/tmp/alis-sidebar-content-size-9k68itzq/shell.qml"
+  INFO: Shell ID: "c7b6681b1232a48a220e206065b7d1f2" Path ID "c7b6681b1232a48a220e206065b7d1f2"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/behqkvtumt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1235580.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-sidebar-content-size-9k68itzq/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-sidebar-content-size-9k68itzq/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-sidebar-content-size-9k68itzq/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: SIDEBAR_CONTENT_SIZE_PASS 280 four Edges, reversal, stable content, unchanged geometry/input, resize and unload

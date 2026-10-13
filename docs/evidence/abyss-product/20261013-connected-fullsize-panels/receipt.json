@@ -1,0 +1,53 @@
+{
+  "sidebar_source": "d01f0d491bd3fcd95552229ba869210476829824",
+  "panel_source": "4d8ea01bb40c7c30a0ec28f3c2d276d5c52da45c",
+  "native_sidebar": "PASS 280 clean d01",
+  "native_static_panels": "PASS 700 clean4d8; five production flags, diagnostic content, four-edge BodyHost native behavior; not full feature UI acceptance",
+  "native_body_lifecycle": "PASS clean d01 private Niri",
+  "policy_checks": [
+    {
+      "command": [
+        "python3",
+        "scripts/test-surface-motion-contract.py"
+      ],
+      "exit_code": 0,
+      "log": "test-surface-motion-contract.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-pyramid-v2-motion-contract.py"
+      ],
+      "exit_code": 0,
+      "log": "test-abyss-pyramid-v2-motion-contract.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-body-placement.py"
+      ],
+      "exit_code": 0,
+      "log": "test-abyss-body-placement.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-abyss-input-region-contract.py"
+      ],
+      "exit_code": 0,
+      "log": "test-abyss-input-region-contract.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-abyss-sidebar-reveal.sh"
+      ],
+      "exit_code": 0,
+      "log": "test-abyss-sidebar-reveal.log"
+    }
+  ],
+  "theme": "FAIL at worktree and unchanged clean fe80; no cause attributed to sizing flags",
+  "full_canonical": "NOT_STARTED",
+  "owner_installed": "earlier source de8a9db8d; no new-source desktop acceptance",
+  "before_case": "expected sizing failure at progress.01:0x464.8 compared with full345.8x464.8"
+}

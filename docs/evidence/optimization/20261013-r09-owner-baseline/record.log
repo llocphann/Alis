@@ -1,0 +1,2 @@
+[ perf record: Woken up 1 times to write data ]
+[ perf record: Captured and wrote 0.304 MB .git/maintainer-validation/20261013-r09-owner-perf/user-cpu.data (57 samples) ]
