@@ -1923,7 +1923,7 @@ Scope {
                 colBackground: ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.6)
                 colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.4)
 
-                onClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis/blob/dev/docs/TROUBLESHOOTING.md")
+                onClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis/blob/dev/docs/SETUP.md")
 
                 Rectangle {
                     anchors.fill: parent

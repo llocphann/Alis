@@ -26,12 +26,14 @@ all: build
 
 build:
 	@bash -n scripts/inir
+	@bash -n scripts/alis
 	@bash -n scripts/test-local-distribution.sh
 	@bash -n setup
 
 # Host/update contracts remain in core; helper implementations are tested in Hadalird.
 test-local: build test-native-production test-doctor-routing test-optional-audio-deps test-news-contract test-equalizer-contracts test-perimeter-contracts test-weather-contracts test-docs test-install-lifecycle test-prefix-install test-package-docs test-package-metadata test-package-hooks
 	@bash scripts/test-local-distribution.sh
+	@bash scripts/test-brand-entrypoints.sh
 	@bash scripts/test-packaging-contract.sh
 	@bash scripts/test-nix-module-contract.sh
 
@@ -129,10 +131,11 @@ install-bin:
 	@sed 's|^system_config_dir=.*|system_config_dir="$${INIR_SYSTEM_RUNTIME_DIR:-$(SHELL_INSTALL_DIR)}"|' \
 		scripts/inir > "$(DESTDIR)$(BINDIR)/inir"
 	@chmod 755 "$(DESTDIR)$(BINDIR)/inir"
+	@install -m755 scripts/alis "$(DESTDIR)$(BINDIR)/alis"
 
 install-shell:
 	@python3 sdata/lib/runtime-payload.py copy --root . --target "$(DESTDIR)$(SHELL_INSTALL_DIR)"
-	@chmod +x "$(DESTDIR)$(SHELL_INSTALL_DIR)/setup" "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts/inir"
+	@chmod +x "$(DESTDIR)$(SHELL_INSTALL_DIR)/setup" "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts/inir" "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts/alis"
 	@find "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts" -type f \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} +
 	@sed -i \
 		's|^system_config_dir=.*|system_config_dir="$${INIR_SYSTEM_RUNTIME_DIR:-$(SHELL_INSTALL_DIR)}"|' \
@@ -190,7 +193,7 @@ install-battery-helper install-thinkfan-helper uninstall-battery-helper uninstal
 install: build install-bin install-shell install-native install-systemd install-icon install-desktop install-docs install-license
 
 uninstall-bin:
-	@rm -f "$(DESTDIR)$(BINDIR)/inir"
+	@rm -f "$(DESTDIR)$(BINDIR)/alis" "$(DESTDIR)$(BINDIR)/inir"
 
 uninstall-shell:
 	@rm -rf "$(DESTDIR)$(SHELL_INSTALL_DIR)"

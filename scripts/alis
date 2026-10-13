@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Alis is the public command while the proven iNiR runtime owns the session.
+# Preserve all existing flags, IPC targets, service ownership and user data.
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ "${1:-}" == "completions" && $# -eq 2 ]]; then
+    case "$2" in
+        bash|fish|zsh)
+            for candidate in \
+                "$script_dir/completions/alis.$2" \
+                "$script_dir/../share/quickshell/inir/scripts/completions/alis.$2" \
+                "${INIR_RUNTIME_DIR:-/nonexistent}/scripts/completions/alis.$2" \
+                "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir/scripts/completions/alis.$2" \
+                /usr/local/share/quickshell/inir/scripts/completions/alis."$2" \
+                /usr/share/quickshell/inir/scripts/completions/alis."$2"; do
+                if [[ -f "$candidate" ]]; then
+                    cat -- "$candidate"
+                    exit 0
+                fi
+            done
+            printf "Alis %s completions are not installed.\n" "$2" >&2
+            exit 1
+            ;;
+    esac
+fi
+
+if [[ -f "$script_dir/inir" ]]; then
+    exec bash "$script_dir/inir" "$@"
+fi
+if command -v inir >/dev/null 2>&1; then
+    exec inir "$@"
+fi
+printf "Alis runtime launcher not found. Install the shell first.\n" >&2
+exit 127
