@@ -51,7 +51,7 @@ Scope {
     readonly property string selectedProfileAudience: selectedProfile === "minimum"
         ? Translation.tr("Best if you want the shell out of the way and will add pieces yourself.")
         : selectedProfile === "full"
-            ? Translation.tr("Best if you want to see everything iNiR can do on day one.")
+            ? Translation.tr("Best if you want to see everything Alis can do on day one.")
             : Translation.tr("Best for most people. This is what a fresh install ships.")
 
     // Every starting profile prepares shared services and the Material II
@@ -249,7 +249,7 @@ Scope {
     readonly property var steps: [
         {
             icon: "waving_hand", title: Translation.tr("Welcome"),
-            headline: Translation.tr("Welcome to iNiR"),
+            headline: Translation.tr("Welcome to Alis"),
             subtitle: Translation.tr("Five short steps. Everything here can be changed later in Settings.")
         },
         {
@@ -292,7 +292,7 @@ Scope {
         repeat: false
         onTriggered: {
             // first_run.txt is already written by FirstRunExperience before launching us
-            Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Welcome to inir"), Translation.tr("Press Super+/ for all keyboard shortcuts."), "-a", "Shell"])
+            Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Welcome to Alis"), Translation.tr("Press Super+/ for all keyboard shortcuts."), "-a", "Alis"])
             Qt.quit()
         }
     }
@@ -839,7 +839,7 @@ Scope {
                 }
 
                 StyledToolTip {
-                    text: Translation.tr("You can re-open this wizard anytime with:\n  inir welcome")
+                    text: Translation.tr("You can re-open this wizard anytime with:\n  alis welcome")
                 }
 
                 HoverHandler {
@@ -1923,7 +1923,7 @@ Scope {
                 colBackground: ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.6)
                 colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colPrimaryContainer, 0.4)
 
-                onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/wiki/Troubleshooting")
+                onClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis/blob/dev/docs/TROUBLESHOOTING.md")
 
                 Rectangle {
                     anchors.fill: parent
@@ -2002,7 +2002,7 @@ Scope {
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.colors.colLayer2
                     colBackgroundHover: Appearance.colors.colLayer2Hover
-                    onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/wiki")
+                    onClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis")
                     RowLayout {
                         id: docsChipRow
                         anchors.centerIn: parent
@@ -2018,7 +2018,7 @@ Scope {
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.colors.colLayer2
                     colBackgroundHover: Appearance.colors.colLayer2Hover
-                    onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/issues")
+                    onClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis/issues")
                     RowLayout {
                         id: issueChipRow
                         anchors.centerIn: parent

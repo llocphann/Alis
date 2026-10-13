@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=iNiR Shell
-Comment=iNiR desktop shell session
+Name=Alis Shell
+Comment=Alis desktop shell session
 Exec=inir service restart
 Icon=inir
 Terminal=false

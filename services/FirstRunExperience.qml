@@ -10,7 +10,7 @@ Singleton {
     id: root
     property string firstRunFilePath: FileUtils.trimFileProtocol(`${Directories.state}/user/first_run.txt`)
     property string firstRunFileContent: "This file is just here to confirm you've been greeted :>"
-    property string firstRunNotifSummary: "Welcome!"
+    property string firstRunNotifSummary: "Welcome to Alis!"
     property string firstRunNotifBody: "Hit Super+/ for a list of keybinds"
     property string defaultWallpaperPath: ""
     property bool _pendingFirstRun: false

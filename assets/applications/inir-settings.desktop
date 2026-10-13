@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=iNiR Settings
-Comment=Open iNiR settings
+Name=Alis Settings
+Comment=Open Alis settings
 Exec=inir settings
 Icon=inir
 Terminal=false
