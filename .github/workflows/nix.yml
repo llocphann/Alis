@@ -69,6 +69,14 @@ jobs:
       - name: Evaluate flake outputs
         run: nix flake check --no-build --print-build-logs
 
-      - name: Build Hadalis package
+      - name: Validate Alis and legacy flake exports
+        run: |
+          nix eval --raw .#packages.x86_64-linux.alis.pname
+          nix eval --raw .#packages.x86_64-linux.inir.pname
+
+      - name: Build Alis package
+        run: nix build .#alis --print-build-logs
+
+      - name: Legacy package output remains buildable
         run: nix build .#inir --print-build-logs
 
