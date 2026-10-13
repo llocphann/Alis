@@ -3,7 +3,7 @@
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
 # IPC.md metadata: docs/IPC.md
-# Targets: 64
+# Targets: 65
 
 declare -gA IPC_TARGET_DESC=(
   [abyss]="Edit the Abyss module layout on the focused output. The editor uses a draft: Done saves its changes; Cancel or Escape restores the saved layout. These methods apply while Abyss is active."
@@ -25,6 +25,7 @@ declare -gA IPC_TARGET_DESC=(
   [coverflowSelector]="Wallpaper coverflow (3D card) picker."
   [customWidgets]="Custom widget management. Create, list, reload, and remove user-installed widgets from \`~/.config/inir/widgets/\`."
   [dashboard]="Centered welcome hub panel (ii family): greeting, clock, notifications, media, weather, calendar, todo, system usage and GitHub activity."
+  [dashboardEscProbe]="Read-only per-output Dashboard Escape ownership diagnostic. This inspection does not cancel edits, change focus, close surfaces, or install a timer."
   [dev]="Development navigation for loading lazy surfaces and internal views without automating pointer or keyboard input. Destination identifiers are stable and returned as JSON by \`list\`."
   [gamemode]="Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects. Can also be toggled manually for those stubborn games that don't go fullscreen properly."
   [globalActions]="Command palette / action registry. Search and execute shell actions from scripts or keybinds."
@@ -92,6 +93,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [coverflowSelector]="shared"
   [customWidgets]="waffle"
   [dashboard]="shared"
+  [dashboardEscProbe]="shared"
   [dev]="shared"
   [gamemode]="shared"
   [globalActions]="shared"
@@ -159,6 +161,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [coverflowSelector]="toggle open close"
   [customWidgets]="reload list create remove"
   [dashboard]="toggle close open"
+  [dashboardEscProbe]="snapshot"
   [dev]="list open close current"
   [gamemode]="toggle activate deactivate status"
   [globalActions]="run runWithArgs list search open"
@@ -287,6 +290,7 @@ declare -gA IPC_FUNCTION_DESC=(
   ["dashboard:toggle"]="Open/close dashboard"
   ["dashboard:close"]="Close dashboard"
   ["dashboard:open"]="Open dashboard"
+  ["dashboardEscProbe:snapshot"]="Return timestamp, active panel family and per-output Dashboard Escape state as JSON"
   ["dev:list"]="Return the destination inventory as JSON"
   ["dev:open"]="Open a destination by semantic identifier"
   ["dev:close"]="Close development-opened surfaces and clear the request"
@@ -542,8 +546,8 @@ bind "Ctrl+Alt+A" { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; 
   [ytmusic]='bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(abyss abyssHostProbe abyssHoverProbe ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions hadalird hadanion keyboard lock mediaControls memory minimize mpris notificationCenter notifications osd osdInput osdVolume osk overlay overview packageSearch panelFamily recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter wull wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(abyss abyssHostProbe abyssHoverProbe ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dev gamemode globalActions hadalird hadanion keyboard lock mediaControls memory minimize mpris notificationCenter notifications osd osdInput osdVolume osk overlay overview packageSearch panelFamily region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wallpaperLauncher wallpaperSelector wull ytmusic zoom)
+IPC_ALL_TARGETS=(abyss abyssHostProbe abyssHoverProbe ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dashboardEscProbe dev gamemode globalActions hadalird hadanion keyboard lock mediaControls memory minimize mpris notificationCenter notifications osd osdInput osdVolume osk overlay overview packageSearch panelFamily recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter wull wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(abyss abyssHostProbe abyssHoverProbe ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dashboardEscProbe dev gamemode globalActions hadalird hadanion keyboard lock mediaControls memory minimize mpris notificationCenter notifications osd osdInput osdVolume osk overlay overview packageSearch panelFamily region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wallpaperLauncher wallpaperSelector wull ytmusic zoom)
 IPC_II_TARGETS=()
 IPC_WAFFLE_TARGETS=(autostart customWidgets recordingOsd search wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 
@@ -557,6 +561,7 @@ declare -gA IPC_KEBAB_ALIASES=(
   [control-panel]=controlPanel
   [coverflow-selector]=coverflowSelector
   [custom-widgets]=customWidgets
+  [dashboard-esc-probe]=dashboardEscProbe
   [global-actions]=globalActions
   [media-controls]=mediaControls
   [notification-center]=notificationCenter

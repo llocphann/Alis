@@ -825,6 +825,16 @@ inir abyssHostProbe remountPerimeter
 
 ---
 
+### dashboardEscProbe
+
+Read-only per-output Dashboard Escape ownership diagnostic. This inspection does not cancel edits, change focus, close surfaces, or install a timer.
+
+| Function | Description |
+|----------|-------------|
+| `snapshot` | Return timestamp, active panel family and per-output Dashboard Escape state as JSON |
+
+---
+
 ### abyssHoverProbe
 
 Read-only diagnostic snapshots of **production Abyss Screen Edge hover**
