@@ -1,0 +1,30 @@
+name: Alis Issue label colors
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/issue-label-palette.json'
+      - 'scripts/sync-issue-labels.py'
+      - '.github/workflows/issue-label-colors.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: issue-label-colors
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout matching source
+        uses: actions/checkout@v4
+      - name: Apply colors to custom labels (keep built-in colors)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 scripts/sync-issue-labels.py
