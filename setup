@@ -320,14 +320,14 @@ restart_updated_shell() {
     local runtime_dir="$1"
     local launcher=""
 
-    if [[ -x "${XDG_BIN_HOME}/inir" ]]; then
-        launcher="${XDG_BIN_HOME}/inir"
-    elif [[ -x "${REPO_ROOT}/scripts/inir" ]]; then
-        launcher="${REPO_ROOT}/scripts/inir"
-    elif [[ -x "${runtime_dir}/scripts/inir" ]]; then
-        launcher="${runtime_dir}/scripts/inir"
+    if [[ -x "${XDG_BIN_HOME}/alis" ]]; then
+        launcher="${XDG_BIN_HOME}/alis"
+    elif [[ -x "${REPO_ROOT}/scripts/alis" ]]; then
+        launcher="${REPO_ROOT}/scripts/alis"
+    elif [[ -x "${runtime_dir}/scripts/alis" ]]; then
+        launcher="${runtime_dir}/scripts/alis"
     else
-        log_error "No iNiR launcher available for verified restart"
+        log_error "No Alis launcher available for verified restart"
         return 1
     fi
 
@@ -534,8 +534,8 @@ show_help() {
     tui_list_item "./setup update       Pull, sync, and restart"
     tui_list_item "./setup doctor       Diagnose weird runtime breakage"
     tui_list_item "./setup status       See what is installed and what is drifting"
-    tui_list_item "inir run             Start the shell"
-    tui_list_item "inir logs            Read what the shell is complaining about"
+    tui_list_item "alis run             Start the shell"
+    tui_list_item "alis logs            Read what the shell is complaining about"
     tui_section_end
     echo ""
 }
@@ -1305,7 +1305,7 @@ run_config() {
             tui_info "Opening $config_file with $editor..."
             "$editor" "$config_file"
             tui_success "Config saved"
-            tui_info "Run 'inir restart' to apply changes"
+            tui_info "Run 'alis restart' to apply changes"
             ;;
         "Panel Family")
             echo ""
@@ -1317,7 +1317,7 @@ run_config() {
                     tmp_file=$(mktemp)
                     jq --arg f "$new_family" '.panelFamily = $f' "$config_file" > "$tmp_file" && mv "$tmp_file" "$config_file"
                     tui_success "Panel family set to: $new_family"
-                    tui_info "Run 'inir restart' to apply"
+                    tui_info "Run 'alis restart' to apply"
                 else
                     tui_warn "jq required to edit config programmatically"
                     tui_info "Edit $config_file manually"
@@ -1341,7 +1341,7 @@ run_config() {
                     cp "$config_file" "${config_file}.backup.$(date +%Y%m%d%H%M%S)"
                     cp "${REPO_ROOT}/defaults/config.json" "$config_file"
                     tui_success "Config reset to defaults (backup created)"
-                    tui_info "Run 'inir restart' to apply"
+                    tui_info "Run 'alis restart' to apply"
                 else
                     tui_error "Default config not found"
                 fi
@@ -1378,7 +1378,7 @@ run_theme() {
 
         if command -v inir &>/dev/null; then
             local runtime_dir
-            runtime_dir="$(inir path 2>/dev/null || true)"
+            runtime_dir="$(alis path 2>/dev/null || true)"
             candidate="${runtime_dir}/scripts/colors/switchwall.sh"
             if [[ -x "$candidate" ]]; then
                 printf '%s' "$candidate"
@@ -1599,7 +1599,7 @@ run_logs() {
 
     if [[ ${#log_sources[@]} -eq 0 ]]; then
         tui_warn "No log sources found"
-        tui_info "Start iNiR first: inir run"
+        tui_info "Start Alis first: alis run"
         echo ""
         read -rp "Press Enter to continue..."
         return 0
@@ -1805,7 +1805,7 @@ run_install() {
     tui_task_finalize
 
     echo ""
-    tui_alert "success" "Installation complete" "Version $(get_repo_version) is ready.\nRun 'inir run' to start the shell, or log out and back in."
+    tui_alert "success" "Installation complete" "Version $(get_repo_version) is ready.\nRun 'alis run' to start the shell, or log out and back in."
 }
 
 ###############################################################################
@@ -1982,7 +1982,7 @@ restore_all_user_mods() {
 
     echo ""
     tui_success "Restored $restored file(s)"
-    tui_info "Restart the shell to apply changes: inir restart"
+    tui_info "Restart the shell to apply changes: alis restart"
 }
 
 # Helper: Restore a single file from user-mods backup
@@ -2034,7 +2034,7 @@ restore_single_user_mod() {
     mkdir -p "$(dirname "$dest_file")"
     cp "$src_file" "$dest_file"
     tui_success "Restored: $choice"
-    tui_info "Restart the shell to apply changes: inir restart"
+    tui_info "Restart the shell to apply changes: alis restart"
 }
 
 ###############################################################################
@@ -2688,9 +2688,22 @@ run_update() {
     local niri_config="${XDG_CONFIG_HOME}/niri/config.kdl"
     local niri_startup_cfg="${XDG_CONFIG_HOME}/niri/config.d/50-startup.kdl"
     local niri_binds_cfg="${XDG_CONFIG_HOME}/niri/config.d/70-binds.kdl"
-    if [[ -f "$niri_config" && -x "${XDG_BIN_HOME}/inir" ]]; then
-        local launcher_target_escaped="${XDG_BIN_HOME}/inir"
+    if [[ -f "$niri_config" && -x "${XDG_BIN_HOME}/alis" ]]; then
+        local launcher_target_escaped="${XDG_BIN_HOME}/alis"
         launcher_target_escaped="${launcher_target_escaped//&/\\&}"
+        # Save original keybinds once before changing disabled inir executables.
+        local _brand_niri_file
+        for _brand_niri_file in "$niri_binds_cfg" "$niri_startup_cfg" "$niri_config"; do
+            [[ -f "$_brand_niri_file" && ! -L "$_brand_niri_file" ]] || continue
+            if grep -Eq '^[[:space:]]*(spawn|spawn-at-startup)[[:space:]].*("/bin/inir"|/bin/inir"|spawn "inir"|"inir")' "$_brand_niri_file"; then
+                if [[ ! -e "$_brand_niri_file.brand-cli.bak" && ! -L "$_brand_niri_file.brand-cli.bak" ]]; then
+                    cp -p -- "$_brand_niri_file" "$_brand_niri_file.brand-cli.bak" || { log_error "Niri backup failed: $_brand_niri_file"; return 1; }
+                fi
+                sed -i -e '/^[[:space:]]*spawn[[:space:]]/s|/bin/inir"|/bin/alis"|g' \
+                       -e '/^[[:space:]]*spawn-at-startup[[:space:]]/s|/bin/inir"|/bin/alis"|g' \
+                       -e '/^[[:space:]]*spawn-at-startup[[:space:]]/s|spawn-at-startup "inir"|spawn-at-startup "alis"|g' "$_brand_niri_file"
+            fi
+        done
         if [[ -f "$niri_binds_cfg" ]]; then
             sed -i \
                 -e 's|spawn "bash" "-lc" "exec \"\$(inir path)/scripts/launch-terminal.sh\""|spawn "'"${launcher_target_escaped}"'" "terminal"|' \
