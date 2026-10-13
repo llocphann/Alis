@@ -52,6 +52,10 @@ Repo-managed Alis entries are removed only when their contents carry the expecte
 
 `scripts/test-brand-single-owner.sh` verifies the current Quickshell `ShellId inir`, the sole `inir.service` process owner and StatusNotifierWatcher DBus bus name; it also rejects a second `alis.service` and enforces the forwarding CLI for both source and fallback runtime modes. This is intentionally a **strict-lossless compatibility release**: the user sees Alis, while established runtime/IPC/session selectors remain stable. Migrating the canonical selectors later is a separate owner-gated transaction, not an automatic package upgrade.
 
+## Staged installation and rollback evidence (R9)
+
+Run `bash scripts/test-brand-upgrade-rollback.sh` to stage a fresh Make installation, repeat installation as a simulated package upgrade, uninstall and reinstall. It verifies public and legacy entrypoint ownership, app-ID hiding, icon preservation and SHA-256 sentinels for an isolated user config and first-run marker. It also rejects foreign command collisions. The scenario **does not** invoke pacman, manage a user service, manipulate real user files, or prove a physical graphical login.
+
 ## Standalone automated regression lane
 
 GitHub Actions workflow `.github/workflows/brand-contracts.yml` runs a bounded, desktop-independent set of CLI, app ID, staged installer ownership, XDG namespace alias and pinned Arch snapshot contracts on `dev`. Its first confirmed successful run was [38430739766](https://github.com/llocphann/Alis/actions/runs/38430739766) at SHA `cf81808b8c8377d24f5fa917866edd47c2a7e5f5`. This gives independent evidence even when the full desktop/Niri canonical validator cannot execute in hosted CI; it **does not** replace owner visual acceptance, package installation on real hardware, or rollback validation.
