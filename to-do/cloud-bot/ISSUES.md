@@ -562,6 +562,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   verified initial/resting size and owner acceptance.
 
 - [x] **AC-I04 — Companion-enabled Screen Edge module hover regression — owner report 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Companion-enabled Screen Edge module popup-on-hover repair accepted. Historical "Owner chưa verified" and owner-acceptance OPEN statements in prior evidence below are superseded for this task's owner sign-off only; source/installed/Niri/CI test results and independent regression gates keep their actual documented status. No fresh test PASS is implied.
   **Related independent general bridge issue:** POP-I01 in this file.
   AC-I04 concerns Companion-specific failure to *open* the Popup on hover;
   POP-I01 concerns an already-open Popup *closing* during bridge travel.
@@ -1617,6 +1618,7 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   **OWNER VERIFIED — 2026-10-11 22:19 ICT:** Maintainer accepts the source repair restoring fullscreen Volume/Brightness OSD at physical screen edges and normal non-fullscreen placement. Retain the 130 native assertions and source receipt; this closes the reported OSD issue. It does NOT reclassify the broader unrelated GameMode/fullscreen, panel-hover/companion or canonical gate as passed.
 
 - [x] **REC-I01 — Recording Popup Expand Controls/Minimize buttons fail; dot-only minimized hover mode — owner report 2026-10-11:**
+  **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Recording Popup Expand/Minimize and minimized blinking-dot controls accepted. Historical "Owner chưa verified" and owner-acceptance OPEN statements in prior evidence below are superseded for this task's owner sign-off only; source/installed/Niri/CI test results and independent regression gates keep their actual documented status. No fresh test PASS is implied.
   The Expand Controls and Minimize actions on the Recording Popup do not work.
   Restore the action handlers and connected geometry/input ownership. In
   **minimized mode**, resting UI must show **only one small blinking red dot**
