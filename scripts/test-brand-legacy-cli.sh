@@ -22,6 +22,14 @@ for args in help status settings 'run' 'service restart' 'completions bash' 'ove
     [[ $rc -eq 64 ]] || fail "legacy public command '$args' unexpectedly exited $rc"
     [[ "$output" == *"temporarily disabled"* && "$output" == *"'alis'"* ]] || fail "missing Alis guidance for $args"
 done
+# A non-standard XDG_BIN_HOME must not accidentally reactivate the old CLI.
+mkdir -p "$tmp/custom-launchers"
+cp "$repo/scripts/inir" "$tmp/custom-launchers/inir"
+set +e
+custom_output="$(HOME="$tmp/home" bash "$tmp/custom-launchers/inir" status 2>&1)"
+custom_rc=$?
+set -e
+[[ $custom_rc -eq 64 && "$custom_output" == *"Use 'alis' instead."* ]] || fail "custom XDG_BIN_HOME legacy executable remains enabled"
 # Environment from Alis should only bypass the public check for delegation.
 set +e
 help_output="$(HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/home/.config" INIR_RUNTIME_DIR="$repo" bash "$tmp/bin/alis" help 2>&1)"
