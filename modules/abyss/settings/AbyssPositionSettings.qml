@@ -31,7 +31,7 @@ ColumnLayout {
     }
     function compactContentWidth(options): real {
         let widest = 0
-        for (const option of options)
+        for (const option of options ?? [])
             widest = Math.max(widest, compactSelectorMetrics.advanceWidth(option.label))
         // StyledComboBox: 12px text inset, 6px gap, arrow and 8px right inset.
         return Math.ceil(widest + 32*Appearance.fontSizeScale

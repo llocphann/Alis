@@ -164,7 +164,7 @@ assert 'objectName:"abyssModuleRoundingAction"' in editor
 assert 'objectName:"abyssRoundZeroCorners"' in editor
 assert 'id:edgeGapAndSizeRow' in editor
 assert 'id:edgeWidthRow' in editor
-assert 'Math.min(root.width-48,660*Appearance.fontSizeScale)' in editor
+assert 'root.ipcToolbarSpan : 660*Appearance.fontSizeScale' in editor
 assert 'columns:1;rowSpacing:4*Appearance.fontSizeScale' in editor
 assert editor.count('AbyssCheckBox {') == 1
 assert 'visible:root.edgeWidthAffectsModules[root.editingEdge]===false' not in editor
