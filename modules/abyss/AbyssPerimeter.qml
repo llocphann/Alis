@@ -716,6 +716,7 @@ Scope {
                     // key press follows the existing Dashboard close behavior.
                     if (dashboardBody.contentItem?.item?.editMode
                             && dashboardBody.contentItem.item.handleEscape()) {
+                        dashboardBody.forceActiveFocus()
                         return
                     }
                     window.closePopup()
