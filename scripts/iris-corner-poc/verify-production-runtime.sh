@@ -2,7 +2,7 @@
 set -euo pipefail
 
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
-runtime_root="${HADALIS_RUNTIME_ROOT:-${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir}"
+runtime_root="${HADALIS_RUNTIME_ROOT:-${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis}"
 
 fail() {
     printf 'Production iRiS runtime preflight: FAIL: %s\n' "$1" >&2
