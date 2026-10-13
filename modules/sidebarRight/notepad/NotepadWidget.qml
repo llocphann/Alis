@@ -874,9 +874,15 @@ Item {
                                     root.markdownEditing = true
                                     root.editorActivated()
                                 } else if (root.autoMarkdownReading && root.markdownEditing) {
-                                    // Blur, including a click on another control, is Reading.
-                                    root.releaseEditorFocus()
-                                    root.editorDeactivated()
+                                    // Defer one tick: the corner can briefly lose input
+                                    // focus while its layer-shell keyboard lease upgrades.
+                                    Qt.callLater(() => {
+                                        if (!root.autoMarkdownReading || !root.markdownEditing
+                                                || textArea.activeFocus)
+                                            return
+                                        root.releaseEditorFocus()
+                                        root.editorDeactivated()
+                                    })
                                 }
                             }
 
