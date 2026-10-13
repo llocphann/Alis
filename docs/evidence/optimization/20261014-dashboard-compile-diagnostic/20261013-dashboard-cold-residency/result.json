@@ -1,0 +1,117 @@
+{
+  "source_sha": "4d8ea01bb40c7c30a0ec28f3c2d276d5c52da45c",
+  "scope": "production BodyHost and actual Dashboard content; private no-focus full-output window, programmatic cold/warm/expiry; no shared Field shader or owner performance claim",
+  "events": [
+    {
+      "stage": "cold-open",
+      "kind": "ready",
+      "time": 1791910300784,
+      "ready": true
+    },
+    {
+      "stage": "cold-open",
+      "kind": "request",
+      "before": 1791910300416,
+      "after": 1791910300908,
+      "open": true
+    },
+    {
+      "stage": "warm-close",
+      "kind": "request",
+      "before": 1791910302308,
+      "after": 1791910302314,
+      "open": false
+    },
+    {
+      "stage": "warm-open",
+      "kind": "request",
+      "before": 1791910303014,
+      "after": 1791910303018,
+      "open": true
+    },
+    {
+      "stage": "expire-close",
+      "kind": "request",
+      "before": 1791910304118,
+      "after": 1791910304123,
+      "open": false
+    },
+    {
+      "stage": "expire-close",
+      "kind": "ready",
+      "time": 1791910305634,
+      "ready": false
+    },
+    {
+      "stage": "expired-open",
+      "kind": "ready",
+      "time": 1791910306563,
+      "ready": true
+    },
+    {
+      "stage": "expired-open",
+      "kind": "request",
+      "before": 1791910306523,
+      "after": 1791910306621,
+      "open": true
+    }
+  ],
+  "frames": [
+    {
+      "stage": "cold-open",
+      "time": 1791910300977,
+      "progress": 0,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    },
+    {
+      "stage": "warm-close",
+      "time": 1791910302488,
+      "progress": 0.26457875850752943,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    },
+    {
+      "stage": "warm-open",
+      "time": 1791910303457,
+      "progress": 1,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    },
+    {
+      "stage": "expire-close",
+      "time": 1791910304454,
+      "progress": 1.5053411385301807e-05,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    },
+    {
+      "stage": "expire-close",
+      "time": 1791910305451,
+      "progress": 0,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    },
+    {
+      "stage": "expire-close",
+      "time": 1791910306442,
+      "progress": 0,
+      "ready": false,
+      "width": 0,
+      "height": 0
+    },
+    {
+      "stage": "expired-open",
+      "time": 1791910307477,
+      "progress": 1,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    }
+  ]
+}

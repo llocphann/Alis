@@ -1,0 +1,23 @@
+  INFO: Launching config: "/tmp/alis-dashboard-residency-trace-aw49tycc/shell.qml"
+  INFO: Shell ID: "6cde3eea697df04799045df54877bad7" Path ID "6cde3eea697df04799045df54877bad7"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/df5rgpvumt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1266720.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-residency-trace-aw49tycc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dashboard-residency-trace-aw49tycc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dashboard-residency-trace-aw49tycc/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-dashboard-residency-trace-aw49tycc/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[429:5]: Read of /tmp/alis-dashboard-residency-trace-aw49tycc/state/quickshell/user/todo.txt failed: File does not exist.
+  WARN scene: QML FileView at @services/InternalTodoBackend.qml[353:5]: Read of /tmp/alis-dashboard-residency-trace-aw49tycc/state/quickshell/user/todo.json failed: File does not exist.
+ DEBUG qml: [Todo] JSON not found, creating new file.
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-dashboard-residency-trace-aw49tycc/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f54ffff40e0)
+  INFO qml: [Weather] Getting location from IP...
+  INFO qml: [Weather] Location: [redacted]
+  INFO qml: [Weather] Updated: 26°C [redacted]
+  INFO qml: [Weather] Air quality updated: 57 EAQI
+  INFO qml: DASHBOARD_RESIDENCY_TRACE_PASS {"events":[{"stage":"cold-open","kind":"ready","time":1791911430969,"ready":true},{"stage":"cold-open","kind":"request","before":1791911430608,"after":1791911431100,"open":true},{"stage":"warm-close","kind":"request","before":1791911432501,"after":1791911432507,"open":false},{"stage":"warm-open","kind":"request","before":1791911433208,"after":1791911433214,"open":true},{"stage":"expire-close","kind":"request","before":1791911434315,"after":1791911434321,"open":false},{"stage":"expire-close","kind":"ready","time":1791911435829,"ready":false},{"stage":"expired-open","kind":"ready","time":1791911436758,"ready":true},{"stage":"expired-open","kind":"request","before":1791911436722,"after":1791911436831,"open":true}],"frames":[{"stage":"cold-open","time":1791911431173,"progress":0,"ready":true,"width":1596.8,"height":929.76},{"stage":"cold-open","time":1791911431802,"progress":1.00483005025,"ready":true,"width":1596.8,"height":929.76},{"stage":"warm-close","time":1791911432771,"progress":0.012403628765940145,"ready":true,"width":1596.8,"height":929.76},{"stage":"warm-open","time":1791911433766,"progress":1,"ready":true,"width":1596.8,"height":929.76},{"stage":"expire-close","time":1791911434765,"progress":0,"ready":true,"width":1596.8,"height":929.76},{"stage":"expire-close","time":1791911435763,"progress":0,"ready":true,"width":1596.8,"height":929.76},{"stage":"expired-open","time":1791911436863,"progress":0,"ready":true,"width":1596.8,"height":929.76},{"stage":"expired-open","time":1791911437781,"progress":1,"ready":true,"width":1596.8,"height":929.76}]}

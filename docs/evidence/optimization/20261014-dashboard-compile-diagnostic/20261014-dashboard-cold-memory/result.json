@@ -1,0 +1,125 @@
+{
+  "source_sha": "4d8ea01bb40c7c30a0ec28f3c2d276d5c52da45c",
+  "scope": "production BodyHost and actual Dashboard content; private no-focus full-output window, programmatic cold/warm/expiry; no shared Field shader or owner performance claim",
+  "events": [
+    {
+      "stage": "cold-open",
+      "kind": "ready",
+      "time": 1791911430969,
+      "ready": true
+    },
+    {
+      "stage": "cold-open",
+      "kind": "request",
+      "before": 1791911430608,
+      "after": 1791911431100,
+      "open": true
+    },
+    {
+      "stage": "warm-close",
+      "kind": "request",
+      "before": 1791911432501,
+      "after": 1791911432507,
+      "open": false
+    },
+    {
+      "stage": "warm-open",
+      "kind": "request",
+      "before": 1791911433208,
+      "after": 1791911433214,
+      "open": true
+    },
+    {
+      "stage": "expire-close",
+      "kind": "request",
+      "before": 1791911434315,
+      "after": 1791911434321,
+      "open": false
+    },
+    {
+      "stage": "expire-close",
+      "kind": "ready",
+      "time": 1791911435829,
+      "ready": false
+    },
+    {
+      "stage": "expired-open",
+      "kind": "ready",
+      "time": 1791911436758,
+      "ready": true
+    },
+    {
+      "stage": "expired-open",
+      "kind": "request",
+      "before": 1791911436722,
+      "after": 1791911436831,
+      "open": true
+    }
+  ],
+  "frames": [
+    {
+      "stage": "cold-open",
+      "time": 1791911431173,
+      "progress": 0,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    },
+    {
+      "stage": "cold-open",
+      "time": 1791911431802,
+      "progress": 1.00483005025,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    },
+    {
+      "stage": "warm-close",
+      "time": 1791911432771,
+      "progress": 0.012403628765940145,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    },
+    {
+      "stage": "warm-open",
+      "time": 1791911433766,
+      "progress": 1,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    },
+    {
+      "stage": "expire-close",
+      "time": 1791911434765,
+      "progress": 0,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    },
+    {
+      "stage": "expire-close",
+      "time": 1791911435763,
+      "progress": 0,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    },
+    {
+      "stage": "expired-open",
+      "time": 1791911436863,
+      "progress": 0,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    },
+    {
+      "stage": "expired-open",
+      "time": 1791911437781,
+      "progress": 1,
+      "ready": true,
+      "width": 1596.8,
+      "height": 929.76
+    }
+  ]
+}

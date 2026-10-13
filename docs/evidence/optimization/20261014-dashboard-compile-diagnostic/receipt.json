@@ -1,0 +1,44 @@
+{
+  "source": "4d8ea01bb40c7c30a0ec28f3c2d276d5c52da45c",
+  "classification": "RESEARCH ONLY; no runtime precompilation patch promoted",
+  "baseline_cold_setter_ms": [
+    492,
+    492
+  ],
+  "compile_only_cold_setter_ms": [
+    205,
+    216
+  ],
+  "warm_setter_ms_before": [
+    4,
+    6
+  ],
+  "warm_setter_ms_compile": [
+    5,
+    3
+  ],
+  "expired_setter_ms_before": [
+    98,
+    109
+  ],
+  "expired_setter_ms_compile": [
+    118,
+    111
+  ],
+  "compile_elapsed_ms": [
+    408,
+    407
+  ],
+  "compile_widget_instances": false,
+  "compile_sampling_consumers": 0,
+  "sampled_compile_pss_delta_kib": 11583,
+  "frames_baseline": [
+    7,
+    8
+  ],
+  "frames_compile": [
+    8,
+    6
+  ],
+  "limits": "only two process pairs, no shared Field shader; sparse no-focus private swaps are not FPS evidence; no matched owner resource gain or whole-task acceptance"
+}

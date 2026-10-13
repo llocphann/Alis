@@ -1,0 +1,9 @@
+# Dashboard initial compilation and residency diagnostic
+
+Frozen source: `4d8ea01bb40c7c30a0ec28f3c2d276d5c52da45c`. Production BodyHost loads actual Abyss Dashboard content in an isolated full-output, no-focus private Niri. Cold opening, rapid warm reuse, expiry and reopening are programmatic. No shared Field shader is drawn, and only6–8 swaps are observed: these captures are not animation FPS, native compositor present or Owner smoothness acceptance.
+
+Two baseline first-open setters block492ms; rapid reuse takes4/6ms, and expired reopening98/109ms. An experimental asynchronous Qt Component compile before opening takes408/407ms in advance, without a Dashboard instance or ResourceUsage sampling consumer. The subsequent first-open setter takes205/216ms. A separate process sampler finds PSS164386→175969KiB over the preparation interval, an observed11583KiB increase. Actual widgets remain absent until opening. Production compilation/creation remains unchanged; this is a research driver rather than promoted code.
+
+There are only two process pairs, uncontrolled native/OS caching and no owner resource comparison. Expired reopen118/111ms does not improve over98/109ms. Do not report a percentage, whole CPU/RAM improvement or assume preparation eliminates the remaining constructor stall. Before adoption, metadata lifetime/cleanup, startup contention, no unwanted service/AI/vault work, multiple outputs and early opening/source-change cases need qualification. The existing1.2s widget cache remains intact; no widget is permanently warmed and no quality or normal animation parameter was changed.
+
+Memory samples are read-only Linux rollups of the test's own Quickshell PID. Paths, clock samples and synthetic state are retained; no user screenshot, PCM or personal Dashboard data was captured.

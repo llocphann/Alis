@@ -1,0 +1,6 @@
+{
+  "source_sha": "9b1730223078a304d7c76eb78eb6a51a1c86ea56",
+  "result": "PASS15/3 native completions",
+  "scope": "focused theme readiness; no whole canonical/owner/pixel parity",
+  "old_failure": "cleanfe80 original fixture failed prematurely on Waffle transition"
+}
