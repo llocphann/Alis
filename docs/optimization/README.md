@@ -3,9 +3,7 @@
 This directory is the **single active home for optimization documentation**.
 Do not create new optimization research Markdown elsewhere in `docs/`.
 
-The active task router remains
-[`to-do/cloud-bot/REWORK_OPTIMIZATION.md`](../../to-do/cloud-bot/REWORK_OPTIMIZATION.md);
-that file routes work only and must not become a second technical ledger.
+Optimization **tasks** live in [Alis GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen). This directory contains technical research and evidence, not task status or a parallel backlog.
 
 ## Active documents
 
@@ -30,8 +28,7 @@ they are evidence artifacts, not competing optimization ledgers.
 
 ## Rules
 
-- Re-fetch current `dev`, read `AGENTS.md` and
-  `to-do/cloud-bot/REWORK_OPTIMIZATION.md` before each research/write pass.
+- Re-fetch current `dev`, read `AGENTS.md` and the relevant open GitHub Issue before each research/write pass.
 - Search the canonical audit before promoting a candidate to avoid duplicate,
   ALREADY/CLOSED/SUPERSEDED findings.
 - Strict-lossless is the default. Visual substitutions require the audit's
