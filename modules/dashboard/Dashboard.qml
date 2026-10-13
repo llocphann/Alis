@@ -165,6 +165,24 @@ Scope {
 
         mask: dashboardInputRegion
 
+        // The window itself owns one Edit-mode Escape shortcut. Controls and
+        // cards may steal QQuickItem activeFocus from the content Loader.
+        Shortcut {
+            sequences: ["Escape"]
+            context: Qt.WindowShortcut
+            autoRepeat: false
+            enabled: GlobalStates.dashboardOpen
+                && (contentLoader.item?.editMode ?? false)
+            onActivated: {
+                if (contentLoader.item?.handleEscape()) {
+                    contentLoader.forceActiveFocus()
+                    console.info("[DashboardEscape] edit canceled; surface=standalone")
+                }
+            }
+            onActivatedAmbiguously: console.warn(
+                "[DashboardEscape] ambiguous Escape shortcut in standalone window")
+        }
+
         // Backdrop click to close
         MouseArea {
             anchors.fill: parent
@@ -253,18 +271,6 @@ Scope {
             transform: Translate { y: contentLoader.panelTranslateY }
 
             focus: GlobalStates.dashboardOpen
-            // Window-level shortcut still works after clicking a toolbar button
-            // that takes activeFocus away from this Loader.
-            Shortcut {
-                sequences: ["Escape"]
-                context: Qt.WindowShortcut
-                enabled: GlobalStates.dashboardOpen
-                    && (contentLoader.item?.editMode ?? false)
-                onActivated: {
-                    if (contentLoader.item?.handleEscape())
-                        contentLoader.forceActiveFocus()
-                }
-            }
             Keys.onPressed: (event) => {
                 if (event.key === Qt.Key_Escape) {
                     if (!contentLoader.item?.handleEscape())
