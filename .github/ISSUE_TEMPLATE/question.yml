@@ -1,16 +1,16 @@
 name: Question
-description: Ask for help with Hadalis setup, configuration, or usage
+description: Ask for help with Alis setup, configuration, or usage
 labels: ["question"]
 body:
   - type: markdown
     attributes:
       value: |
-        Check the Hadalis documentation first:
-        - [Documentation index](https://github.com/llocphann/Hadalis/tree/stable/docs)
-        - [Installation](https://github.com/llocphann/Hadalis/blob/stable/docs/INSTALL.md)
-        - [Keybindings](https://github.com/llocphann/Hadalis/blob/stable/docs/KEYBINDS.md)
-        - [IPC reference](https://github.com/llocphann/Hadalis/blob/stable/docs/IPC.md)
-        - [Known limitations](https://github.com/llocphann/Hadalis/blob/stable/docs/LIMITATIONS.md)
+        Check the Alis documentation first:
+        - [Documentation index](https://github.com/llocphann/Alis/tree/stable/docs)
+        - [Installation](https://github.com/llocphann/Alis/blob/stable/docs/INSTALL.md)
+        - [Keybindings](https://github.com/llocphann/Alis/blob/stable/docs/KEYBINDS.md)
+        - [IPC reference](https://github.com/llocphann/Alis/blob/stable/docs/IPC.md)
+        - [Known limitations](https://github.com/llocphann/Alis/blob/stable/docs/LIMITATIONS.md)
 
   - type: textarea
     id: question
