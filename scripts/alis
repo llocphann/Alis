@@ -1,8 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Canonical CLI and runtime name is Alis. Historical Alis shell instances
-# must be stopped during the owner-gated service/Quickshell cutover.
+# Canonical CLI and runtime name is Alis. Prior runtime identities must be
+# retired through the owner-gated, one-service handoff.
+# Fail closed before a user command can start a second Quickshell instance.
+case "${1:-}" in
+    run|start|restart)
+        if command -v systemctl >/dev/null 2>&1 &&
+           systemctl --user is-active --quiet inir.service; then
+            printf '%s\n' 'The previous shell service is still active. Refusing a second Alis session; complete the canonical service cutover.' >&2
+            exit 65
+        fi
+        ;;
+esac
 # Qt requires a UTF-8 process locale. Preserve every already-valid user locale,
 # but repair legacy C/ASCII launch environments before Quickshell starts.
 _alis_ensure_utf8_locale() {
