@@ -2,6 +2,8 @@
 """Sync only Alis custom Issue label colors; keep GitHub default labels intact."""
 import json
 import os
+import re
+import sys
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import quote
@@ -31,7 +33,7 @@ def api(method, path, payload=None):
     request = Request(base + path, data=data, headers=headers, method=method)
     try:
         with urlopen(request, timeout=30) as response:
-            return json.load(response)
+            return None if response.status == 204 else json.load(response)
     except HTTPError as exc:
         # Never print tokens, body content, or other private data.
         raise RuntimeError(f"{method} {path}: GitHub HTTP {exc.code}") from exc
@@ -59,3 +61,64 @@ for name, item in palette.items():
     else:
         unchanged += 1
 print(f"ALIS_ISSUE_LABEL_COLORS_PASS created={created} updated={updated} unchanged={unchanged} total={len(palette)}")
+
+# Explicit opt-in migration: preserve area/status/other user tags, replace only
+# redundant legacy type:* labels with GitHub built-ins, and tag complex work.
+if "--migrate" in sys.argv:
+    complex_issue_numbers = {
+        27, 30, 31, 32, 36, 40, 41, 42, 43, 45, 49, 57, 58, 59,
+        63, 64, 65, 66, 67, 72, 73, 74, 80, 81, 83, 88, 89, 90,
+        91, 92, 93, 94, 95, 99, 100,
+    }
+    def desired_labels(issue):
+        labels = [item["name"] for item in issue.get("labels", [])]
+        prefix = re.match(r"^\[[A-Z]+-([FRI])\d+\]", issue["title"])
+        if issue["number"] == 97:
+            kind = "documentation"
+        elif prefix:
+            kind = "bug" if prefix.group(1) == "I" else "enhancement"
+        elif "type:bug" in labels:
+            kind = "bug"
+        elif "type:feature" in labels or "type:rework" in labels:
+            kind = "enhancement"
+        else:
+            return None
+        result = [x for x in labels if not x.startswith("type:")]
+        if kind not in result:
+            result.append(kind)
+        if issue["number"] in complex_issue_numbers and "complexity:high" not in result:
+            result.append("complexity:high")
+        return result
+
+    changed = skipped = 0
+    all_issues = []
+    page = 1
+    while True:
+        page_items = api("GET", f"/issues?state=all&per_page=100&page={page}")
+        all_issues.extend(page_items)
+        if len(page_items) < 100:
+            break
+        page += 1
+    for issue in all_issues:
+        if "pull_request" in issue:
+            continue
+        labels = desired_labels(issue)
+        if labels is None:
+            skipped += 1
+        elif set(labels) != {item["name"] for item in issue["labels"]}:
+            api("PATCH", f"/issues/{issue['number']}", {"labels": labels})
+            changed += 1
+
+    # Old gray type:* labels are redundant. Remove the repository label entry
+    # only when no Issue/PR references it in the freshly queried API snapshot.
+    removed = []
+    for name in ("type:bug", "type:feature", "type:rework"):
+        still_used = any(
+            name in {tag["name"] for tag in issue.get("labels", [])}
+            for issue in all_issues if "pull_request" in issue
+        )
+        if name in existing and not still_used:
+            api("DELETE", "/labels/" + quote(name, safe=""))
+            removed.append(name)
+    print(f"ALIS_ISSUE_LABEL_MIGRATION_PASS changed={changed} skipped={skipped} "
+          f"scanned={len(all_issues)} obsolete_removed={','.join(removed)}")
