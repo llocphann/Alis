@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Four-edge production BodyHost reveal must not resize Sidebar contents."""
+"""Four-edge production BodyHost reveal must keep static panel contents full size."""
 import json,tempfile,os
 from pathlib import Path
 from native_test_session import private_wayland,run_qs
 ROOT=Path(__file__).resolve().parents[1]
 source=(ROOT/'modules/abyss/AbyssPerimeter.qml').read_text()
 flags=[]
-for identity in ['leftPanel','rightPanel']:
+for identity in ['leftPanel','rightPanel','settings','controls','clipboardBody']:
  start=source.index('id: '+identity+'\n');end=source.index('\n            Abyss',start)
  flags.append('stableContentSize: true' in source[start:end])
 with tempfile.TemporaryDirectory(prefix='alis-sidebar-content-size-')as name:
@@ -62,7 +62,7 @@ ShellRoot {
       root.fixedSize=false;root.reveal=progress;wait(0);const original=geometry()
       root.fixedSize=enabled;wait(0)
       check(geometry()===original,"content-sizing option changed surface/input geometry "+edge)
-      check(item.width===full.width&&item.height===full.height,"Sidebar reflows during reveal "+edge+" progress="+progress+" dimensions="+item.width+"x"+item.height+" full="+full.width+"x"+full.height)
+      check(item.width===full.width&&item.height===full.height,"Panel reflows during reveal "+edge+" progress="+progress+" dimensions="+item.width+"x"+item.height+" full="+full.width+"x"+full.height)
       check(body.contentItem.item===item&&body.acceptsInput,"reveal replaced content or lost input")
      }
      // Resize/reflow still changes final dimensions; this is a reveal-only fix.
@@ -71,11 +71,11 @@ ShellRoot {
      check(item.width===body.targetRecord.content.width&&item.height===body.targetRecord.content.height,"content ignored a real target resize")
      body.depth=410;wait(0)
      root.shown=false;tryVerify(()=>body.contentItem.item===null,3000)
-     check(!body.acceptsInput&&!body.ready,"closed Sidebar retained content/input")
+     check(!body.acceptsInput&&!body.ready,"closed panel retained content/input")
     }
    }
-   console.info("SIDEBAR_CONTENT_SIZE_PASS",root.checks,"four Edges, reversal, stable content, unchanged geometry/input, resize and unload")
-  }catch(e){console.error("SIDEBAR_CONTENT_SIZE_FAIL",e.message,e.stack)}Qt.quit()}
+   console.info("PANEL_CONTENT_SIZE_PASS",root.checks,"four Edges, reversal, stable content, unchanged geometry/input, resize and unload")
+  }catch(e){console.error("PANEL_CONTENT_SIZE_FAIL",e.message,e.stack)}Qt.quit()}
  }
  Timer {interval:100;running:true;onTriggered:test.run()}
 }
@@ -89,7 +89,7 @@ ShellRoot {
   result=run_qs(folder,env,30)
   log=os.environ.get('ALIS_SIDEBAR_CONTENT_SIZE_LOG')
   if log:Path(log).write_text(result.stdout)
-  errors=['SIDEBAR_CONTENT_SIZE_FAIL','ReferenceError:','TypeError:','Binding loop','Failed to load configuration']
-  if result.returncode or 'SIDEBAR_CONTENT_SIZE_PASS'not in result.stdout or any(e in result.stdout for e in errors):print(result.stdout);raise SystemExit(1)
+  errors=['PANEL_CONTENT_SIZE_FAIL','ReferenceError:','TypeError:','Binding loop','Failed to load configuration']
+  if result.returncode or 'PANEL_CONTENT_SIZE_PASS'not in result.stdout or any(e in result.stdout for e in errors):print(result.stdout);raise SystemExit(1)
   for line in result.stdout.splitlines():
-   if 'SIDEBAR_CONTENT_SIZE_PASS'in line:print(line)
+   if 'PANEL_CONTENT_SIZE_PASS'in line:print(line)

@@ -1338,6 +1338,7 @@ Scope {
             // rendered Dashboard inside the still-visible Clipboard silhouette.
             AbyssBodyHost {
                 id: clipboardBody
+                stableContentSize: true
                 identity: "clipboard"
                 controller: liquid
                 anchors.fill: parent
@@ -1381,6 +1382,7 @@ Scope {
             }
             AbyssBodyHost {
                 id: settings
+                stableContentSize: true
                 identity: "settings"
                 controller: liquid
                 anchors.fill: parent
@@ -1417,6 +1419,7 @@ Scope {
             }
             AbyssBodyHost {
                 id: controls
+                stableContentSize: true
                 identity: "controls"
                 controller: liquid
                 anchors.fill: parent
