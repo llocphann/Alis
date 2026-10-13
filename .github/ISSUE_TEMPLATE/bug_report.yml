@@ -1,107 +1,30 @@
-name: Bug Report
-description: Report something in Hadalis that is not working correctly
+name: Bug report
+description: Report broken behavior in Alis
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        If the shell broke right after a system update or crashes at startup,
-        run `inir doctor` first. Remove secrets, tokens, and private user data
-        from logs or configuration before submitting them.
-
+        Search existing [Alis Issues](https://github.com/llocphann/Alis/issues) first. Keep details concise and remove private data from logs.
   - type: textarea
-    id: summary
+    id: problem
     attributes:
-      label: Summary
-      description: One sentence describing what is broken
-      placeholder: Weather module stops rendering after moving it to another perimeter slot
+      label: What is broken?
+      description: What happened, and what should happen?
+      placeholder: Calendar indicators overlap when a day has many events.
     validations:
       required: true
-
   - type: textarea
-    id: steps
+    id: reproduce
     attributes:
-      label: Steps to reproduce
-      description: Numbered steps that reproduce the issue from a known state
-      placeholder: |
-        1. Start Hadalis
-        2. Change the affected setting or module placement
-        3. Observe the failure
+      label: How to reproduce
+      description: Short steps or a screenshot when applicable.
     validations:
-      required: true
-
+      required: false
   - type: textarea
-    id: expected
+    id: context
     attributes:
-      label: Expected behavior
-      description: What should happen instead
+      label: Relevant context (optional)
+      description: Alis commit/version, Niri/Quickshell, device/scale and a few redacted log lines if they matter.
     validations:
-      required: true
-
-  - type: textarea
-    id: logs
-    attributes:
-      label: Logs
-      description: |
-        Paste the relevant output from `inir logs`. Include crash output when
-        available, but remove credentials and unrelated private data first.
-      render: shell
-    validations:
-      required: true
-
-  - type: textarea
-    id: environment
-    attributes:
-      label: Environment
-      description: |
-        Include the output of:
-        ```
-        inir version
-        qs --version
-        niri msg version   # or: hyprctl version
-        ```
-        Also include your distribution and display scale when relevant.
-      render: shell
-    validations:
-      required: true
-
-  - type: dropdown
-    id: area
-    attributes:
-      label: Affected area
-      options:
-        - Perimeter / module placement
-        - Top or bottom surface
-        - Left or right sidebar
-        - Dock
-        - Settings / configuration
-        - Notifications
-        - Media / weather / status module
-        - System or hardware integration
-        - Install / update / packaging
-        - Other
-    validations:
-      required: true
-
-  - type: dropdown
-    id: family
-    attributes:
-      label: Panel family
-      description: Select this when the issue may depend on the active panel family
-      options:
-        - ii
-        - waffle
-        - Not family-specific / unknown
-
-  - type: textarea
-    id: config
-    attributes:
-      label: Relevant configuration
-      description: Paste only the relevant configuration fragment if applicable; remove secrets first
-      render: json
-
-  - type: textarea
-    id: notes
-    attributes:
-      label: Additional context
-      description: Screenshots, monitor layout, GPU information, or other details that help reproduce the issue
+      required: false
