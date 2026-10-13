@@ -1,0 +1,16 @@
+  INFO: Launching config: "/tmp/alis-dynamic-content-1rey3rq3/shell.qml"
+  INFO: Shell ID: "7329240c71aedb532e8420e415f4c0a6" Path ID "7329240c71aedb532e8420e415f4c0a6"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/nfhvbr1vmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1468909.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dynamic-content-1rey3rq3/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dynamic-content-1rey3rq3/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dynamic-content-1rey3rq3/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-dynamic-content-1rey3rq3/state/quickshell/states.json failed: File does not exist.
+ DEBUG qml: Failed to load persistent states file: 2
+ DEBUG qml: [Persistent] File not found, creating new file.
+  WARN qml: [NiriKeybinds] get-binds failed (exit 1), falling back to legacy parser
+  WARN qml: [NiriKeybinds] Parser error: Config not found: /tmp/alis-dynamic-content-1rey3rq3/config/niri/config.kdl
+  INFO qml: DYNAMIC_CONTENT_SIZE_PASS 936 real Toast/OSD/Utility and reparented form, four Edges, reversal, resize and release

@@ -1,0 +1,12 @@
+{
+  "name": "negative-before",
+  "source_sha": "0eae5b0f7c624ed3bddcd95d40ffedbae2d399fd",
+  "worktree_runtime_changes": false,
+  "fixture_sha": "10b5687ea2255f5350f94d3d3a7681b0ce9775d753270a8941492284ba533187",
+  "command": [
+    "python3",
+    "scripts/test-abyss-dynamic-content-size-runtime.py"
+  ],
+  "exit_code": 1,
+  "elapsed_s": 3.3430798660047003
+}

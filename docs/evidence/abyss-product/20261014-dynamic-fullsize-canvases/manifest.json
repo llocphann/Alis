@@ -1,0 +1,27 @@
+{
+  "source_sha": "55b1fd183876543d51e8d36394c155b5c9c50a35",
+  "sha256": {
+    "adapters.log": "769c0302d47f29322d68166c12de1ae2285f3bb78660e4933e15b2ce78092814",
+    "diagnostic.log": "1fdfd026537f00b8b54c1c7a82097b4f39c799556ec096ab7af4743a790dd22c",
+    "first.log": "93aa8275c3fc2cfc9f98f3f58c83ecedb7dadc98775c8b2e4b2724ad2631bd58",
+    "negative-before-native.log": "3032b798f7e600609646e0aeaf0fe17afb5562dae4e1f569f6ff37158bdf9527",
+    "negative-before-receipt.json": "27b01c82cb98fae3b7d17ac1cc3caf4469dc5882dfa5f03516f78e43e00a935b",
+    "negative-before.log": "92565d0e1928669a3dd9074c7e277adef1554019df3b49b0d8b09c930a966bfd",
+    "README.md": "ad046bdd5646d71e7cfe00cc164d5928afeb45840d75e2d31ffadafebb92e250",
+    "static-panels-native.log": "68cd3142fcb4cb7dfcd34d3bbbe2f2a333666ba19ab144d8b6e232faff03b5e1",
+    "static-panels-receipt.json": "442fb2a80c54a217d4101d022b7de790466683d27d0f2faa876035db89b42a84",
+    "static-panels.log": "af28bd05569620ff0532363c5a11199d69673ad91311af01d26c5eabe09cf8f5",
+    "utility-close-receipt.json": "673574b6df600f6be4eb78205fd9801049a3bdc6fbfdb0a47d1a6a142ecd1a90",
+    "utility-close.log": "11a41f3b02b235be4e526b26bfd5cb0aa4108b7f352bd2561e071935c63100e1",
+    "exact-55b1fd183/body-lifecycle.log": "dd9bcd63695e2b4a7096fdfc19378a5c2c4cbe8caf82fdc9115e60e207779531",
+    "exact-55b1fd183/dialog.log": "cabcd7804102ef753f8649958f8ba590a592ca7a484a46fadabcf5cb69f6726c",
+    "exact-55b1fd183/dynamic-adapters-native.log": "62712ea61d5172db2e78b43496cc54655aabf24b753a84b4739aceeb77ad90d4",
+    "exact-55b1fd183/dynamic-adapters.log": "210b831d13a482286c0566e0aa37884ecb3fb258491b6c9a1a404d3a3466dfd9",
+    "exact-55b1fd183/input.log": "e1e1a175d1588b21467f08feb878b6dfd627b4cc2113dbe97e8ebaf99296cc6b",
+    "exact-55b1fd183/pyramid.log": "849166ca4c5159e9a65e9bf1e6f012f42e4e0335fa07adef553170add0768401",
+    "exact-55b1fd183/receipt.json": "28be21e247ac64337a10ff14006f531495c8276707e3c1d4dede0a5c88d25643",
+    "exact-55b1fd183/static-panels-native.log": "cf9a9ec4d82beb3b7c5674d16f1be9ac1ea83b3c3a2ca4a8bbfa04ec877326fa",
+    "exact-55b1fd183/static-panels.log": "af28bd05569620ff0532363c5a11199d69673ad91311af01d26c5eabe09cf8f5",
+    "exact-55b1fd183/utility-close.log": "11a41f3b02b235be4e526b26bfd5cb0aa4108b7f352bd2561e071935c63100e1"
+  }
+}

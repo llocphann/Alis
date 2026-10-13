@@ -1,0 +1,13 @@
+  INFO: Launching config: "/tmp/alis-dynamic-content-aydtvis_/shell.qml"
+  INFO: Shell ID: "81a95cfb6a6fcc2f73ea8ce716c5748e" Path ID "81a95cfb6a6fcc2f73ea8ce716c5748e"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/c7gvko1vmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1467301.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dynamic-content-aydtvis_/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dynamic-content-aydtvis_/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dynamic-content-aydtvis_/state/quickshell/user/gamemode_active failed: File does not exist.
+ ERROR qml: DYNAMIC_CONTENT_SIZE_FAIL canvas reflows toastBody top 0.01 check@qs:@/qs/shell.qml:73
+fullSize@qs:@/qs/shell.qml:76
+run@qs:@/qs/shell.qml:99
+expression for onTriggered@qs:@/qs/shell.qml:136 toastBody top true true 1 content/AbyssToastContent.qml {"visible":true,"evicted":false,"along":100,"inward":0,"span":188,"depth":72,"shrunk":false,"content":{"x":114,"y":62,"width":160,"height":44}} 0.01

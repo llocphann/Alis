@@ -1,0 +1,18 @@
+  INFO: Launching config: "/tmp/alis-dynamic-content-uuil684j/shell.qml"
+  INFO: Shell ID: "5c8dbdfbfae69d474f794388420b2f7d" Path ID "5c8dbdfbfae69d474f794388420b2f7d"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/l7fvyl1vmt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1466027.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-dynamic-content-uuil684j/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dynamic-content-uuil684j/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-dynamic-content-uuil684j/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  WARN scene: QML FileView at @modules/common/Persistent.qml[60:5]: Read of /tmp/alis-dynamic-content-uuil684j/state/quickshell/states.json failed: File does not exist.
+ DEBUG qml: Failed to load persistent states file: 2
+ DEBUG qml: [Persistent] File not found, creating new file.
+  WARN qml: [NiriKeybinds] get-binds failed (exit 1), falling back to legacy parser
+  WARN qml: [NiriKeybinds] Parser error: Config not found: /tmp/alis-dynamic-content-uuil684j/config/niri/config.kdl
+ ERROR qml: DYNAMIC_CONTENT_SIZE_FAIL QtQuickTest::fail tryVerify@qrc:/qt-project.org/imports/QtTest/TestCase.qml:603
+run@qs:@/qs/shell.qml:92
+expression for onTriggered@qs:@/qs/shell.qml:135 dialogBody top false false 0  null 0

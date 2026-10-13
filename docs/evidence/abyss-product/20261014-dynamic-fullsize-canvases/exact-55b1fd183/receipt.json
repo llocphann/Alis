@@ -1,0 +1,66 @@
+{
+  "source_sha": "55b1fd183876543d51e8d36394c155b5c9c50a35",
+  "scope": "exact clean source focused, no installed/owner/canonical claim",
+  "cases": [
+    {
+      "name": "dynamic-adapters",
+      "command": [
+        "python3",
+        "scripts/test-abyss-dynamic-content-size-runtime.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 12.068304252003145
+    },
+    {
+      "name": "static-panels",
+      "command": [
+        "python3",
+        "scripts/test-abyss-panel-content-size-runtime.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.997969687996374
+    },
+    {
+      "name": "utility-close",
+      "command": [
+        "python3",
+        "scripts/test-abyss-utility-closing-kind.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 8.004321321001044
+    },
+    {
+      "name": "dialog",
+      "command": [
+        "bash",
+        "scripts/test-abyss-dialog-host.sh"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.165678931000002
+    },
+    {
+      "name": "input",
+      "command": [
+        "python3",
+        "scripts/test-abyss-input-region-contract.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.0245752819973859
+    },
+    {
+      "name": "pyramid",
+      "command": [
+        "python3",
+        "scripts/test-abyss-pyramid-v2-motion-contract.py"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.025133299997833092
+    },
+    {
+      "name": "body-lifecycle",
+      "exit_code": 0,
+      "private_no_focus": true
+    }
+  ],
+  "clean_source_after": ""
+}
