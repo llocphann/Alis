@@ -1,0 +1,7 @@
+# Full canonical at47e1316ed
+
+Frozen driver and exact clean source:47e1316ed399219f69b76583667a3bd0e54f2a52. Full result FAIL exit1. Reported summary385 PASS /46 FAIL /2 listed SKIP;432 numbered checks parse as385 PASS /46 FAIL /1 SKIP (the deferred Nix listing does not add another numbered check). Clean-source final check PASS. Complete raw log, terminal output, source/driver/hash/context receipt and failure index retained.
+
+The outer session was a private dark Niri without parent focus. Native tests may create an additional nested compositor; this context is explicit. Do not merge these FAILs with direct focused PASS or classify all as source regressions or fixture errors without evidence. Full/1.5x shared-field parity checks17/18 and generic check63 PASS. The new dynamic adapter fixture FAILs at Utility intrinsic resize: a native window constrained to a small nested output caps both scenarios to the same target. A controlled-canvas fixture repair has been committed separately at74c1b4950; it is not part of this canonical SHA. Physical-contact199-capture test exits124 without a final marker in the nested context. Other focus/press, layout, literal-policy and feature failures remain in the index with causes not fully established.
+
+The runtime shader/canvas focused milestones remain scoped. No full validation, installed, actual physical-pointer, multi-output or Owner acceptance claimed. Source changes after47e require their own focused/canonical qualification; this immutable driver's bytes were not edited while running.

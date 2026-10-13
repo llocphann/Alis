@@ -1,0 +1,8 @@
+{
+  "source_sha": "47e1316ed399219f69b76583667a3bd0e54f2a52",
+  "driver": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/drivers/field-47e1316ed399219f69b76583667a3bd0e54f2a52.sh",
+  "driver_sha256": "b3add1f6ea9f0df7302dd172915492d1dcb6e5dac7c94479bbbff33a65efced0",
+  "caller_checkout": "/tmp/alis-field-exact-47e1316ed",
+  "mode": "--current-repo",
+  "scope": "full exact clean-clone canonical; private dark Niri wrapper, no parent focus"
+}
