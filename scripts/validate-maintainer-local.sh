@@ -4,7 +4,7 @@ set -uo pipefail
 # newly created log files private even when the caller's umask is permissive.
 umask 077
 
-repo_url="${HADALIS_VALIDATION_REPO_URL:-https://github.com/llocphann/Hadalis.git}"
+repo_url="${HADALIS_VALIDATION_REPO_URL:-https://github.com/llocphann/Alis.git}"
 branch="${HADALIS_VALIDATION_BRANCH:-dev}"
 mode="remote"
 strict_qml=0
@@ -30,9 +30,9 @@ while (($# > 0)); do
     shift
 done
 
-workspace="$(mktemp -d "${TMPDIR:-/tmp}/hadalis-validation.XXXXXX")"
-checkout="$workspace/Hadalis"
-log_path="${HADALIS_VALIDATION_LOG:-${TMPDIR:-/tmp}/hadalis-maintainer-validation-$(date +%Y%m%d-%H%M%S).log}"
+workspace="$(mktemp -d "${TMPDIR:-/tmp}/alis-validation.XXXXXX")"
+checkout="$workspace/Alis"
+log_path="${HADALIS_VALIDATION_LOG:-${TMPDIR:-/tmp}/alis-maintainer-validation-$(date +%Y%m%d-%H%M%S).log}"
 if [[ "$log_path" != /* ]]; then
     log_path="$PWD/$log_path"
 fi
@@ -55,7 +55,7 @@ fatal() {
     exit 2
 }
 
-log_line 'Hadalis maintainer local validation'
+log_line 'Alis maintainer local validation'
 log_line "Started: $(date -Iseconds)"
 log_line "Mode: $mode"
 log_line "Repository: $repo_url"
@@ -65,7 +65,7 @@ printf 'Invocation: bash scripts/validate-maintainer-local.sh' >>"$log_path"
 printf ' %q' "${original_args[@]}" >>"$log_path"
 printf '\n' >>"$log_path"
 log_line "Log: $log_path"
-terminal_line 'Hadalis maintainer local validation'
+terminal_line 'Alis maintainer local validation'
 terminal_line "Log: $log_path"
 
 if [[ "$mode" == "current-repo" ]]; then
@@ -380,7 +380,7 @@ log_line "FINAL LOG: $log_path"
 log_line '========================================'
 
 terminal_line ''
-terminal_line "Hadalis validation: $([[ $failures -eq 0 ]] && printf PASS || printf FAIL)"
+terminal_line "Alis validation: $([[ $failures -eq 0 ]] && printf PASS || printf FAIL)"
 terminal_line "SHA: $validation_sha"
 terminal_line "Passed: $passes"
 terminal_line "Failed: $failures"

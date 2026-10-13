@@ -8,8 +8,8 @@
 pkgname=inir-deps
 pkgver=2.29.3
 pkgrel=8
-pkgdesc='iNiR desktop shell - dependency tracker (meta-package)'
-url='https://github.com/llocphann/Hadalis'
+pkgdesc='Alis desktop shell - dependency tracker (meta-package)'
+url='https://github.com/llocphann/Alis'
 arch=(any)
 license=('GPL-3.0-only')
 

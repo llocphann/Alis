@@ -3,8 +3,8 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
-github_repo="llocphann/Hadalis"
-wiki_url="https://github.com/llocphann/Hadalis.wiki.git"
+github_repo="llocphann/Alis"
+wiki_url="https://github.com/llocphann/Alis.wiki.git"
 
 usage() {
   cat <<'EOF'
@@ -189,9 +189,9 @@ $notes
 
 ---
 
-Update: https://github.com/llocphann/Hadalis/blob/stable/docs/SETUP.md#update
-Fresh install: https://github.com/llocphann/Hadalis/blob/stable/docs/INSTALL.md
-Full changelog: https://github.com/llocphann/Hadalis/blob/stable/CHANGELOG.md
+Update: https://github.com/llocphann/Alis/blob/stable/docs/SETUP.md#update
+Fresh install: https://github.com/llocphann/Alis/blob/stable/docs/INSTALL.md
+Full changelog: https://github.com/llocphann/Alis/blob/stable/CHANGELOG.md
 EOF
 }
 

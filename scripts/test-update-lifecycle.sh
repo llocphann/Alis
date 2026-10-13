@@ -108,8 +108,8 @@ repo_version="$(tr -d '[:space:]' < "$repo_root/VERSION")"
 dependency_meta_version="$(grep -m1 '^pkgver=' "$arch_dependency_meta" | cut -d= -f2-)"
 [[ "$dependency_meta_version" == "$repo_version" ]] \
     || fail "inir-deps pkgver=$dependency_meta_version does not match VERSION=$repo_version"
-grep -Fqx "url='https://github.com/llocphann/Hadalis'" "$arch_dependency_meta" \
-    || fail 'inir-deps still advertises a non-Hadalis repository'
+grep -Fqx "url='https://github.com/llocphann/Alis'" "$arch_dependency_meta" \
+    || fail 'inir-deps still advertises a non-Alis repository'
 grep -Fq 'inir-deps) continue ;;' "$arch_dependency_installer" \
     || fail 'Arch installer can resolve aggregate tracker dependencies as an install group'
 grep -Fq '_meta_build_dir="$(mktemp -d)"' "$arch_dependency_installer" \
@@ -157,9 +157,9 @@ release_notes="$tmp/release-notes.md"
     cd "$tmp"
     bash "$release_script" notes "$release_version" release-notes.md
 )
-grep -Fq 'Update: https://github.com/llocphann/Hadalis/blob/stable/docs/SETUP.md#update' "$release_notes" \
+grep -Fq 'Update: https://github.com/llocphann/Alis/blob/stable/docs/SETUP.md#update' "$release_notes" \
     || fail 'release notes generation lost the update documentation link'
-grep -Fq 'Fresh install: https://github.com/llocphann/Hadalis/blob/stable/docs/INSTALL.md' "$release_notes" \
+grep -Fq 'Fresh install: https://github.com/llocphann/Alis/blob/stable/docs/INSTALL.md' "$release_notes" \
     || fail 'release notes generation lost the install documentation link'
 python3 - "$release_script" <<'PY'
 from pathlib import Path

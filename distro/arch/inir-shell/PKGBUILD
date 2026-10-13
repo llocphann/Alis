@@ -1,18 +1,18 @@
 pkgname=inir-shell
 pkgver=2.29.3
 pkgrel=15
-pkgdesc='Hadalis shell payload, launcher, and user service'
+pkgdesc='Alis shell payload, launcher, and user service'
 arch=('x86_64')
-url='https://github.com/llocphann/Hadalis'
+url='https://github.com/llocphann/Alis'
 license=('GPL-3.0-only')
 install=inir-shell.install
 # Hadalis does not publish version tags/releases yet. Keep the non-VCS package
 # reproducible by pinning the reviewed source snapshot; release automation can
 # switch this to a tag once the project publishes one.
 _source_ref="${INIR_SOURCE_REF:-5a94e8ef8f19851d1d1c565603bc5dc72064950f}"
-_default_source_archive="https://github.com/llocphann/Hadalis/archive/${_source_ref}.tar.gz"
+_default_source_archive="https://github.com/llocphann/Alis/archive/${_source_ref}.tar.gz"
 _source_archive="${INIR_SOURCE_ARCHIVE:-${_default_source_archive}}"
-_source_dir="${INIR_SOURCE_DIR:-Hadalis-${_source_ref}}"
+_source_dir="${INIR_SOURCE_DIR:-Alis-${_source_ref}}"
 makedepends=(cargo)
 depends=(
   bash
@@ -90,7 +90,7 @@ optdepends=(
   'mpv: media playback and YouTube Music support'
   'mpv-mpris: richer mpv media session integration'
   'mpd: local Music library and queue backend'
-  'mpd-mpris: MPD/rmpc/Hadalis Music controls through MPRIS'
+  'mpd-mpris: MPD/rmpc/Alis Music controls through MPRIS'
   'nautilus: default file manager integration'
   'nm-connection-editor: default network settings GUI'
   'pavucontrol: advanced audio mixer UI'
@@ -116,7 +116,7 @@ optdepends=(
 )
 conflicts=('inir-shell-git' 'noctalia-qs' 'noctalia-shell' 'cachyos-niri-noctalia')
 source=(
-  "hadalis-${pkgver}-${_source_ref}.tar.gz::${_source_archive}"
+  "alis-${pkgver}-${_source_ref}.tar.gz::${_source_archive}"
 )
 sha256sums=('SKIP')
 

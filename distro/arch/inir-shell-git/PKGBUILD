@@ -1,9 +1,9 @@
 pkgname=inir-shell-git
 pkgver=2.29.3.r0.g0000000
 pkgrel=10
-pkgdesc='Hadalis shell payload, launcher, and user service (git)'
+pkgdesc='Alis shell payload, launcher, and user service (git)'
 arch=('x86_64')
-url='https://github.com/llocphann/Hadalis'
+url='https://github.com/llocphann/Alis'
 license=('GPL-3.0-only')
 depends=(
   bash
@@ -81,7 +81,7 @@ optdepends=(
   'mpv: media playback and YouTube Music support'
   'mpv-mpris: richer mpv media session integration'
   'mpd: local Music library and queue backend'
-  'mpd-mpris: MPD/rmpc/Hadalis Music controls through MPRIS'
+  'mpd-mpris: MPD/rmpc/Alis Music controls through MPRIS'
   'nautilus: default file manager integration'
   'nm-connection-editor: default network settings GUI'
   'pavucontrol: advanced audio mixer UI'
@@ -110,7 +110,7 @@ install=inir-shell-git.install
 provides=('inir-shell')
 conflicts=('inir-shell' 'noctalia-qs' 'noctalia-shell' 'cachyos-niri-noctalia')
 source=(
-  'inir::git+https://github.com/llocphann/Hadalis.git#branch=dev'
+  'inir::git+https://github.com/llocphann/Alis.git#branch=dev'
 )
 sha256sums=('SKIP')
 

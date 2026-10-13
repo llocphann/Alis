@@ -3,7 +3,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source_dir="$repo_root/docs"
-wiki_url="https://github.com/llocphann/Hadalis.wiki.git"
+wiki_url="https://github.com/llocphann/Alis.wiki.git"
 
 usage() {
     cat <<'EOF'

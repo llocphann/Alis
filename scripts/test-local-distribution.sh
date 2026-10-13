@@ -31,11 +31,11 @@ for dist_installer in "$runtime_root"/sdata/dist-*/install-deps.sh; do
     [[ -f "$dist_installer" ]] || continue
     bash -n "$dist_installer"
 done
-step "Hadalis updater source"
+step "Alis updater source"
 versioning_lib="$runtime_root/sdata/lib/versioning.sh"
 tracking_lib="$runtime_root/sdata/lib/snapshots.sh"
-if ! grep -Fq 'GITHUB_REPO="llocphann/Hadalis"' "$versioning_lib"; then
-    printf 'FAIL: updater release API does not target llocphann/Hadalis\n' >&2
+if ! grep -Fq 'GITHUB_REPO="llocphann/Alis"' "$versioning_lib"; then
+    printf 'FAIL: updater release API does not target llocphann/Alis\n' >&2
     exit 1
 fi
 if ! grep -Fq '[[ -z "$branch" || "$branch" == "HEAD" ]] && branch="stable"' "$versioning_lib"; then

@@ -35,7 +35,7 @@ VERSION_FILE_RUNTIME_SYSTEM_LOCAL="${RUNTIME_DIR_SYSTEM_LOCAL}/version.json"
 VERSION_FILE_RUNTIME_SYSTEM="${RUNTIME_DIR_SYSTEM}/version.json"
 VERSION_FILE_REPO="${REPO_ROOT}/VERSION"
 CHANGELOG_FILE="${REPO_ROOT}/CHANGELOG.md"
-GITHUB_REPO="llocphann/Hadalis"
+GITHUB_REPO="llocphann/Alis"
 GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}"
 
 # Cache for remote version checks (avoid hammering GitHub)
