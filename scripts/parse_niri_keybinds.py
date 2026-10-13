@@ -174,8 +174,8 @@ ACTION_MAP = {
 IPC_MAP = {
     ('altSwitcher', 'next'): 'Next window',
     ('altSwitcher', 'previous'): 'Previous window',
-    ('overlay', 'toggle'): 'iNiR Overlay',
-    ('overview', 'toggle'): 'iNiR Overview',
+    ('overlay', 'toggle'): 'Alis Overlay',
+    ('overview', 'toggle'): 'Alis Overview',
     ('clipboard', 'toggle'): 'Clipboard',
     ('lock', 'activate'): 'Lock screen',
     ('region', 'screenshot'): 'Screenshot region',
@@ -208,28 +208,28 @@ FILE_MANAGERS = ['dolphin', 'nautilus', 'thunar', 'nemo', 'pcmanfm', 'ranger']
 BROWSERS = ['firefox', 'zen-browser', 'chromium', 'brave', 'vivaldi']
 
 
-def parse_inir_action(action: str) -> tuple[str, str] | None:
-    ipc_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"ipc"\s+"call"\s+"([\w-]+)"\s+"([\w-]+)"', action)
+def parse_alis_action(action: str) -> tuple[str, str] | None:
+    ipc_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"ipc"\s+"call"\s+"([\w-]+)"\s+"([\w-]+)"', action)
     if ipc_match:
         return ipc_match.group(1), ipc_match.group(2)
 
-    settings_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"settings"(?:\s|;|$)', action)
+    settings_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"settings"(?:\s|;|$)', action)
     if settings_match:
         return 'settings', 'open'
 
-    terminal_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"terminal"(?:\s|;|$)', action)
+    terminal_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"terminal"(?:\s|;|$)', action)
     if terminal_match:
         return 'launcher', 'terminal'
 
-    close_window_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"close-window"(?:\s|;|$)', action)
+    close_window_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"close-window"(?:\s|;|$)', action)
     if close_window_match:
         return 'launcher', 'close-window'
 
-    browser_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"browser"(?:\s|;|$)', action)
+    browser_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"browser"(?:\s|;|$)', action)
     if browser_match:
         return 'browser', 'open'
 
-    direct_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"([\w-]+)"\s+"([\w-]+)"', action)
+    direct_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"([\w-]+)"\s+"([\w-]+)"', action)
     if direct_match:
         return direct_match.group(1), direct_match.group(2)
 
@@ -260,9 +260,9 @@ def generate_comment(action: str) -> str:
     
     # Spawn commands
     if action.startswith('spawn'):
-        inir_action = parse_inir_action(action)
-        if inir_action:
-            target, func = inir_action
+        alis_action = parse_alis_action(action)
+        if alis_action:
+            target, func = alis_action
             return IPC_MAP.get((target, func), f'{target} {func}')
 
         ipc_match = re.search(r'ipc.*call.*"(\w+)".*"(\w+)"', action)
@@ -319,14 +319,14 @@ def categorize_keybind(kb: dict) -> str:
     if any(x in comment for x in ['niri overview', 'quit niri', 'inhibit', 'power off', 'hotkey overlay']):
         return 'System'
     
-    # iNiR Shell
-    if any(x in comment for x in ['inir ', 'clipboard', 'lock screen', 'wallpaper', 'settings', 'cheatsheet', 'panel style']):
-        return 'iNiR Shell'
-    inir_action = parse_inir_action(action)
-    if inir_action:
-        target, _func = inir_action
+    # Alis Shell
+    if any(x in comment for x in ['alis ', 'clipboard', 'lock screen', 'wallpaper', 'settings', 'cheatsheet', 'panel style']):
+        return 'Alis Shell'
+    alis_action = parse_alis_action(action)
+    if alis_action:
+        target, _func = alis_action
         if target in ('overlay', 'overview', 'clipboard', 'lock', 'wallpaperSelector', 'settings', 'cheatsheet', 'panelFamily', 'session'):
-            return 'iNiR Shell'
+            return 'Alis Shell'
         if target == 'altSwitcher':
             return 'Window Switcher'
         if target in ('audio', 'mpris'):
@@ -334,7 +334,7 @@ def categorize_keybind(kb: dict) -> str:
         if target == 'brightness':
             return 'Brightness'
     if re.search(r'ipc.*call.*(overlay|overview|clipboard|lock|wallpaper|settings|cheatsheet|panelfamily)', action):
-        return 'iNiR Shell'
+        return 'Alis Shell'
     
     # Window Switcher
     if 'window' in comment and ('next' in comment or 'previous' in comment):
@@ -457,7 +457,7 @@ def parse_niri_config(config_path: Path) -> dict:
         })
     
     category_order = [
-        'System', 'iNiR Shell', 'Window Switcher', 'Screenshots',
+        'System', 'Alis Shell', 'Window Switcher', 'Screenshots',
         'Applications', 'Window Management', 'Layout', 'Resize',
         'Focus', 'Move Windows', 'Monitors', 'Workspaces',
         'Media', 'Brightness', 'Other'
