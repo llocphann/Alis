@@ -500,4 +500,61 @@ for token in (
 ):
     require(registry, token, "Quick Notes Settings search metadata missing")
 
+# Quick Notes Reading/Source is focus-driven on Dashboard and the popup;
+# Sidebar Left and the full Notepad retain their existing Source-first entry.
+for token in (
+    "property bool autoMarkdownReading: false",
+    "property bool externalEscapeHandling: false",
+    "property bool markdownEditing: !root.autoMarkdownReading",
+    "readonly property bool markdownReading: root.autoMarkdownReading && !root.markdownEditing",
+    "signal editorDeactivated()",
+    "onActiveFocusChanged:",
+    "Qt.callLater(() => {",
+    "root.releaseEditorFocus()",
+    "root.editorDeactivated()",
+    "root.autoMarkdownReading && !root.externalEscapeHandling",
+    "event.key === Qt.Key_Escape",
+    "event.accepted = true",
+    "root.flushPendingSave()",
+    "textArea.forceActiveFocus()",
+):
+    require(notepad, token, "Quick Notes focus-driven Markdown contract missing")
+
+for token in (
+    "property bool autoMarkdownReading: false",
+    "property bool externalEscapeHandling: false",
+    "autoMarkdownReading: root.autoMarkdownReading",
+    "externalEscapeHandling: root.externalEscapeHandling",
+    "onEditorDeactivated: root.editorDeactivated()",
+):
+    require(quick_notes_view, token, "QuickNotesView mode forwarding missing")
+
+for token in (
+    "autoMarkdownReading: true",
+    "externalEscapeHandling: true",
+    "onEditorActivated: root.enterEditorMode()",
+    "onEditorDeactivated: root.editorFocused = false",
+    "property bool escapeArmed: false",
+    "root.escapeArmed = true",
+    "root.leaveEditorMode()",
+    "root.dismissPresentation()",
+    "keyboardFocus: root.editorFocused || root.todoDialogOpen || root.escapeArmed",
+):
+    require(popup, token, "Quick Notes popup two-stage Escape missing")
+
+require(dash_notes, "autoMarkdownReading: true",
+        "Dashboard Quick Notes must open in Reading")
+
+for source in (quick_notes_view, dash_notes):
+    for retired in ("showMarkdownModeSwitch", "markdownModeSwitch",
+                    "toggleMarkdownMode", "Source-first Markdown Reading switch"):
+        forbid(source, retired, "Quick Notes must not expose a manual mode switch")
+
+for retired in ("readingOnHover", "allowManualReading", "enterMarkdownReading"):
+    forbid(notepad, retired, "Retired manual/hover Markdown mode still used")
+
+# Do not inadvertently turn the Sidebar Left editor into a forced Reading host.
+forbid(sidebar_quick_note, "autoMarkdownReading: true",
+       "Sidebar Left should retain Source-first entry")
+
 print("ok - bottom-left Quick Notes corner contract")
