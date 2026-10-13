@@ -248,17 +248,21 @@ def main() -> None:
     assert edit_esc.index('if (dashboardCanvas.editMode) {') < edit_esc.index(
         'if (dashboardHeader.cancelPageDrag()) return true')
     require(edit_esc, 'dashboardCanvas.cancelEditMode()', "DashboardContent.qml")
+    # Window owners own the shortcut. Embedded toolbar is not another owner.
     for txt, name in (
         (standalone, "Dashboard.qml"),
         (overview, "OverviewDashboard.qml"),
-        (abyss_toolbar_host, "AbyssDashboardEditPopup.qml"),
+        (abyss_perimeter, "AbyssPerimeter.qml"),
     ):
         require(txt, 'sequences: ["Escape"]', name)
         require(txt, 'context: Qt.WindowShortcut', name)
+    forbid(abyss_toolbar_host, 'sequences: ["Escape"]',
+           "AbyssDashboardEditPopup.qml")
+    require(overview, '!root.externalEditToolbar', "OverviewDashboard.qml")
     require(overview_shell,
             'dashboardPanel.item?.handleEscape()', "Overview.qml")
     require(abyss_content, 'return content.handleEscape()', "AbyssDashboardContent.qml")
-    require(abyss_perimeter, 'dashboardBody.contentItem.item.handleEscape()',
+    require(abyss_perimeter, 'window.cancelDashboardEditFromEscape()',
             "AbyssPerimeter.qml")
 
     # Icon/button centering and the occasional ninth button must not overflow
