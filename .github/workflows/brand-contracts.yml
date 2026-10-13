@@ -15,6 +15,7 @@ on:
       - "distro/arch/inir-shell/*.install"
       - "distro/arch/inir-shell-git/*.install"
       - "scripts/brand-owner-audit.sh"
+      - "scripts/test-brand-owner-audit.sh"
       - "scripts/test-brand-single-owner.sh"
       - "scripts/test-brand-upgrade-rollback.sh"
       - "scripts/completions/alis.*"
@@ -49,7 +50,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash -n scripts/alis scripts/brand-owner-audit.sh scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh scripts/test-brand-single-owner.sh scripts/test-brand-upgrade-rollback.sh
+          bash -n scripts/alis scripts/brand-owner-audit.sh scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh scripts/test-brand-single-owner.sh scripts/test-brand-upgrade-rollback.sh scripts/test-brand-owner-audit.sh
           bash -n scripts/brand-namespace-rollback.sh scripts/test-brand-namespace-rollback.sh scripts/test-brand-uninstall.sh
           bash -n sdata/migrations/061-alis-namespace-alias.sh sdata/subcmd-install/3.files.sh setup
           test ! -e assets/systemd/alis.service
@@ -69,6 +70,9 @@ jobs:
       - name: R9 staged fresh/upgrade/reinstall/rollback
         shell: bash
         run: bash scripts/test-brand-upgrade-rollback.sh
+      - name: R10 read-only owner audit safety
+        shell: bash
+        run: bash scripts/test-brand-owner-audit.sh
       - name: Immutable Arch snapshot includes Alis entrypoints
         shell: bash
         run: |

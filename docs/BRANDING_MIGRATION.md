@@ -42,7 +42,7 @@ Test coverage: `scripts/test-alis-namespace-alias.sh` and `scripts/test-brand-na
 
 ## Owner desktop evidence
 
-Run `bash scripts/brand-owner-audit.sh` from a local Alis checkout to inspect installed launcher paths, runtime service state, and XDG aliases **without writing state or restarting the shell**. Save its printed observations alongside owner screenshots after manually testing cold login, settings, IPC, popups and rollback. The script only reports facts; no owner-verified result is inferred from it.
+Run `bash scripts/brand-owner-audit.sh` from a local Alis checkout to inspect installed launcher paths, runtime service state, and XDG aliases **without writing state or restarting the shell**. It returns exit status **2** if both `inir.service` and `alis.service` are active, which is an explicit release blocker. Save its observations alongside owner screenshots after manually testing cold login, settings, IPC, popups and rollback. The script only reports facts; no owner-verified result is inferred from it. See [the R10 owner checklist](BRAND_R10_OWNER_ACCEPTANCE.md).
 
 ## Lossless uninstall ownership
 

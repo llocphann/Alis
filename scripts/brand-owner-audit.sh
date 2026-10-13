@@ -2,6 +2,7 @@
 # BRAND-R01 owner evidence helper: read-only, no service operations or writes.
 set -uo pipefail
 
+audit_blocked=0
 printf 'BRAND-R01 desktop read-only audit\n'
 printf 'Captured (UTC): %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 printf 'This is diagnostic evidence, not a substitute for owner visual approval.\n\n'
@@ -29,6 +30,13 @@ if command -v systemctl >/dev/null 2>&1; then
     systemctl --user show alis.service \
         --property=LoadState,ActiveState,MainPID,FragmentPath \
         --no-pager 2>&1 || true
+    # A second active service is a hard R10 release blocker. Read-only query.
+    _inir_active="$(systemctl --user show inir.service -p ActiveState --value --no-pager 2>/dev/null || true)"
+    _alis_active="$(systemctl --user show alis.service -p ActiveState --value --no-pager 2>/dev/null || true)"
+    if [[ "$_inir_active" == active && "$_alis_active" == active ]]; then
+        printf '\nBLOCKER: inir.service and alis.service are BOTH active. Do not verify the release.\n'
+        audit_blocked=2
+    fi
 else
     printf '  systemctl not installed\n'
 fi
@@ -76,3 +84,5 @@ Owner-only desktop acceptance checklist (record PASS/FAIL with screenshot/log):
   7. Rollback: validate snapshot restore and service start only with owner approval.
 Do not mark issue #64 owner-verified until these checks are completed.
 ACCEPTANCE
+
+exit "$audit_blocked"
