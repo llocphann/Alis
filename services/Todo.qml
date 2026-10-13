@@ -120,10 +120,6 @@ Singleton {
     Connections {
         target: root.obsidianBackend
 
-        function onAgendaMutationFinished(success,payload): void {
-            // Legacy backend signal ignored: independent Todo storage.
-        }
-
         function onMigrationFinished(success, payload): void {
             root._migrationInFlight = false
             if (!success)
