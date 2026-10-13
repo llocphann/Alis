@@ -7,7 +7,7 @@ material = (root / "modules/settings/About.qml").read_text()
 waffle = (root / "modules/waffle/settings/pages/WAboutPage.qml").read_text()
 image = root / "assets/icons/alis-owner-avatar.jpg"
 avatar = image.read_bytes()
-assert len(avatar) > 1500 and avatar[:3] == b"\\xff\\xd8\\xff" and avatar[-2:] == b"\\xff\\xd9", "Avatar JPEG missing/corrupt"
+assert len(avatar) > 1500 and avatar[:3] == bytes((0xff, 0xd8, 0xff)) and avatar[-2:] == bytes((0xff, 0xd9)), "Avatar JPEG missing/corrupt"
 for name, source in (("Material", material), ("Waffle", waffle)):
     assert 'assets/icons/alis-owner-avatar.jpg' in source, f"{name} is not using repo avatar"
     assert "https://github.com/llocphann/Alis" in source, f"{name} lost primary Alis repository"
