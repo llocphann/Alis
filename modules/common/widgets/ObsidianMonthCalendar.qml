@@ -345,7 +345,9 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.bottom: parent.bottom
                             anchors.bottomMargin: 2
-                            spacing: 1
+                            // Counted dots belong to Calendar Popup only; do not
+                            // alter the Sidebar/Dashboard legacy dot spacing.
+                            spacing: root.countedEventDots ? 3 : 1
                             visible: root.showEventDots && dayCell.eventCount > 0
                                 && (!root.countedEventDots || root.effectiveMaxEventDots > 0)
 

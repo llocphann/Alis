@@ -65,23 +65,34 @@ Item {
     readonly property bool isAllDay: root.event?.allDay ?? false
     readonly property bool isPast: UpcomingWindow.eventIsPast(
         root.eventDate, root.eventEndDate, DateTime.clock.date)
-    
+    // Passive hover tracking is shared by metadata, but the close action
+    // independently tracks just its own small hit area.
+    HoverHandler { id: cardHover }
+
     StyledRectangularShadow {
         target: cardBg
-        visible: true
+        visible: !root.compactPresentation
     }
     
     Rectangle {
         id: cardBg
         anchors.fill: parent
         radius: Appearance.rounding.small
-        color: editMA.containsMouse && !root.isExternal
-            ? Appearance.colors.colLayer2Hover
-            : (Appearance.m3colors?.m3surfaceContainerHigh ?? Appearance.colors.colLayer2)
+        // The Calendar's denser card uses the darker theme layer; other
+        // EventCard owners preserve their current Material treatment.
+        color: root.compactPresentation
+            ? (cardHover.hovered && !root.isExternal
+                ? ColorUtils.mix(Appearance.colors.colLayer1,
+                    Appearance.colors.colLayer2, 0.35)
+                : Appearance.colors.colLayer1)
+            : (editMA.containsMouse && !root.isExternal
+                ? Appearance.colors.colLayer2Hover
+                : (Appearance.m3colors?.m3surfaceContainerHigh ?? Appearance.colors.colLayer2))
         border.width: root.activeFocus && !root.isExternal ? 2 : 1
         border.color: root.activeFocus && !root.isExternal
             ? root.colPrimary
-            : ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.72)
+            : ColorUtils.transparentize(Appearance.colors.colOutlineVariant,
+                root.compactPresentation ? 0.84 : 0.72)
         Behavior on color {
             enabled: Appearance.animationsEnabled
             animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -100,21 +111,21 @@ Item {
         RowLayout {
             id: cardContent
             anchors.fill: parent
-            anchors.margins: root.compactPresentation ? 8 : 12
-            anchors.leftMargin: root.compactPresentation ? 12 : 16
-            spacing: root.compactPresentation ? 8 : 12
+            anchors.margins: root.compactPresentation ? 6 : 12
+            anchors.leftMargin: root.compactPresentation ? 10 : 16
+            spacing: root.compactPresentation ? 6 : 12
             
             // Category / source icon
             Rectangle {
-                Layout.preferredWidth: root.compactPresentation ? 30 : 40
-                Layout.preferredHeight: root.compactPresentation ? 30 : 40
+                Layout.preferredWidth: root.compactPresentation ? 24 : 40
+                Layout.preferredHeight: root.compactPresentation ? 24 : 40
                 radius: width / 2
                 color: ColorUtils.transparentize(root.indicatorColor, 0.85)
                 
                 MaterialSymbol {
                     anchors.centerIn: parent
                     text: root.isExternal ? "cloud_sync" : Events.getCategoryIcon(root.event.category)
-                    iconSize: root.compactPresentation ? 16 : 20
+                    iconSize: root.compactPresentation ? 14 : 20
                     color: root.indicatorColor
                 }
             }
@@ -123,12 +134,14 @@ Item {
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                spacing: 4
+                spacing: root.compactPresentation ? 2 : 4
                 
                 StyledText {
                     Layout.fillWidth: true
                     text: root.event?.title ?? ""
-                    font.pixelSize: Appearance.font.pixelSize.normal
+                    font.pixelSize: root.compactPresentation
+                        ? Appearance.font.pixelSize.small
+                        : Appearance.font.pixelSize.normal
                     font.weight: Font.Medium
                     color: root.colText
                     elide: Text.ElideRight
@@ -152,12 +165,14 @@ Item {
                 RowLayout {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    spacing: 8
+                    spacing: root.compactPresentation ? 4 : 8
                     
                     // Date/time badge
                     Rectangle {
-                        Layout.fillWidth: true
+                        Layout.fillWidth: !root.compactPresentation
                         Layout.minimumWidth: 0
+                        Layout.preferredWidth: root.compactPresentation
+                            ? dateTimeRow.implicitWidth + 10 : -1
                         implicitHeight: dateTimeRow.implicitHeight + 6
                         implicitWidth: dateTimeRow.implicitWidth + 10
                         radius: height / 2
@@ -171,16 +186,16 @@ Item {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.margins: 5
-                            spacing: 4
+                            spacing: root.compactPresentation ? 3 : 4
                             
                             MaterialSymbol {
                                 text: "schedule"
-                                iconSize: 12
+                                iconSize: root.compactPresentation ? 11 : 12
                                 color: root.isToday ? root.colPrimary : root.colSubtext
                             }
                             
                             StyledText {
-                                Layout.fillWidth: true
+                                Layout.fillWidth: !root.compactPresentation
                                 Layout.minimumWidth: 0
                                 elide: Text.ElideRight
                                 text: {
@@ -189,6 +204,8 @@ Item {
                                     const range = !isNaN(root.eventEndDate.getTime())
                                         ? start + "–" + Qt.formatTime(root.eventEndDate, "HH:mm")
                                         : start
+                                    // Calendar headings already identify the day.
+                                    if (root.compactPresentation) return range
                                     if (root.isToday) return Translation.tr("Today") + " " + range
                                     const now = new Date()
                                     const tomorrow = new Date(now)
@@ -205,10 +222,15 @@ Item {
                         }
                     }
                     
-                    // Source / category badge
+                    // Source / category badge: only reveal on card hover/focus
+                    // inside the compact Calendar Popup (no blank chip at rest).
                     Rectangle {
-                        Layout.fillWidth: true
+                        visible: !root.compactPresentation
+                            || cardHover.hovered || root.activeFocus
+                        Layout.fillWidth: !root.compactPresentation
                         Layout.minimumWidth: 0
+                        Layout.preferredWidth: root.compactPresentation
+                            ? categoryText.implicitWidth + 12 : -1
                         implicitHeight: categoryText.implicitHeight + 6
                         implicitWidth: categoryText.implicitWidth + 12
                         radius: height / 2
@@ -239,13 +261,22 @@ Item {
                 }
             }
             
-            // Remove button (local events only)
+            // A small reserved action area avoids card reflow. Its close icon
+            // appears only when the pointer reaches this particular corner,
+            // not when hovering the title/time or the rest of the card.
             RippleButton {
-                Layout.preferredWidth: 32
-                Layout.preferredHeight: 32
+                Layout.preferredWidth: root.compactPresentation ? 26 : 32
+                Layout.preferredHeight: root.compactPresentation ? 26 : 32
                 buttonText: Translation.tr("Remove")
-                buttonRadius: 16
+                buttonRadius: root.compactPresentation ? 13 : 16
                 visible: !root.isExternal
+                opacity: !root.compactPresentation || removeHover.hovered
+                    || activeFocus ? 1 : 0
+                HoverHandler { id: removeHover }
+                Behavior on opacity {
+                    enabled: Appearance.animationsEnabled
+                    NumberAnimation { duration: 100 }
+                }
                 colBackground: "transparent"
                 colBackgroundHover: Appearance.colors.colLayer1Hover
                 onClicked: root.removeClicked()
@@ -253,7 +284,7 @@ Item {
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: "close"
-                    iconSize: 16
+                    iconSize: root.compactPresentation ? 14 : 16
                     color: root.colSubtext
                 }
                 

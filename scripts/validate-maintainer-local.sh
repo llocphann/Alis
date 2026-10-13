@@ -320,6 +320,7 @@ run_check 'Weekly Planner multi-date single-write storage runtime' python3 scrip
 run_check 'Multi-date Events grouping and Weekly Planner drag/resize policy' node scripts/test-event-occurrences-policy.mjs
 run_check 'Events persisted data preservation without automatic migration' node scripts/test-events-no-automatic-migration.mjs
 run_check 'Calendar popup three-day civil range and recurrence policy' node scripts/test-calendar-three-day-window.mjs
+run_check 'Calendar popup compact event cards, hover controls and dot spacing' python3 scripts/test-calendar-popup-compact-contract.py
 run_check 'Independent Agenda and Todo stores with stable Event ID edits' node scripts/test-agenda-todo-independence.mjs
 run_check 'Agenda QML upcoming events and Dashboard startup compatibility' node scripts/test-agenda-upcoming-runtime-compat.mjs
 run_check 'Screen Edge lock reservations and output packing' node scripts/test-abyss-module-locks.mjs

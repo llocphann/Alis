@@ -1324,6 +1324,28 @@ run privileged installation just because manual buttons are retired.
   midnight refresh and owner screenshot acceptance are NOT RUN.
   **Hoàn thành (bot báo xong) — Owner chưa verified.**
 
+- [ ] **CAL-R03 — Compact Calendar Popup event cards and spaced Agenda dots — owner request 2026-10-13:**
+  [Owner: Alis dev; Rework/Calendar UI] Scope to the Events pane inside
+  `modules/bar/ClockCalendarContent.qml`; do not change Sidebar/Dashboard
+  Event cards. Replace the date separator for the three local civil-day groups
+  with **Today / Tomorrow / Day after**. Every compact timed Event's primary
+  badge displays **start–end time only**; All day remains an explicit state.
+  Show category/source metadata only on card hover or keyboard focus.
+  Show the Remove/Close control only when hovering its own small top-right
+  action area (or keyboard focus), not on whole-card hover. Reduce icon/card
+  footprint and margins while preserving readable text, edit/remove, recurrence,
+  external read-only behavior, local date grouping and scrolling.
+  Use a darker active-theme card surface with restrained outline/hover rather
+  than fixed-color Material gray. Space the **counted** Calendar Popup agenda
+  dots a little farther apart; preserve their configured maximum, overflow
+  cue and legacy Sidebar/Dashboard dot layout.
+  **Source milestone — 2026-10-13:** Scoped `EventsWidget.qml`,
+  `EventCard.qml` and `ObsidianMonthCalendar.qml` changes plus
+  `scripts/test-calendar-popup-compact-contract.py` and canonical validator
+  hook delivered. **OPEN for native Quickshell/Niri visual/input, hover boundary,
+  narrow/high-DPI, keyboard focus, month/day rollover and owner acceptance.**
+  Source contract and revision verification do not imply native tests PASS.
+
 - [ ] **DASH-R03 — Weekly Planner Day/date + All day header material parity — owner screenshot 2026-10-12:**
   [Owner: Alis dev; Rework / Material UX] The 7-column date/day header
   and its **All day** strip in Dashboard Weekly Planner currently read

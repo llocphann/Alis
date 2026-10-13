@@ -158,7 +158,7 @@ Item {
         // Header with upcoming count
         RowLayout {
             Layout.fillWidth: true
-            Layout.margins: 12
+            Layout.margins: root.compactCalendarWindow ? 8 : 12
             spacing: 8
             
             MaterialSymbol {
@@ -212,7 +212,7 @@ Item {
             ColumnLayout {
                 id: eventsColumn
                 width: parent.width
-                spacing: 8
+                spacing: root.compactCalendarWindow ? 4 : 8
                 
                 // Merged events
                 Repeater {
@@ -221,22 +221,23 @@ Item {
                     delegate: ColumnLayout {
                         required property var modelData
                         Layout.fillWidth:true
-                        spacing:4
+                        spacing: root.compactCalendarWindow ? 2 : 4
 
                         StyledText {
                             visible:root.compactCalendarWindow && modelData._showDayHeader
                             Layout.fillWidth:true
-                            Layout.leftMargin:12
-                            Layout.topMargin:6
-                            text:modelData._groupDate
-                                ? Qt.formatDate(modelData._groupDate,"ddd, dd MMM") : ""
-                            font.pixelSize:Appearance.font.pixelSize.small
+                            Layout.leftMargin: 8
+                            Layout.topMargin: 4
+                            text: modelData._dayOffset === 0 ? Translation.tr("Today")
+                                : modelData._dayOffset === 1 ? Translation.tr("Tomorrow")
+                                : Translation.tr("Day after")
+                            font.pixelSize:Appearance.font.pixelSize.smallest
                             font.weight:Font.DemiBold
                             color:root.colSubtext
                         }
                         EventCard {
                             Layout.fillWidth:true
-                            Layout.margins:root.compactCalendarWindow ? 6 : 8
+                            Layout.margins:root.compactCalendarWindow ? 4 : 8
                             compactPresentation:root.compactCalendarWindow
                             event:modelData
                             isExternal:(modelData?._source ?? "local")==="external"
