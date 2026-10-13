@@ -22,7 +22,7 @@ const group={id:101,title:"Two days",allDay:false,occurrences:[
     {startDate:offset(4),endDate:offset(5),notified:false},
     {startDate:offset(2),endDate:offset(3),notified:false},
     {startDate:offset(6),endDate:offset(7),notified:true},
-    {startDate:offset(250),endDate:offset(251),notified:false}
+    {startDate:offset(600),endDate:offset(601),notified:false}
 ]};
 const overlappingDay={id:102,title:"All day",allDay:true,
     startDate:offset(-2),endDate:offset(20),notified:true};
