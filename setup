@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# iNiR setup - installer and maintenance entrypoint
+# Alis setup - installer and maintenance entrypoint
 # Commands: install, update, status, migrate, doctor, rollback, my-changes, uninstall (or TUI if no args)
 
 resolve_bootstrap_repo_root() {
@@ -11,7 +11,7 @@ resolve_bootstrap_repo_root() {
     fi
 
     local xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
-    local config_new="${xdg_config_home}/inir"
+    local config_new="${xdg_config_home}/alis"
     local config_legacy="${xdg_config_home}/illogical-impulse"
     local config_dir=""
 
@@ -51,8 +51,8 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(resolve_bootstrap_repo_root "$SCRIPT_DIR")"
 
 if [[ ! -d "$REPO_ROOT" || ! -f "$REPO_ROOT/shell.qml" ]]; then
-    echo "Error: Could not find iNiR repository (resolved to: ${REPO_ROOT:-<empty>})" >&2
-    echo "Run this script from the iNiR repo directory, or fix ~/.config/inir/version.json" >&2
+    echo "Error: Could not find Alis repository (resolved to: ${REPO_ROOT:-<empty>})" >&2
+    echo "Run this script from the Alis repo directory, or fix ~/.config/alis/version.json" >&2
     exit 1
 fi
 
@@ -202,15 +202,15 @@ _check_privilege_prereqs() {
 }
 
 sync_launcher_from_repo() {
-    local launcher_target="${XDG_BIN_HOME}/inir"
-    if [[ -f "${REPO_ROOT}/scripts/inir" ]]; then
+    local launcher_target="${XDG_BIN_HOME}/alis"
+    if [[ -f "${REPO_ROOT}/scripts/alis" ]]; then
         mkdir -p "$XDG_BIN_HOME"
-        cp -f "${REPO_ROOT}/scripts/inir" "$launcher_target"
+        cp -f "${REPO_ROOT}/scripts/alis" "$launcher_target"
         chmod +x "$launcher_target"
         if [[ -f "${REPO_ROOT}/scripts/alis" ]]; then
             local alis_target="${XDG_BIN_HOME}/alis"
             if [[ -L "$alis_target" || ( -e "$alis_target" && ! -f "$alis_target" ) ]] \
-                || { [[ -f "$alis_target" ]] && ! grep -Fq "# Alis is the public command while the proven iNiR runtime owns the session." "$alis_target"; }; then
+                || { [[ -f "$alis_target" ]] && ! grep -Fq "# Alis is the public command while the proven Alis runtime owns the session." "$alis_target"; }; then
                 printf "Alis launcher path is user-owned, preserving %s\n" "$alis_target" >&2
             else
                 cp -f "${REPO_ROOT}/scripts/alis" "$alis_target"
@@ -222,11 +222,11 @@ sync_launcher_from_repo() {
     fi
 }
 
-sync_user_inir_service_from_repo_if_present() {
-    local service_asset="${REPO_ROOT}/assets/systemd/inir.service"
+sync_user_alis_service_from_repo_if_present() {
+    local service_asset="${REPO_ROOT}/assets/systemd/alis.service"
     local service_target_dir="${XDG_CONFIG_HOME}/systemd/user"
-    local service_target="${service_target_dir}/inir.service"
-    local launcher_target="${XDG_BIN_HOME}/inir"
+    local service_target="${service_target_dir}/alis.service"
+    local launcher_target="${XDG_BIN_HOME}/alis"
     local tmp_file
     local changed=false
 
@@ -235,14 +235,14 @@ sync_user_inir_service_from_repo_if_present() {
 
     mkdir -p "$service_target_dir"
     mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}"
-    tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir.service.$$"
+    tmp_file="${XDG_CACHE_HOME:-$HOME/.cache}/alis.service.$$"
 
     sed -e "s|^ExecStart=.*|ExecStart=${launcher_target//&/\\&} run --session|" \
         -e "s|^ExecStopPost=-.*|ExecStopPost=-${launcher_target//&/\\&} cleanup-orphans|" \
         "$service_asset" > "$tmp_file"
 
     if [[ -L "$service_target" ]]; then
-        # A repo-link unit points at the portable template, whose /usr/bin/inir
+        # A repo-link unit points at the portable template, whose /usr/bin/alis
         # path is wrong for developer installs.  A drop-in fixes it only after
         # the first setup/doctor run, so a fresh login can hit 203/EXEC before
         # that override exists.  Materialize the rendered unit instead.
@@ -254,7 +254,7 @@ sync_user_inir_service_from_repo_if_present() {
         cp -f "$tmp_file" "$service_target"
     fi
 
-    local service_dropin_dir="${service_target_dir}/inir.service.d"
+    local service_dropin_dir="${service_target_dir}/alis.service.d"
     local service_override="${service_dropin_dir}/override.conf"
     if [[ -f "$service_override" ]] && grep -q '^# Managed locally:' "$service_override"; then
         rm -f "$service_override"
@@ -275,12 +275,12 @@ sync_user_inir_service_from_repo_if_present() {
     return 1
 }
 
-ensure_user_inir_service_enabled() {
+ensure_user_alis_service_enabled() {
     if ! command -v systemctl >/dev/null 2>&1; then
         return 1
     fi
 
-    local service_path="${XDG_CONFIG_HOME}/systemd/user/inir.service"
+    local service_path="${XDG_CONFIG_HOME}/systemd/user/alis.service"
     if [[ ! -f "$service_path" ]]; then
         return 1
     fi
@@ -299,16 +299,16 @@ ensure_user_inir_service_enabled() {
     fi
 
     local wants_dir="${XDG_CONFIG_HOME}/systemd/user/${target}.wants"
-    if [[ ! -e "$wants_dir/inir.service" ]]; then
+    if [[ ! -e "$wants_dir/alis.service" ]]; then
         mkdir -p "$wants_dir"
-        ln -sf "$service_path" "$wants_dir/inir.service"
+        ln -sf "$service_path" "$wants_dir/alis.service"
     fi
 
     systemctl --user daemon-reload >/dev/null 2>&1 || true
     return 0
 }
 
-inir_supported_session_active() {
+alis_supported_session_active() {
     # Never use WAYLAND_DISPLAY as a compositor detector: KDE/GNOME set it too.
     [[ -n "${NIRI_SOCKET:-}" ]] && return 0
     pgrep -x niri >/dev/null 2>&1 && return 0
@@ -331,7 +331,7 @@ restart_updated_shell() {
         return 1
     fi
 
-    INIR_RUNTIME_DIR="$runtime_dir" "$launcher" restart -q -c "$runtime_dir"
+    ALIS_RUNTIME_DIR="$runtime_dir" "$launcher" restart -q -c "$runtime_dir"
 }
 
 ###############################################################################
@@ -350,7 +350,7 @@ setup_service_link_summary() {
     local wants_dir
     for wants_dir in "${XDG_CONFIG_HOME}/systemd/user"/*.wants; do
         [[ -d "$wants_dir" ]] || continue
-        [[ -e "$wants_dir/inir.service" || -L "$wants_dir/inir.service" ]] || continue
+        [[ -e "$wants_dir/alis.service" || -L "$wants_dir/alis.service" ]] || continue
         links+=("$(basename "${wants_dir%.wants}")")
     done
 
@@ -456,7 +456,7 @@ show_setup_context_card() {
     runtime_dir="$(get_runtime_shell_dir)"
     current_branch="$(setup_current_branch)"
     tracked_branch="$(setup_tracked_branch)"
-    launcher_path="$(command -v inir 2>/dev/null || echo "${XDG_BIN_HOME}/inir")"
+    launcher_path="$(command -v alis 2>/dev/null || echo "${XDG_BIN_HOME}/alis")"
     service_links="$(setup_service_link_summary)"
     remote_state="$(setup_remote_state_summary)"
     runtime_state="$(setup_runtime_change_summary)"
@@ -484,7 +484,7 @@ show_help() {
     echo ""
     tui_hero_card "Alis setup" \
         "Install, sync, repair, inspect, and unfuck the shell without guessing which entrypoint owns what." \
-        "Use inir for daily runtime control. Use ./setup when you want the maintenance brain."
+        "Use alis for daily runtime control. Use ./setup when you want the maintenance brain."
 
     tui_key_value "Usage:" "./setup [command] [options]"
     show_setup_context_card "Setup Overview"
@@ -511,7 +511,7 @@ show_help() {
     tui_list_item "rollback    Restore a previous snapshot"
     tui_list_item "my-changes  View or restore preserved user modifications"
     tui_list_item "reinstall   Re-run install pipeline for current setup"
-    tui_list_item "uninstall   Remove iNiR from the system"
+    tui_list_item "uninstall   Remove Alis from the system"
     tui_section_end
 
     tui_section_start "Customization"
@@ -604,7 +604,7 @@ show_version_info() {
     # Check for updates
     if [[ "$update_strategy" != "package-manager" && "$installed_commit" != "$repo_commit" ]]; then
         echo ""
-        tui_alert "info" "Update available" "Run './setup update' or 'inir update' to apply."
+        tui_alert "info" "Update available" "Run './setup update' or 'alis update' to apply."
     fi
 }
 
@@ -643,7 +643,7 @@ tui_menu() {
             "${ICON_DOT}|Rollback|Restore a previous snapshot" \
             "${ICON_DOT}|My Changes|View your preserved modifications" \
             "${ICON_DOT}|Reinstall|Full reinstall from scratch" \
-            "${ICON_CROSS}|Uninstall|Remove iNiR from the system" \
+            "${ICON_CROSS}|Uninstall|Remove Alis from the system" \
             "${ICON_CIRCLE}|Help|Show commands and usage" \
             "${ICON_CIRCLE}|Exit|")
     else
@@ -680,7 +680,7 @@ tui_menu() {
 # Status Command
 ###############################################################################
 show_status_boot_timing() {
-    local cache_file="${XDG_CACHE_HOME:-$HOME/.cache}/inir/last-boot.json"
+    local cache_file="${XDG_CACHE_HOME:-$HOME/.cache}/alis/last-boot.json"
     if [[ ! -s "$cache_file" ]]; then
         return 0
     fi
@@ -697,7 +697,7 @@ show_status_boot_timing() {
     local service_start_ms=0 qs_start_ms=0
     if command -v systemctl >/dev/null 2>&1; then
         local exec_start
-        exec_start=$(systemctl --user show inir.service -p ExecMainStartTimestamp --value 2>/dev/null)
+        exec_start=$(systemctl --user show alis.service -p ExecMainStartTimestamp --value 2>/dev/null)
         if [[ -n "$exec_start" && "$exec_start" != "n/a" ]]; then
             # systemctl prints "Tue 2026-05-19 11:38:37 -03"; date -d understands it.
             service_start_ms=$(date -d "$exec_start" +%s%3N 2>/dev/null || echo 0)
@@ -785,7 +785,7 @@ show_status_boot_timing() {
         echo ""
         tui_check_warn "Boot took $(_fmt_ms $total_ms) — unusually slow."
         tui_info "  Common culprits: Qt/Quickshell ABI mismatch, missing WAYLAND_DISPLAY env, slow icon cache, network-bound services on first run."
-        tui_info "  Run 'inir doctor' to auto-detect, or share the table above when filing an issue."
+        tui_info "  Run 'alis doctor' to auto-detect, or share the table above when filing an issue."
     elif [[ "$total_ms" -gt 5000 ]]; then
         echo ""
         tui_check_skip "Boot took $(_fmt_ms $total_ms) — a bit slow on first run; subsequent boots should be faster."
@@ -794,7 +794,7 @@ show_status_boot_timing() {
 
 show_status_environment() {
     # Versions and system info — the things we always end up asking users for
-    # in support threads. Print once so they can paste their `inir status` output.
+    # in support threads. Print once so they can paste their `alis status` output.
     tui_title "System & Quickshell"
     tui_table_header "Property" "Value" 22 42
 
@@ -967,7 +967,7 @@ show_status() {
     tui_table_row "Remote State" "$remote_state" 18 36
     tui_table_row "Local Changes" "$runtime_state" 18 36
     tui_table_row "Runtime Path" "$runtime_dir_display" 18 36
-    tui_table_row "Launcher" "alis run (inir compatible)" 18 36
+    tui_table_row "Launcher" "alis run (alis compatible)" 18 36
     [[ -n "$repo_path_display" ]] && tui_table_row "Repo Path" "$repo_path_display" 18 36
     if [[ "$update_strategy" == "package-manager" ]]; then
         [[ -n "$update_hint" ]] && tui_table_row "Update Cmd" "$update_hint" 18 36
@@ -1003,14 +1003,14 @@ show_status() {
     fi
 
     local launcher_path
-    launcher_path="$(command -v inir 2>/dev/null || true)"
-    if [[ -n "$launcher_path" || -x "${REPO_ROOT}/scripts/inir" ]]; then
+    launcher_path="$(command -v alis 2>/dev/null || true)"
+    if [[ -n "$launcher_path" || -x "${REPO_ROOT}/scripts/alis" ]]; then
         tui_check_ok "Launcher available${launcher_path:+: $launcher_path}"
     else
         tui_check_warn "Launcher not available in PATH"
     fi
 
-    local service_path="${XDG_CONFIG_HOME}/systemd/user/inir.service"
+    local service_path="${XDG_CONFIG_HOME}/systemd/user/alis.service"
     local service_links
     service_links="$(setup_service_link_summary)"
     if [[ -f "$service_path" ]]; then
@@ -1073,7 +1073,7 @@ show_status() {
     fi
 
     # Last boot timing breakdown — helps users self-triage "my shell takes 15s to start".
-    # Pulls T0 from systemd, T1 from `qs list`, T2-T5 from ~/.cache/inir/last-boot.json
+    # Pulls T0 from systemd, T1 from `qs list`, T2-T5 from ~/.cache/alis/last-boot.json
     # (written by shell.qml at end of deferred phase).
     show_status_boot_timing
     echo ""
@@ -1115,14 +1115,14 @@ show_info() {
     local kernel
     kernel=$(uname -r 2>/dev/null || echo "unknown")
 
-    # iNiR details
+    # Alis details
     local installed_ver=$(get_installed_version)
     local installed_commit=$(get_installed_commit)
     local installed_mode=$(get_installed_install_mode)
     local runtime_dir
     runtime_dir="$(get_runtime_shell_dir)"
     local config_dir
-    config_dir="$(resolve_inir_config_dir)"
+    config_dir="$(resolve_alis_config_dir)"
     local config_file="${config_dir}/config.json"
     local state_dir="${XDG_STATE_HOME}/quickshell/user/generated"
     local remote_state="$(setup_remote_state_summary)"
@@ -1182,7 +1182,7 @@ show_info() {
     tui_key_value "State:" "$state_dir"
     tui_key_value "Runtime:" "${runtime_dir:-"(not set)"}"
     tui_key_value "Repo:" "$REPO_ROOT"
-    tui_key_value "Launcher:" "$(command -v inir 2>/dev/null || echo "${XDG_BIN_HOME}/inir")"
+    tui_key_value "Launcher:" "$(command -v alis 2>/dev/null || echo "${XDG_BIN_HOME}/alis")"
     tui_key_value "Remote:" "$remote_state"
     tui_key_value "Runtime State:" "$runtime_state"
     tui_key_value "Preserved Mods:" "$preserved_mods"
@@ -1214,7 +1214,7 @@ show_info() {
     local snapshot_count=$(list_snapshots 2>/dev/null | wc -l)
     tui_check_ok "$snapshot_count snapshot(s) available"
 
-    local service_path="${XDG_CONFIG_HOME}/systemd/user/inir.service"
+    local service_path="${XDG_CONFIG_HOME}/systemd/user/alis.service"
     if [[ -f "$service_path" ]]; then
         tui_check_ok "User service file present"
     else
@@ -1222,7 +1222,7 @@ show_info() {
     fi
 
     local launcher_path
-    launcher_path="$(command -v inir 2>/dev/null || true)"
+    launcher_path="$(command -v alis 2>/dev/null || true)"
     if [[ -n "$launcher_path" ]]; then
         tui_check_ok "Launcher resolves to $launcher_path"
     else
@@ -1253,7 +1253,7 @@ run_config() {
     echo ""
 
     local config_dir
-    config_dir="$(resolve_inir_config_dir)"
+    config_dir="$(resolve_alis_config_dir)"
     local config_file="${config_dir}/config.json"
 
     if [[ ! -f "$config_file" ]]; then
@@ -1376,7 +1376,7 @@ run_theme() {
             return 0
         fi
 
-        if command -v inir &>/dev/null; then
+        if command -v alis &>/dev/null; then
             local runtime_dir
             runtime_dir="$(alis path 2>/dev/null || true)"
             candidate="${runtime_dir}/scripts/colors/switchwall.sh"
@@ -1500,7 +1500,7 @@ run_extras() {
     local action
     action=$(tui_choose_rich "Extras" \
         "${ICON_DOT}|Install iNiR-Walls|Download optional wallpaper pack and copy image files" \
-        "${ICON_DOT}|Install ii-pixel-sddm|Install/apply iNiR SDDM login theme" \
+        "${ICON_DOT}|Install ii-pixel-sddm|Install/apply Alis SDDM login theme" \
         "${ICON_DOT}|Install YAMIS icons|Install/update yet-another-monochrome-icon-set (GPL-3, ~23 MiB)" \
         "${ICON_DOT}|Install all|Run all optional installers" \
         "${ICON_CIRCLE}|Back|Return to main menu")
@@ -1508,7 +1508,7 @@ run_extras() {
     case "$action" in
         "Install iNiR-Walls")
             echo ""
-            extras_install_inir_walls
+            extras_install_alis_walls
             ;;
         "Install ii-pixel-sddm")
             echo ""
@@ -1520,7 +1520,7 @@ run_extras() {
             ;;
         "Install all")
             echo ""
-            extras_install_inir_walls
+            extras_install_alis_walls
             echo ""
             extras_install_sddm_theme "ask"
             echo ""
@@ -2118,7 +2118,7 @@ run_update_simulated() {
     _step_phase_header 2 "Syncing files"
     tui_info "Syncing Alis..."
     sleep 1
-    tui_check_ok "scripts/inir         (current)"
+    tui_check_ok "scripts/alis         (current)"
     tui_check_ok "modules/bar          (3 files updated)"
     tui_check_ok "services/Audio.qml   (current)"
     tui_check_ok "translations/es.json (current)"
@@ -2134,7 +2134,7 @@ run_update_simulated() {
     _step_phase_header 4 "Finalizing"
     tui_info "Refreshing systemd unit..."
     sleep 1
-    tui_check_ok "inir.service reloaded"
+    tui_check_ok "alis.service reloaded"
     tui_check_ok "Launcher path verified"
     tui_success "Service file refreshed"
 
@@ -2198,7 +2198,7 @@ run_update() {
     # Short-circuit to the simulated walkthrough — no git pull, no rsync,
     # no migrations, no shell restart. Useful for previewing the new TUI
     # visuals or exercising the resume-from-status-file logic.
-    if [[ "${INIR_SIMULATE_UPDATE:-}" == "1" ]]; then
+    if [[ "${ALIS_SIMULATE_UPDATE:-}" == "1" ]]; then
         run_update_simulated
         return $?
     fi
@@ -2226,7 +2226,7 @@ run_update() {
     local update_hint=$(get_installed_package_update_hint)
 
     if [[ "$installed_strategy" == "package-manager" ]]; then
-        tui_warn "This iNiR installation is package-managed"
+        tui_warn "This Alis installation is package-managed"
         tui_status_line "Install Mode:" "$installed_mode" ""
         [[ -n "$package_name" ]] && tui_status_line "Package:" "$package_name" ""
         if [[ -n "$update_hint" ]]; then
@@ -2248,12 +2248,12 @@ run_update() {
             fi
         fi
 
-        ensure_user_inir_service_enabled >/dev/null 2>&1 || true
-        # Only start inir if we're running under a supported compositor.
+        ensure_user_alis_service_enabled >/dev/null 2>&1 || true
+        # Only start alis if we're running under a supported compositor.
         # WAYLAND_DISPLAY alone is not enough — KDE/GNOME set it too.
-        if inir_supported_session_active; then
-            systemctl --user reset-failed inir.service >/dev/null 2>&1 || true
-            systemctl --user start inir.service >/dev/null 2>&1 || true
+        if alis_supported_session_active; then
+            systemctl --user reset-failed alis.service >/dev/null 2>&1 || true
+            systemctl --user start alis.service >/dev/null 2>&1 || true
         fi
 
         # Even on package-managed installs, refresh the shipped ii-pixel theme from
@@ -2383,11 +2383,11 @@ run_update() {
 
             if ! sync_launcher_from_repo >/dev/null; then
                 _report_update_failure "launcher" "Launcher refresh failed"
-                tui_error "Could not refresh the iNiR launcher"
+                tui_error "Could not refresh the Alis launcher"
                 return 1
             fi
-            sync_user_inir_service_from_repo_if_present >/dev/null 2>&1 || true
-            ensure_user_inir_service_enabled >/dev/null 2>&1 || true
+            sync_user_alis_service_from_repo_if_present >/dev/null 2>&1 || true
+            ensure_user_alis_service_enabled >/dev/null 2>&1 || true
             # A matching core SHA does not guarantee a matching Companion.
             # Repair/install the pinned Companion even on a core no-op update.
             sync_integrated_companion || return 1
@@ -2409,7 +2409,7 @@ run_update() {
     tui_info "Syncing Alis..."
 
     II_SOURCE="${REPO_ROOT}"
-    II_TARGET="${XDG_CONFIG_HOME}/quickshell/inir"
+    II_TARGET="${XDG_CONFIG_HOME}/quickshell/alis"
     local legacy_runtime_dir="${XDG_CONFIG_HOME}/quickshell/ii"
 
     for dir in "$XDG_BIN_HOME" "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$II_TARGET"; do
@@ -2559,7 +2559,7 @@ run_update() {
     fi
 
     # Generate the installed manifest from the same policy used to copy files.
-    if ! generate_manifest "$II_SOURCE" "${II_TARGET}/.inir-manifest"; then
+    if ! generate_manifest "$II_SOURCE" "${II_TARGET}/.alis-manifest"; then
         _report_update_failure "manifest" "Runtime manifest generation failed"
         [[ -n "$runtime_backup_path" ]] && rollback_update >/dev/null 2>&1 || true
         tui_error "Runtime manifest generation failed"
@@ -2567,7 +2567,7 @@ run_update() {
     fi
 
     # Remove managed source-only files left by older updater implementations.
-    if ! cleanup_orphans "$II_TARGET" "${II_TARGET}/.inir-manifest"; then
+    if ! cleanup_orphans "$II_TARGET" "${II_TARGET}/.alis-manifest"; then
         _report_update_failure "cleanup" "Runtime orphan cleanup failed"
         [[ -n "$runtime_backup_path" ]] && rollback_update >/dev/null 2>&1 || true
         tui_error "Runtime orphan cleanup failed"
@@ -2578,16 +2578,16 @@ run_update() {
     find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \; 2>/dev/null || true
     [[ -f "${II_TARGET}/setup" ]] && chmod +x "${II_TARGET}/setup"
 
-    local launcher_target="${XDG_BIN_HOME}/inir"
-    if [[ -f "${REPO_ROOT}/scripts/inir" ]]; then
+    local launcher_target="${XDG_BIN_HOME}/alis"
+    if [[ -f "${REPO_ROOT}/scripts/alis" ]]; then
         if ! sync_launcher_from_repo >/dev/null; then
             _report_update_failure "launcher" "Launcher refresh failed"
             [[ -n "$runtime_backup_path" ]] && rollback_update >/dev/null 2>&1 || true
-            tui_error "Could not refresh the iNiR launcher"
+            tui_error "Could not refresh the Alis launcher"
             return 1
         fi
         ensure_launcher_path_in_shells "$XDG_BIN_HOME"
-        if ! command -v inir &>/dev/null && [[ ":$PATH:" != *":${XDG_BIN_HOME}:"* ]]; then
+        if ! command -v alis &>/dev/null && [[ ":$PATH:" != *":${XDG_BIN_HOME}:"* ]]; then
             tui_warn "Launcher installed to ${launcher_target}, but ${XDG_BIN_HOME} is not in PATH for this shell"
         fi
     fi
@@ -2597,18 +2597,18 @@ run_update() {
     if [[ -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" ]]; then
         local icon_target_dir="${XDG_DATA_HOME}/icons/hicolor/scalable/apps"
         mkdir -p "$icon_target_dir"
-        cp -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "${icon_target_dir}/inir.svg"
+        cp -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "${icon_target_dir}/alis.svg"
     fi
 
     local applications_dir="${XDG_DATA_HOME}/applications"
     mkdir -p "$applications_dir"
-    if [[ -f "${REPO_ROOT}/assets/applications/inir.desktop" ]]; then
-        cp -f "${REPO_ROOT}/assets/applications/inir.desktop" "${applications_dir}/inir.desktop"
+    if [[ -f "${REPO_ROOT}/assets/applications/alis.desktop" ]]; then
+        cp -f "${REPO_ROOT}/assets/applications/alis.desktop" "${applications_dir}/alis.desktop"
     fi
-    if [[ -f "${REPO_ROOT}/assets/applications/inir-settings.desktop" ]]; then
-        local settings_tmp="${XDG_CACHE_HOME}/inir-settings.desktop.$$"
-        sed "s|^Exec=.*|Exec=${XDG_BIN_HOME//&/\\&}/alis settings|" "${REPO_ROOT}/assets/applications/inir-settings.desktop" > "$settings_tmp"
-        cp -f "$settings_tmp" "${applications_dir}/inir-settings.desktop"
+    if [[ -f "${REPO_ROOT}/assets/applications/alis-settings.desktop" ]]; then
+        local settings_tmp="${XDG_CACHE_HOME}/alis-settings.desktop.$$"
+        sed "s|^Exec=.*|Exec=${XDG_BIN_HOME//&/\\&}/alis settings|" "${REPO_ROOT}/assets/applications/alis-settings.desktop" > "$settings_tmp"
+        cp -f "$settings_tmp" "${applications_dir}/alis-settings.desktop"
         rm -f "$settings_tmp"
     fi
 
@@ -2674,16 +2674,16 @@ run_update() {
 
     _step_phase_header 4 "Finalizing"
     _service_refresh_status=1
-    if sync_user_inir_service_from_repo_if_present; then
+    if sync_user_alis_service_from_repo_if_present; then
         _service_refresh_status=0
     else
         _service_refresh_status=$?
     fi
     if [[ $_service_refresh_status -eq 0 ]]; then
-        tui_success "Updated existing user inir.service"
+        tui_success "Updated existing user alis.service"
     fi
 
-    ensure_user_inir_service_enabled >/dev/null 2>&1 || true
+    ensure_user_alis_service_enabled >/dev/null 2>&1 || true
 
     local niri_config="${XDG_CONFIG_HOME}/niri/config.kdl"
     local niri_startup_cfg="${XDG_CONFIG_HOME}/niri/config.d/50-startup.kdl"
@@ -2691,30 +2691,30 @@ run_update() {
     if [[ -f "$niri_config" && -x "${XDG_BIN_HOME}/alis" ]]; then
         local launcher_target_escaped="${XDG_BIN_HOME}/alis"
         launcher_target_escaped="${launcher_target_escaped//&/\\&}"
-        # Save original keybinds once before changing disabled inir executables.
+        # Save original keybinds once before changing disabled alis executables.
         local _brand_niri_file
         for _brand_niri_file in "$niri_binds_cfg" "$niri_startup_cfg" "$niri_config"; do
             [[ -f "$_brand_niri_file" && ! -L "$_brand_niri_file" ]] || continue
-            if grep -Eq '^[[:space:]]*(spawn|spawn-at-startup)[[:space:]].*("/bin/inir"|/bin/inir"|spawn "inir"|"inir")' "$_brand_niri_file"; then
+            if grep -Eq '^[[:space:]]*(spawn|spawn-at-startup)[[:space:]].*("/bin/alis"|/bin/alis"|spawn "alis"|"alis")' "$_brand_niri_file"; then
                 if [[ ! -e "$_brand_niri_file.brand-cli.bak" && ! -L "$_brand_niri_file.brand-cli.bak" ]]; then
                     cp -p -- "$_brand_niri_file" "$_brand_niri_file.brand-cli.bak" || { log_error "Niri backup failed: $_brand_niri_file"; return 1; }
                 fi
-                sed -i -e '/^[[:space:]]*spawn[[:space:]]/s|/bin/inir"|/bin/alis"|g' \
-                       -e '/^[[:space:]]*spawn-at-startup[[:space:]]/s|/bin/inir"|/bin/alis"|g' \
-                       -e '/^[[:space:]]*spawn-at-startup[[:space:]]/s|spawn-at-startup "inir"|spawn-at-startup "alis"|g' "$_brand_niri_file"
+                sed -i -e '/^[[:space:]]*spawn[[:space:]]/s|/bin/alis"|/bin/alis"|g' \
+                       -e '/^[[:space:]]*spawn-at-startup[[:space:]]/s|/bin/alis"|/bin/alis"|g' \
+                       -e '/^[[:space:]]*spawn-at-startup[[:space:]]/s|spawn-at-startup "alis"|spawn-at-startup "alis"|g' "$_brand_niri_file"
             fi
         done
         if [[ -f "$niri_binds_cfg" ]]; then
             sed -i \
-                -e 's|spawn "bash" "-lc" "exec \"\$(inir path)/scripts/launch-terminal.sh\""|spawn "'"${launcher_target_escaped}"'" "terminal"|' \
-                -e 's|spawn "bash" "-lc" "exec \"\$(inir path)/scripts/close-window.sh\""|spawn "'"${launcher_target_escaped}"'" "close-window"|' \
-                -e 's|spawn "inir" "|spawn "'"${launcher_target_escaped}"'" "|g' \
+                -e 's|spawn "bash" "-lc" "exec \"\$(alis path)/scripts/launch-terminal.sh\""|spawn "'"${launcher_target_escaped}"'" "terminal"|' \
+                -e 's|spawn "bash" "-lc" "exec \"\$(alis path)/scripts/close-window.sh\""|spawn "'"${launcher_target_escaped}"'" "close-window"|' \
+                -e 's|spawn "alis" "|spawn "'"${launcher_target_escaped}"'" "|g' \
                 "$niri_binds_cfg"
         else
             sed -i \
-                -e 's|spawn "bash" "-lc" "exec \"\$(inir path)/scripts/launch-terminal.sh\""|spawn "'"${launcher_target_escaped}"'" "terminal"|' \
-                -e 's|spawn "bash" "-lc" "exec \"\$(inir path)/scripts/close-window.sh\""|spawn "'"${launcher_target_escaped}"'" "close-window"|' \
-                -e 's|spawn "inir" "|spawn "'"${launcher_target_escaped}"'" "|g' \
+                -e 's|spawn "bash" "-lc" "exec \"\$(alis path)/scripts/launch-terminal.sh\""|spawn "'"${launcher_target_escaped}"'" "terminal"|' \
+                -e 's|spawn "bash" "-lc" "exec \"\$(alis path)/scripts/close-window.sh\""|spawn "'"${launcher_target_escaped}"'" "close-window"|' \
+                -e 's|spawn "alis" "|spawn "'"${launcher_target_escaped}"'" "|g' \
                 "$niri_config"
         fi
     fi
@@ -2876,7 +2876,7 @@ run_update() {
 
     # Restart only in an explicitly supported compositor session. The launcher
     # owns the systemd/direct-process lifecycle and waits for the new shell.
-    if inir_supported_session_active; then
+    if alis_supported_session_active; then
         _step_phase_start 7 "Restarting shell"
         if ! restart_updated_shell "$II_TARGET"; then
             _step_phase_fail "Shell failed to restart"
@@ -2939,7 +2939,7 @@ while [[ $# -gt 0 ]]; do
         -y|--yes) ask=false; shift ;;
         -q|--quiet) quiet=true; shift ;;
         --local) export _II_POST_PULL=local; shift ;;
-        --set-default-shell) export INIR_SET_DEFAULT_SHELL=true; shift ;;
+        --set-default-shell) export ALIS_SET_DEFAULT_SHELL=true; shift ;;
         -h|--help) show_help; exit 0 ;;
         *) echo "Unknown: $1"; show_help; exit 1 ;;
     esac
@@ -2975,7 +2975,7 @@ case "$COMMAND" in
                 -y|--yes) ask=false ;;
                 -q|--quiet) quiet=true ;;
                 --local) export _II_POST_PULL=local ;;
-                --simulate|--dry-run) export INIR_SIMULATE_UPDATE=1 ;;
+                --simulate|--dry-run) export ALIS_SIMULATE_UPDATE=1 ;;
             esac
         done
         run_update

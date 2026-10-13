@@ -1,4 +1,4 @@
-# Snapshot system for iNiR
+# Snapshot system for Alis
 # Time-machine style backups before updates
 # This script is meant to be sourced.
 
@@ -6,12 +6,12 @@
 
 SNAPSHOTS_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/snapshots"
 MAX_SNAPSHOTS=10
-INIR_CONFIG_DIR="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME}/illogical-impulse}"
+ALIS_CONFIG_DIR="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME}/illogical-impulse}"
 
 # Paths to snapshot
 SNAPSHOT_PATHS=(
-    "${XDG_CONFIG_HOME}/quickshell/inir"
-    "${INIR_CONFIG_DIR}/config.json"
+    "${XDG_CONFIG_HOME}/quickshell/alis"
+    "${ALIS_CONFIG_DIR}/config.json"
     "${XDG_CONFIG_HOME}/niri/config.kdl"
     "${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/desktop-items.json"
 )
@@ -33,8 +33,8 @@ create_snapshot() {
     mkdir -p "$snapshot_dir"
     
     # Copy QML code
-    if [[ -d "${XDG_CONFIG_HOME}/quickshell/inir" ]]; then
-        rsync -a --exclude='.inir-manifest' "${XDG_CONFIG_HOME}/quickshell/inir/" "${snapshot_dir}/inir/"
+    if [[ -d "${XDG_CONFIG_HOME}/quickshell/alis" ]]; then
+        rsync -a --exclude='.alis-manifest' "${XDG_CONFIG_HOME}/quickshell/alis/" "${snapshot_dir}/alis/"
     fi
 
     if [[ -d "${XDG_CONFIG_HOME}/quickshell/ii" ]]; then
@@ -42,8 +42,8 @@ create_snapshot() {
     fi
     
     # Copy user config
-    if [[ -f "${INIR_CONFIG_DIR}/config.json" ]]; then
-        cp "${INIR_CONFIG_DIR}/config.json" "${snapshot_dir}/"
+    if [[ -f "${ALIS_CONFIG_DIR}/config.json" ]]; then
+        cp "${ALIS_CONFIG_DIR}/config.json" "${snapshot_dir}/"
     fi
     
     # Copy niri config
@@ -52,8 +52,8 @@ create_snapshot() {
     fi
     
     # Copy migrations state
-    if [[ -f "${INIR_CONFIG_DIR}/migrations.json" ]]; then
-        cp "${INIR_CONFIG_DIR}/migrations.json" "${snapshot_dir}/"
+    if [[ -f "${ALIS_CONFIG_DIR}/migrations.json" ]]; then
+        cp "${ALIS_CONFIG_DIR}/migrations.json" "${snapshot_dir}/"
     fi
 
     # Copy managed desktop-item state. It lives in XDG state, not the config
@@ -154,33 +154,33 @@ restore_snapshot() {
     echo -e "${STY_CYAN}Restoring snapshot: ${snapshot_id}${STY_RST}"
     
     # Stop the shell through its lifecycle owner before replacing files.
-    local runtime_target="${XDG_CONFIG_HOME}/quickshell/inir"
+    local runtime_target="${XDG_CONFIG_HOME}/quickshell/alis"
     local runtime_launcher=""
-    if command -v inir >/dev/null 2>&1; then
-        runtime_launcher="$(command -v inir)"
-    elif [[ -x "${runtime_target}/scripts/inir" ]]; then
-        runtime_launcher="${runtime_target}/scripts/inir"
+    if command -v alis >/dev/null 2>&1; then
+        runtime_launcher="$(command -v alis)"
+    elif [[ -x "${runtime_target}/scripts/alis" ]]; then
+        runtime_launcher="${runtime_target}/scripts/alis"
     fi
     if [[ -n "$runtime_launcher" ]]; then
-        INIR_RUNTIME_DIR="$runtime_target" "$runtime_launcher" kill -c "$runtime_target" >/dev/null 2>&1 || true
+        ALIS_RUNTIME_DIR="$runtime_target" "$runtime_launcher" kill -c "$runtime_target" >/dev/null 2>&1 || true
     elif command -v systemctl >/dev/null 2>&1; then
-        systemctl --user stop inir.service >/dev/null 2>&1 || true
+        systemctl --user stop alis.service >/dev/null 2>&1 || true
     fi
     
     # Restore QML code
-    if [[ -d "${snapshot_dir}/inir" ]]; then
+    if [[ -d "${snapshot_dir}/alis" ]]; then
         log_info "Restoring QML code..."
-        rsync -a --delete "${snapshot_dir}/inir/" "${XDG_CONFIG_HOME}/quickshell/inir/"
+        rsync -a --delete "${snapshot_dir}/alis/" "${XDG_CONFIG_HOME}/quickshell/alis/"
     elif [[ -d "${snapshot_dir}/ii" ]]; then
         log_info "Restoring QML code..."
-        rsync -a --delete "${snapshot_dir}/ii/" "${XDG_CONFIG_HOME}/quickshell/inir/"
+        rsync -a --delete "${snapshot_dir}/ii/" "${XDG_CONFIG_HOME}/quickshell/alis/"
     fi
     
     # Restore user config
     if [[ -f "${snapshot_dir}/config.json" ]]; then
         log_info "Restoring user config..."
-        mkdir -p "${INIR_CONFIG_DIR}"
-        cp "${snapshot_dir}/config.json" "${INIR_CONFIG_DIR}/"
+        mkdir -p "${ALIS_CONFIG_DIR}"
+        cp "${snapshot_dir}/config.json" "${ALIS_CONFIG_DIR}/"
     fi
     
     # Restore niri config
@@ -191,8 +191,8 @@ restore_snapshot() {
     
     # Restore migrations state
     if [[ -f "${snapshot_dir}/migrations.json" ]]; then
-        mkdir -p "${INIR_CONFIG_DIR}"
-        cp "${snapshot_dir}/migrations.json" "${INIR_CONFIG_DIR}/"
+        mkdir -p "${ALIS_CONFIG_DIR}"
+        cp "${snapshot_dir}/migrations.json" "${ALIS_CONFIG_DIR}/"
     fi
 
     if [[ -f "${snapshot_dir}/desktop-items.json" ]]; then
@@ -221,21 +221,21 @@ restore_snapshot() {
     
     # Refresh launcher/service topology after the checkout moved backwards.
     declare -F sync_launcher_from_repo >/dev/null 2>&1 && sync_launcher_from_repo >/dev/null 2>&1 || true
-    declare -F sync_user_inir_service_from_repo_if_present >/dev/null 2>&1 \
-        && sync_user_inir_service_from_repo_if_present >/dev/null 2>&1 || true
-    declare -F ensure_user_inir_service_enabled >/dev/null 2>&1 \
-        && ensure_user_inir_service_enabled >/dev/null 2>&1 || true
+    declare -F sync_user_alis_service_from_repo_if_present >/dev/null 2>&1 \
+        && sync_user_alis_service_from_repo_if_present >/dev/null 2>&1 || true
+    declare -F ensure_user_alis_service_enabled >/dev/null 2>&1 \
+        && ensure_user_alis_service_enabled >/dev/null 2>&1 || true
 
     local session_active=false
-    if declare -F inir_supported_session_active >/dev/null 2>&1; then
-        inir_supported_session_active && session_active=true
+    if declare -F alis_supported_session_active >/dev/null 2>&1; then
+        alis_supported_session_active && session_active=true
     elif [[ -n "${NIRI_SOCKET:-}" ]] || pgrep -x niri >/dev/null 2>&1 \
             || [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] || pgrep -x Hyprland >/dev/null 2>&1; then
         session_active=true
     fi
 
     if $session_active; then
-        log_info "Starting shell through the iNiR lifecycle..."
+        log_info "Starting shell through the Alis lifecycle..."
         if declare -F restart_updated_shell >/dev/null 2>&1; then
             if ! restart_updated_shell "$runtime_target"; then
                 log_error "Snapshot restored but shell restart failed"
@@ -243,11 +243,11 @@ restore_snapshot() {
             fi
         else
             local restored_launcher=""
-            command -v inir >/dev/null 2>&1 && restored_launcher="$(command -v inir)"
-            [[ -z "$restored_launcher" && -x "${runtime_target}/scripts/inir" ]] \
-                && restored_launcher="${runtime_target}/scripts/inir"
+            command -v alis >/dev/null 2>&1 && restored_launcher="$(command -v alis)"
+            [[ -z "$restored_launcher" && -x "${runtime_target}/scripts/alis" ]] \
+                && restored_launcher="${runtime_target}/scripts/alis"
             if [[ -z "$restored_launcher" ]] \
-                    || ! INIR_RUNTIME_DIR="$runtime_target" "$restored_launcher" restart -q -c "$runtime_target"; then
+                    || ! ALIS_RUNTIME_DIR="$runtime_target" "$restored_launcher" restart -q -c "$runtime_target"; then
                 log_error "Snapshot restored but no verified launcher restart was available"
                 return 1
             fi
@@ -255,7 +255,7 @@ restore_snapshot() {
         tui_success "Snapshot restored and shell restarted"
     else
         tui_warn "No supported compositor session - shell restart skipped"
-        tui_info "Run: inir restart (from your Niri/Hyprland session)"
+        tui_info "Run: alis restart (from your Niri/Hyprland session)"
         tui_success "Snapshot restored"
     fi
 
