@@ -21,8 +21,11 @@ Rectangle {
     readonly property real sectionGap: 8
     readonly property real availableModulesNaturalWidth:
         root.hiddenIds.length > 0 ? availableModulesRow.implicitWidth : 0
+    readonly property int visibleActionCount:
+        7 + (root.canvasController?.responsiveWorkspace ?? false ? 0 : 1)
+            + (root.hiddenIds.length > 0 ? 1 : 0)
     readonly property real toolbarRowNaturalWidth:
-        8*34+7*6
+        root.visibleActionCount*34 + (root.visibleActionCount-1)*6
         + (root.hiddenIds.length > 0
             ? root.sectionGap + root.availableModulesNaturalWidth : 0)
     implicitWidth: Math.ceil(Math.max(
@@ -76,7 +79,8 @@ Rectangle {
             GridLayout {
                 id: editActions
                 Layout.alignment: Qt.AlignHCenter
-                columns: Math.max(1,Math.min(8,Math.floor((root.width-root.horizontalPadding*2+6)/40)))
+                columns: Math.max(1,Math.min(root.visibleActionCount,
+                    Math.floor((root.width-root.horizontalPadding*2+6)/40)))
                 rowSpacing: 6
                 columnSpacing: 6
 
@@ -251,6 +255,8 @@ Rectangle {
 
         implicitWidth: 34
         implicitHeight: 34
+        // Keep every button (including a wrapped row) geometrically centered.
+        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
         focusPolicy: Qt.StrongFocus
         buttonText: tool.tooltipText
         buttonRadius: Appearance.rounding.full
@@ -270,6 +276,8 @@ Rectangle {
             ? AbyssStyle.accent : Appearance.colors.colPrimary
 
         contentItem: Item {
+            implicitWidth: tool.implicitWidth
+            implicitHeight: tool.implicitHeight
             Rectangle {
                 anchors.fill: parent
                 anchors.margins: 1
@@ -288,6 +296,8 @@ Rectangle {
             MaterialSymbol {
                 id: toolIcon
                 anchors.centerIn: parent
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
                 iconSize: Appearance.font.pixelSize.normal
                 color: root.abyssMode
                     ? (tool.toggled
