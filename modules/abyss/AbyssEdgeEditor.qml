@@ -1126,7 +1126,7 @@ Item {
                             columns:1;rowSpacing:4*Appearance.fontSizeScale
                             RowLayout {
                             id:moduleRoundingRow
-                            Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
+                            Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2*Appearance.fontSizeScale
                             AbyssButton {
                             Layout.maximumHeight:root.editorActionSize
                             Layout.maximumWidth:root.editorActionSize
@@ -1169,7 +1169,7 @@ Item {
                             }
                             RowLayout {
                             id:moduleCustomSizeRow
-                            Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
+                            Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2*Appearance.fontSizeScale
                             AbyssButton {
                             objectName:"abyssModuleCustomSizeToggle"
                             text:"Custom size";glyph:"aspect_ratio"
