@@ -1,0 +1,34 @@
+{
+  "source_sha": "537e791e492d4cef5a49bdc2d742a59ef688ef38",
+  "scope": "Actual standalone Dashboard, isolated config and private no-focus Wayland; synthetic 500ms render suppression. No production change.",
+  "result": "INCONCLUSIVE",
+  "attempts": [
+    {
+      "driver": "probe.py",
+      "log": "native.log",
+      "exit": 255,
+      "result": "UNSUPPORTED_BACKEND: ContextMenu requires PanelWindow backend; no Dashboard timing evidence"
+    },
+    {
+      "driver": "probe-wayland.py",
+      "log": "native-wayland.log",
+      "exit": 124,
+      "result": "TIMED_OUT: no final diagnostic marker; cause not established"
+    },
+    {
+      "driver": "probe-wayland-clock.py",
+      "log": "native-wayland-clock.log",
+      "exit": null,
+      "result": "Diagnostic marker and result-clock.json persisted; final process exit was not retained. One frame only; insufficient for animation or smoothness qualification."
+    }
+  ],
+  "observations": [
+    "At delayed-paint marker: offset32, presented=false, frames0. First retained swap69ms later: offset32, presented=true, content=true.",
+    "This does not establish lost animation, owner stutter, actual compositor delay or CPU/GPU improvement.",
+    "Production 16ms first-entry timer is a research lead, not an accepted root cause."
+  ],
+  "boundaries": [
+    "No owner restart, volume/preset/route changes, vault access or physical-window focus.",
+    "No canonical or installed/owner/multi-output PASS."
+  ]
+}

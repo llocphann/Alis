@@ -1,0 +1,21 @@
+{
+  "source_sha": "537e791e492d4cef5a49bdc2d742a59ef688ef38",
+  "scope": "actual standalone Dashboard with private no-focus Wayland/config and synthetic500ms render suppression; no owner/compositor/performance claim",
+  "events": [
+    {
+      "stage": "delayed-paint",
+      "time": 1791928147319,
+      "offset": 32,
+      "presented": false,
+      "frames": 0
+    }
+  ],
+  "frames": [
+    {
+      "time": 1791928147388,
+      "offset": 32,
+      "presented": true,
+      "content": true
+    }
+  ]
+}
