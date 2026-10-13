@@ -93,8 +93,8 @@ ContentPage {
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             text: Autostart.startupFilePath.length > 0
-                ? Translation.tr("iNiR couldn't find %1. Re-run the installer to restore it.").arg(Autostart.startupFilePath)
-                : Translation.tr("iNiR couldn't locate your niri startup config.")
+                ? Translation.tr("Alis couldn't find %1. Re-run the installer to restore it.").arg(Autostart.startupFilePath)
+                : Translation.tr("Alis couldn't locate your niri startup config.")
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.colors.colOnSurface
         }

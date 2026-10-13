@@ -105,7 +105,7 @@ ContentPage {
                 label: (Ai.getModel() ?? null) !== null
                     ? Translation.tr("Active model: %1").arg(Ai.getModel().name)
                     : Translation.tr("No model selected")
-                detail: Translation.tr("iNiR keeps the selected model and can add live models from connected providers automatically")
+                detail: Translation.tr("Alis keeps the selected model and can add live models from connected providers automatically")
             }
 
             StatusRow {
@@ -670,7 +670,7 @@ ContentPage {
                         icon: providerForm._preset?.local ? "computer" : "cloud_sync"
                         text: providerForm._preset
                             ? Translation.tr(providerForm._preset.description)
-                                + "\n\n" + Translation.tr("iNiR will discover the available model IDs and capabilities automatically.")
+                                + "\n\n" + Translation.tr("Alis will discover the available model IDs and capabilities automatically.")
                             : ""
                     }
 

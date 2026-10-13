@@ -49,7 +49,7 @@ WSettingsPage {
             severity: root.hasModel ? WSettingsInfoBar.Severity.Success : WSettingsInfoBar.Severity.Warning
             message: root.hasModel
                 ? Translation.tr("Active model: %1").arg(Ai.getModel().name)
-                : Translation.tr("No model selected. Connect a provider below and iNiR will discover compatible models automatically.")
+                : Translation.tr("No model selected. Connect a provider below and Alis will discover compatible models automatically.")
         }
 
         WSettingsInfoBar {
@@ -138,7 +138,7 @@ WSettingsPage {
             Layout.leftMargin: 0
             Layout.rightMargin: 0
             wrapMode: Text.Wrap
-            text: Translation.tr("Choose a provider. iNiR discovers its current models and API protocol automatically.")
+            text: Translation.tr("Choose a provider. Alis discovers its current models and API protocol automatically.")
             font.pixelSize: Looks.font.pixelSize.small
             color: Looks.colors.subfg
         }
@@ -311,7 +311,7 @@ WSettingsPage {
                 severity: WSettingsInfoBar.Severity.Info
                 message: providerForm.preset
                     ? Translation.tr(providerForm.preset.description)
-                        + "\n" + Translation.tr("iNiR will discover model IDs and capabilities automatically.")
+                        + "\n" + Translation.tr("Alis will discover model IDs and capabilities automatically.")
                     : ""
             }
 

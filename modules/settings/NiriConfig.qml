@@ -3097,8 +3097,8 @@ ContentPage {
                     StyledText {
                         Layout.fillWidth: true
                         text: root.hasCustomConfigDiffs
-                            ? Translation.tr("%1 config files differ from iNiR defaults").arg(root.customConfigActionableCount)
-                            : Translation.tr("iNiR-managed files are unmodified")
+                            ? Translation.tr("%1 config files differ from Alis defaults").arg(root.customConfigActionableCount)
+                            : Translation.tr("Alis-managed files are unmodified")
                         font.pixelSize: Appearance.font.pixelSize.small
                         color: Appearance.colors.colOnLayer1
                         wrapMode: Text.WordWrap
@@ -3109,7 +3109,7 @@ ContentPage {
             StyledText {
                 Layout.fillWidth: true
                 text: root.hasCustomConfigDiffs
-                    ? Translation.tr("These files were changed after installation. iNiR may overwrite them on update — review them to keep your modifications.")
+                    ? Translation.tr("These files were changed after installation. Alis may overwrite them on update — review them to keep your modifications.")
                     : Translation.tr("Only generated and user-owned files differ from the managed defaults. Nothing needs attention.")
                 font.pixelSize: Appearance.font.pixelSize.small
                 color: Appearance.colors.colSubtext

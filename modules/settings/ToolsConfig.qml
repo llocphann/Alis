@@ -506,7 +506,7 @@ ContentPage {
                     visible: root.recordingAudioMode === "both"
                     materialIcon: root.audioMixAvailable ? "instant_mix" : "warning"
                     text: root.audioMixAvailable
-                        ? Translation.tr("iNiR combines system audio and microphone automatically. The temporary audio route is removed when recording ends.")
+                        ? Translation.tr("Alis combines system audio and microphone automatically. The temporary audio route is removed when recording ends.")
                         : Translation.tr("System and microphone audio cannot be combined on this setup. Recording will continue with whichever source is available.")
                 }
 

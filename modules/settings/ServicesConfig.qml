@@ -437,7 +437,7 @@ ContentPage {
         visible: root.activeSection === "updates"
         expanded: true
         icon: "deployed_code_update"
-        title: Translation.tr("iNiR Shell Updates")
+        title: Translation.tr("Alis Shell Updates")
 
         SettingsGroup {
             StyledText {
@@ -465,7 +465,7 @@ ContentPage {
                 onValueChanged: Config.setNestedValue("shellUpdates.checkIntervalMinutes", value)
                 enabled: Config.options?.shellUpdates?.enabled ?? true
                 StyledToolTip {
-                    text: Translation.tr("How often to check for iNiR updates (in minutes). Default: 360 (6 hours)")
+                    text: Translation.tr("How often to check for Alis updates (in minutes). Default: 360 (6 hours)")
                 }
             }
 

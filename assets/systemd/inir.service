@@ -1,5 +1,5 @@
 [Unit]
-Description=iNiR shell
+Description=Alis shell
 # Lifecycle: stop/restart inir when the graphical session stops/restarts.
 PartOf=graphical-session.target
 # Ordering: the compositor-specific wants link starts iNiR alongside the
