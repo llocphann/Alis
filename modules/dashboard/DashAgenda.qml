@@ -28,6 +28,7 @@ DashCard {
         function onEventAdded(event) { card._localTrigger++ }
         function onEventRemoved(id) { card._localTrigger++ }
         function onEventUpdated(event) { card._localTrigger++ }
+        function onReadyChanged() { card._localTrigger++ }
     }
     property int _externalTrigger: 0
     Connections {
@@ -52,7 +53,11 @@ DashCard {
         const _t1 = card._localTrigger
         const _t2 = card._externalTrigger
         const _d = card._todayKey
-        return card._buildEntries()
+        // The store is loaded asynchronously. Keep a valid model before
+        // Events.ready, and restore entries as soon as the store is ready.
+        if (!Events.ready) return []
+        const computed=card._buildEntries()
+        return Array.isArray(computed) ? computed : []
     }
     property int overflowCount: 0
 
@@ -95,7 +100,7 @@ DashCard {
     }
 
     Repeater {
-        model: card.entries
+        model: card.entries ?? []
         delegate: Loader {
             id: entryLoader
             required property var modelData
@@ -133,7 +138,7 @@ DashCard {
 
     // Empty state
     ColumnLayout {
-        visible: card.entries.length === 0
+        visible: (card.entries?.length ?? 0) === 0
         Layout.fillWidth: true
         spacing: 4
         StyledText {
