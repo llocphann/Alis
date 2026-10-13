@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Hadalis documentation
-    url: https://github.com/llocphann/Hadalis/tree/stable/docs
+  - name: Alis documentation
+    url: https://github.com/llocphann/Alis/tree/stable/docs
     about: Installation, configuration, modules, IPC, and reference documentation
   - name: Security vulnerability
-    url: https://github.com/llocphann/Hadalis/security/advisories/new
+    url: https://github.com/llocphann/Alis/security/advisories/new
     about: Report security-sensitive issues privately instead of opening a public issue
