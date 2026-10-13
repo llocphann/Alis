@@ -42,6 +42,98 @@ ColumnLayout {
         valueText:Math.round(value*(unit === "%" ? 100 : 1))+" "+unit
         onMoved: Config.setNestedValue(configKey,value)
     }
+    // Surface-specific one-line control. Keep the existing config keys and
+    // slider behavior; only the presentation is more compact.
+    component CompactSurfaceRow: RowLayout {
+        id: row
+        property string text: ""
+        property real from: 0
+        property real to: 1
+        property real stepSize: .01
+        property real currentValue: 0
+        property string valueText: ""
+        property string toggleIcon: ""
+        property string toggleDescription: ""
+        property bool toggleChecked: false
+        signal moved(real value)
+        signal toggledByUser(bool checked)
+
+        Layout.fillWidth: true
+        spacing: 8
+        implicitHeight: Math.round(36 * Appearance.fontSizeScale)
+
+        Item {
+            Layout.preferredWidth: Math.round(30 * Appearance.fontSizeScale)
+            Layout.preferredHeight: Math.round(30 * Appearance.fontSizeScale)
+            Layout.alignment: Qt.AlignVCenter
+            IconToolbarButton {
+                anchors.centerIn: parent
+                width: Math.round(28 * Appearance.fontSizeScale)
+                height: width
+                visible: row.toggleIcon.length > 0
+                text: row.toggleIcon
+                toggled: row.toggleChecked
+                buttonText: row.toggleDescription
+                Accessible.checkable: true
+                Accessible.checked: row.toggleChecked
+                onClicked: row.toggledByUser(!row.toggleChecked)
+                StyledToolTip {
+                    text: row.toggleDescription + (row.toggleChecked ? " · On" : " · Off")
+                }
+            }
+        }
+
+        StyledText {
+            Layout.preferredWidth: Math.min(230 * Appearance.fontSizeScale,
+                Math.max(110 * Appearance.fontSizeScale, row.width * .29))
+            Layout.minimumWidth: 90 * Appearance.fontSizeScale
+            Layout.alignment: Qt.AlignVCenter
+            text: row.text
+            elide: Text.ElideRight
+            color: Appearance.colors.colOnSurface
+            font.pixelSize: Appearance.font.pixelSize.small
+        }
+
+        StyledSlider {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 70 * Appearance.fontSizeScale
+            Layout.alignment: Qt.AlignVCenter
+            configuration: StyledSlider.Configuration.S
+            from: row.from
+            to: row.to
+            stepSize: row.stepSize
+            value: row.currentValue
+            tooltipContent: row.valueText
+            Accessible.name: row.text
+            settingsSearchLabel: row.text
+            onMoved: row.moved(value)
+        }
+
+        StyledText {
+            Layout.preferredWidth: 58 * Appearance.fontSizeScale
+            Layout.minimumWidth: 52 * Appearance.fontSizeScale
+            Layout.alignment: Qt.AlignVCenter
+            text: row.valueText
+            horizontalAlignment: Text.AlignRight
+            color: Appearance.colors.colSubtext
+            font.pixelSize: Appearance.font.pixelSize.small
+        }
+    }
+    component CompactSurfacePercent: CompactSurfaceRow {
+        id: control
+        required property string configKey
+        property real fallback: 0
+        property real minimum: 0
+        property real maximum: 1
+        property string unit: maximum > 4 ? "px" : "%"
+        from: minimum
+        to: maximum
+        stepSize: unit === "%" ? .01 : 1
+        currentValue: Config.getNestedValue(configKey, fallback)
+        valueText: Math.round(currentValue * (unit === "%" ? 100 : 1))
+            + (unit === "%" ? "%" : " px")
+        onMoved: value => Config.setNestedValue(configKey, value)
+    }
     component WaveControl: WindowDialogSlider {
         id: control
         required property string parameter
@@ -100,54 +192,71 @@ ColumnLayout {
         title:"Surface";icon:"opacity";settingsTaskSection:"surface"
         visible:root.activeSection==="surface"
         SettingsGroup {
-            ConfigSwitch {
-                text:"Transparent surfaces";autoToggle:false
-                checked:(Config.options?.abyss?.surface?.opacity ?? .78)<.999
+            // Icon toggles share the row of the value they control. Empty
+            // icon slots keep all titles/sliders aligned when a row has no toggle.
+            CompactSurfacePercent {
+                text:"Surface opacity"
+                configKey:"abyss.surface.opacity";fallback:.78;minimum:0
+                toggleIcon:"opacity"
+                toggleDescription:"Transparent surfaces"
+                toggleChecked:(Config.options?.abyss?.surface?.opacity ?? .78)<.999
                 onToggledByUser:checked=>Config.setNestedValue("abyss.surface.opacity",checked ? .78 : 1)
             }
-            Percent { text:"Surface opacity";configKey:"abyss.surface.opacity";fallback:.78;minimum:0 }
-            Percent { text:"Screen Edge depth";configKey:"abyss.perimeter.thickness";fallback:16;minimum:0;maximum:40 }
-            Percent { text:"Curvature";configKey:"abyss.perimeter.radius";fallback:34;minimum:12;maximum:64 }
-            Percent { text:"Fusion softness";configKey:"abyss.surface.softness";fallback:24;minimum:4;maximum:48 }
-            ConfigSwitch {
-                text:"Wallpaper blur";autoToggle:false
-                checked:Config.options?.abyss?.effects?.blur?.enabled ?? true
+            // Screen Edge depth belongs to Edit Abyss Layout, not Surface.
+            CompactSurfacePercent {
+                text:"Curvature";configKey:"abyss.perimeter.radius"
+                fallback:34;minimum:12;maximum:64
+            }
+            CompactSurfacePercent {
+                text:"Fusion softness";configKey:"abyss.surface.softness"
+                fallback:24;minimum:4;maximum:48
+            }
+            CompactSurfacePercent {
+                text:"Blur strength";configKey:"abyss.effects.blur.radius"
+                fallback:10;maximum:24
+                toggleIcon:"blur_on"
+                toggleDescription:"Wallpaper blur"
+                toggleChecked:Config.options?.abyss?.effects?.blur?.enabled ?? true
                 onToggledByUser:checked=>Config.setNestedValue("abyss.effects.blur.enabled",checked)
             }
-            Percent { text:"Blur strength";configKey:"abyss.effects.blur.radius";fallback:10;maximum:24 }
-            ConfigSwitch {
-                objectName:"abyssPanelOpacityFollow"
-                text:"Panel and content opacity follows Screen Edge";autoToggle:false
-                checked:(Config.options?.abyss?.content?.opacity ?? -1)<0
-                onToggledByUser:checked=>Config.setNestedValue("abyss.content.opacity",checked ? -1 : AbyssStyle.contentOpacity)
-            }
-            WindowDialogSlider {
+            CompactSurfaceRow {
                 objectName:"abyssPanelOpacity"
-                text:"Panel & content opacity";Layout.fillWidth:true;from:0;to:1;stepSize:.01
-                value:AbyssStyle.contentOpacity;valueText:Math.round(value*100)+" %"
-                onMoved:Config.setNestedValue("abyss.content.opacity",value)
+                text:"Panel & content opacity";from:0;to:1;stepSize:.01
+                currentValue:AbyssStyle.contentOpacity
+                valueText:Math.round(currentValue*100)+"%"
+                toggleIcon:"join"
+                toggleDescription:"Panel and content opacity follows Screen Edge"
+                toggleChecked:(Config.options?.abyss?.content?.opacity ?? -1)<0
+                onToggledByUser:checked=>Config.setNestedValue("abyss.content.opacity",checked ? -1 : AbyssStyle.contentOpacity)
+                onMoved:value=>Config.setNestedValue("abyss.content.opacity",value)
             }
-            ConfigSwitch {
-                objectName:"abyssPanelBlurFollow"
-                text:"Panel blur follows Screen Edge";autoToggle:false
-                checked:(Config.options?.abyss?.content?.blurRadius ?? -1)<0
-                onToggledByUser:checked=>Config.setNestedValue("abyss.content.blurRadius",checked ? -1 : AbyssStyle.configuredContentBlurRadius)
-            }
-            WindowDialogSlider {
+            CompactSurfaceRow {
                 objectName:"abyssPanelBlur"
-                text:"Panel background blur";Layout.fillWidth:true;from:0;to:24;stepSize:1
-                value:AbyssStyle.configuredContentBlurRadius;valueText:Math.round(value)+" px"
-                onMoved:Config.setNestedValue("abyss.content.blurRadius",value)
+                text:"Panel background blur";from:0;to:24;stepSize:1
+                currentValue:AbyssStyle.configuredContentBlurRadius
+                valueText:Math.round(currentValue)+" px"
+                toggleIcon:"blur_circular"
+                toggleDescription:"Panel blur follows Screen Edge"
+                toggleChecked:(Config.options?.abyss?.content?.blurRadius ?? -1)<0
+                onToggledByUser:checked=>Config.setNestedValue("abyss.content.blurRadius",checked ? -1 : AbyssStyle.configuredContentBlurRadius)
+                onMoved:value=>Config.setNestedValue("abyss.content.blurRadius",value)
             }
-            SettingsNote { text:"Panels and cards share opacity; blur stays independent and its saved value is preserved." }
-            ConfigSwitch {
-                text:"Refraction (Quality)";autoToggle:false
-                checked:Config.options?.abyss?.effects?.refraction?.enabled ?? false
+            CompactSurfacePercent {
+                text:"Refraction strength";configKey:"abyss.effects.refraction.strength"
+                fallback:6;maximum:16
+                toggleIcon:"diamond"
+                toggleDescription:"Refraction (Quality)"
+                toggleChecked:Config.options?.abyss?.effects?.refraction?.enabled ?? false
                 onToggledByUser:checked=>Config.setNestedValue("abyss.effects.refraction.enabled",checked)
             }
-            Percent { text:"Refraction strength";configKey:"abyss.effects.refraction.strength";fallback:6;maximum:16 }
-            Percent { text:"Rim highlight";configKey:"abyss.effects.surfaceHighlight";fallback:.45 }
-            Percent { text:"Glow";configKey:"abyss.effects.glow.strength";fallback:.08;maximum:.3 }
+            CompactSurfacePercent {
+                text:"Rim highlight";configKey:"abyss.effects.surfaceHighlight"
+                fallback:.45
+            }
+            CompactSurfacePercent {
+                text:"Glow";configKey:"abyss.effects.glow.strength"
+                fallback:.08;maximum:.3
+            }
         }
     }
     SettingsCardSection {
