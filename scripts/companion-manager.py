@@ -21,7 +21,7 @@ REQUIRED = {
     "session": "HadalisSession.qml",
     "output": "HadalisOutput.qml",
     "settings": "modules/settings/CompanionConfig.qml",
-    "binary": "native/bin/inir-companiond",
+    "binary": "native/bin/alis-companiond",
 }
 
 
@@ -170,7 +170,7 @@ def sync(remote, revision, data_home, cache):
         record_owner(data_home, revision)
         print("Alis-Companion integrated successfully (" + revision[:12] + ")", flush=True)
     # Runtime refresh is best effort; setup update also restarts the Alis shell.
-    launcher = shutil.which("inir")
+    launcher = shutil.which("alis")
     if launcher:
         try:
             subprocess.run([launcher, "ipc", "hadanion", "refresh"], timeout=5,

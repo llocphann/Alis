@@ -4,7 +4,7 @@ set -uo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR" || exit 1
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/inir"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/alis"
 BACKEND_STATE_FILE="$STATE_DIR/native-backend"
 HARNESS="$ROOT_DIR/scripts/native-cutover-benchmark.sh"
 READ_ONLY=0
@@ -47,17 +47,17 @@ if ((FINAL && READ_ONLY)); then
 fi
 
 if ((FINAL)); then
-    export INIR_FINAL_QUALIFICATION=1
+    export ALIS_FINAL_QUALIFICATION=1
     export LIVE_AB_RUNS="${LIVE_AB_RUNS:-3}"
     export LIVE_SETTLE_SECONDS="${LIVE_SETTLE_SECONDS:-8}"
     export LIVE_WINDOW_SECONDS="${LIVE_WINDOW_SECONDS:-10}"
 else
-    unset INIR_FINAL_QUALIFICATION
+    unset ALIS_FINAL_QUALIFICATION
 fi
 
 mkdir -p "$STATE_DIR" || exit 1
 REPORT="$(mktemp "$STATE_DIR/native-full-benchmark-$(date +%Y%m%d-%H%M%S)-XXXXXX.txt")" || exit 1
-TMP_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/inir-full-benchmark.XXXXXX")" || exit 1
+TMP_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/alis-full-benchmark.XXXXXX")" || exit 1
 
 backend_state() {
     if [[ -r "$BACKEND_STATE_FILE" ]]; then
@@ -69,10 +69,10 @@ backend_state() {
 
 restore_if_needed() {
     local selected_env
-    selected_env="$(systemctl --user show-environment 2>/dev/null | sed -n 's/^INIR_NATIVE_BACKEND=//p' | head -n 1)"
+    selected_env="$(systemctl --user show-environment 2>/dev/null | sed -n 's/^ALIS_NATIVE_BACKEND=//p' | head -n 1)"
     if [[ "$(backend_state)" == rust || "$selected_env" == rust || "$selected_env" == auto ]]; then
         echo "Returning the live service to Python..."
-        INIR_NATIVE_REPORT="$TMP_ROOT/restore-internal.txt" \
+        ALIS_NATIVE_REPORT="$TMP_ROOT/restore-internal.txt" \
             bash "$HARNESS" --restore >"$TMP_ROOT/restore-output.txt" 2>&1
         RESTORE_RC=$?
         cat "$TMP_ROOT/restore-output.txt"
@@ -111,7 +111,7 @@ elif ! git diff --quiet || ! git diff --cached --quiet; then
 elif [[ "$(backend_state)" != python ]]; then
     RUN_MODE="read-only: existing backend trial is active"
 else
-    ENV_MODE="$(systemctl --user show-environment 2>/dev/null | sed -n 's/^INIR_NATIVE_BACKEND=//p' | head -n 1)"
+    ENV_MODE="$(systemctl --user show-environment 2>/dev/null | sed -n 's/^ALIS_NATIVE_BACKEND=//p' | head -n 1)"
     if [[ "$ENV_MODE" == rust || "$ENV_MODE" == auto ]]; then
         RUN_MODE="read-only: existing backend trial is active"
     fi
@@ -119,18 +119,18 @@ fi
 
 echo "Benchmark mode: $RUN_MODE"
 if ((DEEP)); then
-    export INIR_BENCH_MPD_SNAPSHOT=1
+    export ALIS_BENCH_MPD_SNAPSHOT=1
     echo "Deep benchmark: enabled (isolated MPD full snapshot)"
 else
-    unset INIR_BENCH_MPD_SNAPSHOT
+    unset ALIS_BENCH_MPD_SNAPSHOT
 fi
 echo "Building native release and measuring Python/Rust paths..."
 if [[ "$RUN_MODE" == live-if-safe ]]; then
     RESTORE_ARMED=1
-    INIR_NATIVE_REPORT="$TMP_ROOT/native-internal.txt" bash "$HARNESS" \
+    ALIS_NATIVE_REPORT="$TMP_ROOT/native-internal.txt" bash "$HARNESS" \
         2>&1 | tee "$TMP_ROOT/native-output.txt"
 else
-    INIR_NATIVE_REPORT="$TMP_ROOT/native-internal.txt" bash "$HARNESS" --no-activate \
+    ALIS_NATIVE_REPORT="$TMP_ROOT/native-internal.txt" bash "$HARNESS" --no-activate \
         2>&1 | tee "$TMP_ROOT/native-output.txt"
 fi
 NATIVE_RC=${PIPESTATUS[0]}

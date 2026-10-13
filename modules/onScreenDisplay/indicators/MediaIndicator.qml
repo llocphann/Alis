@@ -307,16 +307,16 @@ Item {
         screenHeight: root.QsWindow?.window?.screen?.height ?? implicitHeight
         radius: root.connectedSurface ? 0 : Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+            : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
             : Appearance.rounding.normal
         wallpaperBackdropEnabled: !root.connectedSurface
         fallbackColor: root.connectedSurface ? "transparent" : Appearance.colors.colLayer0
-        inirColor: Appearance.inir.colLayer1
+        alisColor: Appearance.alis.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
         border.width: root.connectedSurface ? 0 : Appearance.zzzEverywhere ? Appearance.zzz.borderThick
-            : Appearance.auroraEverywhere || Appearance.inirEverywhere ? 1 : 0
+            : Appearance.auroraEverywhere || Appearance.alisEverywhere ? 1 : 0
         border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-            : Appearance.inirEverywhere ? Appearance.inir.colBorder
+            : Appearance.alisEverywhere ? Appearance.alis.colBorder
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : Appearance.colors.colLayer0Border
         implicitWidth: root.cardWidth
         implicitHeight: root.cardHeight
@@ -337,7 +337,7 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                    : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
+                    : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
                     : Appearance.rounding.small
                 color: Appearance.colors.colLayer1
                 clip: true
@@ -433,15 +433,15 @@ Item {
                 implicitHeight: mediaControls.implicitHeight + Appearance.sizes.spacingSmall * 0.5
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                    : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
+                    : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
                     : Appearance.rounding.full
                 color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
                     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                     : Appearance.colors.colLayer1
-                border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
+                border.width: Appearance.alisEverywhere || Appearance.angelEverywhere ? 1 : 0
                 border.color: Appearance.angelEverywhere
-                    ? Appearance.angel.colCardBorder : Appearance.inir.colBorder
+                    ? Appearance.angel.colCardBorder : Appearance.alis.colBorder
 
                 PlayerControls {
                     id: mediaControls

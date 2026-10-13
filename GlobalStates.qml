@@ -219,7 +219,7 @@ Singleton {
         const isWaffle = Config.options?.panelFamily === "waffle"
             && Config.options?.waffles?.settings?.useMaterialStyle !== true
         if (isWaffle) {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),
                 "waffle-settings-window"])
         } else if (Config.options?.panelFamily === "abyss" || (Config.options?.settingsUi?.overlayMode ?? false)) {
             root.settingsOverlayTargetOutput = root.resolveOutputName("",[])
@@ -230,7 +230,7 @@ Singleton {
             const command = ["/usr/bin/env", `QS_SETTINGS_PAGE=${index}`]
             if (targetSection.length > 0)
                 command.push("QS_SETTINGS_SECTION=" + targetSection)
-            command.push(Quickshell.shellPath("scripts/inir"), "settings-window")
+            command.push(Quickshell.shellPath("scripts/alis"), "settings-window")
             Quickshell.execDetached(command)
         }
     }

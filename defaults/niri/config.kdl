@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// iNiR — Niri Compositor Configuration
+// Alis — Niri Compositor Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // This config is split into modular files under config.d/ so you can edit
@@ -11,9 +11,9 @@
 //   40  Environment variables (Qt, XDG, theming)
 //   50  Processes spawned at login
 //   60  Animations (spring physics tuning)
-//   70  Key bindings (iNiR shell + window management)
-//   75  PATH-safe iNiR launcher key binding overrides
-//   80  Layer rules (backdrop surfaces for iNiR panels)
+//   70  Key bindings (Alis shell + window management)
+//   75  PATH-safe Alis launcher key binding overrides
+//   80  Layer rules (backdrop surfaces for Alis panels)
 //   90  Your personal overrides (never touched by updates)
 //
 // Docs: https://niri-wm.github.io/niri/Configuration:-Introduction
@@ -25,7 +25,7 @@
 // Restart apps after toggling this.
 prefer-no-csd
 
-// Hide the built-in hotkey cheatsheet on startup (iNiR has its own: Mod+/).
+// Hide the built-in hotkey cheatsheet on startup (Alis has its own: Mod+/).
 hotkey-overlay {
     skip-at-startup
 }
@@ -37,7 +37,7 @@ debug {
 }
 
 // Where native Niri screenshots land (Print key).
-// iNiR's region selector (Mod+Shift+S) uses its own path.
+// Alis's region selector (Mod+Shift+S) uses its own path.
 screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 
 // ── Modular includes ────────────────────────────────────────────────────────
@@ -48,6 +48,6 @@ include "config.d/40-environment.kdl"
 include "config.d/50-startup.kdl"
 include "config.d/60-animations.kdl"
 include "config.d/70-binds.kdl"
-include "config.d/75-inir-launcher-binds.kdl"
+include "config.d/75-alis-launcher-binds.kdl"
 include "config.d/80-layer-rules.kdl"
 include "config.d/90-user-extra.kdl"

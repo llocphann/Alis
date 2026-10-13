@@ -20,7 +20,7 @@ Item {
     DropArea {
         id: dropArea
         anchors.fill: parent
-        keys: ["inir-settings-chrome"]
+        keys: ["alis-settings-chrome"]
         enabled: root.active
         onDropped: drop => {
             const sourceId = String(drop.source?.blockId ?? "")
@@ -78,7 +78,7 @@ Item {
 
         Drag.active: handleDrag.drag.active
         Drag.source: dragHandle
-        Drag.keys: ["inir-settings-chrome"]
+        Drag.keys: ["alis-settings-chrome"]
         Drag.hotSpot.x: width / 2
         Drag.hotSpot.y: height / 2
 

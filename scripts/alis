@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Canonical CLI and runtime name is Alis. Historical iNiR shell instances
+# Canonical CLI and runtime name is Alis. Historical Alis shell instances
 # must be stopped during the owner-gated service/Quickshell cutover.
 # Qt requires a UTF-8 process locale. Preserve every already-valid user locale,
 # but repair legacy C/ASCII launch environments before Quickshell starts.

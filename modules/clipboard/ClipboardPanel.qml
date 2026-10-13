@@ -555,7 +555,7 @@ Scope {
                             text: "content_paste"
                             iconSize: Appearance.font.pixelSize.huge
                             color: Appearance.zzzEverywhere ? Appearance.zzz.accent
-                                : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                                : Appearance.alisEverywhere ? Appearance.alis.colPrimary : Appearance.colors.colPrimary
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
                                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -570,7 +570,7 @@ Scope {
                             font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Normal
                             font.italic: Appearance.zzzEverywhere
                             color: Appearance.zzzEverywhere ? Appearance.zzz.ink
-                                : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
+                                : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnSurface
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
                                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -636,7 +636,7 @@ Scope {
                             text: root.matchCount + " " + Translation.tr("matches")
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
-                                : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                                : Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
                                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -669,7 +669,7 @@ Scope {
                             visible: root.showClearConfirmation
                             text: Translation.tr("Clear all?")
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: Appearance.inirEverywhere ? Appearance.inir.colError : Appearance.colors.colError
+                            color: Appearance.alisEverywhere ? Appearance.alis.colError : Appearance.colors.colError
                         }
 
                         IconToolbarButton {
@@ -709,10 +709,10 @@ Scope {
                         Layout.fillHeight: true
                         implicitHeight: Math.min(480, Math.max(160, listView.contentHeight + 20))
                         radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-                            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                            : Appearance.alisEverywhere ? Appearance.alis.roundingNormal : Appearance.rounding.normal
                         color: Appearance.angelEverywhere
                             ? ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.76)
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                            : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                             : Appearance.auroraEverywhere
                             ? ColorUtils.transparentize(Appearance.colors.colLayer0Base,
                                 Math.max(0.12, Appearance.aurora.subSurfaceTransparentize - 0.14))
@@ -872,7 +872,7 @@ Scope {
                                 StyledText {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: Translation.tr("No clipboard entries")
-                                    color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                                    color: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
                                     font.pixelSize: Appearance.font.pixelSize.small
                                 }
                             }
@@ -895,10 +895,10 @@ Scope {
                             anchors.bottom: parent.bottom
                             implicitHeight: hintsColumn.implicitHeight + 16
                             radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-                                : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                                : Appearance.alisEverywhere ? Appearance.alis.roundingNormal : Appearance.rounding.normal
                             color: Appearance.angelEverywhere
                                 ? ColorUtils.transparentize(Appearance.angel.colGlassCard, 0.76)
-                                : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                                : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                                 : Appearance.auroraEverywhere
                                 ? ColorUtils.transparentize(Appearance.colors.colLayer0Base,
                                     Math.max(0.12, Appearance.aurora.subSurfaceTransparentize - 0.14))
@@ -920,7 +920,7 @@ Scope {
                                     text: Translation.tr("↑/↓, J/K: Navigate • Enter: Paste")
                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                     color: Appearance.angelEverywhere ? Appearance.angel.colText
-                                        : Appearance.inirEverywhere ? Appearance.inir.colText 
+                                        : Appearance.alisEverywhere ? Appearance.alis.colText 
                                         : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface 
                                         : Appearance.colors.colOnPrimaryContainer
                                     elide: Text.ElideRight
@@ -931,7 +931,7 @@ Scope {
                                     text: Translation.tr("Ctrl+C: Copy • Ctrl+P: Pin • Del: Delete • Shift+Del: Clear all • Esc: Close")
                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                     color: Appearance.angelEverywhere ? Appearance.angel.colText
-                                        : Appearance.inirEverywhere ? Appearance.inir.colText 
+                                        : Appearance.alisEverywhere ? Appearance.alis.colText 
                                         : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface 
                                         : Appearance.colors.colOnPrimaryContainer
                                     elide: Text.ElideRight
@@ -941,7 +941,7 @@ Scope {
                                     text: Translation.tr("Navigate mode: Tab/Shift+Tab jump between matches")
                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                     color: Appearance.angelEverywhere ? Appearance.angel.colText
-                                        : Appearance.inirEverywhere ? Appearance.inir.colText 
+                                        : Appearance.alisEverywhere ? Appearance.alis.colText 
                                         : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface 
                                         : Appearance.colors.colOnPrimaryContainer
                                     elide: Text.ElideRight

@@ -40,14 +40,14 @@ Item {
         color: root.themeSourceColor
     }
 
-    readonly property color surfaceColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.inirEverywhere ? playerBase.inirLayer1 : (root.blendedColors?.colPrimaryContainer ?? Appearance.colors.colPrimaryContainer)
-    readonly property color ink: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? playerBase.inirText : (root.blendedColors?.colOnPrimaryContainer ?? Appearance.colors.colOnPrimaryContainer)
-    readonly property color accent: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.inirEverywhere ? playerBase.inirPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+    readonly property color surfaceColor: Appearance.zzzEverywhere ? Appearance.zzz.paper : Appearance.alisEverywhere ? playerBase.alisLayer1 : (root.blendedColors?.colPrimaryContainer ?? Appearance.colors.colPrimaryContainer)
+    readonly property color ink: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.alisEverywhere ? playerBase.alisText : (root.blendedColors?.colOnPrimaryContainer ?? Appearance.colors.colOnPrimaryContainer)
+    readonly property color accent: Appearance.zzzEverywhere ? Appearance.zzz.accent : Appearance.alisEverywhere ? playerBase.alisPrimary : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
     readonly property color onAccent: root.blendedColors?.colOnPrimary ?? Appearance.colors.colOnPrimary
 
     StyledRectangularShadow {
         target: card
-        visible: !Appearance.zzzEverywhere && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
+        visible: !Appearance.zzzEverywhere && (Appearance.angelEverywhere || (!Appearance.alisEverywhere && !Appearance.auroraEverywhere))
     }
 
     Rectangle {
@@ -55,7 +55,7 @@ Item {
         anchors.centerIn: parent
         width: parent.width - Appearance.sizes.elevationMargin
         height: parent.height - Appearance.sizes.elevationMargin
-        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
+        radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius : Appearance.alisEverywhere ? Appearance.alis.roundingNormal : root.radius
         color: root.surfaceColor
         border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
@@ -103,7 +103,7 @@ Item {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt : Appearance.inirEverywhere ? playerBase.inirLayer2 : (root.blendedColors?.colSurfaceContainerLow ?? Appearance.colors.colLayer1)
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt : Appearance.alisEverywhere ? playerBase.alisLayer2 : (root.blendedColors?.colSurfaceContainerLow ?? Appearance.colors.colLayer1)
 
                         MaterialSymbol {
                             anchors.centerIn: parent
@@ -197,7 +197,7 @@ Item {
 
                             MaterialShapeWrappedMaterialSymbol {
                                 id: playShape
-                                shape: (Appearance.zzzEverywhere || Appearance.inirEverywhere)
+                                shape: (Appearance.zzzEverywhere || Appearance.alisEverywhere)
                                     ? MaterialShape.Shape.Square
                                     : MaterialShape.Shape.Cookie12Sided
                                 color: root.accent

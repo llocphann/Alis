@@ -36,20 +36,20 @@ def preview(path, options, cache):
     path = path.resolve(strict=True)
     thumbnail = Path(options.pop("thumbnail", ""))
     source = thumbnail if path.suffix.lower() in MEDIA | {".gif"} and thumbnail.is_file() else path
-    state = Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state"))) / "inir"
+    state = Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state"))) / "alis"
     artifacts = [Path(__file__), ROOT / "scripts/native-dispatch", ROOT / "scripts/colors/generate_colors_material.py",
                  ROOT / "scripts/colors/terminal/scheme-base.json", state / "native-backend", state / "native-bin-dir",
-                 ROOT / "native/bin/inir-theme", ROOT / "native/target/release/inir-theme"]
-    if os.environ.get("INIR_NATIVE_BIN_DIR"):
-        artifacts.append(Path(os.environ["INIR_NATIVE_BIN_DIR"]) / "inir-theme")
+                 ROOT / "native/bin/alis-theme", ROOT / "native/target/release/alis-theme"]
+    if os.environ.get("ALIS_NATIVE_BIN_DIR"):
+        artifacts.append(Path(os.environ["ALIS_NATIVE_BIN_DIR"]) / "alis-theme")
     else:
         try:
-            artifacts.append(Path((state / "native-bin-dir").read_text().strip()) / "inir-theme")
+            artifacts.append(Path((state / "native-bin-dir").read_text().strip()) / "alis-theme")
         except OSError:
             pass
     key = hashlib.sha256(json.dumps([1, signature(path), signature(source), options,
                                     [signature(item) for item in artifacts],
-                                    os.environ.get("INIR_NATIVE_BACKEND", "")], sort_keys=True).encode()).hexdigest()
+                                    os.environ.get("ALIS_NATIVE_BACKEND", "")], sort_keys=True).encode()).hexdigest()
     cache.mkdir(parents=True, exist_ok=True)
     cached = cache / (key + ".json")
     try:

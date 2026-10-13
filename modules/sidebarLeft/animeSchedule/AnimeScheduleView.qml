@@ -69,20 +69,20 @@ Item {
                 toggled: root.currentTab === 0
                 bounce: true
                 colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                     : Appearance.auroraEverywhere ? "transparent"
                     : Appearance.colors.colLayer1
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                     : Appearance.colors.colLayer1Hover
                 colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
-                    : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                    : Appearance.alisEverywhere ? Appearance.alis.colSecondaryContainer
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                     : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                     : Appearance.colors.colSecondaryContainer
                 colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                    : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
+                    : Appearance.alisEverywhere ? Appearance.alis.colPrimaryContainerHover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                     : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                     : Appearance.colors.colSecondaryContainerHover
@@ -99,20 +99,20 @@ Item {
                 toggled: root.currentTab === 1
                 bounce: true
                 colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                     : Appearance.auroraEverywhere ? "transparent"
                     : Appearance.colors.colLayer1
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                     : Appearance.colors.colLayer1Hover
                 colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
-                    : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                    : Appearance.alisEverywhere ? Appearance.alis.colSecondaryContainer
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                     : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                     : Appearance.colors.colSecondaryContainer
                 colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                    : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
+                    : Appearance.alisEverywhere ? Appearance.alis.colPrimaryContainerHover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                     : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                     : Appearance.colors.colSecondaryContainerHover
@@ -129,20 +129,20 @@ Item {
                 toggled: root.currentTab === 2
                 bounce: true
                 colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                     : Appearance.auroraEverywhere ? "transparent"
                     : Appearance.colors.colLayer1
                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                     : Appearance.colors.colLayer1Hover
                 colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
-                    : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                    : Appearance.alisEverywhere ? Appearance.alis.colSecondaryContainer
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                     : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                     : Appearance.colors.colSecondaryContainer
                 colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                    : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
+                    : Appearance.alisEverywhere ? Appearance.alis.colPrimaryContainerHover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                     : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                     : Appearance.colors.colSecondaryContainerHover
@@ -188,17 +188,17 @@ Item {
                         bounce: true
                         
                         // Same theming as tabs above
-                        colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                        colBackground: Appearance.alisEverywhere ? Appearance.alis.colLayer2
                             : Appearance.auroraEverywhere ? "transparent"
                             : Appearance.colors.colLayer1
-                        colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        colBackgroundHover: Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                             : Appearance.colors.colLayer1Hover
-                        colBackgroundToggled: Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                        colBackgroundToggled: Appearance.alisEverywhere ? Appearance.alis.colSecondaryContainer
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                             : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                             : Appearance.colors.colSecondaryContainer
-                        colBackgroundToggledHover: Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
+                        colBackgroundToggledHover: Appearance.alisEverywhere ? Appearance.alis.colPrimaryContainerHover
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                             : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                             : Appearance.colors.colSecondaryContainerHover
@@ -238,7 +238,7 @@ Item {
                     enabled: !AnimeService.loading
                     
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                         : Appearance.colors.colLayer2Hover
                     
@@ -256,9 +256,9 @@ Item {
                 Rectangle {
                     implicitWidth: seasonLabel.implicitWidth + 24
                     implicitHeight: 32
-                    radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+                    radius: Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.small
                     color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                        : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                        : Appearance.alisEverywhere ? Appearance.alis.colSecondaryContainer
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                         : Appearance.colors.colSecondaryContainer
                     
@@ -280,7 +280,7 @@ Item {
                     enabled: !AnimeService.loading
                     
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                         : Appearance.colors.colLayer2Hover
                     
@@ -302,15 +302,15 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-                : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                : Appearance.alisEverywhere ? Appearance.alis.roundingNormal : Appearance.rounding.normal
             color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                : Appearance.alisEverywhere ? Appearance.alis.colLayer1
                 : Appearance.auroraEverywhere ? "transparent"
                 : Appearance.colors.colLayer1
             border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                 : Appearance.auroraEverywhere ? 0 : 1
             border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-                : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
+                : Appearance.alisEverywhere ? Appearance.alis.colBorderSubtle
                 : Appearance.colors.colLayer0Border
             clip: true
             
@@ -424,7 +424,7 @@ Item {
                 buttonRadius: Appearance.rounding.full
                 enabled: !AnimeService.loading
                 
-                colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                colBackgroundHover: Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                     : Appearance.colors.colLayer2Hover
                 

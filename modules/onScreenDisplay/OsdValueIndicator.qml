@@ -40,13 +40,13 @@ Item {
         wallpaperBackdropEnabled: !root.connectedSurface
         fallbackColor: root.connectedSurface ? "transparent"
             : root._zzz ? Appearance.zzz.bg0 : Appearance.colors.colLayer0
-        inirColor: Appearance.inir.colLayer1
+        alisColor: Appearance.alis.colLayer1
         auroraTransparency: Appearance.aurora.popupTransparentize
         border.width: root.connectedSurface ? 0
-            : root._zzz || Appearance.auroraEverywhere || Appearance.inirEverywhere ? 1 : 0
+            : root._zzz || Appearance.auroraEverywhere || Appearance.alisEverywhere ? 1 : 0
         border.color: root._zzz ? Appearance.zzz.borderColor
             : Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-            : Appearance.inirEverywhere ? Appearance.inir.colBorder
+            : Appearance.alisEverywhere ? Appearance.alis.colBorder
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : Appearance.colors.colLayer0Border
 
         implicitWidth: valueRow.implicitWidth

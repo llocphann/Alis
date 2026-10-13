@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-RUST = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "native/target/release/inir-native"
+RUST = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "native/target/release/alis-native"
 
 
 def report(command, home):
@@ -35,7 +35,7 @@ def compare(label, home):
 def main():
     if not RUST.is_file():
         raise SystemExit(f"Rust binary missing: {RUST}")
-    with tempfile.TemporaryDirectory(prefix="inir-niri-parity-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="alis-niri-parity-") as temporary:
         home = Path(temporary)
         compare("missing config", home)
         config = home / "niri"

@@ -1,0 +1,59 @@
+post_install() {
+  cat <<'EOF'
+Alis has been installed.
+
+Recommended next steps for each user who will run the shell:
+  - Initialize or migrate the per-user config compatibility layout with:
+      alis migrate
+  - Start the shell manually with: alis run
+  - Or wire the user service to the detected compositor and start it with:
+      alis service enable
+      alis service start
+
+Pacman does not modify user home directories. The live QML compatibility path is:
+  ~/.config/illogical-impulse/config.json
+
+Required migration 019 makes ~/.config/alis the canonical config directory and
+links ~/.config/illogical-impulse to it. Run 'alis migrate' as the affected user
+before first launch to establish that layout; do not run it as root for another
+user's home.
+
+The packaged runtime lives in:
+  /usr/share/quickshell/alis
+EOF
+}
+
+post_upgrade() {
+  cat <<'EOF'
+Alis has been upgraded.
+
+Recommended next steps for each affected user:
+  - Apply required per-user migrations with: alis migrate
+  - Restart the shell with: alis restart
+  - Package-managed installs use pacman for package updates.
+
+Pacman does not mutate user home directories, so config migrations are performed
+by the affected user through 'alis migrate', not by the package transaction.
+EOF
+}
+
+pre_remove() {
+  # Optional hardware state belongs to Hadalird and survives core removal.
+  :
+}
+
+post_remove() {
+  cat <<'EOF'
+Alis has been removed.
+
+Pacman does not modify per-user systemd state. If an account previously ran
+'alis service enable' without first running 'alis service disable', remove any
+dangling compositor wants link in that account and reload its user manager:
+
+  find "${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user" -path '*.wants/alis.service' -type l -delete
+  systemctl --user daemon-reload
+
+For future removals, run 'alis service disable' as each affected user before
+removing the package.
+EOF
+}

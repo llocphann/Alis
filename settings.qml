@@ -1,6 +1,6 @@
 //@ pragma UseQApplication
 //@ pragma Env QS_NO_RELOAD_POPUP=1
-//@ pragma Env INIR_STANDALONE_WINDOW=1
+//@ pragma Env ALIS_STANDALONE_WINDOW=1
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
 //@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
 // Launcher keeps QT_SCALE_FACTOR=1; shell scaling lives in appearance.typography.sizeScale
@@ -889,7 +889,7 @@ ApplicationWindow {
                     RippleButton {
                         visible:Config.options?.panelFamily === "abyss"
                         buttonRadius:Appearance.rounding.full;implicitWidth:35;implicitHeight:35
-                        onClicked:Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),"ipc","call","abyss","editLayout"])
+                        onClicked:Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),"ipc","call","abyss","editLayout"])
                         contentItem:MaterialSymbol {anchors.centerIn:parent;text:"dashboard_customize";iconSize:20}
                         StyledToolTip {text:Translation.tr("Edit Abyss Layout")}
                     }
@@ -898,7 +898,7 @@ ApplicationWindow {
                         buttonRadius: Appearance.rounding.full
                         implicitWidth: 35
                         implicitHeight: 35
-                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
+                        onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "lock", "activate"])
                         contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             horizontalAlignment: Text.AlignHCenter
@@ -1227,7 +1227,7 @@ ApplicationWindow {
                     id: settingsRestartTimer
                     interval: 500
                     onTriggered: {
-                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
+                        Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"])
                         Qt.quit()
                     }
                 }

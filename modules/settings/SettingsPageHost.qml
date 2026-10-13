@@ -405,7 +405,7 @@ Item {
 
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Check iNiR logs for the QML error, then retry after correcting it.")
+                text: Translation.tr("Check Alis logs for the QML error, then retry after correcting it.")
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
                 font.pixelSize: Appearance.font.pixelSize.small

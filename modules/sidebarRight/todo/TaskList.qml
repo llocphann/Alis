@@ -97,7 +97,7 @@ Item {
                         anchors.bottom: parent.bottom
                         implicitHeight: todoContentRowLayout.implicitHeight
                         color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                            : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                             : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
                         radius: Appearance.rounding.small
                         ColumnLayout {

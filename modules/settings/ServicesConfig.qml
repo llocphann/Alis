@@ -199,7 +199,7 @@ ContentPage {
             MaterialTextArea {
                 Layout.fillWidth: true
                 placeholderText: Translation.tr("Network name (SSID)")
-                text: Config.options?.hotspot?.ssid ?? "iNiR Hotspot"
+                text: Config.options?.hotspot?.ssid ?? "Alis Hotspot"
                 wrapMode: TextEdit.Wrap
                 onTextChanged: Config.setNestedValue("hotspot.ssid", text)
                 StyledToolTip {
@@ -210,7 +210,7 @@ ContentPage {
             MaterialTextArea {
                 Layout.fillWidth: true
                 placeholderText: Translation.tr("Password")
-                text: Config.options?.hotspot?.password ?? "inirhotspot"
+                text: Config.options?.hotspot?.password ?? "alishotspot"
                 wrapMode: TextEdit.Wrap
                 onTextChanged: Config.setNestedValue("hotspot.password", text)
                 StyledToolTip {
@@ -791,7 +791,7 @@ ContentPage {
                             // Separate window mode (default): settings.qml is a separate qs process.
                             // Singletons are isolated per-process, so we must use IPC to reach
                             // the main shell's ShellUpdates.openOverlay() instead.
-                            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "shellUpdate", "open"])
+                            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "shellUpdate", "open"])
                         }
                     }
 

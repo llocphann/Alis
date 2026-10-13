@@ -70,12 +70,12 @@ Item {
 
     property QtObject blendedColors: AdaptedMaterialScheme { color: root.artDominantColor }
     
-    // Inir uses fixed colors instead of adaptive
-    readonly property color jiraColText: Appearance.inir.colText
-    readonly property color jiraColTextSecondary: Appearance.inir.colTextSecondary
-    readonly property color jiraColPrimary: Appearance.inir.colPrimary
-    readonly property color jiraColLayer1: Appearance.inir.colLayer1
-    readonly property color jiraColLayer2: Appearance.inir.colLayer2
+    // Alis uses fixed colors instead of adaptive
+    readonly property color jiraColText: Appearance.alis.colText
+    readonly property color jiraColTextSecondary: Appearance.alis.colTextSecondary
+    readonly property color jiraColPrimary: Appearance.alis.colPrimary
+    readonly property color jiraColLayer1: Appearance.alis.colLayer1
+    readonly property color jiraColLayer2: Appearance.alis.colLayer2
 
     StyledRectangularShadow { target: card }
 
@@ -86,17 +86,17 @@ Item {
         implicitHeight: 130
         radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+            : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
             : Appearance.rounding.normal
         color: Appearance.zzzEverywhere ? "transparent"
              : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-             : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+             : Appearance.alisEverywhere ? Appearance.alis.colLayer1
              : Appearance.auroraEverywhere ? ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7)
              : (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
-        border.width: Appearance.zzzEverywhere ? 0 : (Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0))
+        border.width: Appearance.zzzEverywhere ? 0 : (Appearance.angelEverywhere ? 0 : (Appearance.alisEverywhere ? 1 : 0))
         border.color: Appearance.zzzEverywhere ? "transparent"
             : Appearance.angelEverywhere ? "transparent"
-            : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+            : Appearance.alisEverywhere ? Appearance.alis.colBorder : "transparent"
         clip: true
         Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve } }
         Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
@@ -112,7 +112,7 @@ Item {
             maskSource: Rectangle { width: card.width; height: card.height; radius: card.radius }
         }
 
-        // Cover art background - subtle for inir, more transparent for aurora
+        // Cover art background - subtle for alis, more transparent for aurora
         Image {
             id: bgArt
             anchors.fill: parent
@@ -122,22 +122,22 @@ Item {
             cache: false
             sourceSize.width: Math.max(1, Math.ceil(card.width * root._dpr))
             sourceSize.height: Math.max(1, Math.ceil(card.height * root._dpr))
-            opacity: Appearance.angelEverywhere ? 0.2 : (Appearance.inirEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.25 : 0.5))
+            opacity: Appearance.angelEverywhere ? 0.2 : (Appearance.alisEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.25 : 0.5))
             visible: root.displayedArtFilePath !== ""
 
             layer.enabled: root.visible && GlobalStates.sidebarLeftOpen && Appearance.effectsEnabled
             layer.effect: MultiEffect {
                 blurEnabled: true
-                blur: Appearance.inirEverywhere ? 0.3 : 0.15
+                blur: Appearance.alisEverywhere ? 0.3 : 0.15
                 blurMax: 16
-                saturation: Appearance.inirEverywhere ? 0.1 : 0.3
+                saturation: Appearance.alisEverywhere ? 0.1 : 0.3
             }
         }
 
         // Dark overlay for controls visibility - only for Material
         Rectangle {
             anchors.fill: parent
-            visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere
+            visible: !Appearance.alisEverywhere && !Appearance.auroraEverywhere
             gradient: Gradient {
                 orientation: Gradient.Horizontal
                 GradientStop { position: 0.0; color: "transparent" }
@@ -158,7 +158,7 @@ Item {
             smoothing: 2
             color: ColorUtils.transparentize(
                 Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                : Appearance.inirEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary), 
+                : Appearance.alisEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary), 
                 0.6
             )
         }
@@ -175,15 +175,15 @@ Item {
                 Layout.preferredHeight: 110
                 artRadius: Appearance.zzzEverywhere ? Appearance.zzz.roundNormal
                     : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                    : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+                    : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.small
                 source: root.displayedArtFilePath
                 downloaded: root.downloaded
                 slideDirection: root.slideDirection
                 placeholderColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                    : Appearance.inirEverywhere ? root.jiraColLayer2
+                    : Appearance.alisEverywhere ? root.jiraColLayer2
                     : (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1)
                 iconColor: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                    : Appearance.inirEverywhere ? root.jiraColTextSecondary
+                    : Appearance.alisEverywhere ? root.jiraColTextSecondary
                     : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
                 iconSize: 32
             }
@@ -201,7 +201,7 @@ Item {
                     font.pixelSize: Appearance.font.pixelSize.normal
                     font.weight: Font.Medium
                     color: Appearance.angelEverywhere ? Appearance.angel.colText
-                        : Appearance.inirEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                        : Appearance.alisEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                     elide: Text.ElideRight
                     animateChange: true
                     animationDistanceX: root.slideDirection * 8
@@ -214,7 +214,7 @@ Item {
                     text: root.effectiveArtist || ""
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-                        : Appearance.inirEverywhere ? root.jiraColTextSecondary : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
+                        : Appearance.alisEverywhere ? root.jiraColTextSecondary : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
                     elide: Text.ElideRight
                     visible: text !== ""
                     animateChange: true
@@ -237,11 +237,11 @@ Item {
                             wavy: root.effectiveIsPlaying
                             animateWave: root.effectiveIsPlaying
                             highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                : Appearance.inirEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                                : Appearance.alisEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
+                                : Appearance.alisEverywhere ? Appearance.alis.colLayer2 : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             handleColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                : Appearance.inirEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                                : Appearance.alisEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
                             onMoved: {
                                 if (root.isYtMusicPlayer) {
@@ -261,9 +261,9 @@ Item {
                             wavy: root.effectiveIsPlaying
                             animateWave: root.effectiveIsPlaying
                             highlightColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                                : Appearance.inirEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+                                : Appearance.alisEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
                             trackColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
+                                : Appearance.alisEverywhere ? Appearance.alis.colLayer2 : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
                             value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
                         }
                     }
@@ -279,7 +279,7 @@ Item {
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: Appearance.angelEverywhere ? Appearance.angel.colText
-                            : Appearance.inirEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                            : Appearance.alisEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                     }
 
                     Item { Layout.fillWidth: true }
@@ -316,12 +316,12 @@ Item {
                         implicitHeight: 32
                         enabled: MprisController.canGoPrevious
                         buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                            : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                            : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.full
                         colBackground: "transparent"
                         colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
+                            : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover : ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
                         colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
+                            : Appearance.alisEverywhere ? Appearance.alis.colLayer2Active : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
                         onClicked: {
                             root.slideDirection = -1
                             MprisController.previous()
@@ -334,7 +334,7 @@ Item {
                                 iconSize: 22
                                 fill: 1
                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
-                                    : Appearance.inirEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                                    : Appearance.alisEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                             }
                         }
 
@@ -346,14 +346,14 @@ Item {
                         implicitWidth: 40
                         implicitHeight: 40
                         buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                            : Appearance.inirEverywhere 
-                            ? Appearance.inir.roundingSmall 
+                            : Appearance.alisEverywhere 
+                            ? Appearance.alis.roundingSmall 
                             : (root.effectiveIsPlaying ? Appearance.rounding.normal : Appearance.rounding.full)
                         colBackground: Appearance.zzzEverywhere
                             ? (root.effectiveIsPlaying ? Appearance.zzz.sticker : Appearance.colors.colLayer1)
                             : Appearance.angelEverywhere
                             ? "transparent"
-                            : Appearance.inirEverywhere
+                            : Appearance.alisEverywhere
                             ? "transparent"
                             : Appearance.auroraEverywhere
                                 ? "transparent"
@@ -364,8 +364,8 @@ Item {
                             ? (root.effectiveIsPlaying ? Appearance.colors.colPrimaryHover : Appearance.colors.colLayer1Hover)
                             : Appearance.angelEverywhere
                             ? Appearance.angel.colGlassCardHover
-                            : Appearance.inirEverywhere
-                            ? Appearance.inir.colLayer2Hover
+                            : Appearance.alisEverywhere
+                            ? Appearance.alis.colLayer2Hover
                             : Appearance.auroraEverywhere
                                 ? ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
                                 : (root.effectiveIsPlaying 
@@ -375,8 +375,8 @@ Item {
                             ? (root.effectiveIsPlaying ? Appearance.colors.colPrimaryActive : Appearance.colors.colLayer1Active)
                             : Appearance.angelEverywhere
                             ? Appearance.angel.colGlassCardActive
-                            : Appearance.inirEverywhere
-                            ? Appearance.inir.colLayer2Active
+                            : Appearance.alisEverywhere
+                            ? Appearance.alis.colLayer2Active
                             : Appearance.auroraEverywhere
                                 ? (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
                                 : (root.effectiveIsPlaying 
@@ -385,7 +385,7 @@ Item {
                         onClicked: MprisController.togglePlaying()
 
                         Behavior on buttonRadius {
-                            enabled: Appearance.animationsEnabled && !Appearance.inirEverywhere
+                            enabled: Appearance.animationsEnabled && !Appearance.alisEverywhere
                             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
                         }
 
@@ -399,7 +399,7 @@ Item {
                                     ? (root.effectiveIsPlaying ? Appearance.zzz.onSticker : Appearance.colors.colOnLayer1)
                                     : Appearance.angelEverywhere
                                     ? Appearance.angel.colPrimary
-                                    : Appearance.inirEverywhere
+                                    : Appearance.alisEverywhere
                                     ? root.jiraColPrimary
                                     : Appearance.auroraEverywhere
                                         ? (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
@@ -422,12 +422,12 @@ Item {
                         implicitHeight: 32
                         enabled: MprisController.canGoNext
                         buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                            : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                            : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.full
                         colBackground: "transparent"
                         colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
+                            : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover : ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
                         colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
+                            : Appearance.alisEverywhere ? Appearance.alis.colLayer2Active : (blendedColors?.colLayer1Active ?? Appearance.colors.colLayer1Active)
                         onClicked: {
                             root.slideDirection = 1
                             MprisController.next()
@@ -440,7 +440,7 @@ Item {
                                 iconSize: 22
                                 fill: 1
                                 color: Appearance.angelEverywhere ? Appearance.angel.colText
-                                    : Appearance.inirEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                                    : Appearance.alisEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                             }
                         }
 
@@ -480,7 +480,7 @@ Item {
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: Appearance.angelEverywhere ? Appearance.angel.colText
-                            : Appearance.inirEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
+                            : Appearance.alisEverywhere ? root.jiraColText : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
                     }
                 }
             }

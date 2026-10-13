@@ -382,7 +382,7 @@ Item {
                         GlobalStates.settingsOverlayRequestedPage = 14
                         GlobalStates.settingsOverlayOpen = true
                     } else {
-                        Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=14", Quickshell.shellPath("scripts/inir"), "settings-window"])
+                        Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=14", Quickshell.shellPath("scripts/alis"), "settings-window"])
                     }
                 }
                 contentItem: MaterialSymbol {

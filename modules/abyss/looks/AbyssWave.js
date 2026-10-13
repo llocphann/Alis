@@ -198,7 +198,7 @@ function spectrum(state, edges, points, ceiling, strength, phase) {
             var a=Number(points[low]),b=Number(points[high]);
             var level=((Number.isFinite(a)?Math.max(0,a):0)*(1-(position-low))+(Number.isFinite(b)?Math.max(0,b):0)*(position-low))/normalizer;
             level=Math.sqrt(Math.max(0,Math.min(1,level)));
-            // Old iNiR carrier: index*.5 + phase, driven at CAVA frame cadence.
+            // Old Alis carrier: index*.5 + phase, driven at CAVA frame cadence.
             // Audio is a presentation shape, independent of the interaction
             // spring string. Peaks respond in this frame rather than seconds.
             if(level>.025) target=Math.min(limit,maximum*level)*Math.sin(position*.5+(Number(phase)||0))*Math.pow(Math.sin(t*Math.PI),2);

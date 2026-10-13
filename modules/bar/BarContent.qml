@@ -54,7 +54,7 @@ Item {
                 monochromeIcon: true,
                 text: Translation.tr("Settings"),
                 action: () => {
-                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"])
                 },
             },
         ]
@@ -278,7 +278,7 @@ Item {
     readonly property QtObject blendedColors: root._useGlobalQuantizer
         ? Appearance.wallpaperBlendedColors : _localBlendedColors
 
-    readonly property bool inirEverywhere: root.surfaceDialect === "inir"
+    readonly property bool alisEverywhere: root.surfaceDialect === "alis"
     readonly property bool angelEverywhere: root.surfaceDialect === "angel"
     readonly property bool regaliaEverywhere: root.surfaceDialect === "regalia"
     readonly property bool auroraEverywhere: root.surfaceDialect === "aurora" || root.angelEverywhere
@@ -335,7 +335,7 @@ Item {
     // Keep the continuous wave's CAVA payload aligned with its bounded scene
     // resolution. Bars stay density-derived because they are discrete columns.
     readonly property int barSpectrumWaveSampleCap: 72
-    readonly property color barSpectrumColor: root.inirEverywhere ? Appearance.inir.colPrimary
+    readonly property color barSpectrumColor: root.alisEverywhere ? Appearance.alis.colPrimary
         : root.zzzEverywhere ? Appearance.zzz.accent
         : root.regaliaEverywhere ? Appearance.regalia.hardwarePrimary
         : (root.blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
@@ -417,7 +417,7 @@ Item {
         Layout.fillHeight: true
         implicitWidth: 1
         color: root.zzzEverywhere ? Appearance.zzz.hairlineStrong
-            : root.inirEverywhere ? Appearance.inir.colBorderSubtle
+            : root.alisEverywhere ? Appearance.alis.colBorderSubtle
             : root.separatorColor
         Behavior on implicitWidth {
             enabled: Appearance.animationsEnabled
@@ -675,7 +675,7 @@ Item {
                         base, Appearance.angel.compositorPanelTransparentize)
                 return ColorUtils.applyAlpha(base, 1)
             }
-            if (root.inirEverywhere) return Appearance.inir.colLayer0
+            if (root.alisEverywhere) return Appearance.alis.colLayer0
             if (auroraEverywhere) {
                 const base = blendedColors?.colLayer0 ?? Appearance.colors.colLayer0
                 if (root.nativeBlurActive)
@@ -720,9 +720,9 @@ Item {
             if (root.angelEverywhere)
                 return (cornerStyle === 1 || cornerStyle === 3)
                     ? Appearance.angel.roundingNormal : 0
-            if (root.inirEverywhere)
+            if (root.alisEverywhere)
                 return (cornerStyle === 1 || cornerStyle === 3)
-                    ? Appearance.inir.roundingNormal : 0
+                    ? Appearance.alis.roundingNormal : 0
             if (floatingStyle)
                 return cornerStyle === 3
                     ? Appearance.rounding.normal : Appearance.rounding.windowRounding
@@ -775,7 +775,7 @@ Item {
             if (root.zzzEverywhere) return 1
             if (root.regaliaEverywhere) return 0
             if (root.angelEverywhere) return Appearance.angel.panelBorderWidth
-            if (root.inirEverywhere)
+            if (root.alisEverywhere)
                 return (cornerStyle === 1 || cornerStyle === 3) ? 1 : 0
             if (auroraEverywhere) return floatingStyle ? 1 : 0
             return floatingStyle ? 1 : 0
@@ -792,7 +792,7 @@ Item {
             if (root.zzzEverywhere) return Appearance.zzz.hairline
             if (root.regaliaEverywhere) return "transparent"
             if (root.angelEverywhere) return Appearance.angel.colPanelBorder
-            if (root.inirEverywhere) return Appearance.inir.colBorder
+            if (root.alisEverywhere) return Appearance.alis.colBorder
             if (auroraEverywhere) return Appearance.aurora.colTooltipBorder
             return Appearance.colors.colLayer0Border
         }
@@ -818,7 +818,7 @@ Item {
             z: -1
         }
 
-        layer.enabled: auroraEverywhere && !root.inirEverywhere
+        layer.enabled: auroraEverywhere && !root.alisEverywhere
             && !root.zzzEverywhere && !gameModeMinimal
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle {
@@ -837,7 +837,7 @@ Item {
             width: root.screen?.width ?? 1920
             height: root.screen?.height ?? 1080
             visible: barBackground.auroraEverywhere
-                && !root.inirEverywhere && !root.zzzEverywhere
+                && !root.alisEverywhere && !root.zzzEverywhere
                 && !barBackground.gameModeMinimal && !root.nativeBlurActive
             source: visible ? root.wallpaperUrl : ""
             fillMode: Image.PreserveAspectCrop
@@ -848,7 +848,7 @@ Item {
 
             layer.enabled: Appearance.effectsEnabled
                 && barBackground.auroraEverywhere
-                && !root.inirEverywhere && !root.nativeBlurActive
+                && !root.alisEverywhere && !root.nativeBlurActive
             layer.effect: MultiEffect {
                 source: blurredWallpaper
                 anchors.fill: source

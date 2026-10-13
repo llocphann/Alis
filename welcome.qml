@@ -1,6 +1,6 @@
 //@ pragma UseQApplication
 //@ pragma Env QS_NO_RELOAD_POPUP=1
-//@ pragma Env INIR_STANDALONE_WINDOW=1
+//@ pragma Env ALIS_STANDALONE_WINDOW=1
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
 //@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
 
@@ -1863,7 +1863,7 @@ Scope {
                                 colBackgroundHover: Appearance.colors.colLayer1Hover
 
                                 onClicked: Quickshell.execDetached([
-                                    Quickshell.shellPath("scripts/inir"),
+                                    Quickshell.shellPath("scripts/alis"),
                                     modelData.target,
                                     modelData.fn
                                 ])
@@ -1986,7 +1986,7 @@ Scope {
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.colors.colLayer2
                     colBackgroundHover: Appearance.colors.colLayer2Hover
-                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
+                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"])
                     RowLayout {
                         id: settingsChipRow
                         anchors.centerIn: parent

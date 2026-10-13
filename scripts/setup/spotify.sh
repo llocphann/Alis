@@ -14,7 +14,7 @@
 #               prefs file) if the first apply fails. Then sets prefs_path,
 #               retries, installs the Marketplace, and — only if the user has
 #               enabled `appearance.wallpaperTheming.enableSpicetify` in
-#               config.json — applies the iNiR Spicetify theme.
+#               config.json — applies the Alis Spicetify theme.
 # Other distros: falls back to the Flatpak build of Spotify. Spicetify is
 #                skipped because it cannot patch the Flatpak install reliably.
 
@@ -363,15 +363,15 @@ if is_arch_like; then
     fi
 
     if _theme_enabled_in_config; then
-        setup_progress 6 $TOTAL "Applying iNiR Spicetify theme"
+        setup_progress 6 $TOTAL "Applying Alis Spicetify theme"
         theme_script="$SCRIPT_DIR/../colors/apply-spicetify-theme.sh"
         if [[ -x "$theme_script" ]]; then
-            theme_name="$(jq -r '.appearance.wallpaperTheming.spicetifyTheme // "Inir"' "$CONFIG_PATH" 2>/dev/null)"
-            if [[ "$theme_name" != "Inir" && "$theme_name" != "InirTUI" ]]; then
-                theme_name="Inir"
+            theme_name="$(jq -r '.appearance.wallpaperTheming.spicetifyTheme // "Alis"' "$CONFIG_PATH" 2>/dev/null)"
+            if [[ "$theme_name" != "Alis" && "$theme_name" != "AlisTUI" ]]; then
+                theme_name="Alis"
             fi
             if "$theme_script" --theme "$theme_name"; then
-                echo "iNiR theme applied."
+                echo "Alis theme applied."
             else
                 echo "warning: theme script returned non-zero; rerun it manually if Spotify looks unstyled." >&2
             fi
@@ -379,8 +379,8 @@ if is_arch_like; then
             echo "warning: $theme_script not found or not executable; skipping theme." >&2
         fi
     else
-        setup_progress 6 $TOTAL "Skipping iNiR theme (appearance.wallpaperTheming.enableSpicetify is off)"
-        echo "  · Enable it in Settings → Themes → 'Spotify theming' to apply the iNiR theme."
+        setup_progress 6 $TOTAL "Skipping Alis theme (appearance.wallpaperTheming.enableSpicetify is off)"
+        echo "  · Enable it in Settings → Themes → 'Spotify theming' to apply the Alis theme."
     fi
 
     setup_done "Spotify + Spicetify ready. Launch Spotify to verify."

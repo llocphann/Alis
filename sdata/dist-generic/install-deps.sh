@@ -1,4 +1,4 @@
-# Generic dependency installation guide for iNiR
+# Generic dependency installation guide for Alis
 # This script provides instructions for unsupported distributions
 # It can also attempt to install what it can via common methods
 
@@ -9,7 +9,7 @@
 #####################################################################################
 echo ""
 echo -e "${STY_CYAN}╔══════════════════════════════════════════════════════════════════╗${STY_RST}"
-echo -e "${STY_CYAN}║           iNiR - Generic Installation Guide                      ║${STY_RST}"
+echo -e "${STY_CYAN}║           Alis - Generic Installation Guide                      ║${STY_RST}"
 echo -e "${STY_CYAN}╚══════════════════════════════════════════════════════════════════╝${STY_RST}"
 echo ""
 echo -e "${STY_YELLOW}Your distribution (${OS_PRETTY_NAME:-unknown}) is not directly supported.${STY_RST}"

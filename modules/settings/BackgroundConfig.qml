@@ -316,13 +316,13 @@ ContentPage {
                     Layout.preferredHeight: 180
                     radius: Appearance.rounding.normal
                     color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                         : Appearance.inirEverywhere ? Appearance.inir.colLayer0
+                         : Appearance.alisEverywhere ? Appearance.alis.colLayer0
                          : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                          : Appearance.colors.colLayer0
                     border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
-                        : Appearance.inirEverywhere ? 1 : (Appearance.auroraEverywhere ? 0 : 1)
+                        : Appearance.alisEverywhere ? 1 : (Appearance.auroraEverywhere ? 0 : 1)
                     border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-                               : Appearance.inirEverywhere ? Appearance.inir.colBorder
+                               : Appearance.alisEverywhere ? Appearance.alis.colBorder
                                : Appearance.colors.colLayer0Border
 
                     RowLayout {
@@ -373,14 +373,14 @@ ContentPage {
                                     height: bgMonDelegate.cardHeight
                                     radius: Appearance.rounding.small
                                     color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                                         : Appearance.alisEverywhere ? Appearance.alis.colLayer1
                                          : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                                          : Appearance.colors.colLayer1
                                     border.width: bgMonDelegate.isSelected && bgMultiMonPanel.showBackdropView
-                                        ? (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : Appearance.inirEverywhere ? 1 : 2) : (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : Appearance.inirEverywhere ? 1 : 0)
+                                        ? (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : Appearance.alisEverywhere ? 1 : 2) : (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : Appearance.alisEverywhere ? 1 : 0)
                                     border.color: bgMonDelegate.isSelected && bgMultiMonPanel.showBackdropView
-                                        ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.inirEverywhere ? Appearance.inir.colAccent : Appearance.colors.colPrimary)
-                                        : (Appearance.angelEverywhere ? Appearance.angel.colCardBorder : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent")
+                                        ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.alisEverywhere ? Appearance.alis.colAccent : Appearance.colors.colPrimary)
+                                        : (Appearance.angelEverywhere ? Appearance.angel.colCardBorder : Appearance.alisEverywhere ? Appearance.alis.colBorder : "transparent")
                                     clip: true
 
                                     layer.enabled: true
@@ -489,7 +489,7 @@ ContentPage {
                                         color: "transparent"
                                         visible: bgMultiMonPanel.showBackdropView && bgMonDelegate.isSelected
                                         border.width: 2
-                                        border.color: Appearance.inirEverywhere ? Appearance.inir.colAccent : Appearance.colors.colPrimary
+                                        border.color: Appearance.alisEverywhere ? Appearance.alis.colAccent : Appearance.colors.colPrimary
                                     }
                                 }
 
@@ -505,14 +505,14 @@ ContentPage {
                                     height: bgMonDelegate.cardHeight
                                     radius: Appearance.rounding.small
                                     color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                                         : Appearance.alisEverywhere ? Appearance.alis.colLayer1
                                          : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                                          : Appearance.colors.colLayer1
                                     border.width: bgMonDelegate.isSelected && !bgMultiMonPanel.showBackdropView
-                                        ? (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : Appearance.inirEverywhere ? 1 : 2) : (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : Appearance.inirEverywhere ? 1 : 0)
+                                        ? (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : Appearance.alisEverywhere ? 1 : 2) : (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : Appearance.alisEverywhere ? 1 : 0)
                                     border.color: bgMonDelegate.isSelected && !bgMultiMonPanel.showBackdropView
-                                        ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.inirEverywhere ? Appearance.inir.colAccent : Appearance.colors.colPrimary)
-                                        : (Appearance.angelEverywhere ? Appearance.angel.colCardBorder : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent")
+                                        ? (Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.alisEverywhere ? Appearance.alis.colAccent : Appearance.colors.colPrimary)
+                                        : (Appearance.angelEverywhere ? Appearance.angel.colCardBorder : Appearance.alisEverywhere ? Appearance.alis.colBorder : "transparent")
                                     clip: true
 
                                     layer.enabled: true
@@ -710,12 +710,12 @@ ContentPage {
                     implicitHeight: bgMonPreviewCol.implicitHeight
                     radius: Appearance.rounding.small
                     color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                         : Appearance.alisEverywhere ? Appearance.alis.colLayer1
                          : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                          : Appearance.colors.colLayer1
                     border.width: Appearance.angelEverywhere ? (Appearance.angel?.cardBorderWidth ?? 1) : 1
                     border.color: Appearance.angelEverywhere ? (Appearance.angel?.colCardBorder ?? Appearance.colors.colLayer0Border)
-                               : Appearance.inirEverywhere ? (Appearance.inir?.colBorder ?? Appearance.colors.colLayer0Border)
+                               : Appearance.alisEverywhere ? (Appearance.alis?.colBorder ?? Appearance.colors.colLayer0Border)
                                : Appearance.colors.colLayer0Border
                     clip: true
 
@@ -887,8 +887,8 @@ ContentPage {
                         Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 1
-                            color: Appearance.inirEverywhere
-                                ? (Appearance.inir?.colBorder
+                            color: Appearance.alisEverywhere
+                                ? (Appearance.alis?.colBorder
                                     ?? Appearance.colors?.colLayer0Border
                                     ?? Appearance.colors?.colLayer0Border
                                     ?? Appearance.colors.colOutlineVariant)
@@ -950,7 +950,7 @@ ContentPage {
                                         if (mon) {
                                             Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
                                             Config.setNestedValue("wallpaperSelector.targetMonitor", mon)
-                                            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
+                                            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"])
                                         }
                                     }
                                 }
@@ -994,7 +994,7 @@ ContentPage {
                                     }
                                     onClicked: {
                                         Config.setNestedValue("wallpaperSelector.selectionTarget", "backdrop")
-                                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
+                                        Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"])
                                     }
                                 }
                                 RippleButtonWithIcon {
@@ -1269,9 +1269,9 @@ ContentPage {
                     Layout.bottomMargin: 2
                     text: {
                         const raw = Config.options?.background?.transition?.type ?? "crossfade"
-                        const t = raw === "inirMelt" ? raw : AwwwBackend.normalizedAwwwTransitionType(raw, Config.options?.background?.transition?.direction ?? "right")
+                        const t = raw === "alisMelt" ? raw : AwwwBackend.normalizedAwwwTransitionType(raw, Config.options?.background?.transition?.direction ?? "right")
                         switch (t) {
-                        case "inirMelt": return "Liquid melt with flowing columns, following iNiR."
+                        case "alisMelt": return "Liquid melt with flowing columns, following Alis."
                         case "none":   return Translation.tr("Instant switch — no visible transition.")
                         case "simple": return Translation.tr("Classic step-based dissolve. Fast, simple and lightweight.")
                         case "fade":   return Translation.tr("Smooth fade using a bezier curve for the transition progression.")
@@ -1296,13 +1296,13 @@ ContentPage {
                 }
 
                 ConfigSelectionArray {
-                    currentValue: Config.options?.background?.transition?.type === "inirMelt" ? "inirMelt"
-                        : AwwwBackend.normalizedAwwwTransitionType(Config.options?.background?.transition?.type ?? "inirMelt",Config.options?.background?.transition?.direction ?? "right")
+                    currentValue: Config.options?.background?.transition?.type === "alisMelt" ? "alisMelt"
+                        : AwwwBackend.normalizedAwwwTransitionType(Config.options?.background?.transition?.type ?? "alisMelt",Config.options?.background?.transition?.direction ?? "right")
                     onSelected: newValue => {
                         Config.setNestedValue("background.transition.type", newValue);
                     }
                     options: [
-                        { displayName:"Liquid melt (iNiR)",icon:"water",value:"inirMelt" },
+                        { displayName:"Liquid melt (Alis)",icon:"water",value:"alisMelt" },
                         { displayName: Translation.tr("None"), icon: "block", value: "none" },
                         { displayName: Translation.tr("Simple"), icon: "transition_fade", value: "simple" },
                         { displayName: Translation.tr("Fade"), icon: "motion_photos_on", value: "fade" },
@@ -1440,7 +1440,7 @@ ContentPage {
                         MaterialSymbol {
                             text: "open_with"
                             iconSize: 16
-                            color: Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                            color: Appearance.alisEverywhere ? Appearance.alis.colPrimary
                                  : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                                  : Appearance.colors.colPrimary
                         }
@@ -1449,7 +1449,7 @@ ContentPage {
                             text: Translation.tr("Wallpaper position")
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.Medium
-                            color: Appearance.inirEverywhere ? Appearance.inir.colText
+                            color: Appearance.alisEverywhere ? Appearance.alis.colText
                                  : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface
                                  : Appearance.colors.colOnLayer1
                         }
@@ -1477,9 +1477,9 @@ ContentPage {
                             visible: panCard.hasPan
                             implicitWidth: 26
                             implicitHeight: 26
-                            buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                            buttonRadius: Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.full
                             colBackground: "transparent"
-                            colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                            colBackgroundHover: Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                                 : Appearance.colors.colLayer2Hover
                             onClicked: {
@@ -1491,7 +1491,7 @@ ContentPage {
                                 anchors.centerIn: parent
                                 text: "restart_alt"
                                 iconSize: 14
-                                color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+                                color: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary
                                      : Appearance.auroraEverywhere ? Appearance.colors.colOnSurfaceVariant
                                      : Appearance.colors.colSubtext
                             }
@@ -2131,7 +2131,7 @@ ContentPage {
                     mainText: Translation.tr("Pick backdrop wallpaper")
                     onClicked: {
                         Config.setNestedValue("wallpaperSelector.selectionTarget", "backdrop")
-                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"]);
+                        Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"]);
                     }
                 }
 

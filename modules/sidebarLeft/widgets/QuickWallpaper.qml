@@ -79,7 +79,7 @@ Item {
         anchors.centerIn: parent
         width: parent.width
         implicitHeight: mainColumn.implicitHeight + (root.cardPadding * 2)
-        radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+        radius: Appearance.alisEverywhere ? Appearance.alis.roundingNormal : Appearance.rounding.normal
         color: "transparent"
 
         ColumnLayout {
@@ -97,28 +97,28 @@ Item {
                 MaterialSymbol {
                     text: "wallpaper"
                     iconSize: Appearance.font.pixelSize.normal
-                    color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                    color: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
                 }
 
                 StyledText {
                     text: Translation.tr("Wallpapers")
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     font.weight: Font.Medium
-                    color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                    color: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
                     Layout.fillWidth: true
                 }
 
                 RippleButton {
                     implicitWidth: 28
                     implicitHeight: 28
-                    buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                    buttonRadius: Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.full
                     colBackground: "transparent"
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
+                        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover 
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
                         : Appearance.colors.colLayer2Hover
                     colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
+                        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Active 
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
                         : Appearance.colors.colLayer2Active
                     onClicked: {
@@ -131,7 +131,7 @@ Item {
                             anchors.centerIn: parent
                             text: "casino"
                             iconSize: 16
-                            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                            color: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
                         }
                     }
                     StyledToolTip { text: Translation.tr("Random wallpaper") }
@@ -140,14 +140,14 @@ Item {
                 RippleButton {
                     implicitWidth: 28
                     implicitHeight: 28
-                    buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                    buttonRadius: Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.full
                     colBackground: "transparent"
                     colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
+                        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover 
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
                         : Appearance.colors.colLayer2Hover
                     colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-                        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
+                        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Active 
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive 
                         : Appearance.colors.colLayer2Active
                     onClicked: GlobalActions.runLauncher(["wallpaperSelector", "toggle"])
@@ -156,7 +156,7 @@ Item {
                             anchors.centerIn: parent
                             text: "open_in_full"
                             iconSize: 16
-                            color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                            color: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
                         }
                     }
                     StyledToolTip { text: Translation.tr("Open wallpaper selector") }
@@ -173,7 +173,7 @@ Item {
                     maskSource: Rectangle {
                         width: carousel.width
                         height: carousel.height
-                        radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+                        radius: Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.small
                     }
                 }
 
@@ -230,7 +230,7 @@ Item {
                             radius: thumb.radius
                             color: "transparent"
                             border.width: wallpaperDelegate.isCurrentWallpaper ? 2 : 0
-                            border.color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                            border.color: Appearance.alisEverywhere ? Appearance.alis.colPrimary : Appearance.colors.colPrimary
                             z: 2
 
                             Behavior on border.width {
@@ -242,8 +242,8 @@ Item {
                         Rectangle {
                             id: thumb
                             anchors.fill: parent
-                            radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-                            color: Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.colors.colLayer2
+                            radius: Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.small
+                            color: Appearance.alisEverywhere ? Appearance.alis.colLayer2 : Appearance.colors.colLayer2
 
                             layer.enabled: root.visible && GlobalStates.sidebarLeftOpen
                             layer.effect: OpacityMask {
@@ -279,8 +279,8 @@ Item {
                                 anchors.centerIn: parent
                                 width: 28
                                 height: 28
-                                radius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : 14
-                                color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+                                radius: Appearance.alisEverywhere ? Appearance.alis.roundingSmall : 14
+                                color: Appearance.alisEverywhere ? Appearance.alis.colPrimary : Appearance.colors.colPrimary
                                 visible: wallpaperDelegate.isCurrentWallpaper
                                 scale: wallpaperDelegate.isCurrentWallpaper ? 1 : 0
 
@@ -293,7 +293,7 @@ Item {
                                     anchors.centerIn: parent
                                     text: "check"
                                     iconSize: 18
-                                    color: Appearance.inirEverywhere ? Appearance.inir.colOnPrimary : Appearance.colors.colOnPrimary
+                                    color: Appearance.alisEverywhere ? Appearance.alis.colOnPrimary : Appearance.colors.colOnPrimary
                                 }
                             }
 

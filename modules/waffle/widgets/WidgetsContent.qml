@@ -67,12 +67,12 @@ WBarAttachedPanelContent {
             AppLauncher.launch("terminal")
             break
         case "settings":
-            ShellExec.execDetachedArgs([Quickshell.shellPath("scripts/inir"), "settings"], "Open iNiR settings")
+            ShellExec.execDetachedArgs([Quickshell.shellPath("scripts/alis"), "settings"], "Open Alis settings")
             break
         case "wallpaper": {
             const useMain = Config.options?.waffles?.background?.useMainWallpaper ?? true
             Config.setNestedValue("wallpaperSelector.selectionTarget", useMain ? "main" : "waffle")
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
+            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"])
             break
         }
         case "screenshot":
@@ -155,7 +155,7 @@ WBarAttachedPanelContent {
                             implicitSize: Looks.dp(16)
                         }
                         onClicked: {
-                            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
+                            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"])
                             GlobalStates.waffleWidgetsOpen = false
                         }
                     }

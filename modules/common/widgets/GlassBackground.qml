@@ -12,7 +12,7 @@ Rectangle {
     id: root
     
     property color fallbackColor: Appearance.colors.colLayer1
-    property color inirColor: Appearance.inir.colLayer1
+    property color alisColor: Appearance.alis.colLayer1
     property real auroraTransparency: Appearance.aurora.popupTransparentize
     property bool wallpaperBackdropEnabled: true
     property string wallpaperUrl: WallpaperListener.wallpaperUrlForScreen(root.QsWindow?.window?.screen ?? null)

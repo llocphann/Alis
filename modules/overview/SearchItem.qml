@@ -157,9 +157,9 @@ RippleButton {
 
         Drag.dragType: Drag.Automatic
         Drag.supportedActions: Qt.CopyAction
-        Drag.keys: ["application/x-inir-desktop-entry"]
+        Drag.keys: ["application/x-alis-desktop-entry"]
         Drag.mimeData: ({
-            "application/x-inir-desktop-entry": root.desktopEntryId
+            "application/x-alis-desktop-entry": root.desktopEntryId
         })
         Drag.imageSource: Quickshell.iconPath(root.itemIcon, "application-x-executable")
         Drag.imageSourceSize: Qt.size(52, 52)

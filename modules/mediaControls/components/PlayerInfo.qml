@@ -17,12 +17,12 @@ ColumnLayout {
     
     // Optional properties
     property color titleColor: Appearance.zzzEverywhere ? Appearance.zzz.ink
-        : Appearance.inirEverywhere
-        ? Appearance.inir.colText 
+        : Appearance.alisEverywhere
+        ? Appearance.alis.colText 
         : Appearance.colors.colOnLayer0
     property color artistColor: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
-        : Appearance.inirEverywhere
-        ? Appearance.inir.colTextSecondary 
+        : Appearance.alisEverywhere
+        ? Appearance.alis.colTextSecondary 
         : Appearance.colors.colSubtext
     property int titleSize: Appearance.font.pixelSize.large
     property int artistSize: Appearance.font.pixelSize.small

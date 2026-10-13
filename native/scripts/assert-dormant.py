@@ -13,11 +13,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 NATIVE_BINARY_MARKERS = (
-    "inir-inputd",
-    "inir-native",
-    "inir-mpdd",
-    "inir-theme",
-    "inir-mega",
+    "alis-inputd",
+    "alis-native",
+    "alis-mpdd",
+    "alis-theme",
+    "alis-mega",
 )
 
 RUNTIME_ROOTS = (
@@ -39,7 +39,7 @@ RUNTIME_FILES = (
 # separately covered by test-native-selector-contract.sh; it is not a runtime
 # call site for those binaries.
 LIFECYCLE_REFERENCE_FILES = {
-    ROOT / "scripts" / "inir",
+    ROOT / "scripts" / "alis",
 }
 
 TEXT_SUFFIXES = {
@@ -86,7 +86,7 @@ def main() -> int:
                     continue
 
                 # The selector can expose binary readiness as metadata (for
-                # example `inir-mpdd=ready`). That is not a direct runtime
+                # example `alis-mpdd=ready`). That is not a direct runtime
                 # binding. Reject executable/path contexts instead of any
                 # harmless mention of a binary name.
                 direct_path = any(

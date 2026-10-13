@@ -163,7 +163,7 @@ ContentPage {
                     { displayName: "Abyss", icon: "water", value: "abyss" },
                     { displayName: "Waffle", icon: "window", value: "waffle" }
                 ]
-                onSelected: value => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),"panelFamily","set",value])
+                onSelected: value => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),"panelFamily","set",value])
             }
         }
     }

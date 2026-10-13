@@ -8,7 +8,7 @@ import qs.modules.common.widgets
 import qs.services
 
 // Style-aware widget background surface.
-// Adapts to the active ii style: blur for aurora/angel, border-only for inir, solid for material.
+// Adapts to the active ii style: blur for aurora/angel, border-only for alis, solid for material.
 // Parent widget must set screenX/screenY for correct blur alignment.
 Rectangle {
     id: root
@@ -53,7 +53,7 @@ Rectangle {
         ? "island" : Appearance.globalStyle
     readonly property bool _angel: root._surfaceDialect === "angel"
     readonly property bool _aurora: root._surfaceDialect === "aurora" || root._angel
-    readonly property bool _inir: root._surfaceDialect === "inir"
+    readonly property bool _alis: root._surfaceDialect === "alis"
     readonly property bool _zzz: root._surfaceDialect === "zzz"
     readonly property bool _cookie: root._surfaceDialect === "cookie"
     readonly property bool _regalia: root._surfaceDialect === "regalia"
@@ -112,7 +112,7 @@ Rectangle {
             : root._island ? "island"
             : root._angel ? "angel"
             : root._aurora ? "aurora"
-            : root._inir ? "inir" : "material",
+            : root._alis ? "alis" : "material",
         cookie: root._cookie,
         island: root._island,
         glass: root._glass,
@@ -131,7 +131,7 @@ Rectangle {
         : _zzz ? "transparent"
         : _cookie ? "transparent"
         : _regalia ? "transparent"
-        : _inir ? "transparent"
+        : _alis ? "transparent"
         : root._backgroundVisible ? _flatFill : "transparent"
     border.width: 0
     border.color: "transparent"
@@ -199,8 +199,8 @@ Rectangle {
         visible: !root._zzz && !root._cookie && !root._regalia && !root._island && !root._angel
             && root.surfaceBorderWidth > 0 && root.surfaceBorderOpacity > 0
         border.width: root.surfaceBorderWidth
-        border.color: root._inir
-            ? ColorUtils.applyAlpha(Appearance.inir.colBorder, root.surfaceBorderOpacity * 3)
+        border.color: root._alis
+            ? ColorUtils.applyAlpha(Appearance.alis.colBorder, root.surfaceBorderOpacity * 3)
             : root._aurora
                 ? ColorUtils.applyAlpha(Appearance.aurora.colTooltipBorder,
                     root.surfaceBorderOpacity)
@@ -325,10 +325,10 @@ Rectangle {
         elevated: true
     }
 
-    // Inir subtle fill
+    // Alis subtle fill
     Rectangle {
         anchors.fill: parent
-        visible: root._inir && root._backgroundVisible
+        visible: root._alis && root._backgroundVisible
         radius: root.radius
         color: ColorUtils.applyAlpha(root._plate, Math.min(0.96, 0.72 + root.surfaceOpacity * 0.24))
     }

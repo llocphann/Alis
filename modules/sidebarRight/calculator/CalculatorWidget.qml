@@ -78,37 +78,37 @@ FocusScope {
 
     // Style tokens
     readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
-        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-    readonly property color colTextSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+        : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer1
+    readonly property color colTextSecondary: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
     readonly property color colBg: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer0
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer0
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer0
     readonly property color colLayer1: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colLayer1
     readonly property color colLayer2: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer2
     readonly property color colOperator: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+        : Appearance.alisEverywhere ? Appearance.alis.colPrimary
         : Appearance.colors.colPrimary
     readonly property color colOperatorContainer: Appearance.angelEverywhere ? Appearance.colors.colPrimaryContainer
-        : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+        : Appearance.alisEverywhere ? Appearance.alis.colSecondaryContainer
         : Appearance.colors.colPrimaryContainer
     readonly property color colOnOperator: Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colOnPrimary
+        : Appearance.alisEverywhere ? Appearance.alis.colOnPrimary
         : Appearance.colors.colOnPrimary
     readonly property color colBorder: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        : Appearance.alisEverywhere ? Appearance.alis.colBorder : "transparent"
     readonly property int borderWidth: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
-        : Appearance.inirEverywhere ? 1 : 0
+        : Appearance.alisEverywhere ? 1 : 0
     readonly property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+        : Appearance.alisEverywhere ? Appearance.alis.roundingNormal : Appearance.rounding.normal
     readonly property real radiusSmall: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+        : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.small
 
     // Keyboard handling
     Keys.onPressed: (event) => {
@@ -552,8 +552,8 @@ FocusScope {
         colBackgroundHover: accent
             ? (accentSecondary ? Appearance.colors.colPrimaryContainerHover : Appearance.colors.colPrimaryHover)
             : secondary
-                ? (Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.colors.colLayer2Hover)
-                : (Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.colors.colLayer1Hover)
+                ? (Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover : Appearance.colors.colLayer2Hover)
+                : (Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover : Appearance.colors.colLayer1Hover)
 
         contentItem: StyledText {
             text: parent.buttonText

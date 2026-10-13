@@ -22,13 +22,13 @@ Item {
         }
         radius: root.connectedSurface ? 0 : Appearance.rounding.full
         color: root.connectedSurface ? "transparent" : Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
-             : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+             : Appearance.alisEverywhere ? Appearance.alis.colLayer1
              : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
              : Appearance.colors.colLayer0
         border.width: root.connectedSurface ? 0 : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
-            : Appearance.auroraEverywhere || Appearance.inirEverywhere ? 1 : 0
+            : Appearance.auroraEverywhere || Appearance.alisEverywhere ? 1 : 0
         border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-            : Appearance.inirEverywhere ? Appearance.inir.colBorder 
+            : Appearance.alisEverywhere ? Appearance.alis.colBorder 
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
         implicitHeight: contentRow.implicitHeight + 18
 

@@ -2,7 +2,7 @@
 """End-to-end Python/Rust theme parity on a synthetic image and temp templates.
 
 The fixture only writes under a TemporaryDirectory and sets
-INIR_THEME_SKIP_SDDM_SYNC=1 so a local ii-pixel installation is never touched.
+ALIS_THEME_SKIP_SDDM_SYNC=1 so a local ii-pixel installation is never touched.
 It also asserts that switchwall and IconThemeService continue to route through
 scripts/native-dispatch rather than binding directly to Rust binaries.
 """
@@ -25,7 +25,7 @@ TERMSCHEME = REPO / "scripts" / "colors" / "terminal" / "scheme-base.json"
 def python_candidates() -> list[Path]:
     result: list[Path] = []
     for raw in (
-        os.environ.get("INIR_VENV"),
+        os.environ.get("ALIS_VENV"),
         os.environ.get("ILLOGICAL_IMPULSE_VIRTUAL_ENV"),
     ):
         if raw:
@@ -190,7 +190,7 @@ def run_backend(
             "XDG_CONFIG_HOME": str(home / ".config"),
             "XDG_STATE_HOME": str(home / ".local/state"),
             "XDG_CACHE_HOME": str(home / ".cache"),
-            "INIR_THEME_SKIP_SDDM_SYNC": "1",
+            "ALIS_THEME_SKIP_SDDM_SYNC": "1",
         }
     )
     result = subprocess.run(argv, env=env, text=True, capture_output=True)
@@ -219,7 +219,7 @@ def assert_consumers() -> None:
     icons = (REPO / "services/IconThemeService.qml").read_text()
 
     required = [
-        ('native-dispatch theme route', 'theme) required_binary=inir-theme', dispatch),
+        ('native-dispatch theme route', 'theme) required_binary=alis-theme', dispatch),
         ('theme Python fallback', 'generate_colors_material.py', dispatch),
         ('switchwall selector route', '"$SCRIPT_DIR/../native-dispatch" theme', switchwall),
         ('icon selector path', 'Quickshell.shellPath("scripts/native-dispatch")', icons),
@@ -233,7 +233,7 @@ def assert_consumers() -> None:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("usage: check-theme-parity.py /path/to/inir-theme", file=sys.stderr)
+        print("usage: check-theme-parity.py /path/to/alis-theme", file=sys.stderr)
         return 64
 
     rust_binary = Path(sys.argv[1]).resolve()

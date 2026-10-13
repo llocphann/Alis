@@ -4,7 +4,7 @@ set -euo pipefail
 
 command -v fcitx5 >/dev/null 2>&1 || exit 0
 config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/fcitx5"
-data_dir="${INIR_FCITX5_DATA_DIR:-/usr/share/fcitx5/inputmethod}"
+data_dir="${ALIS_FCITX5_DATA_DIR:-/usr/share/fcitx5/inputmethod}"
 if [[ ! -f "$data_dir/unikey.conf" ]]; then
     printf 'Hadalis: install fcitx5-unikey to enable Telex\n' >&2
     exit 0

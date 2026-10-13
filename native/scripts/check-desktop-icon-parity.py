@@ -3,7 +3,7 @@
 
 The fixture extracts the real embedded Python updater scripts from
 services/IconThemeService.qml, runs them under a temporary HOME, runs
-inir-native desktop sync-icon-theme under a separate temporary XDG_CONFIG_HOME,
+alis-native desktop sync-icon-theme under a separate temporary XDG_CONFIG_HOME,
 and compares the resulting KDE/Qt/GTK INI semantics. No real desktop config,
 gsettings database, or icon cache is touched.
 """
@@ -169,7 +169,7 @@ def assert_consumer_order(source: str) -> None:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("usage: check-desktop-icon-parity.py /path/to/inir-native", file=sys.stderr)
+        print("usage: check-desktop-icon-parity.py /path/to/alis-native", file=sys.stderr)
         return 64
     rust = Path(sys.argv[1]).resolve()
     if not rust.is_file():

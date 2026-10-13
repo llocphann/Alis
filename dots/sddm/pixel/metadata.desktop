@@ -1,7 +1,7 @@
 [SddmGreeterTheme]
 Name=ii-pixel
-Description=iNiR SDDM login screen — Material You dynamic colors
-Author=iNiR Project
+Description=Alis SDDM login screen — Material You dynamic colors
+Author=Alis Project
 Type=sddm-theme
 Version=1.0
 Website=https://github.com/snowarch/iNiR

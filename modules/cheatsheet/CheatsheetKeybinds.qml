@@ -145,17 +145,17 @@ StyledFlickable {
             Layout.fillWidth: true
             Layout.preferredHeight: 200
             radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-                 : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                 : Appearance.alisEverywhere ? Appearance.alis.roundingNormal : Appearance.rounding.normal
             color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                 : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                 : Appearance.alisEverywhere ? Appearance.alis.colLayer1
                  : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface 
                  : Appearance.colors.colLayer1
             border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
                         : Appearance.zzzEverywhere ? 1
-                        : Appearance.inirEverywhere ? 1 : 0
+                        : Appearance.alisEverywhere ? 1 : 0
             border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
                         : Appearance.zzzEverywhere ? Appearance.zzz.hairline
-                        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+                        : Appearance.alisEverywhere ? Appearance.alis.colBorder : "transparent"
             Behavior on border.width {
                 enabled: Appearance.animationsEnabled
                 NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -187,15 +187,15 @@ StyledFlickable {
                 Layout.preferredHeight: catColumn.implicitHeight + 8
                 visible: catKeybinds.length > 0
                 radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-                     : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                     : Appearance.alisEverywhere ? Appearance.alis.roundingNormal : Appearance.rounding.normal
                 color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                     : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                     : Appearance.alisEverywhere ? Appearance.alis.colLayer1
                      : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                      : Appearance.colors.colLayer1
                 border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
-                            : Appearance.inirEverywhere ? 1 : 0
+                            : Appearance.alisEverywhere ? 1 : 0
                 border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-                            : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+                            : Appearance.alisEverywhere ? Appearance.alis.colBorder : "transparent"
 
                 Column {
                     id: catColumn
@@ -240,7 +240,7 @@ StyledFlickable {
                                 implicitHeight: 20
                                 radius: Appearance.rounding.full
                                 color: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                     : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                                     : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                                      : Appearance.colors.colLayer2
                                 StyledText {
                                     id: countLabel
@@ -259,7 +259,7 @@ StyledFlickable {
                         anchors.horizontalCenter: parent.horizontalCenter
                         height: 1
                         color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-                             : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
+                             : Appearance.alisEverywhere ? Appearance.alis.colBorderSubtle
                              : Appearance.colors.colOutlineVariant
                         opacity: 0.4
                     }
@@ -287,15 +287,15 @@ StyledFlickable {
             Layout.fillWidth: true
             Layout.preferredHeight: searchColumn.implicitHeight + 16
             radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-                 : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                 : Appearance.alisEverywhere ? Appearance.alis.roundingNormal : Appearance.rounding.normal
             color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                 : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                 : Appearance.alisEverywhere ? Appearance.alis.colLayer1
                  : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                  : Appearance.colors.colLayer1
             border.width: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
-                        : Appearance.inirEverywhere ? 1 : 0
+                        : Appearance.alisEverywhere ? 1 : 0
             border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-                        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+                        : Appearance.alisEverywhere ? Appearance.alis.colBorder : "transparent"
             visible: root.isSearching && root.hasResults
 
             Column {

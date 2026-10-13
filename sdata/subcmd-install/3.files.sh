@@ -182,7 +182,7 @@ case "${SKIP_QUICKSHELL}" in
             ( -e "$ALIS_LAUNCHER_PATH" && ! -f "$ALIS_LAUNCHER_PATH" ) ]] ||
           { [[ -f "$ALIS_LAUNCHER_PATH" ]] &&
             ! grep -Fq '# Canonical CLI and runtime name is Alis.' "$ALIS_LAUNCHER_PATH" &&
-            ! grep -Fq '# Alis is the public command while the proven iNiR runtime owns the session.' "$ALIS_LAUNCHER_PATH"; }; then
+            ! grep -Fq '# Alis is the public command while the proven Alis runtime owns the session.' "$ALIS_LAUNCHER_PATH"; }; then
         log_error "Refusing to overwrite user-owned Alis CLI: $ALIS_LAUNCHER_PATH"
         return 1
       fi

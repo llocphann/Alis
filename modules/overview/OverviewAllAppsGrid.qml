@@ -462,9 +462,9 @@ Item {
 
             Drag.dragType: Drag.Automatic
             Drag.supportedActions: Qt.CopyAction
-            Drag.keys: ["application/x-inir-desktop-entry"]
+            Drag.keys: ["application/x-alis-desktop-entry"]
             Drag.mimeData: ({
-                "application/x-inir-desktop-entry": appBtn.desktopEntryId
+                "application/x-alis-desktop-entry": appBtn.desktopEntryId
             })
             Drag.imageSource: Quickshell.iconPath(
                 String(appBtn.entry?.icon ?? ""), "application-x-executable")

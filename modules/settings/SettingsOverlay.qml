@@ -1054,7 +1054,7 @@ Scope {
                                     buttonRadius: Appearance.rounding.full
                                     implicitWidth: 36
                                     implicitHeight: 36
-                                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
+                                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "lock", "activate"])
                                     contentItem: MaterialSymbol {
                                         anchors.centerIn: parent
                                         horizontalAlignment: Text.AlignHCenter
@@ -1298,7 +1298,7 @@ Scope {
                                         Appearance.colors.colLayer1Hover, 0.5)
 
                                     onClicked: {
-                                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window"])
+                                        Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings-window"])
                                         Config.setNestedValue("settingsUi.overlayMode", false)
                                         GlobalStates.settingsOverlayOpen = false
                                     }

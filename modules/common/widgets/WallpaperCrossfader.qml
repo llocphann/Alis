@@ -50,11 +50,11 @@ Item {
     // ── Internal state ─────────────────────────────────────────────────
     property bool _transitioning: false
     // Melt's frame-swapped/ShaderEffect handoff is unreliable on real desktop
-    // compositors. Existing saved inirMelt profiles must still change images.
+    // compositors. Existing saved alisMelt profiles must still change images.
     // Only opt in to the experimental shader explicitly; the safe path uses
     // the already-loaded image slots and an ordinary crossfade (no frame lease).
-    readonly property bool experimentalMelt: Quickshell.env("INIR_EXPERIMENTAL_MELT") === "1"
-    readonly property var shaderTransitionTypes: ["inirMelt"]
+    readonly property bool experimentalMelt: Quickshell.env("ALIS_EXPERIMENTAL_MELT") === "1"
+    readonly property var shaderTransitionTypes: ["alisMelt"]
     readonly property bool shaderTransitionRequested: experimentalMelt
         && (isShaderTransitionType(transitionType)
             || String(transitionType ?? "") === "shaderRandom")
@@ -225,7 +225,7 @@ Item {
 
     function _normalizedTransitionType(rawType: string): string {
         switch (String(rawType ?? "crossfade")) {
-        case "inirMelt":
+        case "alisMelt":
         case "shaderRandom":
             return "crossfade"
         case "none":
@@ -248,7 +248,7 @@ Item {
         case "random":
             return "zoom"
         default:
-            return String(rawType ?? "inirMelt")
+            return String(rawType ?? "alisMelt")
         }
     }
 

@@ -346,11 +346,11 @@ Scope {
                                     root.surfaceDialect === "angel"
                                 readonly property bool auroraEverywhere:
                                     root.surfaceDialect === "aurora" || angelEverywhere
-                                readonly property bool inirEverywhere:
-                                    root.surfaceDialect === "inir"
+                                readonly property bool alisEverywhere:
+                                    root.surfaceDialect === "alis"
                                 readonly property bool gameModeMinimal:
                                     Appearance.gameModeMinimal
-                                // In dark non-glass Material/iNiR presentation, use
+                                // In dark non-glass Material/Alis presentation, use
                                 // the same base surface token as the physical Screen
                                 // Edge so the joined seam cannot read as two colors.
                                 readonly property bool matchDarkPhysicalEdge:
@@ -415,10 +415,10 @@ Scope {
                                             (blendedColors?.colLayer0
                                                 ?? Appearance.colors.colLayer0),
                                             dockRoot.nativeBlurActive ? 0.46 : 1)
-                                        : inirEverywhere
+                                        : alisEverywhere
                                             ? (matchDarkPhysicalEdge
                                                 ? Appearance.colors.colLayer0
-                                                : Appearance.inir.colLayer1)
+                                                : Appearance.alis.colLayer1)
                                             : Appearance.colors.colLayer0
                                 border.width: root.zzzEverywhere || regaliaEverywhere
                                     ? 0
@@ -428,8 +428,8 @@ Scope {
                                     ? "transparent"
                                     : angelEverywhere
                                         ? Appearance.angel.colPanelBorder
-                                        : inirEverywhere
-                                            ? Appearance.inir.colBorder
+                                        : alisEverywhere
+                                            ? Appearance.alis.colBorder
                                             : Appearance.colors.colLayer0Border
                                 radius: root.zzzEverywhere
                                     ? Appearance.zzz.panelRadius
@@ -437,8 +437,8 @@ Scope {
                                         ? Appearance.regalia.roundLarge
                                         : angelEverywhere
                                             ? Appearance.angel.roundingNormal
-                                            : inirEverywhere
-                                                ? Appearance.inir.roundingNormal
+                                            : alisEverywhere
+                                                ? Appearance.alis.roundingNormal
                                                 : Appearance.rounding.large
                                 // Keep the body plate on the same rounded
                                 // rectangle as the iRiS SDF record. Squaring the
@@ -510,7 +510,7 @@ Scope {
 
                                 clip: true
                                 layer.enabled: auroraEverywhere
-                                    && !inirEverywhere
+                                    && !alisEverywhere
                                     && !root.zzzEverywhere
                                     && !gameModeMinimal
                                     && !dockRoot.nativeBlurActive
@@ -543,7 +543,7 @@ Scope {
                                     width: dockRoot.screen?.width ?? 1920
                                     height: dockRoot.screen?.height ?? 1080
                                     visible: dockVisualBackground.auroraEverywhere
-                                        && !dockVisualBackground.inirEverywhere
+                                        && !dockVisualBackground.alisEverywhere
                                         && !root.zzzEverywhere
                                         && !dockVisualBackground.gameModeMinimal
                                         && !dockRoot.nativeBlurActive
@@ -556,7 +556,7 @@ Scope {
 
                                     layer.enabled: Appearance.effectsEnabled
                                         && dockVisualBackground.auroraEverywhere
-                                        && !dockVisualBackground.inirEverywhere
+                                        && !dockVisualBackground.alisEverywhere
                                         && !dockVisualBackground.gameModeMinimal
                                         && !dockRoot.nativeBlurActive
                                     layer.effect: MultiEffect {

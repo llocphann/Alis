@@ -6,7 +6,7 @@ Rectangle {
     id: root
     anchors.fill: parent
     readonly property color surfaceColor: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.auroraEverywhere ? Appearance.colors.colLayer2Base
         : Appearance.colors.colSurfaceContainer
     color: ColorUtils.applyAlpha(

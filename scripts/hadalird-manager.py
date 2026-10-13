@@ -33,8 +33,8 @@ MAX_ARCHIVE = 8 * 1024 * 1024
 MAX_PAYLOAD = 24 * 1024 * 1024
 MAX_FILES = 512
 MAX_MEMBERS = 4096
-SYSTEM_PROVISIONER = "/usr/libexec/inir-hadalird-system-provision"
-EXECUTABLE = {"assets/helpers/inir-battery-charge-limit", "assets/helpers/inir-thinkfan"}
+SYSTEM_PROVISIONER = "/usr/libexec/alis-hadalird-system-provision"
+EXECUTABLE = {"assets/helpers/alis-battery-charge-limit", "assets/helpers/alis-thinkfan"}
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 
 
@@ -325,7 +325,7 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
                 raise ValueError("Invalid Hadalird release")
             gateway = gateway_call("gateway-status")
             provisioner = system_call("helpers-status", None)
-            # A full inir-shell Arch package can already own the trusted
+            # A full alis-shell Arch package can already own the trusted
             # provisioner without installing the separate repo-copy package.
             if provisioner.get("provisionerAvailable") is not True:
                 if gateway.get("installed") is not True:

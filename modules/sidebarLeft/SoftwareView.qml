@@ -13,18 +13,18 @@ Item {
 
     // Style tokens — ToolsView pattern
     readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
-        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
-    readonly property color colTextSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+        : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer1
+    readonly property color colTextSecondary: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
     readonly property color colBg: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.auroraEverywhere ? "transparent"
         : Appearance.colors.colLayer1
     readonly property color colBgHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1Hover
     readonly property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.verysmall
+        : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.verysmall
 
     Component.onCompleted: {
         if (AppCatalog.packageManager === "unknown") {
@@ -78,20 +78,20 @@ Item {
                             toggled: AppCatalog.selectedCategory === "all"
                             bounce: true
                             colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                                : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                                 : Appearance.auroraEverywhere ? "transparent"
                                 : Appearance.colors.colLayer1
                             colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                                : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                                 : Appearance.colors.colLayer1Hover
                             colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
-                                : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                                : Appearance.alisEverywhere ? Appearance.alis.colSecondaryContainer
                                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                                 : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                                 : Appearance.colors.colSecondaryContainer
                             colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
+                                : Appearance.alisEverywhere ? Appearance.alis.colPrimaryContainerHover
                                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                                 : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                                 : Appearance.colors.colSecondaryContainerHover
@@ -124,20 +124,20 @@ Item {
                                 toggled: AppCatalog.selectedCategory === modelData
                                 bounce: true
                                 colBackground: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                                     : Appearance.auroraEverywhere ? "transparent"
                                     : Appearance.colors.colLayer1
                                 colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                                     : Appearance.colors.colLayer1Hover
                                 colBackgroundToggled: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
-                                    : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                                    : Appearance.alisEverywhere ? Appearance.alis.colSecondaryContainer
                                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                                     : Appearance.zzzEverywhere ? Appearance.zzz.sticker
                                     : Appearance.colors.colSecondaryContainer
                                 colBackgroundToggledHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                    : Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainerHover
+                                    : Appearance.alisEverywhere ? Appearance.alis.colPrimaryContainerHover
                                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
                                     : Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
                                     : Appearance.colors.colSecondaryContainerHover
@@ -387,7 +387,7 @@ Item {
         colBackground: "transparent"
         colBackgroundHover: root.colBgHover
         colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-            : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
+            : Appearance.alisEverywhere ? Appearance.alis.colLayer1Active
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
             : Appearance.colors.colLayer1Active
 
@@ -463,9 +463,9 @@ Item {
                         implicitHeight: badgeText.implicitHeight + 4
                         radius: height / 2
                         color: card.isInstalled
-                            ? (Appearance.inirEverywhere ? Appearance.inir.colPrimaryContainer
+                            ? (Appearance.alisEverywhere ? Appearance.alis.colPrimaryContainer
                                 : Appearance.colors.colPrimaryContainer)
-                            : (Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                            : (Appearance.alisEverywhere ? Appearance.alis.colLayer2
                                 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                                 : Appearance.colors.colSecondaryContainer)
 
@@ -477,9 +477,9 @@ Item {
                                 : card.installMethod
                             font.pixelSize: Appearance.font.pixelSize.smallest
                             color: card.isInstalled
-                                ? (Appearance.inirEverywhere ? Appearance.inir.colOnPrimaryContainer
+                                ? (Appearance.alisEverywhere ? Appearance.alis.colOnPrimaryContainer
                                     : Appearance.colors.colOnPrimaryContainer)
-                                : (Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+                                : (Appearance.alisEverywhere ? Appearance.alis.colTextSecondary
                                     : Appearance.colors.colOnSecondaryContainer)
                         }
                     }
@@ -504,7 +504,7 @@ Item {
                 fill: card.isInstalled ? 1 : 0
                 animateFill: true
                 color: card.isInstalled
-                    ? (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                    ? (Appearance.alisEverywhere ? Appearance.alis.colPrimary : Appearance.colors.colPrimary)
                     : card.isAvailable ? root.colText
                     : root.colTextSecondary
             }

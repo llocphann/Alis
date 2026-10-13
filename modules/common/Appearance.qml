@@ -15,7 +15,7 @@ Singleton {
     property QtObject animation
     property QtObject animationCurves
     property QtObject aurora
-    property QtObject inir
+    property QtObject alis
     property QtObject angel
     property QtObject regalia
     property QtObject zzz
@@ -79,7 +79,7 @@ Singleton {
     readonly property bool contextualMotionProfile: iiMotionProfile === "contextual"
     // Compatibility aliases for old callers. Material is the only runtime
     // Global Theme in v1.0, so these can never become active.
-    readonly property bool inirEverywhere: false
+    readonly property bool alisEverywhere: false
     readonly property bool angelEverywhere: false
     readonly property bool auroraEverywhere: false
     readonly property bool regaliaEverywhere: false
@@ -854,8 +854,8 @@ Singleton {
         
     }
 
-    inir: QtObject {
-        // Inir style - Elegant terminal UI aesthetic
+    alis: QtObject {
+        // Alis style - Elegant terminal UI aesthetic
         
         // ═══════════════════════════════════════════════════════════════
         // LAYER SYSTEM

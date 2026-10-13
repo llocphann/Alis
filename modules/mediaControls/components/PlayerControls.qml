@@ -22,26 +22,26 @@ RowLayout {
     property int playIconSize: 24
     property real buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall 
+        : Appearance.alisEverywhere ? Appearance.alis.roundingSmall 
         : Appearance.rounding.full
     property real playButtonRadius: buttonRadius
     property color buttonColor: "transparent"
     property color playButtonColor: root.buttonColor
     property color buttonHoverColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover 
         : Appearance.colors.colLayer1Hover
     property color buttonRippleColor: Appearance.zzzEverywhere ? ColorUtils.transparentize(Appearance.zzz.accent, 0.68)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Active 
         : Appearance.colors.colLayer1Active
     property color iconColor: Appearance.zzzEverywhere ? Appearance.zzz.ink
         : Appearance.angelEverywhere ? Appearance.angel.colText
-        : Appearance.inirEverywhere ? Appearance.inir.colText 
+        : Appearance.alisEverywhere ? Appearance.alis.colText 
         : Appearance.colors.colOnLayer0
     property color playIconColor: Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary 
+        : Appearance.alisEverywhere ? Appearance.alis.colPrimary 
         : Appearance.colors.colOnLayer1
     property color playButtonHoverColor: root.playButtonColor.a > 0.01
         ? ColorUtils.mix(root.playButtonColor, root.playIconColor, 0.90)

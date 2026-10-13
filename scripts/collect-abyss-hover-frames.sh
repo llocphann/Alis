@@ -33,9 +33,9 @@ if ! command -v qs >/dev/null 2>&1; then
     exit 127
 fi
 
-# The production launcher (scripts/inir) targets a *path*: qs -p DIR ipc call.
+# The production launcher (scripts/alis) targets a *path*: qs -p DIR ipc call.
 # Bare qs ipc call instead looks for a nonexistent "default" config. Resolve
-# the live inir path to avoid targeting a stale install or a different shell.
+# the live alis path to avoid targeting a stale install or a different shell.
 candidates=()
 if [[ -n "${HADALIS_QS_CONFIG:-}" ]]; then
     candidates+=("$HADALIS_QS_CONFIG")
@@ -51,8 +51,8 @@ else
     while IFS= read -r qml; do
         [[ -n "$qml" ]] && candidates+=("${qml%/shell.qml}")
     done < <(qs list --all 2>/dev/null | sed -n 's/^[[:space:]]*Config path:[[:space:]]*//p' | grep '/shell\.qml$' || true)
-    candidates+=("${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
-        "$repo_root" /usr/local/share/quickshell/inir /usr/share/quickshell/inir)
+    candidates+=("${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis"
+        "$repo_root" /usr/local/share/quickshell/alis /usr/share/quickshell/alis)
 fi
 
 resolved_config=""
@@ -61,7 +61,7 @@ for candidate in "${candidates[@]}"; do
     if [[ "$candidate" == */shell.qml ]]; then candidate="${candidate%/shell.qml}"; fi
     [[ -f "$candidate/shell.qml" ]] || continue
     # An unrelated Quickshell config must never receive the diagnostics.
-    grep -q '^//@ pragma ShellId inir' "$candidate/shell.qml" || continue
+    grep -q '^//@ pragma ShellId alis' "$candidate/shell.qml" || continue
     canonical="$(realpath -e -- "$candidate" 2>/dev/null || printf '%s' "$candidate")"
     listing="$(qs -p "$canonical" list 2>/dev/null)" || continue
     [[ -n "$listing" && "$listing" != No\ running\ instances* ]] || continue
@@ -70,9 +70,9 @@ for candidate in "${candidates[@]}"; do
 done
 if [[ -z "$resolved_config" ]]; then
     {
-        printf 'ERROR: no running iNiR Quickshell instance found.\n'
+        printf 'ERROR: no running Alis Quickshell instance found.\n'
         printf 'Inspect: qs list --all\n'
-        printf 'Optional: HADALIS_QS_CONFIG=/path/to/running/inir\n'
+        printf 'Optional: HADALIS_QS_CONFIG=/path/to/running/alis\n'
         printf 'No shell was started or changed by this script.\n'
     } | tee "$output_dir/config-error.txt" >&2
     exit 3
@@ -119,20 +119,20 @@ source_mismatch=false
     printf 'caveat=source checkout SHA is not proof of installed shell identity\n'
 } > "$output_dir/identity.txt"
 
-# Fail CLOSED on stale/mismatched installed source. 'inir restart' alone
+# Fail CLOSED on stale/mismatched installed source. 'alis restart' alone
 # restarts the installed copy; it does not sync checkout QML into that copy.
 if [[ "$source_mismatch" == true ]]; then
     {
-        printf 'ERROR: installed iNiR QML does not match this dev checkout.\n'
-        printf 'Run the supported Hadalis setup update from this checkout, then restart iNiR.\n'
+        printf 'ERROR: installed Alis QML does not match this dev checkout.\n'
+        printf 'Run the supported Hadalis setup update from this checkout, then restart Alis.\n'
         printf 'From repo: ./setup update --local  (sync this dev checkout; skip git pull)\n'
-        printf 'Then: inir restart; bash scripts/collect-abyss-hover-frames.sh\n'
+        printf 'Then: alis restart; bash scripts/collect-abyss-hover-frames.sh\n'
         printf 'No FPS or hover conclusion can be drawn from this stale runtime.\n'
     } | tee "$output_dir/config-error.txt" >&2
     exit 4
 fi
 
-# A successful 'inir restart' may leave the critical host registered before
+# A successful 'alis restart' may leave the critical host registered before
 # deferred panels and the optional Perimeter have mounted. The IPC CLI can even
 # return exit 0 for 'Target not found.'. Do not misreport this boot race as a
 # frame failure. Never remount or alter any shell surface to "fix" readiness.

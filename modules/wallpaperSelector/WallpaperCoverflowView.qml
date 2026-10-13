@@ -20,7 +20,7 @@ import Qt5Compat.GraphicalEffects as GE
  *   • Center card is dominant (~38% screen width, 16:10 landscape)
  *   • Side cards peek from behind, progressively smaller and dimmer
  *   • Clean gaps — cards breathe, no tight packing
- *   • All 5 styles supported (material/cards/aurora/inir/angel)
+ *   • All 5 styles supported (material/cards/aurora/alis/angel)
  */
 Item {
     id: root
@@ -85,31 +85,31 @@ Item {
             ? Translation.tr("Preview mode")
             : Translation.tr("Arrows, wheel or click to navigate")
     readonly property color surfaceColor: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer1
     readonly property color elevatedColor: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colOverlay
         : Appearance.colors.colLayer2
     readonly property color baseColor: Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer0
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer0
         : Appearance.auroraEverywhere ? Appearance.aurora.colOverlay
         : Appearance.colors.colLayer0
     readonly property color textColor: Appearance.angelEverywhere ? Appearance.angel.colText
-        : Appearance.inirEverywhere ? Appearance.inir.colText
+        : Appearance.alisEverywhere ? Appearance.alis.colText
         : Appearance.colors.colOnLayer1
     readonly property color subtleTextColor: Appearance.angelEverywhere ? Appearance.angel.colTextMuted
-        : Appearance.inirEverywhere ? Appearance.inir.colTextMuted
+        : Appearance.alisEverywhere ? Appearance.alis.colTextMuted
         : Appearance.colors.colSubtext
     readonly property color borderColor: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
-        : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
+        : Appearance.alisEverywhere ? Appearance.alis.colBorderSubtle
         : ColorUtils.applyAlpha(Appearance.colors.colOutlineVariant, 0.45)
     readonly property real cardRadius: Appearance.angelEverywhere ? Appearance.angel.roundingLarge
-        : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
+        : Appearance.alisEverywhere ? Appearance.alis.roundingLarge
         : Appearance.rounding.large
     readonly property real panelRadius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+        : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
         : Appearance.rounding.normal
 
     readonly property string _sideThumbnailSizeName: Images.thumbnailSizeNameForDimensions(
@@ -452,9 +452,9 @@ Item {
                     screenY: { const m = headerChip.mapToGlobal(0, 0); return m.y }
                     radius: Appearance.rounding.full
                     fallbackColor: root.surfaceColor
-                    inirColor: Appearance.inir.colLayer1
+                    alisColor: Appearance.alis.colLayer1
                     auroraTransparency: Appearance.aurora.popupTransparentize
-                    border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
+                    border.width: Appearance.alisEverywhere || Appearance.angelEverywhere ? 1 : 0
                     border.color: root.borderColor
 
                     RowLayout {
@@ -918,9 +918,9 @@ Item {
             screenY: { const m = infoOverlay.mapToGlobal(0, 0); return m.y }
             radius: root.panelRadius
             fallbackColor: root.surfaceColor
-            inirColor: Appearance.inir.colLayer1
+            alisColor: Appearance.alis.colLayer1
             auroraTransparency: Appearance.aurora.popupTransparentize
-            border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
+            border.width: Appearance.alisEverywhere || Appearance.angelEverywhere ? 1 : 0
             border.color: root.borderColor
 
             ColumnLayout {
@@ -1018,9 +1018,9 @@ Item {
             screenY: { const m = actionsOverlay.mapToGlobal(0, 0); return m.y }
             radius: root.panelRadius
             fallbackColor: root.surfaceColor
-            inirColor: Appearance.inir.colLayer1
+            alisColor: Appearance.alis.colLayer1
             auroraTransparency: Appearance.aurora.popupTransparentize
-            border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
+            border.width: Appearance.alisEverywhere || Appearance.angelEverywhere ? 1 : 0
             border.color: root.borderColor
 
             ColumnLayout {
@@ -1125,9 +1125,9 @@ Item {
             screenY: { const m = guideOverlay.mapToGlobal(0, 0); return m.y }
             radius: root.panelRadius
             fallbackColor: root.surfaceColor
-            inirColor: Appearance.inir.colLayer1
+            alisColor: Appearance.alis.colLayer1
             auroraTransparency: Appearance.aurora.popupTransparentize
-            border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
+            border.width: Appearance.alisEverywhere || Appearance.angelEverywhere ? 1 : 0
             border.color: root.borderColor
 
             ColumnLayout {
@@ -1166,9 +1166,9 @@ Item {
             screenY: { const m = statusOverlay.mapToGlobal(0, 0); return m.y }
             radius: root.panelRadius
             fallbackColor: root.surfaceColor
-            inirColor: Appearance.inir.colLayer1
+            alisColor: Appearance.alis.colLayer1
             auroraTransparency: Appearance.aurora.popupTransparentize
-            border.width: Appearance.inirEverywhere || Appearance.angelEverywhere ? 1 : 0
+            border.width: Appearance.alisEverywhere || Appearance.angelEverywhere ? 1 : 0
             border.color: root.borderColor
 
             ColumnLayout {
@@ -1304,7 +1304,7 @@ Item {
         Rectangle {
             implicitWidth: 1; implicitHeight: 16
             color: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
-                 : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
+                 : Appearance.alisEverywhere ? Appearance.alis.colBorderSubtle
                  : Appearance.colors.colOnSurfaceVariant
             opacity: 0.2
         }
@@ -1338,7 +1338,7 @@ Item {
         Rectangle {
             implicitWidth: 1; implicitHeight: 16
             color: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
-                 : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
+                 : Appearance.alisEverywhere ? Appearance.alis.colBorderSubtle
                  : Appearance.colors.colOnSurfaceVariant
             opacity: 0.2
         }
@@ -1371,7 +1371,7 @@ Item {
         Rectangle {
             implicitWidth: 1; implicitHeight: 16
             color: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
-                 : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
+                 : Appearance.alisEverywhere ? Appearance.alis.colBorderSubtle
                  : Appearance.colors.colOnSurfaceVariant
             opacity: 0.2
         }

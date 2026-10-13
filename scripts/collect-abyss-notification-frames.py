@@ -130,9 +130,9 @@ def git_sha():
 
 def preflight(config):
     if not config.is_dir() or not (config / "shell.qml").is_file():
-        raise RuntimeError("missing installed iNiR config")
-    if "//@ pragma ShellId inir" not in (config / "shell.qml").read_text(errors="replace"):
-        raise RuntimeError("config is not the iNiR shell")
+        raise RuntimeError("missing installed Alis config")
+    if "//@ pragma ShellId alis" not in (config / "shell.qml").read_text(errors="replace"):
+        raise RuntimeError("config is not the Alis shell")
     dirty = subprocess.run(["git", "-C", str(ROOT), "status", "--porcelain"],
                            capture_output=True, text=True, check=True)
     if dirty.stdout.strip():
@@ -147,7 +147,7 @@ def preflight(config):
     inventory = subprocess.run(["qs", "-p", str(config), "list"],
                                capture_output=True, text=True, timeout=5)
     if inventory.returncode or "No running instances" in inventory.stdout:
-        raise RuntimeError("no running installed iNiR instance")
+        raise RuntimeError("no running installed Alis instance")
     snap = sanitize_snapshot(checked_call(config, "snapshot"))
     if not snap["outputs"] or not any(o["fieldReady"] for o in snap["outputs"]):
         raise RuntimeError("installed Abyss output is not ready")
@@ -215,7 +215,7 @@ def main():
     parser.add_argument("--interval", type=float, default=.25)
     parser.add_argument("--config", type=Path, default=Path(
         os.environ.get("HADALIS_QS_CONFIG",
-                       str(Path.home() / ".config/quickshell/inir"))))
+                       str(Path.home() / ".config/quickshell/alis"))))
     parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args()
     if not 2 <= args.seconds <= 8 or not .15 <= args.interval <= 1:

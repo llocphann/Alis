@@ -19,7 +19,7 @@ Rectangle {
     id: root
     radius: Appearance.zzzEverywhere ? Appearance.zzz.cardRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+        : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
         : Appearance.rounding.normal
     Behavior on radius {
         enabled: Appearance.animationsEnabled
@@ -27,21 +27,21 @@ Rectangle {
     }
     color: Appearance.zzzEverywhere ? "transparent"
          : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+         : Appearance.alisEverywhere ? Appearance.alis.colLayer1
          : Appearance.auroraEverywhere ? "transparent"
          : Appearance.colors.colLayer1
     Behavior on color {
         enabled: Appearance.animationsEnabled
         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
-    border.width: Appearance.zzzEverywhere ? 0 : (Appearance.angelEverywhere ? 0 : (Appearance.inirEverywhere ? 1 : 0))
+    border.width: Appearance.zzzEverywhere ? 0 : (Appearance.angelEverywhere ? 0 : (Appearance.alisEverywhere ? 1 : 0))
     Behavior on border.width {
         enabled: Appearance.animationsEnabled
         NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
     border.color: Appearance.zzzEverywhere ? "transparent"
         : Appearance.angelEverywhere ? "transparent"
-        : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+        : Appearance.alisEverywhere ? Appearance.alis.colBorder : "transparent"
     Behavior on border.color {
         enabled: Appearance.animationsEnabled
         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -206,7 +206,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: "keyboard_arrow_up"
                     iconSize: Appearance.font.pixelSize.larger
-                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                    color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer1
                     Behavior on color {
                         enabled: Appearance.animationsEnabled
                         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -221,7 +221,7 @@ Rectangle {
             text: root.tabs[root.selectedTab]?.name ?? Translation.tr("Widgets")
             font.pixelSize: Appearance.font.pixelSize.large
             font.family: Appearance.zzzEverywhere ? Appearance.font.family.numbers : Appearance.font.family.main
-            color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+            color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer1
             Behavior on color {
                 enabled: Appearance.animationsEnabled
                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -277,7 +277,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "keyboard_arrow_down"
                         iconSize: Appearance.font.pixelSize.larger
-                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer1
                         Behavior on color {
                             enabled: Appearance.animationsEnabled
                             ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -356,7 +356,7 @@ Rectangle {
                 gradient: Gradient {
                     GradientStop {
                         position: 0.0
-                        color: Appearance.zzzEverywhere ? Appearance.zzz.chrome : Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.chrome : Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.alisEverywhere ? Appearance.alis.colLayer1 : Appearance.colors.colLayer1
                         Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     }
                     GradientStop { position: 1.0; color: "transparent" }
@@ -376,7 +376,7 @@ Rectangle {
                     GradientStop { position: 0.0; color: "transparent" }
                     GradientStop {
                         position: 1.0
-                        color: Appearance.zzzEverywhere ? Appearance.zzz.chrome : Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1
+                        color: Appearance.zzzEverywhere ? Appearance.zzz.chrome : Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.alisEverywhere ? Appearance.alis.colLayer1 : Appearance.colors.colLayer1
                         Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                     }
                 }

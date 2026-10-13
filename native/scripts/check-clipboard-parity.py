@@ -75,7 +75,7 @@ def run(argv: list[str], payload: bytes) -> subprocess.CompletedProcess[bytes]:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("usage: check-clipboard-parity.py /path/to/inir-native", file=sys.stderr)
+        print("usage: check-clipboard-parity.py /path/to/alis-native", file=sys.stderr)
         return 64
     rust = Path(sys.argv[1]).resolve()
     if not rust.is_file():

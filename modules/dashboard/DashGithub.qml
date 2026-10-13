@@ -208,8 +208,8 @@ DashCard {
                 anchors.margins: contributionContent.roomy ? 6 : 4
 
                 readonly property color cellColor: root.colAccent
-                readonly property color emptyColor: root.inirEverywhere
-                    ? Appearance.inir.colLayer2
+                readonly property color emptyColor: root.alisEverywhere
+                    ? Appearance.alis.colLayer2
                     : Appearance.angelEverywhere
                         ? Appearance.angel.colGlassCardHover
                         : Appearance.colors.colLayer2

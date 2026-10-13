@@ -37,7 +37,7 @@ Scope {
     id: backgroundScope
 
     // Bounded diagnostics for the desktop clock. They are inert unless the
-    // supervised shell is loaded with INIR_REGION_DEBUG=1.
+    // supervised shell is loaded with ALIS_REGION_DEBUG=1.
     property bool clockDebugRegionActive: false
     property color clockDebugRegionColor: "transparent"
     property real clockDebugRegionBrightness: -1
@@ -188,7 +188,7 @@ Scope {
 
         function clockDebugState(): string {
             return JSON.stringify({
-                enabled: Quickshell.env("INIR_REGION_DEBUG") === "1",
+                enabled: Quickshell.env("ALIS_REGION_DEBUG") === "1",
                 config: {
                     style: Config.getNestedValue("background.widgets.clock.style", "cookie"),
                     adaptToWallpaper: Config.getNestedValue("background.widgets.clock.digital.adaptToWallpaper", true),
@@ -214,8 +214,8 @@ Scope {
         }
 
         function clockDebugSetMode(style: string, adaptToWallpaper: bool): string {
-            if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
-                return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
+            if (Quickshell.env("ALIS_REGION_DEBUG") !== "1")
+                return "clock diagnostics disabled; load with ALIS_REGION_DEBUG=1";
             if (style !== "digital" && style !== "cookie")
                 return "invalid clock style: " + style;
             backgroundScope._captureClockDebugSnapshot();
@@ -236,8 +236,8 @@ Scope {
         }
 
         function clockDebugSetRegion(color: string, brightness: real, spread: real): string {
-            if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
-                return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
+            if (Quickshell.env("ALIS_REGION_DEBUG") !== "1")
+                return "clock diagnostics disabled; load with ALIS_REGION_DEBUG=1";
             const parsed = Qt.color(color);
             if (!parsed.valid)
                 return "invalid color: " + color;
@@ -249,8 +249,8 @@ Scope {
         }
 
         function clockDebugSetLayout(x: int, y: int, quickControlsOpen: bool): string {
-            if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
-                return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
+            if (Quickshell.env("ALIS_REGION_DEBUG") !== "1")
+                return "clock diagnostics disabled; load with ALIS_REGION_DEBUG=1";
             if (!backgroundScope._clockDebugEditModeSnapshotValid) {
                 backgroundScope._clockDebugEditModeSnapshot = GlobalStates.widgetEditMode;
                 backgroundScope._clockDebugEditModeSnapshotValid = true;
@@ -1626,14 +1626,14 @@ Scope {
                                 GlobalStates.settingsOverlayOpen = true
                             } else {
                                 Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=14",
-                                    Quickshell.shellPath("scripts/inir"), "settings-window"])
+                                    Quickshell.shellPath("scripts/alis"), "settings-window"])
                             }
                         } },
                     { text: Translation.tr("Done editing"), iconName: "check", monochromeIcon: true,
                         action: () => { widgetManagerPanel.shown = false; GlobalStates.setWidgetEditMode(false) } }
                 ] : [
                     { text: Translation.tr("Settings"), iconName: "settings", monochromeIcon: true,
-                        action: () => { Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]) } },
+                        action: () => { Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"]) } },
                     { type: "separator" },
                     { text: Translation.tr("Change wallpaper"), iconName: "image", monochromeIcon: true,
                         action: () => { GlobalActions.runLauncher(["wallpaperSelector", "toggle"]) } },
@@ -2014,7 +2014,7 @@ Scope {
                     const nextKey = String(next?.editInstanceKey ?? instanceKey)
                     backgroundScope.promoteDesktopWidgetKey(nextKey)
                     GlobalStates.selectDesktopWidget(nextKey)
-                    if (Quickshell.env("INIR_REGION_DEBUG") === "1")
+                    if (Quickshell.env("ALIS_REGION_DEBUG") === "1")
                         console.debug("[WidgetEdit] layer promote", instanceKey, "->", nextKey,
                             "overlaps=", matches.length)
                     return nextKey
@@ -2058,11 +2058,11 @@ Scope {
                     readonly property int gridSize: Config.getNestedValue("background.widgets.editGrid.size", 32)
                     readonly property bool gridVisible: Config.getNestedValue("background.widgets.editGrid.snap", true)
                     readonly property color gridColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                        : Appearance.inirEverywhere ? Appearance.inir.colAccent
+                        : Appearance.alisEverywhere ? Appearance.alis.colAccent
                         : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                         : Appearance.colors.colPrimary
                     readonly property color crosshairColor: Appearance.angelEverywhere ? Appearance.angel.colTertiary
-                        : Appearance.inirEverywhere ? Appearance.inir.colTertiary
+                        : Appearance.alisEverywhere ? Appearance.alis.colTertiary
                         : Appearance.auroraEverywhere ? Appearance.colors.colTertiary
                         : Appearance.colors.colTertiary
                     readonly property var workArea: ShellLayoutController.desktopWorkArea(
@@ -2606,7 +2606,7 @@ Scope {
                     }
                 }
 
-                // Custom user widgets from ~/.config/inir/widgets/
+                // Custom user widgets from ~/.config/alis/widgets/
                 Repeater {
                     model: CustomWidgets.ready ? CustomWidgets.widgets : []
 

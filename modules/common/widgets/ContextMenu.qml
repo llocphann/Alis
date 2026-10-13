@@ -251,7 +251,7 @@ Loader {
                 rightMargin: popupWindow.isHorizontalPopup && popupWindow.isLeftSide ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
             }
             fallbackColor: root.panelFallbackColor
-            inirColor: Appearance.inir.colLayer2
+            alisColor: Appearance.alis.colLayer2
             auroraTransparency: Appearance.aurora.popupTransparentize
             radius: root.panelRadius
             border.width: root.panelBorderWidth

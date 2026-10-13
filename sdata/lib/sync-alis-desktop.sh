@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Reconcile public Alis desktop IDs after repo-copy UPDATE.
-# This does not change the legacy inir.service, ShellId, XDG user state, or
+# This does not change the legacy alis.service, ShellId, XDG user state, or
 # the user's existing foreign Alis desktop entries/icon.
 set -euo pipefail
 
@@ -89,4 +89,4 @@ else
         exit 1
     fi
 fi
-printf 'Alis desktop IDs reconciled; legacy inir IDs and session remain unchanged.\n'
+printf 'Alis desktop IDs reconciled; legacy alis IDs and session remain unchanged.\n'

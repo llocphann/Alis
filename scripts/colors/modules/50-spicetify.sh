@@ -10,7 +10,7 @@ main() {
   [[ "$enable_spicetify" == 'true' ]] || exit 0
   command -v spicetify &>/dev/null || exit 0
   local theme
-  theme=$(config_json '.appearance.wallpaperTheming.spicetifyTheme // "Inir"' 'Inir')
+  theme=$(config_json '.appearance.wallpaperTheming.spicetifyTheme // "Alis"' 'Alis')
   "$SCRIPT_DIR/apply-spicetify-theme.sh" --theme "$theme"
 }
 
