@@ -336,9 +336,15 @@ EOF
       assets/applications/inir.desktop > "$out/share/applications/inir.desktop"
     sed "s|^Exec=inir|Exec=$out/bin/inir|" \
       assets/applications/inir-settings.desktop > "$out/share/applications/inir-settings.desktop"
+    sed "s|^Exec=alis|Exec=$out/bin/alis|" \
+      assets/applications/alis.desktop > "$out/share/applications/alis.desktop"
+    sed "s|^Exec=alis|Exec=$out/bin/alis|" \
+      assets/applications/alis-settings.desktop > "$out/share/applications/alis-settings.desktop"
     chmod 0644 \
       "$out/share/applications/inir.desktop" \
-      "$out/share/applications/inir-settings.desktop"
+      "$out/share/applications/inir-settings.desktop" \
+      "$out/share/applications/alis.desktop" \
+      "$out/share/applications/alis-settings.desktop"
     install -Dm644 assets/icons/desktop-symbolic.svg \
       "$out/share/icons/hicolor/scalable/apps/inir.svg"
 
@@ -361,6 +367,6 @@ EOF
     homepage = "https://github.com/llocphann/Alis";
     license = lib.licenses.gpl3Only;
     platforms = lib.platforms.linux;
-    mainProgram = "inir";
+    mainProgram = "alis";
   };
 }

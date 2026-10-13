@@ -22,13 +22,20 @@ for shell in bash fish zsh; do
 done
 grep -Fq "Name=Alis Shell" "$repo/assets/applications/inir.desktop" || fail "desktop entry"
 grep -Fq "Name=Alis Settings" "$repo/assets/applications/inir-settings.desktop" || fail "settings desktop entry"
+grep -Fxq "NoDisplay=true" "$repo/assets/applications/inir-settings.desktop" || fail "legacy settings launcher visible"
+grep -Fxq "NoDisplay=true" "$repo/assets/applications/inir.desktop" || fail "legacy shell launcher visible"
+grep -Fxq "X-Alis-Managed=true" "$repo/assets/applications/alis.desktop" || fail "Alis desktop ownership marker missing"
+grep -Fq "Exec=alis settings" "$repo/assets/applications/alis-settings.desktop" || fail "Alis settings app ID missing"
+grep -Fq "Exec=alis service restart" "$repo/assets/applications/alis.desktop" || fail "Alis shell app ID missing"
 grep -Fq 'Translation.tr("Welcome to Alis")' "$repo/welcome.qml" || fail "wizard"
 grep -Fq "first_run.txt" "$repo/services/FirstRunExperience.qml" || fail "first-run marker"
 grep -Fq "welcomeWizard.completed" "$repo/welcome.qml" || fail "wizard completion marker"
 for package in "$repo/distro/arch/inir-shell/PKGBUILD" "$repo/distro/arch/inir-shell-git/PKGBUILD"; do
     grep -Fq 'install -Dm755 "$srcroot/scripts/alis" "$pkgdir/usr/bin/alis"' "$package" || fail "Arch Alis launcher missing"
+    grep -Fq 'install -Dm644 "$srcroot/assets/applications/alis-settings.desktop"' "$package" || fail "Arch Alis application ID missing"
 done
 grep -Fq 'makeWrapper "$runtime/scripts/alis" "$out/bin/alis"' "$repo/nix/package.nix" || fail "Nix Alis launcher missing"
+grep -Fq 'assets/applications/alis-settings.desktop > "$out/share/applications/alis-settings.desktop"' "$repo/nix/package.nix" || fail "Nix Alis desktop ID missing"
 grep -Fq 'install -m755 scripts/alis "$(DESTDIR)$(BINDIR)/alis"' "$repo/Makefile" || fail "Makefile Alis launcher missing"
 stage="$tmp/make-stage"
 make -s install-bin "DESTDIR=$stage" "PREFIX=/usr" || fail "Make Alis launcher installation"

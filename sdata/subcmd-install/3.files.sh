@@ -262,6 +262,34 @@ case "${SKIP_QUICKSHELL}" in
       log_success "Settings desktop entry installed"
     fi
 
+
+    # New Alis IDs remain visible; legacy IDs are hidden for pinned shortcuts.
+    # Never replace an unrelated user-owned Alis desktop entry.
+    if [[ -f "${REPO_ROOT}/assets/applications/alis.desktop" ]]; then
+      _alis_shell_entry="${INIR_APPLICATIONS_DIR}/alis.desktop"
+      if [[ -e "$_alis_shell_entry" || -L "$_alis_shell_entry" ]] &&
+         { [[ ! -f "$_alis_shell_entry" || -L "$_alis_shell_entry" ]] || ! grep -Fxq 'X-Alis-Managed=true' "$_alis_shell_entry"; }; then
+        log_warning "Preserving user-owned desktop entry: $_alis_shell_entry"
+      else
+        _alis_shell_tmp="${XDG_CACHE_HOME}/alis.desktop.$"
+        sed "s|^Exec=.*|Exec=${XDG_BIN_HOME//&/\\&}/alis service restart|" "${REPO_ROOT}/assets/applications/alis.desktop" > "$_alis_shell_tmp"
+        install_file "$_alis_shell_tmp" "$_alis_shell_entry"
+        rm -f "$_alis_shell_tmp"
+      fi
+    fi
+    if [[ -f "${REPO_ROOT}/assets/applications/alis-settings.desktop" ]]; then
+      _alis_settings_entry="${INIR_APPLICATIONS_DIR}/alis-settings.desktop"
+      if [[ -e "$_alis_settings_entry" || -L "$_alis_settings_entry" ]] &&
+         { [[ ! -f "$_alis_settings_entry" || -L "$_alis_settings_entry" ]] || ! grep -Fxq 'X-Alis-Managed=true' "$_alis_settings_entry"; }; then
+        log_warning "Preserving user-owned desktop entry: $_alis_settings_entry"
+      else
+        _alis_settings_tmp="${XDG_CACHE_HOME}/alis-settings.desktop.$"
+        sed "s|^Exec=.*|Exec=${XDG_BIN_HOME//&/\\&}/alis settings|" "${REPO_ROOT}/assets/applications/alis-settings.desktop" > "$_alis_settings_tmp"
+        install_file "$_alis_settings_tmp" "$_alis_settings_entry"
+        rm -f "$_alis_settings_tmp"
+      fi
+    fi
+
     log_success "Quickshell inir config installed"
 
     # Install Python packages now that requirements.txt is in place

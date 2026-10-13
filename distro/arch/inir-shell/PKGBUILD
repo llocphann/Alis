@@ -9,7 +9,7 @@ install=inir-shell.install
 # Hadalis does not publish version tags/releases yet. Keep the non-VCS package
 # reproducible by pinning the reviewed source snapshot; release automation can
 # switch this to a tag once the project publishes one.
-_source_ref="${INIR_SOURCE_REF:-299f825a48292e47a148852fbebd3955cea82ae9}"
+_source_ref="${INIR_SOURCE_REF:-de7155d0a53a35e04dd58c9e160647943776223a}"
 _default_source_archive="https://github.com/llocphann/Alis/archive/${_source_ref}.tar.gz"
 _source_archive="${INIR_SOURCE_ARCHIVE:-${_default_source_archive}}"
 _source_dir="${INIR_SOURCE_DIR:-Alis-${_source_ref}}"
@@ -258,6 +258,8 @@ PY
 
   install -Dm644 "$srcroot/assets/applications/inir.desktop" "$pkgdir/usr/share/applications/inir.desktop"
   install -Dm644 "$srcroot/assets/applications/inir-settings.desktop" "$pkgdir/usr/share/applications/inir-settings.desktop"
+  install -Dm644 "$srcroot/assets/applications/alis.desktop" "$pkgdir/usr/share/applications/alis.desktop"
+  install -Dm644 "$srcroot/assets/applications/alis-settings.desktop" "$pkgdir/usr/share/applications/alis-settings.desktop"
   install -Dm644 "$srcroot/assets/icons/desktop-symbolic.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/inir.svg"
   install -Dm644 "$srcroot/distro/arch/inir-shell/inir-quickshell-rebuild.hook" \
     "$pkgdir/usr/share/libalpm/hooks/inir-quickshell-rebuild.hook"
