@@ -157,8 +157,18 @@ float physicalContact(vec2 p,vec4 rect,float radius,float bodyRadius) {
         d=min(d,contactCorner(vec2(p.y,viewport.x-p.x),rect.y,rect.y+rect.w,max(0.0,min(radius,min(rect.w*.5,viewport.x-rect.x-rounding)))));
     return d;
 }
-float record(float d, vec2 p, vec4 rect, float radius) {
+float record(float d, vec2 p, vec4 rect, float radius, bool boundPoint, float support) {
     if(rect.z <= 0.0 || rect.w <= 0.0) return d;
+    // Conservative lower bound for the box and its physical contact support.
+    // Only skip when the smooth union is exactly the current distance. The
+    // 1px arithmetic margin is used within the finite coordinate domain below;
+    // other inputs retain the original distance calculation.
+    if(boundPoint && radius >= 0.0 && radius <= 32768.0
+            && all(lessThanEqual(abs(rect),vec4(32768.0)))) {
+        vec2 outside=max(rect.xy-p,p-rect.xy-rect.zw);
+        float lowerBound=max(outside.x,outside.y)-material.x;
+        if(lowerBound > d+support) return d;
+    }
     return fuse(d,min(roundedBox(p,rect,radius),physicalContact(p,rect,material.x,radius)));
 }
 vec4 workspaceRect() {
@@ -168,18 +178,26 @@ vec4 workspaceRect() {
     return vec4(edges.xy,viewport.xy-edges.xy-edges.zw);
 }
 float field(vec2 p) {
+    bool boundPoint=material.x >= 0.0 && material.x <= 32768.0
+        && material.y <= 32768.0
+        && all(lessThanEqual(abs(p),vec2(32768.0)));
+    float support=max(0.1,material.y)+1.0;
     vec4 hole=workspaceRect();
     float d=-roundedBox(p,hole,material.x);
-    d=record(d,p,rect0,radii0.x); d=record(d,p,rect1,radii0.y); d=record(d,p,rect2,radii0.z); d=record(d,p,rect3,radii0.w);
-    d=record(d,p,rect4,radii1.x); d=record(d,p,rect5,radii1.y); d=record(d,p,rect6,radii1.z); d=record(d,p,rect7,radii1.w);
-    d=record(d,p,rect8,radii2.x); d=record(d,p,rect9,radii2.y); d=record(d,p,rect10,radii2.z); d=record(d,p,rect11,radii2.w);
-    d=record(d,p,rect12,radii3.x); d=record(d,p,rect13,radii3.y); d=record(d,p,rect14,radii3.z); d=record(d,p,rect15,radii3.w);
-    d=record(d,p,rect16,radii4.x); d=record(d,p,rect17,radii4.y); d=record(d,p,rect18,radii4.z); d=record(d,p,rect19,radii4.w);
-    d=record(d,p,rect20,radii5.x); d=record(d,p,rect21,radii5.y); d=record(d,p,rect22,radii5.z); d=record(d,p,rect23,radii5.w);
-    d=record(d,p,rect24,radii6.x); d=record(d,p,rect25,radii6.y); d=record(d,p,rect26,radii6.z); d=record(d,p,rect27,radii6.w);
-    d=record(d,p,rect28,radii7.x); d=record(d,p,rect29,radii7.y); d=record(d,p,rect30,radii7.z); d=record(d,p,rect31,radii7.w);
-    d=record(d,p,rect32,radii8.x); d=record(d,p,rect33,radii8.y); d=record(d,p,rect34,radii8.z); d=record(d,p,rect35,radii8.w);
-    d=record(d,p,rect36,radii9.x); d=record(d,p,rect37,radii9.y); d=record(d,p,rect38,radii9.z); d=record(d,p,rect39,radii9.w);
+    // Fold the same 40 slots in the same order without duplicating the
+    // distance/control-flow program 40 times in the driver compiler.
+    vec4 rectangles[40]=vec4[40](
+        rect0,rect1,rect2,rect3,rect4,rect5,rect6,rect7,
+        rect8,rect9,rect10,rect11,rect12,rect13,rect14,rect15,
+        rect16,rect17,rect18,rect19,rect20,rect21,rect22,rect23,
+        rect24,rect25,rect26,rect27,rect28,rect29,rect30,rect31,
+        rect32,rect33,rect34,rect35,rect36,rect37,rect38,rect39);
+    vec4 rounding[10]=vec4[10](
+        radii0,radii1,radii2,radii3,radii4,
+        radii5,radii6,radii7,radii8,radii9);
+    for(int i=0;i<40;i++)
+        // Avoid integer modulo: the Qt6 package also serves GLSL 1.20.
+        d=record(d,p,rectangles[i],rounding[i/4][i-(i/4)*4],boundPoint,support);
     return d;
 }
 layout(binding=3) uniform sampler2D bodyTexture;
