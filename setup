@@ -283,7 +283,7 @@ sync_user_alis_service_from_repo_if_present() {
 
 ensure_user_alis_service_enabled() {
     if brand_legacy_owner_present; then
-        log_error "Previous shell service still exists; run the explicit canonical cutover before enabling Alis."
+        log_error "Previous shell service still exists. Inspect scripts/brand-canonical-cutover.sh --dry-run before enabling Alis."
         return 2
     fi
     if ! command -v systemctl >/dev/null 2>&1; then
