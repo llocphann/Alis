@@ -76,6 +76,7 @@ ColumnLayout {
                 objectName: row.toggleObjectName
                 text: row.toggleIcon
                 toggled: row.toggleChecked
+                checked: row.toggleChecked
                 buttonText: row.toggleDescription
                 Accessible.checkable: true
                 Accessible.checked: row.toggleChecked
