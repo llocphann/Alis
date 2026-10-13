@@ -117,7 +117,7 @@ ContentPage {
             ContentSubsection {
                 visible: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
                 title: Translation.tr("Spotify theme")
-                tooltip: Translation.tr("Choose the Spicetify layout while keeping iNiR wallpaper colors")
+                tooltip: Translation.tr("Choose the Spicetify layout while keeping Alis wallpaper colors")
 
                 ConfigSelectionArray {
                     currentValue: Config.options?.appearance?.wallpaperTheming?.spicetifyTheme ?? "Inir"

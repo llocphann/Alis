@@ -193,7 +193,7 @@ Item {
                     ActionTile {
                         tileIcon: "settings"
                         label: Translation.tr("Settings")
-                        onClicked: ShellExec.execDetachedArgs([Quickshell.shellPath("scripts/inir"), "settings"], "Open iNiR settings")
+                        onClicked: ShellExec.execDetachedArgs([Quickshell.shellPath("scripts/inir"), "settings"], "Open Alis settings")
                     }
                     ActionTile {
                         tileIcon: "tune"
