@@ -642,9 +642,12 @@ Singleton {
         const now=new Date()
         const future=new Date(now)
         future.setDate(future.getDate()+(days||7))
-        return root.list.flatMap(event=> {
+        // Qt's QML JavaScript runtime does not consistently provide
+        // Array.prototype.flatMap. Use explicit accumulation to preserve
+        // occurrence identity, filtering, and chronological ordering.
+        const upcoming=[]
+        for (const event of root.list) {
             const slots=Occurrences.entries(event)
-            const entries=[]
             for (let index=0;index<slots.length;index++) {
                 const slot=slots[index]
                 const start=new Date(slot.startDate)
@@ -653,14 +656,15 @@ Singleton {
                     ? end>now && start<=future
                     : start>=now && start<=future && !slot.notified
                 if (!show) continue
-                entries.push(Object.assign({},event,{
+                upcoming.push(Object.assign({},event,{
                     _canonicalEvent:Object.assign({},event,{_editOccurrenceIndex:index}),
                     dateTime:slot.startDate,startDate:slot.startDate,
                     endDate:slot.endDate
                 }))
             }
-            return entries
-        }).sort((a,b)=>new Date(a.startDate)-new Date(b.startDate))
+        }
+        upcoming.sort((a,b)=>new Date(a.startDate)-new Date(b.startDate))
+        return upcoming
     }
 
     function markAsNotified(id) {
