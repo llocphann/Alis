@@ -41,7 +41,6 @@ Item {
     // Only the side toolbar's top action row gets smaller square buttons.
     readonly property real headerActionSize: toolbarOnHorizontalEdge
         ? editorActionSize : 26 * Appearance.fontSizeScale
-    readonly property real editorSliderWidth: 158 * Appearance.fontSizeScale
     required property string outputName
     required property var moduleLayer
     required property var controller
@@ -950,12 +949,18 @@ Item {
                         id:moduleEditorColumn
                         Layout.alignment:Qt.AlignTop
                         objectName:"abyssEditorModuleColumn"
+                        // Use the trailing module action as the right alignment
+                        // guide. Never stretch the lower controls into empty
+                        // space beyond the Module picker/action toolbar.
+                        readonly property real controlsSpan:Math.max(0,
+                            Math.min(width,moduleHeaderActions.implicitWidth))
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         Layout.preferredWidth:editFineControls.useTwoColumns
                             ? Math.max(0,(toolbarScroll.width-24*Appearance.fontSizeScale)/2)
                             : Math.max(0,toolbarScroll.width)
                         spacing:4*Appearance.fontSizeScale
                             RowLayout {
+                            id:moduleHeaderActions
                             objectName:"abyssModuleHeaderActions"
                             Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
                             StyledComboBox {
@@ -1057,14 +1062,19 @@ Item {
                             }
                             RowLayout {
                         id:moduleAlignmentRow
-                        Layout.fillWidth:true;Layout.minimumWidth:0;spacing:4*Appearance.fontSizeScale
+                        Layout.fillWidth:false;Layout.minimumWidth:0
+                        Layout.preferredWidth:moduleEditorColumn.controlsSpan
+                        Layout.maximumWidth:moduleEditorColumn.controlsSpan
+                        spacing:4*Appearance.fontSizeScale
                         StyledComboBox {
                         baseHeight:28*Appearance.fontSizeScale
-                        Layout.preferredWidth:(root.multiSelect ? 126 : 190)*Appearance.fontSizeScale
-                        Layout.maximumWidth:(root.multiSelect ? 126 : 190)*Appearance.fontSizeScale
+                        Layout.preferredWidth:root.multiSelect
+                            ? 126*Appearance.fontSizeScale : moduleEditorColumn.controlsSpan
+                        Layout.maximumWidth:moduleEditorColumn.controlsSpan
                         Layout.fillWidth:true;Layout.minimumWidth:0;
                         
                         id:alignmentChoice
+                        objectName:"abyssModulePositionDropdown"
                         visible:true
                         model:[
                         {label:"Free position",value:"free"},
@@ -1110,7 +1120,9 @@ Item {
                             GridLayout {
                             id:selectedModuleControls
                             objectName:"abyssEditorSelectedFields"
-                            Layout.fillWidth:true;Layout.minimumWidth:0
+                            Layout.fillWidth:false;Layout.minimumWidth:0
+                            Layout.preferredWidth:moduleEditorColumn.controlsSpan
+                            Layout.maximumWidth:moduleEditorColumn.controlsSpan
                             columns:1;rowSpacing:4*Appearance.fontSizeScale
                             RowLayout {
                             id:moduleRoundingRow
@@ -1139,7 +1151,12 @@ Item {
                             }
                             AbyssSlider {
                             editorCompact:true
-                            Layout.fillWidth:true;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
+                            Layout.fillWidth:true
+                            Layout.preferredWidth:Math.max(75*Appearance.fontSizeScale,
+                                moduleEditorColumn.controlsSpan-root.editorActionSize-2*Appearance.fontSizeScale)
+                            Layout.maximumWidth:Math.max(75*Appearance.fontSizeScale,
+                                moduleEditorColumn.controlsSpan-root.editorActionSize-2*Appearance.fontSizeScale)
+                            Layout.minimumWidth:75*Appearance.fontSizeScale
                             
                             
                             objectName:"abyssModuleRounding"
@@ -1168,9 +1185,15 @@ Item {
                             }
                             AbyssSlider {
                             editorCompact:true
-                            Layout.fillWidth:true;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
+                            Layout.fillWidth:true
+                            Layout.preferredWidth:Math.max(75*Appearance.fontSizeScale,
+                                moduleEditorColumn.controlsSpan-root.editorActionSize-2*Appearance.fontSizeScale)
+                            Layout.maximumWidth:Math.max(75*Appearance.fontSizeScale,
+                                moduleEditorColumn.controlsSpan-root.editorActionSize-2*Appearance.fontSizeScale)
+                            Layout.minimumWidth:75*Appearance.fontSizeScale
                             
                             
+                            objectName:"abyssModuleCustomSizeSlider"
                             visible:true
                             from:.6;to:1.8
                             value:root.selected?.customSize
@@ -1211,8 +1234,8 @@ Item {
                             Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
                             StyledComboBox {
                             baseHeight:28*Appearance.fontSizeScale
-                            Layout.preferredWidth:88*Appearance.fontSizeScale
-                            Layout.maximumWidth:88*Appearance.fontSizeScale
+                            Layout.preferredWidth:104*Appearance.fontSizeScale
+                            Layout.maximumWidth:104*Appearance.fontSizeScale
                             Layout.fillWidth:true;Layout.minimumWidth:0;
                             
                             id:edgeChoice
@@ -1252,20 +1275,31 @@ Item {
                             onToggled:root.edgeJoinModules=Object.assign({},root.edgeJoinModules,{[root.editingEdge]:checked})
                             }
                             }
-                            RowLayout {
+                            GridLayout {
                             id:edgeGapAndSizeRow
-                            Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
+                            objectName:"abyssEdgeGapAndSizeRow"
+                            Layout.fillWidth:true;Layout.minimumWidth:0
+                            // Both tracks receive equal column widths. On side
+                            // toolbars stack them instead of clipping the labels.
+                            columns:root.toolbarOnHorizontalEdge
+                                && edgeEditorColumn.width>=260*Appearance.fontSizeScale ? 2 : 1
+                            columnSpacing:2*Appearance.fontSizeScale
+                            rowSpacing:2*Appearance.fontSizeScale
                             RowLayout {
                             
-                            Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
+                            Layout.fillWidth:true;Layout.minimumWidth:0
+                            Layout.preferredWidth:0
+                            spacing:2*Appearance.fontSizeScale
                             EditorIconHint {
                             Layout.preferredWidth:20*Appearance.fontSizeScale
                             glyph:"space_bar";description:"Gap between modules" }
                             AbyssSlider {
                             editorCompact:true
-                            Layout.fillWidth:true;Layout.preferredWidth:Math.max(78,(edgeEditorColumn.width-50*Appearance.fontSizeScale)/2);Layout.maximumWidth:135*Appearance.fontSizeScale;Layout.minimumWidth:75*Appearance.fontSizeScale
+                            Layout.fillWidth:true;Layout.preferredWidth:110*Appearance.fontSizeScale
+                            Layout.minimumWidth:75*Appearance.fontSizeScale
                             
                             
+                            objectName:"abyssEdgeGapSlider"
                             unit:"px";from:0;to:32;value:root.gap
                             onMoved:root.gap=value
                             
@@ -1273,15 +1307,19 @@ Item {
                             }
                             RowLayout {
                             
-                            Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
+                            Layout.fillWidth:true;Layout.minimumWidth:0
+                            Layout.preferredWidth:0
+                            spacing:2*Appearance.fontSizeScale
                             EditorIconHint {
                             Layout.preferredWidth:20*Appearance.fontSizeScale
                             glyph:"aspect_ratio";description:"Shared module size for this Edge" }
                             AbyssSlider {
                             editorCompact:true
-                            Layout.fillWidth:true;Layout.preferredWidth:Math.max(78,(edgeEditorColumn.width-50*Appearance.fontSizeScale)/2);Layout.maximumWidth:135*Appearance.fontSizeScale;Layout.minimumWidth:75*Appearance.fontSizeScale
+                            Layout.fillWidth:true;Layout.preferredWidth:110*Appearance.fontSizeScale
+                            Layout.minimumWidth:75*Appearance.fontSizeScale
                             
                             
+                            objectName:"abyssEdgeSizeSlider"
                             from:.6;to:1.8
                             value:Placement.edgeSize(root.draftOptions,root.editingEdge)
                             
@@ -1296,19 +1334,6 @@ Item {
                             EditorIconHint {
                             Layout.preferredWidth:20*Appearance.fontSizeScale
                             glyph:"line_weight";description:"Physical Edge width" }
-                            AbyssSlider {
-                            editorCompact:true
-                            Layout.fillWidth:true;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
-                            
-                            
-                            unit:"px";from:0;to:40;stepSize:1
-                            
-                            value:Placement.edgeThickness(
-                            root.draftOptions,root.editingEdge)
-                            onMoved:root.edgeThicknesses=Object.assign(
-                            {},root.edgeThicknesses,
-                            {[root.editingEdge]:value})
-                            }
                             AbyssButton {
                             Layout.maximumHeight:root.editorActionSize
                             Layout.maximumWidth:root.editorActionSize
@@ -1338,6 +1363,21 @@ Item {
                             checked:root.edgeRoundZeroCorners[root.editingEdge]===true
                             onToggled:root.edgeRoundZeroCorners=Object.assign({},root.edgeRoundZeroCorners,{[root.editingEdge]:checked})
                             }
+                            AbyssSlider {
+                            editorCompact:true
+                            objectName:"abyssEdgeWidthSlider"
+                            Layout.fillWidth:true;Layout.preferredWidth:190*Appearance.fontSizeScale
+                            Layout.minimumWidth:75*Appearance.fontSizeScale
+                            
+                            
+                            unit:"px";from:0;to:40;stepSize:1
+                            
+                            value:Placement.edgeThickness(
+                            root.draftOptions,root.editingEdge)
+                            onMoved:root.edgeThicknesses=Object.assign(
+                            {},root.edgeThicknesses,
+                            {[root.editingEdge]:value})
+                            }
                             }
                             RowLayout {
                             id:scaleModulesRow
@@ -1356,17 +1396,6 @@ Item {
                             checkable:true;checked:root.edgeWidthAffectsModules[root.editingEdge]!==false
                             onToggled:root.edgeWidthAffectsModules=Object.assign({},root.edgeWidthAffectsModules,{[root.editingEdge]:checked})
                             }
-                            AbyssSlider {
-                            editorCompact:true
-                            objectName:"abyssScaleModulesSlider"
-                            Layout.fillWidth:true;Layout.preferredWidth:root.editorSliderWidth;Layout.maximumWidth:root.editorSliderWidth;Layout.minimumWidth:75*Appearance.fontSizeScale
-                            
-                            
-                            from:.6;to:1.8;value:root.moduleScale
-                            
-                            onMoved:root.moduleScale=value
-                            StyledToolTip { text:"Overall module scale" }
-                            }
                             AbyssButton {
                             Layout.maximumHeight:root.editorActionSize
                             Layout.maximumWidth:root.editorActionSize
@@ -1384,6 +1413,18 @@ Item {
                             onToggled:root.singleModuleExpansion=Object.assign(
                             {},root.singleModuleExpansion,
                             {[root.editingEdge]:checked ? "edge" : "local"})
+                            }
+                            AbyssSlider {
+                            editorCompact:true
+                            objectName:"abyssScaleModulesSlider"
+                            Layout.fillWidth:true;Layout.preferredWidth:190*Appearance.fontSizeScale
+                            Layout.minimumWidth:75*Appearance.fontSizeScale
+                            
+                            
+                            from:.6;to:1.8;value:root.moduleScale
+                            
+                            onMoved:root.moduleScale=value
+                            StyledToolTip { text:"Overall module scale" }
                             }
                             }
                     }
