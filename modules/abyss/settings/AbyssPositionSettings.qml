@@ -22,6 +22,10 @@ ColumnLayout {
     property bool compactIpcEditor: false
     // Compact IPC presents type, Edge, alignment and corner toggle together.
     property alias compactKindCombo: compactKindChoice
+    property bool compactSideToolbar: false
+    // Move the same Join toggle into the side toolbar's Modules/IPC row,
+    // without duplicating its checked state or activation handler.
+    property Item compactCornerHost: null
     // Size each trigger for its own longest choice. Do not derive the
     // widths from this ColumnLayout's width: that depends on the children's
     // implicit widths and can collapse the three IPC fields to ~72 px.
@@ -40,6 +44,20 @@ ColumnLayout {
     readonly property real compactKindWidth: compactContentWidth(compactKindChoice.model)
     readonly property real compactEdgeWidth: compactContentWidth(edgeChoice.model)
     readonly property real compactAlignmentWidth: compactContentWidth(alignmentChoice.model)
+    function compactTriggerWidth(label, fullWidth): real {
+        if (!compactSideToolbar) return fullWidth
+        // Side triggers fit the selected text; their opened menus retain
+        // the full option width via StyledComboBox.popupMinimumWidth.
+        return Math.min(fullWidth,Math.max(86*Appearance.fontSizeScale,
+            compactSelectorMetrics.advanceWidth(label || "")
+                + 32*Appearance.fontSizeScale + Appearance.font.pixelSize.normal))
+    }
+    readonly property real compactKindTriggerWidth:
+        compactTriggerWidth(compactKindChoice.displayText,compactKindWidth)
+    readonly property real compactEdgeTriggerWidth:
+        compactTriggerWidth(edgeChoice.displayText,compactEdgeWidth)
+    readonly property real compactAlignmentTriggerWidth:
+        compactTriggerWidth(alignmentChoice.displayText,compactAlignmentWidth)
     property bool compactVertical: false
     property bool compactActions: false
     property var allowedKinds: []
@@ -141,11 +159,13 @@ ColumnLayout {
             id:compactKindChoice
             objectName:"abyssEditorIpcKind"
             visible:root.compactIpcEditor
-            Layout.fillWidth:root.compactVertical
+            Layout.fillWidth:root.compactVertical && !root.compactSideToolbar
             Layout.minimumWidth:0
-            Layout.preferredWidth:root.compactIpcEditor ? root.compactKindWidth : -1
-            Layout.maximumWidth:root.compactIpcEditor && !root.compactVertical
-                ? root.compactKindWidth : Infinity
+            Layout.preferredWidth:root.compactIpcEditor ? root.compactKindTriggerWidth : -1
+            Layout.maximumWidth:root.compactIpcEditor
+                && (!root.compactVertical || root.compactSideToolbar)
+                ? root.compactKindTriggerWidth : Infinity
+            popupMinimumWidth:root.compactSideToolbar ? root.compactKindWidth : 0
             textRole:"label";valueRole:"value"
             model:[{label:"All OSDs",value:"osd"},{label:"Volume",value:"volume"},
                 {label:"Brightness",value:"brightness"},{label:"Microphone",value:"mic"},
@@ -157,12 +177,15 @@ ColumnLayout {
         StyledComboBox {
             id:edgeChoice
             objectName:"abyssIpcEdgeDropdown"
-            Layout.fillWidth:!root.compactIpcEditor || root.compactVertical
+            Layout.fillWidth:!root.compactIpcEditor
+                || (root.compactVertical && !root.compactSideToolbar)
             Layout.minimumWidth:0
             Layout.preferredWidth:root.compactIpcEditor
-                ? root.compactEdgeWidth : -1
-            Layout.maximumWidth:root.compactIpcEditor && !root.compactVertical
-                ? root.compactEdgeWidth : Infinity
+                ? root.compactEdgeTriggerWidth : -1
+            Layout.maximumWidth:root.compactIpcEditor
+                && (!root.compactVertical || root.compactSideToolbar)
+                ? root.compactEdgeTriggerWidth : Infinity
+            popupMinimumWidth:root.compactSideToolbar ? root.compactEdgeWidth : 0
             textRole:"label";valueRole:"value"
             model:[{label:"Follow source edge",value:"source"},{label:"Top Edge",value:"top"},
                 {label:"Right Edge",value:"right"},{label:"Bottom Edge",value:"bottom"},{label:"Left Edge",value:"left"}]
@@ -172,12 +195,15 @@ ColumnLayout {
         StyledComboBox {
             id:alignmentChoice
             objectName:"abyssIpcAlignmentDropdown"
-            Layout.fillWidth:!root.compactIpcEditor || root.compactVertical
+            Layout.fillWidth:!root.compactIpcEditor
+                || (root.compactVertical && !root.compactSideToolbar)
             Layout.minimumWidth:0
             Layout.preferredWidth:root.compactIpcEditor
-                ? root.compactAlignmentWidth : -1
-            Layout.maximumWidth:root.compactIpcEditor && !root.compactVertical
-                ? root.compactAlignmentWidth : Infinity
+                ? root.compactAlignmentTriggerWidth : -1
+            Layout.maximumWidth:root.compactIpcEditor
+                && (!root.compactVertical || root.compactSideToolbar)
+                ? root.compactAlignmentTriggerWidth : Infinity
+            popupMinimumWidth:root.compactSideToolbar ? root.compactAlignmentWidth : 0
             textRole:"label";valueRole:"value"
             model:[{label:"Follow source position",value:"source"},{label:"Align start",value:"start"},
                 {label:"Align center",value:"center"},{label:"Align end",value:"end"},{label:"Custom position",value:"custom"}]
@@ -199,7 +225,9 @@ ColumnLayout {
         }
         AbyssButton {
             objectName:"abyssIpcJoinCornerToggle"
-            visible:root.compactIpcEditor && Presentation.canJoin(root.kind)
+            parent:root.compactSideToolbar && root.compactCornerHost
+                ? root.compactCornerHost : ipcPositionSelectorRow
+            visible:root.visible && root.compactIpcEditor && Presentation.canJoin(root.kind)
             text:"Join nearby corner";glyph:"join_inner"
             compact:true;editorSquare:true;checkable:true
             description:root.nearbyEdge

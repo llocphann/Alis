@@ -38,6 +38,9 @@ Item {
         }
     }
     readonly property real editorActionSize: 30 * Appearance.fontSizeScale
+    // Only the side toolbar's top action row gets smaller square buttons.
+    readonly property real headerActionSize: toolbarOnHorizontalEdge
+        ? editorActionSize : 26 * Appearance.fontSizeScale
     readonly property real editorSliderWidth: 158 * Appearance.fontSizeScale
     required property string outputName
     required property var moduleLayer
@@ -737,26 +740,35 @@ Item {
 
                 GridLayout {
                     Layout.fillWidth: true;Layout.minimumWidth:0
-                    columns: width>=480*Appearance.fontSizeScale ? 2 : 1
-                    rowSpacing: 4
+                    // Measure against the fixed scroll viewport, never this
+                    // grid's width. Side panels can still use a single row.
+                    columns: root.toolbarOnHorizontalEdge
+                        ? (toolbarScroll.width>=480*Appearance.fontSizeScale ? 2 : 1)
+                        : (toolbarScroll.width>=205*Appearance.fontSizeScale ? 2 : 1)
+                    columnSpacing:root.toolbarOnHorizontalEdge ? 8 : 3
+                    rowSpacing:4
                     AbyssLabel {
+                        objectName:"abyssEditorTitle"
                         text: "Edit layout · "+root.outputName
                         font.bold: true
-                        Layout.fillWidth: true;Layout.minimumWidth:0
-
-                        elide: Text.ElideRight
+                        font.pixelSize:root.toolbarOnHorizontalEdge
+                            ? AbyssStyle.fontSize : 11*Appearance.fontSizeScale
+                        wrapMode:Text.NoWrap
+                        Layout.fillWidth:true;Layout.minimumWidth:0
+                        elide:Text.ElideRight
                     }
                     RowLayout {
+                        objectName:"abyssEditorHeaderActions"
                         Layout.alignment:Qt.AlignRight
                         Layout.fillWidth:false
-                        spacing:4
+                        spacing:root.toolbarOnHorizontalEdge ? 4 : 2
                         AbyssButton {
                         Layout.maximumHeight:root.editorActionSize
                         Layout.maximumWidth:root.editorActionSize
                         editorSquare:true
                             objectName:"abyssLayoutUndo"
                             text:"Undo";glyph:"undo";compact:true
-                            Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
+                            Layout.preferredWidth:root.headerActionSize;Layout.preferredHeight:root.headerActionSize
                             enabled:root.undoStack.length>0
                             onClicked:root.undo()
                         }
@@ -767,7 +779,7 @@ Item {
                             objectName:"abyssLayoutReset"
                             text: "Reset"; glyph: "restart_alt"; compact: true
                             description: root.editingPopups ? "Reset selected IPC position" : "Reset layout draft"
-                            Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
+                            Layout.preferredWidth:root.headerActionSize;Layout.preferredHeight:root.headerActionSize
                             onClicked: root.editingPopups ? root.resetIpcPosition() : root.reset()
                         }
 
@@ -779,7 +791,7 @@ Item {
                             objectName:"abyssLayoutCancel"
                             text: "Cancel"; glyph: "close"; compact: true
                             description: "Cancel editing"
-                            Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
+                            Layout.preferredWidth:root.headerActionSize;Layout.preferredHeight:root.headerActionSize
                             onClicked: root.finish(false)
                         }
                         AbyssButton {
@@ -789,7 +801,7 @@ Item {
                             objectName:"abyssLayoutDone"
                             text: "Done"; glyph: "check"; compact: true
                             description: "Save layout changes"
-                            Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
+                            Layout.preferredWidth:root.headerActionSize;Layout.preferredHeight:root.headerActionSize
                             enabled:!root.layoutConflicts.length
                             onClicked: root.finish(true)
                         }
@@ -804,19 +816,21 @@ Item {
                     color:Appearance.colors.colError
                 }
 
-                // One clear toolbar line on horizontal Edges: tabs at left,
-                // output selection and scope at right. Narrow side-Edge
-                // layouts stack the same two groups without clipping.
+                // Wide Edges show tabs and output scope on one row.
+                // Side Edges stack those two rows, but each remains compact:
+                // the Join toggle stays beside IPC, and scope stays inline.
                 GridLayout {
                     id: editorModeHeader
                     objectName: "abyssEditorModeHeader"
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
-                    columns: width >= 500*Appearance.fontSizeScale ? 2 : 1
+                    columns: root.toolbarOnHorizontalEdge
+                        && toolbarScroll.width >= 500*Appearance.fontSizeScale ? 2 : 1
                     columnSpacing: 8
                     rowSpacing: 4
 
                     RowLayout {
+                        id: editorModeTabs
                         objectName: "abyssEditorModeTabs"
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
@@ -846,15 +860,15 @@ Item {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                        spacing: 8
+                        spacing:root.toolbarOnHorizontalEdge ? 8 : 4
                         Item { Layout.fillWidth: true; Layout.minimumWidth: 0 }
-                        // On narrow vertical toolbars the two scope controls
-                        // stack instead of overflowing the BodyHost clip.
                         GridLayout {
                             Layout.fillWidth: false
                             Layout.alignment: Qt.AlignRight
-                            columns: editorModeHeader.columns === 2 ? 2 : 1
-                            columnSpacing: 8
+                            columns: editorModeHeader.columns === 2
+                                || (!root.toolbarOnHorizontalEdge
+                                    && toolbarScroll.width >= 200*Appearance.fontSizeScale) ? 2 : 1
+                            columnSpacing:root.toolbarOnHorizontalEdge ? 8 : 6
                             rowSpacing: 4
                             StyledComboBox {
                             id:ipcOutputChoice
@@ -862,8 +876,8 @@ Item {
                             // Shared output scope is useful in both Modules and IPC.
                             visible:true
                             baseHeight:28*Appearance.fontSizeScale
-                            Layout.preferredWidth:116*Appearance.fontSizeScale
-                            Layout.maximumWidth:116*Appearance.fontSizeScale
+                            Layout.preferredWidth:(root.toolbarOnHorizontalEdge ? 116 : 94)*Appearance.fontSizeScale
+                            Layout.maximumWidth:(root.toolbarOnHorizontalEdge ? 116 : 94)*Appearance.fontSizeScale
                             textRole:"label";valueRole:"value"
                             model:[{label:"All outputs",value:""},
                                 {label:root.outputName,value:root.outputName}]
@@ -876,6 +890,8 @@ Item {
                             Layout.fillWidth:false
                             Layout.minimumWidth:0
                             text:"This output only"
+                            font.pixelSize:root.toolbarOnHorizontalEdge
+                                ? AbyssStyle.fontSize : 12*Appearance.fontSizeScale
                             checked:root.outputOnly
                             onToggled:root.outputOnly=checked
                         }
@@ -892,6 +908,8 @@ Item {
                     visible:root.editingPopups
                     kind:"volume"
                     compactVertical:!root.toolbarWideControls
+                    compactSideToolbar:!root.toolbarOnHorizontalEdge
+                    compactCornerHost:root.toolbarOnHorizontalEdge ? null : editorModeTabs
                     compactActions:root.toolbarOnHorizontalEdge
                     commitImmediately:false
                     positions:root.draftPositions

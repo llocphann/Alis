@@ -28,6 +28,21 @@ assert '? (root.compactVertical ? 1 : 4)' in positions
 assert 'id:compactKindChoice' in positions
 assert 'property alias compactKindCombo: compactKindChoice' in positions
 assert positions.count('Layout.preferredWidth:root.compactIpcEditor') == 3
+assert 'property bool compactSideToolbar: false' in positions
+assert 'property Item compactCornerHost: null' in positions
+assert 'root.compactCornerHost : ipcPositionSelectorRow' in positions
+assert 'compactCornerHost:root.toolbarOnHorizontalEdge ? null : editorModeTabs' in editor
+assert 'font.pixelSize:root.toolbarOnHorizontalEdge' in editor
+assert 'root.headerActionSize' in editor
+assert 'columns: root.toolbarOnHorizontalEdge' in editor
+assert 'toolbarScroll.width>=205*Appearance.fontSizeScale ? 2 : 1' in editor
+assert 'toolbarScroll.width >= 200*Appearance.fontSizeScale' in editor
+assert '(root.toolbarOnHorizontalEdge ? 116 : 94)*Appearance.fontSizeScale' in editor
+assert positions.count('popupMinimumWidth:root.compactSideToolbar') == 3
+combo = (root / "modules/common/widgets/StyledComboBox.qml").read_text()
+assert 'property real popupMinimumWidth: 0' in combo
+assert 'width: Math.max(root.width,root.popupMinimumWidth)' in combo
+assert 'width: root.popup.width - 8' in combo
 # The editor has one visible IPC kind picker; output scope joins the tabs.
 assert 'objectName:"abyssEditorIpcKind"' in positions
 assert 'objectName:"abyssIpcEdgeDropdown"' in positions
@@ -57,7 +72,8 @@ assert 'selectionRegion' not in editor
 # left: Modules / IPC tabs; right: output dropdown + This output only.
 head=editor.split('id: editorModeHeader',1)[1].split('AbyssPositionSettings {',1)[0]
 assert 'objectName: "abyssEditorModeHeader"' in editor
-assert 'columns: width >= 500*Appearance.fontSizeScale ? 2 : 1' in head
+assert 'columns: root.toolbarOnHorizontalEdge' in head
+assert 'toolbarScroll.width >= 500*Appearance.fontSizeScale ? 2 : 1' in head
 assert 'objectName: "abyssEditorModeTabs"' in head
 assert 'objectName: "abyssEditorOutputScope"' in head
 assert head.index('objectName:"abyssEditorModulesMode"') < head.index('objectName:"abyssEditorIpcMode"')
@@ -74,7 +90,7 @@ assert 'root.editingPopups ? root.resetIpcPosition() : root.reset()' in editor
 assert editor.count('text:"This output only"') == 1
 assert 'visible: !root.compactIpcEditor' in positions.split('SettingsNote {')[-1]
 
-assert 'Layout.preferredWidth:116*Appearance.fontSizeScale' in editor
+assert '(root.toolbarOnHorizontalEdge ? 116 : 94)*Appearance.fontSizeScale' in editor
 
 fine=editor[editor.index("id:editFineControls"):]
 fine_two_column=re.search(r"readonly property bool useTwoColumns:\s*([\s\S]+?)\n\s*columns:useTwoColumns",fine)

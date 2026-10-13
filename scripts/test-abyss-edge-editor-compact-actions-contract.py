@@ -115,6 +115,10 @@ assert 'description:"Scale modules:' in editor
 assert 'root.edgeWidthAffectsModules[root.editingEdge]!==false' in editor
 assert 'description:"Choose a module to add"' not in editor
 assert 'Layout.preferredWidth:92*Appearance.fontSizeScale' in editor
+assert 'readonly property real headerActionSize:' in editor
+assert editor.count('Layout.preferredWidth:root.headerActionSize;Layout.preferredHeight:root.headerActionSize') == 4
+assert 'objectName:"abyssEditorHeaderActions"' in editor
+assert 'objectName:"abyssEditorTitle"' in editor
 assert 'Layout.preferredWidth:58*Appearance.fontSizeScale' in editor
 assert 'readonly property real editorActionSize: 30 * Appearance.fontSizeScale' in editor
 assert 'readonly property real editorSliderWidth: 158 * Appearance.fontSizeScale' in editor

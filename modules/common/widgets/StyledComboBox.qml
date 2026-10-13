@@ -15,6 +15,8 @@ ComboBox {
     property list<string> settingsSearchKeywords: []
 
     property real baseHeight: 38
+    // Opt-in: compact triggers may open a wider menu for long option labels.
+    property real popupMinimumWidth: 0
     readonly property bool abyssStyle: Config.options?.panelFamily === "abyss"
     property real radius: abyssStyle ? baseHeight/2 : Appearance.rounding.small
 
@@ -89,7 +91,7 @@ ComboBox {
     popup: Popup {
         y: root.height + 4
         margins: 8
-        width: root.width
+        width: Math.max(root.width,root.popupMinimumWidth)
         implicitHeight: Math.min(contentItem.implicitHeight + 8, 300)
         padding: 4
 
@@ -161,7 +163,7 @@ ComboBox {
         required property int index
         required property var modelData
 
-        width: root.width - 8
+        width: root.popup.width - 8
         height: 36
         highlighted: root.highlightedIndex === index
         hoverEnabled: true

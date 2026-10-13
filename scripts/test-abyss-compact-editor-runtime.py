@@ -103,6 +103,16 @@ ShellRoot {
      check(!findChild(editor,"abyssEditorSelection"),"duplicate module dropdown returned")
      const header=item("abyssEditorModeHeader")
      const tabs=control("abyssEditorModeTabs")
+     const title=control("abyssEditorTitle")
+     const actions=control("abyssEditorHeaderActions")
+     const headerOrigin=(item)=>item.mapToItem(scroll.contentItem,0,0)
+     if(!editor.toolbarOnHorizontalEdge && scroll.width>=205*scale) {
+      check(Math.abs(headerOrigin(title).y-headerOrigin(actions).y)<1.5,
+        "side title and Undo/Reset/Cancel/Done must share the first line")
+      check(headerOrigin(title).x+title.width<=headerOrigin(actions).x+1,
+        "side editor title overlaps header actions")
+      check(done.width<=26*scale+1,"side header actions did not shrink")
+     }
      const scope=control("abyssEditorOutputScope")
      const sharedOutput=control("abyssEditorIpcOutput")
      const outputCheckbox=control("abyssEditorOutputOnly")
@@ -214,6 +224,25 @@ ShellRoot {
      const alignCombo=control("abyssIpcAlignmentDropdown")
      const ipcJoin=control("abyssIpcJoinCornerToggle")
      check(ipcJoin.checkable,"IPC join nearby corner must be a toggle")
+     if(!editor.toolbarOnHorizontalEdge) {
+      const joinPoint=ipcJoin.mapToItem(scroll.contentItem,0,0)
+      const tabsPoint=tabs.mapToItem(scroll.contentItem,0,0)
+      check(Math.abs(joinPoint.y-tabsPoint.y)<1.5,
+        "side IPC Join icon must move next to the IPC tab")
+      const outputPoint=outputPicker.mapToItem(scroll.contentItem,0,0)
+      const checkPoint=outputCheckbox.mapToItem(scroll.contentItem,0,0)
+      if(scroll.width>=200*scale)
+       check(Math.abs(outputPoint.y-checkPoint.y)<1.5,
+         "side output dropdown and checkbox must share a line")
+      for(const [item,limit] of [[chooser,placement.compactKindWidth],
+          [edgeCombo,placement.compactEdgeWidth],
+          [alignCombo,placement.compactAlignmentWidth]]) {
+       check(item.width<=limit+1 && item.width<scroll.width-10*scale,
+         "side IPC trigger is not content-sized")
+       check(item.popup.width>=limit-1,
+         "side IPC popup should reveal full choice labels")
+      }
+     }
      const coords=item=>item.mapToItem(scroll.contentItem,0,0)
      if(!placement.compactVertical) {
       check(selectorRow.columns===4,"IPC horizontal row must contain three dropdowns plus corner toggle")
