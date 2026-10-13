@@ -107,7 +107,7 @@ pkgbase = inir-shell
 	conflicts = noctalia-qs
 	conflicts = noctalia-shell
 	conflicts = cachyos-niri-noctalia
-	source = alis-2.29.3-5a94e8ef8f19851d1d1c565603bc5dc72064950f.tar.gz::https://github.com/llocphann/Alis/archive/5a94e8ef8f19851d1d1c565603bc5dc72064950f.tar.gz
+	source = alis-2.29.3-299f825a48292e47a148852fbebd3955cea82ae9.tar.gz::https://github.com/llocphann/Alis/archive/299f825a48292e47a148852fbebd3955cea82ae9.tar.gz
 	sha256sums = SKIP
 
 pkgname = inir-shell
