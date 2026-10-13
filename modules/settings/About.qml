@@ -118,7 +118,7 @@ ContentPage {
     SettingsCardSection {
         expanded: false
         icon: "deployed_code"
-        title: "iNiR"
+        title: "Alis"
 
         SettingsGroup {
             RowLayout {
@@ -209,7 +209,7 @@ ContentPage {
                     Layout.alignment: Qt.AlignVCenter
 
                     StyledText {
-                        text: "iNiR"
+                        text: "Alis"
                         font.pixelSize: Appearance.font.pixelSize.title
                     }
 
@@ -247,7 +247,7 @@ ContentPage {
                     }
 
                     StyledText {
-                        text: "[https://github.com/snowarch/inir](https://github.com/snowarch/inir)"
+                        text: "[https://github.com/llocphann/Alis](https://github.com/llocphann/Alis)"
                         font.pixelSize: Appearance.font.pixelSize.small
                         color: Appearance.colors.colPrimary
                         textFormat: Text.MarkdownText
@@ -271,13 +271,13 @@ ContentPage {
                 RippleButtonWithIcon {
                     materialIcon: "auto_stories"
                     mainText: Translation.tr("Documentation")
-                    onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/wiki")
+                    onClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis/blob/dev/docs/INSTALL.md")
                 }
 
                 RippleButtonWithIcon {
                     materialIcon: "bug_report"
                     mainText: Translation.tr("Issues")
-                    onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/issues")
+                    onClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis/issues")
                 }
 
             }
