@@ -42,7 +42,7 @@ WindowDialog {
         for (let i=0;i<42;i++) {
             const date=new Date(start)
             date.setDate(start.getDate()+i)
-            const local=Events.getAllEventsForDate(date)
+            const local=Events.getAllEventOccurrencesForDate(date)
             const external=CalendarSync.getEventsForDate(date) || []
             cells.push({date:date,day:date.getDate(),
                 currentMonth:date.getMonth()===month && date.getFullYear()===year,

@@ -66,13 +66,20 @@ function reschedule(event,index,start,end) {
     slots[index]=newSlot;
     return store(event,slots);
 }
-function intersectsDay(event,date,includeNotified) {
-    var begin=new Date(date);begin.setHours(0,0,0,0);
+// Each saved time slot counts separately in calendar indicators, even when
+// several compatible Agenda slots share one canonical Event ID.
+function occurrencesForDay(event,date,includeNotified) {
+    var begin=valid(date);
+    if (!begin) return [];
+    begin.setHours(0,0,0,0);
     var finish=new Date(begin);finish.setDate(finish.getDate()+1);
-    return entries(event).some(function(slot) {
+    return entries(event).filter(function(slot) {
         return (includeNotified || !slot.notified || event.allDay===true)
             && valid(slot.startDate)<finish && valid(slot.endDate)>begin;
     });
+}
+function intersectsDay(event,date,includeNotified) {
+    return occurrencesForDay(event,date,includeNotified).length > 0;
 }
 function upcoming(event,nowValue,throughValue) {
     var now=valid(nowValue),through=valid(throughValue);

@@ -633,9 +633,22 @@ Singleton {
         return root.list.filter(event => Occurrences.intersectsDay(event,date,false))
     }
 
-    // History and calendar dots include previously fired occurrences.
+    // Preserve the canonical Event-ID view for existing consumers.
     function getAllEventsForDate(date) {
         return root.list.filter(event => Occurrences.intersectsDay(event,date,true))
+    }
+
+    // Calendar dots represent every saved slot, not just distinct Event IDs.
+    // Return the parent event once per matching slot for consistent colors;
+    // include fired history without modifying Agenda persistence.
+    function getAllEventOccurrencesForDate(date) {
+        const matches = []
+        for (const event of root.list) {
+            const slots = Occurrences.occurrencesForDay(event,date,true)
+            for (let i = 0; i < slots.length; i++)
+                matches.push(event)
+        }
+        return matches
     }
 
     function getUpcomingEvents(days) {

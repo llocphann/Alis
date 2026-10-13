@@ -8,6 +8,8 @@ renderer=(root/"modules/common/widgets/ObsidianMonthCalendar.qml").read_text()
 policy=(root/"modules/common/widgets/CalendarEventDotLayout.js").read_text()
 popup=(root/"modules/bar/ClockCalendarContent.qml").read_text()
 editor=(root/"modules/sidebarRight/events/EventsDialog.qml").read_text()
+events=(root/"services/Events.qml").read_text()
+occurrences=(root/"services/EventOccurrences.js").read_text()
 sidebar=(root/"modules/sidebarRight/calendar/CalendarWidget.qml").read_text()
 settings=(root/"modules/settings/IntegrationsConfig.qml").read_text()
 english=json.loads((root/"translations/en_US.json").read_text())
@@ -29,6 +31,14 @@ require("spacing: root.countedEventDots ? 3 : 1" in renderer,"legacy dot spacing
 require("Math.min(3," in popup and "Math.min(3," in editor,"counted hosts must cap at 3")
 require("countedEventDots: true" in popup and "maxEventDots: root.maxEventDots" in popup,"Popup not wired")
 require("countedEventDots: true" in editor,"Planner editor not wired")
+require("Events.getAllEventOccurrencesForDate(date)" in editor,
+    "Planner calendar must count saved slots, not canonical Event IDs")
+require("Occurrences.occurrencesForDay(event,date,true)" in events,
+    "Calendar occurrence feed must include every saved slot and history")
+require("function occurrencesForDay(event,date,includeNotified)" in occurrences,
+    "Missing canonical per-day slot filter")
+require("return occurrencesForDay(event,date,includeNotified).length > 0" in occurrences,
+    "Legacy intersectsDay must share per-day filtering semantics")
 require("CalendarSync.getEventsForDate(d)" in popup and "Events.getEventsForDate(d)" in popup,"missing feeds")
 require("eventCount: local.length + external.length" in popup,"event identity/count lost")
 require("root._localEventRevision" in popup and "root._externalEventRevision" in popup,"updates no longer reactive")
