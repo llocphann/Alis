@@ -15,6 +15,7 @@ Item {
     id: root
 
     signal editorActivated()
+    signal editorDeactivated()
 
     property int margin: 10
     // Dashboard can opt into a denser chrome while Sidebar keeps the full
@@ -25,16 +26,14 @@ Item {
     // Keep the same editor/autosave backend while hiding Dashboard/Sidebar
     // navigation chrome that would slow down a one-thought interaction.
     property bool quickCapturePresentation: false
-    // The hover corner reads Markdown without taking input focus; all other
-    // shared editor hosts preserve their existing Source-first behavior.
-    property bool readingOnHover: false
-    // Dashboard/Weekly Planner opt in to an explicit, local Reading/Source
-    // choice. Sidebar stays Source-first, and the Edgebar stays hover-Reading.
-    // Neither mode is saved globally or writes a separate note.
-    property bool allowManualReading: false
-    property bool markdownEditing: !root.readingOnHover
-    readonly property bool markdownReading:
-        (root.readingOnHover || root.allowManualReading) && !root.markdownEditing
+    // Dashboard and corner Quick Notes render Markdown until the text input
+    // actually has focus. Full Notepad and Sidebar keep Source-first behavior.
+    property bool autoMarkdownReading: false
+    // The corner layer-shell popup handles Escape as a window shortcut.
+    // Avoid handling the same press in both the editor and its host.
+    property bool externalEscapeHandling: false
+    property bool markdownEditing: !root.autoMarkdownReading
+    readonly property bool markdownReading: root.autoMarkdownReading && !root.markdownEditing
     property int _markdownFocusEpoch: 0
     property bool verticalDotNavigation: false
     property var _noteRailWheelState: NoteRailWheel.idle()
@@ -172,19 +171,10 @@ Item {
     function releaseEditorFocus(): void {
         ++root._markdownFocusEpoch
         root.flushPendingSave()
+        if (root.autoMarkdownReading)
+            root.markdownEditing = false
         textArea.focus = false
         root.focus = false
-        if (root.readingOnHover)
-            root.markdownEditing = false
-    }
-
-    function enterMarkdownReading(): void {
-        if (!root.allowManualReading || !Notepad.ready)
-            return
-        // Cancel queued async focus and durably flush this exact tab before
-        // hiding Source. The Markdown preview reads those same source bytes.
-        root.releaseEditorFocus()
-        root.markdownEditing = false
     }
 
     function formatMarkdown(kind): bool {
@@ -880,8 +870,14 @@ Item {
                             background: null
 
                             onActiveFocusChanged: {
-                                if (activeFocus)
+                                if (activeFocus) {
+                                    root.markdownEditing = true
                                     root.editorActivated()
+                                } else if (root.autoMarkdownReading && root.markdownEditing) {
+                                    // Blur, including a click on another control, is Reading.
+                                    root.releaseEditorFocus()
+                                    root.editorDeactivated()
+                                }
                             }
 
                             MouseArea {
@@ -913,6 +909,15 @@ Item {
                             }
 
                             Keys.onPressed: event => {
+                                if (root.autoMarkdownReading && !root.externalEscapeHandling
+                                        && event.key === Qt.Key_Escape
+                                        && event.modifiers === Qt.NoModifier) {
+                                    // First Escape consumes the edit and flushes the draft.
+                                    // A subsequent Escape reaches the Dashboard owner.
+                                    root.releaseEditorFocus()
+                                    event.accepted = true
+                                    return
+                                }
                                 if (Notepad.ready && event.modifiers === Qt.ControlModifier) {
                                     const formatKind = event.key === Qt.Key_B ? "bold"
                                         : event.key === Qt.Key_I ? "italic"
