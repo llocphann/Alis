@@ -11,6 +11,21 @@ cat > "$tmp/inir" <<'LEGACY'
 printf "<%s>\n" "$@"
 LEGACY
 output="$(bash "$tmp/alis" status --example "arg with spaces")"
+cat > "$tmp/inir" <<'HELP_MOCK'
+#!/usr/bin/env bash
+if [[ "${1:-}" == help ]]; then
+    printf '%s\n' 'Usage: inir <command>' '  inir status' '  ~/.config/inir must stay unchanged'
+else
+    printf '<%s>\n' "$@"
+fi
+HELP_MOCK
+help_output="$(bash "$tmp/alis" help)"
+grep -Fq 'Usage: alis <command>' <<< "$help_output" || fail 'Alis public help still exposes legacy command usage'
+grep -Fq '  alis status' <<< "$help_output" || fail 'Alis help command example not converted'
+grep -Fq '~/.config/inir must stay unchanged' <<< "$help_output" || fail 'Alis help rewrote internal compatibility paths'
+alt_help_output="$(bash "$tmp/alis" --help)"
+[[ "$alt_help_output" == "$help_output" ]] || fail 'Alis --help is not equivalent to help'
+
 [[ "$output" == $'<status>\n<--example>\n<arg with spaces>' ]] || fail "argument passthrough"
 for shell in bash fish zsh; do
     output="$(bash "$repo/scripts/alis" completions "$shell")" || fail "$shell completion lookup"

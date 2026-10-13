@@ -26,6 +26,25 @@ if [[ "${1:-}" == "completions" && $# -eq 2 ]]; then
     esac
 fi
 
+# Only rewrite command examples in human-readable help. Internal paths,
+# unit names, environment variables and IPC IDs remain compatibility ABI.
+if [[ $# -eq 0 || "${1:-}" == "help" || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    if [[ -f "$script_dir/inir" ]]; then
+        bash "$script_dir/inir" help
+    elif command -v inir >/dev/null 2>&1; then
+        inir help
+    else
+        printf 'Alis runtime launcher not found. Install the shell first.\n' >&2
+        exit 127
+    fi | sed \
+        -e 's/^Usage: inir /Usage: alis /' \
+        -e 's/^  inir /  alis /' \
+        -e 's/^IPC targets (inir </IPC targets (alis </' \
+        -e 's/IPC targets (inir </IPC targets (alis </g' \
+        -e "s/'inir </'alis </g"
+    exit 0
+fi
+
 if [[ -f "$script_dir/inir" ]]; then
     exec bash "$script_dir/inir" "$@"
 fi
