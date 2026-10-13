@@ -20,9 +20,9 @@ DashCard {
         Layout.fillHeight: true
         surfaceLocalTabSelection: true
         showZettelkastenActions: true
-        // A deliberate, Source-first Markdown Reading switch. The Weekly
-        // Planner's notes column uses this same card/editor implementation.
-        showMarkdownModeSwitch: true
+        // Reading by default; click into Source editing, Escape to Reading.
+        // Weekly Planner inherits this same shared card/editor behavior.
+        autoMarkdownReading: true
         margin: 0
     }
 }
