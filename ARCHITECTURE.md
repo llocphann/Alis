@@ -1,4 +1,4 @@
-# iNiR Architecture
+# Alis Architecture
 
 > A complete desktop shell built on [Quickshell](https://quickshell.org/) for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor.
 
@@ -215,8 +215,8 @@ Names such as `m3primary`, `m3surface`, etc. are Material color-token identifier
 ## Distribution
 
 ```bash
-git clone https://github.com/llocphann/Hadalis.git
-cd Hadalis
+git clone https://github.com/llocphann/Alis.git
+cd Alis
 ./setup
 ./setup install -y
 ./setup update
@@ -253,7 +253,7 @@ inir overview toggle
 inir audio volumeUp
 ```
 
-Never run raw `qs kill -c inir` / `qs -c inir` by hand. iNiR runs under `inir.service` (`systemd --user`); `inir restart` is the supported forced restart path.
+Never run raw `qs kill -c inir` / `qs -c inir` by hand. Alis runs under the compatibility unit `inir.service` (`systemd --user`); `inir restart` is the supported forced restart path.
 
 ## Connected Perimeter Status
 

@@ -8,7 +8,7 @@
 
 Please report security vulnerabilities privately rather than opening a public issue with exploit details.
 
-1. Prefer GitHub private vulnerability reporting for this repository: <https://github.com/llocphann/Hadalis/security/advisories/new>.
+1. Prefer GitHub private vulnerability reporting for this repository: <https://github.com/llocphann/Alis/security/advisories/new>.
 2. Include the affected revision/version, reproduction steps, impact, and any relevant logs with secrets removed.
 3. If private vulnerability reporting is unavailable, contact the repository maintainer privately before publishing technical details.
 
@@ -16,7 +16,7 @@ Do not include passwords, API tokens, private configuration values, or other cre
 
 ## Privilege model
 
-The main Hadalis/iNiR shell runs as the logged-in user. However, the repository also ships narrowly scoped privileged helpers for operations that require system-level access.
+The main Alis shell (compatible with iNiR runtime IDs) runs as the logged-in user. However, the repository also ships narrowly scoped privileged helpers for operations that require system-level access.
 
 Current privileged integration surfaces include:
 
@@ -36,7 +36,7 @@ Relevant security concerns include, but are not limited to:
 - **Unsafe update/install behavior** — repository, package, migration, or install flows overwriting user/system state outside their documented ownership.
 - **Optional integration handling** — missing services, permissions, hardware, or binaries leading to unsafe fallbacks rather than graceful failure.
 
-Upstream vulnerabilities in Niri/Hyprland, Qt, Quickshell, systemd, polkit, TLP, ThinkFan, or other dependencies should normally be reported upstream. A Hadalis-specific misuse, unsafe configuration, packaging error, or privilege-boundary issue involving those dependencies remains in scope here.
+Upstream vulnerabilities in Niri/Hyprland, Qt, Quickshell, systemd, polkit, TLP, ThinkFan, or other dependencies should normally be reported upstream. An Alis-specific misuse, unsafe configuration, packaging error, or privilege-boundary issue involving those dependencies remains in scope here.
 
 ## Security-sensitive changes
 

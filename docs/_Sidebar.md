@@ -1,4 +1,4 @@
-## iNiR Wiki
+## Alis Wiki
 
 ### Start
 - [Home](Home)

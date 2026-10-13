@@ -1,1 +1,1 @@
-iNiR documentation. `stable` is stable. `dev` is development.
+Alis documentation. `stable` is stable. `dev` is development.

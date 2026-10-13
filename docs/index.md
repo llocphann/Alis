@@ -1,4 +1,4 @@
-# iNiR
+# Alis
 
 A complete desktop shell for Niri, built with Quickshell and QML.
 

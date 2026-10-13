@@ -1,6 +1,6 @@
-# Contributing to Hadalis
+# Contributing to Alis
 
-Hadalis is being developed on top of the cleaned iNiR runtime baseline. The current architectural target and perimeter constraints live in [README.md](README.md) and [ARCHITECTURE.md](ARCHITECTURE.md); do not infer feature completion from those target documents alone.
+Alis is being developed on top of the cleaned iNiR runtime baseline. The current architectural target and perimeter constraints live in [README.md](README.md) and [ARCHITECTURE.md](ARCHITECTURE.md); do not infer feature completion from those target documents alone.
 
 ## Branch model
 
@@ -16,8 +16,8 @@ Because multiple changes may land on `dev` concurrently, refresh the branch befo
 ## Development setup
 
 ```bash
-git clone https://github.com/llocphann/Hadalis.git
-cd Hadalis
+git clone https://github.com/llocphann/Alis.git
+cd Alis
 git switch dev
 ./setup install
 inir run
