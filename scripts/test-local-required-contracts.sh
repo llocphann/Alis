@@ -93,10 +93,10 @@ done
 for install_hook in \
     distro/arch/inir-shell/inir-shell.install \
     distro/arch/inir-shell-git/inir-shell-git.install; do
-    require_contains 'inir service enable' "$install_hook" \
-        "$install_hook no longer enables the user service"
-    require_contains 'inir service start' "$install_hook" \
-        "$install_hook no longer starts the user service"
+    require_contains 'alis service enable' "$install_hook" \
+        "$install_hook no longer instructs Alis users to enable the compatibility service"
+    require_contains 'alis service start' "$install_hook" \
+        "$install_hook no longer instructs Alis users to start the compatibility service"
     require_contains 'Pacman does not modify user home directories. The live QML compatibility path is:' "$install_hook" \
         "$install_hook no longer explains the live QML config path and ownership boundary"
     require_contains '~/.config/illogical-impulse/config.json' "$install_hook" \
@@ -105,6 +105,14 @@ for install_hook in \
         fail "$install_hook misstates the live QML config path"
     fi
 done
+
+# The public Alis CLI delegates to the existing inir.service owner.
+# Package post-install help uses the Alis command, while systemd unit,
+# compositor wants links and persistent config namespace remain unchanged.
+require_contains 'ExecStart=/usr/bin/inir run --session' assets/systemd/inir.service \
+    'active systemd session owner drifted during public-only rebrand'
+[[ ! -e assets/systemd/alis.service ]] \
+    || fail 'a second Alis unit would risk spawning two shell sessions'
 
 release_script=scripts/release.sh
 wiki_script=scripts/wiki-sync.sh
