@@ -1,9 +1,9 @@
 pkgname=inir-meta
 pkgver=2.29.3
 pkgrel=6
-pkgdesc='Full Hadalis desktop experience meta-package'
+pkgdesc='Full Alis desktop experience meta-package'
 arch=(any)
-url='https://github.com/llocphann/Hadalis'
+url='https://github.com/llocphann/Alis'
 license=('GPL-3.0-only')
 source=()
 sha256sums=()

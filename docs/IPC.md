@@ -1,20 +1,20 @@
 # IPC Reference
 
-iNiR exposes IPC targets you can call from Niri keybinds, scripts, or your terminal.
+Alis exposes IPC targets you can call from Niri keybinds, scripts, or your terminal. The legacy `inir` command and internal session name remain supported during the compatibility transition.
 
-> **Quick discovery:** `inir help` lists all targets, `inir <target> --help` shows available functions.
-> Shell completions: `eval "$(inir completions bash)"` (also zsh, fish).
+> **Quick discovery:** `alis help` lists all targets, `alis <target> --help` shows available functions.
+> Shell completions: `eval "$(alis completions bash)"` (also zsh, fish).
 
 From terminal (for testing, or showing off):
 
 ```bash
-inir <target> <function>
+alis <target> <function>
 ```
 
 In Niri config (for actual keybinds):
 
 ```kdl
-bind "Key" { spawn "inir" "<target>" "<function>"; }
+bind "Key" { spawn "alis" "<target>" "<function>"; }
 ```
 
 For low-level debugging, `inir ipc <target> <function>` still works.

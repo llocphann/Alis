@@ -43,16 +43,16 @@ for pkg in \
     distro/arch/inir-shell/PKGBUILD \
     distro/arch/inir-shell-git/PKGBUILD \
     distro/arch/inir-meta/PKGBUILD; do
-    require_contains "url='https://github.com/llocphann/Hadalis'" "$pkg" \
-        "$pkg no longer identifies the Hadalis repository"
+    require_contains "url='https://github.com/llocphann/Alis'" "$pkg" \
+        "$pkg no longer identifies the Alis repository"
     if grep -Fqi 'github.com/snowarch/inir' "$pkg"; then
         fail "$pkg still sources the upstream iNiR repository"
     fi
 done
-require_contains 'github.com/llocphann/Hadalis/archive/${_source_ref}.tar.gz' distro/arch/inir-shell/PKGBUILD \
-    'stable Arch source archive no longer points at Hadalis'
-require_contains 'git+https://github.com/llocphann/Hadalis.git#branch=dev' distro/arch/inir-shell-git/PKGBUILD \
-    'git Arch package no longer tracks Hadalis dev'
+require_contains 'github.com/llocphann/Alis/archive/${_source_ref}.tar.gz' distro/arch/inir-shell/PKGBUILD \
+    'stable Arch source archive no longer points at Alis'
+require_contains 'git+https://github.com/llocphann/Alis.git#branch=dev' distro/arch/inir-shell-git/PKGBUILD \
+    'git Arch package no longer tracks Alis dev'
 require_exact 'install=inir-shell.install' distro/arch/inir-shell/PKGBUILD \
     'stable Arch package install hook identity drifted'
 require_exact 'install=inir-shell-git.install' distro/arch/inir-shell-git/PKGBUILD \
@@ -62,8 +62,8 @@ for info in \
     distro/arch/inir-shell/.SRCINFO \
     distro/arch/inir-shell-git/.SRCINFO \
     distro/arch/inir-meta/.SRCINFO; do
-    require_contains 'url = https://github.com/llocphann/Hadalis' "$info" \
-        "$info no longer identifies the Hadalis repository"
+    require_contains 'url = https://github.com/llocphann/Alis' "$info" \
+        "$info no longer identifies the Alis repository"
     if grep -Fqi 'github.com/snowarch/inir' "$info"; then
         fail "$info still advertises the upstream iNiR repository"
     fi
@@ -74,7 +74,7 @@ require_contains 'install = inir-shell-git.install' distro/arch/inir-shell-git/.
     'git .SRCINFO install hook identity drifted'
 require_contains 'license = GPL-3.0-only' distro/arch/inir-shell-git/.SRCINFO \
     'git .SRCINFO license metadata drifted'
-require_contains 'source = inir::git+https://github.com/llocphann/Hadalis.git#branch=dev' distro/arch/inir-shell-git/.SRCINFO \
+require_contains 'source = inir::git+https://github.com/llocphann/Alis.git#branch=dev' distro/arch/inir-shell-git/.SRCINFO \
     'git .SRCINFO source identity drifted'
 require_contains 'optdepends = thinkfan: managed fan-control integration' distro/arch/inir-shell/.SRCINFO \
     'stable package no longer advertises ThinkFan integration'
@@ -108,13 +108,13 @@ done
 
 release_script=scripts/release.sh
 wiki_script=scripts/wiki-sync.sh
-require_contains 'https://github.com/llocphann/Hadalis/blob/stable/docs/SETUP.md#update' "$release_script" \
+require_contains 'https://github.com/llocphann/Alis/blob/stable/docs/SETUP.md#update' "$release_script" \
     'release helper update documentation URL drifted'
-require_contains 'https://github.com/llocphann/Hadalis/blob/stable/docs/INSTALL.md' "$release_script" \
+require_contains 'https://github.com/llocphann/Alis/blob/stable/docs/INSTALL.md' "$release_script" \
     'release helper install documentation URL drifted'
-require_contains 'https://github.com/llocphann/Hadalis/blob/stable/CHANGELOG.md' "$release_script" \
+require_contains 'https://github.com/llocphann/Alis/blob/stable/CHANGELOG.md' "$release_script" \
     'release helper changelog URL drifted'
-require_contains 'wiki_url="https://github.com/llocphann/Hadalis.wiki.git"' "$wiki_script" \
+require_contains 'wiki_url="https://github.com/llocphann/Alis.wiki.git"' "$wiki_script" \
     'Wiki publication target drifted'
 if grep -Fqi 'github.com/snowarch/inir' "$release_script" "$wiki_script"; then
     fail 'release tooling still targets the upstream iNiR repository'
