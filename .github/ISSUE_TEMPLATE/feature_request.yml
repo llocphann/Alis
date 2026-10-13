@@ -1,20 +1,11 @@
-name: Feature or improvement
-description: Suggest an Alis feature or a refinement
-labels: ["enhancement"]
+name: Feature request
+description: Suggest a new Alis capability
+labels: ["type:feature"]
 body:
   - type: markdown
     attributes:
       value: |
         Search [Alis Issues](https://github.com/llocphann/Alis/issues) before submitting a new request. One outcome per Issue; details should be just enough to implement and verify it.
-  - type: dropdown
-    id: kind
-    attributes:
-      label: Type
-      options:
-        - New feature
-        - Rework / optimization
-    validations:
-      required: true
   - type: textarea
     id: goal
     attributes:
