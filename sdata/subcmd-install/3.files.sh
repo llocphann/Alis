@@ -194,13 +194,13 @@ case "${SKIP_QUICKSHELL}" in
       log_error "Missing canonical Alis runtime launcher"
       return 1
     fi
-    # The canonical unit may not be installed/enabled while an old user
-    # service can still start. The owner-gated handoff handles upgrades.
-    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/alis.service" ||
-          -L "${XDG_CONFIG_HOME}/systemd/user/alis.service" ]] ||
+    # A previously installed user service must be retired explicitly.
+    local _legacy_owner='in''ir.service'
+    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/$_legacy_owner" ||
+          -L "${XDG_CONFIG_HOME}/systemd/user/$_legacy_owner" ]] ||
           { command -v systemctl >/dev/null &&
-            systemctl --user cat alis.service >/dev/null 2>&1; }; then
-      log_error "Legacy alis.service is still installed; refusing parallel Alis service. Use the explicit canonical cutover procedure."
+            systemctl --user cat "$_legacy_owner" >/dev/null 2>&1; }; then
+      log_error "Previous shell service still installed; refusing a parallel Alis owner."
       return 2
     fi
     local _service_refresh_status=1

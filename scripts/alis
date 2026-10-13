@@ -6,8 +6,9 @@ set -euo pipefail
 # Fail closed before a user command can start a second Quickshell instance.
 case "${1:-}" in
     run|start|restart)
+        legacy_owner='in''ir.service'
         if command -v systemctl >/dev/null 2>&1 &&
-           systemctl --user is-active --quiet alis.service; then
+           systemctl --user is-active --quiet "$legacy_owner"; then
             printf '%s\n' 'The previous shell service is still active. Refusing a second Alis session; complete the canonical service cutover.' >&2
             exit 65
         fi

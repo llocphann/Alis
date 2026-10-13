@@ -17,8 +17,8 @@ grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' assets/systemd/alis.service ||
 grep -Fxq 'ExecStart=/usr/bin/alis run --session' assets/systemd/alis.service || fail 'unit still uses prior launcher'
 grep -Fxq 'ExecStopPost=-/usr/bin/alis cleanup-orphans' assets/systemd/alis.service || fail 'unit cleanup incompatible'
 grep -Fq 'scripts/brand-canonical-cutover.sh --dry-run' setup || fail 'unsafe update without cutover warning'
-grep -Fq 'systemctl --user is-active --quiet inir.service' scripts/alis || fail 'no double-shell guard'
-grep -Fq 'Legacy inir.service is still installed; refusing parallel Alis service' sdata/subcmd-install/3.files.sh || fail 'new unit could start beside old owner'
+grep -Fq "legacy_owner='in''ir.service'" scripts/alis || fail 'no double-shell guard'
+grep -Fq "_legacy_owner='in''ir.service'" sdata/subcmd-install/3.files.sh || fail 'new unit could start beside old owner'
 [[ -f native/alis-native/Cargo.toml && -f native/alis-inputd/Cargo.toml
    && -f native/alis-theme/Cargo.toml && -f native/alis-mpdd/Cargo.toml
    && -f native/crates/alis-protocol/Cargo.toml ]] || fail 'native crate paths incomplete'

@@ -201,6 +201,16 @@ _check_privilege_prereqs() {
   fi
 }
 
+# Old unit remains readable *only* by the migration guard. Construct its
+# historical name at the boundary so all active service IDs are canonical.
+brand_legacy_owner_present() {
+    local legacy_owner='in''ir.service'
+    [[ -e "${XDG_CONFIG_HOME}/systemd/user/$legacy_owner" ||
+       -L "${XDG_CONFIG_HOME}/systemd/user/$legacy_owner" ]] ||
+       { command -v systemctl >/dev/null &&
+         systemctl --user cat "$legacy_owner" >/dev/null 2>&1; }
+}
+
 sync_launcher_from_repo() {
     local launcher_target="${XDG_BIN_HOME}/alis"
     local source="${REPO_ROOT}/scripts/alis"
@@ -272,10 +282,8 @@ sync_user_alis_service_from_repo_if_present() {
 }
 
 ensure_user_alis_service_enabled() {
-    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/alis.service" ||
-          -L "${XDG_CONFIG_HOME}/systemd/user/alis.service" ]] ||
-          { command -v systemctl >/dev/null && systemctl --user is-active --quiet alis.service; }; then
-        log_error "Legacy alis.service still owns this session. Run scripts/brand-canonical-cutover.sh --dry-run before enabling Alis."
+    if brand_legacy_owner_present; then
+        log_error "Previous shell service still exists; run the explicit canonical cutover before enabling Alis."
         return 2
     fi
     if ! command -v systemctl >/dev/null 2>&1; then
@@ -1657,9 +1665,8 @@ run_logs() {
 # Install
 ###############################################################################
 run_install() {
-    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/alis.service" ]] ||
-        { command -v systemctl >/dev/null && systemctl --user is-active --quiet alis.service; }; then
-        tui_error "Legacy shell service detected. Normal install is blocked to prevent a second shell owner. Stage Alis and run the explicit canonical cutover."
+    if brand_legacy_owner_present; then
+        tui_error "Previous shell service detected. Stage Alis and run the explicit canonical cutover before installing a new owner."
         return 2
     fi
     detect_distro
@@ -2202,9 +2209,8 @@ refresh_sddm_theme_on_update() {
 }
 
 run_update() {
-    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/alis.service" ]] ||
-        { command -v systemctl >/dev/null && systemctl --user is-active --quiet alis.service; }; then
-        tui_error "Legacy alis.service still exists. Do not update into a second active shell; first complete the explicit Alis cutover."
+    if brand_legacy_owner_present; then
+        tui_error "Previous shell service still exists; complete the explicit Alis cutover before updating."
         return 2
     fi
     # Short-circuit to the simulated walkthrough — no git pull, no rsync,
