@@ -6,7 +6,8 @@ set -euo pipefail
 # inir command is temporarily disabled. Do not rename persisted identities.
 # The Alis forwarder sets ALIS_INTERNAL_CLI for one delegated invocation.
 case "${BASH_SOURCE[0]}" in
-    */bin/inir) ALIS_LEGACY_PUBLIC=1 ;;
+    */scripts/inir) ;; # internal runtime used by QML and setup
+    */inir) ALIS_LEGACY_PUBLIC=1 ;; # public launcher, including custom XDG_BIN_HOME
 esac
 if [[ "${ALIS_LEGACY_PUBLIC:-0}" == 1 && "${ALIS_INTERNAL_CLI:-0}" != 1 ]]; then
     # Existing inir.service remains the sole session owner. Its two private
