@@ -178,24 +178,22 @@ case "${SKIP_QUICKSHELL}" in
     [[ -f "${II_TARGET}/setup" ]] && chmod +x "${II_TARGET}/setup"
 
     if [[ -f "${REPO_ROOT}/scripts/alis" ]]; then
-      install_file "${REPO_ROOT}/scripts/alis" "${ALIS_LAUNCHER_PATH}"
-      chmod +x "${ALIS_LAUNCHER_PATH}"
-      ensure_launcher_path_in_shells "${XDG_BIN_HOME}"
-      log_success "Launcher installed"
-      log_success "Launcher path configured for interactive shells"
-      if [[ -f "${REPO_ROOT}/scripts/alis" ]]; then
-        _alis_target="${XDG_BIN_HOME}/alis"
-        if [[ -L "$_alis_target" || ( -e "$_alis_target" && ! -f "$_alis_target" ) ]] \
-            || { [[ -f "$_alis_target" ]] && ! grep -Fq "# Alis is the public command while the proven Alis runtime owns the session." "$_alis_target"; }; then
-          log_warning "Preserving existing user-owned Alis launcher: $_alis_target"
-        else
-          install_file "${REPO_ROOT}/scripts/alis" "$_alis_target"
-          chmod +x "$_alis_target"
-          log_success "Alis command installed (compatible with alis runtime)"
-        fi
+      if [[ -L "$ALIS_LAUNCHER_PATH" ||
+            ( -e "$ALIS_LAUNCHER_PATH" && ! -f "$ALIS_LAUNCHER_PATH" ) ]] ||
+          { [[ -f "$ALIS_LAUNCHER_PATH" ]] &&
+            ! grep -Fq '# Canonical CLI and runtime name is Alis.' "$ALIS_LAUNCHER_PATH" &&
+            ! grep -Fq '# Alis is the public command while the proven iNiR runtime owns the session.' "$ALIS_LAUNCHER_PATH"; }; then
+        log_error "Refusing to overwrite user-owned Alis CLI: $ALIS_LAUNCHER_PATH"
+        return 1
       fi
+      install_file "${REPO_ROOT}/scripts/alis" "$ALIS_LAUNCHER_PATH"
+      chmod +x "$ALIS_LAUNCHER_PATH"
+      ensure_launcher_path_in_shells "$XDG_BIN_HOME"
+      log_success "Canonical Alis launcher installed"
+    else
+      log_error "Missing canonical Alis runtime launcher"
+      return 1
     fi
-
     local _service_refresh_status=1
     local _service_dir="${XDG_CONFIG_HOME}/systemd/user"
     local _service_asset="${REPO_ROOT}/assets/systemd/alis.service"
@@ -249,61 +247,35 @@ case "${SKIP_QUICKSHELL}" in
     fi
 
     if [[ -f "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" ]]; then
-      install_file "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "${ALIS_ICON_DIR}/alis.svg"
-      log_success "Launcher icon installed"
       _alis_icon="${ALIS_ICON_DIR}/alis.svg"
-      if [[ -e "$_alis_icon" || -L "$_alis_icon" ]]; then
-        if [[ ! -f "$_alis_icon" || -L "$_alis_icon" ]] || ! cmp -s "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "$_alis_icon"; then
-          log_warning "Preserving user-owned Alis icon: $_alis_icon"
-        fi
+      if [[ -e "$_alis_icon" || -L "$_alis_icon" ]] &&
+          { [[ ! -f "$_alis_icon" || -L "$_alis_icon" ]] ||
+            ! cmp -s "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "$_alis_icon"; }; then
+        log_warning "Preserving existing user-owned Alis icon: $_alis_icon"
       else
         install_file "${REPO_ROOT}/assets/icons/desktop-symbolic.svg" "$_alis_icon"
       fi
     fi
 
-    if [[ -f "${REPO_ROOT}/assets/applications/alis.desktop" ]]; then
-      ALIS_DESKTOP_TMP="${XDG_CACHE_HOME}/alis.desktop.$$"
-      sed "s|^Exec=.*|Exec=${ALIS_LAUNCHER_PATH//&/\\&} service restart|" "${REPO_ROOT}/assets/applications/alis.desktop" > "${ALIS_DESKTOP_TMP}"
-      install_file "${ALIS_DESKTOP_TMP}" "${ALIS_APPLICATIONS_DIR}/alis.desktop"
-      rm -f "${ALIS_DESKTOP_TMP}"
-      log_success "Shell desktop entry installed"
-    fi
-
-    if [[ -f "${REPO_ROOT}/assets/applications/alis-settings.desktop" ]]; then
-      ALIS_SETTINGS_DESKTOP_TMP="${XDG_CACHE_HOME}/alis-settings.desktop.$$"
-      sed "s|^Exec=.*|Exec=${ALIS_LAUNCHER_PATH//&/\\&} settings|" "${REPO_ROOT}/assets/applications/alis-settings.desktop" > "${ALIS_SETTINGS_DESKTOP_TMP}"
-      install_file "${ALIS_SETTINGS_DESKTOP_TMP}" "${ALIS_APPLICATIONS_DIR}/alis-settings.desktop"
-      rm -f "${ALIS_SETTINGS_DESKTOP_TMP}"
-      log_success "Settings desktop entry installed"
-    fi
-
-
-    # New Alis IDs remain visible; legacy IDs are hidden for pinned shortcuts.
-    # Never replace an unrelated user-owned Alis desktop entry.
-    if [[ -f "${REPO_ROOT}/assets/applications/alis.desktop" ]]; then
-      _alis_shell_entry="${ALIS_APPLICATIONS_DIR}/alis.desktop"
-      if [[ -e "$_alis_shell_entry" || -L "$_alis_shell_entry" ]] &&
-         { [[ ! -f "$_alis_shell_entry" || -L "$_alis_shell_entry" ]] || ! grep -Fxq 'X-Alis-Managed=true' "$_alis_shell_entry"; }; then
-        log_warning "Preserving user-owned desktop entry: $_alis_shell_entry"
-      else
-        _alis_shell_tmp="${XDG_CACHE_HOME}/alis.desktop.$"
-        sed "s|^Exec=.*|Exec=${XDG_BIN_HOME//&/\\&}/alis service restart|" "${REPO_ROOT}/assets/applications/alis.desktop" > "$_alis_shell_tmp"
-        install_file "$_alis_shell_tmp" "$_alis_shell_entry"
-        rm -f "$_alis_shell_tmp"
+    # One managed public entry per role; never overwrite foreign entries.
+    local _alis_entry _alis_src _alis_command
+    for _alis_command in "alis.desktop:service restart" "alis-settings.desktop:settings"; do
+      _alis_entry="${_alis_command%%:*}"
+      _alis_src="${REPO_ROOT}/assets/applications/${_alis_entry}"
+      _alis_command="${_alis_command#*:}"
+      [[ -f "$_alis_src" ]] || continue
+      local _target="${ALIS_APPLICATIONS_DIR}/${_alis_entry}"
+      if [[ -e "$_target" || -L "$_target" ]] &&
+          { [[ ! -f "$_target" || -L "$_target" ]] ||
+            ! grep -Fxq 'X-Alis-Managed=true' "$_target"; }; then
+        log_warning "Preserving foreign Alis desktop entry: $_target"
+        continue
       fi
-    fi
-    if [[ -f "${REPO_ROOT}/assets/applications/alis-settings.desktop" ]]; then
-      _alis_settings_entry="${ALIS_APPLICATIONS_DIR}/alis-settings.desktop"
-      if [[ -e "$_alis_settings_entry" || -L "$_alis_settings_entry" ]] &&
-         { [[ ! -f "$_alis_settings_entry" || -L "$_alis_settings_entry" ]] || ! grep -Fxq 'X-Alis-Managed=true' "$_alis_settings_entry"; }; then
-        log_warning "Preserving user-owned desktop entry: $_alis_settings_entry"
-      else
-        _alis_settings_tmp="${XDG_CACHE_HOME}/alis-settings.desktop.$"
-        sed "s|^Exec=.*|Exec=${XDG_BIN_HOME//&/\\&}/alis settings|" "${REPO_ROOT}/assets/applications/alis-settings.desktop" > "$_alis_settings_tmp"
-        install_file "$_alis_settings_tmp" "$_alis_settings_entry"
-        rm -f "$_alis_settings_tmp"
-      fi
-    fi
+      local _tmp="${XDG_CACHE_HOME}/${_alis_entry}.$$"
+      sed "s|^Exec=.*|Exec=${ALIS_LAUNCHER_PATH//&/\\&} ${_alis_command}|" "$_alis_src" > "$_tmp"
+      install_file "$_tmp" "$_target"
+      rm -f "$_tmp"
+    done
 
     log_success "Quickshell alis config installed"
 
