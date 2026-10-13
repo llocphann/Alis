@@ -1,0 +1,50 @@
+name: Canonical Alis cutover source staging
+on:
+  push:
+    branches:
+      - brand-r01-canonical-alis
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: canonical-alis-cutover-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  refactor-source:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify migration helper syntax
+        run: python3 -m py_compile scripts/brand-canonical-refactor.py scripts/brand-canonical-audit.py
+      - name: Apply Alis-only source conversion (feature branch)
+        run: python3 scripts/brand-canonical-refactor.py --apply
+      - name: Verify shell entrypoints and staged migration
+        shell: bash
+        run: |
+          bash -n scripts/alis setup scripts/brand-canonical-cutover.sh
+          bash -n sdata/subcmd-install/3.files.sh
+          bash -n native/scripts/install-runtime.sh scripts/native-dispatch
+          test ! -e scripts/inir
+          test -f assets/systemd/alis.service
+          grep -Fxq '//@ pragma ShellId alis' shell.qml
+          grep -Fq 'ExecStart=/usr/bin/alis run --session' assets/systemd/alis.service
+          ! test -f assets/systemd/inir.service
+      - name: Check canonical Cargo metadata
+        shell: bash
+        run: cargo metadata --no-deps --locked --format-version 1 --manifest-path native/Cargo.toml > /dev/null
+      - name: Commit only reviewed active source paths
+        shell: bash
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'All active canonical paths already updated.'
+            exit 0
+          fi
+          git diff --cached --stat | tail -40
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'refactor(brand): synchronize remaining active iNiR identities to Alis (#64)'
+          git push origin HEAD:refs/heads/brand-r01-canonical-alis
+      - name: Inventory remaining legacy public identities
+        run: python3 scripts/brand-canonical-audit.py --limit 15
