@@ -40,6 +40,10 @@ To undo an applied alias manually, confirm it is a symlink pointing to the adjac
 
 Test coverage: `scripts/test-alis-namespace-alias.sh` uses isolated XDG roots to check fresh install no-op, preservation of sentinel bytes, idempotence, foreign/dangling symlink refusal, and conflict preflight.
 
+## Standalone automated regression lane
+
+GitHub Actions workflow `.github/workflows/brand-contracts.yml` runs a bounded, desktop-independent set of CLI, app ID, staged installer ownership, XDG namespace alias and pinned Arch snapshot contracts on `dev`. This gives independent evidence even when the full desktop/Niri canonical validator cannot execute in hosted CI; it **does not** replace owner visual acceptance, package installation on real hardware, or rollback validation.
+
 ## Present guardrails / open checks
 
 - The `alis` launcher currently forwards to the legacy runtime, by design; it is not an independent session.
