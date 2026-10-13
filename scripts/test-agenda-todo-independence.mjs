@@ -30,6 +30,26 @@ assert.deepEqual(JSON.parse(JSON.stringify(historic[0].agenda)),legacyTask.agend
 assert.equal(fs.existsSync(new URL("../services/AgendaTodoPolicy.js",import.meta.url)),false);
 assert.doesNotMatch(card,/AgendaTodoLink/);
 assert.doesNotMatch(planner,/Todo\.agendaStatus/);
+// The deleted link component used to break the entire calendar/dashboard
+// QML dependency chain through CalendarEventRow. Guard every QML reference,
+// not only the event card and weekly planner.
+const calendarRow=read("modules/sidebarRight/calendar/CalendarEventRow.qml");
+const calendarDetail=read("modules/sidebarRight/calendar/CalendarDayDetail.qml");
+assert.match(calendarDetail,/CalendarEventRow\s*\{/);
+assert.match(calendarRow,/root\.event\?\.description/);
+assert.doesNotMatch(calendarRow,/AgendaTodoLink/);
+const moduleRoot=new URL("../modules/",import.meta.url);
+function visit(directory) {
+  for(const entry of fs.readdirSync(directory,{withFileTypes:true})) {
+    const path=new URL(entry.name+(entry.isDirectory()?"/":""),directory);
+    if(entry.isDirectory()) visit(path);
+    else if(entry.name.endsWith(".qml")) {
+      assert.doesNotMatch(fs.readFileSync(path,"utf8"),/\bAgendaTodoLink\b/,
+        "orphan AgendaTodoLink component reference in "+path.pathname);
+    }
+  }
+}
+visit(moduleRoot);
 assert.doesNotMatch(editor,/plannerRepeatConflictHint/);
 assert.match(editor,/Events\.updateEventGroup\(root\.editingEvent\.id/);
 assert.match(editor,/canonical\.repeatTemplate/);
