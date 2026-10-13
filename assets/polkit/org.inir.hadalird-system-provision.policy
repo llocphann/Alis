@@ -3,7 +3,7 @@
 <policyconfig>
   <action id="org.inir.hadalird-system-provision">
     <description>Install or remove verified Hadalird system helpers</description>
-    <message>Authenticate to manage TLP and Thinkfan helper files for Alis.</message>
+    <message>Authenticate to manage TLP and Thinkfan helper files for Hadalis.</message>
     <defaults>
       <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
