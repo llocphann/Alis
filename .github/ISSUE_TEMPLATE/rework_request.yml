@@ -1,6 +1,6 @@
 name: Rework or optimization
 description: Improve existing Alis behavior, UI or performance
-labels: ["type:rework"]
+labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
