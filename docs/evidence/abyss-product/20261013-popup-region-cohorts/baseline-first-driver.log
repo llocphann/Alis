@@ -1,0 +1,9 @@
+{"run": 0, "count": 324, "p50": 17, "p95": 35, "p99": 205, "max": 537, "over33ms": 25, "popupOpenFrames": 325, "heartbeatOver100Ms": 0, "heartbeatMaxIntervalMs": 75}
+{"run": 1, "count": 322, "p50": 17, "p95": 34, "p99": 244, "max": 542, "over33ms": 19, "popupOpenFrames": 323, "heartbeatOver100Ms": 0, "heartbeatMaxIntervalMs": 71}
+{"run": 2, "count": 321, "p50": 17, "p95": 34, "p99": 260, "max": 538, "over33ms": 18, "popupOpenFrames": 322, "heartbeatOver100Ms": 0, "heartbeatMaxIntervalMs": 69}
+0/body False
+0/outside False
+1/body False
+1/outside False
+2/body False
+2/outside False

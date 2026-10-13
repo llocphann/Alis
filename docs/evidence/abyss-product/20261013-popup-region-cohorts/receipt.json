@@ -1,0 +1,17 @@
+{
+  "source_sha": "180b9682e803197ce6c1ca1ee81ed6add842f5f0",
+  "source_body_sha256": "ee4fe4fd16fd4810a1d3f60df36745417b5e9bb639003b23904ea2b0c34b33c4",
+  "scope": "clean detached exact-source focused native qualification",
+  "checks": 136040,
+  "cohorts": 256,
+  "complete_publications": 260,
+  "published_regions": 6400,
+  "test_exit": 0,
+  "hover": "PASS four edges/body/padding/bridge/shoulders",
+  "multi_popup": "PASS independent close/focus/input aggregation",
+  "cold_remount": "PASS",
+  "canonical_claim": false,
+  "owner_installed_claim": false,
+  "multi_output_claim": false,
+  "frametime_improvement_claim": false
+}

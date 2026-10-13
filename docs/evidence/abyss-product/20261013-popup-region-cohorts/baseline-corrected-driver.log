@@ -1,0 +1,6 @@
+{"run": 0, "count": 206, "p50": 17, "p95": 310, "p99": 2004, "max": 2013, "over33ms": 28, "popupOpenFrames": 207, "heartbeatOver100Ms": 7, "heartbeatMaxIntervalMs": 260}
+{"run": 1, "count": 324, "p50": 17, "p95": 33, "p99": 249, "max": 553, "over33ms": 16, "popupOpenFrames": 325, "heartbeatOver100Ms": 0, "heartbeatMaxIntervalMs": 76}
+0/body True
+0/outside False
+1/body True
+1/outside False
