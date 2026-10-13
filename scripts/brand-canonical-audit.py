@@ -16,14 +16,14 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 PATTERNS = {
-    "environment": re.compile(r"\\bINIR_[A-Z0-9_]+\\b"),
-    "service": re.compile(r"\\binir\\.service\\b"),
-    "shell-id": re.compile(r"ShellId\\s+inir\\b"),
-    "native": re.compile(r"\\binir-(?:native|mpdd|inputd|theme|protocol)\\b|\\binir_protocol\\b"),
-    "polkit": re.compile(r"org\\.inir\\.|/inir-(?:thinkfan|battery|hadalird)"),
-    "launcher": re.compile(r"(?:[/\\s\\\"']|^)inir(?:\\s|\\\"|'|$)|(?:scripts|bin)/inir\\b"),
-    "runtime-path": re.compile(r"(?:quickshell|share|cache|config|state|data)/inir\\b"),
-    "nix": re.compile(r"programs\\.inir\\b|nixosModules\\.inir\\b|homeModules\\.inir\\b"),
+    "environment": re.compile(r"\bINIR_[A-Z0-9_]+\b"),
+    "service": re.compile(r"\binir\.service\b"),
+    "shell-id": re.compile(r"ShellId\s+inir\b"),
+    "native": re.compile(r"\binir-(?:native|mpdd|inputd|theme|protocol)\b|\binir_protocol\b"),
+    "polkit": re.compile(r"org\.inir\.|/inir-(?:thinkfan|battery|hadalird)"),
+    "launcher": re.compile(r"(?:[/\s\\"']|^)inir(?:\s|\\"|'|$)|(?:scripts|bin)/inir\b"),
+    "runtime-path": re.compile(r"(?:quickshell|share|cache|config|state|data)/inir\b"),
+    "nix": re.compile(r"programs\.inir\b|nixosModules\.inir\b|homeModules\.inir\b"),
 }
 EXCLUDED_PREFIXES = (
     "docs/", "to-do/", "CHANGELOG.md", "ARCHITECTURE.md", "CONTRIBUTING.md",
@@ -39,7 +39,7 @@ SPECIAL_NAMES = {"Makefile", "setup", "PKGBUILD", ".SRCINFO", "flake.nix", "VERS
 
 
 def files() -> list[Path]:
-    paths = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).split(b"\\0")
+    paths = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).split(b"\0")
     return [Path(x.decode("utf-8", "replace")) for x in paths if x]
 
 
@@ -69,7 +69,7 @@ def main() -> int:
             for match in regex.finditer(text):
                 total_by_kind[kind] += 1
                 if len(examples[kind]) < args.limit:
-                    line = text.count("\\n", 0, match.start()) + 1
+                    line = text.count("\n", 0, match.start()) + 1
                     examples[kind].append({"path": label, "line": line, "match": match.group()})
     pending = sum(total_by_kind.values()) + len(names)
     result = {
