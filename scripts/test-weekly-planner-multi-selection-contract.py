@@ -34,4 +34,11 @@ assert "root.list=result.list" in batch_method
 assert "function apply(events,operations,occurrences)" in batch
 assert "const distinct=new Set" in batch
 assert "if (distinct.size!==next.length) return null" in batch
+# Qt's embedded QML JavaScript parser rejects object-rest/spread in
+# imported service scripts. Node/V8 tests alone will not catch this.
+assert "..." not in batch, "QML script parser rejects spread in EventBatchPolicy.js"
+assert "..." not in policy, "QML script parser rejects spread in PlannerSelection.js"
+assert "Object.assign({},slots[i]," in batch, "preserve slot metadata without object spread"
+assert "(day.allDay || []).concat(day.timed || [])" in policy
+assert "Array.from(new Set(merged))" in policy
 print("WEEKLY_PLANNER_MULTISELECT_CONTRACT_PASS: scroll preserved, select + handles + atomic delete/move")
