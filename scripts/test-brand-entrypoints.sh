@@ -46,6 +46,8 @@ grep -Fq "Name=Alis Shell" "$repo/assets/applications/inir.desktop" || fail "des
 grep -Fq "Name=Alis Settings" "$repo/assets/applications/inir-settings.desktop" || fail "settings desktop entry"
 grep -Fxq "NoDisplay=true" "$repo/assets/applications/inir-settings.desktop" || fail "legacy settings launcher visible"
 grep -Fxq "NoDisplay=true" "$repo/assets/applications/inir.desktop" || fail "legacy shell launcher visible"
+grep -Fq "Exec=alis service restart" "$repo/assets/applications/inir.desktop" || fail "legacy pinned shell command must use Alis"
+grep -Fq "Exec=alis settings" "$repo/assets/applications/inir-settings.desktop" || fail "legacy pinned settings command must use Alis"
 grep -Fxq "X-Alis-Managed=true" "$repo/assets/applications/alis.desktop" || fail "Alis desktop ownership marker missing"
 grep -Fq 'title: "Alis"' "$repo/modules/settings/About.qml" || fail "Alis classic About still named iNiR"
 grep -Fq 'text: "Alis"' "$repo/modules/waffle/settings/pages/WAboutPage.qml" || fail "Alis Waffle About still named iNiR"

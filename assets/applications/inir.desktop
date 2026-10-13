@@ -2,7 +2,7 @@
 Type=Application
 Name=Alis Shell
 Comment=Alis desktop shell session
-Exec=inir service restart
+Exec=alis service restart
 Icon=inir
 Terminal=false
 NoDisplay=true

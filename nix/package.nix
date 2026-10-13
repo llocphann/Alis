@@ -333,9 +333,9 @@ EOF
       --set-default INIR_SYSTEM_RUNTIME_DIR "$runtime" \
       --set-default INIR_FALLBACK_SYSTEM_RUNTIME_DIR "$runtime"
 
-    sed "s|^Exec=inir|Exec=$out/bin/inir|" \
+    sed "s|^Exec=alis|Exec=$out/bin/alis|" \
       assets/applications/inir.desktop > "$out/share/applications/inir.desktop"
-    sed "s|^Exec=inir|Exec=$out/bin/inir|" \
+    sed "s|^Exec=alis|Exec=$out/bin/alis|" \
       assets/applications/inir-settings.desktop > "$out/share/applications/inir-settings.desktop"
     sed "s|^Exec=alis|Exec=$out/bin/alis|" \
       assets/applications/alis.desktop > "$out/share/applications/alis.desktop"

@@ -99,8 +99,8 @@ test-prefix-install:
 		grep -Fq 'RUNTIME_DIR_SYSTEM_LOCAL="$${INIR_SYSTEM_RUNTIME_DIR_LOCAL:-/opt/inir/share/quickshell/inir}"' "$$runtime/sdata/lib/versioning.sh"; \
 		grep -Fq 'get_installed_update_strategy 2>/dev/null || true' "$$runtime/setup"; \
 		python3 -c 'import json, pathlib, sys; data=json.loads(pathlib.Path(sys.argv[1]).read_text()); assert data["version"] == pathlib.Path("VERSION").read_text().strip(); assert data["installMode"] == "package-managed"; assert data["updateStrategy"] == "package-manager"; assert data["packageManager"] == "manual"; assert "PREFIX=\"/opt/inir\"" in data["packageUpdateHint"]' "$$runtime/version.json"; \
-		grep -Fxq 'Exec=/opt/inir/bin/inir service restart' "$$stage/opt/inir/share/applications/inir.desktop"; \
-		grep -Fxq 'Exec=/opt/inir/bin/inir settings' "$$stage/opt/inir/share/applications/inir-settings.desktop"
+		grep -Fxq 'Exec=/opt/inir/bin/alis service restart' "$$stage/opt/inir/share/applications/inir.desktop"; \
+		grep -Fxq 'Exec=/opt/inir/bin/alis settings' "$$stage/opt/inir/share/applications/inir-settings.desktop"
 
 test-package-docs:
 	@grep -Fq 'for doc in docs/*.md; do' Makefile
@@ -185,8 +185,8 @@ install-desktop:
 			printf "Refusing to overwrite user-owned Alis desktop entry: %s\n" "$$target" >&2; exit 1; \
 		fi; \
 	done
-	@sed 's|^Exec=inir|Exec=$(BINDIR)/inir|' assets/applications/inir.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/inir.desktop"
-	@sed 's|^Exec=inir|Exec=$(BINDIR)/inir|' assets/applications/inir-settings.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/inir-settings.desktop"
+	@sed 's|^Exec=alis|Exec=$(BINDIR)/alis|' assets/applications/inir.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/inir.desktop"
+	@sed 's|^Exec=alis|Exec=$(BINDIR)/alis|' assets/applications/inir-settings.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/inir-settings.desktop"
 	@sed 's|^Exec=alis|Exec=$(BINDIR)/alis|' assets/applications/alis.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/alis.desktop"
 	@sed 's|^Exec=alis|Exec=$(BINDIR)/alis|' assets/applications/alis-settings.desktop > "$(DESTDIR)$(APPLICATIONS_DIR)/alis-settings.desktop"
 	@chmod 644 "$(DESTDIR)$(APPLICATIONS_DIR)/inir.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/inir-settings.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/alis.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/alis-settings.desktop"

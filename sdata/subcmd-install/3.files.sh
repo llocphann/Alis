@@ -264,7 +264,7 @@ case "${SKIP_QUICKSHELL}" in
 
     if [[ -f "${REPO_ROOT}/assets/applications/inir.desktop" ]]; then
       INIR_DESKTOP_TMP="${XDG_CACHE_HOME}/inir.desktop.$$"
-      sed "s|^Exec=.*|Exec=${INIR_LAUNCHER_PATH//&/\\&} service restart|" "${REPO_ROOT}/assets/applications/inir.desktop" > "${INIR_DESKTOP_TMP}"
+      sed "s|^Exec=.*|Exec=${ALIS_LAUNCHER_PATH//&/\\&} service restart|" "${REPO_ROOT}/assets/applications/inir.desktop" > "${INIR_DESKTOP_TMP}"
       install_file "${INIR_DESKTOP_TMP}" "${INIR_APPLICATIONS_DIR}/inir.desktop"
       rm -f "${INIR_DESKTOP_TMP}"
       log_success "Shell desktop entry installed"
@@ -272,7 +272,7 @@ case "${SKIP_QUICKSHELL}" in
 
     if [[ -f "${REPO_ROOT}/assets/applications/inir-settings.desktop" ]]; then
       INIR_SETTINGS_DESKTOP_TMP="${XDG_CACHE_HOME}/inir-settings.desktop.$$"
-      sed "s|^Exec=.*|Exec=${INIR_LAUNCHER_PATH//&/\\&} settings|" "${REPO_ROOT}/assets/applications/inir-settings.desktop" > "${INIR_SETTINGS_DESKTOP_TMP}"
+      sed "s|^Exec=.*|Exec=${ALIS_LAUNCHER_PATH//&/\\&} settings|" "${REPO_ROOT}/assets/applications/inir-settings.desktop" > "${INIR_SETTINGS_DESKTOP_TMP}"
       install_file "${INIR_SETTINGS_DESKTOP_TMP}" "${INIR_APPLICATIONS_DIR}/inir-settings.desktop"
       rm -f "${INIR_SETTINGS_DESKTOP_TMP}"
       log_success "Settings desktop entry installed"

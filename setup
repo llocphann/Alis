@@ -2607,7 +2607,7 @@ run_update() {
     fi
     if [[ -f "${REPO_ROOT}/assets/applications/inir-settings.desktop" ]]; then
         local settings_tmp="${XDG_CACHE_HOME}/inir-settings.desktop.$$"
-        sed "s|^Exec=.*|Exec=${launcher_target//&/\\&} settings|" "${REPO_ROOT}/assets/applications/inir-settings.desktop" > "$settings_tmp"
+        sed "s|^Exec=.*|Exec=${XDG_BIN_HOME//&/\\&}/alis settings|" "${REPO_ROOT}/assets/applications/inir-settings.desktop" > "$settings_tmp"
         cp -f "$settings_tmp" "${applications_dir}/inir-settings.desktop"
         rm -f "$settings_tmp"
     fi
