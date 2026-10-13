@@ -69,14 +69,14 @@ jobs:
       - name: Evaluate flake outputs
         run: nix flake check --no-build --print-build-logs
 
-      - name: Validate Alis and legacy flake exports
+      - name: Validate Alis-only flake exports
         run: |
-          nix eval --raw .#packages.x86_64-linux.alis.pname
-          nix eval --raw .#packages.x86_64-linux.inir.pname
+          test "$(nix eval --raw .#packages.x86_64-linux.alis.pname)" = alis
+          if nix eval --raw .#packages.x86_64-linux.inir.pname >/dev/null 2>&1; then
+            echo "Legacy inir flake export must not remain" >&2
+            exit 1
+          fi
 
       - name: Build Alis package
         run: nix build .#alis --print-build-logs
-
-      - name: Legacy package output remains buildable
-        run: nix build .#inir --print-build-logs
 
