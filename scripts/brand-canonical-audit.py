@@ -21,7 +21,7 @@ PATTERNS = {
     "shell-id": re.compile(r"ShellId\s+inir\b"),
     "native": re.compile(r"\binir-(?:native|mpdd|inputd|theme|protocol)\b|\binir_protocol\b"),
     "polkit": re.compile(r"org\.inir\.|/inir-(?:thinkfan|battery|hadalird)"),
-    "launcher": re.compile(r"(?:[/\s\\"']|^)inir(?:\s|\\"|'|$)|(?:scripts|bin)/inir\b"),
+    "launcher": re.compile(r"""(?:^|[\s/])inir(?=[\s"'/]|$)|(?:scripts|bin)/inir\b"""),
     "runtime-path": re.compile(r"(?:quickshell|share|cache|config|state|data)/inir\b"),
     "nix": re.compile(r"programs\.inir\b|nixosModules\.inir\b|homeModules\.inir\b"),
 }
