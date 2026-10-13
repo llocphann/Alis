@@ -121,11 +121,7 @@ Item {
                 }
 
                 // Source name for external events, or description for local
-                AgendaTodoLink {
-                    Layout.fillWidth:true
-                    event:root.isExternal ? null : root.event
-                    interactive:false
-                }
+                // Agenda and Todo are independent; no link status is shown.
                 StyledText {
                     Layout.fillWidth: true
                     visible: text !== ""
