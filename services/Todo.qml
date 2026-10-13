@@ -82,13 +82,6 @@ Singleton {
     }
     readonly property int internalItemCount: internal.list.length
 
-    // Compatibility no-ops: old clients may still query status or request a
-    // retry, but Agenda is no longer linked to Todo in any backend.
-    function _scheduleAgenda() {}
-    function retryAgendaLinks() {}
-    function agendaStatus(event) { return "" }
-    property string agendaError: ""
-
     // Compatibility paths remain the internal store paths. New UI must use
     // openSource() instead of assuming Todo.txtFilePath is canonical.
     property alias filePath: internal.filePath
