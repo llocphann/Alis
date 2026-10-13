@@ -1,0 +1,28 @@
+  INFO: Launching config: "/tmp/alis-common-popups-x2bcqc22/shell.qml"
+  INFO: Shell ID: "9a06771492fe304894fafcf1a33f1685" Path ID "9a06771492fe304894fafcf1a33f1685"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/wefoedpumt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1139691.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-common-popups-x2bcqc22/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-common-popups-x2bcqc22/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-common-popups-x2bcqc22/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f22171cd1c0)
+  WARN scene: QML FileView at @services/Events.qml[110:5]: Read of /tmp/alis-common-popups-x2bcqc22/state/quickshell/user/events.json failed: File does not exist.
+ DEBUG qml: [Events] File not found, creating new file.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-common-popups-x2bcqc22/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+  INFO qml: [Abyss] Cold Niri perimeter re-created after first native frame
+  INFO qml: [Weather] Getting location from IP...
+  INFO qml: [Weather] Location: [redacted]
+  WARN: QObject: Cannot create children for a parent that is in a different thread.
+(Parent is QGuiApplication(0x7f221aee3200), parent's thread is QThread(0x7f221ae18890), current thread is QQuickPixmapReader(0x7f21fa52df80)
+  WARN: QObject::installEventFilter(): Cannot filter events for objects in a different thread.
+ DEBUG qml: [ShellUpdates] Loading repo path from version.json...
+ DEBUG qml: [ShellUpdates] No repo_path in version.json, searching for repository...
+ DEBUG qml: [ShellUpdates] Repository not found, using config dir: /tmp/alis-common-popups-x2bcqc22/.
+ DEBUG qml: [ShellUpdates] Update feature will not be available
+ DEBUG qml: [ShellUpdates] Git available: false
+  INFO qml: [Weather] Updated: 27°C [redacted]
+  INFO qml: [Weather] Air quality updated: 59 EAQI

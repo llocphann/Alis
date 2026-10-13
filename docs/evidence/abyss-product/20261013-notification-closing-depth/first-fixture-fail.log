@@ -1,0 +1,17 @@
+  INFO: Launching config: "/tmp/alis-notification-closing-tfcnb2bk/shell.qml"
+  INFO: Shell ID: "9466fd17d8ab1d162de117e35acbc5cc" Path ID "9466fd17d8ab1d162de117e35acbc5cc"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/pgmo1opumt/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1148834.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-notification-closing-tfcnb2bk/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-notification-closing-tfcnb2bk/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/Notifications.qml[784:5]: Read of /tmp/alis-notification-closing-tfcnb2bk/state/quickshell/user/notifications.json failed: File does not exist.
+ DEBUG qml: [Notifications] File not found, creating new file.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7fdc8310b3a0)
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-notification-closing-tfcnb2bk/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+ ERROR qml: NOTIFICATION_CLOSING_FAIL grouped banner did not exercise a taller geometry check@qs:@/qs/shell.qml:19
+run@qs:@/qs/shell.qml:34
+expression for onTriggered@qs:@/qs/shell.qml:52
+
