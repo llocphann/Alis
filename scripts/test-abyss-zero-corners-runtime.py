@@ -26,9 +26,10 @@ import qs.modules.common
 import qs.modules.abyss
 import qs.modules.abyss.bar
 import qs.modules.abyss.looks
+import "modules/abyss/looks/AbyssLayout.js" as Layout
 import "original"
 ShellRoot {
- id:root;property int checks:0;property int frames:0;property bool original:false
+ id:root;property int checks:0;property int frames:0;property bool original:false;property bool previewEditor:false
  property var insets:({left:16,top:0,right:16,bottom:16});property var choice:({});property var moduleRecords:[]
  Component.onCompleted:Quickshell.watchFiles=false
  FileView {id:disk;path:Config.filePath;watchChanges:true;property var snapshot:null;onLoaded:{try{snapshot=JSON.parse(text())}catch(error){snapshot=null}}}
@@ -42,7 +43,12 @@ ShellRoot {
   }
  }
  Component {id:old;OriginalField {edgeInsets:root.insets}}
- Component {id:current;AbyssField {edgeInsets:root.insets;roundZeroCorners:root.choice;records:root.moduleRecords}}
+ Component {id:current;AbyssField {
+  edgeInsets:root.insets
+  roundZeroCorners:root.previewEditor?layer.layoutOptions.edgeRoundZeroCorners:root.choice
+  cornerWidthInsets:root.previewEditor?Layout.edgeInsetsForModules([],layer.layoutOptions,1,16,48,false):root.insets
+  records:root.moduleRecords
+ }}
  TestCase {
   id:test;when:false;optional:true
   function check(v,label){root.checks++;if(!v)throw new Error(label)}
@@ -68,12 +74,21 @@ ShellRoot {
     root.insets={left:0,top:0,right:0,bottom:0};root.moduleRecords=[{surface:{x:-50,y:-50,width:195,height:170},radius:0},{surface:{x:855,y:-50,width:195,height:170},radius:0}]
     root.choice={};capture("modules-top-off");root.choice={top:true};capture("modules-top-on")
     root.moduleRecords=[]
+    root.previewEditor=true
     GlobalStates.deferredPanelsReady=true;GlobalStates.abyssEditing=true;wait(100)
     const initial=JSON.stringify(editor.edgeRoundZeroCorners)
     for(const edge of ["top","right","bottom","left"]){
      editor.editingEdge=edge;const checkbox=control();check(!checkbox.enabled,"0px checkbox active at nonzero width")
      editor.edgeThicknesses=Object.assign({},editor.edgeThicknesses,{[edge]:0});wait(30);check(checkbox.enabled,"0px checkbox not enabled")
      mouseClick(checkbox);wait(30);check(editor.edgeRoundZeroCorners[edge]===true,"actual checkbox failed on "+edge)
+     const index=["top","right","bottom","left"].indexOf(edge)
+     check(field.item.physicalContactEdges[index]===true,"editor checkbox did not reach the actual shader mask")
+     mouseClick(checkbox);wait(30);check(!field.item.physicalContactEdges[index],"editor checkbox OFF left rounding enabled")
+     mouseClick(checkbox);wait(30)
+     editor.edgeThicknesses=Object.assign({},editor.edgeThicknesses,{[edge]:10});wait(30)
+     check(!field.item.physicalContactEdges[index],"10px Edge kept zero-width rounding")
+     editor.edgeThicknesses=Object.assign({},editor.edgeThicknesses,{[edge]:0});wait(30)
+     check(field.item.physicalContactEdges[index],"0px preview did not restore its saved choice")
     }
     editor.reset();wait(40);check(Object.values(editor.edgeRoundZeroCorners).every(v=>!v),"Reset retains zero-corner choices")
     editor.undo();wait(40);check(Object.values(editor.edgeRoundZeroCorners).every(v=>v),"Undo Reset loses choices")

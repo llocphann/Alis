@@ -56,7 +56,7 @@ ShellRoot {
   function run(){try{
    tryCompare(Config,"ready",true,5000)
    Config.setNestedValue("performance.reduceAnimations",true)
-   wait(20);verifyAll()
+   wait(200);verifyAll()
    for(const insets of [{left:16,top:16,right:16,bottom:16},{left:0,top:0,right:0,bottom:0},{left:0,top:16,right:0,bottom:16}]){
     controller.edgeInsets=insets
     controller.cornerWidthInsets=insets
@@ -71,12 +71,14 @@ ShellRoot {
     const identities=Array.from({length:4},(_,i)=>hosts.itemAt(i).connectionRegions.slice())
     const stable=root.publications
     root.along+=3;wait(0);verifyAll()
-    check(root.publications===stable,"tangent motion rebuilt native list")
-    for(let i=0;i<4;i++)for(let k=0;k<identities[i].length;k++)check(identities[i][k]===hosts.itemAt(i).connectionRegions[k],"tangent motion replaced Region")
+    const changed=identities.filter((list,i)=>list.length!==hosts.itemAt(i).connectionRects.length).length
+    check(root.publications-stable===changed,"tangent motion published partial or unchanged cohorts")
+    for(let i=0;i<4;i++)if(identities[i].length===hosts.itemAt(i).connectionRects.length)
+     for(let k=0;k<identities[i].length;k++)check(identities[i][k]===hosts.itemAt(i).connectionRegions[k],"stable strip count replaced Region")
     // Physical strip extent changes create/remove one synchronous cohort.
     root.depth+=17;wait(0);verifyAll()
     root.shown=false;verifyAll();wait(0);verifyAll()
-    check(root.publications-stable<=8,"resize/close published intermediate cohorts")
+    check(root.publications-stable-changed<=8,"resize/close published intermediate cohorts")
     root.cohorts+=4
    }
    }

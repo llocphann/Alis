@@ -11,6 +11,7 @@ layout(std140,binding=0) uniform buf {
     float maskOnly;
     vec4 insets;
     vec4 zeroCorners;
+    vec4 contactEdges;
     vec4 material;
     vec4 liquidContact;
     vec4 liquidContactNormal;
@@ -142,13 +143,13 @@ float contactCorner(vec2 point,float start,float end,float radius) {
 }
 float physicalContact(vec2 p,vec4 rect,float radius) {
     float d=1e20;
-    if(rect.y<=0.0 && rect.y+rect.w>0.0)
+    if(contactEdges.x>.5 && rect.y<=0.0 && rect.y+rect.w>0.0)
         d=min(d,contactCorner(p,rect.x,rect.x+rect.z,min(radius,min(rect.z*.5,rect.y+rect.w))));
-    if(rect.y+rect.w>=viewport.y && rect.y<viewport.y)
+    if(contactEdges.z>.5 && rect.y+rect.w>=viewport.y && rect.y<viewport.y)
         d=min(d,contactCorner(vec2(p.x,viewport.y-p.y),rect.x,rect.x+rect.z,min(radius,min(rect.z*.5,viewport.y-rect.y))));
-    if(rect.x<=0.0 && rect.x+rect.z>0.0)
+    if(contactEdges.w>.5 && rect.x<=0.0 && rect.x+rect.z>0.0)
         d=min(d,contactCorner(p.yx,rect.y,rect.y+rect.w,min(radius,min(rect.w*.5,rect.x+rect.z))));
-    if(rect.x+rect.z>=viewport.x && rect.x<viewport.x)
+    if(contactEdges.y>.5 && rect.x+rect.z>=viewport.x && rect.x<viewport.x)
         d=min(d,contactCorner(vec2(p.y,viewport.x-p.x),rect.y,rect.y+rect.w,min(radius,min(rect.w*.5,viewport.x-rect.x))));
     return d;
 }

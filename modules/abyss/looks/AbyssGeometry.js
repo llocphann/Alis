@@ -44,11 +44,13 @@ function popupShoulders(width,height,insets,edge,record,radius,softness,recordRa
     var seam=leading ? insets[edge]
         : (h ? height : width)-insets[edge];
     var popupRadius=record.radius ?? recordRadius ?? radius;
+    var contactEdges=physicalContactMask(cornerWidthInsets ?? insets,roundZeroCorners);
+    var contactEnabled=contactEdges[{top:0,right:1,bottom:2,left:3}[edge]];
     var physicalDepth=leading ? (h ? surface.y+surface.height : surface.x+surface.width)
         : (h ? height-surface.y : width-surface.x);
     var touches=leading ? (h ? surface.y : surface.x)<=0
         : (h ? surface.y+surface.height>=height : surface.x+surface.width>=width);
-    var contactRadius=touches ? Math.max(0,Math.min(popupRadius,(h ? surface.width : surface.height)/2,physicalDepth)) : 0;
+    var contactRadius=touches && contactEnabled ? Math.max(0,Math.min(popupRadius,(h ? surface.width : surface.height)/2,physicalDepth)) : 0;
     var reach=Math.max(0,softness,contactRadius);
     if(reach<=0)return [];
     var normalReach=Math.max(0,softness,contactRadius-Math.max(0,insets[edge]));
@@ -80,7 +82,7 @@ function popupShoulders(width,height,insets,edge,record,radius,softness,recordRa
         var y=h ? cross+.5 : tangent+.5;
         var d=-roundedDistance(x,y,workspaceRect,radius);
         if(cutCorners)d=zeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
-        d=smoothUnion(d,surfaceDistance(x,y,width,height,surface,popupRadius),softness);
+        d=smoothUnion(d,surfaceDistance(x,y,width,height,surface,popupRadius,contactEdges),softness);
         if(cutCorners)d=clipZeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
         return d<0;
     };
@@ -278,35 +280,37 @@ function contactCornerDistance(tangent,normal,start,end,radius) {
     var clip=Math.max(-q,-normal,normal-radius);
     return Math.max(circle,clip);
 }
-function physicalContactDistance(x,y,width,height,rect,radius) {
+function physicalContactDistance(x,y,width,height,rect,radius,enabledEdges) {
+    if(!enabledEdges)return Infinity;
     var d=Infinity;
-    if(rect.y<=0 && rect.y+rect.height>0)
+    if(enabledEdges[0] && rect.y<=0 && rect.y+rect.height>0)
         d=Math.min(d,contactCornerDistance(x,y,rect.x,rect.x+rect.width,
             Math.min(radius,rect.width/2,rect.y+rect.height)));
-    if(rect.y+rect.height>=height && rect.y<height)
+    if(enabledEdges[2] && rect.y+rect.height>=height && rect.y<height)
         d=Math.min(d,contactCornerDistance(x,height-y,rect.x,rect.x+rect.width,
             Math.min(radius,rect.width/2,height-rect.y)));
-    if(rect.x<=0 && rect.x+rect.width>0)
+    if(enabledEdges[3] && rect.x<=0 && rect.x+rect.width>0)
         d=Math.min(d,contactCornerDistance(y,x,rect.y,rect.y+rect.height,
             Math.min(radius,rect.height/2,rect.x+rect.width)));
-    if(rect.x+rect.width>=width && rect.x<width)
+    if(enabledEdges[1] && rect.x+rect.width>=width && rect.x<width)
         d=Math.min(d,contactCornerDistance(y,width-x,rect.y,rect.y+rect.height,
             Math.min(radius,rect.height/2,width-rect.x)));
     return d;
 }
-function surfaceDistance(x,y,width,height,rect,radius) {
+function surfaceDistance(x,y,width,height,rect,radius,enabledEdges) {
     return Math.min(roundedDistance(x,y,rect,radius),
-        physicalContactDistance(x,y,width,height,rect,radius));
+        physicalContactDistance(x,y,width,height,rect,radius,enabledEdges));
 }
 function distance(x, y, width, height, insets, radius, records, softness, recordRadius, roundZeroCorners, cornerWidthInsets) {
     var left=insets.left>0 ? insets.left : -64, top=insets.top>0 ? insets.top : -64;
     var right=insets.right>0 ? insets.right : -64, bottom=insets.bottom>0 ? insets.bottom : -64;
     var d = -roundedDistance(x,y,{x:left,y:top,width:width-left-right,height:height-top-bottom},radius);
     d=zeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
+    var contactEdges=physicalContactMask(cornerWidthInsets ?? insets,roundZeroCorners);
     for (var i=0;i<records.length;i++) {
         var rec=records[i];
         if (rec.surface.width>0 && rec.surface.height>0)
-            d=smoothUnion(d,surfaceDistance(x,y,width,height,rec.surface,rec.radius ?? recordRadius ?? radius),softness);
+            d=smoothUnion(d,surfaceDistance(x,y,width,height,rec.surface,rec.radius ?? recordRadius ?? radius,contactEdges),softness);
     }
     return clipZeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
 }
@@ -346,8 +350,13 @@ function joinCorner(record, adjacent, width, height, insets) {
 
 // Corner ownership is OR: either enabled zero-width adjoining Edge owns one arc.
 // This changes only the workspace-facing quarter curve, never the outer boundary.
+function physicalContactMask(insets,choices) {
+    return ["top","right","bottom","left"].map(function(edge) {
+        return choices?.[edge]===true && insets?.[edge]===0;
+    });
+}
 function zeroCornerMask(insets,choices) {
-    var on=function(edge) {return choices?.[edge]===true && insets[edge]<=0;};
+    var on=function(edge) {return choices?.[edge]===true && insets[edge]===0;};
     return [on("top")||on("left"),on("top")||on("right"),
         on("bottom")||on("right"),on("bottom")||on("left")];
 }

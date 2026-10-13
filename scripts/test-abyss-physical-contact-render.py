@@ -80,12 +80,20 @@ ShellRoot {
    }
    root.insets={left:0,top:0,right:0,bottom:0}
    for(const edge of ["top","right","bottom","left"])for(const start of [140,250]){
-    root.edge=edge;root.records=[body(edge,start,120,90,30)]
+    root.edge=edge;root.records=[body(edge,start,120,90,30)];root.choices={}
+    pair(edge+"-"+start+"-off")
+    root.choices={[edge]:true}
     const name=edge+"-"+start;pair(name)
     root.cases.push({name:name,edge:edge,start:start,span:120,depth:90,radius:30})
-    const rows=Geometry.popupShoulders(850,480,root.insets,edge,root.records[0],34,24,30)
+    const rows=Geometry.popupShoulders(850,480,root.insets,edge,root.records[0],34,24,30,root.choices,root.insets)
     check(rows.some(row=>row.width>0&&row.height>0),"0px physical contact has no hover region")
    }
+   for(const width of [1,10,16,40]){
+    root.insets={left:width,top:width,right:width,bottom:width};root.choices={top:true,right:true,bottom:true,left:true}
+    root.records=[body("top",140,120,90,30),body("right",250,120,90,30),body("bottom",250,120,90,30),body("left",140,120,90,30)]
+    pair("nonzero-"+width)
+   }
+   root.insets={left:0,top:0,right:0,bottom:0}
    root.edge="top";root.records=[body("top",8,120,90,34)];root.choices={top:true};grab("corner-cut")
    root.choices={};root.records=[body("top",250,120,90,0)];pair("zero-radius")
    console.info("PHYSICAL_CONTACT_CASES",JSON.stringify(root.cases))
@@ -109,11 +117,14 @@ ShellRoot {
             print(result.stdout)
             raise SystemExit(1)
         from PIL import Image
-        for name in ['zero-empty', 'mixed-empty', 'regular-empty', 'zero-detached', 'mixed-detached', 'regular-detached', 'zero-radius']:
+        exact = ['zero-empty', 'mixed-empty', 'regular-empty', 'zero-detached', 'mixed-detached', 'regular-detached', 'zero-radius']
+        exact += [f'{edge}-{start}-off' for edge in ['top', 'right', 'bottom', 'left'] for start in [140,250]]
+        exact += [f'nonzero-{width}' for width in [1,10,16,40]]
+        for name in exact:
             with Image.open(args.output/(name+'-before.png')) as a, Image.open(args.output/(name+'-after.png')) as b:
                 assert a.size == b.size and a.convert('RGBA').tobytes() == b.convert('RGBA').tobytes(), 'Off-state RGBA changed: '+name
         for edge in ['top', 'right', 'bottom', 'left']:
             for start in [140,250]:
                 with Image.open(args.output/f'{edge}-{start}-before.png') as a, Image.open(args.output/f'{edge}-{start}-after.png') as b:
                     assert a.convert('RGBA').tobytes() != b.convert('RGBA').tobytes(), f'Contact missing: {edge} {start}'
-        print('PHYSICAL_CONTACT_RENDER_PASS 7 exact off-state RGBA pairs, 8 moving four-edge contacts and corner clipping')
+        print(f'PHYSICAL_CONTACT_RENDER_PASS {len(exact)} exact disabled/nonzero RGBA pairs, 8 moving four-edge enabled contacts and corner clipping')
