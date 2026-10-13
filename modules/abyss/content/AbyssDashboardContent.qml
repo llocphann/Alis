@@ -6,6 +6,9 @@ Item {
     id: root
     property var participant: null
     readonly property bool editMode: content.editMode
+    function handleEscape(): bool {
+        return content.handleEscape()
+    }
     readonly property real topControlReserve: editor.desiredHeight+16
     DashboardContent {
         id: content
