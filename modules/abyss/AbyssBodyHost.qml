@@ -226,7 +226,8 @@ Item {
             && root.inputBounds.width > 0 && root.inputBounds.height > 0
         ? Geometry.popupShoulders(root.width,root.height,root.connectionInsets,root.edge,
             root.rawPresentationRecord,AbyssStyle.perimeterRadius,
-            AbyssStyle.connectionDepth,AbyssStyle.neckRadius) : []
+            AbyssStyle.connectionDepth,AbyssStyle.neckRadius,
+            root.controller?.roundZeroCorners,root.controller?.cornerWidthInsets) : []
     property var connectionRegions: []
     // Instantiator creates/removes a synchronous cohort. Publish its complete
     // native region list once, before returning to input dispatch, rather than
@@ -519,7 +520,8 @@ Item {
     Item {
         id: inputFrame
         readonly property real shoulderReach: root.connectionRects.length > 0
-            ? Math.ceil(AbyssStyle.connectionDepth)+1 : 0
+            ? Math.ceil(Math.max(AbyssStyle.connectionDepth,
+                root.rawPresentationRecord.radius ?? AbyssStyle.neckRadius))+1 : 0
         x: root.inputBounds.x-(Geometry.horizontal(root.edge) ? shoulderReach : 0)
         y: root.inputBounds.y-(Geometry.horizontal(root.edge) ? 0 : shoulderReach)
         width: root.inputBounds.width+(Geometry.horizontal(root.edge) ? 2*shoulderReach : 0)

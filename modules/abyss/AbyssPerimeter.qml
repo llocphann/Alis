@@ -846,6 +846,8 @@ Scope {
                 dialogHost: dialogBody
                 edgeInsets: window.paintInsets
                 moduleRecords: bar.visible ? bar.deformations : []
+                cornerWidthInsets: window.configuredInsets
+                roundZeroCorners: bar.layoutOptions.edgeRoundZeroCorners ?? {}
                 // Editing disables the mature module's input, but its handle
                 // still owns the same source pixels. Do not let a popup behind
                 // that handle acquire body hover and keep itself alive during

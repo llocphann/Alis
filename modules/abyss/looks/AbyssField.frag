@@ -132,9 +132,29 @@ float fuse(float a, float b) {
     float h = max(k-abs(a-b),0.0)/k;
     return min(a,b)-h*h*k*0.25;
 }
+float contactCorner(vec2 point,float start,float end,float radius) {
+    if(radius<=0.0 || point.y<0.0 || point.y>radius) return 1e20;
+    float q=min(point.x-start+radius,end+radius-point.x);
+    if(q<0.0) return 1e20;
+    float circle=radius-length(vec2(q,point.y-radius));
+    float clip=max(-q,max(-point.y,point.y-radius));
+    return max(circle,clip);
+}
+float physicalContact(vec2 p,vec4 rect,float radius) {
+    float d=1e20;
+    if(rect.y<=0.0 && rect.y+rect.w>0.0)
+        d=min(d,contactCorner(p,rect.x,rect.x+rect.z,min(radius,min(rect.z*.5,rect.y+rect.w))));
+    if(rect.y+rect.w>=viewport.y && rect.y<viewport.y)
+        d=min(d,contactCorner(vec2(p.x,viewport.y-p.y),rect.x,rect.x+rect.z,min(radius,min(rect.z*.5,viewport.y-rect.y))));
+    if(rect.x<=0.0 && rect.x+rect.z>0.0)
+        d=min(d,contactCorner(p.yx,rect.y,rect.y+rect.w,min(radius,min(rect.w*.5,rect.x+rect.z))));
+    if(rect.x+rect.z>=viewport.x && rect.x<viewport.x)
+        d=min(d,contactCorner(vec2(p.y,viewport.x-p.x),rect.y,rect.y+rect.w,min(radius,min(rect.w*.5,viewport.x-rect.x))));
+    return d;
+}
 float record(float d, vec2 p, vec4 rect, float radius) {
     if(rect.z <= 0.0 || rect.w <= 0.0) return d;
-    return fuse(d,roundedBox(p,rect,radius));
+    return fuse(d,min(roundedBox(p,rect,radius),physicalContact(p,rect,radius)));
 }
 vec4 workspaceRect() {
     // A disabled Edge lies outside the render target, including its AA/rim

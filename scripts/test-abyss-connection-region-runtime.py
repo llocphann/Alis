@@ -57,6 +57,11 @@ ShellRoot {
    tryCompare(Config,"ready",true,5000)
    Config.setNestedValue("performance.reduceAnimations",true)
    wait(20);verifyAll()
+   for(const insets of [{left:16,top:16,right:16,bottom:16},{left:0,top:0,right:0,bottom:0},{left:0,top:16,right:0,bottom:16}]){
+    controller.edgeInsets=insets
+    controller.cornerWidthInsets=insets
+    controller.roundZeroCorners={top:true,right:true,bottom:true,left:true}
+    wait(0);verifyAll()
    for(let cycle=0;cycle<32;cycle++){
     root.depth=80+(cycle%5)*22;root.span=230+(cycle%4)*17;root.along=110+(cycle%3)*26
     const before=root.publications
@@ -74,6 +79,7 @@ ShellRoot {
     check(root.publications-stable<=8,"resize/close published intermediate cohorts")
     root.cohorts+=4
    }
+   }
    console.info("CONNECTION_REGION_PASS",root.checks,"coverage/lifetime checks",root.publications,"complete publications",root.regionObjects,"published Regions",root.cohorts,"open/close cohorts")
   }catch(e){console.error("CONNECTION_REGION_FAIL",e.message,e.stack)}Qt.quit()}
  }
@@ -84,7 +90,7 @@ ShellRoot {
         if env is None:
             print('SKIP: Region validation requires local private Niri')
             raise SystemExit(0)
-        result = run_qs(folder, env, timeout=30)
+        result = run_qs(folder, env, timeout=45)
         destination = os.environ.get('ALIS_CONNECTION_REGION_LOG')
         if destination:
             Path(destination).write_text(result.stdout)

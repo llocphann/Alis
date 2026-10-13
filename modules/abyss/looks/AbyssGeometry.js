@@ -33,9 +33,9 @@ function popupInput(content,width,height,insets,edge,paintedSurface) {
 // The smooth union paints two concave shoulders beyond the body's tangent
 // bounds. Rasterize only those small shoulder strips, using the same SDF as
 // the field. Expanding the entire body rectangle would capture blank desktop.
-function popupShoulders(width,height,insets,edge,record,radius,softness,recordRadius) {
+function popupShoulders(width,height,insets,edge,record,radius,softness,recordRadius,roundZeroCorners,cornerWidthInsets) {
     if (!record || !record.surface || record.surface.width <= 0
-            || record.surface.height <= 0 || softness <= 0) return [];
+            || record.surface.height <= 0) return [];
     var h=horizontal(edge),leading=edge === "top" || edge === "left";
     var surface=record.surface;
     var start=Math.floor(h ? surface.x : surface.y);
@@ -43,8 +43,17 @@ function popupShoulders(width,height,insets,edge,record,radius,softness,recordRa
     var extent=Math.floor(h ? width : height);
     var seam=leading ? insets[edge]
         : (h ? height : width)-insets[edge];
-    // Disabled Edges have no owner seam to fuse with.
-    if (insets[edge] <= 0) return [];
+    var popupRadius=record.radius ?? recordRadius ?? radius;
+    var physicalDepth=leading ? (h ? surface.y+surface.height : surface.x+surface.width)
+        : (h ? height-surface.y : width-surface.x);
+    var touches=leading ? (h ? surface.y : surface.x)<=0
+        : (h ? surface.y+surface.height>=height : surface.x+surface.width>=width);
+    var contactRadius=touches ? Math.max(0,Math.min(popupRadius,(h ? surface.width : surface.height)/2,physicalDepth)) : 0;
+    var reach=Math.max(0,softness,contactRadius);
+    if(reach<=0)return [];
+    var normalReach=Math.max(0,softness,contactRadius-Math.max(0,insets[edge]));
+    // 0px Edges still own the bounded contact of a local body with the screen.
+    if (insets[edge] <= 0 && contactRadius<=0) return [];
     var firstCross=leading ? Math.floor(seam) : Math.ceil(seam)-1;
     var rows=[];
     // This function has exactly one non-empty record. The old distance()
@@ -56,14 +65,23 @@ function popupShoulders(width,height,insets,edge,record,radius,softness,recordRa
     var right=insets.right>0 ? insets.right : -64;
     var bottom=insets.bottom>0 ? insets.bottom : -64;
     var workspaceRect={x:left,y:top,width:width-left-right,height:height-top-bottom};
-    var popupRadius=record.radius ?? recordRadius ?? radius;
-    var cornerStart=(h ? insets.left : insets.top)+radius;
-    var cornerEnd=extent-(h ? insets.right : insets.bottom)-radius;
+    var zeroMask=zeroCornerMask(cornerWidthInsets ?? insets,roundZeroCorners);
+    var cutCorners=zeroMask.some(function(value) {return value;});
+    // 0px corner fields can fuse with the new contact beyond the corner arc.
+    // Scan that finite support exactly; only the far, monotone intervals use
+    // the binary search, so no empty gap is bridged by a native rectangle.
+    var cornerSupport=radius+(cutCorners ? softness : 0);
+    var cornerStart=(h ? insets.left : insets.top)+cornerSupport;
+    var cornerEnd=extent-(h ? insets.right : insets.bottom)-cornerSupport;
+    if(cutCorners && (start-reach<cornerStart || end+reach>cornerEnd))
+        normalReach=Math.max(normalReach,cornerSupport-Math.max(0,insets[edge]));
     var painted=function(tangent,cross) {
         var x=h ? tangent+.5 : cross+.5;
         var y=h ? cross+.5 : tangent+.5;
         var d=-roundedDistance(x,y,workspaceRect,radius);
-        d=smoothUnion(d,roundedDistance(x,y,surface,popupRadius),softness);
+        if(cutCorners)d=zeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
+        d=smoothUnion(d,surfaceDistance(x,y,width,height,surface,popupRadius),softness);
+        if(cutCorners)d=clipZeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
         return d<0;
     };
     var append=function(first,last,cross) {
@@ -81,10 +99,10 @@ function popupShoulders(width,height,insets,edge,record,radius,softness,recordRa
         if (segment >= 0) append(segment,last,cross);
         if (rows.length === before) append(first,first,cross);
     };
-    for (var i=0;i<Math.ceil(softness)+1;i++) {
+    for (var i=0;i<Math.ceil(normalReach)+1;i++) {
         var cross=firstCross+(leading ? i : -i);
         if (cross < 0 || cross >= Math.floor(h ? height : width)) continue;
-        var lo=Math.max(0,Math.floor(start-softness)),hi=Math.max(0,Math.min(extent,start));
+        var lo=Math.max(0,Math.floor(start-reach)),hi=Math.max(0,Math.min(extent,start));
         var first=lo,last=hi;
         while (lo < hi) {
             var middle=Math.floor((lo+hi)/2);
@@ -92,7 +110,7 @@ function popupShoulders(width,height,insets,edge,record,radius,softness,recordRa
         }
         if (first < cornerStart) scan(first,last,cross);
         else append(lo,last,cross);
-        lo=Math.min(extent,end);hi=Math.min(extent,Math.ceil(end+softness));
+        lo=Math.min(extent,end);hi=Math.min(extent,Math.ceil(end+reach));
         first=Math.max(0,lo);last=hi;
         while (lo < hi) {
             var middle=Math.floor((lo+hi)/2);
@@ -249,6 +267,37 @@ function smoothUnion(a, b, k) {
     var h = Math.max(k-Math.abs(a-b),0)/k;
     return Math.min(a,b)-h*h*k*0.25;
 }
+// A contact follows the actual rectangle crossing the physical boundary.
+// Its concave quarter circle meets that boundary and the body's side with
+// continuous tangents; no output-wide strip or fixed screen-corner patch.
+function contactCornerDistance(tangent,normal,start,end,radius) {
+    if(!(radius>0) || normal<0 || normal>radius)return Infinity;
+    var q=Math.min(tangent-start+radius,end+radius-tangent);
+    if(q<0)return Infinity;
+    var circle=radius-Math.hypot(q,normal-radius);
+    var clip=Math.max(-q,-normal,normal-radius);
+    return Math.max(circle,clip);
+}
+function physicalContactDistance(x,y,width,height,rect,radius) {
+    var d=Infinity;
+    if(rect.y<=0 && rect.y+rect.height>0)
+        d=Math.min(d,contactCornerDistance(x,y,rect.x,rect.x+rect.width,
+            Math.min(radius,rect.width/2,rect.y+rect.height)));
+    if(rect.y+rect.height>=height && rect.y<height)
+        d=Math.min(d,contactCornerDistance(x,height-y,rect.x,rect.x+rect.width,
+            Math.min(radius,rect.width/2,height-rect.y)));
+    if(rect.x<=0 && rect.x+rect.width>0)
+        d=Math.min(d,contactCornerDistance(y,x,rect.y,rect.y+rect.height,
+            Math.min(radius,rect.height/2,rect.x+rect.width)));
+    if(rect.x+rect.width>=width && rect.x<width)
+        d=Math.min(d,contactCornerDistance(y,width-x,rect.y,rect.y+rect.height,
+            Math.min(radius,rect.height/2,width-rect.x)));
+    return d;
+}
+function surfaceDistance(x,y,width,height,rect,radius) {
+    return Math.min(roundedDistance(x,y,rect,radius),
+        physicalContactDistance(x,y,width,height,rect,radius));
+}
 function distance(x, y, width, height, insets, radius, records, softness, recordRadius, roundZeroCorners, cornerWidthInsets) {
     var left=insets.left>0 ? insets.left : -64, top=insets.top>0 ? insets.top : -64;
     var right=insets.right>0 ? insets.right : -64, bottom=insets.bottom>0 ? insets.bottom : -64;
@@ -257,7 +306,7 @@ function distance(x, y, width, height, insets, radius, records, softness, record
     for (var i=0;i<records.length;i++) {
         var rec=records[i];
         if (rec.surface.width>0 && rec.surface.height>0)
-            d=smoothUnion(d,roundedDistance(x,y,rec.surface,rec.radius ?? recordRadius ?? radius),softness);
+            d=smoothUnion(d,surfaceDistance(x,y,width,height,rec.surface,rec.radius ?? recordRadius ?? radius),softness);
     }
     return clipZeroCornerField(d,x,y,width,height,insets,radius,roundZeroCorners,cornerWidthInsets);
 }

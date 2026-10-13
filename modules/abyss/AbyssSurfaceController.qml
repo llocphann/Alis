@@ -50,6 +50,8 @@ QtObject {
     property bool presented: true
     property Item presentationItem: null
     property var edgeInsets: ({left:16,top:48,right:16,bottom:16})
+    property var cornerWidthInsets: edgeInsets
+    property var roundZeroCorners: ({})
     // Backward-compatible single host used by isolated tests/legacy callers.
     // Production Abyss registers stable popup slots instead, allowing several
     // mature StyledPopup instances to coexist without dismissing each other.
