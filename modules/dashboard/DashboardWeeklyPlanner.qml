@@ -75,12 +75,23 @@ Item {
         if (!root.deleteConfirmation) {root.deleteConfirmation=true;return}
         if (typeof root.localBackend.applyPlannerOccurrenceBatch!=="function")
             return
+        const form=inlineEventsPanel.item
+        const editedIsSelected=form && form.isEditing
+            && root.selectedEventRows.some(row=>row.event.id===form.editingEvent?.id
+                && row.occurrenceIndex===form.editingOccurrenceIndex)
+        if (editedIsSelected && form.hasUnsavedChanges()) {
+            form.editorWarning=Translation.tr(
+                "Save or Cancel the current event before deleting selected events.")
+            root.deleteConfirmation=false
+            return
+        }
         const actions=root.selectedEventRows.map(row=>({
             id:row.event.id,occurrenceIndex:row.occurrenceIndex,remove:true
         }))
-        if (root.localBackend.applyPlannerOccurrenceBatch(actions))
+        if (root.localBackend.applyPlannerOccurrenceBatch(actions)) {
             root.clearEventSelection()
-        else root.deleteConfirmation=false
+            if (editedIsSelected) root.closeInlineEventEditor()
+        } else root.deleteConfirmation=false
     }
     function handleSelectionKey(event): bool {
         if (event.key===Qt.Key_Escape && root.selectedEventKeys.length>0) {
