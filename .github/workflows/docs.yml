@@ -4,6 +4,10 @@ on:
   push:
     paths:
       - 'README.md'
+      - 'AGENTS.md'
+      - 'to-do/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - 'scripts/test-task-issues-governance.py'
       - 'docs/**'
       - '**/*.qml'
       - 'translations/**'
@@ -17,6 +21,10 @@ on:
   pull_request:
     paths:
       - 'README.md'
+      - 'AGENTS.md'
+      - 'to-do/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - 'scripts/test-task-issues-governance.py'
       - 'docs/**'
       - '**/*.qml'
       - 'translations/**'
@@ -45,6 +53,9 @@ jobs:
 
       - name: Validate IPC registry parser
         run: python3 scripts/test-ipc-registry-generator.py
+
+      - name: Guard GitHub Issues task workflow
+        run: python3 scripts/test-task-issues-governance.py
 
       - name: Validate documentation contracts
         run: bash scripts/verify-docs.sh
