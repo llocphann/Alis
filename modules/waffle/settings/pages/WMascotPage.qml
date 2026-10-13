@@ -68,7 +68,7 @@ WSettingsPage {
         WSettingsSwitch {
             label: Translation.tr("Show mascot illustration")
             icon: "image"
-            description: Translation.tr("Show the iNiR mascot in About, empty states and other shell surfaces")
+            description: Translation.tr("Show the Alis mascot in About, empty states and other shell surfaces")
             checked: Config.options?.mascot?.enable ?? false
             onCheckedChanged: Config.setNestedValue("mascot.enable", checked)
         }

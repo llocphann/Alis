@@ -15,6 +15,7 @@ on:
       - "distro/arch/inir-shell/*.install"
       - "distro/arch/inir-shell-git/*.install"
       - "scripts/brand-owner-audit.sh"
+      - "scripts/test-brand-single-owner.sh"
       - "scripts/completions/alis.*"
       - "scripts/test-brand-entrypoints.sh"
       - "scripts/test-alis-namespace-alias.sh"
@@ -47,11 +48,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash -n scripts/alis scripts/brand-owner-audit.sh scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh
+          bash -n scripts/alis scripts/brand-owner-audit.sh scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh scripts/test-brand-single-owner.sh
           bash -n scripts/brand-namespace-rollback.sh scripts/test-brand-namespace-rollback.sh scripts/test-brand-uninstall.sh
           bash -n sdata/migrations/061-alis-namespace-alias.sh sdata/subcmd-install/3.files.sh setup
           test ! -e assets/systemd/alis.service
           grep -Fq 'ShellId inir' shell.qml
+      - name: R5 single-owner ShellId and service compatibility
+        shell: bash
+        run: bash scripts/test-brand-single-owner.sh
       - name: Public CLI, menu IDs and staged Make ownership
         shell: bash
         run: bash scripts/test-brand-entrypoints.sh

@@ -48,6 +48,10 @@ Run `bash scripts/brand-owner-audit.sh` from a local Alis checkout to inspect in
 
 Repo-managed Alis entries are removed only when their contents carry the expected Alis management marker (launcher and desktop files) or their SVG bytes equal the distributed Alis icon. Existing files with foreign content or symlinks are preserved. `scripts/test-brand-uninstall.sh` exercises both cases and verifies that XDG data aliases and original preference bytes are untouched. Existing `inir` runtime files retain their prior lifecycle behavior.
 
+## Runtime ownership contract (R5)
+
+`scripts/test-brand-single-owner.sh` verifies the current Quickshell `ShellId inir`, the sole `inir.service` process owner and StatusNotifierWatcher DBus bus name; it also rejects a second `alis.service` and enforces the forwarding CLI for both source and fallback runtime modes. This is intentionally a **strict-lossless compatibility release**: the user sees Alis, while established runtime/IPC/session selectors remain stable. Migrating the canonical selectors later is a separate owner-gated transaction, not an automatic package upgrade.
+
 ## Standalone automated regression lane
 
 GitHub Actions workflow `.github/workflows/brand-contracts.yml` runs a bounded, desktop-independent set of CLI, app ID, staged installer ownership, XDG namespace alias and pinned Arch snapshot contracts on `dev`. Its first confirmed successful run was [38430739766](https://github.com/llocphann/Alis/actions/runs/38430739766) at SHA `cf81808b8c8377d24f5fa917866edd47c2a7e5f5`. This gives independent evidence even when the full desktop/Niri canonical validator cannot execute in hosted CI; it **does not** replace owner visual acceptance, package installation on real hardware, or rollback validation.
