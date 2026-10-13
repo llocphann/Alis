@@ -24,18 +24,19 @@ for args in help status settings 'run' 'service restart' 'completions bash' 'ove
 done
 # Environment from Alis should only bypass the public check for delegation.
 set +e
-help_output="$(HOME="$tmp/home" INIR_RUNTIME_DIR="$repo" bash "$tmp/bin/alis" help 2>&1)"
+help_output="$(HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/home/.config" INIR_RUNTIME_DIR="$repo" bash "$tmp/bin/alis" help 2>&1)"
 help_rc=$?
 set -e
 if [[ $help_rc -ne 0 ]]; then
     printf 'Alis help diagnostic (exit %s):\\n%s\\n' "$help_rc" "$help_output" >&2
+    HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/home/.config" INIR_RUNTIME_DIR="$repo" bash -x "$tmp/bin/inir" help 2>&1 | tail -50 >&2 || true
     fail 'Alis help through installed bin'
 fi
 [[ "$help_output" == *'Usage: alis <command>'* ]] || fail 'Alis public help missing'
 [[ "$help_output" == *'  alis status'* ]] || fail 'Alis help targets wrong command'
 [[ "$help_output" == *'IPC targets (alis '* ]] || fail 'Alis IPC help missing'
 # The source engine is still directly usable by internal QML code.
-source_help="$(HOME="$tmp/home" INIR_RUNTIME_DIR="$repo" bash "$repo/scripts/inir" help)" || fail 'internal engine stopped working'
+source_help="$(HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/home/.config" INIR_RUNTIME_DIR="$repo" bash "$repo/scripts/inir" help)" || fail 'internal engine stopped working'
 [[ "$source_help" == *'Usage: inir <command>'* ]] || fail 'internal engine semantics changed'
 # No second unit, ShellId or persisted names were introduced.
 grep -Fxq 'ExecStart=/usr/bin/inir run --session' "$repo/assets/systemd/inir.service" || fail 'service owner changed'
