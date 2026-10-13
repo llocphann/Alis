@@ -35,9 +35,18 @@ assert 'compactCornerHost:root.toolbarOnHorizontalEdge ? null : editorModeTabs' 
 assert 'font.pixelSize:root.toolbarOnHorizontalEdge' in editor
 assert 'root.headerActionSize' in editor
 assert 'columns: root.toolbarOnHorizontalEdge' in editor
-assert 'toolbarScroll.width>=205*Appearance.fontSizeScale ? 2 : 1' in editor
-assert 'toolbarScroll.width >= 200*Appearance.fontSizeScale' in editor
-assert '(root.toolbarOnHorizontalEdge ? 116 : 86)*Appearance.fontSizeScale' in editor
+assert 'objectName: "abyssEditorHeader"' in editor
+header=editor.split('objectName: "abyssEditorHeader"',1)[1].split('objectName:"abyssEditorHeaderActions"',1)[0]
+assert 'Layout.fillWidth:true;Layout.minimumWidth:0' in header
+assert 'Layout.alignment:Qt.AlignVCenter' in header
+assert 'elide:Text.ElideRight' in header
+assert '10*Appearance.fontSizeScale' in header
+assert 'toolbarScroll.width>=205*Appearance.fontSizeScale ? 2 : 1' not in editor
+assert 'compactSideSelectorWidth:root.sideIpcDropdownWidth' in editor
+assert positions.count('root.compactSideSelectorWidth') == 6
+assert 'property real compactSideSelectorWidth: 136*Appearance.fontSizeScale' in positions
+assert 'Layout.preferredWidth:root.toolbarOnHorizontalEdge' in editor
+assert 'Math.max(116*Appearance.fontSizeScale,' in editor
 assert positions.count('popupMinimumWidth:root.compactSideToolbar') == 3
 combo = (root / "modules/common/widgets/StyledComboBox.qml").read_text()
 assert 'property real popupMinimumWidth: 0' in combo
@@ -81,8 +90,8 @@ assert 'visible:!root.compactIpcEditor && Presentation.canJoin(root.kind)' in po
 assert 'onToggled:root.change("joinCorner",checked)' in positions
 assert 'ipcOutputRegion' in editor and 'ipcOutputRegion,edgeRegion' in editor
 assert 'selectionRegion' not in editor
-# First row stays two aligned groups on horizontal Edges:
-# left: Modules / IPC tabs; right: output dropdown + This output only.
+# Horizontal Modes and scope remain paired; side scope is a uniform
+# output dropdown plus the adjacent icon-only checked control.
 head=editor.split('id: editorModeHeader',1)[1].split('AbyssPositionSettings {',1)[0]
 assert 'objectName: "abyssEditorModeHeader"' in editor
 assert 'columns: root.toolbarOnHorizontalEdge' in head
@@ -92,6 +101,8 @@ assert 'objectName: "abyssEditorOutputScope"' in head
 assert head.index('objectName:"abyssEditorModulesMode"') < head.index('objectName:"abyssEditorIpcMode"')
 assert head.index('objectName: "abyssEditorOutputScope"') < head.index('id:ipcOutputChoice') < head.index('objectName:"abyssEditorOutputOnly"')
 assert 'Layout.alignment: Qt.AlignRight | Qt.AlignVCenter' in head
+assert 'columns:2' in head
+assert 'Layout.alignment:root.toolbarOnHorizontalEdge' in head
 assert 'visible:true' in head.split('id:ipcOutputChoice',1)[1]
 assert 'id:ipcKindChoice' not in editor
 assert 'previewPositions.compactKindCombo.popup.contentItem' in editor
@@ -101,9 +112,16 @@ assert 'function resetIpcPosition(): void' in editor
 assert 'previewPositions.apply(null)' in editor
 assert 'root.editingPopups ? root.resetIpcPosition() : root.reset()' in editor
 assert editor.count('text:"This output only"') == 1
+scope=editor.split('objectName:"abyssEditorOutputOnly"',1)[1].split('AbyssPositionSettings {',1)[0]
+for needle in ['glyph:checked ? "check_box" : "check_box_outline_blank"',
+               'compact:true;editorSquare:true;checkable:true',
+               'checked:root.outputOnly','onToggled:root.outputOnly=checked']:
+    assert needle in scope, needle
+assert 'AbyssCheckBox {' not in editor.split('objectName: "abyssEditorOutputScope"',1)[1].split('AbyssPositionSettings {',1)[0]
 assert 'visible: !root.compactIpcEditor' in positions.split('SettingsNote {')[-1]
 
-assert '(root.toolbarOnHorizontalEdge ? 116 : 86)*Appearance.fontSizeScale' in editor
+assert 'Layout.preferredWidth:root.toolbarOnHorizontalEdge' in editor
+assert 'Math.max(116*Appearance.fontSizeScale,' in editor
 
 fine=editor[editor.index("id:editFineControls"):]
 fine_two_column=re.search(r"readonly property bool useTwoColumns:\s*([\s\S]+?)\n\s*columns:useTwoColumns",fine)

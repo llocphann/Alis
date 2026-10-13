@@ -40,7 +40,12 @@ Item {
     readonly property real editorActionSize: 30 * Appearance.fontSizeScale
     // Only the side toolbar's top action row gets smaller square buttons.
     readonly property real headerActionSize: toolbarOnHorizontalEdge
-        ? editorActionSize : 26 * Appearance.fontSizeScale
+        ? editorActionSize : 24 * Appearance.fontSizeScale
+    // Side scope and all IPC selector triggers share the same width.
+    readonly property real sideIpcDropdownWidth: Math.min(
+        136 * Appearance.fontSizeScale,
+        Math.max(86 * Appearance.fontSizeScale,
+            toolbarScroll.width - (headerActionSize + 10 * Appearance.fontSizeScale)))
     required property string outputName
     required property var moduleLayer
     required property var controller
@@ -746,29 +751,28 @@ Item {
                 width: toolbarScroll.width
                 spacing: 3
 
-                GridLayout {
+                RowLayout {
+                    objectName: "abyssEditorHeader"
                     Layout.fillWidth: true;Layout.minimumWidth:0
-                    // Measure against the fixed scroll viewport, never this
-                    // grid's width. Side panels can still use a single row.
-                    columns: root.toolbarOnHorizontalEdge
-                        ? (toolbarScroll.width>=480*Appearance.fontSizeScale ? 2 : 1)
-                        : (toolbarScroll.width>=205*Appearance.fontSizeScale ? 2 : 1)
-                    columnSpacing:root.toolbarOnHorizontalEdge ? 8 : 3
-                    rowSpacing:4
+                    // Never wrap the actions below the title.
+                    spacing:root.toolbarOnHorizontalEdge ? 8 : 4
                     AbyssLabel {
                         objectName:"abyssEditorTitle"
                         text: "Edit layout · "+root.outputName
                         font.bold: true
                         font.pixelSize:root.toolbarOnHorizontalEdge
-                            ? AbyssStyle.fontSize : 11*Appearance.fontSizeScale
+                            ? AbyssStyle.fontSize : 10*Appearance.fontSizeScale
                         wrapMode:Text.NoWrap
                         Layout.fillWidth:true;Layout.minimumWidth:0
+                        Layout.alignment:Qt.AlignVCenter
                         elide:Text.ElideRight
                     }
                     RowLayout {
                         objectName:"abyssEditorHeaderActions"
-                        Layout.alignment:Qt.AlignRight
+                        Layout.alignment:Qt.AlignRight | Qt.AlignVCenter
                         Layout.fillWidth:false
+                        Layout.minimumWidth:root.headerActionSize*4
+                            + (root.toolbarOnHorizontalEdge ? 12 : 6)*Appearance.fontSizeScale
                         spacing:root.toolbarOnHorizontalEdge ? 4 : 2
                         AbyssButton {
                         Layout.maximumHeight:root.editorActionSize
@@ -869,13 +873,16 @@ Item {
                         Layout.minimumWidth: 0
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                         spacing:root.toolbarOnHorizontalEdge ? 8 : 4
-                        Item { Layout.fillWidth: true; Layout.minimumWidth: 0 }
+                        Item {
+                            visible:root.toolbarOnHorizontalEdge
+                            Layout.fillWidth:root.toolbarOnHorizontalEdge
+                            Layout.minimumWidth:0
+                        }
                         GridLayout {
-                            Layout.fillWidth: false
-                            Layout.alignment: Qt.AlignRight
-                            columns: editorModeHeader.columns === 2
-                                || (!root.toolbarOnHorizontalEdge
-                                    && toolbarScroll.width >= 200*Appearance.fontSizeScale) ? 2 : 1
+                            Layout.fillWidth:false
+                            Layout.alignment:root.toolbarOnHorizontalEdge
+                                ? Qt.AlignRight : Qt.AlignLeft
+                            columns:2
                             columnSpacing:root.toolbarOnHorizontalEdge ? 8 : 6
                             rowSpacing: 4
                             StyledComboBox {
@@ -884,11 +891,15 @@ Item {
                             // Shared output scope is useful in both Modules and IPC.
                             visible:true
                             baseHeight:28*Appearance.fontSizeScale
-                            // Reserve room for the full scope checkbox on side
-                            // bodies (220px content width at the default scale).
-                            Layout.preferredWidth:(root.toolbarOnHorizontalEdge ? 116 : 86)*Appearance.fontSizeScale
-                            Layout.maximumWidth:(root.toolbarOnHorizontalEdge ? 116 : 86)*Appearance.fontSizeScale
-                            popupMinimumWidth:root.toolbarOnHorizontalEdge ? 0 : 116*Appearance.fontSizeScale
+                            // Output, IPC kind, Edge and alignment triggers
+                            // end at one x-position on left/right toolbars.
+                            Layout.preferredWidth:root.toolbarOnHorizontalEdge
+                                ? 116*Appearance.fontSizeScale : root.sideIpcDropdownWidth
+                            Layout.maximumWidth:root.toolbarOnHorizontalEdge
+                                ? 116*Appearance.fontSizeScale : root.sideIpcDropdownWidth
+                            popupMinimumWidth:root.toolbarOnHorizontalEdge
+                                ? 0 : Math.max(116*Appearance.fontSizeScale,
+                                    root.sideIpcDropdownWidth)
                             textRole:"label";valueRole:"value"
                             model:[{label:"All outputs",value:""},
                                 {label:root.outputName,value:root.outputName}]
@@ -896,13 +907,18 @@ Item {
                             onActivated:root.outputOnly=currentValue!==""
                             StyledToolTip {text:"Edit this output or all outputs"}
                         }
-                        AbyssCheckBox {
+                        AbyssButton {
                             objectName:"abyssEditorOutputOnly"
-                            Layout.fillWidth:false
-                            Layout.minimumWidth:0
                             text:"This output only"
-                            font.pixelSize:root.toolbarOnHorizontalEdge
-                                ? AbyssStyle.fontSize : 12*Appearance.fontSizeScale
+                            glyph:checked ? "check_box" : "check_box_outline_blank"
+                            compact:true;editorSquare:true;checkable:true
+                            description:checked
+                                ? "This output only · on" : "This output only · off"
+                            Layout.fillWidth:false;Layout.minimumWidth:0
+                            Layout.preferredWidth:root.headerActionSize
+                            Layout.preferredHeight:root.headerActionSize
+                            Layout.maximumWidth:root.headerActionSize
+                            Layout.maximumHeight:root.headerActionSize
                             checked:root.outputOnly
                             onToggled:root.outputOnly=checked
                         }
@@ -920,6 +936,7 @@ Item {
                     kind:"volume"
                     compactVertical:!root.toolbarWideControls
                     compactSideToolbar:!root.toolbarOnHorizontalEdge
+                    compactSideSelectorWidth:root.sideIpcDropdownWidth
                     compactCornerHost:root.toolbarOnHorizontalEdge ? null : editorModeTabs
                     compactActions:root.toolbarOnHorizontalEdge
                     commitImmediately:false

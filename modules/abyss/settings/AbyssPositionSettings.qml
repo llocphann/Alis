@@ -23,12 +23,14 @@ ColumnLayout {
     // Compact IPC presents type, Edge, alignment and corner toggle together.
     property alias compactKindCombo: compactKindChoice
     property bool compactSideToolbar: false
+    // Horizontal selectors and open menus retain font-measured widths.
+    // Side Edit Layout triggers use one common host-specified width.
+    property real compactSideSelectorWidth: 136*Appearance.fontSizeScale
     // Move the same Join toggle into the side toolbar's Modules/IPC row,
     // without duplicating its checked state or activation handler.
     property Item compactCornerHost: null
-    // Size each trigger for its own longest choice. Do not derive the
-    // widths from this ColumnLayout's width: that depends on the children's
-    // implicit widths and can collapse the three IPC fields to ~72 px.
+    // Side triggers do not resize when the selected text changes;
+    // measured full model widths remain available to the opened menus.
     FontMetrics {
         id: compactSelectorMetrics
         font.pixelSize: Appearance.font.pixelSize.small
@@ -161,10 +163,12 @@ ColumnLayout {
             visible:root.compactIpcEditor
             Layout.fillWidth:root.compactVertical && !root.compactSideToolbar
             Layout.minimumWidth:0
-            Layout.preferredWidth:root.compactIpcEditor ? root.compactKindTriggerWidth : -1
+            Layout.preferredWidth:root.compactIpcEditor ? (root.compactSideToolbar ? root.compactSideSelectorWidth
+                    : root.compactKindTriggerWidth) : -1
             Layout.maximumWidth:root.compactIpcEditor
                 && (!root.compactVertical || root.compactSideToolbar)
-                ? root.compactKindTriggerWidth : Infinity
+                ? (root.compactSideToolbar ? root.compactSideSelectorWidth
+                    : root.compactKindTriggerWidth) : Infinity
             popupMinimumWidth:root.compactSideToolbar ? root.compactKindWidth : 0
             textRole:"label";valueRole:"value"
             model:[{label:"All OSDs",value:"osd"},{label:"Volume",value:"volume"},
@@ -181,10 +185,12 @@ ColumnLayout {
                 || (root.compactVertical && !root.compactSideToolbar)
             Layout.minimumWidth:0
             Layout.preferredWidth:root.compactIpcEditor
-                ? root.compactEdgeTriggerWidth : -1
+                ? (root.compactSideToolbar ? root.compactSideSelectorWidth
+                    : root.compactEdgeTriggerWidth) : -1
             Layout.maximumWidth:root.compactIpcEditor
                 && (!root.compactVertical || root.compactSideToolbar)
-                ? root.compactEdgeTriggerWidth : Infinity
+                ? (root.compactSideToolbar ? root.compactSideSelectorWidth
+                    : root.compactEdgeTriggerWidth) : Infinity
             popupMinimumWidth:root.compactSideToolbar ? root.compactEdgeWidth : 0
             textRole:"label";valueRole:"value"
             model:[{label:root.compactIpcEditor ? "Source edge" : "Follow source edge",value:"source"},{label:"Top Edge",value:"top"},
@@ -199,10 +205,12 @@ ColumnLayout {
                 || (root.compactVertical && !root.compactSideToolbar)
             Layout.minimumWidth:0
             Layout.preferredWidth:root.compactIpcEditor
-                ? root.compactAlignmentTriggerWidth : -1
+                ? (root.compactSideToolbar ? root.compactSideSelectorWidth
+                    : root.compactAlignmentTriggerWidth) : -1
             Layout.maximumWidth:root.compactIpcEditor
                 && (!root.compactVertical || root.compactSideToolbar)
-                ? root.compactAlignmentTriggerWidth : Infinity
+                ? (root.compactSideToolbar ? root.compactSideSelectorWidth
+                    : root.compactAlignmentTriggerWidth) : Infinity
             popupMinimumWidth:root.compactSideToolbar ? root.compactAlignmentWidth : 0
             textRole:"label";valueRole:"value"
             model:[{label:root.compactIpcEditor ? "Source position" : "Follow source position",value:"source"},{label:"Align start",value:"start"},
