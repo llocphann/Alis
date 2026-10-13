@@ -1,73 +1,23 @@
-# Hadalis agent workflow
+# Alis agent workflow — GitHub Issues
 
-Hadalis uses a single-agent development workflow on `dev`.
+These rules apply to both Local and Cloud development AI. ChatGPT is the reasoning agent; tools, tests and workers execute the requested work.
 
-These instructions apply equally to **Local and Cloud development AI**, on
-every new request and continuation. Both use the same repository task lists.
-The `cloud-bot` directory name does not create a separate workflow for Local AI.
+## Source and safety
+1. Work on **Alis `dev`**, refetch its HEAD and affected files before every edit, preserve concurrent changes, and do not change `stable` unless the owner explicitly requests it. Do not create a branch/PR by default.
+2. Treat **[Alis GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue)** as the **only active task tracker**, including Alis-Companion and Alis-Intergration tasks. Never append tasks, status or checkboxes to `to-do/`, `AGENTS.md`, `docs/` or other Markdown ledgers. Existing Markdown archives and technical evidence are historical references, not live task boards.
+3. On each actionable owner request, **search Issues first**. Update an existing matching issue or create one only for a genuinely distinct outcome. Prefix the issue title with its stable code: `[DOMAIN-F##]` for new features, `[DOMAIN-R##]` for rework/optimization, `[DOMAIN-I##]` for bugs/correctness. Never renumber or reuse codes; cite related Issues.
+4. Issue bodies should be **short but complete**: expected result, important constraints/edge cases, any observed evidence and the next acceptance gate. Expand only for security, data durability, compatibility or complex interactions. Add progress as concise issue comments; don't dump raw logs. Source SHAs and actual PASS/FAIL/SKIP/exit results belong in comments or evidence links.
+5. **Status:** Keep an Issue open while implementation is incomplete **or** bot-reported complete but **awaiting Owner verification**. Mark those two dimensions explicitly in its description/comment; a reported source fix does not imply test PASS or owner acceptance. Close with `completed` only after the owner verifies. For a withdrawn request, close with `not planned` and retain its history. Reopen only on new scope or a confirmed regression.
+6. For work in **Alis-Companion** (`main`) or **Alis-Intergration** (`main`), the Issue stays in Alis. Preserve actual implementation repo/ref, matching host/package SHA, consent/permissions, and package-local tests. Do not create separate trackers.
 
-## Working rules
+## Selection and priorities
+- Explicit latest owner priority takes precedence. Otherwise work first on actionable **non-deferred New Features**, address related Rework and Issues alongside them, then remaining high-impact Rework/Issues. Within a group, prioritize crashes/data loss, regressions and unblocking dependencies.
+- **Final phase:** `PERF-F01` and `AC-F01`–`AC-F10` are deferred until all other non-deferred tasks are done. **Very last:** `SYS-F01` after that deferred group, unless owner reprioritizes. Preserve their consent and native quality gates.
+- Continue one safe atomic milestone at a time. A partial source milestone is not whole-task completion. Don't recreate features already Owner verified.
 
-1. Fetch/refetch the current `dev` HEAD before every audit and immediately before every write or ref update. Never assume a previously seen HEAD is current.
-2. Work directly on `dev`. Do not create a branch or PR unless the maintainer explicitly asks for one. Never mutate `stable`.
-3. Re-read every file you intend to edit from the current HEAD and avoid overwriting valid concurrent work. Fix forward; do not rewrite shared history.
-4. Keep commits atomic and technical-purpose focused.
-5. Use repository regression tests and the canonical local validator as the primary acceptance path. Do not infer product quality from GitHub Actions state.
-6. Nix support stays in-tree but dedicated Nix validation is deferred/non-blocking for the maintainer workflow.
-7. Waffle is a separate supported shell family. Never classify Waffle as legacy or remove it as ii/Connected Perimeter cleanup.
-8. Prefer behavior/contract tests over implementation-spelling grep assertions. Do not change runtime behavior merely to make a stale test green.
-9. Use `to-do/` as the single active chatbot task entry point. ChatGPT is the only reasoning agent; repository tests and the canonical maintainer validator are the execution/acceptance path. Do not create bot-number, ownership, collision-boundary, separate task-board or handoff bureaucracy. Continue the highest-value unresolved work in one agent context.
-10. On receipt, automatically record/classify every actionable maintainer request into `Issues/bugs`, `Rework/optimization`, or `New features` before implementation. Merge duplicates and corrections; split mixed requests by outcome. Select the next actionable task autonomously using the shared policy below, without asking the maintainer to classify or choose routine work. Effective 2026-10-12, prioritize non-deferred New features; address related Rework/optimization and Issues/bugs alongside the selected feature in the same single-agent context. Explicit maintainer override (2026-10-12): defer feature #1 and #14–23 until all other non-deferred work is complete; #12 Non-Arch gateway is very last after that group; #13 and #24–27 are Owner verified. Numbering is anchored to the current 27-feature list in to-do/cloud-bot/NEW_FEATURES.md. Preserve explicit feature sequences and complete the current safe atomic milestone. When no feature can advance, continue related, then other actionable Rework/Issues. Under the maintainer's 2026-10-12 status rule, a task that the bot explicitly reported finished is **[x] completed — owner NOT VERIFIED** until the owner confirms; do not leave it [ ] solely because owner/native acceptance is outstanding. Keep unfinished scope [ ] and preserve separate exact-SHA tests, FAIL evidence and release gates. Archive owner-verified completed items after seven days; retain completed-but-owner-unverified items visibly until the owner reviews them.
+## Product and validation boundaries
+- Prefer the existing connected Abyss/Quickshell presentation and faithful Caelestia-like UI. Waffle remains supported; do not classify Waffle as obsolete.
+- Ship English-only UI (`translations/en_US.json`); preserve legacy config aliases, user files, source identity, test coverage, and optional package boundaries. No automatic privileged installs, model downloads or vault mutations.
+- Validate through scoped regression tests and `bash scripts/validate-maintainer-local.sh` at an exact committed SHA. Physical Niri/Quickshell, installed-package, multi-output and owner visual/input acceptance are separate; never turn a STOPPED, FAIL or unrun check into PASS.
 
-## Task routing
-
-**Single portfolio backlog:** Alis dev also owns every task for
-[Alis-Companion](https://github.com/llocphann/Alis-Companion) and
-[Alis-Intergration](https://github.com/llocphann/Alis-Intergration).
-Their code, package tests and technical evidence stay in their repositories;
-the three Alis task categories alone own intake, priority, progress,
-completion and archiving. The satellite repositories' previous TODO
-documents are immutable *import evidence*, not competing active work queues.
-Never create a separate Companion or Integration task board. Record the actual
-implementation repository/ref, both compatible source SHAs and source/native
-acceptance gates when executing external tasks; the general Alis dev-only rule
-does not imply an external repository has a dev branch.
-
-Read `to-do/README.md` after this file. Keep active work in `to-do/cloud-bot/`. Technical research remains in `docs/` and archives remain historical.
-
-The only active task lists are `ISSUES.md`, `REWORK_OPTIMIZATION.md`, and `NEW_FEATURES.md` in `to-do/cloud-bot/`. Old ABYSS/OPTIMIZATION/RELEASE links are compatibility pointers, not competing checklists. Record new reports and meaningful progress in the appropriate category, not in another chronological handoff document.
-
-Read and apply [the shared intake and task-selection policy](to-do/cloud-bot/README.md)
-after the entry point. Re-evaluate it on new input, every continuation and after
-each completed milestone. Prioritize impact/severity within a category, not file
-position or the newest message alone. Keep a task awaiting unavailable evidence
-open only when implementation remains unfinished; a bot-declared finished task
-is checked with "Owner chưa verified" and its unpassed test gates recorded
-separately. A generic
-"continue" means choose the next task from these lists and carry it through the
-required implementation and validation; it does not require another task choice
-from the maintainer.
-
-## Current product priorities
-
-Unless the maintainer changes them, these product directions guide implementation
-within the selected task. They do not override the shared feature-first policy or an
-explicit immediate priority.
-
-1. Caelestia-like UI/UX using the existing iNiR surfaces: existing popups should visually connect to their bar/screen edge instead of introducing a second popup system.
-2. Connected-surface presentation is the default for existing bar popups and must not require a user-facing toggle. Keep the broader `iiPerimeter` composition cutover guarded until it can replace the legacy composition without dropping functionality.
-3. Keep Dock presentation simple: Panel is the canonical ii dock style; historical style values must degrade safely to Panel.
-4. English-only localization. `translations/en_US.json` is the only shipped locale catalog; multilingual translation generation/auditing is not an active product requirement.
-5. Runtime correctness, local regression coverage, install/update lifecycle, and source/package identity.
-
-Documentation/wiki polish and release prose are lower priority and must not block the product/UI loop unless a change directly invalidates a required runtime or packaging contract.
-
-## Validation
-
-Canonical maintainer validation entry point:
-
-```bash
-bash scripts/validate-maintainer-local.sh
-```
-
-A PASS applies only to the exact SHA printed by that run. Environment-only desktop acceptance (live Niri/Quickshell interaction, multi-output/hotplug/suspend/fractional scaling) remains separate from static/local contract validation.
+[Task entry point](to-do/README.md) · [Historical archives](docs/archive/README.md) · [Open Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen).
