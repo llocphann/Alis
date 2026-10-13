@@ -54,6 +54,8 @@ ColumnLayout {
         property string valueText: ""
         property string toggleIcon: ""
         property string toggleDescription: ""
+        property string toggleObjectName: ""
+        property var searchKeywords: []
         property bool toggleChecked: false
         signal moved(real value)
         signal toggledByUser(bool checked)
@@ -71,6 +73,7 @@ ColumnLayout {
                 width: Math.round(28 * Appearance.fontSizeScale)
                 height: width
                 visible: row.toggleIcon.length > 0
+                objectName: row.toggleObjectName
                 text: row.toggleIcon
                 toggled: row.toggleChecked
                 buttonText: row.toggleDescription
@@ -84,8 +87,8 @@ ColumnLayout {
         }
 
         StyledText {
-            Layout.preferredWidth: Math.min(230 * Appearance.fontSizeScale,
-                Math.max(110 * Appearance.fontSizeScale, row.width * .29))
+            // Fixed preferred width avoids a preferredWidth <-> row.width loop.
+            Layout.preferredWidth: 202 * Appearance.fontSizeScale
             Layout.minimumWidth: 90 * Appearance.fontSizeScale
             Layout.alignment: Qt.AlignVCenter
             text: row.text
@@ -106,6 +109,7 @@ ColumnLayout {
             tooltipContent: row.valueText
             Accessible.name: row.text
             settingsSearchLabel: row.text
+            settingsSearchKeywords: row.searchKeywords
             onMoved: row.moved(value)
         }
 
@@ -199,6 +203,7 @@ ColumnLayout {
                 configKey:"abyss.surface.opacity";fallback:.78;minimum:0
                 toggleIcon:"opacity"
                 toggleDescription:"Transparent surfaces"
+                searchKeywords:["transparent", "surface", "opacity"]
                 toggleChecked:(Config.options?.abyss?.surface?.opacity ?? .78)<.999
                 onToggledByUser:checked=>Config.setNestedValue("abyss.surface.opacity",checked ? .78 : 1)
             }
@@ -216,6 +221,7 @@ ColumnLayout {
                 fallback:10;maximum:24
                 toggleIcon:"blur_on"
                 toggleDescription:"Wallpaper blur"
+                searchKeywords:["wallpaper", "blur", "toggle"]
                 toggleChecked:Config.options?.abyss?.effects?.blur?.enabled ?? true
                 onToggledByUser:checked=>Config.setNestedValue("abyss.effects.blur.enabled",checked)
             }
@@ -224,8 +230,10 @@ ColumnLayout {
                 text:"Panel & content opacity";from:0;to:1;stepSize:.01
                 currentValue:AbyssStyle.contentOpacity
                 valueText:Math.round(currentValue*100)+"%"
-                toggleIcon:"join"
+                toggleIcon:"link"
+                toggleObjectName:"abyssPanelOpacityFollow"
                 toggleDescription:"Panel and content opacity follows Screen Edge"
+                searchKeywords:["follow", "screen edge", "panel", "content", "opacity"]
                 toggleChecked:(Config.options?.abyss?.content?.opacity ?? -1)<0
                 onToggledByUser:checked=>Config.setNestedValue("abyss.content.opacity",checked ? -1 : AbyssStyle.contentOpacity)
                 onMoved:value=>Config.setNestedValue("abyss.content.opacity",value)
@@ -235,8 +243,10 @@ ColumnLayout {
                 text:"Panel background blur";from:0;to:24;stepSize:1
                 currentValue:AbyssStyle.configuredContentBlurRadius
                 valueText:Math.round(currentValue)+" px"
-                toggleIcon:"blur_circular"
+                toggleIcon:"link"
+                toggleObjectName:"abyssPanelBlurFollow"
                 toggleDescription:"Panel blur follows Screen Edge"
+                searchKeywords:["follow", "screen edge", "panel", "blur"]
                 toggleChecked:(Config.options?.abyss?.content?.blurRadius ?? -1)<0
                 onToggledByUser:checked=>Config.setNestedValue("abyss.content.blurRadius",checked ? -1 : AbyssStyle.configuredContentBlurRadius)
                 onMoved:value=>Config.setNestedValue("abyss.content.blurRadius",value)
@@ -246,6 +256,7 @@ ColumnLayout {
                 fallback:6;maximum:16
                 toggleIcon:"diamond"
                 toggleDescription:"Refraction (Quality)"
+                searchKeywords:["refraction", "quality", "effects"]
                 toggleChecked:Config.options?.abyss?.effects?.refraction?.enabled ?? false
                 onToggledByUser:checked=>Config.setNestedValue("abyss.effects.refraction.enabled",checked)
             }
