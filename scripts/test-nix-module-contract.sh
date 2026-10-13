@@ -29,9 +29,11 @@ for file in "$common" "$nixos" "$home" "$package" "$workflow_parser" "$flake" "$
   [[ -f "$file" ]] || fail "missing Nix/runtime contract file: $file"
 done
 
+grep -Fq 'imports = [ (lib.mkAliasOptionModule [ "programs" "alis" ] [ "programs" "inir" ]) ];' "$common" \
+  || fail "public programs.alis options alias no longer supports the same single inir service"
 grep -Fq 'extraPackages = lib.mkOption {' "$common" \
   || fail 'programs.inir.extraPackages option is missing'
-grep -Fq 'description = "Extra runtime packages made available to the Hadalis shell service.";' "$common" \
+grep -Fq 'description = "Extra runtime packages made available to the Alis shell service.";' "$common" \
   || fail 'extraPackages no longer documents its service PATH contract'
 
 grep -Fq 'path = [ cfg.package ] ++ cfg.extraPackages;' "$nixos" \

@@ -12,7 +12,7 @@ in
     environment.systemPackages = [ cfg.package ];
 
     systemd.user.services.inir = lib.mkIf cfg.service.enable {
-      description = "iNiR shell";
+      description = "Alis shell";
       wantedBy = lib.optional (wantedUnit != null) wantedUnit;
       partOf = [ "graphical-session.target" ];
       wants = [ "graphical-session-pre.target" ];

@@ -28,7 +28,7 @@ in
 
     systemd.user.services.inir = lib.mkIf cfg.service.enable {
       Unit = {
-        Description = "iNiR shell";
+        Description = "Alis shell";
         PartOf = [ "graphical-session.target" ];
         Wants = [ "graphical-session-pre.target" ];
         After = [ "graphical-session-pre.target" ];

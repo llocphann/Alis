@@ -38,6 +38,8 @@ in
   ];
 
   programs.inir = {
+
+**Alis public option namespace:** New configurations may use `programs.alis` instead of `programs.inir` (the latter remains supported via a Nix module alias). Both names resolve to a single `inir.service` in the current compatibility phase. Do not declare both prefixes in the same configuration; use one canonical public prefix per deployment. Existing `programs.inir` setups need no forced migration.
     enable = true;
     package = pkgs.callPackage (hadalisSrc + "/nix/package.nix") { inherit pkgs; };
     service.compositor = "niri";

@@ -5,27 +5,30 @@ let
 in
 {
   optionsModule = { config, ... }: {
+    imports = [ (lib.mkAliasOptionModule [ "programs" "alis" ] [ "programs" "inir" ]) ];
+    # Alis is the public option prefix; the inir option tree keeps NixOS/Home
+    # Manager configurations and their single service identity compatible.
     options.programs.inir = {
-      enable = lib.mkEnableOption "Hadalis desktop shell runtime";
+      enable = lib.mkEnableOption "Alis desktop shell runtime";
 
       package = lib.mkOption {
         type = lib.types.package;
         default = defaultPackage;
         defaultText = lib.literalExpression "pkgs.callPackage ./nix/package.nix { inherit pkgs; }";
-        description = "Hadalis package to install and run through the inir runtime identity.";
+        description = "Alis package to install and run through the compatible inir runtime identity.";
       };
 
       extraPackages = lib.mkOption {
         type = lib.types.listOf lib.types.package;
         default = [ ];
-        description = "Extra runtime packages made available to the Hadalis shell service.";
+        description = "Extra runtime packages made available to the Alis shell service.";
       };
 
       service = {
         enable = lib.mkOption {
           type = lib.types.bool;
           default = true;
-          description = "Create the inir systemd user service for Hadalis.";
+          description = "Create the compatible inir systemd user service for Alis.";
         };
 
         compositor = lib.mkOption {
