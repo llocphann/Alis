@@ -1,5 +1,5 @@
 //@ pragma UseQApplication
-//@ pragma ShellId inir
+//@ pragma ShellId alis
 // DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
 //-@ pragma EnableQtWebEngineQuick
 //@ pragma Env QS_NO_RELOAD_POPUP=1
@@ -25,8 +25,8 @@ ShellRoot {
     id: root
 
 
-    readonly property bool disableHotReload: Quickshell.env("INIR_DISABLE_HOT_RELOAD") === "1"
-        || Quickshell.env("INIR_DISABLE_HOT_RELOAD") === "true"
+    readonly property bool disableHotReload: Quickshell.env("ALIS_DISABLE_HOT_RELOAD") === "1"
+        || Quickshell.env("ALIS_DISABLE_HOT_RELOAD") === "true"
 
     function _log(msg: string): void {
         if (Quickshell.env("QS_DEBUG") === "1") console.log(msg);
@@ -104,8 +104,8 @@ ShellRoot {
         function onAutoThemeChanged():void {root._ensureDeferredFeatureServices()}
     }
 
-    // Boot phase timing (ms since epoch). Written to ~/.cache/inir/last-boot.json
-    // when the deferred phase finishes. `inir status` reads this back to show users
+    // Boot phase timing (ms since epoch). Written to ~/.cache/alis/last-boot.json
+    // when the deferred phase finishes. `alis status` reads this back to show users
     // exactly where their startup time goes — systemd → qs launch → QML completed →
     // Config ready → shell entry → deferred services. Useful for triaging "15-20s startup"
     // reports without asking the user to run journalctl.
@@ -113,7 +113,7 @@ ShellRoot {
     property real _bootConfigReadyAt: 0
     property real _bootShellEntryAt: 0
     property real _bootDeferredAt: 0
-    readonly property string _bootCachePath: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/inir/last-boot.json"
+    readonly property string _bootCachePath: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/alis/last-boot.json"
 
     Component.onCompleted: {
         root._bootCompletedAt = Date.now();
@@ -229,7 +229,7 @@ ShellRoot {
         }
     }
 
-    // Persist boot phase timestamps so `inir status` can report startup breakdown
+    // Persist boot phase timestamps so `alis status` can report startup breakdown
     // without asking the user to run journalctl. Only written once per boot — hot-reloads
     // overwrite (which is intentional, latest run is what matters for diagnostics).
     function _writeBootPhase(): void {
@@ -578,7 +578,7 @@ ShellRoot {
 
             if (isWaffle) {
                 // Waffle always opens its own Win11-style settings window
-                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),
                     "waffle-settings-window"])
             } else if (Config.options?.panelFamily === "abyss" || (Config.options?.settingsUi?.overlayMode ?? false)) {
                 // ii overlay mode — toggle inline panel
@@ -586,7 +586,7 @@ ShellRoot {
                 GlobalStates.settingsOverlayOpen = !GlobalStates.settingsOverlayOpen
             } else {
                 // ii window mode (default) — launch separate process
-                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),
+                Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),
                     "settings-window"])
             }
         }
