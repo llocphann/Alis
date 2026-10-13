@@ -24,7 +24,7 @@ function format(source, first, last, kind) {
     var alignment = kind.startsWith("align-") ? kind.slice(6) : "";
     if (["left", "right", "center", "justify"].includes(alignment)) {
         // Alignment acts on whole source paragraphs, even with no selection.
-        var from = raw.lastIndexOf("\n", Math.max(0, a - 1)) + 1;
+        var from = a === 0 ? 0 : raw.lastIndexOf("\n", a - 1) + 1;
         var lastPosition = b > a && raw[b - 1] === "\n" ? b - 1 : b;
         var breakAt = raw.indexOf("\n", lastPosition);
         var to = breakAt < 0 ? raw.length : breakAt;
