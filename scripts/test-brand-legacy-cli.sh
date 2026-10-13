@@ -20,7 +20,14 @@ for args in help status settings 'run' 'service restart' 'completions bash' 'ove
     [[ "$output" == *"temporarily disabled"* && "$output" == *"'alis'"* ]] || fail "missing Alis guidance for $args"
 done
 # Environment from Alis should only bypass the public check for delegation.
-help_output="$(HOME="$tmp/home" bash "$tmp/bin/alis" help)" || fail 'Alis help through installed bin'
+set +e
+help_output="$(HOME="$tmp/home" bash "$tmp/bin/alis" help 2>&1)"
+help_rc=$?
+set -e
+if [[ $help_rc -ne 0 ]]; then
+    printf 'Alis help diagnostic (exit %s):\\n%s\\n' "$help_rc" "$help_output" >&2
+    fail 'Alis help through installed bin'
+fi
 [[ "$help_output" == *'Usage: alis <command>'* ]] || fail 'Alis public help missing'
 [[ "$help_output" == *'  alis status'* ]] || fail 'Alis help targets wrong command'
 [[ "$help_output" == *'IPC targets (alis '* ]] || fail 'Alis IPC help missing'
