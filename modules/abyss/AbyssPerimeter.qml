@@ -707,16 +707,52 @@ Scope {
                 liquid.dismissPopups()
                 window.closeGenericPopup()
             }
+            // An edit Escape must be handled by the active Window, not by an
+            // editor sub-item: Quick Notes, drag handles and toolbar buttons
+            // can all own QQuickItem focus. Keep only ONE shortcut per output.
+            property bool dashboardEscapeCancelPending: false
+            function cancelDashboardEditFromEscape(): bool {
+                if (window.dashboardEscapeCancelPending)
+                    return true
+                const dashboard = dashboardBody.presented ? dashboardBody.contentItem?.item : null
+                const overview = aux.presented ? aux.contentItem?.item : null
+                const target = dashboard?.editMode ? dashboard
+                    : overview?.editMode ? overview : null
+                if (!target || typeof target.handleEscape !== "function")
+                    return false
+                window.dashboardEscapeCancelPending = true
+                try {
+                    target.handleEscape()
+                    // Preserve keyboard ownership for the next physical press.
+                    perimeterEscapeFallback.forceActiveFocus()
+                    console.info("[DashboardEscape] edit canceled; surface="
+                        + (target === dashboard ? "dashboard" : "overview"))
+                } finally {
+                    Qt.callLater(() => window.dashboardEscapeCancelPending = false)
+                }
+                return true
+            }
+            Shortcut {
+                sequences: ["Escape"]
+                context: Qt.WindowShortcut
+                autoRepeat: false
+                enabled: window.presented && field.ready
+                    && ((dashboardBody.presented
+                        && (dashboardBody.contentItem?.item?.editMode ?? false))
+                        || (aux.presented
+                            && (aux.contentItem?.item?.editMode ?? false)))
+                onActivated: window.cancelDashboardEditFromEscape()
+                onActivatedAmbiguously: console.warn(
+                    "[DashboardEscape] ambiguous Escape shortcut in Abyss output")
+            }
             Item {
+                id: perimeterEscapeFallback
                 anchors.fill: parent
                 focus: aux.presented || clipboardBody.presented || leftPanel.presented
                     || rightPanel.presented || popup.presented || dashboardBody.presented
-                Keys.onEscapePressed: {
-                    // First Escape cancels the Dashboard edit draft. The next
-                    // key press follows the existing Dashboard close behavior.
-                    if (dashboardBody.contentItem?.item?.editMode
-                            && dashboardBody.contentItem.item.handleEscape()) {
-                        dashboardBody.forceActiveFocus()
+                Keys.onEscapePressed: event => {
+                    if (window.cancelDashboardEditFromEscape()) {
+                        event.accepted = true
                         return
                     }
                     window.closePopup()
