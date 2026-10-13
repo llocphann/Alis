@@ -1,4 +1,4 @@
-# Install dependencies for iNiR on Arch-based systems
+# Install dependencies for Alis on Arch-based systems
 # This script is meant to be sourced, not run directly.
 
 # shellcheck shell=bash
@@ -196,16 +196,16 @@ install_pkgbuild_deps() {
   }
 }
 
-# Install dependency groups. inir-deps is the aggregate tracker built only after
+# Install dependency groups. alis-deps is the aggregate tracker built only after
 # dependency resolution; running it here would defeat --no-* group choices.
-for pkgdir in ./sdata/dist-arch/inir-*/; do
+for pkgdir in ./sdata/dist-arch/alis-*/; do
   pkgname=$(basename "$pkgdir")
   case "$pkgname" in
-    inir-deps) continue ;;
-    inir-audio) $INSTALL_AUDIO || continue ;;
-    inir-toolkit) $INSTALL_TOOLKIT || continue ;;
-    inir-screencapture) $INSTALL_SCREENCAPTURE || continue ;;
-    inir-fonts) $INSTALL_FONTS || continue ;;
+    alis-deps) continue ;;
+    alis-audio) $INSTALL_AUDIO || continue ;;
+    alis-toolkit) $INSTALL_TOOLKIT || continue ;;
+    alis-screencapture) $INSTALL_SCREENCAPTURE || continue ;;
+    alis-fonts) $INSTALL_FONTS || continue ;;
   esac
   
   v install_pkgbuild_deps "$pkgdir"
@@ -264,20 +264,20 @@ _qs_shell_found=false
 for _qs_pkg in "${_qs_shell_conflicts[@]}"; do
   if pacman -Qi "$_qs_pkg" &>/dev/null 2>&1; then
     _qs_shell_found=true
-    log_warning "$_qs_pkg is installed and conflicts with iNiR"
+    log_warning "$_qs_pkg is installed and conflicts with Alis"
 
     # Stop related services before removal
     systemctl --user stop "${_qs_pkg}.service" 2>/dev/null || true
     systemctl --user disable "${_qs_pkg}.service" 2>/dev/null || true
 
     if $ask; then
-      if tui_confirm "Remove $_qs_pkg? (required for iNiR)"; then
+      if tui_confirm "Remove $_qs_pkg? (required for Alis)"; then
         log_info "Removing $_qs_pkg..."
         v pkg_sudo pacman -Rdd --noconfirm "$_qs_pkg" 2>/dev/null \
           || v pkg_sudo pacman -R --noconfirm "$_qs_pkg" \
           || log_warning "Could not remove $_qs_pkg — install may fail"
       else
-        log_warning "Keeping $_qs_pkg — iNiR may not work correctly"
+        log_warning "Keeping $_qs_pkg — Alis may not work correctly"
       fi
     else
       log_info "Non-interactive: removing $_qs_pkg"
@@ -447,7 +447,7 @@ if $INSTALL_FONTS; then
 fi
 
 if $INSTALL_AUDIO; then
-  : # cava moved to inir-audio PKGBUILD
+  : # cava moved to alis-audio PKGBUILD
 fi
 
 if $INSTALL_TOOLKIT; then
@@ -511,21 +511,21 @@ v install-python-packages
 
 #####################################################################################
 # Register dependencies with pacman via meta-package
-# This prevents "clean orphans" from removing iNiR's installed dependencies.
+# This prevents "clean orphans" from removing Alis's installed dependencies.
 # The staged meta-package contains no files — only dependency declarations for
 # packages that are actually present after this install run.
 #####################################################################################
 tui_info "Registering dependencies with pacman..."
 
-_meta_dir="./sdata/dist-arch/inir-deps"
+_meta_dir="./sdata/dist-arch/alis-deps"
 if [[ -f "$_meta_dir/PKGBUILD" ]]; then
-  _inir_ver="$(cat ./VERSION 2>/dev/null || echo '2.29.3')"
+  _alis_ver="$(cat ./VERSION 2>/dev/null || echo '2.29.3')"
   _meta_build_dir="$(mktemp -d)"
 
   # Build from a staged recipe so setup never rewrites a tracked PKGBUILD just
   # to inject the current VERSION into the dependency-tracker package.
   if cp -- "$_meta_dir/PKGBUILD" "$_meta_build_dir/PKGBUILD"; then
-    sed -i "s/^pkgver=.*/pkgver=${_inir_ver}/" "$_meta_build_dir/PKGBUILD"
+    sed -i "s/^pkgver=.*/pkgver=${_alis_ver}/" "$_meta_build_dir/PKGBUILD"
 
     (
       cd "$_meta_build_dir"
@@ -566,7 +566,7 @@ PY
           exit 0
         fi
 
-        log_info "Tracking ${#_meta_installed_deps[@]} installed dependencies with inir-deps"
+        log_info "Tracking ${#_meta_installed_deps[@]} installed dependencies with alis-deps"
       else
         log_warning "Could not read staged meta-package recipe — orphan protection unavailable"
         exit 0
@@ -582,7 +582,7 @@ PY
           # Reinstall even at the same pkgver/pkgrel so changing --no-* choices
           # refreshes the dependency metadata recorded by pacman.
           if pkg_sudo pacman -U --noconfirm "${local_pkg[0]}" 2>/dev/null; then
-            log_success "Meta-package inir-deps registered — orphan cleaner will skip iNiR deps"
+            log_success "Meta-package alis-deps registered — orphan cleaner will skip Alis deps"
           else
             log_warning "Could not register meta-package — orphan protection unavailable"
           fi
@@ -599,7 +599,7 @@ PY
 else
   log_warning "Meta-package PKGBUILD not found at $_meta_dir"
 fi
-unset _meta_dir _meta_build_dir _inir_ver
+unset _meta_dir _meta_build_dir _alis_ver
 
 #####################################################################################
 # Post-install: Check for Qt/Quickshell ABI mismatch

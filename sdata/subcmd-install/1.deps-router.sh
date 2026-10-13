@@ -1,4 +1,4 @@
-# Dependency installation router for iNiR
+# Dependency installation router for Alis
 # This script is meant to be sourced.
 
 # shellcheck shell=bash

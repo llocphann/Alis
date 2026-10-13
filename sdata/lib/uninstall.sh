@@ -1,50 +1,50 @@
-# Uninstall command for iNiR
-# Safely removes iNiR while preserving user data and shared resources
+# Uninstall command for Alis
+# Safely removes Alis while preserving user data and shared resources
 # This script is meant to be sourced.
 
 # shellcheck shell=bash
 
-INIR_CONFIG_DIR="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME}/inir}"
+ALIS_CONFIG_DIR="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME}/alis}"
 
 ###############################################################################
-# Configuration - What iNiR installs/manages
+# Configuration - What Alis installs/manages
 ###############################################################################
 
 # Categories of files:
-# - inir_only: Files created exclusively by iNiR, safe to remove
+# - alis_only: Files created exclusively by Alis, safe to remove
 # - shared: Files that may be used by other apps, ask before removing
 # - user_data: User's personal data, preserve by default
 
-# iNiR-exclusive files (safe to remove)
-declare -A INIR_ONLY_PATHS=(
-    ["${XDG_CONFIG_HOME}/quickshell/inir"]="iNiR shell configuration"
-    ["${INIR_CONFIG_DIR}"]="iNiR user preferences"
-    ["${XDG_STATE_HOME}/quickshell/user"]="iNiR state (notifications, todo)"
-    ["${XDG_CACHE_HOME}/quickshell/inir"]="iNiR cache"
-    ["${XDG_BIN_HOME}/inir"]="iNiR launcher"
-    ["${HOME}/.local/bin/inir_super_overview_daemon.py"]="iNiR super daemon"
-    ["${XDG_CONFIG_HOME}/systemd/user/inir.service"]="iNiR user service"
-    ["${XDG_CONFIG_HOME}/systemd/user/inir-super-overview.service"]="iNiR daemon service"
-    ["${XDG_CONFIG_HOME}/vesktop/themes/system24.theme.css"]="iNiR Vesktop Material theme"
-    ["${XDG_CONFIG_HOME}/vesktop/themes/inir-tui.theme.css"]="iNiR Vesktop TUI theme"
-    ["${XDG_CONFIG_HOME}/vesktop/themes/inir-midnight.theme.css"]="iNiR Vesktop Midnight theme"
-    ["${XDG_CONFIG_HOME}/vesktop/themes/ii-colors.css"]="iNiR Vesktop colors"
-    ["${XDG_CONFIG_HOME}/Vesktop/themes/system24.theme.css"]="iNiR Vesktop Material theme (alt)"
-    ["${XDG_CONFIG_HOME}/Vesktop/themes/inir-tui.theme.css"]="iNiR Vesktop TUI theme (alt)"
-    ["${XDG_CONFIG_HOME}/Vesktop/themes/inir-midnight.theme.css"]="iNiR Vesktop Midnight theme (alt)"
-    ["${XDG_CONFIG_HOME}/Vesktop/themes/ii-colors.css"]="iNiR Vesktop colors (alt)"
-    ["${XDG_DATA_HOME}/applications/inir.desktop"]="iNiR desktop entry"
-    ["${XDG_DATA_HOME}/applications/inir-settings.desktop"]="iNiR settings desktop entry"
-    ["${XDG_DATA_HOME}/icons/hicolor/scalable/apps/inir.svg"]="iNiR launcher icon"
-    ["${HOME}/.local/bin/sync-pixel-sddm.py"]="iNiR SDDM theme sync helper"
+# Alis-exclusive files (safe to remove)
+declare -A ALIS_ONLY_PATHS=(
+    ["${XDG_CONFIG_HOME}/quickshell/alis"]="Alis shell configuration"
+    ["${ALIS_CONFIG_DIR}"]="Alis user preferences"
+    ["${XDG_STATE_HOME}/quickshell/user"]="Alis state (notifications, todo)"
+    ["${XDG_CACHE_HOME}/quickshell/alis"]="Alis cache"
+    ["${XDG_BIN_HOME}/alis"]="Alis launcher"
+    ["${HOME}/.local/bin/alis_super_overview_daemon.py"]="Alis super daemon"
+    ["${XDG_CONFIG_HOME}/systemd/user/alis.service"]="Alis user service"
+    ["${XDG_CONFIG_HOME}/systemd/user/alis-super-overview.service"]="Alis daemon service"
+    ["${XDG_CONFIG_HOME}/vesktop/themes/system24.theme.css"]="Alis Vesktop Material theme"
+    ["${XDG_CONFIG_HOME}/vesktop/themes/alis-tui.theme.css"]="Alis Vesktop TUI theme"
+    ["${XDG_CONFIG_HOME}/vesktop/themes/alis-midnight.theme.css"]="Alis Vesktop Midnight theme"
+    ["${XDG_CONFIG_HOME}/vesktop/themes/ii-colors.css"]="Alis Vesktop colors"
+    ["${XDG_CONFIG_HOME}/Vesktop/themes/system24.theme.css"]="Alis Vesktop Material theme (alt)"
+    ["${XDG_CONFIG_HOME}/Vesktop/themes/alis-tui.theme.css"]="Alis Vesktop TUI theme (alt)"
+    ["${XDG_CONFIG_HOME}/Vesktop/themes/alis-midnight.theme.css"]="Alis Vesktop Midnight theme (alt)"
+    ["${XDG_CONFIG_HOME}/Vesktop/themes/ii-colors.css"]="Alis Vesktop colors (alt)"
+    ["${XDG_DATA_HOME}/applications/alis.desktop"]="Alis desktop entry"
+    ["${XDG_DATA_HOME}/applications/alis-settings.desktop"]="Alis settings desktop entry"
+    ["${XDG_DATA_HOME}/icons/hicolor/scalable/apps/alis.svg"]="Alis launcher icon"
+    ["${HOME}/.local/bin/sync-pixel-sddm.py"]="Alis SDDM theme sync helper"
 )
 
 # Shared configs - may be used by other apps or user customizations
 # Format: path -> "description|app_command|critical_level"
-# critical_level: essential (user likely needs), optional (can remove), inir_default (iNiR created)
+# critical_level: essential (user likely needs), optional (can remove), alis_default (Alis created)
 declare -A SHARED_PATHS=(
     ["${XDG_CONFIG_HOME}/niri/config.kdl"]="Niri compositor config|niri|essential"
-    ["${XDG_CONFIG_HOME}/matugen"]="iNiR theming templates|python3|optional"
+    ["${XDG_CONFIG_HOME}/matugen"]="Alis theming templates|python3|optional"
     ["${XDG_CONFIG_HOME}/fuzzel"]="Fuzzel launcher config|fuzzel|optional"
     ["${XDG_CONFIG_HOME}/Kvantum"]="Kvantum Qt theme|kvantummanager|optional"
     ["${XDG_CONFIG_HOME}/kdeglobals"]="KDE global settings||optional"
@@ -52,7 +52,7 @@ declare -A SHARED_PATHS=(
     ["${XDG_CONFIG_HOME}/gtk-3.0/gtk.css"]="GTK3 custom styles||optional"
     ["${XDG_CONFIG_HOME}/gtk-4.0/gtk.css"]="GTK4 custom styles||optional"
     ["${XDG_CONFIG_HOME}/fontconfig"]="Font configuration||essential"
-    ["${XDG_DATA_HOME:-$HOME/.local/share}/color-schemes/Darkly.colors"]="Darkly color scheme||inir_default"
+    ["${XDG_DATA_HOME:-$HOME/.local/share}/color-schemes/Darkly.colors"]="Darkly color scheme||alis_default"
 )
 
 # Quickshell state that may be shared with other quickshell configs
@@ -61,11 +61,11 @@ declare -A QUICKSHELL_SHARED=(
     ["${XDG_STATE_HOME}/quickshell/themes"]="Generated themes"
 )
 
-# Packages that iNiR may have installed - with usage context
+# Packages that Alis may have installed - with usage context
 # Format: command -> "package_name|description|shared_usage"
-# shared_usage: inir_only, compositor, system_tool, optional_tool
-declare -A INIR_PACKAGES=(
-    ["qs"]="quickshell|Shell framework|inir_only"
+# shared_usage: alis_only, compositor, system_tool, optional_tool
+declare -A ALIS_PACKAGES=(
+    ["qs"]="quickshell|Shell framework|alis_only"
     ["niri"]="niri|Wayland compositor|compositor"
     ["cliphist"]="cliphist|Clipboard history|system_tool"
     ["fuzzel"]="fuzzel|Application launcher|system_tool"
@@ -91,7 +91,7 @@ has_other_quickshell_configs() {
     if [[ -d "$qs_dir" ]]; then
         local other_configs
         other_configs=$(find "$qs_dir" -mindepth 2 -maxdepth 2 -type f -name "shell.qml" \
-            ! -path "${qs_dir}/inir/shell.qml" \
+            ! -path "${qs_dir}/alis/shell.qml" \
             ! -path "${qs_dir}/ii/shell.qml" 2>/dev/null | wc -l)
         [[ "$other_configs" -gt 0 ]]
     else
@@ -121,13 +121,13 @@ has_other_niri_usage() {
     [[ $niri_refs -gt 0 ]]
 }
 
-# Check if niri config has iNiR-specific content or is user-customized
-niri_config_is_inir_default() {
+# Check if niri config has Alis-specific content or is user-customized
+niri_config_is_alis_default() {
     local config="${XDG_CONFIG_HOME}/niri/config.kdl"
-    [[ -f "$config" ]] && grep -qE 'spawn-at-startup "([^"]*/)?inir" "start"|spawn-at-startup "qs" "-c" "inir"|quickshell:iiBackdrop' "$config" 2>/dev/null
+    [[ -f "$config" ]] && grep -qE 'spawn-at-startup "([^"]*/)?alis" "start"|spawn-at-startup "qs" "-c" "alis"|quickshell:iiBackdrop' "$config" 2>/dev/null
 }
 
-# Check if niri config has user customizations beyond iNiR defaults
+# Check if niri config has user customizations beyond Alis defaults
 niri_config_has_user_customizations() {
     local config="${XDG_CONFIG_HOME}/niri/config.kdl"
     [[ ! -f "$config" ]] && return 1
@@ -146,8 +146,8 @@ niri_config_has_user_customizations() {
         grep -qi "$marker" "$config" 2>/dev/null && return 0
     done
     
-    # Check if file was modified after iNiR install
-    local install_marker="${INIR_CONFIG_DIR}/installed_true"
+    # Check if file was modified after Alis install
+    local install_marker="${ALIS_CONFIG_DIR}/installed_true"
     if [[ -f "$install_marker" && -f "$config" ]]; then
         [[ "$config" -nt "$install_marker" ]] && return 0
     fi
@@ -228,15 +228,15 @@ package_has_dependents() {
 # Determine if a package is safe to suggest removal
 get_package_removal_safety() {
     local cmd="$1"
-    local meta="${INIR_PACKAGES[$cmd]}"
+    local meta="${ALIS_PACKAGES[$cmd]}"
     
     [[ -z "$meta" ]] && echo "unknown" && return
     
     IFS='|' read -r pkg_name pkg_desc pkg_usage <<< "$meta"
     
     case "$pkg_usage" in
-        inir_only)
-            # Only used by iNiR - safe to remove if no other qs configs
+        alis_only)
+            # Only used by Alis - safe to remove if no other qs configs
             if has_other_quickshell_configs; then
                 echo "keep_qs"
             else
@@ -278,28 +278,28 @@ get_package_removal_safety() {
 uninstall_stop_services() {
     tui_info "Stopping Alis services..."
 
-    # Stop quickshell inir config
-    local runtime_target="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
+    # Stop quickshell alis config
+    local runtime_target="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis"
     qs -p "$runtime_target" kill 2>/dev/null || true
 
     # Stop super daemon if running
     if command -v systemctl &>/dev/null && [[ -d /run/systemd/system ]]; then
         # Stop the service
-        systemctl --user stop inir.service 2>/dev/null || true
+        systemctl --user stop alis.service 2>/dev/null || true
         # Remove all wants links (compositor-specific and legacy graphical-session)
         local _sd_user="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
         for _wd in "$_sd_user"/*.wants; do
             [[ -d "$_wd" ]] || continue
-            rm -f "$_wd/inir.service" 2>/dev/null || true
+            rm -f "$_wd/alis.service" 2>/dev/null || true
         done
         # Also try legacy disable in case old [Install] symlinks exist
-        systemctl --user disable inir.service 2>/dev/null || true
-        systemctl --user reset-failed inir.service 2>/dev/null || true
+        systemctl --user disable alis.service 2>/dev/null || true
+        systemctl --user reset-failed alis.service 2>/dev/null || true
 
-        if systemctl --user is-active inir-super-overview.service &>/dev/null; then
-            systemctl --user disable --now inir-super-overview.service 2>/dev/null || true
+        if systemctl --user is-active alis-super-overview.service &>/dev/null; then
+            systemctl --user disable --now alis-super-overview.service 2>/dev/null || true
         fi
-        systemctl --user reset-failed inir-super-overview.service 2>/dev/null || true
+        systemctl --user reset-failed alis-super-overview.service 2>/dev/null || true
     fi
 
     tui_success "Services stopped"
@@ -322,18 +322,18 @@ uninstall_remove_thinkfan_bridge() {
 }
 
 uninstall_create_backup() {
-    local backup_dir="${HOME}/.local/share/inir-uninstall-backup-$(date +%Y%m%d-%H%M%S)"
+    local backup_dir="${HOME}/.local/share/alis-uninstall-backup-$(date +%Y%m%d-%H%M%S)"
 
     tui_info "Creating backup before uninstall..." >&2
     mkdir -p "$backup_dir"
 
-    # Backup iNiR-specific files
-    if [[ -d "${XDG_CONFIG_HOME}/quickshell/inir" ]]; then
-        cp -r "${XDG_CONFIG_HOME}/quickshell/inir" "$backup_dir/quickshell-inir"
+    # Backup Alis-specific files
+    if [[ -d "${XDG_CONFIG_HOME}/quickshell/alis" ]]; then
+        cp -r "${XDG_CONFIG_HOME}/quickshell/alis" "$backup_dir/quickshell-alis"
     fi
 
-    if [[ -d "${INIR_CONFIG_DIR}" ]]; then
-        cp -r "${INIR_CONFIG_DIR}" "$backup_dir/$(basename "$INIR_CONFIG_DIR")"
+    if [[ -d "${ALIS_CONFIG_DIR}" ]]; then
+        cp -r "${ALIS_CONFIG_DIR}" "$backup_dir/$(basename "$ALIS_CONFIG_DIR")"
     fi
 
     # Backup niri config
@@ -355,7 +355,7 @@ uninstall_create_backup() {
 uninstall_remove_alis_public_entries() {
     local launcher="${XDG_BIN_HOME}/alis"
     if [[ -f "$launcher" && ! -L "$launcher" ]] &&
-        grep -Fq '# Alis is the public command while the proven iNiR runtime owns the session.' "$launcher"; then
+        grep -Fq '# Alis is the public command while the proven Alis runtime owns the session.' "$launcher"; then
         rm -f -- "$launcher"
     fi
 
@@ -375,11 +375,11 @@ uninstall_remove_alis_public_entries() {
         cmp -s -- "$icon" "$source_icon"; then
         rm -f -- "$icon"
     fi
-    # Optional XDG alis -> inir data aliases deliberately remain user-owned.
+    # Optional XDG alis -> alis data aliases deliberately remain user-owned.
     # They are only removed by explicit scripts/brand-namespace-rollback.sh.
 }
 
-uninstall_remove_inir_only() {
+uninstall_remove_alis_only() {
     local removed=0
     local _start=$SECONDS
 
@@ -388,7 +388,7 @@ uninstall_remove_inir_only() {
 
     # Pre-count existing items for N/M progress display
     local total=0
-    for path in "${!INIR_ONLY_PATHS[@]}"; do
+    for path in "${!ALIS_ONLY_PATHS[@]}"; do
         local ep
         ep="$path"
         [[ -e "$ep" ]] && ((total++))
@@ -398,10 +398,10 @@ uninstall_remove_inir_only() {
         echo -e "  ${STY_FAINT}Nothing to remove — already clean.${STY_RST}"
     else
         local idx=0
-        for path in "${!INIR_ONLY_PATHS[@]}"; do
+        for path in "${!ALIS_ONLY_PATHS[@]}"; do
             local ep
             ep="$path"
-            local desc="${INIR_ONLY_PATHS[$path]}"
+            local desc="${ALIS_ONLY_PATHS[$path]}"
 
             if [[ -d "$ep" ]]; then
                 ((idx++))
@@ -473,12 +473,12 @@ uninstall_handle_shared_configs() {
                     reason="has custom changes"
                 else
                     rec="remove"
-                    reason="app not found, iNiR default"
+                    reason="app not found, Alis default"
                 fi
                 ;;
-            inir_default)
+            alis_default)
                 rec="remove"
-                reason="created by iNiR"
+                reason="created by Alis"
                 ;;
         esac
 
@@ -596,7 +596,7 @@ uninstall_handle_shared_configs() {
             local rec="${_rec[$ep]}"
             local reason="${_reason[$ep]}"
             local level="${_level[$ep]}"
-            if [[ "$level" == "inir_default" ]]; then
+            if [[ "$level" == "alis_default" ]]; then
                 [[ -d "$ep" ]] && rm -rf "$ep" || rm -f "$ep"
                 echo -e "  ${STY_RED}✗${STY_RST} Removed: $desc ($reason)"
                 ((removed++))
@@ -685,8 +685,8 @@ uninstall_show_manual_steps() {
     echo -e "  ${STY_YELLOW}•${STY_RST} SDDM theme: /usr/share/sddm/themes/ii-pixel"
     echo -e "    ${STY_FAINT}Used by: SDDM login screen${STY_RST}"
     echo ""
-    echo -e "  ${STY_YELLOW}•${STY_RST} SDDM theme drop-in: /etc/sddm.conf.d/99-inir-theme.conf"
-    echo -e "    ${STY_FAINT}Used by: sets Current=ii-pixel (legacy path: /etc/sddm.conf.d/inir-theme.conf)${STY_RST}"
+    echo -e "  ${STY_YELLOW}•${STY_RST} SDDM theme drop-in: /etc/sddm.conf.d/99-alis-theme.conf"
+    echo -e "    ${STY_FAINT}Used by: sets Current=ii-pixel (legacy path: /etc/sddm.conf.d/alis-theme.conf)${STY_RST}"
     echo ""
 
     if $ask && tui_confirm "Show commands to revert these changes?" "no"; then
@@ -706,7 +706,7 @@ uninstall_show_manual_steps() {
         echo -e "  sudo rm -rf /usr/share/sddm/themes/ii-pixel"
         echo ""
         echo -e "  ${STY_CYAN}# Remove SDDM theme config drop-in${STY_RST}"
-        echo -e "  sudo rm -f /etc/sddm.conf.d/99-inir-theme.conf /etc/sddm.conf.d/inir-theme.conf"
+        echo -e "  sudo rm -f /etc/sddm.conf.d/99-alis-theme.conf /etc/sddm.conf.d/alis-theme.conf"
         echo ""
     fi
 }
@@ -715,7 +715,7 @@ uninstall_show_packages() {
     echo ""
     tui_subtitle "Installed packages"
     echo ""
-    echo -e "${STY_FAINT}iNiR may have installed these packages. Review before removing.${STY_RST}"
+    echo -e "${STY_FAINT}Alis may have installed these packages. Review before removing.${STY_RST}"
     echo ""
 
     # Detect distro
@@ -730,11 +730,11 @@ uninstall_show_packages() {
     echo -e "${STY_CYAN}Package analysis:${STY_RST}"
     echo ""
 
-    for cmd in "${!INIR_PACKAGES[@]}"; do
+    for cmd in "${!ALIS_PACKAGES[@]}"; do
         # Skip if not installed
         command -v "$cmd" &>/dev/null || continue
 
-        local meta="${INIR_PACKAGES[$cmd]}"
+        local meta="${ALIS_PACKAGES[$cmd]}"
         IFS='|' read -r pkg_name pkg_desc pkg_usage <<< "$meta"
         
         local safety=$(get_package_removal_safety "$cmd")
@@ -743,7 +743,7 @@ uninstall_show_packages() {
             safe)
                 safe_to_remove+=("$pkg_name")
                 echo -e "  ${STY_GREEN}✓${STY_RST} $pkg_name - $pkg_desc"
-                echo -e "    ${STY_FAINT}Safe to remove (only used by iNiR)${STY_RST}"
+                echo -e "    ${STY_FAINT}Safe to remove (only used by Alis)${STY_RST}"
                 ;;
             ask)
                 ask_before_remove+=("$pkg_name")
@@ -871,10 +871,10 @@ run_uninstall() {
     fi
 
     # Check if installed
-    if [[ ! -f "${INIR_CONFIG_DIR}/installed_true" ]] && \
-       [[ ! -d "${XDG_CONFIG_HOME}/quickshell/inir" ]] && \
-       [[ ! -f "${INIR_CONFIG_DIR}/version.json" ]] && \
-       [[ ! -f "${XDG_BIN_HOME}/inir" ]]; then
+    if [[ ! -f "${ALIS_CONFIG_DIR}/installed_true" ]] && \
+       [[ ! -d "${XDG_CONFIG_HOME}/quickshell/alis" ]] && \
+       [[ ! -f "${ALIS_CONFIG_DIR}/version.json" ]] && \
+       [[ ! -f "${XDG_BIN_HOME}/alis" ]]; then
         tui_warn "Alis does not appear to be installed"
         return 1
     fi
@@ -973,8 +973,8 @@ run_uninstall() {
         tui_warn "Companion was independently modified; it was preserved."
     fi
 
-    # Remove iNiR-exclusive files (always safe)
-    uninstall_remove_inir_only
+    # Remove Alis-exclusive files (always safe)
+    uninstall_remove_alis_only
     uninstall_reload_user_systemd
 
     # Handle shared configs (ask user)
@@ -1012,7 +1012,7 @@ EOF
     echo -e "  $backup_dir"
     echo ""
     echo -e "${STY_FAINT}To restore from backup:${STY_RST}"
-    echo -e "  cp -r $backup_dir/quickshell-inir ${XDG_CONFIG_HOME}/quickshell/inir"
+    echo -e "  cp -r $backup_dir/quickshell-alis ${XDG_CONFIG_HOME}/quickshell/alis"
     echo ""
     local _total_elapsed=$(( SECONDS - _uninstall_start ))
     echo -e "${STY_FAINT}To reinstall Alis:${STY_RST}"
@@ -1066,9 +1066,9 @@ run_uninstall_quick() {
         tui_warn "Companion was independently modified; it was preserved."
     fi
 
-    # Remove only iNiR-exclusive files
+    # Remove only Alis-exclusive files
     ask=false  # Disable prompts for shared configs
-    uninstall_remove_inir_only
+    uninstall_remove_alis_only
     uninstall_reload_user_systemd
 
     echo ""
