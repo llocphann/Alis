@@ -25,6 +25,11 @@ def main() -> None:
     toolbar = read("modules/dashboard/DashboardEditToolbar.qml")
     standalone = read("modules/dashboard/Dashboard.qml")
     overview = read("modules/overview/OverviewDashboard.qml")
+    overview_shell = read("modules/overview/Overview.qml")
+    abyss_toolbar_host = read("modules/abyss/AbyssDashboardEditPopup.qml")
+    abyss_content = read("modules/abyss/content/AbyssDashboardContent.qml")
+    abyss_perimeter = read("modules/abyss/AbyssPerimeter.qml")
+    abyss_controller = read("modules/abyss/AbyssSurfaceController.qml")
     system = read("modules/dashboard/DashSystem.qml")
     calendar_widget = read("modules/sidebarRight/calendar/CalendarWidget.qml")
     weather = read("modules/dashboard/DashWeather.qml")
@@ -218,6 +223,57 @@ def main() -> None:
     ):
         require(toolbar, token, "DashboardEditToolbar.qml")
     forbid(toolbar, "Flow {", "DashboardEditToolbar.qml")
+
+    # Edit toolbar is above the Abyss body and must register a native region:
+    # painting the buttons alone is insufficient with a masked PanelWindow.
+    for token in (
+        'import Quickshell',
+        'readonly property rect toolbarInputBounds: root.enabled',
+        'readonly property Region toolbarInputRegion: Region {',
+        'nativeInputRegion: root.toolbarInputRegion',
+        'inputBounds: root.toolbarInputBounds',
+        'onActivated: root.canvasController.cancelEditMode()',
+    ):
+        require(abyss_toolbar_host, token, "AbyssDashboardEditPopup.qml")
+    require(abyss_controller, 'participants[key]?.nativeInputRegion',
+            "AbyssSurfaceController.qml")
+    require(abyss_perimeter,
+            'Region { regions: window.presented && field.ready ? liquid.nativeInputRegions : [] }',
+            "AbyssPerimeter.qml")
+
+    # Escape #1 must use exactly the Cancel/discard branch before outer close;
+    # the next Escape is handled by the pre-existing window dismissal.
+    edit_esc = content.split('function handleEscape(): bool {', 1)[1].split(
+        'function openPlannerEventEditor', 1)[0]
+    assert edit_esc.index('if (dashboardCanvas.editMode) {') < edit_esc.index(
+        'if (dashboardHeader.cancelPageDrag()) return true')
+    require(edit_esc, 'dashboardCanvas.cancelEditMode()', "DashboardContent.qml")
+    for txt, name in (
+        (standalone, "Dashboard.qml"),
+        (overview, "OverviewDashboard.qml"),
+        (abyss_toolbar_host, "AbyssDashboardEditPopup.qml"),
+    ):
+        require(txt, 'sequences: ["Escape"]', name)
+        require(txt, 'context: Qt.WindowShortcut', name)
+    require(overview_shell,
+            'dashboardPanel.item?.handleEscape()', "Overview.qml")
+    require(abyss_content, 'return content.handleEscape()', "AbyssDashboardContent.qml")
+    require(abyss_perimeter, 'dashboardBody.contentItem.item.handleEscape()',
+            "AbyssPerimeter.qml")
+
+    # Icon/button centering and the occasional ninth button must not overflow
+    # an eighth-column-only layout.
+    for token in (
+        "readonly property int visibleActionCount:",
+        "Math.min(root.visibleActionCount,",
+        "Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter",
+        "implicitWidth: tool.implicitWidth",
+        "implicitHeight: tool.implicitHeight",
+        "horizontalAlignment: Text.AlignHCenter",
+        "verticalAlignment: Text.AlignVCenter",
+    ):
+        require(toolbar, token, "DashboardEditToolbar.qml")
+
     # The adaptive GridLayout is assigned the toolbar's width; feeding its
     # implicit width back into that same width creates a sizing cycle.
     forbid(toolbar, "editActions.implicitWidth", "Dashboard toolbar width dependency")
