@@ -1,5 +1,21 @@
 // Stateless 15-minute snap policy; no persistence during pointer movement.
 // Moves preserve event duration, resize acts only on one chosen boundary.
+function rangeForSelection(row,mode,dx,dy,dayWidth,hourHeight) {
+    if (!row || row.source!=="local" || row.virtual
+            || (row.event?.recurrence || "none")!=="none") return null;
+    if (!row.event?.allDay)
+        return rangeForGesture(row,mode,dx,dy,dayWidth,hourHeight);
+    // All-day selections move in civil days, never vertical minutes.
+    if (mode!=="move" || !(dayWidth>0)) return null;
+    const days=Math.round(Number(dx || 0)/dayWidth);
+    if (!Number.isFinite(days) || days===0 || Math.abs(days)>14) return null;
+    const start=new Date(row.startDate),end=new Date(row.endDate);
+    if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())
+            || end<=start) return null;
+    start.setDate(start.getDate()+days);
+    end.setDate(end.getDate()+days);
+    return {startIso:start.toISOString(),endIso:end.toISOString()};
+}
 function rangeForGesture(row, mode, dx, dy, dayWidth, hourHeight) {
     if (!row || row.source !== "local" || row.virtual
         || row.event?.allDay === true || (row.event?.recurrence || "none") !== "none")
