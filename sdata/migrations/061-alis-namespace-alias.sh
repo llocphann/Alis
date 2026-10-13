@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Opt-in compatibility: keep the existing inir directories as source of truth.
+# Optional Alis aliases: legacy XDG directories remain the source of truth.
+# Foreign Alis application data (notably ~/.cache/alis) is NEVER overwritten.
 MIGRATION_ID="061-alis-namespace-alias"
 MIGRATION_TITLE="Add Alis XDG namespace aliases"
-MIGRATION_DESCRIPTION="Create non-destructive Alis aliases to existing iNiR config/cache/data/state directories, without moving files or restarting the shell."
+MIGRATION_DESCRIPTION="Optionally alias free Alis config/cache/data/state paths to existing iNiR roots. Skip foreign Alis paths without touching them."
 MIGRATION_TARGET_FILE=""
 MIGRATION_REQUIRED=false
 
@@ -33,46 +34,62 @@ _alis_alias_compatible() {
 
 migration_check() {
     _alis_alias_collect
-    local i
+    local i dest
     for i in "${!_alis_alias_sources[@]}"; do
-        _alis_alias_compatible "${_alis_alias_sources[i]}" "${_alis_alias_destinations[i]}" || return 0
+        dest="${_alis_alias_destinations[i]}"
+        # A foreign Alis root is not a reason to repeatedly prompt users:
+        # only paths free for creating an alias can be pending.
+        [[ -e "$dest" || -L "$dest" ]] || return 0
     done
     return 1
 }
 
 migration_preview() {
     _alis_alias_collect
-    local i
+    local i src dest
     if [[ ${#_alis_alias_sources[@]} -eq 0 ]]; then
         printf 'No existing iNiR XDG directories need aliases.\n'
     fi
     for i in "${!_alis_alias_sources[@]}"; do
-        printf '  %s -> %s\n' "${_alis_alias_destinations[i]}" "${_alis_alias_sources[i]}"
+        src="${_alis_alias_sources[i]}"
+        dest="${_alis_alias_destinations[i]}"
+        if _alis_alias_compatible "$src" "$dest"; then
+            printf '  Existing compatible alias: %s\n' "$dest"
+        elif [[ -e "$dest" || -L "$dest" ]]; then
+            printf '  SKIP — existing user-owned Alis path: %s\n' "$dest"
+        else
+            printf '  Create: %s -> %s\n' "$dest" "$src"
+        fi
     done
-    printf 'Original files and the running shell remain untouched.\n'
+    printf 'Original files and foreign Alis data remain untouched.\n'
 }
 
 migration_apply() {
     _alis_alias_collect
     local i j src dest
     local -a created=()
-    # Preflight every destination: never overwrite a foreign user-owned path.
+    # The four paths are independent conveniences, not a primary namespace
+    # transition. Never rename, merge or delete a pre-existing Alis directory
+    # or a symlink belonging to some other application.
     for i in "${!_alis_alias_sources[@]}"; do
         src="${_alis_alias_sources[i]}"
         dest="${_alis_alias_destinations[i]}"
-        if [[ -e "$dest" || -L "$dest" ]]; then
-            if ! _alis_alias_compatible "$src" "$dest"; then
-                printf 'migration %s: conflicting path %s; preserving user data\n' "$MIGRATION_ID" "$dest" >&2
-                return 1
-            fi
+        if [[ ! -d "$src" ]]; then
+            printf 'migration %s: legacy source disappeared at %s; no change\n' "$MIGRATION_ID" "$src" >&2
+            return 1
+        fi
+        if [[ -e "$dest" || -L "$dest" ]] &&
+                ! _alis_alias_compatible "$src" "$dest"; then
+            printf 'migration %s: SKIP existing user-owned path %s; data preserved\n' "$MIGRATION_ID" "$dest" >&2
         fi
     done
     for i in "${!_alis_alias_sources[@]}"; do
         src="${_alis_alias_sources[i]}"
         dest="${_alis_alias_destinations[i]}"
         _alis_alias_compatible "$src" "$dest" && continue
+        [[ -e "$dest" || -L "$dest" ]] && continue
         if ! ln -sT -- "$src" "$dest"; then
-            printf 'migration %s: could not link %s; reversing links created by this attempt\n' "$MIGRATION_ID" "$dest" >&2
+            printf 'migration %s: link failed at %s; undoing aliases made this attempt\n' "$MIGRATION_ID" "$dest" >&2
             for j in "${!created[@]}"; do
                 local created_dest="${created[j]}"
                 local created_src="${_alis_alias_sources[j]}"
