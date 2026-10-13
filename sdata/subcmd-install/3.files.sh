@@ -135,7 +135,14 @@ case "${SKIP_QUICKSHELL}" in
       while IFS= read -r runtime_file; do
         [[ -n "$runtime_file" ]] || continue
         if [[ -f "${II_SOURCE}/${runtime_file}" ]]; then
-          install_file "${II_SOURCE}/${runtime_file}" "${II_TARGET}/${runtime_file}"
+          if [[ "$runtime_file" == "setup" ]]; then
+            if ! bash "${II_SOURCE}/sdata/lib/safe-setup-sync.sh"                     "${II_SOURCE}/setup" "${II_TARGET}/setup"; then
+              tui_error "Setup synchronization failed; refusing the invalid entrypoint"
+              return 1
+            fi
+          else
+            install_file "${II_SOURCE}/${runtime_file}" "${II_TARGET}/${runtime_file}"
+          fi
         fi
       done < "$runtime_root_manifest"
     fi

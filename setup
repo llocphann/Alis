@@ -2502,7 +2502,18 @@ run_update() {
         if [[ -f "$runtime_root_manifest" ]]; then
             while IFS= read -r runtime_file; do
                 [[ -n "$runtime_file" ]] || continue
-                [[ -f "${II_SOURCE}/${runtime_file}" ]] && cp -f "${II_SOURCE}/${runtime_file}" "${II_TARGET}/${runtime_file}"
+                if [[ -f "${II_SOURCE}/${runtime_file}" ]]; then
+                    if [[ "$runtime_file" == "setup" ]]; then
+                        if ! bash "${II_SOURCE}/sdata/lib/safe-setup-sync.sh"                                 "${II_SOURCE}/setup" "${II_TARGET}/setup"; then
+                            _report_update_failure "setup" "Refused unsafe setup entrypoint replacement"
+                            [[ -n "$runtime_backup_path" ]] && rollback_update >/dev/null 2>&1 || true
+                            tui_error "Setup synchronization failed; original entrypoint was preserved"
+                            return 1
+                        fi
+                    else
+                        cp -f "${II_SOURCE}/${runtime_file}" "${II_TARGET}/${runtime_file}"
+                    fi
+                fi
             done < "$runtime_root_manifest"
         fi
 

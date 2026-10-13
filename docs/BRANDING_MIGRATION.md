@@ -56,6 +56,12 @@ Repo-managed Alis entries are removed only when their contents carry the expecte
 
 Run `bash scripts/test-brand-upgrade-rollback.sh` to stage a fresh Make installation, repeat installation as a simulated package upgrade, uninstall and reinstall. It verifies public and legacy entrypoint ownership, app-ID hiding, icon preservation and SHA-256 sentinels for an isolated user config and first-run marker. It also rejects foreign command collisions. The scenario **does not** invoke pacman, manage a user service, manipulate real user files, or prove a physical graphical login.
 
+## Setup entrypoint integrity
+
+The reported local error `~/.config/quickshell/inir/setup: line 2951: e ;;` does not match the tracked dev source (line 2951 contains a valid `uninstall) run_uninstall ;;` case arm). To prevent recurrence during installs and updates, `sdata/lib/safe-setup-sync.sh` now validates source Bash syntax, writes the new setup to a temporary file in the destination directory, validates the staged copy, then atomically renames it over the managed runtime entrypoint. A corrupt source is rejected without touching the destination. `scripts/test-setup-sync-atomic.sh` verifies recovery from a truncated setup, invalid-source rejection, no partial files, source/target equality and foreign symlink preservation.
+
+Recover an already corrupt local copy from a **healthy checkout** by using the helper directly; invoking the broken installed `setup` cannot repair itself. Back up the original file and inspect any user changes before replacing it. No other user data or preferences need to be reset.
+
 ## Standalone automated regression lane
 
 GitHub Actions workflow `.github/workflows/brand-contracts.yml` runs a bounded, desktop-independent set of CLI, app ID, staged installer ownership, XDG namespace alias and pinned Arch snapshot contracts on `dev`. Its first confirmed successful run was [38430739766](https://github.com/llocphann/Alis/actions/runs/38430739766) at SHA `cf81808b8c8377d24f5fa917866edd47c2a7e5f5`. This gives independent evidence even when the full desktop/Niri canonical validator cannot execute in hosted CI; it **does not** replace owner visual acceptance, package installation on real hardware, or rollback validation.

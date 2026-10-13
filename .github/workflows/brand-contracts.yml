@@ -16,6 +16,8 @@ on:
       - "distro/arch/inir-shell-git/*.install"
       - "scripts/brand-owner-audit.sh"
       - "scripts/test-brand-owner-audit.sh"
+      - "scripts/test-setup-sync-atomic.sh"
+      - "sdata/lib/safe-setup-sync.sh"
       - "scripts/test-brand-single-owner.sh"
       - "scripts/test-brand-upgrade-rollback.sh"
       - "scripts/completions/alis.*"
@@ -50,11 +52,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash -n scripts/alis scripts/brand-owner-audit.sh scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh scripts/test-brand-single-owner.sh scripts/test-brand-upgrade-rollback.sh scripts/test-brand-owner-audit.sh
+          bash -n scripts/alis scripts/brand-owner-audit.sh scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh scripts/test-brand-single-owner.sh scripts/test-brand-upgrade-rollback.sh scripts/test-brand-owner-audit.sh scripts/test-setup-sync-atomic.sh sdata/lib/safe-setup-sync.sh
           bash -n scripts/brand-namespace-rollback.sh scripts/test-brand-namespace-rollback.sh scripts/test-brand-uninstall.sh
           bash -n sdata/migrations/061-alis-namespace-alias.sh sdata/subcmd-install/3.files.sh setup
           test ! -e assets/systemd/alis.service
           grep -Fq 'ShellId inir' shell.qml
+      - name: Setup entrypoint atomic recovery and syntax guard
+        shell: bash
+        run: bash scripts/test-setup-sync-atomic.sh
       - name: R5 single-owner ShellId and service compatibility
         shell: bash
         run: bash scripts/test-brand-single-owner.sh
