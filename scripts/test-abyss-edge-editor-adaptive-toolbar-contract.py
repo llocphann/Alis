@@ -59,6 +59,11 @@ assert 'FontMetrics {' in positions
 assert 'compactSelectorMetrics.advanceWidth(option.label)' in positions
 for dimension in ['compactKindWidth', 'compactEdgeWidth', 'compactAlignmentWidth']:
     assert f'readonly property real {dimension}:' in positions
+    # The full model width is now only used by the wider popup. The trigger
+    # instead follows the active label on side toolbars.
+    assert positions.count('root.' + dimension) == 1
+for dimension in ['compactKindTriggerWidth', 'compactEdgeTriggerWidth', 'compactAlignmentTriggerWidth']:
+    assert f'readonly property real {dimension}:' in positions
     assert positions.count('root.' + dimension) == 2
 assert 'Math.min(root.width-48,root.editingPopups' in editor
 assert 'root.ipcToolbarSpan : 660*Appearance.fontSizeScale' in editor
