@@ -88,9 +88,16 @@ const editor=fs.readFileSync(fileURLToPath(
 const body=planner.split('function commitTimedGesture(row, mode, dx, dy): void {',2)[1]
  .split('function editOccurrence(row): void {',1)[0];
 assert.ok(body.indexOf('rescheduleOccurrence(')<body.indexOf('form.syncMovedOccurrence('));
-assert.ok(body.includes('form.editingEvent?.id===row.event.id'));
-assert.ok(body.includes('form.editingOccurrenceIndex===row.occurrenceIndex'));
-assert.ok(body.includes('return\n        }'),'failed writes must return before focus sync');
+assert.ok(body.includes('form.editingEvent?.id===target.event.id'));
+assert.ok(body.includes('form.editingOccurrenceIndex===target.occurrenceIndex'));
+assert.ok(body.includes('applyPlannerOccurrenceBatch(changes)'),
+    'multi-selection must use one atomic write');
+assert.ok(body.includes('if (!range) return'),
+    'invalid group ranges must abort before any persistence');
+assert.ok(body.indexOf('rescheduleOccurrence(')<body.indexOf('form.syncMovedOccurrence('),
+    'single-event writes must complete before form reconciliation');
+assert.ok(body.includes('return\n            }'),
+    'failed group writes must return before updating the editor');
 assert.ok(editor.includes('function syncMovedOccurrence(id, oldStart, newStart, newEnd): void'));
 assert.ok(editor.includes('root._cleanFormSnapshot=JSON.stringify(change.baseline)'));
 assert.ok(editor.includes('root._plannerPickingDate=true'));
