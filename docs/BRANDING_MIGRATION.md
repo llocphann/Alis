@@ -10,7 +10,7 @@ This is an implementation inventory, not a declaration of completion. The public
 |---|---|---|---|
 | First-run heading, greeting, notification sender | `welcome.qml`, `services/FirstRunExperience.qml`, `modules/bootGreeting/BootGreeting.qml` | Public identity | Display Alis; retain `first_run.txt` and `welcomeWizard.completed/skipped` |
 | Settings, Update UI, keybind help | `services/ShellUpdates.qml`, `modules/settings/SettingsPageRegistryData.qml`, `modules/bar/ShellUpdateIndicator.qml`, `services/deferred/NiriKeybinds.qml` | Public identity | Display Alis; do not rewrite saved style/layout enums |
-| CLI and completions | `scripts/inir`, `scripts/alis`, `scripts/completions/*` | Public command plus compatibility alias | `alis` delegates to current `inir` process owner; both commands must accept old flags/IPC |
+| CLI and completions | `scripts/inir`, `scripts/alis`, `scripts/completions/*` | Public command plus compatibility alias | `alis` delegates to the existing internal `scripts/inir` engine; interactive installed `inir` CLI is temporarily blocked (exit 64), with sole systemd lifecycle exceptions; existing flags/IPC remain supported via `alis` |
 | Runtime ShellId and selector | `shell.qml` (`ShellId inir`), `scripts/inir` (`qs -p`), `~/.config/quickshell/inir` | High-risk runtime interface | Keep one Quickshell session; coordinated switch required with rollback |
 | User service and compositor wants links | `assets/systemd/inir.service`, `setup`, `Makefile`, Arch/Nix recipes, Niri startup KDL | High-risk session owner | A new unit must replace—not accompany—the old owner after tested stop/disable/migrate/start |
 | Configuration roots and overrides | `scripts/lib/config-path.sh`, `sdata/migrations/019-config-dir-rename-compat.sh`, `sdata/migrations/061-alis-namespace-alias.sh`, `INIR_*` | Persistent compatibility interface | Keep `inir` and `illogical-impulse` as current source of truth; optional checked `alis` symlinks only; no automatic directory move |
@@ -83,3 +83,13 @@ GitHub Actions workflow `.github/workflows/brand-contracts.yml` runs a bounded, 
 - The full maintainer validator contains unrelated preexisting/parallel failures; record the exact SHA and log evidence before attributing failures to this work.
 
 This matrix is used to prevent an unsafe bulk string replace; it does not supersede the owner's issue acceptance checklist.
+
+## Temporary public CLI cutover (2026-10-14, BRAND-R01)
+
+Use **`alis` exclusively** for interactive terminal commands, including `alis status`, `alis update`, `alis service restart`, `alis settings`, and `alis <ipc-target> <function>`. Installed public `inir` launchers in `bin/inir` refuse all ordinary commands (exit 64) and explain how to use Alis. The Nix public `inir` wrapper explicitly opts into the same guard. `alis` passes a one-hop internal delegation flag and then clears it in the underlying engine.
+
+**Do not remove `scripts/inir`**: current QML buttons, the existing Niri keybinds, setup scripts and shell helper processes still depend on that runtime file. A running/installed `inir.service` may continue invoking `inir run --session` and `inir cleanup-orphans` **only under a systemd invocation context** (`INVOCATION_ID`); these are private lifecycle exceptions, not public CLI support. Keep `inir.service`, `ShellId inir`, XDG user data, helper/IPC ABI, and existing unit ownership unchanged. No parallel `alis.service` is created.
+
+This is an **interface restriction, not a destructive rename**. It becomes effective after the installed public launcher is updated (repo-copy setup/update, Arch package upgrade, Make reinstall or Nix rebuild). Direct `scripts/inir` invocation is still an internal compatibility entrypoint; public shell completions and documentation should promote `alis`. Rollback of this gate is reverting this source change and refreshing the installed launcher; do not delete/move user preferences or overwrite foreign `~/.cache/alis`.
+
+Regression: `bash scripts/test-brand-legacy-cli.sh`. Existing R9/R10 cold-login and owner visual checks remain required; never mark #64 owner verified solely from this contract.

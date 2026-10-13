@@ -4,6 +4,8 @@ set -euo pipefail
 # Alis is the public command while the proven iNiR runtime owns the session.
 # Preserve all existing flags, IPC targets, service ownership and user data.
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# One-hop permission for the compatible engine, not a global legacy CLI alias.
+export ALIS_INTERNAL_CLI=1
 
 if [[ "${1:-}" == "completions" && $# -eq 2 ]]; then
     case "$2" in

@@ -317,6 +317,7 @@ PY
 EOF
 
     makeWrapper "$runtime/scripts/inir" "$out/bin/inir" \
+      --set ALIS_LEGACY_PUBLIC 1 \
       --prefix PATH : "${lib.makeBinPath runtimeDeps}" \
       --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath "lib/qt-6/qml" qmlDeps}" \
       --prefix QT_PLUGIN_PATH : "${lib.makeSearchPath "lib/qt-6/plugins" qmlDeps}" \

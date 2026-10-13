@@ -1,6 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# BRAND-R01: keep the established scripts/inir engine for Quickshell/QML,
+# existing systemd units and historical IPC. Only the installed *public*
+# inir command is temporarily disabled. Do not rename persisted identities.
+# The Alis forwarder sets ALIS_INTERNAL_CLI for one delegated invocation.
+case "${BASH_SOURCE[0]}" in
+    */bin/inir) ALIS_LEGACY_PUBLIC=1 ;;
+esac
+if [[ "${ALIS_LEGACY_PUBLIC:-0}" == 1 && "${ALIS_INTERNAL_CLI:-0}" != 1 ]]; then
+    # Existing inir.service remains the sole session owner. Its two private
+    # lifecycle actions must keep working after a repo-copy/package upgrade
+    # (including before systemd has reloaded a unit on disk).
+    if [[ -n "${INVOCATION_ID:-}" ]] && {
+        [[ $# -eq 2 && "${1:-}" == run && "${2:-}" == --session ]] ||
+        [[ $# -eq 1 && "${1:-}" == cleanup-orphans ]];
+    }; then
+        :
+    else
+        printf "The 'inir' command is temporarily disabled. Use 'alis' instead.\\n" >&2
+        exit 64
+    fi
+fi
+unset ALIS_INTERNAL_CLI ALIS_LEGACY_PUBLIC
+
 # Qt requires a UTF-8 process locale. Preserve every already-valid user locale,
 # but repair legacy C/ASCII launch environments before Quickshell starts.
 _inir_ensure_utf8_locale() {
