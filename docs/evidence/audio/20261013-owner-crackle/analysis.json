@@ -1,0 +1,38 @@
+{
+  "startEpoch": 1791891048.9901006,
+  "endEpoch": 1791891073.9934673,
+  "rate": 48000,
+  "channels": 2,
+  "source": "verified output monitors only",
+  "files": {
+    "after-dsp.f32": 9600000,
+    "before-dsp.f32": 9600000
+  },
+  "before-dsp": {
+    "frames": 1200000,
+    "seconds": 25.0,
+    "peak": 0.9973486661911011,
+    "rms": 0.13051557540893555,
+    "atOrAboveFullScale": 0,
+    "nonFinite": 0
+  },
+  "after-dsp": {
+    "frames": 1200000,
+    "seconds": 25.0,
+    "peak": 0.9999989867210388,
+    "rms": 0.17102953791618347,
+    "atOrAboveFullScale": 2,
+    "nonFinite": 0
+  },
+  "crossCorrelationLagSamples": 2680,
+  "correlation": 0.6782641972338591,
+  "alignedFrames": 1197320,
+  "beforeMaxDerivative": 0.14001896977424622,
+  "beforeDerivativeAbove0_5": 0,
+  "beforeDerivativeAbove0_8": 0,
+  "beforeLongestFullScaleRun": 0,
+  "afterMaxDerivative": 0.20513953268527985,
+  "afterDerivativeAbove0_5": 0,
+  "afterDerivativeAbove0_8": 0,
+  "afterLongestFullScaleRun": 0
+}

@@ -1,0 +1,7 @@
+{
+  "base_source": "4848d5ae462846db623a49e502b9515fe468a557",
+  "patch_sha256": "601771eab0d2731b56cc70f11c2c05964845db804b25ce20de35925d2302be79",
+  "qualification": "PURE_PASS_NATIVE_NOT_STARTED",
+  "scope": "0px paint expansion, global surface curvature, finite unified contact SDF and removal of detached zero-corner patches",
+  "source_promoted": false
+}

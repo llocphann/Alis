@@ -1,0 +1,11 @@
+{
+  "startEpoch": 1791891048.9901006,
+  "endEpoch": 1791891073.9934673,
+  "rate": 48000,
+  "channels": 2,
+  "source": "verified output monitors only",
+  "files": {
+    "after-dsp.f32": 9600000,
+    "before-dsp.f32": 9600000
+  }
+}

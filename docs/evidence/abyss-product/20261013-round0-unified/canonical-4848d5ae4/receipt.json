@@ -1,0 +1,16 @@
+{
+  "source_sha": "4848d5ae462846db623a49e502b9515fe468a557",
+  "source_path": "/tmp/alis-r13-gated-exact-20261013",
+  "driver_path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261013-round0-canonical/4848d5ae462846db623a49e502b9515fe468a557.sh",
+  "driver_sha256": "b7d90fd63eb991d6850dd970d8ec20dee30a29ce8e53467778824ed1d1b63210",
+  "log_path": "/tmp/alis-round0-canonical-4848d5ae462846db623a49e502b9515fe468a557.log",
+  "status": "FAIL",
+  "exit_code": 1,
+  "full_summary_available": true,
+  "completed_counts": {
+    "PASS": 384,
+    "FAIL": 24,
+    "SKIP": 1
+  },
+  "checks_run": 408
+}
