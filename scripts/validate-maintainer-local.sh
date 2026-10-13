@@ -321,6 +321,7 @@ run_check 'Multi-date Events grouping and Weekly Planner drag/resize policy' nod
 run_check 'Events persisted data preservation without automatic migration' node scripts/test-events-no-automatic-migration.mjs
 run_check 'Calendar popup three-day civil range and recurrence policy' node scripts/test-calendar-three-day-window.mjs
 run_check 'Independent Agenda and Todo stores with stable Event ID edits' node scripts/test-agenda-todo-independence.mjs
+run_check 'Agenda QML upcoming events and Dashboard startup compatibility' node scripts/test-agenda-upcoming-runtime-compat.mjs
 run_check 'Screen Edge lock reservations and output packing' node scripts/test-abyss-module-locks.mjs
 run_check 'Screen Edge multi-selection transactions' node scripts/test-abyss-multi-selection.mjs
 run_check 'Screen Edge full module designs and capacity' node scripts/test-abyss-full-size-modules.mjs
