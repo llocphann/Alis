@@ -22,7 +22,7 @@ Rectangle {
     readonly property real availableModulesNaturalWidth:
         root.hiddenIds.length > 0 ? availableModulesRow.implicitWidth : 0
     readonly property int visibleActionCount:
-        7 + (root.canvasController?.responsiveWorkspace ?? false ? 0 : 1)
+        7 + ((root.canvasController?.responsiveWorkspace ?? false) ? 0 : 1)
             + (root.hiddenIds.length > 0 ? 1 : 0)
     readonly property real toolbarRowNaturalWidth:
         root.visibleActionCount*34 + (root.visibleActionCount-1)*6
