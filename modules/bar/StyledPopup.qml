@@ -109,6 +109,8 @@ LazyLoader {
     }
     property var _hostedController: null
     property bool _liquidDismissed: false
+    // Preserve dismissal while the user-requested slide is still running.
+    property bool _gracefulDismissal: false
     property bool _liquidSemanticHold: false
     // Wull borrows this exact mature popup. Hover/focus takes the same content
     // over, and revokes the lease so its later departure cannot close user UI.
@@ -158,6 +160,7 @@ LazyLoader {
     // Forced owner eviction still uses dismissPresentation() below.
     function retractPresentation(): void {
         companionLease = null
+        _gracefulDismissal = true
         _liquidDismissed = true
         _liquidSemanticHold = false
         _bodyHovered = false
@@ -172,6 +175,7 @@ LazyLoader {
 
     function dismissPresentation(): void {
         companionLease = null
+        _gracefulDismissal = false
         _liquidDismissed = true
         _liquidSemanticHold = false
         _bodyHovered = false; _contentHovered = false
@@ -365,7 +369,17 @@ LazyLoader {
     // grace, never the visual retract tail.
     readonly property bool liquidSemanticVisible:
         root.requestedVisible || root._liquidSemanticHold
-    on_RawVisibleRequestChanged: if (!root._rawVisibleRequest) root._liquidDismissed = false
+    on_RawVisibleRequestChanged: {
+        if (!root._rawVisibleRequest && !root._gracefulDismissal)
+            root._liquidDismissed = false
+    }
+    function _finishGracefulDismissal(): void {
+        if (!root._gracefulDismissal)
+            return
+        root._gracefulDismissal = false
+        if (!root._rawVisibleRequest)
+            root._liquidDismissed = false
+    }
     property bool _lingerVisible: false
     // Match Caelestia's panel wrappers: one normalized offsetScale drives the
     // whole slide and reverses naturally from its current value. Geometry keeps
@@ -422,6 +436,7 @@ LazyLoader {
     onHoverTargetChanged: {
         anchorResolveRetry.stop()
         if (root.hoverTarget) Qt.callLater(root.startColdAnchorResolution)
+        root._gracefulDismissal = false
         root._liquidDismissed = false
         root._liquidSemanticHold = false
         root._bodyHovered = false
@@ -435,8 +450,10 @@ LazyLoader {
         root.offsetScale = 1
         if (Appearance.animationsEnabled)
             retractTimer.restart()
-        else
+        else {
             root._lingerVisible = false
+            root._finishGracefulDismissal()
+        }
     }
 
     function _syncRequestedVisibility(): void {
@@ -528,8 +545,10 @@ LazyLoader {
         interval: Math.max(1, SurfaceMotion.duration + 16)
         repeat: false
         onTriggered: {
-            if (!root.requestedVisible && root.offsetScale >= 0.999)
+            if (!root.requestedVisible && root.offsetScale >= 0.999) {
                 root._lingerVisible = false
+                root._finishGracefulDismissal()
+            }
         }
     }
 
