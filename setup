@@ -207,6 +207,16 @@ sync_launcher_from_repo() {
         mkdir -p "$XDG_BIN_HOME"
         cp -f "${REPO_ROOT}/scripts/inir" "$launcher_target"
         chmod +x "$launcher_target"
+        if [[ -f "${REPO_ROOT}/scripts/alis" ]]; then
+            local alis_target="${XDG_BIN_HOME}/alis"
+            if [[ -L "$alis_target" || ( -e "$alis_target" && ! -f "$alis_target" ) ]] \
+                || { [[ -f "$alis_target" ]] && ! grep -Fq "# Alis is the public command while the proven iNiR runtime owns the session." "$alis_target"; }; then
+                printf "Alis launcher path is user-owned, preserving %s\n" "$alis_target" >&2
+            else
+                cp -f "${REPO_ROOT}/scripts/alis" "$alis_target"
+                chmod +x "$alis_target"
+            fi
+        fi
         ensure_launcher_path_in_shells "$XDG_BIN_HOME"
         printf '%s\n' "$launcher_target"
     fi

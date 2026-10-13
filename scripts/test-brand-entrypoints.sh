@@ -25,4 +25,9 @@ grep -Fq "Name=Alis Settings" "$repo/assets/applications/inir-settings.desktop" 
 grep -Fq 'Translation.tr("Welcome to Alis")' "$repo/welcome.qml" || fail "wizard"
 grep -Fq "first_run.txt" "$repo/services/FirstRunExperience.qml" || fail "first-run marker"
 grep -Fq "welcomeWizard.completed" "$repo/welcome.qml" || fail "wizard completion marker"
+for package in "$repo/distro/arch/inir-shell/PKGBUILD" "$repo/distro/arch/inir-shell-git/PKGBUILD"; do
+    grep -Fq 'install -Dm755 "$srcroot/scripts/alis" "$pkgdir/usr/bin/alis"' "$package" || fail "Arch Alis launcher missing"
+done
+grep -Fq 'makeWrapper "$runtime/scripts/alis" "$out/bin/alis"' "$repo/nix/package.nix" || fail "Nix Alis launcher missing"
+grep -Fq 'install -m755 scripts/alis "$(DESTDIR)$(BINDIR)/alis"' "$repo/Makefile" || fail "Makefile Alis launcher missing"
 printf "PASS: Alis alias, completions, and first-run identity contracts\n"

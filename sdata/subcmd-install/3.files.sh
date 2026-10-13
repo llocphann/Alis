@@ -166,6 +166,7 @@ case "${SKIP_QUICKSHELL}" in
 
     # Fix script permissions
     log_info "Setting script permissions..."
+    [[ -f "$II_TARGET/scripts/alis" ]] && chmod +x "$II_TARGET/scripts/alis"
     find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \; 2>/dev/null || true
     [[ -f "${II_TARGET}/setup" ]] && chmod +x "${II_TARGET}/setup"
 
@@ -175,6 +176,17 @@ case "${SKIP_QUICKSHELL}" in
       ensure_launcher_path_in_shells "${XDG_BIN_HOME}"
       log_success "Launcher installed"
       log_success "Launcher path configured for interactive shells"
+      if [[ -f "${REPO_ROOT}/scripts/alis" ]]; then
+        _alis_target="${XDG_BIN_HOME}/alis"
+        if [[ -L "$_alis_target" || ( -e "$_alis_target" && ! -f "$_alis_target" ) ]] \
+            || { [[ -f "$_alis_target" ]] && ! grep -Fq "# Alis is the public command while the proven iNiR runtime owns the session." "$_alis_target"; }; then
+          log_warning "Preserving existing user-owned Alis launcher: $_alis_target"
+        else
+          install_file "${REPO_ROOT}/scripts/alis" "$_alis_target"
+          chmod +x "$_alis_target"
+          log_success "Alis command installed (compatible with inir runtime)"
+        fi
+      fi
     fi
 
     local _service_refresh_status=1

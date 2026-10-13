@@ -143,12 +143,13 @@ package() {
   for binary in inir-inputd inir-mpdd inir-native inir-theme; do install -Dm0755 "$srcdir/inir-native-target/release/$binary" "$shellroot/native/bin/$binary"; done
   # Keep the root namespace present for older source overrides as well.
   install -Dm644 "$srcroot/qmldir" "$shellroot/qmldir"
-  chmod +x "$shellroot/setup" "$shellroot/scripts/inir"
+  chmod +x "$shellroot/setup" "$shellroot/scripts/inir" "$shellroot/scripts/alis"
   find "$shellroot/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} +
   python3 -c 'from pathlib import Path; import sys; p=Path(sys.argv[1]); t=p.read_text(); m="sync_launcher_from_repo() {\n"; assert t.count(m) == 1, "expected one sync_launcher_from_repo definition"; g=m+"    if [[ \"$(get_installed_update_strategy 2>/dev/null || true)\" == \"package-manager\" ]]; then\n        return 0\n    fi\n"; p.write_text(t.replace(m, g, 1))' "$shellroot/setup"
   grep -Fq 'get_installed_update_strategy 2>/dev/null || true' "$shellroot/setup" || return
 
   install -Dm755 "$srcroot/scripts/inir" "$pkgdir/usr/bin/inir"
+  install -Dm755 "$srcroot/scripts/alis" "$pkgdir/usr/bin/alis"
   install -Dm644 "$srcroot/assets/systemd/inir.service" "$pkgdir/usr/lib/systemd/user/inir.service"
   # Privileged gateway is shipped by the trusted Hadalis system package.
   # Optional Hadalird helper payloads are not bundled in Core.

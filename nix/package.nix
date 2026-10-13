@@ -191,7 +191,7 @@ pkgs.stdenvNoCC.mkDerivation {
       install -m0755 "${nativeBackend}/bin/$binary" "$runtime/native/bin/$binary"
     done
 
-    chmod +x "$runtime/setup" "$runtime/scripts/inir"
+    chmod +x "$runtime/setup" "$runtime/scripts/inir" "$runtime/scripts/alis"
     find "$runtime/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} +
 
     # The source tree intentionally targets Arch, where helpers live under
@@ -311,12 +311,20 @@ PY
   "packageManager": "nix",
   "package_name": "inir",
   "packageName": "inir",
-  "package_update_hint": "update the Hadalis source/input and rebuild your NixOS or Home Manager configuration",
-  "packageUpdateHint": "update the Hadalis source/input and rebuild your NixOS or Home Manager configuration"
+  "package_update_hint": "update the Alis source/input and rebuild your NixOS or Home Manager configuration",
+  "packageUpdateHint": "update the Alis source/input and rebuild your NixOS or Home Manager configuration"
 }
 EOF
 
     makeWrapper "$runtime/scripts/inir" "$out/bin/inir" \
+      --prefix PATH : "${lib.makeBinPath runtimeDeps}" \
+      --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath "lib/qt-6/qml" qmlDeps}" \
+      --prefix QT_PLUGIN_PATH : "${lib.makeSearchPath "lib/qt-6/plugins" qmlDeps}" \
+      ${materialSymbolsWrapperArg} \
+      --set-default INIR_SYSTEM_RUNTIME_DIR "$runtime" \
+      --set-default INIR_FALLBACK_SYSTEM_RUNTIME_DIR "$runtime"
+
+    makeWrapper "$runtime/scripts/alis" "$out/bin/alis" \
       --prefix PATH : "${lib.makeBinPath runtimeDeps}" \
       --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath "lib/qt-6/qml" qmlDeps}" \
       --prefix QT_PLUGIN_PATH : "${lib.makeSearchPath "lib/qt-6/plugins" qmlDeps}" \
@@ -349,8 +357,8 @@ EOF
   };
 
   meta = {
-    description = "Hadalis desktop shell runtime built on Quickshell";
-    homepage = "https://github.com/llocphann/Hadalis";
+    description = "Alis desktop shell runtime built on Quickshell";
+    homepage = "https://github.com/llocphann/Alis";
     license = lib.licenses.gpl3Only;
     platforms = lib.platforms.linux;
     mainProgram = "inir";
