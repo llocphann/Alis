@@ -4,7 +4,7 @@ let
   lib = pkgs.lib;
   packageVersion = lib.removeSuffix "\n" (builtins.readFile ../VERSION);
   nativeBackend = pkgs.rustPlatform.buildRustPackage {
-    pname = "inir-native-backend";
+    pname = "alis-native-backend";
     version = packageVersion;
     src = lib.cleanSource ../native;
     cargoLock.lockFile = ../native/Cargo.lock;
@@ -13,10 +13,10 @@ let
     installPhase = ''
       runHook preInstall
       mkdir -p "$out/bin"
-      native_bin="$(find target -type f -path '*/release/inir-native' -perm -0100 -print -quit)"
+      native_bin="$(find target -type f -path '*/release/alis-native' -perm -0100 -print -quit)"
       test -n "$native_bin"
       release="$(dirname "$native_bin")"
-      for binary in inir-inputd inir-mpdd inir-native inir-theme; do
+      for binary in alis-inputd alis-mpdd alis-native alis-theme; do
         test -x "$release/$binary"
         install -m0755 "$release/$binary" "$out/bin/$binary"
       done
@@ -156,7 +156,7 @@ let
     ++ optionalQt6 "qtwayland";
 in
 pkgs.stdenvNoCC.mkDerivation {
-  pname = "inir";
+  pname = "alis";
   version = packageVersion;
   src = lib.cleanSource ../.;
 
@@ -165,18 +165,18 @@ pkgs.stdenvNoCC.mkDerivation {
   # Prevent patchShebangs from attempting to rewrite Python scripts;
   # non-executable files are skipped during fixupPhase.
   preFixup = ''
-    find "$out/share/quickshell/inir" -type f -name '*.py' -exec chmod -x {} +
+    find "$out/share/quickshell/alis" -type f -name '*.py' -exec chmod -x {} +
   '';
 
   postFixup = ''
-    find "$out/share/quickshell/inir" -type f -name '*.py' -exec chmod +x {} +
+    find "$out/share/quickshell/alis" -type f -name '*.py' -exec chmod +x {} +
   '';
 
   installPhase = ''
     runHook preInstall
 
-    runtime="$out/share/quickshell/inir"
-    docs="$out/share/doc/inir"
+    runtime="$out/share/quickshell/alis"
+    docs="$out/share/doc/alis"
     mkdir -p \
       "$runtime" \
       "$docs" \
@@ -187,11 +187,11 @@ pkgs.stdenvNoCC.mkDerivation {
     python3 sdata/lib/runtime-payload.py copy --root . --target "$runtime"
 
     mkdir -p "$runtime/native/bin"
-    for binary in inir-inputd inir-mpdd inir-native inir-theme; do
+    for binary in alis-inputd alis-mpdd alis-native alis-theme; do
       install -m0755 "${nativeBackend}/bin/$binary" "$runtime/native/bin/$binary"
     done
 
-    chmod +x "$runtime/setup" "$runtime/scripts/inir" "$runtime/scripts/alis"
+    chmod +x "$runtime/setup" "$runtime/scripts/alis" "$runtime/scripts/alis"
     find "$runtime/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} +
 
     # The source tree intentionally targets Arch, where helpers live under
@@ -202,14 +202,14 @@ pkgs.stdenvNoCC.mkDerivation {
       -exec sed -i '1!s#/usr/bin/##g' {} +
 
     # Keep direct runtime entrypoints package-aware even when they are invoked
-    # outside $out/bin/inir and therefore do not inherit makeWrapper variables.
+    # outside $out/bin/alis and therefore do not inherit makeWrapper variables.
     # Package-managed maintenance must also never copy the raw launcher into
     # ~/.local/bin, where it would shadow the Nix wrapper on later invocations.
-    # NixOS/Home Manager own inir.service declaratively, so the packaged CLI
+    # NixOS/Home Manager own alis.service declaratively, so the packaged CLI
     # must not materialize or delete mutable user units/wants links either.
     python3 - \
       "$runtime/setup" \
-      "$runtime/scripts/inir" \
+      "$runtime/scripts/alis" \
       "$runtime/sdata/lib/versioning.sh" \
       "$runtime" <<'PY'
 from pathlib import Path
@@ -232,8 +232,8 @@ if setup.count(marker) != 1:
 setup_path.write_text(setup.replace(marker, guard, 1))
 
 launcher = launcher_path.read_text()
-launcher_default = 'system_config_dir="$' + '{INIR_SYSTEM_RUNTIME_DIR:-/usr/local/share/quickshell/inir}"'
-launcher_value = 'system_config_dir="$' + '{INIR_SYSTEM_RUNTIME_DIR:-' + runtime + '}"'
+launcher_default = 'system_config_dir="$' + '{ALIS_SYSTEM_RUNTIME_DIR:-/usr/local/share/quickshell/alis}"'
+launcher_value = 'system_config_dir="$' + '{ALIS_SYSTEM_RUNTIME_DIR:-' + runtime + '}"'
 count = launcher.count(launcher_default)
 if count != 1:
     raise SystemExit("expected exactly one launcher runtime default")
@@ -244,8 +244,8 @@ ensure_marker = """ensure_service_unit_available() {
 """
 ensure_guard = """ensure_service_unit_available() {
     require_command systemctl
-    if ! systemctl --user cat inir.service >/dev/null 2>&1; then
-        echo "inir.service is not provisioned by Nix; enable programs.inir.service in NixOS or Home Manager" >&2
+    if ! systemctl --user cat alis.service >/dev/null 2>&1; then
+        echo "alis.service is not provisioned by Nix; enable programs.alis.service in NixOS or Home Manager" >&2
         return 1
     fi
     return 0
@@ -268,7 +268,7 @@ service_guard = (
     '    shift || true\n\n'
     '    case "$action" in\n'
     '        install|uninstall|remove|enable|disable)\n'
-    '            echo "Nix-managed installations keep inir.service declarative; configure programs.inir.service and rebuild." >&2\n'
+    '            echo "Nix-managed installations keep alis.service declarative; configure programs.alis.service and rebuild." >&2\n'
     '            return 1\n'
     '            ;;\n'
     '    esac\n\n'
@@ -280,8 +280,8 @@ launcher = launcher.replace(service_marker, service_guard, 1)
 launcher_path.write_text(launcher)
 
 versioning = versioning_path.read_text()
-versioning_default = 'RUNTIME_DIR_SYSTEM_LOCAL="$' + '{INIR_SYSTEM_RUNTIME_DIR_LOCAL:-/usr/local/share/quickshell/inir}"'
-versioning_value = 'RUNTIME_DIR_SYSTEM_LOCAL="$' + '{INIR_SYSTEM_RUNTIME_DIR_LOCAL:-' + runtime + '}"'
+versioning_default = 'RUNTIME_DIR_SYSTEM_LOCAL="$' + '{ALIS_SYSTEM_RUNTIME_DIR_LOCAL:-/usr/local/share/quickshell/alis}"'
+versioning_value = 'RUNTIME_DIR_SYSTEM_LOCAL="$' + '{ALIS_SYSTEM_RUNTIME_DIR_LOCAL:-' + runtime + '}"'
 count = versioning.count(versioning_default)
 if count != 1:
     raise SystemExit("expected exactly one versioning runtime default")
@@ -289,9 +289,9 @@ versioning_path.write_text(versioning.replace(versioning_default, versioning_val
 
 PY
     grep -Fq 'get_installed_update_strategy 2>/dev/null || true' "$runtime/setup"
-    grep -Fq "$runtime" "$runtime/scripts/inir"
-    grep -Fq 'Nix-managed installations keep inir.service declarative' "$runtime/scripts/inir"
-    grep -Fq 'systemctl --user cat inir.service' "$runtime/scripts/inir"
+    grep -Fq "$runtime" "$runtime/scripts/alis"
+    grep -Fq 'Nix-managed installations keep alis.service declarative' "$runtime/scripts/alis"
+    grep -Fq 'systemctl --user cat alis.service' "$runtime/scripts/alis"
     grep -Fq "$runtime" "$runtime/sdata/lib/versioning.sh"
 
     cat > "$runtime/version.json" <<'EOF'
@@ -309,45 +309,32 @@ PY
   "updateStrategy": "package-manager",
   "package_manager": "nix",
   "packageManager": "nix",
-  "package_name": "inir",
-  "packageName": "inir",
+  "package_name": "alis",
+  "packageName": "alis",
   "package_update_hint": "update the Alis source/input and rebuild your NixOS or Home Manager configuration",
   "packageUpdateHint": "update the Alis source/input and rebuild your NixOS or Home Manager configuration"
 }
 EOF
-
-    makeWrapper "$runtime/scripts/inir" "$out/bin/inir" \
-      --set ALIS_LEGACY_PUBLIC 1 \
-      --prefix PATH : "${lib.makeBinPath runtimeDeps}" \
-      --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath "lib/qt-6/qml" qmlDeps}" \
-      --prefix QT_PLUGIN_PATH : "${lib.makeSearchPath "lib/qt-6/plugins" qmlDeps}" \
-      ${materialSymbolsWrapperArg} \
-      --set-default INIR_SYSTEM_RUNTIME_DIR "$runtime" \
-      --set-default INIR_FALLBACK_SYSTEM_RUNTIME_DIR "$runtime"
 
     makeWrapper "$runtime/scripts/alis" "$out/bin/alis" \
       --prefix PATH : "${lib.makeBinPath runtimeDeps}" \
       --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath "lib/qt-6/qml" qmlDeps}" \
       --prefix QT_PLUGIN_PATH : "${lib.makeSearchPath "lib/qt-6/plugins" qmlDeps}" \
       ${materialSymbolsWrapperArg} \
-      --set-default INIR_SYSTEM_RUNTIME_DIR "$runtime" \
-      --set-default INIR_FALLBACK_SYSTEM_RUNTIME_DIR "$runtime"
+      --set-default ALIS_SYSTEM_RUNTIME_DIR "$runtime" \
+      --set-default ALIS_FALLBACK_SYSTEM_RUNTIME_DIR "$runtime"
 
-    sed "s|^Exec=alis|Exec=$out/bin/alis|" \
-      assets/applications/inir.desktop > "$out/share/applications/inir.desktop"
-    sed "s|^Exec=alis|Exec=$out/bin/alis|" \
-      assets/applications/inir-settings.desktop > "$out/share/applications/inir-settings.desktop"
     sed "s|^Exec=alis|Exec=$out/bin/alis|" \
       assets/applications/alis.desktop > "$out/share/applications/alis.desktop"
     sed "s|^Exec=alis|Exec=$out/bin/alis|" \
       assets/applications/alis-settings.desktop > "$out/share/applications/alis-settings.desktop"
     chmod 0644 \
-      "$out/share/applications/inir.desktop" \
-      "$out/share/applications/inir-settings.desktop" \
+      "$out/share/applications/alis.desktop" \
+      "$out/share/applications/alis-settings.desktop" \
       "$out/share/applications/alis.desktop" \
       "$out/share/applications/alis-settings.desktop"
     install -Dm644 assets/icons/desktop-symbolic.svg \
-      "$out/share/icons/hicolor/scalable/apps/inir.svg"
+      "$out/share/icons/hicolor/scalable/apps/alis.svg"
     install -Dm644 assets/icons/desktop-symbolic.svg \
       "$out/share/icons/hicolor/scalable/apps/alis.svg"
 
@@ -355,7 +342,7 @@ EOF
     for doc in docs/*.md; do
       install -Dm644 "$doc" "$docs/''${doc##*/}"
     done
-    install -Dm644 LICENSE "$out/share/licenses/inir/LICENSE"
+    install -Dm644 LICENSE "$out/share/licenses/alis/LICENSE"
 
     runHook postInstall
   '';

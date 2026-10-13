@@ -5,17 +5,16 @@ let
 in
 {
   optionsModule = { config, ... }: {
-    imports = [ (lib.mkAliasOptionModule [ "programs" "alis" ] [ "programs" "inir" ]) ];
-    # Alis is the public option prefix; the inir option tree keeps NixOS/Home
+    # Alis is the public option prefix; the alis option tree keeps NixOS/Home
     # Manager configurations and their single service identity compatible.
-    options.programs.inir = {
+    options.programs.alis = {
       enable = lib.mkEnableOption "Alis desktop shell runtime";
 
       package = lib.mkOption {
         type = lib.types.package;
         default = defaultPackage;
         defaultText = lib.literalExpression "pkgs.callPackage ./nix/package.nix { inherit pkgs; }";
-        description = "Alis package to install and run through the compatible inir runtime identity.";
+        description = "Alis package to install and run through the compatible alis runtime identity.";
       };
 
       extraPackages = lib.mkOption {
@@ -28,13 +27,13 @@ in
         enable = lib.mkOption {
           type = lib.types.bool;
           default = true;
-          description = "Create the compatible inir systemd user service for Alis.";
+          description = "Create the compatible alis systemd user service for Alis.";
         };
 
         compositor = lib.mkOption {
           type = lib.types.nullOr (lib.types.enum [ "niri" "hyprland" ]);
           default = "niri";
-          description = "Compositor user unit that should want inir.service. Set null to create the unit without auto-start wiring.";
+          description = "Compositor user unit that should want alis.service. Set null to create the unit without auto-start wiring.";
         };
       };
     };
@@ -46,8 +45,8 @@ in
     else null;
 
   serviceEnvironment = cfg: {
-    INIR_SYSTEM_RUNTIME_DIR = "${cfg.package}/share/quickshell/inir";
-    INIR_FALLBACK_SYSTEM_RUNTIME_DIR = "${cfg.package}/share/quickshell/inir";
+    ALIS_SYSTEM_RUNTIME_DIR = "${cfg.package}/share/quickshell/alis";
+    ALIS_FALLBACK_SYSTEM_RUNTIME_DIR = "${cfg.package}/share/quickshell/alis";
     QS_DISABLE_CRASH_HANDLER = "1";
     QT_LOGGING_RULES = "quickshell.dbus.properties=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false";
     QT_SCALE_FACTOR = "1";

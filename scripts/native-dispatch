@@ -2,9 +2,9 @@
 set -uo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/inir"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/alis"
 MODE_FILE="$STATE_DIR/native-backend"
-MODE="${INIR_NATIVE_BACKEND:-}"
+MODE="${ALIS_NATIVE_BACKEND:-}"
 if [[ -z "$MODE" && -r "$MODE_FILE" ]]; then
     IFS= read -r MODE < "$MODE_FILE" || true
 fi
@@ -12,25 +12,25 @@ fi
 MODE="${MODE:-rust}"
 case "$MODE" in
     python|rust|auto) ;;
-    *) echo "[native-dispatch] invalid INIR_NATIVE_BACKEND=$MODE" >&2; exit 64 ;;
+    *) echo "[native-dispatch] invalid ALIS_NATIVE_BACKEND=$MODE" >&2; exit 64 ;;
 esac
 BIN_DIR_FILE="$STATE_DIR/native-bin-dir"
-BIN_DIR="${INIR_NATIVE_BIN_DIR:-}"
+BIN_DIR="${ALIS_NATIVE_BIN_DIR:-}"
 if [[ -z "$BIN_DIR" && -r "$BIN_DIR_FILE" ]]; then
     IFS= read -r BIN_DIR < "$BIN_DIR_FILE" || true
 fi
 DEFAULT_BIN_DIR="$ROOT_DIR/native/bin"
-if [[ ! -x "$DEFAULT_BIN_DIR/inir-native" && -x "$ROOT_DIR/native/target/release/inir-native" ]]; then
+if [[ ! -x "$DEFAULT_BIN_DIR/alis-native" && -x "$ROOT_DIR/native/target/release/alis-native" ]]; then
     DEFAULT_BIN_DIR="$ROOT_DIR/native/target/release"
 fi
 BIN_DIR="${BIN_DIR:-$DEFAULT_BIN_DIR}"
-STRICT="${INIR_NATIVE_STRICT:-0}"
-MPD_SOCKET="${INIR_MPD_SOCKET:-${XDG_RUNTIME_DIR:-/tmp}/inir/mpd.sock}"
+STRICT="${ALIS_NATIVE_STRICT:-0}"
+MPD_SOCKET="${ALIS_MPD_SOCKET:-${XDG_RUNTIME_DIR:-/tmp}/alis/mpd.sock}"
 
 python_bin() {
     local candidate=""
-    if [[ -n "${INIR_VENV:-}" ]]; then
-        candidate="${INIR_VENV/#\~/$HOME}/bin/python3"
+    if [[ -n "${ALIS_VENV:-}" ]]; then
+        candidate="${ALIS_VENV/#\~/$HOME}/bin/python3"
     elif [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
         candidate="${ILLOGICAL_IMPULSE_VIRTUAL_ENV/#\~/$HOME}/bin/python3"
     else
@@ -72,10 +72,10 @@ shift
 if [[ "$MODE" == rust && "$STRICT" == 1 ]]; then
     required_binary=""
     case "$cmd" in
-        input-lock|input-keys) required_binary=inir-inputd ;;
-        niri|clipboard-store|desktop-icons) required_binary=inir-native ;;
-        mpd|mpd-daemon|mpd-subscribe|lyrics) required_binary=inir-mpdd ;;
-        theme) required_binary=inir-theme ;;
+        input-lock|input-keys) required_binary=alis-inputd ;;
+        niri|clipboard-store|desktop-icons) required_binary=alis-native ;;
+        mpd|mpd-daemon|mpd-subscribe|lyrics) required_binary=alis-mpdd ;;
+        theme) required_binary=alis-theme ;;
     esac
     if [[ -n "$required_binary" ]] && ! rust_ready "$required_binary"; then
         echo "[native-dispatch] missing Rust binary: $BIN_DIR/$required_binary" >&2
@@ -87,7 +87,7 @@ case "$cmd" in
     backend-info)
         printf 'mode=%s\n' "$MODE"
         printf 'bin_dir=%s\n' "$BIN_DIR"
-        for binary in inir-inputd inir-native inir-mpdd inir-theme; do
+        for binary in alis-inputd alis-native alis-mpdd alis-theme; do
             if rust_ready "$binary"; then
                 printf '%s=ready\n' "$binary"
             else
@@ -97,8 +97,8 @@ case "$cmd" in
         ;;
 
     input-lock)
-        if want_rust && rust_ready inir-inputd; then
-            "$BIN_DIR/inir-inputd" --mode locks "$@"
+        if want_rust && rust_ready alis-inputd; then
+            "$BIN_DIR/alis-inputd" --mode locks "$@"
             rc=$?
             if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
             echo "[native-dispatch] Rust input-lock failed ($rc), falling back to Python" >&2
@@ -107,8 +107,8 @@ case "$cmd" in
         ;;
 
     input-keys)
-        if want_rust && rust_ready inir-inputd; then
-            "$BIN_DIR/inir-inputd" --mode keys "$@"
+        if want_rust && rust_ready alis-inputd; then
+            "$BIN_DIR/alis-inputd" --mode keys "$@"
             rc=$?
             if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
             echo "[native-dispatch] Rust input-keys failed ($rc), falling back to Python" >&2
@@ -117,13 +117,13 @@ case "$cmd" in
         ;;
 
     niri)
-        if want_rust && rust_ready inir-native; then
+        if want_rust && rust_ready alis-native; then
             # Niri helpers return machine-readable JSON on stdout. Capture it
             # until the Rust attempt has succeeded so a failed Rust response
             # cannot be concatenated with the Python fallback response.
             rust_stdout="$(
-                INIR_SHELL_ROOT="${INIR_SHELL_ROOT:-$ROOT_DIR}" \
-                    "$BIN_DIR/inir-native" niri "$@"
+                ALIS_SHELL_ROOT="${ALIS_SHELL_ROOT:-$ROOT_DIR}" \
+                    "$BIN_DIR/alis-native" niri "$@"
             )"
             rc=$?
             if (( rc == 0 )); then
@@ -143,8 +143,8 @@ case "$cmd" in
         ;;
 
     clipboard-store)
-        if want_rust && rust_ready inir-native; then
-            "$BIN_DIR/inir-native" clipboard-filter "$@"
+        if want_rust && rust_ready alis-native; then
+            "$BIN_DIR/alis-native" clipboard-filter "$@"
             rc=$?
             if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
             echo "[native-dispatch] Rust clipboard filter failed ($rc), falling back to Python" >&2
@@ -153,9 +153,9 @@ case "$cmd" in
         ;;
 
     mpd)
-        if want_rust && rust_ready inir-mpdd; then
+        if want_rust && rust_ready alis-mpdd; then
             if [[ -S "$MPD_SOCKET" ]]; then
-                "$BIN_DIR/inir-mpdd" --client-compat --socket "$MPD_SOCKET" "$@"
+                "$BIN_DIR/alis-mpdd" --client-compat --socket "$MPD_SOCKET" "$@"
                 rc=$?
                 if (( rc != 75 || STRICT == 1 )); then
                     exit "$rc"
@@ -163,7 +163,7 @@ case "$cmd" in
                 echo "[native-dispatch] Rust MPD daemon transport unavailable, using direct compatibility mode" >&2
             fi
 
-            "$BIN_DIR/inir-mpdd" --compat "$@"
+            "$BIN_DIR/alis-mpdd" --compat "$@"
             rc=$?
             if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
             echo "[native-dispatch] Rust MPD compatibility mode failed ($rc), falling back to Python" >&2
@@ -172,16 +172,16 @@ case "$cmd" in
         ;;
 
     mpd-daemon)
-        if want_rust && rust_ready inir-mpdd; then
-            exec "$BIN_DIR/inir-mpdd" --socket "$MPD_SOCKET" "$@"
+        if want_rust && rust_ready alis-mpdd; then
+            exec "$BIN_DIR/alis-mpdd" --socket "$MPD_SOCKET" "$@"
         fi
         echo "[native-dispatch] persistent MPD daemon requires the Rust backend" >&2
         exit 69
         ;;
 
     mpd-subscribe)
-        if want_rust && rust_ready inir-mpdd; then
-            exec "$BIN_DIR/inir-mpdd" --subscribe --socket "$MPD_SOCKET"
+        if want_rust && rust_ready alis-mpdd; then
+            exec "$BIN_DIR/alis-mpdd" --subscribe --socket "$MPD_SOCKET"
         fi
         echo "[native-dispatch] MPD event subscription requires the Rust backend" >&2
         exit 69
@@ -190,8 +190,8 @@ case "$cmd" in
     lyrics)
         track="${1:-}"
         [[ -n "$track" ]] || { echo "lyrics requires a track path" >&2; exit 64; }
-        if want_rust && rust_ready inir-mpdd; then
-            "$BIN_DIR/inir-mpdd" --lyrics "$track"
+        if want_rust && rust_ready alis-mpdd; then
+            "$BIN_DIR/alis-mpdd" --lyrics "$track"
             rc=$?
             if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
             echo "[native-dispatch] Rust lyrics parser failed ($rc), falling back to Python" >&2
@@ -200,8 +200,8 @@ case "$cmd" in
         ;;
 
     theme)
-        if want_rust && rust_ready inir-theme; then
-            "$BIN_DIR/inir-theme" "$@"
+        if want_rust && rust_ready alis-theme; then
+            "$BIN_DIR/alis-theme" "$@"
             rc=$?
             if (( rc == 0 || STRICT == 1 )); then exit "$rc"; fi
             echo "[native-dispatch] Rust theme generator failed ($rc), falling back to Python" >&2
@@ -213,8 +213,8 @@ case "$cmd" in
     desktop-icons)
         theme="${1:-}"
         [[ -n "$theme" ]] || { echo "desktop-icons requires a theme" >&2; exit 64; }
-        if want_rust && rust_ready inir-native; then
-            exec "$BIN_DIR/inir-native" desktop sync-icon-theme "$theme"
+        if want_rust && rust_ready alis-native; then
+            exec "$BIN_DIR/alis-native" desktop sync-icon-theme "$theme"
         fi
         echo "[native-dispatch] desktop-icons native path requested while backend is not Rust" >&2
         exit 64

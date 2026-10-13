@@ -2,7 +2,7 @@
 
 let
   common = import ./module-common.nix { inherit lib pkgs; };
-  cfg = config.programs.inir;
+  cfg = config.programs.alis;
   wantedUnit = common.compositorUnit cfg.service.compositor;
   env = common.serviceEnvironment cfg // lib.optionalAttrs (cfg.extraPackages != [ ]) {
     PATH = lib.makeBinPath ([ cfg.package ] ++ cfg.extraPackages);
@@ -11,11 +11,11 @@ in
 {
   imports = [ common.optionsModule ];
 
-  options.programs.inir.configSymlink = {
+  options.programs.alis.configSymlink = {
     enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Expose the packaged shell at ~/.config/quickshell/inir for tools that expect the traditional path.";
+      description = "Expose the packaged shell at ~/.config/quickshell/alis for tools that expect the traditional path.";
     };
   };
 
@@ -23,10 +23,10 @@ in
     home.packages = [ cfg.package ];
 
     xdg.configFile = lib.mkIf cfg.configSymlink.enable {
-      "quickshell/inir".source = "${cfg.package}/share/quickshell/inir";
+      "quickshell/alis".source = "${cfg.package}/share/quickshell/alis";
     };
 
-    systemd.user.services.inir = lib.mkIf cfg.service.enable {
+    systemd.user.services.alis = lib.mkIf cfg.service.enable {
       Unit = {
         Description = "Alis shell";
         PartOf = [ "graphical-session.target" ];

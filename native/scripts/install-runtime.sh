@@ -5,7 +5,7 @@ MANIFEST="$ROOT_DIR/native/Cargo.toml"
 TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT_DIR/native/target}"
 DEST_DIR=""
 BUILD_ONLY=0
-BINARIES=(inir-inputd inir-mpdd inir-native inir-theme)
+BINARIES=(alis-inputd alis-mpdd alis-native alis-theme)
 usage() { cat <<'EOF'
 Usage: native/scripts/install-runtime.sh [--dest DIR] [--build-only]
 Builds the locked release workspace and installs the four production helpers.
