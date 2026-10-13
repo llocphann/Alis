@@ -40,6 +40,10 @@ To undo an applied alias manually, confirm it is a symlink pointing to the adjac
 
 Test coverage: `scripts/test-alis-namespace-alias.sh` uses isolated XDG roots to check fresh install no-op, preservation of sentinel bytes, idempotence, foreign/dangling symlink refusal, and conflict preflight.
 
+## Owner desktop evidence
+
+Run `bash scripts/brand-owner-audit.sh` from a local Alis checkout to inspect installed launcher paths, runtime service state, and XDG aliases **without writing state or restarting the shell**. Save its printed observations alongside owner screenshots after manually testing cold login, settings, IPC, popups and rollback. The script only reports facts; no owner-verified result is inferred from it.
+
 ## Standalone automated regression lane
 
 GitHub Actions workflow `.github/workflows/brand-contracts.yml` runs a bounded, desktop-independent set of CLI, app ID, staged installer ownership, XDG namespace alias and pinned Arch snapshot contracts on `dev`. Its first confirmed successful run was [38430739766](https://github.com/llocphann/Alis/actions/runs/38430739766) at SHA `cf81808b8c8377d24f5fa917866edd47c2a7e5f5`. This gives independent evidence even when the full desktop/Niri canonical validator cannot execute in hosted CI; it **does not** replace owner visual acceptance, package installation on real hardware, or rollback validation.

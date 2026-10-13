@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/brand-contracts.yml"
       - "scripts/alis"
+      - "scripts/brand-owner-audit.sh"
       - "scripts/completions/alis.*"
       - "scripts/test-brand-entrypoints.sh"
       - "scripts/test-alis-namespace-alias.sh"
@@ -34,7 +35,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash -n scripts/alis scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh
+          bash -n scripts/alis scripts/brand-owner-audit.sh scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh
           bash -n sdata/migrations/061-alis-namespace-alias.sh sdata/subcmd-install/3.files.sh setup
           test ! -e assets/systemd/alis.service
           grep -Fq 'ShellId inir' shell.qml
