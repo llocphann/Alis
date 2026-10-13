@@ -19,18 +19,20 @@ SOURCE_PREFIXES = (
     "modules/", "services/", "sdata/lib/", "sdata/subcmd-install/",
     "sdata/dist-arch/", "sdata/dist-fedora/", "sdata/dist-debian/",
     "sdata/dist-generic/", "defaults/niri/", "defaults/matugen/",
-    "dots/.config/", "dots/sddm/", "scripts/", "assets/",
+    "dots/.config/", "dots/sddm/", "scripts/", "assets/", "translations/",
+    "defaults/widgets/", "sdata/uv/",
     "distro/arch/", "native/", "nix/",
 )
 ROOT_FILES = {
     "setup", "Makefile", "flake.nix", "shell.qml", "settings.qml",
     "welcome.qml", "GlobalStates.qml", "waffleSettings.qml",
-    "killDialog.qml", "README.md", "go.mod",
+    "killDialog.qml", "README.md", "SECURITY.md", "STRUCTURE.md",
+    "CODE_OF_CONDUCT.md", "go.mod",
 }
 EXCLUDED_PREFIXES = (
     "scripts/test-", "scripts/brand-", "scripts/iris-corner-poc/",
     "sdata/migrations/", "native/target/", "docs/", "native/tests/",
-    "defaults/plugins/", "defaults/widgets/", "assets/icons/fluent/",
+    "defaults/plugins/", "assets/icons/fluent/",
 )
 BINARY_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".webp", ".gif", ".woff", ".ttf", ".otf",
@@ -107,6 +109,11 @@ def main() -> int:
         except (UnicodeError, OSError):
             continue
         target_text = rename_text(text)
+        if relative == "CODE_OF_CONDUCT.md":
+            target_text = target_text.replace(
+                "https://github.com/snowarch/inir/issues",
+                "https://github.com/llocphann/Alis/issues",
+            )
         if text != target_text or new_path != old_path:
             changes.append((old_path, new_path, target_text))
     collisions = [
