@@ -88,6 +88,13 @@ Item {
     property bool _agendaDialogLoaded: false
 
     function handleEscape(): bool {
+        // Edit Mode owns the first Escape, regardless of widget selection or
+        // in-progress tab drag. This is the same discard path as Cancel.
+        if (dashboardCanvas.editMode) {
+            dashboardHeader.cancelPageDrag()
+            dashboardCanvas.cancelEditMode()
+            return true
+        }
         if (dashboardHeader.cancelPageDrag()) return true
         if (_agendaDialogShown) {
             _agendaDialogShown = false
@@ -95,10 +102,6 @@ Item {
         }
         if (currentPageId==="weeklyPlanner" && plannerPage.item?.sideView==="events") {
             plannerPage.item.closeInlineEventEditor()
-            return true
-        }
-        if (dashboardCanvas.editMode) {
-            dashboardCanvas.cancelEditMode()
             return true
         }
         return currentPageId === "music" && (musicPage.item?.restoreBrowserColumns() ?? false)
