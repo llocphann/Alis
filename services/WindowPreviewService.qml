@@ -17,7 +17,7 @@ import "WindowPreviewPolicy.js" as PreviewPolicy
  * - Pre-capture newly observed windows so the first presentation is immediate
  * - Reuse snapshots for hover/task surfaces without an arbitrary wall-clock TTL
  * - Refresh only the bounded visible window set when Overview opens
- * - Cache in ~/.cache/inir/window-previews/ and clean up on window close/session reset
+ * - Cache in ~/.cache/alis/window-previews/ and clean up on window close/session reset
  */
 Singleton {
     id: root
@@ -26,7 +26,7 @@ Singleton {
         if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
     }
 
-    readonly property string previewDir: FileUtils.trimFileProtocol(Directories.genericCache) + "/inir/window-previews"
+    readonly property string previewDir: FileUtils.trimFileProtocol(Directories.genericCache) + "/alis/window-previews"
     readonly property string sessionMarkerPath: previewDir + "/.niri-session"
     readonly property string sessionKey: NiriService.socketPath ?? ""
     

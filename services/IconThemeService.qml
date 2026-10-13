@@ -25,11 +25,11 @@ Singleton {
     readonly property string nativeBackendStatePath: {
         const stateHome = String(Quickshell.env("XDG_STATE_HOME") ?? "").trim()
         const base = stateHome.length > 0 ? stateHome : (Quickshell.env("HOME") + "/.local/state")
-        return base + "/inir/native-backend"
+        return base + "/alis/native-backend"
     }
     property string _nativeBackendState: ""
     readonly property bool nativeBackendEnabled: {
-        const envMode = String(Quickshell.env("INIR_NATIVE_BACKEND") ?? "").trim()
+        const envMode = String(Quickshell.env("ALIS_NATIVE_BACKEND") ?? "").trim()
         if (envMode.length > 0)
             return envMode === "rust" || envMode === "auto"
         const stateMode = root._nativeBackendState.trim()

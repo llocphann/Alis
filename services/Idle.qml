@@ -35,7 +35,7 @@ Singleton {
         ? root._nonNegativeInt(Config.options?.idle?.onBattery?.suspendTimeout, 600)
         : root._nonNegativeInt(Config.options?.idle?.suspendTimeout, 0)
     readonly property bool lockBeforeSleep: Config.options?.idle?.lockBeforeSleep !== false
-    readonly property string launcherPath: Quickshell.shellPath("scripts/inir")
+    readonly property string launcherPath: Quickshell.shellPath("scripts/alis")
 
     onScreenOffTimeoutChanged: _restartSwayidle()
     onLockTimeoutChanged: _restartSwayidle()
@@ -77,9 +77,9 @@ Singleton {
         const cmd = ["/usr/bin/swayidle", "-w"]
 
         if (screenOffTimeout > 0 && CompositorService.isNiri) {
-            const inir = StringUtils.shellSingleQuoteEscape(root.launcherPath);
-            const offCmd = `'${inir}' brightness sleepBegin; /usr/bin/niri msg action power-off-monitors`;
-            const resumeCmd = `/usr/bin/niri msg action power-on-monitors && /usr/bin/sleep 0.5 && '${inir}' brightness restoreAfterWake`;
+            const alis = StringUtils.shellSingleQuoteEscape(root.launcherPath);
+            const offCmd = `'${alis}' brightness sleepBegin; /usr/bin/niri msg action power-off-monitors`;
+            const resumeCmd = `/usr/bin/niri msg action power-on-monitors && /usr/bin/sleep 0.5 && '${alis}' brightness restoreAfterWake`;
             cmd.push("timeout", screenOffTimeout.toString(), offCmd, "resume", resumeCmd)
         }
 

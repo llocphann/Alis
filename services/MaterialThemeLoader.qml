@@ -138,7 +138,7 @@ Singleton {
     // prematurely cleared by unrelated file-watch events.
     property bool _forceApply: false
 
-    readonly property bool defaultApplyExternal: (Quickshell.env("INIR_STANDALONE_WINDOW") ?? "") !== "1"
+    readonly property bool defaultApplyExternal: (Quickshell.env("ALIS_STANDALONE_WINDOW") ?? "") !== "1"
 
     // Check if auto theme is selected (reads directly from Config to avoid circular dependency with ThemeService)
     readonly property bool isAutoTheme: (Config.options?.appearance?.theme ?? "auto") === "auto"

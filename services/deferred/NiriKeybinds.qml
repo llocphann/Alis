@@ -8,7 +8,7 @@ import qs.modules.common.functions
 import qs.services
 
 /**
- * Keybinds for Niri compositor with iNiR shell.
+ * Keybinds for Niri compositor with Alis shell.
  * Dynamically parses user's ~/.config/niri/config.kdl
  * Falls back to defaults if parsing fails.
  *
