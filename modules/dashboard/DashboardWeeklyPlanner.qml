@@ -127,8 +127,20 @@ Item {
             root.columnWidth,root.hourHeight)
         if (!candidate) return
         if (!root.localBackend.rescheduleOccurrence(row.event.id,
-                row.occurrenceIndex,candidate.startIso,candidate.endIso))
+                row.occurrenceIndex,candidate.startIso,candidate.endIso)) {
             console.warn("[WeeklyPlanner] Timed event gesture not saved")
+            return
+        }
+        // The calendar dots already react to Events.eventUpdated, but the
+        // open Edit Event form owns its own selected-day highlight. Reconcile
+        // that focus only after the canonical occurrence was actually saved.
+        // Do not reload the form: doing so would erase an unsaved title/note.
+        const form=inlineEventsPanel.item
+        if (form && form.isEditing
+                && form.editingEvent?.id===row.event.id
+                && form.editingOccurrenceIndex===row.occurrenceIndex)
+            form.syncMovedOccurrence(row.event.id,row.startDate,
+                candidate.startIso,candidate.endIso)
     }
     function editOccurrence(row): void {
         if (row.source!=="local") return

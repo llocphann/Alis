@@ -67,6 +67,58 @@ function choose(values,anchor,primary,clicked,ctrl,shift) {
 }
 // Construct each occurrence at LOCAL wall-clock time to preserve DST days,
 // midnight-crossing durations and all-day end-exclusive semantics.
+// Follow a successful Planner drag without overwriting manually edited
+// dates/times or wiping the rest of the form. The baseline is rebased only
+// for untouched fields, so unrelated unsaved title/note changes remain dirty.
+// In multi-date groups, read the stored slots after the drag: the old day
+// may still contain another occurrence and the slot index may have changed.
+function rebaseDraggedEvent(draft,baseline,oldStart,newStart,newEnd,canonical) {
+    var before=new Date(oldStart),after=new Date(newStart),end=new Date(newEnd);
+    if (!Array.isArray(baseline) || baseline.length<11
+            || !Number.isFinite(before.getTime())
+            || !Number.isFinite(after.getTime())
+            || !Number.isFinite(end.getTime()) || end<=after
+            || !canonical) return null;
+    var slots=Array.isArray(canonical.occurrences)
+            && canonical.occurrences.length>0
+        ? canonical.occurrences : [canonical];
+    var occurrenceIndex=slots.findIndex(function(slot) {
+        return Number(new Date(slot.startDate || slot.dateTime))===after.getTime()
+            && Number(new Date(slot.endDate))===end.getTime();
+    });
+    if (occurrenceIndex<0) return null;
+    var updatedDays=normalized(slots.map(function(slot) {
+        return key(new Date(slot.startDate || slot.dateTime));
+    }));
+    var nextKey=key(after);
+    if (!nextKey || updatedDays.indexOf(nextKey)<0) return null;
+    var wasDateClean=Number(new Date(draft.date))===Number(baseline[2]);
+    var wasKeysClean=JSON.stringify(normalized(draft.keys))
+        ===JSON.stringify(normalized(baseline[10]));
+    var dateFollowed=wasDateClean && wasKeysClean;
+    var timeClean=draft.time===baseline[3];
+    var endClean=draft.endTime===baseline[4];
+    function clock(date) {
+        return String(date.getHours()).padStart(2,"0")+":"
+            +String(date.getMinutes()).padStart(2,"0");
+    }
+    var nextDate=dateFollowed ? after : draft.date;
+    var nextKeys=dateFollowed ? updatedDays : draft.keys;
+    var nextAnchor=dateFollowed ? nextKey : draft.anchor;
+    var nextTime=timeClean ? clock(after) : draft.time;
+    var nextEnd=endClean ? clock(end) : draft.endTime;
+    var newBaseline=baseline.slice();
+    if (dateFollowed) {
+        newBaseline[2]=after.getTime();
+        newBaseline[10]=updatedDays.slice();
+    }
+    if (timeClean) newBaseline[3]=nextTime;
+    if (endClean) newBaseline[4]=nextEnd;
+    return {date:nextDate,keys:nextKeys,anchor:nextAnchor,
+        time:nextTime,endTime:nextEnd,baseline:newBaseline,
+        dateFollowed:dateFollowed,occurrenceIndex:occurrenceIndex};
+}
+
 function ranges(values,startTime,endTime,allDay) {
     var days=normalized(values);
     if (days.length<2 || days.length>limit) return null;

@@ -318,6 +318,7 @@ run_check 'Weekly Planner civil dates, overlap, recurrence and DST regression' n
 run_check 'Weekly Planner Ctrl/Shift multi-date and compatible Repeat cycles' node scripts/test-weekly-planner-multidate.mjs
 run_check 'Weekly Planner multi-date single-write storage runtime' python3 scripts/test-weekly-planner-multidate-storage-runtime.py
 run_check 'Multi-date Events grouping and Weekly Planner drag/resize policy' node scripts/test-event-occurrences-policy.mjs
+run_check 'Weekly Planner moved Event inline Calendar focus' node scripts/test-weekly-planner-event-focus.mjs
 run_check 'Events persisted data preservation without automatic migration' node scripts/test-events-no-automatic-migration.mjs
 run_check 'Calendar popup three-day civil range and recurrence policy' node scripts/test-calendar-three-day-window.mjs
 run_check 'Calendar popup compact event cards, hover controls and dot spacing' python3 scripts/test-calendar-popup-compact-contract.py

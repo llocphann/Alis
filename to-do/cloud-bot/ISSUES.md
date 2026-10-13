@@ -1,5 +1,25 @@
 # Issues/bugs
 
+- [ ] **DASH-I12 — Weekly Planner drag moves agenda dots but leaves Edit Event date focus stale — owner screenshots 2026-10-13:**
+  When a local timed Event is dragged to a different civil day while its
+  inline Edit Event pane remains open, the agenda indicators update from
+  `Events.eventUpdated`, but the highlighted Calendar day is still derived
+  from the previous `plannerSelectedDateKeys` / `eventDate` snapshot.
+  Follow the successfully persisted occurrence in that same Editor only,
+  updating selected-day background, month view and unmodified time inputs,
+  while retaining unsaved Title/Note and any explicitly changed dates/times.
+  Rebase the clean-form snapshot only for fields changed by the drag; never
+  reload/replace a dirty editor draft, create a new event, mutate external
+  read-only events, or affect other editor instances.
+  **Source milestone 2026-10-13:** `DashboardWeeklyPlanner.qml` now calls
+  `EventsDialog.syncMovedOccurrence` only after a successful
+  `rescheduleOccurrence` for the same Event ID/occurrence. Pure policy
+  `EventDateSelection.rebaseDraggedEvent` keeps the calendar selection and
+  baseline consistent. Added `scripts/test-weekly-planner-event-focus.mjs`
+  to the canonical local validator. **OPEN:** exact-SHA Node/CI, native
+  Quickshell/Niri focus/date redraw, dirty-form handling, grouped dates,
+  midnight/DST, multi-output/scaling and owner screenshot acceptance.
+
 **Owner scope withdrawal (2026-10-13):** the canceled Agenda → To-do linking defect `AGENDA-I01` is [archived](../../docs/archive/chatbot/2026-10-13/AGENDA-I01_RETIRED.md); Agenda and Todo now operate independently. Historical data and test evidence remain preserved.
 
 - [x] **ABYSS-I08 — P0 Edit Abyss Layout QML fails to load (owner log, 2026-10-13):**

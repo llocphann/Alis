@@ -396,6 +396,38 @@ WindowDialog {
         root.captureFormBaseline()
     }
 
+    // A drag/resize commits to Events while the inline editor can still hold
+    // a text draft. Rebase only untouched date/time fields on the newly saved
+    // occurrence, preserving unsaved edits and the original dirty-form check.
+    function syncMovedOccurrence(id, oldStart, newStart, newEnd): void {
+        if (!root.plannerPresentation || !root.isEditing
+                || root.editingEvent?.id!==id) return
+        const updated=Events.list.find(item=>item.id===id)
+        if (!updated) return
+        let baseline
+        try { baseline=JSON.parse(root._cleanFormSnapshot) }
+        catch (error) { return }
+        const change=DateSelection.rebaseDraggedEvent({
+            date:root.eventDate,keys:root.plannerSelectedDateKeys,
+            anchor:root.plannerSelectionAnchor,time:root.eventTime,
+            endTime:root.eventEndTime
+        },baseline,oldStart,newStart,newEnd,updated)
+        if (!change) return
+        root._plannerPickingDate=true
+        root.plannerSelectedDateKeys=change.keys
+        root.plannerSelectionAnchor=change.anchor
+        root.eventDate=change.date
+        root._plannerPickingDate=false
+        root.eventTime=change.time
+        root.eventEndTime=change.endTime
+        root.editingEvent=updated
+        root.editingOccurrenceIndex=change.occurrenceIndex
+        root._cleanFormSnapshot=JSON.stringify(change.baseline)
+        if (!change.dateFollowed)
+            root.editorWarning=Translation.tr(
+                "Event time changed. Review your unsaved date selection before saving.")
+    }
+
     function saveEvent(): bool {
         if (!Events.ready || root.eventTitle.trim() === "") return false
 
