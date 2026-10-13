@@ -40,6 +40,17 @@ grep -Fq "Name=Alis Settings" "$repo/assets/applications/inir-settings.desktop" 
 grep -Fxq "NoDisplay=true" "$repo/assets/applications/inir-settings.desktop" || fail "legacy settings launcher visible"
 grep -Fxq "NoDisplay=true" "$repo/assets/applications/inir.desktop" || fail "legacy shell launcher visible"
 grep -Fxq "X-Alis-Managed=true" "$repo/assets/applications/alis.desktop" || fail "Alis desktop ownership marker missing"
+grep -Fq 'title: "Alis"' "$repo/modules/settings/About.qml" || fail "Alis classic About still named iNiR"
+grep -Fq 'text: "Alis"' "$repo/modules/waffle/settings/pages/WAboutPage.qml" || fail "Alis Waffle About still named iNiR"
+if grep -Fq 'snowarch/inir' "$repo/modules/settings/About.qml" || grep -Fq 'snowarch/inir' "$repo/modules/waffle/settings/pages/WAboutPage.qml"; then fail "About page linked to upstream rather than Alis"; fi
+grep -Fq 'nixosModules.alis = nixosModule;' "$repo/flake.nix" || fail "Alis Nix module not exported"
+grep -Fq 'homeModules.alis = homeModule;' "$repo/flake.nix" || fail "Alis Home Manager module not exported"
+grep -Fq '          alis = package;' "$repo/flake.nix" || fail "Alis package not exported"
+grep -Fq 'mkAliasOptionModule [ "programs" "alis" ] [ "programs" "inir" ]' "$repo/nix/module-common.nix" || fail "Alis Nix config option is not mapped to one service"
+for hook in "$repo/distro/arch/inir-shell/inir-shell.install" "$repo/distro/arch/inir-shell-git/inir-shell-git.install"; do
+    grep -Fq 'Alis has been installed.' "$hook" || fail "Arch install notice still uses old public name"
+    grep -Fq 'inir.service' "$hook" || fail "Arch notice lost service compatibility identity"
+done
 grep -Fq "Exec=alis settings" "$repo/assets/applications/alis-settings.desktop" || fail "Alis settings app ID missing"
 grep -Fxq "Icon=alis" "$repo/assets/applications/alis-settings.desktop" || fail "Alis icon ID missing"
 grep -Fq 'apps/alis.svg"' "$repo/nix/package.nix" || fail "Nix icon alias not packaged"
