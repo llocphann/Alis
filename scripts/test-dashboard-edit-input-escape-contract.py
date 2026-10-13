@@ -33,7 +33,10 @@ body = content[content.index("function handleEscape(): bool {"):
 assert body.index("dashboardCanvas.cancelEditMode()") < body.index("if (_agendaDialogShown)")
 assert "dashboardHeader.cancelPageDrag()" in body
 assert 'sequences: ["Escape"]' in editor
-assert "root.canvasController.cancelEditMode()" in editor
+assert "enabled: root.editing && (root.body?.open ?? false)" in editor
+assert "root.body?.forceActiveFocus()" in editor
+assert "dashboard?.handleEscape?.()" in editor
+assert "root.editing && root.revealRequested" not in editor
 assert "function handleEscape(): bool {" in embedded
 assert "return content.handleEscape()" in embedded
 assert "dashboardBody.contentItem.item.handleEscape()" in perimeter
@@ -43,6 +46,24 @@ assert "contentLoader.item?.handleEscape()" in standalone
 assert "panelRoot.hide()" in standalone
 assert "function cancelEditMode()" in canvas
 assert "root._draftEntries = null" in canvas
+
+# The QML focus path inside the body previously closed immediately, before
+# the outer Perimeter's cancellation handler could see the event.
+body_host = read("modules/abyss/AbyssBodyHost.qml")
+assert 'Keys.onEscapePressed: root.closeRequested()' not in body_host
+host_escape = body_host[body_host.index("Keys.onEscapePressed: event => {"):
+                        body_host.index("Behavior on visualPlacementAlong")]
+assert 'root.identity === "dashboard" ? content.item : null' in host_escape
+assert '(dashboard?.editMode ?? false)' in host_escape
+assert 'dashboard.handleEscape()' in host_escape
+assert host_escape.index("dashboard.handleEscape()") < host_escape.index("root.closeRequested()")
+assert "event.accepted = true" in host_escape
+
+# Both the output-field fallback and standalone window should preserve focus
+# after Cancel so the next Escape can reach the normal close path.
+assert "dashboardBody.forceActiveFocus()" in perimeter
+assert "contentLoader.forceActiveFocus()" in standalone
+assert "root.body?.forceActiveFocus()" in editor
 
 # Action buttons must remain centered, keyboard-reachable and functional.
 for token in (
