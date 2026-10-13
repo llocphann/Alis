@@ -1,6 +1,6 @@
-# Releasing Hadalis
+# Releasing Alis
 
-Hadalis develops on `dev` and publishes stable releases from `stable`. Release publication is intentionally fail-closed for the required non-Nix release lane: the release helper validates repository/package state, stages or reuses a GitHub draft release, syncs the Wiki, and only then makes the GitHub release public. Nix compatibility is currently a deferred diagnostic lane and does not block this publication path.
+Alis develops on `dev` and publishes stable releases from `stable`. Release publication is intentionally fail-closed for the required non-Nix release lane: the release helper validates repository/package state, stages or reuses a GitHub draft release, syncs the Wiki, and only then makes the GitHub release public. Nix compatibility is currently a deferred diagnostic lane and does not block this publication path.
 
 ## Release preparation
 

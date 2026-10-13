@@ -18,12 +18,12 @@ This is the recommended way to use the setup script if you're unsure which comma
 
 ## How the pieces fit together
 
-There are now three complementary entry points:
+There are now three complementary entry points (the public `alis` command forwards to the existing `inir` runtime without creating a second session):
 
 - `./setup`
   - authoritative installer and maintenance entry point
   - owns install, update, doctor, status, migrate, rollback, my-changes, uninstall
-- `inir`
+- `alis` (legacy alias: `inir`)
   - daily launcher and operator CLI
   - owns runtime actions like `run`, `start`, `restart`, `settings`, `logs`, `repair`, `terminal`, and IPC calls
   - forwards maintenance commands like `install`, `update`, `doctor`, `status`, `migrate`, `rollback`, `my-changes`, and `uninstall` back to `setup`
@@ -51,8 +51,8 @@ Use them like this:
 ## Install
 
 ```bash
-git clone https://github.com/llocphann/Hadalis.git
-cd Hadalis
+git clone https://github.com/llocphann/Alis.git
+cd Alis
 ./setup install
 inir run
 ```
@@ -528,8 +528,8 @@ For package-managed installs, use the package manager to remove the system paylo
 To reinstall iNiR after uninstalling:
 
 ```bash
-git clone https://github.com/llocphann/Hadalis.git
-cd Hadalis
+git clone https://github.com/llocphann/Alis.git
+cd Alis
 ./setup install
 inir run
 ```

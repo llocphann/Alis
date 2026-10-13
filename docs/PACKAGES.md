@@ -5,11 +5,11 @@
 Current-source install/package paths build the committed `native/Cargo.lock` workspace and ship the qualified helpers under `share/quickshell/inir/native/bin/`, including the opt-in Wull backend `inir-companiond`. The rolling Arch package and Nix build current source; the pinned non-VCS Arch package gains newer helpers when its source snapshot advances. Python remains only for explicitly retained fallback paths.
 
 
-This page documents the Arch-based source install dependency model used by `./setup install`, plus the separate Arch package recipes that distribute the Hadalis/iNiR runtime itself.
+This page documents the Arch-based source install dependency model used by `./setup install`, plus the separate Arch package recipes that distribute the Alis runtime (with iNiR compatibility) itself.
 
 ## Packaging layers
 
-Hadalis has two different Arch packaging trees with different responsibilities:
+Alis has two different Arch packaging trees with different responsibilities:
 
 | Path | Purpose |
 |---|---|
@@ -258,13 +258,13 @@ These integrations are useful when their corresponding feature is desired, but t
 
 ## Distributable Arch packages (`distro/arch`)
 
-The package recipes under `distro/arch/` distribute Hadalis itself rather than serving as source-installer dependency groups:
+The package recipes under `distro/arch/` distribute Alis itself rather than serving as source-installer dependency groups:
 
 | Package | Purpose |
 |---------|---------|
-| `inir-shell` | Versioned non-VCS Hadalis shell/runtime package. Before release tags exist, the committed recipe may pin an immutable reviewed commit snapshot; release preparation switches the default source identity to the immutable `vX.Y.Z` tag. |
+| `inir-shell` | Versioned non-VCS Alis shell/runtime package. Before release tags exist, the committed recipe may pin an immutable reviewed commit snapshot; release preparation switches the default source identity to the immutable `vX.Y.Z` tag. |
 | `inir-shell-git` | Development/VCS package following `dev`. |
-| `inir-meta` | Full Hadalis desktop-experience meta-package depending on `inir-shell` plus the wider integration set. |
+| `inir-meta` | Full Alis desktop-experience meta-package depending on `inir-shell` plus the wider integration set. |
 
 The pre-release commit pin is a reproducible development/package snapshot, not evidence that current `dev` has passed package acceptance. Published release preparation must replace that default `_source_ref` with the release tag and regenerate `.SRCINFO`; `RELEASING.md` and the publication preflight own that invariant.
 

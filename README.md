@@ -1,6 +1,6 @@
-# Hadalis — v1.0 Release Plan / Development Contract
+# Alis — v1.0 Release Plan / Development Contract
 
-> This README is the current product and execution contract for completing **Hadalis 1.0**.
+> This README is the current product and execution contract for completing **Alis 1.0**.
 > It intentionally contains only active requirements, release blockers, architecture constraints and validation gates. Historical implementation notes, one-off commit hashes and stale migration narratives belong in Git history / `CHANGELOG.md`, not here.
 >
 > **Target:** `1.0`  
@@ -44,7 +44,7 @@ Working rules:
 
 This section is the **maintainer handoff for new chat sessions**. Read it before touching Screen Edge, Bar, popup, Sidebar, Dashboard, Settings overlay or any shared perimeter primitive. If another section appears to conflict with this handoff, the maintainer's newest explicit instruction wins.
 
-**Maintainer workflow lock (2026-09-25):** Hadalis development is `dev`-only. Do not create feature/fix branches and do not open pull requests unless the maintainer explicitly asks for them. Refetch and re-read the latest `dev` target before every write, then commit focused changes directly to `dev`. `stable` is comparison-only unless the maintainer explicitly changes that rule.
+**Maintainer workflow lock (2026-09-25):** Alis development is `dev`-only. Do not create feature/fix branches and do not open pull requests unless the maintainer explicitly asks for them. Refetch and re-read the latest `dev` target before every write, then commit focused changes directly to `dev`. `stable` is comparison-only unless the maintainer explicitly changes that rule.
 
 **Failed-fix rule — no patch stacking:** when a proposed fix is shown by runtime evidence, regression testing or maintainer acceptance to be ineffective, revert that fix before attempting a replacement. Do not layer a second workaround over the failed approach. Restore the last known-good behavior, identify why the previous approach failed, then implement a materially different root-cause fix. Preserve concurrent unrelated work by reverting only the failed change set when necessary.
 
@@ -116,7 +116,7 @@ Optimization research is centralized under [docs/optimization](docs/optimization
 
 ## 2. v1.0 product direction
 
-Hadalis remains a Quickshell desktop shell built on the existing iNiR architecture. The v1.0 priority is **UI/UX quality without throwing away working iNiR behavior**.
+Alis remains a Quickshell desktop shell built on the existing iNiR architecture. The v1.0 priority is **UI/UX quality without throwing away working iNiR behavior**.
 
 Required direction:
 
@@ -136,7 +136,7 @@ Retired per-component renderer/style experiments must not be revived merely to p
 
 The maintainer requires the physical Screen Edge corners to match Caelestia without painted edge/corner patches, wedges or overlay geometry.
 
-**Four-corner geometry lock (maintainer-approved 2026-09-19):** the live-validated inverted-frame silhouette remains the canonical visual reference for Hadalis. The maintainer subsequently approved one controlled degree of freedom: `appearance.screenEdge.radius` may change the radius of that same quarter-circle geometry (default **25px**, range **0–96px**). The healthy renderer now expresses that exact rounded workspace opening analytically in `ScreenEdgeField`; the historical odd-even `ShapePath` with four circular `PathArc` corners is retained as the lazy shader-error reference/fallback. Future Bar, popup, reservation, scaling, refactor or compositor work must preserve the same concentric placement and circular-corner silhouette. If a later change deforms, offsets, double-rounds or adds a second physical painter, restore the locked `ScreenEdges.qml` model rather than compensating elsewhere.
+**Four-corner geometry lock (maintainer-approved 2026-09-19):** the live-validated inverted-frame silhouette remains the canonical visual reference for Alis. The maintainer subsequently approved one controlled degree of freedom: `appearance.screenEdge.radius` may change the radius of that same quarter-circle geometry (default **25px**, range **0–96px**). The healthy renderer now expresses that exact rounded workspace opening analytically in `ScreenEdgeField`; the historical odd-even `ShapePath` with four circular `PathArc` corners is retained as the lazy shader-error reference/fallback. Future Bar, popup, reservation, scaling, refactor or compositor work must preserve the same concentric placement and circular-corner silhouette. If a later change deforms, offsets, double-rounds or adds a second physical painter, restore the locked `ScreenEdges.qml` model rather than compensating elsewhere.
 
 **Bar + Screen Edge corner lock (maintainer-approved 2026-09-19):** the current top/bottom/left/right normal ii Bar endpoint corners and the four Screen Edge corners are one canonical perimeter geometry. The Bar is not allowed to own a second corner renderer. Its owned edge only changes the corresponding inner-frame inset from Screen Edge thickness to Bar/VerticalBar body thickness; the same `PerimeterTokens.frameRadius` drives the analytic rounded-workspace SDF and its four-`PathArc` error fallback. Future work must restore this exact model if the Bar or Screen Edge corners regress. Only the existing radius setting may intentionally change their curvature.
 
@@ -236,7 +236,7 @@ See [`docs/VALIDATION.md`](docs/VALIDATION.md) for the canonical validator contr
 
 ## 8. v1.0 definition of done
 
-Hadalis can be called **1.0** only when:
+Alis can be called **1.0** only when:
 
 - every P0 release blocker above is completed and locally validated;
 - no known empty/broken Settings route remains for supported features;

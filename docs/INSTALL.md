@@ -12,8 +12,8 @@
 ## The Easy Way
 
 ```bash
-git clone https://github.com/llocphann/Hadalis.git
-cd Hadalis
+git clone https://github.com/llocphann/Alis.git
+cd Alis
 ./setup install
 ```
 
@@ -43,7 +43,7 @@ The manual source-install path itself needs these tools before `sudo make instal
 
 | Package | Why |
 |---------|-----|
-| `git` | Clones the Hadalis source tree. |
+| `git` | Clones the Alis source tree. |
 | `make` | Runs the source install targets. |
 | `python3` | Executes the runtime-payload installer. |
 | `rsync` | Copies the filtered shell runtime payload into the install prefix. |
@@ -86,8 +86,8 @@ For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by categor
 ### 2. Clone the source
 
 ```bash
-git clone https://github.com/llocphann/Hadalis.git ~/Hadalis
-cd ~/Hadalis
+git clone https://github.com/llocphann/Alis.git ~/Alis
+cd ~/Alis
 ```
 
 ### 3. Install the packaged runtime assets
@@ -102,7 +102,7 @@ With the default Makefile paths, this installs:
 - the battery/TLP and ThinkFan privileged helpers under `/usr/libexec`;
 - their polkit policies, plus the TLP settings schema, under `/usr/share`.
 
-Those system locations can be changed through the Makefile install variables when packaging. The target does **not** install distro dependencies, install ThinkFan/TLP themselves, or enable the iNiR user service for you.
+Those system locations can be changed through the Makefile install variables when packaging. The target does **not** install distro dependencies, install ThinkFan/TLP themselves, or enable the compatibility inir user service for you.
 
 The ThinkFan helper is only the Hadalis control bridge; managed fan control still requires the `thinkfan` executable, a working `thinkfan.service`, and a machine-specific ThinkFan configuration. See [ThinkFan Integration](THINKFAN.md) before enabling managed fan control.
 
@@ -118,9 +118,9 @@ This gives you:
 - GTK settings
 - Fuzzel config
 
-### 5. Apply per-user migrations and enable the iNiR user service
+### 5. Apply per-user migrations and enable the compatibility inir user service
 
-Run the required config migrations as the user who will run Hadalis, not through `sudo`:
+Run the required config migrations as the user who will run Alis, not through `sudo`:
 
 ```bash
 inir migrate

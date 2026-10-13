@@ -1,6 +1,6 @@
 # Uninstall and Service Teardown
 
-Hadalis has multiple installation modes. Remove the runtime with the same ownership model that installed it; do not mix repo-managed, manual `make install`, pacman, and Nix teardown commands.
+Alis has multiple installation modes. Remove the runtime with the same ownership model that installed it; do not mix repo-managed, manual `make install`, pacman, and Nix teardown commands.
 
 ## Repo-managed installation (`./setup install`)
 
@@ -10,7 +10,7 @@ Use the setup-owned uninstall path:
 ./setup uninstall
 ```
 
-This path can identify the active user and safely stop `inir.service`, remove Hadalis-owned user service wiring, back up user state, and preserve shared resources according to the interactive choices. See [Setup & Updates](SETUP.md#uninstall) for the complete repo-managed behavior.
+This path can identify the active user and safely stop `inir.service`, remove Alis-owned user service wiring, back up user state, and preserve shared resources according to the interactive choices. See [Setup & Updates](SETUP.md#uninstall) for the complete repo-managed behavior.
 
 For a repo-managed install, uninstall also removes the Hadalis-owned ThinkFan bridge files (`/usr/libexec/inir-thinkfan` and `org.inir.thinkfan.policy`). If the installed metadata reports package-manager ownership, those system files are preserved for the package manager instead. This cleanup never removes the upstream `thinkfan` package, disables/stops `thinkfan.service`, or deletes `/etc/thinkfan.yaml` / `/etc/thinkfan.conf`.
 
