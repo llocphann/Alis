@@ -47,4 +47,4 @@ jobs:
           git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'refactor(brand): synchronize remaining active iNiR identities to Alis (#64)'
           git push origin HEAD:refs/heads/brand-r01-canonical-alis
       - name: Inventory remaining legacy public identities
-        run: python3 scripts/brand-canonical-audit.py --limit 15
+        run: python3 scripts/brand-canonical-audit.py --strict --limit 15
