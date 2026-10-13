@@ -21,6 +21,8 @@ Bar.StyledPopup {
 
     required property Item anchorItem
     property bool editorFocused: false
+    // Keep keyboard ownership after the first Escape until the second closes.
+    property bool escapeArmed: false
     property bool entryBridgeHeld: false
     // Popup ownership is local to this output. Do not reuse timer.pinnedToBar:
     // that persistent state controls the independent Bar timer indicator.
@@ -64,16 +66,16 @@ Bar.StyledPopup {
     attachmentThicknessOverride: root.cornerAttachmentThickness
     hoverActivates: true
     alternativeVisibleCondition: root.editorFocused || root.todoDialogOpen
-        || root.entryBridgeHeld || root.popupPinned
+        || root.entryBridgeHeld || root.popupPinned || root.escapeArmed
     // Pre-arm click-to-focus before the first editor click. OnDemand does not
     // steal focus merely because the hover popup is visible.
     keyboardFocusOnDemand: true
-    keyboardFocus: root.editorFocused || root.todoDialogOpen
+    keyboardFocus: root.editorFocused || root.todoDialogOpen || root.escapeArmed
     exclusiveKeyboardFocus: true
     // Keep the fullscreen catcher below this Overlay surface so it cannot cover
     // the TextArea or replace its I-beam cursor after editor focus is acquired.
     outsideClickBackdropBelowPopup: true
-    closeOnOutsideClick: root.editorFocused || root.todoDialogOpen
+    closeOnOutsideClick: root.editorFocused || root.todoDialogOpen || root.escapeArmed
     popupBackgroundMargin: 0
 
     function enterEditorMode(): void {
@@ -83,6 +85,7 @@ Bar.StyledPopup {
         // activeFocus through the pre-armed OnDemand layer-shell surface.
         // From this point Exclusive focus simply preserves ownership while the
         // user types; it is no longer responsible for making the first click work.
+        root.escapeArmed = false
         root.editorFocused = true
     }
 
@@ -116,18 +119,23 @@ Bar.StyledPopup {
         // Allocator/owner loss uses dismissPresentation() and revokes both.
         if (root._liquidDismissed)
             root.popupPinned = false
+        root.escapeArmed = false
         root.leaveEditorMode()
         if (todoViewLoader.item)
             todoViewLoader.item.showAddDialog = false
     }
     onSelectedMainTabChanged: {
+        root.escapeArmed = false
         root.leaveEditorMode()
         if (root.selectedMainTab !== 0) {
             notesTrayHideTimer.stop()
             root.notesTrayOpen = false
         }
     }
-    onSelectedNotesTabChanged: root.leaveEditorMode()
+    onSelectedNotesTabChanged: {
+        root.escapeArmed = false
+        root.leaveEditorMode()
+    }
     onPresentationActiveChanged: {
         if (presentationActive) {
             Qt.callLater(() => {
@@ -141,6 +149,7 @@ Bar.StyledPopup {
 
         entryBridgeTimer.stop()
         root.entryBridgeHeld = false
+        root.escapeArmed = false
         if (notesViewLoader.item) {
             notesViewLoader.item.flushPendingSave()
             notesViewLoader.item.releaseEditorFocus()
@@ -179,12 +188,15 @@ Bar.StyledPopup {
         Shortcut {
             sequences: [StandardKey.Cancel]
             context: Qt.WindowShortcut
-            enabled: root.presentationActive && (root.editorFocused || root.popupPinned)
+            enabled: root.presentationActive
             onActivated: {
-                if (root.editorFocused)
+                if (root.editorFocused) {
+                    root.escapeArmed = true
                     root.leaveEditorMode()
-                else
+                } else {
+                    root.escapeArmed = false
                     root.dismissPresentation()
+                }
             }
         }
 
@@ -308,8 +320,10 @@ Bar.StyledPopup {
                         showHeader: false
                         showZettelkastenActions: false
                         verticalDotNavigation: true
-                        readingOnHover: true
+                        autoMarkdownReading: true
+                        externalEscapeHandling: true
                         onEditorActivated: root.enterEditorMode()
+                        onEditorDeactivated: root.editorFocused = false
                     }
                 }
 
