@@ -405,7 +405,13 @@ Scope {
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {
+                        if (dashboardPanel.item?.editing
+                                && dashboardPanel.item?.handleEscape()) {
+                            event.accepted = true
+                            return
+                        }
                         GlobalStates.overviewOpen = false;
+                        event.accepted = true;
                     } else if (event.key === Qt.Key_Left) {
                         if (!root.searchingText) {
                             if (CompositorService.isNiri) {
