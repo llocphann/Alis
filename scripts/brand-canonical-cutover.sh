@@ -86,6 +86,14 @@ rollback() {
     for old in "${old_wants[@]}"; do
       [[ -e "$old" || -L "$old" ]] || ln -s "$old_unit" "$old" || true
     done
+    for i in "${!destinations[@]}"; do
+      if [[ "${aliases[i]}" == true && -L "$backup/alias-$i" ]]; then
+        if [[ -e "${destinations[i]}" || -L "${destinations[i]}" ]]; then
+          mv -- "${destinations[i]}" "$backup/copied-root-$i" || true
+        fi
+        mv -- "$backup/alias-$i" "${destinations[i]}" || true
+      fi
+    done
     if [[ "$unit_created" == true ]]; then rm -f -- "$new_unit"; fi
     systemctl --user daemon-reload >/dev/null 2>&1 || true
     if [[ "$stopped" == true && "$old_active" == active ]]; then
