@@ -1,5 +1,7 @@
 # Issues/bugs
 
+**Owner scope withdrawal (2026-10-13):** the canceled Agenda → To-do linking defect `AGENDA-I01` is [archived](../../docs/archive/chatbot/2026-10-13/AGENDA-I01_RETIRED.md); Agenda and Todo now operate independently. Historical data and test evidence remain preserved.
+
 - [x] **ABYSS-I08 — P0 Edit Abyss Layout QML fails to load (owner log, 2026-10-13):**
   **Owner verified — 2026-10-13 (maintainer explicit confirmation):** Fix accepted. Older "Owner chưa verified" text is superseded for owner acceptance, while source/CI/installed test evidence and any separate open regressions keep their actual status.
   Installed `dev` source `d3d2bc4ecb5b06320d3b2a0a71c09055966c7626`
@@ -192,17 +194,6 @@ do not presume these are stale fixtures. New current-SHA canonical/owner OPEN.
   output pointer oracle PASS, with unchanged click bounds and no auto-scroll
   substituted for this diagnosis. [Evidence](../../docs/evidence/abyss-product/20261012-module-locks/README.md).
   State: SOURCE/FOCUSED FIXED; exact-SHA canonical/installed/owner OPEN.
-  **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
-
-- [x] **AGENDA-I01 — Linked task reconciliation and keyboard retry stalls — discovered 2026-10-12:**
-  Related `AGENDA-F01`: queued no-op Event save could hold a stale write lease;
-  optional QVariant sequence cleared the UI despite correct task files; Enter
-  on Retry propagated into EventCard. Source0465ffc5a consumes idle-lease
-  notification and Enter/Return locally; Integration4d0aa3f transports typed
-  JSON and releases acknowledged job busy state. Original focused failures and
-  actual store/QML bridge/UI fix-forward results remain in
-  [Agenda evidence](../../docs/evidence/abyss-product/20261012-agenda-internal/README.md).
-  State: SOURCE/FOCUSED FIXED; full0465 FAIL359/7/1 on separate fixtures; owner/installed OPEN.
   **Completion classification (2026-10-12, maintainer rule): Hoàn thành (bot báo xong) — Owner chưa verified.** The reported implementation/fix is counted as done; existing exact-SHA canonical, environment, installed, hardware and owner acceptance gates retain their real PASS/FAIL/SKIP or pending state. This notation does not claim a fresh validation PASS.
 
 - [x] **DASH-I07 — Tab-order conflict baseline must survive Undo Reset — source review 2026-10-12:**
