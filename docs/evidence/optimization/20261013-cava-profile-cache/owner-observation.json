@@ -1,0 +1,116 @@
+{
+  "scope": "owner installed shell observational baseline; not matched A/B; global GPU not per-process attribution",
+  "installed": {
+    "commit": "6959ad11a",
+    "install_mode": "repo-copy"
+  },
+  "samples": [
+    {
+      "Rss": 972300,
+      "Pss": 733603,
+      "Private_Clean": 56868,
+      "Private_Dirty": 615684,
+      "t": 27870.853857807,
+      "ticks": 7089,
+      "gpu_global": 11,
+      "cpu_one_core_percent": 1.9782603216507522
+    },
+    {
+      "Rss": 972424,
+      "Pss": 733727,
+      "Private_Clean": 56868,
+      "Private_Dirty": 615808,
+      "t": 27871.86623909,
+      "ticks": 7093,
+      "gpu_global": 13,
+      "cpu_one_core_percent": 3.9510805535157436
+    },
+    {
+      "Rss": 972544,
+      "Pss": 733847,
+      "Private_Clean": 56868,
+      "Private_Dirty": 615928,
+      "t": 27872.877197022,
+      "ticks": 7095,
+      "gpu_global": 10,
+      "cpu_one_core_percent": 1.9783216854933217
+    },
+    {
+      "Rss": 973268,
+      "Pss": 734571,
+      "Private_Clean": 56868,
+      "Private_Dirty": 616652,
+      "t": 27873.889500378,
+      "ticks": 7099,
+      "gpu_global": 9,
+      "cpu_one_core_percent": 3.951384707248972
+    },
+    {
+      "Rss": 973260,
+      "Pss": 734563,
+      "Private_Clean": 56868,
+      "Private_Dirty": 616644,
+      "t": 27874.901866643,
+      "ticks": 7107,
+      "gpu_global": 15,
+      "cpu_one_core_percent": 7.902278332068187
+    },
+    {
+      "Rss": 972764,
+      "Pss": 734067,
+      "Private_Clean": 56868,
+      "Private_Dirty": 616148,
+      "t": 27875.914224611,
+      "ticks": 7113,
+      "gpu_global": 15,
+      "cpu_one_core_percent": 5.926757322661084
+    },
+    {
+      "Rss": 972776,
+      "Pss": 734079,
+      "Private_Clean": 56868,
+      "Private_Dirty": 616160,
+      "t": 27876.927848355,
+      "ticks": 7118,
+      "gpu_global": 14,
+      "cpu_one_core_percent": 4.9327968386564605
+    },
+    {
+      "Rss": 972652,
+      "Pss": 733955,
+      "Private_Clean": 56868,
+      "Private_Dirty": 616036,
+      "t": 27877.940556981,
+      "ticks": 7121,
+      "gpu_global": 12,
+      "cpu_one_core_percent": 2.9623525691190786
+    },
+    {
+      "Rss": 972136,
+      "Pss": 733439,
+      "Private_Clean": 56868,
+      "Private_Dirty": 615520,
+      "t": 27878.952167948,
+      "ticks": 7123,
+      "gpu_global": 11,
+      "cpu_one_core_percent": 1.977044600391326
+    },
+    {
+      "Rss": 972136,
+      "Pss": 733439,
+      "Private_Clean": 56868,
+      "Private_Dirty": 615520,
+      "t": 27879.964360427,
+      "ticks": 7127,
+      "gpu_global": 13,
+      "cpu_one_core_percent": 3.9518175475394868
+    }
+  ],
+  "rss_kib_range": [
+    972136,
+    973268
+  ],
+  "cpu_percent_mean": 3.951209447834441,
+  "gpu_global_mean": 12.3,
+  "power": "Not charging"
+}

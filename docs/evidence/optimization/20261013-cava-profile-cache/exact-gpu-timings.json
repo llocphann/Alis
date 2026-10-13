@@ -1,0 +1,242 @@
+[
+  {
+    "profile": "flat",
+    "pair": 0,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 94,
+    "candidate_ms": 92
+  },
+  {
+    "profile": "flat",
+    "pair": 1,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 87,
+    "baseline_ms": 89
+  },
+  {
+    "profile": "flat",
+    "pair": 2,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 90,
+    "candidate_ms": 89
+  },
+  {
+    "profile": "flat",
+    "pair": 3,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 90,
+    "baseline_ms": 90
+  },
+  {
+    "profile": "flat",
+    "pair": 4,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 89,
+    "candidate_ms": 89
+  },
+  {
+    "profile": "flat",
+    "pair": 5,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 88,
+    "baseline_ms": 88
+  },
+  {
+    "profile": "bass",
+    "pair": 0,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 376,
+    "candidate_ms": 104
+  },
+  {
+    "profile": "bass",
+    "pair": 1,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 95,
+    "baseline_ms": 371
+  },
+  {
+    "profile": "bass",
+    "pair": 2,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 380,
+    "candidate_ms": 102
+  },
+  {
+    "profile": "bass",
+    "pair": 3,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 102,
+    "baseline_ms": 372
+  },
+  {
+    "profile": "bass",
+    "pair": 4,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 370,
+    "candidate_ms": 98
+  },
+  {
+    "profile": "bass",
+    "pair": 5,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 99,
+    "baseline_ms": 366
+  },
+  {
+    "profile": "vocal",
+    "pair": 0,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 573,
+    "candidate_ms": 95
+  },
+  {
+    "profile": "vocal",
+    "pair": 1,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 94,
+    "baseline_ms": 574
+  },
+  {
+    "profile": "vocal",
+    "pair": 2,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 579,
+    "candidate_ms": 99
+  },
+  {
+    "profile": "vocal",
+    "pair": 3,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 97,
+    "baseline_ms": 567
+  },
+  {
+    "profile": "vocal",
+    "pair": 4,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 576,
+    "candidate_ms": 93
+  },
+  {
+    "profile": "vocal",
+    "pair": 5,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 92,
+    "baseline_ms": 571
+  },
+  {
+    "profile": "treble",
+    "pair": 0,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 652,
+    "candidate_ms": 101
+  },
+  {
+    "profile": "treble",
+    "pair": 1,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 100,
+    "baseline_ms": 649
+  },
+  {
+    "profile": "treble",
+    "pair": 2,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 655,
+    "candidate_ms": 97
+  },
+  {
+    "profile": "treble",
+    "pair": 3,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 97,
+    "baseline_ms": 653
+  },
+  {
+    "profile": "treble",
+    "pair": 4,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 653,
+    "candidate_ms": 97
+  },
+  {
+    "profile": "treble",
+    "pair": 5,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 97,
+    "baseline_ms": 652
+  },
+  {
+    "profile": "smile",
+    "pair": 0,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 789,
+    "candidate_ms": 91
+  },
+  {
+    "profile": "smile",
+    "pair": 1,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 92,
+    "baseline_ms": 790
+  },
+  {
+    "profile": "smile",
+    "pair": 2,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 780,
+    "candidate_ms": 103
+  },
+  {
+    "profile": "smile",
+    "pair": 3,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 103,
+    "baseline_ms": 788
+  },
+  {
+    "profile": "smile",
+    "pair": 4,
+    "iterations": 6000,
+    "order": "AB",
+    "baseline_ms": 791,
+    "candidate_ms": 94
+  },
+  {
+    "profile": "smile",
+    "pair": 5,
+    "iterations": 6000,
+    "order": "BA",
+    "candidate_ms": 94,
+    "baseline_ms": 790
+  }
+]
