@@ -136,7 +136,7 @@ install-bin:
 
 install-shell:
 	@python3 sdata/lib/runtime-payload.py copy --root . --target "$(DESTDIR)$(SHELL_INSTALL_DIR)"
-	@chmod +x "$(DESTDIR)$(SHELL_INSTALL_DIR)/setup" "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts/alis" "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts/alis"
+	@chmod +x "$(DESTDIR)$(SHELL_INSTALL_DIR)/setup" "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts/alis"
 	@find "$(DESTDIR)$(SHELL_INSTALL_DIR)/scripts" -type f \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} +
 	@sed -i \
 		's|^system_config_dir=.*|system_config_dir="$${ALIS_SYSTEM_RUNTIME_DIR:-$(SHELL_INSTALL_DIR)}"|' \
@@ -210,7 +210,6 @@ uninstall-bin:
 		elif [ -e "$$target" ] || [ -L "$$target" ]; then \
 			printf "Preserving user-owned Alis launcher: %s\n" "$$target" >&2; \
 		fi
-	@rm -f "$(DESTDIR)$(BINDIR)/alis"
 
 uninstall-shell:
 	@rm -rf "$(DESTDIR)$(SHELL_INSTALL_DIR)"
@@ -225,7 +224,6 @@ uninstall-icon:
 		elif [ -e "$$target" ] || [ -L "$$target" ]; then \
 			printf "Preserving user-owned Alis icon: %s\n" "$$target" >&2; \
 		fi
-	@rm -f "$(DESTDIR)$(ICON_DIR)/alis.svg"
 	@if [ -z "$(DESTDIR)" ]; then gtk-update-icon-cache -q "$(SHAREDIR)/icons/hicolor" 2>/dev/null || true; fi
 
 uninstall-desktop:
