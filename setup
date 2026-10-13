@@ -2612,6 +2612,15 @@ run_update() {
         rm -f "$settings_tmp"
     fi
 
+    # The initial installer ships public Alis desktop IDs, but repo-copy
+    # updates must also reconcile them. Keep legacy hidden entries for older
+    # shortcuts and preserve any unrelated user-owned Alis paths.
+    if ! bash "${REPO_ROOT}/sdata/lib/sync-alis-desktop.sh"             "$REPO_ROOT" "$XDG_BIN_HOME" "$XDG_DATA_HOME"; then
+        _report_update_failure "desktop" "Alis desktop IDs could not be safely synchronized"
+        tui_error "Alis desktop synchronization failed (no user data was deleted)"
+        return 1
+    fi
+
     tui_success "Files synced"
 
     # Refresh ii-pixel SDDM theme on update (keeps shipped theme in sync with fixes)

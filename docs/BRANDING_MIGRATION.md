@@ -56,6 +56,10 @@ Repo-managed Alis entries are removed only when their contents carry the expecte
 
 Run `bash scripts/test-brand-upgrade-rollback.sh` to stage a fresh Make installation, repeat installation as a simulated package upgrade, uninstall and reinstall. It verifies public and legacy entrypoint ownership, app-ID hiding, icon preservation and SHA-256 sentinels for an isolated user config and first-run marker. It also rejects foreign command collisions. The scenario **does not** invoke pacman, manage a user service, manipulate real user files, or prove a physical graphical login.
 
+## Repo-copy update desktop IDs
+
+Installer and packagers already distribute public `alis.desktop`, `alis-settings.desktop` and `alis.svg`; the previous `setup update` refreshed only legacy `inir*.desktop` and `inir.svg`. `sdata/lib/sync-alis-desktop.sh` is now invoked during repo-copy updates to reconcile the public IDs and icon without altering the legacy compatibility entries. It refreshes only marked `X-Alis-Managed=true` desktop files, keeps the Alis Shell launcher hidden so a second session is not exposed, quotes launcher paths containing spaces, and preserves foreign files/symlinks or custom icons. Regression: `scripts/test-alis-desktop-update.sh`.
+
 ## Setup entrypoint integrity
 
 The reported local error `~/.config/quickshell/inir/setup: line 2951: e ;;` does not match the tracked dev source (line 2951 contains a valid `uninstall) run_uninstall ;;` case arm). To prevent recurrence during installs and updates, `sdata/lib/safe-setup-sync.sh` now validates source Bash syntax, writes the new setup to a temporary file in the destination directory, validates the staged copy, then atomically renames it over the managed runtime entrypoint. A corrupt source is rejected without touching the destination. `scripts/test-setup-sync-atomic.sh` verifies recovery from a truncated setup, invalid-source rejection, no partial files, source/target equality and foreign symlink preservation.
