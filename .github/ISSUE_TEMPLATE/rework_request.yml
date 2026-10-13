@@ -1,0 +1,22 @@
+name: Rework or optimization
+description: Improve existing Alis behavior, UI or performance
+labels: ["type:rework"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search [Alis Issues](https://github.com/llocphann/Alis/issues) first. Keep the request brief and avoid duplicating an existing task.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What existing behavior needs improving?
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when (optional)
+      description: Essential constraints, evidence or measurable acceptance; add screenshots when helpful.
+    validations:
+      required: false
