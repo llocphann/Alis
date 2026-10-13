@@ -17,7 +17,7 @@ This is an implementation inventory, not a declaration of completion. The public
 | Shared and per-user state | `services/FirstRunExperience.qml`, `modules/common/Config.qml`, scripts referencing XDG state/cache/data paths | User data | Do not reset themes, layouts, credentials, notes, models, wallpaper, wizard marker or custom overrides |
 | IPC/DBus/Niri process selectors | `scripts/lib/ipc-registry.sh`, `docs/IPC.md`, ShellId, `org.kde.StatusNotifierWatcher` | Runtime ABI | Preserve established targets, function aliases and DBus watcher uniqueness |
 | Native helper/Polkit interfaces | `native/inir-*`, `assets/helpers/inir-*`, `assets/polkit/org.inir.*` | Native ABI / privileged integration | Treat executable, socket and policy IDs as ABI until mapped and upgrade-tested |
-| Install/update packaging | `setup`, `sdata/subcmd-install/3.files.sh`, Arch PKGBUILD/.SRCINFO, `nix/package.nix`, `Makefile` | Public installer with legacy package IDs | Install Alis CLI; retain installed `inir-shell` package and `inir.service` until coordinated ownership migration |
+| Install/update packaging | `setup`, `sdata/subcmd-install/3.files.sh`, Arch PKGBUILD/.SRCINFO, `nix/package.nix`, `Makefile` | Public installer with legacy package IDs | Ship public Alis CLI, desktop IDs and icon; hide legacy desktop launchers, retain `inir-shell` package and `inir.service` until coordinated ownership migration |
 | Update URLs and docs | `sdata/lib/versioning.sh`, `scripts/release.sh`, `scripts/wiki-sync.sh`, `docs/INSTALL.md`, `docs/SETUP.md` | Public identity | Follow `llocphann/Alis`; keep historical commit SHA references |
 | Third-party or historical names | Hadalird/Hadanion repositories, Waffle/Aqua/iRiS, prior commits, archived investigations | External / historical | Do not rename without explicit authorization; do not falsify historical evidence |
 
@@ -42,7 +42,7 @@ Test coverage: `scripts/test-alis-namespace-alias.sh` uses isolated XDG roots to
 
 ## Standalone automated regression lane
 
-GitHub Actions workflow `.github/workflows/brand-contracts.yml` runs a bounded, desktop-independent set of CLI, app ID, staged installer ownership, XDG namespace alias and pinned Arch snapshot contracts on `dev`. This gives independent evidence even when the full desktop/Niri canonical validator cannot execute in hosted CI; it **does not** replace owner visual acceptance, package installation on real hardware, or rollback validation.
+GitHub Actions workflow `.github/workflows/brand-contracts.yml` runs a bounded, desktop-independent set of CLI, app ID, staged installer ownership, XDG namespace alias and pinned Arch snapshot contracts on `dev`. Its first confirmed successful run was [38430739766](https://github.com/llocphann/Alis/actions/runs/38430739766) at SHA `cf81808b8c8377d24f5fa917866edd47c2a7e5f5`. This gives independent evidence even when the full desktop/Niri canonical validator cannot execute in hosted CI; it **does not** replace owner visual acceptance, package installation on real hardware, or rollback validation.
 
 ## Present guardrails / open checks
 

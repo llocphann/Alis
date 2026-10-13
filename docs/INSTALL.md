@@ -68,7 +68,7 @@ The bare minimum runtime packages to not crash immediately:
 
 For everything else, check [PACKAGES.md](PACKAGES.md). It's organized by category so you can skip what you don't need.
 
-> **Note on quickshell package:** iNiR intentionally uses `quickshell` from official repos to avoid long AUR compile times and update-time build failures.
+> **Note on quickshell package:** Alis intentionally uses `quickshell` from official repos to avoid long AUR compile times and update-time build failures.
 >
 > **Runtime extras used by features:**
 > - `socat` for YTMusic IPC fallback control and, when available, optional EasyEffects Equalizer transport
@@ -98,13 +98,13 @@ sudo make install
 
 With the default Makefile paths, this installs:
 
-- the `inir` launcher, Quickshell runtime payload, generated runtime metadata, user service unit, desktop entries/icon, docs, and license under `/usr/local`;
+- both `alis` (public) and `inir` (compatibility) launchers, Quickshell runtime payload, generated runtime metadata, the existing `inir.service`, Alis desktop IDs/icons with hidden legacy entries, docs, and license under `/usr/local`;
 - the battery/TLP and ThinkFan privileged helpers under `/usr/libexec`;
 - their polkit policies, plus the TLP settings schema, under `/usr/share`.
 
 Those system locations can be changed through the Makefile install variables when packaging. The target does **not** install distro dependencies, install ThinkFan/TLP themselves, or enable the compatibility inir user service for you.
 
-The ThinkFan helper is only the Hadalis control bridge; managed fan control still requires the `thinkfan` executable, a working `thinkfan.service`, and a machine-specific ThinkFan configuration. See [ThinkFan Integration](THINKFAN.md) before enabling managed fan control.
+The ThinkFan helper is only the Alis control bridge; managed fan control still requires the `thinkfan` executable, a working `thinkfan.service`, and a machine-specific ThinkFan configuration. See [ThinkFan Integration](THINKFAN.md) before enabling managed fan control.
 
 ### 4. Copy the configs
 

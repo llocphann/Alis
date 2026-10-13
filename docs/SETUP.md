@@ -35,14 +35,14 @@ Use them like this:
 - install once:
   - `./setup install`
 - maintenance via launcher wrapper:
-  - `inir update`
-  - `inir doctor`
-  - `inir status`
+  - `alis update`
+  - `alis doctor`
+  - `alis status`
 - runtime operation:
-  - `inir run`
-  - `inir settings`
-  - `inir logs`
-  - `inir repair`
+  - `alis run`
+  - `alis settings`
+  - `alis logs`
+  - `alis repair`
 - local distribution validation:
   - `make test-local`
   - `inir test-local`
@@ -67,11 +67,11 @@ sudo make install
 
 With the default Makefile paths, that installs:
 
-- the `inir` launcher, Quickshell runtime payload, generated package-managed runtime metadata, user service unit, both desktop entries, desktop icon, docs, and license under `/usr/local`;
+- the `alis` public launcher plus `inir` compatibility launcher, Quickshell runtime payload, package-managed metadata, the existing `inir.service`, public `alis.desktop` and `alis-settings.desktop` IDs/icons, hidden legacy desktop IDs, docs, and license under `/usr/local`;
 - the battery/TLP and ThinkFan privileged helpers under `/usr/libexec`;
 - their polkit policies, plus the TLP settings schema, under `/usr/share`.
 
-Those system locations can be changed through the Makefile install variables when packaging. `make install` does **not** install distro dependencies, install ThinkFan/TLP themselves, or enable the iNiR user service for you. See [ThinkFan Integration](THINKFAN.md) for ThinkFan service/config prerequisites and troubleshooting.
+Those system locations can be changed through the Makefile install variables when packaging. `make install` does **not** install distro dependencies, install ThinkFan/TLP themselves, or enable the existing `inir.service` user service for you. See [ThinkFan Integration](THINKFAN.md) for ThinkFan service/config prerequisites and troubleshooting.
 
 ## Update
 
@@ -98,7 +98,7 @@ The runtime sync does not overwrite your user configs directly. If a release nee
 
 For legacy monolithic Niri configs, required migrations can now convert `~/.config/niri/config.kdl` into the modular `config.d/` layout automatically during update. The current config is preserved section-by-section, unknown top-level blocks are kept in `config.d/90-user-extra.kdl`, and the normal migration backup/rollback flow still applies.
 
-If `setup` detects that the active iNiR installation is externally managed, `inir update` does **not** pull or sync repo files into the runtime. In that case it:
+If `setup` detects that the active Alis installation is externally managed, `inir update` does **not** pull or sync repo files into the runtime. In that case it:
 
 - Shows the detected install mode
 - Shows the package update command when metadata provides one
@@ -187,7 +187,7 @@ For new installs and migrated setups, `~/.config/niri/config.kdl` becomes a smal
 - `90-user-extra.kdl`
   - preserved custom blocks that do not map to the standard split
 
-If you want to change which apps iNiR launches, edit `~/.config/illogical-impulse/config.json` instead of hardcoding new executables into the distributed binds:
+If you want to change which apps Alis launches, edit `~/.config/illogical-impulse/config.json` instead of hardcoding new executables into the distributed binds:
 
 - `apps.terminal`
   - used by `inir terminal`
@@ -225,11 +225,11 @@ Useful when you want to see what you've changed or restore defaults after custom
 | `./setup doctor`     | Diagnose and auto-fix                                       |
 | `./setup rollback`   | Restore previous snapshot                                   |
 | `./setup my-changes` | View and restore user modifications                         |
-| `./setup uninstall`  | Remove iNiR from system                                     |
+| `./setup uninstall`  | Remove Alis from system                                     |
 | `inir install`       | Wrapper around `./setup install` from the repo/runtime root |
-| `inir start`         | Start iNiR (uses inir.service when enabled)                 |
+| `inir start`         | Start Alis (uses the compatibility inir.service when enabled)                 |
 | `inir stop`          | Stop the active runtime                                     |
-| `inir run`           | Launch iNiR from the active runtime                         |
+| `inir run`           | Launch Alis from the active runtime                         |
 | `inir restart`       | Restart the active runtime                                  |
 | `inir settings`      | Open settings via IPC                                       |
 | `inir terminal`      | Launch the configured terminal from `apps.terminal`         |
