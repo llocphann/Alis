@@ -753,6 +753,7 @@ Item {
                         Layout.maximumHeight:root.editorActionSize
                         Layout.maximumWidth:root.editorActionSize
                         editorSquare:true
+                            objectName:"abyssLayoutReset"
                             text: "Reset"; glyph: "restart_alt"; compact: true
                             description: root.editingPopups ? "Reset selected IPC position" : "Reset layout draft"
                             Layout.preferredWidth:root.editorActionSize;Layout.preferredHeight:root.editorActionSize
