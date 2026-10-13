@@ -64,6 +64,7 @@ Item {
             if (!result) return
             root.selectedEventKeys=result.keys
             root.selectionAnchorKey=result.anchor
+            root.forceActiveFocus()
         } else if (!root.isEventSelected(row)
                 || root.selectedEventKeys.length===0) {
             root.clearEventSelection()
@@ -201,7 +202,10 @@ Item {
         for (const target of targets) {
             const range=Gesture.rangeForSelection(target,mode,dx,dy,
                 root.columnWidth,root.hourHeight)
-            if (!range) return
+            if (!range) {
+                console.warn("[WeeklyPlanner] Unsupported group gesture; selection unchanged")
+                return
+            }
             changes.push({id:target.event.id,occurrenceIndex:target.occurrenceIndex,
                 startIso:range.startIso,endIso:range.endIso})
         }
@@ -364,6 +368,10 @@ Item {
                         buttonInk:root.deleteConfirmation
                             ? Appearance.colors.colError : root.headerInk
                         onClicked:root.confirmOrDeleteSelected()
+                        StyledToolTip {
+                            text:"Ctrl+Click to toggle · Shift+Click for range · "
+                                +"drag to move/resize · Delete twice to confirm"
+                        }
                     }
                     Action {
                         objectName:"plannerTodoAction"
