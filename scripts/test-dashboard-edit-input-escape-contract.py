@@ -44,6 +44,13 @@ assert 'perimeterEscapeFallback.forceActiveFocus()' in perimeter
 assert 'onActivated: window.cancelDashboardEditFromEscape()' in perimeter
 assert 'onActivatedAmbiguously:' in perimeter
 assert 'dashboardEscapeCancelPending' in perimeter
+assert 'target: "dashboardEscProbe"' in perimeter
+assert 'function dashboardEscapeProbe(): var' in perimeter
+assert 'dashboardEscapeCancelCount++' in perimeter
+assert 'dashboardEscapeFallbackCount++' in perimeter
+assert 'id: dashboardEditEscapeShortcut' in perimeter
+assert 'ownerShortcutEnabled: dashboardEditEscapeShortcut.enabled' in perimeter
+assert 'escapeKeyCount++' in read("modules/abyss/AbyssBodyHost.qml")
 assert "function handleEscape(): bool {" in embedded
 assert "return content.handleEscape()" in embedded
 assert 'const dashboard = dashboardBody.presented ? dashboardBody.contentItem?.item : null' in perimeter
