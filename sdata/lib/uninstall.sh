@@ -276,7 +276,7 @@ get_package_removal_safety() {
 ###############################################################################
 
 uninstall_stop_services() {
-    tui_info "Stopping iNiR services..."
+    tui_info "Stopping Alis services..."
 
     # Stop quickshell inir config
     local runtime_target="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
@@ -383,7 +383,7 @@ uninstall_remove_inir_only() {
     local removed=0
     local _start=$SECONDS
 
-    tui_info "Removing iNiR-exclusive files..."
+    tui_info "Removing Alis-exclusive files..."
     echo ""
 
     # Pre-count existing items for N/M progress display
@@ -426,7 +426,7 @@ uninstall_remove_inir_only() {
 
     echo ""
     local _elapsed=$(( SECONDS - _start ))
-    tui_success "Removed $removed iNiR-exclusive item(s)  (${_elapsed}s)"
+    tui_success "Removed $removed Alis-exclusive item(s)  (${_elapsed}s)"
 }
 
 uninstall_handle_shared_configs() {
@@ -858,7 +858,7 @@ run_uninstall() {
     local update_strategy
     local package_name
     echo ""
-    tui_title "iNiR Uninstaller"
+    tui_title "Alis Uninstaller"
     echo ""
 
     # Safety: if no TTY available, force non-interactive safe mode
@@ -875,7 +875,7 @@ run_uninstall() {
        [[ ! -d "${XDG_CONFIG_HOME}/quickshell/inir" ]] && \
        [[ ! -f "${INIR_CONFIG_DIR}/version.json" ]] && \
        [[ ! -f "${XDG_BIN_HOME}/inir" ]]; then
-        tui_warn "iNiR does not appear to be installed"
+        tui_warn "Alis does not appear to be installed"
         return 1
     fi
 
@@ -907,7 +907,7 @@ run_uninstall() {
     # Warning
     echo -e "${STY_RED}${STY_BOLD}⚠ WARNING${STY_RST}"
     echo ""
-    echo "This will remove iNiR from your system."
+    echo "This will remove Alis from your system."
     echo ""
     
     if [[ ${#warnings[@]} -gt 0 ]]; then
@@ -919,7 +919,7 @@ run_uninstall() {
     fi
     
     echo -e "${STY_FAINT}What will happen:${STY_RST}"
-    echo "  • iNiR shell configuration will be removed"
+    echo "  • Alis shell configuration will be removed"
     if is_running_niri_session; then
         echo -e "  • ${STY_YELLOW}Your Niri session will continue (without the shell UI)${STY_RST}"
         echo -e "  • ${STY_YELLOW}Niri config will be preserved (you're using it!)${STY_RST}"
@@ -1015,8 +1015,8 @@ EOF
     echo -e "  cp -r $backup_dir/quickshell-inir ${XDG_CONFIG_HOME}/quickshell/inir"
     echo ""
     local _total_elapsed=$(( SECONDS - _uninstall_start ))
-    echo -e "${STY_FAINT}To reinstall iNiR:${STY_RST}"
-    echo -e "  git clone https://github.com/snowarch/inir.git && cd inir && ./setup install"
+    echo -e "${STY_FAINT}To reinstall Alis:${STY_RST}"
+    echo -e "  git clone https://github.com/llocphann/Alis.git && cd Alis && ./setup install"
     echo ""
     echo -e "${STY_FAINT}Total time: ${_total_elapsed}s${STY_RST}"
     echo ""
@@ -1028,11 +1028,11 @@ EOF
 
 run_uninstall_quick() {
     echo ""
-    tui_title "iNiR Quick Uninstall"
+    tui_title "Alis Quick Uninstall"
     echo ""
 
     echo -e "${STY_YELLOW}Quick uninstall will:${STY_RST}"
-    echo "  • Remove iNiR-exclusive files only"
+    echo "  • Remove Alis-exclusive files only"
     echo "  • Keep all shared configs (Niri, themes, etc.)"
     echo "  • Keep all system packages"
     echo "  • Create a backup first"
@@ -1072,7 +1072,7 @@ run_uninstall_quick() {
     uninstall_reload_user_systemd
 
     echo ""
-    tui_success "iNiR removed. All shared configs and packages preserved."
+    tui_success "Alis removed. All shared configs and packages preserved."
     echo ""
     echo -e "${STY_CYAN}Backup:${STY_RST} $backup_dir"
     echo ""
