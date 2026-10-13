@@ -557,4 +557,38 @@ for retired in ("readingOnHover", "allowManualReading", "enterMarkdownReading"):
 forbid(sidebar_quick_note, "autoMarkdownReading: true",
        "Sidebar Left should retain Source-first entry")
 
+# Mode transitions and the second Escape must preserve the shared edge
+# retract geometry rather than immediately unmapping/fading the surface.
+for token in (
+    "function retractPresentation(): void {",
+    "property bool _gracefulDismissal: false",
+    "root._gracefulDismissal = true",
+    "root._beginRetract()",
+    "root._finishGracefulDismissal()",
+    "root._lingerVisible = false",
+):
+    require(styled_popup, token,
+            "Graceful slide-under popup close contract missing")
+require(popup, "root.retractPresentation()",
+        "Quick Notes second Escape should use the normal slide retract")
+
+for token in (
+    "event.key === Qt.Key_U",
+    'event.key === Qt.Key_L ? "align-left"',
+    'event.key === Qt.Key_E ? "align-center"',
+    'event.key === Qt.Key_R ? "align-right"',
+    'event.key === Qt.Key_J ? "align-justify"',
+    "Qt.ControlModifier | Qt.ShiftModifier",
+):
+    require(notepad, token, "Quick Notes editor keyboard formatting missing")
+
+for token in (
+    "function _renumberDefaultTitles(value)",
+    "if (renamed.changed)",
+    "_normalizedTabsNeedSave = true",
+    "tabs = root._renumberDefaultTitles(t).tabs",
+):
+    require(notepad_service, token,
+            "Default note titles must renumber on load and mutations")
+
 print("ok - bottom-left Quick Notes corner contract")
