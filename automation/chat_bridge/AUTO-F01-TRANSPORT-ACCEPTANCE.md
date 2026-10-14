@@ -69,6 +69,22 @@ New *independent* offline shape checker:
 
 Test: `node scripts/test-hadalis-transport-evidence.mjs`. A passing synthetic test means only that the diagnostic guard stays closed. It does not establish connected-app state, runtime project identity, actual Desktop responses or a working native bridge.
 
+## Adaptation track: historical Playwright/CDP UI transport
+
+**Owner direction (2026-10-15):** adapt toward the old UI-based Desktop connection because it has a real positive historical receipt. At historical revision `0d05092faeb8`, `automation/results/JOB-DESKTOP-LIVE-ACCEPT-013.json` reports `status:passed`, `exit_code:0` for `scripts/test-hadalis-live-transport.mjs`, one new post-submit `HADALIS_LOOP:DONE` marker and `generation.completed:true`. Earlier jobs 009–012 had failed syntax, repeated marker, timeout and extraction checks, respectively. This proves one historical smoke-test dispatch/completion, **not** robust receipt identity or compatibility with the currently installed Desktop.
+
+**Source adaptation on `Alis/dev`:**
+- `legacy_ui_probe.mjs` reads the accessible ChatGPT Desktop main-renderer UI through the same historical Project/composer/Send/Stop semantics. It never reads raw prompt, account data, selected chat titles, project IDs, assistant messages or credentials. It reports only booleans and capped counts and **never** executes React resolver, clicks, keyboard actions, network fetches or sends.
+- `legacy_ui_probe_cli.mjs` is an opt-in **read-only** Playwright/CDP probe on loopback, separate from the native transport CLI. Its command surface supports `probe` only. A UI Project badge or selected Project chat list counts as a **visual guard** but does **not** verify the true server Project/conversation ID.
+- `legacy_ui_acceptance.mjs` is an **isolated, owner-approved harmless-test primitive**, NOT imported by a CLI or Scheduler. The caller must supply an acceptance ID and a durable/no-replay `persistAttempt` hook. It checks UI readiness, persists the attempt **before modifying any UI**, fills only a fixed harmless acceptance prompt and attempts exactly **one** Send click. It never falls back to Enter, alternate buttons or a retry; any result (including a successful click) stays `indeterminate` until independently observed. It is not an authorization path for any of the queued GitHub tasks, and no live acceptance has been executed.
+- `scripts/test-hadalis-legacy-ui-probe.mjs` and `scripts/test-hadalis-legacy-ui-acceptance.mjs` are offline mocks included in the native fail-closed CI gate. They prove only selector/guard behavior and a single-attempt invariant, not end-to-end Desktop continuity.
+
+**Current boundaries and next tests:**
+1. Confirm *read-only* compatibility on the owner's installed Desktop by running `node automation/chat_bridge/legacy_ui_probe_cli.mjs probe` after exact-head CI safety tests PASS. The result must not contain text or IDs and will **never** authorize a send.
+2. Separately obtain explicit owner approval to run **one harmless manual acceptance** in an intentionally empty managed test chat; use a fsynced private journal and preserve its indeterminate outcome until reconciled. Never run the historical multi-fallback `desktop_cli.mjs managed-submit` in the live queue.
+3. Independently verify whether the installed UI or another documented supported interface can associate a clicked Send with one exact server `user_message_id`, ChatGPT Project membership and one terminal assistant receipt. Without this proof, the UI fallback may only support *assisted/manual* testing, not unattended queue execution or chat rollover.
+4. Preserve the existing native adapter as an isolated unsupported source path; only an explicitly accepted, proven UI transport may eventually replace the manager's send/poll route. Restarting Scheduler or migrating the 18 pending tasks is **not part of this change**.
+
 ## Explicit exclusions
 
 No `definition.resolve()` invocation; no native `submit`/CLI submit, DOM/click/keyboard/UI fallback, transport injection, speculative `native_adapter.mjs` modifications, scheduler start/reset, queue replay, chat rotation or attempt to choose between the seven Maps. The next engineering investigation should evaluate available **supported transport capabilities** and exact identity/receipt requirements separately from the private bundled React implementation.
