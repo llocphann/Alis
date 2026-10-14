@@ -1,0 +1,11 @@
+{
+  "source_sha": "667a84d9cfd7c14e142a45ac4501c85c72dd576c",
+  "scope": "Unchanged editor popup source fixture, direct private no-focus Wayland, isolated config",
+  "result": "PASS marker:150 checks/57 native grab frames",
+  "logging": "Filtered driver stdout only. The launcher supplied an unrecognized receipt environment name, so the raw run_qs output and independent native process receipt were not saved. Do not describe this as full raw capture.",
+  "boundaries": [
+    "Not a canonical rerun or cause attribution for1312 check62 failure",
+    "No nested/installed/actual-pointer/multi-output/Owner PASS",
+    "No production patch resulting from this diagnostic"
+  ]
+}
