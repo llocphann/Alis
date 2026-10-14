@@ -48,7 +48,11 @@ if [[ -e "$launcher" ]]; then
     [[ -f "$launcher" && -x "$launcher" ]] ||
         { echo "Non-executable/foreign launcher: $launcher" >&2; exit 2; }
     if grep -Fq '# Canonical CLI and runtime name is Alis.' "$launcher"; then
-        launcher_kind=canonical
+        if cmp -s -- "$launcher" "$repo/scripts/alis"; then
+            launcher_kind=canonical
+        else
+            launcher_kind=canonical-stale
+        fi
     elif { grep -Fq '# Alis is the public command while the proven iNiR runtime owns the session.' "$launcher" ||
            grep -Fq '# Alis is the public command while the proven Alis runtime owns the session.' "$launcher"; } &&
          grep -Fq 'export ALIS_INTERNAL_CLI=1' "$launcher" &&
@@ -109,8 +113,8 @@ else
     printf 'PLAN: stage a new canonical Alis runtime at %s\n' "$target"
 fi
 printf 'Alis CLI: %s (%s)\n' "$launcher" "$launcher_kind"
-if [[ "$launcher_kind" == managed-compatibility ]]; then
-    echo 'PLAN: save legacy managed launcher byte-for-byte and install canonical Alis CLI.'
+if [[ "$launcher_kind" == managed-compatibility || "$launcher_kind" == canonical-stale ]]; then
+    echo 'PLAN: back up managed Alis launcher byte-for-byte and refresh source CLI.'
 elif [[ "$launcher_kind" == missing ]]; then
     echo 'PLAN: install missing public canonical Alis CLI.'
 fi
@@ -152,7 +156,7 @@ if [[ "$launcher_kind" != canonical ]]; then
     staged_launcher="$(mktemp "$bin_dir/.alis-cli-stage.XXXXXXXX")"
     install -m755 -- "$repo/scripts/alis" "$staged_launcher"
     bash -n "$staged_launcher" || exit 1
-    if [[ "$launcher_kind" == managed-compatibility ]]; then
+    if [[ "$launcher_kind" == managed-compatibility || "$launcher_kind" == canonical-stale ]]; then
         [[ -f "$launcher" && ! -L "$launcher" &&
            "$(sha256sum -- "$launcher" | cut -d ' ' -f1)" == "$launcher_hash" ]] ||
             { echo 'Installed compatibility launcher changed during staging' >&2; exit 2; }
@@ -162,7 +166,7 @@ if [[ "$launcher_kind" != canonical ]]; then
         cp -p -- "$launcher" "$backup_dir/alis"
         cmp -s -- "$launcher" "$backup_dir/alis" ||
             { echo "Legacy launcher backup failed: $backup_dir" >&2; exit 1; }
-        echo "BACKUP: original Alis compatibility launcher -> $backup_dir/alis"
+        echo "BACKUP: previous managed Alis launcher -> $backup_dir/alis"
     else
         [[ ! -e "$launcher" && ! -L "$launcher" ]] ||
             { echo 'Foreign launcher appeared; refusing overwrite' >&2; exit 2; }
@@ -179,7 +183,7 @@ fi
 if [[ -n "$staged_launcher" ]]; then
     # Never replace a user-created executable or a launcher modified during
     # staging; this only advances an explicitly recognized Alis-owned wrapper.
-    if [[ "$launcher_kind" == managed-compatibility ]]; then
+    if [[ "$launcher_kind" == managed-compatibility || "$launcher_kind" == canonical-stale ]]; then
         [[ -f "$launcher" && ! -L "$launcher" &&
            "$(sha256sum -- "$launcher" | cut -d ' ' -f1)" == "$launcher_hash" ]] ||
             { echo 'Launcher changed after backup; refusing replacement' >&2; exit 2; }
