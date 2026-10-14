@@ -66,6 +66,32 @@ def read(code: str, repository: str = "llocphann/Alis") -> dict:
          "text": redact(x.get("text", ""))}
         for x in reports[-tf.REPORT_LIMIT:] if isinstance(x, dict)
     ]
+    # Include manager events from the restored, independently running service.
+    # Match the task's exact deterministic profile ID; do not expose unrelated
+    # users' profiles or the global journal. Read-only and bounded.
+    try:
+        from . import managed_tasks
+        from .manager import store
+        _, manager_state, _ = store.read_snapshot()
+        pid = managed_tasks.profile_id(repository, code)
+        backend_events = [event for event in manager_state.get("events", [])
+                          if isinstance(event, dict) and event.get("profile_id") == pid]
+        events.extend({
+            "at_unix": int(event.get("at_unix") or 0),
+            "kind": str(event.get("kind", ""))[:60],
+            "detail": redact(event.get("detail") or ""),
+        } for event in backend_events[-DISPLAY_LIMIT:])
+        state = manager_state.get("profiles", {}).get(pid) or {}
+        if state.get("last_error"):
+            logs.append({"at_unix": int(state.get("last_activity_at_unix") or 0),
+                         "kind": "scheduler",
+                         "text": redact(state.get("last_error", ""))})
+    except (ImportError, ValueError, RuntimeError, OSError, KeyError, TypeError):
+        # Diagnostics are optional. A corrupt legacy state must not break the
+        # task queue's own private local history.
+        pass
+    events = sorted(events, key=lambda item: item["at_unix"])[-DISPLAY_LIMIT:]
+
     receipt = record.get("latest_receipt")
     if isinstance(receipt, dict):
         logs.append({"at_unix": int(receipt.get("finished_unix") or 0),
