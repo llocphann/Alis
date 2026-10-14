@@ -101,6 +101,16 @@ export async function probeDesktopScopeReadOnly({
         scope_id_present: definition?.scope?.id != null,
         resolve_function_present: typeof definition?.resolve === "function",
         provider_map_count: 0,
+        unique_provider_map_count_capped: 0,
+        active_provider_map_count_capped: 0,
+        unique_provider_identity_count_capped: 0,
+        active_provider_identity_count_capped: 0,
+        react_container_count_capped: 0,
+        active_root_count_capped: 0,
+        unresolved_root_count_capped: 0,
+        provider_map_shared_with_active_tree: false,
+        fiber_scan_truncated: false,
+        provider_selection: "not_evaluated",
         resolution_attempted: false,
         prepare_function_present: false,
         start_function_present: false,
@@ -108,22 +118,92 @@ export async function probeDesktopScopeReadOnly({
       };
       if (!report.scope_id_present || !report.resolve_function_present)
         return report;
-      const stack = Array.from(document.body?.children ?? []).flatMap(el =>
+      const anchors = Array.from(document.body?.children ?? []).flatMap(el =>
         Object.keys(el).filter(k => k.startsWith("__reactContainer$"))
-          .map(k => el[k]));
-      const seen = new Set(), maps = [];
-      for (let i = 0; i < 30000 && stack.length; i++) {
-        const node = stack.pop();
-        if (!node || seen.has(node)) continue;
-        seen.add(node);
-        const value = node.memoizedProps?.value;
-        if (value instanceof Map && value.has(definition.scope.id)) maps.push(value);
-        stack.push(node.child, node.sibling, node.alternate, node.current);
+          .map(k => el[k]).filter(Boolean));
+      report.react_container_count_capped = Math.min(8, anchors.length);
+
+      // React often exposes both current and alternate Fibers. A repeated
+      // map hit is not automatically an independent provider. Compare object
+      // identity without exposing it, choosing a provider, or invoking resolve.
+      const observe = (roots, includeAlternates) => {
+        const stack = [...roots], seen = new Set(), maps = new Set();
+        const providers = new Set();
+        let hits = 0, iterations = 0;
+        while (stack.length && iterations < 30000) {
+          const node = stack.pop();
+          iterations++;
+          if (!node || typeof node !== "object" || seen.has(node)) continue;
+          seen.add(node);
+          const value = node.memoizedProps?.value;
+          if (value instanceof Map && value.has(definition.scope.id)) {
+            hits++;
+            maps.add(value);
+            providers.add(value.get(definition.scope.id));
+          }
+          stack.push(node.child, node.sibling);
+          if (includeAlternates) stack.push(node.alternate, node.current);
+        }
+        return {maps, providers, hits, truncated: stack.length > 0};
+      };
+
+      // Roots are accepted only if their React HostRoot stateNode explicitly
+      // owns a current Fiber. Never infer active ownership from DOM selection,
+      // sibling order, or whichever alternate happens to be visited first.
+      const roots = new Set();
+      let unknownRoots = 0;
+      for (const anchor of anchors) {
+        let top = anchor, steps = 0;
+        const parents = new Set();
+        while (top?.return && steps++ < 1024 && !parents.has(top)) {
+          parents.add(top);
+          top = top.return;
+        }
+        const current = top?.stateNode?.current;
+        if (top && !top.return && current?.stateNode === top.stateNode)
+          roots.add(current);
+        else
+          unknownRoots++;
       }
-      report.provider_map_count = Math.min(2, maps.length);
-      if (maps.length !== 1) return report;
-      const provider = maps[0].get(definition.scope.id);
-      if (!provider?.store || typeof provider.store.get !== "function") return report;
+      report.active_root_count_capped = Math.min(8, roots.size);
+      report.unresolved_root_count_capped = Math.min(8, unknownRoots);
+      const all = observe(anchors, true);
+      const active = observe(roots, false);
+      report.provider_map_count = Math.min(2, all.hits); // Retained legacy display field.
+      report.unique_provider_map_count_capped = Math.min(8, all.maps.size);
+      report.active_provider_map_count_capped = Math.min(8, active.maps.size);
+      report.unique_provider_identity_count_capped = Math.min(8, all.providers.size);
+      report.active_provider_identity_count_capped = Math.min(8, active.providers.size);
+      report.provider_map_shared_with_active_tree =
+        [...active.maps].some(map => all.maps.has(map));
+      report.fiber_scan_truncated = all.truncated || active.truncated;
+      if (report.fiber_scan_truncated) {
+        report.provider_selection = "fiber_scan_incomplete";
+        return report;
+      }
+      if (unknownRoots || roots.size !== 1) {
+        report.provider_selection = "active_root_ambiguous";
+        return report;
+      }
+      if (active.maps.size !== 1) {
+        report.provider_selection = "active_provider_ambiguous";
+        return report;
+      }
+      if (all.maps.size !== 1 || all.providers.size !== 1) {
+        report.provider_selection = "alternate_or_duplicate_provider_unresolved";
+        return report;
+      }
+      const map = [...active.maps][0];
+      if (![...all.maps].includes(map)) {
+        report.provider_selection = "active_provider_not_verified";
+        return report;
+      }
+      const provider = map.get(definition.scope.id);
+      if (!provider?.store || typeof provider.store.get !== "function") {
+        report.provider_selection = "provider_store_unavailable";
+        return report;
+      }
+      report.provider_selection = "unique_active_and_full_tree";
       // Resolve once to TEST the candidate's shape; do not activate transport.
       // A capability check is not authority to send a message.
       const resolved = definition.resolve(provider, maps[0]);
