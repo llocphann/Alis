@@ -30,6 +30,11 @@ launcher="$(command -v alis)"
 [[ -f "$launcher" && ! -L "$launcher" ]] &&
 grep -Fq '# Canonical CLI and runtime name is Alis.' "$launcher" ||
   { echo "Installed alis is not the canonical runtime CLI: $launcher" >&2; exit 2; }
+# Refuse a stale managed CLI while the old owner is still running. The
+# read-only staging preview reports whether an approved launcher refresh is
+# needed; do not repair it as a side effect of service cutover.
+cmp -s -- "$repo/scripts/alis" "$launcher" ||
+  { echo "Installed canonical CLI differs from source; run brand-canonical-stage.sh --dry-run and review its owner-approved refresh: $launcher" >&2; exit 2; }
 [[ -f "$template" ]] || { echo 'Missing new service template' >&2; exit 2; }
 grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' "$template" ||
   { echo 'Template is missing tray D-Bus singleton ownership' >&2; exit 2; }
