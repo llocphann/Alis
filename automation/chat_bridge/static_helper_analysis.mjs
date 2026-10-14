@@ -133,7 +133,7 @@ function inspectFunctionBody(source, declarationEnd) {
   const sanitizeTokenShape = text => {
     const tokens=[], maxTokens=96, maxChars=320;
     const keep=new Set(["new","await","void","typeof","delete","true","false",
-      "null","undefined","in","instanceof"]);
+      "null","undefined","in","instanceof","STRING"]);
     const punct=["===","!==",">>>","**=","&&=","||=","??=","=>","==","!=",
       "<=",">=","&&","||","??","?.","++","--","**","<<",">>","+=","-=",
       "*=","/=","%=","&=","|=","^=","..."];
@@ -165,7 +165,7 @@ function inspectFunctionBody(source, declarationEnd) {
         i=j;continue;
       }
       if(/[0-9]/.test(c)){
-        let j=i+1;while(j<text.length&&/[0-9A-Fa-f_xXobOBn.eE+-]/.test(text[j]))j++;
+        let j=i+1;while(j<text.length&&/[0-9A-Fa-f_xXobOBn.]/.test(text[j]))j++;
         if(!push("0"))break;i=j;continue;
       }
       let matched="";
