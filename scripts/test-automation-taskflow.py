@@ -366,6 +366,7 @@ class TaskflowTests(unittest.TestCase):
         Catches import failures and stdout-empty errors masked by JSON.parse.
         """
         import subprocess
+        import os
         root = Path(__file__).resolve().parents[1]
         cli = root / "scripts/alis-automation-task.py"
         with tempfile.TemporaryDirectory() as tmp:
