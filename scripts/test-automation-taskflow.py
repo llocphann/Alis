@@ -9,7 +9,8 @@ import unittest
 from unittest.mock import patch
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from automation import taskflow, credentials, rotation, lifecycle, queue, activity
+from automation import taskflow, credentials, rotation, lifecycle, queue, activity, managed_tasks
+from automation.manager import model as legacy_model, store as legacy_store, control as legacy_control
 
 TASK = {
     "code": "AUTO-R01", "repository": "llocphann/Alis",
@@ -180,6 +181,73 @@ class TaskflowTests(unittest.TestCase):
         self.assertEqual(qml.count("Component.onCompleted:"), 1)
         self.assertNotIn("automationRotationPrompt", qml)
         self.assertNotIn("prepareProcess", qml)
+
+    def test_restored_scheduler_defaults_stopped_without_legacy_replay(self):
+        profile = legacy_model.default_profile()
+        self.assertFalse(profile["enabled"])
+        self.assertEqual(profile["mode"], "manual")
+        state = legacy_store.default_state(legacy_model.default_config())
+        self.assertEqual(state["profiles"][profile["id"]]["desired"], "stopped")
+
+    def test_ordered_queue_launch_and_native_receipt_advances_without_second_scheduler(self):
+        other = {**TASK, "code": "ABYSS-R09", "issue_number": 191}
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
+                "XDG_STATE_HOME": tmp + "/state", "XDG_CONFIG_HOME": tmp + "/config"}):
+            queue.prepare("AUTO-R01; ABYSS-R09", resolver=lambda c:
+                          TASK if c == "AUTO-R01" else other)
+            with self.assertRaisesRegex(taskflow.TaskError, "approval"):
+                managed_tasks.start_ordered_queue()
+            self.assertEqual(queue.view()["state"], "prepared")
+            service_states = {"bridge": {"state": "inactive"},
+                              "worker": {"state": "inactive"}}
+            with patch.object(legacy_control, "service_states", return_value=service_states), \
+                 patch.object(legacy_control, "profile_action", return_value={"ok": True}) as start:
+                result = managed_tasks.start_ordered_queue(approved=True)
+            self.assertEqual(result["task"]["code"], "AUTO-R01")
+            start.assert_called_once_with("start", result["profile_id"])
+            self.assertEqual(queue.view()["active"]["code"], "AUTO-R01")
+            self.assertTrue(queue._load()["approved_start"])
+            config, runtime, issues = legacy_store.read_snapshot()
+            profile = next(p for p in config["profiles"] if p["id"] == result["profile_id"])
+            self.assertEqual(managed_tasks.reference(profile), ("llocphann/Alis", "AUTO-R01"))
+            self.assertEqual(profile["prompt"], "Taskflow dynamic initial prompt")
+            self.assertIn("AUTO-R01", legacy_model.effective_prompt(profile, "initial"))
+            self.assertNotIn(TASK["issue_url"], profile["prompt"])
+            self.assertIn("HADALIS_LOOP", legacy_model.effective_prompt(profile, "continuation"))
+            self.assertEqual(managed_tasks.reconcile_once()["state"], "active")
+            def completed(config, state):
+                item = state["profiles"][result["profile_id"]]
+                item.update(status="completed", last_success="DONE",
+                            pending=None, job_id=None,
+                            response_message_id="answer-uuid",
+                            session={"conversation_id": "verified-chat",
+                                     "project_id": "verified-project"})
+            legacy_store.change(completed)
+            switched = managed_tasks.reconcile_once()
+            self.assertEqual(switched["state"], "scheduled")
+            self.assertEqual(switched["selected"]["code"], "ABYSS-R09")
+            first = taskflow.load_task("AUTO-R01")
+            self.assertEqual(first["status"], "awaiting_owner")
+            self.assertEqual(first["delivery"]["message_id"], "answer-uuid")
+            self.assertEqual(queue.view()["items"][0]["state"], "awaiting_owner")
+            second_id = managed_tasks.profile_id("llocphann/Alis", "ABYSS-R09")
+            _, state, _ = legacy_store.read_snapshot()
+            self.assertEqual(state["profiles"][second_id]["desired"], "run")
+            self.assertEqual(state["profiles"][second_id]["request"], "initial")
+            self.assertEqual(managed_tasks.reconcile_once()["state"], "active")
+            # The next task can run, but the first Issue is not owner-verified.
+            self.assertNotEqual(first["status"], "completed")
+
+    def test_ordered_queue_refuses_dispatch_with_missing_worker_service(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
+                "XDG_STATE_HOME": tmp + "/state", "XDG_CONFIG_HOME": tmp + "/config"}):
+            queue.prepare("AUTO-R01", resolver=lambda _: TASK)
+            with patch.object(legacy_control, "service_states", return_value={
+                    "bridge": {"state": "inactive"},
+                    "worker": {"state": "unavailable"}}):
+                with self.assertRaisesRegex(taskflow.TaskError, "backend not installed"):
+                    managed_tasks.start_ordered_queue(approved=True)
+            self.assertEqual(queue.view()["state"], "prepared")
 
     def test_lookup_code_and_exact_reference(self):
         task = taskflow.resolve("AUTO-R01", api)
