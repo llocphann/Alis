@@ -106,9 +106,9 @@ function inspectFunctionBody(source, declarationEnd) {
   // compare it against a renderer/global constructor: both may execute code.
   const localMapShadowSyntax = params === null ? "parameters-unparsed" :
     params.has("Map") ? "parameter-name" :
-    /\\b(?:const|let|var|function|class)\\s+Map\\b/.test(masked)
+    /\b(?:const|let|var|function|class)\s+Map\b/.test(masked)
       ? "local-declaration-token" :
-    /(?:^|[,;{}])\\s*Map\\s*=(?!=)/.test(masked)
+    /(?:^|[,;{}])\s*Map\s*=(?!=)/.test(masked)
       ? "assignment-token" : "not-detected";
   const constructorEvidence = {
     local_map_shadow_syntax:localMapShadowSyntax,
