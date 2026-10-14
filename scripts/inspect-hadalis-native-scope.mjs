@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* AUTO-F01 diagnostic ONLY. No native-cli submission path or profile state. */
 import {probeDesktopScopeReadOnly} from "../automation/chat_bridge/scope_probe.mjs";
+import {assessNativeTransportEvidence} from "../automation/chat_bridge/transport_evidence.mjs";
 
 const guard = setTimeout(() => {
   console.log(JSON.stringify({
@@ -11,7 +12,8 @@ const guard = setTimeout(() => {
 }, 25000);
 try {
   const result = await probeDesktopScopeReadOnly();
-  console.log(JSON.stringify(result));
+  console.log(JSON.stringify({...result,
+    transport_evidence: assessNativeTransportEvidence(result)}));
 } catch (error) {
   // No raw Desktop exceptions: they can embed session IDs, file paths,
   // or account data. Only bounded categories are exported.
