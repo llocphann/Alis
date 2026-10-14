@@ -65,7 +65,10 @@ def main():
         elif args.action == "queue-status":
             result = queue.view()
         elif args.action == "start-queue":
-            result = managed_tasks.start_ordered_queue(approved=args.approve)
+            mode = queue.view()["mode"]
+            result = (managed_tasks.start_cloud_queue(approved=args.approve)
+                      if mode == "cloud"
+                      else managed_tasks.start_ordered_queue(approved=args.approve))
         elif args.action == "activity":
             result = activity.read(args.code, args.repo)
         elif args.action in ("resolve", "prepare"):

@@ -351,7 +351,7 @@ def _verified_choice_response(item: dict) -> tuple[str, str]:
         text = r.get("text")
         if not isinstance(text, str) or len(text) > 120000:
             continue
-        matches = re.findall(r"^HADALIS_TASK_CHOICE:\\s*([A-Z][A-Z0-9]{1,15}-(?:F|R|I)[0-9]{2,3})\\s*$", text, re.M)
+        matches = re.findall(r"^HADALIS_TASK_CHOICE:\s*([A-Z][A-Z0-9]{1,15}-(?:F|R|I)[0-9]{2,3})\s*$", text, re.M)
         if len(matches) == 1 and "HADALIS_LOOP:DONE" in text:
             matching.append(matches[0])
     if len(matching) != 1:
@@ -396,6 +396,8 @@ def reconcile_cloud_selection() -> dict:
     if item is None:
         return _schedule_selector_next()
     if item.get("status") == "completed" and item.get("last_success") == "DONE":
+        if item.get("response_message_id") == doc.get("last_cloud_decision"):
+            return _schedule_selector_next()
         choice, decision = _verified_choice_response(item)
         selected = queue.claim(choice=choice, decision_id=decision,
             verified_start=lambda task, record, selected_id:

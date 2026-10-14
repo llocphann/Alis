@@ -130,7 +130,7 @@ ContentPage {
     }
 
     function startQueue(): void {
-        if (root.busy || !root.queueSnapshot || root.cloudSelectTasks)
+        if (root.busy || !root.queueSnapshot)
             return
         root.queueOperation = "start"
         root.errorText = ""
@@ -377,7 +377,7 @@ ContentPage {
                     buttonText: Translation.tr("Start")
                     enabled: !root.busy && !!root.queueSnapshot
                         && ["prepared", "waiting"].includes(root.queueSnapshot.state)
-                        && root.queueSnapshot.mode === "ordered"
+                        && ["ordered", "cloud"].includes(root.queueSnapshot.mode)
                     onClicked: root.startQueue()
                 }
             }

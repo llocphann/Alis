@@ -181,6 +181,8 @@ def claim(verified_start: Callable[[dict, dict], bool] | None = None,
             "selected_unix": int(time.time()),
         }
         manifest["state"] = "active"
+        if manifest["mode"] == "cloud":
+            manifest["last_cloud_decision"] = decision_id
         manifest["updated_unix"] = int(time.time())
         _save(manifest)
         return {"ok": True, "selected": manifest["active"],
