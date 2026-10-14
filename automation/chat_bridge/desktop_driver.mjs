@@ -5,7 +5,7 @@ const { chromium } = await import(PLAYWRIGHT);
 
 const CDP = process.env.HADALIS_CHATGPT_CDP_URL ?? "http://127.0.0.1:9222";
 const MAIN_URL = "app://-/index.html";
-const PROJECT_NAME = process.env.HADALIS_CHATGPT_PROJECT ?? "Hadalis Cloud";
+const PROJECT_NAME = process.env.HADALIS_CHATGPT_PROJECT ?? "Automatic Alis";
 if (!/^[A-Za-z0-9 ._-]{1,80}$/.test(PROJECT_NAME))
   throw new Error("invalid configured ChatGPT project name");
 const escapedProject = PROJECT_NAME.replaceAll(".", "\\.");
