@@ -34,6 +34,14 @@ ShellRoot {
             for (const child of item.children ?? []) { const x = find(child, p); if (x) return x }
             return null
         }
+        function setFollow(control,checked) {
+            if (control.checked !== checked) control.clicked()
+            check(control.checked === checked, "follow icon did not reflect its click")
+        }
+        function slider(row) {
+            return find(row, i => i !== row && typeof i.value === "number"
+                && i.from === row.from && i.to === row.to && typeof i.moved === "function")
+        }
         function runChecks() { try {
             tryCompare(Config, "ready", true, 6000)
             if (Quickshell.env("MATERIAL_RESTART") === "1") {
@@ -51,22 +59,24 @@ ShellRoot {
             // The old label allows the same reproducer to detect the original defect.
             const opacityFollow = find(settings, i => i.objectName === "abyssPanelOpacityFollow" || i.text === "Panel background follows Screen Edge")
             check(opacityFollow !== null, "opacity follow control missing")
-            opacityFollow.toggledByUser(true)
+            setFollow(opacityFollow,true)
             check(Config.options.abyss.content.blurRadius === 17, "opacity inheritance overwrote independent blur: " + Config.options.abyss.content.blurRadius)
             check(Config.options.abyss.content.opacity === -1 && opacityFollow.checked, "opacity inheritance not active")
             check(AbyssStyle.contentBlurRadius === 17, "opacity inheritance changed resolved blur")
             const blurFollow = findChild(settings, "abyssPanelBlurFollow")
-            const opacitySlider = findChild(settings, "abyssPanelOpacity")
-            const blurSlider = findChild(settings, "abyssPanelBlur")
+            const opacityRow = findChild(settings, "abyssPanelOpacity")
+            const opacitySlider = slider(opacityRow)
+            const blurRow = findChild(settings, "abyssPanelBlur")
+            const blurSlider = slider(blurRow)
             check(blurFollow !== null && opacitySlider !== null && blurSlider !== null, "separate controls missing")
-            check(opacitySlider.text === "Panel & content opacity", "shared slider label missing")
+            check(opacityRow.text === "Panel & content opacity", "shared slider label missing")
             check(find(settings, i => i.text === "Content card opacity") === null, "retired card slider still visible")
             for (const alpha of [-1, 0, .25, .5, .75, 1]) for (const radius of [-1, 0, 8, 16, 24]) {
                 Config.setNestedValues({"abyss.content.opacity":alpha, "abyss.content.blurRadius":radius})
                 const beforeBlur = Config.options.abyss.content.blurRadius
-                opacityFollow.toggledByUser(true)
+                setFollow(opacityFollow,true)
                 check(Config.options.abyss.content.blurRadius === beforeBlur, "opacity follow wrote blur")
-                opacityFollow.toggledByUser(false)
+                setFollow(opacityFollow,false)
                 check(Config.options.abyss.content.opacity === .62, "opacity detach changed inherited value")
                 check(Config.options.abyss.content.blurRadius === beforeBlur, "opacity detach wrote blur")
                 opacitySlider.value = alpha < 0 ? 0 : alpha; opacitySlider.moved()
@@ -74,10 +84,10 @@ ShellRoot {
                 check(AbyssStyle.cardOpacity === AbyssStyle.contentOpacity && Math.abs(AbyssStyle.contentLayer.a-AbyssStyle.contentOpacity)<.005, "shared slider did not update cards")
                 check(Config.options.abyss.content.blurRadius === beforeBlur, "opacity slider wrote blur")
                 const beforeAlpha = Config.options.abyss.content.opacity
-                blurFollow.toggledByUser(true)
+                setFollow(blurFollow,true)
                 check(Config.options.abyss.content.opacity === beforeAlpha, "blur follow wrote opacity")
                 check(Config.options.abyss.content.blurRadius === -1 && blurFollow.checked, "blur inheritance not active")
-                blurFollow.toggledByUser(false)
+                setFollow(blurFollow,false)
                 check(Config.options.abyss.content.blurRadius === 12, "blur detach lost configured Edge value")
                 check(Config.options.abyss.content.opacity === beforeAlpha, "blur detach wrote opacity")
                 blurSlider.value = radius < 0 ? 0 : radius; blurSlider.moved()
@@ -90,14 +100,15 @@ ShellRoot {
                     "performance.lowPower":policy === "effects-off", "abyss.content.opacity":.75, "abyss.content.blurRadius":17})
                 check(AbyssStyle.configuredContentBlurRadius === 17, "policy overwrote configured blur")
                 check(AbyssStyle.contentBlurRadius === (policy === "quality" ? 17 : 0), "policy did not suppress only effective radius")
-                blurFollow.toggledByUser(true); blurFollow.toggledByUser(false)
+                setFollow(blurFollow,true); setFollow(blurFollow,false)
                 check(Config.options.abyss.content.blurRadius === 12, "detach saved temporary policy zero")
                 check(Config.options.abyss.content.opacity === .75, "policy/detach changed opacity")
             }
-            const opaque = find(settings, i => i.buttonText === "Use opaque Material appearance")
-            check(opaque !== null, "opaque material action missing")
+            // SET-R04 retired the opaque batch preset. Exercise the same durable
+            // material choices through the current independent value controls.
             const retired = Config.options.abyss.content.cardOpacity
-            opaque.clicked()
+            opacitySlider.value=1;opacitySlider.moved()
+            blurSlider.value=0;blurSlider.moved()
             check(AbyssStyle.contentOpacity === 1 && AbyssStyle.cardOpacity === 1, "opaque action did not set shared alpha")
             check(Config.options.abyss.content.cardOpacity === retired, "opaque action wrote retired card preference")
             check(Config.options.abyss.content.blurRadius === 0, "opaque action retained blur")
