@@ -110,7 +110,7 @@ export function inspectInstalledScopeContract() {
       ? [...initial.slice(exportOffset + 7).matchAll(/(?:^|,)([\w$]+)\s+as\s+[\w$]+(?=,|})/g)]
           .map(match => match[1])
       : []);
-    const distanceBand = d => d <= 500 ? "0-500" : d <= 2000
+    const callbackDistanceBand = d => d <= 500 ? "0-500" : d <= 2000
       ? "500-2k" : d <= 8000 ? "2k-8k" : "8k-12k";
     const shape = mentions.slice(0, 3).map(m => {
       const start = Math.max(0, m.index - 110);
@@ -138,7 +138,7 @@ export function inspectInstalledScopeContract() {
         exported_in_12k: scopedConstructors.filter(x => x.exported).length,
         nearest: scopedConstructors.slice(0, 3).map(x => ({
           direction: x.delta < 0 ? "before" : "after",
-          distance_band: distanceBand(Math.abs(x.delta)),
+          distance_band: callbackDistanceBand(Math.abs(x.delta)),
           export_binding_present: x.exported
         }))
       };
