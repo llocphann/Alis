@@ -217,8 +217,9 @@ sync_launcher_from_repo() {
     [[ -f "$source" ]] || { log_error "Missing canonical Alis launcher"; return 1; }
     mkdir -p "$XDG_BIN_HOME"
     if [[ -L "$launcher_target" || ( -e "$launcher_target" && ! -f "$launcher_target" ) ]] ||
-        { [[ -f "$launcher_target" ]] && ! grep -Fq '# Canonical CLI and runtime name is Alis.' "$launcher_target"
-          && ! grep -Fq '# Alis is the public command while the proven Alis runtime owns the session.' "$launcher_target"; }; then
+        { [[ -f "$launcher_target" ]] &&
+          ! grep -Fq '# Canonical CLI and runtime name is Alis.' "$launcher_target" &&
+          ! grep -Fq '# Alis is the public command while the proven Alis runtime owns the session.' "$launcher_target"; }; then
         log_error "Preserving user-owned launcher: $launcher_target"
         return 1
     fi
