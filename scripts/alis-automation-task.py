@@ -8,6 +8,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from automation import taskflow, credentials, lifecycle, queue, activity, managed_tasks
+from automation.manager import control as manager_control
 
 
 def main():
@@ -20,6 +21,7 @@ def main():
     batch.add_argument("codes", help="AUTO-R01; ABYSS-R09; BRAND-F01")
     batch.add_argument("--mode", choices=["ordered", "cloud"], default="ordered")
     commands.add_parser("queue-status")
+    commands.add_parser("backend-status")
     start_queue = commands.add_parser("start-queue")
     start_queue.add_argument("--approve", action="store_true")
     history = commands.add_parser("activity")
@@ -64,6 +66,14 @@ def main():
             result = queue.prepare(args.codes, mode=args.mode)
         elif args.action == "queue-status":
             result = queue.view()
+        elif args.action == "backend-status":
+            states = manager_control.service_states()
+            result = {"ok": True, "services": {
+                kind: {"state": service.get("state", "unavailable"),
+                       "unit": service.get("unit", "")}
+                for kind, service in states.items()
+            }, "installed": all(states[name]["state"] != "unavailable"
+                               for name in ("bridge", "worker"))}
         elif args.action == "start-queue":
             mode = queue.view()["mode"]
             result = (managed_tasks.start_cloud_queue(approved=args.approve)
