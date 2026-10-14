@@ -59,6 +59,7 @@ invoke() {
     export TEST_HOME="$tmp/$fixture"
     export HOME="$TEST_HOME" XDG_CONFIG_HOME="$TEST_HOME/config"
     export XDG_CACHE_HOME="$TEST_HOME/cache"
+    export XDG_DATA_HOME="$TEST_HOME/data"
     export XDG_STATE_HOME="$TEST_HOME/state"
     export PATH="$TEST_HOME/bin:/usr/bin:/bin"
     bash "$helper" "$@"
