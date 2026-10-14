@@ -18,7 +18,52 @@ ContentPage {
     property string statusText: ""
     property var selectedTask: null
     property string cleanupResult: ""
+    property string selectedGithubRepo: "llocphann/Alis"
+    property bool githubTokenSaved: false
+    property bool githubKeyringAvailable: false
+    property string githubStatusText: ""
+    property string pendingSecretInput: ""
+    property string pendingSecretOperation: ""
     readonly property bool busy: prepareProcess.running || cleanupProcess.running
+        || githubSecretProcess.running || githubStatusProcess.running
+
+    function refreshGithubStatus(): void {
+        if (githubStatusProcess.running || githubSecretProcess.running)
+            return
+        githubStatusProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "github-token-status", root.selectedGithubRepo]
+        githubStatusProcess.running = true
+    }
+
+    function saveGithubToken(): void {
+        if (root.busy || !githubToken.text.length)
+            return
+        root.pendingSecretInput = githubToken.text
+        githubToken.clear()
+        root.githubStatusText = ""
+        root.pendingSecretOperation = "save"
+        githubSecretProcess.stdinEnabled = true
+        githubSecretProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "github-token-save", root.selectedGithubRepo]
+        githubSecretProcess.running = true
+    }
+
+    function clearGithubToken(): void {
+        if (root.busy || !root.githubTokenSaved)
+            return
+        root.pendingSecretOperation = "clear"
+        root.pendingSecretInput = ""
+        githubSecretProcess.stdinEnabled = false
+        githubSecretProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "github-token-clear", root.selectedGithubRepo]
+        githubSecretProcess.running = true
+    }
+
+    onVisibleChanged: if (visible) Qt.callLater(root.refreshGithubStatus)
+    Component.onCompleted: Qt.callLater(root.refreshGithubStatus)
 
     function activateSettingsSearchSection(section: string): bool {
         return true
@@ -89,6 +134,54 @@ ContentPage {
         if (apply)
             cleanupProcess.command = cleanupProcess.command.concat(["--apply"])
         cleanupProcess.running = true
+    }
+
+    Process {
+        id: githubStatusProcess
+        stdout: StdioCollector { id: githubStatusOutput }
+        stderr: StdioCollector { id: githubStatusError }
+        onExited: exitCode => {
+            try {
+                const result = JSON.parse(githubStatusOutput.text)
+                if (exitCode !== 0 || result.ok !== true)
+                    throw new Error(result.error || "Credential status unavailable")
+                if (result.repository !== root.selectedGithubRepo)
+                    return
+                root.githubKeyringAvailable = result.keyring_available === true
+                root.githubTokenSaved = result.saved === true
+            } catch (error) {
+                root.githubStatusText = Translation.tr("GitHub keyring unavailable: %1").arg(String(error))
+            }
+        }
+    }
+
+    Process {
+        id: githubSecretProcess
+        stdout: StdioCollector { id: githubSecretOutput }
+        stderr: StdioCollector { id: githubSecretError }
+        onStarted: {
+            if (root.pendingSecretOperation === "save") {
+                githubSecretProcess.write(root.pendingSecretInput)
+                root.pendingSecretInput = ""
+                githubSecretProcess.stdinEnabled = false
+            }
+        }
+        onExited: exitCode => {
+            root.pendingSecretInput = ""
+            try {
+                const result = JSON.parse(githubSecretOutput.text)
+                if (exitCode !== 0 || result.ok !== true)
+                    throw new Error(result.error || "Keyring operation failed")
+                root.githubTokenSaved = result.saved === true
+                root.githubStatusText = result.saved
+                    ? Translation.tr("GitHub token saved in system keyring.")
+                    : Translation.tr("GitHub token removed from system keyring.")
+            } catch (error) {
+                root.githubStatusText = Translation.tr("GitHub token operation failed: %1").arg(String(error))
+            }
+            root.pendingSecretOperation = ""
+            Qt.callLater(root.refreshGithubStatus)
+        }
     }
 
     SettingsTaskNavigator {
@@ -219,4 +312,85 @@ ContentPage {
             }
         }
     }
+    SettingsCardSection {
+        expanded: true
+        icon: "key"
+        title: Translation.tr("GitHub credential")
+        settingsTaskSection: "tasks"
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: Appearance.colors.colSubtext
+                text: Translation.tr("Optional token for Localbot Git operations. Stored in the system keyring; never inserted into Cloudbot prompts, command arguments or task files.")
+            }
+            ConfigSelectionArray {
+                currentValue: root.selectedGithubRepo
+                options: [
+                    { displayName: "Alis", value: "llocphann/Alis" },
+                    { displayName: "Alis-Companion", value: "llocphann/Alis-Companion" },
+                    { displayName: "Alis-Intergration", value: "llocphann/Alis-Intergration" }
+                ]
+                onSelected: value => {
+                    if (root.busy) return
+                    githubToken.clear()
+                    root.selectedGithubRepo = value
+                    root.githubTokenSaved = false
+                    root.githubStatusText = ""
+                    Qt.callLater(root.refreshGithubStatus)
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                MaterialTextField {
+                    id: githubToken
+                    objectName: "automationGithubToken"
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("GitHub personal access token")
+                    echoMode: TextInput.Password
+                    onAccepted: root.saveGithubToken()
+                }
+                DialogButton {
+                    buttonText: Translation.tr("Save token")
+                    enabled: !root.busy && root.githubKeyringAvailable && githubToken.text.length > 0
+                    onClicked: root.saveGithubToken()
+                }
+                DialogButton {
+                    buttonText: Translation.tr("Clear")
+                    enabled: !root.busy && root.githubTokenSaved
+                    onClicked: root.clearGithubToken()
+                }
+            }
+            SettingsNote {
+                icon: root.githubTokenSaved ? "lock" : "key"
+                text: !root.githubKeyringAvailable
+                    ? Translation.tr("System keyring unavailable. Install and unlock Secret Service.")
+                    : root.githubTokenSaved
+                    ? Translation.tr("Saved for the selected repository · local Git only")
+                    : Translation.tr("No GitHub token saved for this repository")
+            }
+            StyledText {
+                visible: root.githubStatusText.length > 0
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: Appearance.colors.colSubtext
+                text: root.githubStatusText
+            }
+        }
+    }
+
+    SettingsCardSection {
+        expanded: true
+        icon: "autorenew"
+        title: Translation.tr("Automatic chat rollover")
+        settingsTaskSection: "tasks"
+        SettingsGroup {
+            SettingsNote {
+                icon: "info"
+                text: Translation.tr("No manual prompt/iteration thresholds. Cloudbot checkpoints are preserved; confirmed context or conversation limits will trigger a new managed chat when the authenticated Desktop bridge is restored.")
+            }
+        }
+    }
+
 }
