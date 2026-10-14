@@ -42,6 +42,7 @@ ContentPage {
     property string selectedGithubRepo: "llocphann/Alis"
     property bool githubTokenSaved: false
     property bool githubKeyringAvailable: false
+    property bool githubStatusKnown: false
     property string githubStatusText: ""
     property string pendingSecretInput: ""
     property string pendingSecretOperation: ""
@@ -258,7 +259,7 @@ ContentPage {
             const reason = /can't open file|No such file or directory/i.test(error)
                 ? "Automation script missing from shell config"
                 : /ModuleNotFoundError|ImportError/i.test(error)
-                ? "Automation Python modules unavailable"
+                ? "Automation modules missing from installed Alis; update runtime"
                 : /Permission denied/i.test(error)
                 ? "Automation helper permission denied"
                 : "Automation helper returned no output"
@@ -392,9 +393,13 @@ ContentPage {
                 if (result.repository !== root.selectedGithubRepo)
                     return
                 root.githubKeyringAvailable = result.keyring_available === true
+                root.githubStatusKnown = true
                 root.githubTokenSaved = result.saved === true
+                root.githubStatusText = ""
             } catch (error) {
-                root.githubStatusText = Translation.tr("GitHub keyring unavailable: %1").arg(String(error))
+                root.githubStatusKnown = false
+                root.githubKeyringAvailable = false
+                root.githubStatusText = Translation.tr("GitHub status unavailable: %1").arg(String(error))
             }
         
     }
@@ -576,7 +581,7 @@ ContentPage {
                 }
                 DialogButton {
                     buttonText: Translation.tr("Install backend")
-                    enabled: !root.busy && !root.backendInstalled
+                    enabled: !root.busy && root.backendStatusKnown && !root.backendInstalled
                     onClicked: root.installBackend()
                 }
             }
@@ -811,6 +816,7 @@ ContentPage {
                     githubToken.clear()
                     root.selectedGithubRepo = value
                     root.githubTokenSaved = false
+                    root.githubStatusKnown = false
                     root.githubStatusText = ""
                     Qt.callLater(root.refreshGithubStatus)
                 }
@@ -839,7 +845,9 @@ ContentPage {
             }
             SettingsNote {
                 icon: root.githubTokenSaved ? "lock" : "key"
-                text: !root.githubKeyringAvailable
+                text: !root.githubStatusKnown
+                    ? Translation.tr("GitHub token status unknown")
+                    : !root.githubKeyringAvailable
                     ? Translation.tr("System keyring unavailable. Install and unlock Secret Service.")
                     : root.githubTokenSaved
                     ? Translation.tr("Saved for the selected repository · local Git only")
