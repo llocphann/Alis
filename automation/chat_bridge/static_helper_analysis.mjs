@@ -118,6 +118,10 @@ function inspectFunctionBody(source, declarationEnd) {
     if(/^new\s+Map\s*\(/.test(tail)) return "new-map";
     if(/^new\s+[$A-Za-z_][\w$]*\s*\(/.test(tail)) return "new-other";
     if(/^[$A-Za-z_][\w$]*\s*\(/.test(tail)) return "helper-call-result";
+    // Treat optional computed access as a complex indexed expression,
+    // not as an ordinary dot-member result that skips alias analysis.
+    if(/^[$A-Za-z_][\w$]*\s*\?\.\s*\[/.test(tail))
+      return "other-expression";
     if(/^[$A-Za-z_][\w$]*\s*(?:\?\.|\.)/.test(tail))
       return "member-result";
     if(/^[$A-Za-z_][\w$]*\b/.test(tail)) return "identifier-alias";
