@@ -63,3 +63,20 @@ exclusive session/tray ownership, Niri shortcuts and IPC, popups, fullscreen,
 recording, user-data preservation and live rollback. Full maintainer
 validation and physical/owner acceptance remain independent gates. Evidence
 is linked from GitHub Issues; a focused source result is not release approval.
+
+## BRAND-R01 update compatibility when the previous service is retained
+
+The old `inir.service` file stays available for owner-controlled recovery after
+a successful cutover. Its presence alone is **not** a reason to block future
+`alis update` commands. The update guard now allows updates **only** if the
+canonical `alis.service` is active, legacy service inactive and
+disabled/static, no legacy compositor `*.wants/inir.service` links remain,
+and the installed runtime has `ShellId alis`. An old active/enabled unit,
+missing canonical session, or partial migration still blocks updates.
+
+To prepare a repo-copy cutover before switching services, use
+`bash scripts/brand-canonical-stage.sh --dry-run`; staging is explicitly
+owner-gated and must not run automatically. Then review
+`bash scripts/brand-canonical-cutover.sh --dry-run` before making any
+owner-authorized service changes. Package-managed users must upgrade using
+their package manager. Source tests are not physical desktop verification.

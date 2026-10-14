@@ -217,10 +217,36 @@ _check_privilege_prereqs() {
 # historical name at the boundary so all active service IDs are canonical.
 brand_legacy_owner_present() {
     local legacy_owner='in''ir.service'
-    [[ -e "${XDG_CONFIG_HOME}/systemd/user/$legacy_owner" ||
-       -L "${XDG_CONFIG_HOME}/systemd/user/$legacy_owner" ]] ||
-       { command -v systemctl >/dev/null &&
-         systemctl --user cat "$legacy_owner" >/dev/null 2>&1; }
+    # Retaining the old unit for rollback is expected AFTER a verified cutover.
+    # Existence alone must not lock canonical Alis updates forever.
+    if [[ ! -e "${XDG_CONFIG_HOME}/systemd/user/$legacy_owner" &&
+          ! -L "${XDG_CONFIG_HOME}/systemd/user/$legacy_owner" ]] &&
+         ! { command -v systemctl >/dev/null 2>&1 &&
+             systemctl --user cat "$legacy_owner" >/dev/null 2>&1; }; then
+        return 1
+    fi
+    # Permit an ordinary update only with Alis as the sole live owner, old
+    # unit inactive and disabled, no legacy autostart and a staged ShellId.
+    # All other states fail closed. This does NOT perform a service cutover.
+    if command -v systemctl >/dev/null 2>&1 &&
+       systemctl --user is-active --quiet alis.service &&
+       ! systemctl --user is-active --quiet "$legacy_owner"; then
+        local old_enable
+        old_enable="$(systemctl --user is-enabled "$legacy_owner" 2>/dev/null || true)"
+        case "$old_enable" in
+            disabled|static)
+                local old_link
+                for old_link in "${XDG_CONFIG_HOME}/systemd/user/"*.wants/"$legacy_owner"; do
+                    [[ ! -e "$old_link" && ! -L "$old_link" ]] || return 0
+                done
+                if [[ -f "${XDG_CONFIG_HOME}/quickshell/alis/shell.qml" ]] &&
+                   grep -Fxq '//@ pragma ShellId alis' "${XDG_CONFIG_HOME}/quickshell/alis/shell.qml"; then
+                    return 1
+                fi
+                ;;
+        esac
+    fi
+    return 0
 }
 
 sync_launcher_from_repo() {
@@ -2224,6 +2250,9 @@ refresh_sddm_theme_on_update() {
 run_update() {
     if brand_legacy_owner_present; then
         tui_error "Previous shell service still exists; complete the explicit Alis cutover before updating."
+        tui_info "For a pre-cutover repo-copy install, inspect: bash scripts/brand-canonical-stage.sh --dry-run"
+        tui_info "Then inspect: bash scripts/brand-canonical-cutover.sh --dry-run"
+        tui_info "Never remove the old unit just to bypass this guard; it is retained for rollback."
         return 2
     fi
     # Short-circuit to the simulated walkthrough — no git pull, no rsync,
