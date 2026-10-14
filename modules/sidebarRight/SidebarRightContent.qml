@@ -111,7 +111,7 @@ Item {
             _log("[SidebarRight] Checking for existing settings window among", wins.length, "windows");
             for (let i = 0; i < wins.length; i++) {
                 const w = wins[i]
-                if (w.title === "illogical-impulse Settings" && w.app_id === "org.quickshell") {
+                if (w.title === "alis Settings" && w.app_id === "org.quickshell") {
                     _log("[SidebarRight] Found existing settings window, focusing it");
                     GlobalStates.sidebarRightOpen = false;
                     Qt.callLater(() => {

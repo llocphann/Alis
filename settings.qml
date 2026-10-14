@@ -436,7 +436,7 @@ ApplicationWindow {
 
     visible: true
     onClosing: Qt.quit()
-    title: "illogical-impulse Settings"
+    title: "alis Settings"
 
     Component.onCompleted: {
         Quickshell.watchFiles = false
@@ -1136,9 +1136,9 @@ ApplicationWindow {
                         colBackground: "transparent"
                         colBackgroundHover: Appearance.colors.colLayer1Hover
 
-                        onClicked: Qt.openUrlExternally(`${Directories.config}/illogical-impulse/config.json`)
+                        onClicked: Qt.openUrlExternally(`${Directories.config}/alis/config.json`)
                         altAction: () => {
-                            Quickshell.clipboardText = CF.FileUtils.trimFileProtocol(`${Directories.config}/illogical-impulse/config.json`);
+                            Quickshell.clipboardText = CF.FileUtils.trimFileProtocol(`${Directories.config}/alis/config.json`);
                             configFileBtn.justCopied = true;
                             revertTextTimer.restart();
                         }
