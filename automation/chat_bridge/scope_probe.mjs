@@ -145,6 +145,8 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         resolver_parameter_shape: "unknown",
         resolver_first_argument_map_access: false,
         resolver_second_argument_map_access: false,
+        resolver_masked_shape: "",
+        resolver_shape_complete: false,
         active_provider_identity_count_capped: 0,
         react_container_count_capped: 0,
         active_root_count_capped: 0,
@@ -168,6 +170,22 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         // Lexical hint only: minification and captured functions mean this
         // cannot prove or disprove a context-map dependency.
         report.resolver_uses_map_access_tokens = /\.(?:get|has)\s*\(/.test(source);
+        // Scrub all text and symbol names before export. This is not an AST
+        // proof; it is a bounded structural hint for identifying which
+        // receiver makes .get/.has calls. No raw source ever leaves Desktop.
+        const preserve = new Set([
+          "function", "async", "return", "new", "const", "let", "var",
+          "if", "else", "throw", "try", "catch", "null", "undefined",
+          "true", "false", "this", "get", "has", "scope", "store"
+        ]);
+        const erased = source
+          .replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, " ")
+          .replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`/g, "STRING");
+        report.resolver_masked_shape = erased.replace(/[$A-Za-z_][\w$]*/g,
+          word => preserve.has(word) ? word : "id")
+          .replace(/[0-9]+/g, "0")
+          .replace(/\s+/g, " ").slice(0, 640);
+        report.resolver_shape_complete = erased.length <= 640;
         // Very conservative lexical classification, NOT proof of dependency:
         // handle only two bare identifier arguments. No names/source are sent
         // outside Desktop. A function with destructuring, shadowing, or a
