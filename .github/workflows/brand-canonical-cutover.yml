@@ -53,6 +53,7 @@ jobs:
           bash scripts/test-local-music-mpd-source-contract.sh
           bash scripts/test-native-production-contract.sh
           bash scripts/test-native-selector-contract.sh
+          bash scripts/test-native-selector-behavior.sh
           bash scripts/test-native-benchmark-deep-contract.sh
       - name: Check canonical Cargo metadata
         shell: bash
