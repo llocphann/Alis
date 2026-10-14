@@ -133,6 +133,8 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         active_map_comparison_complete: false,
         active_map_topology_complete: false,
         active_map_depth_range_capped: [0, 0],
+        active_map_depth_limit_reached: false,
+        active_map_ancestor_edges: [],
         active_map_ancestor_pair_count_capped: 0,
         active_map_incomparable_pair_count_capped: 0,
         active_map_depth_size_profiles: [],
@@ -140,6 +142,9 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         resolver_source_inspected: false,
         resolver_length_band: "unknown",
         resolver_uses_map_access_tokens: false,
+        resolver_parameter_shape: "unknown",
+        resolver_first_argument_map_access: false,
+        resolver_second_argument_map_access: false,
         active_provider_identity_count_capped: 0,
         react_container_count_capped: 0,
         active_root_count_capped: 0,
@@ -163,6 +168,22 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         // Lexical hint only: minification and captured functions mean this
         // cannot prove or disprove a context-map dependency.
         report.resolver_uses_map_access_tokens = /\.(?:get|has)\s*\(/.test(source);
+        // Very conservative lexical classification, NOT proof of dependency:
+        // handle only two bare identifier arguments. No names/source are sent
+        // outside Desktop. A function with destructuring, shadowing, or a
+        // different syntactic form remains unknown.
+        const header = source.match(/^(?:(?:async\s+)?function\s*[\w$]*|(?:async\s+)?[\w$]+)?\s*\(\s*([\w$]+)\s*,\s*([\w$]+)\s*\)\s*\{/);
+        if (header) {
+          report.resolver_parameter_shape = "two-simple-identifiers";
+          const body = source.slice(header[0].length);
+          const receivesAccess = argument =>
+            new RegExp("(?:^|[^\\w$])" + argument +
+              "\\s*(?:\\?\\.)?\\s*\\.(?:get|has)\\s*\\(").test(body);
+          report.resolver_first_argument_map_access = receivesAccess(header[1]);
+          report.resolver_second_argument_map_access = receivesAccess(header[2]);
+        } else {
+          report.resolver_parameter_shape = "complex-or-unrecognized";
+        }
       } catch {}
       const anchors = testFixture
         ? testFixture.anchors
@@ -240,7 +261,7 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         }));
         const seen = new Set(), profiles = new Map(), ancestorPairs = new Set();
         const index = new Map();
-        let iterations = 0;
+        let iterations = 0, depthLimitReached = false;
         while (stack.length && iterations++ < 30000) {
           const frame = stack.pop();
           const node = frame?.node;
@@ -252,7 +273,8 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
           if (relevant) {
             if (!index.has(value)) index.set(value, index.size);
             const key = index.get(value);
-            const depth = Math.min(128, frame.depth);
+            const depth = Math.min(4096, frame.depth);
+            if (frame.depth > 4096) depthLimitReached = true;
             const prior = profiles.get(value);
             if (prior) {
               prior.min_depth = Math.min(prior.min_depth, depth);
@@ -281,9 +303,17 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
             ancestors: nextAncestors
           });
         }
-        const rows = [...profiles.values()].sort((a, b) =>
-          a.min_depth - b.min_depth ||
-          a.context_key_count_capped - b.context_key_count_capped);
+        const ordered = [...profiles.entries()].sort((a, b) =>
+          a[1].min_depth - b[1].min_depth ||
+          a[1].context_key_count_capped - b[1].context_key_count_capped);
+        const rows = ordered.map(([, data]) => data);
+        const order = new Map(ordered.map(([map], n) =>
+          [index.get(map), n]));
+        const edges = [...ancestorPairs].map(pair => {
+          const [a, b] = pair.split(":").map(Number);
+          return [order.get(a), order.get(b)].sort((x, y) => x - y);
+        }).filter(pair => pair.every(Number.isSafeInteger))
+          .sort((a,b) => a[0]-b[0] || a[1]-b[1]);
         const pairs = profiles.size * (profiles.size - 1) / 2;
         return {
           complete: stack.length === 0,
@@ -293,11 +323,15 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
           ] : [0, 0],
           ancestor_pairs: ancestorPairs.size,
           incomparable_pairs: Math.max(0, pairs - ancestorPairs.size),
-          rows: rows.slice(0, 12)
+          rows: rows.slice(0, 12),
+          depth_limit_reached: depthLimitReached,
+          ancestry_edges: rows.length <= 12 ? edges : []
         };
       })();
       report.active_map_topology_complete = topology.complete;
       report.active_map_depth_range_capped = topology.depth_range;
+      report.active_map_depth_limit_reached = topology.depth_limit_reached;
+      report.active_map_ancestor_edges = topology.ancestry_edges;
       report.active_map_ancestor_pair_count_capped =
         Math.min(128, topology.ancestor_pairs);
       report.active_map_incomparable_pair_count_capped =
