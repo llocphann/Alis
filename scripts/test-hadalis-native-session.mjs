@@ -82,7 +82,7 @@ try {
   // Positive structural fixture: report a possible binding shape, but never
   // include a mock secret, constructor name, or raw module source.
   const sample = Buffer.from(
-    'var z=0,T=mk($,({scope:e})=>new Foo(e));const secret="ghp_PRIVATE_FIXTURE_SECRET";async startCompletionStream('
+    'var z=0,T=mk($,({scope:e})=>new Foo(e));const secret="ghp_PRIVATE_FIXTURE_SECRET";async startCompletionStream();export{T as safeExport}'
   );
   const syntheticEntries = {
     "app-initial-fixture.js": {size: sample.length, offset: "0"},
@@ -108,6 +108,12 @@ try {
     assert.equal(report.stream_neighborhoods.length, 1);
     assert.ok(report.stream_neighborhoods[0].method_shape.includes("async"));
     assert.ok(report.stream_neighborhoods[0].scope_bindings_within_12k >= 1);
+    assert.equal(report.scoped_constructor_callbacks_count, 1);
+    assert.equal(report.stream_neighborhoods[0].scoped_constructor_candidates.count_in_12k, 1);
+    assert.equal(report.stream_neighborhoods[0].scoped_constructor_candidates.exported_in_12k, 1);
+    assert.equal(report.stream_neighborhoods[0].scoped_constructor_candidates.nearest[0].export_binding_present, true);
+    // Source-only evidence must NEVER enable a managed conversation.
+    assert.equal(report.supported, false);
     const json = JSON.stringify(report);
     assert.ok(!json.includes("PRIVATE_FIXTURE_SECRET"));
     assert.ok(!json.includes("ghp_"));
