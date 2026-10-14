@@ -131,6 +131,15 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         active_map_size_range_capped: [0, 0],
         // This comparison reads Map entries only; it does not call resolve.
         active_map_comparison_complete: false,
+        active_map_topology_complete: false,
+        active_map_depth_range_capped: [0, 0],
+        active_map_ancestor_pair_count_capped: 0,
+        active_map_incomparable_pair_count_capped: 0,
+        active_map_depth_size_profiles: [],
+        // Static source characteristics only: never execute resolve here.
+        resolver_source_inspected: false,
+        resolver_length_band: "unknown",
+        resolver_uses_map_access_tokens: false,
         active_provider_identity_count_capped: 0,
         react_container_count_capped: 0,
         active_root_count_capped: 0,
@@ -145,6 +154,16 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
       };
       if (!report.scope_id_present || !report.resolve_function_present)
         return report;
+      try {
+        const source = Function.prototype.toString.call(definition.resolve);
+        report.resolver_source_inspected = true;
+        report.resolver_length_band = source.length <= 120 ? "0-120"
+          : source.length <= 500 ? "121-500"
+          : source.length <= 2000 ? "501-2k" : "over-2k";
+        // Lexical hint only: minification and captured functions mean this
+        // cannot prove or disprove a context-map dependency.
+        report.resolver_uses_map_access_tokens = /\.(?:get|has)\s*\(/.test(source);
+      } catch {}
       const anchors = testFixture
         ? testFixture.anchors
         : Array.from(document.body?.children ?? []).flatMap(el =>
@@ -212,6 +231,78 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
       report.distinct_maps_share_provider_identity =
         all.maps.size > 1 && all.providers.size === 1;
       report.active_provider_identity_count_capped = Math.min(8, active.providers.size);
+      // Map topology is read only, and does not depend on user-visible
+      // component names, DOM text, props, or raw context values. The active
+      // tree is followed through child/sibling edges, never alternates.
+      const topology = (() => {
+        const stack = [...roots].map(node => ({
+          node, depth: 0, ancestors: []
+        }));
+        const seen = new Set(), profiles = new Map(), ancestorPairs = new Set();
+        const index = new Map();
+        let iterations = 0;
+        while (stack.length && iterations++ < 30000) {
+          const frame = stack.pop();
+          const node = frame?.node;
+          if (!node || typeof node !== "object" || seen.has(node)) continue;
+          seen.add(node);
+          const value = node.memoizedProps?.value;
+          const relevant = value instanceof Map && value.has(definition.scope.id);
+          let nextAncestors = frame.ancestors;
+          if (relevant) {
+            if (!index.has(value)) index.set(value, index.size);
+            const key = index.get(value);
+            const depth = Math.min(128, frame.depth);
+            const prior = profiles.get(value);
+            if (prior) {
+              prior.min_depth = Math.min(prior.min_depth, depth);
+              prior.max_depth = Math.max(prior.max_depth, depth);
+            } else {
+              profiles.set(value, {
+                min_depth: depth, max_depth: depth,
+                context_key_count_capped: Math.min(128, value.size)
+              });
+            }
+            for (const parent of frame.ancestors) {
+              if (parent === value) continue;
+              if (!index.has(parent)) index.set(parent, index.size);
+              const first = index.get(parent), last = key;
+              ancestorPairs.add([Math.min(first, last), Math.max(first, last)].join(":"));
+            }
+            if (!frame.ancestors.includes(value))
+              nextAncestors = [...frame.ancestors, value];
+          }
+          if (node.sibling) stack.push({
+            node: node.sibling, depth: frame.depth,
+            ancestors: frame.ancestors
+          });
+          if (node.child) stack.push({
+            node: node.child, depth: frame.depth + 1,
+            ancestors: nextAncestors
+          });
+        }
+        const rows = [...profiles.values()].sort((a, b) =>
+          a.min_depth - b.min_depth ||
+          a.context_key_count_capped - b.context_key_count_capped);
+        const pairs = profiles.size * (profiles.size - 1) / 2;
+        return {
+          complete: stack.length === 0,
+          depth_range: rows.length ? [
+            Math.min(...rows.map(x => x.min_depth)),
+            Math.max(...rows.map(x => x.max_depth))
+          ] : [0, 0],
+          ancestor_pairs: ancestorPairs.size,
+          incomparable_pairs: Math.max(0, pairs - ancestorPairs.size),
+          rows: rows.slice(0, 12)
+        };
+      })();
+      report.active_map_topology_complete = topology.complete;
+      report.active_map_depth_range_capped = topology.depth_range;
+      report.active_map_ancestor_pair_count_capped =
+        Math.min(128, topology.ancestor_pairs);
+      report.active_map_incomparable_pair_count_capped =
+        Math.min(128, topology.incomparable_pairs);
+      report.active_map_depth_size_profiles = topology.rows;
       const currentMaps = [...active.maps];
       // Compare only JS Map key/value object identities (Object.is).
       // Do not stringify map keys, values, component props, or provider data.
