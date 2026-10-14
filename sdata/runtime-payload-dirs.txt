@@ -1,6 +1,7 @@
 modules
 services
 scripts
+automation
 assets
 translations
 defaults
