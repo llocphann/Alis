@@ -126,9 +126,11 @@ ShellRoot {
    while(Date.now()<deadline){
     root.slideTrace.push({phase:"before-grab",ms:Date.now()-root.slideStarted,p:popup.revealProgress,requested:popup.revealRequested,animations:Appearance.animationsEnabled,edit:canvas.editMode,body:body.progress,captures:root.capturedFrames})
     if(root.slideTrace.length>80)root.slideTrace.shift()
-    flushFrame()
+    // Sample live motion before awaiting an asynchronous render callback.
+    if(root.captureDirectory.length)flushFrame()
+    else wait(8)
     const progress=popup.revealProgress
-    root.slideTrace.push({phase:"after-grab",ms:Date.now()-root.slideStarted,p:progress,captures:root.capturedFrames})
+    root.slideTrace.push({phase:root.captureDirectory.length?"after-grab":"after-tick",ms:Date.now()-root.slideStarted,p:progress,captures:root.capturedFrames})
     if(root.slideTrace.length>80)root.slideTrace.shift()
     check(opening?progress>=previous-.001:progress<=previous+.001,"slide reversed unexpectedly")
     if(progress>0 && progress<1){sampleSlide(popup,canvas,dimensions);intermediate++}
@@ -138,7 +140,6 @@ ShellRoot {
      check(intermediate>0,"toolbar appeared/disappeared without intermediate movement "+JSON.stringify(root.slideTrace))
      return progress
     }
-    wait(8)
    }
    throw new Error(root.caseName+": toolbar slide did not reach "+(partial?"partial reveal":opening?"open":"closed")+" "+JSON.stringify(root.slideTrace))
   }
@@ -151,7 +152,7 @@ ShellRoot {
    check(Math.abs(popup.revealProgress-partial)<.001,"close snapped reveal progress")
    check(JSON.stringify([popup.x,popup.y,popup.width,popup.height])===JSON.stringify(resting),"close lost retained toolbar footprint: "+JSON.stringify([resting,[popup.x,popup.y,popup.width,popup.height]]))
    check(liquid.participants.dashboardEditor.inputBounds.width===0,"Cancel did not immediately release input")
-   flushFrame();sampleSlide(popup,canvas,dimensions)
+   sampleSlide(popup,canvas,dimensions)
    const reversing=popup.revealProgress
    check(reversing>0 && reversing<=partial,"toolbar vanished before reversal")
    canvas.beginEditMode()
@@ -162,6 +163,7 @@ ShellRoot {
    canvas.cancelEditMode()
    check(liquid.participants.dashboardEditor.inputBounds.width===0,"exit retained editor input")
    advanceSlide(popup,canvas,dimensions,false,false)
+   flushFrame()
    check(!popup.visible && liquid.participants.dashboardEditor.geometry===null,"closed editor retained paint")
    Config.setNestedValue("performance.reduceAnimations",true)
    canvas.beginEditMode();check(popup.revealProgress===1,"reduced motion must open immediately")
@@ -204,6 +206,10 @@ ShellRoot {
     tryCompare(Notepad,"ready",true,4000)
     const note=find(canvas,i=>typeof i.placeholderText==="string" && typeof i.cursorPosition==="number" && typeof i.wrapMode==="number")
     check(note!==null,"notes editor missing")
+    const shared=findChild(canvas,"quickNotesSharedDashboardView")
+    check(shared!==null,"shared Notes surface missing")
+    shared.focusEditor();tryVerify(()=>note.visible,2000)
+    check(note.visible,"Notes Source is still hidden in Reading mode")
     const draft=note.text
     note.text="";wait(40)
     check(note.placeholderText.length>0,"empty notes lost their placeholder")
@@ -213,9 +219,10 @@ ShellRoot {
     while(viewport && typeof viewport.contentY!=="number")viewport=viewport.parent
     check(viewport!==null && viewport.contentHeight>viewport.height,"long notes cannot scroll")
     check(viewport.contentHeight>=note.contentHeight && viewport.contentWidth<=viewport.width+1,"notes have clipped text or a horizontal scroll extent")
+    flushFrame()
     viewport.contentY=Math.max(0,viewport.contentHeight-viewport.height);wait(20)
     check(viewport.contentY+viewport.height>=note.contentHeight,"last note line is unreachable")
-    note.text=draft;wait(40)
+    note.text=draft;shared.releaseEditorFocus();wait(40)
     const dimensions=[canvas.width,canvas.height],saved=JSON.stringify(Config.options.dashboard.canvas.widgets)
     recordLayout("before-edit")
     canvas.beginEditMode();wait(120);flushFrame();recordLayout("after-edit")
@@ -239,7 +246,7 @@ ShellRoot {
     checkSlide(popup,canvas,dimensions);console.info("CASE_DONE",root.caseName)
     count++
    }
-   console.info("DASHBOARD_FIELD_PASS",count,"composed routes/edges/sizes: dimensions above-field Add Undo Cancel Done input-release",root.motionSamples,"native slide/reversal samples")
+   console.info("DASHBOARD_FIELD_PASS",count,"composed routes/edges/sizes: visible Notes source, dimensions above-field Add Undo Cancel Done input-release",root.motionSamples,"live motion-state samples")
   }catch(e){console.error("DASHBOARD_FIELD_FAIL",e.message,e.stack)}Qt.quit()}
  }
  Timer {interval:100;running:true;onTriggered:test.runChecks()}
@@ -252,6 +259,8 @@ ShellRoot {
   (config/"config.json").write_text(json.dumps(value));env["QSG_RHI_BACKEND"]="opengl"
   if CAPTURE:env["ALIS_DASHBOARD_FIELD_CAPTURE_DIR"]=str(CAPTURE)
   result=run_qs(folder,env,timeout=80)
+  if os.environ.get("ALIS_DASHBOARD_FIELD_LOG"):
+   Path(os.environ["ALIS_DASHBOARD_FIELD_LOG"]).write_text(result.stdout)
   if CAPTURE:
    (CAPTURE/"native.log").write_text(result.stdout)
    (CAPTURE/"process.json").write_text(json.dumps({"exit_code":result.returncode,"captures":len(list(CAPTURE.glob("slide-*.png")))},indent=2)+"\n")
@@ -261,4 +270,4 @@ ShellRoot {
    print("Dashboard native process exit:",result.returncode);print(result.stdout);raise SystemExit(1)
   for line in result.stdout.splitlines():
    if "DASHBOARD_FIELD_PASS" in line:print(line)
-  print("DASHBOARD_FIELD_PASS 16 composed route/edge/size cases; stable workspace; native Undo Cancel Done; full-size slide/reversal/reduced motion; field paint/input")
+  print("DASHBOARD_FIELD_PASS 16 composed route/edge/size cases; stable workspace; native Undo Cancel Done; full-size motion states/reversal/reduced motion; field paint/input; partial-frame capture requires explicit capture lane")
