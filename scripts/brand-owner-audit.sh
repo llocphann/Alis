@@ -3,6 +3,21 @@
 set -uo pipefail
 
 audit_blocked=0
+audit_repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+# Audit the identity shipped by this checkout. The compatibility branch still
+# uses inir.service; the isolated canonical branch MUST use alis.service.
+# Never assume one unit is authoritative merely because it is installed.
+expected_owner=unknown
+if [[ -f "$audit_repo/shell.qml" ]] &&
+   grep -Fxq '//@ pragma ShellId alis' "$audit_repo/shell.qml"; then
+    expected_owner=alis
+elif [[ -f "$audit_repo/shell.qml" ]] &&
+     grep -Fxq '//@ pragma ShellId inir' "$audit_repo/shell.qml"; then
+    expected_owner=inir
+else
+    printf 'BLOCKER: cannot establish this checkout\x27s ShellId.\n'
+    audit_blocked=2
+fi
 printf 'BRAND-R01 desktop read-only audit\n'
 printf 'Captured (UTC): %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 printf 'This is diagnostic evidence, not a substitute for owner visual approval.\n\n'
@@ -21,7 +36,7 @@ if command -v alis >/dev/null 2>&1; then
     alis version --json 2>&1 || printf '  Unable to read installed Alis version\n'
 fi
 
-printf '\nSession ownership (legacy inir.service remains authoritative):\n'
+printf '\nSession ownership (expected ShellId and sole unit: %s):\n' "$expected_owner"
 if command -v systemctl >/dev/null 2>&1; then
     systemctl --user show inir.service \
         --property=LoadState,ActiveState,SubState,MainPID,FragmentPath \
@@ -37,8 +52,28 @@ if command -v systemctl >/dev/null 2>&1; then
         printf '\nBLOCKER: inir.service and alis.service are BOTH active. Do not verify the release.\n'
         audit_blocked=2
     fi
+    case "$expected_owner" in
+        alis)
+            if [[ "$_alis_active" != active ]]; then
+                printf '\nBLOCKER: canonical ShellId alis requires alis.service active; observed %s.\n' "${_alis_active:-unknown}"
+                audit_blocked=2
+            fi
+            if [[ "$_inir_active" == active ]]; then
+                printf 'BLOCKER: canonical Alis checkout still has legacy inir.service active.\n'
+                audit_blocked=2
+            fi
+            ;;
+        inir)
+            if [[ "$_inir_active" != active ]]; then
+                printf '\nBLOCKER: compatibility ShellId inir requires inir.service active; observed %s.\n' "${_inir_active:-unknown}"
+                audit_blocked=2
+            fi
+            ;;
+    esac
 else
     printf '  systemctl not installed\n'
+    printf 'BLOCKER: cannot verify sole systemd user-session ownership.\n'
+    audit_blocked=2
 fi
 
 printf '\nXDG namespace paths (no file contents inspected):\n'
@@ -77,11 +112,11 @@ cat <<'ACCEPTANCE'
 Owner-only desktop acceptance checklist (record PASS/FAIL with screenshot/log):
   1. Fresh install: Alis welcome and desktop application labels display correctly.
   2. Upgrade: previous themes, layout, notes, AI model choices and wizard marker survive.
-  3. Terminal: alis help/status/settings and legacy inir commands work identically.
-  4. Session: exactly one active Quickshell tray watcher; no duplicate session after reboot/restart.
+  3. Terminal: alis help/status/settings work; retired inir CLI is not a required public command.
+  4. Session: expected ShellId/service matches the tested branch; one Quickshell tray watcher after cold login.
   5. Niri: keybinds, IPC routing, popups, fullscreen OSD and recorder still operate.
   6. Migration: no unexpected alis files; opt-in aliases never replace foreign data.
-  7. Rollback: validate snapshot restore and service start only with owner approval.
+  7. Rollback: validate the original settings, CLI, service and data recovery only with owner approval.
 Do not mark issue #64 owner-verified until these checks are completed.
 ACCEPTANCE
 
