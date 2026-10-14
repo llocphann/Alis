@@ -170,7 +170,14 @@ def main():
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--report-dir", type=Path)
     args = parser.parse_args()
-    assert os.access(args.rust_binary, os.X_OK), "Build alis-mpdd first (no backend is silently skipped)"
+    if not os.access(args.rust_binary, os.X_OK):
+        # A clean validator clone has no ignored build artifacts. Build its
+        # own helper; never substitute an installed owner binary or skip Rust.
+        default = ROOT / "native/target/release/alis-mpdd"
+        assert args.rust_binary == default, "Requested Rust fixture binary is missing"
+        subprocess.run(["cargo", "build", "--release", "--locked", "--manifest-path",
+                        str(ROOT / "native/Cargo.toml"), "-p", "alis-mpdd"],
+                       env={**os.environ, "CARGO_BUILD_JOBS": "2"}, check=True, timeout=300)
     rows = []
     checks = 0
     with tempfile.TemporaryDirectory(prefix="alis-lean-mpd-") as name:
