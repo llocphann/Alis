@@ -11,6 +11,93 @@ function matchCount(source, pattern) {
   }
   return count;
 }
+// Read *only* the textual body of a uniquely matched function declaration.
+// Delimiter scanning ignores string/comment/template contents and fails closed
+// on malformed or oversized bodies. Never execute an installed helper.
+function inspectFunctionBody(source, declarationEnd) {
+  const unknown = {
+    body_inspection:"unavailable",
+    body_length_band:"unknown",
+    map_read_syntax_present:false,
+    map_write_syntax_present:false,
+    creates_objects_syntax_present:false,
+    calls_other_functions_syntax_present:false,
+    side_effect_freedom_proven:false
+  };
+  if (!Number.isSafeInteger(declarationEnd)) return unknown;
+  const max = 16384;
+  const limit = Math.min(source.length, declarationEnd + max);
+  let state = "normal", escape = false, paren = 1, brace = 0;
+  let bodyStart = -1, bodyEnd = -1;
+  for (let i = declarationEnd; i < limit; i++) {
+    const c = source[i], n = source[i + 1];
+    if (state === "line") {
+      if (c === "\n" || c === "\r") state = "normal";
+      continue;
+    }
+    if (state === "block") {
+      if (c === "*" && n === "/") {state = "normal"; i++;}
+      continue;
+    }
+    if (state !== "normal") {
+      if (escape) {escape = false; continue;}
+      if (c === "\\") {escape = true; continue;}
+      if ((state === "single" && c === "'") ||
+          (state === "double" && c === '"') ||
+          (state === "template" && c === "\`")) state = "normal";
+      continue;
+    }
+    if (c === "/" && n === "/") {state = "line"; i++; continue;}
+    if (c === "/" && n === "*") {state = "block"; i++; continue;}
+    if (c === "'") {state = "single"; continue;}
+    if (c === '"') {state = "double"; continue;}
+    if (c === "\`") {state = "template"; continue;}
+    if (bodyStart < 0) {
+      if (c === "(") paren++;
+      if (c === ")") paren--;
+      if (paren < 0) return {...unknown,body_inspection:"invalid-parameters"};
+      if (paren === 0) {
+        // There must be no non-whitespace token between ')' and '{'.
+        let k = i + 1;
+        while (k < limit && /\s/.test(source[k])) k++;
+        if (source[k] !== "{") return {
+          ...unknown,body_inspection:"unsupported-declaration"
+        };
+        bodyStart = k;
+        brace = 1;
+        i = k;
+      }
+      continue;
+    }
+    if (c === "{") brace++;
+    if (c === "}") {
+      brace--;
+      if (brace === 0) {bodyEnd = i; break;}
+      if (brace < 0) return {...unknown,body_inspection:"invalid-body"};
+    }
+  }
+  if (bodyStart < 0 || bodyEnd < 0)
+    return {...unknown,body_inspection:"unclosed-or-oversize"};
+  const body = source.slice(bodyStart + 1,bodyEnd);
+  // A conservative syntax-only report. Absence of these tokens does NOT
+  // establish a helper is free from side effects; called functions may write.
+  const masked = body
+    .replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g," ")
+    .replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\`(?:[^\`\\]|\\.)*\`/g,"STRING");
+  const has = pattern => pattern.test(masked);
+  return {
+    body_inspection:"complete",
+    body_length_band:body.length <= 256 ? "0-256" :
+      body.length <= 1024 ? "257-1k" :
+      body.length <= 4096 ? "1k-4k" : "4k-16k",
+    map_read_syntax_present:has(/\.(?:get|has)\s*\(/),
+    map_write_syntax_present:has(/\.(?:set|delete|clear)\s*\(/),
+    creates_objects_syntax_present:has(/\bnew\s+[$A-Za-z_]/),
+    calls_other_functions_syntax_present:has(/[$A-Za-z_][\w$]*\s*\(/),
+    side_effect_freedom_proven:false
+  };
+}
+
 function findBinding(initial, shared, symbol) {
   if (!IDENT.test(symbol))
     return {status:"invalid-symbol",kind:"none",asset:"none",candidate_count_capped:0};
@@ -30,7 +117,19 @@ function findBinding(initial, shared, symbol) {
     }
   }
   const total = hits.reduce((n,h) => n + h.count,0);
+  const bodyEvidence = total === 1 && hits[0].kind === "function-declaration"
+    ? (() => {
+      const matchSource = hits[0].asset === "initial" ? initial : shared;
+      const pat = new RegExp("\\bfunction\\s+" + e + "\\s*\\(", "g");
+      const match = pat.exec(matchSource);
+      return match ? inspectFunctionBody(matchSource, match.index +
+        match[0].length) : {body_inspection:"unavailable",
+          side_effect_freedom_proven:false};
+    })()
+    : {body_inspection: total === 1 ? "unsupported-binding-kind" :
+        "binding-not-unique",side_effect_freedom_proven:false};
   return {
+    ...bodyEvidence,
     status: total === 1 ? "unique-declaration" :
       total === 0 ? "unresolved-static" : "ambiguous",
     kind: total === 1 ? hits[0].kind : "none",
