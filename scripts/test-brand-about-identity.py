@@ -21,6 +21,16 @@ assert 'text: "Alis"' in material and 'title: "Alis"' in material
 assert 'text: "Alis"' in waffle
 assert 'source: Quickshell.shellPath("assets/icons/sf.jpg")' not in material
 assert 'label: Translation.tr("Original Project (end-4)")' not in waffle
-assert (root / "assets/systemd/inir.service").is_file(), "compatibility unit removed"
-assert '//@ pragma ShellId inir' in (root / "shell.qml").read_text(), "runtime identity changed"
+# Test the actual identity of the checked-out branch without weakening either
+# service contract. Canonical must NOT ship the old installable session unit.
+shell = (root / "shell.qml").read_text()
+canonical = '//@ pragma ShellId alis' in shell
+compatible = '//@ pragma ShellId inir' in shell
+assert canonical != compatible, "ambiguous/missing ShellId"
+if canonical:
+    assert (root / "assets/systemd/alis.service").is_file(), "canonical unit missing"
+    assert not (root / "assets/systemd/inir.service").exists(), "duplicate legacy unit in canonical runtime"
+else:
+    assert (root / "assets/systemd/inir.service").is_file(), "compatibility unit removed"
+    assert not (root / "assets/systemd/alis.service").exists(), "duplicate Alis service in compatibility runtime"
 print("PASS: Material/Waffle Alis About + embedded owner avatar + both original-project credits")
