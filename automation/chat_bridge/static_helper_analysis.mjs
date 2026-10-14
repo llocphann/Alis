@@ -205,7 +205,9 @@ function inspectFunctionBody(source, declarationEnd) {
         return {origin_hint:"new-other-syntax",hops_capped:Math.min(8,hops)};
       if (/^[$A-Za-z_][\w$]*\s*\(/.test(rhs))
         return {origin_hint:"helper-call-result",hops_capped:Math.min(8,hops)};
-      if (/^[$A-Za-z_][\w$]*\s*(?:\?\.|\.)/.test(rhs))
+      // Optional computed member (owner?.[key]) is not the same as
+      // owner?.property; route it to bounded complex-expression analysis.
+      if (/^[$A-Za-z_][\w$]*\s*(?:\?\.(?!\s*\[)|\.)/.test(rhs))
         return {origin_hint:"member-result",hops_capped:Math.min(8,hops)};
       const alias = rhs.match(/^([$A-Za-z_][\w$]*)\s*(?=[,;}\n\r]|$)/);
       if (!alias)
