@@ -80,3 +80,39 @@ owner-gated and must not run automatically. Then review
 `bash scripts/brand-canonical-cutover.sh --dry-run` before making any
 owner-authorized service changes. Package-managed users must upgrade using
 their package manager. Source tests are not physical desktop verification.
+
+## Transitional launcher bootstrap (before owner cutover)
+
+A repo-copy desktop may retain a **managed compatibility** `~/.local/bin/alis`
+launcher which forwards to the now-retired `inir` runtime. The source
+`scripts/alis` is canonical but the installed launcher has not been updated.
+Both `alis update` and service cutover intentionally refuse a dual-owner
+state; demanding an already-canonical public CLI before staging created a
+circular dependency.
+
+`bash scripts/brand-canonical-stage.sh --dry-run` identifies the old managed
+launcher without writing anything. On explicit owner approval,
+`--apply --owner-approved` first prepares a separate canonical QML/native
+runtime (or verifies a complete existing Alis runtime), then copies the old
+managed launcher **byte-for-byte** to a unique
+`~/.local/state/alis-cutover-backups/launcher-*/alis` directory, and atomically
+installs the source canonical CLI at the user launcher path. It recognizes
+only the signed-off historical wrapper markers plus the internal iNiR
+delegation. Unknown executables, symlinks, shadowing PATH commands, partial
+runtime targets and package-managed installs are rejected. Already-canonical
+launchers and completely staged runtime are left unchanged.
+
+Staging **does not** stop either systemd unit, perform a data migration or
+change Niri keybinds. While `inir.service` still owns the desktop, replacing
+the public CLI can affect commands aimed at the old runtime; conduct the
+subsequent cutover from a safe recovery-capable session. Run the separate
+`brand-canonical-cutover.sh --dry-run` after staging, and do not apply that
+cutover while any reported Niri, XDG, owner-unit, backup or package
+qualification blocker remains. The original CLI backup is **not** a proof
+of full service rollback; restored service startup and original engine have
+separate release gates.
+
+The dedicated regression verifies foreign and symlink launcher rejection,
+explicit consent, byte-for-byte backup, complete-runtime idempotency,
+native build, retained owner unit and untouched synthetic preferences and
+first-run marker.
