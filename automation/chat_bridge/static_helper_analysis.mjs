@@ -85,8 +85,37 @@ function inspectFunctionBody(source, declarationEnd) {
     .replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g," ")
     .replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\`(?:[^\`\\]|\\.)*\`/g,"STRING");
   const has = pattern => pattern.test(masked);
+  // Cautious lexical classification of .set/.delete/.clear receivers.
+  // A fresh local Map write is NOT proof of no side effects: the local can
+  // escape, helper calls can mutate external state, and minified classes
+  // may implement these methods with arbitrary behavior.
+  const paramsMatch = source.slice(declarationEnd, bodyStart).match(
+    /^\s*((?:[$A-Za-z_][\w$]*\s*,\s*)*[$A-Za-z_][\w$]*|)\s*\)\s*$/
+  );
+  const params = paramsMatch
+    ? new Set(paramsMatch[1] ? paramsMatch[1].split(",").map(x=>x.trim()) : [])
+    : null;
+  const freshLocals = new Set([...masked.matchAll(
+    /\b(?:const|let|var)\s+([$A-Za-z_][\w$]*)\s*=\s*new\s+Map\s*\(/g
+  )].map(m=>m[1]));
+  const receiverCalls = [...masked.matchAll(
+    /\b([$A-Za-z_][\w$]*)\s*\.\s*(?:set|delete|clear)\s*\(/g
+  )];
+  const counts = {fresh_local_capped:0,direct_parameter_capped:0,
+    other_or_unknown_capped:0};
+  for(const m of receiverCalls){
+    const receiver = m[1];
+    if(params?.has(receiver)) counts.direct_parameter_capped++;
+    else if(freshLocals.has(receiver)) counts.fresh_local_capped++;
+    else counts.other_or_unknown_capped++;
+  }
+  for(const key of Object.keys(counts)) counts[key] = Math.min(8, counts[key]);
+  const originStatus = receiverCalls.length === 0 ? "no-lexical-calls" :
+    params ? "lexical-classification-only" : "unsupported-parameters";
   return {
     body_inspection:"complete",
+    map_write_origin_status:originStatus,
+    map_write_receiver_counts:counts,
     body_length_band:body.length <= 256 ? "0-256" :
       body.length <= 1024 ? "257-1k" :
       body.length <= 4096 ? "1k-4k" : "4k-16k",
