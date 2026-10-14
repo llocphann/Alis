@@ -2631,7 +2631,10 @@ run_update() {
     local native_dest="$II_TARGET/native/bin"
     if [[ "$src_real" == "$tgt_real" ]]; then native_dest="$II_SOURCE/native/target/release"; fi
     tui_info "Building qualified Rust runtime..."
-    if ! "$II_SOURCE/native/scripts/install-runtime.sh" --dest "$native_dest"; then
+    # The tracked helper is a Bash source file (git mode 100644), not an
+    # executable entrypoint. Match install and Makefile invocation; otherwise
+    # repo-copy updates stop after payload sync with "Permission denied".
+    if ! bash "$II_SOURCE/native/scripts/install-runtime.sh" --dest "$native_dest"; then
         _report_update_failure "native" "Rust runtime build/install failed"
         [[ -n "$runtime_backup_path" ]] && rollback_update >/dev/null 2>&1 || true
         tui_error "Rust runtime build/install failed"
