@@ -17,6 +17,10 @@ assert.equal(r.primary_helper.kind,"function-declaration");
 assert.equal(r.secondary_helper.status,"unique-declaration");
 assert.equal(r.secondary_helper.kind,"arrow-function");
 assert.equal(r.static_binding_match_complete,true);
+assert.equal(r.primary_helper.body_inspection,"complete");
+assert.equal(r.primary_helper.creates_objects_syntax_present,true);
+assert.equal(r.primary_helper.side_effect_freedom_proven,false);
+assert.equal(r.secondary_helper.body_inspection,"unsupported-binding-kind");
 assert.equal(r.submission_authorized,false);
 assert.equal(r.supported,false);
 assert.equal(r.helper_identity_relation,"distinct");
@@ -42,6 +46,45 @@ assert.equal(r.static_binding_match_complete,true);
 r=inspect(afterIfBundle+";function build(c,d){}","",afterIf);
 assert.equal(r.secondary_helper.status,"ambiguous");
 assert.equal(r.static_binding_match_complete,false);
+
+// Never treat function bodies that merely lack direct writes as side-effect
+// free. Detect lexical Map read/write syntax without calling the helpers.
+const effectsSrc="resolve(p,c){let a=make(p,c,s),b=a.get(s);" +
+  "let z=build(c,s);return b}";
+const effectsBundle="function make(p,c,s){const map=new Map();" +
+  "if(c.has(s)){map.set(s,c.get(s))}return map}" +
+  "function build(c,s){let x=c;return x}" +
+  "class Resolver{" + effectsSrc + "}";
+r=inspect(effectsBundle,"",effectsSrc);
+assert.equal(r.static_binding_match_complete,true);
+assert.equal(r.primary_helper.body_inspection,"complete");
+assert.equal(r.primary_helper.map_read_syntax_present,true);
+assert.equal(r.primary_helper.map_write_syntax_present,true);
+assert.equal(r.primary_helper.creates_objects_syntax_present,true);
+assert.equal(r.primary_helper.side_effect_freedom_proven,false);
+assert.equal(r.secondary_helper.body_inspection,"complete");
+assert.equal(r.secondary_helper.map_write_syntax_present,false);
+assert.equal(r.secondary_helper.side_effect_freedom_proven,false);
+
+const falseSyntaxSrc="resolve(p,c){let a=make(p,c,s),b=build(c,s);return b}";
+const falseSyntaxBundle="function make(p,c,s){const x='secret .set(value) }';" +
+  "/* .clear() } */ return {x}}" +
+  "function build(c,s){return c}" +
+  "class Resolver{" + falseSyntaxSrc + "}";
+r=inspect(falseSyntaxBundle,"",falseSyntaxSrc);
+assert.equal(r.primary_helper.body_inspection,"complete");
+assert.equal(r.primary_helper.map_write_syntax_present,false);
+assert.equal(r.primary_helper.side_effect_freedom_proven,false);
+
+// Unbalanced candidate bodies are reported without source, values, or
+// speculative effects. Declaration uniqueness alone is not semantic proof.
+const brokenSource="resolve(p,c){let a=make(p,c,s),b=build(c,s);return a}";
+const brokenBundle="function make(p,c,s){let secret='ghp_TEST_ONLY';" +
+  "function build(c,s){return c}" + "class Resolver{" + brokenSource + "}";
+r=inspect(brokenBundle,"",brokenSource);
+assert.equal(r.primary_helper.body_inspection,"unclosed-or-oversize");
+assert.equal(r.primary_helper.side_effect_freedom_proven,false);
+assert.ok(!JSON.stringify(r).includes("ghp_TEST_ONLY"));
 
 r=inspect(bundled,bundled);
 assert.equal(r.resolver_source_location,"ambiguous");
