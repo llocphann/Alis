@@ -43,6 +43,10 @@ def main() -> None:
                 "XDG_CONFIG_HOME": tmp + "/config",
                 "XDG_STATE_HOME": tmp + "/state"}):
             pid = "strict-lossless-research"
+            # Restored Automation now starts disabled: this test explicitly
+            # opts into profile execution before testing service error paths.
+            store.change(lambda config, state:
+                         config["profiles"][0].update(enabled=True))
 
             def stale(_config, runtime):
                 runtime["owner_id"] = pid
