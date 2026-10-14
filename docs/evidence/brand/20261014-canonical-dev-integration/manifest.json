@@ -1,0 +1,40 @@
+{
+  "tested_source": "c69d95fef30d0ce24c28959fed2311a7da6819df",
+  "merged_branch": "d4798ffd232d976a2e9525d898686ce4cd36b2b7",
+  "preserved_dev": "3f0018a42e04b59b77dd5000c74173eb398d6671",
+  "scope": "Focused source and isolated synthetic migration tests; no installed/service/cold-login/owner acceptance",
+  "corrected_launches": {
+    "08": "13",
+    "17": "18"
+  },
+  "about_test": {
+    "command": [
+      "python3",
+      "scripts/test-brand-about-identity.py"
+    ],
+    "exit": 0
+  },
+  "files": {
+    "00.log.gz": "27053d4cf42d11ca662c52858ad80bdd208aea64f26b28c17ab8638ffb944bdf",
+    "01.log.gz": "1f5d89b678de01c72df8cf4546a031f1453a0ba7a170264670c10555a3e0bc3d",
+    "02.log.gz": "d15682b140a8fa16b97d3465cab2665980192c1a6e79c32950c8f470aad6caaa",
+    "03.log.gz": "96b2dcd5b34fda6a565acecef741e88ac36db3c2c15a7392e9cb9c21a845eb73",
+    "04.log.gz": "9d0f31f2b8c2650f1ed36961194ed43384364f963c60d41817ecaf1b02b6fea9",
+    "05.log.gz": "00812760f9492e05c7db30ee81c55321c72b3f449a36a73fbec889d0ec1c02aa",
+    "06.log.gz": "a61ea0dd4c9dc5b74a39db2a5e08016145bb726d189c02fbb6a594765ac7822c",
+    "07.log.gz": "89f942de7cd1814f396fe4749a53495b4b5ba9d262fda1fd5eb4072cc5f16ce9",
+    "08.log.gz": "fed5d59280daafec7c18b729a9f4336bde223b33319f79a3ee31242d169a74fd",
+    "09.log.gz": "3e9f9950ddcda8208e7481d41266c1d519f794bcac2f6b824e0a610ed5fe605e",
+    "10.log.gz": "014c3c37370ac98f3397d81c545663c83b2fe2158b82cf886100fc1510ea4d8f",
+    "11.log.gz": "d3e34fc3224cb7edac51a4c5197d7d0a32ca225845b15ec74a37e26ae64e5734",
+    "12.log.gz": "3452db89dad4359b5b86204e49f0bc02e501c0059879e621eb912df6a6daf8f0",
+    "13.log.gz": "4855af9a66f1ea08089d45aa761c991452ae863ab4d547b8e96181b06e44e38d",
+    "14.log.gz": "3a10cca4bd7fa5a8e470cc9a1edd2070624069d44b48629b8758795dbfce3bb1",
+    "15.log.gz": "eab867105c5d95af1f6290fe4d19ca8279a320f9a2e8ff87d85f3979f33a1352",
+    "16.log.gz": "bba53c70bb24f028cf513adcf541a82a1cc8894733a34a22292d8ea043a2cc95",
+    "17.log.gz": "1a507ffd5ad45492bde97557e5cb0928887fce9770c09ee5d5898a2a1b9b9bfc",
+    "18.log.gz": "dd958f10b5f39a80bb23e0ba4de5df524ea78106e152a9d7343ad2ba680f8381",
+    "receipt.json": "34024cf3385a61f3881f2ddd9e0ff0e9d088ca097182ebea086ff1be1e2e5522",
+    "supplement.json": "9d9145d7f9c5d0a31a431d47f06a00324906a5165c6a149445389cbf344daacb"
+  }
+}

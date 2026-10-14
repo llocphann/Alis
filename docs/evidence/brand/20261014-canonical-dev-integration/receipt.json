@@ -1,0 +1,131 @@
+{
+  "source": "c69d95fef30d0ce24c28959fed2311a7da6819df",
+  "tests": [
+    {
+      "command": [
+        "python3",
+        "scripts/brand-canonical-audit.py",
+        "--strict",
+        "--limit",
+        "5"
+      ],
+      "exit": 0,
+      "seconds": 2.27,
+      "log": ".git/maintainer-validation/20261014-brand-merge/00.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-brand-canonical-contracts.sh"
+      ],
+      "exit": 0,
+      "seconds": 2.32,
+      "log": ".git/maintainer-validation/20261014-brand-merge/01.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-brand-canonical-cutover.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.62,
+      "log": ".git/maintainer-validation/20261014-brand-merge/02.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-brand-canonical-rollback.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.21,
+      "log": ".git/maintainer-validation/20261014-brand-merge/03.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-brand-owner-audit.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.16,
+      "log": ".git/maintainer-validation/20261014-brand-merge/04.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-brand-canonical-keyring.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.06,
+      "log": ".git/maintainer-validation/20261014-brand-merge/05.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-brand-canonical-config.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.06,
+      "log": ".git/maintainer-validation/20261014-brand-merge/06.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-brand-canonical-arch-snapshot.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.06,
+      "log": ".git/maintainer-validation/20261014-brand-merge/07.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-brand-niri-keybind-repair.sh"
+      ],
+      "exit": 127,
+      "seconds": 0.0,
+      "log": ".git/maintainer-validation/20261014-brand-merge/08.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-native-production-contract.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.03,
+      "log": ".git/maintainer-validation/20261014-brand-merge/09.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-native-selector-contract.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.06,
+      "log": ".git/maintainer-validation/20261014-brand-merge/10.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-native-selector-behavior.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.26,
+      "log": ".git/maintainer-validation/20261014-brand-merge/11.log"
+    },
+    {
+      "command": [
+        "cargo",
+        "metadata",
+        "--no-deps",
+        "--locked",
+        "--format-version",
+        "1",
+        "--manifest-path",
+        "native/Cargo.toml"
+      ],
+      "exit": 0,
+      "seconds": 0.11,
+      "log": ".git/maintainer-validation/20261014-brand-merge/12.log"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "source": "c69d95fef30d0ce24c28959fed2311a7da6819df",
+  "tests": [
+    {
+      "command": [
+        "bash",
+        "scripts/test-brand-niri-hotkeys.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.16,
+      "log": ".git/maintainer-validation/20261014-brand-merge/13.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-brand-upgrade-rollback.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.21,
+      "log": ".git/maintainer-validation/20261014-brand-merge/14.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-brand-uninstall.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.06,
+      "log": ".git/maintainer-validation/20261014-brand-merge/15.log"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/lib/generate-ipc-registry.py",
+        "--check"
+      ],
+      "exit": 0,
+      "seconds": 0.16,
+      "log": ".git/maintainer-validation/20261014-brand-merge/16.log"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-brand-identity.sh"
+      ],
+      "exit": 127,
+      "seconds": 0.0,
+      "log": ".git/maintainer-validation/20261014-brand-merge/17.log"
+    }
+  ]
+}
