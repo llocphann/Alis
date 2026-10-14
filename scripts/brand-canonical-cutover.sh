@@ -72,7 +72,7 @@ if [[ -f "$niri_root" ]]; then
       exit 2
     fi
     declared_includes="$(grep -Ec '^[[:space:]]*include[[:space:]]+' "$path" || true)"
-    parsed_includes="$(sed -nE 's/^[[:space:]]*include[[:space:]]+"([^"]+)".*$/\\1/p' "$path" | wc -l)"
+    parsed_includes="$(sed -nE 's/^[[:space:]]*include[[:space:]]+"([^"]+)".*$/\1/p' "$path" | wc -l)"
     if [[ "$declared_includes" != "$parsed_includes" ]]; then
       echo "Unrecognized active Niri include syntax: $path" >&2
       exit 2
@@ -100,7 +100,7 @@ if [[ -f "$niri_root" ]]; then
       [[ "$normalized" == "$niri_dir/"* ]] ||
         { echo "Niri include leaves config root: $candidate" >&2; exit 2; }
       niri_bind_files+=("$normalized")
-    done < <(sed -nE 's/^[[:space:]]*include[[:space:]]+"([^"]+)".*$/\\1/p' "$path")
+    done < <(sed -nE 's/^[[:space:]]*include[[:space:]]+"([^"]+)".*$/\1/p' "$path")
   done
 fi
 # Package ownership may be recorded under any historical config root.
