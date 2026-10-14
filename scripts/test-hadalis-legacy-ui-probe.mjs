@@ -23,7 +23,10 @@ const page=(opts={})=>{
   const data={composer:opts.composer??[{visible:true,disabled:false,draft:""}],
     badge:opts.badge??[{visible:true}],list:opts.list??[],
     scopedComposer:opts.scopedComposer??[],
+    action:opts.action??[],
     send:opts.send??[{visible:true,disabled:false}],stop:opts.stop??[]};
+  data.genericComposer=opts.genericComposer??(
+    data.scopedComposer.length>0?[]:data.composer);
   return {
     url:()=>opts.url??"app://-/index.html",
     keyboard:{press:failWrite,insertText:failWrite},
@@ -31,11 +34,16 @@ const page=(opts={})=>{
     getByRole(role,options){
       if(role==="textbox"&&options.name==="New chat in Automatic Alis" &&
          options.exact===true)return makeLocator(data.scopedComposer);
+      if(role==="textbox"&&options.name instanceof RegExp &&
+         options.name.test("Ask ChatGPT"))return makeLocator(data.genericComposer);
       if(role==="textbox")return makeLocator(data.composer);
       if(role==="list")return makeLocator(data.list);
       if(role==="button"&&options.name==="Send")return makeLocator(data.send);
       if(role==="button"&&options.name instanceof RegExp &&
           options.name.test("Stop"))return makeLocator(data.stop);
+      if(role==="button"&&options.name instanceof RegExp &&
+          options.name.test("New chat in Automatic Alis"))
+        return makeLocator(data.action);
       if(role==="button")return makeLocator(data.badge);
       throw Error("UNEXPECTED_ROLE");
     }
@@ -63,13 +71,27 @@ assert.equal(result.project_view_visible,false);
 assert.equal(result.observation_ready,false);
 assert.equal(result.read_only_project_entry_ready,false);
 assert.ok(result.readiness_issues.includes("PROJECT_UI_GUARD_NOT_UNIQUE"));
-assert.ok(result.readiness_issues.includes("SEND_CONTROL_NOT_READY"));
+assert.ok(result.readiness_issues.includes(
+  "SEND_ABSENT_ON_EMPTY_UNSCOPED_COMPOSER"));
+assert.equal(result.composer_scope_evidence,
+  "generic-label-without-project-guard");
+assert.equal(result.send_control_state,"absent-on-empty-unscoped-composer");
+assert.equal(result.project_new_chat_action_visible,false);
+// The Project's new-chat action is a manual navigation affordance, never
+// proof that the CURRENT blank editor belongs to that Project.
+result=await inspect({badge:[],list:[{visible:true,selected:[]}],send:[],
+  action:[{visible:true}]});
+assert.equal(result.project_new_chat_action_visible,true);
+assert.equal(result.project_view_visible,false);
+assert.equal(result.read_only_project_entry_ready,false);
+assert.equal(result.submission_authorized,false);
 // A distinctly project-scoped blank composer may legitimately hide Send.
 // This is only "read-only project entry ready"; managed sends stay blocked.
 result=await inspect({badge:[],list:[{visible:true,selected:[]}],send:[],
   scopedComposer:[{visible:true,disabled:false,draft:""}]});
 assert.equal(result.project_view_visible,true);
 assert.equal(result.empty_project_composer_observed,true);
+assert.equal(result.composer_scope_evidence,"exact-project-scoped-label");
 assert.equal(result.read_only_project_entry_ready,true);
 assert.equal(result.observation_ready,false);
 assert.deepEqual(result.readiness_issues,
@@ -143,6 +165,9 @@ try {
     "if(role==='textbox'&&opt.name==='New chat in Automatic Alis')",
     " return locator(process.env.MOCK_BLANK_PROJECT==='1'",
     " ?[{visible:true,disabled:false}]:[]);",
+    "if(role==='textbox'&&opt.name instanceof RegExp&&opt.name.test('Ask ChatGPT'))",
+    " return locator(process.env.MOCK_BLANK_PROJECT==='1'",
+    " ?[]:[{visible:true,disabled:false}]);",
     "if(role==='textbox')return locator([{visible:true,disabled:false}]);",
     "if(role==='list')return locator(process.env.MOCK_BLANK_PROJECT==='1'",
     " ?[{visible:true,selected:[]}]:[]);",
@@ -150,6 +175,8 @@ try {
     " return locator(process.env.MOCK_BLANK_PROJECT==='1'",
     " ?[]:[{visible:true}]);",
     "if(role==='button'&&opt.name instanceof RegExp&&opt.name.test('Stop'))return locator([]);",
+    "if(role==='button'&&opt.name instanceof RegExp&&opt.name.test('New chat in Automatic Alis'))",
+    " return locator(process.env.MOCK_SHOW_PROJECT_ACTION==='1'?[{visible:true}]:[]);",
     "return locator(process.env.MOCK_BLANK_PROJECT==='1'?[]:[{visible:true}]);}};",
     "export const chromium={connectOverCDP:async url=>{",
     "if(url!=='http://127.0.0.1:9222')throw Error('UNEXPECTED_URL');",
@@ -178,6 +205,11 @@ try {
     ["SEND_ABSENT_ON_EMPTY_PROJECT_COMPOSER"]);
   assert.equal(blankReport.submission_authorized,false);
   assert.equal(blankReport.durable_server_receipt_verified,false);
+  const withAction=run(["probe"],{MOCK_SHOW_PROJECT_ACTION:"1"});
+  assert.equal(withAction.status,0);
+  const actionReport=JSON.parse(withAction.stdout);
+  assert.equal(actionReport.project_new_chat_action_visible,true);
+  assert.equal(actionReport.submission_authorized,false);
   const denied=run(["submit"]);
   assert.equal(denied.status,1);
   assert.equal(JSON.parse(denied.stdout).error_code,
