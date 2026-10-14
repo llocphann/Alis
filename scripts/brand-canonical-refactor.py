@@ -35,6 +35,9 @@ EXCLUDED_PREFIXES = (
     "defaults/plugins/", "assets/icons/fluent/",
     # Upstream names in About are attribution, never canonicalized to Alis.
     "modules/settings/About.qml", "modules/waffle/settings/pages/WAboutPage.qml",
+    # Package post-upgrade notices must recognize retiring iNiR services.
+    "distro/arch/alis-shell/alis-shell.install",
+    "distro/arch/alis-shell-git/alis-shell-git.install",
 )
 BINARY_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".webp", ".gif", ".woff", ".ttf", ".otf",

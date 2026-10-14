@@ -9,7 +9,7 @@ Fresh users: prepare the canonical Alis config before running migrations,
 then start Alis with 'alis run' or its compositor-specific 'alis service enable'
 and 'alis service start' commands.
 
-Upgrading from Alis: do not enable a second service or run old migration 019.
+Upgrading from iNiR: do not enable a second service or run old migration 019.
 Back up settings, reconcile user config/state, verify Niri keybinds and
 complete an owner-approved single-service handoff before running 'alis migrate'.
 See docs/BRAND_R01_CANONICAL_CUTOVER.md in the installed documentation.
@@ -24,7 +24,7 @@ post_upgrade() {
 Alis has been upgraded.
 
 Package-managed installs use pacman for updates. Pacman does not migrate
-user home directories. If alis.service is still present, DO NOT start Alis
+user home directories. If inir.service is still present, DO NOT start Alis
 in parallel or run 'alis migrate' yet. Follow the owner-gated rebrand handoff.
 After user config is reconciled and only alis.service owns the shell, run
 'alis migrate' and then 'alis restart' as the affected user.
