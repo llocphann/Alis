@@ -86,6 +86,9 @@ ShellRoot {
    check(!LocalMusic.enabled,"fixture started enabled")
    Config.options={dashboard:{music:{enable:true}},sidebar:{music:{mpdHost:"fixture.invalid",mpdPort:6600}}}
    tryVerify(()=>LocalMusic.available && !LocalMusic.scanning,1500)
+   calls.reload()
+   const scans=calls.text().trim().split("\\n").filter(line=>line).map(line=>JSON.parse(line)).filter(args=>args[0]==="mpd" && args[1]==="snapshot")
+   check(scans.length===1 && scans[0][scans[0].length-1]==="--lean","internal scan did not request the additive lean route")
    wait(350)
    const timer=LocalMusic.fixturePollTimer
    check(timer && timer.interval===30000,"hidden fallback cadence changed")
