@@ -101,6 +101,21 @@ function inspectFunctionBody(source, declarationEnd) {
   const receiverCalls = [...masked.matchAll(
     /\b([$A-Za-z_][\w$]*)\s*\.\s*(?:set|delete|clear)\s*\(/g
   )];
+  // Only the current helper body and its positional parameters are
+  // inspected. Outer/module bindings are NOT resolved. Never call Map or
+  // compare it against a renderer/global constructor: both may execute code.
+  const localMapShadowSyntax = params === null ? "parameters-unparsed" :
+    params.has("Map") ? "parameter-name" :
+    /\\b(?:const|let|var|function|class)\\s+Map\\b/.test(masked)
+      ? "local-declaration-token" :
+    /(?:^|[,;{}])\\s*Map\\s*=(?!=)/.test(masked)
+      ? "assignment-token" : "not-detected";
+  const constructorEvidence = {
+    local_map_shadow_syntax:localMapShadowSyntax,
+    module_or_closure_binding_inspected:false,
+    builtin_map_identity_verified:false,
+    constructor_side_effects_verified:false
+  };
   const counts = {fresh_local_capped:0,direct_parameter_capped:0,
     other_or_unknown_capped:0};
   // Further distinguish *why* a receiver stayed unknown without exporting
@@ -316,6 +331,8 @@ function inspectFunctionBody(source, declarationEnd) {
       unknownSites.push({receiver_form:"bare-identifier",
         receiver_initializer_kind:kind,
         owner_origin_hint:"not-applicable",
+        ...(kind === "new-map-token-no-args"
+          ? {map_constructor_binding:constructorEvidence} : {}),
         ...(["identifier-alias","other-expression",
           "new-constructor-no-args","new-map-token-no-args"].includes(kind)
           ? {alias_trace:traceIdentifierAlias(receiver,m.index)} : {})});
