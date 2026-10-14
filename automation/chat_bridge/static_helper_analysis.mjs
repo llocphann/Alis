@@ -105,7 +105,11 @@ function inspectFunctionBody(source, declarationEnd) {
     other_or_unknown_capped:0};
   for(const m of receiverCalls){
     const receiver = m[1];
-    if(params?.has(receiver)) counts.direct_parameter_capped++;
+    // A call like object.parameter.set(...) refers to a property, not
+    // necessarily the parameter with the same spelling.
+    const before = masked.slice(0,m.index).trimEnd();
+    if(before.endsWith(".")) counts.other_or_unknown_capped++;
+    else if(params?.has(receiver)) counts.direct_parameter_capped++;
     else if(freshLocals.has(receiver)) counts.fresh_local_capped++;
     else counts.other_or_unknown_capped++;
   }
