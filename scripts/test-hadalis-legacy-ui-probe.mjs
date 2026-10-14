@@ -35,7 +35,9 @@ const page=(opts={})=>{
       if(role==="textbox"&&options.name==="New chat in Automatic Alis" &&
          options.exact===true)return makeLocator(data.scopedComposer);
       if(role==="textbox"&&options.name instanceof RegExp &&
-         options.name.test("Ask ChatGPT"))return makeLocator(data.genericComposer);
+         options.name.test("Ask ChatGPT") &&
+         !options.name.test("New chat in Automatic Alis"))
+        return makeLocator(data.genericComposer);
       if(role==="textbox")return makeLocator(data.composer);
       if(role==="list")return makeLocator(data.list);
       if(role==="button"&&options.name==="Send")return makeLocator(data.send);
@@ -165,7 +167,8 @@ try {
     "if(role==='textbox'&&opt.name==='New chat in Automatic Alis')",
     " return locator(process.env.MOCK_BLANK_PROJECT==='1'",
     " ?[{visible:true,disabled:false}]:[]);",
-    "if(role==='textbox'&&opt.name instanceof RegExp&&opt.name.test('Ask ChatGPT'))",
+    "if(role==='textbox'&&opt.name instanceof RegExp&&opt.name.test('Ask ChatGPT')",
+    " &&!opt.name.test('New chat in Automatic Alis'))",
     " return locator(process.env.MOCK_BLANK_PROJECT==='1'",
     " ?[]:[{visible:true,disabled:false}]);",
     "if(role==='textbox')return locator([{visible:true,disabled:false}]);",
