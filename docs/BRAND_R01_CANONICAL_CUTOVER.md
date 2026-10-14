@@ -149,3 +149,58 @@ After updating a reviewed repo checkout, rerun
 `bash scripts/brand-canonical-cutover.sh --dry-run` to inspect **all**
 remaining blockers before any owner-authorized live cutover. A green synthetic
 test does not count as R10 desktop verification.
+
+## Singleton D-Bus name repair (owner failure, October 14, 2026)
+
+The owner observed a **real**, owner-approved service cutover failure:
+`alis.service: Two services allocated for the same bus name
+org.kde.StatusNotifierWatcher, refusing operation` (21:15:21 local time).
+The initial rollback brought `inir.service` back to **active** and
+`alis.service` to **not-found/inactive**. Merely stopping `inir.service`
+does **not** retire its systemd unit, so the manager still reserves
+`BusName=org.kde.StatusNotifierWatcher` for both installed units.
+
+The canonical cutover now checks that the installed `alis` CLI exactly
+matches the reviewed source (`cmp`) before the old desktop is stopped.
+For a stale but recognized canonical launcher, review
+`bash scripts/brand-canonical-stage.sh --dry-run`. Its separately
+owner-approved apply preserves the previous launcher byte-for-byte under
+`alis-cutover-backups/launcher-*/alis` and atomically installs the source
+launcher. It does not stop either service. A complete already-staged Alis
+runtime is retained.
+
+At owner-authorized cutover, the script stops the old owner before copying
+its final config/data/state, creates a verified original unit backup, moves
+`inir.service` to
+`$XDG_STATE_HOME/alis-cutover-backups/retired-inir.service` **outside
+systemd's unit search path**, installs a `inir.service -> /dev/null` mask,
+rewires the compositor's managed `*.wants` link, reloads the user manager,
+and verifies **legacy unit = masked, canonical unit = loaded** before
+starting Alis. The mask also prevents lower-priority package units from
+reclaiming the old identity. A failed start attempts to restore the exact
+original file, previous wants links and previous sole active service. No
+cache/data root is deleted.
+
+After a successful cutover, the original unit is **archived and masked**,
+not an inactive `Type=dbus` unit left installed beside Alis. The setup
+update guard admits this state only when the old unit is inactive, the
+managed mask points to `/dev/null`, the verified archive still exists,
+the old compositor wants link is absent and canonical `ShellId alis`
+is staged. An old active unit, a missing archive or a foreign mask fails
+closed.
+
+The owner-approved `brand-canonical-rollback.sh` uses the reverse
+transaction: archive the Alis unit outside the search path, remove only
+the recognized legacy mask, restore the original unit from its verified
+archive, rewire the compositor, daemon-reload and start the old owner.
+If old startup fails it attempts to restore the canonical unit, mask and
+links before restarting Alis. The two unit files must never be visible
+to systemd with an identical `BusName` during the same reload.
+
+**Acceptance is still pending.** The isolated regression mocks systemd's
+duplicate-name failure and tests both switch directions, denied consent,
+archive integrity and rollback restoration. A green synthetic test does
+not substitute for an actual user-manager run and owner cold-login / IPC /
+system tray / restore verification. Never retry `--apply` merely because a
+new commit exists; first ensure the existing desktop is healthy, inspect
+the current dry-run and have an independent recovery terminal available.
