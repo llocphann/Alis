@@ -9,6 +9,9 @@ on:
       - scripts/brand-canonical-stage.sh
       - scripts/test-brand-canonical-stage.sh
       - scripts/test-brand-legacy-owner-update.sh
+      - scripts/test-config-namespace-migration.sh
+      - sdata/migrations/019-config-dir-rename-compat.sh
+      - docs/CONFIG_SYSTEM.md
       - scripts/brand-canonical-cutover.sh
       - scripts/test-brand-canonical-cutover.sh
       - scripts/brand-recovery-cli.sh
@@ -60,6 +63,8 @@ jobs:
         run: python3 scripts/test-brand-cli-session-guard.py
       - name: Retained user environment and config aliases
         run: python3 scripts/test-brand-env-compat.py
+      - name: Historical migration 019 remains fail-closed without advertising retired CLI
+        run: bash scripts/test-config-namespace-migration.sh
       - name: Active quoted commands cannot evade the identity audit
         run: python3 scripts/test-brand-canonical-audit.py
       - name: Pinned Arch CLI preserves the session-owner boundary
