@@ -69,6 +69,9 @@ with tempfile.TemporaryDirectory(prefix="alis-companion-managed-") as td:
     cmd("git","-c","user.name=Fixture","-c","user.email=fixture@example.invalid",
         "commit","-qm","first",cwd=source)
     first = cmd("git","rev-parse","HEAD",cwd=source).stdout.strip()
+    # The pinned upstream package intentionally uses this historical daemon
+    # name. Alis must accept it without renaming the package's signed files.
+    assert json.loads((source/"manifest.json").read_text())["binary"] == "native/bin/inir-companiond"
     remote = root / "remote.git"
     cmd("git","clone","--bare","-q",str(source),str(remote))
     cmd("git","remote","add","origin",str(remote),cwd=source)
@@ -85,9 +88,13 @@ with tempfile.TemporaryDirectory(prefix="alis-companion-managed-") as td:
     cmd("git","remote","set-url","origin",str(root/"offline"),cwd=checkout)
     sync(first)
     assert current.resolve().name==first
-    # A later revision must refuse a foreign remote and preserve the old release.
+    # A future Alis-Companion revision can switch its binary name without
+    # breaking users upgrading from the pinned historical release.
+    spec = json.loads((source/"manifest.json").read_text())
+    spec["binary"] = "native/bin/alis-companiond"
+    (source/"manifest.json").write_text(json.dumps(spec))
     (source/"extra.txt").write_text("next\n")
-    cmd("git","add","extra.txt",cwd=source)
+    cmd("git","add","-A",cwd=source)
     cmd("git","-c","user.name=Fixture","-c","user.email=fixture@example.invalid",
         "commit","-qm","second",cwd=source)
     second=cmd("git","rev-parse","HEAD",cwd=source).stdout.strip()
@@ -100,6 +107,20 @@ with tempfile.TemporaryDirectory(prefix="alis-companion-managed-") as td:
     sync(second)
     assert current.resolve().name==second
     assert first != second
+    info = json.loads((current.resolve()/"manifest.json").read_text())
+    assert info["binary"] == "native/bin/alis-companiond"
+    # Reject any arbitrary manifest-provided daemon path, even for a clean
+    # exact-SHA checkout. The prior valid release must remain active.
+    spec["binary"] = "native/bin/other-companiond"
+    (source/"manifest.json").write_text(json.dumps(spec))
+    cmd("git","add","manifest.json",cwd=source)
+    cmd("git","-c","user.name=Fixture","-c","user.email=fixture@example.invalid",
+        "commit","-qm","unexpected-entrypoint",cwd=source)
+    unexpected=cmd("git","rev-parse","HEAD",cwd=source).stdout.strip()
+    cmd("git","push","-q","origin","main",cwd=source)
+    rejected=sync(unexpected,ok=False)
+    assert rejected.returncode != 0 and "Unexpected Companion runtime entrypoint: binary" in rejected.stdout
+    assert current.resolve().name == second
     # A local modification must not be overwritten on a repair.
     current.unlink()
     (checkout/"foreign.txt").write_text("local modification\n")
@@ -123,4 +144,4 @@ with tempfile.TemporaryDirectory(prefix="alis-companion-managed-") as td:
     assert not current.exists() and not current.is_symlink()
     assert (root/"data/hadanion/releases"/first).exists()
     assert (root/"data/hadanion/releases"/second).exists()
-print("PASS: pin, idempotence, remote guard, failure rollback, repair and managed-only uninstall")
+print("PASS: pinned legacy daemon, future canonical daemon, unknown entrypoint refusal, pin, idempotence, remote guard, failure rollback, repair and managed-only uninstall")
