@@ -9,7 +9,8 @@ trap 'rm -rf -- "$tmp"' EXIT
 bash -n "$helper" || die 'cutover helper Bash syntax'
 
 make_fixture() {
-    local name="$1" home="$tmp/$name"
+    local name="$1"
+    local home="$tmp/$name"
     mkdir -p "$home"/{bin,config/niri/config.d,config/quickshell/alis,config/systemd/user/niri.service.wants,config/inir,cache}
     printf '#!/bin/bash\n# Canonical CLI and runtime name is Alis.\nexit 0\n' > "$home/bin/alis"
     chmod +x "$home/bin/alis"
