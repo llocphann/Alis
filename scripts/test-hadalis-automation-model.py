@@ -37,7 +37,7 @@ def main() -> None:
     assert wrapped.endswith(custom["prompt"])
     assert custom["prompt"].endswith("  \n")
     assert custom["id"] != initial["id"] and not custom["enabled"]
-    assert custom["project_name"] == "Hadalis Cloud"
+    assert custom["project_name"] == "Automatic Alis"
     assert "Profile objective:" in model.effective_prompt(custom, "rotation")
 
     older = {"profiles": [{"id": custom["id"], "name": "Older", "prompt": custom["prompt"]}]}
