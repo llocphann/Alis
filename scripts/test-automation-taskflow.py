@@ -238,6 +238,96 @@ class TaskflowTests(unittest.TestCase):
             # The next task can run, but the first Issue is not owner-verified.
             self.assertNotEqual(first["status"], "completed")
 
+    def test_cloud_choice_uses_native_assistant_receipt_and_serially_reselects(self):
+        other = {**TASK, "code": "ABYSS-R09", "issue_number": 151}
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
+                "XDG_STATE_HOME": tmp + "/state", "XDG_CONFIG_HOME": tmp + "/config"}):
+            queue.prepare("AUTO-R01; ABYSS-R09", mode="cloud",
+                          resolver=lambda c: TASK if c == "AUTO-R01" else other)
+            with patch.object(legacy_control, "service_states", return_value={
+                    "bridge": {"state": "inactive"},
+                    "worker": {"state": "inactive"}}), \
+                 patch.object(legacy_control, "profile_action", return_value={"ok": True}):
+                started = managed_tasks.start_cloud_queue(approved=True)
+            self.assertEqual(started["profile_id"], managed_tasks.SELECTOR_ID)
+            self.assertEqual(queue.view()["state"], "prepared")
+            _, runtime, _ = legacy_store.read_snapshot()
+            selector_profile = next(p for p in legacy_store.read_snapshot()[0]["profiles"]
+                                    if p["id"] == managed_tasks.SELECTOR_ID)
+            self.assertIn("HADALIS_TASK_CHOICE", legacy_model.effective_prompt(selector_profile, "initial"))
+            def finished(message_id, conversation="chat-selector-1"):
+                def update(c, state):
+                    item = state["profiles"][managed_tasks.SELECTOR_ID]
+                    item.update(status="completed", last_success="DONE", desired="stopped",
+                                pending=None, job_id=None, run_active=False,
+                                response_message_id=message_id,
+                                session={"conversation_id": conversation, "project_id": "project"})
+                legacy_store.change(update)
+            def receipt(message_id, code, conversation="chat-selector-1"):
+                import json
+                folder = legacy_store.state_dir() / "responses" / managed_tasks.SELECTOR_ID
+                folder.mkdir(parents=True, exist_ok=True)
+                legacy_store._write(folder / ("user-"+message_id+".json"), {
+                    "conversation_id": conversation,
+                    "response": {"message_id": message_id,
+                                 "text": "Evidence reviewed.\nHADALIS_TASK_CHOICE: " + code +
+                                         "\nHADALIS_LOOP:DONE"}})
+            finished("assistant-message-0001")
+            with self.assertRaisesRegex(taskflow.TaskError, "receipt"):
+                managed_tasks.reconcile_once()
+            self.assertEqual(queue.view()["state"], "prepared")
+            receipt("assistant-message-0001", "ABYSS-R09")
+            accepted = managed_tasks.reconcile_once()
+            self.assertEqual(accepted["state"], "task_scheduled")
+            self.assertEqual(queue.view()["active"]["code"], "ABYSS-R09")
+            selected_pid = managed_tasks.profile_id("llocphann/Alis", "ABYSS-R09")
+            def complete_selected(c, state):
+                item = state["profiles"][selected_pid]
+                item.update(status="completed", last_success="DONE", pending=None, job_id=None,
+                            response_message_id="answer-0002", run_active=False,
+                            session={"conversation_id": "chat-work", "project_id": "project"})
+            legacy_store.change(complete_selected)
+            advanced = managed_tasks.reconcile_once()
+            self.assertEqual(advanced["state"], "selecting")
+            self.assertEqual(queue.view()["state"], "waiting")
+            _, runtime, _ = legacy_store.read_snapshot()
+            self.assertEqual(runtime["profiles"][managed_tasks.SELECTOR_ID]["request"], "new")
+            self.assertEqual(runtime["profiles"][managed_tasks.SELECTOR_ID]["desired"], "run")
+            # The consumed decision cannot be replayed while awaiting new chat.
+            self.assertEqual(managed_tasks.reconcile_once()["state"], "selecting")
+            finished("assistant-message-0003", "chat-selector-2")
+            receipt("assistant-message-0003", "AUTO-R01", "chat-selector-2")
+            self.assertEqual(managed_tasks.reconcile_once()["selected"]["code"], "AUTO-R01")
+            self.assertEqual(queue.view()["items"][0]["state"], "active")
+            self.assertEqual(queue.view()["items"][1]["state"], "awaiting_owner")
+
+    def test_cloud_choice_rejects_missing_or_multiple_choices(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
+                "XDG_STATE_HOME": tmp + "/state", "XDG_CONFIG_HOME": tmp + "/config"}):
+            queue.prepare("AUTO-R01", mode="cloud", resolver=lambda _: TASK)
+            queue.approve_cloud_start()
+            managed_tasks._ensure_selector()
+            def finish(c, state):
+                item = state["profiles"][managed_tasks.SELECTOR_ID]
+                item.update(status="completed", last_success="DONE",
+                            response_message_id="assistant-result-id",
+                            session={"conversation_id": "chat-c", "project_id": "p"})
+            legacy_store.change(finish)
+            folder = legacy_store.state_dir() / "responses" / managed_tasks.SELECTOR_ID
+            folder.mkdir(parents=True)
+            for text in ("HADALIS_TASK_CHOICE: AUTO-R01\nHADALIS_TASK_CHOICE: AUTO-R01\nHADALIS_LOOP:DONE",
+                         "HADALIS_TASK_CHOICE: NOTHERE-R99\nHADALIS_LOOP:DONE"):
+                legacy_store._write(folder / "receipt.json", {
+                    "conversation_id": "chat-c",
+                    "response": {"message_id": "assistant-result-id", "text": text}})
+                if text.count("HADALIS_TASK_CHOICE") > 1:
+                    with self.assertRaisesRegex(taskflow.TaskError, "ambiguous"):
+                        managed_tasks.reconcile_once()
+                else:
+                    with self.assertRaisesRegex(taskflow.TaskError, "pending tasks"):
+                        managed_tasks.reconcile_once()
+            self.assertEqual(queue.view()["state"], "prepared")
+
     def test_ordered_queue_refuses_dispatch_with_missing_worker_service(self):
         with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
                 "XDG_STATE_HOME": tmp + "/state", "XDG_CONFIG_HOME": tmp + "/config"}):
