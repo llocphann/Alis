@@ -61,8 +61,8 @@ try {
     '          return {',
     '            exported_definition_present:true, scope_id_present:true,',
     '            resolve_function_present:true, provider_map_count:1,',
-    '            resolution_attempted:true, prepare_function_present:true,',
-    '            start_function_present:true, query_cache_present:true',
+    '            resolution_attempted:false, prepare_function_present:false,',
+    '            start_function_present:false, query_cache_present:false',
     '          };',
     '        }',
     '      }]}],',
@@ -77,8 +77,10 @@ try {
   });
   assert.equal(report.supported, false);
   assert.equal(report.submission_authorized, false);
-  assert.equal(report.prepare_function_present, true);
-  assert.equal(report.start_function_present, true);
+  assert.equal(report.prepare_function_present, false);
+  assert.equal(report.start_function_present, false);
+  assert.equal(report.resolution_attempted, false);
+  assert.equal(report.resolver_invocation_permitted, false);
   assert.equal(report.fingerprint_prefix.length, 12);
   assert.ok(!JSON.stringify(report).includes("exportedScope"));
   assert.ok(!JSON.stringify(report).includes("Constructor"));
@@ -140,14 +142,28 @@ assert.equal(res.unique_provider_map_count_capped, 1);
 assert.equal(res.active_provider_map_count_capped, 1);
 assert.equal(res.unique_provider_identity_count_capped, 1);
 assert.equal(res.alternate_only_provider_map_count_capped, 0);
-assert.equal(res.provider_selection, "unique_active_and_full_tree");
-assert.equal(res.resolution_attempted, true);
-assert.equal(res.prepare_function_present, true);
-assert.equal(res.start_function_present, true);
-assert.equal(res.query_cache_present, true);
+assert.equal(res.provider_selection, "unique_provider_resolver_not_invoked");
+assert.equal(res.resolution_attempted, false);
+assert.equal(res.resolver_invocation_permitted, false);
+assert.equal(res.resolver_side_effects_unverified, true);
+assert.equal(res.prepare_function_present, false);
+assert.equal(res.start_function_present, false);
+assert.equal(res.query_cache_present, false);
 assert.equal(res.active_root_count_capped, 1);
 assert.equal(res.fiber_scan_truncated, false);
-assert.equal(resolves, 1);
+assert.equal(resolves, 0);
+
+// A unique Map is insufficient authorization to run code that can write
+// provider caches. The exact renderer callback must not invoke this thrower.
+const savedResolver = def.resolve;
+def.resolve = function unsafeResolver(_p, _map) {
+  throw new Error("FORBIDDEN_RESOLVE_INVOCATION");
+};
+res = await inspect([duplicated.currentRoot]);
+assert.equal(res.provider_selection, "unique_provider_resolver_not_invoked");
+assert.equal(res.resolution_attempted, false);
+assert.equal(resolverNeverRuns(res), true);
+def.resolve = savedResolver;
 
 resolves = 0;
 const differentMap = new Map([[scopeId, provider]]);
@@ -354,5 +370,9 @@ assert.equal(res.resolution_attempted, false);
 assert.equal(resolves, 0);
 
 function resolutionAttempted(result) {return result.resolution_attempted;}
+function resolverNeverRuns(result) {
+  return result.resolver_invocation_permitted === false &&
+    result.resolution_attempted === false;
+}
 console.log("PASS: AUTO-F01 unique scope-export, current/alternate identity and fail-closed read-only probe");
 
