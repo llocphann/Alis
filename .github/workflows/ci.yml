@@ -42,6 +42,13 @@ jobs:
         shell: bash
         run: python3 scripts/test-automation-taskflow.py
 
+      - name: Verify native Desktop adapter fails closed without sending
+        shell: bash
+        run: |
+          node --check automation/chat_bridge/native_adapter.mjs
+          node --check automation/chat_bridge/native_cli.mjs
+          node scripts/test-hadalis-native-session.mjs
+
       - name: Verify restored Automation backend
         shell: bash
         run: |
