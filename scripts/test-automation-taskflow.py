@@ -2,6 +2,7 @@
 """Offline focused tests for AUTO-R01; no network or local agent required."""
 from __future__ import annotations
 import json
+import subprocess
 from pathlib import Path
 import tempfile
 import unittest
@@ -101,6 +102,34 @@ class TaskflowTests(unittest.TestCase):
             self.assertEqual(test["exit_code"], 0)
             self.assertIn("[REDACTED]", test["output_excerpt"])
             self.assertNotIn("ghp_", test["output_excerpt"])
+
+    def test_receipt_roundtrip_and_no_reexecution(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            checkout = Path(tmp) / "checkout"
+            checkout.mkdir()
+            subprocess.run(["git", "init", "-q", str(checkout)], check=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["git", "-C", str(checkout), "-c", "user.name=Fixture",
+                            "-c", "user.email=fixture@example.invalid",
+                            "commit", "--allow-empty", "-qm", "fixture"], check=True)
+            sha = subprocess.check_output(["git", "-C", str(checkout),
+                                           "rev-parse", "HEAD"], text=True).strip()
+            task = {**TASK, "base_sha": sha}
+            payload = {"schema": "alis.local-handoff.v1", "task": task,
+                       "commands": [["git", "diff", "--check"]],
+                       "next_prompt": "Cloudbot: continue with verified receipt.",
+                       "checkpoint": "fixture"}
+            bundle = taskflow.package(payload)
+            with patch.dict("os.environ", {"XDG_STATE_HOME": str(Path(tmp) / "state")}):
+                first = taskflow.run_local(bundle, checkout, approved=True)
+                self.assertEqual(first["state"], "passed")
+                self.assertEqual(first["steps"][0]["exit_code"], 0)
+                self.assertTrue(first["continuation_ready"])
+                second = taskflow.run_local(bundle, checkout, approved=True)
+                self.assertTrue(second["already_recorded"])
+                self.assertFalse(second["replayed"])
+                self.assertEqual(taskflow.continuation(bundle, first),
+                                 payload["next_prompt"])
 
     def test_no_execution_without_approval_or_pinned_source(self):
         bundle = taskflow.package({"schema": "alis.local-handoff.v1", "task": TASK,
