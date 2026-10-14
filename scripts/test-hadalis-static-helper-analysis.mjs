@@ -188,6 +188,31 @@ complexSite=aliasFixture(
 assert.equal(complexSite.alias_trace.expression_form,"logical-or-coalescing");
 assert.equal(complexSite.alias_trace.contains_new_map_syntax,false);
 assert.equal(complexSite.alias_trace.mentions_parameter_token,true);
+// Indexed access can produce a Map-like receiver without any literal
+// new Map() or named parameter appearing in the RHS expression.
+complexSite=aliasFixture(
+  "let receiver=registry[key];receiver.set(s,c);return receiver"
+);
+assert.deepEqual(complexSite.alias_trace,{
+  origin_hint:"complex-or-unsupported-expression",hops_capped:0,
+  expression_form:"computed-member-access",expression_scan_complete:true,
+  contains_new_map_syntax:false,mentions_parameter_token:false
+});
+assert.equal(complexSite.receiver_initializer_kind,"identifier-alias");
+complexSite=aliasFixture(
+  "let receiver=registry?.[key];receiver.set(s,c);return receiver"
+);
+assert.equal(complexSite.alias_trace.expression_form,"computed-member-access");
+assert.equal(complexSite.alias_trace.expression_scan_complete,true);
+assert.equal(complexSite.alias_trace.mentions_parameter_token,false);
+// Parameter-dependent indexed expression remains syntax-only evidence.
+complexSite=aliasFixture(
+  "let receiver=p[key];receiver.set(s,c);return receiver"
+);
+assert.equal(complexSite.alias_trace.expression_form,"computed-member-access");
+assert.equal(complexSite.alias_trace.mentions_parameter_token,true);
+assert.equal(complexSite.alias_trace.origin_hint,
+  "complex-or-unsupported-expression");
 complexSite=aliasFixture(
   "let receiver=p+other;receiver.set(s,c);return receiver"
 );
