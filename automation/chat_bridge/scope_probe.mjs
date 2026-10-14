@@ -187,7 +187,8 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
           top = top.return;
         }
         const current = top?.stateNode?.current;
-        if (top && !top.return && current?.stateNode === top.stateNode)
+        if (top && !top.return && top.stateNode && current &&
+            current.stateNode === top.stateNode)
           roots.add(current);
         else
           unknownRoots++;
