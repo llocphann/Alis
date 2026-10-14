@@ -221,13 +221,20 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         // actual scope Map is selected, and no original names leave Desktop.
         // This does NOT prove semantic dependence or transport ownership.
         if (report.resolver_alpha_complete) {
-          const fn = structurallyMasked.match(/^v\d+\((v\d+),(v\d+)\)\{/);
+          // Compact punctuation only: deleting all spaces would conflate
+          // 'let v3' with an unrelated identifier 'letv3'.
+          const alphaForFlow = structurallyMasked
+            .replace(/\s*([(),=?:])\s*/g, "$1")
+            .replace(/\s*\.\s*/g, ".");
+          const fn = alphaForFlow.match(
+            /^(?:(?:async\s+)?function\s+)?v\d+\((v\d+),(v\d+)\)\{/
+          );
           if (fn) {
             const args = [fn[1], fn[2]];
-            const count = [0, 0];
-            const helpers = [...structurallyMasked.matchAll(
+            const count = [0, 0], body = alphaForFlow.slice(fn[0].length);
+            const helpers = [...body.matchAll(
               /\b(v\d+)\s*\((v\d+(?:,v\d+)*)\)/g
-            )].filter(match => match.index !== 0);
+            )];
             for (const [, , argList] of helpers) {
               const tokens = argList.split(",");
               args.forEach((arg, index) => {
@@ -237,12 +244,12 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
             report.resolver_argument_helper_call_counts_capped =
               count.map(n => Math.min(16, n));
             report.resolver_helper_flow_status = "lexical-only";
-            const calls = [...structurallyMasked.matchAll(
+            const calls = [...body.matchAll(
               /\b(v\d+)\.get\(\s*v\d+\s*\)/g
             )];
             if (calls.length === 1) {
               const receiver = calls[0][1];
-              const assign = structurallyMasked.match(new RegExp(
+              const assign = body.match(new RegExp(
                 "\\b" + receiver + "=([^,;}]*)"
               ));
               const rhs = assign?.[1] ?? "";
@@ -253,7 +260,7 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
                 report.resolver_get_receiver_kind =
                   "conditional-property-of-local";
                 const variable = branches[1];
-                const helperAssign = structurallyMasked.match(new RegExp(
+                const helperAssign = body.match(new RegExp(
                   "\\b" + variable + "=(v\\d+)\\((v\\d+(?:,v\\d+)*)\\)"
                 ));
                 if (helperAssign) {
