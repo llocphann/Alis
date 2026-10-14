@@ -23,18 +23,21 @@ function hasTargetOnCurrentBranch(c,id){
      typeof current!=="string")return null;
   let nodeId=current;
   const seen=new Set();
+  let matchingUserMessages=0;
   for(let steps=0;nodeId!=null&&steps<1000;steps++){
     if(typeof nodeId!=="string"||seen.has(nodeId))return null;
     seen.add(nodeId);
     const node=Object.prototype.hasOwnProperty.call(mapping,nodeId)
       ? mapping[nodeId] : null;
     if(!node||typeof node!=="object")return null;
-    if(node.message?.id===id&&node.message?.author?.role==="user")
-      return true;
+    if(node.message?.id===id&&node.message?.author?.role==="user") {
+      matchingUserMessages++;
+      if(matchingUserMessages>1)return "duplicate-user-message-on-branch";
+    }
     nodeId=node.parent;
   }
   if(nodeId!=null)return null;
-  return false;
+  return matchingUserMessages===1;
 }
 export function auditReconciliationSnapshot(pending,candidates){
   if(!UUID.test(pending?.user_message_id)||
@@ -43,7 +46,7 @@ export function auditReconciliationSnapshot(pending,candidates){
     return decision("PENDING_IDENTITY_INVALID");
   if(!Array.isArray(candidates)||candidates.length>CAP)
     return decision("CANDIDATE_SNAPSHOT_INVALID_OR_OVERSIZE",0,true);
-  let hits=0,duplicate=false,invalid=false,conflict=false;
+  let hits=0,duplicate=false,invalid=false,conflict=false,duplicateUser=false;
   const seen=new Set();
   for(const c of candidates){
     if(!UUID.test(c?.conversation_id)){invalid=true;continue;}
@@ -51,12 +54,16 @@ export function auditReconciliationSnapshot(pending,candidates){
     seen.add(c.conversation_id);
     const onBranch=hasTargetOnCurrentBranch(c,pending.user_message_id);
     if(onBranch===null){invalid=true;continue;}
+    if(onBranch==="duplicate-user-message-on-branch"){
+      duplicateUser=true;continue;
+    }
     if(!onBranch)continue;
     hits++;
     if(pending.conversation_id&&pending.conversation_id!==c.conversation_id)
       conflict=true;
   }
   if(invalid)return decision("SNAPSHOT_UNVERIFIED",hits,true);
+  if(duplicateUser)return decision("DUPLICATE_USER_MESSAGE_ON_BRANCH",hits);
   if(duplicate)return decision("DUPLICATE_CONVERSATION_IDENTITY",hits);
   if(hits>1)return decision("AMBIGUOUS_USER_MESSAGE",hits);
   if(conflict)return decision("CONFLICTS_WITH_PENDING_CONVERSATION",hits);
