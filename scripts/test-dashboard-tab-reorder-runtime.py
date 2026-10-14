@@ -160,7 +160,7 @@ with tempfile.TemporaryDirectory(prefix='alis-dashboard-tab-reorder-') as name:
  (folder/'shell.qml').write_text(QML)
  with private_wayland(folder) as env:
   if not env:raise SystemExit('SKIP: Dashboard tab reorder needs private Niri')
-  config=folder/'config/illogical-impulse';config.mkdir(parents=True,exist_ok=True)
+  config=folder/'config/alis';config.mkdir(parents=True,exist_ok=True)
   raw=json.loads((ROOT/'defaults/config.json').read_text());raw['panelFamily']='abyss';raw['dashboard']['pageOrderVersion']=0;raw['dashboard']['pageOrder']=['dashboard','music']
   ids=['welcome','clock','system','github','notifications','todo','media','weather','calendar','agenda','notes']
   raw['dashboard']['canvas']['widgets']=[dict(id=item,x=.1,y=.1,w=.3,h=.3,visible=False) for item in ids]

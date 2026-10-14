@@ -17,7 +17,7 @@ Item {
     }
 
     function openSettings(): void {
-        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
+        Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"])
     }
 
     RowLayout {
@@ -30,28 +30,28 @@ Item {
         Item { Layout.fillWidth: true }
 
         // Toggles
-        Toggle { 
+        Toggle {
             btnIcon: "dark_mode"
             tip: Translation.tr("Dark mode")
             active: Appearance.m3colors?.darkmode ?? false
             onClicked: root.toggleDark()
             visible: Config.options?.sidebar?.widgets?.controlsCard?.showDarkMode ?? true
         }
-        Toggle { 
+        Toggle {
             btnIcon: "do_not_disturb_on"
             tip: Translation.tr("Do not disturb")
             active: Notifications.silent ?? false
             onClicked: Notifications.toggleSilent()
             visible: Config.options?.sidebar?.widgets?.controlsCard?.showDnd ?? true
         }
-        Toggle { 
+        Toggle {
             btnIcon: "nightlight"
             tip: Translation.tr("Night light")
             active: Hyprsunset.active ?? false
             onClicked: Hyprsunset.toggle()
             visible: Config.options?.sidebar?.widgets?.controlsCard?.showNightLight ?? true
         }
-        Toggle { 
+        Toggle {
             btnIcon: "sports_esports"
             tip: GameMode.active ? Translation.tr("Game mode (active)") : Translation.tr("Game mode")
             active: GameMode.active ?? false
@@ -59,13 +59,13 @@ Item {
             visible: Config.options?.sidebar?.widgets?.controlsCard?.showGameMode ?? true
         }
 
-        Rectangle { 
+        Rectangle {
             width: 1
             height: 24
             radius: 0.5
             color: Appearance.zzzEverywhere ? Appearance.zzz.hairline
                 : Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
-                : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
+                : Appearance.alisEverywhere ? Appearance.alis.colBorderSubtle
                 : Appearance.colors.colOutlineVariant
             Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
             opacity: 0.5
@@ -90,14 +90,14 @@ Item {
         implicitWidth: 40
         implicitHeight: 40
         buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-            : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+            : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.full
         colBackground: "transparent"
         colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-            : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+            : Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
             : Appearance.colors.colLayer1Hover
         colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-            : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
+            : Appearance.alisEverywhere ? Appearance.alis.colLayer1Active
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
             : Appearance.colors.colLayer1Active
 
@@ -116,12 +116,12 @@ Item {
                 color: active
                     ? (Appearance.zzzEverywhere ? Appearance.zzz.accent
                         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                        : Appearance.alisEverywhere ? Appearance.alis.colPrimary
                         : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
                         : Appearance.colors.colPrimary)
                     : (Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
                         : Appearance.angelEverywhere ? Appearance.angel.colText
-                        : Appearance.inirEverywhere ? Appearance.inir.colText
+                        : Appearance.alisEverywhere ? Appearance.alis.colText
                         : Appearance.auroraEverywhere ? Appearance.colors.colOnSurface
                         : Appearance.colors.colOnLayer0)
                 Behavior on fill { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
@@ -139,13 +139,13 @@ Item {
         implicitWidth: 40
         implicitHeight: 40
         buttonRadius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-            : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+            : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.full
         colBackground: "transparent"
         colBackgroundHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-            : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover 
+            : Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
         colRipple: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-            : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active 
+            : Appearance.alisEverywhere ? Appearance.alis.colLayer1Active
             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer1Active
 
         contentItem: Item {
@@ -153,7 +153,7 @@ Item {
                 anchors.centerIn: parent
                 text: btnIcon
                 iconSize: 20
-                color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

@@ -1,6 +1,6 @@
 //@ pragma UseQApplication
 //@ pragma Env QS_NO_RELOAD_POPUP=1
-//@ pragma Env INIR_STANDALONE_WINDOW=1
+//@ pragma Env ALIS_STANDALONE_WINDOW=1
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
 //@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
 // Launcher keeps QT_SCALE_FACTOR=1; shell scaling lives in appearance.typography.sizeScale
@@ -18,10 +18,10 @@ import qs.modules.waffle.settings
 
 ApplicationWindow {
     id: root
-    
+
     property bool uiReady: Config.ready
     property string pendingStartSection: ""
-    
+
     property var pages: [
         {
             key: "quick",
@@ -140,7 +140,7 @@ ApplicationWindow {
         ,{key: "integrations",name:Translation.tr("Integrations"),icon:"apps",
           component:Qt.resolvedUrl("modules/waffle/settings/pages/WIntegrationsPage.qml")}
     ]
-    
+
     property int currentPage: 0
     property int _requestedStartPage: -1
     property bool _navigationInitialized: false
@@ -162,10 +162,10 @@ ApplicationWindow {
     }
 
     onCurrentPageChanged: root._persistCurrentPage()
-    
+
     visible: true
     onClosing: Qt.quit()
-    title: "Settings — iNiR"
+    title: "Settings — Alis"
 
     function tryOpenPendingSection(): void {
         if (!root.pendingStartSection || !root.uiReady)
@@ -181,7 +181,7 @@ ApplicationWindow {
             })
         })
     }
-    
+
     Component.onCompleted: {
         Quickshell.watchFiles = false
         Config.readWriteDelay = 0
@@ -199,7 +199,7 @@ ApplicationWindow {
         target: Persistent
         function onReadyChanged() { root.initializeNavigation() }
     }
-    
+
     Connections {
         target: Config
         function onReadyChanged() {
@@ -207,18 +207,18 @@ ApplicationWindow {
             root.tryOpenPendingSection()
         }
     }
-    
+
     minimumWidth: 700
     minimumHeight: 450
     width: 1000
     height: 650
     color: root.uiReady ? Looks.colors.bg0Opaque : "transparent"
-    
+
     // Loading state
     Item {
         anchors.fill: parent
         visible: !root.uiReady
-        
+
         WText {
             id: startupLoadingLabel
             anchors.centerIn: parent
@@ -243,14 +243,14 @@ ApplicationWindow {
             }
         }
     }
-    
+
     // Main content
     WSettingsContent {
         id: settingsContent
         anchors.fill: parent
         visible: root.uiReady
         opacity: visible ? 1 : 0
-        
+
         pages: root.pages
         currentPage: root.currentPage
         loadEnabled: root.uiReady && root._navigationInitialized
@@ -260,28 +260,28 @@ ApplicationWindow {
         }
         onCloseRequested: root.close()
         Component.onCompleted: root.tryOpenPendingSection()
-        
+
         Behavior on opacity {
             NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
         }
     }
-    
+
     // Keyboard shortcuts
     Shortcut {
         sequence: "Ctrl+PageDown"
         onActivated: root.currentPage = Math.min(root.currentPage + 1, root.pages.length - 1)
     }
-    
+
     Shortcut {
         sequence: "Ctrl+PageUp"
         onActivated: root.currentPage = Math.max(root.currentPage - 1, 0)
     }
-    
+
     Shortcut {
         sequence: "Ctrl+Tab"
         onActivated: root.currentPage = (root.currentPage + 1) % root.pages.length
     }
-    
+
     Shortcut {
         sequence: "Ctrl+Shift+Tab"
         onActivated: root.currentPage = (root.currentPage - 1 + root.pages.length) % root.pages.length

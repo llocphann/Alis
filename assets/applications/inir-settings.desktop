@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Alis Settings
-Comment=Open Alis settings
-Exec=alis settings
-Icon=inir
-Terminal=false
-NoDisplay=true
-Categories=Settings;

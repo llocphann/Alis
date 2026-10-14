@@ -75,7 +75,7 @@ Singleton {
             'IFS= read -r ai_payload; printf \'%s\' "$ai_payload" | curl -sS --no-buffer --max-time 75'
             + (model.local ? " --noproxy '*'" : "")
             + ' --url ' + url + ' -H \'Content-Type: application/json\''
-            + (auth ? " " + auth : "") + " --data @- --write-out '\\n__INIR_HTTP_STATUS__:"+status+"\\n'"],
+            + (auth ? " " + auth : "") + " --data @- --write-out '\\n__ALIS_HTTP_STATUS__:"+status+"\\n'"],
             environment:environment, payload:data}
     }
 
@@ -333,7 +333,7 @@ Singleton {
         "{DISTRO}": SystemInfo.distroName,
         "{DATETIME}": `${DateTime.time}, ${DateTime.collapsedCalendarFormat}`,
         "{WINDOWCLASS}": ToplevelManager.activeToplevel?.appId ?? "Unknown",
-        "{DE}": `${SystemInfo.desktopEnvironment} (${SystemInfo.windowingSystem})` 
+        "{DE}": `${SystemInfo.desktopEnvironment} (${SystemInfo.windowingSystem})`
     }
 
     // Gemini: https://ai.google.dev/gemini-api/docs/function-calling
@@ -355,7 +355,7 @@ Singleton {
                 },
                 {
                     "name": "get_shell_actions",
-                    "description": "Search iNiR's typed action registry before requesting a shell action.",
+                    "description": "Search Alis's typed action registry before requesting a shell action.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -383,7 +383,7 @@ Singleton {
                 },
                 {
                     "name": "run_shell_action",
-                    "description": "Run a named action from iNiR's safe action registry after user approval.",
+                    "description": "Run a named action from Alis's safe action registry after user approval.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -436,7 +436,7 @@ Singleton {
                     "type": "function",
                     "function": {
                         "name": "get_shell_actions",
-                        "description": "Search iNiR's typed action registry before requesting a shell action.",
+                        "description": "Search Alis's typed action registry before requesting a shell action.",
                         "parameters": {
                             "type": "object",
                             "properties": {
@@ -449,7 +449,7 @@ Singleton {
                     "type": "function",
                     "function": {
                         "name": "run_shell_action",
-                        "description": "Run a named action from iNiR's safe action registry after user approval.",
+                        "description": "Run a named action from Alis's safe action registry after user approval.",
                         "parameters": {
                             "type": "object",
                             "properties": {
@@ -519,7 +519,7 @@ Singleton {
                     "type": "function",
                     "function": {
                         "name": "get_shell_actions",
-                        "description": "Search iNiR's typed action registry before requesting a shell action.",
+                        "description": "Search Alis's typed action registry before requesting a shell action.",
                         "parameters": {
                             "type": "object",
                             "properties": {
@@ -532,7 +532,7 @@ Singleton {
                     "type": "function",
                     "function": {
                         "name": "run_shell_action",
-                        "description": "Run a named action from iNiR's safe action registry after user approval.",
+                        "description": "Run a named action from Alis's safe action registry after user approval.",
                         "parameters": {
                             "type": "object",
                             "properties": {
@@ -597,7 +597,7 @@ Singleton {
                 },
                 {
                     "name": "get_shell_actions",
-                    "description": "Search iNiR's typed action registry before requesting a shell action.",
+                    "description": "Search Alis's typed action registry before requesting a shell action.",
                     "input_schema": {
                         "type": "object",
                         "properties": {
@@ -607,7 +607,7 @@ Singleton {
                 },
                 {
                     "name": "run_shell_action",
-                    "description": "Run a named action from iNiR's safe action registry after user approval.",
+                    "description": "Run a named action from Alis's safe action registry after user approval.",
                     "input_schema": {
                         "type": "object",
                         "properties": {
@@ -670,7 +670,7 @@ Singleton {
                     "type": "function",
                     "function": {
                         "name": "get_shell_actions",
-                        "description": "Search iNiR's typed action registry before requesting a shell action.",
+                        "description": "Search Alis's typed action registry before requesting a shell action.",
                         "parameters": {
                             "type": "object",
                             "properties": {
@@ -683,7 +683,7 @@ Singleton {
                     "type": "function",
                     "function": {
                         "name": "run_shell_action",
-                        "description": "Run a named action from iNiR's safe action registry after user approval.",
+                        "description": "Run a named action from Alis's safe action registry after user approval.",
                         "parameters": {
                             "type": "object",
                             "properties": {
@@ -1249,7 +1249,7 @@ Singleton {
         Config.setNestedValue(["ai", "tool"], tool)
         return true
     }
-    
+
     function getTemperature() {
         return root.temperature;
     }
@@ -1410,7 +1410,7 @@ Singleton {
             requester.currentStrategy = root.currentApiStrategy
             if (!requester.currentStrategy) {
                 root.addMessage(
-                    Translation.tr("The selected model uses an API protocol that iNiR does not support yet."),
+                    Translation.tr("The selected model uses an API protocol that Alis does not support yet."),
                     root.interfaceRole
                 )
                 return
@@ -1434,7 +1434,7 @@ Singleton {
             let requestHeaders = {
                 "Content-Type": "application/json",
             }
-            
+
             /* Create local message object */
             requester.message = root.aiMessageComponent.createObject(root, {
                 "role": "assistant",
@@ -1456,7 +1456,7 @@ Singleton {
             }
             requester.localPayload=null
 
-            /* Build header string for curl */ 
+            /* Build header string for curl */
             let headerString = Object.entries(requestHeaders)
                 .filter(([k, v]) => v && v.length > 0)
                 .map(([k, v]) => `-H '${k}: ${v}'`)
@@ -1494,9 +1494,9 @@ Singleton {
                 + ` ${headerString}`
                 + (authHeader ? ` ${authHeader}` : "")
                 + ` --data @-`
-                + ` --write-out '\n__INIR_HTTP_STATUS__:${curlStatusToken}\n'`
+                + ` --write-out '\n__ALIS_HTTP_STATUS__:${curlStatusToken}\n'`
                 + "\n"
-            
+
             /* Send the request */
             const scriptContent = requester.currentStrategy.finalizeScriptContent(scriptShebang + scriptFileSetupContent + scriptRequestContent)
             const shellScriptPath = CF.FileUtils.trimFileProtocol(root.requestScriptFilePath)
@@ -1511,8 +1511,8 @@ Singleton {
         stdout: SplitParser {
             onRead: data => {
                 if (data.length === 0) return
-                if (data.startsWith("__INIR_HTTP_STATUS__:")) {
-                    requester.httpStatus = Number(data.substring("__INIR_HTTP_STATUS__:".length).trim()) || 0
+                if (data.startsWith("__ALIS_HTTP_STATUS__:")) {
+                    requester.httpStatus = Number(data.substring("__ALIS_HTTP_STATUS__:".length).trim()) || 0
                     return
                 }
                 if (requester.message.thinking) requester.message.thinking = false;
@@ -1535,7 +1535,7 @@ Singleton {
                     if (result.finished) {
                         requester.markDone();
                     }
-                    
+
                 } catch (e) {
                     console.log("[AI] Could not parse response: ", e);
                     requester.message.rawContent += data;
@@ -1580,8 +1580,8 @@ Singleton {
                     ?? providerId ?? Translation.tr("this provider")
                 const responseDetail = String(finishedMessage.rawContent ?? "").trim()
                 const summary = requester.httpStatus === 401
-                    ? Translation.tr("%1 returned HTTP 401 for this request. The credential, account/model access, or selected API route may be the cause; iNiR kept the stored key unchanged.").arg(providerName)
-                    : Translation.tr("%1 denied access to this request (HTTP 403). Check model/account permissions; iNiR kept the stored key unchanged.").arg(providerName)
+                    ? Translation.tr("%1 returned HTTP 401 for this request. The credential, account/model access, or selected API route may be the cause; Alis kept the stored key unchanged.").arg(providerName)
+                    : Translation.tr("%1 denied access to this request (HTTP 403). Check model/account permissions; Alis kept the stored key unchanged.").arg(providerName)
                 const message = responseDetail.length > 0
                     ? summary + "\n\n" + responseDetail.substring(0, 600)
                     : summary

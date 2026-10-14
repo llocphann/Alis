@@ -170,10 +170,10 @@ ContentPage {
     readonly property string _japanesePath: "background.widgets.japaneseTypography"
     readonly property bool _widgetBlurAvailable: Appearance.effectsEnabled
         && (Appearance.angelEverywhere
-            || (Appearance.auroraEverywhere && !Appearance.inirEverywhere)
+            || (Appearance.auroraEverywhere && !Appearance.alisEverywhere)
             || (!Appearance.zzzEverywhere && !Appearance.cookieEverywhere
                 && !Appearance.angelEverywhere && !Appearance.auroraEverywhere
-                && !Appearance.inirEverywhere
+                && !Appearance.alisEverywhere
                 && (Config.options?.background?.widgets?.style ?? "panel") === "island"
                 && (Config.options?.appearance?.island?.glass ?? true)
                 && (Config.options?.appearance?.island?.opacity ?? 1) < 0.999))
@@ -1722,7 +1722,7 @@ ContentPage {
                     height: 28
                     radius: Appearance.rounding.small
                     color: ColorUtils.applyAlpha(Appearance.colors.colOnLayer1, 0.08)
-                    
+
                     Row {
                         id: powerStatusRow
                         anchors.centerIn: parent
@@ -1731,18 +1731,18 @@ ContentPage {
                             anchors.verticalCenter: parent.verticalCenter
                             text: WidgetPowerManager.widgetsActive ? "play_circle" : "pause_circle"
                             iconSize: 16
-                            color: WidgetPowerManager.widgetsActive 
-                                ? Appearance.colors.colPrimary 
+                            color: WidgetPowerManager.widgetsActive
+                                ? Appearance.colors.colPrimary
                                 : Appearance.colors.colSubtext
                         }
                         StyledText {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: WidgetPowerManager.widgetsActive 
-                                ? Translation.tr("Active") 
+                            text: WidgetPowerManager.widgetsActive
+                                ? Translation.tr("Active")
                                 : Translation.tr("Paused")
                             font.pixelSize: Appearance.font.pixelSize.small
-                            color: WidgetPowerManager.widgetsActive 
-                                ? Appearance.colors.colPrimary 
+                            color: WidgetPowerManager.widgetsActive
+                                ? Appearance.colors.colPrimary
                                 : Appearance.colors.colSubtext
                         }
                     }
@@ -4839,7 +4839,7 @@ ContentPage {
             // Description
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("Custom QML widgets: ~/.config/inir/widgets/ (widget.json and .qml required).")
+                text: Translation.tr("Custom QML widgets: ~/.config/alis/widgets/ (widget.json and .qml required).")
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap

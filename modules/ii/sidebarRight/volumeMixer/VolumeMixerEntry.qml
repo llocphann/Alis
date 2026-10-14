@@ -32,7 +32,7 @@ Rectangle {
     implicitHeight: rowLayout.implicitHeight + Appearance.sizes.spacingMedium * 2
     radius: Appearance.rounding.small
     color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
 
     RowLayout {
@@ -63,14 +63,14 @@ Rectangle {
 
             RowLayout {
                 Layout.fillWidth: true
-                
+
                 StyledText {
                     Layout.fillWidth: true
                     font.pixelSize: Appearance.font.pixelSize.small
                     elide: Text.ElideRight
                     text: MprisController.streamDisplayName(root.node)
                 }
-                
+
                 StyledText {
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colSubtext

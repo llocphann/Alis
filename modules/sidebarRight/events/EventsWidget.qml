@@ -12,7 +12,7 @@ import "EventsWindow.js" as UpcomingWindow
 
 Item {
     id: root
-    
+
     // Kept for API compatibility with older owners. Events creation/editing
     // now stays inside this widget instead of asking the owner for a dialog.
     signal openEventsDialog(var editEvent)
@@ -34,22 +34,22 @@ Item {
 
     // Style tokens
     readonly property color colPrimary: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
+        : Appearance.alisEverywhere ? Appearance.alis.colPrimary : Appearance.colors.colPrimary
     readonly property color colText: Appearance.angelEverywhere ? Appearance.angel.colText
-        : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer1
+        : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer1
     readonly property color colSubtext: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-        : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+        : Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
     readonly property color colBadgeBg: Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.70)
-        : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+        : Appearance.alisEverywhere ? Appearance.alis.colSecondaryContainer
         : Appearance.colors.colSecondaryContainer
     readonly property color colBadgeText: Appearance.angelEverywhere ? Appearance.angel.colOnPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colOnSecondaryContainer
+        : Appearance.alisEverywhere ? Appearance.alis.colOnSecondaryContainer
         : Appearance.colors.colOnSecondaryContainer
     readonly property color colEmptyBg: Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.85)
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colSubSurface ?? Appearance.colors.colSecondaryContainer)
         : Appearance.colors.colSecondaryContainer
-    
+
     // Trigger to force recomputation when events change
     property int _eventsTrigger: 0
     Connections {
@@ -63,7 +63,7 @@ Item {
         target: CalendarSync
         function onEventsUpdated() { root._externalTrigger++ }
     }
-    
+
     readonly property string _todayKey: Qt.formatDate(DateTime.clock.date, "yyyy-MM-dd")
 
     // Merged events: local + external, sorted by date
@@ -149,25 +149,25 @@ Item {
         if (!isNaN(parsed.getTime()))
             inlineEditor.eventDate = parsed
     }
-    
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
         visible: !root.inlineEditorMode
-        
+
         // Header with upcoming count
         RowLayout {
             Layout.fillWidth: true
             Layout.margins: root.compactCalendarWindow ? 8 : 12
             spacing: 8
-            
+
             MaterialSymbol {
                 text: "event_upcoming"
                 iconSize: 20
                 fill: 1
                 color: root.colPrimary
             }
-            
+
             StyledText {
                 Layout.fillWidth: true
                 text: Translation.tr("Events")
@@ -175,14 +175,14 @@ Item {
                 font.weight: Font.Medium
                 color: root.colText
             }
-            
+
             Rectangle {
                 visible: root.upcomingCount > 0
                 implicitWidth: Math.max(20, countText.implicitWidth + 10)
                 implicitHeight: 20
                 radius: 10
                 color: root.colBadgeBg
-                
+
                 StyledText {
                     id: countText
                     anchors.centerIn: parent
@@ -194,26 +194,26 @@ Item {
                 }
             }
         }
-        
+
         // Events list
         Flickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
             contentHeight: eventsColumn.implicitHeight
             clip: true
-            
+
             ScrollBar.vertical: ScrollBar {
                 // Calendar's narrow Events pane has no visible scroll chrome;
                 // the Flickable keeps wheel/touchpad/touch/keyboard scrolling.
                 policy: root.compactCalendarWindow
                     ? ScrollBar.AlwaysOff : ScrollBar.AsNeeded
             }
-            
+
             ColumnLayout {
                 id: eventsColumn
                 width: parent.width
                 spacing: root.compactCalendarWindow ? 4 : 8
-                
+
                 // Merged events
                 Repeater {
                     model: root.mergedEvents
@@ -255,14 +255,14 @@ Item {
                         }
                     }
                 }
-                
+
                 // Empty state
                 Item {
                     id: emptyState
                     Layout.fillWidth: true
                     Layout.preferredHeight: 200
                     visible: root.mergedEvents.length === 0
-                    
+
                     ColumnLayout {
                         anchors.centerIn: parent
                         spacing: 12
@@ -289,7 +289,7 @@ Item {
                                 }
                             }
                         }
-                        
+
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
                             text: root.compactCalendarWindow
@@ -316,7 +316,7 @@ Item {
             }
         }
     }
-    
+
     // The editor occupies exactly the same item as the Events list. Switching
     // modes never changes the parent/tab geometry.
     EventsDialog {
@@ -338,7 +338,7 @@ Item {
         radius: fabButton.buttonRadius
         blur: 0.6 * Appearance.sizes.elevationMargin
     }
-    
+
     FloatingActionButton {
         id: fabButton
         visible: root.showAddButton && !root.inlineEditorMode
@@ -353,11 +353,11 @@ Item {
         baseSize: root.fabSize
         onClicked: root.openInlineEditor(null)
     }
-    
+
     // Listen for triggered events and show notifications
     Connections {
         target: Events
-        
+
         function onEventTriggered(event) {
             const urgency = event.priority === "high" ? 2 : (event.priority === "low" ? 0 : 1)
             Notifications.notify(
@@ -369,14 +369,14 @@ Item {
                 []
             )
         }
-        
+
         function onReminderTriggered(event, minutesBefore) {
-            const reminderText = minutesBefore >= 1440 
+            const reminderText = minutesBefore >= 1440
                 ? Translation.tr("Tomorrow")
-                : minutesBefore >= 60 
+                : minutesBefore >= 60
                     ? Translation.tr("In %1 hour(s)").arg(Math.floor(minutesBefore / 60))
                     : Translation.tr("In %1 minutes").arg(minutesBefore)
-            
+
             Notifications.notify(
                 Translation.tr("Upcoming: %1").arg(event.title),
                 reminderText + (event.description ? " — " + event.description : ""),

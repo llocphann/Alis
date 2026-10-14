@@ -29,8 +29,8 @@ def main() -> None:
     debian = read("sdata/dist-debian/install-deps.sh")
     fedora = read("sdata/dist-fedora/install-deps.sh")
     nix = read("nix/package.nix")
-    arch = read("distro/arch/inir-shell/PKGBUILD")
-    arch_git = read("distro/arch/inir-shell-git/PKGBUILD")
+    arch = read("distro/arch/alis-shell/PKGBUILD")
+    arch_git = read("distro/arch/alis-shell-git/PKGBUILD")
     thinkfan_docs = read("docs/THINKFAN.md")
 
     # CAVA is a real process dependency of the shared visualizer service.
@@ -43,7 +43,7 @@ def main() -> None:
     require(debian, "if ! command -v cava &>/dev/null; then", "Debian installer")
     require(fedora, "  cava", "Fedora installer")
     require(nix, '++ optionalTop "cava"', "Nix package")
-    for source, text in (("inir-shell", arch), ("inir-shell-git", arch_git)):
+    for source, text in (("alis-shell", arch), ("alis-shell-git", arch_git)):
         require(text, "'cava: audio visualizer'", source)
 
     # Weather hard-requires curl. GPS via Geoclue/where-am-i is optional because
@@ -60,13 +60,13 @@ def main() -> None:
     require(fedora, "  geoclue2", "Fedora installer")
     require(nix, "      curl", "Nix package")
     require(nix, '++ optionalTop "geoclue2"', "Nix package")
-    for source, text in (("inir-shell", arch), ("inir-shell-git", arch_git)):
+    for source, text in (("alis-shell", arch), ("alis-shell-git", arch_git)):
         require(text, "  curl", source)
         require(text, "'geoclue: GPS-backed weather location detection'", source)
 
     # Physical ThinkFan capability guards are owned/tested in optional Hadalird.
     forbid(doctor, '"thinkfan:thinkfan"', "doctor.sh")
-    for source, text in (("inir-shell", arch), ("inir-shell-git", arch_git)):
+    for source, text in (("alis-shell", arch), ("alis-shell-git", arch_git)):
         require(text, "'thinkfan: managed fan-control integration'", source)
 
     for token in (

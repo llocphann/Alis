@@ -50,14 +50,14 @@ OUTPUT_FILE = Path(
 MIDNIGHT_OUTPUT_FILE = Path(
     os.environ.get(
         "MIDNIGHT_DMS_CSS",
-        "~/.config/vesktop/themes/inir-midnight.theme.css",
+        "~/.config/vesktop/themes/alis-midnight.theme.css",
     )
 ).expanduser()
 
 TUI_OUTPUT_FILE = Path(
     os.environ.get(
-        "INIR_TUI_CSS",
-        "~/.config/vesktop/themes/inir-tui.theme.css",
+        "ALIS_TUI_CSS",
+        "~/.config/vesktop/themes/alis-tui.theme.css",
     )
 ).expanduser()
 
@@ -93,11 +93,11 @@ def _resolve_output_files(env_var: str, default_path: Path) -> list[Path]:
 
 # Template for the full theme file
 THEME_TEMPLATE = """/**
- * @name iNiR Material
+ * @name Alis Material
  * @description Material Design Discord theme with Material You colors.
- * @author refact0r (system24 base), iNiR (Material adaptation)
+ * @author refact0r (system24 base), Alis (Material adaptation)
  * @version 2.2.0
- * @source https://github.com/end-4/iNiR
+ * @source https://github.com/end-4/Alis
  */
 
 /*
@@ -156,9 +156,9 @@ body {{
 """
 
 TUI_THEME_TEMPLATE = """/**
- * @name iNiR TUI
- * @description System24 TUI layout with iNiR Material You colors.
- * @author refact0r (system24 base), iNiR (palette integration)
+ * @name Alis TUI
+ * @description System24 TUI layout with Alis Material You colors.
+ * @author refact0r (system24 base), Alis (palette integration)
  * @version 2.2.0
  * @source https://github.com/snowarch/inir
  */
@@ -212,11 +212,11 @@ body {{
 """
 
 MIDNIGHT_THEME_TEMPLATE = """/**
- * @name iNiR Midnight
- * @description iNiR Midnight Discord theme with Material You colors.
- * @author iNiR (Material palette injection)
+ * @name Alis Midnight
+ * @description Alis Midnight Discord theme with Material You colors.
+ * @author Alis (Material palette injection)
  * @version 2.2.0
- * @source https://github.com/end-4/iNiR
+ * @source https://github.com/end-4/Alis
  */
 
 /*
@@ -464,7 +464,7 @@ def _write_palette(palette: Dict[str, str]) -> None:
 
     system24_outputs = _resolve_output_files("SYSTEM24_PALETTE_CSS", OUTPUT_FILE)
     midnight_outputs = _resolve_output_files("MIDNIGHT_DMS_CSS", MIDNIGHT_OUTPUT_FILE)
-    tui_outputs = _resolve_output_files("INIR_TUI_CSS", TUI_OUTPUT_FILE)
+    tui_outputs = _resolve_output_files("ALIS_TUI_CSS", TUI_OUTPUT_FILE)
 
     for out in system24_outputs + midnight_outputs + tui_outputs:
         _ensure_parent(out)

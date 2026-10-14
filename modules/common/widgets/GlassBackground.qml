@@ -10,19 +10,19 @@ import Quickshell
 // Hidden instances release their blur FBO; decoded wallpaper pixmaps remain shared.
 Rectangle {
     id: root
-    
+
     property color fallbackColor: Appearance.colors.colLayer1
-    property color inirColor: Appearance.inir.colLayer1
+    property color alisColor: Appearance.alis.colLayer1
     property real auroraTransparency: Appearance.aurora.popupTransparentize
     property bool wallpaperBackdropEnabled: true
     property string wallpaperUrl: WallpaperListener.wallpaperUrlForScreen(root.QsWindow?.window?.screen ?? null)
-    
+
     // Screen-relative position for blur alignment (set by parent)
     property real screenX: 0
     property real screenY: 0
     property real screenWidth: Quickshell.screens[0]?.width ?? 1920
     property real screenHeight: Quickshell.screens[0]?.height ?? 1080
-    
+
     // Bypasses the style gate, which is what its callers always documented it as
     // doing. It used to be AND-ed inside the backend check, so a surface asking
     // for a backdrop outside aurora — island glass, or a backdrop the user turned
@@ -37,16 +37,16 @@ Rectangle {
         ? Appearance.effectsEnabled
         : (Appearance.blurBackendFor("panels", Appearance.blurTopology.unsupported) === "wallpaper"
             && root.wallpaperBackdropEnabled)
-    
+
     color: root.useWallpaperBackdrop ? "transparent" : root.fallbackColor
-    
+
     property bool hovered: false
 
     border.width: 0
     border.color: "transparent"
 
     clip: true
-    
+
     // Hidden persistent surfaces must not retain their mask FBO. The decoded
     // wallpaper stays in Qt's shared image cache, so remapping remains warm.
     layer.enabled: root.useWallpaperBackdrop && root.visible
@@ -61,7 +61,7 @@ Rectangle {
             bottomRightRadius: root.bottomRightRadius
         }
     }
-    
+
     // Optional blurred wallpaper backdrop for supported surfaces.
     // OPTIMIZATION: layer.enabled is only active when the GlassBackground is
     // actually visible, reducing GPU memory when panels are hidden.

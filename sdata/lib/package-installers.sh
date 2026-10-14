@@ -1,4 +1,4 @@
-# Package installation functions for iNiR
+# Package installation functions for Alis
 # This is NOT a script for execution, but for loading functions
 # Shared across all distros
 
@@ -16,7 +16,7 @@ _is_graphical_env() {
 # Detect available privilege escalation methods
 _detect_privilege_method() {
   local method=""
-  
+
   # Check for graphical methods first (polkit-based)
   if command -v pkexec &>/dev/null && [[ -n "${DBUS_SESSION_BUS_ADDRESS}" ]]; then
     # Test if polkit can authenticate
@@ -24,12 +24,12 @@ _detect_privilege_method() {
       method="pkexec"
     fi
   fi
-  
+
   # Check for elevate (available in some graphical environments)
   if [[ -z "$method" ]] && command -v elevate &>/dev/null; then
     method="elevate"
   fi
-  
+
   # Check for sudo
   if [[ -z "$method" ]] && command -v sudo &>/dev/null; then
     # Test if user has sudo permissions (non-interactive)
@@ -37,22 +37,22 @@ _detect_privilege_method() {
       method="sudo"
     fi
   fi
-  
+
   # Check for su (requires root password, not sudo password)
   if [[ -z "$method" ]] && command -v su &>/dev/null && [[ -r /etc/shadow || $(id -u) -eq 0 ]]; then
     method="su"
   fi
-  
+
   echo "$method"
 }
 
 # Show environment-specific instructions
 _show_privilege_instructions() {
   local reason="$1"
-  
+
   echo -e "${STY_RED}Error: $reason${STY_RST}" >&2
   echo "" >&2
-  
+
   if _is_graphical_env; then
     # Graphical environment detected
     echo -e "${STY_YELLOW}Detected: Graphical environment (Wayland/X11)${STY_RST}" >&2
@@ -83,7 +83,7 @@ _show_privilege_instructions() {
     echo "     pacman -S sudo" >&2
     echo "" >&2
   fi
-  
+
   # Common configuration instructions
   echo -e "${STY_CYAN}After installing sudo, configure it:${STY_RST}" >&2
   echo "  sudo visudo" >&2
@@ -104,7 +104,7 @@ pkg_sudo() {
     elevate "$@"
     return $?
   fi
-  
+
   # Priority 2: Try sudo first (standard method)
   if command -v sudo &>/dev/null; then
     # Try non-interactive first (already has cached credentials)
@@ -116,7 +116,7 @@ pkg_sudo() {
     sudo "$@"
     return $?
   fi
-  
+
   # Priority 3: Fallback to pkexec (polkit) - works in graphical environments
   # without requiring sudo configuration
   if command -v pkexec &>/dev/null; then
@@ -131,7 +131,7 @@ pkg_sudo() {
       fi
     fi
   fi
-  
+
   # Priority 4: Fallback to su (for TTY/console environments)
   # su requires root password (set during Arch installation)
   if command -v su &>/dev/null; then
@@ -143,13 +143,13 @@ pkg_sudo() {
       return $?
     fi
   fi
-  
+
   # Priority 5: Fallback to elevate if not already tried
   if type elevate &>/dev/null; then
     elevate "$@"
     return $?
   fi
-  
+
   # No privilege escalation method available
   _show_privilege_instructions "No privilege escalation method available (tried: sudo, pkexec, elevate)"
   return 1
@@ -251,7 +251,7 @@ install-python-packages(){
     if declare -F get_runtime_shell_dir >/dev/null; then
       requirements_file="$(get_runtime_shell_dir)/sdata/uv/requirements.txt"
     else
-      requirements_file="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir/sdata/uv/requirements.txt"
+      requirements_file="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis/sdata/uv/requirements.txt"
     fi
   fi
 
@@ -676,8 +676,8 @@ setup-environment-config(){
   fi
 
   mkdir -p ~/.config/environment.d
-  cat > ~/.config/environment.d/inir.conf << EOF
-# iNiR environment variables
+  cat > ~/.config/environment.d/alis.conf << EOF
+# Alis environment variables
 XCURSOR_THEME=${cursor_theme}
 XCURSOR_SIZE=24
 QT_QPA_PLATFORM=wayland
@@ -686,7 +686,7 @@ QT_STYLE_OVERRIDE=Darkly
 GTK_THEME=adw-gtk3-dark
 ELECTRON_OZONE_PLATFORM_HINT=auto
 ILLOGICAL_IMPULSE_VIRTUAL_ENV=\$HOME/.local/state/quickshell/.venv
-INIR_VENV=\$HOME/.local/state/quickshell/.venv
+ALIS_VENV=\$HOME/.local/state/quickshell/.venv
 EOF
 
   log_success "Environment configuration set"
@@ -713,7 +713,7 @@ pad=25x25
 
 bold-text-in-bright=no
 
-include=~/.config/foot/inir-colors.ini
+include=~/.config/foot/alis-colors.ini
 
 [scrollback]
 lines=10000
@@ -744,9 +744,9 @@ delete-prev-word=Control+BackSpace
 EOF
   else
     # Existing config - ensure include line is present for theming
-    if ! grep -q "include=.*inir-colors\.ini" ~/.config/foot/foot.ini; then
-      log_info "Adding inir-colors.ini include to existing foot.ini..."
-      sed -i '1i include=~/.config/foot/inir-colors.ini' ~/.config/foot/foot.ini
+    if ! grep -q "include=.*alis-colors\.ini" ~/.config/foot/foot.ini; then
+      log_info "Adding alis-colors.ini include to existing foot.ini..."
+      sed -i '1i include=~/.config/foot/alis-colors.ini' ~/.config/foot/foot.ini
     fi
     # Remove stale colors.ini include if present (legacy matugen terminal template)
     sed -i '/^include=.*\/colors\.ini$/d' ~/.config/foot/foot.ini
@@ -763,7 +763,7 @@ setup-kitty-config(){
   # Only create if doesn't exist or is minimal
   if [[ ! -f ~/.config/kitty/kitty.conf ]] || [[ $(wc -l < ~/.config/kitty/kitty.conf) -lt 5 ]]; then
     cat > ~/.config/kitty/kitty.conf << 'EOF'
-# iNiR wallpaper theming - colors from quickshell
+# Alis wallpaper theming - colors from quickshell
 include current-theme.conf
 
 # Font configuration
@@ -866,7 +866,7 @@ if status is-interactive
         alias ls 'eza --icons'
     end
     alias clear "printf '\033[2J\033[3J\033[1;1H'"
-    alias q 'inir run'
+    alias q 'alis run'
 
     # Add local bin to PATH
     fish_add_path ~/.local/bin
@@ -882,12 +882,12 @@ setup-bash-config(){
   log_info "Setting up Bash shell configuration..."
 
   local bashrc="$HOME/.bashrc"
-  local inir_config="$HOME/.config/inir/bashrc"
+  local alis_config="$HOME/.config/alis/bashrc"
 
-  mkdir -p ~/.config/inir
+  mkdir -p ~/.config/alis
 
   # Create ii bash config
-  cat > "$inir_config" << 'EOF'
+  cat > "$alis_config" << 'EOF'
 # ii shell integration - starship prompt and terminal colors
 
 # Load terminal colors from ii theming
@@ -908,7 +908,7 @@ if command -v eza &> /dev/null; then
 elif [[ -x ~/.local/bin/eza ]]; then
     alias ls='~/.local/bin/eza --icons'
 fi
-alias q='inir run'
+alias q='alis run'
 
 # Add local bin to PATH
 export PATH="$HOME/.local/bin:$PATH"
@@ -917,16 +917,16 @@ EOF
   # Add source line to .bashrc if not present
   if [[ -f "$bashrc" ]]; then
     if grep -q "source.*ii/bashrc" "$bashrc" || grep -q "\..*ii/bashrc" "$bashrc"; then
-      sed -i 's|~/.config/ii/bashrc|~/.config/inir/bashrc|g' "$bashrc"
+      sed -i 's|~/.config/ii/bashrc|~/.config/alis/bashrc|g' "$bashrc"
       log_success "Updated Bash integration path in .bashrc"
-    elif ! grep -q "source.*inir/bashrc" "$bashrc" && ! grep -q "\..*inir/bashrc" "$bashrc"; then
-      echo -e "\n# ii shell integration\n[[ -f ~/.config/inir/bashrc ]] && source ~/.config/inir/bashrc" >> "$bashrc"
+    elif ! grep -q "source.*alis/bashrc" "$bashrc" && ! grep -q "\..*alis/bashrc" "$bashrc"; then
+      echo -e "\n# ii shell integration\n[[ -f ~/.config/alis/bashrc ]] && source ~/.config/alis/bashrc" >> "$bashrc"
       log_success "Added Bash integration to .bashrc"
     else
       log_info "Bash integration already in .bashrc"
     fi
   else
-    echo -e "# ii shell integration\n[[ -f ~/.config/inir/bashrc ]] && source ~/.config/inir/bashrc" > "$bashrc"
+    echo -e "# ii shell integration\n[[ -f ~/.config/alis/bashrc ]] && source ~/.config/alis/bashrc" > "$bashrc"
     log_success "Created .bashrc with Bash integration"
   fi
 
@@ -937,12 +937,12 @@ setup-zsh-config(){
   log_info "Setting up Zsh shell configuration..."
 
   local zshrc="$HOME/.zshrc"
-  local inir_config="$HOME/.config/inir/zshrc"
+  local alis_config="$HOME/.config/alis/zshrc"
 
-  mkdir -p ~/.config/inir
+  mkdir -p ~/.config/alis
 
   # Create ii zsh config
-  cat > "$inir_config" << 'EOF'
+  cat > "$alis_config" << 'EOF'
 # ii shell integration - starship prompt and terminal colors
 
 # Load terminal colors from ii theming
@@ -963,7 +963,7 @@ if command -v eza &> /dev/null; then
 elif [[ -x ~/.local/bin/eza ]]; then
     alias ls='~/.local/bin/eza --icons'
 fi
-alias q='inir run'
+alias q='alis run'
 
 # Add local bin to PATH
 export PATH="$HOME/.local/bin:$PATH"
@@ -972,10 +972,10 @@ EOF
   # Add source line to .zshrc if not present
   if [[ -f "$zshrc" ]]; then
     if grep -q "source.*ii/zshrc" "$zshrc" || grep -q "\..*ii/zshrc" "$zshrc"; then
-      sed -i 's|~/.config/ii/zshrc|~/.config/inir/zshrc|g' "$zshrc"
+      sed -i 's|~/.config/ii/zshrc|~/.config/alis/zshrc|g' "$zshrc"
       log_success "Updated Zsh integration path in .zshrc"
-    elif ! grep -q "source.*inir/zshrc" "$zshrc" && ! grep -q "\..*inir/zshrc" "$zshrc"; then
-      echo -e "\n# ii shell integration\n[[ -f ~/.config/inir/zshrc ]] && source ~/.config/inir/zshrc" >> "$zshrc"
+    elif ! grep -q "source.*alis/zshrc" "$zshrc" && ! grep -q "\..*alis/zshrc" "$zshrc"; then
+      echo -e "\n# ii shell integration\n[[ -f ~/.config/alis/zshrc ]] && source ~/.config/alis/zshrc" >> "$zshrc"
       log_success "Added Zsh integration to .zshrc"
     else
       log_info "Zsh integration already in .zshrc"

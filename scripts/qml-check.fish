@@ -1,5 +1,5 @@
 #!/usr/bin/env fish
-# QML validation for iNiR. Syntax/startup-critical failures are fatal;
+# QML validation for Alis. Syntax/startup-critical failures are fatal;
 # style heuristics remain warnings so existing code is not blocked.
 
 set -l project_root (realpath (dirname (status filename))/..)

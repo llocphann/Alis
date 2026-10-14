@@ -1,14 +1,14 @@
-# Conflict detection for iNiR
+# Conflict detection for Alis
 # Checks for packages that might conflict with Quickshell's functionality
 
 check_conflicts() {
     echo -e "${STY_CYAN}Checking for conflicting packages...${STY_RST}"
-    
+
     local conflicts=()
     local conflict_services=()
     local critical_conflicts=()
     local package_manager=""
-    
+
     if command -v pacman &>/dev/null; then
         package_manager="pacman"
     elif command -v rpm &>/dev/null; then
@@ -16,29 +16,29 @@ check_conflicts() {
     elif command -v dpkg &>/dev/null; then
         package_manager="dpkg"
     fi
-    
+
     # Define conflict groups
     declare -A conflict_map
-    
+
     # Notifications (Quickshell has built-in notifications)
     conflict_map["dunst"]="Notification Daemon"
     conflict_map["mako"]="Notification Daemon"
     conflict_map["swaync"]="Notification Daemon"
-    
+
     # Bars/Shells (Quickshell provides the bar/shell)
     conflict_map["waybar"]="Status Bar"
     conflict_map["ironbar"]="Status Bar"
     conflict_map["eww"]="Widget System"
     conflict_map["ags"]="Shell System"
-    
+
     # Wallpaper (Quickshell handles wallpaper)
     conflict_map["hyprpaper"]="Wallpaper Daemon"
     conflict_map["swww"]="Wallpaper Daemon"
     conflict_map["mpvpaper"]="Wallpaper Daemon"
     conflict_map["wpaperd"]="Wallpaper Daemon"
-    
+
     # Quickshell-based shells — these are critical because they ship their own
-    # Quickshell fork or config that directly conflicts with iNiR at runtime.
+    # Quickshell fork or config that directly conflicts with Alis at runtime.
     # Noctalia (CachyOS default Niri shell)
     conflict_map["cachyos-niri-noctalia"]="Quickshell Shell (Noctalia/CachyOS)"
     conflict_map["noctalia-shell"]="Quickshell Shell (Noctalia)"
@@ -53,7 +53,7 @@ check_conflicts() {
     # BMS
     conflict_map["bms-shell-bin"]="Quickshell Shell (BMS)"
 
-    # Packages that are critical conflicts — they break iNiR at the package
+    # Packages that are critical conflicts — they break Alis at the package
     # level (provide/replace quickshell, or own overlapping config paths).
     # Unlike notification daemons or bars, these cannot coexist at all.
     declare -A critical_map
@@ -66,7 +66,7 @@ check_conflicts() {
     critical_map["caelestia-shell"]=1
     critical_map["caelestia-shell-git"]=1
     critical_map["bms-shell-bin"]=1
-    
+
     # Check for installed conflicts
     for pkg in "${!conflict_map[@]}"; do
         local installed=false
@@ -85,7 +85,7 @@ check_conflicts() {
                 if command -v "$pkg" &>/dev/null; then installed=true; fi
                 ;;
         esac
-        
+
         if $installed; then
             conflicts+=("$pkg (${conflict_map[$pkg]})")
             if [[ -n "${critical_map[$pkg]:-}" ]]; then
@@ -97,7 +97,7 @@ check_conflicts() {
             fi
         fi
     done
-    
+
     if [ ${#conflicts[@]} -gt 0 ]; then
         echo -e "${STY_YELLOW}Found potential conflicting packages:${STY_RST}"
         for c in "${conflicts[@]}"; do
@@ -106,7 +106,7 @@ check_conflicts() {
         echo ""
 
         if [ ${#critical_conflicts[@]} -gt 0 ]; then
-            echo -e "${STY_RED}${STY_BOLD}Critical:${STY_RST} ${critical_conflicts[*]} must be removed for iNiR to work."
+            echo -e "${STY_RED}${STY_BOLD}Critical:${STY_RST} ${critical_conflicts[*]} must be removed for Alis to work."
             echo -e "These packages ship their own Quickshell runtime or configs that directly conflict."
             echo ""
 
@@ -127,7 +127,7 @@ check_conflicts() {
                     if tui_confirm "Remove conflicting packages? (${ordered_remove[*]})"; then
                         _remove_critical_conflicts "${ordered_remove[@]}"
                     else
-                        echo -e "${STY_YELLOW}Keeping conflicting packages — iNiR will NOT work correctly.${STY_RST}"
+                        echo -e "${STY_YELLOW}Keeping conflicting packages — Alis will NOT work correctly.${STY_RST}"
                     fi
                 else
                     echo -e "${STY_CYAN}Non-interactive mode: removing conflicting packages...${STY_RST}"
@@ -139,10 +139,10 @@ check_conflicts() {
             echo ""
         fi
 
-        echo -e "${STY_BOLD}iNiR provides its own bar, notifications, wallpaper, and shell.${STY_RST}"
+        echo -e "${STY_BOLD}Alis provides its own bar, notifications, wallpaper, and shell.${STY_RST}"
         echo -e "Running other shells/bars simultaneously causes visual glitches or double notifications."
         echo ""
-        
+
         # Offer to disable non-critical conflicting services
         if [ ${#conflict_services[@]} -gt 0 ]; then
             echo -e "${STY_CYAN}Detected running services:${STY_RST}"
@@ -154,7 +154,7 @@ check_conflicts() {
                 fi
             done
             echo ""
-            
+
             if [[ "$ask" == "true" ]]; then
                 if tui_confirm "Disable conflicting services automatically?"; then
                     echo ""
@@ -186,7 +186,7 @@ check_conflicts() {
         else
             echo -e "${STY_YELLOW}Recommendation: Uninstall or disable them manually.${STY_RST}"
         fi
-        
+
         echo ""
         if [[ "$ask" == "true" ]]; then
             read -p "Press Enter to continue installation (or Ctrl+C to abort)..."

@@ -39,9 +39,9 @@ require_release_version_consistency() {
     || die "VERSION=$repo_version does not match release version $version"
 
   for package_file in \
-    "$repo_root/distro/arch/inir-shell/PKGBUILD" \
-    "$repo_root/distro/arch/inir-meta/PKGBUILD" \
-    "$repo_root/sdata/dist-arch/inir-deps/PKGBUILD"; do
+    "$repo_root/distro/arch/alis-shell/PKGBUILD" \
+    "$repo_root/distro/arch/alis-meta/PKGBUILD" \
+    "$repo_root/sdata/dist-arch/alis-deps/PKGBUILD"; do
     [[ -f "$package_file" ]] || die "missing release package metadata: ${package_file#$repo_root/}"
     package_version="$(grep -m1 '^pkgver=' "$package_file" | cut -d= -f2- || true)"
     [[ -n "$package_version" ]] \
@@ -54,13 +54,13 @@ require_release_version_consistency() {
 require_release_source_pin() {
   local tag="$1"
   local package_file srcinfo_file source_ref srcinfo_source
-  package_file="$repo_root/distro/arch/inir-shell/PKGBUILD"
-  srcinfo_file="$repo_root/distro/arch/inir-shell/.SRCINFO"
+  package_file="$repo_root/distro/arch/alis-shell/PKGBUILD"
+  srcinfo_file="$repo_root/distro/arch/alis-shell/.SRCINFO"
 
   [[ -f "$package_file" ]] || die "missing release package recipe: ${package_file#$repo_root/}"
   [[ -f "$srcinfo_file" ]] || die "missing release package metadata: ${srcinfo_file#$repo_root/}"
 
-  source_ref="$(sed -n 's/^_source_ref="${INIR_SOURCE_REF:-\([^}]*\)}"$/\1/p' "$package_file")"
+  source_ref="$(sed -n 's/^_source_ref="${ALIS_SOURCE_REF:-\([^}]*\)}"$/\1/p' "$package_file")"
   [[ -n "$source_ref" ]] \
     || die "could not read default _source_ref from ${package_file#$repo_root/}"
   [[ "$source_ref" == "$tag" ]] \

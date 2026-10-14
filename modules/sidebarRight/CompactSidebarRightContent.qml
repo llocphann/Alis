@@ -98,11 +98,11 @@ Item {
     readonly property int compactActionBgHeight: compactTightHeight ? 30 : 34
     readonly property int compactSectionSpacing: compactTightHeight ? Appearance.sizes.spacingSmall : Appearance.sizes.spacingMedium
     readonly property int compactGridSpacing: compactNarrowWidth ? 4 : 5
-    
+
     // Controls section order from config
     readonly property var defaultSectionOrder: ["sliders", "toggles", "devices", "media", "quickActions"]
     property var controlsSectionOrder: Config.options?.sidebar?.right?.controlsSectionOrder ?? defaultSectionOrder
-    
+
     function moveSectionUp(index: int): void {
         if (index <= 0) return
         let order = [...root.controlsSectionOrder]
@@ -112,7 +112,7 @@ Item {
         root.controlsSectionOrder = order
         Config.setNestedValue("sidebar.right.controlsSectionOrder", order)
     }
-    
+
     function moveSectionDown(index: int): void {
         if (index >= root.controlsSectionOrder.length - 1) return
         let order = [...root.controlsSectionOrder]
@@ -420,7 +420,7 @@ Item {
             }
         }
     }
-    Component { 
+    Component {
         id: eventsComponent
         Item {
             anchors.fill: parent
@@ -435,7 +435,7 @@ Item {
                 id: eventsSurface
                 anchors.fill: parent
 
-                EventsWidget { 
+                EventsWidget {
                     anchors.fill: parent
                     anchors.margins: root.compactGridSpacing
                     onOpenEventsDialog: (editEvent) => {
@@ -1273,16 +1273,16 @@ Item {
                     // ═══════════════════════════════════════════════════════
                     Repeater {
                         model: root.controlsSectionOrder
-                        
+
                         delegate: ColumnLayout {
                             id: sectionDelegate
                             required property string modelData
                             required property int index
-                            
+
                             Layout.fillWidth: true
                             Layout.topMargin: sectionDelegate.index > 0 ? controlsRoot.controlsInlineGap : 0
                             spacing: controlsRoot.controlsInlineGap
-                            
+
                             // Move buttons (visible in edit mode)
                             Revealer {
                                 vertical: true
@@ -1292,7 +1292,7 @@ Item {
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 spacing: controlsRoot.controlsInlineGap
-                                
+
                                 StyledText {
                                     Layout.fillWidth: true
                                     text: {
@@ -1309,7 +1309,7 @@ Item {
                                     font.weight: Font.Medium
                                     color: Appearance.colors.colPrimary
                                 }
-                                
+
                                 RippleButton {
                                     implicitWidth: 28; implicitHeight: 28
                                     buttonRadius: 14
@@ -1321,7 +1321,7 @@ Item {
                                     contentItem: MaterialSymbol { anchors.centerIn: parent; text: "arrow_upward"; iconSize: 16; color: Appearance.colors.colOnLayer1 }
                                     StyledToolTip { text: Translation.tr("Move up") }
                                 }
-                                
+
                                 RippleButton {
                                     implicitWidth: 28; implicitHeight: 28
                                     buttonRadius: 14
@@ -1335,7 +1335,7 @@ Item {
                                 }
                             }
                             }
-                            
+
                             // Section content based on modelData
                             Loader {
                                 Layout.fillWidth: true
@@ -1348,14 +1348,14 @@ Item {
                                     compactSurface: true
                                 }
                             }
-                            
+
                             Loader {
                                 Layout.fillWidth: true
                                 active: sectionDelegate.modelData === "toggles"
                                 visible: active
                                 sourceComponent: ColumnLayout {
                                     spacing: controlsRoot.controlsInlineGap
-                                    
+
                                     // Classic compact controls: one intentional row only.
                                     // Wi-Fi/Bluetooth already have full device rows below; Settings/Lock
                                     // live in the rail/system actions. Use the scarce header slots for
@@ -1545,7 +1545,7 @@ Item {
                                     }
                                 }
                             }
-                            
+
                             Loader {
                                 Layout.fillWidth: true
                                 active: sectionDelegate.modelData === "devices"
@@ -1567,7 +1567,7 @@ Item {
                                     }
                                 }
                             }
-                            
+
                             Loader {
                                 Layout.fillWidth: true
                                 active: sectionDelegate.modelData === "media"
@@ -1589,7 +1589,7 @@ Item {
                                     }
                                 }
                             }
-                            
+
                             Loader {
                                 Layout.fillWidth: true
                                 active: sectionDelegate.modelData === "quickActions"
@@ -1687,7 +1687,7 @@ Item {
             const wins = NiriService.windows || []
             for (let i = 0; i < wins.length; i++) {
                 const w = wins[i]
-                if (w.title === "illogical-impulse Settings" && w.app_id === "org.quickshell") {
+                if (w.title === "Alis Settings" && w.app_id === "org.quickshell") {
                     GlobalStates.sidebarRightOpen = false
                     Qt.callLater(() => NiriService.focusWindow(w.id))
                     return
@@ -1695,7 +1695,7 @@ Item {
             }
         }
         GlobalStates.sidebarRightOpen = false
-        Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]))
+        Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"]))
     }
 
     // ═════════════════════════════════════════════════════════════
@@ -1852,7 +1852,7 @@ Item {
                 label: Translation.tr("Screenshot")
                 onClicked: {
                     GlobalStates.sidebarRightOpen = false
-                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "screenshot"]))
+                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "region", "screenshot"]))
                 }
             }
 
@@ -1862,7 +1862,7 @@ Item {
                 label: Translation.tr("Record")
                 onClicked: {
                     GlobalStates.sidebarRightOpen = false
-                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "record"]))
+                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "region", "record"]))
                 }
             }
 
@@ -1872,7 +1872,7 @@ Item {
                 label: Translation.tr("OCR")
                 onClicked: {
                     GlobalStates.sidebarRightOpen = false
-                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "ocr"]))
+                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "region", "ocr"]))
                 }
             }
 
@@ -1882,7 +1882,7 @@ Item {
                 label: Translation.tr("Search")
                 onClicked: {
                     GlobalStates.sidebarRightOpen = false
-                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "search"]))
+                    Qt.callLater(() => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "region", "search"]))
                 }
             }
 

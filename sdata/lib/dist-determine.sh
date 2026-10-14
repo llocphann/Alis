@@ -1,4 +1,4 @@
-# Determine distribution for iNiR installer
+# Determine distribution for Alis installer
 # This is NOT a script for execution, but for loading functions
 
 # shellcheck shell=bash
@@ -15,7 +15,7 @@ OS_PRETTY_NAME=""
 function print_arch_info(){
   if [[ -f /etc/arch-release ]] || command -v pacman &>/dev/null; then
     OS_GROUP_ID="arch"
-    
+
     # Detect specific distro
     if [[ -f /etc/cachyos-release ]]; then
       OS_SPECIFIC_ID="cachyos"
@@ -36,7 +36,7 @@ function print_arch_info(){
       OS_SPECIFIC_ID="arch"
       OS_PRETTY_NAME="Arch Linux"
     fi
-    
+
     if ! ${quiet:-false}; then
       echo -e "${STY_GREEN}Detected: Arch-based system${STY_RST}"
       echo -e "${STY_CYAN}  Distribution: ${OS_PRETTY_NAME}${STY_RST}"
@@ -50,12 +50,12 @@ function print_arch_info(){
 function print_fedora_info(){
   if [[ -f /etc/fedora-release ]] || (grep -qi "fedora" /etc/os-release 2>/dev/null); then
     OS_GROUP_ID="fedora"
-    
+
     # Get version
     if [[ -f /etc/os-release ]]; then
       OS_VERSION=$(grep "^VERSION_ID=" /etc/os-release | cut -d= -f2 | tr -d '"')
     fi
-    
+
     # Detect specific variant
     if grep -qi "nobara" /etc/os-release 2>/dev/null; then
       OS_SPECIFIC_ID="nobara"
@@ -73,7 +73,7 @@ function print_fedora_info(){
       OS_SPECIFIC_ID="fedora"
       OS_PRETTY_NAME="Fedora ${OS_VERSION}"
     fi
-    
+
     if ! ${quiet:-false}; then
       echo -e "${STY_GREEN}Detected: Fedora-based system${STY_RST}"
       echo -e "${STY_CYAN}  Distribution: ${OS_PRETTY_NAME}${STY_RST}"
@@ -91,7 +91,7 @@ function print_debian_info(){
     if grep -qi "ubuntu" /etc/os-release 2>/dev/null; then
       OS_GROUP_ID="ubuntu"
       OS_VERSION=$(grep "^VERSION_ID=" /etc/os-release | cut -d= -f2 | tr -d '"')
-      
+
       # Detect Ubuntu variants
       if grep -qi "pop" /etc/os-release 2>/dev/null; then
         OS_SPECIFIC_ID="pop"
@@ -115,7 +115,7 @@ function print_debian_info(){
     else
       OS_GROUP_ID="debian"
       OS_VERSION=$(cat /etc/debian_version 2>/dev/null || echo "unknown")
-      
+
       # Detect Debian variants
       if grep -qi "mx" /etc/os-release 2>/dev/null; then
         OS_SPECIFIC_ID="mx"
@@ -131,7 +131,7 @@ function print_debian_info(){
         OS_PRETTY_NAME="Debian ${OS_VERSION}"
       fi
     fi
-    
+
     if ! ${quiet:-false}; then
       echo -e "${STY_GREEN}Detected: Debian-based system${STY_RST}"
       echo -e "${STY_CYAN}  Distribution: ${OS_PRETTY_NAME}${STY_RST}"
@@ -145,7 +145,7 @@ function print_debian_info(){
 function print_opensuse_info(){
   if grep -qi "opensuse" /etc/os-release 2>/dev/null || [[ -f /etc/SuSE-release ]]; then
     OS_GROUP_ID="opensuse"
-    
+
     if grep -qi "tumbleweed" /etc/os-release 2>/dev/null; then
       OS_SPECIFIC_ID="tumbleweed"
       OS_PRETTY_NAME="openSUSE Tumbleweed"
@@ -160,7 +160,7 @@ function print_opensuse_info(){
       OS_SPECIFIC_ID="opensuse"
       OS_PRETTY_NAME="openSUSE"
     fi
-    
+
     if ! ${quiet:-false}; then
       echo -e "${STY_GREEN}Detected: openSUSE-based system${STY_RST}"
       echo -e "${STY_CYAN}  Distribution: ${OS_PRETTY_NAME}${STY_RST}"
@@ -176,7 +176,7 @@ function print_void_info(){
     OS_GROUP_ID="void"
     OS_SPECIFIC_ID="void"
     OS_PRETTY_NAME="Void Linux"
-    
+
     if ! ${quiet:-false}; then
       echo -e "${STY_GREEN}Detected: Void Linux${STY_RST}"
     fi
@@ -191,7 +191,7 @@ function print_gentoo_info(){
     OS_GROUP_ID="gentoo"
     OS_SPECIFIC_ID="gentoo"
     OS_PRETTY_NAME="Gentoo Linux"
-    
+
     if ! ${quiet:-false}; then
       echo -e "${STY_GREEN}Detected: Gentoo-based system${STY_RST}"
     fi
@@ -206,7 +206,7 @@ function print_nixos_info(){
     OS_GROUP_ID="nixos"
     OS_SPECIFIC_ID="nixos"
     OS_PRETTY_NAME="NixOS"
-    
+
     if ! ${quiet:-false}; then
       echo -e "${STY_GREEN}Detected: NixOS${STY_RST}"
       echo -e "${STY_YELLOW}  Note: NixOS requires declarative configuration.${STY_RST}"
@@ -224,7 +224,7 @@ function print_alpine_info(){
     OS_SPECIFIC_ID="alpine"
     OS_VERSION=$(cat /etc/alpine-release 2>/dev/null || echo "unknown")
     OS_PRETTY_NAME="Alpine Linux ${OS_VERSION}"
-    
+
     if ! ${quiet:-false}; then
       echo -e "${STY_GREEN}Detected: Alpine Linux${STY_RST}"
     fi
@@ -252,13 +252,13 @@ detect_distro(){
   OS_SPECIFIC_ID=""
   OS_VERSION=""
   OS_PRETTY_NAME=""
-  
+
   for fn in "${print_os_group_id_functions[@]}"; do
     $fn
     # Stop at first match
     [[ -n "$OS_GROUP_ID" ]] && break
   done
-  
+
   if [[ -z "$OS_GROUP_ID" ]]; then
     echo -e "${STY_RED}Could not detect distribution.${STY_RST}"
     echo ""
@@ -276,7 +276,7 @@ detect_distro(){
     echo "  1. Run: ./setup install --skip-deps"
     echo "  2. Install dependencies manually (see docs/INSTALL.md, 'The Hard Way (Manual)')"
     echo ""
-    
+
     # Allow continuing with generic installer
     if ${ask:-true}; then
       echo -e "${STY_YELLOW}Would you like to continue with manual dependency installation?${STY_RST}"
@@ -289,7 +289,7 @@ detect_distro(){
         return 0
       fi
     fi
-    
+
     exit 1
   fi
 }
@@ -315,7 +315,7 @@ uses_systemd() {
 get_package_manager() {
   case "$OS_GROUP_ID" in
     arch) echo "pacman" ;;
-    fedora) 
+    fedora)
       if is_immutable_distro; then
         echo "rpm-ostree"
       else

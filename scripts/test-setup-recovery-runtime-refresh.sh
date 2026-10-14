@@ -15,7 +15,7 @@ fail() {
 # The source file is not functionized, so close its active case arm immediately
 # after the Quickshell stage's terminal success marker. This keeps copy/manifest/
 # cleanup behavior real while avoiding unrelated Niri/theme/system integration.
-marker_re='^[[:space:]]*log_success "Quickshell inir config installed"[[:space:]]*$'
+marker_re='^[[:space:]]*log_success "Quickshell alis config installed"[[:space:]]*$'
 marker_count="$(grep -Ec "$marker_re" "$installer" || true)"
 [[ "$marker_count" -eq 1 ]] \
     || fail "Quickshell install-stage boundary count is $marker_count"
@@ -48,7 +48,7 @@ cat > "$XDG_BIN_HOME/cargo" <<'EOF'
 set -euo pipefail
 release="${CARGO_TARGET_DIR:?}/release"
 mkdir -p "$release"
-for binary in inir-inputd inir-mpdd inir-native inir-theme; do
+for binary in alis-inputd alis-mpdd alis-native alis-theme; do
     printf '#!/usr/bin/env sh\nexit 0\n' > "$release/$binary"
     chmod +x "$release/$binary"
 done
@@ -84,14 +84,14 @@ tui_info() { :; }
 tui_warn() { :; }
 tui_confirm() { return 1; }
 systemctl() { return 1; }
-sync_user_inir_service_from_repo_if_present() { return 1; }
+sync_user_alis_service_from_repo_if_present() { return 1; }
 
 # Recovery install must not accidentally take the update-only backup branch.
 create_update_backup() {
     fail 'IS_UPDATE=false recovery install unexpectedly created an update backup'
 }
 
-runtime="$XDG_CONFIG_HOME/quickshell/inir"
+runtime="$XDG_CONFIG_HOME/quickshell/alis"
 mkdir -p "$runtime/scripts"
 printf '%s\n' 'import QtQuick' > "$runtime/RetiredRoot.qml"
 printf '%s\n' '# private excluded artifact' > "$runtime/scripts/test-local-private.sh"
@@ -112,12 +112,12 @@ run_recovery_stage() {
     || fail 'IS_UPDATE=false recovery install deleted excluded private runtime artifact'
 [[ -f "$runtime/shell.qml" ]] \
     || fail 'recovery install did not copy the canonical runtime root'
-[[ -f "$runtime/.inir-manifest" ]] \
+[[ -f "$runtime/.alis-manifest" ]] \
     || fail 'recovery install did not finalize the canonical runtime manifest'
-if grep -Fq 'RetiredRoot.qml' "$runtime/.inir-manifest"; then
+if grep -Fq 'RetiredRoot.qml' "$runtime/.alis-manifest"; then
     fail 'retired root fixture leaked into canonical runtime manifest'
 fi
-if grep -Fq 'scripts/test-local-private.sh' "$runtime/.inir-manifest"; then
+if grep -Fq 'scripts/test-local-private.sh' "$runtime/.alis-manifest"; then
     fail 'excluded private fixture leaked into canonical runtime manifest'
 fi
 

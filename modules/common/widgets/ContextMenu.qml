@@ -144,11 +144,11 @@ Loader {
             rect.y: Number(root.anchorRect?.y ?? 0)
             rect.width: Number(root.anchorRect?.width ?? (root.anchorItem?.width ?? 0))
             rect.height: Number(root.anchorRect?.height ?? (root.anchorItem?.height ?? 0))
-            gravity: root.popupSide !== 0 
-                ? root.popupSide 
+            gravity: root.popupSide !== 0
+                ? root.popupSide
                 : (root.popupAbove ? Edges.Top : Edges.Bottom)
-            edges: root.popupSide !== 0 
-                ? root.popupSide 
+            edges: root.popupSide !== 0
+                ? root.popupSide
                 : (root.popupAbove ? Edges.Top : Edges.Bottom)
         }
 
@@ -251,7 +251,7 @@ Loader {
                 rightMargin: popupWindow.isHorizontalPopup && popupWindow.isLeftSide ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
             }
             fallbackColor: root.panelFallbackColor
-            inirColor: Appearance.inir.colLayer2
+            alisColor: Appearance.alis.colLayer2
             auroraTransparency: Appearance.aurora.popupTransparentize
             radius: root.panelRadius
             border.width: root.panelBorderWidth

@@ -10,14 +10,14 @@ import qs.services
 
 Loader {
     id: root
-    
+
     property Item anchorItem: parent
     property real visualMargin: 8
-    
+
     function toggle() {
         active = !active
     }
-    
+
     function close() {
         if (item && typeof item.close === "function") item.close()
         else active = false
@@ -30,7 +30,7 @@ Loader {
         id: popupWindow
         visible: true
         property bool closing: false
-        
+
         anchor.item: root.anchorItem
         anchor.gravity: Edges.Bottom
         anchor.edges: Edges.Top
@@ -67,14 +67,14 @@ Loader {
             exclusiveZone: 0
             WlrLayershell.layer: WlrLayer.Top
             WlrLayershell.namespace: "quickshell:widgetSettings"
-            
+
             anchors {
                 top: true
                 bottom: true
                 left: true
                 right: true
             }
-            
+
             MouseArea {
                 anchors.fill: parent
                 acceptedButtons: Qt.AllButtons
@@ -128,16 +128,16 @@ Loader {
             anchors.top: parent.top
             anchors.topMargin: popupWindow.sourceEdgeMargin
             anchors.right: parent.right // Align right with the button usually
-            
+
             implicitWidth: 220
             implicitHeight: contentCol.implicitHeight + 24
 
             fallbackColor: Appearance.colors.colSurfaceContainer
-            inirColor: Appearance.inir.colLayer2
+            alisColor: Appearance.alis.colLayer2
             auroraTransparency: Appearance.aurora.popupTransparentize
-            radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+            radius: Appearance.alisEverywhere ? Appearance.alis.roundingNormal : Appearance.rounding.normal
             border.width: 1
-            border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.colors.colOutlineVariant
+            border.color: Appearance.alisEverywhere ? Appearance.alis.colBorder : Appearance.colors.colOutlineVariant
             opacity: Appearance.motion.popupReveal.enableFade ? (shown ? 1 : 0) : 1
             scale: shown ? 1
                 : (Appearance.motion.popupReveal.enableScale
@@ -258,7 +258,7 @@ Loader {
                     checked: Config.options?.sidebar?.widgets?.crypto ?? false
                     onClicked: Config.setNestedValue("sidebar.widgets.crypto", checked)
                 }
-                
+
                 WidgetSwitch {
                     text: Translation.tr("Wallpaper")
                     buttonIcon: "wallpaper"

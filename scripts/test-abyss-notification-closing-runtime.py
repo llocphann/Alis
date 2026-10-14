@@ -70,7 +70,7 @@ ShellRoot {
     with private_wayland(folder) as env:
         if env is None:
             raise SystemExit("Private local Niri is required")
-        config = folder / "config/illogical-impulse"
+        config = folder / "config/alis"
         config.mkdir(parents=True, exist_ok=True)
         values = json.loads((ROOT / "defaults/config.json").read_text())
         values["panelFamily"] = "abyss"

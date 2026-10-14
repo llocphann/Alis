@@ -1,6 +1,6 @@
 //@ pragma UseQApplication
 //@ pragma Env QS_NO_RELOAD_POPUP=1
-//@ pragma Env INIR_STANDALONE_WINDOW=1
+//@ pragma Env ALIS_STANDALONE_WINDOW=1
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
 //@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
 
@@ -662,24 +662,24 @@ Scope {
                             // Fade + scale out, then fade + scale in
                             SequentialAnimation {
                                 ParallelAnimation {
-                                    NumberAnimation { 
+                                    NumberAnimation {
                                         target: stepStack; property: "opacity"; to: 0
                                         duration: stepAnim.moveDuration * 0.35
                                         easing.type: Easing.OutCubic
                                     }
-                                    NumberAnimation { 
+                                    NumberAnimation {
                                         target: stepStack; property: "scale"; to: 0.96
                                         duration: stepAnim.moveDuration * 0.35
                                         easing.type: Easing.OutCubic
                                     }
                                 }
                                 ParallelAnimation {
-                                    NumberAnimation { 
+                                    NumberAnimation {
                                         target: stepStack; property: "opacity"; to: 1
                                         duration: stepAnim.moveDuration * 0.65
                                         easing.type: Easing.OutCubic
                                     }
-                                    NumberAnimation { 
+                                    NumberAnimation {
                                         target: stepStack; property: "scale"; to: 1
                                         duration: stepAnim.moveDuration * 0.65
                                         easing.type: Easing.OutBack
@@ -690,17 +690,17 @@ Scope {
 
                             // Slide animation with improved easing
                             SequentialAnimation {
-                                NumberAnimation { 
+                                NumberAnimation {
                                     target: stepTranslate; property: "x"
                                     to: stepAnim.direction * -30
                                     duration: stepAnim.moveDuration * 0.35
                                     easing.type: Easing.OutCubic
                                 }
-                                PropertyAction { 
+                                PropertyAction {
                                     target: stepTranslate; property: "x"
                                     value: stepAnim.direction * 30
                                 }
-                                NumberAnimation { 
+                                NumberAnimation {
                                     target: stepTranslate; property: "x"; to: 0
                                     duration: stepAnim.moveDuration * 0.65
                                     easing.type: Easing.OutCubic
@@ -1151,7 +1151,7 @@ Scope {
         boundsBehavior: Flickable.StopAtBounds
         bottomMargin: 16
         topMargin: Math.max(0, (height - contentHeight - 16) / 2)
-        
+
         ColumnLayout {
             id: themeColumn
             width: parent.width
@@ -1863,7 +1863,7 @@ Scope {
                                 colBackgroundHover: Appearance.colors.colLayer1Hover
 
                                 onClicked: Quickshell.execDetached([
-                                    Quickshell.shellPath("scripts/inir"),
+                                    Quickshell.shellPath("scripts/alis"),
                                     modelData.target,
                                     modelData.fn
                                 ])
@@ -1986,7 +1986,7 @@ Scope {
                     buttonRadius: Appearance.rounding.small
                     colBackground: Appearance.colors.colLayer2
                     colBackgroundHover: Appearance.colors.colLayer2Hover
-                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
+                    onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"])
                     RowLayout {
                         id: settingsChipRow
                         anchors.centerIn: parent

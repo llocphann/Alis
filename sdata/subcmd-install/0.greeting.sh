@@ -1,4 +1,4 @@
-# Greeting for iNiR installer
+# Greeting for Alis installer
 # This script is meant to be sourced.
 
 # shellcheck shell=bash
@@ -19,7 +19,7 @@ detect_system() {
 
     # Shell detection
     DETECTED_SHELL=$(basename "${SHELL:-unknown}")
-    
+
     # DE/WM detection
     if [[ -n "$NIRI_SOCKET" ]]; then
         DETECTED_DE="Niri"
@@ -35,7 +35,7 @@ detect_system() {
 
     # Session type
     DETECTED_SESSION="${XDG_SESSION_TYPE:-unknown}"
-    
+
     # AUR helpers are relevant only on the Arch-family path.
     case "$DETECTED_DISTRO_ID" in
         arch|endeavouros|manjaro|garuda|cachyos|artix)

@@ -295,7 +295,7 @@ ContentPage {
 
                             DropArea {
                                 anchors.fill: parent
-                                keys: ["inir-dock-pinned-app"]
+                                keys: ["alis-dock-pinned-app"]
                                 enabled: root.pinnedDragging
                                 onEntered: drag => {
                                     if (drag.source && drag.source.appId !== pinnedSlot.appId)
@@ -322,7 +322,7 @@ ContentPage {
 
                                 Drag.active: pinnedHandle.drag.active
                                 Drag.source: pinnedRow
-                                Drag.keys: ["inir-dock-pinned-app"]
+                                Drag.keys: ["alis-dock-pinned-app"]
                                 Drag.hotSpot.x: width / 2
                                 Drag.hotSpot.y: height / 2
 

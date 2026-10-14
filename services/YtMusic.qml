@@ -83,7 +83,7 @@ Singleton {
     property bool verbose: Config.options?.sidebar?.ytmusic?.verbose ?? false
 
     function _log(msg) { if (root.verbose) console.log(msg) }
-    
+
     property string currentTitle: ""
     property string currentArtist: ""
     property string currentThumbnail: ""
@@ -91,16 +91,16 @@ Singleton {
     property string currentVideoId: ""
     property real currentDuration: 0
     property real currentPosition: 0
-    
+
     property bool canPause: _mpvPlayer?.canPause ?? true
     property bool canSeek: _mpvPlayer?.canSeek ?? true
     property real volume: _mpvPlayer?.volume ?? (_savedVolume / 100)
-    
+
     property bool shuffleMode: Config.options?.sidebar?.ytmusic?.shuffleMode ?? false
     property int repeatMode: Config.options?.sidebar?.ytmusic?.repeatMode ?? 0
     readonly property bool upNextNotificationsEnabled: Config.options?.sidebar?.ytmusic?.upNextNotifications ?? true
     readonly property bool suppressUpNextInFullscreen: Config.options?.sidebar?.ytmusic?.suppressUpNextInFullscreen ?? true
-    
+
     property string audioQuality: Config.options?.sidebar?.ytmusic?.audioQuality ?? "best"
     onAudioQualityChanged: {
         Config.setNestedValue('sidebar.ytmusic.audioQuality', audioQuality)
@@ -141,7 +141,7 @@ Singleton {
 
     onShuffleModeChanged: Config.setNestedValue('sidebar.ytmusic.shuffleMode', shuffleMode)
     onRepeatModeChanged: Config.setNestedValue('sidebar.ytmusic.repeatMode', repeatMode)
-    
+
     property var searchResults: []
     property var recentSearches: []
     property var queue: []
@@ -149,18 +149,18 @@ Singleton {
     property list<var> likedSongs: []
     property string lastLikedSync: ""
     property bool syncingLiked: false
-    
+
     property var activePlaylist: []
     property int currentIndex: -1
     property string activePlaylistSource: ""
-    
+
     // currentArtistInfo removed — was declared but never populated.
     // Artist header UI in YtMusicView was dead code.
-    
+
     property string userName: ""
     property string userAvatar: ""
     property string userChannelUrl: ""
-    
+
     // InnerTube owns the current browser-cookie session. Keep the legacy surface in sync with its
     // verified runtime state instead of trusting the persisted `connected` hint before validation.
     property bool googleConnected: InnerTube.authenticated
@@ -178,7 +178,7 @@ Singleton {
     // read + YTM validation). This legacy yt-dlp-based auto-connect is disabled so the two flows
     // don't compete writing yt-cookies.txt (the old path rotated and clobbered a good session).
     readonly property bool autoConnectEnabled: false
-    
+
     // OAuth state
     property bool oauthConfigured: false
     property string oauthChannel: ""
@@ -189,11 +189,11 @@ Singleton {
     property string oauthSetupError: ""
     property string _oauthClientId: ""
     property string _oauthClientSecret: ""
-    
+
     readonly property int maxRecentSearches: 10
     readonly property int maxLikedSongs: 200
     readonly property int maxSearchResults: 30
-    
+
     readonly property var browserInfo: ({
         "firefox": { name: "Firefox", icon: "local_fire_department", configPath: "~/.mozilla/firefox" },
         "chrome": { name: "Chrome", icon: "public", configPath: "~/.config/google-chrome" },
@@ -210,11 +210,11 @@ Singleton {
 
     property MprisPlayer _mpvPlayer: null
     readonly property MprisPlayer mpvPlayer: _mpvPlayer
-    
+
     readonly property bool hasActivePlaylist: activePlaylist.length > 0 && currentIndex >= 0
     readonly property bool canGoNext: hasActivePlaylist && (currentIndex < activePlaylist.length - 1 || repeatMode === 2 || shuffleMode)
     readonly property bool canGoPrevious: hasActivePlaylist && (currentIndex > 0 || repeatMode === 2 || currentPosition > 3)
-    
+
     function _isOurMpv(player): bool {
         if (!player) return false
         const id = (player.identity ?? "").toLowerCase()
@@ -232,25 +232,25 @@ Singleton {
 
     Instantiator {
         model: Mpris.players
-        
+
         Connections {
             required property MprisPlayer modelData
             target: modelData
-            
+
             Component.onCompleted: {
                 if (root._isOurMpv(modelData)) {
                     root._mpvPlayer = modelData
                     root._syncFromMpvPlayer(modelData)
                 }
             }
-            
+
             function onIsPlayingChanged() {
                 if (root._isOurMpv(modelData)) {
                     root._mpvPlayer = modelData
                     root._syncFromMpvPlayer(modelData)
                 }
             }
-            
+
             function onPostTrackChanged() {
                 if (root._isOurMpv(modelData)) {
                     root._mpvPlayer = modelData
@@ -275,7 +275,7 @@ Singleton {
                     root._syncFromMpvPlayer(modelData)
                 }
             }
-            
+
             Component.onDestruction: {
                 if (root._mpvPlayer === modelData) {
                     root._mpvPlayer = null
@@ -284,7 +284,7 @@ Singleton {
             }
         }
     }
-    
+
     function _findMpvPlayer(): void {
         for (const player of Mpris.players.values) {
             if (root._isOurMpv(player)) {
@@ -368,7 +368,7 @@ Singleton {
         if (len > 0) root.currentDuration = len
         if (pos >= 0) root.currentPosition = pos
     }
-    
+
     // P0-13: do nothing until the user enables the feature — no process spawns,
     // no disk reads. Initializes lazily when enabled flips at runtime.
     property bool _initialized: false
@@ -493,7 +493,7 @@ Singleton {
             }
         }
     }
-    
+
     property bool _ipcPaused: false
     property bool _ipcEofReached: false
     property bool _autoAdvanceTriggered: false
@@ -567,12 +567,12 @@ Singleton {
         }
         function onRadioTracksChanged() { root._onRadioTracks() }
     }
-    
+
     // clearArtistInfo() removed — currentArtistInfo was dead code
 
     property var _pendingItem: null
     property real _fadeVolume: 1.0
-    
+
     function _playInternal(item): void {
         if (!item?.videoId || !root.available) return
         root.error = ""
@@ -585,9 +585,9 @@ Singleton {
         // the isPlaying fallback reports true instead of a stale false for up to
         // the first IPC poll after the player starts.
         root._ipcPaused = false
-        
+
         _fadeOutOtherPlayers()
-        
+
         root.currentTitle = item.title || ""
         root.currentArtist = item.artist || ""
         root.currentVideoId = item.videoId || ""
@@ -602,11 +602,11 @@ Singleton {
 
         root._playUrl = root.currentUrl
         root._pendingItem = item
-        
+
         root._stopMpv()
         _playDelayTimer.restart()
     }
-    
+
     function play(item): void {
         if (!item?.videoId) return
         root.activePlaylist = [item]
@@ -619,7 +619,7 @@ Singleton {
             root._clearRelatedQueue()
         }
     }
-    
+
     function playFromPlaylist(playlist, index, source): void {
         root._log("[YtMusic] playFromPlaylist. playlist.length=" + (playlist?.length ?? "null") + " index=" + index + " source=" + source)
         if (!playlist || index < 0 || index >= playlist.length) return
@@ -635,20 +635,20 @@ Singleton {
         root._log("[YtMusic] Set activePlaylist.length=" + root.activePlaylist.length + " currentIndex=" + root.currentIndex)
         _playInternal(item)
     }
-    
+
     function playFromSearch(index): void {
         if (index >= 0 && index < searchResults.length) {
             playFromPlaylist(searchResults, index, "search")
         }
     }
-    
+
     function playFromLiked(index): void {
         root._log("[YtMusic] playFromLiked. index=" + index + " likedSongs.length=" + likedSongs.length)
         if (index >= 0 && index < likedSongs.length) {
             playFromPlaylist(likedSongs, index, "liked")
         }
     }
-    
+
     function playFromQueue(index): void {
         if (index >= 0 && index < queue.length) {
             const item = queue[index]
@@ -665,7 +665,7 @@ Singleton {
             _playInternal(item)
         }
     }
-    
+
     function _fadeOutOtherPlayers(): void {
         for (const player of Mpris.players.values) {
             if (player === root._mpvPlayer) continue
@@ -773,7 +773,7 @@ Singleton {
         property string commandData
         command: ["/bin/sh", "-c", "echo '" + commandData + "' | socat - " + root.ipcSocket + " 2>/dev/null"]
     }
-    
+
     function _sendIpc(cmd): void {
         _ipcProc.commandData = JSON.stringify({ command: cmd })
         _ipcProc.running = true
@@ -786,7 +786,7 @@ Singleton {
             _sendIpc(["cycle", "pause"])
         }
     }
-    
+
     function seek(seconds): void {
         if (root._mpvPlayer) {
             root._mpvPlayer.position = seconds
@@ -806,18 +806,18 @@ Singleton {
             _sendIpc(["set_property", "volume", root._savedVolume])
         }
     }
-    
+
     function getVolume(): real {
         return root._mpvPlayer?.volume ?? root._ipcVolume
     }
-    
+
     property real _ipcVolume: 1.0
     property int _savedVolume: Config.options?.sidebar?.ytmusic?.volume ?? 100
 
     function toggleShuffle(): void {
         root.shuffleMode = !root.shuffleMode
     }
-    
+
     function cycleRepeatMode(): void {
         root.repeatMode = (root.repeatMode + 1) % 3
     }
@@ -852,22 +852,22 @@ Singleton {
     function playNext(notifyUpcoming): void {
         notifyUpcoming = (notifyUpcoming === true)
         root._log("[YtMusic] playNext called. activePlaylist.length=" + activePlaylist.length + " currentIndex=" + currentIndex + " source=" + activePlaylistSource)
-        
+
         if (root.repeatMode === 1 && root.currentVideoId) {
             seek(0)
             if (!root.isPlaying) togglePlaying()
             return
         }
-        
+
         if (root.activePlaylist.length > 0 && root.currentIndex >= 0) {
             let nextIndex = root.currentIndex + 1
-            
+
             if (root.shuffleMode && root.activePlaylist.length > 1) {
                 do {
                     nextIndex = Math.floor(Math.random() * root.activePlaylist.length)
                 } while (nextIndex === root.currentIndex)
             }
-            
+
             if (nextIndex >= root.activePlaylist.length) {
                 if (root.queue.length > 0) {
                     if (notifyUpcoming)
@@ -881,7 +881,7 @@ Singleton {
                     return
                 }
             }
-            
+
             const nextItem = root.activePlaylist[nextIndex]
             if (notifyUpcoming)
                 root._notifyUpcomingTrack(nextItem)
@@ -889,23 +889,23 @@ Singleton {
             _playInternal(nextItem)
             return
         }
-        
+
         if (root.queue.length > 0) {
             if (notifyUpcoming)
                 root._notifyUpcomingTrack(root.queue[0])
             playFromQueue(0)
         }
     }
-    
+
     function playPrevious(): void {
         if (root.currentPosition > 3) {
             seek(0)
             return
         }
-        
+
         if (root.activePlaylist.length > 0 && root.currentIndex >= 0) {
             let prevIndex = root.currentIndex - 1
-            
+
             if (prevIndex < 0) {
                 if (root.repeatMode === 2) {
                     prevIndex = root.activePlaylist.length - 1
@@ -914,12 +914,12 @@ Singleton {
                     return
                 }
             }
-            
+
             root.currentIndex = prevIndex
             _playInternal(root.activePlaylist[prevIndex])
             return
         }
-        
+
         seek(0)
     }
 
@@ -994,7 +994,7 @@ Singleton {
     function addToPlaylist(playlistIndex, item): void {
         if (playlistIndex < 0 || playlistIndex >= root.playlists.length) return
         if (!item?.videoId) return
-        
+
         let p = [...root.playlists]
         if (!p[playlistIndex].items.find(i => i.videoId === item.videoId)) {
             p[playlistIndex].items = [...p[playlistIndex].items, {
@@ -1210,14 +1210,14 @@ Singleton {
         if (playlistIndex < 0 || playlistIndex >= root.playlists.length) return
         let items = [...root.playlists[playlistIndex].items]
         if (items.length === 0) return
-        
+
         if (shuffle) {
             for (let i = items.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [items[i], items[j]] = [items[j], items[i]]
             }
         }
-        
+
         playFromPlaylist(items, 0, "playlist:" + root.playlists[playlistIndex].name)
     }
 
@@ -1263,7 +1263,7 @@ Singleton {
         // Delete stale cookie file
         _deleteCookiesProc.running = true
     }
-    
+
     function quickConnect(): void {
         if (root.googleConnected) return
         root.googleError = ""
@@ -1271,10 +1271,10 @@ Singleton {
         root._quickConnectIndex = 0
         root._tryNextBrowser()
     }
-    
+
     property int _quickConnectIndex: 0
     property var _browsersToTry: []
-    
+
     function _tryNextBrowser(): void {
         if (root._quickConnectIndex === 0) {
             let browsers = []
@@ -1286,13 +1286,13 @@ Singleton {
             }
             root._browsersToTry = browsers
         }
-        
+
         if (root._quickConnectIndex >= root._browsersToTry.length) {
             root.googleChecking = false
             root.googleError = Translation.tr("Could not connect. Log in to music.youtube.com in your browser first.")
             return
         }
-        
+
         root.googleBrowser = root._browsersToTry[root._quickConnectIndex]
         root._resolvedBrowserArg = ""
         if (root._firefoxForks.includes(root.googleBrowser)) {
@@ -1353,15 +1353,15 @@ print("")
             "--print", "id",
             "https://www.youtube.com/feed/history"
         ]
-        
+
         onStarted: { stdOutput = "" }
-        
+
         stdout: SplitParser {
             onRead: line => {
                 _quickConnectCheckProc.stdOutput += line + "\n"
             }
         }
-        
+
         onExited: (code) => {
             if (code === 0 && _quickConnectCheckProc.stdOutput.trim().length > 0) {
                 root.googleConnected = true
@@ -1381,7 +1381,7 @@ print("")
             }
         }
     }
-    
+
     Process {
         id: _fetchProfileProc
         command: ["/usr/bin/yt-dlp",
@@ -1391,7 +1391,7 @@ print("")
             "--print", "%(uploader)s|%(uploader_url)s",
             "https://music.youtube.com/library/playlists"
         ]
-        
+
         stdout: SplitParser {
             onRead: line => {
                 const parts = line.split("|")
@@ -1403,7 +1403,7 @@ print("")
             }
         }
     }
-    
+
     Process {
         id: _fetchAvatarProc
         command: ["/usr/bin/yt-dlp",
@@ -1411,7 +1411,7 @@ print("")
             "--dump-json",
             root.userChannelUrl
         ]
-        
+
         stdout: SplitParser {
             onRead: line => {
                 try {
@@ -1424,14 +1424,14 @@ print("")
             }
         }
     }
-    
+
     function fetchUserProfile(): void {
         if (!root.googleConnected) return
         _fetchProfileProc.running = true
         fetchLikedPlaylists()
         fetchLikedSongs()
     }
-    
+
     function _persistProfile(): void {
         Config.setNestedValues({
             'sidebar.ytmusic.profile.name': root.userName,
@@ -1439,18 +1439,18 @@ print("")
             'sidebar.ytmusic.profile.url': root.userChannelUrl
         })
     }
-    
+
     function openYtMusicInBrowser(): void {
         Qt.openUrlExternally("https://music.youtube.com")
     }
-    
+
     function retryConnection(): void {
         root.googleError = ""
         root.googleChecking = true
         root._resolvedBrowserArg = ""
         _checkGoogleConnection()
     }
-    
+
     function getBrowserDisplayName(browserId): string {
         return root.browserInfo[browserId]?.name ?? browserId
     }
@@ -1464,11 +1464,11 @@ print("")
             "--playlist-end", root.maxLikedSongs.toString(),
             "https://music.youtube.com/playlist?list=LM"
         ]
-        
+
         property var newLiked: []
-        
+
         onStarted: { newLiked = [] }
-        
+
         stdout: SplitParser {
             onRead: line => {
                 try {
@@ -1486,7 +1486,7 @@ print("")
                 } catch (e) {}
             }
         }
-        
+
         onExited: (code) => {
             root.syncingLiked = false
             if (code === 0 && _fetchLikedProc.newLiked.length > 0) {
@@ -1500,7 +1500,7 @@ print("")
             }
         }
     }
-    
+
     Process {
         id: _fetchLikedFallbackProc
         command: ["/usr/bin/yt-dlp",
@@ -1510,11 +1510,11 @@ print("")
             "--playlist-end", root.maxLikedSongs.toString(),
             "https://www.youtube.com/playlist?list=LL"
         ]
-        
+
         property var newLiked: []
-        
+
         onStarted: { newLiked = [] }
-        
+
         stdout: SplitParser {
             onRead: line => {
                 try {
@@ -1523,8 +1523,8 @@ print("")
                     const duration = data.duration || 0
                     if (duration < 30 || duration > 600) return
                     const title = (data.title || "").toLowerCase()
-                    const videoKeywords = ['podcast', 'interview', 'documentary', 'tutorial', 
-                                          'review', 'gameplay', 'walkthrough', 'vlog', 
+                    const videoKeywords = ['podcast', 'interview', 'documentary', 'tutorial',
+                                          'review', 'gameplay', 'walkthrough', 'vlog',
                                           'episode', 'part ', 'full album', 'compilation',
                                           'hours of', 'asmr', 'white noise']
                     if (videoKeywords.some(kw => title.includes(kw))) return
@@ -1538,7 +1538,7 @@ print("")
                 } catch (e) {}
             }
         }
-        
+
         onExited: (code) => {
             root.syncingLiked = false
             if (code === 0 && _fetchLikedFallbackProc.newLiked.length > 0) {
@@ -1549,7 +1549,7 @@ print("")
             }
         }
     }
-    
+
     function fetchLikedSongs(): void {
         if (root.syncingLiked) return
         root.syncingLiked = true
@@ -1591,7 +1591,7 @@ print("")
             }
         }
     }
-    
+
     function fetchYtMusicPlaylists(): void {
         fetchLikedPlaylists()
     }
@@ -1661,7 +1661,7 @@ print("")
         ? root.customCookiesPath : root._cookiesFilePath
     // yt-dlp's --cookies option writes the jar back after a request. Playback therefore gets a
     // disposable copy so server-side rotations can never corrupt InnerTube's canonical session.
-    readonly property string _playbackCookiesFile: Directories.cachePath + "/inir/ytmusic-playback-cookies.txt"
+    readonly property string _playbackCookiesFile: Directories.cachePath + "/alis/ytmusic-playback-cookies.txt"
 
     function _getThumbnailUrl(videoId): string {
         if (!videoId) return ""
@@ -1671,7 +1671,7 @@ print("")
         // (from InnerTube) is preferred when the track carries it — this is the videoId-only fallback.
         return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
     }
-    
+
     Connections {
         target: _detectBrowsersProc
         function onRunningChanged() {
@@ -1705,25 +1705,25 @@ print("")
         root.lastLikedSync = Config.options?.sidebar?.ytmusic?.lastLikedSync ?? ""
         root.customCookiesPath = Config.options?.sidebar?.ytmusic?.cookiesPath ?? ""
         root._useManualCookies = Config.options?.sidebar?.ytmusic?.useManualCookies ?? false
-        
+
         const profile = Config.options?.sidebar?.ytmusic?.profile
         if (profile) {
             root.userName = profile.name ?? ""
             root.userAvatar = profile.avatar ?? ""
             root.userChannelUrl = profile.url ?? ""
         }
-        
+
         const savedBrowser = Config.options?.sidebar?.ytmusic?.browser
         if (savedBrowser) {
             root.googleBrowser = savedBrowser
         }
-        
+
         // Restore persisted resolved browser arg (avoids re-resolving on restart)
         const savedResolvedArg = Config.options?.sidebar?.ytmusic?.resolvedBrowserArg ?? ""
         if (savedResolvedArg) {
             root._resolvedBrowserArg = savedResolvedArg
         }
-        
+
     }
 
     Process {
@@ -1741,7 +1741,7 @@ print("")
                 else if (desktop.includes("opera")) browser = "opera"
                 else if (desktop.includes("edge")) browser = "edge"
                 else if (desktop.includes("zen")) browser = "zen"
-                
+
                 if (browser && !Config.options?.sidebar?.ytmusic?.browser) {
                     root.googleBrowser = browser
                     root.defaultBrowser = browser
@@ -1952,8 +1952,8 @@ print("")
                 _googleCheckProc.errorOutput += line + "\n"
             }
         }
-        onStarted: { 
-            errorOutput = ""; 
+        onStarted: {
+            errorOutput = "";
             stdOutput = "";
             root._log("[YtMusic] Starting connection check with browser:", root.googleBrowser)
         }
@@ -2019,9 +2019,9 @@ print("")
             `ytsearch${root.maxSearchResults * 2}:${root._searchQuery} song`
         ]
         property var results: []
-        
+
         onStarted: { results = [] }
-        
+
         stdout: SplitParser {
             onRead: line => {
                 try {
@@ -2030,8 +2030,8 @@ print("")
                     const duration = data.duration || 0
                     if (duration < 30 || duration > 600) return
                     const title = (data.title || "").toLowerCase()
-                    const videoKeywords = ['podcast', 'interview', 'documentary', 'tutorial', 
-                                          'review', 'gameplay', 'walkthrough', 'vlog', 
+                    const videoKeywords = ['podcast', 'interview', 'documentary', 'tutorial',
+                                          'review', 'gameplay', 'walkthrough', 'vlog',
                                           'episode', 'part ', 'full album', 'compilation',
                                           'hours of', 'asmr', 'white noise', 'rain sounds']
                     if (videoKeywords.some(kw => title.includes(kw))) return
@@ -2239,7 +2239,7 @@ print("")
     }
 
     // Kill any orphaned mpv instances that use our IPC socket.
-    // Handles processes that survived across inir restart or weren't cleaned up properly.
+    // Handles processes that survived across alis restart or weren't cleaned up properly.
     Process {
         id: _killOrphanedMpvProc
         command: ["/bin/sh", "-c", "pkill -f 'mpv.*qs-ytmusic-mpv\\.sock' 2>/dev/null; true"]
@@ -2411,14 +2411,14 @@ print("")
             }
         }
     }
-    
+
     IpcHandler {
         target: "ytmusic"
 
         function playPause(): void {
             root.togglePlaying()
         }
-        
+
         function next(): void {
             if (!root.canGoNext)
                 return
@@ -2426,7 +2426,7 @@ print("")
             if (Config.options?.osd?.mediaEnabled ?? true)
                 GlobalStates.showMediaAction("next")
         }
-        
+
         function previous(): void {
             if (!root.currentVideoId)
                 return
@@ -2434,7 +2434,7 @@ print("")
             if (Config.options?.osd?.mediaEnabled ?? true)
                 GlobalStates.showMediaAction("previous")
         }
-        
+
         function stop(): void {
             root.stop()
         }

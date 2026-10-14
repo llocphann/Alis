@@ -29,7 +29,7 @@ Item {
     }
     property real screenX: 0
     property real screenY: 0
-    
+
     readonly property string vizType: Config.getNestedValue("background.widgets.mediaControls.visualizerType", "wave")
     readonly property string vizPosition: Config.getNestedValue("background.widgets.mediaControls.visualizerPosition", "bottom")
 
@@ -38,25 +38,25 @@ Item {
         player: root.player
         positionUpdatesActive: root.positionUpdatesActive
     }
-    
+
     // Theme seed for the whole player. Defaults to the album-art colour (floating popup
     // keeps that). Desktop host overrides it with the wallpaper seed for cohesion.
     property color themeSourceColor: playerBase.artDominantColor
     property QtObject blendedColors: AdaptedMaterialScheme { color: root.themeSourceColor }
-    
-    StyledRectangularShadow { 
+
+    StyledRectangularShadow {
         target: card
         visible: !Appearance.zzzEverywhere
-            && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
+            && (Appearance.angelEverywhere || (!Appearance.alisEverywhere && !Appearance.auroraEverywhere))
     }
-    
+
     Rectangle {
         id: card
         anchors.centerIn: parent
         width: parent.width - Appearance.sizes.elevationMargin
         height: parent.height - Appearance.sizes.elevationMargin
         radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
-            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : root.radius
+            : Appearance.alisEverywhere ? Appearance.alis.roundingNormal : root.radius
         color: Appearance.zzzEverywhere ? Appearance.zzz.paper : "transparent"
         border.width: Appearance.zzzEverywhere ? Appearance.zzz.borderThick : 0
         border.color: Appearance.zzzEverywhere ? Appearance.zzz.hairlineStrong : "transparent"
@@ -66,12 +66,12 @@ Item {
         Behavior on border.width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
         Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
         clip: true
-        
+
         layer.enabled: true
         layer.effect: GE.OpacityMask {
             maskSource: Rectangle { width: card.width; height: card.height; radius: card.radius }
         }
-        
+
         // Full cover art background with blur
         Image {
             anchors.fill: parent
@@ -82,7 +82,7 @@ Item {
             smooth: true
             mipmap: true
             visible: playerBase.displayedArtFilePath !== ""
-            
+
             opacity: Appearance.zzzEverywhere ? 0.32 : 1
             layer.enabled: Appearance.effectsEnabled
             layer.effect: MultiEffect {
@@ -92,22 +92,22 @@ Item {
                 saturation: Appearance.zzzEverywhere ? 0.32 : 0.5
             }
         }
-        
+
         // Fallback color when no art
         Rectangle {
             anchors.fill: parent
             visible: !playerBase.downloaded
-            color: Appearance.inirEverywhere 
-                ? playerBase.inirLayer1
+            color: Appearance.alisEverywhere
+                ? playerBase.alisLayer1
                 : Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
                 : (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
-            
+
             MaterialSymbol {
                 anchors.centerIn: parent
                 text: "music_note"
                 iconSize: 64
-                color: Appearance.inirEverywhere 
-                    ? playerBase.inirTextSecondary 
+                color: Appearance.alisEverywhere
+                    ? playerBase.alisTextSecondary
                     : Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
                     : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
             }
@@ -140,7 +140,7 @@ Item {
                 }
             }
         }
-        
+
         // Visualizer overlay
         WaveVisualizer {
             visible: root.vizType === "wave" && root.vizPosition !== "none"
@@ -165,7 +165,7 @@ Item {
             colorMed: ColorUtils.transparentize(root.themeSourceColor, 0.1)
             colorHigh: root.themeSourceColor
         }
-        
+
         // Controls overlay at bottom
         ColumnLayout {
             anchors.left: parent.left
@@ -173,7 +173,7 @@ Item {
             anchors.bottom: parent.bottom
             anchors.margins: 16
             spacing: 8
-            
+
             // Title & Artist
             PlayerInfo {
                 Layout.fillWidth: true
@@ -185,7 +185,7 @@ Item {
                 artistSize: Appearance.font.pixelSize.normal
                 slideDirection: playerBase.slideDirection
             }
-            
+
             // Progress bar
             PlayerProgress {
                 Layout.fillWidth: true
@@ -198,12 +198,12 @@ Item {
                 trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack : ColorUtils.transparentize("white", 0.6)
                 onSeekRequested: seconds => playerBase.seek(seconds)
             }
-            
+
             // Time + controls
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
-                
+
                 StyledText {
                     text: StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)
                     font.pixelSize: Appearance.font.pixelSize.smallest
@@ -214,9 +214,9 @@ Item {
                         ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                     }
                 }
-                
+
                 Item { Layout.fillWidth: true }
-                
+
                 PlayerControls {
                     canGoPrevious: playerBase.effectiveCanGoPrevious
                     canGoNext: playerBase.effectiveCanGoNext
@@ -235,9 +235,9 @@ Item {
                     onPlayPauseClicked: playerBase.togglePlaying()
                     onNextClicked: playerBase.next()
                 }
-                
+
                 Item { Layout.fillWidth: true }
-                
+
                 StyledText {
                     text: StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)
                     font.pixelSize: Appearance.font.pixelSize.smallest

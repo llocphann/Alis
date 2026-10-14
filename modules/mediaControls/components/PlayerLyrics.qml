@@ -10,8 +10,8 @@ import qs.services
 Item {
     id: root
 
-    property color textColor: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-    property color activeColor: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
+    property color textColor: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
+    property color activeColor: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer0
     property color indicatorColor: Appearance.colors.colPrimaryContainer
     property int textAlignment: Text.AlignHCenter
     property int lineSpacing: 8

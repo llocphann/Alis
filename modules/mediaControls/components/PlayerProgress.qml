@@ -9,28 +9,28 @@ import qs.modules.common.functions
  */
 Item {
     id: root
-    
+
     // Required properties
     required property real position
     required property real length
     required property bool canSeek
     required property bool isPlaying
-    
+
     // Optional properties
     property color highlightColor: Appearance.zzzEverywhere ? Appearance.zzz.metricFill
-        : Appearance.inirEverywhere
-        ? Appearance.inir.colPrimary 
+        : Appearance.alisEverywhere
+        ? Appearance.alis.colPrimary
         : Appearance.colors.colPrimary
     property color trackColor: Appearance.zzzEverywhere ? Appearance.zzz.metricTrack
-        : Appearance.inirEverywhere
-        ? Appearance.inir.colLayer2 
+        : Appearance.alisEverywhere
+        ? Appearance.alis.colLayer2
         : Appearance.colors.colSecondaryContainer
     property bool enableWavy: true
     property bool scrollable: true
-    
+
     // Signals
     signal seekRequested(real seconds)
-    
+
     readonly property real boundedPosition: StringUtils.boundedMediaPosition(
         root.position, root.length)
     readonly property real progressValue: length > 0
@@ -64,7 +64,7 @@ Item {
             scrollable: root.scrollable
         }
     }
-    
+
     // Non-seekable progress bar
     Loader {
         anchors.fill: parent

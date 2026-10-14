@@ -11,10 +11,10 @@ import qs.services
  */
 RowLayout {
     id: root
-    
+
     // Required properties
     required property bool isPlaying
-    
+
     // Optional properties
     property int buttonSize: 32
     property int playButtonSize: 40
@@ -22,26 +22,26 @@ RowLayout {
     property int playIconSize: 24
     property real buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall 
+        : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
         : Appearance.rounding.full
     property real playButtonRadius: buttonRadius
     property color buttonColor: "transparent"
     property color playButtonColor: root.buttonColor
     property color buttonHoverColor: Appearance.zzzEverywhere ? Appearance.zzz.paperAlt
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover 
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
         : Appearance.colors.colLayer1Hover
     property color buttonRippleColor: Appearance.zzzEverywhere ? ColorUtils.transparentize(Appearance.zzz.accent, 0.68)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active 
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Active
         : Appearance.colors.colLayer1Active
     property color iconColor: Appearance.zzzEverywhere ? Appearance.zzz.ink
         : Appearance.angelEverywhere ? Appearance.angel.colText
-        : Appearance.inirEverywhere ? Appearance.inir.colText 
+        : Appearance.alisEverywhere ? Appearance.alis.colText
         : Appearance.colors.colOnLayer0
     property color playIconColor: Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary 
+        : Appearance.alisEverywhere ? Appearance.alis.colPrimary
         : Appearance.colors.colOnLayer1
     property color playButtonHoverColor: root.playButtonColor.a > 0.01
         ? ColorUtils.mix(root.playButtonColor, root.playIconColor, 0.90)
@@ -52,14 +52,14 @@ RowLayout {
     property bool showLabels: true
     property bool canGoPrevious: true
     property bool canGoNext: true
-    
+
     // Signals
     signal previousClicked()
     signal playPauseClicked()
     signal nextClicked()
-    
+
     spacing: 4
-    
+
     // Previous button
     RippleButton {
         cookieMorphing: true
@@ -71,7 +71,7 @@ RowLayout {
         colBackgroundHover: root.buttonHoverColor
         colRipple: root.buttonRippleColor
         onClicked: root.previousClicked()
-        
+
         contentItem: Item {
             MaterialSymbol {
                 anchors.centerIn: parent
@@ -81,13 +81,13 @@ RowLayout {
                 color: root.iconColor
             }
         }
-        
-        StyledToolTip { 
+
+        StyledToolTip {
             text: Translation.tr("Previous")
             visible: root.showLabels && parent.hovered
         }
     }
-    
+
     // Play/Pause button
     RippleButton {
         cookieMorphing: true
@@ -98,7 +98,7 @@ RowLayout {
         colBackgroundHover: root.playButtonHoverColor
         colRipple: root.playButtonRippleColor
         onClicked: root.playPauseClicked()
-        
+
         contentItem: Item {
             MaterialSymbol {
                 anchors.centerIn: parent
@@ -106,20 +106,20 @@ RowLayout {
                 iconSize: root.playIconSize
                 fill: 1
                 color: root.playIconColor
-                
+
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
                     animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                 }
             }
         }
-        
-        StyledToolTip { 
+
+        StyledToolTip {
             text: root.isPlaying ? Translation.tr("Pause") : Translation.tr("Play")
             visible: root.showLabels && parent.hovered
         }
     }
-    
+
     // Next button
     RippleButton {
         cookieMorphing: true
@@ -131,7 +131,7 @@ RowLayout {
         colBackgroundHover: root.buttonHoverColor
         colRipple: root.buttonRippleColor
         onClicked: root.nextClicked()
-        
+
         contentItem: Item {
             MaterialSymbol {
                 anchors.centerIn: parent
@@ -141,8 +141,8 @@ RowLayout {
                 color: root.iconColor
             }
         }
-        
-        StyledToolTip { 
+
+        StyledToolTip {
             text: Translation.tr("Next")
             visible: root.showLabels && parent.hovered
         }

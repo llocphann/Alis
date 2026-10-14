@@ -1,3 +1,3 @@
-module inir
+module alis
 
 go 1.26

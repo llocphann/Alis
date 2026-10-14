@@ -284,7 +284,7 @@ ContentPage {
             visible: field.description.length > 0
             text: field.description
             color: Appearance.angelEverywhere ? Appearance.angel.colTextMuted
-                : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+                : Appearance.alisEverywhere ? Appearance.alis.colTextSecondary
                 : Appearance.colors.colSubtext
             font.pixelSize: Appearance.font.pixelSize.smallie
             wrapMode: Text.WordWrap

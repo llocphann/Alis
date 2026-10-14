@@ -13,7 +13,7 @@ spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFI
 
 // Use the launcher so repo-sync and packaged installs share the same helper.
 // It creates an EN/VI profile only on first use and leaves existing IMEs intact.
-spawn-at-startup "inir" "input-method" "start"
+spawn-at-startup "alis" "input-method" "start"
 
 // Clipboard history: wl-paste watches the clipboard and cliphist stores it.
 // Text goes through clipboard-store.py, which strips browser markup: `--type
@@ -22,15 +22,15 @@ spawn-at-startup "inir" "input-method" "start"
 // raw <meta http-equiv=...> markup is what would land in the history. Asking
 // for text/plain instead would drop those entries entirely.
 // Niri owns each long-running watcher directly; do not background them inside bash.
-// Access via iNiR's clipboard overlay (Mod+V).
-spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store"
+// Access via Alis's clipboard overlay (Mod+V).
+spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store"
 spawn-at-startup "bash" "-c" "exec wl-paste --type image --watch cliphist store"
 
 // Polkit authentication agent — needed for GUI sudo prompts (software install,
-// disk mount, etc.). iNiR's setup auto-detects which agent is installed and
+// disk mount, etc.). Alis's setup auto-detects which agent is installed and
 // patches this line accordingly (KDE, GNOME, MATE, LXQt, or lxpolkit).
 spawn-at-startup "/usr/lib/mate-polkit/polkit-mate-authentication-agent-1"
 
-// ── iNiR shell ──────────────────────────────────────────────────────────────
-// iNiR is managed by the user systemd service (inir.service).
+// ── Alis shell ──────────────────────────────────────────────────────────────
+// Alis is managed by the user systemd service (alis.service).
 // Do not add a compositor startup entry here or you'll get two shells.

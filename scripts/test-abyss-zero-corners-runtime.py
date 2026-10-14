@@ -113,7 +113,7 @@ ShellRoot {
 ''')
  with private_wayland(folder,capture_focus=OUTPUT is not None) as env:
   if env is None:raise SystemExit('SKIP: zero-corner native requires private Niri')
-  cfg=folder/'config/illogical-impulse';cfg.mkdir(parents=True,exist_ok=True)
+  cfg=folder/'config/alis';cfg.mkdir(parents=True,exist_ok=True)
   data=json.loads((ROOT/'defaults/config.json').read_text());data['panelFamily']='abyss';data['abyss']['companion']['enabled']=False;data['abyss']['modules']['configured']=True;data['abyss']['modules']['placements']=[];data['abyss']['modules']['outputLayouts']=[{'outputName':'B','placements':[],'edgeRoundZeroCorners':{'left':True}}]
   (cfg/'config.json').write_text(json.dumps(data))
   for action in ['exercise','restart']:

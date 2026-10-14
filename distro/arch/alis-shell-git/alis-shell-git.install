@@ -1,0 +1,53 @@
+post_install() {
+  cat <<'EOF'
+Alis has been installed.
+
+User configuration is canonical under ~/.config/alis/config.json.
+Pacman deliberately does not modify or migrate anyone's home directory.
+
+Fresh users: prepare the canonical Alis config before running migrations,
+then start Alis with 'alis run' or its compositor-specific 'alis service enable'
+and 'alis service start' commands.
+
+Upgrading from iNiR: do not enable a second service or run old migration 019.
+Back up settings, reconcile user config/state, verify Niri keybinds and
+complete an owner-approved single-service handoff before running 'alis migrate'.
+See docs/BRAND_R01_CANONICAL_CUTOVER.md in the installed documentation.
+
+The packaged runtime lives in:
+  /usr/share/quickshell/alis
+EOF
+}
+
+post_upgrade() {
+  cat <<'EOF'
+Alis has been upgraded.
+
+Package-managed installs use pacman for updates. Pacman does not migrate
+user home directories. If inir.service is still present, DO NOT start Alis
+in parallel or run 'alis migrate' yet. Follow the owner-gated rebrand handoff.
+After user config is reconciled and only alis.service owns the shell, run
+'alis migrate' and then 'alis restart' as the affected user.
+EOF
+}
+
+pre_remove() {
+  # Optional hardware state belongs to Hadalird and survives core removal.
+  :
+}
+
+post_remove() {
+  cat <<'EOF'
+Alis has been removed.
+
+Pacman does not modify per-user systemd state. If an account previously ran
+'alis service enable' without first running 'alis service disable', remove any
+dangling compositor wants link in that account and reload its user manager:
+
+  find "${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user" -path '*.wants/alis.service' -type l -delete
+  systemctl --user daemon-reload
+
+For future removals, run 'alis service disable' as each affected user before
+removing the package.
+EOF
+}

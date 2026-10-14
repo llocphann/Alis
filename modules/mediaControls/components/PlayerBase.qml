@@ -15,25 +15,25 @@ import qs.services
  */
 QtObject {
     id: root
-    
+
     // Required properties
     required property MprisPlayer player
     property int slideDirection: 1
     property bool positionUpdatesActive: true
-    
+
     // YtMusic detection
     readonly property bool isYtMusicPlayer: {
         if (!player) return false
         if (YtMusic.mpvPlayer && player === YtMusic.mpvPlayer) return true
         return MprisController._isYtMusicMpv(player)
     }
-    
+
     // Effective properties (YtMusic or regular player)
-    readonly property string effectiveTitle: isYtMusicPlayer 
-        ? YtMusic.currentTitle 
+    readonly property string effectiveTitle: isYtMusicPlayer
+        ? YtMusic.currentTitle
         : (player?.trackTitle ?? "")
-    readonly property string effectiveArtist: isYtMusicPlayer 
-        ? YtMusic.currentArtist 
+    readonly property string effectiveArtist: isYtMusicPlayer
+        ? YtMusic.currentArtist
         : (player?.trackArtist ?? "")
     readonly property string effectiveArtUrl: isYtMusicPlayer
         ? YtMusic.currentThumbnail
@@ -41,19 +41,19 @@ QtObject {
     // Artwork motion is keyed only by real art identity. Metadata-only updates
     // must not move the cover, or one track change animates twice.
     readonly property string mediaTransitionKey: (root.effectiveArtUrl ?? "").split("?")[0].split("#")[0]
-    readonly property real effectiveLength: isYtMusicPlayer 
-        ? YtMusic.currentDuration 
+    readonly property real effectiveLength: isYtMusicPlayer
+        ? YtMusic.currentDuration
         : (player?.length ?? 0)
     readonly property real _rawEffectivePosition: isYtMusicPlayer
         ? YtMusic.currentPosition
         : (player?.position ?? 0)
     readonly property real effectivePosition: StringUtils.boundedMediaPosition(
         root._rawEffectivePosition, root.effectiveLength)
-    readonly property bool effectiveIsPlaying: isYtMusicPlayer 
-        ? YtMusic.isPlaying 
+    readonly property bool effectiveIsPlaying: isYtMusicPlayer
+        ? YtMusic.isPlaying
         : (player?.isPlaying ?? false)
-    readonly property bool effectiveCanSeek: isYtMusicPlayer 
-        ? YtMusic.canSeek 
+    readonly property bool effectiveCanSeek: isYtMusicPlayer
+        ? YtMusic.canSeek
         : (player?.canSeek ?? false)
     readonly property bool effectiveCanGoPrevious: isYtMusicPlayer
         ? YtMusic.canGoPrevious
@@ -61,32 +61,32 @@ QtObject {
     readonly property bool effectiveCanGoNext: isYtMusicPlayer
         ? YtMusic.canGoNext
         : MprisController.canGoNextForPlayer(root.player)
-    
+
     // Art download management
     property string artDownloadLocation: Directories.coverArt
     readonly property bool downloaded: root.displayedArtFilePath !== ""
     readonly property string resolverDisplaySource: artworkResolver.displaySource
     property string displayedArtFilePath: ""
-    
+
     // Color extraction
     property var colorQuantizer: ColorQuantizer {
         source: root.displayedArtFilePath
         depth: 0
         rescaleSize: 1
     }
-    
+
     readonly property color artDominantColor: ColorUtils.mix(
         colorQuantizer?.colors[0] ?? Appearance.colors.colPrimary,
         Appearance.colors.colPrimaryContainer, 0.7
     )
-    
-    // Style tokens (Inir fixed colors)
-    readonly property color inirText: ColorUtils.boostInkSaturation(Appearance.inir.colText, Appearance.m3colors.m3primary)
-    readonly property color inirTextSecondary: ColorUtils.boostInkSaturation(Appearance.inir.colTextSecondary, Appearance.m3colors.m3primary)
-    readonly property color inirPrimary: Appearance.inir.colPrimary
-    readonly property color inirLayer1: Appearance.inir.colLayer1
-    readonly property color inirLayer2: Appearance.inir.colLayer2
-    
+
+    // Style tokens (Alis fixed colors)
+    readonly property color alisText: ColorUtils.boostInkSaturation(Appearance.alis.colText, Appearance.m3colors.m3primary)
+    readonly property color alisTextSecondary: ColorUtils.boostInkSaturation(Appearance.alis.colTextSecondary, Appearance.m3colors.m3primary)
+    readonly property color alisPrimary: Appearance.alis.colPrimary
+    readonly property color alisLayer1: Appearance.alis.colLayer1
+    readonly property color alisLayer2: Appearance.alis.colLayer2
+
     // Player actions
     function togglePlaying(): void {
         if (isYtMusicPlayer) {
@@ -95,17 +95,17 @@ QtObject {
             player?.togglePlaying()
         }
     }
-    
+
     function previous(): void {
         root.slideDirection = -1
         MprisController.previousForPlayer(root.player)
     }
-    
+
     function next(): void {
         root.slideDirection = 1
         MprisController.nextForPlayer(root.player)
     }
-    
+
     function seek(seconds: real): void {
         if (isYtMusicPlayer) {
             YtMusic.seek(seconds)
@@ -113,7 +113,7 @@ QtObject {
             player.position = seconds
         }
     }
-    
+
     // Art download logic — mirrors BarMediaPlayerItem (the known-good impl)
     function checkAndDownloadArt(): void {
         artworkResolver.refresh()
@@ -175,7 +175,7 @@ QtObject {
                 Qt.callLater(root.checkAndDownloadArt)
         }
     }
-    
+
     // Internal components
     property var artworkResolver: MediaArtworkResolver {
         sourceUrl: root.effectiveArtUrl
@@ -192,7 +192,7 @@ QtObject {
                 root.displayedArtFilePath = ""
         }
     }
-    
+
     property var positionUpdateTimer: Timer {
         running: root.positionUpdatesActive
             && root.player?.playbackState === MprisPlaybackState.Playing

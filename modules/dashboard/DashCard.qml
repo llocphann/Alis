@@ -30,7 +30,7 @@ Rectangle {
 
     // Compatibility properties consumed by a few Dashboard content components.
     // They no longer select the card background: Material owns the surface.
-    readonly property bool inirEverywhere: Appearance.inirEverywhere
+    readonly property bool alisEverywhere: Appearance.alisEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
     readonly property bool zzzEverywhere: Appearance.zzzEverywhere
 

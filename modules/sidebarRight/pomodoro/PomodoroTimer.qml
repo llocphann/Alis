@@ -16,25 +16,25 @@ Item {
 
     // Style helpers
     readonly property color _colLayer: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
         : Appearance.colors.colLayer2
     readonly property color _colLayerHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
         : Appearance.colors.colLayer2Hover
     readonly property color _colLayerActive: Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2Active
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer2Active
     readonly property color _colText: Appearance.angelEverywhere ? Appearance.angel.colText
-        : Appearance.inirEverywhere ? Appearance.inir.colText
+        : Appearance.alisEverywhere ? Appearance.alis.colText
         : Appearance.colors.colOnLayer2
     readonly property color _colTextSecondary: Appearance.angelEverywhere ? Appearance.angel.colTextSecondary
-        : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+        : Appearance.alisEverywhere ? Appearance.alis.colTextSecondary
         : Appearance.colors.colSubtext
     readonly property color _colAccent: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+        : Appearance.alisEverywhere ? Appearance.alis.colPrimary
         : Appearance.colors.colPrimary
     readonly property color _colTrack: ColorUtils.transparentize(root._colTextSecondary, 0.82)
 
@@ -87,18 +87,18 @@ Item {
             implicitWidth: 56
             implicitHeight: 28
             radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
+                : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
                 : Appearance.rounding.small
             color: adjustRow._editing
                 ? (Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.angel.colPrimary, 0.8)
-                 : Appearance.inirEverywhere ? Appearance.inir.colSecondaryContainer
+                 : Appearance.alisEverywhere ? Appearance.alis.colSecondaryContainer
                  : Appearance.colors.colPrimaryContainer)
                 : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                : Appearance.alisEverywhere ? Appearance.alis.colLayer1
                 : Appearance.colors.colLayer1
             border.width: adjustRow._editing ? 1 : 0
             border.color: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-                : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                : Appearance.alisEverywhere ? Appearance.alis.colPrimary
                 : Appearance.colors.colPrimary
             TextInput {
                 anchors.centerIn: parent
@@ -360,7 +360,7 @@ Item {
                         text: TimerService.pomodoroRunning ? Translation.tr("Pause") : (TimerService.pomodoroSecondsLeft === TimerService.focusTime) ? Translation.tr("Start") : Translation.tr("Resume")
                         color: TimerService.pomodoroRunning
                             ? (Appearance.zzzEverywhere ? Appearance.zzz.onSticker
-                                : Appearance.inirEverywhere ? Appearance.inir.colText
+                                : Appearance.alisEverywhere ? Appearance.alis.colText
                                 : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2 : Appearance.colors.colOnSecondaryContainer)
                             : Appearance.colors.colOnPrimary
                         Behavior on color {
@@ -375,17 +375,17 @@ Item {
                     onClicked: TimerService.togglePomodoro()
                     colBackground: TimerService.pomodoroRunning
                         ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                            : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                             : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSecondaryContainer)
                         : Appearance.colors.colPrimary
                     colBackgroundHover: TimerService.pomodoroRunning
                         ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                            : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                             : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover : Appearance.colors.colSecondaryContainerHover)
                         : Appearance.colors.colPrimaryHover
                     colRipple: TimerService.pomodoroRunning
                         ? (Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive
-                            : Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                            : Appearance.alisEverywhere ? Appearance.alis.colLayer2Active
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colSecondaryContainerActive)
                         : Appearance.colors.colPrimaryActive
                 }
@@ -398,13 +398,13 @@ Item {
                     enabled: (TimerService.pomodoroSecondsLeft < TimerService.pomodoroLapDuration) || TimerService.pomodoroCycle > 0 || TimerService.pomodoroBreak
 
                     font.pixelSize: Appearance.font.pixelSize.larger
-                    colBackground: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    colBackground: Appearance.alisEverywhere ? Appearance.alis.colLayer2
                         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface
                         : Appearance.colors.colErrorContainer
-                    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover
+                    colBackgroundHover: Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurfaceHover
                         : Appearance.colors.colErrorContainerHover
-                    colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer2Active
+                    colRipple: Appearance.alisEverywhere ? Appearance.alis.colLayer2Active
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive
                         : Appearance.colors.colErrorContainerActive
 
@@ -412,7 +412,7 @@ Item {
                         anchors.centerIn: parent
                         horizontalAlignment: Text.AlignHCenter
                         text: Translation.tr("Reset")
-                        color: Appearance.inirEverywhere ? Appearance.inir.colText
+                        color: Appearance.alisEverywhere ? Appearance.alis.colText
                             : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer2
                             : Appearance.colors.colOnErrorContainer
                     }
@@ -466,12 +466,12 @@ Item {
                 Rectangle {
                     anchors.fill: parent
                     radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-                        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+                        : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
                         : Appearance.rounding.normal
                     color: root._colLayer
                     border.width: 1
                     border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
-                        : Appearance.inirEverywhere ? Appearance.inir.colBorder
+                        : Appearance.alisEverywhere ? Appearance.alis.colBorder
                         : Appearance.colors.colLayer0Border
                 }
 
@@ -517,7 +517,7 @@ Item {
                         Layout.fillWidth: true
                         implicitHeight: 1
                         color: Appearance.angelEverywhere ? Appearance.angel.colBorder
-                            : Appearance.inirEverywhere ? Appearance.inir.colBorder
+                            : Appearance.alisEverywhere ? Appearance.alis.colBorder
                             : Appearance.colors.colOutlineVariant
                         opacity: 0.5
                     }

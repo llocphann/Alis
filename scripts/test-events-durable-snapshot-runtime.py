@@ -113,7 +113,7 @@ with tempfile.TemporaryDirectory(prefix='alis-events-durable-') as name:
   for key in ['QS_CONFIG_NAME','QS_CONFIG_PATH','QS_MANIFEST','NIRI_SOCKET','WAYLAND_DISPLAY']:env.pop(key,None)
   for kind in ['config','state','cache','data','runtime']:
    path=folder/kind;path.mkdir(mode=0o700);env['XDG_'+kind.upper()+('_DIR' if kind=='runtime' else '_HOME')]=str(path)
-  config=folder/'config/illogical-impulse';config.mkdir();(config/'config.json').write_bytes((ROOT/'defaults/config.json').read_bytes())
+  config=folder/'config/alis';config.mkdir();(config/'config.json').write_bytes((ROOT/'defaults/config.json').read_bytes())
   file=folder/'state/quickshell/user/events.json';file.parent.mkdir(parents=True);file.write_text(json.dumps({'nextId':1,'events':[]},indent=2))
   for stage in [action,'restart']:
    expected='Alpha updated|Beta'+('|Denied' if action=='failure' else '')

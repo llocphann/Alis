@@ -2,7 +2,7 @@
 # Install: eval "$(alis completions bash)"
 # Or: alis completions bash > /etc/bash_completion.d/alis
 
-_inir_completions() {
+_alis_completions() {
     local cur prev
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -12,20 +12,20 @@ _inir_completions() {
     local cli_commands="install start stop run restart kill logs terminal browser close-window ipc settings settings-window waffle-settings-window repair path test-local setup service doctor migrate status update rollback my-changes uninstall config info backup version theme help completions"
 
     # Source IPC registry for target/function completion
-    local script_dir inir_bin
-    inir_bin="$(command -v inir 2>/dev/null || echo /usr/bin/inir)"
+    local script_dir alis_bin
+    alis_bin="$(command -v alis 2>/dev/null || echo /usr/bin/alis)"
     # Follow symlinks to find the real scripts/ directory
-    if [[ -L "$inir_bin" ]] && command -v readlink &>/dev/null; then
-        script_dir="$(cd -- "$(dirname -- "$(readlink -f "$inir_bin")")" 2>/dev/null && pwd)"
+    if [[ -L "$alis_bin" ]] && command -v readlink &>/dev/null; then
+        script_dir="$(cd -- "$(dirname -- "$(readlink -f "$alis_bin")")" 2>/dev/null && pwd)"
     else
-        script_dir="$(cd -- "$(dirname -- "$inir_bin")" 2>/dev/null && pwd)"
+        script_dir="$(cd -- "$(dirname -- "$alis_bin")" 2>/dev/null && pwd)"
     fi
     local registry=""
     local candidate
     for candidate in \
         "${script_dir}/lib/ipc-registry.sh" \
-        "/usr/share/quickshell/inir/scripts/lib/ipc-registry.sh" \
-        "/usr/local/share/quickshell/inir/scripts/lib/ipc-registry.sh"; do
+        "/usr/share/quickshell/alis/scripts/lib/ipc-registry.sh" \
+        "/usr/local/share/quickshell/alis/scripts/lib/ipc-registry.sh"; do
         if [[ -f "$candidate" ]]; then
             registry="$candidate"
             break
@@ -89,4 +89,4 @@ _inir_completions() {
     esac
 }
 
-complete -F _inir_completions alis
+complete -F _alis_completions alis

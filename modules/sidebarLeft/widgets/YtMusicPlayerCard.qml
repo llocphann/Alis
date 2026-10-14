@@ -59,24 +59,24 @@ Item {
     property QtObject blendedColors: AdaptedMaterialScheme { color: root.artColor }
 
     // Style tokens
-    readonly property color colText: Appearance.inirEverywhere ? Appearance.inir.colText
+    readonly property color colText: Appearance.alisEverywhere ? Appearance.alis.colText
         : (blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0)
-    readonly property color colTextSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+    readonly property color colTextSecondary: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary
         : (blendedColors?.colSubtext ?? Appearance.colors.colSubtext)
-    readonly property color colPrimary: Appearance.inirEverywhere ? Appearance.inir.colPrimary
+    readonly property color colPrimary: Appearance.alisEverywhere ? Appearance.alis.colPrimary
         : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
     readonly property color colBg: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.7)
         : (blendedColors?.colLayer0 ?? Appearance.colors.colLayer0)
-    readonly property color colLayer2: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+    readonly property color colLayer2: Appearance.alisEverywhere ? Appearance.alis.colLayer2
         : (blendedColors?.colLayer1 ?? Appearance.colors.colLayer1)
     readonly property real radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+        : Appearance.alisEverywhere ? Appearance.alis.roundingNormal : Appearance.rounding.normal
     readonly property real radiusSmall: Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
+        : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.small
 
-    StyledRectangularShadow { target: card; visible: Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere) }
+    StyledRectangularShadow { target: card; visible: Appearance.angelEverywhere || (!Appearance.alisEverywhere && !Appearance.auroraEverywhere) }
 
     Rectangle {
         id: card
@@ -85,9 +85,9 @@ Item {
         implicitHeight: 140
         radius: root.radius
         color: root.colBg
-        border.width: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 1 : 0
+        border.width: (Appearance.angelEverywhere || Appearance.alisEverywhere) ? 1 : 0
         border.color: Appearance.angelEverywhere ? Appearance.angel.colBorder
-            : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
+            : Appearance.alisEverywhere ? Appearance.alis.colBorder : "transparent"
         clip: true
 
         layer.enabled: true
@@ -102,7 +102,7 @@ Item {
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             cache: false
-            opacity: root.downloaded ? (Appearance.inirEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.25 : 0.5)) : 0
+            opacity: root.downloaded ? (Appearance.alisEverywhere ? 0.15 : (Appearance.auroraEverywhere ? 0.25 : 0.5)) : 0
             visible: opacity > 0
             Behavior on opacity {
                 enabled: Appearance.animationsEnabled
@@ -115,7 +115,7 @@ Item {
         // Gradient overlay for Material
         Rectangle {
             anchors.fill: parent
-            visible: !Appearance.inirEverywhere && !Appearance.auroraEverywhere
+            visible: !Appearance.alisEverywhere && !Appearance.auroraEverywhere
             gradient: Gradient {
                 orientation: Gradient.Horizontal
                 GradientStop { position: 0.0; color: "transparent" }
@@ -237,7 +237,7 @@ Item {
                                 height: 4 + Math.random() * 6
                                 radius: Appearance.rounding.unsharpen
                                 color: root.colPrimary
-                                
+
                                 SequentialAnimation on height {
                                     running: root.isPlaying && GlobalStates.sidebarLeftOpen && root.visible
                                     loops: Animation.Infinite
@@ -342,7 +342,7 @@ Item {
                         colBackgroundHover: root.colLayer2
                         onClicked: YtMusic.togglePlaying()
                         Behavior on buttonRadius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
-                        contentItem: MaterialSymbol { 
+                        contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: root.isPlaying ? "pause" : "play_arrow"
                             iconSize: 22; fill: 1
@@ -369,7 +369,7 @@ Item {
                         colBackground: YtMusic.repeatMode > 0 ? root.colPrimary : "transparent"
                         colBackgroundHover: YtMusic.repeatMode > 0 ? root.colPrimary : root.colLayer2
                         onClicked: YtMusic.cycleRepeatMode()
-                        contentItem: MaterialSymbol { 
+                        contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: YtMusic.repeatMode === 1 ? "repeat_one" : "repeat"
                             iconSize: 13
@@ -395,7 +395,7 @@ Item {
                             }
                         }
                         contentItem: Item {
-                            MaterialSymbol { 
+                            MaterialSymbol {
                                 anchors.centerIn: parent
                                 text: YtMusic.volume <= 0 ? "volume_off" : YtMusic.volume < 0.5 ? "volume_down" : "volume_up"
                                 iconSize: 13
@@ -421,7 +421,7 @@ Item {
                         colBackground: "transparent"
                         colBackgroundHover: root.colLayer2
                         onClicked: isLiked ? YtMusic.unlikeSong(YtMusic.currentVideoId) : YtMusic.likeSong()
-                        contentItem: MaterialSymbol { 
+                        contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: "favorite"
                             iconSize: 13

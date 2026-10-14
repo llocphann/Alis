@@ -9,7 +9,7 @@ import Quickshell.Io
 import Quickshell.Services.Notifications
 
 /*
- * iNiR shell update checker service.
+ * Alis shell update checker service.
  * Periodically checks the git repo for new commits and exposes
  * update state to UI widgets. Separate from system Updates service.
  *
@@ -99,7 +99,7 @@ Singleton {
     property string repoPath: configDir  // Will be updated after reading version.json
     property string pendingRepoPath: ""
     property bool repoPathLoaded: false
-    readonly property string manifestPath: configDir + "/.inir-manifest"
+    readonly property string manifestPath: configDir + "/.alis-manifest"
     property string installMode: "unknown"
     property string updateStrategy: "unknown"
     property string installSource: "unknown"
@@ -369,7 +369,7 @@ Singleton {
     // ─────────────────────────────────────────────────────────────────────────
     // Resume update display after shell restart
     // ─────────────────────────────────────────────────────────────────────────
-    // `setup update` triggers `systemctl --user restart inir.service` as its
+    // `setup update` triggers `systemctl --user restart alis.service` as its
     // last step, killing the shell mid-flow. The new shell instance must
     // detect the prior state from the status file and either clean up
     // (if the final step was reached) or resume polling so the bar indicator
@@ -636,14 +636,14 @@ Singleton {
             "if [[ -d \"" + root.configDir + "/.git\" ]]; then echo \"" + root.configDir + "\"; exit 0; fi; " +
             // Search for a git repo containing setup + shell.qml (our repo signature)
             // Check common locations first, then broader search
-            "for dir in ~/illogical-impulse ~/inir ~/iNiR " +
-            "~/.local/src/illogical-impulse ~/.local/src/inir " +
-            "~/Projects/illogical-impulse ~/Projects/inir " +
-            "~/Downloads/illogical-impulse ~/Downloads/inir " +
-            "~/src/illogical-impulse ~/src/inir; do " +
+            "for dir in ~/illogical-impulse ~/alis ~/Alis " +
+            "~/.local/src/illogical-impulse ~/.local/src/alis " +
+            "~/Projects/illogical-impulse ~/Projects/alis " +
+            "~/Downloads/illogical-impulse ~/Downloads/alis " +
+            "~/src/illogical-impulse ~/src/alis; do " +
             "if [[ -d \"$dir/.git\" && -f \"$dir/setup\" && -f \"$dir/shell.qml\" ]]; then echo \"$dir\"; exit 0; fi; done; " +
             // Last resort: find in home (max depth 3, timeout 2s)
-            "timeout 2 find \"$HOME\" -maxdepth 3 -name setup \\( -path '*/inir/setup' -o -path '*/illogical-impulse/setup' -o -path '*/ii/setup' \\) 2>/dev/null | while read -r f; do [[ -f \"$(dirname \"$f\")/shell.qml\" ]] && dirname \"$f\" && break; done; "
+            "timeout 2 find \"$HOME\" -maxdepth 3 -name setup \\( -path '*/alis/setup' -o -path '*/illogical-impulse/setup' -o -path '*/ii/setup' \\) 2>/dev/null | while read -r f; do [[ -f \"$(dirname \"$f\")/shell.qml\" ]] && dirname \"$f\" && break; done; "
         ]
         stdout: StdioCollector {
             onStreamFinished: {

@@ -35,7 +35,7 @@ RowLayout {
         if (root.searchingText.startsWith(root.searchPrefixes.webSearch ?? "?")) return SearchBar.SearchPrefixType.WebSearch;
         return SearchBar.SearchPrefixType.DefaultSearch;
     }
-    
+
     MaterialShapeWrappedMaterialSymbol {
         id: searchIcon
         Layout.alignment: Qt.AlignVCenter
@@ -127,7 +127,7 @@ RowLayout {
         onClicked: {
             GlobalStates.overviewOpen = false;
             // Use IPC to trigger region search (works for both Hyprland and Niri)
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "googleLens"]);
+            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "region", "googleLens"]);
         }
         text: "image_search"
         StyledToolTip {

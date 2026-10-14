@@ -14,7 +14,7 @@ Singleton {
 
     readonly property string provider: "awww"
     // The internal renderer owns both rest and transition frames in liquid mode.
-    readonly property bool enabled: transitionType !== "inirMelt"
+    readonly property bool enabled: transitionType !== "alisMelt"
     readonly property int transitionFps: Config.options?.background?.backend?.awww?.transitionFps ?? 60
     readonly property int simpleStep: Config.options?.background?.backend?.awww?.simpleStep ?? 5
     readonly property int spatialStep: Config.options?.background?.backend?.awww?.spatialStep ?? 30
@@ -306,7 +306,7 @@ Singleton {
                 daemon_bin=$(command -v awww-daemon 2>/dev/null || true)
                 if [ -n "$awww_bin" ] && [ -n "$daemon_bin" ] && ! "$awww_bin" query >/dev/null 2>&1; then
                     if command -v systemd-run >/dev/null 2>&1; then
-                        if ! systemd-run --user --quiet --collect --property=Description="iNiR wallpaper daemon" --setenv="WAYLAND_DISPLAY=$WAYLAND_DISPLAY" --setenv="XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" -- "$daemon_bin" >/dev/null 2>&1; then
+                        if ! systemd-run --user --quiet --collect --property=Description="Alis wallpaper daemon" --setenv="WAYLAND_DISPLAY=$WAYLAND_DISPLAY" --setenv="XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" -- "$daemon_bin" >/dev/null 2>&1; then
                             nohup "$daemon_bin" >/dev/null 2>&1 &
                         fi
                     else

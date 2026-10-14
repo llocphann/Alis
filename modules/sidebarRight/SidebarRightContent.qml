@@ -70,7 +70,7 @@ Item {
     // Events dialog target: an event object to edit, a Date for a new event
     // prefilled to that day, or null for a blank new event.
     property var eventsDialogEditEvent: null
-    
+
     // Debounce timers to prevent accidental double-clicks
     property bool reloadButtonEnabled: true
     property bool settingsButtonEnabled: true
@@ -111,7 +111,7 @@ Item {
             _log("[SidebarRight] Checking for existing settings window among", wins.length, "windows");
             for (let i = 0; i < wins.length; i++) {
                 const w = wins[i]
-                if (w.title === "illogical-impulse Settings" && w.app_id === "org.quickshell") {
+                if (w.title === "alis Settings" && w.app_id === "org.quickshell") {
                     _log("[SidebarRight] Found existing settings window, focusing it");
                     GlobalStates.sidebarRightOpen = false;
                     Qt.callLater(() => {
@@ -126,7 +126,7 @@ Item {
         _log("[SidebarRight] Opening new settings window via IPC");
         GlobalStates.sidebarRightOpen = false;
         Qt.callLater(() => {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]);
+            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"]);
         })
     }
 
@@ -748,7 +748,7 @@ Item {
                 item.forceActiveFocus();
             }
         }
-        
+
         Connections {
             target: toggleDialogLoader.item
             function onDismiss() {

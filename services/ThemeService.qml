@@ -16,7 +16,7 @@ Singleton {
     property bool ready: false
     readonly property string currentTheme: Config.options?.appearance?.theme ?? "auto"
     readonly property bool isAutoTheme: currentTheme === "auto"
-    readonly property bool isStandaloneSettingsWindow: (Quickshell.env("INIR_STANDALONE_WINDOW") ?? "") === "1"
+    readonly property bool isStandaloneSettingsWindow: (Quickshell.env("ALIS_STANDALONE_WINDOW") ?? "") === "1"
     readonly property bool defaultApplyExternal: !isStandaloneSettingsWindow
     readonly property bool vesktopEnabled: (Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true) !== false
     readonly property var wallpaperThemingCfg: Config.options?.appearance?.wallpaperTheming ?? null
@@ -61,14 +61,14 @@ Singleton {
     function setTheme(themeId, applyExternal = true): void {
         root._log("[ThemeService] setTheme called with:", themeId);
         Config.setNestedValue(["appearance", "theme"], themeId)
-        
+
         // Update recent themes (max 4, no duplicates)
         let recent = Config.options?.appearance?.recentThemes ?? []
         recent = recent.filter(t => t !== themeId)
         recent.unshift(themeId)
         if (recent.length > 4) recent = recent.slice(0, 4)
         Config.setNestedValue("appearance.recentThemes", recent)
-        
+
         root._log("[ThemeService] Config updated, now applying theme");
         if (themeId === "auto") {
             root._log("[ThemeService] Auto theme, scheduling wallpaper regeneration");

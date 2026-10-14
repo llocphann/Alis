@@ -69,7 +69,7 @@ def main() -> int:
         'contrast_hex(colors.get("term7"',
     )
     require(
-        "native/inir-theme/src/palette.rs",
+        "native/alis-theme/src/palette.rs",
         "scheme.primary_palette",
         "tint_light_surfaces(&mut palette, scheme_name, seed)",
         '("background", 77.0, 1.00)',
@@ -99,8 +99,8 @@ def main() -> int:
     )
     require(
         "scripts/colors/vscode_themegen/main.go",
-        'themeNameLight   = "iNiR Material Light"',
-        'themeFileLight   = "inir-material-light-color-theme.json"',
+        'themeNameLight   = "Alis Material Light"',
+        'themeFileLight   = "alis-material-light-color-theme.json"',
         '{"label": themeNameLight, "uiTheme": "vs"',
         "func mutedInk(",
         "func lightenEdges(",

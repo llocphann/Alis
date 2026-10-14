@@ -218,7 +218,7 @@ def assert_equal(label: str, left: Any, right: Any) -> None:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("usage: check-niri-write-parity.py /path/to/inir-native", file=sys.stderr)
+        print("usage: check-niri-write-parity.py /path/to/alis-native", file=sys.stderr)
         return 64
     rust_binary = Path(sys.argv[1]).resolve()
     if not rust_binary.is_file():

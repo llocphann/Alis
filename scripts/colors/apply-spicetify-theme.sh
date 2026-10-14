@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # apply-spicetify-theme.sh - Generate and apply Spicetify color scheme
-# from iNiR Material colors using custom theme with live updates.
+# from Alis Material colors using custom theme with live updates.
 #
 # Design:
 # - Always regenerate theme files (color.ini, user.css bridge) from the
@@ -15,8 +15,8 @@
 # - This script never starts/opens Spotify itself.
 #
 # Reads: app-palette.json first, then palette.json/colors.json fallback
-# Writes: ~/.config/spicetify/Themes/Inir/{color.ini,user.css}
-#         ~/.config/spicetify/Themes/InirTUI/{color.ini,user.css}
+# Writes: ~/.config/spicetify/Themes/Alis/{color.ini,user.css}
+#         ~/.config/spicetify/Themes/AlisTUI/{color.ini,user.css}
 
 set -euo pipefail
 
@@ -30,8 +30,8 @@ APP_PALETTE_JSON="$STATE_DIR/user/generated/app-palette.json"
 COLORS_JSON="$STATE_DIR/user/generated/colors.json"
 LOG_FILE="$STATE_DIR/user/generated/spicetify_theme.log"
 
-THEME_NAME="Inir"
-TUI_THEME_NAME="InirTUI"
+THEME_NAME="Alis"
+TUI_THEME_NAME="AlisTUI"
 SCHEME_NAME="matugen"
 SLEEK_CSS_URL="https://raw.githubusercontent.com/spicetify/spicetify-themes/master/Sleek/user.css"
 TEXT_CSS_URL="https://raw.githubusercontent.com/spicetify/spicetify-themes/master/text/user.css"
@@ -313,7 +313,7 @@ regenerate_user_css_bridge() {
 
   # ── Build the bridge block ────────────────────────────────────────────────
   local bridge_block
-  bridge_block="/* === iNiR CSS variable bridge - auto-generated, do not edit === */
+  bridge_block="/* === Alis CSS variable bridge - auto-generated, do not edit === */
 :root {
   --spice-text:                #$(strip_hash "${COLORS[on_surface]}");
   --spice-subtext:             #$(strip_hash "${COLORS[on_surface_variant]}");
@@ -364,7 +364,7 @@ regenerate_user_css_bridge() {
   --spice-rgb-misc:            $(hex_to_rgb "${COLORS[outline]}");
   --spice-rgb-main-secondary:  $(hex_to_rgb "$main_secondary");
 }
-/* === end iNiR CSS variable bridge === */"
+/* === end Alis CSS variable bridge === */"
 
   # ── Replace only the bridge block in user.css (keep everything else) ──────
   # Use python3 for reliable multi-line regex replace without temp file races.
@@ -377,7 +377,7 @@ css_path = pathlib.Path(sys.argv[1])
 new_block = sys.argv[2]
 content = css_path.read_text()
 pattern = re.compile(
-    r'/\* === iNiR CSS variable bridge - auto-generated, do not edit === \*/.*?/\* === end iNiR CSS variable bridge === \*/\n?',
+    r'/\* === Alis CSS variable bridge - auto-generated, do not edit === \*/.*?/\* === end Alis CSS variable bridge === \*/\n?',
     re.DOTALL
 )
 # Strip ALL existing bridge blocks (including duplicates from prior bad runs)
@@ -401,7 +401,7 @@ regenerate_playback_controls_fix() {
   playback_rgb="$(hex_to_rgb "${COLORS[on_surface_variant]}")"
 
   local playback_block
-  playback_block="/* === iNiR playback controls fix - auto-generated === */
+  playback_block="/* === Alis playback controls fix - auto-generated === */
 .main-playbackBar__slider,
 .playback-bar__progress-time-elapsed,
 .main-playbackBar__slider::before {
@@ -425,7 +425,7 @@ regenerate_playback_controls_fix() {
 .progress-bar__bg {
   background-color: rgba($playback_rgb, 0.3) !important;
 }
-/* === end iNiR playback controls fix === */"
+/* === end Alis playback controls fix === */"
 
   python3 - "$css_file" "$playback_block" <<'PYEOF'
 import sys, re, pathlib
@@ -433,11 +433,11 @@ css_path = pathlib.Path(sys.argv[1])
 new_block = sys.argv[2]
 content = css_path.read_text()
 pattern = re.compile(
-    r'/\* === iNiR playback controls fix - auto-generated === \*/.*?(?=(/\* === end iNiR playback controls fix === \*/|/\* === iNiR playback controls fix - auto-generated === \*/|\Z))',
+    r'/\* === Alis playback controls fix - auto-generated === \*/.*?(?=(/\* === end Alis playback controls fix === \*/|/\* === Alis playback controls fix - auto-generated === \*/|\Z))',
     re.DOTALL
 )
 content = pattern.sub('', content)
-content = re.sub(r'/\* === end iNiR playback controls fix === \*/\n?', '', content)
+content = re.sub(r'/\* === end Alis playback controls fix === \*/\n?', '', content)
 content = content.lstrip('\n')
 content = new_block + '\n' + content
 css_path.write_text(content)
@@ -471,9 +471,9 @@ download_sleek_css() {
 
 download_text_css() {
   local css_file="$1"
-  # Older iNiR TUI revisions appended the Sleek palette bridge to text. Refresh
+  # Older Alis TUI revisions appended the Sleek palette bridge to text. Refresh
   # those files once from upstream so the text theme owns its complete CSS again.
-  if [[ ! -f "$css_file" ]] || grep -q 'iNiR CSS variable bridge' "$css_file"; then
+  if [[ ! -f "$css_file" ]] || grep -q 'Alis CSS variable bridge' "$css_file"; then
     log "Downloading current text theme CSS..."
     if curl -L --fail --create-dirs -o "$css_file" "$TEXT_CSS_URL" 2>/dev/null; then
       log "Downloaded current text base CSS"
@@ -489,7 +489,7 @@ regenerate_tui_color_bridge() {
   [[ -f "$css_file" ]] || return 0
 
   local color_block
-  color_block="/* === iNiR TUI color bridge - auto-generated === */
+  color_block="/* === Alis TUI color bridge - auto-generated === */
 :root {
   --spice-accent:             #$(strip_hash "${SPICE_COLORS[accent]}");
   --spice-accent-active:      #$(strip_hash "${SPICE_COLORS[accent]}");
@@ -519,7 +519,7 @@ regenerate_tui_color_bridge() {
   --spice-rgb-subtext:            $(hex_to_rgb "${SPICE_COLORS[subtext]}");
   --spice-rgb-text:               $(hex_to_rgb "${SPICE_COLORS[text]}");
 }
-/* === end iNiR TUI color bridge === */"
+/* === end Alis TUI color bridge === */"
 
   python3 - "$css_file" "$color_block" <<'PYEOF'
 import pathlib, re, sys
@@ -528,7 +528,7 @@ css_path = pathlib.Path(sys.argv[1])
 new_block = sys.argv[2]
 content = css_path.read_text()
 pattern = re.compile(
-    r'/\* === iNiR TUI color bridge - auto-generated === \*/.*?/\* === end iNiR TUI color bridge === \*/\n?',
+    r'/\* === Alis TUI color bridge - auto-generated === \*/.*?/\* === end Alis TUI color bridge === \*/\n?',
     re.DOTALL,
 )
 content = pattern.sub('', content).rstrip()
@@ -543,10 +543,10 @@ regenerate_tui_overrides() {
   local css_file="$1"
   [[ -f "$css_file" ]] || return 0
 
-  # Keep upstream text responsible for layout. iNiR supplies the local font and
+  # Keep upstream text responsible for layout. Alis supplies the local font and
   # raises playback control contrast so generated palettes remain readable.
   local tui_block
-  tui_block="/* === iNiR TUI overrides - auto-generated === */
+  tui_block="/* === Alis TUI overrides - auto-generated === */
 :root {
   --font-family: 'JetBrainsMono Nerd Font', 'JetBrains Mono', monospace;
 }
@@ -585,7 +585,7 @@ button[data-testid='control-button-repeat'][aria-checked='true'],
 button[data-testid='control-button-repeat'][aria-checked='mixed'] {
   color: var(--spice-accent-active) !important;
 }
-/* === end iNiR TUI overrides === */"
+/* === end Alis TUI overrides === */"
 
   python3 - "$css_file" "$tui_block" <<'PYEOF'
 import pathlib, re, sys
@@ -594,7 +594,7 @@ css_path = pathlib.Path(sys.argv[1])
 new_block = sys.argv[2]
 content = css_path.read_text()
 pattern = re.compile(
-    r'/\* === iNiR TUI overrides - auto-generated === \*/.*?/\* === end iNiR TUI overrides === \*/\n?',
+    r'/\* === Alis TUI overrides - auto-generated === \*/.*?/\* === end Alis TUI overrides === \*/\n?',
     re.DOTALL,
 )
 content = pattern.sub('', content).rstrip()

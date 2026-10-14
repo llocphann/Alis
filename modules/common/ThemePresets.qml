@@ -583,7 +583,7 @@ Singleton {
         }
     ]
 
-    // Angel - Signature theme for iNiR
+    // Angel - Signature theme for Alis
     // Celestial twilight aesthetic: warm golden halos against deep cosmic void
     // Inspired by the image: amber eyes, ethereal glow, dark silhouette
     readonly property var angelColors: ({
@@ -2107,7 +2107,7 @@ Singleton {
         m3onSurfaceVariant: "#b0b8e6", // Boosted from #848bbd for legibility
         m3inverseSurface: "#ffffff",
         m3inverseOnSurface: "#262335",
-        m3outline: "#616eb3", // Boosted form #495495 for Inir borders
+        m3outline: "#616eb3", // Boosted form #495495 for Alis borders
         m3outlineVariant: "#34294a",
         m3shadow: "#000000",
         m3scrim: "#000000",
@@ -3466,16 +3466,16 @@ Singleton {
             return false;
         }
         _log("[ThemePresets] Applying colors to Appearance.m3colors");
-        
+
         var cSource = preset.colors === "custom" ? (Config.options?.appearance?.customTheme ?? {}) : preset.colors;
-        
+
         // Soften colors for built-in presets (not custom) if enabled in config
         var shouldSoften = (Config.options?.appearance?.softenColors ?? true) && (id !== "custom");
         var c = shouldSoften ? softenColors(cSource) : cSource;
         c = tintLightSurfaces(c);
 
         const m3 = Appearance.m3colors;
-        
+
         m3.darkmode = c.darkmode;
         m3.transparent = c.transparent ?? false;
         m3.m3background = c.m3background;
@@ -3535,18 +3535,18 @@ Singleton {
         if (!skipColorsJson) {
             generateColorsJson(c);
         }
-        
+
         if (applyExternal) {
             applyExternalThemes(c);
         }
-        
+
         return true;
     }
-    
+
     function applyExternalThemes(c) {
         const enableAppsAndShell = Config.options?.appearance?.wallpaperTheming?.enableAppsAndShell ?? true;
         const enableTerminal = Config.options?.appearance?.wallpaperTheming?.enableTerminal ?? true;
-        
+
         // Fan out to the same pipeline used by wallpaper auto-generation so
         // terminals/editors/chrome/spicetify/sddm/steam/pear stay in sync.
         // Delay: _writeDebounce (60ms) + bash write must finish before
@@ -3568,12 +3568,12 @@ Singleton {
         // very files _doWriteGeneratedFiles just wrote.
         onTriggered: MaterialThemeLoader.requestExternalApply()
     }
-    
+
     function generateScssFromColors(c) {
         // Generate SCSS format matching generate_colors_material.py output
         let scss = `$darkmode: ${c.darkmode};\n`;
         scss += `$transparent: ${c.transparent ?? false};\n`;
-        
+
         // Map m3* properties to scss variables
         const colorMap = {
             "background": c.m3background,
@@ -3630,11 +3630,11 @@ Singleton {
             "successContainer": c.m3successContainer,
             "onSuccessContainer": c.m3onSuccessContainer,
         };
-        
+
         for (const [key, value] of Object.entries(colorMap)) {
             if (value) scss += `$${key}: ${value};\n`;
         }
-        
+
         // Generate terminal colors
         // If the color object provides explicit terminal colors (term1-term14),
         // use them directly — this allows preset themes to ship their exact
@@ -3653,11 +3653,11 @@ Singleton {
         // Background colors - directly from theme (use surfaceContainerLow for slightly lighter bg)
         const bgColor = Qt.color(c.m3surfaceContainerLow ?? c.m3background);
         const term0 = c.term0 ?? colorToHex(bgColor);
-        
+
         // Foreground colors - from theme
         const fgColor = Qt.color(c.m3onBackground);
         const term15 = c.term15 ?? colorToHex(fgColor);
-        
+
         // Gray tones - from theme's surface variant and outline
         const term7 = c.term7 ?? colorToHex(Qt.color(c.m3onSurfaceVariant));
         const term8 = c.term8 ?? colorToHex(Qt.color(c.m3outline));
@@ -3731,7 +3731,7 @@ Singleton {
             term6 = harmonizedColor(0.48, normalSat, normalLight, userHarmony);
             term14 = harmonizedColor(0.48, brightSat, brightLight, userHarmony);
         }
-        
+
         scss += `$term0: ${term0};\n`;
         scss += `$term1: ${term1};\n`;
         scss += `$term2: ${term2};\n`;
@@ -3748,10 +3748,10 @@ Singleton {
         scss += `$term13: ${term13};\n`;
         scss += `$term14: ${term14};\n`;
         scss += `$term15: ${term15};\n`;
-        
+
         return scss;
     }
-    
+
 
     function generateColorsJsonObject(c) {
         return {
@@ -3917,7 +3917,7 @@ Singleton {
             app_thumbnail_bg: layer4
         });
     }
-    
+
     function generateColorsJson(c) {
         _log("[ThemePresets] Generating colors.json for preset theme");
         const colorsJson = generateColorsJsonObject(c);
@@ -4090,28 +4090,28 @@ Singleton {
 
     function previewPreset(id) {
         if (!id || id === "auto") return;
-        
+
         const preset = getPreset(id);
         if (!preset?.colors) return;
-        
+
         // Capture current colors if not already previewing
         if (!_isPreviewing) {
             _previewBackup = captureCurrentColors();
             _isPreviewing = true;
         }
-        
+
         // Apply preview (no external apps)
         var cSource = preset.colors === "custom" ? Config.options?.appearance?.customTheme : preset.colors;
         var shouldSoften = (Config.options?.appearance?.softenColors ?? true) && (id !== "custom");
         var c = shouldSoften ? softenColors(cSource) : cSource;
         c = tintLightSurfaces(c);
-        
+
         applyColorsToAppearance(c);
     }
 
     function restoreFromPreview() {
         if (!_isPreviewing || !_previewBackup) return;
-        
+
         applyColorsToAppearance(_previewBackup);
         _previewBackup = null;
         _isPreviewing = false;

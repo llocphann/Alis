@@ -9,18 +9,18 @@ import qs.modules.common.functions
  */
 Rectangle {
     id: root
-    
+
     // Required properties
     required property string artSource
     required property bool downloaded
-    
+
     // Optional properties
-    property real artRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-    property color placeholderColor: Appearance.inirEverywhere 
-        ? Appearance.inir.colLayer2 
+    property real artRadius: Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.small
+    property color placeholderColor: Appearance.alisEverywhere
+        ? Appearance.alis.colLayer2
         : Appearance.colors.colLayer1
-    property color iconColor: Appearance.inirEverywhere 
-        ? Appearance.inir.colTextSecondary 
+    property color iconColor: Appearance.alisEverywhere
+        ? Appearance.alis.colTextSecondary
         : Appearance.colors.colSubtext
     property int iconSize: 32
     property bool enableBlurTransition: true
@@ -30,11 +30,11 @@ Rectangle {
 
     signal transitionStarted(string source)
     signal transitionFinished(string source)
-    
+
     radius: artRadius
     color: "transparent"
     clip: true
-    
+
     MediaCrossSlideImage {
         anchors.fill: parent
         source: root.artSource

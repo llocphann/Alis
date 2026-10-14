@@ -205,14 +205,14 @@ DockButton {
         : (root.regaliaStyle ? Appearance.regalia.hoverPlate
         : root.zzzStyle ? "transparent"
         : root.angelStyle ? Appearance.angel.colGlassCard
-        : root.inirStyle ? Appearance.inir.colLayer1Hover
+        : root.alisStyle ? Appearance.alis.colLayer1Hover
         : root.auroraStyle ? Appearance.aurora.colSubSurface
         : Appearance.colors.colLayer0Hover)
     colRipple: root.islandStyle ? Qt.alpha(Appearance.colors.colPrimary, 0.18)
         : (root.regaliaStyle ? Appearance.regalia.pressPlate
         : root.zzzStyle ? ColorUtils.applyAlpha(Appearance.zzz.accent, 0.22)
         : root.angelStyle ? Appearance.angel.colGlassCardActive
-        : root.inirStyle ? Appearance.inir.colLayer1Active
+        : root.alisStyle ? Appearance.alis.colLayer1Active
         : root.auroraStyle ? Appearance.aurora.colSubSurfaceActive
         : Appearance.colors.colLayer0Active)
 
@@ -248,7 +248,7 @@ DockButton {
         sourceComponent: Rectangle {
             width: root.vertical ? root.separatorSize : 1
             height: root.vertical ? 1 : root.separatorSize
-            color: root.inirStyle ? Appearance.inir.colBorderSubtle
+            color: root.alisStyle ? Appearance.alis.colBorderSubtle
                  : root.zzzStyle ? Appearance.zzz.hairlineStrong
                  : root.auroraStyle ? ColorUtils.transparentize(Appearance.colors.colOnLayer0, 0.7)
                  : Appearance.colors.colOutlineVariant
@@ -653,7 +653,7 @@ DockButton {
                     ColorOverlay {
                         anchors.fill: desaturatedIcon
                         source: desaturatedIcon
-                        color: ColorUtils.transparentize(root.inirStyle ? Appearance.inir.colPrimary
+                        color: ColorUtils.transparentize(root.alisStyle ? Appearance.alis.colPrimary
                             : root.zzzStyle ? Appearance.zzz.accent
                             : Appearance.colors.colPrimary, 0.9)
                     }
@@ -674,10 +674,10 @@ DockButton {
                       implicitHeight: 16
                       radius: root.zzzStyle ? Appearance.zzz.controlRadius : height / 2
                       color: root.zzzStyle ? Appearance.zzz.signal
-                          : root.inirStyle ? Appearance.inir.colError : Appearance.colors.colError
+                          : root.alisStyle ? Appearance.alis.colError : Appearance.colors.colError
                       border.width: 1
                       border.color: root.zzzStyle ? Appearance.zzz.paper
-                          : root.inirStyle ? Appearance.inir.colLayer1 : Appearance.colors.colLayer1
+                          : root.alisStyle ? Appearance.alis.colLayer1 : Appearance.colors.colLayer1
 
                       Behavior on implicitWidth {
                           enabled: Appearance.animationsEnabled
@@ -695,7 +695,7 @@ DockButton {
                           font.pixelSize: Appearance.font.pixelSize.smallest
                           font.weight: Font.Bold
                           color: root.zzzStyle ? Appearance.zzz.onSignal
-                              : root.inirStyle ? Appearance.inir.colOnError : Appearance.colors.colOnError
+                              : root.alisStyle ? Appearance.alis.colOnError : Appearance.colors.colOnError
                       }
                   }
               }
@@ -755,11 +755,11 @@ DockButton {
                                    ? (root.islandStyle ? Appearance.colors.colPrimary
                                    : root.zzzStyle ? Appearance.zzz.accent
                                    : root.angelStyle ? Appearance.angel.colPrimary
-                                   : root.inirStyle ? Appearance.inir.colPrimary : Appearance.colors.colPrimary)
+                                   : root.alisStyle ? Appearance.alis.colPrimary : Appearance.colors.colPrimary)
                                    : root.islandStyle ? Qt.alpha(Appearance.colors.colOnLayer0, 0.25)
                                    : ColorUtils.transparentize(root.zzzStyle ? Appearance.zzz.ink
                                    : root.angelStyle ? Appearance.angel.colTextSecondary
-                                   : root.inirStyle ? Appearance.inir.colText : Appearance.colors.colOnLayer0, 0.65)
+                                   : root.alisStyle ? Appearance.alis.colText : Appearance.colors.colOnLayer0, 0.65)
 
                             Behavior on implicitWidth {
                                 enabled: Appearance.animationsEnabled
@@ -787,7 +787,7 @@ DockButton {
                         color: root.islandStyle ? Qt.alpha(Appearance.colors.colOnLayer0, 0.25)
                             : ColorUtils.transparentize(root.zzzStyle ? Appearance.zzz.ink
                             : root.angelStyle ? Appearance.angel.colTextSecondary
-                            : root.inirStyle ? Appearance.inir.colText : Appearance.colors.colOnLayer0,
+                            : root.alisStyle ? Appearance.alis.colText : Appearance.colors.colOnLayer0,
                             root.zzzStyle ? 0.65 : 0.5)
                         Behavior on radius { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animationCurves.zzzOvershoot } }
                         Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }

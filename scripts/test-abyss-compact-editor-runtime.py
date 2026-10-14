@@ -361,7 +361,7 @@ ShellRoot {
     with private_wayland(folder, capture_focus=OUTPUT is not None) as env:
         if env is None:
             raise SystemExit("SKIP: compact editor requires private Niri")
-        config = folder / "config/illogical-impulse"
+        config = folder / "config/alis"
         config.mkdir(parents=True, exist_ok=True)
         data = json.loads((ROOT / "defaults/config.json").read_text())
         data["abyss"]["companion"]["enabled"] = False

@@ -1,7 +1,7 @@
 # Optional extras helpers for setup/install flows
 # shellcheck shell=bash
 
-inir_get_user_wallpapers_dir() {
+alis_get_user_wallpapers_dir() {
   local _xdg_pictures
   _xdg_pictures="$(xdg-user-dir PICTURES 2>/dev/null || true)"
   if [[ -z "$_xdg_pictures" || "$_xdg_pictures" != /* || "$_xdg_pictures" == "$HOME" ]]; then
@@ -29,7 +29,7 @@ extras_install_sddm_theme() {
 
   tui_info "Setting up ii-pixel-sddm login theme..."
   chmod +x "$sddm_script"
-  if ! INIR_SDDM_AUTO_APPLY="$auto_apply_mode" bash "$sddm_script"; then
+  if ! ALIS_SDDM_AUTO_APPLY="$auto_apply_mode" bash "$sddm_script"; then
     log_warning "ii-pixel-sddm setup failed — SDDM config may need manual update"
     log_warning "Try: sudo bash ${sddm_script}"
     return 1
@@ -42,8 +42,8 @@ extras_install_sddm_theme() {
 # - copies only image files into destination
 # - does not overwrite existing non-empty files
 # Output contract:
-# - sets global EXTRAS_INIR_WALLS_FIRST_IMAGE to first copied/available image path (or empty)
-extras_install_inir_walls() {
+# - sets global EXTRAS_ALIS_WALLS_FIRST_IMAGE to first copied/available image path (or empty)
+extras_install_alis_walls() {
   local walls_repo_url="https://github.com/snowarch/iNiR-Walls.git"
   local walls_estimated_count=148
   local walls_estimated_bytes=663709943
@@ -59,14 +59,14 @@ extras_install_inir_walls() {
   fi
 
   local user_wallpapers_dir
-  user_wallpapers_dir="$(inir_get_user_wallpapers_dir)"
+  user_wallpapers_dir="$(alis_get_user_wallpapers_dir)"
   mkdir -p "$user_wallpapers_dir"
 
   local walls_tmp
   walls_tmp="$(mktemp -d)"
   local walls_repo_dir="${walls_tmp}/iNiR-Walls"
   local first_image=""
-  EXTRAS_INIR_WALLS_FIRST_IMAGE=""
+  EXTRAS_ALIS_WALLS_FIRST_IMAGE=""
 
   tui_info "Downloading iNiR-Walls repository (git progress below)..."
   if git clone --depth 1 --progress "$walls_repo_url" "$walls_repo_dir"; then
@@ -106,7 +106,7 @@ extras_install_inir_walls() {
   fi
 
   rm -rf "$walls_tmp"
-  EXTRAS_INIR_WALLS_FIRST_IMAGE="$first_image"
+  EXTRAS_ALIS_WALLS_FIRST_IMAGE="$first_image"
   return 0
 }
 
@@ -114,7 +114,7 @@ extras_install_inir_walls() {
 # dirn-typo. GPL-3, ~23 MiB. Lives in user-scope ($HOME/.local/share/icons) so
 # it's available to GTK / Qt without root. Non-intrusive: only installs the
 # theme files. The user's current icon theme is NOT touched — they can switch
-# via iNiR Settings if they want.
+# via Alis Settings if they want.
 #
 # Idempotent: clones on first run, fast-forwards on subsequent runs.
 extras_install_yamis_icons() {
@@ -148,7 +148,7 @@ extras_install_yamis_icons() {
   tui_info "Installing YAMIS monochrome icon theme (~23 MiB, by dirn-typo)..."
   if git clone --depth 1 --quiet "$repo_url" "$dest"; then
     log_success "YAMIS icons installed at ${dest}"
-    log_info  "Switch to it via iNiR Settings → Appearance → Icon theme"
+    log_info  "Switch to it via Alis Settings → Appearance → Icon theme"
     if command -v gtk-update-icon-cache >/dev/null 2>&1; then
       gtk-update-icon-cache -q "$dest" 2>/dev/null || true
     fi

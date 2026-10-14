@@ -19,7 +19,7 @@ Item {
     property var parentWindow: null
     readonly property string surfaceDialect: Appearance.surfaceDialectFor("")
     readonly property bool zzzStyle: surfaceDialect === "zzz"
-    readonly property bool inirStyle: surfaceDialect === "inir"
+    readonly property bool alisStyle: surfaceDialect === "alis"
 
     property Item lastHoveredButton
     property bool buttonHovered: false

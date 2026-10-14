@@ -34,7 +34,7 @@ grep -Fq 'native-dispatch clipboard-store'     "$root/sdata/migrations/049-nativ
 grep -Fq '"$SCRIPT_DIR/../native-dispatch" theme'     "$root/scripts/colors/switchwall.sh"     || fail 'theme pipeline must route through native-dispatch'
 grep -Fq 'nativeIconSyncProc' "$root/services/IconThemeService.qml"     || fail 'IconThemeService must expose native sync test path'
 grep -Fq 'nativeBackendStatePath' "$root/services/IconThemeService.qml"     || fail 'IconThemeService must honor persistent trial selector state after reboot'
-grep -Fq '/inir-inputd([[:space:]]|$)' "$root/scripts/inir"     || fail 'shell restart cleanup must recognize Rust input daemon'
+grep -Fq '/alis-inputd([[:space:]]|$)' "$root/scripts/alis"     || fail 'shell restart cleanup must recognize Rust input daemon'
 
 # The trial cutover harness must remain reversible. The live qualification loop
 # alternates order to reduce warm-cache bias, so assert the semantic Rust path
@@ -43,7 +43,7 @@ grep -Fq 'order=(python rust)' "$harness"     || fail 'cutover harness must incl
 grep -Fq 'order=(rust python)' "$harness"     || fail 'cutover harness must include Rust in even live A/B rounds'
 grep -Fq 'measure_service_mode "$mode" "$round"' "$harness"     || fail 'cutover harness must measure each selected backend in every live A/B round'
 grep -Fq 'set_runtime_backend rust' "$harness"     || fail 'cutover harness must explicitly restore Rust test mode after alternating A/B'
-grep -Fq 'INIR_NATIVE_BACKEND=python' "$harness"     || fail 'cutover harness must provide Python rollback'
+grep -Fq 'ALIS_NATIVE_BACKEND=python' "$harness"     || fail 'cutover harness must provide Python rollback'
 grep -Fq 'BACKEND_STATE_FILE="$STATE_DIR/native-backend"' "$harness"     || fail 'cutover harness must persist selector state for Niri-spawned helpers'
 grep -Fq 'MODE_FILE="$STATE_DIR/native-backend"' "$dispatch"     || fail 'native-dispatch must read persistent selector state when env is absent'
 grep -Fq 'BIN_DIR_FILE="$STATE_DIR/native-bin-dir"' "$dispatch"     || fail 'native-dispatch must read persistent native binary path for Niri-spawned helpers'

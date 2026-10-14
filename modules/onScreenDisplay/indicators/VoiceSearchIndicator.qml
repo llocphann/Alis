@@ -22,13 +22,13 @@ Item {
         }
         radius: root.connectedSurface ? 0 : Appearance.rounding.full
         color: root.connectedSurface ? "transparent" : Appearance.angelEverywhere ? Appearance.angel.colGlassPopup
-             : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+             : Appearance.alisEverywhere ? Appearance.alis.colLayer1
              : Appearance.auroraEverywhere ? Appearance.aurora.colPopupSurface
              : Appearance.colors.colLayer0
         border.width: root.connectedSurface ? 0 : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth
-            : Appearance.auroraEverywhere || Appearance.inirEverywhere ? 1 : 0
+            : Appearance.auroraEverywhere || Appearance.alisEverywhere ? 1 : 0
         border.color: Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-            : Appearance.inirEverywhere ? Appearance.inir.colBorder 
+            : Appearance.alisEverywhere ? Appearance.alis.colBorder
             : Appearance.auroraEverywhere ? Appearance.aurora.colTooltipBorder : "transparent"
         implicitHeight: contentRow.implicitHeight + 18
 
@@ -78,7 +78,7 @@ Item {
             // Status text
             StyledText {
                 Layout.fillWidth: true
-                text: VoiceSearch.transcribing 
+                text: VoiceSearch.transcribing
                     ? Translation.tr("Transcribing...")
                     : Translation.tr("Listening...")
                 font.pixelSize: Appearance.font.pixelSize.normal
@@ -116,14 +116,14 @@ Item {
                 visible: VoiceSearch.transcribing
                 implicitWidth: 20
                 implicitHeight: 20
-                
+
                 CircularProgress {
                     anchors.fill: parent
                     lineWidth: 2
                     value: 0.25
                     colPrimary: Appearance.colors.colPrimary
                     colSecondary: Appearance.colors.colLayer1
-                    
+
                     RotationAnimation on rotation {
                         running: VoiceSearch.transcribing
                         from: 0

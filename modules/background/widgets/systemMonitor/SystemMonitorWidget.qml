@@ -202,7 +202,7 @@ AbstractBackgroundWidget {
 
     // ── Style tokens ──
     readonly property real cardRadius: root.widgetCardRadius
-    readonly property int _innerMargin: Appearance.angelEverywhere || Appearance.inirEverywhere ? 6 : 2
+    readonly property int _innerMargin: Appearance.angelEverywhere || Appearance.alisEverywhere ? 6 : 2
 
     // Rings/bars/text reuse the same categorical palette as Tiles. The wallpaper
     // already generated these semantic roles, so position analysis must not invent
@@ -677,7 +677,7 @@ AbstractBackgroundWidget {
                 StyledRectangularShadow {
                     target: tile
                     z: -2
-                    visible: !Appearance.zzzEverywhere && !Appearance.inirEverywhere
+                    visible: !Appearance.zzzEverywhere && !Appearance.alisEverywhere
                         && !Appearance.regaliaEverywhere
                 }
 

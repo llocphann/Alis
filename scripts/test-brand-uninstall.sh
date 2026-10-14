@@ -14,6 +14,8 @@ export REPO_ROOT="$repo"
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 source "$repo/sdata/lib/uninstall.sh"
 mkdir -p "$XDG_BIN_HOME" "$XDG_DATA_HOME/applications" "$XDG_DATA_HOME/icons/hicolor/scalable/apps" "$XDG_CONFIG_HOME"
+mkdir -p "$XDG_STATE_HOME/quickshell/user"
+printf '%s\n' 'very private notes' > "$XDG_STATE_HOME/quickshell/user/notes"
 cp "$repo/scripts/alis" "$XDG_BIN_HOME/alis"
 cp "$repo/assets/applications/alis.desktop" "$XDG_DATA_HOME/applications/alis.desktop"
 cp "$repo/assets/applications/alis-settings.desktop" "$XDG_DATA_HOME/applications/alis-settings.desktop"
@@ -27,6 +29,15 @@ for target in "$XDG_BIN_HOME/alis" "$XDG_DATA_HOME/applications/alis.desktop" "$
 done
 [[ "$(cat "$XDG_CONFIG_HOME/inir/preferences")" == preserve ]] || fail 'original config was deleted'
 [[ -L "$XDG_CONFIG_HOME/alis" ]] || fail 'alias was deleted without explicit owner approval'
+[[ "$(cat "$XDG_STATE_HOME/quickshell/user/notes")" == 'very private notes' ]] ||
+    fail 'personal notes/state removed'
+# Default uninstall must never classify personal state, config or managed-only
+# public file names as unconditionally deletable.
+for user_path in "$XDG_CONFIG_HOME/alis" "$XDG_STATE_HOME/quickshell/user" \
+    "$XDG_BIN_HOME/alis" "$XDG_DATA_HOME/applications/alis.desktop"; do
+    [[ -z "${ALIS_ONLY_PATHS[$user_path]:-}" ]] ||
+        fail "protected/foreign ownership path in unconditional removal list: $user_path"
+done
 echo 'foreign launcher' > "$XDG_BIN_HOME/alis"
 echo 'foreign desktop' > "$XDG_DATA_HOME/applications/alis.desktop"
 echo 'foreign settings' > "$XDG_DATA_HOME/applications/alis-settings.desktop"

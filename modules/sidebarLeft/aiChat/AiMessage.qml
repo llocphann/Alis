@@ -28,7 +28,7 @@ Rectangle {
 
     radius: Appearance.rounding.normal
     color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1
 
     function saveMessage() {
@@ -56,9 +56,9 @@ Rectangle {
 
     Keys.onPressed: (event) => {
         if ( // Prevent de-select
-            event.key === Qt.Key_Control || 
-            event.key == Qt.Key_Shift || 
-            event.key == Qt.Key_Alt || 
+            event.key === Qt.Key_Control ||
+            event.key == Qt.Key_Shift ||
+            event.key == Qt.Key_Alt ||
             event.key == Qt.Key_Meta
         ) {
             event.accepted = true
@@ -96,8 +96,8 @@ Rectangle {
                     visible: messageData?.role == 'assistant' && Ai.models[messageData?.model]?.icon
                     width: 16
                     height: 16
-                    source: (messageData?.role == 'assistant' && Ai.models[messageData?.model]) 
-                        ? Ai.models[messageData?.model].icon 
+                    source: (messageData?.role == 'assistant' && Ai.models[messageData?.model])
+                        ? Ai.models[messageData?.model].icon
                         : ""
                     colorize: true
                     color: Appearance.colors.colSubtext
@@ -109,9 +109,9 @@ Rectangle {
                     visible: !modelIcon.visible
                     iconSize: 16
                     color: Appearance.colors.colSubtext
-                    text: messageData?.role == 'user' ? 'person' : 
-                        messageData?.role == 'interface' ? 'settings' : 
-                        messageData?.role == 'assistant' ? 'neurology' : 
+                    text: messageData?.role == 'user' ? 'person' :
+                        messageData?.role == 'interface' ? 'settings' :
+                        messageData?.role == 'assistant' ? 'neurology' :
                         'computer'
                 }
             }
@@ -124,10 +124,10 @@ Rectangle {
                 elide: Text.ElideRight
                 font.pixelSize: Appearance.font.pixelSize.small
                 color: Appearance.colors.colSubtext
-                text: (messageData?.role == 'assistant' && Ai.models[messageData?.model]) 
-                    ? Ai.models[messageData?.model].name 
-                    : (messageData?.role == 'user' && SystemInfo.username) 
-                        ? SystemInfo.username 
+                text: (messageData?.role == 'assistant' && Ai.models[messageData?.model])
+                    ? Ai.models[messageData?.model].name
+                    : (messageData?.role == 'user' && SystemInfo.username)
+                        ? SystemInfo.username
                         : Translation.tr("Interface")
             }
 
@@ -139,13 +139,13 @@ Rectangle {
                 iconSize: 12
                 color: Appearance.colors.colSubtext
                 text: "visibility_off"
-                
+
                 MouseArea {
                     id: notVisibleMouseArea
                     anchors.fill: parent
                     hoverEnabled: true
                 }
-                
+
                 StyledToolTip {
                     visible: notVisibleMouseArea.containsMouse
                     text: Translation.tr("Not visible to model")

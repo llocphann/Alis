@@ -15,11 +15,11 @@ WSettingsPage {
     pageTitle: Translation.tr("General")
     pageIcon: "settings"
     pageDescription: Translation.tr("System behavior and preferences")
-    
+
     WSettingsCard {
         title: Translation.tr("Audio")
         icon: "speaker-2-filled"
-        
+
         WSettingsSwitch {
             label: Translation.tr("Volume protection")
             icon: "speaker-mute"
@@ -27,7 +27,7 @@ WSettingsPage {
             checked: Config.options?.audio?.protection?.enable ?? false
             onCheckedChanged: Config.setNestedValue("audio.protection.enable", checked)
         }
-        
+
         WSettingsSpinBox {
             visible: Config.options?.audio?.protection?.enable ?? false
             label: Translation.tr("Maximum volume")
@@ -37,7 +37,7 @@ WSettingsPage {
             value: Config.options?.audio?.protection?.maxAllowed ?? 99
             onValueChanged: Config.setNestedValue("audio.protection.maxAllowed", value)
         }
-        
+
         WSettingsSpinBox {
             visible: Config.options?.audio?.protection?.enable ?? false
             label: Translation.tr("Max increase per step")
@@ -49,11 +49,11 @@ WSettingsPage {
             onValueChanged: Config.setNestedValue("audio.protection.maxAllowedIncrease", value)
         }
     }
-    
+
     WSettingsCard {
         title: Translation.tr("Battery")
         icon: "battery-full"
-        
+
         WSettingsSpinBox {
             label: Translation.tr("Low battery warning")
             icon: "battery-warning"
@@ -62,7 +62,7 @@ WSettingsPage {
             value: Config.options?.battery?.low ?? 20
             onValueChanged: Config.setNestedValue("battery.low", value)
         }
-        
+
         WSettingsSpinBox {
             label: Translation.tr("Critical battery")
             icon: "battery-0"
@@ -72,7 +72,7 @@ WSettingsPage {
             value: Config.options?.battery?.critical ?? 5
             onValueChanged: Config.setNestedValue("battery.critical", value)
         }
-        
+
         WSettingsSwitch {
             label: Translation.tr("Full battery notification")
             icon: "battery-charge"
@@ -80,11 +80,11 @@ WSettingsPage {
             onCheckedChanged: Config.setNestedValue("battery.notifyFull", checked)
         }
     }
-    
+
     WSettingsCard {
         title: Translation.tr("Time & Language")
         icon: "globe-search"
-        
+
         WSettingsSwitch {
             label: Translation.tr("Show seconds")
             icon: "timer"
@@ -110,7 +110,7 @@ WSettingsPage {
             text: Config.options?.time?.shortDateFormat ?? "dd/MM"
             onTextEdited: newText => Config.setNestedValue("time.shortDateFormat", newText)
         }
-        
+
         WSettingsDropdown {
             label: Translation.tr("Language")
             icon: "globe-search"
@@ -199,11 +199,11 @@ WSettingsPage {
             onCheckedChanged: Config.setNestedValue("keyboardIndicators.panel.num", checked)
         }
     }
-    
+
     WSettingsCard {
         title: Translation.tr("Windows & Sounds")
         icon: "app-generic"
-        
+
         WSettingsSwitch {
             visible: CompositorService.isNiri
             label: Translation.tr("Confirm before closing")
@@ -221,14 +221,14 @@ WSettingsPage {
             checked: Config.options?.compositor?.autoExpandSingleTilingWindow ?? false
             onCheckedChanged: Config.setNestedValue("compositor.autoExpandSingleTilingWindow", checked)
         }
-        
+
         WSettingsSwitch {
             label: Translation.tr("Battery sounds")
             icon: "speaker"
             checked: Config.options?.sounds?.battery ?? false
             onCheckedChanged: Config.setNestedValue("sounds.battery", checked)
         }
-        
+
         WSettingsSwitch {
             label: Translation.tr("Notification sounds")
             icon: "music-note-2"
@@ -274,11 +274,11 @@ WSettingsPage {
             }
         }
     }
-    
+
     WSettingsCard {
         title: Translation.tr("Idle & Sleep")
         icon: "weather-moon"
-        
+
         WSettingsSpinBox {
             label: Translation.tr("Screen off timeout")
             icon: "flash-off"
@@ -288,7 +288,7 @@ WSettingsPage {
             value: Config.options?.idle?.screenOffTimeout ?? 300
             onValueChanged: Config.setNestedValue("idle.screenOffTimeout", value)
         }
-        
+
         WSettingsSpinBox {
             label: Translation.tr("Lock timeout")
             icon: "lock-closed"
@@ -298,7 +298,7 @@ WSettingsPage {
             value: Config.options?.idle?.lockTimeout ?? 600
             onValueChanged: Config.setNestedValue("idle.lockTimeout", value)
         }
-        
+
         WSettingsSpinBox {
             label: Translation.tr("Suspend timeout")
             icon: "weather-moon"
@@ -308,7 +308,7 @@ WSettingsPage {
             value: Config.options?.idle?.suspendTimeout ?? 0
             onValueChanged: Config.setNestedValue("idle.suspendTimeout", value)
         }
-        
+
         WSettingsSwitch {
             label: Translation.tr("Lock before sleep")
             icon: "lock-closed"
@@ -360,11 +360,11 @@ WSettingsPage {
             onValueChanged: Config.setNestedValue("idle.onBattery.suspendTimeout", value)
         }
     }
-    
+
     WSettingsCard {
         title: Translation.tr("Game Mode")
         icon: "games"
-        
+
         WSettingsSwitch {
             label: Translation.tr("Auto-detect fullscreen")
             icon: "eye"
@@ -372,7 +372,7 @@ WSettingsPage {
             checked: Config.options?.gameMode?.autoDetect ?? true
             onCheckedChanged: Config.setNestedValue("gameMode.autoDetect", checked)
         }
-        
+
         WSettingsSwitch {
             label: Translation.tr("Disable animations")
             icon: "wand"
@@ -380,7 +380,7 @@ WSettingsPage {
             checked: Config.options?.gameMode?.disableAnimations ?? true
             onCheckedChanged: Config.setNestedValue("gameMode.disableAnimations", checked)
         }
-        
+
         WSettingsSwitch {
             label: Translation.tr("Disable effects")
             icon: "eye-off"
@@ -388,7 +388,7 @@ WSettingsPage {
             checked: Config.options?.gameMode?.disableEffects ?? true
             onCheckedChanged: Config.setNestedValue("gameMode.disableEffects", checked)
         }
-        
+
         WSettingsSwitch {
             label: Translation.tr("Disable Niri animations")
             icon: "pulse"
@@ -438,7 +438,7 @@ WSettingsPage {
             label: Translation.tr("Network name (SSID)")
             icon: "wifi-tethering"
             description: Translation.tr("The name your hotspot will broadcast")
-            text: Config.options?.hotspot?.ssid ?? "iNiR Hotspot"
+            text: Config.options?.hotspot?.ssid ?? "Alis Hotspot"
             onTextEdited: (newText) => Config.setNestedValue("hotspot.ssid", newText)
         }
 
@@ -446,7 +446,7 @@ WSettingsPage {
             label: Translation.tr("Password")
             icon: "key"
             description: Translation.tr("WPA2 passphrase for the hotspot")
-            text: Config.options?.hotspot?.password ?? "inirhotspot"
+            text: Config.options?.hotspot?.password ?? "alishotspot"
             onTextEdited: (newText) => Config.setNestedValue("hotspot.password", newText)
         }
 

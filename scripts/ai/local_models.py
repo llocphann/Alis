@@ -10,7 +10,7 @@ import shutil
 import struct
 
 def roots(extra_root=''):
-    override=os.environ.get('INIR_GGUF_ROOTS')
+    override=os.environ.get('ALIS_GGUF_ROOTS')
     if override is not None:
         standard=[Path(p).expanduser() for p in json.loads(override)[:8]]
     else:
@@ -20,7 +20,7 @@ def roots(extra_root=''):
         hf_home=Path(os.environ.get('HF_HOME',str(cache/'huggingface'))).expanduser()
         hub=Path(os.environ.get('HF_HUB_CACHE',os.environ.get('HUGGINGFACE_HUB_CACHE',str(hf_home/'hub')))).expanduser()
         standard=[hub,home/'.unsloth/studio/exports',home/'.unsloth/studio/library',home/'Models',
-            home/'.local/share/inir/models',home/'Downloads']
+            home/'.local/share/alis/models',home/'Downloads']
     if not extra_root:return standard
     if not isinstance(extra_root,str) or len(extra_root)>4096:raise ValueError('Invalid model folder')
     custom=Path(extra_root).expanduser()

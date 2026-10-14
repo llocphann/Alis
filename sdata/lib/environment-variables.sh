@@ -1,4 +1,4 @@
-# Environment variables for iNiR installer
+# Environment variables for Alis installer
 # This is NOT a script for execution, but for loading variables
 
 XDG_BIN_HOME=${XDG_BIN_HOME:-$HOME/.local/bin}
@@ -30,29 +30,26 @@ STY_RST='\e[0m'
 declare -a TEMP_FILES_TO_CLEANUP=()
 
 # Used by install script
-BACKUP_DIR="${BACKUP_DIR:-$HOME/inir-backup}"
-INIR_CONFIG_DIR_NEW="${XDG_CONFIG_HOME}/inir"
-INIR_CONFIG_DIR_LEGACY="${XDG_CONFIG_HOME}/illogical-impulse"
+BACKUP_DIR="${BACKUP_DIR:-$HOME/alis-backup}"
+ALIS_CONFIG_DIR_NEW="${XDG_CONFIG_HOME}/alis"
+ALIS_CONFIG_DIR_LEGACY="${XDG_CONFIG_HOME}/illogical-impulse"
 
-resolve_inir_config_dir() {
-  if [[ -L "$INIR_CONFIG_DIR_LEGACY" && -d "$INIR_CONFIG_DIR_NEW" ]]; then
-    printf '%s' "$INIR_CONFIG_DIR_NEW"
+resolve_alis_config_dir() {
+  # Installer tooling and live QML must agree after the cutover.
+  if [[ -d "$ALIS_CONFIG_DIR_NEW" ]]; then
+    printf '%s' "$ALIS_CONFIG_DIR_NEW"
     return
   fi
 
-  if [[ -d "$INIR_CONFIG_DIR_LEGACY" ]]; then
-    printf '%s' "$INIR_CONFIG_DIR_LEGACY"
+  # Keep the original location readable before the owner-gated migration.
+  if [[ -d "$ALIS_CONFIG_DIR_LEGACY" ]]; then
+    printf '%s' "$ALIS_CONFIG_DIR_LEGACY"
     return
   fi
 
-  if [[ -d "$INIR_CONFIG_DIR_NEW" ]]; then
-    printf '%s' "$INIR_CONFIG_DIR_NEW"
-    return
-  fi
-
-  printf '%s' "$INIR_CONFIG_DIR_NEW"
+  printf '%s' "$ALIS_CONFIG_DIR_NEW"
 }
 
-DOTS_CORE_CONFDIR="${DOTS_CORE_CONFDIR:-$(resolve_inir_config_dir)}"
+DOTS_CORE_CONFDIR="${DOTS_CORE_CONFDIR:-$(resolve_alis_config_dir)}"
 INSTALLED_LISTFILE="${DOTS_CORE_CONFDIR}/installed_listfile"
 FIRSTRUN_FILE="${DOTS_CORE_CONFDIR}/installed_true"

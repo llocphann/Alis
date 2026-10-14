@@ -242,7 +242,7 @@ def check_case(
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("usage: check-mpd-mutation-parity.py /path/to/inir-mpdd", file=sys.stderr)
+        print("usage: check-mpd-mutation-parity.py /path/to/alis-mpdd", file=sys.stderr)
         return 64
     rust_binary = Path(sys.argv[1]).resolve()
     if not rust_binary.is_file():

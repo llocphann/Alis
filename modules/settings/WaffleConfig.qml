@@ -90,7 +90,7 @@ ContentPage {
                 mainText: Translation.tr("Pick main wallpaper")
                 onClicked: {
                     Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
-                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"]);
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"]);
                 }
             }
 
@@ -102,7 +102,7 @@ ContentPage {
                 mainText: Translation.tr("Pick Waffle wallpaper")
                 onClicked: {
                     Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle")
-                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"]);
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"]);
                 }
             }
 
@@ -115,7 +115,7 @@ ContentPage {
                     text: Translation.tr("Hide the Waffle main wallpaper during fullscreen. The Task View backdrop remains available.")
                 }
             }
-            
+
             SettingsSwitch {
                 buttonIcon: "play_circle"
                 text: Translation.tr("Enable animated wallpapers (videos/GIFs)")
@@ -239,7 +239,7 @@ ContentPage {
                 mainText: Translation.tr("Pick backdrop wallpaper")
                 onClicked: {
                     Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle-backdrop")
-                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"]);
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"]);
                 }
             }
 
@@ -386,7 +386,7 @@ ContentPage {
                 visible: themingSection.currentFontFamily !== themingSection.defaultFont || (Config.options?.waffles?.theming?.font?.scale ?? 1.0) !== 1.0
                 Layout.fillWidth: true
                 implicitHeight: 36
-                
+
                 colBackground: Appearance.colors.colLayer1
                 colBackgroundHover: Appearance.colors.colLayer1Hover
                 colRipple: Appearance.colors.colLayer1Active

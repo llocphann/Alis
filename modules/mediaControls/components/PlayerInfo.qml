@@ -10,19 +10,19 @@ import qs.modules.common.functions
  */
 ColumnLayout {
     id: root
-    
+
     // Required properties
     required property string title
     required property string artist
-    
+
     // Optional properties
     property color titleColor: Appearance.zzzEverywhere ? Appearance.zzz.ink
-        : Appearance.inirEverywhere
-        ? Appearance.inir.colText 
+        : Appearance.alisEverywhere
+        ? Appearance.alis.colText
         : Appearance.colors.colOnLayer0
     property color artistColor: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted
-        : Appearance.inirEverywhere
-        ? Appearance.inir.colTextSecondary 
+        : Appearance.alisEverywhere
+        ? Appearance.alis.colTextSecondary
         : Appearance.colors.colSubtext
     property int titleSize: Appearance.font.pixelSize.large
     property int artistSize: Appearance.font.pixelSize.small
@@ -30,9 +30,9 @@ ColumnLayout {
     property bool cleanTitle: true
     property bool animateTitle: true
     property int slideDirection: 1
-    
+
     spacing: 0
-    
+
     // Title
     StyledText {
         Layout.fillWidth: true
@@ -46,7 +46,7 @@ ColumnLayout {
         animationDistanceX: root.slideDirection * 8
         animationDistanceY: 0
     }
-    
+
     // Artist
     StyledText {
         Layout.fillWidth: true

@@ -11,7 +11,7 @@ Singleton {
     property alias options: configOptionsJsonAdapter
     property bool ready: false
     property int revision: 0
-    property bool isSettingsProcess: (Quickshell.env("INIR_STANDALONE_WINDOW") ?? "") === "1"
+    property bool isSettingsProcess: (Quickshell.env("ALIS_STANDALONE_WINDOW") ?? "") === "1"
     property int readWriteDelay: 50 // milliseconds
     property bool blockWrites: false
     // Custom widget data stored outside JsonAdapter to avoid VME crash on property var
@@ -918,7 +918,7 @@ Singleton {
                     property int material: 0
                     property int cards: 3
                     property int aurora: 0
-                    property int inir: 1
+                    property int alis: 1
                     property int angel: 1
                     property int regalia: 1
                     property int zzz: 0
@@ -998,7 +998,7 @@ Singleton {
                     property bool enableVSCode: true
                     property bool enableChrome: true
                     property bool enableSpicetify: false
-                    property string spicetifyTheme: "Inir"
+                    property string spicetifyTheme: "Alis"
                     property bool enableSteam: false
                     property bool enablePearDesktop: true
                     property bool enableOpenCode: false
@@ -1882,7 +1882,7 @@ Singleton {
                 }
                 property JsonObject transition: JsonObject {
                     property bool enable: true
-                    property string type: "inirMelt"
+                    property string type: "alisMelt"
                     property string direction: "right"
                     property int duration: 800
                     property list<var> bezier: [0.54, 0.0, 0.34, 0.99]
@@ -2288,8 +2288,8 @@ Singleton {
             }
 
             property JsonObject hotspot: JsonObject {
-                property string ssid: "iNiR Hotspot"
-                property string password: "inirhotspot"
+                property string ssid: "Alis Hotspot"
+                property string password: "alishotspot"
                 property string band: "bg"
             }
 
@@ -2952,7 +2952,7 @@ Singleton {
                     property bool hideWhenFullscreen: true
                     property JsonObject transition: JsonObject {
                         property bool enable: true
-                        property string type: "inirMelt"
+                        property string type: "alisMelt"
                         property string direction: "right"
                         property int duration: 800
                     }

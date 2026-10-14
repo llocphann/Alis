@@ -1,4 +1,4 @@
-# Install dependencies for iNiR on Fedora-based systems
+# Install dependencies for Alis on Fedora-based systems
 # This script is meant to be sourced, not run directly.
 
 # shellcheck shell=bash
@@ -148,10 +148,10 @@ tui_info "Installing packages from repositories..."
 FEDORA_CORE_PKGS=(
   # Quickshell (from COPR - no compilation needed!)
   quickshell
-  
+
   # Niri compositor (from COPR)
   niri
-  
+
   # Build tools (needed for Python packages like dbus-python, pycairo, pygobject)
   gcc
   gcc-c++
@@ -169,7 +169,7 @@ FEDORA_CORE_PKGS=(
   gobject-introspection-devel
   gtk3-devel
   glib2-devel
-  
+
   # Basic utilities
   bc
   coreutils
@@ -187,35 +187,35 @@ FEDORA_CORE_PKGS=(
   dunst
   gum
   cliphist
-  
+
   # XDG Portals
   xdg-desktop-portal
   xdg-desktop-portal-gtk
   xdg-desktop-portal-gnome
-  
+
   # Polkit
   polkit
-  
+
   # Network
   NetworkManager
   gnome-keyring
-  
+
   # File manager
   nautilus
-  
+
   # Terminal - kitty is default, configurable in Settings
   kitty
-  
+
   # Shell (required for scripts)
   fish
-  
+
   # X11 compatibility
   xwayland-satellite
-  
+
   # Thumbnails
   ffmpegthumbnailer
   tumbler
-  
+
   # Translation
   translate-shell
 )
@@ -233,18 +233,18 @@ FEDORA_QT6_PKGS=(
   qt6-qtpositioning
   qt6-qtsensors
   qt6-qttools
-  
+
   # System libs
   jemalloc
   libxcb
   libdrm
   mesa-dri-drivers
-  
+
   # KDE integration
   kf6-kirigami
   kdialog
   kf6-syntax-highlighting
-  
+
   # Qt theming
   qt6ct
   kde-gtk-config
@@ -311,11 +311,11 @@ FEDORA_FONT_PKGS=(
   liberation-fonts
   google-noto-emoji-fonts
   jetbrains-mono-fonts-all
-  
+
   # Launcher
   fuzzel
   glib2
-  
+
   # Qt theming
   kvantum
 
@@ -375,26 +375,26 @@ install_github_binary() {
   local repo="$2"
   local asset_pattern="$3"
   local install_path="${4:-/usr/local/bin}"
-  
+
   if command -v "$name" &>/dev/null; then
     log_success "$name already installed"
     return 0
   fi
-  
+
   log_info "Installing $name from GitHub..."
-  
+
   local download_url
   download_url=$(curl -s "https://api.github.com/repos/${repo}/releases/latest" | \
     jq -r ".assets[] | select(.name | test(\"${asset_pattern}\")) | .browser_download_url" | head -1)
-  
+
   if [[ -z "$download_url" || "$download_url" == "null" ]]; then
     log_warning "Could not find $name binary, skipping"
     return 1
   fi
-  
+
   local temp_dir="/tmp/${name}-install-$$"
   mkdir -p "$temp_dir"
-  
+
   local filename=$(basename "$download_url")
   if curl -fsSL -o "$temp_dir/$filename" "$download_url"; then
     case "$filename" in
@@ -421,7 +421,7 @@ install_github_binary() {
   else
     log_warning "Failed to download $name"
   fi
-  
+
   rm -rf "$temp_dir"
 }
 
@@ -447,13 +447,13 @@ if ${INSTALL_FONTS:-true}; then
     log_info "Installing darkly theme from GitHub..."
     DARKLY_RPM_URL=$(curl -s "https://api.github.com/repos/Bali10050/darkly/releases/latest" | \
       jq -r ".assets[] | select(.name | test(\"fc${FEDORA_VERSION}.*x86_64.rpm$\")) | .browser_download_url" | head -1)
-    
+
     # Fallback to any Fedora RPM if exact version not found
     if [[ -z "$DARKLY_RPM_URL" || "$DARKLY_RPM_URL" == "null" ]]; then
       DARKLY_RPM_URL=$(curl -s "https://api.github.com/repos/Bali10050/darkly/releases/latest" | \
         jq -r '.assets[] | select(.name | test("fc[0-9]+.*x86_64.rpm$")) | .browser_download_url' | head -1)
     fi
-    
+
     if [[ -n "$DARKLY_RPM_URL" && "$DARKLY_RPM_URL" != "null" ]]; then
       v sudo dnf install -y "$DARKLY_RPM_URL"
     else
@@ -486,13 +486,13 @@ tui_info "Installing critical fonts..."
 FONT_DIR="$HOME/.local/share/fonts"
 mkdir -p "$FONT_DIR"
 
-# Material Symbols Rounded (icons) - this is the font iNiR actually uses
+# Material Symbols Rounded (icons) - this is the font Alis actually uses
 if ! fc-list | grep -qi "Material Symbols Rounded"; then
   log_info "Downloading Material Symbols Rounded font..."
-  
+
   # Direct download from raw.githubusercontent
   MATERIAL_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
-  
+
   if curl -fsSL -o "$FONT_DIR/MaterialSymbolsRounded.ttf" "$MATERIAL_URL"; then
     fc-cache -fv "$FONT_DIR" 2>/dev/null
     log_success "Material Symbols Rounded font installed"
@@ -505,9 +505,9 @@ fi
 # Also install Outlined variant (used by nts)
 if ! fc-list | grep -qi "Material Symbols Outlined"; then
   log_info "Downloading Material Symbols Outlined font..."
-  
+
   MATERIAL_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
-  
+
   if curl -fsSL -o "$FONT_DIR/MaterialSymbolsOutlined.ttf" "$MATERIAL_URL"; then
     fc-cache -fv "$FONT_DIR" 2>/dev/null
     log_success "Material Symbols Outlined font installed"
@@ -519,11 +519,11 @@ fi
 # JetBrains Mono Nerd Font (if not installed via dnf)
 if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
   log_info "Downloading JetBrains Mono Nerd Font..."
-  
+
   NERD_FONTS_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
   TEMP_DIR="/tmp/nerdfonts-$$"
   mkdir -p "$TEMP_DIR"
-  
+
   if curl -fsSL -o "$TEMP_DIR/JetBrainsMono.zip" "$NERD_FONTS_URL"; then
     unzip -o "$TEMP_DIR/JetBrainsMono.zip" -d "$FONT_DIR" >/dev/null 2>&1
     fc-cache -f "$FONT_DIR"
@@ -531,7 +531,7 @@ if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
   else
     log_warning "Could not download JetBrains Mono Nerd Font"
   fi
-  
+
   rm -rf "$TEMP_DIR"
 fi
 
@@ -546,10 +546,10 @@ mkdir -p "$ICON_DIR"
 # WhiteSur icon theme
 if [[ ! -d "$ICON_DIR/WhiteSur-dark" ]]; then
   log_info "Installing WhiteSur icon theme..."
-  
+
   TEMP_DIR="/tmp/whitesur-icons-$$"
   mkdir -p "$TEMP_DIR"
-  
+
   if curl -fsSL -o "$TEMP_DIR/whitesur.tar.gz" \
     "https://github.com/vinceliuice/WhiteSur-icon-theme/archive/refs/heads/master.tar.gz"; then
     tar -xzf "$TEMP_DIR/whitesur.tar.gz" -C "$TEMP_DIR"
@@ -565,17 +565,17 @@ if [[ ! -d "$ICON_DIR/WhiteSur-dark" ]]; then
   else
     log_warning "Could not download WhiteSur icon theme"
   fi
-  
+
   rm -rf "$TEMP_DIR"
 fi
 
 # MacTahoe icon theme (for dock)
 if [[ ! -d "$ICON_DIR/MacTahoe" ]]; then
   log_info "Installing MacTahoe icon theme..."
-  
+
   TEMP_DIR="/tmp/mactahoe-icons-$$"
   mkdir -p "$TEMP_DIR"
-  
+
   if curl -fsSL -o "$TEMP_DIR/mactahoe.tar.gz" \
     "https://github.com/vinceliuice/MacTahoe-icon-theme/archive/refs/heads/master.tar.gz"; then
     tar -xzf "$TEMP_DIR/mactahoe.tar.gz" -C "$TEMP_DIR"
@@ -586,7 +586,7 @@ if [[ ! -d "$ICON_DIR/MacTahoe" ]]; then
   else
     log_warning "Could not download MacTahoe icon theme"
   fi
-  
+
   rm -rf "$TEMP_DIR"
 fi
 
@@ -598,24 +598,24 @@ tui_info "Installing cursor themes..."
 # Bibata Modern cursors (popular, well-maintained)
 if [[ ! -d "$ICON_DIR/Bibata-Modern-Classic" ]]; then
   log_info "Installing Bibata cursor theme..."
-  
+
   TEMP_DIR="/tmp/bibata-cursors-$$"
   mkdir -p "$TEMP_DIR"
-  
+
   # Download Bibata Modern Classic (dark)
   if curl -fsSL -o "$TEMP_DIR/bibata-classic.tar.xz" \
     "https://github.com/ful1e5/Bibata_Cursor/releases/latest/download/Bibata-Modern-Classic.tar.xz"; then
     tar -xf "$TEMP_DIR/bibata-classic.tar.xz" -C "$ICON_DIR"
     log_success "Bibata Modern Classic cursor installed"
   fi
-  
+
   # Download Bibata Modern Ice (light)
   if curl -fsSL -o "$TEMP_DIR/bibata-ice.tar.xz" \
     "https://github.com/ful1e5/Bibata_Cursor/releases/latest/download/Bibata-Modern-Ice.tar.xz"; then
     tar -xf "$TEMP_DIR/bibata-ice.tar.xz" -C "$ICON_DIR"
     log_success "Bibata Modern Ice cursor installed"
   fi
-  
+
   rm -rf "$TEMP_DIR"
 fi
 
@@ -640,7 +640,7 @@ if ! fc-list | grep -qi "Rubik"; then
     log_success "Rubik installed"
 fi
 
-# Geist (used by default in iNiR)
+# Geist (used by default in Alis)
 if ! fc-list | grep -qi "Geist"; then
   log_info "Downloading Geist font..."
   TEMP_DIR="/tmp/geist-font-$$"

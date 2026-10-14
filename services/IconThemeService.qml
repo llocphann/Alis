@@ -25,11 +25,11 @@ Singleton {
     readonly property string nativeBackendStatePath: {
         const stateHome = String(Quickshell.env("XDG_STATE_HOME") ?? "").trim()
         const base = stateHome.length > 0 ? stateHome : (Quickshell.env("HOME") + "/.local/state")
-        return base + "/inir/native-backend"
+        return base + "/alis/native-backend"
     }
     property string _nativeBackendState: ""
     readonly property bool nativeBackendEnabled: {
-        const envMode = String(Quickshell.env("INIR_NATIVE_BACKEND") ?? "").trim()
+        const envMode = String(Quickshell.env("ALIS_NATIVE_BACKEND") ?? "").trim()
         if (envMode.length > 0)
             return envMode === "rust" || envMode === "auto"
         const stateMode = root._nativeBackendState.trim()
@@ -52,7 +52,7 @@ Singleton {
             const guessed = AppSearch.lookupDesktopEntry(appId)?.icon ?? AppSearch.guessIcon(appId);
             return guessed || appId || "application-x-executable";
         }
-        
+
         if (icon.startsWith("/") || icon.startsWith("file://")) {
             const path = icon.startsWith("file://") ? icon.substring(7) : icon;
 
@@ -60,41 +60,41 @@ Singleton {
                 return path.replace("/resources/app/resources/", "/resources/");
             }
         }
-        
+
         return icon;
     }
 
     // Get icon path from dock theme, fallback to system
     function dockIconPath(iconName: string, fallback: string): string {
         if (!iconName) return Quickshell.iconPath(fallback || "application-x-executable")
-        
+
         // If iconName is already an absolute path, use it directly
         if (iconName.startsWith("/") || iconName.startsWith("file://")) {
             return iconName.startsWith("file://") ? iconName : `file://${iconName}`
         }
-        
+
         if (!root.dockTheme) return Quickshell.iconPath(iconName, fallback || "application-x-executable")
-        
+
         const home = Quickshell.env("HOME")
         const theme = root.dockTheme
-        
+
         // Return first candidate path - Image will handle fallback via onStatusChanged
         // Structure: theme/apps/scalable (YAMIS, etc)
         return `file://${home}/.local/share/icons/${theme}/apps/scalable/${iconName}.svg`
     }
-    
+
     // Get all candidate paths for dock icon
     function dockIconCandidates(iconName: string): list<string> {
         if (!iconName || !root.dockTheme) return []
-        
+
         // If iconName is already an absolute path, return it as-is (no candidates needed)
         if (iconName.startsWith("/") || iconName.startsWith("file://")) {
             return []
         }
-        
+
         const home = Quickshell.env("HOME")
         const theme = root.dockTheme
-        
+
         return [
             `file://${home}/.local/share/icons/${theme}/apps/scalable/${iconName}.svg`,
             `file:///usr/share/icons/${theme}/apps/scalable/${iconName}.svg`,
@@ -111,7 +111,7 @@ Singleton {
         if (root._initialized)
             return;
         root._initialized = true;
-        
+
         // Load system theme
         const savedTheme = Config.ready ? (Config.options?.appearance?.iconTheme ?? "") : ""
         if (savedTheme && String(savedTheme).trim().length > 0) {
@@ -122,7 +122,7 @@ Singleton {
             currentThemeProc.running = false
             currentThemeProc.running = true
         }
-        
+
         // Load dock theme
         root.dockTheme = Config.options?.appearance?.dockIconTheme ?? ""
     }
@@ -148,7 +148,7 @@ Singleton {
         root.currentTheme = themeStr
 
         root._apply(themeStr, false)
-        
+
         // Persist to config.json
         Config.setNestedValue('appearance.iconTheme', themeStr)
 
@@ -533,9 +533,9 @@ for subdir in ["gtk-3.0", "gtk-4.0"]:
             "-type",
             "d"
         ]
-        
+
         property var themes: []
-        
+
         stdout: SplitParser {
             onRead: line => {
                 const p = line.trim()
@@ -552,7 +552,7 @@ for subdir in ["gtk-3.0", "gtk-4.0"]:
                 listThemesProc.themes.push(name)
             }
         }
-        
+
         onRunningChanged: {
             if (running)
                 return

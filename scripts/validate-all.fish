@@ -188,8 +188,8 @@ end
 
 function scan_runtime_journal
     set -l label 'runtime QML error scan since validation start'
-    set -l journal_file "$VALIDATION_WORKDIR/inir-journal.log"
-    set -l hits_file "$VALIDATION_WORKDIR/inir-journal-errors.log"
+    set -l journal_file "$VALIDATION_WORKDIR/alis-journal.log"
+    set -l hits_file "$VALIDATION_WORKDIR/alis-journal-errors.log"
 
     if not type -q journalctl
         skip_stage OPTIONAL "$label" 'journalctl is unavailable'
@@ -200,15 +200,15 @@ function scan_runtime_journal
         return
     end
 
-    systemctl --user status inir.service >/dev/null 2>&1
+    systemctl --user status alis.service >/dev/null 2>&1
     set -l service_status $status
     if test $service_status -ne 0
-        skip_stage OPTIONAL "$label" 'inir.service is not active under systemd --user; manual qs launches cannot be scoped safely'
+        skip_stage OPTIONAL "$label" 'alis.service is not active under systemd --user; manual qs launches cannot be scoped safely'
         return
     end
 
     set -g CHECK_NO (math "$CHECK_NO + 1")
-    journalctl --user -u inir.service --since "$START_JOURNAL" --no-pager > "$journal_file" 2>&1
+    journalctl --user -u alis.service --since "$START_JOURNAL" --no-pager > "$journal_file" 2>&1
     set -l journal_rc $status
     if test $journal_rc -ne 0
         log_only ''
@@ -350,12 +350,12 @@ if test $run_live -eq 1
     if test $has_wayland -eq 0
         skip_stage OPTIONAL 'live shell acceptance' 'no Niri/Hyprland/Wayland session variables detected'
     else if not test -x /usr/bin/qs
-        skip_stage OPTIONAL 'live shell acceptance' '/usr/bin/qs is unavailable; scripts/inir currently expects that Quickshell path'
+        skip_stage OPTIONAL 'live shell acceptance' '/usr/bin/qs is unavailable; scripts/alis currently expects that Quickshell path'
     else
-        run_stage OPTIONAL 'installed/runtime version identity' bash scripts/inir version --json
-        run_stage OPTIONAL 'live shell status' bash scripts/inir status
-        run_stage OPTIONAL 'live shell doctor' bash scripts/inir doctor
-        run_stage OPTIONAL 'live shell performance doctor' bash scripts/inir doctor --perf
+        run_stage OPTIONAL 'installed/runtime version identity' bash scripts/alis version --json
+        run_stage OPTIONAL 'live shell status' bash scripts/alis status
+        run_stage OPTIONAL 'live shell doctor' bash scripts/alis doctor
+        run_stage OPTIONAL 'live shell performance doctor' bash scripts/alis doctor --perf
         scan_runtime_journal
     end
 else

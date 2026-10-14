@@ -30,19 +30,19 @@ Scope {
     // Style-aware tokens (no hardcoded hex fallbacks)
     readonly property color accentColor: root._zzz ? Appearance.zzz.accent
         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? (Appearance.inir?.colAccent ?? Appearance.colors.colPrimary)
+        : Appearance.alisEverywhere ? (Appearance.alis?.colAccent ?? Appearance.colors.colPrimary)
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colAccent ?? Appearance.colors.colPrimary)
         : Appearance.colors.colPrimary
 
     readonly property color layerColor: root._zzz ? Appearance.zzz.bg0
         : Appearance.angelEverywhere ? Appearance.colors.colLayer0Base
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer0
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer0
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colSurface ?? Appearance.colors.colLayer0)
         : Appearance.colors.colLayer0
 
     readonly property color surfaceColor: root._zzz ? Appearance.zzz.bg1
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.auroraEverywhere ? (Appearance.aurora?.colSubSurface ?? Appearance.colors.colSurfaceContainerLow)
         : Appearance.colors.colSurfaceContainerLow
 
@@ -52,21 +52,21 @@ Scope {
         : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : Appearance.colors.colSubtext
     readonly property color borderColor: root._zzz ? Appearance.zzz.borderColor
         : Appearance.angelEverywhere ? Appearance.angel.colBorder
-        : Appearance.inirEverywhere ? Appearance.inir.colBorder
+        : Appearance.alisEverywhere ? Appearance.alis.colBorder
         : Appearance.colors.colLayer0Border
 
     // Adaptive rounding
     readonly property real cardRadius: root._zzz ? Appearance.zzz.panelRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+        : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
         : Appearance.rounding.windowRounding
     readonly property real sectionRadius: root._zzz ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
+        : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
         : Appearance.rounding.small
     readonly property real pillRadius: root._zzz ? Appearance.zzz.controlRadius
         : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : 999
+        : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : 999
 
     // Parse commit log lines: "hash|subject|relative_date|author"
     function parseCommits(raw) {
@@ -198,12 +198,12 @@ Scope {
             MultiEffect {
                 anchors.fill: parent
                 source: wallpaperSource
-                blurEnabled: Appearance.effectsEnabled && !Appearance.inirEverywhere
-                blur: (Appearance.effectsEnabled && !Appearance.inirEverywhere) ? 1.0 : 0
+                blurEnabled: Appearance.effectsEnabled && !Appearance.alisEverywhere
+                blur: (Appearance.effectsEnabled && !Appearance.alisEverywhere) ? 1.0 : 0
                 blurMax: 64
                 blurMultiplier: 1.0
-                saturation: (Appearance.effectsEnabled && !Appearance.inirEverywhere) ? 0.2 : 0
-                visible: !Appearance.inirEverywhere
+                saturation: (Appearance.effectsEnabled && !Appearance.alisEverywhere) ? 0.2 : 0
+                visible: !Appearance.alisEverywhere
                 opacity: root.embeddedHost ? 1 : root.isOpen ? 1 : 0
 
                 Behavior on opacity {
@@ -218,7 +218,7 @@ Scope {
 
             Rectangle {
                 anchors.fill: parent
-                color: Appearance.inirEverywhere
+                color: Appearance.alisEverywhere
                     ? ColorUtils.applyAlpha(root.layerColor, 0.95)
                     : ColorUtils.applyAlpha(root.layerColor, 0.85)
                 opacity: root.embeddedHost ? 1 : root.isOpen ? 1 : 0
@@ -347,8 +347,8 @@ Scope {
                         height: 44
                         radius: root.sectionRadius
                         color: ColorUtils.transparentize(root.accentColor, 0.85)
-                        border.width: Appearance.inirEverywhere ? 1 : 0
-                        border.color: Appearance.inirEverywhere ? root.borderColor : "transparent"
+                        border.width: Appearance.alisEverywhere ? 1 : 0
+                        border.color: Appearance.alisEverywhere ? root.borderColor : "transparent"
                         Layout.alignment: Qt.AlignVCenter
 
                         MaterialSymbol {
@@ -395,8 +395,8 @@ Scope {
                                 implicitHeight: versionRow.implicitHeight + 10
                                 radius: root.pillRadius
                                 color: root.surfaceColor
-                                border.width: Appearance.inirEverywhere ? 1 : 0
-                                border.color: Appearance.inirEverywhere ? root.borderColor : "transparent"
+                                border.width: Appearance.alisEverywhere ? 1 : 0
+                                border.color: Appearance.alisEverywhere ? root.borderColor : "transparent"
 
                                 RowLayout {
                                     id: versionRow
@@ -592,7 +592,7 @@ Scope {
                                 console.log("[ShellUpdates] Diagnostics:\n" + diag)
                                 Notifications.notify({
                                     summary: "Update System Diagnostics",
-                                    body: "Diagnostics printed to console. Run: qs log -c inir | tail -50",
+                                    body: "Diagnostics printed to console. Run: qs log -c alis | tail -50",
                                     urgency: NotificationUrgency.Normal,
                                     timeout: 8000,
                                     appName: "Alis Shell"
@@ -663,8 +663,8 @@ Scope {
                                 implicitHeight: sysInfoCol.implicitHeight + 28
                                 radius: root.sectionRadius
                                 color: root.surfaceColor
-                                border.width: Appearance.inirEverywhere ? 1 : 0
-                                border.color: Appearance.inirEverywhere ? root.borderColor : "transparent"
+                                border.width: Appearance.alisEverywhere ? 1 : 0
+                                border.color: Appearance.alisEverywhere ? root.borderColor : "transparent"
 
                                 ColumnLayout {
                                     id: sysInfoCol
@@ -1032,8 +1032,8 @@ Scope {
                                     implicitHeight: changelogText.implicitHeight + 24
                                     radius: root.sectionRadius
                                     color: root.surfaceColor
-                                    border.width: Appearance.inirEverywhere ? 1 : 0
-                                    border.color: Appearance.inirEverywhere ? root.borderColor : "transparent"
+                                    border.width: Appearance.alisEverywhere ? 1 : 0
+                                    border.color: Appearance.alisEverywhere ? root.borderColor : "transparent"
 
                                     StyledText {
                                         id: changelogText
@@ -1087,8 +1087,8 @@ Scope {
                                     implicitHeight: incomingCommitsCol.implicitHeight + 16
                                     radius: root.sectionRadius
                                     color: root.surfaceColor
-                                    border.width: Appearance.inirEverywhere ? 1 : 0
-                                    border.color: Appearance.inirEverywhere ? root.borderColor : "transparent"
+                                    border.width: Appearance.alisEverywhere ? 1 : 0
+                                    border.color: Appearance.alisEverywhere ? root.borderColor : "transparent"
 
                                     ColumnLayout {
                                         id: incomingCommitsCol
@@ -1108,7 +1108,7 @@ Scope {
                                                 required property int index
                                                 Layout.fillWidth: true
                                                 implicitHeight: incomingRow.implicitHeight + 12
-                                                radius: Appearance.inirEverywhere ? 2 : (Appearance.rounding?.smaller ?? 4)
+                                                radius: Appearance.alisEverywhere ? 2 : (Appearance.rounding?.smaller ?? 4)
                                                 color: index % 2 === 0
                                                     ? "transparent"
                                                     : ColorUtils.transparentize(root.layerColor, 0.5)
@@ -1201,8 +1201,8 @@ Scope {
                                     implicitHeight: localCommitsCol.implicitHeight + 16
                                     radius: root.sectionRadius
                                     color: root.surfaceColor
-                                    border.width: Appearance.inirEverywhere ? 1 : 0
-                                    border.color: Appearance.inirEverywhere ? root.borderColor : "transparent"
+                                    border.width: Appearance.alisEverywhere ? 1 : 0
+                                    border.color: Appearance.alisEverywhere ? root.borderColor : "transparent"
 
                                     ColumnLayout {
                                         id: localCommitsCol
@@ -1222,7 +1222,7 @@ Scope {
                                                 required property int index
                                                 Layout.fillWidth: true
                                                 implicitHeight: localRow.implicitHeight + 12
-                                                radius: Appearance.inirEverywhere ? 2 : (Appearance.rounding?.smaller ?? 4)
+                                                radius: Appearance.alisEverywhere ? 2 : (Appearance.rounding?.smaller ?? 4)
                                                 color: index % 2 === 0
                                                     ? "transparent"
                                                     : ColorUtils.transparentize(root.layerColor, 0.5)

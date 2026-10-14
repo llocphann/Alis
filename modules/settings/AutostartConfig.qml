@@ -234,7 +234,7 @@ ContentPage {
                         radius: Appearance.rounding.small
                         color: rowHover.hovered
                             ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                               : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                               : Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
                                : Appearance.zzzEverywhere ? Appearance.zzz.bg1
                                : Appearance.colors.colLayer1Hover)
                             : "transparent"
@@ -299,7 +299,7 @@ ContentPage {
                         }
 
                         // External badge: app is launched by a hand-written /
-                        // default line outside iNiR's managed section. No switch —
+                        // default line outside Alis's managed section. No switch —
                         // a disabled toggle looks broken, and the badge already
                         // communicates "not managed here".
                         Rectangle {
@@ -423,7 +423,7 @@ ContentPage {
                         radius: Appearance.rounding.small
                         color: cmdHover.hovered
                             ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                               : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                               : Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
                                : Appearance.zzzEverywhere ? Appearance.zzz.bg1
                                : Appearance.colors.colLayer1Hover)
                             : "transparent"

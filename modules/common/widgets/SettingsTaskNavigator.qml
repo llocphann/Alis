@@ -87,7 +87,7 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: visible ? introColumn.implicitHeight + (root.title.length > 0 ? 24 : 20) : 0
         radius: Appearance.rounding.normal
-        // Follow upstream iNiR's quiet information hierarchy: task context is
+        // Follow upstream Alis's quiet information hierarchy: task context is
         // a neutral settings plate, while selection is carried by the tabs.
         color: root.abyssTaskStyle ? SettingsMaterialPreset.cardColor : Appearance.colors.colLayer1
 

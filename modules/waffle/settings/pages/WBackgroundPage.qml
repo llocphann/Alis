@@ -18,7 +18,7 @@ WSettingsPage {
     pageTitle: Translation.tr("Background")
     pageIcon: "image"
     pageDescription: Translation.tr("Wallpaper effects and backdrop settings for Waffle")
-    
+
     // Shorthand for waffle background config
     readonly property var wBg: Config.options?.waffles?.background ?? {}
     readonly property var wEffects: wBg.effects ?? {}
@@ -38,7 +38,7 @@ WSettingsPage {
 
         Config.setNestedValue(nestedKey, value)
     }
-    
+
 
     function ensureHeavySectionsReady(effectivePath: string): void {
         if (heavySectionsReady)
@@ -90,7 +90,7 @@ WSettingsPage {
     WSettingsCard {
         title: Translation.tr("Wallpaper")
         icon: "image"
-        
+
         WSettingsSwitch {
             label: Translation.tr("Use Material wallpaper")
             icon: "link"
@@ -762,7 +762,7 @@ WSettingsPage {
                                     if (mon) {
                                         Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
                                         Config.setNestedValue("wallpaperSelector.targetMonitor", mon)
-                                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
+                                        Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"])
                                     }
                                 }
                             }
@@ -798,7 +798,7 @@ WSettingsPage {
                                 colForeground: Looks.colors.accentFg
                                 onClicked: {
                                     Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle-backdrop")
-                                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
+                                    Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"])
                                 }
                             }
                             WButton {
@@ -1201,7 +1201,7 @@ WSettingsPage {
                     buttonText: Translation.tr("Change")
                     onButtonClicked: {
                         Config.setNestedValue("wallpaperSelector.selectionTarget", "waffle-backdrop")
-                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "wallpaperSelector", "toggle"])
+                        Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "wallpaperSelector", "toggle"])
                     }
                 }
 

@@ -59,7 +59,7 @@ ShellRoot {
         path = folder / kind
         path.mkdir()
         env[f"XDG_{kind.upper()}_HOME"] = str(path)
-    config = folder / "config/illogical-impulse/config.json"
+    config = folder / "config/alis/config.json"
     config.parent.mkdir()
     config.write_text((ROOT / "defaults/config.json").read_text())
     result = run_qs(folder, env, timeout=15)

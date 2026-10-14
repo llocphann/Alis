@@ -152,7 +152,7 @@ Item {
             sourceComponent: CircleUtilButton {
                 Layout.alignment: Qt.AlignVCenter
                 Accessible.name: Translation.tr("Take screenshot")
-                onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "screenshot"])
+                onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "region", "screenshot"])
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter
                     fill: 1

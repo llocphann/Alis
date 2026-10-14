@@ -15,7 +15,7 @@ Singleton {
     property QtObject animation
     property QtObject animationCurves
     property QtObject aurora
-    property QtObject inir
+    property QtObject alis
     property QtObject angel
     property QtObject regalia
     property QtObject zzz
@@ -60,15 +60,15 @@ Singleton {
         return Math.max(0, Math.min(0.22, y))
     }
     property real autoContentTransparency: 0.9
-    
+
     // Transparency - respects enable toggle
     readonly property bool _transparencyEnabled: Config?.options?.appearance?.transparency?.enable ?? false
     readonly property bool _transparencyAutomatic: Config?.options?.appearance?.transparency?.automatic ?? true
-    property real backgroundTransparency: _transparencyEnabled 
-        ? (_transparencyAutomatic ? autoBackgroundTransparency : (Config?.options?.appearance?.transparency?.backgroundTransparency ?? 0)) 
+    property real backgroundTransparency: _transparencyEnabled
+        ? (_transparencyAutomatic ? autoBackgroundTransparency : (Config?.options?.appearance?.transparency?.backgroundTransparency ?? 0))
         : 0
-    property real contentTransparency: _transparencyEnabled 
-        ? (_transparencyAutomatic ? autoContentTransparency : (Config?.options?.appearance?.transparency?.contentTransparency ?? 0)) 
+    property real contentTransparency: _transparencyEnabled
+        ? (_transparencyAutomatic ? autoContentTransparency : (Config?.options?.appearance?.transparency?.contentTransparency ?? 0))
         : 0
 
     // Material is the only shell-wide runtime style in v1.0. ThemeService still
@@ -79,13 +79,13 @@ Singleton {
     readonly property bool contextualMotionProfile: iiMotionProfile === "contextual"
     // Compatibility aliases for old callers. Material is the only runtime
     // Global Theme in v1.0, so these can never become active.
-    readonly property bool inirEverywhere: false
+    readonly property bool alisEverywhere: false
     readonly property bool angelEverywhere: false
     readonly property bool auroraEverywhere: false
     readonly property bool regaliaEverywhere: false
     readonly property bool zzzEverywhere: false
     readonly property bool cookieEverywhere: false
-    
+
     // Explicit surface dialects such as islands/Ricelin own their complete
     // surface. Otherwise the selected global worldview owns it. Consumers use
     // this once rather than mixing independent `island && zzz && aurora` flags.
@@ -574,7 +574,7 @@ Singleton {
     // Theme Metadata Logic
     readonly property var activeThemePreset: ThemePresets.getPreset(Config.options?.appearance?.theme ?? "auto")
     readonly property var _themeMeta: activeThemePreset.meta || {}
-    
+
     // Material typography may still request a monospace preset through theme metadata.
     readonly property bool _forceMono: _themeMeta.fontStyle === "mono"
     readonly property string _angelFont: "Oxanium"
@@ -759,7 +759,7 @@ Singleton {
                     easing.bezierCurve: root.animation.clickBounce.bezierCurve
             }}
         }
-        
+
         property QtObject scroll: QtObject {
             property int duration: root.calcEffectiveDuration(200, root.animationSpeed.scroll)
             property int type: root.resolveCurveType("scroll", Easing.BezierSpline)
@@ -815,48 +815,48 @@ Singleton {
         readonly property real popupTransparentize: (_cfg?.popup ?? 0.32)
         readonly property real tooltipTransparentize: (_cfg?.tooltip ?? 0.28)
         readonly property real layerTransparentize: (_cfg?.layer ?? 0.32)
-        
+
         // === Main Panel Overlay (Layer 0) ===
         readonly property color colOverlay: ColorUtils.transparentize(root.colors.colLayer0Base, overlayTransparentize)
         readonly property color colOverlayHover: ColorUtils.transparentize(
             ColorUtils.mix(root.colors.colLayer0Base, root.colors.colOnLayer0, 0.95), overlayTransparentize)
-        
+
         // === Sub-Surface (Layer 1 - cards, groups within panels) ===
         readonly property color colSubSurface: ColorUtils.transparentize(root.colors.colLayer1Base, subSurfaceTransparentize)
         readonly property color colSubSurfaceHover: ColorUtils.transparentize(
             ColorUtils.mix(root.colors.colLayer1Base, root.colors.colOnLayer1, 0.92), subSurfaceTransparentize)
         readonly property color colSubSurfaceActive: ColorUtils.transparentize(
             ColorUtils.mix(root.colors.colLayer1Base, root.colors.colOnLayer1, 0.85), subSurfaceTransparentize)
-        
+
         // === Elevated Surface (Layer 2 - elevated cards) ===
         readonly property color colElevatedSurface: ColorUtils.transparentize(root.colors.colLayer2Base, subSurfaceTransparentize * 0.9)
         readonly property color colElevatedSurfaceHover: ColorUtils.transparentize(
             ColorUtils.mix(root.colors.colLayer2Base, root.colors.colOnLayer2, 0.92), subSurfaceTransparentize * 0.9)
-        
+
         // === Popup Surface (menus, dialogs, floating elements) ===
         readonly property color colPopupSurface: ColorUtils.transparentize(root.colors.colLayer2Base, popupTransparentize)
         readonly property color colPopupSurfaceHover: ColorUtils.transparentize(
             ColorUtils.mix(root.colors.colLayer2Base, root.colors.colOnLayer2, 0.92), popupTransparentize)
         readonly property color colPopupSurfaceActive: ColorUtils.transparentize(
             ColorUtils.mix(root.colors.colLayer2Base, root.colors.colOnLayer2, 0.85), popupTransparentize)
-        
+
         // === Tooltip Surface (high contrast for readability) ===
         readonly property color colTooltipSurface: ColorUtils.transparentize(root.colors.colLayer3Base, tooltipTransparentize)
         readonly property color colTooltipBorder: ColorUtils.transparentize(
             ColorUtils.mix(root.colors.colLayer3Base, root.colors.colOnLayer3, 0.85), tooltipTransparentize * 0.8)
-        
+
         // === Dialog Surface (modal dialogs) ===
         readonly property color colDialogSurface: ColorUtils.transparentize(root.colors.colLayer3Base, popupTransparentize * 0.85)
-        
+
         // Missing properties for BarMediaPopup compatibility
         readonly property color colPopupBorder: ColorUtils.transparentize(root.colors.colOutline, 0.7)
         readonly property color colTextSecondary: ColorUtils.transparentize(root.colors.colOnLayer1, 0.3)
-        
+
     }
 
-    inir: QtObject {
-        // Inir style - Elegant terminal UI aesthetic
-        
+    alis: QtObject {
+        // Alis style - Elegant terminal UI aesthetic
+
         // ═══════════════════════════════════════════════════════════════
         // LAYER SYSTEM
         // ═══════════════════════════════════════════════════════════════
@@ -864,35 +864,35 @@ Singleton {
         readonly property color colLayer1: root.m3colors.transparent ? "transparent" : root.m3colors.m3surfaceContainerLow
         readonly property color colLayer2: root.m3colors.transparent ? "transparent" : root.m3colors.m3surfaceContainer
         readonly property color colLayer3: root.m3colors.transparent ? "transparent" : root.m3colors.m3surfaceContainerHigh
-        
+
         readonly property color colOnLayer0: root.m3colors.m3onBackground
         readonly property color colOnLayer1: root.m3colors.m3onSurface
         readonly property color colOnLayer2: root.m3colors.m3onSurface
         readonly property color colOnLayer3: root.m3colors.m3onSurface
-        
+
         // Hover states (very subtle, calm interactions)
         readonly property color colLayer1Hover: ColorUtils.mix(colLayer1, colOnLayer1, 0.94)
         readonly property color colLayer2Hover: ColorUtils.mix(colLayer2, colOnLayer2, 0.94)
         readonly property color colLayer3Hover: ColorUtils.mix(colLayer3, colOnLayer3, 0.94)
-        
+
         // Active states (slightly more visible)
         readonly property color colLayer1Active: ColorUtils.mix(colLayer1, colOnLayer1, 0.88)
         readonly property color colLayer2Active: ColorUtils.mix(colLayer2, colOnLayer2, 0.88)
         readonly property color colLayer3Active: ColorUtils.mix(colLayer3, colOnLayer3, 0.88)
-        
+
         // ═══════════════════════════════════════════════════════════════
         // BORDER SYSTEM (Elegant, subtle - refined appearance)
         // ═══════════════════════════════════════════════════════════════
         // Scale border width for themes like Matrix/Synthwave
         readonly property real borderScale: root._themeMeta.borderWidthScale ?? 1.0
-        
+
         readonly property color colBorder: root.m3colors.m3outlineVariant ? ColorUtils.transparentize(root.m3colors.m3outlineVariant, 0.3) : "transparent"
         readonly property color colBorderHover: root.m3colors.m3outlineVariant
         readonly property color colBorderAccent: ColorUtils.transparentize(root.m3colors.m3primary, 0.6)
         readonly property color colBorderFocus: ColorUtils.transparentize(root.m3colors.m3primary, 0.3)
         readonly property color colBorderSubtle: ColorUtils.transparentize(root.m3colors.m3outlineVariant, 0.6)
         readonly property color colBorderMuted: ColorUtils.transparentize(root.m3colors.m3outline, 0.7)
-        
+
         // ═══════════════════════════════════════════════════════════════
         // TEXT COLORS (refined hierarchy)
         // ═══════════════════════════════════════════════════════════════
@@ -900,11 +900,11 @@ Singleton {
         readonly property color colTextSecondary: root.m3colors.m3onSurfaceVariant
         readonly property color colTextMuted: ColorUtils.transparentize(root.m3colors.m3onSurfaceVariant, 0.3)
         readonly property color colTextDisabled: ColorUtils.transparentize(root.m3colors.m3outline, 0.5)
-        
+
         // Labels (subtle accent)
         readonly property color colLabel: root.m3colors.m3primary
         readonly property color colLabelSecondary: root.m3colors.m3secondary
-        
+
         // ═══════════════════════════════════════════════════════════════
         // PRIMARY/ACCENT (calm, not overwhelming)
         // ═══════════════════════════════════════════════════════════════
@@ -912,29 +912,29 @@ Singleton {
         readonly property color colPrimaryHover: ColorUtils.mix(root.m3colors.m3primary, root.m3colors.m3onPrimary, 0.9)
         readonly property color colPrimaryActive: ColorUtils.mix(root.m3colors.m3primary, root.m3colors.m3onPrimary, 0.8)
         readonly property color colOnPrimary: root.m3colors.m3onPrimary
-        
+
         // Containers (softer, more elegant)
         readonly property color colPrimaryContainer: ColorUtils.transparentize(root.m3colors.m3primaryContainer, 0.2)
         readonly property color colPrimaryContainerHover: root.m3colors.m3primaryContainer
         readonly property color colPrimaryContainerActive: ColorUtils.mix(root.m3colors.m3primaryContainer, root.m3colors.m3onPrimaryContainer, 0.85)
         readonly property color colOnPrimaryContainer: root.m3colors.m3onPrimaryContainer
-        
+
         readonly property color colSecondary: root.m3colors.m3secondary
         readonly property color colSecondaryContainer: ColorUtils.transparentize(root.m3colors.m3secondaryContainer, 0.3)
         readonly property color colOnSecondaryContainer: root.m3colors.m3onSecondaryContainer
-        
+
         readonly property color colTertiary: root.m3colors.m3tertiary
-        
+
         // Accent alias for consistency with other styles
         readonly property color colAccent: root.m3colors.m3primary
-        
+
         // ═══════════════════════════════════════════════════════════════
         // SELECTION (subtle, elegant highlighting)
         // ═══════════════════════════════════════════════════════════════
         readonly property color colSelection: ColorUtils.transparentize(root.m3colors.m3primaryContainer, 0.15)
         readonly property color colSelectionHover: root.m3colors.m3primaryContainer
         readonly property color colOnSelection: root.m3colors.m3onPrimaryContainer
-        
+
         // ═══════════════════════════════════════════════════════════════
         // SEMANTIC COLORS (softer variants)
         // ═══════════════════════════════════════════════════════════════
@@ -942,7 +942,7 @@ Singleton {
         readonly property color colOnSuccess: root.m3colors.m3onSuccess
         readonly property color colSuccessContainer: ColorUtils.transparentize(root.m3colors.m3successContainer, 0.3)
         readonly property color colOnSuccessContainer: root.m3colors.m3onSuccessContainer
-        
+
         readonly property color colError: root.m3colors.m3error
         readonly property color colOnError: root.m3colors.m3onError
         readonly property color colErrorContainer: ColorUtils.transparentize(root.m3colors.m3errorContainer, 0.3)
@@ -952,7 +952,7 @@ Singleton {
             root.m3colors.m3tertiary, 0.42)
         readonly property color colOnWarningContainer: root.m3colors.m3onTertiaryContainer
         readonly property color colInfo: root.m3colors.m3secondary
-        
+
         // ═══════════════════════════════════════════════════════════════
         // COMPONENT ALIASES
         // ═══════════════════════════════════════════════════════════════
@@ -964,18 +964,18 @@ Singleton {
         readonly property color colTooltipBorder: colBorder
         readonly property color colDialog: colLayer2
         readonly property color colDialogBorder: colBorder
-        
+
         // Input fields
         readonly property color colInput: colLayer1
         readonly property color colInputBorder: colBorderMuted
         readonly property color colInputBorderFocus: colBorderFocus
         readonly property color colInputPlaceholder: colTextMuted
-        
+
         // Scrollbar (very subtle)
         readonly property color colScrollbar: "transparent"
         readonly property color colScrollbarThumb: ColorUtils.transparentize(root.m3colors.m3outline, 0.6)
         readonly property color colScrollbarThumbHover: ColorUtils.transparentize(root.m3colors.m3outline, 0.4)
-        
+
         // ═══════════════════════════════════════════════════════════════
         // ROUNDING (refined, slightly larger for elegance)
         // ═══════════════════════════════════════════════════════════════

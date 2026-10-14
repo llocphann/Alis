@@ -9,20 +9,20 @@ set -euo pipefail
 # that happens Quickshell would otherwise keep WindowPreviewService.capturing
 # and Cliphist.suppressRefresh set forever because the Process never exits.
 timeout_bin="/usr/bin/timeout"
-capture_timeout_seconds="${INIR_WINDOW_PREVIEW_CAPTURE_TIMEOUT_SECONDS:-90}"
+capture_timeout_seconds="${ALIS_WINDOW_PREVIEW_CAPTURE_TIMEOUT_SECONDS:-90}"
 if [[ ! "$capture_timeout_seconds" =~ ^[1-9][0-9]*$ ]]; then
   capture_timeout_seconds=90
 fi
-if [[ "${INIR_CAPTURE_WINDOWS_TIMEOUT_ACTIVE:-0}" != "1" ]]; then
+if [[ "${ALIS_CAPTURE_WINDOWS_TIMEOUT_ACTIVE:-0}" != "1" ]]; then
   if [[ ! -x "$timeout_bin" ]]; then
     echo "[capture-windows] missing binary: $timeout_bin" >&2
     exit 127
   fi
-  export INIR_CAPTURE_WINDOWS_TIMEOUT_ACTIVE=1
+  export ALIS_CAPTURE_WINDOWS_TIMEOUT_ACTIVE=1
   exec "$timeout_bin" --signal=TERM --kill-after=5s "${capture_timeout_seconds}s" "$0" "$@"
 fi
 
-preview_dir="$HOME/.cache/inir/window-previews"
+preview_dir="$HOME/.cache/alis/window-previews"
 mkdir -p "$preview_dir"
 
 niri_bin="/usr/bin/niri"
@@ -52,7 +52,7 @@ for bin in "$niri_bin" "$jq_bin" "$cliphist_bin" "$head_bin" \
   fi
 done
 
-state_dir="$(mktemp -d -t inir-window-previews.XXXXXX)"
+state_dir="$(mktemp -d -t alis-window-previews.XXXXXX)"
 trap 'rm -rf -- "$state_dir"' EXIT
 
 select_clipboard_mime() {
@@ -85,12 +85,12 @@ restore_clipboard_file() {
 
   # wl-copy normally forks and remains alive as the Wayland selection owner.
   # When this script runs from Quickshell that daemon would otherwise remain
-  # inside inir.service after a shell restart.  Let the systemd user manager
+  # inside alis.service after a shell restart.  Let the systemd user manager
   # own a foreground wl-copy in its own transient service instead: the
-  # clipboard survives iNiR restarts, while the shell cgroup remains clean.
+  # clipboard survives Alis restarts, while the shell cgroup remains clean.
   # Use a per-capture unit name so an older selection owner can finish its
   # Wayland cancellation path without racing a unit-name reuse.
-  local unit="inir-clipboard-owner-${BASHPID:-$$}"
+  local unit="alis-clipboard-owner-${BASHPID:-$$}"
   if command -v /usr/bin/systemd-run >/dev/null 2>&1; then
     if /usr/bin/systemd-run \
       --user \
@@ -163,7 +163,7 @@ if [[ -n "$first_entry" ]]; then
   fi
 fi
 
-max_concurrent="${INIR_WINDOW_PREVIEW_CAPTURE_CONCURRENCY:-2}"
+max_concurrent="${ALIS_WINDOW_PREVIEW_CAPTURE_CONCURRENCY:-2}"
 if [[ ! "$max_concurrent" =~ ^[1-4]$ ]]; then
   max_concurrent=2
 fi

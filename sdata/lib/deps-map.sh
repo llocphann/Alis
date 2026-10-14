@@ -1,10 +1,10 @@
-# Dependency mapping for iNiR across distributions
+# Dependency mapping for Alis across distributions
 # This file maps generic dependency names to distro-specific package names
 # Format: DEPS_<CATEGORY>_<GENERIC_NAME>="arch:pkg fedora:pkg debian:pkg opensuse:pkg void:pkg"
 #
 # Special values:
 #   - "AUR:pkg" = Arch AUR package
-#   - "COPR:repo/pkg" = Fedora COPR package  
+#   - "COPR:repo/pkg" = Fedora COPR package
 #   - "CARGO:pkg" = Install via cargo
 #   - "COMPILE:url" = Must compile from source
 #   - "FLATPAK:id" = Flatpak package
@@ -180,24 +180,24 @@ get_pkg_name() {
     local dep_var="$1"
     local distro="${OS_GROUP_ID:-arch}"
     local dep_string="${!dep_var}"
-    
+
     if [[ -z "$dep_string" ]]; then
         echo ""
         return 1
     fi
-    
+
     # Parse the dependency string
     local pkg=""
     for entry in $dep_string; do
         local entry_distro="${entry%%:*}"
         local entry_pkg="${entry#*:}"
-        
+
         if [[ "$entry_distro" == "$distro" ]]; then
             pkg="$entry_pkg"
             break
         fi
     done
-    
+
     echo "$pkg"
 }
 
@@ -205,7 +205,7 @@ get_pkg_name() {
 # Returns: "normal", "aur", "copr", "cargo", "compile", "flatpak", "github", or "unavailable"
 get_pkg_type() {
     local pkg="$1"
-    
+
     case "$pkg" in
         AUR:*) echo "aur" ;;
         COPR:*) echo "copr" ;;
@@ -232,7 +232,7 @@ get_category_packages() {
     local category="$1"
     local distro="${OS_GROUP_ID:-arch}"
     local packages=()
-    
+
     # Find all DEPS_<category>_* variables
     for var in $(compgen -v | grep "^DEPS_${category}_"); do
         local pkg=$(get_pkg_name "$var")
@@ -240,7 +240,7 @@ get_category_packages() {
             packages+=("$pkg")
         fi
     done
-    
+
     echo "${packages[@]}"
 }
 
@@ -255,7 +255,7 @@ install_package() {
     local pkg_type=$(get_pkg_type "$pkg")
     local pkg_value=$(get_pkg_value "$pkg")
     local distro="${OS_GROUP_ID:-arch}"
-    
+
     case "$pkg_type" in
         normal)
             local cmd="${PKG_INSTALL_CMD[$distro]}"
@@ -326,18 +326,18 @@ install_package() {
 list_compile_deps() {
     local distro="${OS_GROUP_ID:-arch}"
     local compile_deps=()
-    
+
     for var in $(compgen -v | grep "^DEPS_"); do
         local pkg=$(get_pkg_name "$var")
         local pkg_type=$(get_pkg_type "$pkg")
-        
+
         if [[ "$pkg_type" == "compile" ]]; then
             local name="${var#DEPS_*_}"
             local url=$(get_pkg_value "$pkg")
             compile_deps+=("$name:$url")
         fi
     done
-    
+
     printf '%s\n' "${compile_deps[@]}"
 }
 
@@ -345,16 +345,16 @@ list_compile_deps() {
 list_cargo_deps() {
     local distro="${OS_GROUP_ID:-arch}"
     local cargo_deps=()
-    
+
     for var in $(compgen -v | grep "^DEPS_"); do
         local pkg=$(get_pkg_name "$var")
         local pkg_type=$(get_pkg_type "$pkg")
-        
+
         if [[ "$pkg_type" == "cargo" ]]; then
             local pkg_name=$(get_pkg_value "$pkg")
             cargo_deps+=("$pkg_name")
         fi
     done
-    
+
     printf '%s\n' "${cargo_deps[@]}"
 }

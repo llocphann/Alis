@@ -87,7 +87,7 @@ Button {
             tagFetchTimer.stop()
         }
     }
-    
+
     Process {
         id: downloadProcess
         running: false
@@ -120,7 +120,7 @@ Button {
         implicitWidth: root.rowHeight * modelData.aspect_ratio
         implicitHeight: root.rowHeight
         radius: imageRadius
-        color: root.showBackground ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : (Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2)) : "transparent"
+        color: root.showBackground ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.alisEverywhere ? Appearance.alis.colLayer2 : (Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2)) : "transparent"
     }
 
     contentItem: Item {
@@ -235,7 +235,7 @@ Button {
             z: 1000
             anchorItem: menuAnchor
             anchorHovered: root.hovered || root.buttonHovered
-            
+
             model: [
                 {
                     iconName: "open_in_new",
@@ -265,7 +265,7 @@ Button {
                     action: () => {
                         const targetPath = root.imageData.is_nsfw ? root.nsfwPath : root.downloadPath;
                         const localPath = `${targetPath}/${root.fileName}`;
-                        Quickshell.execDetached(["/usr/bin/bash", "-c", 
+                        Quickshell.execDetached(["/usr/bin/bash", "-c",
                             `mkdir -p '${targetPath}' && curl '${root.imageData.file_url}' -o '${localPath}' && notify-send '${Translation.tr("Download complete")}' '${localPath}' -a 'Shell'`
                         ])
                         if (Config.options?.sidebar?.openFolderOnDownload ?? false)

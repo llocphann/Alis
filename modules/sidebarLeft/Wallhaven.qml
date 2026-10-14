@@ -157,17 +157,17 @@ Item {
 
                 property int lastResponseLength: 0
                 property bool userIsScrolling: false
-                
+
                 onMovingChanged: {
                     if (moving) userIsScrolling = true
                     else Qt.callLater(() => { userIsScrolling = false })
                 }
-                
+
                 onDraggingChanged: {
                     if (dragging) userIsScrolling = true
                     else Qt.callLater(() => { userIsScrolling = false })
                 }
-                
+
                 Connections {
                     target: root
                     function onResponsesChanged() {
@@ -252,7 +252,7 @@ Item {
             Layout.fillWidth: true
             radius: Appearance.rounding.normal - root.padding
             color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
+                : Appearance.alisEverywhere ? Appearance.alis.colLayer2 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
             implicitWidth: tagInputField.implicitWidth
             implicitHeight: Math.max(inputFieldRowLayout.implicitHeight + inputFieldRowLayout.anchors.topMargin
                 + commandButtonsRow.implicitHeight + commandButtonsRow.anchors.bottomMargin + columnSpacing, 45)

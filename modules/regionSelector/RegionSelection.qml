@@ -28,12 +28,12 @@ PanelWindow {
         bottom: true
     }
 
-    enum SnipAction { Copy, Edit, Search, CharRecognition, Record, RecordWithSound } 
+    enum SnipAction { Copy, Edit, Search, CharRecognition, Record, RecordWithSound }
     enum SelectionMode { RectCorners, Circle }
     property var action: RegionSelection.SnipAction.Copy
     property var selectionMode: RegionSelection.SelectionMode.RectCorners
     signal dismiss()
-    
+
     readonly property bool useNiri: CompositorService.isNiri
     readonly property real screenEdgeThickness: Math.max(1, Math.min(32,
         Math.round(Config.options?.appearance?.screenEdge?.width ?? 10)))
@@ -90,31 +90,31 @@ PanelWindow {
 
     // Tri-style color support
     property color overlayColor: Appearance.angelEverywhere ? ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.33)
-        : Appearance.inirEverywhere ? ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.53)
+        : Appearance.alisEverywhere ? ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.53)
         : Appearance.auroraEverywhere ? ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.4) : ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.53)
-    property color brightText: Appearance.inirEverywhere ? Appearance.inir.colText
+    property color brightText: Appearance.alisEverywhere ? Appearance.alis.colText
         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
         : (Appearance.m3colors.darkmode ? Appearance.colors.colOnLayer0 : Appearance.colors.colLayer0)
-    property color brightSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
+    property color brightSecondary: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary
         : Appearance.auroraEverywhere ? Appearance.aurora.colTextSecondary
         : (Appearance.m3colors.darkmode ? Appearance.colors.colSecondary : Appearance.colors.colOnSecondary)
     property color brightTertiary: Appearance.zzzEverywhere ? Appearance.zzz.accent
-        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+        : Appearance.alisEverywhere ? Appearance.alis.colPrimary
         : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
         : (Appearance.m3colors.darkmode ? Appearance.colors.colTertiary : Qt.lighter(Appearance.colors.colPrimary))
     property color selectionBorderColor: Appearance.zzzEverywhere ? Appearance.zzz.accent
-        : Appearance.inirEverywhere ? Appearance.inir.colBorder
+        : Appearance.alisEverywhere ? Appearance.alis.colBorder
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
         : ColorUtils.mix(brightText, brightSecondary, 0.5)
     property color selectionFillColor: Appearance.zzzEverywhere ? ColorUtils.transparentize(Appearance.zzz.accent, 0.86)
-        : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colPrimary, 0.8)
+        : Appearance.alisEverywhere ? ColorUtils.transparentize(Appearance.alis.colPrimary, 0.8)
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.8)
         : ColorUtils.applyAlpha(Appearance.colors.colOnLayer0, 0.2)
     property color windowBorderColor: brightSecondary
     property color windowFillColor: ColorUtils.transparentize(windowBorderColor, 0.85)
     property color imageBorderColor: brightTertiary
     property color imageFillColor: ColorUtils.transparentize(imageBorderColor, 0.85)
-    property color onBorderColor: Appearance.inirEverywhere ? Appearance.inir.colText
+    property color onBorderColor: Appearance.alisEverywhere ? Appearance.alis.colText
         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0 : Appearance.colors.colScrim
     readonly property var windows: useNiri
         ? (NiriService.windows || [])
@@ -134,7 +134,7 @@ PanelWindow {
         : (hyprlandMonitor ? hyprlandMonitor.scale : 1)
     readonly property real monitorOffsetX: root.useNiri ? 0 : (hyprlandMonitor ? hyprlandMonitor.x : 0)
     readonly property real monitorOffsetY: root.useNiri ? 0 : (hyprlandMonitor ? hyprlandMonitor.y : 0)
-    property int activeWorkspaceId: root.useNiri 
+    property int activeWorkspaceId: root.useNiri
         ? (NiriService.focusedWorkspaceIndex ?? 0)
         : (hyprlandMonitor && hyprlandMonitor.activeWorkspace ? hyprlandMonitor.activeWorkspace.id : 0)
     property string screenshotPath: `${root.screenshotDir}/image-${screen.name}`
@@ -344,9 +344,9 @@ PanelWindow {
 
     Process {
         id: imageDetectionProcess
-        command: ["/usr/bin/bash", "-c", `${Directories.scriptsPath}/images/find-regions-venv.sh ` 
-            + `--image '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' ` 
-            + `--max-width ${Math.round(root.screen.width * root.falsePositivePreventionRatio)} ` 
+        command: ["/usr/bin/bash", "-c", `${Directories.scriptsPath}/images/find-regions-venv.sh `
+            + `--image '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' `
+            + `--max-width ${Math.round(root.screen.width * root.falsePositivePreventionRatio)} `
             + `--max-height ${Math.round(root.screen.height * root.falsePositivePreventionRatio)} `]
         stdout: StdioCollector {
             id: imageDimensionCollector
@@ -537,7 +537,7 @@ PanelWindow {
                 root.dragDiffY = mouse.y - root.dragStartY;
                 root.points.push({ x: mouse.x, y: mouse.y });
             }
-            
+
             // Clip only the dim/selection-guide rendering to the workspace
             // interior. The MouseArea and snip coordinates remain full-output,
             // so Bar/Screen Edge pixels stay visually unchanged without
@@ -703,7 +703,7 @@ PanelWindow {
                 implicitWidth: controlsLoader.implicitWidth + shellPadding * 2
                 implicitHeight: controlsLoader.implicitHeight + shellPadding * 2
                 opacity: 0
-                
+
                 // Position: waffle = top center, material = connected to bottom Screen Edge
                 anchors {
                     horizontalCenter: parent.horizontalCenter
@@ -712,7 +712,7 @@ PanelWindow {
                     topMargin: useWaffle ? -height : 0
                     bottomMargin: useWaffle ? 0 : -height
                 }
-                
+
                 Connections {
                     target: root
                     function onVisibleChanged() {
@@ -797,7 +797,7 @@ PanelWindow {
                     }
                 }
             }
-            
+
         }
     }
 }

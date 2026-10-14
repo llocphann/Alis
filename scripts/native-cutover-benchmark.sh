@@ -4,16 +4,16 @@ set -uo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/inir"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/alis"
 mkdir -p "$STATE_DIR"
 BACKEND_STATE_FILE="$STATE_DIR/native-backend"
 BIN_STATE_FILE="$STATE_DIR/native-bin-dir"
 STAMP="$(date +%Y%m%d-%H%M%S)"
-REPORT="${INIR_NATIVE_REPORT:-$STATE_DIR/native-cutover-$STAMP.txt}"
-TMP_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/inir-native-test.XXXXXX")"
+REPORT="${ALIS_NATIVE_REPORT:-$STATE_DIR/native-cutover-$STAMP.txt}"
+TMP_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/alis-native-test.XXXXXX")"
 BIN_DIR="$ROOT_DIR/native/target/release"
 DISPATCH="$ROOT_DIR/scripts/native-dispatch"
-ACTIVE_RUNTIME="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
+ACTIVE_RUNTIME="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis"
 ACTIVE_RUNTIME="$(readlink -f "$ACTIVE_RUNTIME" 2>/dev/null || printf '%s' "$ACTIVE_RUNTIME")"
 ACTIVATION_BLOCKERS=()
 RUNTIME_MODE="unchanged"
@@ -88,7 +88,7 @@ if runs < 1:
     raise ValueError("BENCH_RUNS must be positive")
 samples = []
 for _ in range(runs):
-    input_path = os.environ.get("INIR_BENCH_STDIN")
+    input_path = os.environ.get("ALIS_BENCH_STDIN")
     with open(input_path, "rb") if input_path else open(os.devnull, "rb") as input_file:
         started = time.perf_counter_ns()
         process = subprocess.Popen(command, stdin=input_file,
@@ -306,9 +306,9 @@ set_runtime_backend() {
     printf '%s\n' "$mode" > "$BACKEND_STATE_FILE"
     printf '%s\n' "$BIN_DIR" > "$BIN_STATE_FILE"
     systemctl --user set-environment \
-        INIR_NATIVE_BACKEND="$mode" INIR_NATIVE_BIN_DIR="$BIN_DIR" INIR_NATIVE_STRICT=0 || return 1
-    "$ROOT_DIR/scripts/inir" restart || systemctl --user restart inir.service || return 1
-    systemctl --user is-active --quiet inir.service
+        ALIS_NATIVE_BACKEND="$mode" ALIS_NATIVE_BIN_DIR="$BIN_DIR" ALIS_NATIVE_STRICT=0 || return 1
+    "$ROOT_DIR/scripts/alis" restart || systemctl --user restart alis.service || return 1
+    systemctl --user is-active --quiet alis.service
 }
 
 measure_service_mode() {
@@ -323,25 +323,25 @@ measure_service_mode() {
 
     local pid pid_after mem0 mem1 tasks0 tasks1 cpu0 cpu1 delta
     local shell_pss0 shell_pss1 shell_rss0 shell_rss1
-    pid="$(systemctl --user show -p MainPID --value inir.service 2>/dev/null || echo 0)"
+    pid="$(systemctl --user show -p MainPID --value alis.service 2>/dev/null || echo 0)"
     [[ "$pid" =~ ^[1-9][0-9]*$ ]] || return 1
-    mem0="$(systemctl --user show -p MemoryCurrent --value inir.service 2>/dev/null || echo unknown)"
-    tasks0="$(systemctl --user show -p TasksCurrent --value inir.service 2>/dev/null || echo unknown)"
-    cpu0="$(systemctl --user show -p CPUUsageNSec --value inir.service 2>/dev/null || echo 0)"
+    mem0="$(systemctl --user show -p MemoryCurrent --value alis.service 2>/dev/null || echo unknown)"
+    tasks0="$(systemctl --user show -p TasksCurrent --value alis.service 2>/dev/null || echo unknown)"
+    cpu0="$(systemctl --user show -p CPUUsageNSec --value alis.service 2>/dev/null || echo 0)"
     shell_pss0="$(awk '/^Pss:/{print $2; exit}' "/proc/$pid/smaps_rollup" 2>/dev/null || echo 0)"
     shell_rss0="$(awk '/^VmRSS:/{print $2; exit}' "/proc/$pid/status" 2>/dev/null || echo 0)"
 
     sleep "$window"
 
-    pid_after="$(systemctl --user show -p MainPID --value inir.service 2>/dev/null || echo 0)"
+    pid_after="$(systemctl --user show -p MainPID --value alis.service 2>/dev/null || echo 0)"
     [[ "$pid_after" == "$pid" ]] || {
         kv "live $mode round $round" "ERROR service PID changed during sample ($pid -> $pid_after)"
         return 1
     }
-    systemctl --user is-active --quiet inir.service || return 1
-    mem1="$(systemctl --user show -p MemoryCurrent --value inir.service 2>/dev/null || echo unknown)"
-    tasks1="$(systemctl --user show -p TasksCurrent --value inir.service 2>/dev/null || echo unknown)"
-    cpu1="$(systemctl --user show -p CPUUsageNSec --value inir.service 2>/dev/null || echo 0)"
+    systemctl --user is-active --quiet alis.service || return 1
+    mem1="$(systemctl --user show -p MemoryCurrent --value alis.service 2>/dev/null || echo unknown)"
+    tasks1="$(systemctl --user show -p TasksCurrent --value alis.service 2>/dev/null || echo unknown)"
+    cpu1="$(systemctl --user show -p CPUUsageNSec --value alis.service 2>/dev/null || echo 0)"
     shell_pss1="$(awk '/^Pss:/{print $2; exit}' "/proc/$pid/smaps_rollup" 2>/dev/null || echo "$shell_pss0")"
     shell_rss1="$(awk '/^VmRSS:/{print $2; exit}' "/proc/$pid/status" 2>/dev/null || echo "$shell_rss0")"
     if [[ "$cpu0" =~ ^[0-9]+$ && "$cpu1" =~ ^[0-9]+$ ]]; then
@@ -372,11 +372,11 @@ measure_service_mode() {
 
     printf 'processes(%s round=%s):\n' "$mode" "$round"
     ps -eo pid,ppid,rss,etimes,comm,args \
-        | grep -E 'quickshell|inir-inputd|inir-mpdd|inir-native|inir-theme|keyboard_lock_state_daemon|osk_physical_key_daemon' \
+        | grep -E 'quickshell|alis-inputd|alis-mpdd|alis-native|alis-theme|keyboard_lock_state_daemon|osk_physical_key_daemon' \
         | grep -v grep || true
 
     printf 'journal(%s round=%s since=%s):\n' "$mode" "$round" "$started_at"
-    journalctl --user -u inir.service --since "$started_at" --no-pager 2>&1 \
+    journalctl --user -u alis.service --since "$started_at" --no-pager 2>&1 \
         | grep -Ei 'warn|error|failed|fallback|binding loop' \
         | tail -n 40 || true
 }
@@ -444,7 +444,7 @@ activate_rust() {
     section "LIVE SHELL A/B"
     local relative
     for relative in \
-        scripts/native-dispatch scripts/inir scripts/colors/switchwall.sh \
+        scripts/native-dispatch scripts/alis scripts/colors/switchwall.sh \
         services/KeyboardIndicators.qml \
         services/NiriService.qml services/LocalMusic.qml services/IconThemeService.qml \
         services/Wallpapers.qml services/deferred/Cliphist.qml \
@@ -459,8 +459,8 @@ activate_rust() {
         kv "live A/B" "SKIP (${#ACTIVATION_BLOCKERS[@]} blocker(s))"
         return 1
     fi
-    if ! systemctl --user is-active --quiet inir.service; then
-        block_activation "inir.service is not active"
+    if ! systemctl --user is-active --quiet alis.service; then
+        block_activation "alis.service is not active"
         kv "live A/B" "SKIP (no active service)"
         return 1
     fi
@@ -470,7 +470,7 @@ activate_rust() {
         return 1
     fi
     : > "$LIVE_AB_SAMPLE_FILE"
-    echo "Measuring the same inir.service for $rounds Python/Rust round(s)."
+    echo "Measuring the same alis.service for $rounds Python/Rust round(s)."
     echo "Round order alternates to reduce warm-cache/order bias; each sample restarts the service."
     local round mode
     local -a order
@@ -512,7 +512,7 @@ activate_rust() {
         sleep "${LIVE_SETTLE_SECONDS:-4}"
     fi
     local active_info
-    active_info="$(env -u INIR_NATIVE_BACKEND -u INIR_NATIVE_BIN_DIR \
+    active_info="$(env -u ALIS_NATIVE_BACKEND -u ALIS_NATIVE_BIN_DIR \
         "$ACTIVE_RUNTIME/scripts/native-dispatch" backend-info 2>&1)"
     if [[ "$active_info" != *$'mode=rust\n'* || "$active_info" != *"bin_dir=$BIN_DIR"* ]]; then
         block_activation "installed selector did not retain Rust mode and binary path"
@@ -536,9 +536,9 @@ activate_rust() {
     fi
 
     section "RUST TEST MODE STATUS"
-    systemctl --user --no-pager --full status inir.service 2>&1 | sed -n '1,35p' || true
+    systemctl --user --no-pager --full status alis.service 2>&1 | sed -n '1,35p' || true
     printf '\nRecent selector/fallback messages:\n'
-    journalctl --user -u inir.service --since '-3 minutes' --no-pager 2>&1         | grep -E 'native-dispatch|inir-inputd|inir-native|inir-mpdd|inir-theme|falling back|Failed|failed|error'         | tail -n 120 || true
+    journalctl --user -u alis.service --since '-3 minutes' --no-pager 2>&1         | grep -E 'native-dispatch|alis-inputd|alis-native|alis-mpdd|alis-theme|falling back|Failed|failed|error'         | tail -n 120 || true
 }
 
 verify_python_restore() {
@@ -555,7 +555,7 @@ verify_python_restore() {
         return 1
     fi
 
-    info="$(env -u INIR_NATIVE_BACKEND -u INIR_NATIVE_BIN_DIR -u INIR_NATIVE_STRICT \
+    info="$(env -u ALIS_NATIVE_BACKEND -u ALIS_NATIVE_BIN_DIR -u ALIS_NATIVE_STRICT \
         "$selector" backend-info 2>&1)" || {
         kv "restore selector" "FAIL (backend-info unavailable)"
         return 1
@@ -570,16 +570,16 @@ verify_python_restore() {
         kv "restore manager env" "FAIL (show-environment unavailable)"
         return 1
     }
-    if ! grep -Fxq 'INIR_NATIVE_BACKEND=python' <<<"$manager_env"; then
+    if ! grep -Fxq 'ALIS_NATIVE_BACKEND=python' <<<"$manager_env"; then
         kv "restore manager env" "FAIL (backend is not python)"
         return 1
     fi
-    if grep -Eq '^INIR_NATIVE_(BIN_DIR|STRICT)=' <<<"$manager_env"; then
+    if grep -Eq '^ALIS_NATIVE_(BIN_DIR|STRICT)=' <<<"$manager_env"; then
         kv "restore manager env" "FAIL (Rust selector variables remain)"
         return 1
     fi
-    if ! systemctl --user is-active --quiet inir.service; then
-        kv "restore service" "FAIL (inir.service inactive)"
+    if ! systemctl --user is-active --quiet alis.service; then
+        kv "restore service" "FAIL (alis.service inactive)"
         return 1
     fi
 
@@ -592,16 +592,16 @@ restore_python() {
     section "RESTORE PYTHON MODE"
     printf '%s\n' python > "$BACKEND_STATE_FILE"
     rm -f "$BIN_STATE_FILE"
-    systemctl --user set-environment INIR_NATIVE_BACKEND=python || return 1
-    systemctl --user unset-environment INIR_NATIVE_BIN_DIR INIR_NATIVE_STRICT || true
-    "$ROOT_DIR/scripts/inir" restart || systemctl --user restart inir.service || return 1
+    systemctl --user set-environment ALIS_NATIVE_BACKEND=python || return 1
+    systemctl --user unset-environment ALIS_NATIVE_BIN_DIR ALIS_NATIVE_STRICT || true
+    "$ROOT_DIR/scripts/alis" restart || systemctl --user restart alis.service || return 1
     verify_python_restore || return 1
     RUNTIME_MODE="python restored"
     kv "backend" "python"
 }
 
 if [[ "${1:-}" == "--restore" ]]; then
-    restore_python || { kv "backend" "RESTORE FAILED (inspect inir.service)"; exit 1; }
+    restore_python || { kv "backend" "RESTORE FAILED (inspect alis.service)"; exit 1; }
     printf '\nReport: %s\n' "$REPORT"
     exit 0
 fi
@@ -624,7 +624,7 @@ kv "rustc" "$(rustc --version 2>/dev/null || echo unavailable)"
 kv "cargo" "$(cargo --version 2>/dev/null || echo unavailable)"
 kv "python" "$(python3 --version 2>&1 || echo unavailable)"
 kv "mpd" "$(mpd --version 2>/dev/null | sed -n '1p' || echo unavailable)"
-kv "backend_before" "${INIR_NATIVE_BACKEND:-python(default)}"
+kv "backend_before" "${ALIS_NATIVE_BACKEND:-python(default)}"
 kv "backend_state_file" "$BACKEND_STATE_FILE ($(cat "$BACKEND_STATE_FILE" 2>/dev/null || echo unset))"
 kv "native_bin_state_file" "$BIN_STATE_FILE ($(cat "$BIN_STATE_FILE" 2>/dev/null || echo unset))"
 
@@ -642,14 +642,14 @@ run_gate "native boundary guard" 6 python3 native/scripts/assert-dormant.py
 run_gate "native selector contract" 7 bash scripts/test-native-selector-contract.sh
 run_gate "native selector behavior" 7 bash scripts/test-native-selector-behavior.sh
 run_gate "Niri parser regression" 8 python3 scripts/test-niri-config-structural-read.py
-run_gate "Niri customization fixture parity" 8 python3 native/scripts/check-niri-customizations.py "$BIN_DIR/inir-native"
-run_gate "Niri isolated write parity" 8 python3 native/scripts/check-niri-write-parity.py "$BIN_DIR/inir-native"
-run_gate "MPD isolated mutation parity" 8 python3 native/scripts/check-mpd-mutation-parity.py "$BIN_DIR/inir-mpdd"
-run_gate "Clipboard corpus parity" 8 python3 native/scripts/check-clipboard-parity.py "$BIN_DIR/inir-native"
-run_gate "Theme image/template + consumer parity" 25 python3 native/scripts/check-theme-parity.py "$BIN_DIR/inir-theme"
-run_gate "Desktop icon isolated parity" 8 python3 native/scripts/check-desktop-icon-parity.py "$BIN_DIR/inir-native"
+run_gate "Niri customization fixture parity" 8 python3 native/scripts/check-niri-customizations.py "$BIN_DIR/alis-native"
+run_gate "Niri isolated write parity" 8 python3 native/scripts/check-niri-write-parity.py "$BIN_DIR/alis-native"
+run_gate "MPD isolated mutation parity" 8 python3 native/scripts/check-mpd-mutation-parity.py "$BIN_DIR/alis-mpdd"
+run_gate "Clipboard corpus parity" 8 python3 native/scripts/check-clipboard-parity.py "$BIN_DIR/alis-native"
+run_gate "Theme image/template + consumer parity" 25 python3 native/scripts/check-theme-parity.py "$BIN_DIR/alis-theme"
+run_gate "Desktop icon isolated parity" 8 python3 native/scripts/check-desktop-icon-parity.py "$BIN_DIR/alis-native"
 "$DISPATCH" backend-info
-for binary in inir-inputd inir-mpdd inir-native inir-theme; do
+for binary in alis-inputd alis-mpdd alis-native alis-theme; do
     if [[ -x "$BIN_DIR/$binary" ]]; then
         kv "binary $binary" "$(du -h "$BIN_DIR/$binary" | awk '{print $1}') ($(stat -c %s "$BIN_DIR/$binary") bytes)"
     fi
@@ -660,7 +660,7 @@ CLIP_INPUT='<meta http-equiv="content-type" content="text/html; charset=utf-8"><
 printf '%s' "$CLIP_INPUT" >"$TMP_ROOT/clip.in"
 printf '%s' "$CLIP_INPUT" | python3 scripts/clipboard-store.py --filter >"$TMP_ROOT/clip.py"
 py_clip_rc=$?
-printf '%s' "$CLIP_INPUT" | INIR_NATIVE_BACKEND=rust INIR_NATIVE_STRICT=1 "$DISPATCH" clipboard-store --filter >"$TMP_ROOT/clip.rs"
+printf '%s' "$CLIP_INPUT" | ALIS_NATIVE_BACKEND=rust ALIS_NATIVE_STRICT=1 "$DISPATCH" clipboard-store --filter >"$TMP_ROOT/clip.rs"
 rs_clip_rc=$?
 if (( py_clip_rc == 0 && rs_clip_rc == 0 )) && cmp -s "$TMP_ROOT/clip.py" "$TMP_ROOT/clip.rs"; then
     kv "clipboard parity" "PASS"
@@ -669,9 +669,9 @@ else
     diff -u "$TMP_ROOT/clip.py" "$TMP_ROOT/clip.rs" || true
     block_activation "clipboard filter parity failed"
 fi
-INIR_BENCH_STDIN="$TMP_ROOT/clip.in" bench "clipboard python" python3 scripts/clipboard-store.py --filter
-INIR_BENCH_STDIN="$TMP_ROOT/clip.in" bench "clipboard rust" "$BIN_DIR/inir-native" clipboard-filter --filter
-INIR_BENCH_STDIN="$TMP_ROOT/clip.in" INIR_NATIVE_BACKEND=rust INIR_NATIVE_BIN_DIR="$BIN_DIR"     bench "clipboard rust dispatch" "$ROOT_DIR/scripts/native-dispatch" clipboard-store --filter
+ALIS_BENCH_STDIN="$TMP_ROOT/clip.in" bench "clipboard python" python3 scripts/clipboard-store.py --filter
+ALIS_BENCH_STDIN="$TMP_ROOT/clip.in" bench "clipboard rust" "$BIN_DIR/alis-native" clipboard-filter --filter
+ALIS_BENCH_STDIN="$TMP_ROOT/clip.in" ALIS_NATIVE_BACKEND=rust ALIS_NATIVE_BIN_DIR="$BIN_DIR"     bench "clipboard rust dispatch" "$ROOT_DIR/scripts/native-dispatch" clipboard-store --filter
 
 section "NIRI READ-ONLY PARITY + BENCHMARK"
 for op in outputs get-hot-corners get-input get-layout get-animations get-window-rules get-binds list-cursor-themes validate detect-customizations; do
@@ -679,7 +679,7 @@ for op in outputs get-hot-corners get-input get-layout get-animations get-window
     rs="$TMP_ROOT/niri-$op.rs"
     python3 scripts/niri-config.py "$op" >"$py" 2>"$TMP_ROOT/niri-$op.py.err"
     py_rc=$?
-    "$BIN_DIR/inir-native" niri "$op" >"$rs" 2>"$TMP_ROOT/niri-$op.rs.err"
+    "$BIN_DIR/alis-native" niri "$op" >"$rs" 2>"$TMP_ROOT/niri-$op.rs.err"
     rs_rc=$?
     if (( py_rc == 0 && rs_rc == 0 )); then
         compare_args=()
@@ -692,13 +692,13 @@ for op in outputs get-hot-corners get-input get-layout get-animations get-window
     [[ "$parity" == PASS ]] || block_activation "Niri $op parity failed"
     if (( py_rc == 0 && rs_rc == 0 )); then
         bench "niri $op python" python3 scripts/niri-config.py "$op"
-        bench "niri $op rust" "$BIN_DIR/inir-native" niri "$op"
-        INIR_NATIVE_BACKEND=rust INIR_NATIVE_BIN_DIR="$BIN_DIR"             bench "niri $op rust dispatch" "$ROOT_DIR/scripts/native-dispatch" niri "$op"
+        bench "niri $op rust" "$BIN_DIR/alis-native" niri "$op"
+        ALIS_NATIVE_BACKEND=rust ALIS_NATIVE_BIN_DIR="$BIN_DIR"             bench "niri $op rust dispatch" "$ROOT_DIR/scripts/native-dispatch" niri "$op"
     fi
 done
 
 section "DESKTOP CONFIG PARITY (ISOLATED TEMP HOME)"
-if python3 - "$ROOT_DIR/services/IconThemeService.qml" "$BIN_DIR/inir-native" "$TMP_ROOT/desktop" <<'PY'
+if python3 - "$ROOT_DIR/services/IconThemeService.qml" "$BIN_DIR/alis-native" "$TMP_ROOT/desktop" <<'PY'
 import configparser
 import os
 import shlex
@@ -716,7 +716,7 @@ files = {
     "gtk-3.0/settings.ini": ("Settings", "gtk-icon-theme-name"),
     "gtk-4.0/settings.ini": ("Settings", "gtk-icon-theme-name"),
 }
-theme = "INIR-Native-Trial"
+theme = "ALIS-Native-Trial"
 runner_commands = []
 for backend in ("python", "rust"):
     for relative, (section, _) in files.items():
@@ -779,7 +779,7 @@ then
     kv "desktop config parity" "PASS"
     HOME="$TMP_ROOT/desktop/python" bench "desktop python combined" bash "$TMP_ROOT/desktop/run-python.sh"
     XDG_CONFIG_HOME="$TMP_ROOT/desktop/rust/.config" bench "desktop rust combined" \
-        "$BIN_DIR/inir-native" desktop sync-icon-theme INIR-Native-Trial
+        "$BIN_DIR/alis-native" desktop sync-icon-theme ALIS-Native-Trial
 else
     block_activation "desktop config parity failed"
 fi
@@ -790,12 +790,12 @@ THEME_ARGS=(--color '#4181EE' --mode dark --scheme scheme-tonal-spot --termschem
 PY_THEME=(python3 scripts/colors/generate_colors_material.py)
 if [[ -x "$HOME/.local/state/quickshell/.venv/bin/python3" ]]; then
     PY_THEME=("$HOME/.local/state/quickshell/.venv/bin/python3" scripts/colors/generate_colors_material.py)
-elif [[ -n "${INIR_VENV:-}" && -x "${INIR_VENV/#\~/$HOME}/bin/python3" ]]; then
-    PY_THEME=("${INIR_VENV/#\~/$HOME}/bin/python3" scripts/colors/generate_colors_material.py)
+elif [[ -n "${ALIS_VENV:-}" && -x "${ALIS_VENV/#\~/$HOME}/bin/python3" ]]; then
+    PY_THEME=("${ALIS_VENV/#\~/$HOME}/bin/python3" scripts/colors/generate_colors_material.py)
 fi
 "${PY_THEME[@]}" "${THEME_ARGS[@]}"     --json-output "$TMP_ROOT/theme-py/colors.json"     --palette-output "$TMP_ROOT/theme-py/palette.json"     --app-palette-output "$TMP_ROOT/theme-py/app.json"     --terminal-output "$TMP_ROOT/theme-py/terminal.json"     --meta-output "$TMP_ROOT/theme-py/meta.json"     --scss-output "$TMP_ROOT/theme-py/colors.scss" >/dev/null
 py_theme_rc=$?
-"$BIN_DIR/inir-theme" "${THEME_ARGS[@]}"     --json-output "$TMP_ROOT/theme-rs/colors.json"     --palette-output "$TMP_ROOT/theme-rs/palette.json"     --app-palette-output "$TMP_ROOT/theme-rs/app.json"     --terminal-output "$TMP_ROOT/theme-rs/terminal.json"     --meta-output "$TMP_ROOT/theme-rs/meta.json"     --scss-output "$TMP_ROOT/theme-rs/colors.scss" >/dev/null
+"$BIN_DIR/alis-theme" "${THEME_ARGS[@]}"     --json-output "$TMP_ROOT/theme-rs/colors.json"     --palette-output "$TMP_ROOT/theme-rs/palette.json"     --app-palette-output "$TMP_ROOT/theme-rs/app.json"     --terminal-output "$TMP_ROOT/theme-rs/terminal.json"     --meta-output "$TMP_ROOT/theme-rs/meta.json"     --scss-output "$TMP_ROOT/theme-rs/colors.scss" >/dev/null
 rs_theme_rc=$?
 kv "theme exit" "python=$py_theme_rc rust=$rs_theme_rc"
 for file in palette.json app.json terminal.json colors.json; do
@@ -841,8 +841,8 @@ PY
     [[ "$scss_parity" == PASS* ]] || block_activation "theme SCSS parity failed"
 fi
 bench "theme python color-only" "${PY_THEME[@]}" "${THEME_ARGS[@]}" --json-output "$TMP_ROOT/bench-py.json"
-bench "theme rust color-only" "$BIN_DIR/inir-theme" "${THEME_ARGS[@]}" --json-output "$TMP_ROOT/bench-rs.json"
-INIR_NATIVE_BACKEND=rust INIR_NATIVE_BIN_DIR="$BIN_DIR"     bench "theme rust dispatch" "$ROOT_DIR/scripts/native-dispatch" theme     "${THEME_ARGS[@]}" --json-output "$TMP_ROOT/bench-rs-dispatch.json"
+bench "theme rust color-only" "$BIN_DIR/alis-theme" "${THEME_ARGS[@]}" --json-output "$TMP_ROOT/bench-rs.json"
+ALIS_NATIVE_BACKEND=rust ALIS_NATIVE_BIN_DIR="$BIN_DIR"     bench "theme rust dispatch" "$ROOT_DIR/scripts/native-dispatch" theme     "${THEME_ARGS[@]}" --json-output "$TMP_ROOT/bench-rs-dispatch.json"
 mkdir -p "$TMP_ROOT/theme-bench-py" "$TMP_ROOT/theme-bench-rs"
 for backend in py rs; do
     if [[ "$backend" == py ]]; then
@@ -850,7 +850,7 @@ for backend in py rs; do
         command=("${PY_THEME[@]}")
     else
         label="theme rust full"
-        command=("$BIN_DIR/inir-theme")
+        command=("$BIN_DIR/alis-theme")
     fi
     output_dir="$TMP_ROOT/theme-bench-$backend"
     bench "$label" "${command[@]}" "${THEME_ARGS[@]}" \
@@ -865,7 +865,7 @@ done
 section "INPUT PROBE + RESIDENT COST"
 python3 scripts/daemon/keyboard_lock_state_daemon.py --once >"$TMP_ROOT/input.py" 2>"$TMP_ROOT/input.py.err"
 py_input_rc=$?
-"$BIN_DIR/inir-inputd" --mode locks --once >"$TMP_ROOT/input.rs" 2>"$TMP_ROOT/input.rs.err"
+"$BIN_DIR/alis-inputd" --mode locks --once >"$TMP_ROOT/input.rs" 2>"$TMP_ROOT/input.rs.err"
 rs_input_rc=$?
 kv "input probe exit" "python=$py_input_rc rust=$rs_input_rc"
 kv "input python" "$(tr '\n' ' ' < "$TMP_ROOT/input.py" | head -c 240)"
@@ -878,21 +878,21 @@ fi
 kv "input state parity" "$input_parity"
 [[ "$input_parity" == PASS ]] || block_activation "input state parity failed"
 bench "input probe python" python3 scripts/daemon/keyboard_lock_state_daemon.py --once
-bench "input probe rust" "$BIN_DIR/inir-inputd" --mode locks --once
-INIR_NATIVE_BACKEND=rust INIR_NATIVE_BIN_DIR="$BIN_DIR"     bench "input probe rust dispatch" "$ROOT_DIR/scripts/native-dispatch" input-lock --once
+bench "input probe rust" "$BIN_DIR/alis-inputd" --mode locks --once
+ALIS_NATIVE_BACKEND=rust ALIS_NATIVE_BIN_DIR="$BIN_DIR"     bench "input probe rust dispatch" "$ROOT_DIR/scripts/native-dispatch" input-lock --once
 proc_metrics "input python resident" python3 -u scripts/daemon/keyboard_lock_state_daemon.py || block_activation "Python input daemon exited early"
-proc_metrics "input rust resident" "$BIN_DIR/inir-inputd" --mode locks || block_activation "Rust input daemon exited early"
+proc_metrics "input rust resident" "$BIN_DIR/alis-inputd" --mode locks || block_activation "Rust input daemon exited early"
 proc_metrics "osk keys python resident" python3 -u scripts/daemon/osk_physical_key_daemon.py || block_activation "Python OSK key listener exited early"
-proc_metrics "osk keys rust resident" "$BIN_DIR/inir-inputd" --mode keys || block_activation "Rust OSK key listener exited early"
+proc_metrics "osk keys rust resident" "$BIN_DIR/alis-inputd" --mode keys || block_activation "Rust OSK key listener exited early"
 
 
 section "MPD READ-ONLY PARITY + BENCHMARK"
 MPD_HOST_TEST="${MPD_HOST:-127.0.0.1}"
 MPD_PORT_TEST="${MPD_PORT:-6600}"
-MUSIC_ROOT_TEST="${INIR_MUSIC_ROOT:-}"
+MUSIC_ROOT_TEST="${ALIS_MUSIC_ROOT:-}"
 python3 scripts/local_music_mpd.py status "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST" >"$TMP_ROOT/mpd.py" 2>"$TMP_ROOT/mpd.py.err"
 py_mpd_rc=$?
-"$BIN_DIR/inir-mpdd" --compat status "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST" >"$TMP_ROOT/mpd.rs" 2>"$TMP_ROOT/mpd.rs.err"
+"$BIN_DIR/alis-mpdd" --compat status "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST" >"$TMP_ROOT/mpd.rs" 2>"$TMP_ROOT/mpd.rs.err"
 rs_mpd_rc=$?
 kv "mpd status exit" "python=$py_mpd_rc rust=$rs_mpd_rc"
 if (( py_mpd_rc == 0 && rs_mpd_rc == 0 )); then
@@ -907,9 +907,9 @@ PY
         kv "mpd status parity" "$mpd_parity"
         [[ "$mpd_parity" == PASS* ]] || block_activation "MPD status parity failed"
         bench "mpd status python" python3 scripts/local_music_mpd.py status "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST"
-        bench "mpd status rust" "$BIN_DIR/inir-mpdd" --compat status "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST"
+        bench "mpd status rust" "$BIN_DIR/alis-mpdd" --compat status "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST"
 
-        if [[ "${INIR_BENCH_MPD_SNAPSHOT:-0}" == 1 ]]; then
+        if [[ "${ALIS_BENCH_MPD_SNAPSHOT:-0}" == 1 ]]; then
             section "MPD FULL SNAPSHOT DEEP BENCHMARK"
             snapshot_parity_cache="$TMP_ROOT/mpd-snapshot-parity-cache"
             snapshot_python_cache="$TMP_ROOT/mpd-snapshot-python-cache"
@@ -922,7 +922,7 @@ PY
                 >"$TMP_ROOT/mpd.snapshot.py" 2>"$TMP_ROOT/mpd.snapshot.py.err"
             py_snapshot_rc=$?
             env XDG_CACHE_HOME="$snapshot_parity_cache" \
-                "$BIN_DIR/inir-mpdd" --compat snapshot \
+                "$BIN_DIR/alis-mpdd" --compat snapshot \
                 "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST" \
                 >"$TMP_ROOT/mpd.snapshot.rs" 2>"$TMP_ROOT/mpd.snapshot.rs.err"
             rs_snapshot_rc=$?
@@ -948,7 +948,7 @@ PY
                     "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST"
                 BENCH_RUNS="$snapshot_runs" bench "mpd snapshot rust" \
                     env XDG_CACHE_HOME="$snapshot_rust_cache" \
-                    "$BIN_DIR/inir-mpdd" --compat snapshot \
+                    "$BIN_DIR/alis-mpdd" --compat snapshot \
                     "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST"
             else
                 kv "mpd snapshot stable parity" "ERROR (snapshot failed)"
@@ -964,7 +964,7 @@ PY
 
         mpd_socket="$TMP_ROOT/mpd-daemon.sock"
         mpd_daemon_command=(
-            "$BIN_DIR/inir-mpdd"
+            "$BIN_DIR/alis-mpdd"
             --host "$MPD_HOST_TEST"
             --port "$MPD_PORT_TEST"
             --socket "$mpd_socket"
@@ -982,14 +982,14 @@ PY
         done
 
         if [[ -S "$mpd_socket" ]]; then
-            "$BIN_DIR/inir-mpdd" --client-compat --socket "$mpd_socket"                 status "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST"                 >"$TMP_ROOT/mpd.daemon.rs" 2>"$TMP_ROOT/mpd.daemon.rs.err"
+            "$BIN_DIR/alis-mpdd" --client-compat --socket "$mpd_socket"                 status "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST"                 >"$TMP_ROOT/mpd.daemon.rs" 2>"$TMP_ROOT/mpd.daemon.rs.err"
             daemon_mpd_rc=$?
             if (( daemon_mpd_rc == 0 )); then
                 daemon_mpd_parity="$(json_compare "$TMP_ROOT/mpd.rs" "$TMP_ROOT/mpd.daemon.rs" --mpd-status)"
                 kv "mpd daemon parity" "$daemon_mpd_parity"
                 [[ "$daemon_mpd_parity" == PASS ]] || block_activation "MPD daemon parity failed"
-                bench "mpd status rust daemon" "$BIN_DIR/inir-mpdd"                     --client-compat --socket "$mpd_socket"                     status "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST"
-                INIR_NATIVE_BACKEND=rust INIR_NATIVE_BIN_DIR="$BIN_DIR" INIR_MPD_SOCKET="$mpd_socket"                     bench "mpd status rust dispatch" "$ROOT_DIR/scripts/native-dispatch"                     mpd status "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST"
+                bench "mpd status rust daemon" "$BIN_DIR/alis-mpdd"                     --client-compat --socket "$mpd_socket"                     status "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST"
+                ALIS_NATIVE_BACKEND=rust ALIS_NATIVE_BIN_DIR="$BIN_DIR" ALIS_MPD_SOCKET="$mpd_socket"                     bench "mpd status rust dispatch" "$ROOT_DIR/scripts/native-dispatch"                     mpd status "$MPD_HOST_TEST" "$MPD_PORT_TEST" "$MUSIC_ROOT_TEST"
             else
                 kv "mpd daemon parity" "ERROR exit=$daemon_mpd_rc"
                 block_activation "MPD daemon client smoke failed"
@@ -1015,7 +1015,7 @@ fi
 
 section "OPTIONAL PERF COUNTERS"
 if command_exists perf; then
-    perf stat -e task-clock,context-switches,cpu-migrations,page-faults         "$BIN_DIR/inir-native" niri get-hot-corners >/dev/null 2>"$TMP_ROOT/perf-rust.txt" || true
+    perf stat -e task-clock,context-switches,cpu-migrations,page-faults         "$BIN_DIR/alis-native" niri get-hot-corners >/dev/null 2>"$TMP_ROOT/perf-rust.txt" || true
     perf stat -e task-clock,context-switches,cpu-migrations,page-faults         python3 scripts/niri-config.py get-hot-corners >/dev/null 2>"$TMP_ROOT/perf-python.txt" || true
     echo "--- Rust perf ---"
     cat "$TMP_ROOT/perf-rust.txt"
@@ -1030,10 +1030,10 @@ if [[ "${1:-}" != "--no-activate" ]]; then
 fi
 
 section "SYSTEMD STATUS + RECENT LOGS"
-systemctl --user show inir.service \
+systemctl --user show alis.service \
     -p ActiveState -p SubState -p MainPID -p MemoryCurrent -p CPUUsageNSec \
     -p FragmentPath 2>&1 || true
-journalctl --user -u inir.service --since '-10 minutes' -n 60 --no-pager 2>&1 \
+journalctl --user -u alis.service --since '-10 minutes' -n 60 --no-pager 2>&1 \
     | awk '!seen[$0]++' | tail -n 25 || true
 
 section "SUMMARY"

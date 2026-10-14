@@ -1,10 +1,10 @@
-# Options parser for iNiR installer
+# Options parser for Alis installer
 # This script is meant to be sourced.
 
 # shellcheck shell=bash
 
 showhelp_install(){
-printf "[$0]: Install iNiR — Quickshell config for Niri.
+printf "[$0]: Install Alis — Quickshell config for Niri.
 
 Syntax:
   $0 install [OPTIONS]...

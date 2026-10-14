@@ -24,15 +24,15 @@ Rectangle {
     implicitWidth: contentRow.implicitWidth + (padding * 2)
     implicitHeight: contentRow.implicitHeight + (padding * 2)
     color: Appearance.angelEverywhere || Appearance.regaliaEverywhere ? "transparent"
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.colors.colSurfaceContainer
     radius: Appearance.regaliaEverywhere ? Appearance.regalia.roundLarge
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+        : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
         : Appearance.rounding.large
     border.color: Appearance.regaliaEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colBorder
-        : Appearance.inirEverywhere ? Appearance.inir.colBorder
+        : Appearance.alisEverywhere ? Appearance.alis.colBorder
         : Appearance.colors.colOutlineVariant
     border.width: Appearance.regaliaEverywhere ? 0
         : Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1
@@ -131,7 +131,7 @@ Rectangle {
     component Separator: Rectangle {
         implicitWidth: 1
         color: Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
-            : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
+            : Appearance.alisEverywhere ? Appearance.alis.colBorderSubtle
             : Appearance.colors.colOutlineVariant
         Layout.fillHeight: true
         Layout.topMargin: 10
@@ -151,7 +151,7 @@ Rectangle {
             pixelSize: 22
         }
     }
-    
+
     component BatteryWidget: Row {
         id: batteryWidget
         Layout.alignment: Qt.AlignVCenter
@@ -169,7 +169,7 @@ Rectangle {
             iconSize: 24
             animateChange: true
         }
-        
+
         StyledText {
             id: batteryText
             anchors.verticalCenter: parent.verticalCenter

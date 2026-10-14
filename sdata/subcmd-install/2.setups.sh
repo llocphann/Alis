@@ -1,4 +1,4 @@
-# System setup for iNiR
+# System setup for Alis
 # This script is meant to be sourced.
 
 # shellcheck shell=bash
@@ -10,15 +10,15 @@ tui_title "System Setup"
 #####################################################################################
 function setup_user_groups(){
   tui_info "Setting up user groups..."
-  
+
   # i2c group for ddcutil (external monitor brightness)
   if [[ -z $(getent group i2c) ]]; then
     x pkg_sudo groupadd i2c
   fi
-  
+
   # Add user to required groups
   x pkg_sudo usermod -aG video,i2c,input "$(whoami)"
-  
+
   log_success "User added to video, i2c, input groups"
   log_warning "Group changes require logout/login to take effect"
 }
@@ -28,17 +28,17 @@ function setup_user_groups(){
 #####################################################################################
 function setup_systemd_services(){
   tui_info "Setting up systemd services..."
-  
+
   # Check if systemd is available
   if ! command -v systemctl &>/dev/null || [[ ! -d /run/systemd/system ]]; then
     log_warning "systemd not available, skipping service setup"
     log_info "If using a non-systemd init (runit, openrc, etc.), configure services manually"
     return 0
   fi
-  
+
   # i2c-dev module for ddcutil
   v pkg_sudo sh -c 'printf "%s\n" i2c-dev > /etc/modules-load.d/i2c-dev.conf'
-  
+
   # ydotool service - create user service symlink if needed
   # Check multiple possible locations (varies by distro)
   # Some distros (EndeavourOS) ship ydotool as a user unit directly
@@ -67,7 +67,7 @@ function setup_systemd_services(){
   if ! $ydotool_service_found && command -v ydotool &>/dev/null; then
     log_warning "ydotool installed but no systemd service found"
   fi
-  
+
   # Enable ydotool only if service exists
   if $ydotool_service_found && [[ -n "${DBUS_SESSION_BUS_ADDRESS}" ]]; then
     v systemctl --user daemon-reload
@@ -75,7 +75,7 @@ function setup_systemd_services(){
   elif $ydotool_service_found; then
     log_info "ydotool service found. Enable after login: systemctl --user enable ydotool --now"
   fi
-  
+
   # Bluetooth (optional)
   if command -v bluetoothctl &>/dev/null; then
     v pkg_sudo systemctl enable bluetooth --now
@@ -106,7 +106,7 @@ function setup_systemd_services(){
       elevate systemctl enable sddm.service 2>/dev/null && log_success "SDDM service enabled"
     fi
   fi
-  
+
   log_success "Services configured"
 }
 
@@ -122,35 +122,35 @@ function setup_thinkfan_helper(){
 #####################################################################################
 function setup_super_daemon(){
   tui_info "Setting up Super-tap daemon..."
-  
-  local daemon_src="${REPO_ROOT}/scripts/daemon/inir_super_overview_daemon.py"
-  local service_src="${REPO_ROOT}/scripts/systemd/inir-super-overview.service"
-  local daemon_dst="${HOME}/.local/bin/inir_super_overview_daemon.py"
-  local service_dst="${XDG_CONFIG_HOME}/systemd/user/inir-super-overview.service"
-  
+
+  local daemon_src="${REPO_ROOT}/scripts/daemon/alis_super_overview_daemon.py"
+  local service_src="${REPO_ROOT}/scripts/systemd/alis-super-overview.service"
+  local daemon_dst="${HOME}/.local/bin/alis_super_overview_daemon.py"
+  local service_dst="${XDG_CONFIG_HOME}/systemd/user/alis-super-overview.service"
+
   if [[ ! -f "$daemon_src" ]]; then
     log_warning "Super-tap daemon not found in repo, skipping"
     return 0
   fi
-  
+
   # Install daemon script
   x mkdir -p "$(dirname "$daemon_dst")"
   x cp "$daemon_src" "$daemon_dst"
   x chmod +x "$daemon_dst"
-  
+
   # Install systemd service
   x mkdir -p "$(dirname "$service_dst")"
   x cp "$service_src" "$service_dst"
-  
+
   # Enable service if in graphical session
   if [[ -n "${DBUS_SESSION_BUS_ADDRESS}" ]]; then
     v systemctl --user daemon-reload
-    v systemctl --user enable inir-super-overview.service --now
+    v systemctl --user enable alis-super-overview.service --now
   else
     log_warning "Not in graphical session. Enable later with:"
-    echo "  systemctl --user enable inir-super-overview.service --now"
+    echo "  systemctl --user enable alis-super-overview.service --now"
   fi
-  
+
   log_success "Super-tap daemon installed"
 }
 
@@ -194,9 +194,9 @@ function setup_desktop_settings(){
   if [[ ! -d "$HOME/.local/share/icons/$preferred_icon_theme" ]] && [[ ! -d "/usr/share/icons/$preferred_icon_theme" ]]; then
     icon_theme="Adwaita"
   fi
-  
+
   # gsettings for GNOME/GTK apps (Nautilus, etc.)
-  # Keep default icon theme aligned with iNiR defaults/config and installer payload.
+  # Keep default icon theme aligned with Alis defaults/config and installer payload.
   # If preferred theme is not installed, fall back to Adwaita.
   # If user later changes icon theme in Settings, IconThemeService persists and syncs it.
   if command -v gsettings &>/dev/null; then
@@ -207,7 +207,7 @@ function setup_desktop_settings(){
     try gsettings set org.gnome.desktop.interface cursor-size 24
     try gsettings set org.gnome.desktop.interface font-name 'Rubik 11'
   fi
-  
+
   # KDE/Qt settings (Dolphin, etc.)
   if command -v kwriteconfig6 &>/dev/null; then
     # Use Darkly widget style for KDE apps
@@ -217,7 +217,7 @@ function setup_desktop_settings(){
     # Icons — must match gsettings above
     try kwriteconfig6 --file kdeglobals --group Icons --key Theme "$icon_theme"
   fi
-  
+
   # Configure Kvantum theme via config file (avoid GUI)
   # kvantummanager --set can open a GUI window, so we write the config directly
   # Use MaterialAdw — this is the dynamic theme updated by apply-gtk-theme.sh
@@ -264,7 +264,7 @@ org.freedesktop.impl.portal.Notification = gtk
 PORTAL_EOF
   fi
   log_success "xdg-desktop-portal configured for Niri"
-  
+
   log_success "Desktop settings applied"
 }
 

@@ -47,7 +47,7 @@ def request(path,route,payload=None,timeout=2):
 
 def private_dir():
     base=Path(os.environ.get('XDG_RUNTIME_DIR',tempfile.gettempdir()))
-    folder=base/('inir-wull-'+str(os.getuid()))
+    folder=base/('alis-wull-'+str(os.getuid()))
     folder.mkdir(mode=0o700,exist_ok=True)
     st=folder.lstat()
     if folder.is_symlink() or st.st_uid!=os.getuid() or st.st_mode&0o077:

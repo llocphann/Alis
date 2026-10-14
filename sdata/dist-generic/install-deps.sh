@@ -1,4 +1,4 @@
-# Generic dependency installation guide for iNiR
+# Generic dependency installation guide for Alis
 # This script provides instructions for unsupported distributions
 # It can also attempt to install what it can via common methods
 
@@ -9,7 +9,7 @@
 #####################################################################################
 echo ""
 echo -e "${STY_CYAN}╔══════════════════════════════════════════════════════════════════╗${STY_RST}"
-echo -e "${STY_CYAN}║           iNiR - Generic Installation Guide                      ║${STY_RST}"
+echo -e "${STY_CYAN}║           Alis - Generic Installation Guide                      ║${STY_RST}"
 echo -e "${STY_CYAN}╚══════════════════════════════════════════════════════════════════╝${STY_RST}"
 echo ""
 echo -e "${STY_YELLOW}Your distribution (${OS_PRETTY_NAME:-unknown}) is not directly supported.${STY_RST}"
@@ -80,7 +80,7 @@ if [[ ${#COMPILE_NEEDED[@]} -gt 0 ]]; then
   echo -e "${STY_RED}  CRITICAL: The following must be compiled from source:${STY_RST}"
   echo -e "${STY_RED}═══════════════════════════════════════════════════════════════════${STY_RST}"
   echo ""
-  
+
   for pkg in "${COMPILE_NEEDED[@]}"; do
     case "$pkg" in
       quickshell)
@@ -265,13 +265,13 @@ if $ask; then
   echo "  - Go packages (if Go is available)"
   echo "  - Fonts (downloaded to ~/.local/share/fonts)"
   echo ""
-  
+
   local choice
   read -p "Attempt automatic installation? [y/N]: " choice
-  
+
   if [[ "$choice" =~ ^[yY]$ ]]; then
     echo ""
-    
+
     # Install Cargo packages
     if $HAS_CARGO; then
       echo -e "${STY_BLUE}Installing Cargo packages...${STY_RST}"
@@ -283,7 +283,7 @@ if $ask; then
         fi
       done
     fi
-    
+
     # Install Go packages
     if $HAS_GO; then
       echo -e "${STY_BLUE}Installing Go packages...${STY_RST}"
@@ -297,18 +297,18 @@ if $ask; then
         fi
       done
     fi
-    
+
     # Install fonts
     echo -e "${STY_BLUE}Installing fonts...${STY_RST}"
     FONT_DIR="$HOME/.local/share/fonts"
     mkdir -p "$FONT_DIR"
-    
+
     # JetBrains Mono Nerd Font
     if ! fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd"; then
       echo "  Downloading JetBrains Mono Nerd Font..."
       TEMP_DIR="/tmp/fonts-$$"
       mkdir -p "$TEMP_DIR"
-      
+
       if curl -fsSL -o "$TEMP_DIR/JetBrainsMono.zip" \
         "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip" 2>/dev/null; then
         unzip -o "$TEMP_DIR/JetBrainsMono.zip" -d "$FONT_DIR" 2>/dev/null
@@ -318,9 +318,9 @@ if $ask; then
       fi
       rm -rf "$TEMP_DIR"
     fi
-    
+
     fc-cache -f "$FONT_DIR" 2>/dev/null
-    
+
     echo ""
     echo -e "${STY_GREEN}Automatic installation complete.${STY_RST}"
   fi

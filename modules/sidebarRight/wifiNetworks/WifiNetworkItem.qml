@@ -34,14 +34,14 @@ DialogListItem {
                 iconSize: Appearance.font.pixelSize.larger
                 property int strength: root.wifiNetwork?.strength ?? 0
                 text: strength > 80 ? "signal_wifi_4_bar" : strength > 60 ? "network_wifi_3_bar" : strength > 40 ? "network_wifi_2_bar" : strength > 20 ? "network_wifi_1_bar" : "signal_wifi_0_bar"
-                color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOnSurfaceVariant
+                color: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colOnSurfaceVariant
             }
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 2
                 StyledText {
                     Layout.fillWidth: true
-                    color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurfaceVariant
+                    color: Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnSurfaceVariant
                     elide: Text.ElideRight
                     text: root.wifiNetwork?.ssid ?? Translation.tr("Unknown")
                 }
@@ -51,7 +51,7 @@ DialogListItem {
                     Layout.fillWidth: true
                     StyledText {
                         font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                        color: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
                         elide: Text.ElideRight
                         text: {
                             if (!root.wifiNetwork?.active) return "";
@@ -67,7 +67,7 @@ DialogListItem {
                 visible: (root.wifiNetwork?.isSecure || root.wifiNetwork?.active) ?? false
                 text: root.wifiNetwork?.active ? "check" : Network.wifiConnectTarget === root.wifiNetwork ? "settings_ethernet" : "lock"
                 iconSize: Appearance.font.pixelSize.larger
-                color: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colOnSurfaceVariant
+                color: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colOnSurfaceVariant
             }
         }
 

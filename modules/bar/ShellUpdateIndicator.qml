@@ -7,7 +7,7 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 
 /**
- * Compact iNiR shell update indicator for the bar.
+ * Compact Alis shell update indicator for the bar.
  * Shows when a new version is available in the git repo, and handles live update progress.
  */
 MouseArea {

@@ -10,7 +10,7 @@ import Quickshell.Io
 /**
  * Automatically reloads generated material colors.
  * It is necessary to run reapplyTheme() on startup because Singletons are lazily loaded.
- * 
+ *
  * When a manual theme is selected (Config.options.appearance.theme !== "auto"),
  * this loader will not apply wallpaper colors, allowing the manual theme to remain active.
  *
@@ -138,7 +138,7 @@ Singleton {
     // prematurely cleared by unrelated file-watch events.
     property bool _forceApply: false
 
-    readonly property bool defaultApplyExternal: (Quickshell.env("INIR_STANDALONE_WINDOW") ?? "") !== "1"
+    readonly property bool defaultApplyExternal: (Quickshell.env("ALIS_STANDALONE_WINDOW") ?? "") !== "1"
 
     // Check if auto theme is selected (reads directly from Config to avoid circular dependency with ThemeService)
     readonly property bool isAutoTheme: (Config.options?.appearance?.theme ?? "auto") === "auto"
@@ -299,7 +299,7 @@ Singleton {
                 Appearance.m3colors[m3Key] = json[key]
             }
         }
-        
+
         if (typeof json.darkmode === "boolean") {
             Appearance.m3colors.darkmode = json.darkmode
         } else if (typeof json.darkmode === "string") {

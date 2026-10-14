@@ -1,4 +1,4 @@
-# Robust update system for iNiR
+# Robust update system for Alis
 # Handles: manifest tracking, orphan cleanup, verification, rollback
 # This script is meant to be sourced.
 
@@ -7,9 +7,9 @@
 #####################################################################################
 # Configuration
 #####################################################################################
-II_TARGET="${XDG_CONFIG_HOME}/quickshell/inir"
+II_TARGET="${XDG_CONFIG_HOME}/quickshell/alis"
 II_BACKUP_DIR="${XDG_STATE_HOME}/quickshell/backups"
-II_MANIFEST_FILE="${II_TARGET}/.inir-manifest"
+II_MANIFEST_FILE="${II_TARGET}/.alis-manifest"
 VERIFICATION_TIMEOUT=10
 
 #####################################################################################
@@ -30,7 +30,7 @@ generate_manifest() {
         return 1
     fi
     {
-        echo "# inir-manifest v2"
+        echo "# alis-manifest v2"
         echo "# generated: $(date -Iseconds)"
         echo "# commit: $commit"
         cat "$entries"
@@ -98,40 +98,40 @@ create_update_backup() {
     local timestamp
     timestamp=$(date +%Y%m%d-%H%M%S)
     local backup_path="${II_BACKUP_DIR}/pre-update-${timestamp}"
-    
+
     mkdir -p "$backup_path"
-    
+
     # Only backup QML code, not user configs
-    rsync -a --exclude='.inir-manifest' "$target_dir/" "$backup_path/" 2>/dev/null
-    
+    rsync -a --exclude='.alis-manifest' "$target_dir/" "$backup_path/" 2>/dev/null
+
     # Save backup path for potential rollback
     echo "$backup_path" > "${II_BACKUP_DIR}/.last-backup"
-    
+
     echo "$backup_path"
 }
 
 # Rollback to last backup
 rollback_update() {
     local last_backup_file="${II_BACKUP_DIR}/.last-backup"
-    
+
     if [[ ! -f "$last_backup_file" ]]; then
         log_error "No backup found to rollback to"
         return 1
     fi
-    
+
     local backup_path
     backup_path=$(cat "$last_backup_file")
-    
+
     if [[ ! -d "$backup_path" ]]; then
         log_error "Backup directory not found: $backup_path"
         return 1
     fi
-    
+
     log_warning "Rolling back to: $backup_path"
-    
+
     # Restore from backup
     rsync -a --delete "$backup_path/" "$II_TARGET/"
-    
+
     log_success "Rollback complete"
     return 0
 }
@@ -140,15 +140,15 @@ rollback_update() {
 cleanup_old_backups() {
     local backup_dir="$1"
     local keep_count="${2:-5}"
-    
+
     if [[ ! -d "$backup_dir" ]]; then
         return 0
     fi
-    
+
     # List backups sorted by date, skip the newest $keep_count
     local old_backups
     old_backups=$(ls -1dt "$backup_dir"/pre-update-* 2>/dev/null | tail -n +$((keep_count + 1)))
-    
+
     if [[ -n "$old_backups" ]]; then
         echo "$old_backups" | while read -r dir; do
             rm -rf "$dir"
@@ -267,18 +267,18 @@ cleanup_orphans() {
     local target_dir="$1"
     local manifest_file="$2"
     local dry_run="${3:-false}"
-    
+
     local orphans
     orphans=$(get_orphan_files "$target_dir" "$manifest_file") || return 1
-    
+
     if [[ -z "$orphans" ]]; then
         log_info "No orphan files found"
         return 0
     fi
-    
+
     local count
     count=$(echo "$orphans" | wc -l)
-    
+
     if [[ "$dry_run" == "true" ]]; then
         log_info "Would remove $count orphan file(s):"
         echo "$orphans" | while read -r file; do
@@ -293,12 +293,12 @@ cleanup_orphans() {
                 log_info "  Removed: $file"
             fi
         done
-        
+
         # Clean up empty directories
         find "$target_dir/modules" "$target_dir/services" "$target_dir/scripts" \
             -type d -empty -delete 2>/dev/null || true
     fi
-    
+
     return 0
 }
 
@@ -314,36 +314,36 @@ perform_robust_update() {
     local repo_root="$1"
     local target_dir="${2:-$II_TARGET}"
     local skip_verification="${3:-false}"
-    
+
     log_header "Performing robust update"
-    
+
     # 1. Create backup
     log_info "Creating backup..."
     local backup_path
     backup_path=$(create_update_backup "$target_dir")
     log_success "Backup created: $backup_path"
-    
+
     # 2. Generate manifest from repo
     log_info "Generating manifest..."
     local temp_manifest
     temp_manifest=$(mktemp)
     generate_manifest "$repo_root" "$temp_manifest"
-    
+
     # 3. Sync files (this is done by the caller via existing functions)
     # The caller should call this function AFTER syncing files
-    
+
     # 4. Install manifest
     cp "$temp_manifest" "$II_MANIFEST_FILE"
     rm -f "$temp_manifest"
-    
+
     # 5. Cleanup orphans
     log_info "Checking for orphan files..."
     cleanup_orphans "$target_dir" "$II_MANIFEST_FILE"
-    
+
     # 6. Fix permissions
     log_info "Fixing script permissions..."
     find "$target_dir/scripts" \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} \; 2>/dev/null || true
-    
+
     # 7. Verify (unless skipped)
     if [[ "$skip_verification" != "true" ]]; then
         if ! run_verification; then
@@ -352,10 +352,10 @@ perform_robust_update() {
             return 1
         fi
     fi
-    
+
     # 8. Cleanup old backups
     cleanup_old_backups "$II_BACKUP_DIR" 5
-    
+
     log_success "Update completed successfully"
     return 0
 }

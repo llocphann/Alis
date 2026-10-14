@@ -38,7 +38,7 @@ Item {
         height: contentLayout.implicitHeight + 20
         radius: Appearance.rounding.normal
         fallbackColor: root.connectedSurface ? "transparent" : Appearance.colors.colLayer1
-        inirColor: root.connectedSurface ? "transparent" : Appearance.inir.colLayer2
+        alisColor: root.connectedSurface ? "transparent" : Appearance.alis.colLayer2
         auroraTransparency: Appearance.aurora.popupTransparentize
         wallpaperBackdropEnabled: !root.connectedSurface
         border.width: root.connectedSurface ? 0 : 1

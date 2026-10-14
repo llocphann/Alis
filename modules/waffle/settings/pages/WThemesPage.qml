@@ -733,11 +733,11 @@ WSettingsPage {
             visible: Config.options?.appearance?.wallpaperTheming?.enableSpicetify ?? false
             label: Translation.tr("Spotify theme")
             icon: "terminal"
-            description: Translation.tr("Choose the Spicetify layout while keeping iNiR wallpaper colors")
-            currentValue: Config.options?.appearance?.wallpaperTheming?.spicetifyTheme ?? "Inir"
+            description: Translation.tr("Choose the Spicetify layout while keeping Alis wallpaper colors")
+            currentValue: Config.options?.appearance?.wallpaperTheming?.spicetifyTheme ?? "Alis"
             options: [
-                { value: "Inir", displayName: Translation.tr("Sleek") },
-                { value: "InirTUI", displayName: Translation.tr("Text (TUI)") }
+                { value: "Alis", displayName: Translation.tr("Sleek") },
+                { value: "AlisTUI", displayName: Translation.tr("Text (TUI)") }
             ]
             onSelected: newValue => {
                 Config.setNestedValue("appearance.wallpaperTheming.spicetifyTheme", newValue)

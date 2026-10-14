@@ -1,6 +1,6 @@
 //@ pragma UseQApplication
 //@ pragma Env QS_NO_RELOAD_POPUP=1
-//@ pragma Env INIR_STANDALONE_WINDOW=1
+//@ pragma Env ALIS_STANDALONE_WINDOW=1
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic
 //@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
 // Launcher keeps QT_SCALE_FACTOR=1; shell scaling lives in appearance.typography.sizeScale
@@ -190,7 +190,7 @@ ApplicationWindow {
                     description: Translation.tr("Conflicts with the shell's notification implementation")
                     onAlwaysSelected: Config.setNestedValue("conflictKiller.autoKillNotificationDaemons", true)
                 }
-                
+
             }
         }
     }

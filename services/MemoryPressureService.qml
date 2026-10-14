@@ -40,14 +40,14 @@ Singleton {
         _log("user requested restart")
         Quickshell.execDetached([
             "/usr/bin/notify-send",
-            "iNiR",
+            "Alis",
             Translation.tr("Restarting shell..."),
             "-a", "Shell",
             "--hint=int:transient:1",
         ])
         // Small delay so notification shows
         Qt.callLater(() => {
-            Quickshell.execDetached(["systemctl", "--user", "restart", "inir.service"])
+            Quickshell.execDetached(["systemctl", "--user", "restart", "alis.service"])
         })
     }
 
@@ -127,14 +127,14 @@ Singleton {
         if (!root.enabled) { _log("threshold hit, monitoring disabled"); return }
         if (!root.notifyEnabled) { _log("threshold hit, notification disabled"); return }
         if (root.notificationShown || root.userDismissed) return
-        
+
         root.notificationShown = true
         const mbEstimate = Math.round(root.currentDeletedMappings * 0.5)  // ~0.5 MB per mapping
 
         Quickshell.execDetached([
             "/usr/bin/notify-send",
-            "iNiR",
-            Translation.tr("Memory usage is high (~%1 MB accumulated). A restart would free it. Run: inir memory restart").arg(mbEstimate),
+            "Alis",
+            Translation.tr("Memory usage is high (~%1 MB accumulated). A restart would free it. Run: alis memory restart").arg(mbEstimate),
             "-u", "critical",
             "-a", "Shell",
         ])

@@ -138,7 +138,7 @@ with tempfile.TemporaryDirectory(prefix="alis-config-raw-write-") as name:
         path = folder / kind
         path.mkdir()
         env[f"XDG_{kind.upper()}_HOME"] = str(path)
-    config = folder / "config/illogical-impulse/config.json"
+    config = folder / "config/alis/config.json"
     config.parent.mkdir(parents=True)
     for action, custom, synchronous in matrix:
         raw = json.loads((ROOT / "defaults/config.json").read_text())

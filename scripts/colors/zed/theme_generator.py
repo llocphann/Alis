@@ -998,24 +998,24 @@ def generate_zed_config(
 
     theme_data = {
         "$schema": "https://zed.dev/schema/themes/v0.2.0.json",
-        "name": "iNiR Material",
-        "author": "iNiR Theme System",
+        "name": "Alis Material",
+        "author": "Alis Theme System",
         "themes": [
-            {"name": "iNiR Dark", "appearance": "dark", "style": dark_style},
-            {"name": "iNiR Light", "appearance": "light", "style": light_style},
+            {"name": "Alis Dark", "appearance": "dark", "style": dark_style},
+            {"name": "Alis Light", "appearance": "light", "style": light_style},
             {
-                "name": "iNiR Borderless Dark",
+                "name": "Alis Borderless Dark",
                 "appearance": "dark",
                 "style": borderless_dark_style,
             },
             {
-                "name": "iNiR Borderless Light",
+                "name": "Alis Borderless Light",
                 "appearance": "light",
                 "style": borderless_light_style,
             },
-            {"name": "iNiR-alt Dark", "appearance": "dark", "style": alt_dark_style},
+            {"name": "Alis-alt Dark", "appearance": "dark", "style": alt_dark_style},
             {
-                "name": "iNiR-alt Light",
+                "name": "Alis-alt Light",
                 "appearance": "light",
                 "style": alt_light_style,
             },

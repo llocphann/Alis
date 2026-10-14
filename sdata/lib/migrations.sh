@@ -1,4 +1,4 @@
-# Migration system for iNiR
+# Migration system for Alis
 # Respects user configs - never modifies without explicit consent
 # This script is meant to be sourced.
 
@@ -8,26 +8,24 @@
 # Migration System Configuration
 #####################################################################################
 MIGRATIONS_DIR="${REPO_ROOT}/sdata/migrations"
-if declare -F resolve_inir_config_dir >/dev/null; then
-    _inir_config_dir="$(resolve_inir_config_dir)"
+if declare -F resolve_alis_config_dir >/dev/null; then
+    _alis_config_dir="$(resolve_alis_config_dir)"
 else
     _xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
-    _config_new="${_xdg_config_home}/inir"
+    _config_new="${_xdg_config_home}/alis"
     _config_legacy="${_xdg_config_home}/illogical-impulse"
 
-    if [[ -L "$_config_legacy" && -d "$_config_new" ]]; then
-        _inir_config_dir="$_config_new"
+    if [[ -d "$_config_new" ]]; then
+        _alis_config_dir="$_config_new"
     elif [[ -d "$_config_legacy" ]]; then
-        _inir_config_dir="$_config_legacy"
-    elif [[ -d "$_config_new" ]]; then
-        _inir_config_dir="$_config_new"
+        _alis_config_dir="$_config_legacy"
     else
-        _inir_config_dir="$_config_new"
+        _alis_config_dir="$_config_new"
     fi
 fi
 
-MIGRATIONS_STATE_FILE="${_inir_config_dir}/migrations.json"
-MIGRATIONS_BACKUP_DIR="${_inir_config_dir}/backups"
+MIGRATIONS_STATE_FILE="${_alis_config_dir}/migrations.json"
+MIGRATIONS_BACKUP_DIR="${_alis_config_dir}/backups"
 
 #####################################################################################
 # Migration State Management
@@ -93,18 +91,18 @@ mark_migration_skipped() {
 create_backup() {
     local file="$1"
     local backup_name="$2"
-    
+
     if [[ ! -f "$file" ]]; then
         return 1
     fi
-    
+
     local timestamp=$(date +%Y-%m-%d-%H%M%S)
     local backup_dir="${MIGRATIONS_BACKUP_DIR}/${timestamp}"
     mkdir -p "$backup_dir"
-    
+
     local filename=$(basename "$file")
     cp "$file" "${backup_dir}/${backup_name:-$filename}"
-    
+
     echo "$backup_dir"
 }
 
@@ -133,7 +131,7 @@ list_available_migrations() {
     if [[ ! -d "$MIGRATIONS_DIR" ]]; then
         return
     fi
-    
+
     for migration_file in "$MIGRATIONS_DIR"/*.sh; do
         if [[ -f "$migration_file" ]]; then
             basename "$migration_file" .sh
@@ -144,14 +142,23 @@ list_available_migrations() {
 # Check if a migration is actually needed (runs the check function)
 is_migration_needed() {
     local migration_id="$1"
-    
+
+    # 019 was a historical upstream -> alis directory transition. Canonical
+    # Alis installs must never recreate ~/.config/alis after the owner-gated
+    # cutover (or silently move the upstream config away from Alis).
+    if [[ ( "$migration_id" == "019-config-dir-rename-compat" ||
+            "$migration_id" == "050-rust-native-default" ) &&
+          -d "${XDG_CONFIG_HOME:-$HOME/.config}/alis" ]]; then
+        return 1
+    fi
+
     load_migration "$migration_id" 2>/dev/null || return 1
-    
+
     if type migration_check &>/dev/null; then
         migration_check 2>/dev/null
         return $?
     fi
-    
+
     # No check function = always needed
     return 0
 }
@@ -161,7 +168,7 @@ get_migration_real_status() {
     local migration_id="$1"
     load_migration "$migration_id" 2>/dev/null || return 1
     local is_required="${MIGRATION_REQUIRED:-false}"
-    
+
     if [[ "$is_required" == "true" ]]; then
         if is_migration_needed "$migration_id"; then
             echo "pending"
@@ -183,12 +190,12 @@ get_migration_real_status() {
         echo "skipped"
         return
     fi
-    
+
     if is_migration_applied "$migration_id"; then
         echo "applied"
         return
     fi
-    
+
     if is_migration_needed "$migration_id"; then
         echo "pending"
     else
@@ -199,14 +206,14 @@ get_migration_real_status() {
 
 get_pending_migrations() {
     local pending=()
-    
+
     for migration_id in $(list_available_migrations); do
         local status=$(get_migration_real_status "$migration_id")
         if [[ "$status" == "pending" ]]; then
             pending+=("$migration_id")
         fi
     done
-    
+
     echo "${pending[@]}"
 }
 
@@ -227,36 +234,45 @@ count_pending_migrations() {
 load_migration() {
     local migration_id="$1"
     local migration_file="${MIGRATIONS_DIR}/${migration_id}.sh"
-    
+
     if [[ ! -f "$migration_file" ]]; then
         return 1
     fi
-    
+
     # Reset migration variables
     MIGRATION_ID=""
     MIGRATION_TITLE=""
     MIGRATION_DESCRIPTION=""
     MIGRATION_TARGET_FILE=""
     MIGRATION_REQUIRED=false
-    
+
     # Unset previous functions
     unset -f migration_check migration_preview migration_diff migration_apply 2>/dev/null
-    
+
     source "$migration_file"
 }
 
 apply_migration() {
     local migration_id="$1"
     local force="${2:-false}"
-    
+
+    if [[ ( "$migration_id" == "019-config-dir-rename-compat" ||
+            "$migration_id" == "050-rust-native-default" ) &&
+          -d "${XDG_CONFIG_HOME:-$HOME/.config}/alis" ]]; then
+        # Even a forced interactive request cannot resurrect the retired
+        # active namespace. Legacy inputs remain intact for manual recovery.
+        tui_check_skip "Superseded by canonical Alis configuration"
+        return 0
+    fi
+
     load_migration "$migration_id" || return 1
-    
+
     # Check if already applied
     if is_migration_applied "$migration_id" && [[ "$force" != "true" ]]; then
         tui_check_ok "Already applied: $MIGRATION_TITLE"
         return 0
     fi
-    
+
     # Check if target file exists
     local target_file
     target_file=$(resolve_migration_target_file "$MIGRATION_TARGET_FILE")
@@ -267,13 +283,13 @@ apply_migration() {
             return 0
         fi
     fi
-    
+
     # Create backup
     if [[ -n "$target_file" && -f "$target_file" ]]; then
         local backup_dir=$(create_backup "$target_file" "$(basename "$target_file")")
         tui_dim "    Backup: $backup_dir"
     fi
-    
+
     # Apply migration
     if type migration_apply &>/dev/null; then
         if migration_apply; then
@@ -299,13 +315,13 @@ apply_migration() {
 #####################################################################################
 show_migration_card() {
     local migration_id="$1"
-    
+
     load_migration "$migration_id" || return 1
-    
+
     local resolved_target
     resolved_target=$(resolve_migration_target_file "$MIGRATION_TARGET_FILE")
     local target_short=$(basename "$resolved_target" 2>/dev/null || echo "N/A")
-    
+
     echo ""
     if $HAS_GUM; then
         gum style \
@@ -318,7 +334,7 @@ show_migration_card() {
             "$(gum style --foreground "$TUI_MUTED" "Target: $target_short")" \
             "" \
             "$MIGRATION_DESCRIPTION"
-        
+
         if type migration_preview &>/dev/null; then
             echo ""
             gum style --foreground "$TUI_MUTED" "  Changes:"
@@ -336,7 +352,7 @@ show_migration_card() {
         echo "$MIGRATION_DESCRIPTION" | fold -s -w 50 | while IFS= read -r line; do
             echo -e "  ${STY_FAINT}│${STY_RST} $line"
         done
-        
+
         if type migration_preview &>/dev/null; then
             echo -e "  ${STY_FAINT}│${STY_RST}"
             echo -e "  ${STY_FAINT}│${STY_RST} ${STY_BOLD}Changes:${STY_RST}"
@@ -350,21 +366,21 @@ show_migration_card() {
 
 run_migrations_interactive() {
     local pending=($(get_pending_migrations))
-    
+
     if [[ ${#pending[@]} -eq 0 ]]; then
         tui_success "No pending migrations"
         return 0
     fi
-    
+
     tui_title "Configuration Migrations"
-    
+
     tui_info "${#pending[@]} migration(s) available"
     tui_subtitle "These update your config files to support new features."
     tui_subtitle "Original files are backed up automatically."
-    
+
     for migration_id in "${pending[@]}"; do
         show_migration_card "$migration_id"
-        
+
         echo ""
         local choice
         if $HAS_GUM; then
@@ -390,7 +406,7 @@ run_migrations_interactive() {
                 *) choice="Quit" ;;
             esac
         fi
-        
+
         case "$choice" in
             "Yes, apply")
                 apply_migration "$migration_id"
@@ -426,7 +442,7 @@ run_migrations_interactive() {
                 ;;
         esac
     done
-    
+
     echo ""
     tui_success "All migrations processed"
 }
@@ -447,17 +463,17 @@ run_migrations_auto() {
 #####################################################################################
 show_migrations_status() {
     tui_title "Migration Status"
-    
+
     local applied=0
     local skipped=0
     local pending=0
     local auto_applied=0
-    
+
     for migration_id in $(list_available_migrations); do
         local status=$(get_migration_real_status "$migration_id")
         load_migration "$migration_id" 2>/dev/null
         local title="${MIGRATION_TITLE:-$migration_id}"
-        
+
         case "$status" in
             applied)
                 tui_check_ok "$title"
@@ -477,7 +493,7 @@ show_migrations_status() {
                 ;;
         esac
     done
-    
+
     echo ""
     local total=$((applied + auto_applied))
     tui_key_value "Applied:" "$total"

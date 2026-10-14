@@ -1,0 +1,178 @@
+#!/usr/bin/python3
+"""Hadalis-owned Polkit provisioner for one audited Hadalird helper payload.
+
+This executable must be installed by a trusted *Hadalis system package* as a
+root-owned executable. It never runs files from the user package. Every copied
+byte is checked against hashes pinned in the trusted Hadalis release.
+"""
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+
+TRUSTED = {
+    "assets/helpers/alis-battery-charge-limit": (
+        "/usr/libexec/alis-battery-charge-limit",
+        "8244445450870f78507dee75ef62005acb1338e0f3fee635d9dc92fac3e93562", 0o755),
+    "assets/helpers/alis-thinkfan": (
+        "/usr/libexec/alis-thinkfan",
+        "d0d66270170999a86a791fd0da9a6e8a8c431dcd5f39b59a53fb7ab3d48d6f16", 0o755),
+    "assets/polkit/org.alis.battery-charge-limit.policy": (
+        "/usr/share/polkit-1/actions/org.alis.battery-charge-limit.policy",
+        "f201c62a44715372c9d463f1c5cc492d48fcc54834ed6137b5103d22257921c5", 0o644),
+    "assets/polkit/org.alis.thinkfan.policy": (
+        "/usr/share/polkit-1/actions/org.alis.thinkfan.policy",
+        "13bfd4dc99baa4aa5b2b09db6d7e3cd45765967487ebe0b82597e6cfd13ca2ef", 0o644),
+    "assets/tlp/tlp-settings-schema.json": (
+        "/usr/share/alis/tlp-settings-schema.json",
+        "b23cdaa8b3bb4fd3f8bd36e1bb1c8b61fcce0018eaa5175656353af42d309adb", 0o644),
+}
+STATE = "/usr/share/alis/hadalird-managed-helpers.json"
+MAX_BYTES = 128 * 1024
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def read_file(path):
+    # O_NOFOLLOW ensures the final file is not switched to a symlink while
+    # opening it. Open once, validate, and publish those exact buffered bytes.
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        stat = os.fstat(fd)
+        if not __import__("stat").S_ISREG(stat.st_mode) or stat.st_size > MAX_BYTES:
+            raise ValueError("Invalid package payload type/size: " + str(path))
+        with os.fdopen(os.dup(fd), "rb") as handle:
+            payload = handle.read(MAX_BYTES + 1)
+        if len(payload) > MAX_BYTES:
+            raise ValueError("Oversized package payload")
+        return payload
+    finally:
+        os.close(fd)
+
+
+def destination(root, name):
+    return root / name.lstrip("/")
+
+
+def validated_payload(package):
+    manifest = json.loads(read_file(package / "manifest.json"))
+    if not isinstance(manifest, dict) or manifest.get("id") != "hadalird" or (
+            type(manifest.get("hostApi")) is not int or manifest["hostApi"] != 1):
+        raise ValueError("Invalid Hadalird source manifest")
+    hashes = manifest.get("files")
+    if not isinstance(hashes, dict):
+        raise ValueError("Source package lacks integrity metadata")
+    content = {}
+    for path, (_, expected, _) in TRUSTED.items():
+        data = read_file(package / path)
+        if digest(data) != expected or hashes.get(path) != expected:
+            raise ValueError("Untrusted Hadalird system helper payload: " + path)
+        content[path] = data
+    return content
+
+
+def read_state(root):
+    marker = destination(root, STATE)
+    if not marker.is_file():
+        return None
+    data = json.loads(read_file(marker))
+    if not isinstance(data, dict) or data.get("schema") != 1:
+        raise ValueError("Unsupported system helper ownership record")
+    if data.get("hashes") != {p: spec[1] for p, spec in TRUSTED.items()}:
+        raise ValueError("Different system helper version owns these files")
+    return data
+
+
+def state(root):
+    try:
+        owned = read_state(root) is not None
+        matches = all(destination(root, spec[0]).is_file() and
+                      digest(read_file(destination(root, spec[0]))) == spec[1]
+                      for spec in TRUSTED.values())
+        return {"ok": True, "managed": owned, "installed": owned and matches,
+                "diagnostic": "ready" if owned and matches
+                    else "modified" if owned else "not-installed"}
+    except (OSError, ValueError, TypeError):
+        return {"ok": False, "managed": False, "installed": False,
+                "diagnostic": "invalid-system-helper-state"}
+
+
+def publish(path, data, mode):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, filename = tempfile.mkstemp(prefix=".hadalird-", dir=path.parent)
+    try:
+        os.fchmod(fd, mode)
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(filename, path)
+    finally:
+        try:
+            os.unlink(filename)
+        except FileNotFoundError:
+            pass
+
+
+def install(package, root=Path("/")):
+    if read_state(root) is not None:
+        current = state(root)
+        if not current["installed"]:
+            raise ValueError("Previously managed system helper files were modified")
+    data = validated_payload(package)
+    # Do not silently overwrite separately installed or manually edited
+    # system files. Every existing target must already contain approved bytes.
+    for key, (dst, expected, _) in TRUSTED.items():
+        target = destination(root, dst)
+        if target.is_symlink():
+            raise ValueError("Refusing symlinked system helper destination: " + dst)
+        if target.exists() and digest(read_file(target)) != expected:
+            raise ValueError("Preserving existing different system file: " + dst)
+    for key, (dst, _, mode) in TRUSTED.items():
+        publish(destination(root, dst), data[key], mode)
+    marker = json.dumps({"schema": 1, "hashes":
+                         {p: spec[1] for p, spec in TRUSTED.items()}}).encode() + b"\n"
+    publish(destination(root, STATE), marker, 0o644)
+    return state(root)
+
+
+def remove(root=Path("/")):
+    record = read_state(root)
+    if record is None:
+        return state(root)
+    # Preserve any externally modified files and report a refusal.
+    if not state(root)["installed"]:
+        raise ValueError("Managed system helper files changed; no files removed")
+    for target, _, _ in TRUSTED.values():
+        destination(root, target).unlink()
+    destination(root, STATE).unlink()
+    return state(root)
+
+
+def main():
+    if len(sys.argv) not in (2, 3) or sys.argv[1] not in ("status", "install", "remove"):
+        raise ValueError("Usage: alis-hadalird-system-provision status | install <package> | remove")
+    op = sys.argv[1]
+    if (op == "install") != (len(sys.argv) == 3):
+        raise ValueError("Invalid package argument")
+    if op != "status" and os.geteuid() != 0:
+        raise PermissionError("Authenticated administrator access required")
+    if op == "status":
+        result = state(Path("/"))
+    elif op == "install":
+        result = install(Path(sys.argv[2]), Path("/"))
+    else:
+        result = remove(Path("/"))
+    print(json.dumps(result))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (OSError, ValueError, TypeError, PermissionError, json.JSONDecodeError) as error:
+        print(json.dumps({"ok": False, "error": str(error)}))
+        raise SystemExit(1)

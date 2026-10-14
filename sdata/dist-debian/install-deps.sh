@@ -1,4 +1,4 @@
-# Install dependencies for iNiR on Debian/Ubuntu-based systems
+# Install dependencies for Alis on Debian/Ubuntu-based systems
 # This script is meant to be sourced, not run directly.
 
 # shellcheck shell=bash
@@ -329,41 +329,41 @@ DEBIAN_CORE_PKGS=(
   wlsunset
   dunst
   unzip
-  
+
   # XDG Portals
   xdg-desktop-portal
   xdg-desktop-portal-gtk
   xdg-desktop-portal-gnome
-  
+
   # Polkit
   policykit-1
   policykit-1-gnome
-  
+
   # Network
   network-manager
   gnome-keyring
-  
+
   # File manager
   nautilus
-  
+
   # KDE frameworks (CRITICAL — Quickshell needs these at runtime)
   libkf6syntaxhighlighting6
   qml6-module-org-kde-kirigami
   kdialog
-  
+
   # Terminal
   kitty
-  
+
   # Shell (required for scripts)
   fish
-  
+
   # Thumbnails
   ffmpegthumbnailer
   tumbler
-  
+
   # Translation widget
   translate-shell
-  
+
   # Build essentials (needed for compiling niri/quickshell)
   build-essential
   cmake
@@ -389,17 +389,17 @@ DEBIAN_QT6_PKGS=(
   qt6-5compat-dev
   qt6-multimedia-dev
   qt6-image-formats-plugins
-  
+
   # System libs
   libjemalloc-dev
   libpipewire-0.3-dev
   libxcb1-dev
   libwayland-dev
   libdrm-dev
-  
+
   # KDE integration
   kdialog
-  
+
   # Qt theming
   qt6ct
   kde-config-gtk-style
@@ -468,10 +468,10 @@ DEBIAN_FONT_PKGS=(
   fonts-liberation
   fonts-noto-color-emoji
   fonts-jetbrains-mono
-  
+
   # Launcher
   fuzzel
-  
+
   # Qt theming
   kvantum
 )
@@ -582,29 +582,29 @@ install_github_binary() {
   local repo="$2"
   local asset_pattern="$3"
   local install_path="${4:-/usr/local/bin}"
-  
+
   if command -v "$name" &>/dev/null; then
     log_success "$name already installed"
     return 0
   fi
-  
+
   log_info "Installing $name from GitHub releases..."
-  
+
   local download_url
   download_url=$(curl -s "https://api.github.com/repos/${repo}/releases/latest" | \
     jq -r ".assets[] | select(.name | test(\"${asset_pattern}\")) | .browser_download_url" | head -1)
-  
+
   if [[ -z "$download_url" || "$download_url" == "null" ]]; then
     log_warning "Could not find $name binary for your architecture"
     return 1
   fi
-  
+
   local temp_dir="/tmp/${name}-install-$$"
   mkdir -p "$temp_dir"
-  
+
   local filename=$(basename "$download_url")
   log_info "Downloading: $filename"
-  
+
   if curl -fsSL -o "$temp_dir/$filename" "$download_url"; then
     case "$filename" in
       *.tar.gz|*.tgz)
@@ -635,7 +635,7 @@ install_github_binary() {
     rm -rf "$temp_dir"
     return 1
   fi
-  
+
   rm -rf "$temp_dir"
 }
 
@@ -671,9 +671,9 @@ fi
 # songrec - music recognition (PPA for Ubuntu, Cargo for Debian)
 if ! command -v songrec &>/dev/null; then
   log_info "Installing songrec (music recognition)..."
-  
+
   SONGREC_INSTALLED=false
-  
+
   # Try Ubuntu PPA first (only for Ubuntu)
   if [[ "$IS_UBUNTU" == "true" ]]; then
     log_info "Trying songrec PPA for Ubuntu..."
@@ -685,11 +685,11 @@ if ! command -v songrec &>/dev/null; then
       fi
     fi
   fi
-  
+
   # Fallback: compile with Cargo
   if [[ "$SONGREC_INSTALLED" == "false" ]]; then
     log_info "Compiling songrec from source with Cargo..."
-    
+
     # Install build dependencies
     SONGREC_DEPS=(
       build-essential
@@ -699,7 +699,7 @@ if ! command -v songrec &>/dev/null; then
       pkg-config
     )
     sudo apt install $installflags "${SONGREC_DEPS[@]}" 2>/dev/null || true
-    
+
     # Ensure Rust is available
     if command -v cargo &>/dev/null; then
       if cargo install songrec 2>/dev/null; then
@@ -720,7 +720,7 @@ if ${INSTALL_FONTS:-true}; then
     log_info "Installing darkly theme from GitHub..."
     DARKLY_DEB_URL=$(curl -s "https://api.github.com/repos/Bali10050/darkly/releases/latest" | \
       jq -r '.assets[] | select(.name | test("debian.*amd64.deb$")) | .browser_download_url' | head -1)
-    
+
     if [[ -n "$DARKLY_DEB_URL" && "$DARKLY_DEB_URL" != "null" ]]; then
       TEMP_DEB="/tmp/darkly-$$.deb"
       curl -fsSL -o "$TEMP_DEB" "$DARKLY_DEB_URL"
@@ -737,19 +737,19 @@ if ${INSTALL_FONTS:-true}; then
   if [[ ! -d "$THEME_DIR/adw-gtk3" ]]; then
     log_info "Installing adw-gtk3 theme from GitHub..."
     mkdir -p "$THEME_DIR"
-    
+
     ADW_GTK3_URL=$(curl -s "https://api.github.com/repos/lassekongo83/adw-gtk3/releases/latest" | \
       jq -r '.assets[] | select(.name | test("adw-gtk3.*\\.tar\\.xz$")) | .browser_download_url' | head -1)
-    
+
     if [[ -n "$ADW_GTK3_URL" && "$ADW_GTK3_URL" != "null" ]]; then
       TEMP_DIR="/tmp/adw-gtk3-$$"
       mkdir -p "$TEMP_DIR"
-      
+
       if curl -fsSL -o "$TEMP_DIR/adw-gtk3.tar.xz" "$ADW_GTK3_URL"; then
         tar -xJf "$TEMP_DIR/adw-gtk3.tar.xz" -C "$THEME_DIR"
         log_success "adw-gtk3 theme installed"
       fi
-      
+
       rm -rf "$TEMP_DIR"
     else
       log_warning "Could not find adw-gtk3 release"
@@ -763,7 +763,7 @@ if ${INSTALL_FONTS:-true}; then
     log_info "Installing twemoji-color-font from GitHub..."
     TWEMOJI_DEB_URL=$(curl -s "https://api.github.com/repos/13rac1/twemoji-color-font/releases/latest" | \
       jq -r '.assets[] | select(.name | test("fonts-twemoji-svginot.*_all.deb$")) | .browser_download_url' | head -1)
-    
+
     if [[ -n "$TWEMOJI_DEB_URL" && "$TWEMOJI_DEB_URL" != "null" ]]; then
       TEMP_DEB="/tmp/twemoji-$$.deb"
       if curl -fsSL -o "$TEMP_DEB" "$TWEMOJI_DEB_URL"; then
@@ -782,7 +782,7 @@ if ${INSTALL_SCREENCAPTURE:-true}; then
   if ! command -v swappy &>/dev/null; then
     log_info "Installing swappy from source..."
     sudo apt install $installflags libgtk-3-dev libcairo2-dev libpango1.0-dev scdoc 2>/dev/null || true
-    
+
     SWAPPY_BUILD_DIR="/tmp/swappy-build-$$"
     if git clone https://github.com/jtheoof/swappy.git "$SWAPPY_BUILD_DIR" 2>/dev/null; then
       cd "$SWAPPY_BUILD_DIR"
@@ -862,13 +862,13 @@ if ! command -v niri &>/dev/null; then
       fi
     fi
   fi
-  
+
   # If still not installed, compile from source
   if ! command -v niri &>/dev/null; then
     log_info "Niri not in repos — compiling from source..."
-  
+
     log_info "Installing Niri build dependencies..."
-    
+
     NIRI_BUILD_DEPS=(
       gcc
       clang
@@ -884,7 +884,7 @@ if ! command -v niri &>/dev/null; then
       libpipewire-0.3-dev
       libpango1.0-dev
     )
-    
+
     # libdisplay-info-dev: available in trixie/sid and Ubuntu 24.04+, backports for bookworm
     if apt_pkg_available libdisplay-info-dev; then
       NIRI_BUILD_DEPS+=(libdisplay-info-dev)
@@ -897,16 +897,16 @@ if ! command -v niri &>/dev/null; then
         sudo apt install -t bookworm-backports libdisplay-info-dev 2>/dev/null || true
       fi
     fi
-    
+
     sudo apt install $installflags "${NIRI_BUILD_DEPS[@]}" 2>/dev/null || {
       log_warning "Some niri deps failed, trying individually..."
       for pkg in "${NIRI_BUILD_DEPS[@]}"; do
         sudo apt install $installflags "$pkg" 2>/dev/null || true
       done
     }
-    
+
     NIRI_BUILD_DIR="/tmp/niri-build-$$"
-    
+
     log_info "Cloning Niri..."
     if git clone https://github.com/YaLTeR/niri.git "$NIRI_BUILD_DIR"; then
       log_info "Building Niri (this may take a while)..."
@@ -946,7 +946,7 @@ if ! command -v xwayland-satellite &>/dev/null; then
   if command -v xwayland-satellite &>/dev/null; then
     true
   else
-  
+
   # Install xwayland-satellite build dependencies
   sudo apt install $installflags \
     libxcb1-dev \
@@ -954,7 +954,7 @@ if ! command -v xwayland-satellite &>/dev/null; then
     libxcb-render0-dev \
     libxcb-xfixes0-dev \
     libclang-dev 2>/dev/null || true
-  
+
   # xwayland-satellite is not on crates.io, must compile from source
   XWSAT_BUILD_DIR="/tmp/xwayland-satellite-build-$$"
   if git clone https://github.com/Supreeeme/xwayland-satellite.git "$XWSAT_BUILD_DIR"; then
@@ -1003,7 +1003,7 @@ tui_info "Installing hyprpicker..."
 
 if ! command -v hyprpicker &>/dev/null; then
   log_info "hyprpicker not found, compiling from source..."
-  
+
   # Install build dependencies
   HYPRPICKER_DEPS=(
     cmake
@@ -1014,32 +1014,32 @@ if ! command -v hyprpicker &>/dev/null; then
     wayland-protocols
     libxkbcommon-dev
   )
-  
+
   # hyprutils is required - check if available
   if apt_pkg_available libhyprutils-dev; then
     HYPRPICKER_DEPS+=(libhyprutils-dev)
   fi
-  
+
   # hyprwayland-scanner is required for building - need the -dev package for .pc file
   if apt_pkg_available libhyprwayland-scanner-dev; then
     HYPRPICKER_DEPS+=(libhyprwayland-scanner-dev)
   elif apt_pkg_available hyprwayland-scanner; then
     HYPRPICKER_DEPS+=(hyprwayland-scanner)
   fi
-  
+
   sudo apt install $installflags "${HYPRPICKER_DEPS[@]}" 2>/dev/null || true
-  
+
   # Check if hyprutils is installed (either from package or needs compilation)
   HYPRUTILS_INSTALLED=false
   if pkg-config --exists hyprutils 2>/dev/null; then
     HYPRUTILS_INSTALLED=true
   fi
-  
+
   # Compile hyprutils if not available
   if [[ "$HYPRUTILS_INSTALLED" == "false" ]]; then
     log_info "hyprutils not found, compiling from source..."
     HYPRUTILS_BUILD_DIR="/tmp/hyprutils-build-$$"
-    
+
     if git clone --depth 1 https://github.com/hyprwm/hyprutils.git "$HYPRUTILS_BUILD_DIR" 2>/dev/null; then
       cd "$HYPRUTILS_BUILD_DIR"
       if cmake -B build && cmake --build build && sudo cmake --install build; then
@@ -1052,11 +1052,11 @@ if ! command -v hyprpicker &>/dev/null; then
       rm -rf "$HYPRUTILS_BUILD_DIR"
     fi
   fi
-  
+
   # Now compile hyprpicker
   if [[ "$HYPRUTILS_INSTALLED" == "true" ]]; then
     HYPRPICKER_BUILD_DIR="/tmp/hyprpicker-build-$$"
-    
+
     if git clone --depth 1 https://github.com/hyprwm/hyprpicker.git "$HYPRPICKER_BUILD_DIR" 2>/dev/null; then
       cd "$HYPRPICKER_BUILD_DIR"
       if cmake -B build && cmake --build build; then
@@ -1086,9 +1086,9 @@ if ! command -v qs &>/dev/null; then
 
   if ! command -v qs &>/dev/null; then
     log_info "Quickshell not in repos — compiling from source..."
-  
+
   log_info "Installing Quickshell build dependencies..."
-  
+
   # Base dependencies (always required)
   QUICKSHELL_BASE_DEPS=(
     cmake
@@ -1113,12 +1113,12 @@ if ! command -v qs &>/dev/null; then
     libgbm-dev
     libxcb1-dev
   )
-  
+
   # qt6-wayland-private-dev: only in trixie/sid, not bookworm
   if apt_pkg_available qt6-wayland-private-dev; then
     QUICKSHELL_BASE_DEPS+=(qt6-wayland-private-dev)
   fi
-  
+
   # Qt6 ShaderTools - package name varies by distro/version
   # trixie/sid: qt6-shadertools-dev
   # bookworm: libqt6shadertools6-dev (may not exist)
@@ -1131,12 +1131,12 @@ if ! command -v qs &>/dev/null; then
       break
     fi
   done
-  
+
   if ! $SHADERTOOLS_INSTALLED; then
     log_warning "Qt6 ShaderTools not found — Quickshell may fail to build"
     log_warning "Consider upgrading to Debian trixie/sid or Ubuntu 24.04+"
   fi
-  
+
   # cli11 - header-only library, package name varies
   for pkg in libcli11-dev cli11-dev; do
     if apt_pkg_available "$pkg"; then
@@ -1144,16 +1144,16 @@ if ! command -v qs &>/dev/null; then
       break
     fi
   done
-  
+
   sudo apt install $installflags "${QUICKSHELL_BASE_DEPS[@]}" 2>/dev/null || {
     log_warning "Some quickshell deps failed, trying individually..."
     for pkg in "${QUICKSHELL_BASE_DEPS[@]}"; do
       sudo apt install $installflags "$pkg" 2>/dev/null || true
     done
   }
-  
+
   QUICKSHELL_BUILD_DIR="/tmp/quickshell-build-$$"
-  
+
   log_info "Cloning Quickshell..."
   if git clone --recursive https://github.com/quickshell-mirror/quickshell.git "$QUICKSHELL_BUILD_DIR"; then
     log_info "Building Quickshell (this may take a while)..."
@@ -1193,7 +1193,7 @@ if ! command -v cava &>/dev/null; then
     autoconf \
     automake \
     libtool 2>/dev/null || true
-  
+
   CAVA_BUILD_DIR="/tmp/cava-build-$$"
   if git clone https://github.com/karlstav/cava.git "$CAVA_BUILD_DIR"; then
     cd "$CAVA_BUILD_DIR"
@@ -1219,26 +1219,26 @@ mkdir -p "$FONT_DIR"
 # JetBrains Mono Nerd Font
 if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
   log_info "Downloading JetBrains Mono Nerd Font..."
-  
+
   NERD_FONTS_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
   TEMP_DIR="/tmp/nerdfonts-$$"
   mkdir -p "$TEMP_DIR"
-  
+
   if curl -fsSL -o "$TEMP_DIR/JetBrainsMono.zip" "$NERD_FONTS_URL"; then
     unzip -o "$TEMP_DIR/JetBrainsMono.zip" -d "$FONT_DIR" >/dev/null 2>&1
     fc-cache -f "$FONT_DIR"
     log_success "JetBrains Mono Nerd Font installed"
   fi
-  
+
   rm -rf "$TEMP_DIR"
 fi
 
 # Material Symbols fonts (CRITICAL - UI icons)
 if ! fc-list | grep -qi "Material Symbols Rounded"; then
   log_info "Downloading Material Symbols Rounded font..."
-  
+
   MATERIAL_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
-  
+
   if curl -fsSL -o "$FONT_DIR/MaterialSymbolsRounded.ttf" "$MATERIAL_URL"; then
     log_success "Material Symbols Rounded font installed"
   else
@@ -1248,9 +1248,9 @@ fi
 
 if ! fc-list | grep -qi "Material Symbols Outlined"; then
   log_info "Downloading Material Symbols Outlined font..."
-  
+
   MATERIAL_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
-  
+
   if curl -fsSL -o "$FONT_DIR/MaterialSymbolsOutlined.ttf" "$MATERIAL_URL"; then
     log_success "Material Symbols Outlined font installed"
   fi
@@ -1270,10 +1270,10 @@ mkdir -p "$ICON_DIR"
 # WhiteSur icon theme
 if [[ ! -d "$ICON_DIR/WhiteSur-dark" ]]; then
   log_info "Installing WhiteSur icon theme..."
-  
+
   TEMP_DIR="/tmp/whitesur-icons-$$"
   mkdir -p "$TEMP_DIR"
-  
+
   if curl -fsSL -o "$TEMP_DIR/whitesur.tar.gz" \
     "https://github.com/vinceliuice/WhiteSur-icon-theme/archive/refs/heads/master.tar.gz"; then
     tar -xzf "$TEMP_DIR/whitesur.tar.gz" -C "$TEMP_DIR"
@@ -1286,17 +1286,17 @@ if [[ ! -d "$ICON_DIR/WhiteSur-dark" ]]; then
     cd - >/dev/null
     log_success "WhiteSur icon theme installed"
   fi
-  
+
   rm -rf "$TEMP_DIR"
 fi
 
 # MacTahoe icon theme (dock icons)
 if [[ ! -d "$ICON_DIR/MacTahoe" ]]; then
   log_info "Installing MacTahoe icon theme..."
-  
+
   TEMP_DIR="/tmp/mactahoe-icons-$$"
   mkdir -p "$TEMP_DIR"
-  
+
   if curl -fsSL -o "$TEMP_DIR/mactahoe.tar.gz" \
     "https://github.com/vinceliuice/MacTahoe-icon-theme/archive/refs/heads/main.tar.gz"; then
     tar -xzf "$TEMP_DIR/mactahoe.tar.gz" -C "$TEMP_DIR"
@@ -1307,7 +1307,7 @@ if [[ ! -d "$ICON_DIR/MacTahoe" ]]; then
     cd - >/dev/null
     log_success "MacTahoe icon theme installed"
   fi
-  
+
   rm -rf "$TEMP_DIR"
 fi
 
@@ -1321,19 +1321,19 @@ CURSOR_DIR="$HOME/.local/share/icons"
 # Bibata Modern Classic cursor
 if [[ ! -d "$CURSOR_DIR/Bibata-Modern-Classic" ]]; then
   log_info "Installing Bibata Modern Classic cursor..."
-  
+
   BIBATA_URL=$(curl -s "https://api.github.com/repos/ful1e5/Bibata_Cursor/releases/latest" | \
     jq -r '.assets[] | select(.name | test("Bibata-Modern-Classic.tar.xz$")) | .browser_download_url' | head -1)
-  
+
   if [[ -n "$BIBATA_URL" && "$BIBATA_URL" != "null" ]]; then
     TEMP_DIR="/tmp/bibata-$$"
     mkdir -p "$TEMP_DIR"
-    
+
     if curl -fsSL -o "$TEMP_DIR/bibata.tar.xz" "$BIBATA_URL"; then
       tar -xJf "$TEMP_DIR/bibata.tar.xz" -C "$CURSOR_DIR"
       log_success "Bibata Modern Classic cursor installed"
     fi
-    
+
     rm -rf "$TEMP_DIR"
   fi
 fi
@@ -1341,19 +1341,19 @@ fi
 # Bibata Modern Ice cursor
 if [[ ! -d "$CURSOR_DIR/Bibata-Modern-Ice" ]]; then
   log_info "Installing Bibata Modern Ice cursor..."
-  
+
   BIBATA_URL=$(curl -s "https://api.github.com/repos/ful1e5/Bibata_Cursor/releases/latest" | \
     jq -r '.assets[] | select(.name | test("Bibata-Modern-Ice.tar.xz$")) | .browser_download_url' | head -1)
-  
+
   if [[ -n "$BIBATA_URL" && "$BIBATA_URL" != "null" ]]; then
     TEMP_DIR="/tmp/bibata-ice-$$"
     mkdir -p "$TEMP_DIR"
-    
+
     if curl -fsSL -o "$TEMP_DIR/bibata.tar.xz" "$BIBATA_URL"; then
       tar -xJf "$TEMP_DIR/bibata.tar.xz" -C "$CURSOR_DIR"
       log_success "Bibata Modern Ice cursor installed"
     fi
-    
+
     rm -rf "$TEMP_DIR"
   fi
 fi
@@ -1361,14 +1361,14 @@ fi
 # Capitaine cursors (download from sainnhe fork with extra variants)
 if [[ ! -d "$CURSOR_DIR/capitaine-cursors-light" ]]; then
   log_info "Installing Capitaine cursors..."
-  
+
   CAPITAINE_URL=$(curl -s "https://api.github.com/repos/sainnhe/capitaine-cursors/releases/latest" | \
     jq -r '.assets[] | select(.name == "Linux.zip") | .browser_download_url' | head -1)
-  
+
   if [[ -n "$CAPITAINE_URL" && "$CAPITAINE_URL" != "null" ]]; then
     TEMP_DIR="/tmp/capitaine-$$"
     mkdir -p "$TEMP_DIR"
-    
+
     if curl -fsSL -o "$TEMP_DIR/capitaine.zip" "$CAPITAINE_URL"; then
       unzip -o "$TEMP_DIR/capitaine.zip" -d "$TEMP_DIR" >/dev/null 2>&1
       # Copy all cursor variants to icons dir
@@ -1381,7 +1381,7 @@ if [[ ! -d "$CURSOR_DIR/capitaine-cursors-light" ]]; then
       done
       log_success "Capitaine cursors installed"
     fi
-    
+
     rm -rf "$TEMP_DIR"
   else
     log_warning "Could not find Capitaine cursors release"

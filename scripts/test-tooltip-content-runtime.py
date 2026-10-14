@@ -86,7 +86,7 @@ ShellRoot {
   qml=(folder/'shell.qml').read_text().replace('property string captureDir:""', 'property string captureDir:'+json.dumps(capture));(folder/'shell.qml').write_text(qml)
  with private_wayland(folder) as env:
   if env is None:raise SystemExit('Private Niri required')
-  cfg=folder/'config/illogical-impulse';cfg.mkdir(parents=True,exist_ok=True)
+  cfg=folder/'config/alis';cfg.mkdir(parents=True,exist_ok=True)
   values=json.loads((ROOT/'defaults/config.json').read_text());values['panelFamily']='abyss';values['performance']['reduceAnimations']=False
   (cfg/'config.json').write_text(json.dumps(values))
   result=run_qs(folder,env,35)

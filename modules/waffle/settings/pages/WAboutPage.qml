@@ -17,7 +17,7 @@ WSettingsPage {
     pageTitle: Translation.tr("About")
     pageIcon: "info"
     pageDescription: Translation.tr("Project information and links")
-    
+
     // Hero card — project identity
     WSettingsCard {
         RowLayout {
@@ -27,7 +27,7 @@ WSettingsPage {
             Layout.topMargin: 8
             Layout.bottomMargin: 4
             spacing: 18
-            
+
             // Shared offline Alis owner avatar. The file is kept in the repo,
             // so About never depends on an external image request.
             Rectangle {
@@ -74,30 +74,30 @@ WSettingsPage {
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 4
-                
+
                 WText {
                     text: "Alis"
                     font.pixelSize: Looks.font.pixelSize.xlarger * 1.4
                     font.weight: Looks.font.weight.stronger
                 }
-                
+
                 WText {
                     text: Translation.tr("Quickshell desktop shell for Niri")
                     font.pixelSize: Looks.font.pixelSize.normal
                     color: Looks.colors.subfg
                 }
-                
+
                 RowLayout {
                     spacing: 8
                     Layout.topMargin: 4
-                    
+
                     // Version badge
                     Rectangle {
                         implicitWidth: versionLabel.implicitWidth + 16
                         implicitHeight: 24
                         radius: Looks.radius.small
                         color: Looks.colors.accent
-                        
+
                         WText {
                             id: versionLabel
                             anchors.centerIn: parent
@@ -107,14 +107,14 @@ WSettingsPage {
                             color: Looks.colors.accentFg
                         }
                     }
-                    
+
                     // Compositor badge
                     Rectangle {
                         implicitWidth: compLabel.implicitWidth + 16
                         implicitHeight: 24
                         radius: Looks.radius.small
                         color: Looks.colors.bg2
-                        
+
                         WText {
                             id: compLabel
                             anchors.centerIn: parent
@@ -123,14 +123,14 @@ WSettingsPage {
                             color: Looks.colors.subfg
                         }
                     }
-                    
+
                     // Framework badge
                     Rectangle {
                         implicitWidth: fwLabel.implicitWidth + 16
                         implicitHeight: 24
                         radius: Looks.radius.small
                         color: Looks.colors.bg2
-                        
+
                         WText {
                             id: fwLabel
                             anchors.centerIn: parent
@@ -148,7 +148,7 @@ WSettingsPage {
     WSettingsCard {
         title: Translation.tr("Links")
         icon: "open"
-        
+
         WSettingsButton {
             label: Translation.tr("GitHub Repository")
             description: "github.com/llocphann/Alis"
@@ -164,7 +164,7 @@ WSettingsPage {
             buttonText: Translation.tr("Open")
             onButtonClicked: Qt.openUrlExternally("https://github.com/llocphann/Alis/tree/dev/docs")
         }
-        
+
         WSettingsButton {
             label: Translation.tr("Quickshell Documentation")
             description: "quickshell.outfoxxed.me"
@@ -173,7 +173,7 @@ WSettingsPage {
             onButtonClicked: Qt.openUrlExternally("https://quickshell.outfoxxed.me")
         }
     }
-    
+
     // Explicit upstream credits: the main brand and links above remain Alis.
     WSettingsCard {
         title: Translation.tr("Based on")
@@ -226,19 +226,19 @@ WSettingsPage {
     WSettingsCard {
         title: Translation.tr("System Info")
         icon: "info"
-        
+
         WSettingsRow {
             label: Translation.tr("Config path")
-            description: FileUtils.trimFileProtocol(`${Directories.config}/illogical-impulse/`)
+            description: FileUtils.trimFileProtocol(`${Directories.shellConfig}/`)
             icon: "folder"
         }
-        
+
         WSettingsRow {
             label: Translation.tr("Shell path")
-            description: FileUtils.trimFileProtocol(`${Directories.config}/quickshell/inir/`)
+            description: FileUtils.trimFileProtocol(`${Directories.config}/quickshell/alis/`)
             icon: "folder"
         }
-        
+
         WSettingsRow {
             label: Translation.tr("Panel family")
             description: Config.options?.panelFamily === "waffle" ? "Waffle (Windows 11)" : "ii (Material)"

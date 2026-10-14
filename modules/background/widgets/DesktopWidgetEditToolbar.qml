@@ -74,7 +74,7 @@ Item {
             id: editBarRow
             anchors.centerIn: parent
             spacing: 4
-        
+
             // Grid snap toggle
             RippleButton {
                 id: gridSnapBtn
@@ -99,7 +99,7 @@ Item {
                 }
                 StyledToolTip { text: Translation.tr("Snap to grid") }
             }
-        
+
             // Grid size cycle
             RippleButton {
                 id: gridSizeBtn
@@ -139,14 +139,14 @@ Item {
                 }
                 StyledToolTip { text: Translation.tr("Grid size: %1px — click to cycle").arg(gridSizeBtn._gridSize) }
             }
-        
+
             // Separator
             Rectangle {
                 width: 1; height: 24
                 anchors.verticalCenter: parent.verticalCenter
                 color: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
             }
-        
+
             MaterialSymbol {
                 anchors.verticalCenter: parent.verticalCenter
                 rotation: editControlsBar.vertical ? -90 : 0
@@ -154,7 +154,7 @@ Item {
                 iconSize: 16
                 color: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.62)
             }
-        
+
             StyledText {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: !editControlsBar.vertical && (editControlsBar.hosted ? editControlsBar.width >= 760 : safeBounds.safeWidth >= 900)
@@ -163,7 +163,7 @@ Item {
                 font.weight: Font.Medium
                 color: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.72)
             }
-        
+
             RippleButton {
                 width: 26; height: 36
                 enabled: widgetToggleRail.contentX > 1
@@ -183,7 +183,7 @@ Item {
                 }
                 StyledToolTip { text: Translation.tr("Previous widgets") }
             }
-        
+
             Flickable {
                 id: widgetToggleRail
                 width: Math.max(72, Math.min(420,
@@ -198,12 +198,12 @@ Item {
                 interactive: contentWidth > width
                 boundsBehavior: Flickable.StopAtBounds
                 flickableDirection: Flickable.HorizontalFlick
-        
+
                 function scrollBy(delta: real): void {
                     const maxX = Math.max(0, contentWidth - width)
                     contentX = Math.max(0, Math.min(maxX, contentX + delta))
                 }
-        
+
                 WheelHandler {
                     acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                     onWheel: event => {
@@ -216,11 +216,11 @@ Item {
                         event.accepted = true
                     }
                 }
-        
+
                 Row {
                     id: widgetToggleRow
                     spacing: 2
-        
+
                     Repeater {
                 model: [
                     { key: "weather", icon: "cloud", label: "Weather", defaultOn: false },
@@ -266,7 +266,7 @@ Item {
                     StyledToolTip { text: quickWidgetButton.modelData.label }
                 }
             }
-        
+
             // Custom widget toggles
             Repeater {
                 model: CustomWidgets.ready ? CustomWidgets.widgets : []
@@ -300,7 +300,7 @@ Item {
             }
                 }
             }
-        
+
             RippleButton {
                 width: 26; height: 36
                 enabled: widgetToggleRail.contentX
@@ -321,14 +321,14 @@ Item {
                 }
                 StyledToolTip { text: Translation.tr("More widgets") }
             }
-        
+
             // Separator
             Rectangle {
                 width: 1; height: 24
                 anchors.verticalCenter: parent.verticalCenter
                 color: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
             }
-        
+
             // Toggle the richer widget manager. Keep a visible
             // label here: this is the primary navigation path,
             // not an ambiguous add button.
@@ -369,7 +369,7 @@ Item {
                 }
                 StyledToolTip { text: Translation.tr("Search, filter, lock and configure widgets") }
             }
-        
+
             // Open full settings
             RippleButton {
                 width: 36; height: 36
@@ -382,7 +382,7 @@ Item {
                         GlobalStates.settingsOverlayRequestedPage = 14
                         GlobalStates.settingsOverlayOpen = true
                     } else {
-                        Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=14", Quickshell.shellPath("scripts/inir"), "settings-window"])
+                        Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=14", Quickshell.shellPath("scripts/alis"), "settings-window"])
                     }
                 }
                 contentItem: MaterialSymbol {
@@ -394,14 +394,14 @@ Item {
                 }
                 StyledToolTip { text: Translation.tr("Widget settings") }
             }
-        
+
             // Separator
             Rectangle {
                 width: 1; height: 24
                 anchors.verticalCenter: parent.verticalCenter
                 color: CF.ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, 0.12)
             }
-        
+
             // Exit edit mode
             RippleButton {
                 width: 36; height: 36

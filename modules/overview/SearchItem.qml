@@ -34,7 +34,7 @@ RippleButton {
     signal applicationDragChanged(bool active)
     dragTarget: root.draggableApplication ? desktopEntryDrag : null
     pointerDragThreshold: 10
-    
+
     visible: root.entryShown
     property int horizontalMargin: Appearance.sizes.elevationMargin
     property int buttonHorizontalPadding: Appearance.sizes.elevationMargin
@@ -124,7 +124,7 @@ RippleButton {
             ?.filter(url => !url.includes("…")) // Elided = invalid
         return matches ? matches : [];
     }
-    
+
     PointingHandInteraction {}
 
     background {
@@ -157,9 +157,9 @@ RippleButton {
 
         Drag.dragType: Drag.Automatic
         Drag.supportedActions: Qt.CopyAction
-        Drag.keys: ["application/x-inir-desktop-entry"]
+        Drag.keys: ["application/x-alis-desktop-entry"]
         Drag.mimeData: ({
-            "application/x-inir-desktop-entry": root.desktopEntryId
+            "application/x-alis-desktop-entry": root.desktopEntryId
         })
         Drag.imageSource: Quickshell.iconPath(root.itemIcon, "application-x-executable")
         Drag.imageSourceSize: Qt.size(52, 52)
@@ -228,7 +228,7 @@ RippleButton {
             active: true
             sourceComponent: root.materialSymbol !== "" ? materialSymbolComponent :
                 root.bigText ? bigTextComponent :
-                root.itemIcon !== "" ? iconImageComponent : 
+                root.itemIcon !== "" ? iconImageComponent :
                 null
         }
 

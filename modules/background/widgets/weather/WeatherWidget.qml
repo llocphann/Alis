@@ -244,10 +244,10 @@ AbstractBackgroundWidget {
     }
 
     MaterialShape {
-        visible: root.weatherStyle === "pill" && (Appearance.inirEverywhere || Appearance.angelEverywhere)
+        visible: root.weatherStyle === "pill" && (Appearance.alisEverywhere || Appearance.angelEverywhere)
         anchors.centerIn: parent
         shape: root.pillShapeEnum
-        color: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.angel.colCardBorder
+        color: Appearance.alisEverywhere ? Appearance.alis.colBorder : Appearance.angel.colCardBorder
         implicitSize: root.shapeSize + 2
     }
 

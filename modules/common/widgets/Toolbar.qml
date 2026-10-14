@@ -20,7 +20,7 @@ Item {
     implicitWidth: background.implicitWidth
     implicitHeight: background.implicitHeight
     property alias radius: background.radius
-    
+
     // Screen position for aurora blur alignment (set by parent if needed)
     property real screenX: 0
     property real screenY: 0
@@ -39,7 +39,7 @@ Item {
         anchors.fill: parent
         visible: !root.transparent
         fallbackColor: Appearance.colors.colSurfaceContainer
-        inirColor: Appearance.inir.colLayer2
+        alisColor: Appearance.alis.colLayer2
         auroraTransparency: Appearance.aurora.overlayTransparentize
         screenX: root.screenX
         screenY: root.screenY

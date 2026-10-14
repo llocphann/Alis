@@ -10,10 +10,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
-    source = (ROOT / "scripts/inir").read_text()
+    source = (ROOT / "scripts/alis").read_text()
     # Load just the production functions; do not run the launcher's CLI.
     functions = []
-    for name in ("inir_cleanup_owns_pid", "cleanup_service_processes"):
+    for name in ("alis_cleanup_owns_pid", "cleanup_service_processes"):
         match = re.search(r"^" + name + r"\(\) \{\n.*?^\}", source, re.M | re.S)
         assert match, name
         functions.append(match.group())
@@ -40,7 +40,7 @@ cleanup_service_processes
 '''
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
-        group = "/user.slice/user-1000.slice/user@1000.service/app.slice/inir.service"
+        group = "/user.slice/user-1000.slice/user@1000.service/app.slice/alis.service"
         for pid, cg in {101:group, 102:group, 103:group, 104:group,
                         201:"/user.slice/unrelated.service", 202:"/user.slice/apps.scope",
                         203:"/user.slice/worker.service", 301:group+"-other",

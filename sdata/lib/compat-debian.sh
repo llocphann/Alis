@@ -5,7 +5,7 @@
 
 echo -e "\033[0;34m[compat]: Applying compatibility fixes for Debian/Ubuntu...\033[0m"
 
-TARGET_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
+TARGET_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/alis"
 
 if [[ ! -d "$TARGET_DIR" ]]; then
   echo "Target directory not found: $TARGET_DIR"
@@ -37,7 +37,7 @@ import qs.modules.common
 Item {
     id: root
     required property var target
-    
+
     // Properties matching RectangularShadow API
     property real radius: target.radius
     property real blur: 0.9 * Appearance.sizes.elevationMargin
@@ -45,11 +45,11 @@ Item {
     property real spread: 1
     property color color: Appearance.colors.colShadow
     property bool cached: true
-    
+
     visible: Appearance.effectsEnabled
     anchors.fill: target
     z: -1 // Behind target
-    
+
     // Shadow source (rectangle matching target)
     Rectangle {
         id: sourceRect

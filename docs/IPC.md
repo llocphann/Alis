@@ -1026,7 +1026,7 @@ bind "Super+W" { spawn "inir" "background" "toggleEditMode"; }
 
 ### customWidgets
 
-Custom widget management. Create, list, reload, and remove user-installed widgets from `~/.config/inir/widgets/`.
+Custom widget management. Create, list, reload, and remove user-installed widgets from `~/.config/alis/widgets/`.
 
 | Function | Description |
 |----------|-------------|
@@ -1062,8 +1062,8 @@ Screen recording floating pill OSD. Shows elapsed time and stop button during ac
 ### autostart
 
 Niri login autostart manager. Reads and writes the managed section of
-`~/.config/niri/config.d/50-startup.kdl` (delimited by `// >>> inir-managed-autostart >>>` /
-`// <<< inir-managed-autostart <<<`). Base iNiR lines and any hand-written
+`~/.config/niri/config.d/50-startup.kdl` (delimited by `// >>> alis-managed-autostart >>>` /
+`// <<< alis-managed-autostart <<<`). Base Alis lines and any hand-written
 `spawn-at-startup` lines outside the markers are preserved verbatim; toggling an
 entry comments the line out instead of deleting it. Safe no-op on non-Niri
 compositors (the page shows a guard instead).

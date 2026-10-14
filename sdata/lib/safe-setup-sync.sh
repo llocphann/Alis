@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Install one trusted, syntax-checked setup script without ever exposing a
-# half-written copy at ~/.config/quickshell/inir/setup.
+# half-written copy at ~/.config/quickshell/alis/setup.
 set -euo pipefail
 
 if [[ $# != 2 ]]; then

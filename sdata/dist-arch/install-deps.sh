@@ -1,4 +1,4 @@
-# Install dependencies for iNiR on Arch-based systems
+# Install dependencies for Alis on Arch-based systems
 # This script is meant to be sourced, not run directly.
 
 # shellcheck shell=bash
@@ -92,7 +92,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   if [[ ${#_miss_pkgs[@]} -gt 0 ]]; then
     case $SKIP_SYSUPDATE in
       true) sleep 0;;
-      *) 
+      *)
         if $ask; then
           v pkg_sudo pacman -Syu
         else
@@ -125,7 +125,7 @@ fi
 #####################################################################################
 case $SKIP_SYSUPDATE in
   true) sleep 0;;
-  *) 
+  *)
     if $ask; then
       v pkg_sudo pacman -Syu
     else
@@ -159,23 +159,23 @@ tui_info "Installing packages from PKGBUILDs..."
 install_pkgbuild_deps() {
   local pkgbuild_dir="$1"
   local pkgbuild_file="${pkgbuild_dir}/PKGBUILD"
-  
+
   if [[ ! -f "$pkgbuild_file" ]]; then
     log_warning "PKGBUILD not found: $pkgbuild_file"
     return 1
   fi
-  
+
   log_info "Reading: $pkgbuild_file"
-  
+
   # Source PKGBUILD to get depends array
   local depends=()
   source "$pkgbuild_file"
-  
+
   if [[ ${#depends[@]} -eq 0 ]]; then
     log_warning "No dependencies in $(basename $pkgbuild_file)"
     return 0
   fi
-  
+
   local missing_deps=()
   mapfile -t missing_deps < <(pacman -T "${depends[@]}" 2>/dev/null || true)
 
@@ -185,10 +185,10 @@ install_pkgbuild_deps() {
   fi
 
   log_info "Installing missing: ${missing_deps[*]}"
-  
+
   local installflags="--needed"
   $ask || installflags="$installflags --noconfirm"
-  
+
   # Install via pacman first (for official repos)
   pkg_sudo pacman -S $installflags "${missing_deps[@]}" 2>/dev/null || {
     # Some packages may be AUR-only, try with AUR helper
@@ -196,18 +196,18 @@ install_pkgbuild_deps() {
   }
 }
 
-# Install dependency groups. inir-deps is the aggregate tracker built only after
+# Install dependency groups. alis-deps is the aggregate tracker built only after
 # dependency resolution; running it here would defeat --no-* group choices.
-for pkgdir in ./sdata/dist-arch/inir-*/; do
+for pkgdir in ./sdata/dist-arch/alis-*/; do
   pkgname=$(basename "$pkgdir")
   case "$pkgname" in
-    inir-deps) continue ;;
-    inir-audio) $INSTALL_AUDIO || continue ;;
-    inir-toolkit) $INSTALL_TOOLKIT || continue ;;
-    inir-screencapture) $INSTALL_SCREENCAPTURE || continue ;;
-    inir-fonts) $INSTALL_FONTS || continue ;;
+    alis-deps) continue ;;
+    alis-audio) $INSTALL_AUDIO || continue ;;
+    alis-toolkit) $INSTALL_TOOLKIT || continue ;;
+    alis-screencapture) $INSTALL_SCREENCAPTURE || continue ;;
+    alis-fonts) $INSTALL_FONTS || continue ;;
   esac
-  
+
   v install_pkgbuild_deps "$pkgdir"
 done
 
@@ -264,20 +264,20 @@ _qs_shell_found=false
 for _qs_pkg in "${_qs_shell_conflicts[@]}"; do
   if pacman -Qi "$_qs_pkg" &>/dev/null 2>&1; then
     _qs_shell_found=true
-    log_warning "$_qs_pkg is installed and conflicts with iNiR"
+    log_warning "$_qs_pkg is installed and conflicts with Alis"
 
     # Stop related services before removal
     systemctl --user stop "${_qs_pkg}.service" 2>/dev/null || true
     systemctl --user disable "${_qs_pkg}.service" 2>/dev/null || true
 
     if $ask; then
-      if tui_confirm "Remove $_qs_pkg? (required for iNiR)"; then
+      if tui_confirm "Remove $_qs_pkg? (required for Alis)"; then
         log_info "Removing $_qs_pkg..."
         v pkg_sudo pacman -Rdd --noconfirm "$_qs_pkg" 2>/dev/null \
           || v pkg_sudo pacman -R --noconfirm "$_qs_pkg" \
           || log_warning "Could not remove $_qs_pkg — install may fail"
       else
-        log_warning "Keeping $_qs_pkg — iNiR may not work correctly"
+        log_warning "Keeping $_qs_pkg — Alis may not work correctly"
       fi
     else
       log_info "Non-interactive: removing $_qs_pkg"
@@ -312,7 +312,7 @@ OFFICIAL_PACKAGES=(
   syntax-highlighting
   kirigami
   kdialog
-  
+
   # Already in PKGBUILDs but ensure they're installed
   niri
   cliphist
@@ -320,16 +320,16 @@ OFFICIAL_PACKAGES=(
   starship
   eza
   xwayland-satellite
-  
+
   # Emoji font (CRITICAL — overview search, notifications, etc.)
   noto-fonts-emoji
-  
+
   # File manager
   nautilus
-  
+
   # Polkit agent (needed for auth dialogs — gnome agent works universally)
   polkit-gnome
-  
+
   # Icon themes - fallbacks from official repos (always available)
   hicolor-icon-theme
   adwaita-icon-theme
@@ -381,7 +381,7 @@ AUR_PACKAGES=(
 
   # System monitor (default task manager)
   mission-center
-  
+
   # Note: Python deps are handled via uv + requirements.txt, not AUR packages
 )
 
@@ -416,14 +416,14 @@ declare -A FONT_FALLBACK_URLS=(
 install_font_fallback() {
   local font_name="$1"
   local url="${FONT_FALLBACK_URLS[$font_name]}"
-  
+
   if [[ -z "$url" ]]; then
     return 1
   fi
-  
+
   local font_dir="$HOME/.local/share/fonts"
   mkdir -p "$font_dir"
-  
+
   log_info "Downloading $font_name from fallback URL..."
   if curl -fsSL -o "$font_dir/${font_name}.ttf" "$url" 2>/dev/null; then
     fc-cache -f "$font_dir" 2>/dev/null
@@ -447,7 +447,7 @@ if $INSTALL_FONTS; then
 fi
 
 if $INSTALL_AUDIO; then
-  : # cava moved to inir-audio PKGBUILD
+  : # cava moved to alis-audio PKGBUILD
 fi
 
 if $INSTALL_TOOLKIT; then
@@ -481,7 +481,7 @@ fi
 # Install fonts separately with proper error handling
 if $INSTALL_FONTS; then
   tui_info "Installing critical fonts..."
-  
+
   # Critical fonts - must succeed
   for font in "${CRITICAL_FONTS[@]}"; do
     if ! $AUR_HELPER -S $installflags "$font" 2>/dev/null; then
@@ -489,9 +489,9 @@ if $INSTALL_FONTS; then
       log_warning "Try: $AUR_HELPER -S $font"
     fi
   done
-  
+
   tui_info "Installing optional fonts..."
-  
+
   # Optional fonts - try AUR first, then fallback
   for font in "${OPTIONAL_FONTS[@]}"; do
     if ! $AUR_HELPER -S $installflags "$font" 2>/dev/null; then
@@ -511,21 +511,21 @@ v install-python-packages
 
 #####################################################################################
 # Register dependencies with pacman via meta-package
-# This prevents "clean orphans" from removing iNiR's installed dependencies.
+# This prevents "clean orphans" from removing Alis's installed dependencies.
 # The staged meta-package contains no files — only dependency declarations for
 # packages that are actually present after this install run.
 #####################################################################################
 tui_info "Registering dependencies with pacman..."
 
-_meta_dir="./sdata/dist-arch/inir-deps"
+_meta_dir="./sdata/dist-arch/alis-deps"
 if [[ -f "$_meta_dir/PKGBUILD" ]]; then
-  _inir_ver="$(cat ./VERSION 2>/dev/null || echo '2.29.3')"
+  _alis_ver="$(cat ./VERSION 2>/dev/null || echo '2.29.3')"
   _meta_build_dir="$(mktemp -d)"
 
   # Build from a staged recipe so setup never rewrites a tracked PKGBUILD just
   # to inject the current VERSION into the dependency-tracker package.
   if cp -- "$_meta_dir/PKGBUILD" "$_meta_build_dir/PKGBUILD"; then
-    sed -i "s/^pkgver=.*/pkgver=${_inir_ver}/" "$_meta_build_dir/PKGBUILD"
+    sed -i "s/^pkgver=.*/pkgver=${_alis_ver}/" "$_meta_build_dir/PKGBUILD"
 
     (
       cd "$_meta_build_dir"
@@ -566,7 +566,7 @@ PY
           exit 0
         fi
 
-        log_info "Tracking ${#_meta_installed_deps[@]} installed dependencies with inir-deps"
+        log_info "Tracking ${#_meta_installed_deps[@]} installed dependencies with alis-deps"
       else
         log_warning "Could not read staged meta-package recipe — orphan protection unavailable"
         exit 0
@@ -582,7 +582,7 @@ PY
           # Reinstall even at the same pkgver/pkgrel so changing --no-* choices
           # refreshes the dependency metadata recorded by pacman.
           if pkg_sudo pacman -U --noconfirm "${local_pkg[0]}" 2>/dev/null; then
-            log_success "Meta-package inir-deps registered — orphan cleaner will skip iNiR deps"
+            log_success "Meta-package alis-deps registered — orphan cleaner will skip Alis deps"
           else
             log_warning "Could not register meta-package — orphan protection unavailable"
           fi
@@ -599,7 +599,7 @@ PY
 else
   log_warning "Meta-package PKGBUILD not found at $_meta_dir"
 fi
-unset _meta_dir _meta_build_dir _inir_ver
+unset _meta_dir _meta_build_dir _alis_ver
 
 #####################################################################################
 # Post-install: Check for Qt/Quickshell ABI mismatch

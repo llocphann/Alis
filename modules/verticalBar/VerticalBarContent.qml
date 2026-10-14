@@ -56,7 +56,7 @@ Item { // Bar content region
                 monochromeIcon: true,
                 text: Translation.tr("Settings"),
                 action: () => {
-                    Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
+                    Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"])
                 },
             },
         ]
@@ -66,7 +66,7 @@ Item { // Bar content region
 
     // Bar Settings owns one canonical module-visibility object for every edge.
     // Keep vertical presentation compact, but never fork visibility state by
-    // orientation again (the old iNiR vertical bar only listened to taskbar).
+    // orientation again (the old Alis vertical bar only listened to taskbar).
     function moduleEnabled(name: string, fallback: bool): bool {
         const value = Config.options?.bar?.modules?.[name]
         return value === undefined || value === null ? fallback : Boolean(value)

@@ -22,32 +22,32 @@ def parse_keybinds_from_block(binds_content: str) -> list[dict]:
     keybinds = []
     lines = binds_content.split('\n')
     i = 0
-    
+
     while i < len(lines):
         line = lines[i].strip()
-        
+
         # Skip empty lines and comments
         if not line or line.startswith('//'):
             i += 1
             continue
-        
+
         # Match keybind start: KEY_COMBO [options] { [action] }
         # Single line: Mod+Tab repeat=false { toggle-overview; }
         # Multi line: Alt+Tab { \n spawn ...; \n }
-        
+
         match = re.match(r'^([A-Za-z0-9+_]+)\s*(.*?)(\{.*)$', line)
         if not match:
             i += 1
             continue
-        
+
         key_combo = match.group(1)
         options = match.group(2).strip()
         rest = match.group(3)
-        
+
         # Extract hotkey-overlay-title if present
         title_match = re.search(r'hotkey-overlay-title="([^"]+)"', options)
         overlay_title = title_match.group(1) if title_match else None
-        
+
         # Check if action is on same line or spans multiple lines
         if re.search(r'\{[^}]+\}', rest):
             # Single line - action is complete
@@ -65,12 +65,12 @@ def parse_keybinds_from_block(binds_content: str) -> list[dict]:
                     action_lines.append(inner_line.rstrip(';'))
                 i += 1
             action = ' '.join(action_lines)
-        
+
         # Parse key combo
         parts = key_combo.split('+')
         mods = []
         key = parts[-1]
-        
+
         for part in parts[:-1]:
             if part in ('Mod', 'Super'):
                 mods.append('Super')
@@ -78,7 +78,7 @@ def parse_keybinds_from_block(binds_content: str) -> list[dict]:
                 mods.append(part)
             else:
                 mods.append(part)
-        
+
         # Handle XF86 keys
         if key.startswith('XF86Audio'):
             key = key.replace('XF86Audio', '').replace('RaiseVolume', 'Vol+').replace('LowerVolume', 'Vol-')
@@ -86,19 +86,19 @@ def parse_keybinds_from_block(binds_content: str) -> list[dict]:
             key = key.replace('XF86MonBrightness', 'Brightness').replace('Up', '+').replace('Down', '-')
         elif key.startswith('XF86'):
             key = key.replace('XF86', '')
-        
+
         # Generate comment - prefer overlay title
         comment = overlay_title if overlay_title else generate_comment(action)
-        
+
         keybinds.append({
             'mods': mods,
             'key': key,
             'action': action,
             'comment': comment
         })
-        
+
         i += 1
-    
+
     return keybinds
 
 
@@ -110,7 +110,7 @@ ACTION_MAP = {
     'toggle-keyboard-shortcuts-inhibit': 'Toggle shortcuts inhibit',
     'power-off-monitors': 'Power off monitors',
     'show-hotkey-overlay': 'Niri hotkey overlay',
-    
+
     # Window management
     'close-window': 'Close window',
     'maximize-column': 'Maximize column',
@@ -125,13 +125,13 @@ ACTION_MAP = {
     'consume-or-expel-window-right': 'Consume/expel right',
     'expel-window-from-column': 'Expel from column',
     'consume-window-into-column': 'Consume into column',
-    
+
     # Column layout
     'switch-preset-column-width': 'Cycle column width',
     'switch-preset-window-height': 'Cycle window height',
     'reset-window-height': 'Reset window height',
     'toggle-column-tabbed-display': 'Toggle tabbed display',
-    
+
     # Focus
     'focus-column-left': 'Focus left',
     'focus-column-right': 'Focus right',
@@ -143,7 +143,7 @@ ACTION_MAP = {
     'focus-monitor-right': 'Focus monitor right',
     'focus-monitor-up': 'Focus monitor up',
     'focus-monitor-down': 'Focus monitor down',
-    
+
     # Move
     'move-column-left': 'Move left',
     'move-column-right': 'Move right',
@@ -155,7 +155,7 @@ ACTION_MAP = {
     'move-column-to-monitor-right': 'Move to monitor right',
     'move-column-to-monitor-up': 'Move to monitor up',
     'move-column-to-monitor-down': 'Move to monitor down',
-    
+
     # Workspaces
     'focus-workspace-up': 'Previous workspace',
     'focus-workspace-down': 'Next workspace',
@@ -163,7 +163,7 @@ ACTION_MAP = {
     'move-column-to-workspace-down': 'Move to next workspace',
     'move-workspace-up': 'Move workspace up',
     'move-workspace-down': 'Move workspace down',
-    
+
     # Screenshots
     'screenshot': 'Screenshot',
     'screenshot-screen': 'Screenshot screen',
@@ -174,8 +174,8 @@ ACTION_MAP = {
 IPC_MAP = {
     ('altSwitcher', 'next'): 'Next window',
     ('altSwitcher', 'previous'): 'Previous window',
-    ('overlay', 'toggle'): 'iNiR Overlay',
-    ('overview', 'toggle'): 'iNiR Overview',
+    ('overlay', 'toggle'): 'Alis Overlay',
+    ('overview', 'toggle'): 'Alis Overview',
     ('clipboard', 'toggle'): 'Clipboard',
     ('lock', 'activate'): 'Lock screen',
     ('region', 'screenshot'): 'Screenshot region',
@@ -208,28 +208,28 @@ FILE_MANAGERS = ['dolphin', 'nautilus', 'thunar', 'nemo', 'pcmanfm', 'ranger']
 BROWSERS = ['firefox', 'zen-browser', 'chromium', 'brave', 'vivaldi']
 
 
-def parse_inir_action(action: str) -> tuple[str, str] | None:
-    ipc_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"ipc"\s+"call"\s+"([\w-]+)"\s+"([\w-]+)"', action)
+def parse_alis_action(action: str) -> tuple[str, str] | None:
+    ipc_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"ipc"\s+"call"\s+"([\w-]+)"\s+"([\w-]+)"', action)
     if ipc_match:
         return ipc_match.group(1), ipc_match.group(2)
 
-    settings_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"settings"(?:\s|;|$)', action)
+    settings_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"settings"(?:\s|;|$)', action)
     if settings_match:
         return 'settings', 'open'
 
-    terminal_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"terminal"(?:\s|;|$)', action)
+    terminal_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"terminal"(?:\s|;|$)', action)
     if terminal_match:
         return 'launcher', 'terminal'
 
-    close_window_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"close-window"(?:\s|;|$)', action)
+    close_window_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"close-window"(?:\s|;|$)', action)
     if close_window_match:
         return 'launcher', 'close-window'
 
-    browser_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"browser"(?:\s|;|$)', action)
+    browser_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"browser"(?:\s|;|$)', action)
     if browser_match:
         return 'browser', 'open'
 
-    direct_match = re.search(r'spawn\s+"(?:[^"]*/)?inir"\s+"([\w-]+)"\s+"([\w-]+)"', action)
+    direct_match = re.search(r'spawn\s+"(?:[^"]*/)?alis"\s+"([\w-]+)"\s+"([\w-]+)"', action)
     if direct_match:
         return direct_match.group(1), direct_match.group(2)
 
@@ -239,17 +239,17 @@ def parse_inir_action(action: str) -> tuple[str, str] | None:
 def generate_comment(action: str) -> str:
     """Generate a human-readable comment from the action."""
     action = action.strip()
-    
+
     # Direct niri actions
     if action in ACTION_MAP:
         return ACTION_MAP[action]
-    
+
     # Focus/move workspace N
     ws_match = re.match(r'(focus-workspace|move-column-to-workspace)\s+(\d+)', action)
     if ws_match:
         ws_action = 'Focus' if 'focus' in ws_match.group(1) else 'Move to'
         return f'{ws_action} workspace {ws_match.group(2)}'
-    
+
     # Parameterized resize actions: set-column-width "-10%", set-window-height "+10%"
     resize_match = re.match(r'set-(column-width|window-height)\s+"([+-]\d+%?)"', action)
     if resize_match:
@@ -257,48 +257,48 @@ def generate_comment(action: str) -> str:
         val = resize_match.group(2)
         direction = 'Shrink' if val.startswith('-') else 'Grow'
         return f'{direction} {target} {val.lstrip("+-")}'
-    
+
     # Spawn commands
     if action.startswith('spawn'):
-        inir_action = parse_inir_action(action)
-        if inir_action:
-            target, func = inir_action
+        alis_action = parse_alis_action(action)
+        if alis_action:
+            target, func = alis_action
             return IPC_MAP.get((target, func), f'{target} {func}')
 
         ipc_match = re.search(r'ipc.*call.*"(\w+)".*"(\w+)"', action)
         if ipc_match:
             target, func = ipc_match.groups()
             return IPC_MAP.get((target, func), f'{target} {func}')
-        
+
         # Terminal
         if 'launch-terminal.sh' in action:
             return 'Terminal'
         if any(term in action for term in TERMINALS):
             return 'Terminal'
-        
+
         # File manager
         if any(fm in action for fm in FILE_MANAGERS):
             return 'File manager'
-        
+
         # Browser
         if any(br in action for br in BROWSERS):
             return 'Browser'
-        
+
         # Volume (wpctl)
         if 'wpctl' in action:
             if 'set-volume' in action:
                 return 'Volume up' if '+' in action else 'Volume down'
             if 'set-mute' in action:
                 return 'Mute toggle'
-        
+
         # Brightness
         if 'brightnessctl' in action or 'light' in action:
             return 'Brightness up' if '+' in action or 'inc' in action else 'Brightness down'
-        
+
         # Close window script
         if 'close-window' in action:
             return 'Close window'
-        
+
         # Generic spawn - extract app name
         spawn_match = re.search(r'spawn\s+"([^"]+)"', action)
         if spawn_match:
@@ -306,7 +306,7 @@ def generate_comment(action: str) -> str:
             if '/' in app:
                 app = app.split('/')[-1]
             return app
-    
+
     return action[:30] + '...' if len(action) > 30 else action
 
 
@@ -314,19 +314,19 @@ def categorize_keybind(kb: dict) -> str:
     """Determine category for a keybind based on its action/comment."""
     comment = kb['comment'].lower()
     action = kb.get('action', '').lower()
-    
+
     # System
     if any(x in comment for x in ['niri overview', 'quit niri', 'inhibit', 'power off', 'hotkey overlay']):
         return 'System'
-    
-    # iNiR Shell
-    if any(x in comment for x in ['inir ', 'clipboard', 'lock screen', 'wallpaper', 'settings', 'cheatsheet', 'panel style']):
-        return 'iNiR Shell'
-    inir_action = parse_inir_action(action)
-    if inir_action:
-        target, _func = inir_action
+
+    # Alis Shell
+    if any(x in comment for x in ['alis ', 'clipboard', 'lock screen', 'wallpaper', 'settings', 'cheatsheet', 'panel style']):
+        return 'Alis Shell'
+    alis_action = parse_alis_action(action)
+    if alis_action:
+        target, _func = alis_action
         if target in ('overlay', 'overview', 'clipboard', 'lock', 'wallpaperSelector', 'settings', 'cheatsheet', 'panelFamily', 'session'):
-            return 'iNiR Shell'
+            return 'Alis Shell'
         if target == 'altSwitcher':
             return 'Window Switcher'
         if target in ('audio', 'mpris'):
@@ -334,70 +334,70 @@ def categorize_keybind(kb: dict) -> str:
         if target == 'brightness':
             return 'Brightness'
     if re.search(r'ipc.*call.*(overlay|overview|clipboard|lock|wallpaper|settings|cheatsheet|panelfamily)', action):
-        return 'iNiR Shell'
-    
+        return 'Alis Shell'
+
     # Window Switcher
     if 'window' in comment and ('next' in comment or 'previous' in comment):
         return 'Window Switcher'
     if 'altswitcher' in action:
         return 'Window Switcher'
-    
+
     # Screenshots
     if any(x in comment for x in ['screenshot', 'ocr', 'image search']):
         return 'Screenshots'
-    
+
     # Applications
     if any(x in comment for x in ['terminal', 'file manager', 'browser']):
         return 'Applications'
     if any(x in action for x in TERMINALS + FILE_MANAGERS + BROWSERS):
         return 'Applications'
-    
+
     # Window Management
     if any(x in comment for x in ['close', 'maximize', 'fullscreen', 'floating', 'consume', 'expel', 'float/tile']):
         return 'Window Management'
     if 'close-window' in action:
         return 'Window Management'
-    
+
     # Layout (column/window sizing, presets, tabbed)
     if any(x in comment for x in ['cycle column', 'cycle window', 'reset window', 'center column', 'center visible', 'expand to available', 'tabbed']):
         return 'Layout'
     if any(x in action for x in ['switch-preset-column', 'switch-preset-window', 'reset-window-height', 'center-column', 'center-visible', 'expand-column', 'toggle-column-tabbed']):
         return 'Layout'
-    
+
     # Resize (fine-grained column/window sizing)
     if any(x in comment for x in ['shrink column', 'grow column', 'shrink window', 'grow window']):
         return 'Resize'
     if any(x in action for x in ['set-column-width', 'set-window-height']):
         return 'Resize'
-    
+
     # Monitors (must come before Focus/Move to avoid misclassification)
     if 'monitor' in comment:
         return 'Monitors'
     if any(x in action for x in ['focus-monitor', 'move-column-to-monitor', 'move-window-to-monitor', 'move-workspace-to-monitor']):
         return 'Monitors'
-    
+
     # Focus
     if 'focus' in comment and 'workspace' not in comment:
         return 'Focus'
-    
+
     # Move Windows
     if 'move' in comment and 'workspace' not in comment and 'track' not in comment:
         return 'Move Windows'
-    
+
     # Workspaces
     if 'workspace' in comment:
         return 'Workspaces'
-    
+
     # Media
     if any(x in comment for x in ['volume', 'mute', 'play', 'pause', 'track', 'audio', 'microphone']):
         return 'Media'
     if 'mpris' in action or 'audio' in action:
         return 'Media'
-    
+
     # Brightness
     if 'brightness' in comment:
         return 'Brightness'
-    
+
     return 'Other'
 
 
@@ -406,18 +406,18 @@ def find_binds_block(content: str) -> str | None:
     match = re.search(r'\bbinds\s*\{', content)
     if not match:
         return None
-    
+
     start = match.end()
     depth = 1
     i = start
-    
+
     while i < len(content) and depth > 0:
         if content[i] == '{':
             depth += 1
         elif content[i] == '}':
             depth -= 1
         i += 1
-    
+
     return content[start:i-1] if depth == 0 else None
 
 
@@ -436,16 +436,16 @@ def parse_niri_config(config_path: Path) -> dict:
     """Parse the niri config and extract keybinds."""
     if not config_path.exists():
         return {'error': f'Config not found: {config_path}', 'children': []}
-    
+
     content = config_path.read_text()
     content = resolve_includes(content, config_path.parent)
     binds_content = find_binds_block(content)
     if not binds_content:
         return {'error': 'No binds block found', 'children': []}
-    
+
     keybinds = parse_keybinds_from_block(binds_content)
     keybinds_by_category = {}
-    
+
     for kb in keybinds:
         category = categorize_keybind(kb)
         if category not in keybinds_by_category:
@@ -455,14 +455,14 @@ def parse_niri_config(config_path: Path) -> dict:
             'key': kb['key'],
             'comment': kb['comment']
         })
-    
+
     category_order = [
-        'System', 'iNiR Shell', 'Window Switcher', 'Screenshots',
+        'System', 'Alis Shell', 'Window Switcher', 'Screenshots',
         'Applications', 'Window Management', 'Layout', 'Resize',
         'Focus', 'Move Windows', 'Monitors', 'Workspaces',
         'Media', 'Brightness', 'Other'
     ]
-    
+
     children = []
     for cat in category_order:
         if cat in keybinds_by_category and keybinds_by_category[cat]:
@@ -470,7 +470,7 @@ def parse_niri_config(config_path: Path) -> dict:
                 'name': cat,
                 'children': [{'keybinds': keybinds_by_category[cat]}]
             })
-    
+
     return {'children': children, 'configPath': str(config_path)}
 
 
@@ -478,7 +478,7 @@ def main():
     config_path = get_niri_config_path()
     if len(sys.argv) > 1:
         config_path = Path(sys.argv[1])
-    
+
     result = parse_niri_config(config_path)
     print(json.dumps(result))
 

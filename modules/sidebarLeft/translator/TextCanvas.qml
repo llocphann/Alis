@@ -12,13 +12,13 @@ Rectangle {
     property string placeholderText
     property string text: ""
     property var inputTextArea: isInput ? inputLoader.item : undefined
-    readonly property string displayedText: isInput ? inputLoader.item.text : 
+    readonly property string displayedText: isInput ? inputLoader.item.text :
         root.text.length > 0 ? outputLoader.item.text : ""
     default property alias actionButtons: actions.data
     Layout.fillWidth: true
     implicitHeight: Math.max(150, inputColumn.implicitHeight)
     color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer2
         : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
     radius: Appearance.rounding.normal
 
@@ -62,7 +62,7 @@ Rectangle {
             }
         }
 
-        Item { Layout.fillHeight: true } 
+        Item { Layout.fillHeight: true }
 
         RowLayout { // Status row
             Layout.fillWidth: true

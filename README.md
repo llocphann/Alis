@@ -3,13 +3,13 @@
 > This README is the current product and execution contract for completing **Alis 1.0**.
 > It intentionally contains only active requirements, release blockers, architecture constraints and validation gates. Historical implementation notes, one-off commit hashes and stale migration narratives belong in Git history / `CHANGELOG.md`, not here.
 >
-> **Target:** `1.0`  
-> **Primary development branch:** `dev`  
-> **Stable baseline:** `stable`  
+> **Target:** `1.0`
+> **Primary development branch:** `dev`
+> **Stable baseline:** `stable`
 > **Scope refresh:** 2026-09-28
 >
 > **Current `dev` snapshot (2026-09-28):**
-> - The qualified **Rust native workspace is the production backend**. `inir-native`, `inir-inputd`, `inir-mpdd` and `inir-theme` are built/shipped by supported install paths; Python implementations remain an explicit rollback/fail-soft path rather than the default selector.
+> - The qualified **Rust native workspace is the production backend**. `alis-native`, `alis-inputd`, `alis-mpdd` and `alis-theme` are built/shipped by supported install paths; Python implementations remain an explicit rollback/fail-soft path rather than the default selector.
 > - **Material is the only public shell-wide Global Theme**. Legacy persisted theme/style values are migration input only and must normalize to supported Material behavior rather than reactivate retired renderers.
 > - **Abyss and Waffle are the public panel families.** Material/`ii` panel values migrate to Abyss; Material remains the shared color/theme system, not a third panel family. Abyss inherits mature content and backends through one output-local liquid surface. Existing ii source is compatibility/reuse input, not permission to restore a public Material panel mode.
 > - **Waffle remains a supported independent panel family** and must not be removed or treated as legacy during ii cleanup.
@@ -94,7 +94,7 @@ radius      -> PerimeterTokens.frameRadius
 3. Treat `SCREEN-EDGE-GEOMETRY-LOCK` and `BAR-SCREEN-EDGE-CORNER-LOCK` as hard guards.
 4. For ii Popup work, inspect the iRiS frame/field/body-mask path. For Sidebar/Dashboard/Settings inspect `ConnectedSurfaceIrisEdgeSurface`; Dashboard-owned Applications Search shares that Dashboard field, while standalone Search/OSK/Waffle preserve direct square attachment unless explicitly migrated. Avoid editing locked physical perimeter files.
 5. Update `scripts/test-shell-surface-contracts.py` whenever ownership or geometry contracts change intentionally.
-6. Do not claim runtime success until the maintainer has run `inir update` / `inir restart` and visually validated the result.
+6. Do not claim runtime success until the maintainer has run `alis update` / `alis restart` and visually validated the result.
 
 ### 1.2 iRiS integration phase status
 
@@ -116,11 +116,11 @@ Optimization research is centralized under [docs/optimization](docs/optimization
 
 ## 2. v1.0 product direction
 
-Alis remains a Quickshell desktop shell built on the existing iNiR architecture. The v1.0 priority is **UI/UX quality without throwing away working iNiR behavior**.
+Alis remains a Quickshell desktop shell built on the existing Alis architecture. The v1.0 priority is **UI/UX quality without throwing away working Alis behavior**.
 
 Required direction:
 
-- preserve existing iNiR services, state, routing, popup contents and proven interaction behavior;
+- preserve existing Alis services, state, routing, popup contents and proven interaction behavior;
 - use **Caelestia as the visual/composition reference** for connected edge surfaces;
 - make popups appear to grow/morph from their real source surface instead of looking like detached floating cards;
 - keep keyboard focus, Escape close, outside-click close, hover transfer, multi-output ownership and compositor behavior intact;

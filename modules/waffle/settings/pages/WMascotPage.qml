@@ -57,7 +57,7 @@ WSettingsPage {
                         .concat(ordered.map(p => ({
                             displayName: p,
                             value: p,
-                            image: Quickshell.shellPath(`assets/images/mascot/inir-mascot-${p}.${anim.includes(p) ? "gif" : "png"}`)
+                            image: Quickshell.shellPath(`assets/images/mascot/alis-mascot-${p}.${anim.includes(p) ? "gif" : "png"}`)
                         })))
                 } catch (e) {
                     console.warn("[WQuickPage] mascot manifest load failed:", e)
@@ -241,14 +241,14 @@ WSettingsPage {
             label: Translation.tr("Unleash chaos")
             icon: "flash-on"
             enabled: Config.options?.mascot?.chaos?.enable ?? false
-            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "romp"])
+            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "mascot", "romp"])
         }
 
         WSettingsButton {
             label: Translation.tr("Tidy up")
             description: Translation.tr("Every displaced widget returns home")
             icon: "delete"
-            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "tidy"])
+            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "mascot", "tidy"])
         }
 
         WSettingsSwitch {
@@ -309,13 +309,13 @@ WSettingsPage {
             label: Translation.tr("Peek now")
             description: Translation.tr("Try her right now instead of waiting for the interval")
             icon: "wand"
-            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "poke"])
+            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "mascot", "poke"])
         }
 
         WSettingsButton {
             label: Translation.tr("Send her away")
             icon: "eye-off"
-            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "hide"])
+            onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "mascot", "hide"])
         }
 
         WSettingsSwitch {
@@ -522,7 +522,7 @@ WSettingsPage {
                             Qt.openUrlExternally(Directories.shellConfigPath)
                             break
                         case "shortcuts":
-                            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "cheatsheet", "toggle"])
+                            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "cheatsheet", "toggle"])
                             break
                         }
                     }

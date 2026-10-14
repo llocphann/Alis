@@ -1,5 +1,5 @@
 #!/bin/bash
-# Versioning system for iNiR
+# Versioning system for Alis
 # Tracks installed version, compares with remote, manages updates
 # This script is meant to be sourced.
 
@@ -10,7 +10,7 @@
 #####################################################################################
 XDG_CONFIG_HOME_RESOLVED="${XDG_CONFIG_HOME:-$HOME/.config}"
 
-CONFIG_DIR_NEW="${XDG_CONFIG_HOME_RESOLVED}/inir"
+CONFIG_DIR_NEW="${XDG_CONFIG_HOME_RESOLVED}/alis"
 CONFIG_DIR_LEGACY="${XDG_CONFIG_HOME_RESOLVED}/illogical-impulse"
 
 if [[ -L "$CONFIG_DIR_LEGACY" && -d "$CONFIG_DIR_NEW" ]]; then
@@ -23,12 +23,12 @@ else
     CONFIG_DIR="$CONFIG_DIR_NEW"
 fi
 
-RUNTIME_DIR_USER="${XDG_CONFIG_HOME_RESOLVED}/quickshell/inir"
-RUNTIME_DIR_SYSTEM_LOCAL="${INIR_SYSTEM_RUNTIME_DIR_LOCAL:-/usr/local/share/quickshell/inir}"
-RUNTIME_DIR_SYSTEM="${INIR_SYSTEM_RUNTIME_DIR:-/usr/share/quickshell/inir}"
+RUNTIME_DIR_USER="${XDG_CONFIG_HOME_RESOLVED}/quickshell/alis"
+RUNTIME_DIR_SYSTEM_LOCAL="${ALIS_SYSTEM_RUNTIME_DIR_LOCAL:-/usr/local/share/quickshell/alis}"
+RUNTIME_DIR_SYSTEM="${ALIS_SYSTEM_RUNTIME_DIR:-/usr/share/quickshell/alis}"
 LEGACY_RUNTIME_DIR_USER="${XDG_CONFIG_HOME_RESOLVED}/quickshell/ii"
-LEGACY_RUNTIME_DIR_SYSTEM_LOCAL="${INIR_LEGACY_SYSTEM_RUNTIME_DIR_LOCAL:-/usr/local/share/quickshell/ii}"
-LEGACY_RUNTIME_DIR_SYSTEM="${INIR_LEGACY_SYSTEM_RUNTIME_DIR:-/usr/share/quickshell/ii}"
+LEGACY_RUNTIME_DIR_SYSTEM_LOCAL="${ALIS_LEGACY_SYSTEM_RUNTIME_DIR_LOCAL:-/usr/local/share/quickshell/ii}"
+LEGACY_RUNTIME_DIR_SYSTEM="${ALIS_LEGACY_SYSTEM_RUNTIME_DIR:-/usr/share/quickshell/ii}"
 VERSION_FILE_LOCAL="${CONFIG_DIR}/version.json"
 VERSION_FILE_RUNTIME_USER="${RUNTIME_DIR_USER}/version.json"
 VERSION_FILE_RUNTIME_SYSTEM_LOCAL="${RUNTIME_DIR_SYSTEM_LOCAL}/version.json"
@@ -39,11 +39,11 @@ GITHUB_REPO="llocphann/Alis"
 GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}"
 
 # Cache for remote version checks (avoid hammering GitHub)
-VERSION_CACHE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/inir/version-cache.json"
+VERSION_CACHE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/alis/version-cache.json"
 VERSION_CACHE_TTL=3600  # 1 hour in seconds
 
 get_runtime_shell_dir() {
-    local override="${INIR_RUNTIME_DIR:-}"
+    local override="${ALIS_RUNTIME_DIR:-}"
     if [[ -n "$override" && -f "$override/shell.qml" ]]; then
         printf '%s' "$override"
         return
@@ -119,7 +119,7 @@ get_installed_version_file() {
     local runtime_version_file
     runtime_version_file="$(get_runtime_version_file)"
 
-    if [[ -n "${INIR_RUNTIME_DIR:-}" && -f "$runtime_version_file" ]]; then
+    if [[ -n "${ALIS_RUNTIME_DIR:-}" && -f "$runtime_version_file" ]]; then
         printf '%s' "$runtime_version_file"
     elif is_package_managed_version_file "$runtime_version_file"; then
         printf '%s' "$runtime_version_file"
@@ -302,7 +302,7 @@ get_default_package_update_hint() {
         emerge) echo "sudo emerge --sync && sudo emerge -avuDN @world" ;;
         nix) echo "nixos-rebuild switch" ;;
         apk) echo "sudo apk upgrade" ;;
-        *) echo "use your package manager to update iNiR" ;;
+        *) echo "use your package manager to update Alis" ;;
     esac
 }
 
@@ -390,12 +390,12 @@ get_installed_repo_path() {
 }
 
 get_install_mode() {
-    if [[ -n "${INIR_INSTALL_MODE:-}" ]]; then
-        echo "$INIR_INSTALL_MODE"
+    if [[ -n "${ALIS_INSTALL_MODE:-}" ]]; then
+        echo "$ALIS_INSTALL_MODE"
         return
     fi
 
-    local target="${XDG_CONFIG_HOME_RESOLVED}/quickshell/inir"
+    local target="${XDG_CONFIG_HOME_RESOLVED}/quickshell/alis"
     local repo_real=""
     local target_real=""
 
@@ -419,8 +419,8 @@ get_install_mode() {
 }
 
 get_update_strategy() {
-    if [[ -n "${INIR_UPDATE_STRATEGY:-}" ]]; then
-        echo "$INIR_UPDATE_STRATEGY"
+    if [[ -n "${ALIS_UPDATE_STRATEGY:-}" ]]; then
+        echo "$ALIS_UPDATE_STRATEGY"
         return
     fi
 
@@ -432,8 +432,8 @@ get_update_strategy() {
 }
 
 get_version_repo_path() {
-    if [[ -n "${INIR_REPO_PATH:-}" ]]; then
-        printf '%s' "$INIR_REPO_PATH"
+    if [[ -n "${ALIS_REPO_PATH:-}" ]]; then
+        printf '%s' "$ALIS_REPO_PATH"
         return
     fi
 
@@ -452,9 +452,9 @@ write_version_info_json() {
     local repo_path
     local install_mode
     local update_strategy
-    local package_manager="${INIR_PACKAGE_MANAGER:-}"
-    local package_name="${INIR_PACKAGE_NAME:-}"
-    local package_update_hint="${INIR_PACKAGE_UPDATE_HINT:-}"
+    local package_manager="${ALIS_PACKAGE_MANAGER:-}"
+    local package_name="${ALIS_PACKAGE_NAME:-}"
+    local package_update_hint="${ALIS_PACKAGE_UPDATE_HINT:-}"
 
     repo_path="$(get_version_repo_path)"
     install_mode="$(get_install_mode)"
@@ -523,7 +523,7 @@ set_installed_version() {
     local version="${1:-$(get_repo_version)}"
     local commit="${2:-$(get_repo_commit)}"
     local source="${3:-git}"
-    
+
     write_version_info_json "$VERSION_FILE_LOCAL" "$version" "$commit" "$source"
 
     # Also update old format for backwards compatibility
@@ -539,24 +539,24 @@ is_cache_valid() {
     if [[ ! -f "$VERSION_CACHE_FILE" ]]; then
         return 1
     fi
-    
+
     local cache_time
     if command -v jq &>/dev/null; then
         cache_time=$(jq -r '.cached_at // 0' "$VERSION_CACHE_FILE" 2>/dev/null)
     else
         return 1
     fi
-    
+
     local now=$(date +%s)
     local age=$((now - cache_time))
-    
+
     [[ $age -lt $VERSION_CACHE_TTL ]]
 }
 
 # Get remote version (with caching)
 get_remote_version() {
     local force="${1:-false}"
-    
+
     # Check cache first
     if [[ "$force" != "true" ]] && is_cache_valid; then
         if command -v jq &>/dev/null; then
@@ -564,20 +564,20 @@ get_remote_version() {
             return 0
         fi
     fi
-    
+
     # Fetch from GitHub
     if ! command -v curl &>/dev/null; then
         echo "unknown"
         return 1
     fi
-    
+
     local response
     response=$(curl -sf --max-time 5 "${GITHUB_API}/releases/latest" 2>/dev/null)
-    
+
     if [[ -n "$response" ]] && command -v jq &>/dev/null; then
         local version=$(echo "$response" | jq -r '.tag_name // "unknown"' | sed 's/^v//')
         local commit=$(echo "$response" | jq -r '.target_commitish // "unknown"')
-        
+
         # Update cache
         mkdir -p "$(dirname "$VERSION_CACHE_FILE")"
         jq -n \
@@ -585,11 +585,11 @@ get_remote_version() {
             --arg c "$commit" \
             --argjson t "$(date +%s)" \
             '{version: $v, commit: $c, cached_at: $t}' > "$VERSION_CACHE_FILE"
-        
+
         echo "$version"
         return 0
     fi
-    
+
     # Fallback: check git remote
     if command -v git &>/dev/null && [[ -d "${REPO_ROOT}/.git" ]]; then
         git -C "$REPO_ROOT" fetch --tags --quiet 2>/dev/null
@@ -599,7 +599,7 @@ get_remote_version() {
             return 0
         fi
     fi
-    
+
     echo "unknown"
     return 1
 }
@@ -610,10 +610,10 @@ get_remote_commit() {
         echo "unknown"
         return 1
     fi
-    
+
     local branch=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null)
     [[ -z "$branch" || "$branch" == "HEAD" ]] && branch="stable"
-    
+
     git -C "$REPO_ROOT" fetch --quiet 2>/dev/null
     git -C "$REPO_ROOT" rev-parse --short "origin/${branch}" 2>/dev/null || echo "unknown"
 }
@@ -626,29 +626,29 @@ get_remote_commit() {
 compare_versions() {
     local v1="$1"
     local v2="$2"
-    
+
     # Remove 'v' prefix if present
     v1="${v1#v}"
     v2="${v2#v}"
-    
+
     if [[ "$v1" == "$v2" ]]; then
         echo 0
         return
     fi
-    
+
     # Split into parts
     local IFS='.'
     read -ra V1 <<< "$v1"
     read -ra V2 <<< "$v2"
-    
+
     for i in 0 1 2; do
         local n1="${V1[$i]:-0}"
         local n2="${V2[$i]:-0}"
-        
+
         # Remove non-numeric suffixes for comparison
         n1="${n1%%[^0-9]*}"
         n2="${n2%%[^0-9]*}"
-        
+
         if [[ "$n1" -lt "$n2" ]]; then
             echo -1
             return
@@ -657,7 +657,7 @@ compare_versions() {
             return
         fi
     done
-    
+
     echo 0
 }
 
@@ -667,20 +667,20 @@ check_update_available() {
     local remote=$(get_remote_version)
     local installed_commit=$(get_installed_commit)
     local remote_commit=$(get_remote_commit)
-    
+
     # If versions differ, update available
     local cmp=$(compare_versions "$installed" "$remote")
     if [[ "$cmp" == "-1" ]]; then
         return 0  # Update available
     fi
-    
+
     # If same version but different commit, update available
     if [[ "$installed_commit" != "unknown" && "$remote_commit" != "unknown" ]]; then
         if [[ "$installed_commit" != "$remote_commit" ]]; then
             return 0  # Update available
         fi
     fi
-    
+
     return 1  # No update
 }
 
@@ -695,9 +695,9 @@ show_version_status() {
     local installed_strategy=$(get_installed_update_strategy)
     local repo_version=$(get_repo_version)
     local repo_commit=$(get_repo_commit)
-    
+
     echo ""
-    echo -e "${STY_CYAN}${STY_BOLD}iNiR Version Status${STY_RST}"
+    echo -e "${STY_CYAN}${STY_BOLD}Alis Version Status${STY_RST}"
     echo ""
     echo -e "  ${STY_BOLD}Installed:${STY_RST}  $installed (${installed_commit})"
     echo -e "  ${STY_BOLD}Mode:${STY_RST}      $installed_mode"
@@ -710,7 +710,7 @@ show_version_status() {
     elif [[ "$installed_mode" != "repo-link" ]]; then
         echo -e "  ${STY_BOLD}Repository:${STY_RST} $repo_version (${repo_commit})"
     fi
-    
+
     # Check if local repo is ahead/behind (skip for repo-link: installed IS the repo)
     if [[ "$installed_strategy" != "package-manager" && "$installed_mode" != "repo-link" ]] && ([[ "$installed" != "$repo_version" ]] || [[ "$installed_commit" != "$repo_commit" ]]); then
         echo ""
@@ -720,7 +720,7 @@ show_version_status() {
         echo ""
         echo -e "  ${STY_GREEN}✓ Up to date${STY_RST}"
     fi
-    
+
     # Check remote (optional, may fail without network)
     if [[ "$installed_strategy" != "package-manager" ]]; then
         echo ""
@@ -743,17 +743,17 @@ show_version_status() {
 
 show_changelog() {
     local lines="${1:-20}"
-    
+
     if [[ ! -f "$CHANGELOG_FILE" ]]; then
         echo -e "${STY_YELLOW}No changelog found.${STY_RST}"
         echo -e "Check commits: git log --oneline -20"
         return 1
     fi
-    
-    echo -e "${STY_CYAN}${STY_BOLD}iNiR Changelog${STY_RST}"
+
+    echo -e "${STY_CYAN}${STY_BOLD}Alis Changelog${STY_RST}"
     echo ""
     head -n "$lines" "$CHANGELOG_FILE"
-    
+
     local total_lines=$(wc -l < "$CHANGELOG_FILE")
     if [[ "$total_lines" -gt "$lines" ]]; then
         echo ""

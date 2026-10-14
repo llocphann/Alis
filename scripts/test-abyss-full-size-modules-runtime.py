@@ -111,7 +111,7 @@ ShellRoot {
 ''')
  with private_wayland(folder,capture_focus=OUTPUT is not None) as env:
   if env is None:raise SystemExit('SKIP: full-module orientation requires private Niri')
-  config=folder/'config/illogical-impulse';config.mkdir(parents=True,exist_ok=True)
+  config=folder/'config/alis';config.mkdir(parents=True,exist_ok=True)
   data=json.loads((ROOT/'defaults/config.json').read_text());data['panelFamily']='abyss';data['abyss']['companion']['enabled']=False
   (config/'config.json').write_text(json.dumps(data))
   if OUTPUT:env['ALIS_FULL_MODULE_CAPTURE_DIR']=str(OUTPUT)

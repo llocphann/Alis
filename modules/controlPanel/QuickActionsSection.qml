@@ -103,7 +103,7 @@ PanelSurface {
             accessibleName: Translation.tr("Open settings")
             onClicked: {
                 GlobalStates.controlPanelOpen = false
-                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"])
             }
         }
 
@@ -112,7 +112,7 @@ PanelSurface {
             accessibleName: Translation.tr("Lock screen")
             onClicked: {
                 GlobalStates.controlPanelOpen = false
-                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"])
+                Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "lock", "activate"])
             }
         }
 

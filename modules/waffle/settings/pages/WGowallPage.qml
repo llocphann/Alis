@@ -87,7 +87,7 @@ WSettingsPage {
         case "convert":
             if (convertSource === "custom")
                 GowallService.convertCustomTheme(sourcePath, customThemeName.trim(), customColors, selectedFormat)
-            else if (convertSource === "inir")
+            else if (convertSource === "alis")
                 GowallService.convertCurrentTheme(sourcePath, selectedFormat)
             else if (selectedTheme.length > 0)
                 GowallService.convertTheme(sourcePath, selectedTheme, selectedFormat)
@@ -340,7 +340,7 @@ WSettingsPage {
                 Repeater {
                     model: [
                         { label: Translation.tr("Built-in"), value: "builtin" },
-                        { label: Translation.tr("Alis theme"), value: "inir" },
+                        { label: Translation.tr("Alis theme"), value: "alis" },
                         { label: Translation.tr("Custom"), value: "custom" }
                     ]
 
@@ -529,9 +529,9 @@ WSettingsPage {
         }
     }
 
-    // ── iNiR palette preview ──
+    // ── Alis palette preview ──
     WSettingsCard {
-        visible: GowallService.available && root.operationMode === "convert" && root.convertSource === "inir"
+        visible: GowallService.available && root.operationMode === "convert" && root.convertSource === "alis"
         title: Translation.tr("Current Alis Palette")
         icon: "eyedropper"
 

@@ -359,7 +359,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                 // eliding is what keeps the row inside.
                 radius: Appearance.rounding.normal - root.padding
                 color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                     : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
                 RowLayout {
                     id: statusRowLayout
@@ -520,11 +520,11 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
             visible: root.suggestionList.length > 0 && messageInputField.text.length > 0
             Layout.fillWidth: true
             spacing: 4
-            
+
             StyledText {
                 Layout.fillWidth: true
-                text: root.suggestionList.length > 1 
-                    ? Translation.tr("Select model") 
+                text: root.suggestionList.length > 1
+                    ? Translation.tr("Select model")
                     : ""
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colSubtext
@@ -578,7 +578,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     onClicked: {
                         suggestions.acceptSuggestion(modelData.name);
                     }
-                    
+
                     StyledToolTip {
                         visible: commandButton.hovered && modelData.description
                         text: modelData.description ?? ""
@@ -962,11 +962,11 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     toggled: enabled
                     // Active send = accent, not the default dark chrome plate.
                     colBackgroundToggled: Appearance.zzzEverywhere ? Appearance.zzz.accent
-                        : Appearance.inirEverywhere ? Appearance.inir.colPrimary
+                        : Appearance.alisEverywhere ? Appearance.alis.colPrimary
                         : Appearance.angelEverywhere ? Appearance.angel.colPrimary
                         : Appearance.colors.colPrimary
                     colBackgroundToggledHover: Appearance.zzzEverywhere ? Appearance.zzz.sticker
-                        : Appearance.inirEverywhere ? Appearance.inir.colPrimaryHover
+                        : Appearance.alisEverywhere ? Appearance.alis.colPrimaryHover
                         : Appearance.colors.colPrimaryHover
 
                     MouseArea {

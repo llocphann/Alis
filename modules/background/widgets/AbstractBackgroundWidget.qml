@@ -58,7 +58,7 @@ AbstractWidget {
     readonly property int desktopStackZ: root.editSelected
         ? 10000 : root.desktopPersistentZ
     // Diagnostic-only control, supplied by Background.qml when the supervised
-    // shell is loaded with INIR_REGION_DEBUG=1.
+    // shell is loaded with ALIS_REGION_DEBUG=1.
     property bool debugQuickControlsOpen: false
     property bool debugLayoutProbeActive: false
     property int debugLayoutProbeX: 0
@@ -100,11 +100,11 @@ AbstractWidget {
     readonly property bool showBackground: root._readConfigKey("showBackground") ?? true
     readonly property bool useBlur: root._readConfigKey("useBlur") ?? false
     readonly property bool _widgetIslandStyle: !Appearance.zzzEverywhere && !Appearance.cookieEverywhere
-        && !Appearance.angelEverywhere && !Appearance.auroraEverywhere && !Appearance.inirEverywhere
+        && !Appearance.angelEverywhere && !Appearance.auroraEverywhere && !Appearance.alisEverywhere
         && (Config.options?.background?.widgets?.style ?? "panel") === "island"
     readonly property bool blurAvailable: Appearance.effectsEnabled
         && (Appearance.angelEverywhere
-            || (Appearance.auroraEverywhere && !Appearance.inirEverywhere)
+            || (Appearance.auroraEverywhere && !Appearance.alisEverywhere)
             || (root._widgetIslandStyle
                 && (Config.options?.appearance?.island?.glass ?? true)
                 && (Config.options?.appearance?.island?.opacity ?? 1) < 0.999))
@@ -362,12 +362,12 @@ AbstractWidget {
     readonly property bool _showPausedEffect: Config.options?.background?.widgets?.powerSaving?.showPausedEffect ?? true
     readonly property real _pausedSaturation: root.powerActive ? 0 : -0.7  // -0.7 = mostly grayscale
     readonly property real _pausedBrightness: root.powerActive ? 0 : -0.15 // slight dim
-    
+
     layer.enabled: !root.powerActive && root._showPausedEffect && root.visible
     layer.effect: MultiEffect {
         saturation: root._pausedSaturation
         brightness: root._pausedBrightness
-        
+
         Behavior on saturation {
             enabled: Appearance.animationsEnabled
             NumberAnimation {
@@ -559,7 +559,7 @@ AbstractWidget {
     }
 
     onDebugQuickControlsOpenChanged: {
-        if (Quickshell.env("INIR_REGION_DEBUG") === "1")
+        if (Quickshell.env("ALIS_REGION_DEBUG") === "1")
             editPopoverPanel.open = root.debugQuickControlsOpen;
     }
     onLockedChanged: if (root.locked) editPopoverPanel.open = false
@@ -1000,7 +1000,7 @@ AbstractWidget {
                         GlobalStates.settingsOverlayRequestedPage = 14
                         GlobalStates.settingsOverlayOpen = true
                     } else {
-                        Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=14", Quickshell.shellPath("scripts/inir"), "settings-window"])
+                        Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=14", Quickshell.shellPath("scripts/alis"), "settings-window"])
                     }
                 }
                 contentItem: MaterialSymbol {
@@ -1081,7 +1081,7 @@ AbstractWidget {
                 backdropScreenHeight: root.screenHeight
                 radiusOverride: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                    : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+                    : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
                     : Appearance.rounding.small
             }
 
@@ -1816,7 +1816,7 @@ AbstractWidget {
         case "signal":
             return {
                 color: Appearance.zzzEverywhere ? Appearance.zzz.signal
-                    : Appearance.inirEverywhere ? Appearance.inir.colError : c.colError,
+                    : Appearance.alisEverywhere ? Appearance.alis.colError : c.colError,
                 onColor: Appearance.zzzEverywhere ? Appearance.zzz.onSignal : c.colOnError,
                 container: c.colErrorContainer,
                 onContainer: c.colOnErrorContainer
@@ -1828,7 +1828,7 @@ AbstractWidget {
                 container: Appearance.zzzEverywhere ? Appearance.zzz.chrome
                     : Appearance.cookieEverywhere ? c.colLayer2
                     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer1
                     : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
                     : c.colLayer1,
                 onContainer: Appearance.zzzEverywhere ? Appearance.zzz.onBg
@@ -1875,7 +1875,7 @@ AbstractWidget {
     readonly property real widgetCardRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.cookieEverywhere ? Appearance.cookie.roundLarge
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
+        : Appearance.alisEverywhere ? Appearance.alis.roundingNormal
         : Appearance.rounding.normal
 
     property color accentBackdrop: root.widgetHasSurface ? root.widgetPlateColor
@@ -1937,7 +1937,7 @@ AbstractWidget {
         return p.endsWith(".mp4") || p.endsWith(".webm") || p.endsWith(".mkv") || p.endsWith(".avi") || p.endsWith(".mov");
     }
     property string wallpaperPath: wallpaperIsVideo ? (Config.options?.background?.thumbnailPath ?? "") : (Config.options?.background?.wallpaperPath ?? "")
-    
+
     onWallpaperPathChanged: {
         root.regionBrightness = -1
         root.regionBrightnessSpread = 0
@@ -2057,7 +2057,7 @@ AbstractWidget {
             _liveColorAnalysisTimer.start();
     }
     function refreshPlacementIfNeeded() {
-        if (Quickshell.env("INIR_REGION_DEBUG") === "1")
+        if (Quickshell.env("ALIS_REGION_DEBUG") === "1")
             console.log("[Region]", root.configEntryName, "refresh @", Math.round(root.x), Math.round(root.y),
                 "strategy", root.placementStrategy, "needsColText", root.needsColText);
         if (!Config.ready) return;
@@ -2132,7 +2132,7 @@ AbstractWidget {
                 if (output.length === 0) return;
                 try {
                     const parsedContent = JSON.parse(output);
-                    if (Quickshell.env("INIR_REGION_DEBUG") === "1")
+                    if (Quickshell.env("ALIS_REGION_DEBUG") === "1")
                         console.log("[Region]", root.configEntryName, "LEAST-BUSY landed",
                             "dom", parsedContent.dominant_color, "bright", parsedContent.brightness);
                     if (root.positionColorAdaptationEnabled) {
@@ -2195,7 +2195,7 @@ AbstractWidget {
                     const acceptsLiveSample = root.liveColorTracking && root.isDragging
                         && !GlobalStates.widgetEditMode
                     const stale = geometryChanged && !acceptsLiveSample;
-                    if (Quickshell.env("INIR_REGION_DEBUG") === "1")
+                    if (Quickshell.env("ALIS_REGION_DEBUG") === "1")
                         console.log("[Region]", root.configEntryName, "COLOR-ONLY for", colorOnlyProc.posX, colorOnlyProc.posY,
                             "now at", root._colorTargetX(), root._colorTargetY(),
                             "bright", parsedContent.brightness,

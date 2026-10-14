@@ -9,7 +9,7 @@ if not shutil.which('qs') or not (os.environ.get('DISPLAY') or os.environ.get('W
 with tempfile.TemporaryDirectory(prefix='hadalis-module-field-') as name:
  folder=Path(name)
  for entry in ['modules','services','GlobalStates.qml','qmldir','assets','scripts','defaults','translations']:(folder/entry).symlink_to(ROOT/entry)
- cfg=folder/'config/illogical-impulse';cfg.mkdir(parents=True)
+ cfg=folder/'config/alis';cfg.mkdir(parents=True)
  data=json.loads((ROOT/'defaults/config.json').read_text());data['panelFamily']='abyss'
  (cfg/'config.json').write_text(json.dumps(data))
  (folder/'shell.qml').write_text(r'''

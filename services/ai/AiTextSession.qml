@@ -104,7 +104,7 @@ QtObject {
         stdout: SplitParser {
             onRead: line => {
                 if (root.cancelled || !root.busy || !line) return
-                if (line.startsWith("__INIR_HTTP_STATUS__:")) {
+                if (line.startsWith("__ALIS_HTTP_STATUS__:")) {
                     root.httpStatus = Number(line.slice(21).trim()) || 0
                     return
                 }

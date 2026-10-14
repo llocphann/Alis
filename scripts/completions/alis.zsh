@@ -4,20 +4,20 @@
 # Or: alis completions zsh > ~/.zsh/completions/_alis
 
 # Source IPC registry for target data
-_inir_load_registry() {
-    local script_dir inir_bin
-    inir_bin="$(command -v inir 2>/dev/null || echo /usr/bin/inir)"
+_alis_load_registry() {
+    local script_dir alis_bin
+    alis_bin="$(command -v alis 2>/dev/null || echo /usr/bin/alis)"
     # Follow symlinks to find the real scripts/ directory
-    if [[ -L "$inir_bin" ]]; then
-        script_dir="$(cd -- "$(dirname -- "$(readlink -f "$inir_bin")")" 2>/dev/null && pwd)"
+    if [[ -L "$alis_bin" ]]; then
+        script_dir="$(cd -- "$(dirname -- "$(readlink -f "$alis_bin")")" 2>/dev/null && pwd)"
     else
-        script_dir="$(cd -- "$(dirname -- "$inir_bin")" 2>/dev/null && pwd)"
+        script_dir="$(cd -- "$(dirname -- "$alis_bin")" 2>/dev/null && pwd)"
     fi
     local candidate
     for candidate in \
         "${script_dir}/lib/ipc-registry.sh" \
-        "/usr/share/quickshell/inir/scripts/lib/ipc-registry.sh" \
-        "/usr/local/share/quickshell/inir/scripts/lib/ipc-registry.sh"; do
+        "/usr/share/quickshell/alis/scripts/lib/ipc-registry.sh" \
+        "/usr/local/share/quickshell/alis/scripts/lib/ipc-registry.sh"; do
         if [[ -f "$candidate" ]]; then
             source "$candidate"
             return 0
@@ -26,7 +26,7 @@ _inir_load_registry() {
     return 1
 }
 
-_inir() {
+_alis() {
     local -a cli_commands=(
         'install:Install Alis'
         'start:Start the shell'
@@ -66,7 +66,7 @@ _inir() {
     local -a ipc_targets=()
     local -a ipc_aliases=()
 
-    if _inir_load_registry 2>/dev/null; then
+    if _alis_load_registry 2>/dev/null; then
         local t
         for t in "${IPC_ALL_TARGETS[@]}"; do
             local desc="${IPC_TARGET_DESC[$t]:-}"
@@ -165,4 +165,4 @@ _inir() {
     esac
 }
 
-_inir "$@"
+_alis "$@"

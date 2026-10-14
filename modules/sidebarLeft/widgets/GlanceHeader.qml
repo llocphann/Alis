@@ -26,7 +26,7 @@ Item {
         // Breathing room between the clock and the card's top edge in every
         // style — the header used to sit flush against the border in material.
         anchors.topMargin: 12
-        spacing: (Appearance.angelEverywhere || Appearance.inirEverywhere) ? 2 : 4
+        spacing: (Appearance.angelEverywhere || Appearance.alisEverywhere) ? 2 : 4
 
         RowLayout {
             Layout.fillWidth: true
@@ -38,7 +38,7 @@ Item {
                 font.weight: Appearance.zzzEverywhere ? Font.Black : Font.Light
                 font.family: Appearance.font.family.numbers
                 font.italic: Appearance.zzzEverywhere
-                color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
+                color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer0
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -48,7 +48,7 @@ Item {
 
             Item { Layout.fillWidth: true }
 
-            // Buttons container with inir styling
+            // Buttons container with alis styling
             Row {
                 spacing: 6
 
@@ -56,12 +56,12 @@ Item {
                 RippleButton {
                     implicitWidth: 36
                     implicitHeight: 36
-                    buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
-                    colBackground: Appearance.inirEverywhere ? "transparent"
+                    buttonRadius: Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.full
+                    colBackground: Appearance.alisEverywhere ? "transparent"
                         : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colTertiaryContainer
-                    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                    colBackgroundHover: Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : (Appearance.colors.colTertiaryContainerHover ?? Appearance.colors.colTertiaryContainer)
-                    colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
+                    colRipple: Appearance.alisEverywhere ? Appearance.alis.colLayer1Active
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : (Appearance.colors.colTertiaryContainerActive ?? Appearance.colors.colTertiaryContainer)
                     opacity: GameMode.active && (Config.options?.sidebar?.widgets?.glance?.showGameMode ?? true) ? 1 : 0
                     visible: opacity > 0
@@ -76,7 +76,7 @@ Item {
                             text: "sports_esports"
                             iconSize: 18
                             fill: 1
-                            color: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colOnTertiaryContainer
+                            color: Appearance.alisEverywhere ? Appearance.alis.colPrimary : Appearance.colors.colOnTertiaryContainer
                         }
                     }
 
@@ -87,12 +87,12 @@ Item {
                 RippleButton {
                     implicitWidth: 36
                     implicitHeight: 36
-                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : (Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full)
-                    colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.inirEverywhere ? "transparent"
+                    buttonRadius: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius : (Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.full)
+                    colBackground: Appearance.zzzEverywhere ? Appearance.zzz.sticker : Appearance.alisEverywhere ? "transparent"
                         : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colPrimaryContainer
-                    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                    colBackgroundHover: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryHover : Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colPrimaryContainerHover
-                    colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
+                    colRipple: Appearance.zzzEverywhere ? Appearance.colors.colPrimaryActive : Appearance.alisEverywhere ? Appearance.alis.colLayer1Active
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colPrimaryContainerActive
                     opacity: Notifications.silent && (Config.options?.sidebar?.widgets?.glance?.showDnd ?? true) ? 1 : 0
                     visible: opacity > 0
@@ -107,7 +107,7 @@ Item {
                             text: "do_not_disturb_on"
                             iconSize: 18
                             fill: 1
-                            color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : (Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colOnPrimaryContainer)
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.onSticker : (Appearance.alisEverywhere ? Appearance.alis.colPrimary : Appearance.colors.colOnPrimaryContainer)
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
                                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
@@ -131,11 +131,11 @@ Item {
                         anchors.fill: parent
                         implicitWidth: 60
                         implicitHeight: 36
-                        buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                        buttonRadius: Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.full
                         colBackground: "transparent"
-                        colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                        colBackgroundHover: Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
-                        colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
+                        colRipple: Appearance.alisEverywhere ? Appearance.alis.colLayer1Active
                             : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer1Active
                         onClicked: Audio.toggleMute()
 
@@ -153,8 +153,8 @@ Item {
                                     fill: root.volumeMuted ? 1 : 0
                                     animateFill: true
                                     color: root.volumeMuted
-                                        ? (Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext)
-                                        : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0)
+                                        ? (Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext)
+                                        : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer0)
                                     Behavior on color { enabled: Appearance.animationsEnabled; animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
                                 }
 
@@ -164,8 +164,8 @@ Item {
                                     font.pixelSize: Appearance.font.pixelSize.smaller
                                     font.family: Appearance.font.family.numbers
                                     color: root.volumeMuted
-                                        ? (Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext)
-                                        : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0)
+                                        ? (Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext)
+                                        : (Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer0)
 
                                     Behavior on color {
                                         enabled: Appearance.animationsEnabled
@@ -193,11 +193,11 @@ Item {
                     id: settingsBtn
                     implicitWidth: 36
                     implicitHeight: 36
-                    buttonRadius: Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.full
+                    buttonRadius: Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.full
                     colBackground: "transparent"
-                    colBackgroundHover: Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover
+                    colBackgroundHover: Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
-                    colRipple: Appearance.inirEverywhere ? Appearance.inir.colLayer1Active
+                    colRipple: Appearance.alisEverywhere ? Appearance.alis.colLayer1Active
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer1Active
 
                     onClicked: {
@@ -206,7 +206,7 @@ Item {
                         const pageIndex = isWaffle ? 6 : 5; // Modules (Waffle) vs Interface (ii)
                         const section = isWaffle ? Translation.tr("Widgets Panel") : Translation.tr("Widgets");
 
-                        Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=" + pageIndex, "QS_SETTINGS_SECTION=" + section, Quickshell.shellPath("scripts/inir"), isWaffle ? "waffle-settings-window" : "settings-window"]);
+                        Quickshell.execDetached(["/usr/bin/env", "QS_SETTINGS_PAGE=" + pageIndex, "QS_SETTINGS_SECTION=" + section, Quickshell.shellPath("scripts/alis"), isWaffle ? "waffle-settings-window" : "settings-window"]);
                     }
 
                     contentItem: Item {
@@ -215,7 +215,7 @@ Item {
                             text: "tune" // or 'widgets'
                             iconSize: 18
                             fill: 0
-                            color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
+                            color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer0
                             Behavior on color {
                                 enabled: Appearance.animationsEnabled
                                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
@@ -231,15 +231,15 @@ Item {
         // Subtitle with complementary info
         RowLayout {
             Layout.fillWidth: true
-            Layout.bottomMargin: Appearance.inirEverywhere ? 10 : 0
+            Layout.bottomMargin: Appearance.alisEverywhere ? 10 : 0
             spacing: 8
 
             StyledText {
                 readonly property string _configFormat: Config.options?.time?.dateFormat ?? ""
-                readonly property string _defaultFormat: Appearance.inirEverywhere ? "dddd, MMMM yyyy" : "dddd, d MMMM"
+                readonly property string _defaultFormat: Appearance.alisEverywhere ? "dddd, MMMM yyyy" : "dddd, d MMMM"
                 text: root.locale.toString(DateTime.clock.date, _configFormat.length > 0 ? _configFormat : _defaultFormat)
                 font.pixelSize: Appearance.font.pixelSize.normal
-                color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+                color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
                 Behavior on color {
                     enabled: Appearance.animationsEnabled
                     ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

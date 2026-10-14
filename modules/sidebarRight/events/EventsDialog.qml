@@ -127,7 +127,7 @@ WindowDialog {
         : (root.compactEditor ? 4 : 16)
     embeddedBackgroundColor: Appearance.angelEverywhere
         ? Appearance.angel.colGlassPopup
-        : Appearance.inirEverywhere ? Appearance.inir.colLayer1
+        : Appearance.alisEverywhere ? Appearance.alis.colLayer1
         : Appearance.auroraEverywhere ? Appearance.aurora.colDialogSurface
         : Appearance.colors.colSurfaceContainerHigh
 

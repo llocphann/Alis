@@ -21,9 +21,9 @@ export XDG_STATE_HOME="$stage/state"
 export XDG_CACHE_HOME="$stage/cache"
 export XDG_BIN_HOME="$stage/bin"
 export XDG_DATA_HOME="$stage/data"
-export DOTS_CORE_CONFDIR="$XDG_CONFIG_HOME/inir"
+export DOTS_CORE_CONFDIR="$XDG_CONFIG_HOME/alis"
 
-mkdir -p "$XDG_CONFIG_HOME/quickshell/inir"
+mkdir -p "$XDG_CONFIG_HOME/quickshell/alis"
 
 STY_FAINT=''
 STY_RST=''
@@ -44,14 +44,14 @@ grep -Fq '"$script_dir/test-uninstall-path-safety.sh"' "$repo_root/scripts/relea
 # Some uninstall counters intentionally use post-increment expressions whose
 # status is 1 at zero, so run the helper without inheriting this test's errexit.
 set +e
-uninstall_remove_inir_only >/dev/null
+uninstall_remove_alis_only >/dev/null
 rc=$?
 set -e
 [[ "$rc" -eq 0 ]] || fail 'exclusive-file cleanup returned nonzero'
 
 [[ ! -e "$sentinel" ]] \
     || fail 'uninstall executed shell syntax embedded in an XDG path'
-[[ ! -e "$XDG_CONFIG_HOME/quickshell/inir" ]] \
+[[ ! -e "$XDG_CONFIG_HOME/quickshell/alis" ]] \
     || fail 'uninstall did not remove the literal iNiR runtime path'
 
 printf '%s\n' '1..1'

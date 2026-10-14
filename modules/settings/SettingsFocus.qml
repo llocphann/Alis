@@ -161,7 +161,7 @@ Scope {
         if (mode === "window") {
             Config.setNestedValue("settingsUi.overlayMode", false);
             GlobalStates.settingsOverlayOpen = false;
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window"]);
+            Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings-window"]);
             return;
         }
         Config.setNestedValues({
@@ -639,7 +639,7 @@ Scope {
                 radius: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
                       : Appearance.regaliaEverywhere ? Appearance.regalia.panelRadius
                       : Appearance.angelEverywhere ? Appearance.angel.roundingLarge
-                      : Appearance.inirEverywhere ? Appearance.inir.roundingLarge
+                      : Appearance.alisEverywhere ? Appearance.alis.roundingLarge
                       : Appearance.rounding.windowRounding
                 bottomLeftRadius: 0
                 bottomRightRadius: 0
@@ -651,10 +651,10 @@ Scope {
                 // rail host draws the equivalent surface the same way.
                 border.width: Appearance.angelEverywhere ? Appearance.angel.panelBorderWidth
                             : Appearance.zzzEverywhere ? Appearance.zzz.borderThick
-                            : Appearance.inirEverywhere ? 1 : 0
+                            : Appearance.alisEverywhere ? 1 : 0
                 border.color: Appearance.angelEverywhere ? Appearance.angel.colPanelBorder
                             : Appearance.zzzEverywhere ? Appearance.zzz.hairline
-                            : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
+                            : Appearance.alisEverywhere ? Appearance.alis.colBorderSubtle
                             : "transparent"
                 clip: true
 
@@ -695,7 +695,7 @@ Scope {
                     anchors.fill: parent
                     z: -1
                     radius: card.radius
-                    visible: Appearance.auroraEverywhere && !Appearance.inirEverywhere
+                    visible: Appearance.auroraEverywhere && !Appearance.alisEverywhere
                     screenX: card.x
                     screenY: card.y
                     screenWidth: settingsPanel.width
@@ -706,7 +706,7 @@ Scope {
                     // the whole panel vanish over a fullscreen window.
                     fallbackColor: Appearance.effectsEnabled
                         ? "transparent" : Appearance.colors.colLayer0Base
-                    inirColor: Appearance.inir.colLayer0
+                    alisColor: Appearance.alis.colLayer0
                     auroraTransparency: {
                         const base = Appearance.angelEverywhere
                             ? Appearance.angel.panelTransparentize
@@ -809,7 +809,7 @@ Scope {
                         visible: height > 0
                         radius: header.radius
                         color: Appearance.zzzEverywhere ? Appearance.zzz.tile
-                             : Appearance.inirEverywhere ? Qt.alpha(Appearance.inir.colLayer1, 1)
+                             : Appearance.alisEverywhere ? Qt.alpha(Appearance.alis.colLayer1, 1)
                              : Qt.alpha(Appearance.colors.colLayer0Base, 1)
 
                         Image {
@@ -858,7 +858,7 @@ Scope {
                             radius: Appearance.zzzEverywhere
                                 ? Appearance.zzz.controlRadius : width / 2
                             color: Appearance.zzzEverywhere ? Appearance.zzz.chrome
-                                 : Appearance.inirEverywhere ? Qt.alpha(Appearance.inir.colLayer1, 1)
+                                 : Appearance.alisEverywhere ? Qt.alpha(Appearance.alis.colLayer1, 1)
                                  : Qt.alpha(Appearance.colors.colLayer1, 1)
                             border.width: 2
                             border.color: SettingsMaterialPreset.accentColor
@@ -952,7 +952,7 @@ Scope {
                             text: root.currentMeta.icon ?? ""
                             rotation: root.currentMeta.iconRotation ?? 0
                             iconSize: 20
-                            color: Appearance.inirEverywhere ? Appearance.inir.colAccent
+                            color: Appearance.alisEverywhere ? Appearance.alis.colAccent
                                  : Appearance.colors.colPrimary
                         }
 
@@ -1016,15 +1016,15 @@ Scope {
                             Layout.alignment: Qt.AlignVCenter
                             radius: Appearance.rounding.full
                             color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                 : Appearance.inirEverywhere
-                                    ? (focusSearchField.activeFocus ? Appearance.inir.colLayer1 : Appearance.inir.colLayer0)
+                                 : Appearance.alisEverywhere
+                                    ? (focusSearchField.activeFocus ? Appearance.alis.colLayer1 : Appearance.alis.colLayer0)
                                     : (focusSearchField.activeFocus ? Appearance.colors.colLayer1 : Appearance.colors.colLayer0)
                             border.width: focusSearchField.activeFocus ? 2
                                 : (Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : 1)
                             border.color: focusSearchField.activeFocus
                                 ? Appearance.colors.colPrimary
                                 : (Appearance.angelEverywhere ? Appearance.angel.colCardBorder
-                                  : Appearance.inirEverywhere ? Appearance.inir.colBorderMuted
+                                  : Appearance.alisEverywhere ? Appearance.alis.colBorderMuted
                                   : Appearance.m3colors.m3outlineVariant)
 
                             Behavior on color {
@@ -1183,7 +1183,7 @@ Scope {
 
                         RippleButton {
                             implicitWidth:36;implicitHeight:36
-                            onClicked:Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),"lock","activate"])
+                            onClicked:Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),"lock","activate"])
                             contentItem:MaterialSymbol { text:"lock";iconSize:20;horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter;color:Appearance.colors.colOnSurfaceVariant }
                             StyledToolTip { text:"Lock" }
                         }
@@ -1435,7 +1435,7 @@ Scope {
                                                         buttonRadius: Appearance.zzzEverywhere
                                                             ? Appearance.zzz.controlRadius
                                                             : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                                                            : Appearance.inirEverywhere ? Appearance.inir.roundingSmall
+                                                            : Appearance.alisEverywhere ? Appearance.alis.roundingSmall
                                                             : Appearance.rounding.small
 
                                                         // Rows inside a card, not cards
@@ -1469,7 +1469,7 @@ Scope {
                                                                 color: Appearance.zzzEverywhere
                                                                         ? CF.ColorUtils.transparentize(Appearance.zzz.paperAlt, 0.10)
                                                                     : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                                                                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                                                                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                                                                     : CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.20)
                                                                 colSymbol: SettingsMaterialPreset.navigationIconColor(
                                                                     tile.index, group.modelData.entries.length, false)

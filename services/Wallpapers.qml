@@ -17,7 +17,7 @@ Singleton {
 
     signal wallpaperBlurTransitionRequested(var targetMonitors, int durationMs)
 
-    readonly property bool _debugWallpaperUrls: (Quickshell.env("INIR_DEBUG_WALLPAPER_URLS") ?? "") === "1"
+    readonly property bool _debugWallpaperUrls: (Quickshell.env("ALIS_DEBUG_WALLPAPER_URLS") ?? "") === "1"
 
     // Suppression flag: prevents ThemeService from firing a duplicate
     // switchwall.sh run while a direct apply() is already in progress.
@@ -336,7 +336,7 @@ Singleton {
 
     property string thumbgenScriptPath: `${FileUtils.trimFileProtocol(Directories.scriptPath)}/thumbnails/thumbgen-venv.sh`
     property string generateThumbnailsMagickScriptPath: `${FileUtils.trimFileProtocol(Directories.scriptPath)}/thumbnails/generate-thumbnails-magick.sh`
-    
+
     // Calculate standard Freedesktop thumbnail path
     // size: "normal" (128), "large" (256), "x-large" (512), "xx-large" (1024)
     function getExpectedThumbnailPath(filePath: string, size = "large"): string {
@@ -344,7 +344,7 @@ Singleton {
         // Ensure path is absolute and clean
         let cleanPath = FileUtils.trimFileProtocol(filePath)
         if (!cleanPath.startsWith("/")) cleanPath = Quickshell.env("PWD") + "/" + cleanPath
-        
+
         // Encode URI path segments (similar to python urllib.parse.quote(p, safe=""))
         // JS encodeURIComponent encodes everything except A-Za-z0-9-_.!~*'()
         // We need to match Python's behavior for strict path encoding
@@ -358,7 +358,7 @@ Singleton {
             });
         }
         const url = "file://" + parts.join("/")
-        
+
         const md5Hash = MD5.hash(url)
         const cacheDir = Directories.genericCachePath + "/thumbnails/" + size
         return cacheDir + "/" + md5Hash + ".png"
@@ -982,7 +982,7 @@ Singleton {
     property string _pendingThumbnailDir: ""
     property var _singleThumbPending: ({})
     property var _singleThumbQueue: []
-    
+
     function generateThumbnail(size: string) {
         if (!(size === "normal" || size === "large" || size === "x-large" || size === "xx-large")) throw new Error("Invalid thumbnail size")
         root._pendingThumbnailSize = size
@@ -990,7 +990,7 @@ Singleton {
         thumbgenDebounce.restart()
     }
 
-    // A still frame owned by iNiR, not the shared freedesktop thumbnail cache.
+    // A still frame owned by Alis, not the shared freedesktop thumbnail cache.
     // Both write to ~/.cache/thumbnails/<size>/<md5>.png, and the desktop's own
     // video thumbnailer decorates its output with a film-strip border — whoever
     // wrote first won, so a surface that wants a clean frame could not rely on
@@ -1072,7 +1072,7 @@ Singleton {
         delete pending[key]
         root._singleThumbPending = pending
     }
-    
+
     Timer {
         id: thumbgenDebounce
         interval: 300
@@ -1091,8 +1091,8 @@ Singleton {
         property string directory
         property string _size: ""
         environment: ({
-            "INIR_VENV": Quickshell.env("INIR_VENV") || Quickshell.env("HOME") + "/.local/state/quickshell/.venv",
-            "ILLOGICAL_IMPULSE_VIRTUAL_ENV": Quickshell.env("INIR_VENV") || Quickshell.env("HOME") + "/.local/state/quickshell/.venv"
+            "ALIS_VENV": Quickshell.env("ALIS_VENV") || Quickshell.env("HOME") + "/.local/state/quickshell/.venv",
+            "ILLOGICAL_IMPULSE_VIRTUAL_ENV": Quickshell.env("ALIS_VENV") || Quickshell.env("HOME") + "/.local/state/quickshell/.venv"
         })
         stdout: SplitParser {
             onRead: data => {

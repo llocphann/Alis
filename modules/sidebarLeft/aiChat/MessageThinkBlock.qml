@@ -58,7 +58,7 @@ Item {
         Rectangle { // Header background
             id: header
             color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
+                : Appearance.alisEverywhere ? Appearance.alis.colLayer2
                 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSurfaceContainerHighest
             Layout.fillWidth: true
             implicitHeight: thinkBlockTitleBarRowLayout.implicitHeight + thinkBlockHeaderPaddingVertical * 2
@@ -102,7 +102,7 @@ Item {
                     visible: root.completed
                     implicitWidth: 22
                     implicitHeight: 22
-                    colBackground: headerMouseArea.containsMouse 
+                    colBackground: headerMouseArea.containsMouse
                         ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover)
                         : "transparent"
@@ -112,7 +112,7 @@ Item {
                         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive : Appearance.colors.colLayer2Active
 
                     onClicked: { root.collapsed = !root.collapsed }
-                    
+
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent
                         text: "keyboard_arrow_down"
@@ -128,7 +128,7 @@ Item {
                     }
 
                 }
-                
+
             }
 
         }
@@ -155,7 +155,7 @@ Item {
                 anchors.bottom: parent.bottom
                 implicitHeight: messageTextBlock.implicitHeight
                 color: Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
+                    : Appearance.alisEverywhere ? Appearance.alis.colLayer2 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
 
                 // Load data for the message at the correct scope
                 property bool editing: root.editing

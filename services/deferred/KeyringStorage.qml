@@ -19,9 +19,9 @@ Singleton {
     property bool loaded: false
     property var keyringData: ({})
     property bool _savePending: false
-    
+
     property var properties: {
-        "application": "illogical-impulse",
+        "application": "alis",
         "explanation": Translation.tr("For storing API keys and other sensitive information"),
     }
     property var propertiesAsArgs: Object.keys(root.properties).reduce(
@@ -29,7 +29,7 @@ Singleton {
             return arr.concat([key, root.properties[key]]);
         }, []
     )
-    property string keyringLabel: Translation.tr("%1 Safe Storage").arg("illogical-impulse")
+    property string keyringLabel: Translation.tr("%1 Safe Storage").arg("Alis")
 
     function setNestedField(path, value) {
         if (!root.keyringData) root.keyringData = {};
@@ -135,5 +135,5 @@ Singleton {
             }
         }
     }
-    
+
 }

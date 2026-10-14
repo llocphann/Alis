@@ -13,7 +13,7 @@ Canvas {
     property real dotRadius: 1.4
     property real dotAlpha: 0.10
     property color dotColor: Appearance.angelEverywhere ? Appearance.angel.colPrimary
-        : Appearance.inirEverywhere ? Appearance.inir.colAccent
+        : Appearance.alisEverywhere ? Appearance.alis.colAccent
         : Appearance.colors.colPrimary
 
     onPaint: {

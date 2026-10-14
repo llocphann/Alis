@@ -3,7 +3,7 @@
 ## Directory Layout
 
 ```text
-inir/
+alis/
 ├── shell.qml                     # Root entry — loads services and selects panel family
 ├── ShellIiPanels.qml             # Material ii panel family
 ├── ShellWafflePanels.qml         # Windows 11 panel family

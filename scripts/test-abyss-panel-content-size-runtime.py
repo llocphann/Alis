@@ -84,7 +84,7 @@ ShellRoot {
  qml=(folder/'shell.qml').read_text().replace('source:"../../pane.qml"','source:'+json.dumps(str(folder/'pane.qml')));(folder/'shell.qml').write_text(qml)
  with private_wayland(folder)as env:
   if env is None:raise SystemExit('Private Niri required')
-  cfg=folder/'config/illogical-impulse';cfg.mkdir(parents=True,exist_ok=True)
+  cfg=folder/'config/alis';cfg.mkdir(parents=True,exist_ok=True)
   (cfg/'config.json').write_text((ROOT/'defaults/config.json').read_text())
   result=run_qs(folder,env,30)
   log=os.environ.get('ALIS_SIDEBAR_CONTENT_SIZE_LOG')

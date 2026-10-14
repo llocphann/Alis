@@ -120,14 +120,14 @@ ContentPage {
                 tooltip: Translation.tr("Choose the Spicetify layout while keeping Alis wallpaper colors")
 
                 ConfigSelectionArray {
-                    currentValue: Config.options?.appearance?.wallpaperTheming?.spicetifyTheme ?? "Inir"
+                    currentValue: Config.options?.appearance?.wallpaperTheming?.spicetifyTheme ?? "Alis"
                     onSelected: newValue => {
                         Config.setNestedValue("appearance.wallpaperTheming.spicetifyTheme", newValue)
                         colorRegenTimer.restart()
                     }
                     options: [
-                        { displayName: Translation.tr("Sleek"), value: "Inir" },
-                        { displayName: Translation.tr("Text (TUI)"), value: "InirTUI" }
+                        { displayName: Translation.tr("Sleek"), value: "Alis" },
+                        { displayName: Translation.tr("Text (TUI)"), value: "AlisTUI" }
                     ]
                 }
             }
@@ -212,7 +212,7 @@ ContentPage {
                     colorRegenTimer.restart();
                 }
                 StyledToolTip {
-                    text: Translation.tr("Generate inir.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)")
+                    text: Translation.tr("Generate alis.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)")
                 }
             }
             SettingsSwitch {

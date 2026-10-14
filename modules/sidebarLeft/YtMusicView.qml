@@ -28,22 +28,22 @@ Item {
 
     property string currentView: "search"
 
-    function openAddToPlaylist(item) { 
+    function openAddToPlaylist(item) {
         addToPlaylistPopup.targetItem = item
-        addToPlaylistPopup.open() 
+        addToPlaylistPopup.open()
     }
 
-    readonly property color colText: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
-    readonly property color colTextSecondary: Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
-    readonly property color colPrimary: Appearance.inirEverywhere ? Appearance.inir.colPrimary : Appearance.colors.colPrimary
-    readonly property color colSurface: Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.inirEverywhere ? Appearance.inir.colLayer1 : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer1
-    readonly property color colSurfaceHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : Appearance.inirEverywhere ? Appearance.inir.colLayer1Hover : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
-    readonly property color colLayer2: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated : Appearance.inirEverywhere ? Appearance.inir.colLayer2 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2
-    readonly property color colLayer2Hover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : Appearance.inirEverywhere ? Appearance.inir.colLayer2Hover : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
-    readonly property color colBorder: Appearance.angelEverywhere ? Appearance.angel.colCardBorder : Appearance.inirEverywhere ? Appearance.inir.colBorder : "transparent"
-    readonly property int borderWidth: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : Appearance.inirEverywhere ? 1 : 0
-    readonly property real radiusSmall: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Appearance.inirEverywhere ? Appearance.inir.roundingSmall : Appearance.rounding.small
-    readonly property real radiusNormal: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+    readonly property color colText: Appearance.alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer0
+    readonly property color colTextSecondary: Appearance.alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
+    readonly property color colPrimary: Appearance.alisEverywhere ? Appearance.alis.colPrimary : Appearance.colors.colPrimary
+    readonly property color colSurface: Appearance.angelEverywhere ? Appearance.angel.colGlassCard : Appearance.alisEverywhere ? Appearance.alis.colLayer1 : Appearance.auroraEverywhere ? "transparent" : Appearance.colors.colLayer1
+    readonly property color colSurfaceHover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
+    readonly property color colLayer2: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated : Appearance.alisEverywhere ? Appearance.alis.colLayer2 : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer2
+    readonly property color colLayer2Hover: Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : Appearance.alisEverywhere ? Appearance.alis.colLayer2Hover : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer2Hover
+    readonly property color colBorder: Appearance.angelEverywhere ? Appearance.angel.colCardBorder : Appearance.alisEverywhere ? Appearance.alis.colBorder : "transparent"
+    readonly property int borderWidth: Appearance.angelEverywhere ? Appearance.angel.cardBorderWidth : Appearance.alisEverywhere ? 1 : 0
+    readonly property real radiusSmall: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : Appearance.alisEverywhere ? Appearance.alis.roundingSmall : Appearance.rounding.small
+    readonly property real radiusNormal: Appearance.angelEverywhere ? Appearance.angel.roundingNormal : Appearance.alisEverywhere ? Appearance.alis.roundingNormal : Appearance.rounding.normal
 
     component YtActionChip: RippleButton {
         id: chipRoot
@@ -114,20 +114,20 @@ Item {
             sourceComponent: ColumnLayout {
                 spacing: 16
                 Item { Layout.fillHeight: true }
-                MaterialSymbol { 
+                MaterialSymbol {
                     Layout.alignment: Qt.AlignHCenter
                     text: "music_off"
                     iconSize: 56
-                    color: root.colTextSecondary 
+                    color: root.colTextSecondary
                 }
-                StyledText { 
+                StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     text: Translation.tr("yt-dlp not found")
                     font.pixelSize: Appearance.font.pixelSize.larger
                     font.weight: Font.Medium
-                    color: root.colText 
+                    color: root.colText
                 }
-                StyledText { 
+                StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.fillWidth: true
                     Layout.margins: 20
@@ -135,7 +135,7 @@ Item {
                     wrapMode: Text.WordWrap
                     text: Translation.tr("Install yt-dlp and mpv to use YT Music")
                     font.pixelSize: Appearance.font.pixelSize.small
-                    color: root.colTextSecondary 
+                    color: root.colTextSecondary
                 }
                 RippleButton {
                     Layout.alignment: Qt.AlignHCenter
@@ -144,11 +144,11 @@ Item {
                     buttonRadius: root.radiusNormal
                     colBackground: root.colPrimary
                     onClicked: Qt.openUrlExternally("https://github.com/yt-dlp/yt-dlp#installation")
-                    contentItem: StyledText { 
+                    contentItem: StyledText {
                         anchors.centerIn: parent
                         text: Translation.tr("Install Guide")
                         color: Appearance.colors.colOnPrimary
-                        font.weight: Font.Medium 
+                        font.weight: Font.Medium
                     }
                 }
                 Item { Layout.fillHeight: true }
@@ -160,7 +160,7 @@ Item {
             Layout.fillHeight: true
             active: root.isAvailable
             visible: active
-            
+
             sourceComponent: ColumnLayout {
                 spacing: 8
 
@@ -259,22 +259,22 @@ Item {
                             width: parent.width - 16
                             spacing: 8
                             MaterialSymbol { text: "error"; iconSize: 18; color: Appearance.colors.colOnErrorContainer }
-                            StyledText { 
+                            StyledText {
                                 Layout.fillWidth: true
                                 text: YtMusic.error
                                 color: Appearance.colors.colOnErrorContainer
                                 font.pixelSize: Appearance.font.pixelSize.small
                                 wrapMode: Text.WordWrap
                                 maximumLineCount: 3
-                                elide: Text.ElideRight 
+                                elide: Text.ElideRight
                             }
-                            RippleButton { 
+                            RippleButton {
                                 implicitWidth: 24
                                 implicitHeight: 24
                                 buttonRadius: 12
                                 colBackground: "transparent"
                                 onClicked: YtMusic.error = ""
-                                contentItem: MaterialSymbol { 
+                                contentItem: MaterialSymbol {
                                     anchors.centerIn: parent
                                     text: "close"
                                     iconSize: 16
@@ -311,7 +311,7 @@ Item {
         }
 
         background: Rectangle {
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+            color: Appearance.alisEverywhere ? Appearance.alis.colLayer2
                  : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base
                  : Appearance.colors.colLayer1
             radius: root.radiusNormal
@@ -645,7 +645,7 @@ Item {
         onClosed: { if (YtMusic.oauthSetupActive) YtMusic.cancelOAuthSetup() }
 
         background: Rectangle {
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+            color: Appearance.alisEverywhere ? Appearance.alis.colLayer2
                  : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base
                  : Appearance.colors.colLayer1
             radius: root.radiusNormal
@@ -836,22 +836,22 @@ Item {
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         property var targetItem: null
 
-        background: Rectangle { 
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+        background: Rectangle {
+            color: Appearance.alisEverywhere ? Appearance.alis.colLayer2
                  : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base
                  : Appearance.colors.colLayer1
             radius: root.radiusNormal
             border.width: root.borderWidth
-            border.color: root.colBorder 
+            border.color: root.colBorder
         }
-        
+
         contentItem: ColumnLayout {
             spacing: 8
-            StyledText { 
+            StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 text: Translation.tr("Add to Playlist")
                 font.weight: Font.Medium
-                color: root.colText 
+                color: root.colText
             }
 
             ListView {
@@ -869,38 +869,38 @@ Item {
                     buttonRadius: root.radiusSmall
                     colBackground: "transparent"
                     colBackgroundHover: root.colLayer2Hover
-                    onClicked: { 
-                        if (addToPlaylistPopup.targetItem) { 
+                    onClicked: {
+                        if (addToPlaylistPopup.targetItem) {
                             YtMusic.addToPlaylist(index, addToPlaylistPopup.targetItem)
-                            addToPlaylistPopup.close() 
-                        } 
+                            addToPlaylistPopup.close()
+                        }
                     }
-                    contentItem: StyledText { 
+                    contentItem: StyledText {
                         anchors.fill: parent
                         anchors.leftMargin: 8
                         verticalAlignment: Text.AlignVCenter
                         text: modelData.name ?? ""
                         color: root.colText
-                        elide: Text.ElideRight 
+                        elide: Text.ElideRight
                     }
                 }
             }
-            
+
             RippleButton {
                 Layout.fillWidth: true
                 implicitHeight: 32
                 buttonRadius: root.radiusSmall
                 colBackground: root.colLayer2
                 colBackgroundHover: root.colLayer2Hover
-                onClicked: { 
+                onClicked: {
                     addToPlaylistPopup.close()
-                    createPlaylistPopup.open() 
+                    createPlaylistPopup.open()
                 }
-                contentItem: RowLayout { 
+                contentItem: RowLayout {
                     anchors.centerIn: parent
                     spacing: 4
                     MaterialSymbol { text: "add"; iconSize: 18; color: root.colPrimary }
-                    StyledText { text: Translation.tr("New Playlist"); color: root.colPrimary } 
+                    StyledText { text: Translation.tr("New Playlist"); color: root.colPrimary }
                 }
             }
         }
@@ -913,21 +913,21 @@ Item {
         height: 120
         modal: true
         dim: true
-        background: Rectangle { 
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+        background: Rectangle {
+            color: Appearance.alisEverywhere ? Appearance.alis.colLayer2
                  : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base
                  : Appearance.colors.colLayer1
             radius: root.radiusNormal
             border.width: root.borderWidth
-            border.color: root.colBorder 
+            border.color: root.colBorder
         }
         contentItem: ColumnLayout {
             spacing: 12
-            StyledText { 
+            StyledText {
                 text: Translation.tr("New Playlist")
                 font.pixelSize: Appearance.font.pixelSize.normal
                 font.weight: Font.Medium
-                color: root.colText 
+                color: root.colText
             }
             MaterialTextField {
                 id: newPlaylistName
@@ -935,26 +935,26 @@ Item {
                 placeholderText: Translation.tr("Playlist name")
                 onAccepted: createBtn.clicked()
             }
-            RowLayout { 
+            RowLayout {
                 Layout.fillWidth: true
                 Item { Layout.fillWidth: true }
-                RippleButton { 
+                RippleButton {
                     id: createBtn
                     implicitWidth: 80
                     implicitHeight: 32
                     buttonRadius: root.radiusSmall
                     colBackground: root.colPrimary
-                    onClicked: { 
-                        if (newPlaylistName.text.trim()) { 
+                    onClicked: {
+                        if (newPlaylistName.text.trim()) {
                             YtMusic.createPlaylist(newPlaylistName.text)
                             newPlaylistName.text = ""
-                            createPlaylistPopup.close() 
-                        } 
+                            createPlaylistPopup.close()
+                        }
                     }
-                    contentItem: StyledText { 
+                    contentItem: StyledText {
                         anchors.centerIn: parent
                         text: Translation.tr("Create")
-                        color: Appearance.colors.colOnPrimary 
+                        color: Appearance.colors.colOnPrimary
                     }
                 }
             }
@@ -970,7 +970,7 @@ Item {
         modal: true
         dim: true
         background: Rectangle {
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+            color: Appearance.alisEverywhere ? Appearance.alis.colLayer2
                  : Appearance.auroraEverywhere ? Appearance.colors.colLayer1Base
                  : Appearance.colors.colLayer1
             radius: root.radiusNormal
@@ -1031,7 +1031,7 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             implicitHeight: 42
-            radius: Appearance.inirEverywhere ? root.radiusSmall : Appearance.rounding.full
+            radius: Appearance.alisEverywhere ? root.radiusSmall : Appearance.rounding.full
             color: root.colLayer2
             border.width: root.borderWidth
             border.color: root.colBorder
@@ -1041,13 +1041,13 @@ Item {
                 anchors.leftMargin: 14
                 anchors.rightMargin: 10
                 spacing: 10
-                
+
                 MaterialSymbol {
                     text: "search"
                     iconSize: 20
                     color: root.colTextSecondary
                 }
-                
+
                 TextField {
                     id: searchField
                     Layout.fillWidth: true
@@ -1066,7 +1066,7 @@ Item {
                         target: searchField
                     }
                 }
-                
+
                 RippleButton {
                     implicitWidth: 28
                     implicitHeight: 28
@@ -1075,11 +1075,11 @@ Item {
                     colBackground: "transparent"
                     colBackgroundHover: root.colLayer2Hover
                     onClicked: { searchField.text = ""; searchField.forceActiveFocus() }
-                    contentItem: MaterialSymbol { 
+                    contentItem: MaterialSymbol {
                         anchors.centerIn: parent
                         text: "close"
                         iconSize: 18
-                        color: root.colTextSecondary 
+                        color: root.colTextSecondary
                     }
                 }
             }
@@ -1101,33 +1101,33 @@ Item {
                 anchors.fill: parent
                 spacing: 6
                 visible: !root.hasResults && !YtMusic.searching && YtMusic.recentSearches.length > 0
-                
+
                 RowLayout {
                     Layout.fillWidth: true
-                    StyledText { 
+                    StyledText {
                         text: Translation.tr("Recent")
                         font.pixelSize: Appearance.font.pixelSize.small
                         font.weight: Font.Medium
-                        color: root.colTextSecondary 
+                        color: root.colTextSecondary
                     }
                     Item { Layout.fillWidth: true }
-                    RippleButton { 
+                    RippleButton {
                         implicitWidth: 24
                         implicitHeight: 24
                         buttonRadius: 12
                         colBackground: "transparent"
                         colBackgroundHover: root.colLayer2Hover
                         onClicked: YtMusic.clearRecentSearches()
-                        contentItem: MaterialSymbol { 
+                        contentItem: MaterialSymbol {
                             anchors.centerIn: parent
                             text: "delete_sweep"
                             iconSize: 16
-                            color: root.colTextSecondary 
+                            color: root.colTextSecondary
                         }
                         StyledToolTip { text: Translation.tr("Clear") }
                     }
                 }
-                
+
                 ListView {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -1143,7 +1143,7 @@ Item {
                         colBackground: "transparent"
                         colBackgroundHover: root.colSurfaceHover
                         onClicked: { searchField.text = modelData; YtMusic.search(modelData) }
-                        contentItem: RowLayout { 
+                        contentItem: RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 8
                             anchors.rightMargin: 8
@@ -1163,7 +1163,7 @@ Item {
                 cacheBuffer: 200
                 model: YtMusic.searchResults
                 spacing: 4
-                
+
                 header: Column {
                     width: parent.width
                     spacing: 8
@@ -1202,7 +1202,7 @@ Item {
                             StyledToolTip { text: Translation.tr("Play all") }
                         }
                     }
-                    
+
                     // Searching indicator
                     Loader {
                         width: parent.width
@@ -1214,7 +1214,7 @@ Item {
                         }
                     }
                 }
-                
+
                 delegate: YtMusicTrackItem {
                     required property var modelData
                     required property int index
@@ -1429,7 +1429,7 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
-            
+
             RippleButton {
                 visible: expandedPlaylist >= 0 || showLiked
                 implicitWidth: 32
@@ -1440,18 +1440,18 @@ Item {
                 onClicked: { expandedPlaylist = -1; showLiked = false }
                 contentItem: MaterialSymbol { anchors.centerIn: parent; text: "arrow_back"; iconSize: 20; color: root.colText }
             }
-            
-            StyledText { 
-                text: showLiked ? Translation.tr("Liked Songs") 
-                    : expandedPlaylist >= 0 ? (YtMusic.playlists[expandedPlaylist]?.name ?? "") 
+
+            StyledText {
+                text: showLiked ? Translation.tr("Liked Songs")
+                    : expandedPlaylist >= 0 ? (YtMusic.playlists[expandedPlaylist]?.name ?? "")
                     : Translation.tr("Library")
                 font.pixelSize: Appearance.font.pixelSize.normal
                 font.weight: Font.Medium
                 color: root.colText
             }
-            
+
             Item { Layout.fillWidth: true }
-            
+
             // Settings/connection options
             RippleButton {
                 visible: expandedPlaylist < 0 && !showLiked
@@ -1469,7 +1469,7 @@ Item {
                 }
                 StyledToolTip { text: Translation.tr("Connection settings") }
             }
-            
+
             RippleButton {
                 visible: (expandedPlaylist >= 0 && (YtMusic.playlists[expandedPlaylist]?.items?.length ?? 0) > 0) || (showLiked && YtMusic.likedSongs.length > 0)
                 implicitWidth: 32
@@ -1480,7 +1480,7 @@ Item {
                 contentItem: MaterialSymbol { anchors.centerIn: parent; text: "play_arrow"; iconSize: 20; color: Appearance.colors.colOnPrimary }
                 StyledToolTip { text: Translation.tr("Play all") }
             }
-            
+
             RippleButton {
                 visible: (expandedPlaylist >= 0 && (YtMusic.playlists[expandedPlaylist]?.items?.length ?? 0) > 1) || (showLiked && YtMusic.likedSongs.length > 1)
                 implicitWidth: 32
@@ -1492,7 +1492,7 @@ Item {
                 contentItem: MaterialSymbol { anchors.centerIn: parent; text: "shuffle"; iconSize: 20; color: root.colTextSecondary }
                 StyledToolTip { text: Translation.tr("Shuffle") }
             }
-            
+
             RippleButton {
                 visible: expandedPlaylist < 0 && !showLiked
                 implicitWidth: 32
@@ -1509,13 +1509,13 @@ Item {
             let items = [...YtMusic.likedSongs]
             if (items.length === 0) return
             let startIndex = 0
-            if (shuffle) { 
-                for (let i = items.length - 1; i > 0; i--) { 
+            if (shuffle) {
+                for (let i = items.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1))
                     const temp = items[i]
                     items[i] = items[j]
                     items[j] = temp
-                } 
+                }
             }
             YtMusic.playFromPlaylist(items, startIndex, "liked")
         }
@@ -1584,7 +1584,7 @@ Item {
                         Layout.fillWidth: true
                         height: 1
                         color: root.colBorder
-                        visible: Appearance.inirEverywhere
+                        visible: Appearance.alisEverywhere
                     }
                 }
 
@@ -1729,11 +1729,11 @@ Item {
             colBackground: "transparent"
             colBackgroundHover: ColorUtils.transparentize(Appearance.colors.colError, 0.85)
             onClicked: { YtMusic.deletePlaylist(expandedPlaylist); expandedPlaylist = -1 }
-            contentItem: RowLayout { 
+            contentItem: RowLayout {
                 anchors.centerIn: parent
                 spacing: 8
                 MaterialSymbol { text: "delete"; iconSize: 18; color: Appearance.colors.colError }
-                StyledText { text: Translation.tr("Delete playlist"); color: Appearance.colors.colError } 
+                StyledText { text: Translation.tr("Delete playlist"); color: Appearance.colors.colError }
             }
         }
     }
@@ -1800,58 +1800,58 @@ Item {
                 StyledToolTip { text: Translation.tr("Save as playlist") }
             }
 
-            RippleButton { 
+            RippleButton {
                 implicitWidth: 28
                 implicitHeight: 28
                 buttonRadius: 14
                 colBackground: YtMusic.shuffleMode ? root.colPrimary : "transparent"
                 colBackgroundHover: YtMusic.shuffleMode ? root.colPrimary : root.colLayer2Hover
                 onClicked: YtMusic.toggleShuffle()
-                contentItem: MaterialSymbol { 
+                contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: "shuffle"
                     iconSize: 18
-                    color: YtMusic.shuffleMode ? Appearance.colors.colOnPrimary : root.colTextSecondary 
+                    color: YtMusic.shuffleMode ? Appearance.colors.colOnPrimary : root.colTextSecondary
                 }
                 StyledToolTip { text: YtMusic.shuffleMode ? Translation.tr("Shuffle On") : Translation.tr("Shuffle Off") }
             }
-            
-            RippleButton { 
+
+            RippleButton {
                 implicitWidth: 28
                 implicitHeight: 28
                 buttonRadius: 14
                 colBackground: YtMusic.repeatMode > 0 ? root.colPrimary : "transparent"
                 colBackgroundHover: YtMusic.repeatMode > 0 ? root.colPrimary : root.colLayer2Hover
                 onClicked: YtMusic.cycleRepeatMode()
-                contentItem: MaterialSymbol { 
+                contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: YtMusic.repeatMode === 1 ? "repeat_one" : "repeat"
                     iconSize: 18
-                    color: YtMusic.repeatMode > 0 ? Appearance.colors.colOnPrimary : root.colTextSecondary 
+                    color: YtMusic.repeatMode > 0 ? Appearance.colors.colOnPrimary : root.colTextSecondary
                 }
-                StyledToolTip { 
-                    text: YtMusic.repeatMode === 0 ? Translation.tr("Repeat Off") 
-                        : YtMusic.repeatMode === 1 ? Translation.tr("Repeat One") 
-                        : Translation.tr("Repeat All") 
+                StyledToolTip {
+                    text: YtMusic.repeatMode === 0 ? Translation.tr("Repeat Off")
+                        : YtMusic.repeatMode === 1 ? Translation.tr("Repeat One")
+                        : Translation.tr("Repeat All")
                 }
             }
-            
-            RippleButton { 
+
+            RippleButton {
                 visible: root.hasQueue
                 implicitWidth: 80
                 implicitHeight: 28
                 buttonRadius: root.radiusSmall
                 colBackground: root.colPrimary
                 onClicked: YtMusic.playQueue()
-                contentItem: StyledText { 
+                contentItem: StyledText {
                     anchors.centerIn: parent
                     text: Translation.tr("Play")
                     font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colOnPrimary 
+                    color: Appearance.colors.colOnPrimary
                 }
             }
-            
-            RippleButton { 
+
+            RippleButton {
                 visible: root.hasQueue
                 implicitWidth: 28
                 implicitHeight: 28
@@ -1859,11 +1859,11 @@ Item {
                 colBackground: "transparent"
                 colBackgroundHover: root.colLayer2Hover
                 onClicked: YtMusic.clearQueue()
-                contentItem: MaterialSymbol { 
+                contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: "delete_sweep"
                     iconSize: 18
-                    color: root.colTextSecondary 
+                    color: root.colTextSecondary
                 }
                 StyledToolTip { text: Translation.tr("Clear") }
             }

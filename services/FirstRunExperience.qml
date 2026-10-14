@@ -55,7 +55,7 @@ Singleton {
     function handleFirstRun(): void {
         if (root.defaultWallpaperPath.length > 0)
             Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, root.defaultWallpaperPath])
-        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "welcome"])
+        Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "welcome"])
     }
 
     function _persistAndHandleFirstRun(): void {
@@ -63,7 +63,7 @@ Singleton {
             Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, root.defaultWallpaperPath])
 
         const parentDir = root.firstRunFilePath.substring(0, root.firstRunFilePath.lastIndexOf('/'))
-        const launcherPath = Quickshell.shellPath("scripts/inir")
+        const launcherPath = Quickshell.shellPath("scripts/alis")
         // Keep marker persistence and welcome launch in one process so the
         // launcher cannot win the scheduling race. The welcome still opens if
         // persistence fails; the semicolon intentionally preserves that fallback.

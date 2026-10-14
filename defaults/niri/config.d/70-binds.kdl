@@ -7,7 +7,7 @@
 // Use `wev` to discover XKB key names.
 // Most actions here can also be triggered via `niri msg action <name>`.
 //
-// iNiR binds route through the `inir` launcher which talks to Quickshell
+// Alis binds route through the `alis` launcher which talks to Quickshell
 // via IPC. Niri-native actions (focus, move, resize…) go directly to Niri.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -30,55 +30,55 @@ binds {
     Mod+Shift+O { power-off-monitors; }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // iNiR shell overlays & tools
+    // Alis shell overlays & tools
     // ═══════════════════════════════════════════════════════════════════════
 
     // Crosshair overlay toggle.
-    Super+G { spawn "inir" "overlay" "toggle"; }
+    Super+G { spawn "alis" "overlay" "toggle"; }
 
-    // iNiR app launcher / overview.
-    Mod+Space repeat=false { spawn "inir" "overview" "toggle"; }
+    // Alis app launcher / overview.
+    Mod+Space repeat=false { spawn "alis" "overview" "toggle"; }
 
     // Clipboard history overlay.
-    Mod+V { spawn "inir" "clipboard" "toggle"; }
+    Mod+V { spawn "alis" "clipboard" "toggle"; }
 
     // Lock screen.
-    Mod+Alt+L allow-when-locked=true { spawn "inir" "lock" "activate"; }
+    Mod+Alt+L allow-when-locked=true { spawn "alis" "lock" "activate"; }
     // Re-focus the lock surface (workaround when input feels dead after suspend/resume).
-    Mod+Ctrl+Shift+L allow-when-locked=true { spawn "inir" "lock" "focus"; }
+    Mod+Ctrl+Shift+L allow-when-locked=true { spawn "alis" "lock" "focus"; }
 
     // Region selector: screenshot / OCR / Google Lens search.
-    Mod+Shift+S { spawn "inir" "region" "screenshot"; }
-    Mod+Shift+X { spawn "inir" "region" "ocr"; }
-    Mod+Shift+A { spawn "inir" "region" "search"; }
+    Mod+Shift+S { spawn "alis" "region" "screenshot"; }
+    Mod+Shift+X { spawn "alis" "region" "ocr"; }
+    Mod+Shift+A { spawn "alis" "region" "search"; }
     // Unified snip menu (pick action/scope from the in-overlay toolbar).
-    Ctrl+Shift+S { spawn "inir" "region" "menu"; }
+    Ctrl+Shift+S { spawn "alis" "region" "menu"; }
 
     // Wallpaper picker, settings, cheatsheet, panel family switch.
-    Ctrl+Alt+T { spawn "inir" "wallpaperSelector" "toggle"; }
-    Mod+Comma { spawn "inir" "settings"; }
-    Mod+Alt+Comma repeat=false { spawn "inir" "ipc" "wull" "chat"; }
-    Mod+Slash { spawn "inir" "cheatsheet" "toggle"; }
-    Mod+Shift+W { spawn "inir" "panelFamily" "cycle"; }
+    Ctrl+Alt+T { spawn "alis" "wallpaperSelector" "toggle"; }
+    Mod+Comma { spawn "alis" "settings"; }
+    Mod+Alt+Comma repeat=false { spawn "alis" "ipc" "wull" "chat"; }
+    Mod+Slash { spawn "alis" "cheatsheet" "toggle"; }
+    Mod+Shift+W { spawn "alis" "panelFamily" "cycle"; }
 
     // Session / power dialog.
-    Mod+Shift+Q { spawn "inir" "session" "toggle"; }
+    Mod+Shift+Q { spawn "alis" "session" "toggle"; }
 
     // ═══════════════════════════════════════════════════════════════════════
     // App launchers
     // ═══════════════════════════════════════════════════════════════════════
 
-    Mod+T { spawn "inir" "terminal"; }
-    Mod+Return { spawn "inir" "terminal"; }
+    Mod+T { spawn "alis" "terminal"; }
+    Mod+Return { spawn "alis" "terminal"; }
     Super+E { spawn "nautilus"; }
-    Super+W { spawn "inir" "browser"; }
+    Super+W { spawn "alis" "browser"; }
 
     // ═══════════════════════════════════════════════════════════════════════
     // Window management
     // ═══════════════════════════════════════════════════════════════════════
 
-    // Close window (iNiR's close with confirmation dialog for unsaved work).
-    Mod+Q repeat=false { spawn "inir" "close-window"; }
+    // Close window (Alis's close with confirmation dialog for unsaved work).
+    Mod+Q repeat=false { spawn "alis" "close-window"; }
 
     // Maximize column (fills screen width, keeps gaps/bar).
     Mod+D { maximize-column; }
@@ -103,7 +103,7 @@ binds {
     Mod+R { switch-preset-column-width; }
 
     // Screen recording — region select with audio.
-    Mod+Shift+R { spawn "inir" "region" "recordWithSound"; }
+    Mod+Shift+R { spawn "alis" "region" "recordWithSound"; }
 
     // Reset window height to default.
     Mod+Ctrl+R { reset-window-height; }
@@ -232,7 +232,7 @@ binds {
     Mod+WheelScrollLeft  { focus-column-left; }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // Screenshots (Niri native — iNiR has its own region selector above)
+    // Screenshots (Niri native — Alis has its own region selector above)
     // ═══════════════════════════════════════════════════════════════════════
 
     Print      { screenshot; }
@@ -240,33 +240,33 @@ binds {
     Alt+Print  { screenshot-window; }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // Hardware keys → iNiR IPC (with OSD feedback)
+    // Hardware keys → Alis IPC (with OSD feedback)
     // ═══════════════════════════════════════════════════════════════════════
 
-    // Volume (routed through iNiR for OSD + EasyEffects-aware sink resolution).
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "inir" "audio" "volumeUp"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "inir" "audio" "volumeDown"; }
-    XF86AudioMute        allow-when-locked=true { spawn "inir" "audio" "mute"; }
-    XF86AudioMicMute     allow-when-locked=true { spawn "inir" "audio" "micMute"; }
+    // Volume (routed through Alis for OSD + EasyEffects-aware sink resolution).
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "alis" "audio" "volumeUp"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "alis" "audio" "volumeDown"; }
+    XF86AudioMute        allow-when-locked=true { spawn "alis" "audio" "mute"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn "alis" "audio" "micMute"; }
 
     // Brightness.
-    XF86MonBrightnessUp   allow-when-locked=true { spawn "inir" "brightness" "increment"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "inir" "brightness" "decrement"; }
+    XF86MonBrightnessUp   allow-when-locked=true { spawn "alis" "brightness" "increment"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "alis" "brightness" "decrement"; }
 
     // Media playback (MPRIS — works with any player: Spotify, Firefox, mpv…).
-    XF86AudioPlay  { spawn "inir" "mpris" "playPause"; }
-    XF86AudioPause { spawn "inir" "mpris" "playPause"; }
-    XF86AudioNext  { spawn "inir" "mpris" "next"; }
-    XF86AudioPrev  { spawn "inir" "mpris" "previous"; }
+    XF86AudioPlay  { spawn "alis" "mpris" "playPause"; }
+    XF86AudioPause { spawn "alis" "mpris" "playPause"; }
+    XF86AudioNext  { spawn "alis" "mpris" "next"; }
+    XF86AudioPrev  { spawn "alis" "mpris" "previous"; }
 
     // Keyboard shortcuts for media (when no media keys are available).
-    Ctrl+Mod+Space { spawn "inir" "mpris" "playPause"; }
-    Mod+Alt+N      { spawn "inir" "mpris" "next"; }
-    Mod+Alt+P      { spawn "inir" "mpris" "previous"; }
-    Mod+Shift+M    { spawn "inir" "audio" "mute"; }
-    Mod+Shift+P    { spawn "inir" "mpris" "playPause"; }
-    Mod+Shift+N    { spawn "inir" "mpris" "next"; }
-    Mod+Shift+B    { spawn "inir" "mpris" "previous"; }
+    Ctrl+Mod+Space { spawn "alis" "mpris" "playPause"; }
+    Mod+Alt+N      { spawn "alis" "mpris" "next"; }
+    Mod+Alt+P      { spawn "alis" "mpris" "previous"; }
+    Mod+Shift+M    { spawn "alis" "audio" "mute"; }
+    Mod+Shift+P    { spawn "alis" "mpris" "playPause"; }
+    Mod+Shift+N    { spawn "alis" "mpris" "next"; }
+    Mod+Shift+B    { spawn "alis" "mpris" "previous"; }
 }
 
 recent-windows {

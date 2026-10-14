@@ -17,7 +17,7 @@ import qs.modules.common.functions
 //   zzz    → placa con esquina cortada (chamfer) + hairline (look consola/poster)
 //   angel  → tarjeta de vidrio
 //   regalia→ tile sólido: jerarquía por masa/color, sin marcos ornamentales
-//   inir   → capa plana con borde fino
+//   alis   → capa plana con borde fino
 //   aurora → sub-superficie translúcida
 //   material/cards → rectángulo redondeado con el color de capa
 //
@@ -95,7 +95,7 @@ Item {
     readonly property bool _zzz: root._resolvedDialect === "zzz"
     readonly property bool _angel: root._resolvedDialect === "angel"
     readonly property bool _regalia: root._resolvedDialect === "regalia"
-    readonly property bool _inir: root._resolvedDialect === "inir"
+    readonly property bool _alis: root._resolvedDialect === "alis"
     readonly property bool _aurora: root._resolvedDialect === "aurora" || root._angel
     readonly property bool _cookie: root._resolvedDialect === "cookie"
     readonly property bool _island: root._resolvedDialect === "island"
@@ -115,7 +115,7 @@ Item {
             : root.elevation === 1 ? Appearance.regalia.bg1
             : root.elevation === 2 ? Appearance.regalia.bg2
             : root.elevation === 3 ? Appearance.regalia.bg3 : Appearance.regalia.bg4)
-        : root._inir ? (root.elevation <= 0 ? Appearance.inir.colLayer0 : Appearance.inir.colLayer1)
+        : root._alis ? (root.elevation <= 0 ? Appearance.alis.colLayer0 : Appearance.alis.colLayer1)
         : root._aurora ? Appearance.aurora.colSubSurface
         : (root.elevation <= 0 ? Appearance.colors.colLayer0
           : root.elevation === 1 ? Appearance.colors.colLayer1
@@ -129,7 +129,7 @@ Item {
         : root.island ? Math.min(width, height) / 2
         : root._angel ? Appearance.angel.roundingSmall
         : root._regalia ? Appearance.regalia.roundNormal
-        : root._inir ? Appearance.inir.roundingNormal
+        : root._alis ? Appearance.alis.roundingNormal
         : (root.cardStyle ? Appearance.rounding.normal : Appearance.rounding.small)
 
     // ── Borde ──
@@ -138,11 +138,11 @@ Item {
         : root.island ? 1
         : root._angel ? Appearance.angel.cardBorderWidth
         : root._regalia ? 0
-        : root._inir ? 1
+        : root._alis ? 1
         : (root.cardStyle ? 1 : 0)
     readonly property color _borderColor: root._angel ? Appearance.angel.colCardBorder
         : root._regalia ? "transparent"
-        : root._inir ? Appearance.inir.colBorder
+        : root._alis ? Appearance.alis.colBorder
         : Appearance.colors.colLayer0Border
 
     // ── Backdrop de vidrio (aurora opt-in / island glass) debajo de la cara ──

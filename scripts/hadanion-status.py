@@ -10,7 +10,7 @@ ENTRYPOINTS = {
     "session": "HadalisSession.qml",
     "output": "HadalisOutput.qml",
     "settings": "modules/settings/CompanionConfig.qml",
-    "binary": "native/bin/inir-companiond",
+    "binary": "native/bin/alis-companiond",
 }
 
 

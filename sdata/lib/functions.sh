@@ -1,4 +1,4 @@
-# Core functions for iNiR installer
+# Core functions for Alis installer
 # This is NOT a script for execution, but for loading functions
 
 # shellcheck shell=bash
@@ -17,7 +17,7 @@ function v(){
       echo "  e = Exit now"
       echo "  s = Skip this command"
       echo "  yesforall = Yes and don't ask again"
-      
+
       # Read with timeout (60s), default to Yes if timeout
       local p
       if read -t 60 -p "====> " p; then
@@ -27,7 +27,7 @@ function v(){
         echo -e "${STY_YELLOW}Timeout reached, assuming Yes...${STY_RST}"
         p="y"
       fi
-      
+
       case $p in
         [yY] | "") break ;;
         [eE]) echo -e "${STY_BLUE}Exiting...${STY_RST}" ;exit ;break ;;
@@ -46,7 +46,7 @@ function v(){
 
 function x(){
   if "$@";then local cmdstatus=0;else local cmdstatus=1;fi
-  
+
   # In non-interactive mode, fail immediately on error
   if ! $ask && [ $cmdstatus == 1 ]; then
      echo -e "${STY_RED}[$0]: Command \"${STY_GREEN}$*${STY_RED}\" failed in non-interactive mode. Exiting...${STY_RST}"
@@ -59,7 +59,7 @@ function x(){
     echo "  r = Repeat this command (DEFAULT)"
     echo "  e = Exit now"
     echo "  i = Ignore this error and continue"
-    
+
     local p
     if read -t 60 -p " [R/e/i]: " p; then
         :
@@ -146,7 +146,7 @@ cp_file(){
   x mkdir -p "$(dirname "$dst")"
 
   # Avoid failing when source and destination are the same file
-  # (e.g. when ~/.config/quickshell/inir points into the repo).
+  # (e.g. when ~/.config/quickshell/alis points into the repo).
   if [[ -e "$dst" ]]; then
     local src_real dst_real
     src_real="$(realpath -se "$src" 2>/dev/null || echo "$src")"
@@ -167,14 +167,14 @@ cp_file(){
 
 # Generate rsync exclusions from the same policy used by package delivery and manifests.
 # Resolve relative paths against the source checkout, not the copied directory's basename.
-INIR_PAYLOAD_TOOL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/runtime-payload.py"
+ALIS_PAYLOAD_TOOL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/runtime-payload.py"
 _runtime_rsync() {
   local source_path payload_root relative filters
   source_path="$(realpath -e -- "$1")" || return
-  payload_root="$(cd "$(dirname "$INIR_PAYLOAD_TOOL")/../.." && pwd)" || return
+  payload_root="$(cd "$(dirname "$ALIS_PAYLOAD_TOOL")/../.." && pwd)" || return
   relative="${source_path#"$payload_root"/}"
   [[ "$relative" != "$source_path" ]] || { echo "Install source is outside repository" >&2; return 1; }
-  filters="$(python3 "$INIR_PAYLOAD_TOOL" filters --root "$payload_root" --subdir "$relative")" || return
+  filters="$(python3 "$ALIS_PAYLOAD_TOOL" filters --root "$payload_root" --subdir "$relative")" || return
   local -a exclusions
   mapfile -t exclusions <<< "$filters"
   local target="$2"
@@ -272,8 +272,8 @@ function ensure_launcher_path_in_shells(){
   local launcher_dir="$1"
   [[ -n "$launcher_dir" ]] || return 0
 
-  local marker="# iNiR launcher PATH"
-  local end_marker="# end iNiR launcher PATH"
+  local marker="# Alis launcher PATH"
+  local end_marker="# end Alis launcher PATH"
   local sh_block="
 ${marker}
 case \":\$PATH:\" in
@@ -292,7 +292,7 @@ ${end_marker}
 
   local fish_conf_dir="${XDG_CONFIG_HOME}/fish/conf.d"
   mkdir -p "$fish_conf_dir"
-  cat > "${fish_conf_dir}/inir-path.fish" << EOF
+  cat > "${fish_conf_dir}/alis-path.fish" << EOF
 if not contains -- "${launcher_dir}" \$PATH
     set -gx PATH "${launcher_dir}" \$PATH
 end

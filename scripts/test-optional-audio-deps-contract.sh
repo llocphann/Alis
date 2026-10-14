@@ -13,14 +13,14 @@ for runtime_path in \
 done
 
 python3 - \
-  sdata/dist-arch/inir-audio/PKGBUILD \
-  sdata/dist-arch/inir-deps/PKGBUILD \
-  distro/arch/inir-shell/PKGBUILD \
-  distro/arch/inir-shell/.SRCINFO \
-  distro/arch/inir-shell-git/PKGBUILD \
-  distro/arch/inir-shell-git/.SRCINFO \
-  distro/arch/inir-meta/PKGBUILD \
-  distro/arch/inir-meta/.SRCINFO <<'PY'
+  sdata/dist-arch/alis-audio/PKGBUILD \
+  sdata/dist-arch/alis-deps/PKGBUILD \
+  distro/arch/alis-shell/PKGBUILD \
+  distro/arch/alis-shell/.SRCINFO \
+  distro/arch/alis-shell-git/PKGBUILD \
+  distro/arch/alis-shell-git/.SRCINFO \
+  distro/arch/alis-meta/PKGBUILD \
+  distro/arch/alis-meta/.SRCINFO <<'PY'
 from pathlib import Path
 import re
 import sys
@@ -112,29 +112,29 @@ media_controller="services/MprisController.qml"
 audio_doc="docs/AUDIO_MEDIA.md"
 packages_doc="docs/PACKAGES.md"
 deps_map="sdata/lib/deps-map.sh"
-audio_bundle="sdata/dist-arch/inir-audio/PKGBUILD"
-deps_bundle="sdata/dist-arch/inir-deps/PKGBUILD"
-meta_pkg="distro/arch/inir-meta/PKGBUILD"
-meta_srcinfo="distro/arch/inir-meta/.SRCINFO"
+audio_bundle="sdata/dist-arch/alis-audio/PKGBUILD"
+deps_bundle="sdata/dist-arch/alis-deps/PKGBUILD"
+meta_pkg="distro/arch/alis-meta/PKGBUILD"
+meta_srcinfo="distro/arch/alis-meta/.SRCINFO"
 mpd_migration="sdata/migrations/042-mpd-mpris-bridge.sh"
 
-for pkg in distro/arch/inir-shell/PKGBUILD distro/arch/inir-shell-git/PKGBUILD; do
+for pkg in distro/arch/alis-shell/PKGBUILD distro/arch/alis-shell-git/PKGBUILD; do
   grep -Eq "'mpd-mpris: [^']*MPRIS'" "$pkg" \
     || { printf 'FAIL: %s does not advertise the MPD MPRIS bridge\n' "$pkg" >&2; exit 1; }
 done
-for srcinfo in distro/arch/inir-shell/.SRCINFO distro/arch/inir-shell-git/.SRCINFO; do
+for srcinfo in distro/arch/alis-shell/.SRCINFO distro/arch/alis-shell-git/.SRCINFO; do
   grep -Eq "optdepends = mpd-mpris: .*MPRIS" "$srcinfo" \
     || { printf 'FAIL: %s does not advertise the MPD MPRIS bridge\n' "$srcinfo" >&2; exit 1; }
 done
 
 grep -Eq '^[[:space:]]+mpd-mpris$' "$audio_bundle" \
-  || { printf 'FAIL: inir-audio must include mpd-mpris for MPD/rmpc media integration\n' >&2; exit 1; }
+  || { printf 'FAIL: alis-audio must include mpd-mpris for MPD/rmpc media integration\n' >&2; exit 1; }
 grep -Eq '^[[:space:]]+mpd-mpris$' "$deps_bundle" \
-  || { printf 'FAIL: inir-deps must track official mpd-mpris as an installed dependency candidate\n' >&2; exit 1; }
+  || { printf 'FAIL: alis-deps must track official mpd-mpris as an installed dependency candidate\n' >&2; exit 1; }
 grep -Eq '^[[:space:]]+mpd-mpris$' "$meta_pkg" \
   || { printf 'FAIL: full Arch meta-package must install mpd-mpris for MPD/rmpc media integration\n' >&2; exit 1; }
 grep -Fq "depends = mpd-mpris" "$meta_srcinfo" \
-  || { printf 'FAIL: inir-meta .SRCINFO must include mpd-mpris\n' >&2; exit 1; }
+  || { printf 'FAIL: alis-meta .SRCINFO must include mpd-mpris\n' >&2; exit 1; }
 grep -Fq 'DEPS_AUDIO_MPD_MPRIS="arch:mpd-mpris' "$deps_map" \
   || { printf 'FAIL: dependency routing omits the Arch mpd-mpris bridge\n' >&2; exit 1; }
 

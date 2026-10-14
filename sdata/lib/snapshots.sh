@@ -1,4 +1,4 @@
-# Snapshot system for iNiR
+# Snapshot system for Alis
 # Time-machine style backups before updates
 # This script is meant to be sourced.
 
@@ -6,12 +6,12 @@
 
 SNAPSHOTS_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/snapshots"
 MAX_SNAPSHOTS=10
-INIR_CONFIG_DIR="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME}/illogical-impulse}"
+ALIS_CONFIG_DIR="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME}/illogical-impulse}"
 
 # Paths to snapshot
 SNAPSHOT_PATHS=(
-    "${XDG_CONFIG_HOME}/quickshell/inir"
-    "${INIR_CONFIG_DIR}/config.json"
+    "${XDG_CONFIG_HOME}/quickshell/alis"
+    "${ALIS_CONFIG_DIR}/config.json"
     "${XDG_CONFIG_HOME}/niri/config.kdl"
     "${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/desktop-items.json"
 )
@@ -23,37 +23,37 @@ create_snapshot() {
     local reason="${1:-manual}"
     local description="${2:-}"
     local commit_after="${3:-}"
-    
+
     local timestamp=$(date +%Y%m%d-%H%M%S)
     local commit_before=$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown")
     local version_before=$(get_installed_version 2>/dev/null || echo "unknown")
     local snapshot_id="${timestamp}-${commit_before}"
     local snapshot_dir="${SNAPSHOTS_DIR}/${snapshot_id}"
-    
+
     mkdir -p "$snapshot_dir"
-    
+
     # Copy QML code
-    if [[ -d "${XDG_CONFIG_HOME}/quickshell/inir" ]]; then
-        rsync -a --exclude='.inir-manifest' "${XDG_CONFIG_HOME}/quickshell/inir/" "${snapshot_dir}/inir/"
+    if [[ -d "${XDG_CONFIG_HOME}/quickshell/alis" ]]; then
+        rsync -a --exclude='.alis-manifest' "${XDG_CONFIG_HOME}/quickshell/alis/" "${snapshot_dir}/alis/"
     fi
 
     if [[ -d "${XDG_CONFIG_HOME}/quickshell/ii" ]]; then
         rsync -a --exclude='.ii-manifest' "${XDG_CONFIG_HOME}/quickshell/ii/" "${snapshot_dir}/ii/"
     fi
-    
+
     # Copy user config
-    if [[ -f "${INIR_CONFIG_DIR}/config.json" ]]; then
-        cp "${INIR_CONFIG_DIR}/config.json" "${snapshot_dir}/"
+    if [[ -f "${ALIS_CONFIG_DIR}/config.json" ]]; then
+        cp "${ALIS_CONFIG_DIR}/config.json" "${snapshot_dir}/"
     fi
-    
+
     # Copy niri config
     if [[ -f "${XDG_CONFIG_HOME}/niri/config.kdl" ]]; then
         cp "${XDG_CONFIG_HOME}/niri/config.kdl" "${snapshot_dir}/niri-config.kdl"
     fi
-    
+
     # Copy migrations state
-    if [[ -f "${INIR_CONFIG_DIR}/migrations.json" ]]; then
-        cp "${INIR_CONFIG_DIR}/migrations.json" "${snapshot_dir}/"
+    if [[ -f "${ALIS_CONFIG_DIR}/migrations.json" ]]; then
+        cp "${ALIS_CONFIG_DIR}/migrations.json" "${snapshot_dir}/"
     fi
 
     # Copy managed desktop-item state. It lives in XDG state, not the config
@@ -62,7 +62,7 @@ create_snapshot() {
     if [[ -f "$desktop_items_state" ]]; then
         cp "$desktop_items_state" "${snapshot_dir}/desktop-items.json"
     fi
-    
+
     # Create metadata
     cat > "${snapshot_dir}/snapshot.json" << EOF
 {
@@ -75,10 +75,10 @@ create_snapshot() {
   "description": "${description:-Auto snapshot before ${reason}}"
 }
 EOF
-    
+
     # Cleanup old snapshots
     cleanup_old_snapshots
-    
+
     echo "$snapshot_id"
 }
 
@@ -87,7 +87,7 @@ EOF
 ###############################################################################
 list_snapshots() {
     [[ ! -d "$SNAPSHOTS_DIR" ]] && return
-    
+
     for dir in $(ls -1t "$SNAPSHOTS_DIR" 2>/dev/null); do
         local meta="${SNAPSHOTS_DIR}/${dir}/snapshot.json"
         [[ -f "$meta" ]] && echo "$dir"
@@ -96,15 +96,15 @@ list_snapshots() {
 
 show_snapshots() {
     local snapshots=($(list_snapshots))
-    
+
     if [[ ${#snapshots[@]} -eq 0 ]]; then
         echo -e "${STY_YELLOW}No snapshots found${STY_RST}"
         return 1
     fi
-    
+
     echo -e "${STY_CYAN}${STY_BOLD}Available Snapshots${STY_RST}"
     echo ""
-    
+
     local i=1
     for snap in "${snapshots[@]}"; do
         local meta="${SNAPSHOTS_DIR}/${snap}/snapshot.json"
@@ -139,60 +139,60 @@ restore_snapshot() {
         [[ -n "$update_hint" ]] && tui_info "Use your package manager for shell payload changes: $update_hint"
         return 1
     fi
-    
+
     if [[ ! -d "$snapshot_dir" ]]; then
         log_error "Snapshot not found: $snapshot_id"
         return 1
     fi
-    
+
     local meta="${snapshot_dir}/snapshot.json"
     local commit_before=""
     if [[ -f "$meta" ]] && command -v jq &>/dev/null; then
         commit_before=$(jq -r '.commit_before' "$meta")
     fi
-    
+
     echo -e "${STY_CYAN}Restoring snapshot: ${snapshot_id}${STY_RST}"
-    
+
     # Stop the shell through its lifecycle owner before replacing files.
-    local runtime_target="${XDG_CONFIG_HOME}/quickshell/inir"
+    local runtime_target="${XDG_CONFIG_HOME}/quickshell/alis"
     local runtime_launcher=""
-    if command -v inir >/dev/null 2>&1; then
-        runtime_launcher="$(command -v inir)"
-    elif [[ -x "${runtime_target}/scripts/inir" ]]; then
-        runtime_launcher="${runtime_target}/scripts/inir"
+    if command -v alis >/dev/null 2>&1; then
+        runtime_launcher="$(command -v alis)"
+    elif [[ -x "${runtime_target}/scripts/alis" ]]; then
+        runtime_launcher="${runtime_target}/scripts/alis"
     fi
     if [[ -n "$runtime_launcher" ]]; then
-        INIR_RUNTIME_DIR="$runtime_target" "$runtime_launcher" kill -c "$runtime_target" >/dev/null 2>&1 || true
+        ALIS_RUNTIME_DIR="$runtime_target" "$runtime_launcher" kill -c "$runtime_target" >/dev/null 2>&1 || true
     elif command -v systemctl >/dev/null 2>&1; then
-        systemctl --user stop inir.service >/dev/null 2>&1 || true
+        systemctl --user stop alis.service >/dev/null 2>&1 || true
     fi
-    
+
     # Restore QML code
-    if [[ -d "${snapshot_dir}/inir" ]]; then
+    if [[ -d "${snapshot_dir}/alis" ]]; then
         log_info "Restoring QML code..."
-        rsync -a --delete "${snapshot_dir}/inir/" "${XDG_CONFIG_HOME}/quickshell/inir/"
+        rsync -a --delete "${snapshot_dir}/alis/" "${XDG_CONFIG_HOME}/quickshell/alis/"
     elif [[ -d "${snapshot_dir}/ii" ]]; then
         log_info "Restoring QML code..."
-        rsync -a --delete "${snapshot_dir}/ii/" "${XDG_CONFIG_HOME}/quickshell/inir/"
+        rsync -a --delete "${snapshot_dir}/ii/" "${XDG_CONFIG_HOME}/quickshell/alis/"
     fi
-    
+
     # Restore user config
     if [[ -f "${snapshot_dir}/config.json" ]]; then
         log_info "Restoring user config..."
-        mkdir -p "${INIR_CONFIG_DIR}"
-        cp "${snapshot_dir}/config.json" "${INIR_CONFIG_DIR}/"
+        mkdir -p "${ALIS_CONFIG_DIR}"
+        cp "${snapshot_dir}/config.json" "${ALIS_CONFIG_DIR}/"
     fi
-    
+
     # Restore niri config
     if [[ -f "${snapshot_dir}/niri-config.kdl" ]]; then
         log_info "Restoring niri config..."
         cp "${snapshot_dir}/niri-config.kdl" "${XDG_CONFIG_HOME}/niri/config.kdl"
     fi
-    
+
     # Restore migrations state
     if [[ -f "${snapshot_dir}/migrations.json" ]]; then
-        mkdir -p "${INIR_CONFIG_DIR}"
-        cp "${snapshot_dir}/migrations.json" "${INIR_CONFIG_DIR}/"
+        mkdir -p "${ALIS_CONFIG_DIR}"
+        cp "${snapshot_dir}/migrations.json" "${ALIS_CONFIG_DIR}/"
     fi
 
     if [[ -f "${snapshot_dir}/desktop-items.json" ]]; then
@@ -201,7 +201,7 @@ restore_snapshot() {
         cp "${snapshot_dir}/desktop-items.json" \
             "${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/desktop-items.json"
     fi
-    
+
     # Checkout git to that commit (stay on branch if possible)
     if [[ -n "$commit_before" && "$commit_before" != "unknown" ]]; then
         log_info "Checking out commit ${commit_before}..."
@@ -214,28 +214,28 @@ restore_snapshot() {
             git -C "$REPO_ROOT" checkout "$commit_before" 2>/dev/null || true
         fi
     fi
-    
+
     # Update version tracking
     local version=$(jq -r '.version_before // "unknown"' "$meta" 2>/dev/null || echo "unknown")
     set_installed_version "$version" "$commit_before" "rollback"
-    
+
     # Refresh launcher/service topology after the checkout moved backwards.
     declare -F sync_launcher_from_repo >/dev/null 2>&1 && sync_launcher_from_repo >/dev/null 2>&1 || true
-    declare -F sync_user_inir_service_from_repo_if_present >/dev/null 2>&1 \
-        && sync_user_inir_service_from_repo_if_present >/dev/null 2>&1 || true
-    declare -F ensure_user_inir_service_enabled >/dev/null 2>&1 \
-        && ensure_user_inir_service_enabled >/dev/null 2>&1 || true
+    declare -F sync_user_alis_service_from_repo_if_present >/dev/null 2>&1 \
+        && sync_user_alis_service_from_repo_if_present >/dev/null 2>&1 || true
+    declare -F ensure_user_alis_service_enabled >/dev/null 2>&1 \
+        && ensure_user_alis_service_enabled >/dev/null 2>&1 || true
 
     local session_active=false
-    if declare -F inir_supported_session_active >/dev/null 2>&1; then
-        inir_supported_session_active && session_active=true
+    if declare -F alis_supported_session_active >/dev/null 2>&1; then
+        alis_supported_session_active && session_active=true
     elif [[ -n "${NIRI_SOCKET:-}" ]] || pgrep -x niri >/dev/null 2>&1 \
             || [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] || pgrep -x Hyprland >/dev/null 2>&1; then
         session_active=true
     fi
 
     if $session_active; then
-        log_info "Starting shell through the iNiR lifecycle..."
+        log_info "Starting shell through the Alis lifecycle..."
         if declare -F restart_updated_shell >/dev/null 2>&1; then
             if ! restart_updated_shell "$runtime_target"; then
                 log_error "Snapshot restored but shell restart failed"
@@ -243,11 +243,11 @@ restore_snapshot() {
             fi
         else
             local restored_launcher=""
-            command -v inir >/dev/null 2>&1 && restored_launcher="$(command -v inir)"
-            [[ -z "$restored_launcher" && -x "${runtime_target}/scripts/inir" ]] \
-                && restored_launcher="${runtime_target}/scripts/inir"
+            command -v alis >/dev/null 2>&1 && restored_launcher="$(command -v alis)"
+            [[ -z "$restored_launcher" && -x "${runtime_target}/scripts/alis" ]] \
+                && restored_launcher="${runtime_target}/scripts/alis"
             if [[ -z "$restored_launcher" ]] \
-                    || ! INIR_RUNTIME_DIR="$runtime_target" "$restored_launcher" restart -q -c "$runtime_target"; then
+                    || ! ALIS_RUNTIME_DIR="$runtime_target" "$restored_launcher" restart -q -c "$runtime_target"; then
                 log_error "Snapshot restored but no verified launcher restart was available"
                 return 1
             fi
@@ -255,7 +255,7 @@ restore_snapshot() {
         tui_success "Snapshot restored and shell restarted"
     else
         tui_warn "No supported compositor session - shell restart skipped"
-        tui_info "Run: inir restart (from your Niri/Hyprland session)"
+        tui_info "Run: alis restart (from your Niri/Hyprland session)"
         tui_success "Snapshot restored"
     fi
 
@@ -278,17 +278,17 @@ run_rollback() {
     fi
 
     local snapshots=($(list_snapshots))
-    
+
     if [[ ${#snapshots[@]} -eq 0 ]]; then
         tui_warn "No snapshots available"
         tui_info "Snapshots are created automatically before updates"
         return 1
     fi
-    
+
     echo ""
     tui_title "Available Snapshots"
     echo ""
-    
+
     # Build options array with details
     local options=()
     local i=1
@@ -306,7 +306,7 @@ run_rollback() {
         ((i++))
     done
     options+=("Cancel")
-    
+
     local choice
     if $HAS_GUM; then
         choice=$(gum choose --header "Select snapshot to restore:" "${options[@]}")
@@ -317,9 +317,9 @@ run_rollback() {
             break
         done
     fi
-    
+
     [[ "$choice" == "Cancel" || -z "$choice" ]] && return 0
-    
+
     # Find the index of the selected option
     local idx=-1
     for ((i=0; i<${#options[@]}; i++)); do
@@ -328,11 +328,11 @@ run_rollback() {
             break
         fi
     done
-    
+
     if [[ $idx -ge 0 && $idx -lt ${#snapshots[@]} ]]; then
         local snapshot_id="${snapshots[$idx]}"
         local meta="${SNAPSHOTS_DIR}/${snapshot_id}/snapshot.json"
-        
+
         echo ""
         tui_warn "This will restore your system to:"
         if [[ -f "$meta" ]] && command -v jq &>/dev/null; then
@@ -341,7 +341,7 @@ run_rollback() {
             tui_status_line "Date:" "$(jq -r '.created_at' "$meta" | cut -d'T' -f1)" ""
         fi
         echo ""
-        
+
         if tui_confirm "Continue with rollback?" "no"; then
             restore_snapshot "$snapshot_id"
         else
@@ -357,10 +357,10 @@ run_rollback() {
 ###############################################################################
 cleanup_old_snapshots() {
     [[ ! -d "$SNAPSHOTS_DIR" ]] && return
-    
+
     local snapshots=($(list_snapshots))
     local count=${#snapshots[@]}
-    
+
     if [[ $count -gt $MAX_SNAPSHOTS ]]; then
         local to_delete=$((count - MAX_SNAPSHOTS))
         for snap in "${snapshots[@]: -$to_delete}"; do
@@ -420,7 +420,7 @@ show_pending_commits() {
     local branch
     branch="$(get_update_tracking_branch)"
     local remote="origin/${branch}"
-    
+
     echo -e "${STY_CYAN}New commits available:${STY_RST}"
     echo ""
     git -C "$REPO_ROOT" log --oneline HEAD..${remote} 2>/dev/null | head -10 | while read -r line; do

@@ -38,7 +38,7 @@ ColumnLayout {
         bottomLeftRadius: Appearance.rounding.unsharpen
         bottomRightRadius: Appearance.rounding.unsharpen
         color: Appearance.angelEverywhere ? Appearance.angel.colGlassElevated
-            : Appearance.inirEverywhere ? Appearance.inir.colLayer2 
+            : Appearance.alisEverywhere ? Appearance.alis.colLayer2
             : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colSurfaceContainerHighest
         implicitHeight: codeBlockTitleBarRowLayout.implicitHeight + codeBlockHeaderPadding * 2
 
@@ -98,11 +98,11 @@ ColumnLayout {
 
                     onClicked: {
                         const downloadPath = FileUtils.trimFileProtocol(Directories.downloads)
-                        Quickshell.execDetached(["/usr/bin/bash", "-c", 
+                        Quickshell.execDetached(["/usr/bin/bash", "-c",
                             `echo '${StringUtils.shellSingleQuoteEscape(segmentContent)}' > '${downloadPath}/code.${segmentLang || "txt"}'`
                         ])
-                        Quickshell.execDetached(["/usr/bin/notify-send", 
-                            Translation.tr("Code saved to file"), 
+                        Quickshell.execDetached(["/usr/bin/notify-send",
+                            Translation.tr("Code saved to file"),
                             Translation.tr("Saved to %1").arg(`${downloadPath}/code.${segmentLang || "txt"}`),
                             "-a", "Shell"
                         ])
@@ -140,7 +140,7 @@ ColumnLayout {
             bottomLeftRadius: codeBlockBackgroundRounding
             topRightRadius: Appearance.rounding.unsharpen
             bottomRightRadius: Appearance.rounding.unsharpen
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+            color: Appearance.alisEverywhere ? Appearance.alis.colLayer1
                 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
 
             ColumnLayout {
@@ -153,7 +153,7 @@ ColumnLayout {
                     topMargin: 6
                 }
                 spacing: 0
-                
+
                 Repeater {
                     model: codeTextArea.text.split("\n").length
                     Text {
@@ -177,7 +177,7 @@ ColumnLayout {
             bottomLeftRadius: Appearance.rounding.unsharpen
             topRightRadius: Appearance.rounding.unsharpen
             bottomRightRadius: codeBlockBackgroundRounding
-            color: Appearance.inirEverywhere ? Appearance.inir.colLayer1
+            color: Appearance.alisEverywhere ? Appearance.alis.colLayer1
                 : Appearance.auroraEverywhere ? Appearance.aurora.colElevatedSurface : Appearance.colors.colLayer2
             implicitHeight: codeColumnLayout.implicitHeight
 
@@ -195,7 +195,7 @@ ColumnLayout {
                     // contentHeight: codeTextArea.contentHeight
                     clip: true
                     ScrollBar.vertical.policy: ScrollBar.AlwaysOff
-                    
+
                     ScrollBar.horizontal: ScrollBar {
                         anchors.bottom: parent.bottom
                         anchors.left: parent.left
@@ -209,7 +209,7 @@ ColumnLayout {
                             enabled: Appearance.animationsEnabled
                             animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                         }
-                        
+
                         contentItem: Rectangle {
                             implicitHeight: 6
                             radius: Appearance.rounding.small

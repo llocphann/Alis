@@ -19,10 +19,10 @@ ContentPage {
     readonly property var defaultPanels: ({
         "abyss": FamilyPolicy.abyssPanels,
         "ii": [
-            "iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", 
-            "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", 
-            "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", 
-            "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", 
+            "iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock",
+            "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard",
+            "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners",
+            "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar",
             "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard"
         ],
         "waffle": [
@@ -39,13 +39,13 @@ ContentPage {
     function setPanelEnabled(panelId: string, enabled: bool) {
         let panels = [...(Config.options?.enabledPanels ?? [])]
         const idx = panels.indexOf(panelId)
-        
+
         if (enabled && idx === -1) {
             panels.push(panelId)
         } else if (!enabled && idx !== -1) {
             panels.splice(idx, 1)
         }
-        
+
         Config.setNestedValue("enabledPanels", panels)
     }
 
@@ -163,7 +163,7 @@ ContentPage {
                     { displayName: "Abyss", icon: "water", value: "abyss" },
                     { displayName: "Waffle", icon: "window", value: "waffle" }
                 ]
-                onSelected: value => Quickshell.execDetached([Quickshell.shellPath("scripts/inir"),"panelFamily","set",value])
+                onSelected: value => Quickshell.execDetached([Quickshell.shellPath("scripts/alis"),"panelFamily","set",value])
             }
         }
     }

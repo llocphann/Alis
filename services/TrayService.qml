@@ -17,7 +17,7 @@ Singleton {
     property bool _xembedProxyCheckedOnce: false
 
     property bool smartTray: Config.options?.tray?.filterPassive ?? true
-    
+
     // Apps that don't implement DBus Activate properly (libappindicator issue)
     // These apps need workarounds: gtk-launch or window focus
     // matches: array of substrings to match in tray id/title OR window app_id/title
@@ -40,7 +40,7 @@ Singleton {
         { matches: ["zoom", "Zoom"], launch: "zoom" },
         { matches: ["easyeffects", "EasyEffects", "com.github.wwmm.easyeffects"], launch: "easyeffects" },
     ]
-    
+
     // Check if an item is a problematic app
     function getProblematicAppInfo(item): var {
         if (!item) return null;
@@ -61,7 +61,7 @@ Singleton {
         }
         return null;
     }
-    
+
     // Check if a string matches any pattern from an app's matches array
     function matchesApp(str, app): bool {
         if (!str || !app?.matches) return false;
@@ -71,15 +71,15 @@ Singleton {
         }
         return false;
     }
-    
+
     // Smart activate: tries to focus existing window or launch app
     // Returns true if handled, false if should fall back to item.activate()
     function smartActivate(item): bool {
         if (!item) return false;
-        
+
         const appInfo = getProblematicAppInfo(item);
         if (!appInfo) return false;  // Not a problematic app, use normal activate
-        
+
         // Try to find and focus existing window using ToplevelManager
         let toplevel = null;
         for (const tl of ToplevelManager.toplevels.values) {
@@ -90,68 +90,68 @@ Singleton {
                 break;
             }
         }
-        
+
         if (toplevel) {
             toplevel.activate();
             return true;
         }
-        
+
         // No window found - launch app (use login shell for proper PATH including ~/.local/bin)
         ShellExec.execCmd(appInfo.launch);
         return true;
     }
-    
+
     // Smart toggle: click to focus existing window or launch app
     // Always focuses/activates, never closes (user expectation for tray click)
     function smartToggle(item): bool {
         if (!item) return false;
-        
+
         const id = (item.id ?? "").toLowerCase();
         root._log(`[TrayService] smartToggle called for: ${id}`);
         const appInfo = getProblematicAppInfo(item);
-        
+
         // Find window using ToplevelManager
         let toplevel = null;
         for (const tl of ToplevelManager.toplevels.values) {
             const appId = (tl.appId ?? "").toLowerCase();
             const tlTitle = (tl.title ?? "").toLowerCase();
-            
+
             let isMatch = false;
             if (appInfo) {
                 isMatch = matchesApp(appId, appInfo) || matchesApp(tlTitle, appInfo);
             } else {
-                isMatch = appId.includes(id) || id.includes(appId) || 
+                isMatch = appId.includes(id) || id.includes(appId) ||
                           tlTitle.includes(id) || appId === id;
             }
-            
+
             if (isMatch) {
                 root._log(`[TrayService] Match found for ${id}: ${appId} / ${tlTitle}`);
                 toplevel = tl;
                 break;
             }
         }
-        
+
         if (toplevel) {
             toplevel.activate();
             return true;
         }
-        
+
         // No window found
         if (appInfo) {
             if (appInfo.focusOnly) {
                 root._log(`[TrayService] Window not found for ${id}, but focusOnly is true. Falling back to item.activate().`);
                 return false; // Fallback to item.activate()
             }
-            
+
             // For harmless apps (like Spotify usually), try launching to restore
             root._log(`[TrayService] Window not found for ${id}, executing launch: ${appInfo.launch}`);
             ShellExec.execCmd(appInfo.launch);
             return true;
         }
-        
+
         return false;
     }
-    
+
     // Filter out invalid items (null or missing id)
     function isValidItem(item) {
         return item && item.id;
@@ -194,7 +194,7 @@ Singleton {
         const title = item.title ?? "";
         const id = item.id ?? "";
         const tooltipDescription = item.tooltipDescription ?? "";
-        
+
         var result = tooltipTitle.length > 0 ? tooltipTitle
                 : (title.length > 0 ? title : id);
         if (tooltipDescription.length > 0) result += " • " + tooltipDescription;
@@ -301,11 +301,11 @@ Singleton {
             "/usr/bin/systemd-run",
             "--user",
             "--quiet",
-            "--unit=inir-xembedsniproxy",
+            "--unit=alis-xembedsniproxy",
             "--collect",
             "--service-type=exec",
-            "--property=BindsTo=inir.service",
-            "--property=After=inir.service",
+            "--property=BindsTo=alis.service",
+            "--property=After=alis.service",
             "--property=Restart=on-failure",
             "--property=RestartSec=1s",
             "--setenv=QT_NO_XDG_DESKTOP_PORTAL=1",

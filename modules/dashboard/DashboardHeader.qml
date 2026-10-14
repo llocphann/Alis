@@ -100,11 +100,11 @@ Item {
         } else event.accepted = false
     }
 
-    readonly property bool inirEverywhere: Appearance.inirEverywhere
+    readonly property bool alisEverywhere: Appearance.alisEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
     readonly property bool showPowerButtons: Config.options?.dashboard?.showPowerButtons ?? true
-    readonly property color colText: abyss ? (Appearance.m3colors.darkmode ? AbyssStyle.textColor : "#000000") : Appearance.angelEverywhere ? Appearance.angel.colText : inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
-    readonly property color colSubtext: abyss ? (Appearance.m3colors.darkmode ? AbyssStyle.textColorMuted : Qt.alpha("#000000", .66)) : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
+    readonly property color colText: abyss ? (Appearance.m3colors.darkmode ? AbyssStyle.textColor : "#000000") : Appearance.angelEverywhere ? Appearance.angel.colText : alisEverywhere ? Appearance.alis.colText : Appearance.colors.colOnLayer0
+    readonly property color colSubtext: abyss ? (Appearance.m3colors.darkmode ? AbyssStyle.textColorMuted : Qt.alpha("#000000", .66)) : Appearance.angelEverywhere ? Appearance.angel.colTextSecondary : alisEverywhere ? Appearance.alis.colTextSecondary : Appearance.colors.colSubtext
 
     component HeaderButton: RippleButton {
         id: headerButton
@@ -113,8 +113,8 @@ Item {
         implicitWidth: root.narrow ? 30 : 38
         implicitHeight: root.narrow ? 30 : 38
         buttonRadius: toggled ? Appearance.rounding.normal : Appearance.rounding.full
-        colBackground: root.abyss ? Qt.alpha(AbyssStyle.accent, .05) : Appearance.angelEverywhere ? Appearance.angel.colGlassCard : root.inirEverywhere ? Appearance.inir.colLayer1 : root.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1
-        colBackgroundHover: root.abyss ? Qt.alpha(AbyssStyle.accent, .12) : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : root.inirEverywhere ? Appearance.inir.colLayer1Hover : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
+        colBackground: root.abyss ? Qt.alpha(AbyssStyle.accent, .05) : Appearance.angelEverywhere ? Appearance.angel.colGlassCard : root.alisEverywhere ? Appearance.alis.colLayer1 : root.auroraEverywhere ? Appearance.aurora.colSubSurface : Appearance.colors.colLayer1
+        colBackgroundHover: root.abyss ? Qt.alpha(AbyssStyle.accent, .12) : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover : root.alisEverywhere ? Appearance.alis.colLayer1Hover : root.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover : Appearance.colors.colLayer1Hover
         colBackgroundToggled: Appearance.colors.colSecondaryContainer
         colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
         Behavior on buttonRadius {
@@ -170,7 +170,7 @@ Item {
             tooltip: Translation.tr("Settings")
             onClicked: {
                 GlobalStates.dashboardOpen = false;
-                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]);
+                Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "settings"]);
             }
         }
         HeaderButton {

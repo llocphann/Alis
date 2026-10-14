@@ -134,7 +134,7 @@ ColumnLayout {
     function invertColorsForMode(toLightMode) {
         const ct = Config.options?.appearance?.customTheme ?? ({})
         const next = JSON.parse(JSON.stringify(ct))
-        
+
         // Swap background and foreground colors
         const swaps = [
             ["m3background", "m3onBackground"],
@@ -142,13 +142,13 @@ ColumnLayout {
             ["m3surfaceContainerLowest", "m3surfaceContainerHighest"],
             ["m3surfaceContainerLow", "m3surfaceContainerHigh"],
         ]
-        
+
         swaps.forEach(([a, b]) => {
             const temp = next[a]
             next[a] = next[b]
             next[b] = temp
         })
-        
+
         // Adjust surface containers to create proper gradient
         if (toLightMode) {
             // Light mode: lighten backgrounds
@@ -156,7 +156,7 @@ ColumnLayout {
             next.m3surfaceBright = Appearance.colors.colLayer3
             next.m3surfaceContainer = ColorUtils.lighten(next.m3surfaceContainer, 0.6)
         } else {
-            // Dark mode: darken backgrounds  
+            // Dark mode: darken backgrounds
             next.m3surfaceDim = ColorUtils.darken(next.m3surfaceDim, 0.7)
             next.m3surfaceBright = ColorUtils.darken(next.m3surfaceBright, 0.5)
             next.m3surfaceContainer = ColorUtils.darken(next.m3surfaceContainer, 0.6)
@@ -396,7 +396,7 @@ ColumnLayout {
                                 height: 18
                                 radius: Appearance.rounding.unsharpen
                                 color: index === 0 ? Appearance.m3colors.m3primary : Appearance.m3colors.m3surfaceContainer
-                                
+
                                 StyledText {
                                     anchors.centerIn: parent
                                     text: (index + 1).toString()
@@ -852,7 +852,7 @@ ColumnLayout {
 
     // Store original colors for quick adjustments
     property var originalColors: null
-    
+
     // Debounce timer for quick adjustments
     Timer {
         id: adjustDebounce
@@ -1234,11 +1234,11 @@ ColumnLayout {
                 padding: 8
 
                 background: Rectangle {
-                    color: Appearance.inirEverywhere ? Appearance.inir.colLayer2
+                    color: Appearance.alisEverywhere ? Appearance.alis.colLayer2
                          : Appearance.colors.colLayer2Base
-                    radius: Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
+                    radius: Appearance.alisEverywhere ? Appearance.alis.roundingNormal : Appearance.rounding.normal
                     border.width: 1
-                    border.color: Appearance.inirEverywhere ? Appearance.inir.colBorder
+                    border.color: Appearance.alisEverywhere ? Appearance.alis.colBorder
                                 : Appearance.colors.colLayer0Border
                 }
 
@@ -1278,8 +1278,8 @@ ColumnLayout {
                             required property int index
                             width: presetListView.width
                             implicitHeight: 36
-                            colBackground: modelData.name === root.selectedPresetName 
-                                ? Appearance.colors.colPrimaryContainer 
+                            colBackground: modelData.name === root.selectedPresetName
+                                ? Appearance.colors.colPrimaryContainer
                                 : "transparent"
                             colBackgroundHover: Appearance.colors.colLayer1Hover
                             colRipple: Appearance.colors.colLayer1Active
@@ -1814,7 +1814,7 @@ ColumnLayout {
                     }
 
                     StyledText {
-                        text: "~/.config/illogical-impulse/themes/"
+                        text: "~/.config/alis/themes/"
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         color: Appearance.colors.colSubtext
                         font.family: Appearance.font.family.monospace
@@ -1827,7 +1827,7 @@ ColumnLayout {
                     implicitWidth: statusRow.implicitWidth + 12
                     implicitHeight: 24
                     radius: Appearance.rounding.small
-                    color: root.saveStatus === "saved" ? Appearance.colors.colSuccessContainer 
+                    color: root.saveStatus === "saved" ? Appearance.colors.colSuccessContainer
                          : root.saveStatus === "error" ? Appearance.colors.colErrorContainer
                          : Appearance.colors.colLayer2
 
@@ -1837,7 +1837,7 @@ ColumnLayout {
                         spacing: 4
 
                         MaterialSymbol {
-                            text: root.saveStatus === "saved" ? "check" 
+                            text: root.saveStatus === "saved" ? "check"
                                 : root.saveStatus === "error" ? "error"
                                 : "sync"
                             iconSize: 14
@@ -1903,19 +1903,19 @@ ColumnLayout {
                     implicitWidth: 40
                     implicitHeight: 40
                     radius: Appearance.rounding.small
-                    color: saveNameInput.text.trim().length > 0 
-                        ? Appearance.colors.colPrimary 
+                    color: saveNameInput.text.trim().length > 0
+                        ? Appearance.colors.colPrimary
                         : Appearance.colors.colLayer2
-                    
+
                     MaterialSymbol {
                         anchors.centerIn: parent
                         text: "save"
                         iconSize: 20
-                        color: saveNameInput.text.trim().length > 0 
-                            ? Appearance.colors.colOnPrimary 
+                        color: saveNameInput.text.trim().length > 0
+                            ? Appearance.colors.colOnPrimary
                             : Appearance.colors.colSubtext
                     }
-                    
+
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: saveNameInput.text.trim().length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
