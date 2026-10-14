@@ -12,7 +12,7 @@ make_fixture() {
     local name="$1"
     local home="$tmp/$name"
     mkdir -p "$home"/{bin,config/niri/config.d,config/quickshell/alis,config/systemd/user/niri.service.wants,config/inir,cache}
-    printf '#!/bin/bash\n# Canonical CLI and runtime name is Alis.\nexit 0\n' > "$home/bin/alis"
+    cp "$root/scripts/alis" "$home/bin/alis"
     chmod +x "$home/bin/alis"
     printf '%s\n' '//@ pragma ShellId alis' > "$home/config/quickshell/alis/shell.qml"
     printf '%s\n' 'old user prefs' > "$home/config/inir/preferences.json"
@@ -90,6 +90,15 @@ invoke() {
     bash "$helper" "$@"
 }
 
+make_fixture stale_cli
+printf '\n# stale source revision\n' >> "$tmp/stale_cli/bin/alis"
+if invoke stale_cli --dry-run > "$tmp/stale-cli.log" 2>&1; then
+    die 'accepted a stale canonical CLI before live owner switch'
+fi
+grep -Fq 'Installed canonical CLI differs from source' "$tmp/stale-cli.log" ||
+    die 'stale canonical launcher rejection is not actionable'
+[[ "$(cat "$tmp/stale_cli/state-inir")" == active ]] ||
+    die 'stale CLI preflight stopped original owner'
 make_fixture reject
 # Owner's historic 90-user-extra shortcut must be rejected before any writes.
 printf 'binds {\n Super+E { spawn "/home/user/.local/bin/inir" "terminal" "yazi"; }\n}\n' \
