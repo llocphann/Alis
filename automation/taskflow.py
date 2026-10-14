@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import selectors
 import signal
 import subprocess
 import tempfile
@@ -173,7 +174,15 @@ def intake(task: dict) -> dict:
     identity = f"{task['repository']}#{task['issue_number']}:{task['issue_updated_at']}"
     identifier = "INTAKE-" + hashlib.sha256(identity.encode()).hexdigest()[:20]
     dest = state_dir() / f"{identifier}.json"
+    # Existence alone does not prove that an interrupted write completed.
     if dest.exists():
+        try:
+            with dest.open(encoding="utf-8") as stream:
+                previous = json.load(stream)
+        except (OSError, ValueError):
+            raise TaskError("Incomplete previous intake needs manual reconciliation") from None
+        if previous.get("schema") != "alis.task-intake.v1" or previous.get("id") != identifier:
+            raise TaskError("Previous intake identity mismatch")
         return {"ok": True, "intake_id": identifier, "state": "prepared", "duplicate": True}
     record = {
         "schema": "alis.task-intake.v1", "id": identifier,
@@ -190,7 +199,13 @@ def intake(task: dict) -> dict:
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError:
-        return {"ok": True, "intake_id": identifier, "state": "prepared", "duplicate": True}
+        # Another writer may still be flushing the reserved path.
+        raise TaskError("Concurrent task intake is in progress; inspect before retry")
+    directory = os.open(dest.parent, os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
     return {"ok": True, "intake_id": identifier, "state": "prepared",
             "duplicate": False, "scheduler_dispatched": False}
 
@@ -254,6 +269,58 @@ def _clean_local_tree(repo_path: Path, expected_sha: str):
         raise TaskError("Stale SHA or dirty local checkout; refuse execution")
 
 
+
+def _bounded_test(argv: list[str], checkout: Path) -> dict:
+    """Bound output and wall time; terminate the entire subprocess session."""
+    proc = subprocess.Popen(argv, cwd=checkout, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, start_new_session=True)
+    captured = bytearray()
+    total = 0
+    reason = ""
+    deadline = time.monotonic() + 180
+    selector = selectors.DefaultSelector()
+    try:
+        selector.register(proc.stdout, selectors.EVENT_READ)
+        while selector.get_map():
+            if time.monotonic() >= deadline:
+                reason = "timeout"
+                break
+            for key, _ in selector.select(timeout=0.25):
+                chunk = os.read(key.fileobj.fileno(), 8192)
+                if not chunk:
+                    selector.unregister(key.fileobj)
+                    continue
+                total += len(chunk)
+                if len(captured) < MAX_OUTPUT:
+                    captured.extend(chunk[:MAX_OUTPUT - len(captured)])
+                if total > 32768:
+                    reason = "output_limit"
+                    break
+            if reason:
+                break
+    finally:
+        selector.close()
+        if reason or proc.poll() is None:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            reason = "cleanup_timeout"
+    # Keep bounded local diagnostics; never export raw execution logs to Git.
+    excerpt = captured.decode("utf-8", "replace")
+    excerpt = re.sub(r"(?:ghp_[A-Za-z0-9]{15,}|github_pat_[A-Za-z0-9_]{15,}|"
+                     r"sk-[A-Za-z0-9_-]{16,})", "[REDACTED]", excerpt)
+    excerpt = re.sub(r"(?i)(authorization:\s*bearer\s+)\S+", r"\1[REDACTED]", excerpt)
+    item = {"argv": argv, "exit_code": proc.returncode if not reason else None,
+            "output_excerpt": excerpt, "truncated": total > MAX_OUTPUT}
+    if reason:
+        item["error"] = reason
+    return item
+
+
 def run_local(bundle: dict, checkout: Path, *, approved: bool = False) -> dict:
     """Explicitly approved bounded tests; never execute arbitrary task instructions.
 
@@ -286,13 +353,7 @@ def run_local(bundle: dict, checkout: Path, *, approved: bool = False) -> dict:
     steps = []
     for argv in checked["payload"]["commands"]:
         try:
-            result = subprocess.run(argv, cwd=checkout, capture_output=True, text=True,
-                                    errors="replace", timeout=180, start_new_session=True)
-            output = (result.stdout + "\n" + result.stderr)[:MAX_OUTPUT]
-            steps.append({"argv": argv, "exit_code": result.returncode,
-                          "output_excerpt": output, "truncated": len(result.stdout) + len(result.stderr) > MAX_OUTPUT})
-        except subprocess.TimeoutExpired:
-            steps.append({"argv": argv, "exit_code": None, "error": "timeout"})
+            steps.append(_bounded_test(argv, checkout))
         except OSError:
             steps.append({"argv": argv, "exit_code": None, "error": "spawn_failure"})
         if steps[-1].get("exit_code") != 0:

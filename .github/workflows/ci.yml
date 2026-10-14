@@ -38,6 +38,10 @@ jobs:
           node scripts/test-notification-group-key-policy.mjs
           python3 scripts/test-abyss-notification-presentation-probe.py
 
+      - name: Verify Automation task-code handoff
+        shell: bash
+        run: python3 scripts/test-automation-taskflow.py
+
       - name: Run canonical local validator
         shell: bash
         run: |

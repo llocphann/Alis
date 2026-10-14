@@ -84,6 +84,24 @@ class TaskflowTests(unittest.TestCase):
         with self.assertRaisesRegex(taskflow.TaskError, "Unapproved"):
             taskflow.package(payload)
 
+    def test_previous_partial_intake_is_quarantined(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            task = taskflow.resolve("AUTO-R01", api)
+            first = taskflow.intake(task)
+            file = Path(tmp) / "hadalis-automation/taskflow" / (first["intake_id"] + ".json")
+            file.write_text("{incomplete")
+            with self.assertRaisesRegex(taskflow.TaskError, "Incomplete"):
+                taskflow.intake(task)
+
+    def test_redaction_and_bounded_subprocess(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            # This test runs the allowlisted child implementation with a harmless
+            # python command, not from any Issue or generated manifest.
+            test = taskflow._bounded_test(["python3", "-c", "print('ghp_' + 'a'*32)"], Path(tmp))
+            self.assertEqual(test["exit_code"], 0)
+            self.assertIn("[REDACTED]", test["output_excerpt"])
+            self.assertNotIn("ghp_", test["output_excerpt"])
+
     def test_no_execution_without_approval_or_pinned_source(self):
         bundle = taskflow.package({"schema": "alis.local-handoff.v1", "task": TASK,
                                    "commands": [["git", "diff", "--check"]],
