@@ -42,7 +42,10 @@ ShellRoot {
     root.route=route;root.shown=true;tryVerify(()=>body.ready,6000)
     const content=body.contentItem.item,canvas=find(content,i=>typeof i.beginEditMode==="function")
     check(canvas!==null,"missing real canvas")
-    Config.setNestedValue("dashboard.canvas.widgets",canvas.defaultEntries().map(p=>Object.assign({},p,{visible:["system","weather","media"].includes(p.id),x:p.id==="media"?.66:p.id==="weather"?.33:0,y:0,w:.31,h:.8})))
+    // Three tall side-by-side columns exceed the cards' readable minimum widths
+    // on a nested output. Keep all three real cards active in two valid lanes;
+    // packing overflow is a separate contract from hidden-tree lease cleanup.
+    Config.setNestedValue("dashboard.canvas.widgets",canvas.defaultEntries().map(p=>Object.assign({},p,{visible:["system","weather","media"].includes(p.id),x:p.id==="media"?.5:0,y:p.id==="weather"?.5:0,w:.45,h:p.id==="media"?.8:.4})))
     wait(200)
     const weather=find(content,i=>i.hasData!==undefined && i.now!==undefined)
     const media=find(content,i=>i.hasPlayer!==undefined && i.presentationActive!==undefined)
