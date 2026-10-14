@@ -116,6 +116,58 @@ assert.equal(r.primary_helper.map_write_unknown_sites_truncated,false);
 assert.equal(r.primary_helper.side_effect_freedom_proven,false);
 assert.ok(!JSON.stringify(r).includes("retrieve"));
 
+// Owner's actual Desktop site is a bare identifier initialized through
+// a lexical alias. Prove we never call any helper, reveal original symbols,
+ // or treat an alias's origin as authorization to invoke the resolver.
+function aliasFixture(body) {
+  const src="resolve(p,c){let a=make(p,c,s),b=build(c,s);return b}";
+  const bundle="function make(p,c,s){"+body+"}" +
+    "function build(c,s){return c};class Resolver{"+src+"}";
+  const result=inspect(bundle,"",src);
+  assert.equal(result.static_binding_match_complete,true);
+  assert.equal(result.submission_authorized,false);
+  assert.equal(result.supported,false);
+  assert.equal(result.primary_helper.side_effect_freedom_proven,false);
+  return result.primary_helper.map_write_unknown_sites[0];
+}
+let aliasSite=aliasFixture("let receiver=p;receiver.set(s,c);return receiver");
+assert.equal(aliasSite.receiver_initializer_kind,"identifier-alias");
+assert.deepEqual(aliasSite.alias_trace,{
+  origin_hint:"parameter",hops_capped:1
+});
+aliasSite=aliasFixture("const owned=new Map();let receiver=owned;" +
+  "receiver.set(s,c);return receiver");
+assert.deepEqual(aliasSite.alias_trace,{
+  origin_hint:"new-map-syntax",hops_capped:1
+});
+aliasSite=aliasFixture("let external=source;let receiver=external;" +
+  "receiver.set(s,c);return receiver");
+assert.deepEqual(aliasSite.alias_trace,{
+  origin_hint:"unresolved-external",hops_capped:2
+});
+// Future source initializers cannot be used to infer past alias origins.
+aliasSite=aliasFixture("let receiver=future;let future=new Map();" +
+  "receiver.set(s,c);return receiver");
+assert.deepEqual(aliasSite.alias_trace,{
+  origin_hint:"unresolved-external",hops_capped:1
+});
+aliasSite=aliasFixture("let receiver=receiver;" +
+  "receiver.set(s,c);return receiver");
+assert.deepEqual(aliasSite.alias_trace,{
+  origin_hint:"cycle",hops_capped:1
+});
+aliasSite=aliasFixture("let source=compute(p);let receiver=source;" +
+  "receiver.set(s,c);return receiver");
+assert.deepEqual(aliasSite.alias_trace,{
+  origin_hint:"helper-call-result",hops_capped:1
+});
+const secretAlias=aliasFixture("let ghp_FAKE_SECRET=p;" +
+  "let receiver=ghp_FAKE_SECRET;receiver.set(s,c);return receiver");
+assert.deepEqual(secretAlias.alias_trace,{
+  origin_hint:"parameter",hops_capped:2
+});
+assert.ok(!JSON.stringify(secretAlias).includes("ghp_FAKE_SECRET"));
+
 const noWritesBundle="function make(p,c,s){const fresh=new Map();" +
   "return fresh}function build(c,s){return c}" +
   "class C{"+originSource+"}";
