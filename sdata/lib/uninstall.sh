@@ -355,7 +355,8 @@ uninstall_create_backup() {
 uninstall_remove_alis_public_entries() {
     local launcher="${XDG_BIN_HOME}/alis"
     if [[ -f "$launcher" && ! -L "$launcher" ]] &&
-        grep -Fq '# Alis is the public command while the proven Alis runtime owns the session.' "$launcher"; then
+        { grep -Fq '# Canonical CLI and runtime name is Alis.' "$launcher" ||
+          grep -Fq '# Alis is the public command while the proven Alis runtime owns the session.' "$launcher"; }; then
         rm -f -- "$launcher"
     fi
 
@@ -375,8 +376,8 @@ uninstall_remove_alis_public_entries() {
         cmp -s -- "$icon" "$source_icon"; then
         rm -f -- "$icon"
     fi
-    # Optional XDG alis -> alis data aliases deliberately remain user-owned.
-    # They are only removed by explicit scripts/brand-namespace-rollback.sh.
+    # XDG data roots and migration aliases are NEVER removed here. Namespace
+    # rollback requires a separate explicit owner-approved procedure.
 }
 
 uninstall_remove_alis_only() {
