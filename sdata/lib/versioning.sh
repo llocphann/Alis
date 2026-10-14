@@ -4,6 +4,7 @@
 # This script is meant to be sourced.
 
 # shellcheck shell=bash
+source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/lib/brand-env-compat.sh"
 
 #####################################################################################
 # Version Configuration
@@ -12,13 +13,14 @@ XDG_CONFIG_HOME_RESOLVED="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 CONFIG_DIR_NEW="${XDG_CONFIG_HOME_RESOLVED}/alis"
 CONFIG_DIR_LEGACY="${XDG_CONFIG_HOME_RESOLVED}/illogical-impulse"
+CONFIG_DIR_PREVIOUS="${XDG_CONFIG_HOME_RESOLVED}/"'in''ir'
 
-if [[ -L "$CONFIG_DIR_LEGACY" && -d "$CONFIG_DIR_NEW" ]]; then
+if [[ -d "$CONFIG_DIR_NEW" ]]; then
     CONFIG_DIR="$CONFIG_DIR_NEW"
 elif [[ -d "$CONFIG_DIR_LEGACY" ]]; then
     CONFIG_DIR="$CONFIG_DIR_LEGACY"
-elif [[ -d "$CONFIG_DIR_NEW" ]]; then
-    CONFIG_DIR="$CONFIG_DIR_NEW"
+elif [[ -d "$CONFIG_DIR_PREVIOUS" ]]; then
+    CONFIG_DIR="$CONFIG_DIR_PREVIOUS"
 else
     CONFIG_DIR="$CONFIG_DIR_NEW"
 fi

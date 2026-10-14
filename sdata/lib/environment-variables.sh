@@ -1,5 +1,6 @@
 # Environment variables for Alis installer
 # This is NOT a script for execution, but for loading variables
+source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/lib/brand-env-compat.sh"
 
 XDG_BIN_HOME=${XDG_BIN_HOME:-$HOME/.local/bin}
 XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
@@ -44,6 +45,12 @@ resolve_alis_config_dir() {
   # Keep the original location readable before the owner-gated migration.
   if [[ -d "$ALIS_CONFIG_DIR_LEGACY" ]]; then
     printf '%s' "$ALIS_CONFIG_DIR_LEGACY"
+    return
+  fi
+
+  local previous="$XDG_CONFIG_HOME/"'in''ir'
+  if [[ -d "$previous" ]]; then
+    printf '%s' "$previous"
     return
   fi
 

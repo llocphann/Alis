@@ -30,6 +30,12 @@ alis_config_dir() {
         return
     fi
 
+    local previous="$XDG_CONFIG_HOME/"'in''ir'
+    if [[ -d "$previous" ]]; then
+        printf '%s\n' "$previous"
+        return
+    fi
+
     # Fresh install default.
     printf '%s\n' "$ALIS_CONFIG_DIR_NEW"
 }

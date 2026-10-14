@@ -21,7 +21,7 @@ PATTERNS = {
     "shell-id": re.compile(r"ShellId\s+inir\b"),
     "native": re.compile(r"\binir-(?:native|mpdd|inputd|theme|protocol)\b|\binir_protocol\b"),
     "polkit": re.compile(r"org\.inir\.|/inir-(?:thinkfan|battery|hadalird)"),
-    "launcher": re.compile(r"""(?:^|[\s/])inir(?=[\s"'/]|$)|(?:scripts|bin)/inir\b"""),
+    "launcher": re.compile(r"""(?:^|[\s/"'])inir(?=[\s"'/]|$)|(?:scripts|bin)/inir\b"""),
     "runtime-path": re.compile(r"(?:quickshell|share|cache|config|state|data)/inir\b"),
     "nix": re.compile(r"programs\.inir\b|nixosModules\.inir\b|homeModules\.inir\b"),
 }
@@ -72,6 +72,23 @@ def main() -> int:
                 line_start = text.rfind("\n", 0, match.start()) + 1
                 line_end = text.find("\n", match.end())
                 source_line = text[line_start:line_end if line_end >= 0 else None]
+                if (kind == "service" and label == "setup"
+                        and source_line.strip() == 'local retired_path="${XDG_STATE_HOME:-$HOME/.local/state}/alis-cutover-backups/retired-inir.service"'):
+                    # Verified recovery archive is not an executable unit.
+                    continue
+                if (kind == "launcher" and label in {"nix/home-module.nix", "nix/nixos-module.nix"}
+                        and source_line.strip() == 'imports = [ common.optionsModule (lib.mkAliasOptionModule [ "programs" "inir" ] [ "programs" "alis" ]) ];'):
+                    # Preserve declarative user configuration compatibility.
+                    continue
+                if (kind == "launcher" and label == "defaults/config.json"
+                        and source_line.strip() == '"inir": 1,'):
+                    # Persisted style enum is a configuration compatibility key.
+                    continue
+                if (kind == "environment" and label == "scripts/alis"
+                        and source_line.strip() == '"${ALIS_RUNTIME_DIR:-${INIR_RUNTIME_DIR:-}}/scripts/lib/brand-env-compat.sh" \\'):
+                    # Read-only lookup for the reviewed environment bridge;
+                    # executable/runtime ownership still uses canonical names.
+                    continue
                 if kind == "launcher" and (
                     "github.com/snowarch/inir" in source_line
                     or "github.com/snowarch/iNiR" in source_line

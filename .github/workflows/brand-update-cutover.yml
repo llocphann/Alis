@@ -18,6 +18,14 @@ on:
       - scripts/test-brand-niri-runtime-paths.py
       - scripts/alis
       - scripts/test-brand-cli-session-guard.py
+      - scripts/lib/brand-env-compat.sh
+      - scripts/test-brand-env-compat.py
+      - scripts/brand-canonical-audit.py
+      - scripts/test-brand-canonical-audit.py
+      - scripts/native-dispatch
+      - scripts/lib/config-path.sh
+      - sdata/lib/environment-variables.sh
+      - sdata/lib/versioning.sh
       - .github/workflows/brand-update-cutover.yml
   workflow_dispatch:
 permissions:
@@ -45,3 +53,7 @@ jobs:
         run: python3 scripts/test-brand-niri-runtime-paths.py
       - name: Indirect CLI starts preserve the one-owner boundary
         run: python3 scripts/test-brand-cli-session-guard.py
+      - name: Retained user environment and config aliases
+        run: python3 scripts/test-brand-env-compat.py
+      - name: Active quoted commands cannot evade the identity audit
+        run: python3 scripts/test-brand-canonical-audit.py

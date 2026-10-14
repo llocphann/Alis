@@ -6,6 +6,8 @@ trial="$(mktemp -d "${TMPDIR:-/tmp}/alis-selector-test.XXXXXX")"
 trap 'rm -rf -- "$trial"' EXIT
 mkdir -p "$trial/runtime/scripts" "$trial/runtime/native/bin" "$trial/state/alis" "$trial/home" "$trial/rust-a" "$trial/rust-b"
 cp "$root/scripts/native-dispatch" "$trial/runtime/scripts/native-dispatch"
+mkdir -p "$trial/runtime/scripts/lib"
+cp "$root/scripts/lib/brand-env-compat.sh" "$trial/runtime/scripts/lib/brand-env-compat.sh"
 cat > "$trial/runtime/scripts/niri-config.py" <<'PY'
 import sys
 print("python:" + " ".join(sys.argv[1:]))

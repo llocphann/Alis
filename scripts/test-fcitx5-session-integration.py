@@ -111,7 +111,7 @@ def test_preserved_niri_config_migration():
         env.update({
             "NIRI_ENV_TARGET": str(config),
             "NIRI_STARTUP_TARGET": str(startup),
-            "INIR_LAUNCHER_PATH": "/opt/test/inir",
+            "ALIS_LAUNCHER_PATH": "/opt/test/alis",
         })
         for _ in range(2):
             subprocess.run(["bash", "-e", "-c", snippet], env=env, check=True)
@@ -133,7 +133,7 @@ def test_preserved_niri_config_migration():
               and data.count('XMODIFIERS "@im=fcitx"') == 1,
               "migration must insert both environment variables once")
         lines = startup.read_text().splitlines()
-        check(lines.count('spawn-at-startup "/opt/test/inir" "input-method" "start"') == 1,
+        check(lines.count('spawn-at-startup "/opt/test/alis" "input-method" "start"') == 1,
               "migration must add exactly one path-safe startup entry")
 
 

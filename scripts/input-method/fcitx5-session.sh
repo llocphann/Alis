@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Niri-session-wide Fcitx5/Unikey initialization. Never alter an existing profile.
 set -euo pipefail
+source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/lib/brand-env-compat.sh"
 
 command -v fcitx5 >/dev/null 2>&1 || exit 0
 config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/fcitx5"
 data_dir="${ALIS_FCITX5_DATA_DIR:-/usr/share/fcitx5/inputmethod}"
 if [[ ! -f "$data_dir/unikey.conf" ]]; then
-    printf 'Hadalis: install fcitx5-unikey to enable Telex\n' >&2
+    printf 'Alis: install fcitx5-unikey to enable Telex\n' >&2
     exit 0
 fi
 
