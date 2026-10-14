@@ -571,12 +571,12 @@ def tick(now: int | None = None, executor: ThreadPoolExecutor | None = None) -> 
 
 
 def main() -> int:
-    from automation import managed_tasks
-    managed_tasks.quarantine_legacy_profiles_once()
     parser=argparse.ArgumentParser(description="Independent Hadalis workflow scheduler")
     parser.add_argument("--once",action="store_true")
     parser.add_argument("--reset-state",action="store_true")
     args=parser.parse_args()
+    from automation import managed_tasks
+    managed_tasks.quarantine_legacy_profiles_once()
     lock_path=state_dir()/"chat-bridge.lock";lock_path.parent.mkdir(parents=True,exist_ok=True)
     with lock_path.open("a+") as handle:
         try: fcntl.flock(handle,fcntl.LOCK_EX|fcntl.LOCK_NB)
