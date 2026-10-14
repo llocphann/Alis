@@ -173,6 +173,57 @@ assert.equal(res.provider_selection, "active_provider_ambiguous");
 assert.equal(resolutionAttempted(res), false);
 assert.equal(resolves, 0);
 
+// Owner's Desktop had seven distinct active Map objects with one provider
+// identity. Never treat content equivalence as Map-identity equivalence or
+// authorize a transport resolver from these read-only observations.
+function inspectSeven(maps) {
+  const tree = rootsFor(maps[0]);
+  let cursor = tree.currentChild;
+  for (const map of maps.slice(1)) {
+    cursor.sibling = {return: tree.currentRoot,
+      memoizedProps: {value: map}, sibling: null};
+    cursor = cursor.sibling;
+  }
+  return inspect([tree.currentRoot]);
+}
+const sevenMaps = Array.from({length: 7}, () =>
+  new Map([[scopeId, provider]]));
+resolves = 0;
+res = await inspectSeven(sevenMaps);
+assert.equal(res.active_provider_map_count_capped, 7);
+assert.equal(res.active_provider_identity_count_capped, 1);
+assert.equal(res.active_map_comparison_complete, true);
+assert.equal(res.active_maps_have_equal_key_sets, true);
+assert.equal(res.active_maps_have_equal_entries_by_identity, true);
+assert.equal(res.active_maps_have_nested_key_sets, true);
+assert.deepEqual(res.active_map_size_range_capped, [1, 1]);
+assert.equal(res.resolution_attempted, false);
+assert.equal(res.provider_selection, "active_provider_ambiguous");
+assert.equal(resolves, 0);
+
+const contextKey = {};
+const layered = sevenMaps.map((_, i) =>
+  new Map([[scopeId, provider], ...(i > 0 ? [[contextKey, i]] : [])]));
+res = await inspectSeven(layered);
+assert.equal(res.active_map_comparison_complete, true);
+assert.equal(res.active_maps_have_equal_key_sets, false);
+assert.equal(res.active_maps_have_equal_entries_by_identity, false);
+assert.equal(res.active_maps_have_nested_key_sets, true);
+assert.deepEqual(res.active_map_size_range_capped, [1, 2]);
+assert.equal(res.resolution_attempted, false);
+assert.equal(resolves, 0);
+
+const reversed = [
+  new Map([[scopeId,provider],[contextKey,1]]),
+  new Map([[scopeId,provider],[contextKey,2]])
+];
+res = await inspectSeven(reversed);
+assert.equal(res.active_maps_have_equal_key_sets, true);
+assert.equal(res.active_maps_have_equal_entries_by_identity, false);
+assert.equal(res.active_maps_have_nested_key_sets, true);
+assert.equal(res.resolution_attempted, false);
+assert.equal(resolves, 0);
+
 const unknownRoot = {memoizedProps:{value:sharedMap}};
 res = await inspect([unknownRoot]);
 assert.equal(res.active_root_count_capped, 0);
