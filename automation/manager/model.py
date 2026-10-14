@@ -28,9 +28,11 @@ MAINTENANCE_DEFAULTS = {
     "recover_stale_composer": False,
 }
 
+DEFAULT_PROJECT = "Automatic Alis"
+
 PROFILE_DEFAULTS = {
     "description": "",
-    "project_name": "Hadalis Cloud",
+    "project_name": DEFAULT_PROJECT,
     "enabled": False,
     "requires_github": True,
     "stop_on_done": False,  # Preserve v1 continuous-loop semantics on import.
