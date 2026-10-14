@@ -1,0 +1,8 @@
+{
+  "source_sha": "1312cfa22ba591d0d0da51334423a8dea2ba909c",
+  "driver": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/drivers/sampler-1312cfa22ba591d0d0da51334423a8dea2ba909c.sh",
+  "driver_sha256": "8ad9ced0fa734506e20774591e97ef37377095ff4a48dcaf016a36b78df02c3e",
+  "caller_checkout": "/tmp/alis-canonical-caller-1312cfa22",
+  "mode": "--current-repo",
+  "scope": "full immutable clean-clone canonical with private dark Niri parent, no explicit parent focus; installed/owner/G0 independent"
+}
