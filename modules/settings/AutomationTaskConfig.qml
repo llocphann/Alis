@@ -18,6 +18,7 @@ ContentPage {
     property bool cloudSelectTasks: false
     property var queueSnapshot: null
     property bool backendInstalled: false
+    property bool backendStatusKnown: false
     property var backendServices: ({})
     property string backendStatusText: ""
     property var activitySnapshot: null
@@ -198,43 +199,102 @@ ContentPage {
         queueProcess.running = true
     }
 
-    Process {
-        id: backendStatusProcess
-        stdout: StdioCollector { id: backendStatusOutput }
-        stderr: StdioCollector { id: backendStatusError }
-        onExited: exitCode => {
-            try {
-                const report = JSON.parse(backendStatusOutput.text)
-                if (exitCode !== 0 || report.ok !== true)
-                    throw new Error(report.error || "Service status unavailable")
-                root.backendInstalled = report.installed === true
-                root.backendServices = report.services
-            } catch (error) {
-                root.backendInstalled = false
-                root.backendStatusText = Translation.tr("Backend status unavailable")
+    // Quickshell may emit Process.exited before StdioCollector.streamFinished.
+    // Never parse an empty/incomplete stdout buffer as an API response.
+    property var automationCompletion: ({})
+
+    function _automationExited(name, exitCode) {
+        const entry = root.automationCompletion[name] || {}
+        entry.exited = true
+        entry.exitCode = exitCode
+        root.automationCompletion[name] = entry
+        root._finishAutomationWhenReady(name)
+        ioCompletionFallback.restart()
+    }
+
+    function _automationStdoutClosed(name) {
+        const entry = root.automationCompletion[name] || {}
+        entry.closed = true
+        root.automationCompletion[name] = entry
+        root._finishAutomationWhenReady(name)
+    }
+
+    function _finishAutomationWhenReady(name) {
+        const entry = root.automationCompletion[name]
+        if (!entry || !entry.exited || !entry.closed)
+            return
+        delete root.automationCompletion[name]
+        if (name === "backendStatusProcess") root._handle_backendStatusProcess(entry.exitCode)
+        else if (name === "queueProcess") root._handle_queueProcess(entry.exitCode)
+        else if (name === "activityProcess") root._handle_activityProcess(entry.exitCode)
+        else if (name === "ownerActionProcess") root._handle_ownerActionProcess(entry.exitCode)
+        else if (name === "taskStatusProcess") root._handle_taskStatusProcess(entry.exitCode)
+        else if (name === "cleanupProcess") root._handle_cleanupProcess(entry.exitCode)
+        else if (name === "githubStatusProcess") root._handle_githubStatusProcess(entry.exitCode)
+        else if (name === "githubSecretProcess") root._handle_githubSecretProcess(entry.exitCode)
+    }
+
+    Timer {
+        id: ioCompletionFallback
+        interval: 350
+        repeat: false
+        onTriggered: {
+            for (const name of Object.keys(root.automationCompletion)) {
+                const entry = root.automationCompletion[name]
+                if (entry && entry.exited && !entry.closed) {
+                    // Handle empty stdout/execution failure rather than staying busy
+                    // indefinitely. Real parse errors include a useful error label.
+                    entry.closed = true
+                    root._finishAutomationWhenReady(name)
+                }
             }
         }
     }
 
-    Process {
-        id: installerProcess
-        stdout: StdioCollector { id: installerOutput }
-        stderr: StdioCollector { id: installerError }
-        onExited: exitCode => {
-            root.backendStatusText = exitCode === 0
-                ? Translation.tr("Backend installed · services not auto-started")
-                : Translation.tr("Install failed · check local system logs")
-            Qt.callLater(root.refreshBackendStatus)
+    function readAutomationReply(action, stdoutText, stderrText, exitCode) {
+        const text = String(stdoutText || "").trim()
+        if (!text) {
+            const error = String(stderrText || "")
+            const reason = /can't open file|No such file or directory/i.test(error)
+                ? "Automation script missing from shell config"
+                : /ModuleNotFoundError|ImportError/i.test(error)
+                ? "Automation Python modules unavailable"
+                : /Permission denied/i.test(error)
+                ? "Automation helper permission denied"
+                : "Automation helper returned no output"
+            throw new Error(action + ": " + reason + " (exit " + exitCode + ")")
         }
+        let response
+        try {
+            response = JSON.parse(text)
+        } catch (error) {
+            throw new Error(action + ": helper returned invalid JSON (exit " + exitCode + ")")
+        }
+        if (!response || response.ok !== true || exitCode !== 0)
+            throw new Error(response?.error || (action + ": helper failed (exit " + exitCode + ")"))
+        return response
     }
 
-    Process {
-        id: queueProcess
-        stdout: StdioCollector { id: queueOutput }
-        stderr: StdioCollector { id: queueError }
-        onExited: exitCode => {
+    function _handle_backendStatusProcess(exitCode) {
             try {
-                const result = JSON.parse(queueOutput.text)
+                const report = root.readAutomationReply("backendStatusProcess", backendStatusOutput.text, backendStatusError.text, exitCode)
+                if (exitCode !== 0 || report.ok !== true)
+                    throw new Error(report.error || "Service status unavailable")
+                root.backendInstalled = report.installed === true
+                root.backendStatusKnown = true
+                root.backendStatusText = ""
+                root.backendServices = report.services
+            } catch (error) {
+                root.backendInstalled = false
+                root.backendStatusKnown = false
+                root.backendStatusText = String(error)
+            }
+        
+    }
+
+    function _handle_queueProcess(exitCode) {
+            try {
+                const result = root.readAutomationReply("queueProcess", queueOutput.text, queueError.text, exitCode)
                 if (exitCode !== 0 || result.ok !== true)
                     throw new Error(result.error || "Queue unavailable")
                 if (result.items) {
@@ -262,16 +322,12 @@ ContentPage {
                 root.errorText = String(error)
             }
             root.queueOperation = ""
-        }
+        
     }
 
-    Process {
-        id: activityProcess
-        stdout: StdioCollector { id: activityOutput }
-        stderr: StdioCollector { id: activityError }
-        onExited: exitCode => {
+    function _handle_activityProcess(exitCode) {
             try {
-                const result = JSON.parse(activityOutput.text)
+                const result = root.readAutomationReply("activityProcess", activityOutput.text, activityError.text, exitCode)
                 if (exitCode !== 0 || result.ok !== true)
                     throw new Error(result.error || "History unavailable")
                 if (root.selectedTask && result.code === root.selectedTask.code
@@ -282,17 +338,12 @@ ContentPage {
             } catch (error) {
                 root.historyError = String(error)
             }
-        }
+        
     }
 
-
-    Process {
-        id: ownerActionProcess
-        stdout: StdioCollector { id: ownerActionOutput }
-        stderr: StdioCollector { id: ownerActionError }
-        onExited: exitCode => {
+    function _handle_ownerActionProcess(exitCode) {
             try {
-                const reply = JSON.parse(ownerActionOutput.text)
+                const reply = root.readAutomationReply("ownerActionProcess", ownerActionOutput.text, ownerActionError.text, exitCode)
                 if (exitCode !== 0 || reply.ok !== true)
                     throw new Error(reply.error || "Owner approval failed")
                 root.statusText = Translation.tr("Owner verified · Issue remains open")
@@ -302,16 +353,12 @@ ContentPage {
             } catch (error) {
                 root.errorText = String(error)
             }
-        }
+        
     }
 
-    Process {
-        id: taskStatusProcess
-        stdout: StdioCollector { id: taskStatusOutput }
-        stderr: StdioCollector { id: taskStatusError }
-        onExited: exitCode => {
+    function _handle_taskStatusProcess(exitCode) {
             try {
-                const reply = JSON.parse(taskStatusOutput.text)
+                const reply = root.readAutomationReply("taskStatusProcess", taskStatusOutput.text, taskStatusError.text, exitCode)
                 if (exitCode !== 0 || reply.ok !== true)
                     throw new Error(reply.error || "Task status unavailable")
                 if (root.selectedTask && root.selectedTask.code === reply.code
@@ -320,7 +367,116 @@ ContentPage {
             } catch (error) {
                 root.statusText = Translation.tr("Task status unavailable: %1").arg(String(error))
             }
+        
+    }
+
+    function _handle_cleanupProcess(exitCode) {
+            try {
+                const result = root.readAutomationReply("cleanupProcess", cleanupOutput.text, cleanupError.text, exitCode)
+                if (exitCode !== 0 || result.ok !== true)
+                    throw new Error(result.error || "Cleanup failed")
+                root.cleanupResult = Translation.tr("Old payloads: %1 · receipts: %2 · task files: %3")
+                    .arg(result.retired_payloads).arg(result.compacted_receipts)
+                    .arg(result.deleted_task_files)
+            } catch (error) {
+                root.cleanupResult = Translation.tr("Cleanup unavailable: %1").arg(String(error))
+            }
+        
+    }
+
+    function _handle_githubStatusProcess(exitCode) {
+            try {
+                const result = root.readAutomationReply("githubStatusProcess", githubStatusOutput.text, githubStatusError.text, exitCode)
+                if (exitCode !== 0 || result.ok !== true)
+                    throw new Error(result.error || "Credential status unavailable")
+                if (result.repository !== root.selectedGithubRepo)
+                    return
+                root.githubKeyringAvailable = result.keyring_available === true
+                root.githubTokenSaved = result.saved === true
+            } catch (error) {
+                root.githubStatusText = Translation.tr("GitHub keyring unavailable: %1").arg(String(error))
+            }
+        
+    }
+
+    function _handle_githubSecretProcess(exitCode) {
+            root.pendingSecretInput = ""
+            try {
+                const result = root.readAutomationReply("githubSecretProcess", githubSecretOutput.text, githubSecretError.text, exitCode)
+                if (exitCode !== 0 || result.ok !== true)
+                    throw new Error(result.error || "Keyring operation failed")
+                root.githubTokenSaved = result.saved === true
+                root.githubStatusText = result.saved
+                    ? Translation.tr("GitHub token saved in system keyring.")
+                    : Translation.tr("GitHub token removed from system keyring.")
+            } catch (error) {
+                root.githubStatusText = Translation.tr("GitHub token operation failed: %1").arg(String(error))
+            }
+            root.pendingSecretOperation = ""
+            Qt.callLater(root.refreshGithubStatus)
+        
+    }
+    Process {
+        id: backendStatusProcess
+        stdout: StdioCollector {
+            id: backendStatusOutput
+            onStreamFinished: root._automationStdoutClosed("backendStatusProcess")
         }
+        stderr: StdioCollector { id: backendStatusError }
+        onExited: exitCode => root._automationExited("backendStatusProcess", exitCode)
+    }
+
+    Process {
+        id: installerProcess
+        stdout: StdioCollector { id: installerOutput }
+        stderr: StdioCollector { id: installerError }
+        onExited: exitCode => {
+            root.backendStatusText = exitCode === 0
+                ? Translation.tr("Backend installed · services not auto-started")
+                : Translation.tr("Install failed · check local system logs")
+            Qt.callLater(root.refreshBackendStatus)
+        }
+    }
+
+    Process {
+        id: queueProcess
+        stdout: StdioCollector {
+            id: queueOutput
+            onStreamFinished: root._automationStdoutClosed("queueProcess")
+        }
+        stderr: StdioCollector { id: queueError }
+        onExited: exitCode => root._automationExited("queueProcess", exitCode)
+    }
+
+    Process {
+        id: activityProcess
+        stdout: StdioCollector {
+            id: activityOutput
+            onStreamFinished: root._automationStdoutClosed("activityProcess")
+        }
+        stderr: StdioCollector { id: activityError }
+        onExited: exitCode => root._automationExited("activityProcess", exitCode)
+    }
+
+
+    Process {
+        id: ownerActionProcess
+        stdout: StdioCollector {
+            id: ownerActionOutput
+            onStreamFinished: root._automationStdoutClosed("ownerActionProcess")
+        }
+        stderr: StdioCollector { id: ownerActionError }
+        onExited: exitCode => root._automationExited("ownerActionProcess", exitCode)
+    }
+
+    Process {
+        id: taskStatusProcess
+        stdout: StdioCollector {
+            id: taskStatusOutput
+            onStreamFinished: root._automationStdoutClosed("taskStatusProcess")
+        }
+        stderr: StdioCollector { id: taskStatusError }
+        onExited: exitCode => root._automationExited("taskStatusProcess", exitCode)
     }
 
     Timer {
@@ -336,20 +492,12 @@ ContentPage {
 
     Process {
         id: cleanupProcess
-        stdout: StdioCollector { id: cleanupOutput }
-        stderr: StdioCollector { id: cleanupError }
-        onExited: exitCode => {
-            try {
-                const result = JSON.parse(cleanupOutput.text)
-                if (exitCode !== 0 || result.ok !== true)
-                    throw new Error(result.error || "Cleanup failed")
-                root.cleanupResult = Translation.tr("Old payloads: %1 · receipts: %2 · task files: %3")
-                    .arg(result.retired_payloads).arg(result.compacted_receipts)
-                    .arg(result.deleted_task_files)
-            } catch (error) {
-                root.cleanupResult = Translation.tr("Cleanup unavailable: %1").arg(String(error))
-            }
+        stdout: StdioCollector {
+            id: cleanupOutput
+            onStreamFinished: root._automationStdoutClosed("cleanupProcess")
         }
+        stderr: StdioCollector { id: cleanupError }
+        onExited: exitCode => root._automationExited("cleanupProcess", exitCode)
     }
 
     function inspectCleanup(apply: bool): void {
@@ -364,26 +512,20 @@ ContentPage {
 
     Process {
         id: githubStatusProcess
-        stdout: StdioCollector { id: githubStatusOutput }
-        stderr: StdioCollector { id: githubStatusError }
-        onExited: exitCode => {
-            try {
-                const result = JSON.parse(githubStatusOutput.text)
-                if (exitCode !== 0 || result.ok !== true)
-                    throw new Error(result.error || "Credential status unavailable")
-                if (result.repository !== root.selectedGithubRepo)
-                    return
-                root.githubKeyringAvailable = result.keyring_available === true
-                root.githubTokenSaved = result.saved === true
-            } catch (error) {
-                root.githubStatusText = Translation.tr("GitHub keyring unavailable: %1").arg(String(error))
-            }
+        stdout: StdioCollector {
+            id: githubStatusOutput
+            onStreamFinished: root._automationStdoutClosed("githubStatusProcess")
         }
+        stderr: StdioCollector { id: githubStatusError }
+        onExited: exitCode => root._automationExited("githubStatusProcess", exitCode)
     }
 
     Process {
         id: githubSecretProcess
-        stdout: StdioCollector { id: githubSecretOutput }
+        stdout: StdioCollector {
+            id: githubSecretOutput
+            onStreamFinished: root._automationStdoutClosed("githubSecretProcess")
+        }
         stderr: StdioCollector { id: githubSecretError }
         onStarted: {
             if (root.pendingSecretOperation === "save") {
@@ -392,22 +534,7 @@ ContentPage {
                 githubSecretProcess.stdinEnabled = false
             }
         }
-        onExited: exitCode => {
-            root.pendingSecretInput = ""
-            try {
-                const result = JSON.parse(githubSecretOutput.text)
-                if (exitCode !== 0 || result.ok !== true)
-                    throw new Error(result.error || "Keyring operation failed")
-                root.githubTokenSaved = result.saved === true
-                root.githubStatusText = result.saved
-                    ? Translation.tr("GitHub token saved in system keyring.")
-                    : Translation.tr("GitHub token removed from system keyring.")
-            } catch (error) {
-                root.githubStatusText = Translation.tr("GitHub token operation failed: %1").arg(String(error))
-            }
-            root.pendingSecretOperation = ""
-            Qt.callLater(root.refreshGithubStatus)
-        }
+        onExited: exitCode => root._automationExited("githubSecretProcess", exitCode)
     }
 
     SettingsTaskNavigator {
@@ -433,7 +560,9 @@ ContentPage {
             SettingsNote {
                 icon: root.backendInstalled ? "check_circle" : "warning"
                 warning: !root.backendInstalled
-                text: root.backendInstalled
+                text: !root.backendStatusKnown
+                    ? Translation.tr("Backend status unknown")
+                    : root.backendInstalled
                     ? Translation.tr("Installed · start a queue when ready")
                     : Translation.tr("Backend not installed")
             }
@@ -573,7 +702,9 @@ ContentPage {
             SettingsNote {
                 icon: "hourglass_empty"
                 warning: true
-                text: !root.backendInstalled
+                text: !root.backendStatusKnown
+                    ? Translation.tr("Backend status unknown")
+                    : !root.backendInstalled
                     ? Translation.tr("Backend unavailable · install first")
                     : root.queueSnapshot?.state === "active"
                     ? Translation.tr("Cloudbot running · Localbot receipts required")
