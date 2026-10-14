@@ -71,7 +71,7 @@ class TaskflowTests(unittest.TestCase):
             taskflow.resolve_batch(["ABYSS-R99"], api=listing)
 
     def test_queue_default_resolver_uses_one_batch(self):
-        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}), \\
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}), \
              patch.object(taskflow, "resolve_batch", return_value=[TASK]) as bulk:
             prepared = queue.prepare("AUTO-R01")
             self.assertEqual(prepared["items"][0]["code"], "AUTO-R01")
@@ -79,14 +79,14 @@ class TaskflowTests(unittest.TestCase):
 
     def test_github_errors_identify_rate_limit_vs_offline_without_secrets(self):
         from urllib.error import HTTPError, URLError
-        with patch.dict("os.environ", {"GH_TOKEN": "", "GITHUB_TOKEN": ""}), \\
+        with patch.dict("os.environ", {"GH_TOKEN": "", "GITHUB_TOKEN": ""}), \
              patch.object(credentials, "status", return_value={"saved": False}):
             limited = HTTPError("https://api.github.com", 403, "rate limited",
                                 {"X-RateLimit-Remaining": "0"}, None)
-            with patch.object(taskflow, "urlopen", side_effect=limited), \\
+            with patch.object(taskflow, "urlopen", side_effect=limited), \
                  self.assertRaisesRegex(taskflow.TaskError, "rate limit reached"):
                 taskflow._github("/repos/llocphann/Alis/issues/81")
-            with patch.object(taskflow, "urlopen", side_effect=URLError("DNS failure")), \\
+            with patch.object(taskflow, "urlopen", side_effect=URLError("DNS failure")), \
                  self.assertRaisesRegex(taskflow.TaskError, "Cannot reach api.github.com"):
                 taskflow._github("/repos/llocphann/Alis/issues/81")
 
