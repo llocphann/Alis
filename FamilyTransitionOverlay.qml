@@ -634,13 +634,12 @@ Scope {
                     }
                 }
 
-                // Logo shown at native colors — SVG has dark bg + teal gradients,
-                // MultiEffect colorization makes it a muddy blob at this size
+                // Alis desktop-symbolic branding is displayed at native SVG colors.
                 Image {
                     anchors.centerIn: parent
                     width: 40
                     height: 40
-                    source: Qt.resolvedUrl("assets/icons/illogical-impulse.svg")
+                    source: Qt.resolvedUrl("assets/icons/desktop-symbolic.svg")
                     sourceSize: Qt.size(40, 40)
                 }
             }
