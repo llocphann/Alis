@@ -1,0 +1,5 @@
+{
+  "source_sha": "c265541b8b92eb5e39edb72ae25da8113357583d",
+  "exit": 1,
+  "scope": "instrumented original Weather leave probe, unchanged assertions/runtime, nested private no-focus Wayland"
+}

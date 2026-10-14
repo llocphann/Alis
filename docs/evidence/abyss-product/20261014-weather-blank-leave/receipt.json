@@ -1,0 +1,16 @@
+{
+  "source_sha": "8db6dac8a59f4017f0749a4418a5abc0e89ff256",
+  "fixture_commit": "842a67553e05d95d3e0dc291b40472192984a49c",
+  "result": "FOCUSED_EXACT_NATIVE_PASS_DIRECT_AND_NESTED",
+  "cause": "old leave80,80 falls within Weather body on429x1038 nested scene: input22,8,385,330; content36,54,357,270; original probe owned=true",
+  "change": "Choose true blank input excluding all source modules and open popup footprints; retain24/70/110ms rapid switch, all families/edges,450ms leave deadline and all assertions",
+  "native_observations": {
+    "direct": 1138,
+    "nested": 1141
+  },
+  "gates": [
+    "QtTest native fixture, not physical wl_pointer/installed/owner/multi-output",
+    "full47e canonical FAIL preserved; no newer result"
+  ],
+  "raw_log_encoding": "log.gz contains original log bytes; exact-*-raw retains full run_qs output"
+}

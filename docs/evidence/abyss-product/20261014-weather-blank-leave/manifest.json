@@ -1,0 +1,18 @@
+{
+  "exact-direct-raw.log.gz": "e11b71479f9f0446dc1f07b1bc21076db82946050bb8ba9b4a8dc6fe37db1f14",
+  "exact-direct-receipt.json": "eb47e3c648ab28ad12d71a92a3171af8dc234f572fc3bd822784631228233d9a",
+  "exact-direct.log.gz": "bdc4695cd7d5f7b407ac431479a0836c0f3884f4721a689877dcd834d7680587",
+  "exact-nested-raw.log.gz": "bbf975c0a87e362ccc9f584f408db5dbdba501cd3a79f2f185628614e6590843",
+  "exact-nested-receipt.json": "a1e7bbc5dec178cdc05c5d9e5cb9585a5d7b6bf8c726592f4de83ed08f3dc738",
+  "exact-nested.log.gz": "c414489b2f1efae163facfa57d773a1e8a177f94ec4cad15e08cee0589d62242",
+  "fixed-nested-raw.log.gz": "4c688e2cd49a3f5e734d55324eb8418fe13bc87ce3416b4b545fe211481a5516",
+  "fixed-nested-receipt.json": "5e5689622de0b962f0b8d57552c05f1f5c160fbf4560e32e5bffe0ad792f2a9b",
+  "fixed-nested.log.gz": "e6aba1b6b8ef7c1cbfed181df7b168b3731314d5a354b02988068ff05997db73",
+  "frozen-source.json": "0c7ec7aca8b5bcd3b2d72a9ef9316772d9168c8b152a2345d391791ef46ba891",
+  "original-nested-receipt.json": "79fd4fc5b0f0c72a17b4669b537985d33ad8074d7683f9333106dad9b94a1958",
+  "original-nested.log.gz": "70f4f4c6794af464cf76d28863b5428c5c421a48a586a0830a2eb56dc7839d31",
+  "probe-frozen.py": "fae47931ae77b56675b9401ef02993f005014c19bbfcd2553b78ff11b0a898fa",
+  "probe-original.py": "607910d3650c116f5941130aa3236dc27fd5c775242adda0bbaa48df4f2042a0",
+  "qualified-fixture.py": "78e95973705963fb879bd9e2fe9c66b611f769484543ca628e0693b74a3a0303",
+  "receipt.json": "0ba9f966b4e75c954fcd20a2b9da4d3b18a1c024e073a05ca15376ef18c44b04"
+}
