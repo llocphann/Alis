@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from automation import taskflow, credentials, rotation
+from automation import taskflow, credentials, rotation, lifecycle
 
 TASK = {
     "code": "AUTO-R01", "repository": "llocphann/Alis",
@@ -377,6 +377,82 @@ class TaskflowTests(unittest.TestCase):
             taskflow._save_task(record)
             with self.assertRaisesRegex(taskflow.TaskError, "Unacknowledged"):
                 rotation.observe_chat_limit("AUTO-R01", signal, verify_limit=lambda *args: True)
+
+    def test_cloud_delivery_reconciliation_and_owner_review(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            task = taskflow.resolve("AUTO-R01", api)
+            taskflow.intake(task)
+            rotation.bind_managed_chat("AUTO-R01", "chat-1", "start-1",
+                                       verify_session=lambda *args: True)
+            payload = {"schema": "alis.local-handoff.v1", "task": task,
+                       "commands": [["git", "diff", "--check"]],
+                       "next_prompt": "Continue Cloudbot from pinned local receipt.",
+                       "checkpoint": "checked output"}
+            bundle = taskflow.package(payload)
+            taskflow.save_handoff("AUTO-R01", bundle)
+            record = taskflow.load_task("AUTO-R01")
+            record["status"] = "awaiting_cloud_ack"
+            record["latest_receipt"] = {"id": bundle["id"], "sha256": bundle["sha256"],
+                                        "source_sha": task["base_sha"], "state": "passed"}
+            taskflow._save_task(record)
+            folder = taskflow.state_dir() / "receipts"
+            folder.mkdir(mode=0o700, exist_ok=True)
+            taskflow._atomic_json(folder / (bundle["id"] + ".json"), {
+                "id": bundle["id"], "sha256": bundle["sha256"],
+                "source_sha": task["base_sha"], "state": "passed", "steps": []})
+            with self.assertRaisesRegex(taskflow.TaskError, "AUTO-F01"):
+                lifecycle.acknowledge_cloud_delivery("AUTO-R01", "chat-1", "msg-next")
+            with self.assertRaisesRegex(taskflow.TaskError, "unverified"):
+                lifecycle.acknowledge_cloud_delivery(
+                    "AUTO-R01", "chat-1", "msg-next", verify_transport=lambda *args: False)
+            observed = []
+            def verified(cid, mid, prompt):
+                observed.append((cid, mid, prompt))
+                return (cid == "chat-1" and mid == "msg-next"
+                        and prompt == payload["next_prompt"])
+            ack = lifecycle.acknowledge_cloud_delivery("AUTO-R01", "chat-1",
+                                   "msg-next", verify_transport=verified)
+            self.assertEqual(ack["status"], "cloud_continuing")
+            self.assertTrue(lifecycle.acknowledge_cloud_delivery(
+                "AUTO-R01", "chat-1", "msg-next", verify_transport=verified)["duplicate"])
+            self.assertEqual(len(observed), 1)
+            with self.assertRaisesRegex(taskflow.TaskError, "Different message"):
+                lifecycle.acknowledge_cloud_delivery("AUTO-R01", "chat-1", "other",
+                                                      verify_transport=verified)
+            self.assertEqual(lifecycle.status("AUTO-R01")["status"], "cloud_continuing")
+            self.assertNotIn("cloud_prompt", lifecycle.status("AUTO-R01"))
+            with self.assertRaisesRegex(taskflow.TaskError, "verifier unavailable"):
+                lifecycle.awaiting_owner_verification("AUTO-R01")
+            with self.assertRaisesRegex(taskflow.TaskError, "not verified"):
+                lifecycle.awaiting_owner_verification(
+                    "AUTO-R01", verify_cloud_completion=lambda record: False)
+            self.assertEqual(lifecycle.awaiting_owner_verification(
+                "AUTO-R01", verify_cloud_completion=lambda record: True)["status"],
+                "awaiting_owner")
+            self.assertGreater(taskflow.cleanup(now=int(__import__("time").time()) +
+                                               taskflow.TERMINAL_TTL+5)["preserved_unresolved"], 0)
+            with self.assertRaisesRegex(taskflow.TaskError, "approval"):
+                lifecycle.owner_verified("AUTO-R01")
+            self.assertEqual(lifecycle.owner_verified("AUTO-R01", approval=True)["status"], "completed")
+            done = taskflow.load_task("AUTO-R01")
+            self.assertGreaterEqual(done["terminal_unix"], done["delivery_acknowledged_unix"])
+            self.assertEqual(taskflow.cleanup(now=done["terminal_unix"] +
+                                                taskflow.DETAIL_TTL - 1)["retired_payloads"], 0)
+
+    def test_handoff_idempotency_keeps_pending_receipt(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            task = taskflow.resolve("AUTO-R01", api)
+            taskflow.intake(task)
+            bundle = taskflow.package({"schema": "alis.local-handoff.v1", "task": task,
+                                      "commands": [["git", "diff", "--check"]],
+                                      "next_prompt": "Continue Cloudbot after persisted local receipt.",
+                                      "checkpoint": "safe"})
+            self.assertFalse(taskflow.save_handoff("AUTO-R01", bundle)["duplicate"])
+            state = taskflow.load_task("AUTO-R01")
+            state["status"] = "awaiting_cloud_ack"
+            taskflow._save_task(state)
+            self.assertTrue(taskflow.save_handoff("AUTO-R01", bundle)["duplicate"])
+            self.assertEqual(taskflow.load_task("AUTO-R01")["status"], "awaiting_cloud_ack")
 
     def test_no_execution_without_approval_or_pinned_source(self):
         bundle = taskflow.package({"schema": "alis.local-handoff.v1", "task": TASK,
