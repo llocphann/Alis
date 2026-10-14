@@ -227,7 +227,6 @@ uninstall-icon:
 	@if [ -z "$(DESTDIR)" ]; then gtk-update-icon-cache -q "$(SHAREDIR)/icons/hicolor" 2>/dev/null || true; fi
 
 uninstall-desktop:
-	@rm -f "$(DESTDIR)$(APPLICATIONS_DIR)/alis.desktop" "$(DESTDIR)$(APPLICATIONS_DIR)/alis-settings.desktop"
 	@for app in alis.desktop alis-settings.desktop; do \
 		target="$(DESTDIR)$(APPLICATIONS_DIR)/$$app"; \
 		if [ -f "$$target" ] && [ ! -L "$$target" ] && grep -Fxq "X-Alis-Managed=true" "$$target"; then \

@@ -4,14 +4,18 @@ set -euo pipefail
 # Canonical CLI and runtime name is Alis. Prior runtime identities must be
 # retired through the owner-gated, one-service handoff.
 # Fail closed before a user command can start a second Quickshell instance.
+alis_require_owner_slot() {
+    local legacy_owner='in''ir.service'
+    if command -v systemctl >/dev/null 2>&1 &&
+       systemctl --user is-active --quiet "$legacy_owner"; then
+        printf '%s\n' 'The previous shell service is still active. Refusing a second Alis session; complete the canonical service cutover.' >&2
+        return 65
+    fi
+}
 case "${1:-}" in
-    run|start|restart)
-        legacy_owner='in''ir.service'
-        if command -v systemctl >/dev/null 2>&1 &&
-           systemctl --user is-active --quiet "$legacy_owner"; then
-            printf '%s\n' 'The previous shell service is still active. Refusing a second Alis session; complete the canonical service cutover.' >&2
-            exit 65
-        fi
+    run|start|restart) alis_require_owner_slot || exit $? ;;
+    service)
+        case "${2:-}" in start|restart|enable) alis_require_owner_slot || exit $? ;; esac
         ;;
 esac
 # Qt requires a UTF-8 process locale. Preserve every already-valid user locale,
@@ -158,7 +162,8 @@ read_version_field() {
     local jq_expr="$2"
     local fallback_regex="$3"
 
-    [[ -n "$version_file" && -f "$version_file" ]] || return 1
+    # Installed metadata is optional for standalone help and first install.
+    [[ -n "$version_file" && -f "$version_file" ]] || return 0
 
     if command -v jq >/dev/null 2>&1; then
         jq -r "${jq_expr} // empty" "$version_file" 2>/dev/null || true
@@ -1926,6 +1931,7 @@ has_instances() {
 }
 
 ensure_running_instance() {
+    alis_require_owner_slot || return $?
     local dir="$1"
 
     if has_instances "$dir"; then
@@ -2164,6 +2170,7 @@ ensure_systemd_graphical_env() {
 }
 
 start_alis_service_if_enabled() {
+    alis_require_owner_slot || return $?
     if is_alis_service_enabled; then
         ensure_service_unit_available
         ensure_systemd_graphical_env
@@ -2176,6 +2183,7 @@ start_alis_service_if_enabled() {
 }
 
 start_background() {
+    alis_require_owner_slot || return $?
     local dir="$1"
     if is_alis_service_enabled; then
         ensure_service_unit_available
