@@ -15,13 +15,18 @@ Quickshell config at canonical source before inspecting the handoff.
 CLI, Quickshell selector, referenced Niri includes and legacy executable
 shortcuts before touching services. `scripts/repair-niri-alis-keybinds.sh`
 repairs supported active fragments, preserving hotkey actions and original
-backup bytes. The cutover checks every referenced include, including nested
+backup bytes. Review `python3 scripts/brand-niri-runtime-paths.py --dry-run` for the
+managed clipboard watcher paths and Autostart delimiters. Its approved apply
+mode keeps helper arguments, user Autostart entries and original backup bytes.
+The cutover checks every referenced include, including nested
 ones; unresolved or symlinked includes fail closed.
 
 The cutover's apply mode requires the owner's explicit decision. It stops the
 legacy owner, updates known service links, reloads the user daemon and starts
 one canonical owner. Failed startup restores the previous service wiring.
-It retains the original unit and configuration for recovery.
+It retains the original unit and configuration for recovery. The previous
+owner is stopped before copying the data roots so final shutdown writes are
+included in the canonical snapshot.
 
 ## Data and ownership
 
@@ -42,13 +47,18 @@ canonical staging. Original project credits remain iNiR and illogical-impulse.
 `scripts/brand-canonical-rollback.sh --dry-run` previews reverting the
 service/session owner. This is not an Arch/Nix package transaction or a
 reverse merge of user settings created after cutover. The original verified
-CLI must be restored and its `help` command must work; a disabled compatibility
-shim cannot serve as a rollback target.
+CLI must support read-only `help`, directly or through its byte-identical
+managed private engine. A generic disabled compatibility stub cannot serve
+as a rollback target.
 
 On an explicit owner decision, `--apply --owner-approved` stops
 `alis.service`, restores verified original service links and starts only
 `inir.service`. If the original startup fails, it attempts to restore Alis.
 Both units and all config/cache/data/state directories are retained.
+A managed historical public shim remains a valid service recovery target only
+when its bytes equal the retained private engine, the original ShellId and
+private systemd lifecycle guard are verified, and private `help` succeeds.
+Generic disabled stubs, edited wrappers and symlinked engines remain blocked.
 
 ## Validation scope
 

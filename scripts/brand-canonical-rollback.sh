@@ -23,13 +23,9 @@ canonical="$units/alis.service"
   { echo 'Missing or symlinked user unit: review the original install mode' >&2; exit 2; }
 grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' "$canonical" ||
   { echo 'Alis unit missing singleton tray watcher' >&2; exit 2; }
-legacy_exec="$(sed -n 's/^ExecStart=//p' "$legacy" | head -n1)"
-legacy_exec="${legacy_exec%% *}"
-[[ "$legacy_exec" == /* && -x "$legacy_exec" && ! -L "$legacy_exec" ]] ||
-  { echo "Previous runtime CLI unavailable: $legacy_exec" >&2; exit 2; }
-# Interim disabled inir shim is NOT a usable original runtime.
-"$legacy_exec" help >/dev/null 2>&1 ||
-  { echo 'Original runtime CLI failed read-only help; restore verified old executable' >&2; exit 2; }
+repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$repo/scripts/brand-recovery-cli.sh"
+brand_verify_recovery_cli "$legacy" "$cfg"
 old_active="$(systemctl --user is-active inir.service 2>/dev/null || true)"
 new_active="$(systemctl --user is-active alis.service 2>/dev/null || true)"
 [[ "$new_active" == active && "$old_active" != active ]] ||

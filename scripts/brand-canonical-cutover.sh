@@ -71,6 +71,15 @@ if [[ -f "$niri_root" ]]; then
       echo "Repair the bound command to alis, then rerun --dry-run." >&2
       exit 2
     fi
+    if grep -Ev '^[[:space:]]*(//|#)' "$path" |
+       grep -Eq '^[[:space:]]*spawn[^[:space:]]*[[:space:]].*/quickshell/inir/scripts/(native-dispatch|clipboard-image-store\.sh)'; then
+      echo "Active Niri helper still points at the previous runtime: $path" >&2
+      echo 'Run brand-niri-runtime-paths.py --dry-run and review its scoped repair.' >&2
+      exit 2
+    fi
+    if grep -Eq '^[[:space:]]*// (>>>|<<<) inir-managed-autostart' "$path"; then
+      echo "Previous Niri Autostart delimiters require repair: $path" >&2; exit 2
+    fi
     declared_includes="$(grep -Ec '^[[:space:]]*include[[:space:]]+' "$path" || true)"
     parsed_includes="$(sed -nE 's/^[[:space:]]*include[[:space:]]+"([^"]+)".*$/\1/p' "$path" | wc -l)"
     if [[ "$declared_includes" != "$parsed_includes" ]]; then
@@ -156,6 +165,8 @@ for root_index in "${!roots[@]}"; do
   fi
   sources+=("$old"); destinations+=("$new"); aliases+=("$alias")
 done
+source "$repo/scripts/brand-recovery-cli.sh"
+brand_verify_recovery_cli "$old_unit" "$cfg"
 old_wants=(); new_wants=()
 while IFS= read -r -d '' dir; do
   p="$dir/inir.service"
@@ -207,6 +218,11 @@ rollback() {
   exit "$rc"
 }
 trap rollback EXIT
+# Quiesce the owner before copying: final shutdown writes must survive.
+stopped=true
+systemctl --user stop inir.service
+[[ "$(systemctl --user is-active inir.service 2>/dev/null || true)" != active ]] ||
+  { echo 'Legacy process owner did not stop' >&2; exit 1; }
 for i in "${!sources[@]}"; do
   dst="${destinations[i]}"
   if [[ "${aliases[i]}" == true ]]; then
@@ -216,10 +232,6 @@ for i in "${!sources[@]}"; do
   cp -a -- "${sources[i]}" "$dst"
   copied+=("$dst")
 done
-systemctl --user stop inir.service
-stopped=true
-[[ "$(systemctl --user is-active inir.service 2>/dev/null || true)" != active ]] ||
-  { echo 'Legacy process owner did not stop' >&2; exit 1; }
 mkdir -p "$user_units"
 escaped="${launcher//&/\\&}"
 sed -e "s|^ExecStart=.*|ExecStart=$escaped run --session|" \

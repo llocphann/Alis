@@ -16,7 +16,9 @@ make_fixture() {
     chmod +x "$home/bin/alis"
     printf '%s\n' '//@ pragma ShellId alis' > "$home/config/quickshell/alis/shell.qml"
     printf '%s\n' 'old user prefs' > "$home/config/inir/preferences.json"
-    printf '%s\n' '[Service]' 'ExecStart=/usr/bin/inir run --session' > "$home/config/systemd/user/inir.service"
+    printf '#!/bin/bash\n[[ "${1:-}" == help ]]\n' > "$home/bin/inir"
+    chmod +x "$home/bin/inir"
+    printf '%s\n' '[Service]' "ExecStart=$home/bin/inir run --session" > "$home/config/systemd/user/inir.service"
     ln -s "$home/config/systemd/user/inir.service" "$home/config/systemd/user/niri.service.wants/inir.service"
     printf 'include "config.d/90-user-extra.kdl"\n' > "$home/config/niri/config.kdl"
     printf 'binds {\n  Super+E { spawn "/usr/bin/nautilus"; }\n}\n' > "$home/config/niri/config.d/90-user-extra.kdl"
@@ -37,6 +39,9 @@ case "$cmd" in
         esac
         ;;
     stop)
+        if [[ "$1" == inir.service && "${WRITE_ON_STOP:-0}" == 1 ]]; then
+            printf 'final shutdown preferences\n' > "$TEST_HOME/config/inir/preferences.json"
+        fi
         printf '%s\n' inactive > "$TEST_HOME/state-${1%.service}"
         printf '%s\n' "stop $1" >> "$TEST_HOME/order"
         ;;
@@ -285,3 +290,20 @@ fi
 
 echo 'PASS: canonical cutover cache collision safety, single owner, and rollback'
 
+
+make_fixture quiescent
+WRITE_ON_STOP=1 invoke quiescent --apply --owner-approved > "$tmp/quiescent.log" || die 'quiescent snapshot'
+cmp -s "$tmp/quiescent/config/inir/preferences.json" "$tmp/quiescent/config/alis/preferences.json" || die 'lost final shutdown writes'
+grep -Fq 'final shutdown preferences' "$tmp/quiescent/config/alis/preferences.json" || die 'copied before owner stop'
+echo 'PASS: final shutdown writes are captured after the previous owner stops'
+
+make_fixture stale_helpers
+printf 'spawn-at-startup "bash" "-c" "exec wl-paste --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store"\n' >> "$tmp/stale_helpers/config/niri/config.d/90-user-extra.kdl"
+if invoke stale_helpers --dry-run > "$tmp/helpers-denied" 2>&1; then die 'old clipboard helper survived preflight'; fi
+grep -Fq 'Active Niri helper still points' "$tmp/helpers-denied" || die 'missing stale helper diagnostic'
+[[ "$(cat "$tmp/stale_helpers/state-inir")" == active ]] || die 'stale helper rejection stopped owner'
+make_fixture stale_markers
+printf '// >>> inir-managed-autostart >>>\n// <<< inir-managed-autostart <<<\n' >> "$tmp/stale_markers/config/niri/config.d/90-user-extra.kdl"
+if invoke stale_markers --dry-run > "$tmp/markers-denied" 2>&1; then die 'legacy managed block survived preflight'; fi
+grep -Fq 'Autostart delimiters require repair' "$tmp/markers-denied" || die 'missing old marker diagnostic'
+echo 'PASS: legacy clipboard helper paths and Autostart delimiters block before any service write'

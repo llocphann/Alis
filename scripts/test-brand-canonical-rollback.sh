@@ -58,6 +58,35 @@ fi
   fail 'failed legacy start did not restore Alis'
 [[ -L "$wants/alis.service" && ! -e "$wants/inir.service" ]] ||
   fail 'failed old startup lost Alis wiring'
+# Reproduce the deployed managed public shim: private service lifecycle works
+# while public help is disabled. A byte-identical original runtime is required.
+mkdir -p "$HOME/config/quickshell/inir/scripts"
+printf '%s\n' '//@ pragma ShellId inir' > "$HOME/config/quickshell/inir/shell.qml"
+cat > "$HOME/bin/inir" <<'GUARD'
+#!/usr/bin/env bash
+# BRAND-R01: keep the established scripts/inir engine
+if [[ "${BASH_SOURCE[0]}" != */scripts/inir ]]; then
+    if [[ -n "${INVOCATION_ID:-}" ]] && {
+        [[ "${1:-}" == run && "${2:-}" == --session ]] ||
+        [[ "${1:-}" == cleanup-orphans ]];
+    }; then :; else exit 64; fi
+fi
+[[ "${1:-}" == help ]]
+GUARD
+chmod +x "$HOME/bin/inir"
+cp -p "$HOME/bin/inir" "$HOME/config/quickshell/inir/scripts/inir"
+if "$HOME/bin/inir" help; then fail 'fixture did not reproduce managed help refusal'; fi
+bash "$helper" --dry-run > "$tmp/managed" || fail 'managed private engine recovery rejected'
+grep -Fq 'VERIFIED: byte-identical' "$tmp/managed" || fail 'private recovery proof missing'
+cp -p "$HOME/bin/inir" "$tmp/verified-cli"
+printf '\n# edited public wrapper\n' >> "$HOME/bin/inir"
+if bash "$helper" --dry-run > "$tmp/divergent" 2>&1; then fail 'divergent disabled CLI accepted'; fi
+cp -p "$tmp/verified-cli" "$HOME/bin/inir"
+mv "$HOME/config/quickshell/inir/scripts/inir" "$tmp/private-engine"
+ln -s "$tmp/private-engine" "$HOME/config/quickshell/inir/scripts/inir"
+if bash "$helper" --dry-run > "$tmp/symlink" 2>&1; then fail 'symlink private engine accepted'; fi
+rm "$HOME/config/quickshell/inir/scripts/inir"
+cp -p "$tmp/private-engine" "$HOME/config/quickshell/inir/scripts/inir"
 bash "$helper" --apply --owner-approved > "$tmp/ok" || fail 'approved rollback'
 [[ "$(cat "$HOME/state-inir")" == active && "$(cat "$HOME/state-alis")" == inactive ]] ||
   fail 'two owners after successful rollback'
