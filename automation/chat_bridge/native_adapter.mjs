@@ -91,8 +91,15 @@ export function installedContract() {
       ? initial.match(new RegExp("([\\w$]+) as " + apiLocal + "[,}]"))?.[1]
       : null;
     const atom = initial.match(/,([\w$]+)=\w+\(\$,\(\{scope:e\}\)=>new (\w+)\(e\)\)\}\)\)\)\(\)\}\s*function brn/);
-    if (!apiImport || !atom || !initial.includes("async startCompletionStream("))
-      throw new Error("unsupported Desktop stream contract");
+    const missing = [
+      !apiMatch && "conversation-call",
+      !apiImport && "api-export",
+      !atom && "transport-scope",
+      !initial.includes("async startCompletionStream(") && "stream-method"
+    ].filter(Boolean);
+    if (missing.length)
+      // Only structural markers, never app bundle code, auth or private data.
+      throw new Error("unsupported Desktop stream contract: " + missing.join(", "));
     return { shared: sharedNames[0], initial: initialNames[0], api: apiImport,
       stream: exported(initial, atom[1]),
       fingerprint: crypto.createHash("sha256").update(initial).update(shared).digest("hex") };
