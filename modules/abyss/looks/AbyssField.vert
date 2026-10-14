@@ -2,8 +2,8 @@
 // Prove a central rectangle has distance > 24 even after smooth union, waves
 // and water displacement. Do this once per vertex, using the existing uniforms.
 // Each primitive there is at least L=k+24+reserve+displacement away. A smooth
-// union of any two distances >= L-k stays >= L-k (the smaller distance either
-// stays unchanged or the correction is bounded by the gap to L-k). Thus all
+// union is monotone in both operands: fuse(L-k,L)=L-k. With an accumulator
+// >= L-k and each new primitive >= L, every ordered fold stays >= L-k. Thus all
 // forty ordered folds remain transparent. The reserve also protects adjacent
 // derivative quads: visible pixels retain their original derivatives.
 layout(location=0) in vec4 qt_Vertex;
