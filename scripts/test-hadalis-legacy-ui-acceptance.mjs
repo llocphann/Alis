@@ -34,7 +34,8 @@ function loc(items,kind){
       assert.ok(!value.includes("secret"));
       if(fillThrows)throw Error("UNKNOWN_COMPOSER_OUTCOME");
     },
-    locator:()=>loc([{visible:true}],"selected")
+    locator:()=>loc([{visible:true}],"selected"),
+    getByRole:()=>loc([],"heading")
   };
 }
 const page={
@@ -133,6 +134,7 @@ try{
     "isVisible:async()=>items[0]?.visible??false,",
     "isDisabled:async()=>items[0]?.disabled??false,",
     "locator:()=>loc([{visible:true}]),",
+    "getByRole:()=>loc([]),",
     "fill:async()=>{},",
     "evaluate:async fn=>type==='send'",
     " ?fn({click:()=>fs.appendFileSync(process.env.MOCK_LOG,'clicked\\n')})",
