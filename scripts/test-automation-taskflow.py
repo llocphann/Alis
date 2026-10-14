@@ -328,6 +328,27 @@ class TaskflowTests(unittest.TestCase):
                         managed_tasks.reconcile_once()
             self.assertEqual(queue.view()["state"], "prepared")
 
+    def test_legacy_restore_gate_parks_unresolved_without_replaying(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
+                "XDG_STATE_HOME": tmp + "/state", "XDG_CONFIG_HOME": tmp + "/config"}):
+            def previous(c, state):
+                pid = c["profiles"][0]["id"]
+                c["profiles"][0]["enabled"] = True
+                state["profiles"][pid].update(desired="run", status="thinking",
+                    pending={"user_message_id": "old-message", "phase": "dispatching"})
+            legacy_store.change(previous)
+            result = managed_tasks.quarantine_legacy_profiles_once()
+            self.assertEqual(result["paused"], 1)
+            pid = legacy_model.DEFAULT_ID
+            _, state, _ = legacy_store.read_snapshot()
+            self.assertEqual(state["profiles"][pid]["desired"], "paused")
+            self.assertEqual(state["profiles"][pid]["pending"]["user_message_id"], "old-message")
+            def approved(c, state):
+                state["profiles"][pid]["desired"] = "run"
+            legacy_store.change(approved)
+            self.assertTrue(managed_tasks.quarantine_legacy_profiles_once()["already_gated"])
+            self.assertEqual(legacy_store.read_snapshot()[1]["profiles"][pid]["desired"], "run")
+
     def test_ordered_queue_refuses_dispatch_with_missing_worker_service(self):
         with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
                 "XDG_STATE_HOME": tmp + "/state", "XDG_CONFIG_HOME": tmp + "/config"}):

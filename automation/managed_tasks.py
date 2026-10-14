@@ -259,6 +259,48 @@ def scheduler_housekeeping(now: int | None = None) -> dict:
     return result
 
 
+
+def quarantine_legacy_profiles_once() -> dict:
+    """Restoration migration gate: old pending state retained, not resubmitted.
+
+    Only the first upgraded manager service start performs this gate. Existing
+    taskflow Start from Settings remains allowed. A later explicit owner Start
+    for a legacy profile is respected.
+    """
+    marker = store.state_dir() / "taskflow-restoration-gate.json"
+    if marker.is_symlink():
+        raise tf.TaskError("Unsafe legacy migration marker")
+    if marker.exists():
+        try:
+            import json
+            payload = json.loads(marker.read_text(encoding="utf-8"))
+            if payload.get("version") == 1 and payload.get("gated") is True:
+                return {"ok": True, "already_gated": True}
+        except (OSError, ValueError, AttributeError):
+            pass
+        raise tf.TaskError("Legacy migration gate is unreadable; refuse execution")
+    def gate(config, state):
+        count = 0
+        for profile in config["profiles"]:
+            pid = profile["id"]
+            if pid == SELECTOR_ID or reference(profile) is not None:
+                continue
+            item = state["profiles"].get(pid)
+            if not item:
+                continue
+            if item.get("desired") == "run":
+                item["desired"] = "paused"
+                item["status"] = "parked_unresolved" if item.get("pending") or item.get("job_id") else "paused"
+                item["status_detail"] = "Restored legacy run paused; explicit owner resume required"
+                item["next_run_at_unix"] = None
+                store.event(state, pid, "legacy_restoration_paused")
+                count += 1
+        return count
+    paused = store.change(gate)
+    tf._atomic_json(marker, {"version": 1, "gated": True, "at_unix": int(time.time())})
+    return {"ok": True, "already_gated": False, "paused": paused}
+
+
 def selector_prompt(kind: str) -> str:
     if kind not in {"initial", "continuation", "rotation"}:
         raise tf.TaskError("Invalid selector prompt phase")

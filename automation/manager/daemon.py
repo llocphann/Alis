@@ -571,6 +571,8 @@ def tick(now: int | None = None, executor: ThreadPoolExecutor | None = None) -> 
 
 
 def main() -> int:
+    from automation import managed_tasks
+    managed_tasks.quarantine_legacy_profiles_once()
     parser=argparse.ArgumentParser(description="Independent Hadalis workflow scheduler")
     parser.add_argument("--once",action="store_true")
     parser.add_argument("--reset-state",action="store_true")
