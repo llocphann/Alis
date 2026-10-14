@@ -35,6 +35,14 @@ def api(endpoint):
 
 
 class TaskflowTests(unittest.TestCase):
+    def test_cleanup_settings_contract(self):
+        qml = (Path(__file__).resolve().parents[1] /
+               "modules/settings/AutomationTaskConfig.qml").read_text()
+        self.assertIn("Preview cleanup", qml)
+        self.assertIn("Clean now", qml)
+        self.assertIn("root.inspectCleanup(true)", qml)
+        self.assertIn("cleanupProcess", qml)
+
     def test_lookup_code_and_exact_reference(self):
         task = taskflow.resolve("AUTO-R01", api)
         self.assertEqual(task["repository"], "llocphann/Alis")

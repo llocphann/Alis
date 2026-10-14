@@ -17,7 +17,8 @@ ContentPage {
     property string errorText: ""
     property string statusText: ""
     property var selectedTask: null
-    readonly property bool busy: prepareProcess.running
+    property string cleanupResult: ""
+    readonly property bool busy: prepareProcess.running || cleanupProcess.running
 
     function activateSettingsSearchSection(section: string): bool {
         return true
@@ -60,6 +61,34 @@ ContentPage {
                 root.selectedTask = null
             }
         }
+    }
+
+    Process {
+        id: cleanupProcess
+        stdout: StdioCollector { id: cleanupOutput }
+        stderr: StdioCollector { id: cleanupError }
+        onExited: exitCode => {
+            try {
+                const result = JSON.parse(cleanupOutput.text)
+                if (exitCode !== 0 || result.ok !== true)
+                    throw new Error(result.error || "Cleanup failed")
+                root.cleanupResult = Translation.tr("Old payloads: %1 · receipts: %2 · task files: %3")
+                    .arg(result.retired_payloads).arg(result.compacted_receipts)
+                    .arg(result.deleted_task_files)
+            } catch (error) {
+                root.cleanupResult = Translation.tr("Cleanup unavailable: %1").arg(String(error))
+            }
+        }
+    }
+
+    function inspectCleanup(apply: bool): void {
+        if (root.busy)
+            return
+        root.cleanupResult = ""
+        cleanupProcess.command = ["python3", Quickshell.shellPath("scripts/alis-automation-task.py"), "cleanup"]
+        if (apply)
+            cleanupProcess.command = cleanupProcess.command.concat(["--apply"])
+        cleanupProcess.running = true
     }
 
     SettingsTaskNavigator {
@@ -147,6 +176,46 @@ ContentPage {
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
                 text: Translation.tr("Local tests require explicit approval. GitHub Issues remain open for owner verification.")
+            }
+        }
+    }
+
+    SettingsCardSection {
+        expanded: true
+        icon: "cleaning_services"
+        title: Translation.tr("Automatic housekeeping")
+        settingsTaskSection: "tasks"
+        SettingsGroup {
+            StyledText {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: Appearance.colors.colSubtext
+                text: Translation.tr("Reports are capped per task. Acknowledged completed tasks lose temporary prompts and scripts after 7 days, and the task file after 30 days. Pending or uncertain jobs are protected.")
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                DialogButton {
+                    buttonText: Translation.tr("Preview cleanup")
+                    enabled: !root.busy
+                    onClicked: root.inspectCleanup(false)
+                }
+                DialogButton {
+                    buttonText: Translation.tr("Clean now")
+                    enabled: !root.busy
+                    onClicked: root.inspectCleanup(true)
+                }
+            }
+            StyledText {
+                visible: root.cleanupResult.length > 0
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: Appearance.colors.colSubtext
+                text: root.cleanupResult
+            }
+            SettingsNote {
+                icon: "info"
+                text: Translation.tr("Safe cleanup also runs when a new task is prepared. Periodic cleanup requires the restored Automation scheduler.")
             }
         }
     }
