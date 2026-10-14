@@ -38,6 +38,9 @@ jobs:
       - name: Owner-gated single-service cutover and failure rollback regression
         shell: bash
         run: bash scripts/test-brand-canonical-cutover.sh
+      - name: Owner-approved post-success rollback and failed-start recovery
+        shell: bash
+        run: bash scripts/test-brand-canonical-rollback.sh
       - name: Branch-aware R10 read-only audit and wrong-owner refusal
         shell: bash
         run: bash scripts/test-brand-owner-audit.sh

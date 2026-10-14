@@ -89,3 +89,22 @@ Quickshell runtime checks must pass, Arch/Nix upgrade semantics need an
 end-to-end review, and a live Niri cold-login/rollback requires owner approval.
 No source-stage PASS should be called full release acceptance. Do not
 automatically enable `alis.service` while the old service is active.
+
+## Owner-approved post-success service rollback (repo-copy only)
+
+`scripts/brand-canonical-rollback.sh --dry-run` previews reverting **only**
+the service/session owner. This is not an Arch/Nix package transaction, nor a
+reverse merge of Alis-created user settings. The original verified `inir` CLI
+must be restored and its `help` command must work; the interim disabled
+public shim cannot serve as a rollback target.
+
+Only on the owner's explicit decision, `--apply --owner-approved` stops
+`alis.service`, replaces verified compositor symlinks with original unit
+symlinks, and starts only `inir.service`. If the original service fails to
+start, the script attempts to restore Alis and leaves user data unchanged.
+Both unit files and **all** Alis/legacy XDG config, cache, data and state
+directories are retained. Post-rollback live Niri/Quickshell checks, cold
+login, backups and package-manager reversal remain separate owner-only gates.
+
+A staged regression tests dry-run, consent, failed legacy start recovery,
+single service ownership and SHA-preserved synthetic preference data.
