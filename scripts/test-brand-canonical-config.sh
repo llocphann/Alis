@@ -65,4 +65,16 @@ grep -Fq 'label: "iNiR"' "$root/modules/waffle/settings/pages/WAboutPage.qml" ||
     fail 'Waffle source credit incorrectly relabeled as Alis'
 grep -Fq 'BASHPID' "$root/scripts/brand-canonical-cutover.sh" ||
     fail 'cutover backups lack a unique process identifier'
+grep -Fq 'if brand_legacy_owner_present; then' "$root/setup" ||
+    fail 'alis migrate does not reject an existing legacy service owner'
+grep -Fq 'alis migrate cannot safely initialize legacy data.' "$root/setup" ||
+    fail 'alis migrate may run 019 without canonical config staged'
+cmp "$root/distro/arch/alis-shell/alis-shell.install" "$root/distro/arch/alis-shell-git/alis-shell-git.install" ||
+    fail 'Arch lifecycle hooks diverged'
+for hook in "$root/distro/arch/alis-shell/alis-shell.install" "$root/distro/arch/alis-shell-git/alis-shell-git.install"; do
+    grep -Fq 'do not enable a second service' "$hook" ||
+        fail 'fresh install hook does not warn about dual service ownership'
+    grep -Fq 'If inir.service is still present, DO NOT start Alis' "$hook" ||
+        fail 'upgrade hook would start a second shell owner'
+done
 echo 'PASS: Alis config resolution, historical migration isolation, credits and unique backups'
