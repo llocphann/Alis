@@ -1,0 +1,33 @@
+name: BRAND-R01 canonical staging and update owner safety
+on:
+  push:
+    branches:
+      - dev
+      - brand-r01-canonical-alis
+    paths:
+      - setup
+      - scripts/brand-canonical-stage.sh
+      - scripts/test-brand-canonical-stage.sh
+      - scripts/test-brand-legacy-owner-update.sh
+      - scripts/brand-canonical-cutover.sh
+      - .github/workflows/brand-update-cutover.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owner-update-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate update and pre-cutover stage syntax
+        shell: bash
+        run: bash -n setup scripts/brand-canonical-stage.sh scripts/brand-canonical-cutover.sh
+      - name: Old service retained after successful handoff must not block updates
+        shell: bash
+        run: bash scripts/test-brand-legacy-owner-update.sh
+      - name: Stage canonical source without touching old owner or user data
+        shell: bash
+        run: bash scripts/test-brand-canonical-stage.sh
+      - name: Original owner preserved on rejected or failed cutover
+        shell: bash
+        run: bash scripts/test-brand-canonical-cutover.sh
