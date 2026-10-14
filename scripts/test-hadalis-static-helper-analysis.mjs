@@ -79,8 +79,8 @@ assert.equal(r.primary_helper.side_effect_freedom_proven,false);
 // Unbalanced candidate bodies are reported without source, values, or
 // speculative effects. Declaration uniqueness alone is not semantic proof.
 const brokenSource="resolve(p,c){let a=make(p,c,s),b=build(c,s);return a}";
-const brokenBundle="function make(p,c,s){let secret='ghp_TEST_ONLY';" +
-  "function build(c,s){return c}" + "class Resolver{" + brokenSource + "}";
+const brokenBundle="function build(c,s){return c};class Resolver{" +
+  brokenSource + "};function make(p,c,s){let secret='ghp_TEST_ONLY';";
 r=inspect(brokenBundle,"",brokenSource);
 assert.equal(r.primary_helper.body_inspection,"unclosed-or-oversize");
 assert.equal(r.primary_helper.side_effect_freedom_proven,false);
