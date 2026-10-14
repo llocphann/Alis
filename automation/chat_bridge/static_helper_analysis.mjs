@@ -103,15 +103,51 @@ function inspectFunctionBody(source, declarationEnd) {
   )];
   const counts = {fresh_local_capped:0,direct_parameter_capped:0,
     other_or_unknown_capped:0};
+  // Further distinguish *why* a receiver stayed unknown without exporting
+  // symbols, literals, runtime objects, source slices or account values.
+  // The result is lexical evidence only, never permission to execute code.
+  const unknownSites = [];
+  const initializerKind = symbol => {
+    if(!IDENT.test(symbol)) return "unresolved";
+    const re = new RegExp("(?:^|[,;{])\\s*(?:(?:let|const|var)\\s+)?"+
+      esc(symbol)+"\\s*=\\s*","g");
+    const matches = [...masked.matchAll(re)].filter(m=>m.index < masked.length);
+    if(matches.length!==1) return matches.length > 1 ? "multiple-assignments" :
+      "not-found";
+    const tail = masked.slice(matches[0].index + matches[0][0].length);
+    if(/^new\s+Map\s*\(/.test(tail)) return "new-map";
+    if(/^new\s+[$A-Za-z_][\w$]*\s*\(/.test(tail)) return "new-other";
+    if(/^[$A-Za-z_][\w$]*\s*\(/.test(tail)) return "helper-call-result";
+    if(/^[$A-Za-z_][\w$]*\s*(?:\?\.|\.)/.test(tail))
+      return "member-result";
+    if(/^[$A-Za-z_][\w$]*\b/.test(tail)) return "identifier-alias";
+    return "other-expression";
+  };
   for(const m of receiverCalls){
     const receiver = m[1];
     // A call like object.parameter.set(...) refers to a property, not
     // necessarily the parameter with the same spelling.
     const before = masked.slice(0,m.index).trimEnd();
-    if(before.endsWith(".")) counts.other_or_unknown_capped++;
-    else if(params?.has(receiver)) counts.direct_parameter_capped++;
+    if(before.endsWith(".")) {
+      counts.other_or_unknown_capped++;
+      const ownerMatch = before.slice(0,-1).trimEnd().match(/([$A-Za-z_][\w$]*)$/);
+      const owner = ownerMatch?.[1];
+      const ownerType = owner
+        ? params?.has(owner) ? "parameter-member"
+          : initializerKind(owner) === "not-found" ? "external-member"
+          : "local-member"
+        : "unknown-member";
+      unknownSites.push({receiver_form:"member-property",
+        receiver_initializer_kind:"property-access",
+        owner_origin_hint:ownerType});
+    } else if(params?.has(receiver)) counts.direct_parameter_capped++;
     else if(freshLocals.has(receiver)) counts.fresh_local_capped++;
-    else counts.other_or_unknown_capped++;
+    else {
+      counts.other_or_unknown_capped++;
+      unknownSites.push({receiver_form:"bare-identifier",
+        receiver_initializer_kind:initializerKind(receiver),
+        owner_origin_hint:"not-applicable"});
+    }
   }
   for(const key of Object.keys(counts)) counts[key] = Math.min(8, counts[key]);
   const originStatus = receiverCalls.length === 0 ? "no-lexical-calls" :
@@ -120,6 +156,8 @@ function inspectFunctionBody(source, declarationEnd) {
     body_inspection:"complete",
     map_write_origin_status:originStatus,
     map_write_receiver_counts:counts,
+    map_write_unknown_sites:unknownSites.slice(0,4),
+    map_write_unknown_sites_truncated:unknownSites.length>4,
     body_length_band:body.length <= 256 ? "0-256" :
       body.length <= 1024 ? "257-1k" :
       body.length <= 4096 ? "1k-4k" : "4k-16k",
