@@ -277,6 +277,43 @@ assert.equal(constructorSite.receiver_initializer_kind,"new-map-token-no-args");
 assert.deepEqual(constructorSite.alias_trace,{
   origin_hint:"new-map-token-no-args-unverified",hops_capped:0
 });
+assert.deepEqual(constructorSite.map_constructor_binding,{
+  local_map_shadow_syntax:"not-detected",
+  module_or_closure_binding_inspected:false,
+  builtin_map_identity_verified:false,
+  constructor_side_effects_verified:false
+});
+// Local shadow tokens must be reported, but no lexical check proves global
+// Map identity. An outer/module shadow remains unverified and fail-closed.
+constructorSite=aliasFixture(
+  "let Map=custom(p);let receiver=new Map;" +
+  "receiver.set(s,c);return receiver"
+);
+assert.equal(constructorSite.map_constructor_binding.local_map_shadow_syntax,
+  "local-declaration-token");
+assert.equal(constructorSite.map_constructor_binding.builtin_map_identity_verified,
+  false);
+const paramSrc="resolve(p,c){let a=make(p,c,s),b=build(c,s);return b}";
+const paramBundle="function make(Map,c,s){let receiver=new Map;" +
+  "receiver.set(s,c);return receiver}" +
+  "function build(c,s){return c};class Resolver{"+paramSrc+"}";
+r=inspect(paramBundle,"",paramSrc);
+assert.equal(
+  r.primary_helper.map_write_unknown_sites[0].map_constructor_binding.local_map_shadow_syntax,
+  "parameter-name"
+);
+assert.equal(r.primary_helper.side_effect_freedom_proven,false);
+const outerBundle="const Map=externalMap;"+
+  "function make(p,c,s){let receiver=new Map;receiver.set(s,c);return receiver}"+
+  "function build(c,s){return c};class Resolver{"+paramSrc+"}";
+r=inspect(outerBundle,"",paramSrc);
+const outerEvidence=r.primary_helper.map_write_unknown_sites[0].map_constructor_binding;
+assert.equal(outerEvidence.local_map_shadow_syntax,"not-detected");
+assert.equal(outerEvidence.module_or_closure_binding_inspected,false);
+assert.equal(outerEvidence.builtin_map_identity_verified,false);
+// Even lexical names that resemble credentials never escape the report.
+assert.ok(!JSON.stringify(outerEvidence).includes("externalMap"));
+
 constructorSite=aliasFixture(
   "const map=new Map;let receiver=map;" +
   "receiver.set(s,c);return receiver"
