@@ -19,7 +19,7 @@ escaped="${launcher//\\/\\\\}"
 escaped="${escaped//&/\\&}"
 escaped="${escaped//|/\\|}"
 files=("$root")
-for filename in 70-binds.kdl 75-inir-launcher-binds.kdl 75-alis-launcher-binds.kdl 50-startup.kdl; do
+for filename in 70-binds.kdl 75-inir-launcher-binds.kdl 75-alis-launcher-binds.kdl 50-startup.kdl 90-user-extra.kdl; do
     if grep -Fq "include \"config.d/$filename\"" "$root"; then
         files+=("$cfg/config.d/$filename")
     fi
@@ -32,6 +32,8 @@ done
 for file in "${files[@]}"; do
     # Do not alter names of services, paths, bookmarks or user hotkey actions.
     # The PATH-safe wrapper in 75-* is retained; only the invoked CLI changes.
+    # 90-user-extra.kdl has the final Niri override precedence: migrate only
+    # obsolete executable paths, preserving command arguments and user hotkeys.
     tmp="$(mktemp "${file}.alis-XXXXXX")"
     sed \
         -e "s|spawn \"inir\" |spawn \"${escaped}\" |g" \
