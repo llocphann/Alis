@@ -123,6 +123,47 @@ function inspectFunctionBody(source, declarationEnd) {
     if(/^[$A-Za-z_][\w$]*\b/.test(tail)) return "identifier-alias";
     return "other-expression";
   };
+  // Trace only bare "name=otherName" lexical aliases that occur before the
+  // write. A chain cannot certify ownership or side-effect freedom; it only
+  // identifies a possible origin. Reassignments, cycles, unknown syntax and
+  // excessive depth stop in an explicit non-authorizing state.
+  const traceIdentifierAlias = (start, siteIndex) => {
+    const prefix = masked.slice(0,siteIndex);
+    const seen = new Set();
+    let symbol = start, hops = 0;
+    while (hops <= 8) {
+      if (seen.has(symbol))
+        return {origin_hint:"cycle",hops_capped:Math.min(8,hops)};
+      seen.add(symbol);
+      const assignment = new RegExp(
+        "(?:^|[,;{}])\\s*(?:(?:const|let|var)\\s+)?" +
+        esc(symbol) + "\\s*=\\s*","g");
+      const found = [...prefix.matchAll(assignment)];
+      if (found.length > 1)
+        return {origin_hint:"multiple-assignments",hops_capped:Math.min(8,hops)};
+      if (!found.length)
+        return {origin_hint:params?.has(symbol) ? "parameter" :
+          "unresolved-external",hops_capped:Math.min(8,hops)};
+      // Parameter symbols can be shadowed or reassigned. Do not assert a
+      // parameter origin when an assignment was seen in this body.
+      const rhs = prefix.slice(found[0].index + found[0][0].length);
+      if (/^new\s+Map\s*\(/.test(rhs))
+        return {origin_hint:"new-map-syntax",hops_capped:Math.min(8,hops)};
+      if (/^new\s+[$A-Za-z_][\w$]*\s*\(/.test(rhs))
+        return {origin_hint:"new-other-syntax",hops_capped:Math.min(8,hops)};
+      if (/^[$A-Za-z_][\w$]*\s*\(/.test(rhs))
+        return {origin_hint:"helper-call-result",hops_capped:Math.min(8,hops)};
+      if (/^[$A-Za-z_][\w$]*\s*(?:\?\.|\.)/.test(rhs))
+        return {origin_hint:"member-result",hops_capped:Math.min(8,hops)};
+      const alias = rhs.match(/^([$A-Za-z_][\w$]*)\s*(?=[,;}\n\r]|$)/);
+      if (!alias)
+        return {origin_hint:"complex-or-unsupported-expression",
+          hops_capped:Math.min(8,hops)};
+      symbol = alias[1];
+      hops++;
+    }
+    return {origin_hint:"depth-limit",hops_capped:8};
+  };
   for(const m of receiverCalls){
     const receiver = m[1];
     // A call like object.parameter.set(...) refers to a property, not
@@ -144,9 +185,12 @@ function inspectFunctionBody(source, declarationEnd) {
     else if(freshLocals.has(receiver)) counts.fresh_local_capped++;
     else {
       counts.other_or_unknown_capped++;
+      const kind = initializerKind(receiver);
       unknownSites.push({receiver_form:"bare-identifier",
-        receiver_initializer_kind:initializerKind(receiver),
-        owner_origin_hint:"not-applicable"});
+        receiver_initializer_kind:kind,
+        owner_origin_hint:"not-applicable",
+        ...(kind === "identifier-alias"
+          ? {alias_trace:traceIdentifierAlias(receiver,m.index)} : {})});
     }
   }
   for(const key of Object.keys(counts)) counts[key] = Math.min(8, counts[key]);
