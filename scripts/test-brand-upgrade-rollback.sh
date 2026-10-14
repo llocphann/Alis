@@ -18,11 +18,11 @@ install_staged() { make -s install-bin install-desktop install-icon "${make_args
 uninstall_staged() { make -s uninstall-bin uninstall-desktop uninstall-icon "${make_args[@]}"; }
 check_staged() {
     [[ -x "$stage/usr/bin/alis" ]] || fail 'public Alis command absent'
-    [[ -x "$stage/usr/bin/inir" ]] || fail 'legacy iNiR command absent'
+    [[ ! -e "$stage/usr/bin/inir" ]] || fail 'retired iNiR command unexpectedly installed'
     grep -Fxq 'Name=Alis Settings' "$stage/usr/share/applications/alis-settings.desktop" ||
         fail 'Alis Settings entry missing'
-    grep -Fxq 'NoDisplay=true' "$stage/usr/share/applications/inir-settings.desktop" ||
-        fail 'old launcher visible alongside Alis'
+    [[ ! -e "$stage/usr/share/applications/inir-settings.desktop" ]] ||
+        fail 'retired iNiR Settings entry unexpectedly packaged'
     [[ -s "$stage/usr/share/icons/hicolor/scalable/apps/alis.svg" ]] ||
         fail 'public icon absent'
 }

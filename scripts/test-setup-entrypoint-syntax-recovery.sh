@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 bash -n "$ROOT/setup"
-bash -n "$ROOT/scripts/inir"
+bash -n "$ROOT/scripts/alis"
 
 stage="$(mktemp -d)"
 trap 'rm -rf -- "$stage"' EXIT
@@ -32,13 +32,13 @@ awk '
     /^resolve_setup_dir\(\) \{/ {helpers=1}
     /^run_setup_inline\(\) \{/ {helpers=0}
     helpers {print}
-' "$ROOT/scripts/inir" > "$stage/helpers.sh"
+' "$ROOT/scripts/alis" > "$stage/helpers.sh"
 # shellcheck source=/dev/null
 source "$stage/helpers.sh"
 launcher_root="$stage/runtime"
 config_dir="$stage/runtime"
 resolve_config_dir() { :; }
-inir_version_file() { printf '%s' "$stage/version.json"; }
+alis_version_file() { printf '%s' "$stage/version.json"; }
 printf '{"repoPath":"%s"}\n' "$stage/repo" > "$stage/version.json"
 
 selected="$(resolve_setup_dir)"
