@@ -41,7 +41,16 @@ cat > "$tmp/home/.local/bin/systemctl" <<'MOCK'
 [[ "${3:-}" != alis.service ]] || echo inactive
 [[ "${3:-}" != inir.service ]] || echo active
 MOCK
-printf '#!/bin/sh\n# Canonical CLI and runtime name is Alis.\nexit 0\n' > "$tmp/home/.local/bin/alis"
+cat > "$tmp/home/.local/bin/alis" <<'LEGACY'
+#!/usr/bin/env bash
+# Alis is the public command while the proven iNiR runtime owns the session.
+script_dir="$(dirname -- "${BASH_SOURCE[0]}")"
+export ALIS_INTERNAL_CLI=1
+if [[ -f "$script_dir/inir" ]]; then
+    exec bash "$script_dir/inir" "$@"
+fi
+exec inir "$@"
+LEGACY
 printf '#!/bin/sh\nexit 0\n' > "$tmp/home/.local/bin/cargo"
 chmod +x "$tmp/root/native/scripts/install-runtime.sh" "$tmp/home/.local/bin/"*
 export HOME="$tmp/home"
@@ -51,13 +60,40 @@ export PATH="$HOME/.local/bin:$PATH"
 helper="$tmp/root/scripts/brand-canonical-stage.sh"
 hash1="$(sha256sum "$HOME/.config/inir/config.json" | cut -d' ' -f1)"
 hash2="$(sha256sum "$HOME/.local/state/quickshell/user/first_run.txt" | cut -d' ' -f1)"
+legacy_hash="$(sha256sum "$HOME/.local/bin/alis" | cut -d' ' -f1)"
 bash -n "$helper"
 preview="$(bash "$helper" --dry-run 2>&1)" || { printf 'Stage preview failed:\n%s\n' "$preview" >&2; fail 'dry run'; }
 grep -Fq DRY-RUN <<< "$preview" || { printf 'Unexpected stage preview:\n%s\n' "$preview" >&2; fail 'dry run output'; }
 [[ ! -e "$HOME/.config/quickshell/alis" ]] || fail 'dry-run mutated runtime'
+cp "$HOME/.local/bin/alis" "$tmp/original-wrapper"
+printf '#!/usr/bin/env bash\n# foreign command\n' > "$HOME/.local/bin/alis"
+chmod +x "$HOME/.local/bin/alis"
+if bash "$helper" --dry-run >/dev/null 2>&1; then fail 'foreign launcher accepted'; fi
+cmp -s "$HOME/.local/bin/alis" <(printf '#!/usr/bin/env bash\n# foreign command\n') ||
+    fail 'foreign launcher modified'
+cp "$tmp/original-wrapper" "$HOME/.local/bin/alis"
+ln -s "$HOME/.local/bin/alis" "$tmp/external-alis"
+# An existing symlink at the launcher path must never be followed.
+mv "$HOME/.local/bin/alis" "$tmp/wrapper-for-link"
+ln -s "$tmp/wrapper-for-link" "$HOME/.local/bin/alis"
+if bash "$helper" --dry-run >/dev/null 2>&1; then fail 'symlink launcher accepted'; fi
+rm -- "$HOME/.local/bin/alis"
+mv "$tmp/wrapper-for-link" "$HOME/.local/bin/alis"
 if bash "$helper" --apply >/dev/null 2>&1; then fail 'unapproved apply succeeded'; fi
 bash "$helper" --apply --owner-approved | grep -Fq 'STAGED:' || fail 'explicit staging failed'
 [[ -x "$HOME/.config/quickshell/alis/native/bin/alis-native" ]] || fail 'native runtime missing'
+grep -Fq '# Canonical CLI and runtime name is Alis.' "$HOME/.local/bin/alis" ||
+    fail 'legacy Alis wrapper was not replaced by canonical CLI'
+backups=("$HOME"/.local/state/alis-cutover-backups/launcher-*/alis)
+[[ "${#backups[@]}" == 1 && -f "${backups[0]}" ]] ||
+    fail 'original Alis wrapper backup was not retained'
+[[ "$(sha256sum "${backups[0]}" | cut -d' ' -f1)" == "$legacy_hash" ]] ||
+    fail 'backed-up legacy launcher bytes changed'
+backups_before="$(find "$HOME/.local/state/alis-cutover-backups" -type f -name alis | wc -l)"
+bash "$helper" --apply --owner-approved | grep -Fq 'ALREADY STAGED' ||
+    fail 'repeat staging should be idempotent'
+[[ "$(find "$HOME/.local/state/alis-cutover-backups" -type f -name alis | wc -l)" == "$backups_before" ]] ||
+    fail 'idempotent stage duplicated legacy launcher backup'
 [[ -f "$HOME/.config/systemd/user/inir.service" ]] || fail 'original service lost'
 [[ "$(sha256sum "$HOME/.config/inir/config.json" | cut -d' ' -f1)" == "$hash1" ]] || fail 'preferences mutated'
 [[ "$(sha256sum "$HOME/.local/state/quickshell/user/first_run.txt" | cut -d' ' -f1)" == "$hash2" ]] || fail 'first run reset'
