@@ -78,9 +78,25 @@ def _github(endpoint: str):
     try:
         with urlopen(Request("https://api.github.com" + endpoint, headers=headers), timeout=12) as response:
             return json.load(response)
-    except (HTTPError, URLError, TimeoutError, ValueError) as error:
-        # Never include private HTTP headers or authentication material in diagnostics.
-        raise TaskError("GitHub unavailable or access denied; check connection and permissions") from None
+    except HTTPError as error:
+        # Keep authentication material and raw API error bodies private, but
+        # distinguish rate limiting from bad credentials and missing access.
+        status = getattr(error, "code", None)
+        headers = getattr(error, "headers", None)
+        remaining = headers.get("X-RateLimit-Remaining") if headers else None
+        if status in (403, 429) and (status == 429 or remaining == "0"):
+            raise TaskError("GitHub API rate limit reached (HTTP %s); retry later or configure a scoped token" % status) from None
+        if status == 401:
+            raise TaskError("GitHub token was rejected (HTTP 401); check the saved token") from None
+        if status == 403:
+            raise TaskError("GitHub access denied (HTTP 403); check repository token permissions or API throttling") from None
+        if status == 404:
+            raise TaskError("GitHub repository or Issue unavailable (HTTP 404); check repository access") from None
+        raise TaskError("GitHub API request failed (HTTP %s)" % status) from None
+    except (URLError, TimeoutError):
+        raise TaskError("Cannot reach api.github.com from Localbot; check network, DNS and proxy") from None
+    except ValueError:
+        raise TaskError("GitHub API response was invalid; retry without executing the queue") from None
 
 
 def _code_of_title(title: str) -> str | None:
@@ -100,7 +116,7 @@ def resolve(task_code: str, api: Callable[[str], object] = _github) -> dict:
     elif CODE.fullmatch(entered):
         matches = []
         for repo in REPOSITORIES:
-            query = quote(f'repo:{repo} in:title "{entered}"', safe="")
+            query = quote(f'repo:{repo} is:issue is:open in:title "{entered}"', safe="")
             result = api("/search/issues?q=" + query + "&per_page=100")
             if not isinstance(result, dict) or result.get("total_count", 0) > 100:
                 raise TaskError("GitHub search incomplete; specify owner/repo#issue")
@@ -114,32 +130,97 @@ def resolve(task_code: str, api: Callable[[str], object] = _github) -> dict:
         raise TaskError("No matching Issue" if not matches else "Ambiguous task code; specify owner/repo#issue")
     repo, number = matches[0]
     issue = api(f"/repos/{repo}/issues/{number}")
-    if not isinstance(issue, dict) or "pull_request" in issue or not _code_of_title(issue.get("title", "")):
-        raise TaskError("Target is not a coded GitHub Issue")
-    actual = _code_of_title(issue["title"])
-    if not explicit and actual != entered:
+    if not explicit and (not isinstance(issue, dict) or _code_of_title(issue.get("title", "")) != entered):
         raise TaskError("Issue code mismatch")
-    if issue.get("state") != "open":
-        raise TaskError("Issue is not open; reopen it before scheduling")
     branch = REPOSITORIES[repo]
     branch_data = api(f"/repos/{repo}/branches/{branch}")
-    sha = branch_data.get("commit", {}).get("sha", "")
-    if not SHA.fullmatch(sha):
+    return _task_from_issue(repo, issue, branch_data, api)
+
+
+def _task_from_issue(repo: str, issue: dict, branch_data: dict,
+                     api: Callable[[str], object]) -> dict:
+    """Validate one open Issue and its complete comments against one pinned branch."""
+    if (not isinstance(issue, dict) or "pull_request" in issue
+            or not _code_of_title(issue.get("title", ""))):
+        raise TaskError("Target is not a coded GitHub Issue")
+    if issue.get("state") != "open":
+        raise TaskError("Issue is not open; reopen it before scheduling")
+    number = issue.get("number")
+    if type(number) is not int or number < 1:
+        raise TaskError("Invalid GitHub Issue number")
+    sha = branch_data.get("commit", {}).get("sha", "") if isinstance(branch_data, dict) else ""
+    if not isinstance(sha, str) or not SHA.fullmatch(sha):
         raise TaskError("Cannot pin source SHA")
-    comments = api(f"/repos/{repo}/issues/{number}/comments?per_page=100")
-    if not isinstance(comments, list):
-        raise TaskError("Cannot read Issue comments")
-    if issue.get("comments", 0) > len(comments):
+    count = issue.get("comments", 0)
+    if type(count) is not int or count < 0 or count > 100:
+        raise TaskError("Issue comments exceed bounded API intake; review individually")
+    comments = api(f"/repos/{repo}/issues/{number}/comments?per_page=100") if count else []
+    if not isinstance(comments, list) or len(comments) < count:
         raise TaskError("Issue comments incomplete; refusing incomplete context")
     return {
-        "code": actual, "repository": repo, "issue_number": number,
+        "code": _code_of_title(issue["title"]), "repository": repo,
+        "issue_number": number,
         "issue_url": f"https://github.com/{repo}/issues/{number}",
         "title": issue["title"], "body": (issue.get("body") or "")[:60000],
         "issue_updated_at": issue.get("updated_at", ""),
         "comments": [{"body": (item.get("body") or "")[:12000],
                       "id": item.get("id")} for item in comments],
-        "branch": branch, "base_sha": sha,
+        "branch": REPOSITORIES[repo], "base_sha": sha,
     }
+
+
+def resolve_batch(codes: list[str],
+                  api: Callable[[str], object] = _github) -> list[dict]:
+    """Resolve a serial queue with bounded GitHub API calls.
+
+    One paginated open-Issue listing per repository replaces three search
+    requests per task. Archived/closed migration copies are ignored. A shared
+    branch SHA is pinned once per owning repo; comments are fetched only when
+    present. No incomplete page silently implies that an Issue is missing.
+    """
+    codes = list(codes)
+    names = {entry for entry in codes if CODE.fullmatch(entry)}
+    explicit = {entry for entry in codes if ISSUE_REF.fullmatch(entry)}
+    if len(names) + len(explicit) != len(codes):
+        raise TaskError("Invalid task code in batch")
+    matches = {name: [] for name in names}
+    if names:
+        for repo in REPOSITORIES:
+            for page in range(1, 11):
+                issues = api(f"/repos/{repo}/issues?state=open&per_page=100&page={page}")
+                if not isinstance(issues, list):
+                    raise TaskError("GitHub open-Issue listing unavailable")
+                for issue in issues:
+                    if not isinstance(issue, dict) or issue.get("state") != "open" or "pull_request" in issue:
+                        continue
+                    code = _code_of_title(issue.get("title", ""))
+                    if code in names:
+                        matches[code].append((repo, issue))
+                if len(issues) < 100:
+                    break
+            else:
+                raise TaskError("GitHub Issue listing exceeds bounded pagination")
+    identified = []
+    for code in codes:
+        if code in explicit:
+            identified.append(resolve(code, api))
+            continue
+        found = matches[code]
+        if len(found) != 1:
+            raise TaskError(("No matching open Issue: " if not found else
+                             "Ambiguous open task code: ") + code)
+        identified.append(found[0])
+    pinned = {}
+    result = []
+    for item in identified:
+        if isinstance(item, dict):
+            result.append(item)  # Explicit owner/repo#issue was already verified.
+            continue
+        repo, issue = item
+        if repo not in pinned:
+            pinned[repo] = api(f"/repos/{repo}/branches/{REPOSITORIES[repo]}")
+        result.append(_task_from_issue(repo, issue, pinned[repo], api))
+    return result
 
 
 def internal_prompt(task: dict) -> str:
