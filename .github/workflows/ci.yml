@@ -42,6 +42,18 @@ jobs:
         shell: bash
         run: python3 scripts/test-automation-taskflow.py
 
+      - name: Verify restored Automation backend
+        shell: bash
+        run: |
+          python3 scripts/test-hadalis-automation-model.py
+          python3 scripts/test-hadalis-automation-storage.py
+          python3 scripts/test-hadalis-automation-recovery.py
+          python3 scripts/test-hadalis-automation-scheduler.py
+          python3 scripts/test-hadalis-automation-startup.py
+          python3 scripts/test-hadalis-chat-bridge.py
+          python3 scripts/test-hadalis-automation-credentials.py
+          python3 scripts/test-hadalis-automation-install.py
+
       - name: Run canonical local validator
         shell: bash
         run: |
