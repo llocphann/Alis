@@ -79,6 +79,8 @@ grep -Fq 'Active Niri shortcut still invokes disabled inir' "$tmp/reject.log" ||
     die 'preflight installed new unit'
 
 make_fixture good
+mkdir -p "$tmp/good/state/inir"
+printf '%s\n' 'private state byte' > "$tmp/good/state/inir/snapshot.dat"
 dry="$(invoke good --dry-run)" || die 'dry run failed'
 [[ "$dry" == *'DRY-RUN: no modifications.'* ]] || die 'no dry run result'
 [[ ! -e "$tmp/good/config/alis" ]] || die 'dry run touched user data'
@@ -94,6 +96,10 @@ invoke good --apply --owner-approved > "$tmp/success.log" ||
     die 'two-service handoff state incorrect'
 [[ -f "$tmp/good/config/alis/preferences.json" ]] ||
     die 'lost a copied user preference'
+[[ -f "$tmp/good/state/alis/snapshot.dat" ]] ||
+    die 'Alis state was not copied to the canonical state root'
+[[ ! -e "$tmp/good/state/alis/inir/snapshot.dat" ]] ||
+    die 'state copy nested the old namespace within the new one'
 [[ -f "$tmp/good/config/inir/preferences.json" ]] ||
     die 'destructively removed original user preference'
 [[ -L "$tmp/good/config/systemd/user/niri.service.wants/alis.service" ]] ||
@@ -104,6 +110,31 @@ invoke good --apply --owner-approved > "$tmp/success.log" ||
     die 'new service started more than once'
 [[ "$(head -n 1 "$tmp/good/order")" == 'stop inir.service' ]] ||
     die 'started new service before old owner stopped'
+
+# Original upstream settings may be linked into the public Alis namespace.
+# The script must preserve the historical directory, replace only that
+# recognized symlink, and copy the active config file without modifying bytes.
+make_fixture upstream
+mkdir -p "$tmp/upstream/config/illogical-impulse"
+printf '%s\n' '{"language":"vi","userSetting":true}' > "$tmp/upstream/config/illogical-impulse/config.json"
+ln -s "$tmp/upstream/config/illogical-impulse" "$tmp/upstream/config/alis"
+invoke upstream --apply --owner-approved > "$tmp/upstream.log" ||
+    die 'upstream configuration alias cutover failed'
+[[ ! -L "$tmp/upstream/config/alis" ]] ||
+    die 'recognized upstream alias not replaced with canonical directory'
+cmp "$tmp/upstream/config/illogical-impulse/config.json" "$tmp/upstream/config/alis/config.json" ||
+    die 'upstream settings changed during migration'
+
+# Package metadata under the old upstream namespace must block a mutable
+# service cutover, even when no inir/version.json exists.
+make_fixture package
+mkdir -p "$tmp/package/config/illogical-impulse"
+printf '%s\n' '{"packageManager":"nix"}' > "$tmp/package/config/illogical-impulse/version.json"
+if invoke package --dry-run > "$tmp/package.log" 2>&1; then
+    die 'Nix installation was incorrectly treated as repo-copy'
+fi
+[[ "$(cat "$tmp/package/state-inir")" == active ]] ||
+    die 'package-manager guard mutated old session'
 
 make_fixture rollback
 if FAIL_NEW_OWNER=1 invoke rollback --apply --owner-approved > "$tmp/failure.log" 2>&1; then
