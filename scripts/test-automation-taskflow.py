@@ -236,6 +236,48 @@ class TaskflowTests(unittest.TestCase):
         self.assertNotIn("automationRotationPrompt", qml)
         self.assertNotIn("prepareProcess", qml)
 
+    def test_new_automation_project_defaults_to_automatic_alis_without_rebinding_existing(self):
+        self.assertEqual(legacy_model.DEFAULT_PROJECT, "Automatic Alis")
+        self.assertEqual(legacy_model.default_profile()["project_name"], "Automatic Alis")
+        self.assertEqual(legacy_model.new_profile("New")["project_name"], "Automatic Alis")
+        # Explicitly saved targets in old installations remain untouched.
+        legacy = legacy_model.default_profile()
+        legacy["project_name"] = "Hadalis Cloud"
+        old_config, warnings = legacy_model.normalize_config({
+            "version": 1, "maintenance": {},
+            "profiles": [legacy],
+        })
+        self.assertEqual(old_config["profiles"][0]["project_name"], "Hadalis Cloud")
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
+                "XDG_STATE_HOME": tmp + "/state",
+                "XDG_CONFIG_HOME": tmp + "/config"}):
+            taskflow.intake(taskflow.resolve("AUTO-R01", api))
+            pid = managed_tasks._ensure_profile("llocphann/Alis", "AUTO-R01")
+            config, _, _ = legacy_store.read_snapshot()
+            task_profile = next(p for p in config["profiles"] if p["id"] == pid)
+            self.assertEqual(task_profile["project_name"], "Automatic Alis")
+            def retain_selected_project(config, state):
+                next(p for p in config["profiles"] if p["id"] == pid)["project_name"] = "Hadalis Cloud"
+            legacy_store.change(retain_selected_project)
+            self.assertEqual(managed_tasks._ensure_profile("llocphann/Alis", "AUTO-R01"), pid)
+            config, _, _ = legacy_store.read_snapshot()
+            self.assertEqual(next(p for p in config["profiles"]
+                                  if p["id"] == pid)["project_name"], "Hadalis Cloud")
+            self.assertEqual(managed_tasks._ensure_selector(), managed_tasks.SELECTOR_ID)
+            config, _, _ = legacy_store.read_snapshot()
+            selector = next(p for p in config["profiles"]
+                            if p["id"] == managed_tasks.SELECTOR_ID)
+            self.assertEqual(selector["project_name"], "Automatic Alis")
+            def preserve_selector(config, state):
+                next(p for p in config["profiles"]
+                     if p["id"] == managed_tasks.SELECTOR_ID)["project_name"] = "Other Project"
+            legacy_store.change(preserve_selector)
+            managed_tasks._ensure_selector()
+            config, _, _ = legacy_store.read_snapshot()
+            selector = next(p for p in config["profiles"]
+                            if p["id"] == managed_tasks.SELECTOR_ID)
+            self.assertEqual(selector["project_name"], "Other Project")
+
     def test_restored_scheduler_defaults_stopped_without_legacy_replay(self):
         profile = legacy_model.default_profile()
         self.assertFalse(profile["enabled"])
