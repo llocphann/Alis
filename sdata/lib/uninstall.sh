@@ -15,13 +15,13 @@ ALIS_CONFIG_DIR="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME}/alis}"
 # - shared: Files that may be used by other apps, ask before removing
 # - user_data: User's personal data, preserve by default
 
+# User preferences, Quick Notes, and shared state NEVER belong to this
+# deletion list. Public executable/desktop/icon cleanup is owner-guarded by
+# uninstall_remove_alis_public_entries below; foreign files are preserved.
 # Alis-exclusive files (safe to remove)
 declare -A ALIS_ONLY_PATHS=(
     ["${XDG_CONFIG_HOME}/quickshell/alis"]="Alis shell configuration"
-    ["${ALIS_CONFIG_DIR}"]="Alis user preferences"
-    ["${XDG_STATE_HOME}/quickshell/user"]="Alis state (notifications, todo)"
     ["${XDG_CACHE_HOME}/quickshell/alis"]="Alis cache"
-    ["${XDG_BIN_HOME}/alis"]="Alis launcher"
     ["${HOME}/.local/bin/alis_super_overview_daemon.py"]="Alis super daemon"
     ["${XDG_CONFIG_HOME}/systemd/user/alis.service"]="Alis user service"
     ["${XDG_CONFIG_HOME}/systemd/user/alis-super-overview.service"]="Alis daemon service"
@@ -33,9 +33,6 @@ declare -A ALIS_ONLY_PATHS=(
     ["${XDG_CONFIG_HOME}/Vesktop/themes/alis-tui.theme.css"]="Alis Vesktop TUI theme (alt)"
     ["${XDG_CONFIG_HOME}/Vesktop/themes/alis-midnight.theme.css"]="Alis Vesktop Midnight theme (alt)"
     ["${XDG_CONFIG_HOME}/Vesktop/themes/ii-colors.css"]="Alis Vesktop colors (alt)"
-    ["${XDG_DATA_HOME}/applications/alis.desktop"]="Alis desktop entry"
-    ["${XDG_DATA_HOME}/applications/alis-settings.desktop"]="Alis settings desktop entry"
-    ["${XDG_DATA_HOME}/icons/hicolor/scalable/apps/alis.svg"]="Alis launcher icon"
     ["${HOME}/.local/bin/sync-pixel-sddm.py"]="Alis SDDM theme sync helper"
 )
 
