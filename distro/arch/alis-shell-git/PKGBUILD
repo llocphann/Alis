@@ -144,12 +144,11 @@ package() {
   python3 "$srcroot/sdata/lib/runtime-payload.py" copy --root "$srcroot" --target "$shellroot" || return
   mkdir -p "$shellroot/native/bin"
   for binary in alis-inputd alis-mpdd alis-native alis-theme; do install -Dm0755 "$srcdir/alis-native-target/release/$binary" "$shellroot/native/bin/$binary"; done
-  chmod +x "$shellroot/setup" "$shellroot/scripts/alis" "$shellroot/scripts/alis"
+  chmod +x "$shellroot/setup" "$shellroot/scripts/alis"
   find "$shellroot/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} +
   python3 -c 'from pathlib import Path; import sys; p=Path(sys.argv[1]); t=p.read_text(); m="sync_launcher_from_repo() {\n"; assert t.count(m) == 1, "expected one sync_launcher_from_repo definition"; g=m+"    if [[ \"$(get_installed_update_strategy 2>/dev/null || true)\" == \"package-manager\" ]]; then\n        return 0\n    fi\n"; p.write_text(t.replace(m, g, 1))' "$shellroot/setup"
   grep -Fq 'get_installed_update_strategy 2>/dev/null || true' "$shellroot/setup" || return
 
-  install -Dm755 "$srcroot/scripts/alis" "$pkgdir/usr/bin/alis"
   install -Dm755 "$srcroot/scripts/alis" "$pkgdir/usr/bin/alis"
   install -Dm644 "$srcroot/assets/systemd/alis.service" "$pkgdir/usr/lib/systemd/user/alis.service"
   # Privileged gateway is shipped by the trusted Hadalis system package.
@@ -259,9 +258,6 @@ PY
 
   install -Dm644 "$srcroot/assets/applications/alis.desktop" "$pkgdir/usr/share/applications/alis.desktop"
   install -Dm644 "$srcroot/assets/applications/alis-settings.desktop" "$pkgdir/usr/share/applications/alis-settings.desktop"
-  install -Dm644 "$srcroot/assets/applications/alis.desktop" "$pkgdir/usr/share/applications/alis.desktop"
-  install -Dm644 "$srcroot/assets/applications/alis-settings.desktop" "$pkgdir/usr/share/applications/alis-settings.desktop"
-  install -Dm644 "$srcroot/assets/icons/desktop-symbolic.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/alis.svg"
   install -Dm644 "$srcroot/assets/icons/desktop-symbolic.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/alis.svg"
   install -Dm644 "$srcroot/distro/arch/alis-shell/alis-quickshell-rebuild.hook" \
     "$pkgdir/usr/share/libalpm/hooks/alis-quickshell-rebuild.hook"
