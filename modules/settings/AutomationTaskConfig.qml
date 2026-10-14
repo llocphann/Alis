@@ -47,6 +47,7 @@ ContentPage {
     readonly property bool busy: queueProcess.running || cleanupProcess.running
         || githubSecretProcess.running || githubStatusProcess.running
         || installerProcess.running || backendStatusProcess.running
+        || ownerActionProcess.running
 
     function refreshGithubStatus(): void {
         if (githubStatusProcess.running || githubSecretProcess.running)
@@ -142,6 +143,17 @@ ContentPage {
 
     property string queueOperation: ""
     onActiveSectionChanged: Qt.callLater(root.refreshActivity)
+
+    function verifySelectedTask(): void {
+        if (root.busy || !root.selectedTask
+                || root.taskSnapshot?.status !== "awaiting_owner")
+            return
+        ownerActionProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "owner-verify", root.selectedTask.code, "--repo",
+            root.selectedTask.repository, "--approve"]
+        ownerActionProcess.running = true
+    }
 
     function refreshTaskStatus(): void {
         if (!root.visible || !root.selectedTask || taskStatusProcess.running)
@@ -273,6 +285,25 @@ ContentPage {
         }
     }
 
+
+    Process {
+        id: ownerActionProcess
+        stdout: StdioCollector { id: ownerActionOutput }
+        stderr: StdioCollector { id: ownerActionError }
+        onExited: exitCode => {
+            try {
+                const reply = JSON.parse(ownerActionOutput.text)
+                if (exitCode !== 0 || reply.ok !== true)
+                    throw new Error(reply.error || "Owner approval failed")
+                root.statusText = Translation.tr("Owner verified · Issue remains open")
+                Qt.callLater(root.refreshTaskStatus)
+                Qt.callLater(root.refreshActivity)
+                Qt.callLater(root.refreshQueue)
+            } catch (error) {
+                root.errorText = String(error)
+            }
+        }
+    }
 
     Process {
         id: taskStatusProcess
@@ -561,6 +592,13 @@ ContentPage {
                         .arg(root.taskSnapshot.current_job || "—")
                         .arg(root.taskSnapshot.rotation_pending ? "Pending" : "Idle")
                     : ""
+            }
+            DialogButton {
+                buttonText: Translation.tr("Mark owner verified")
+                enabled: !root.busy && !!root.taskSnapshot
+                    && root.taskSnapshot.status === "awaiting_owner"
+                visible: !!root.taskSnapshot && root.taskSnapshot.status === "awaiting_owner"
+                onClicked: root.verifySelectedTask()
             }
             SettingsNote {
                 visible: !!root.taskSnapshot && root.taskSnapshot.rotation_pending

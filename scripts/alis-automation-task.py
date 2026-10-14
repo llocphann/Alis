@@ -45,6 +45,10 @@ def main():
     run.add_argument("checkout", type=Path)
     run.add_argument("--repo", default="llocphann/Alis", choices=taskflow.REPOSITORIES)
     run.add_argument("--approve-local-tests", action="store_true")
+    accept = commands.add_parser("owner-verify")
+    accept.add_argument("code")
+    accept.add_argument("--repo", default="llocphann/Alis", choices=taskflow.REPOSITORIES)
+    accept.add_argument("--approve", action="store_true")
     check = commands.add_parser("status")
     check.add_argument("code")
     check.add_argument("--repo", default="llocphann/Alis", choices=taskflow.REPOSITORIES)
@@ -99,6 +103,9 @@ def main():
             result = taskflow.cleanup(dry_run=not args.apply)
         elif args.action == "status":
             result = lifecycle.status(args.code, args.repo)
+        elif args.action == "owner-verify":
+            result = lifecycle.owner_verified(args.code, repository=args.repo,
+                                               approval=args.approve)
         elif args.action == "save-handoff":
             bundle = json.load(sys.stdin)
             result = taskflow.save_handoff(args.code, bundle, args.repo)
