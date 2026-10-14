@@ -62,6 +62,24 @@ if command -v systemctl >/dev/null 2>&1; then
                 printf 'BLOCKER: canonical Alis checkout still has legacy inir.service active.\n'
                 audit_blocked=2
             fi
+            # In a repo-copy cutover, a live old Type=dbus unit file retains
+            # its BusName allocation even when the process is inactive.
+            # Fresh canonical installs have no legacy unit or archive.
+            _old_unit="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/inir.service"
+            _retired_unit="${XDG_STATE_HOME:-$HOME/.local/state}/alis-cutover-backups/retired-inir.service"
+            if [[ "$_alis_active" == active &&
+                  ( -e "$_old_unit" || -L "$_old_unit" ||
+                    -e "$_retired_unit" || -L "$_retired_unit" ) ]]; then
+                if [[ -L "$_old_unit" &&
+                      "$(readlink -- "$_old_unit")" == /dev/null &&
+                      -f "$_retired_unit" && ! -L "$_retired_unit" ]] &&
+                   grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' "$_retired_unit"; then
+                    printf 'VERIFIED: original iNiR unit is masked; byte-retained rollback archive exists.\n'
+                else
+                    printf 'BLOCKER: original unit/archive may still allocate the Alis D-Bus name; review masked unit and retired archive.\n'
+                    audit_blocked=2
+                fi
+            fi
             ;;
         inir)
             if [[ "$_inir_active" != active ]]; then
