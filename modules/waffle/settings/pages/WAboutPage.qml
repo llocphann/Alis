@@ -180,7 +180,7 @@ WSettingsPage {
         icon: "people"
 
         WSettingsButton {
-            label: "Alis"
+            label: "iNiR"
             description: "github.com/snowarch/iNiR"
             icon: "open"
             buttonText: Translation.tr("Open")
@@ -204,7 +204,7 @@ WSettingsPage {
 
             WText {
                 Layout.fillWidth: true
-                text: "Alis builds on Alis's Niri/Quickshell foundation and end-4's illogical-impulse."
+                text: "Alis builds on iNiR's Niri/Quickshell foundation and end-4's illogical-impulse."
                 wrapMode: Text.WordWrap
                 font.pixelSize: Looks.font.pixelSize.normal
                 color: Looks.colors.subfg
@@ -229,7 +229,7 @@ WSettingsPage {
         
         WSettingsRow {
             label: Translation.tr("Config path")
-            description: FileUtils.trimFileProtocol(`${Directories.config}/illogical-impulse/`)
+            description: FileUtils.trimFileProtocol(`${Directories.shellConfig}/`)
             icon: "folder"
         }
         

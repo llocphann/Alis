@@ -33,6 +33,8 @@ EXCLUDED_PREFIXES = (
     "scripts/test-", "scripts/brand-", "scripts/iris-corner-poc/",
     "sdata/migrations/", "native/target/", "docs/", "native/tests/",
     "defaults/plugins/", "assets/icons/fluent/",
+    # Upstream names in About are attribution, never canonicalized to Alis.
+    "modules/settings/About.qml", "modules/waffle/settings/pages/WAboutPage.qml",
 )
 BINARY_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".webp", ".gif", ".woff", ".ttf", ".otf",

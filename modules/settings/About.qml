@@ -292,7 +292,7 @@ ContentPage {
         title: Translation.tr("Based on")
 
         SettingsGroup {
-            // Preserve upstream Alis attribution under Based on, not as the
+            // Preserve upstream iNiR attribution under Based on, not as the
             // primary product identity.
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
@@ -316,7 +316,7 @@ ContentPage {
                     Layout.alignment: Qt.AlignVCenter
 
                     StyledText {
-                        text: "Alis"
+                        text: "iNiR"
                         font.pixelSize: Appearance.font.pixelSize.title
                     }
 
@@ -391,7 +391,7 @@ ContentPage {
 
             StyledText {
                 Layout.fillWidth: true
-                text: "Alis builds on Alis's Niri/Quickshell foundation and end-4's illogical-impulse."
+                text: "Alis builds on iNiR's Niri/Quickshell foundation and end-4's illogical-impulse."
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
                 wrapMode: Text.WordWrap
@@ -404,7 +404,7 @@ ContentPage {
 
                 RippleButtonWithIcon {
                     materialIcon: "open_in_new"
-                    mainText: "Alis"
+                    mainText: "iNiR"
                     onClicked: Qt.openUrlExternally("https://github.com/snowarch/iNiR")
                 }
 

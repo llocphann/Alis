@@ -124,7 +124,7 @@ if [[ "$mode" == dry-run ]]; then
 fi
 # Backups must NOT create XDG_STATE_HOME/alis before the canonical state
 # directory is copied; otherwise cp -a nests inir *inside* alis.
-backup="${XDG_STATE_HOME:-$HOME/.local/state}/alis-cutover-backups/cutover-backup-$(date +%Y%m%d%H%M%S)-$"
+backup="${XDG_STATE_HOME:-$HOME/.local/state}/alis-cutover-backups/cutover-backup-$(date +%Y%m%d%H%M%S)-${BASHPID}"
 mkdir -p "$backup"
 copied=(); moved_aliases=(); new_links=(); unit_created=false; stopped=false; success=false
 rollback() {
