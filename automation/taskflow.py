@@ -220,7 +220,8 @@ def load_task(code: str, repository: str = "llocphann/Alis") -> dict:
 
 def _task_record(task: dict, identifier: str) -> dict:
     now = int(time.time())
-    return {
+    from . import activity
+    result = {
         "schema": TASK_SCHEMA, "code": task["code"],
         "repository": task["repository"], "issue_number": task["issue_number"],
         "id": identifier, "task": task, "status": "prepared",
@@ -230,6 +231,8 @@ def _task_record(task: dict, identifier: str) -> dict:
         "updated_unix": now, "delivery_acknowledged_unix": None,
         "unresolved": False,
     }
+    activity.append_event(result, "task_prepared", now=now)
+    return result
 
 
 def _save_task(record: dict) -> None:
@@ -237,6 +240,13 @@ def _save_task(record: dict) -> None:
     dest = _task_path(record["code"], record["repository"])
     if dest.is_symlink():
         raise TaskError("Refusing symlinked task file")
+    if dest.exists():
+        previous = load_task(record["code"], record["repository"])
+        if previous.get("status") != record.get("status"):
+            from . import activity
+            status = record.get("status")
+            if status in activity.EVENT_TYPES:
+                activity.append_event(record, status)
     _atomic_json(dest, record)
 
 
@@ -514,8 +524,9 @@ def append_report(code: str, kind: str, message: str,
     existing = record.get("reports", [])
     if not isinstance(existing, list):
         raise TaskError("Invalid report history")
+    from . import activity
     record["reports"] = (existing + [{"at_unix": at, "kind": kind,
-                         "text": message[:REPORT_CHARS]}])[-REPORT_LIMIT:]
+                         "text": activity.redact(message[:REPORT_CHARS])}])[-REPORT_LIMIT:]
     record["updated_unix"] = at
     _save_task(record)
     return {"ok": True, "stored_reports": len(record["reports"])}
