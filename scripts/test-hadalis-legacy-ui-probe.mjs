@@ -24,6 +24,8 @@ const page=(opts={})=>{
     badge:opts.badge??[{visible:true}],list:opts.list??[],
     scopedComposer:opts.scopedComposer??[],
     action:opts.action??[],
+    main:opts.main??[{visible:true}],
+    mainHeading:opts.mainHeading??[],
     send:opts.send??[{visible:true,disabled:false}],stop:opts.stop??[]};
   data.genericComposer=opts.genericComposer??(
     data.scopedComposer.length>0?[]:data.composer);
@@ -32,6 +34,15 @@ const page=(opts={})=>{
     keyboard:{press:failWrite,insertText:failWrite},
     evaluate:failWrite,
     getByRole(role,options){
+      if(role==="main")return {
+        ...makeLocator(data.main),
+        getByRole(kind,query){
+          assert.equal(kind,"heading");
+          assert.equal(query.name,"Automatic Alis");
+          assert.equal(query.exact,true);
+          return makeLocator(data.mainHeading);
+        }
+      };
       if(role==="textbox"&&options.name==="New chat in Automatic Alis" &&
          options.exact===true)return makeLocator(data.scopedComposer);
       if(role==="textbox"&&options.name instanceof RegExp &&
@@ -85,6 +96,19 @@ result=await inspect({badge:[],list:[{visible:true,selected:[]}],send:[],
   action:[{visible:true}]});
 assert.equal(result.project_new_chat_action_visible,true);
 assert.equal(result.project_view_visible,false);
+assert.equal(result.main_project_view_evidence,"no-exact-project-heading-in-main");
+// An exact heading in the current main region is only an additional
+// visual navigation hint, not proof of server-side Project membership.
+result=await inspect({badge:[],list:[{visible:true,selected:[]}],send:[],
+  action:[{visible:true}],mainHeading:[{visible:true}]});
+assert.equal(result.main_project_view_evidence,"exact-project-heading-in-main");
+assert.equal(result.project_view_visible,false);
+assert.equal(result.observation_ready,false);
+assert.equal(result.submission_authorized,false);
+assert.equal(result.project_identity_verified,false);
+result=await inspect({badge:[],list:[{visible:true,selected:[]}],send:[],
+  action:[{visible:true}],main:[],mainHeading:[]});
+assert.equal(result.main_project_view_evidence,"no-main-region");
 assert.equal(result.read_only_project_entry_ready,false);
 assert.equal(result.submission_authorized,false);
 // A distinctly project-scoped blank composer may legitimately hide Send.
@@ -164,6 +188,9 @@ try {
     "const p={url:()=> 'app://-/index.html',",
     "evaluate:fail,keyboard:{press:fail,insertText:fail},",
     "getByRole:(role,opt)=>{",
+    "if(role==='main')return {...locator([{visible:true}]),",
+    " getByRole:(kind,q)=>locator(process.env.MOCK_MAIN_PROJECT==='1'",
+    " ?[{visible:true}]:[])};",
     "if(role==='textbox'&&opt.name==='New chat in Automatic Alis')",
     " return locator(process.env.MOCK_BLANK_PROJECT==='1'",
     " ?[{visible:true,disabled:false}]:[]);",
@@ -212,7 +239,16 @@ try {
   assert.equal(withAction.status,0);
   const actionReport=JSON.parse(withAction.stdout);
   assert.equal(actionReport.project_new_chat_action_visible,true);
+  assert.equal(actionReport.main_project_view_evidence,
+    "no-exact-project-heading-in-main");
   assert.equal(actionReport.submission_authorized,false);
+  const mainProject=run(["probe"],{MOCK_MAIN_PROJECT:"1"});
+  assert.equal(mainProject.status,0);
+  const mainReport=JSON.parse(mainProject.stdout);
+  assert.equal(mainReport.main_project_view_evidence,
+    "exact-project-heading-in-main");
+  assert.equal(mainReport.project_identity_verified,false);
+  assert.equal(mainReport.submission_authorized,false);
   const denied=run(["submit"]);
   assert.equal(denied.status,1);
   assert.equal(JSON.parse(denied.stdout).error_code,
