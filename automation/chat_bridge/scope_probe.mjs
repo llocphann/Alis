@@ -148,6 +148,11 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         resolver_masked_shape: "",
         resolver_alpha_shape: "",
         resolver_alpha_complete: false,
+        resolver_helper_flow_status: "not_analyzed",
+        resolver_argument_helper_call_counts_capped: [0, 0],
+        resolver_get_receiver_kind: "unknown",
+        resolver_get_receiver_comes_from_argument_helper: false,
+        resolver_get_receiver_lexical_complete: false,
         resolver_shape_complete: false,
         active_provider_identity_count_capped: 0,
         react_container_count_capped: 0,
@@ -211,6 +216,63 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
           .replace(/\s+/g, " ").trim();
         report.resolver_alpha_shape = structurallyMasked.slice(0, 640);
         report.resolver_alpha_complete = structurallyMasked.length <= 640;
+        // Follow only lexical equality of alpha-renamed identifiers in a
+        // complete, simple resolver. No helper function is invoked, no
+        // actual scope Map is selected, and no original names leave Desktop.
+        // This does NOT prove semantic dependence or transport ownership.
+        if (report.resolver_alpha_complete) {
+          const fn = structurallyMasked.match(/^v\d+\((v\d+),(v\d+)\)\{/);
+          if (fn) {
+            const args = [fn[1], fn[2]];
+            const count = [0, 0];
+            const helpers = [...structurallyMasked.matchAll(
+              /\b(v\d+)\s*\((v\d+(?:,v\d+)*)\)/g
+            )].filter(match => match.index !== 0);
+            for (const [, , argList] of helpers) {
+              const tokens = argList.split(",");
+              args.forEach((arg, index) => {
+                if (tokens.includes(arg)) count[index]++;
+              });
+            }
+            report.resolver_argument_helper_call_counts_capped =
+              count.map(n => Math.min(16, n));
+            report.resolver_helper_flow_status = "lexical-only";
+            const calls = [...structurallyMasked.matchAll(
+              /\b(v\d+)\.get\(\s*v\d+\s*\)/g
+            )];
+            if (calls.length === 1) {
+              const receiver = calls[0][1];
+              const assign = structurallyMasked.match(new RegExp(
+                "\\b" + receiver + "=([^,;}]*)"
+              ));
+              const rhs = assign?.[1] ?? "";
+              const branches = rhs.match(
+                /\?(v\d+)\.v\d+:(v\d+)\.v\d+$/
+              );
+              if (branches && branches[1] === branches[2]) {
+                report.resolver_get_receiver_kind =
+                  "conditional-property-of-local";
+                const variable = branches[1];
+                const helperAssign = structurallyMasked.match(new RegExp(
+                  "\\b" + variable + "=(v\\d+)\\((v\\d+(?:,v\\d+)*)\\)"
+                ));
+                if (helperAssign) {
+                  const inputs = helperAssign[2].split(",");
+                  report.resolver_get_receiver_comes_from_argument_helper =
+                    args.some(arg => inputs.includes(arg));
+                }
+                report.resolver_get_receiver_lexical_complete = true;
+              } else if (rhs) {
+                report.resolver_get_receiver_kind = "other-local-expression";
+                report.resolver_get_receiver_lexical_complete = true;
+              }
+            }
+          } else {
+            report.resolver_helper_flow_status = "unrecognized-syntax";
+          }
+        } else {
+          report.resolver_helper_flow_status = "source-truncated";
+        }
         // Very conservative lexical classification, NOT proof of dependency:
         // handle only two bare identifier arguments. No names/source are sent
         // outside Desktop. A function with destructuring, shadowing, or a
