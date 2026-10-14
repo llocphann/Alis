@@ -17,6 +17,7 @@ ContentPage {
     property string activeSection: "tasks"
     property bool cloudSelectTasks: false
     property var queueSnapshot: null
+    property bool queueStatusConfirmed: false
     property bool backendInstalled: false
     property bool backendStatusKnown: false
     property var backendServices: ({})
@@ -125,6 +126,7 @@ ContentPage {
     function refreshQueue(): void {
         if (queueProcess.running)
             return
+        root.queueStatusConfirmed = false
         queueOperation = "status"
         queueProcess.command = ["python3", Quickshell.shellPath("scripts/alis-automation-task.py"), "queue-status"]
         queueProcess.running = true
@@ -189,6 +191,7 @@ ContentPage {
         }
         root.errorText = ""
         root.statusText = ""
+        root.queueStatusConfirmed = false
         root.selectedTask = null
         root.taskSnapshot = null
         root.activitySnapshot = null
@@ -300,6 +303,7 @@ ContentPage {
                     throw new Error(result.error || "Queue unavailable")
                 if (result.items) {
                     root.queueSnapshot = result
+                    root.queueStatusConfirmed = true
                     if (root.queueOperation === "status")
                         root.cloudSelectTasks = result.mode === "cloud"
                 }
@@ -312,14 +316,28 @@ ContentPage {
                     Qt.callLater(root.refreshActivity)
                 }
                 if (root.queueOperation === "prepare")
-                    root.statusText = result.duplicate
+                    root.statusText = result.state === "active"
+                        ? Translation.tr("Queue already active")
+                        : result.duplicate
                         ? Translation.tr("Queue already prepared")
                         : Translation.tr("Queue prepared")
                 else if (root.queueOperation === "start") {
                     root.statusText = Translation.tr("Cloudbot launch requested")
                     Qt.callLater(root.refreshQueue)
+                } else if (root.queueOperation === "status") {
+                    root.statusText = result.state === "active"
+                        ? Translation.tr("Queue active")
+                        : result.state === "prepared"
+                        ? Translation.tr("Queue prepared")
+                        : ""
                 }
+                root.errorText = ""
             } catch (error) {
+                // A failed read must not leave a visible stale success. Keep
+                // the last queue for inspection but block Start until an
+                // authenticated status check confirms its current state.
+                root.queueStatusConfirmed = false
+                root.statusText = ""
                 root.errorText = String(error)
             }
             root.queueOperation = ""
@@ -634,9 +652,16 @@ ContentPage {
                     onClicked: root.prepareTask()
                 }
                 DialogButton {
+                    objectName: "automationRefreshQueue"
+                    buttonText: Translation.tr("Refresh queue")
+                    enabled: !root.busy
+                    onClicked: root.refreshQueue()
+                }
+                DialogButton {
                     objectName: "automationStartQueue"
                     buttonText: Translation.tr("Start")
-                    enabled: !root.busy && root.backendInstalled && !!root.queueSnapshot
+                    enabled: !root.busy && root.backendInstalled
+                        && root.queueStatusConfirmed && !!root.queueSnapshot
                         && ["prepared", "waiting"].includes(root.queueSnapshot.state)
                         && ["ordered", "cloud"].includes(root.queueSnapshot.mode)
                     onClicked: root.startQueue()
@@ -655,6 +680,13 @@ ContentPage {
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colPrimary
                 text: root.statusText
+            }
+            StyledText {
+                visible: !root.queueStatusConfirmed && !!root.queueSnapshot
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: Appearance.colors.colSubtext
+                text: Translation.tr("Last known queue only · refresh to verify live state")
             }
             StyledText {
                 visible: !!root.queueSnapshot && root.queueSnapshot.items.length > 0
