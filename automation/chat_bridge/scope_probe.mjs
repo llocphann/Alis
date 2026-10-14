@@ -125,6 +125,12 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         unique_provider_identity_count_capped: 0,
         alternate_only_provider_map_count_capped: 0,
         distinct_maps_share_provider_identity: false,
+        active_maps_have_equal_key_sets: false,
+        active_maps_have_equal_entries_by_identity: false,
+        active_maps_have_nested_key_sets: false,
+        active_map_size_range_capped: [0, 0],
+        // This comparison reads Map entries only; it does not call resolve.
+        active_map_comparison_complete: false,
         active_provider_identity_count_capped: 0,
         react_container_count_capped: 0,
         active_root_count_capped: 0,
@@ -206,6 +212,34 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
       report.distinct_maps_share_provider_identity =
         all.maps.size > 1 && all.providers.size === 1;
       report.active_provider_identity_count_capped = Math.min(8, active.providers.size);
+      const currentMaps = [...active.maps];
+      // Compare only JS Map key/value object identities (Object.is).
+      // Do not stringify map keys, values, component props, or provider data.
+      // Even identical entries in distinct Map objects do NOT establish that
+      // definition.resolve() can safely use an arbitrarily chosen Map.
+      if (currentMaps.length && currentMaps.length <= 32) {
+        const entries = currentMaps.map(map => [...map.entries()]);
+        const keysEqual = (a, b) => a.length === b.length &&
+          a.every(([key]) => b.some(([other]) => Object.is(key, other)));
+        const entriesEqual = (a, b) => a.length === b.length &&
+          a.every(([key, value]) => b.some(([otherKey, otherValue]) =>
+            Object.is(key, otherKey) && Object.is(value, otherValue)));
+        const subsetKeys = (a, b) => a.every(([key]) =>
+          b.some(([other]) => Object.is(key, other)));
+        const baseline = entries[0];
+        report.active_map_comparison_complete = true;
+        report.active_maps_have_equal_key_sets =
+          entries.every(other => keysEqual(baseline, other));
+        report.active_maps_have_equal_entries_by_identity =
+          entries.every(other => entriesEqual(baseline, other));
+        report.active_maps_have_nested_key_sets =
+          entries.every((one, i) => entries.every((two, j) =>
+            i === j || subsetKeys(one, two) || subsetKeys(two, one)));
+        const sizes = currentMaps.map(map => map.size);
+        report.active_map_size_range_capped = [
+          Math.min(128, Math.min(...sizes)), Math.min(128, Math.max(...sizes))
+        ];
+      }
       report.provider_map_shared_with_active_tree =
         [...active.maps].some(map => all.maps.has(map));
       report.fiber_scan_truncated = all.truncated || active.truncated;
