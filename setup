@@ -890,7 +890,9 @@ show_status_environment() {
 
     # Panel family
     local panel_family="ii"
-    local user_cfg="$HOME/.config/illogical-impulse/config.json"
+    # Status must report the same canonical config that QML and Alis CLI use.
+    # Legacy paths are fallbacks only while no /alis config root exists.
+    local user_cfg="$(resolve_alis_config_dir)/config.json"
     if [[ -r "$user_cfg" ]] && command -v jq >/dev/null 2>&1; then
         local pf
         pf="$(jq -r '.panelFamily // "ii"' "$user_cfg" 2>/dev/null)"
