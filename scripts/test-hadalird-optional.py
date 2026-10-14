@@ -107,7 +107,7 @@ with tempfile.TemporaryDirectory(prefix="hadalird-host-") as name:
         shell.mkdir()
         for entry in ("services","modules","GlobalStates.qml","qmldir","scripts","defaults","translations","assets"):
             (shell / entry).symlink_to(ROOT / entry)
-        config = shell / "config/illogical-impulse"
+        config = shell / "config/alis"
         config.mkdir(parents=True)
         options = json.loads((ROOT / "defaults/config.json").read_text())
         options["integrations"]["hadalird"] = {key:not present for key in ("tlp","thinkfan","obsidian")}

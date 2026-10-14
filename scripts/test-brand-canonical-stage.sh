@@ -113,6 +113,26 @@ if ! grep -l 'previous canonical source revision' "$HOME"/.local/state/alis-cuto
     fail 'stale source backup does not match previous canonical CLI'
 fi
 [[ -f "$HOME/.config/systemd/user/inir.service" ]] || fail 'original service lost'
+# A pre-existing staged runtime can predate a newly required CLI library.
+# Preview only plans an additive copy; foreign files/links remain blockers.
+mkdir -p "$tmp/root/scripts/lib"
+cp "$repo/scripts/lib/brand-env-compat.sh" "$tmp/root/scripts/lib/brand-env-compat.sh"
+printf '\n# uses lib/brand-env-compat.sh\n' >> "$tmp/root/scripts/alis"
+lib="$HOME/.config/quickshell/alis/scripts/lib/brand-env-compat.sh"
+preview_library="$(bash "$helper" --dry-run)" || fail 'missing library preview'
+[[ "$preview_library" == *'add missing read-only CLI compatibility library'* && ! -e "$lib" ]] ||
+    fail 'preview ignored/mutated missing CLI library'
+mkdir -p "$(dirname -- "$lib")"
+printf 'foreign library bytes\n' > "$lib"
+if bash "$helper" --apply --owner-approved >/dev/null 2>&1; then fail 'foreign library overwritten'; fi
+[[ "$(cat "$lib")" == 'foreign library bytes' ]] || fail 'foreign library bytes changed'
+rm "$lib"
+ln -s "$tmp/root/scripts/lib/brand-env-compat.sh" "$lib"
+if bash "$helper" --apply --owner-approved >/dev/null 2>&1; then fail 'library symlink followed'; fi
+unlink "$lib"
+bash "$helper" --apply --owner-approved > "$tmp/library-stage.log" || fail 'missing library staging'
+cmp -s "$lib" "$tmp/root/scripts/lib/brand-env-compat.sh" || fail 'CLI library was not staged exactly'
+cmp -s "$HOME/.local/bin/alis" "$tmp/root/scripts/alis" || fail 'CLI refresh did not follow library staging'
 [[ "$(sha256sum "$HOME/.config/inir/config.json" | cut -d' ' -f1)" == "$hash1" ]] || fail 'preferences mutated'
 [[ "$(sha256sum "$HOME/.local/state/quickshell/user/first_run.txt" | cut -d' ' -f1)" == "$hash2" ]] || fail 'first run reset'
 bash "$helper" --dry-run | grep -Fq 'ALREADY STAGED' || fail 'complete stage not idempotent'

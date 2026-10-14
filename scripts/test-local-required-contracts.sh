@@ -40,48 +40,48 @@ python3 translations/tools/l10n.py audit-all >/dev/null \
 
 printf '== package and release source identity ==\n'
 for pkg in \
-    distro/arch/inir-shell/PKGBUILD \
-    distro/arch/inir-shell-git/PKGBUILD \
-    distro/arch/inir-meta/PKGBUILD; do
+    distro/arch/alis-shell/PKGBUILD \
+    distro/arch/alis-shell-git/PKGBUILD \
+    distro/arch/alis-meta/PKGBUILD; do
     require_contains "url='https://github.com/llocphann/Alis'" "$pkg" \
         "$pkg no longer identifies the Alis repository"
     if grep -Fqi 'github.com/snowarch/inir' "$pkg"; then
         fail "$pkg still sources the upstream iNiR repository"
     fi
 done
-require_contains 'github.com/llocphann/Alis/archive/${_source_ref}.tar.gz' distro/arch/inir-shell/PKGBUILD \
+require_contains 'github.com/llocphann/Alis/archive/${_source_ref}.tar.gz' distro/arch/alis-shell/PKGBUILD \
     'stable Arch source archive no longer points at Alis'
-require_contains 'git+https://github.com/llocphann/Alis.git#branch=dev' distro/arch/inir-shell-git/PKGBUILD \
+require_contains 'git+https://github.com/llocphann/Alis.git#branch=dev' distro/arch/alis-shell-git/PKGBUILD \
     'git Arch package no longer tracks Alis dev'
-require_exact 'install=inir-shell.install' distro/arch/inir-shell/PKGBUILD \
+require_exact 'install=alis-shell.install' distro/arch/alis-shell/PKGBUILD \
     'stable Arch package install hook identity drifted'
-require_exact 'install=inir-shell-git.install' distro/arch/inir-shell-git/PKGBUILD \
+require_exact 'install=alis-shell-git.install' distro/arch/alis-shell-git/PKGBUILD \
     'git Arch package install hook identity drifted'
 
 for info in \
-    distro/arch/inir-shell/.SRCINFO \
-    distro/arch/inir-shell-git/.SRCINFO \
-    distro/arch/inir-meta/.SRCINFO; do
+    distro/arch/alis-shell/.SRCINFO \
+    distro/arch/alis-shell-git/.SRCINFO \
+    distro/arch/alis-meta/.SRCINFO; do
     require_contains 'url = https://github.com/llocphann/Alis' "$info" \
         "$info no longer identifies the Alis repository"
     if grep -Fqi 'github.com/snowarch/inir' "$info"; then
         fail "$info still advertises the upstream iNiR repository"
     fi
 done
-require_contains 'install = inir-shell.install' distro/arch/inir-shell/.SRCINFO \
+require_contains 'install = alis-shell.install' distro/arch/alis-shell/.SRCINFO \
     'stable .SRCINFO install hook identity drifted'
-require_contains 'install = inir-shell-git.install' distro/arch/inir-shell-git/.SRCINFO \
+require_contains 'install = alis-shell-git.install' distro/arch/alis-shell-git/.SRCINFO \
     'git .SRCINFO install hook identity drifted'
-require_contains 'license = GPL-3.0-only' distro/arch/inir-shell-git/.SRCINFO \
+require_contains 'license = GPL-3.0-only' distro/arch/alis-shell-git/.SRCINFO \
     'git .SRCINFO license metadata drifted'
-require_contains 'source = inir::git+https://github.com/llocphann/Alis.git#branch=dev' distro/arch/inir-shell-git/.SRCINFO \
+require_contains 'source = alis::git+https://github.com/llocphann/Alis.git#branch=dev' distro/arch/alis-shell-git/.SRCINFO \
     'git .SRCINFO source identity drifted'
-require_contains 'optdepends = thinkfan: managed fan-control integration' distro/arch/inir-shell/.SRCINFO \
+require_contains 'optdepends = thinkfan: managed fan-control integration' distro/arch/alis-shell/.SRCINFO \
     'stable package no longer advertises ThinkFan integration'
-require_contains 'optdepends = thinkfan: managed fan-control integration' distro/arch/inir-shell-git/.SRCINFO \
+require_contains 'optdepends = thinkfan: managed fan-control integration' distro/arch/alis-shell-git/.SRCINFO \
     'git package no longer advertises ThinkFan integration'
 
-for pkg in inir-shell inir-meta; do
+for pkg in alis-shell alis-meta; do
     pkgbuild="distro/arch/$pkg/PKGBUILD"
     srcinfo="distro/arch/$pkg/.SRCINFO"
     pkgver="$(grep -m1 '^pkgver=' "$pkgbuild" | cut -d= -f2-)"
@@ -91,28 +91,31 @@ for pkg in inir-shell inir-meta; do
 done
 
 for install_hook in \
-    distro/arch/inir-shell/inir-shell.install \
-    distro/arch/inir-shell-git/inir-shell-git.install; do
+    distro/arch/alis-shell/alis-shell.install \
+    distro/arch/alis-shell-git/alis-shell-git.install; do
     require_contains 'alis service enable' "$install_hook" \
-        "$install_hook no longer instructs Alis users to enable the compatibility service"
+        "$install_hook no longer instructs Alis users to enable the canonical service"
     require_contains 'alis service start' "$install_hook" \
-        "$install_hook no longer instructs Alis users to start the compatibility service"
-    require_contains 'Pacman does not modify user home directories. The live QML compatibility path is:' "$install_hook" \
+        "$install_hook no longer instructs Alis users to start the canonical service"
+    require_contains "Pacman deliberately does not modify or migrate anyone's home directory." "$install_hook" \
         "$install_hook no longer explains the live QML config path and ownership boundary"
-    require_contains '~/.config/illogical-impulse/config.json' "$install_hook" \
+    require_contains '~/.config/alis/config.json' "$install_hook" \
         "$install_hook live QML config path drifted"
+    require_contains '/usr/share/quickshell/alis' "$install_hook" \
+        "$install_hook canonical packaged runtime path drifted"
+    require_contains 'complete an owner-approved single-service handoff' "$install_hook" \
+        "$install_hook lost the owner-approved legacy service handoff requirement"
     if grep -Fq 'Package-managed installs keep user config in:' "$install_hook"; then
         fail "$install_hook misstates the live QML config path"
     fi
 done
 
-# The public Alis CLI delegates to the existing inir.service owner.
-# Package post-install help uses the Alis command, while systemd unit,
-# compositor wants links and persistent config namespace remain unchanged.
-require_contains 'ExecStart=/usr/bin/inir run --session' assets/systemd/inir.service \
-    'active systemd session owner drifted during public-only rebrand'
-[[ ! -e assets/systemd/alis.service ]] \
-    || fail 'a second Alis unit would risk spawning two shell sessions'
+# Canonical Alis has one service owner. Cutover retires the previous unit before
+# starting Alis; the distributed payload must not carry a second shell service.
+require_contains 'ExecStart=/usr/bin/alis run --session' assets/systemd/alis.service \
+    'canonical systemd session owner drifted'
+[[ ! -e assets/systemd/inir.service ]] \
+    || fail 'a second legacy unit would risk spawning two shell sessions'
 
 release_script=scripts/release.sh
 wiki_script=scripts/wiki-sync.sh
@@ -131,22 +134,22 @@ fi
 printf '== non-Nix package documentation payload ==\n'
 require_contains 'for doc in docs/*.md; do' Makefile \
     'make install no longer installs the documentation set'
-require_contains 'for doc in "$srcroot"/docs/*.md; do' distro/arch/inir-shell/PKGBUILD \
+require_contains 'for doc in "$srcroot"/docs/*.md; do' distro/arch/alis-shell/PKGBUILD \
     'stable Arch package no longer installs the documentation set'
-require_contains 'for doc in "$srcroot"/docs/*.md; do' distro/arch/inir-shell-git/PKGBUILD \
+require_contains 'for doc in "$srcroot"/docs/*.md; do' distro/arch/alis-shell-git/PKGBUILD \
     'git Arch package no longer installs the documentation set'
 
 printf '== optional integration ownership ==\n'
 python3 scripts/test-hadalird-install-lifecycle.py || fail 'core lifecycle changed optional system state'
 python3 scripts/test-hadalird-arch-package.py || fail 'Arch package lost optional integration boundary'
-for pkg in distro/arch/inir-shell/PKGBUILD distro/arch/inir-shell-git/PKGBUILD; do
-    for marker in 'assets/applications/inir-settings.desktop' '$pkgdir/usr/share/applications/inir-settings.desktop' 'distro/arch/inir-shell/inir-quickshell-rebuild.hook' '$pkgdir/usr/share/libalpm/hooks/inir-quickshell-rebuild.hook'; do
+for pkg in distro/arch/alis-shell/PKGBUILD distro/arch/alis-shell-git/PKGBUILD; do
+    for marker in 'assets/applications/alis-settings.desktop' '$pkgdir/usr/share/applications/alis-settings.desktop' 'distro/arch/alis-shell/alis-quickshell-rebuild.hook' '$pkgdir/usr/share/libalpm/hooks/alis-quickshell-rebuild.hook'; do
         require_contains "$marker" "$pkg" "$pkg lost shared shell payload: $marker"
     done
 done
 
 printf '== non-Nix startup and staged install plan ==\n'
-service_unit=assets/systemd/inir.service
+service_unit=assets/systemd/alis.service
 require_exact 'Type=dbus' "$service_unit" 'canonical user service must remain D-Bus activated'
 require_exact 'BusName=org.kde.StatusNotifierWatcher' "$service_unit" 'canonical user service bus ownership drifted'
 require_exact 'After=graphical-session-pre.target' "$service_unit" 'canonical user service startup ordering drifted'
@@ -155,23 +158,23 @@ if grep -Fxq 'After=graphical-session.target' "$service_unit"; then
     fail 'canonical user service starts too late for tray ownership'
 fi
 
-install_plan="$(make -n install PREFIX=/usr DESTDIR=/tmp/inir-stage-test)"
+install_plan="$(make -n install PREFIX=/usr DESTDIR=/tmp/alis-stage-test)"
 for staged_path in \
-    /tmp/inir-stage-test/usr/bin/inir \
-    /tmp/inir-stage-test/usr/share/quickshell/inir \
-    /tmp/inir-stage-test/usr/lib/systemd/user/inir.service \
-    /tmp/inir-stage-test/usr/share/applications/inir.desktop \
-    /tmp/inir-stage-test/usr/share/doc/inir-shell/README.md \
-    /tmp/inir-stage-test/usr/share/licenses/inir-shell/LICENSE; do
+    /tmp/alis-stage-test/usr/bin/alis \
+    /tmp/alis-stage-test/usr/share/quickshell/alis \
+    /tmp/alis-stage-test/usr/lib/systemd/user/alis.service \
+    /tmp/alis-stage-test/usr/share/applications/alis.desktop \
+    /tmp/alis-stage-test/usr/share/doc/alis-shell/README.md \
+    /tmp/alis-stage-test/usr/share/licenses/alis-shell/LICENSE; do
     grep -Fq "$staged_path" <<<"$install_plan" \
         || fail "make install dry-run omits staged path: $staged_path"
 done
 
 printf '== Arch dependency recipe identity ==\n'
 repo_version="$(tr -d '[:space:]' < VERSION)"
-deps_version="$(grep -m1 '^pkgver=' sdata/dist-arch/inir-deps/PKGBUILD | cut -d= -f2-)"
+deps_version="$(grep -m1 '^pkgver=' sdata/dist-arch/alis-deps/PKGBUILD | cut -d= -f2-)"
 [[ "$deps_version" == "$repo_version" ]] \
-    || fail "inir-deps pkgver=$deps_version does not match VERSION=$repo_version"
+    || fail "alis-deps pkgver=$deps_version does not match VERSION=$repo_version"
 
 printf '%s\n' '1..1'
 printf '%s\n' 'ok 1 - formerly hosted-only required local contracts are enforced in-repo'

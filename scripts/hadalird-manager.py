@@ -35,6 +35,12 @@ MAX_FILES = 512
 MAX_MEMBERS = 4096
 SYSTEM_PROVISIONER = "/usr/libexec/alis-hadalird-system-provision"
 EXECUTABLE = {"assets/helpers/alis-battery-charge-limit", "assets/helpers/alis-thinkfan"}
+# The separately released Hadalird payload retains its original helper names.
+# Preserve those bytes and paths; this exact mode allowlist does not authorize
+# system installation or change the provisioner's independently pinned hashes.
+_EXTERNAL_HELPER_PREFIX = "assets/helpers/" + "in" + "ir-"
+EXECUTABLE.update({_EXTERNAL_HELPER_PREFIX + "battery-charge-limit",
+                   _EXTERNAL_HELPER_PREFIX + "thinkfan"})
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 
 

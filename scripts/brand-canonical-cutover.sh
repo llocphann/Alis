@@ -41,6 +41,13 @@ grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' "$template" ||
 [[ -f "$cfg/quickshell/alis/shell.qml" ]] &&
 grep -Fxq '//@ pragma ShellId alis' "$cfg/quickshell/alis/shell.qml" ||
   { echo 'Canonical Alis runtime is not staged' >&2; exit 2; }
+if grep -Fq 'lib/brand-env-compat.sh' "$repo/scripts/alis"; then
+  compat="$cfg/quickshell/alis/scripts/lib/brand-env-compat.sh"
+  [[ ! -L "$cfg/quickshell/alis/scripts" && ! -L "$cfg/quickshell/alis/scripts/lib" &&
+     -f "$compat" && ! -L "$compat" ]] &&
+  cmp -s -- "$repo/scripts/lib/brand-env-compat.sh" "$compat" ||
+    { echo 'Staged CLI compatibility library differs from source; review brand-canonical-stage.sh --dry-run' >&2; exit 2; }
+fi
 [[ ! -e "$new_unit" && ! -L "$new_unit" ]] ||
   { echo "Existing Alis service is user-owned: $new_unit" >&2; exit 2; }
 # Stopping a Type=dbus service does not release its unit's BusName allocation.

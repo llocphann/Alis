@@ -3,7 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 runtime_root="$(cd -- "$script_dir/.." && pwd)"
-launcher="${INIR_LAUNCHER_PATH:-$runtime_root/scripts/inir}"
+launcher="${ALIS_LAUNCHER_PATH:-${INIR_LAUNCHER_PATH:-$runtime_root/scripts/alis}}"
 
 run_runtime=false
 if [[ "${1:-}" == "--with-runtime" ]]; then
@@ -17,7 +17,7 @@ step() {
 step "shell syntax"
 bash -n \
     "$runtime_root/setup" \
-    "$runtime_root/scripts/inir" \
+    "$runtime_root/scripts/alis" \
     "$runtime_root/scripts/release.sh" \
     "$runtime_root/scripts/verify-docs.sh" \
     "$runtime_root/scripts/wiki-sync.sh" \
@@ -64,13 +64,13 @@ step "network lifecycle regression"
 bash "$runtime_root/scripts/test-network-service-lifecycle.sh"
 
 step "session tray ordering"
-service_unit="$runtime_root/assets/systemd/inir.service"
+service_unit="$runtime_root/assets/systemd/alis.service"
 if ! grep -qx 'Type=dbus' "$service_unit" \
         || ! grep -qx 'BusName=org.kde.StatusNotifierWatcher' "$service_unit" \
         || ! grep -qx 'Before=graphical-session.target' "$service_unit" \
         || grep -qx 'After=graphical-session.target' "$service_unit" \
         || grep -qx 'Requisite=graphical-session.target' "$service_unit"; then
-    printf 'FAIL: inir.service does not gate XDG autostart on the tray watcher\n' >&2
+    printf 'FAIL: alis.service does not gate XDG autostart on the tray watcher\n' >&2
     exit 1
 fi
 if ! grep -Fq 'property var _trayService: TrayService' "$runtime_root/shell.qml"; then
@@ -94,7 +94,7 @@ wizard = (root / "welcome.qml").read_text(encoding="utf-8")
 checks = {
     "settings rail": config["settingsUi"]["overlayStyle"] == "rail",
     "balanced profile": config["welcomeWizard"]["profile"] == "balanced",
-    "iNiR Alt+Tab opt-in": config["modules"]["altSwitcher"] is False,
+    "Alis Alt+Tab opt-in": config["modules"]["altSwitcher"] is False,
     "dock enabled": config["dock"]["enable"] is True,
     "dock pinned": config["dock"]["pinnedOnStartup"] is True,
     "dock not hover-only": config["dock"]["hoverToReveal"] is False,
@@ -111,7 +111,7 @@ if failed:
 
 schema_checks = {
     "schema settings rail": 'property string overlayStyle: "rail"' in schema,
-    "schema iNiR Alt+Tab opt-in": "property bool altSwitcher: false" in schema.split(
+    "schema Alis Alt+Tab opt-in": "property bool altSwitcher: false" in schema.split(
         "\n            property JsonObject modules: JsonObject {", 1)[1].split(
         "property JsonObject appearance: JsonObject {", 1)[0],
     "schema dock enabled": "property bool enable: true" in schema.split(
@@ -139,8 +139,8 @@ if failed:
 binds = (root / "defaults/niri/config.d/70-binds.kdl").read_text(encoding="utf-8")
 if 'Alt+Tab { next-window; }' not in binds or 'Alt+Shift+Tab { previous-window; }' not in binds:
     raise SystemExit("FAIL: native Niri Alt+Tab bindings are missing")
-if 'spawn "inir" "altSwitcher"' in binds:
-    raise SystemExit("FAIL: fresh-install Alt+Tab invokes the iNiR switcher")
+if any(f'spawn "{launcher}" "altSwitcher"' in binds for launcher in ("alis", "inir")):
+    raise SystemExit("FAIL: fresh-install Alt+Tab invokes the shell switcher")
 PY
 
 arch_installer="$runtime_root/sdata/dist-arch/install-deps.sh"
@@ -184,7 +184,7 @@ fi
 
 if [[ -f "$runtime_root/Makefile" ]]; then
     step "make install dry run"
-    make -n install PREFIX=/tmp/inir-stage-test -C "$runtime_root" >/dev/null
+    make -n install PREFIX=/tmp/alis-stage-test -C "$runtime_root" >/dev/null
 
     step "optional package boundary"
     python3 "$runtime_root/scripts/test-hadalird-arch-package.py"
@@ -194,13 +194,13 @@ fi
 if [[ -d "$runtime_root/distro/arch" ]]; then
     step "pkgbuild syntax"
     bash -n \
-        "$runtime_root/distro/arch/inir-shell/PKGBUILD" \
-        "$runtime_root/distro/arch/inir-shell-git/PKGBUILD" \
-        "$runtime_root/distro/arch/inir-meta/PKGBUILD"
+        "$runtime_root/distro/arch/alis-shell/PKGBUILD" \
+        "$runtime_root/distro/arch/alis-shell-git/PKGBUILD" \
+        "$runtime_root/distro/arch/alis-meta/PKGBUILD"
 
     step "version consistency"
     version="$(cat "$runtime_root/VERSION")"
-    for pkg in inir-shell inir-meta; do
+    for pkg in alis-shell alis-meta; do
         pkg_ver="$(grep -m1 '^pkgver=' "$runtime_root/distro/arch/$pkg/PKGBUILD" | cut -d= -f2)"
         if [[ "$pkg_ver" != "$version" ]]; then
             printf 'FAIL: %s pkgver=%s != VERSION=%s\n' "$pkg" "$pkg_ver" "$version" >&2
@@ -210,13 +210,13 @@ if [[ -d "$runtime_root/distro/arch" ]]; then
 fi
 
 step "launcher resolution"
-INIR_RUNTIME_DIR="$runtime_root" bash "$launcher" path >/dev/null
-INIR_RUNTIME_DIR="$runtime_root" bash "$launcher" status >/dev/null
+ALIS_RUNTIME_DIR="$runtime_root" bash "$launcher" path >/dev/null
+ALIS_RUNTIME_DIR="$runtime_root" bash "$launcher" status >/dev/null
 
 step "application launch environment"
 # XWayland is not guaranteed to own :0. Preserve live DISPLAY discovery and validation.
 shell_exec="$runtime_root/modules/common/functions/ShellExec.qml"
-inir_launcher="$runtime_root/scripts/inir"
+alis_launcher="$runtime_root/scripts/alis"
 if ! grep -Fq 'systemctl --user show-environment' "$shell_exec" \
         || ! grep -Fq '_manager_display="$(manager_value DISPLAY)"' "$shell_exec" \
         || ! grep -Fq 'valid_display "$DISPLAY"' "$shell_exec" \
@@ -224,9 +224,9 @@ if ! grep -Fq 'systemctl --user show-environment' "$shell_exec" \
     printf 'FAIL: application launches do not recover the live XWayland DISPLAY environment\n' >&2
     exit 1
 fi
-if ! grep -Fq 'vars_to_import+=("DISPLAY=$DISPLAY")' "$inir_launcher" \
-        || ! grep -Fq 'for _xsock in /tmp/.X11-unix/X*' "$inir_launcher" \
-        || ! grep -Fq 'systemctl --user set-environment "${vars_to_import[@]}"' "$inir_launcher"; then
+if ! grep -Fq 'vars_to_import+=("DISPLAY=$DISPLAY")' "$alis_launcher" \
+        || ! grep -Fq 'for _xsock in /tmp/.X11-unix/X*' "$alis_launcher" \
+        || ! grep -Fq 'systemctl --user set-environment "${vars_to_import[@]}"' "$alis_launcher"; then
     printf 'FAIL: session environment does not publish the XWayland DISPLAY to the user manager\n' >&2
     exit 1
 fi
@@ -241,13 +241,13 @@ fi
 
 if [[ "$run_runtime" == true ]]; then
     step "runtime restart"
-    bash "$runtime_root/scripts/inir" kill >/dev/null 2>&1 || true
+    bash "$runtime_root/scripts/alis" kill >/dev/null 2>&1 || true
     sleep 1
-    bash "$runtime_root/scripts/inir" run >/tmp/inir-test-local-runtime.log 2>&1 &
+    bash "$runtime_root/scripts/alis" run >/tmp/alis-test-local-runtime.log 2>&1 &
     sleep 3
 
     step "runtime logs"
-    bash "$runtime_root/scripts/inir" logs
+    bash "$runtime_root/scripts/alis" logs
 
     step "runtime filtered errors"
     bash "$launcher" logs --full | grep -iE 'error|ReferenceError|TypeError|binding loop' | tail -80 || true
@@ -297,8 +297,8 @@ done
 
 for consumer in \
     "$runtime_root/Makefile" \
-    "$runtime_root/distro/arch/inir-shell/PKGBUILD" \
-    "$runtime_root/distro/arch/inir-shell-git/PKGBUILD" \
+    "$runtime_root/distro/arch/alis-shell/PKGBUILD" \
+    "$runtime_root/distro/arch/alis-shell-git/PKGBUILD" \
     "$runtime_root/nix/package.nix"; do
     [[ -f "$consumer" ]] || continue
     if ! grep -Fq 'runtime-payload.py' "$consumer"; then

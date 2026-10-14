@@ -99,6 +99,27 @@ fi
 # A complete installed Alis runtime is allowed: bootstrap may only need to
 # replace the old managed public CLI. Partial/foreign paths were rejected above.
 [[ "$runtime_complete" == true || ( ! -e "$target" && ! -L "$target" ) ]] || exit 2
+compat_relative='scripts/lib/brand-env-compat.sh'
+compat_source="$repo/$compat_relative"
+compat_target="$target/$compat_relative"
+compat_missing=false
+if grep -Fq 'lib/brand-env-compat.sh' "$repo/scripts/alis"; then
+    [[ -f "$compat_source" && ! -L "$compat_source" ]] ||
+        { echo 'Source CLI compatibility library is missing or symlinked' >&2; exit 2; }
+    if [[ "$runtime_complete" == true ]]; then
+        for dir in "$target/scripts" "$target/scripts/lib"; do
+            [[ ! -L "$dir" && ( ! -e "$dir" || -d "$dir" ) ]] ||
+                { echo "Unsafe staged CLI library directory: $dir" >&2; exit 2; }
+        done
+        if [[ -e "$compat_target" || -L "$compat_target" ]]; then
+            [[ -f "$compat_target" && ! -L "$compat_target" ]] &&
+            cmp -s -- "$compat_source" "$compat_target" ||
+                { echo "Existing CLI compatibility library requires review: $compat_target" >&2; exit 2; }
+        else
+            compat_missing=true
+        fi
+    fi
+fi
 [[ -f "$cfg/systemd/user/$old_service" && ! -L "$cfg/systemd/user/$old_service" ]] ||
     { echo 'No old repo-copy user service; package-managed upgrades need a different path' >&2; exit 2; }
 old_active="$(systemctl --user is-active "$old_service" 2>/dev/null || true)"
@@ -113,6 +134,9 @@ else
     printf 'PLAN: stage a new canonical Alis runtime at %s\n' "$target"
 fi
 printf 'Alis CLI: %s (%s)\n' "$launcher" "$launcher_kind"
+if [[ "$compat_missing" == true ]]; then
+    printf 'PLAN: add missing read-only CLI compatibility library: %s\n' "$compat_target"
+fi
 if [[ "$launcher_kind" == managed-compatibility || "$launcher_kind" == canonical-stale ]]; then
     echo 'PLAN: back up managed Alis launcher byte-for-byte and refresh source CLI.'
 elif [[ "$launcher_kind" == missing ]]; then
@@ -179,6 +203,24 @@ if [[ "$runtime_complete" != true ]]; then
     mv -T -- "$stage" "$target"
     stage=''
     echo "STAGED: $target"
+fi
+if [[ "$compat_missing" == true ]]; then
+    for dir in "$target" "$target/scripts" "$target/scripts/lib"; do
+        [[ ! -L "$dir" && ( ! -e "$dir" || -d "$dir" ) ]] ||
+            { echo "CLI library directory changed during staging: $dir" >&2; exit 2; }
+    done
+    mkdir -p -- "$(dirname -- "$compat_target")"
+    staged_library="$(mktemp "${compat_target}.stage.XXXXXXXX")"
+    install -m644 -- "$compat_source" "$staged_library"
+    # Hard-link publication is exclusive: a concurrent foreign file/link is
+    # never overwritten, and the CLI stays unchanged if publication fails.
+    if ! ln -T -- "$staged_library" "$compat_target"; then
+        rm -f -- "$staged_library"
+        echo 'CLI compatibility library appeared during staging; refusing replacement' >&2
+        exit 2
+    fi
+    rm -f -- "$staged_library"
+    echo "STAGED: read-only CLI compatibility library -> $compat_target"
 fi
 if [[ -n "$staged_launcher" ]]; then
     # Never replace a user-created executable or a launcher modified during

@@ -13,6 +13,8 @@ make_fixture() {
     local home="$tmp/$name"
     mkdir -p "$home"/{bin,config/niri/config.d,config/quickshell/alis,config/systemd/user/niri.service.wants,config/inir,cache}
     cp "$root/scripts/alis" "$home/bin/alis"
+    mkdir -p "$home/config/quickshell/alis/scripts/lib"
+    cp "$root/scripts/lib/brand-env-compat.sh" "$home/config/quickshell/alis/scripts/lib/brand-env-compat.sh"
     chmod +x "$home/bin/alis"
     printf '%s\n' '//@ pragma ShellId alis' > "$home/config/quickshell/alis/shell.qml"
     printf '%s\n' 'old user prefs' > "$home/config/inir/preferences.json"

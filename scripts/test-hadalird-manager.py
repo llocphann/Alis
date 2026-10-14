@@ -4,6 +4,7 @@ import importlib.util
 import io
 import json
 import pathlib
+import stat
 import tarfile
 import tempfile
 
@@ -115,7 +116,11 @@ with tempfile.TemporaryDirectory(prefix="hadalird-manager-test-") as location:
     assert manager.discovery.inspect(shell, base / "data")["available"]
     files = json.loads((home / "current/manifest.json").read_text())["files"]
     assert "scripts/notes/worker.py" in files
-    assert (home / "current/assets/helpers/inir-thinkfan").stat().st_mode & 0o111
+    helper = home / "current/assets/helpers/inir-thinkfan"
+    assert stat.S_IMODE(helper.stat().st_mode) == 0o755
+    assert helper.read_bytes() == b"fake helper"
+    assert not (home / "current/assets/helpers/alis-thinkfan").exists(), "external package path was renamed"
+    assert stat.S_IMODE((home / "current/scripts/notes/worker.py").stat().st_mode) == 0o644
     assert "manifest.json" not in files
     assert run("status")["available"]
     assert requested.count("archive") == 1

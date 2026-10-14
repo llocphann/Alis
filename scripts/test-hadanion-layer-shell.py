@@ -10,7 +10,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-without-companion-") as tempora
     folder = Path(temporary)
     for name in ("modules", "services", "scripts", "defaults", "translations", "assets", "qmldir", "GlobalStates.qml"):
         (folder / name).symlink_to(ROOT / name)
-    config = folder / "config/illogical-impulse"
+    config = folder / "config/alis"
     config.mkdir(parents=True)
     options = json.loads((ROOT / "defaults/config.json").read_text())
     options["panelFamily"] = "abyss"

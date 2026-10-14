@@ -54,7 +54,7 @@ with tempfile.TemporaryDirectory(prefix="hadanion-absent-") as temporary:
     shell.mkdir()
     for name in ("modules", "services", "scripts", "defaults", "translations", "assets", "qmldir", "GlobalStates.qml"):
         (shell / name).symlink_to(ROOT / name)
-    config = private / "config/illogical-impulse"
+    config = private / "config/alis"
     config.mkdir(parents=True)
     options = json.loads((ROOT / "defaults/config.json").read_text())
     options["panelFamily"] = "abyss"
