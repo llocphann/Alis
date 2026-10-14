@@ -17,6 +17,9 @@ on:
       - scripts/test-companion-managed-install.py
       - scripts/test-companion-entrypoint-discovery.py
       - scripts/test-companion-pinned-source-contract.py
+      - scripts/test-companion-output-loader-lifecycle.py
+      - modules/abyss/HadanionSurface.qml
+      - services/Hadanion.qml
       - sdata/companion-revision.txt
       - native/scripts/install-runtime.sh
       - sdata/migrations/021-systemd-single-instance.sh
@@ -67,6 +70,8 @@ jobs:
         run: bash scripts/test-brand-native-installer-invocation.sh
       - name: Pinned external Companion and canonical Alis daemon compatibility
         run: python3 scripts/test-companion-entrypoint-discovery.py
+      - name: Companion late-created output Loader and bounded IPC diagnostics
+        run: python3 scripts/test-companion-output-loader-lifecycle.py
       - name: Managed Companion install, ownership, pins and failed-upgrade recovery
         run: python3 scripts/test-companion-managed-install.py
       - name: Actual SHA-pinned upstream Companion immutable release and Alis host contract
