@@ -117,6 +117,11 @@ function inspectFunctionBody(source, declarationEnd) {
     const tail = masked.slice(matches[0].index + matches[0][0].length);
     if(/^new\s+Map\s*\(/.test(tail)) return "new-map";
     if(/^new\s+[$A-Za-z_][\w$]*\s*\(/.test(tail)) return "new-other";
+    // JS permits `new Constructor` without (). The previous lexer
+    // misreported "new" as an identifier alias, concealing a constructor
+    // invocation. This is NOT proof of a local Map or a pure constructor.
+    if(/^new\s+[$A-Za-z_][\w$]*(?=\s*[,;}\n\r]|$)/.test(tail))
+      return "new-constructor-no-args";
     if(/^[$A-Za-z_][\w$]*\s*\(/.test(tail)) return "helper-call-result";
     // Treat optional computed access as a complex indexed expression,
     // not as an ordinary dot-member result that skips alias analysis.
@@ -259,6 +264,9 @@ function inspectFunctionBody(source, declarationEnd) {
         return {origin_hint:"new-map-syntax",hops_capped:Math.min(8,hops)};
       if (/^new\s+[$A-Za-z_][\w$]*\s*\(/.test(rhs))
         return {origin_hint:"new-other-syntax",hops_capped:Math.min(8,hops)};
+      if (/^new\s+[$A-Za-z_][\w$]*(?=\s*[,;}\n\r]|$)/.test(rhs))
+        return {origin_hint:"constructor-no-args-unverified",
+          hops_capped:Math.min(8,hops)};
       if (/^[$A-Za-z_][\w$]*\s*\(/.test(rhs))
         return {origin_hint:"helper-call-result",hops_capped:Math.min(8,hops)};
       // Optional computed member (owner?.[key]) is not the same as
@@ -301,7 +309,8 @@ function inspectFunctionBody(source, declarationEnd) {
       unknownSites.push({receiver_form:"bare-identifier",
         receiver_initializer_kind:kind,
         owner_origin_hint:"not-applicable",
-        ...(["identifier-alias","other-expression"].includes(kind)
+        ...(["identifier-alias","other-expression",
+          "new-constructor-no-args"].includes(kind)
           ? {alias_trace:traceIdentifierAlias(receiver,m.index)} : {})});
     }
   }
