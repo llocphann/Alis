@@ -11,7 +11,7 @@ const result=(status, finals=0,next=false)=>({
   receipt_shape_status:status,
   terminal_final_count_capped:Math.min(4,finals),
   subsequent_user_turn_present:next,
-  active_branch_complete:status!=="INVALID_OR_INCOMPLETE_BRANCH",
+  branch_validation_scope:"syntactic-parent-chain-only",
   snapshot_origin_verified:false,
   project_membership_verified:false,
   conversation_identity_verified:false,
