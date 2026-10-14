@@ -150,6 +150,11 @@ function inspectFunctionBody(source, declarationEnd) {
     else if(/\?\?|\|\||&&/.test(part)) family="logical-or-coalescing";
     else if(/\?(?!\.)[^:]*:/.test(part)) family="conditional-ternary";
     else if(/^[(]/.test(part)) family="parenthesized";
+    // Computed property access (e.g. cache[key] or cache?.[key]) is
+    // not recognized by the dot-member branch below. A lookup could
+    // return a Map-like object, but its ownership remains unknown.
+    else if(/^(?:await\s+)?[$A-Za-z_][\w$]*\s*(?:\?\.)?\s*\[/.test(part))
+      family="computed-member-access";
     else if(/^(?:await\s+)?[$A-Za-z_][\w$]*\s*\(/.test(part))
       family="call-expression";
     else if(/^(?:await\s+)?[$A-Za-z_][\w$]*(?:\?\.|\.)/.test(part))
