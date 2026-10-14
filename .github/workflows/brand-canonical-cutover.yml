@@ -41,6 +41,9 @@ jobs:
       - name: Canonical Alis keyring with legacy-secret read fallback
         shell: bash
         run: bash scripts/test-brand-canonical-keyring.sh
+      - name: Canonical Alis XDG namespace, migrations and source credits
+        shell: bash
+        run: bash scripts/test-brand-canonical-config.sh
       - name: Check canonical Cargo metadata
         shell: bash
         run: cargo metadata --no-deps --locked --format-version 1 --manifest-path native/Cargo.toml > /dev/null
