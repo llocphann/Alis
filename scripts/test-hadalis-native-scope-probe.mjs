@@ -193,6 +193,13 @@ res = await inspectSeven(sevenMaps);
 assert.equal(res.active_provider_map_count_capped, 7);
 assert.equal(res.active_provider_identity_count_capped, 1);
 assert.equal(res.active_map_comparison_complete, true);
+assert.equal(res.active_map_topology_complete, true);
+assert.deepEqual(res.active_map_depth_range_capped, [1, 1]);
+assert.equal(res.active_map_ancestor_pair_count_capped, 0);
+assert.equal(res.active_map_incomparable_pair_count_capped, 21);
+assert.equal(res.active_map_depth_size_profiles.length, 7);
+assert.equal(res.resolver_source_inspected, true);
+assert.notEqual(res.resolver_length_band, "unknown");
 assert.equal(res.active_maps_have_equal_key_sets, true);
 assert.equal(res.active_maps_have_equal_entries_by_identity, true);
 assert.equal(res.active_maps_have_nested_key_sets, true);
@@ -223,6 +230,23 @@ assert.equal(res.active_maps_have_equal_entries_by_identity, false);
 assert.equal(res.active_maps_have_nested_key_sets, true);
 assert.equal(res.resolution_attempted, false);
 assert.equal(resolves, 0);
+
+// A genuinely nested scope context is distinguishable from seven sibling
+// branches, but no nesting topology is enough to authorize a resolver.
+const nested = rootsFor(sharedMap);
+nested.currentChild.child = {
+  return: nested.currentChild,
+  memoizedProps: {value: differentMap},
+  sibling: null
+};
+res = await inspect([nested.currentRoot]);
+assert.equal(res.active_provider_map_count_capped, 2);
+assert.equal(res.active_map_ancestor_pair_count_capped, 1);
+assert.equal(res.active_map_incomparable_pair_count_capped, 0);
+assert.deepEqual(res.active_map_depth_range_capped, [1, 2]);
+assert.deepEqual(res.active_map_depth_size_profiles.map(x => x.min_depth), [1, 2]);
+assert.equal(res.provider_selection, "active_provider_ambiguous");
+assert.equal(res.resolution_attempted, false);
 
 const unknownRoot = {memoizedProps:{value:sharedMap}};
 res = await inspect([unknownRoot]);
