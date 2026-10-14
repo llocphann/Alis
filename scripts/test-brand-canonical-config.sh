@@ -31,6 +31,11 @@ grep -Fq '/alis' "$root/modules/common/Directories.qml" ||
     tui_check_skip() { :; }
     apply_migration 019-config-dir-rename-compat true ||
         fail 'superseded forced migration did not abort safely'
+    if is_migration_needed 050-rust-native-default; then
+        fail 'historical 050 would recreate retired inir backend state'
+    fi
+    apply_migration 050-rust-native-default true ||
+        fail 'superseded forced backend migration did not abort safely'
 )
 [[ "$(cat "$tmp/config/illogical-impulse/config.json")" == 'old upstream bytes' ]] ||
     fail 'old upstream bytes mutated'

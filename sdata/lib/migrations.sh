@@ -146,7 +146,8 @@ is_migration_needed() {
     # 019 was a historical upstream -> alis directory transition. Canonical
     # Alis installs must never recreate ~/.config/alis after the owner-gated
     # cutover (or silently move the upstream config away from Alis).
-    if [[ "$migration_id" == "019-config-dir-rename-compat" &&
+    if [[ ( "$migration_id" == "019-config-dir-rename-compat" ||
+            "$migration_id" == "050-rust-native-default" ) &&
           -d "${XDG_CONFIG_HOME:-$HOME/.config}/alis" ]]; then
         return 1
     fi
@@ -255,7 +256,8 @@ apply_migration() {
     local migration_id="$1"
     local force="${2:-false}"
 
-    if [[ "$migration_id" == "019-config-dir-rename-compat" &&
+    if [[ ( "$migration_id" == "019-config-dir-rename-compat" ||
+            "$migration_id" == "050-rust-native-default" ) &&
           -d "${XDG_CONFIG_HOME:-$HOME/.config}/alis" ]]; then
         # Even a forced interactive request cannot resurrect the retired
         # active namespace. Legacy inputs remain intact for manual recovery.
