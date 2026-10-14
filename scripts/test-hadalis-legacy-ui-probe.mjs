@@ -22,12 +22,15 @@ const makeLocator=(items=[])=>({
 const page=(opts={})=>{
   const data={composer:opts.composer??[{visible:true,disabled:false,draft:""}],
     badge:opts.badge??[{visible:true}],list:opts.list??[],
+    scopedComposer:opts.scopedComposer??[],
     send:opts.send??[{visible:true,disabled:false}],stop:opts.stop??[]};
   return {
     url:()=>opts.url??"app://-/index.html",
     keyboard:{press:failWrite,insertText:failWrite},
     evaluate:failWrite,
     getByRole(role,options){
+      if(role==="textbox"&&options.name==="New chat in Automatic Alis" &&
+         options.exact===true)return makeLocator(data.scopedComposer);
       if(role==="textbox")return makeLocator(data.composer);
       if(role==="list")return makeLocator(data.list);
       if(role==="button"&&options.name==="Send")return makeLocator(data.send);
@@ -53,6 +56,45 @@ assert.equal(result.observation_ready,true);
 result=await inspect({badge:[],list:[]});
 assert.equal(result.observation_ready,false);
 assert.ok(result.readiness_issues.includes("PROJECT_UI_GUARD_NOT_UNIQUE"));
+// Owner's actual snapshot: project list visible, no selected conversation,
+// blank editor, and no Send. This does not prove the editor is in Project.
+result=await inspect({badge:[],list:[{visible:true,selected:[]}],send:[]});
+assert.equal(result.project_view_visible,false);
+assert.equal(result.observation_ready,false);
+assert.equal(result.read_only_project_entry_ready,false);
+assert.ok(result.readiness_issues.includes("PROJECT_UI_GUARD_NOT_UNIQUE"));
+assert.ok(result.readiness_issues.includes("SEND_CONTROL_NOT_READY"));
+// A distinctly project-scoped blank composer may legitimately hide Send.
+// This is only "read-only project entry ready"; managed sends stay blocked.
+result=await inspect({badge:[],list:[{visible:true,selected:[]}],send:[],
+  scopedComposer:[{visible:true,disabled:false,draft:""}]});
+assert.equal(result.project_view_visible,true);
+assert.equal(result.empty_project_composer_observed,true);
+assert.equal(result.read_only_project_entry_ready,true);
+assert.equal(result.observation_ready,false);
+assert.deepEqual(result.readiness_issues,
+  ["SEND_ABSENT_ON_EMPTY_PROJECT_COMPOSER"]);
+assert.equal(result.send_control_state,"absent-on-empty-project-composer");
+assert.equal(result.project_identity_verified,false);
+assert.equal(result.conversation_identity_verified,false);
+assert.equal(result.submission_authorized,false);
+assert.equal(result.scheduler_activation_authorized,false);
+// A bare Project list + generic composer must not pass this new guard.
+result=await inspect({badge:[],list:[{visible:true,selected:[]}],send:[],
+  scopedComposer:[]});
+assert.equal(result.read_only_project_entry_ready,false);
+// Busy or non-empty project-scoped composer never qualifies.
+result=await inspect({badge:[],list:[{visible:true,selected:[]}],send:[],
+  scopedComposer:[{visible:true}],stop:[{visible:true}]});
+assert.equal(result.read_only_project_entry_ready,false);
+result=await inspect({badge:[],list:[{visible:true,selected:[]}],send:[],
+  composer:[{visible:true,draft:"ghp_PRIVATE_DRAFT"}],
+  scopedComposer:[{visible:true}]});
+assert.equal(result.read_only_project_entry_ready,false);
+assert.ok(!JSON.stringify(result).includes("ghp_PRIVATE_DRAFT"));
+result=await inspect({badge:[],list:[{visible:true,selected:[]}],send:[],
+  scopedComposer:[{visible:true},{visible:true}]});
+assert.equal(result.read_only_project_entry_ready,false);
 result=await inspect({composer:[{visible:true,draft:"ghp_FAKE_DRAFT"}]});
 assert.ok(result.readiness_issues.includes("COMPOSER_NOT_EMPTY_OR_UNVERIFIED"));
 assert.ok(!JSON.stringify(result).includes("ghp_FAKE_DRAFT"));
@@ -98,11 +140,17 @@ try {
     "const p={url:()=> 'app://-/index.html',",
     "evaluate:fail,keyboard:{press:fail,insertText:fail},",
     "getByRole:(role,opt)=>{",
+    "if(role==='textbox'&&opt.name==='New chat in Automatic Alis')",
+    " return locator(process.env.MOCK_BLANK_PROJECT==='1'",
+    " ?[{visible:true,disabled:false}]:[]);",
     "if(role==='textbox')return locator([{visible:true,disabled:false}]);",
-    "if(role==='list')return locator([]);",
-    "if(role==='button'&&opt.name==='Send')return locator([{visible:true}]);",
+    "if(role==='list')return locator(process.env.MOCK_BLANK_PROJECT==='1'",
+    " ?[{visible:true,selected:[]}]:[]);",
+    "if(role==='button'&&opt.name==='Send')",
+    " return locator(process.env.MOCK_BLANK_PROJECT==='1'",
+    " ?[]:[{visible:true}]);",
     "if(role==='button'&&opt.name instanceof RegExp&&opt.name.test('Stop'))return locator([]);",
-    "return locator([{visible:true}]);}};",
+    "return locator(process.env.MOCK_BLANK_PROJECT==='1'?[]:[{visible:true}]);}};",
     "export const chromium={connectOverCDP:async url=>{",
     "if(url!=='http://127.0.0.1:9222')throw Error('UNEXPECTED_URL');",
     "return {contexts:()=>[{pages:()=>[p]}],close:async()=>{}};",
@@ -121,6 +169,15 @@ try {
   assert.equal(output.observation_ready,true);
   assert.equal(output.submission_authorized,false);
   assert.equal(output.project_identity_verified,false);
+  const blank=run(["probe"],{MOCK_BLANK_PROJECT:"1"});
+  assert.equal(blank.status,0,blank.stderr);
+  const blankReport=JSON.parse(blank.stdout);
+  assert.equal(blankReport.read_only_project_entry_ready,true);
+  assert.equal(blankReport.observation_ready,false);
+  assert.deepEqual(blankReport.readiness_issues,
+    ["SEND_ABSENT_ON_EMPTY_PROJECT_COMPOSER"]);
+  assert.equal(blankReport.submission_authorized,false);
+  assert.equal(blankReport.durable_server_receipt_verified,false);
   const denied=run(["submit"]);
   assert.equal(denied.status,1);
   assert.equal(JSON.parse(denied.stdout).error_code,
