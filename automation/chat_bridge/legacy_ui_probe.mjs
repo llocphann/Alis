@@ -49,15 +49,30 @@ export async function inspectLegacyUiReadOnly(page,projectName="Automatic Alis")
   const projectHeadingsInMain=mainRegions.getByRole("heading",{
     name:projectName,exact:true
   });
+  // The current Desktop Project landing (owner screenshot) renders the
+  // visible Project title as ordinary text, not necessarily an ARIA heading.
+  // The composer displays its Project as adjacent text/chip while its
+  // editable element keeps a generic accessible name.
+  // Test fixed literal text only, output counts; never read raw DOM/text.
+  const projectTextInMain=mainRegions.getByText(projectName,{exact:true});
+  const emptyProjectStateInMain=mainRegions.getByText("No chats yet",{
+    exact:true
+  });
+  const projectComposerLabelInMain=mainRegions.getByText(
+    "New chat in "+projectName,{exact:true}
+  );
   const sends=page.getByRole("button",{name:"Send",exact:true});
   const stops=page.getByRole("button",{name:/stop/i});
   const [composerCount,scopedComposerCount,genericComposerCount,
     projectNewChatActionCount,badgeCount,listCount,mainCount,
-    mainProjectHeadingCount,sendCount,stopCount]=await Promise.all([
+    mainProjectHeadingCount,mainProjectTextCount,mainEmptyStateCount,
+    mainComposerVisualLabelCount,sendCount,stopCount]=await Promise.all([
       countVisible(composers),countVisible(projectScopedComposers),
       countVisible(genericComposers),countVisible(projectNewChatActions),
       countVisible(projectBadge),countVisible(projectLists),
       countVisible(mainRegions),countVisible(projectHeadingsInMain),
+      countVisible(projectTextInMain),countVisible(emptyProjectStateInMain),
+      countVisible(projectComposerLabelInMain),
       countVisible(sends),countVisible(stops)
     ]);
   let selectedCount=0;
@@ -89,6 +104,10 @@ export async function inspectLegacyUiReadOnly(page,projectName="Automatic Alis")
     selected_target_chat_count_capped:selectedCount,
     main_region_count_capped:mainCount,
     target_project_heading_in_main_count_capped:mainProjectHeadingCount,
+    target_project_text_in_main_count_capped:mainProjectTextCount,
+    empty_project_state_in_main_count_capped:mainEmptyStateCount,
+    project_composer_visual_label_in_main_count_capped:
+      mainComposerVisualLabelCount,
     send_count_capped:sendCount,
     stop_count_capped:stopCount,
     composer_draft_present:draftPresent,
@@ -142,6 +161,20 @@ export function assessLegacyUiReadiness(snapshot){
     observation_ready:issues.length===0,
     read_only_project_entry_ready:readOnlyProjectEntryReady,
     empty_project_composer_observed:emptyProjectComposer,
+    project_landing_visual_evidence:
+      s.target_project_list_count_capped===1 &&
+      s.target_project_text_in_main_count_capped>=1 &&
+      s.empty_project_state_in_main_count_capped===1
+        ? "project-empty-landing-corroborated"
+        : s.empty_project_state_in_main_count_capped===1
+          ? "empty-state-without-project-text-corroboration"
+          : "not-corroborated",
+    // Screenshot has a visually project-labelled composer while the
+    // editable textbox may still expose generic ARIA name "Ask ChatGPT".
+    // This is only read-only presentation evidence, never an identity
+    // proof or permission to send/observe as a managed task.
+    project_composer_visual_label_observed:
+      s.project_composer_visual_label_in_main_count_capped>=1,
     main_project_view_evidence:
       s.main_region_count_capped===1 &&
       s.target_project_heading_in_main_count_capped===1
