@@ -92,7 +92,9 @@ if [[ -e "$target" ]]; then
         exit 2
     fi
 fi
-[[ ! -e "$target" && ! -L "$target" ]] || exit 2
+# A complete installed Alis runtime is allowed: bootstrap may only need to
+# replace the old managed public CLI. Partial/foreign paths were rejected above.
+[[ "$runtime_complete" == true || ( ! -e "$target" && ! -L "$target" ) ]] || exit 2
 [[ -f "$cfg/systemd/user/$old_service" && ! -L "$cfg/systemd/user/$old_service" ]] ||
     { echo 'No old repo-copy user service; package-managed upgrades need a different path' >&2; exit 2; }
 old_active="$(systemctl --user is-active "$old_service" 2>/dev/null || true)"
