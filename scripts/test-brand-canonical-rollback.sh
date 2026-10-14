@@ -118,7 +118,7 @@ bash "$helper" --apply --owner-approved > "$tmp/ok" || fail 'approved rollback'
    ! -L "$HOME/config/systemd/user/inir.service" &&
    ! -e "$HOME/state/alis-cutover-backups/retired-inir.service" ]] ||
   fail 'post-success rollback still exposes competing D-Bus unit'
-[[ -f "$HOME/state/alis-cutover-backups"/rollback-backup-*/alis.service ]] ||
+compgen -G "$HOME/state/alis-cutover-backups/rollback-backup-*/alis.service" >/dev/null ||
   fail 'canonical unit rollback backup missing'
 [[ "$(sha256sum "$HOME/config/alis/config.json" | cut -d' ' -f1)" == "$data_hash" ]] ||
   fail 'settings mutated'
