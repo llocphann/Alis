@@ -234,7 +234,19 @@ brand_legacy_owner_present() {
         local old_enable
         old_enable="$(systemctl --user is-enabled "$legacy_owner" 2>/dev/null || true)"
         case "$old_enable" in
-            disabled|static)
+            disabled|static|masked)
+                # After canonical cutover the original unit must stay masked:
+                # merely leaving its Type=dbus unit installed prevents systemd
+                # from loading alis.service with the same watcher BusName.
+                if [[ "$old_enable" == masked ]]; then
+                    local old_path="${XDG_CONFIG_HOME}/systemd/user/$legacy_owner"
+                    local retired_path="${XDG_STATE_HOME:-$HOME/.local/state}/alis-cutover-backups/retired-inir.service"
+                    [[ -L "$old_path" && "$(readlink -- "$old_path")" == /dev/null &&
+                       -f "$retired_path" && ! -L "$retired_path" ]] ||
+                        return 0
+                    grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' "$retired_path" ||
+                        return 0
+                fi
                 local old_link
                 for old_link in "${XDG_CONFIG_HOME}/systemd/user/"*.wants/"$legacy_owner"; do
                     [[ ! -e "$old_link" && ! -L "$old_link" ]] || return 0
