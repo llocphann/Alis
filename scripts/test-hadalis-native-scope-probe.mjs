@@ -285,6 +285,10 @@ res = await inspectSeven(sevenMaps);
 assert.equal(res.provider_selection, "active_provider_ambiguous");
 assert.equal(res.resolution_attempted, false);
 assert.equal(res.resolver_shape_complete, true);
+assert.equal(res.resolver_alpha_complete, true);
+assert.ok(res.resolver_alpha_shape.includes(".get("));
+assert.ok(res.resolver_alpha_shape.includes(".has("));
+assert.match(res.resolver_alpha_shape, /v[0-9]+/);
 assert.ok(res.resolver_masked_shape.includes(".get("));
 assert.ok(res.resolver_masked_shape.includes(".has("));
 assert.ok(res.resolver_masked_shape.includes("return"));
@@ -293,6 +297,16 @@ for (const privatePart of ["ghp_", "PRIVATE", "SECRET_COMMENT", "scopeId",
   assert.ok(!JSON.stringify(res).includes(privatePart),
     "resolver structural probe must hide " + privatePart);
 }
+const originalShape = res.resolver_alpha_shape;
+def.resolve = function anAlternateName(one,two) {
+  const replacement = "fake_ALT_TOKEN_SECRET";
+  return one.store.get(two.has(scopeId) ? two.get(scopeId) : replacement);
+};
+res = await inspectSeven(sevenMaps);
+assert.equal(res.resolver_alpha_shape, originalShape,
+  "alpha-normalized syntax must not change with private identifier renames");
+assert.equal(res.resolution_attempted, false);
+assert.ok(!JSON.stringify(res).includes("ALT_TOKEN_SECRET"));
 def.resolve = originalResolver;
 
 const unknownRoot = {memoizedProps:{value:sharedMap}};
