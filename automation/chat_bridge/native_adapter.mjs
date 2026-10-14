@@ -82,8 +82,14 @@ export function installedContract() {
     const sharedNames = archive.files.filter(n => /^app-shared-.*\.js$/.test(n));
     if (initialNames.length !== 1 || sharedNames.length !== 1) throw new Error("ambiguous Desktop build");
     const initial = archive.read(initialNames[0]), shared = archive.read(sharedNames[0]);
-    const apiLocal = initial.match(/([\w$]+)\.streamPost\(`\/f\/conversation`/)[1];
-    const apiImport = initial.match(new RegExp("([\\w$]+) as " + apiLocal + "[,}]"))?.[1];
+    // Installed Desktop internals change without notice. Never dereference an
+    // absent regex match or try a guessed export: fail closed before any CDP
+    // connection or managed message can be started.
+    const apiMatch = initial.match(/([\w$]+)\.streamPost\(`\/f\/conversation`/);
+    const apiLocal = apiMatch?.[1];
+    const apiImport = apiLocal
+      ? initial.match(new RegExp("([\\w$]+) as " + apiLocal + "[,}]"))?.[1]
+      : null;
     const atom = initial.match(/,([\w$]+)=\w+\(\$,\(\{scope:e\}\)=>new (\w+)\(e\)\)\}\)\)\)\(\)\}\s*function brn/);
     if (!apiImport || !atom || !initial.includes("async startCompletionStream("))
       throw new Error("unsupported Desktop stream contract");
@@ -98,13 +104,18 @@ export async function connectNative() {
   const parsed = new URL(url);
   if (parsed.protocol !== "http:" || !["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname))
     throw new Error("Desktop connection must use loopback");
+  // Static compatibility is a prerequisite, not a best-effort fallback.
+  // Check it before opening CDP: otherwise an unsupported installed build
+  // can strand a Playwright connection and turn a fast contract rejection
+  // into the 45-second native_cli subprocess timeout.
+  const contract = installedContract();
   const { chromium } = await import(process.env.HADALIS_PLAYWRIGHT_MODULE ??
     "file:///usr/lib/chatgpt/resources/cua_node/lib/node_modules/playwright-core/index.mjs");
   const browser = await chromium.connectOverCDP(url, { timeout: 10000 });
-  const page = browser.contexts().flatMap(c => c.pages()).find(p => p.url() === "app://-/index.html");
-  if (!page) { await browser.close(); throw new Error("Desktop main renderer unavailable"); }
-  const contract = installedContract();
-  await page.evaluate(async contract => {
+  try {
+    const page = browser.contexts().flatMap(c => c.pages()).find(p => p.url() === "app://-/index.html");
+    if (!page) throw new Error("Desktop main renderer unavailable");
+    await page.evaluate(async contract => {
     const shared = await import(`./assets/${contract.shared}`), initial = await import(`./assets/${contract.initial}`);
     const api = shared[contract.api], definition = initial[contract.stream];
     if (typeof api?.safeGet !== "function" || typeof definition?.resolve !== "function")
@@ -130,8 +141,14 @@ export async function connectNative() {
         typeof transport?.startCompletionStream !== "function") throw new Error("unsupported Desktop transport");
     window.__hadalisNative = { api, transport, fingerprint: contract.fingerprint };
     window.__hadalisReceipts ??= new Map();
-  }, contract);
-  return { page, browser, contract };
+    }, contract);
+    return { page, browser, contract };
+  } catch (error) {
+    // A failed renderer probe must not leave an orphan CDP socket.
+    // Keep the original error category; do not retry or send anything.
+    try { await browser.close(); } catch {}
+    throw error;
+  }
 }
 
 export async function nativeRead(page, path, query = {}) {
