@@ -36,6 +36,60 @@ def api(endpoint):
 
 
 class TaskflowTests(unittest.TestCase):
+    def test_bulk_intake_queries_open_issues_only_and_pins_each_repo_once(self):
+        requests = []
+        def listing(endpoint):
+            requests.append(endpoint)
+            if "/issues?state=open&per_page=100&page=1" in endpoint:
+                if "/Alis-Companion/" in endpoint:
+                    return [{"number": 4, "title": "[AC-I01] Canonical Companion",
+                             "state": "open", "comments": 0, "body": "Companion work"}]
+                if "/Alis-Intergration/" in endpoint:
+                    return []
+                return [
+                    {"number": 81, "title": "[AUDIO-I01] Audio crackle",
+                     "state": "open", "comments": 0, "body": "Audio work"},
+                    {"number": 89, "title": "[AC-I01] Archived old task",
+                     "state": "closed", "comments": 0},
+                    {"number": 80, "title": "[MUSIC-I02] Local music",
+                     "state": "open", "comments": 0},
+                    {"number": 50, "title": "[AC-I01] Pull request",
+                     "state": "open", "pull_request": {"url": "pr"}, "comments": 0},
+                ]
+            if "/branches/" in endpoint:
+                return {"commit": {"sha": "a" * 40}}
+            raise AssertionError(endpoint)
+        codes = ["AUDIO-I01", "MUSIC-I02", "AC-I01"]
+        tasks = taskflow.resolve_batch(codes, api=listing)
+        self.assertEqual([t["code"] for t in tasks], codes)
+        self.assertEqual(tasks[-1]["repository"], "llocphann/Alis-Companion")
+        self.assertEqual(tasks[-1]["issue_number"], 4)
+        self.assertEqual(len(requests), 5)  # Three lists + two pinned branches.
+        self.assertFalse(any("/search/issues" in x for x in requests))
+        self.assertFalse(any("/issues/81" in x for x in requests))
+        with self.assertRaisesRegex(taskflow.TaskError, "No matching open Issue"):
+            taskflow.resolve_batch(["ABYSS-R99"], api=listing)
+
+    def test_queue_default_resolver_uses_one_batch(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}), \\
+             patch.object(taskflow, "resolve_batch", return_value=[TASK]) as bulk:
+            prepared = queue.prepare("AUTO-R01")
+            self.assertEqual(prepared["items"][0]["code"], "AUTO-R01")
+            bulk.assert_called_once_with(["AUTO-R01"])
+
+    def test_github_errors_identify_rate_limit_vs_offline_without_secrets(self):
+        from urllib.error import HTTPError, URLError
+        with patch.dict("os.environ", {"GH_TOKEN": "", "GITHUB_TOKEN": ""}), \\
+             patch.object(credentials, "status", return_value={"saved": False}):
+            limited = HTTPError("https://api.github.com", 403, "rate limited",
+                                {"X-RateLimit-Remaining": "0"}, None)
+            with patch.object(taskflow, "urlopen", side_effect=limited), \\
+                 self.assertRaisesRegex(taskflow.TaskError, "rate limit reached"):
+                taskflow._github("/repos/llocphann/Alis/issues/81")
+            with patch.object(taskflow, "urlopen", side_effect=URLError("DNS failure")), \\
+                 self.assertRaisesRegex(taskflow.TaskError, "Cannot reach api.github.com"):
+                taskflow._github("/repos/llocphann/Alis/issues/81")
+
     def test_cleanup_settings_contract(self):
         qml = (Path(__file__).resolve().parents[1] /
                "modules/settings/AutomationTaskConfig.qml").read_text()
