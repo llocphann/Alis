@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Companion tasks (Aqua / Octo)
+    url: https://github.com/llocphann/Alis-Companion/issues/new
+    about: New Companion bugs, features, animations and provider/model behavior belong in Alis-Companion.
+  - name: Integration tasks (TLP / Thinkfan / Obsidian)
+    url: https://github.com/llocphann/Alis-Intergration/issues/new
+    about: Integration-specific bugs, helpers and management belong in Alis-Intergration.
   - name: Alis documentation
     url: https://github.com/llocphann/Alis/tree/stable/docs
     about: Installation, configuration, modules, IPC, and reference documentation
