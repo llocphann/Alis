@@ -35,6 +35,9 @@ jobs:
       - name: Canonical Alis packaging and session-owner regression
         shell: bash
         run: bash scripts/test-brand-canonical-contracts.sh
+      - name: Owner-gated single-service cutover and failure rollback regression
+        shell: bash
+        run: bash scripts/test-brand-canonical-cutover.sh
       - name: Check canonical Cargo metadata
         shell: bash
         run: cargo metadata --no-deps --locked --format-version 1 --manifest-path native/Cargo.toml > /dev/null
