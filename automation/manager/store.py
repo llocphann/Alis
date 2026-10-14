@@ -118,9 +118,9 @@ def default_state(config: dict) -> dict:
     profiles = {}
     for profile in config["profiles"]:
         item = profile_state()
-        if profile["enabled"] and profile["mode"] == "continuous":
-            item["desired"] = "run"
-            item["status"] = "scheduled"
+        # Restored Automation must never start a legacy continuous profile
+        # when no runtime state exists. Explicit owner start is mandatory.
+        # Existing state snapshots remain readable and unmodified.
         profiles[profile["id"]] = item
     # A stopped legacy bridge can have a connector-blocked terminal state. Do
     # not silently restart that profile during migration.

@@ -74,8 +74,8 @@ def default_profile() -> dict:
         "id": DEFAULT_ID,
         "name": "Strict-lossless optimization research",
         "description": "Continuous Hadalis research on current dev",
-        "enabled": True,
-        "mode": "continuous",
+        "enabled": False,
+        "mode": "manual",
         "prompt": default_prompt(),
     })
     return profile
