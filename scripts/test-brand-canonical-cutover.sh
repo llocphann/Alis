@@ -152,6 +152,17 @@ fi
 grep -Fq 'Niri root is a symlink' "$tmp/link.log" ||
     die 'missing explicit symlink review boundary'
 
+make_fixture archive_collision
+mkdir -p "$tmp/archive_collision/state/alis-cutover-backups"
+printf 'foreign retirement marker\n' > "$tmp/archive_collision/state/alis-cutover-backups/retired-inir.service"
+if invoke archive_collision --dry-run > "$tmp/archive-collision.log" 2>&1; then
+    die 'accepted pre-existing owner-unit archive collision'
+fi
+grep -Fq 'Existing retired service archive' "$tmp/archive-collision.log" ||
+    die 'missing manual-review archive collision diagnostic'
+[[ "$(cat "$tmp/archive_collision/state-inir")" == active ]] ||
+    die 'archive collision stopped original desktop'
+
 make_fixture good
 mkdir -p "$tmp/good/state/inir"
 printf '%s\n' 'private state byte' > "$tmp/good/state/inir/snapshot.dat"
@@ -221,6 +232,7 @@ fi
     die 'package-manager guard mutated old session'
 
 make_fixture rollback
+cp -p "$tmp/rollback/config/systemd/user/inir.service" "$tmp/rollback-old-unit"
 if FAIL_NEW_OWNER=1 invoke rollback --apply --owner-approved > "$tmp/failure.log" 2>&1; then
     die 'simulated failed new unit was accepted'
 fi
@@ -237,6 +249,8 @@ fi
 [[ -f "$tmp/rollback/config/systemd/user/inir.service" &&
    ! -L "$tmp/rollback/config/systemd/user/inir.service" ]] ||
     die 'failed cutover did not restore the original user unit'
+cmp -s "$tmp/rollback-old-unit" "$tmp/rollback/config/systemd/user/inir.service" ||
+    die 'failed cutover changed original service unit bytes'
 [[ ! -e "$tmp/rollback/state/alis-cutover-backups/retired-inir.service" ]] ||
     die 'failed cutover stranded original unit in archive'
 
