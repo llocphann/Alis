@@ -1,0 +1,60 @@
+{
+  "captured_utc": "2026-10-14T15:46:32.091259+00:00",
+  "source_sha": "57dd59c82ee28ae67830a550e2a7b13164d87697",
+  "stop_reason": "Owner requested stopping work when weekly usage remaining reaches 3%; observed weekly usedPercent=97.",
+  "baseline": {
+    "sha": "559d8d4fb576da04ca837198be7b021baf8a4ee0",
+    "result": "FAIL",
+    "checks_run": 451,
+    "passed": 388,
+    "failed": 62,
+    "skipped": 2,
+    "os_exit_code": null,
+    "exit_note": "Complete FAIL summary retained; original agent did not return an OS exit receipt."
+  },
+  "intermediate_validation": {
+    "sha": "69a00a4d86426b0fd11545492cd3f4b3b4fd7ffd",
+    "command": "bash scripts/validate-maintainer-local.sh --current-repo",
+    "result": "STOPPED",
+    "os_exit_code": 143,
+    "reason": "Terminated at owner weekly quota stop; incomplete results are not acceptance."
+  },
+  "focused_local_fixtures": {
+    "observed_exit_code": 0,
+    "scope": "Tests executed before committing the corresponding source trees; isolated fixtures and metadata checks, not hosted CI or owner acceptance.",
+    "tests": [
+      "test-brand-env-compat.py",
+      "test-brand-canonical-audit.py",
+      "test-brand-canonical-config.sh",
+      "test-brand-cli-session-guard.py",
+      "test-brand-canonical-arch-snapshot.sh",
+      "test-native-selector-behavior.sh",
+      "test-fcitx5-session-integration.py",
+      "test-brand-entrypoints.sh",
+      "test-brand-single-owner.sh",
+      "test-brand-legacy-cli.sh",
+      "test-config-namespace-contract.sh",
+      "test-runtime-orphan-cleanup.sh",
+      "test-niri-keybind-launcher-contract.sh",
+      "test-setup-recovery-runtime-refresh.sh",
+      "test-update-lifecycle.sh",
+      "test-packaging-contract.sh",
+      "verify-docs.sh",
+      "make test-prefix-install"
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "baseline-559d8d4.log",
+      "sha256": "318f38465da628c83548f0206c8c287142c2239532aea836a768af938503a885"
+    },
+    {
+      "path": "stopped-69a00a4.log",
+      "sha256": "c659e7a033e178a24949049d578cedc3a0c7daff4eb5c57fadd9301ecace64b3"
+    },
+    {
+      "path": "stopped-69a00a4-driver.log",
+      "sha256": "a9aefe38cefb829427a0c2e1f478d043ea888a43d1fc75cdf1521e54b233c6a1"
+    }
+  ]
+}
