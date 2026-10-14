@@ -51,7 +51,8 @@ helper="$tmp/root/scripts/brand-canonical-stage.sh"
 hash1="$(sha256sum "$HOME/.config/inir/config.json" | cut -d' ' -f1)"
 hash2="$(sha256sum "$HOME/.local/state/quickshell/user/first_run.txt" | cut -d' ' -f1)"
 bash -n "$helper"
-bash "$helper" --dry-run | grep -Fq DRY-RUN || fail 'dry run failed'
+preview="$(bash "$helper" --dry-run 2>&1)" || { printf 'Stage preview failed:\n%s\n' "$preview" >&2; fail 'dry run'; }
+grep -Fq DRY-RUN <<< "$preview" || { printf 'Unexpected stage preview:\n%s\n' "$preview" >&2; fail 'dry run output'; }
 [[ ! -e "$HOME/.config/quickshell/alis" ]] || fail 'dry-run mutated runtime'
 if bash "$helper" --apply >/dev/null 2>&1; then fail 'unapproved apply succeeded'; fi
 bash "$helper" --apply --owner-approved | grep -Fq 'STAGED:' || fail 'explicit staging failed'
