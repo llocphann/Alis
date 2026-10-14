@@ -556,6 +556,18 @@ def tick(now: int | None = None, executor: ThreadPoolExecutor | None = None) -> 
     else:
         for pid in chosen:
             _INFLIGHT[pid]=executor.submit(_step,pid,now)
+    # AUTO-R01 shares this existing scheduler tick. No second daemon/timer;
+    # uncertain states remain untouched and never trigger blind resubmission.
+    try:
+        from automation import managed_tasks
+        managed_tasks.reconcile_once()
+        managed_tasks.scheduler_housekeeping(now)
+    except (ValueError, RuntimeError, OSError) as exc:
+        detail = ("Taskflow reconciliation requires review: " + type(exc).__name__)[:180]
+        def note(c, s):
+            if not s["events"] or s["events"][-1].get("detail") != detail:
+                event(s, None, "taskflow_review", detail)
+        change_state(note)
 
 
 def main() -> int:

@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from automation import taskflow, credentials, lifecycle, queue, activity
+from automation import taskflow, credentials, lifecycle, queue, activity, managed_tasks
 
 
 def main():
@@ -20,6 +20,8 @@ def main():
     batch.add_argument("codes", help="AUTO-R01; ABYSS-R09; BRAND-F01")
     batch.add_argument("--mode", choices=["ordered", "cloud"], default="ordered")
     commands.add_parser("queue-status")
+    start_queue = commands.add_parser("start-queue")
+    start_queue.add_argument("--approve", action="store_true")
     history = commands.add_parser("activity")
     history.add_argument("code")
     history.add_argument("--repo", choices=taskflow.REPOSITORIES,
@@ -62,6 +64,8 @@ def main():
             result = queue.prepare(args.codes, mode=args.mode)
         elif args.action == "queue-status":
             result = queue.view()
+        elif args.action == "start-queue":
+            result = managed_tasks.start_ordered_queue(approved=args.approve)
         elif args.action == "activity":
             result = activity.read(args.code, args.repo)
         elif args.action in ("resolve", "prepare"):

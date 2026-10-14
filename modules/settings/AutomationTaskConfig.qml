@@ -129,6 +129,17 @@ ContentPage {
         taskStatusProcess.running = true
     }
 
+    function startQueue(): void {
+        if (root.busy || !root.queueSnapshot || root.cloudSelectTasks)
+            return
+        root.queueOperation = "start"
+        root.errorText = ""
+        queueProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "start-queue", "--approve"]
+        queueProcess.running = true
+    }
+
     function prepareTask(): void {
         if (root.busy)
             return
@@ -173,7 +184,11 @@ ContentPage {
                 if (root.queueOperation === "prepare")
                     root.statusText = result.duplicate
                         ? Translation.tr("Queue already prepared")
-                        : Translation.tr("Queue prepared · awaiting Cloudbot")
+                        : Translation.tr("Queue prepared")
+                else if (root.queueOperation === "start") {
+                    root.statusText = Translation.tr("Cloudbot launch requested")
+                    Qt.callLater(root.refreshQueue)
+                }
             } catch (error) {
                 root.errorText = String(error)
             }
@@ -356,6 +371,14 @@ ContentPage {
                     buttonText: root.busy ? Translation.tr("Preparing…") : Translation.tr("Queue tasks")
                     enabled: !root.busy && taskCodeField.text.trim().length > 0
                     onClicked: root.prepareTask()
+                }
+                DialogButton {
+                    objectName: "automationStartQueue"
+                    buttonText: Translation.tr("Start")
+                    enabled: !root.busy && !!root.queueSnapshot
+                        && ["prepared", "waiting"].includes(root.queueSnapshot.state)
+                        && root.queueSnapshot.mode === "ordered"
+                    onClicked: root.startQueue()
                 }
             }
             StyledText {
