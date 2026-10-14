@@ -11,6 +11,13 @@ on:
       - scripts/test-brand-legacy-owner-update.sh
       - scripts/brand-canonical-cutover.sh
       - scripts/test-brand-canonical-cutover.sh
+      - scripts/brand-recovery-cli.sh
+      - scripts/brand-canonical-rollback.sh
+      - scripts/test-brand-canonical-rollback.sh
+      - scripts/brand-niri-runtime-paths.py
+      - scripts/test-brand-niri-runtime-paths.py
+      - scripts/alis
+      - scripts/test-brand-cli-session-guard.py
       - .github/workflows/brand-update-cutover.yml
   workflow_dispatch:
 permissions:
@@ -32,3 +39,9 @@ jobs:
       - name: Original owner preserved on rejected or failed cutover
         shell: bash
         run: bash scripts/test-brand-canonical-cutover.sh
+      - name: Post-success original-owner rollback and failed-start recovery
+        run: bash scripts/test-brand-canonical-rollback.sh
+      - name: Niri runtime repair preserves bytes and rolls back partial failures
+        run: python3 scripts/test-brand-niri-runtime-paths.py
+      - name: Indirect CLI starts preserve the one-owner boundary
+        run: python3 scripts/test-brand-cli-session-guard.py

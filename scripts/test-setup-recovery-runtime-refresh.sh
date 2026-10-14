@@ -67,6 +67,9 @@ touch "$FIRSTRUN_FILE"
 source "$repo_root/sdata/lib/functions.sh"
 # shellcheck source=/dev/null
 source "$repo_root/sdata/lib/robust-update.sh"
+awk '/^brand_legacy_owner_present\(\) \{/ {on=1} on {print} on && /^}/ {exit}' \
+    "$repo_root/setup" > "$stage/legacy-owner-predicate.sh"
+source "$stage/legacy-owner-predicate.sh"
 
 # Non-interactive recovery install: critically, this is NOT an update.
 ask=false
@@ -83,7 +86,24 @@ STY_CYAN=''; STY_RST=''; STY_FAINT=''; STY_GREEN=''; STY_BLUE=''; STY_YELLOW='';
 tui_info() { :; }
 tui_warn() { :; }
 tui_confirm() { return 1; }
-systemctl() { return 1; }
+OLD_UNIT=0; OLD_ACTIVE=0; NEW_ACTIVE=0; OLD_ENABLED=disabled
+systemctl() {
+    [[ "${1:-}" == --user ]] || return 2
+    shift
+    case "${1:-}" in
+        cat) [[ "${2:-}" == inir.service && "$OLD_UNIT" == 1 ]] ;;
+        is-active)
+            [[ "${2:-}" == --quiet ]] || return 2
+            case "${3:-}" in
+                inir.service) [[ "$OLD_ACTIVE" == 1 ]] ;;
+                alis.service) [[ "$NEW_ACTIVE" == 1 ]] ;;
+                *) return 1 ;;
+            esac ;;
+        is-enabled) printf '%s\n' "$OLD_ENABLED" ;;
+        daemon-reload) return 0 ;;
+        *) return 2 ;;
+    esac
+}
 sync_user_alis_service_from_repo_if_present() { return 1; }
 
 # Recovery install must not accidentally take the update-only backup branch.
@@ -101,10 +121,36 @@ run_recovery_stage() {
     source "$install_prefix"
 }
 
+# Exercise the real install stage with a unit retained for rollback. Blockers
+# must return before payload copying or native compilation; safe post-cutover
+# ownership must survive the same stage that previously rejected all old units.
+mkdir -p "$XDG_CONFIG_HOME/systemd/user"
+printf '%s\n' 'retained rollback unit' > "$XDG_CONFIG_HOME/systemd/user/inir.service"
+printf '%s\n' '//@ pragma ShellId alis' > "$runtime/shell.qml"
+OLD_UNIT=1
+blocked_stage() {
+    local label="$1" rc=0
+    (cd "$repo_root"; run_recovery_stage) > "$stage/blocked-stage.log" 2>&1 || rc=$?
+    [[ "$rc" == 2 ]] || fail "accepted unsafe install state: $label (exit $rc)"
+    [[ -f "$runtime/RetiredRoot.qml" && ! -f "$runtime/.alis-manifest" ]] ||
+        fail "blocked $label wrote the managed runtime"
+}
+blocked_stage 'inactive pre-cutover legacy owner'
+OLD_ACTIVE=1; blocked_stage 'active legacy owner'
+NEW_ACTIVE=1; blocked_stage 'two active owners'
+OLD_ACTIVE=0; OLD_ENABLED=enabled; blocked_stage 'legacy autostart still enabled'
+OLD_ENABLED=disabled
+mkdir -p "$XDG_CONFIG_HOME/systemd/user/niri.service.wants"
+ln -s ../inir.service "$XDG_CONFIG_HOME/systemd/user/niri.service.wants/inir.service"
+blocked_stage 'lingering legacy wants link'
+unlink "$XDG_CONFIG_HOME/systemd/user/niri.service.wants/inir.service"
+
 (
     cd "$repo_root"
     run_recovery_stage
 ) || fail 'recovery install-stage execution failed'
+grep -Fxq 'retained rollback unit' "$XDG_CONFIG_HOME/systemd/user/inir.service" ||
+    fail 'safe retained legacy unit was modified'
 
 [[ ! -e "$runtime/RetiredRoot.qml" && ! -L "$runtime/RetiredRoot.qml" ]] \
     || fail 'IS_UPDATE=false recovery install preserved retired managed root QML'
@@ -122,4 +168,4 @@ if grep -Fq 'scripts/test-local-private.sh' "$runtime/.alis-manifest"; then
 fi
 
 printf '%s\n' '1..1'
-printf '%s\n' 'ok 1 - recovery install refresh removes managed runtime orphans without deleting excluded private artifacts'
+printf '%s\n' 'ok 1 - install refresh permits safe retained rollback unit; blocks unsafe owners before payload writes and preserves private artifacts'

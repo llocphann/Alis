@@ -96,6 +96,23 @@ if [[ ! "${SKIP_BACKUP}" == true ]]; then auto_backup_configs; fi
 case "${SKIP_QUICKSHELL}" in
   true) sleep 0;;
   *)
+    # Apply the same one-owner preflight as setup before writing the runtime.
+    # A stopped, disabled rollback unit is expected after a verified cutover.
+    local _legacy_owner='in''ir.service'
+    if declare -F brand_legacy_owner_present >/dev/null; then
+      if brand_legacy_owner_present; then
+        log_error "Previous shell service still owns or can autostart the session. Complete the explicit Alis cutover first."
+        return 2
+      fi
+    elif [[ -e "${XDG_CONFIG_HOME}/systemd/user/$_legacy_owner" ||
+            -L "${XDG_CONFIG_HOME}/systemd/user/$_legacy_owner" ]] ||
+            { command -v systemctl >/dev/null &&
+              systemctl --user cat "$_legacy_owner" >/dev/null 2>&1; }; then
+      # The sourced stage also appears in isolated recovery tooling. Without
+      # setup's predicate, retained ownership cannot be established safely.
+      log_error "Previous shell service still installed; refusing a parallel Alis owner."
+      return 2
+    fi
     tui_info "Installing Quickshell alis config..."
 
     # The ii QML code is in the root of this repo, not in dots/
@@ -193,15 +210,6 @@ case "${SKIP_QUICKSHELL}" in
     else
       log_error "Missing canonical Alis runtime launcher"
       return 1
-    fi
-    # A previously installed user service must be retired explicitly.
-    local _legacy_owner='in''ir.service'
-    if [[ -e "${XDG_CONFIG_HOME}/systemd/user/$_legacy_owner" ||
-          -L "${XDG_CONFIG_HOME}/systemd/user/$_legacy_owner" ]] ||
-          { command -v systemctl >/dev/null &&
-            systemctl --user cat "$_legacy_owner" >/dev/null 2>&1; }; then
-      log_error "Previous shell service still installed; refusing a parallel Alis owner."
-      return 2
     fi
     local _service_refresh_status=1
     local _service_dir="${XDG_CONFIG_HOME}/systemd/user"

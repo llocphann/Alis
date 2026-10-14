@@ -16,12 +16,12 @@ source_fingerprint() {
 
 source_before="$(source_fingerprint)"
 
-prefix=/opt/inir
+prefix=/opt/alis
 systemd_user_dir="$prefix/lib/systemd/user"
 libexecdir="$prefix/libexec"
 polkit_actions_dir="$prefix/share/polkit-1/actions"
 tlp_confdir="$prefix/etc/tlp.d"
-system_share="$prefix/share/inir"
+system_share="$prefix/share/alis"
 
 make_args=(
   "DESTDIR=$stage"
@@ -30,7 +30,7 @@ make_args=(
   "LIBEXECDIR=$libexecdir"
   "POLKIT_ACTIONS_DIR=$polkit_actions_dir"
   "TLP_CONFDIR=$tlp_confdir"
-  "INIR_SYSTEM_SHAREDIR=$system_share"
+  "ALIS_SYSTEM_SHAREDIR=$system_share"
 )
 
 make -s install "${make_args[@]}"
@@ -44,33 +44,54 @@ if [[ "$source_after_install" != "$source_before" ]]; then
 fi
 
 expected_files=(
-  "$stage$prefix/bin/inir"
   "$stage$prefix/bin/alis"
-  "$stage$prefix/share/quickshell/inir/scripts/alis"
-  "$stage$prefix/share/quickshell/inir/shell.qml"
-  "$stage$prefix/share/quickshell/inir/qmldir"
-  "$stage$prefix/share/quickshell/inir/version.json"
-  "$stage$prefix/share/quickshell/inir/native/bin/inir-inputd"
-  "$stage$prefix/share/quickshell/inir/native/bin/inir-mpdd"
-  "$stage$prefix/share/quickshell/inir/native/bin/inir-native"
-  "$stage$prefix/share/quickshell/inir/native/bin/inir-theme"
+  "$stage$prefix/share/quickshell/alis/scripts/alis"
+  "$stage$prefix/share/quickshell/alis/shell.qml"
+  "$stage$prefix/share/quickshell/alis/qmldir"
+  "$stage$prefix/share/quickshell/alis/version.json"
+  "$stage$prefix/share/quickshell/alis/native/bin/alis-inputd"
+  "$stage$prefix/share/quickshell/alis/native/bin/alis-mpdd"
+  "$stage$prefix/share/quickshell/alis/native/bin/alis-native"
+  "$stage$prefix/share/quickshell/alis/native/bin/alis-theme"
+  "$stage$systemd_user_dir/alis.service"
+  "$stage$prefix/share/applications/alis.desktop"
+  "$stage$prefix/share/applications/alis-settings.desktop"
+  "$stage$prefix/share/icons/hicolor/scalable/apps/alis.svg"
+  "$stage$prefix/share/doc/alis-shell/README.md"
+  "$stage$prefix/share/doc/alis-shell/AUDIO_MEDIA.md"
+  "$stage$prefix/share/doc/alis-shell/INSTALL.md"
+  "$stage$prefix/share/doc/alis-shell/PACKAGES.md"
+  "$stage$prefix/share/doc/alis-shell/RELEASING.md"
+  "$stage$prefix/share/doc/alis-shell/UNINSTALL.md"
+  "$stage$prefix/share/licenses/alis-shell/LICENSE"
+)
+
+# A fresh canonical package has one public CLI, runtime, service and desktop
+# identity. Compatibility is handled by cutover, never by a second shell owner.
+retired_files=(
+  "$stage$prefix/bin/inir"
+  "$stage$prefix/share/quickshell/inir"
   "$stage$systemd_user_dir/inir.service"
   "$stage$prefix/share/applications/inir.desktop"
   "$stage$prefix/share/applications/inir-settings.desktop"
-  "$stage$prefix/share/applications/alis.desktop"
-  "$stage$prefix/share/applications/alis-settings.desktop"
   "$stage$prefix/share/icons/hicolor/scalable/apps/inir.svg"
-  "$stage$prefix/share/icons/hicolor/scalable/apps/alis.svg"
-  "$stage$prefix/share/doc/inir-shell/README.md"
-  "$stage$prefix/share/doc/inir-shell/AUDIO_MEDIA.md"
-  "$stage$prefix/share/doc/inir-shell/INSTALL.md"
-  "$stage$prefix/share/doc/inir-shell/PACKAGES.md"
-  "$stage$prefix/share/doc/inir-shell/RELEASING.md"
-  "$stage$prefix/share/doc/inir-shell/UNINSTALL.md"
-  "$stage$prefix/share/licenses/inir-shell/LICENSE"
+  "$stage$prefix/share/doc/inir-shell"
+  "$stage$prefix/share/licenses/inir-shell"
 )
+for path in "${retired_files[@]}"; do
+  [[ ! -e "$path" && ! -L "$path" ]] || {
+    printf 'FAIL: canonical install shipped a retired identity: %s\n' "$path" >&2
+    exit 1
+  }
+done
 
 optional_files=(
+  "$stage$libexecdir/alis-battery-charge-limit"
+  "$stage$libexecdir/alis-thinkfan"
+  "$stage$polkit_actions_dir/org.alis.battery-charge-limit.policy"
+  "$stage$polkit_actions_dir/org.alis.thinkfan.policy"
+  "$stage$tlp_confdir/99-alis-battery-charge-limit.conf"
+  "$stage$tlp_confdir/99-alis-tlp-settings.conf"
   "$stage$libexecdir/inir-battery-charge-limit"
   "$stage$libexecdir/inir-thinkfan"
   "$stage$polkit_actions_dir/org.inir.battery-charge-limit.policy"
@@ -94,8 +115,12 @@ for path in "${expected_files[@]}"; do
   }
 done
 
-runtime_dir="$stage$prefix/share/quickshell/inir"
+runtime_dir="$stage$prefix/share/quickshell/alis"
 retired_integrations=(
+  assets/helpers/alis-battery-charge-limit
+  assets/helpers/alis-thinkfan
+  assets/polkit/org.alis.battery-charge-limit.policy
+  assets/polkit/org.alis.thinkfan.policy
   assets/helpers/inir-battery-charge-limit
   assets/helpers/inir-thinkfan
   assets/polkit/org.inir.battery-charge-limit.policy

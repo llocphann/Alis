@@ -1,6 +1,6 @@
 # IPC Reference
 
-Alis exposes IPC targets you can call from Niri keybinds, scripts, or your terminal. The legacy `inir` command and internal session name remain supported during the compatibility transition.
+Alis exposes IPC targets you can call from Niri keybinds, scripts, or your terminal. The public command and session identity are `alis`; the retired `inir` command is unavailable.
 
 > **Quick discovery:** `alis help` lists all targets, `alis <target> --help` shows available functions.
 > Shell completions: `eval "$(alis completions bash)"` (also zsh, fish).
@@ -17,13 +17,13 @@ In Niri config (for actual keybinds):
 bind "Key" { spawn "alis" "<target>" "<function>"; }
 ```
 
-For low-level debugging, `inir ipc <target> <function>` still works.
+For low-level debugging, use `alis ipc <target> <function>`.
 
 ---
 
 ## Available Targets
 
-Everything iNiR can do, exposed for your scripting pleasure.
+Alis shell actions available for scripts and keybinds.
 
 ### dev
 
@@ -39,15 +39,15 @@ returned as JSON by `list`.
 | `current` | Return the current destination or `closed` |
 
 ```bash
-inir dev list | jq -r '.[].id'
-inir dev open sidebar-left/anime-schedule
-inir dev close
-inir dev audit
-inir dev audit sidebar-left/ai settings/ai
-inir dev audit --all --all-families
+alis dev list | jq -r '.[].id'
+alis dev open sidebar-left/anime-schedule
+alis dev close
+alis dev audit
+alis dev audit sidebar-left/ai settings/ai
+alis dev audit --all --all-families
 ```
 
-`inir dev audit` selects destinations related to changed area-specific files in
+`alis dev audit` selects destinations related to changed area-specific files in
 the current worktree. Destination arguments select an exact scope, while
 `--all` requests every safe destination and `--all-families` includes both ii
 and waffle. Each visited destination is closed again and new QML warnings or
@@ -72,7 +72,7 @@ Toggle the workspace overview panel. The one with all your windows looking tiny 
 | `toggleReleaseInterrupt` | Clear the super-key release interrupt flag |
 
 ```kdl
-bind "Mod+Space" { spawn "inir" "overview" "toggle"; }
+bind "Mod+Space" { spawn "alis" "overview" "toggle"; }
 ```
 
 ---
@@ -98,7 +98,7 @@ Floating tools (Super+G): notes, images, crosshair, recorder, resources and othe
 | `toggle` | Open/close Floating tools |
 
 ```kdl
-bind "Super+G" { spawn "inir" "overlay" "toggle"; }
+bind "Super+G" { spawn "alis" "overlay" "toggle"; }
 ```
 
 ---
@@ -114,7 +114,7 @@ Clipboard history panel. Because Ctrl+V only remembers one thing, and that's not
 | `close` | Close panel |
 
 ```kdl
-bind "Super+V" repeat=false { spawn "inir" "clipboard" "toggle"; }
+bind "Super+V" repeat=false { spawn "alis" "clipboard" "toggle"; }
 ```
 
 ---
@@ -132,8 +132,8 @@ Alt+Tab window switcher. Works across workspaces, unlike some other implementati
 | `previous` | Focus previous window |
 
 ```kdl
-bind "Alt+Tab" { spawn "inir" "altSwitcher" "next"; }
-bind "Alt+Shift+Tab" { spawn "inir" "altSwitcher" "previous"; }
+bind "Alt+Tab" { spawn "alis" "altSwitcher" "next"; }
+bind "Alt+Shift+Tab" { spawn "alis" "altSwitcher" "previous"; }
 ```
 
 ---
@@ -155,10 +155,10 @@ Region selection tools. Screenshots, OCR, recording. Draw a box, get stuff done.
 | `current` | Return the selector state (open/action/mode) as JSON |
 
 ```kdl
-bind "Super+Shift+S" { spawn "inir" "region" "screenshot"; }
-bind "Super+Shift+X" { spawn "inir" "region" "ocr"; }
-bind "Super+Shift+A" { spawn "inir" "region" "search"; }
-bind "Ctrl+Shift+S" { spawn "inir" "region" "menu"; }
+bind "Super+Shift+S" { spawn "alis" "region" "screenshot"; }
+bind "Super+Shift+X" { spawn "alis" "region" "ocr"; }
+bind "Super+Shift+A" { spawn "alis" "region" "search"; }
+bind "Ctrl+Shift+S" { spawn "alis" "region" "menu"; }
 ```
 
 ---
@@ -176,7 +176,7 @@ Provider-neutral voice input for web search and AI dictation. Auto prefers local
 | `status` | Return backend, local detection, recording and error state as JSON |
 
 ```kdl
-bind "Super+Shift+V" { spawn "inir" "voiceSearch" "toggle"; }
+bind "Super+Shift+V" { spawn "alis" "voiceSearch" "toggle"; }
 ```
 
 ---
@@ -192,7 +192,7 @@ Power menu. Logout, suspend, reboot, shutdown. The "I'm done for today" buttons.
 | `close` | Hide session screen |
 
 ```kdl
-bind "Super+Shift+E" { spawn "inir" "session" "toggle"; }
+bind "Super+Shift+E" { spawn "alis" "session" "toggle"; }
 ```
 
 ---
@@ -209,7 +209,7 @@ Lock screen. For when you need to pretend you're working.
 | `focus` | Refocus the lock screen input |
 
 ```kdl
-bind "Super+Alt+L" allow-when-locked=true { spawn "inir" "lock" "activate"; }
+bind "Super+Alt+L" allow-when-locked=true { spawn "alis" "lock" "activate"; }
 ```
 
 ---
@@ -239,7 +239,7 @@ Keyboard shortcuts reference. For when you forget what you just configured five 
 | `close` | Hide cheatsheet overlay |
 
 ```kdl
-bind "Super+Slash" { spawn "inir" "cheatsheet" "toggle"; }
+bind "Super+Slash" { spawn "alis" "cheatsheet" "toggle"; }
 ```
 
 ---
@@ -251,12 +251,12 @@ Close window confirmation dialog. Shows a prompt before closing the focused wind
 | Function | Description |
 |----------|-------------|
 | `trigger` | Show close confirmation for focused window |
-| `triggerWindow <windowId> <appId>` | Close or confirm the exact window captured by `inir close-window` |
+| `triggerWindow <windowId> <appId>` | Close or confirm the exact window captured by `alis close-window` |
 | `triggerWindowContext <windowId> <appId> <workspaceId>` | Same exact-window request with the captured Niri workspace, used internally to preserve source-output placement |
 | `close` | Dismiss the dialog without closing |
 
 ```kdl
-bind "Mod+Q" repeat=false { spawn "inir" "close-window"; }
+bind "Mod+Q" repeat=false { spawn "alis" "close-window"; }
 ```
 
 By default, confirmation is disabled (closes immediately). Enable it in settings or config:
@@ -279,14 +279,14 @@ Open or toggle the settings window. GUI config so you don't have to edit JSON by
 | `toggle` | Toggle settings (overlay mode toggles, window mode opens) |
 
 ```kdl
-bind "Super+Comma" { spawn "inir" "settings"; }
+bind "Super+Comma" { spawn "alis" "settings"; }
 ```
 
 ---
 
 ### settingsNav
 
-Navigate the settings overlay to a specific page (same as clicking the nav rail). Opening the window itself is the `inir settings` CLI command (target `settings` above).
+Navigate the settings overlay to a specific page (same as clicking the nav rail). Opening the window itself is the `alis settings` CLI command (target `settings` above).
 
 | Function | Description |
 |----------|-------------|
@@ -295,7 +295,7 @@ Navigate the settings overlay to a specific page (same as clicking the nav rail)
 | `current` | Current page index, or `-1` when no page is open |
 
 ```sh
-inir ipc settingsNav page 5
+alis ipc settingsNav page 5
 ```
 
 ---
@@ -380,8 +380,8 @@ Command palette / action registry. Search and execute shell actions from scripts
 Categories: `system`, `appearance`, `tools`, `media`, `settings`, `custom`.
 
 ```kdl
-bind "Super+Slash" { spawn "inir" "globalActions" "open"; }
-bind "Super+M" { spawn "inir" "globalActions" "run" "toggle-mute"; }
+bind "Super+Slash" { spawn "alis" "globalActions" "open"; }
+bind "Super+M" { spawn "alis" "globalActions" "run" "toggle-mute"; }
 ```
 
 ---
@@ -401,8 +401,8 @@ Wallpaper picker with grid, coverflow and compact launcher styles.
 | `status` | Return picker style, open surface, target monitor and selection target as JSON |
 
 ```kdl
-bind "Ctrl+Alt+T" { spawn "inir" "wallpaperSelector" "toggle"; }
-bind "Ctrl+Alt+A" { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }
+bind "Ctrl+Alt+T" { spawn "alis" "wallpaperSelector" "toggle"; }
+bind "Ctrl+Alt+A" { spawn "alis" "wallpaperSelector" "openLauncher" "animated"; }
 ```
 
 ---
@@ -421,9 +421,9 @@ Navigation and apply controls for the compact wallpaper launcher.
 Open the launcher before calling its controls:
 
 ```bash
-inir wallpaperSelector openLauncher static
-inir wallpaperLauncher next
-inir wallpaperLauncher applyCurrent
+alis wallpaperSelector openLauncher static
+alis wallpaperLauncher next
+alis wallpaperLauncher applyCurrent
 ```
 
 ---
@@ -503,9 +503,9 @@ Media player control. Automatically detects and uses YtMusic controls when activ
 | `next` | Next track (uses YtMusic if active) |
 
 ```kdl
-bind "Ctrl+Mod+Space" { spawn "inir" "mpris" "playPause"; }
-bind "Mod+Alt+N" { spawn "inir" "mpris" "next"; }
-bind "Mod+Alt+P" { spawn "inir" "mpris" "previous"; }
+bind "Ctrl+Mod+Space" { spawn "alis" "mpris" "playPause"; }
+bind "Mod+Alt+N" { spawn "alis" "mpris" "next"; }
+bind "Mod+Alt+P" { spawn "alis" "mpris" "previous"; }
 ```
 
 ---
@@ -522,7 +522,7 @@ Direct YtMusic player control. Use these if you want to control YtMusic specific
 | `stop` | Stop YtMusic playback |
 
 ```kdl
-bind "Mod+M+Space" { spawn "inir" "ytmusic" "playPause"; }
+bind "Mod+M+Space" { spawn "alis" "ytmusic" "playPause"; }
 ```
 
 ---
@@ -611,7 +611,7 @@ Performance mode for gaming. Auto-detects fullscreen apps and disables animation
 | `status` | Print current gamemode state (e.g. `active (manual)`, `inactive (off)`) |
 
 ```kdl
-bind "Super+F12" { spawn "inir" "gamemode" "toggle"; }
+bind "Super+F12" { spawn "alis" "gamemode" "toggle"; }
 ```
 
 ---
@@ -626,7 +626,7 @@ Switch between Abyss (`abyss`, default) and Waffle (`waffle`). Historical `ii` v
 | `set` | Set specific family (`"abyss"` or `"waffle"`; `"ii"` is a compatibility alias for Abyss) |
 
 ```kdl
-bind "Mod+Shift+W" { spawn "inir" "panelFamily" "cycle"; }
+bind "Mod+Shift+W" { spawn "alis" "panelFamily" "cycle"; }
 ```
 
 ---
@@ -659,18 +659,18 @@ taskbar through validated operations over canonical Config keys.
 | `validate` | Validate a surface and slot combination without changing Config |
 
 ```bash
-inir shellLayout open
-inir shellLayout lift featureSidebar
-inir shellLayout preview right
-inir shellLayout place right   # prepares the occupied-edge swap
-inir shellLayout place right   # confirms and commits it
-inir shellLayout setProperty featureSidebar sizeMode fit
-inir shellLayout reset featureSidebar
-inir shellLayout close
+alis shellLayout open
+alis shellLayout lift featureSidebar
+alis shellLayout preview right
+alis shellLayout place right   # prepares the occupied-edge swap
+alis shellLayout place right   # confirms and commits it
+alis shellLayout setProperty featureSidebar sizeMode fit
+alis shellLayout reset featureSidebar
+alis shellLayout close
 ```
 
 ```kdl
-bind "Super+W" { spawn "inir" "shellLayout" "toggle"; }
+bind "Super+W" { spawn "alis" "shellLayout" "toggle"; }
 ```
 
 ---
@@ -757,7 +757,7 @@ Keyboard layout switching (Niri only). Cycles through configured keyboard layout
 | `getLayouts` | Get all configured layout names (JSON array) |
 
 ```kdl
-bind "Mod+Alt+K" { spawn "inir" "keyboard" "switchLayout"; }
+bind "Mod+Alt+K" { spawn "alis" "keyboard" "switchLayout"; }
 ```
 
 ---
@@ -797,8 +797,8 @@ These methods apply while Abyss is active.
 | `cancelEdit` | Cancel editing and restore the saved layout |
 
 ```bash
-inir abyss editLayout
-inir abyss cancelEdit
+alis abyss editLayout
+alis abyss cancelEdit
 ```
 
 ---
@@ -819,8 +819,8 @@ may be a short visual interruption.
 | `remountPerimeter` | Destroy/recreate only AbyssPerimeter, diagnostic only |
 
 ```bash
-inir abyssHostProbe status
-inir abyssHostProbe remountPerimeter
+alis abyssHostProbe status
+alis abyssHostProbe remountPerimeter
 ```
 
 ---
@@ -853,15 +853,15 @@ the Abyss critical host is active. For support investigations only.
 | `remapWindow` | Briefly unmap/remap only the Abyss perimeter window (260 ms), preserving panel family and settings; visible flicker is possible. Diagnostic only. |
 
 ```bash
-inir abyssHoverProbe snapshot
+alis abyssHoverProbe snapshot
 # Use scripts/collect-abyss-hover-frames.sh for a bounded, source-checked capture.
 # When invoking the sampler directly, finish it explicitly:
-inir abyssHoverProbe startFrames
-inir abyssHoverProbe stopFrames
+alis abyssHoverProbe startFrames
+alis abyssHoverProbe stopFrames
 # Only for guided debugging, before the Waffle workaround:
-inir abyssHoverProbe refreshMask
-inir abyssHoverProbe swapMask
-inir abyssHoverProbe remapWindow
+alis abyssHoverProbe refreshMask
+alis abyssHoverProbe swapMask
+alis abyssHoverProbe remapWindow
 ```
 
 ---
@@ -880,7 +880,7 @@ sends and Escape closes it.
 | `status` | Return bounded JSON explaining Companion visibility and placement on each output |
 
 ```bash
-inir wull status
+alis wull status
 ```
 
 ---
@@ -895,8 +895,8 @@ Manage discovery of the separately installed [Hadanion](https://github.com/llocp
 | `status` | Report optional installation and Companion runtime status |
 
 ```bash
-inir ipc hadanion refresh
-inir ipc hadanion status
+alis ipc hadanion refresh
+alis ipc hadanion status
 ```
 
 ---
@@ -1014,12 +1014,12 @@ Desktop background and widget controls.
 | `clockDebugRestore` | Restore the config captured by clock diagnostics |
 
 The mutating diagnostic functions require the supervised shell to be loaded
-with `INIR_REGION_DEBUG=1`. They snapshot the clock's relevant config on first
+with `ALIS_REGION_DEBUG=1`. They snapshot the clock's relevant config on first
 use; always finish a diagnostic run with `clockDebugRestore` before removing
 the environment flag.
 
 ```kdl
-bind "Super+W" { spawn "inir" "background" "toggleEditMode"; }
+bind "Super+W" { spawn "alis" "background" "toggleEditMode"; }
 ```
 
 ---
@@ -1085,14 +1085,14 @@ launches via hand-written lines outside the markers are detected and shown as
 
 ## Standalone Commands
 
-These are top-level `inir` commands that work directly, without going through IPC.
+These are top-level `alis` commands that work directly, without going through IPC.
 
 ### colorpicker
 
 Launch `hyprpicker` to pick a color from anywhere on the screen. The hex value is copied to the clipboard (`-a` flag).
 
 ```kdl
-bind "Super+Shift+C" { spawn "inir" "colorpicker"; }
+bind "Super+Shift+C" { spawn "alis" "colorpicker"; }
 ```
 
 Requires `hyprpicker` installed.

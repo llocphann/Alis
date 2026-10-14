@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import importlib.util
+import re
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -84,6 +86,27 @@ if missing_descriptions:
         + ", ".join(missing_descriptions)
     )
 
+# The documentation is generator input for installed CLI help. Every copied
+# keybind must call the available public command, rather than a retired CLI.
+for target in merged_targets:
+    if re.search(r'\bspawn\s+"inir"', target.keybind_example):
+        raise SystemExit(f"FAIL: {target.name} advertises a disabled public launcher")
+generated = module.generate_bash(merged_targets, module.generate_aliases(merged_targets))
+if generated != module.OUTPUT.read_text():
+    raise SystemExit("FAIL: installed IPC registry is stale; regenerate from docs/IPC.md")
+
+for target, expected_text in (
+    ("overview", 'spawn "alis" "overview" "toggle"'),
+    ("settingsNav", "`alis settings`"),
+    ("closeConfirm", "`alis close-window`"),
+):
+    help_result = subprocess.run(
+        ["bash", str(REPO_ROOT / "scripts/alis"), target, "--help"],
+        capture_output=True, text=True, check=True,
+    )
+    if expected_text not in help_result.stdout or re.search(r"\binir\b", help_result.stdout):
+        raise SystemExit(f"FAIL: {target} installed CLI help still advertises a retired command")
+
 print(
-    "ok - IPC registry parser preserves Markdown semantics and all live functions are documented"
+    "ok - IPC metadata is complete and fresh; public help and keybinds use Alis"
 )
