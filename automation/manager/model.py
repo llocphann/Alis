@@ -214,6 +214,8 @@ Explicitly use the GitHub connector, verify repository access and fetch current 
 def effective_prompt(profile: dict, kind: str) -> str:
     """Keep legacy profiles intact; taskflow reads its single per-code bundle."""
     from automation import managed_tasks
+    if profile.get("id") == managed_tasks.SELECTOR_ID and profile.get("description") == "taskflow-selector":
+        return managed_tasks.selector_prompt(kind)
     if managed_tasks.reference(profile) is not None:
         return managed_tasks.prompt(profile, kind)
     field = {"initial": "prompt", "continuation": "continuation_prompt",

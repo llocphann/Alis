@@ -264,3 +264,18 @@ def approve_ordered_start() -> dict:
             doc["updated_unix"] = int(time.time())
             _save(doc)
         return {"ok": True, "approved_start": True}
+
+
+def approve_cloud_start() -> dict:
+    """Persist user consent to Cloudbot selection, not a claimed task."""
+    with _lock():
+        doc = _load()
+        if not doc or doc["mode"] != "cloud" or doc["state"] not in {"prepared", "waiting"}:
+            raise tf.TaskError("No prepared Cloudbot-selection queue")
+        if doc.get("active") is not None:
+            raise tf.TaskError("Another task is active")
+        if not doc.get("approved_start"):
+            doc["approved_start"] = True
+            doc["updated_unix"] = int(time.time())
+            _save(doc)
+        return {"ok": True, "approved_start": True}

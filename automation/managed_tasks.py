@@ -12,6 +12,7 @@ from . import queue, taskflow as tf
 from .manager import control, model, store
 
 PROFILE_PREFIX = "taskflow:"
+SELECTOR_ID = "profile-auto-selector"
 
 
 def profile_id(repository: str, code: str) -> str:
@@ -204,6 +205,8 @@ def reconcile_once() -> dict:
     """Called by *existing* manager tick; do not create a second scheduler."""
     view = queue.view()
     if view["state"] != "active" or not view.get("active"):
+        if view.get("mode") == "cloud":
+            return reconcile_cloud_selection()
         return {"ok": True, "state": view["state"]}
     selected = view["active"]
     pid = profile_id(selected["repository"], selected["code"])
@@ -232,6 +235,8 @@ def reconcile_once() -> dict:
                            current.get("status") == "awaiting_owner" and
                            current.get("delivery", {}).get("conversation_id") is not None)
     if result["state"] == "waiting":
+        if result.get("mode") == "cloud":
+            return _schedule_selector_next()
         return _schedule_next_authorized()
     return result
 
@@ -252,3 +257,163 @@ def scheduler_housekeeping(now: int | None = None) -> dict:
     result = tf.cleanup(dry_run=False, now=at)
     tf._atomic_json(marker, {"unix": at})
     return result
+
+
+def selector_prompt(kind: str) -> str:
+    if kind not in {"initial", "continuation", "rotation"}:
+        raise tf.TaskError("Invalid selector prompt phase")
+    return (
+        "You are Cloudbot, the only reasoning agent. Pick the next SINGLE "
+        "task for the approved serial GitHub Issue queue, reading dependencies "
+        "and repository source. Do not implement, execute scripts or choose a "
+        "task outside the pending list in this selector turn. "
+        "Report exactly one line HADALIS_TASK_CHOICE: CODE and finish with "
+        "HADALIS_LOOP:DONE. If none is safe, give the blocker and finish "
+        "HADALIS_LOOP:CONNECTOR_BLOCKED GITHUB. Never invent GitHub evidence.\\n\\n"
+        + queue.cloud_selection_prompt()
+    )
+
+
+def _ensure_selector() -> str:
+    def transaction(config, state):
+        prior = next((p for p in config["profiles"] if p["id"] == SELECTOR_ID), None)
+        if prior is not None:
+            if prior.get("description") != "taskflow-selector":
+                raise tf.TaskError("Selector profile collision")
+            return SELECTOR_ID
+        if len(config["profiles"]) >= model.MAX_PROFILES:
+            raise tf.TaskError("Too many Automation profiles")
+        profile = model.new_profile("Cloudbot task selector")
+        profile.update({
+            "id": SELECTOR_ID, "description": "taskflow-selector",
+            "name": "Cloudbot task selector", "project_name": "Hadalis Cloud",
+            "enabled": True, "mode": "continuous", "stop_on_done": True,
+            "requires_github": True, "archive_completed": False,
+            "delete_completed": False, "prompt": "Dynamic taskflow selector",
+            "continuation_prompt": "Dynamic taskflow selector continuation",
+            "rotation_prompt": "Dynamic taskflow selector rollover",
+        })
+        config["profiles"].append(model.validate_profile(profile))
+        state["profiles"][SELECTOR_ID] = store.profile_state()
+        store.event(state, SELECTOR_ID, "selector_prepared")
+        return SELECTOR_ID
+    return store.change(transaction)
+
+
+def start_cloud_queue(*, approved: bool = False) -> dict:
+    """Start exactly one authenticated ChatGPT selection turn, not the task yet."""
+    if approved is not True:
+        raise tf.TaskError("Explicit Start approval required")
+    v = queue.view()
+    if v["mode"] != "cloud" or v["state"] not in {"prepared", "waiting"}:
+        raise tf.TaskError("No pending Cloudbot-choice queue")
+    services = control.service_states()
+    if any(services[key]["state"] == "unavailable" for key in ("bridge", "worker")):
+        raise tf.TaskError("Automation backend not installed; install services explicitly")
+    queue.approve_cloud_start()
+    pid = _ensure_selector()
+    _, state, _ = store.read_snapshot()
+    current = state["profiles"][pid]
+    if current.get("pending") or current.get("job_id") or current.get("run_active"):
+        raise tf.TaskError("Previous selector message is unresolved")
+    if current.get("desired") == "run":
+        return {"ok": True, "profile_id": pid, "state": "already_scheduled"}
+    control.profile_action("start", pid)
+    return {"ok": True, "profile_id": pid, "state": "selecting"}
+
+
+def _verified_choice_response(item: dict) -> tuple[str, str]:
+    """Read exact persisted assistant response from the owned native session."""
+    import json
+    import re
+    if (item.get("status") != "completed" or item.get("last_success") != "DONE"
+            or item.get("pending") or item.get("job_id") or
+            not item.get("response_message_id") or
+            not (item.get("session") or {}).get("conversation_id")):
+        raise tf.TaskError("Cloudbot selector is not completed")
+    profile_responses = store.state_dir() / "responses" / SELECTOR_ID
+    if not profile_responses.is_dir() or profile_responses.is_symlink():
+        raise tf.TaskError("No durable Cloudbot selector receipt")
+    matching = []
+    for path in list(profile_responses.glob("*.json"))[:60]:
+        if path.is_symlink():
+            continue
+        try:
+            with path.open(encoding="utf-8") as stream:
+                response = json.load(stream)
+        except (OSError, ValueError):
+            continue
+        if response.get("conversation_id") != item["session"]["conversation_id"]:
+            continue
+        r = response.get("response") or {}
+        if r.get("message_id") != item["response_message_id"]:
+            continue
+        text = r.get("text")
+        if not isinstance(text, str) or len(text) > 120000:
+            continue
+        matches = re.findall(r"^HADALIS_TASK_CHOICE:\\s*([A-Z][A-Z0-9]{1,15}-(?:F|R|I)[0-9]{2,3})\\s*$", text, re.M)
+        if len(matches) == 1 and "HADALIS_LOOP:DONE" in text:
+            matching.append(matches[0])
+    if len(matching) != 1:
+        raise tf.TaskError("Cloudbot task-choice receipt is missing or ambiguous")
+    return matching[0], item["response_message_id"]
+
+
+def _schedule_selector_next() -> dict:
+    state = queue.view()
+    if state["mode"] != "cloud" or state["state"] not in {"prepared", "waiting"}:
+        return state
+    with queue._lock():
+        snapshot = queue._load()
+        if not snapshot or not snapshot.get("approved_start"):
+            return state
+    pid = _ensure_selector()
+    def start(config, state):
+        item = state["profiles"][pid]
+        if item.get("pending") or item.get("job_id") or item.get("run_active"):
+            return
+        if item.get("desired") in {"paused", "run"}:
+            return
+        state["command_seq"] += 1
+        item.update(desired="run", command_seq=state["command_seq"],
+                    request="new", next_run_at_unix=int(time.time()),
+                    status="scheduled")
+        store.event(state, pid, "selector_scheduled")
+    store.change(start)
+    return {"ok": True, "state": "selecting"}
+
+
+def reconcile_cloud_selection() -> dict:
+    view = queue.view()
+    if view["mode"] != "cloud" or view["state"] not in {"prepared", "waiting"}:
+        return view
+    with queue._lock():
+        doc = queue._load()
+        if not doc or not doc.get("approved_start"):
+            return view
+    _, runtime, _ = store.read_snapshot()
+    item = runtime.get("profiles", {}).get(SELECTOR_ID)
+    if item is None:
+        return _schedule_selector_next()
+    if item.get("status") == "completed" and item.get("last_success") == "DONE":
+        choice, decision = _verified_choice_response(item)
+        selected = queue.claim(choice=choice, decision_id=decision,
+            verified_start=lambda task, record, selected_id:
+                selected_id == decision and task["code"] == choice
+                and record["task"]["base_sha"] == task["source_sha"])["selected"]
+        pid = _ensure_profile(selected["repository"], selected["code"])
+        def start(config, state):
+            dest = state["profiles"][pid]
+            if dest.get("pending") or dest.get("job_id") or dest.get("run_active"):
+                raise tf.TaskError("Selected task already has an unresolved job")
+            if dest.get("desired") not in {"stopped", "run"}:
+                raise tf.TaskError("Selected task was paused by owner")
+            if dest.get("desired") == "stopped":
+                state["command_seq"] += 1
+                dest.update(desired="run", request="initial",
+                            command_seq=state["command_seq"],
+                            next_run_at_unix=int(time.time()), status="scheduled")
+                store.event(state, pid, "cloud_selected", choice)
+        store.change(start)
+        return {"ok": True, "state": "task_scheduled", "selected": selected}
+    return {"ok": True, "state": "selecting"}
