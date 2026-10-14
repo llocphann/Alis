@@ -249,19 +249,60 @@ ShellRoot {
     tryCompare(genericHost,"ready",true,4000);render()
     const feature=genericHost.contentItem.item
     const child=Qt.createQmlObject('import QtQuick; MouseArea { anchors.fill:parent;hoverEnabled:true;acceptedButtons:Qt.NoButton;z:10 }',feature)
+    const body=feature.participant
     const c=genericHost.record.content,ins=controller.edgeInsets
+    const horizontal=edge==="top" || edge==="bottom"
+    const center=horizontal ? c.x+c.width/2 : c.y+c.height/2
+    const cross=edge==="left" ? ins.left+6 : edge==="right" ? scene.width-ins.right-6
+      : edge==="top" ? ins.top+6 : scene.height-ins.bottom-6
+    function ownedPoint(point){
+     return point[0]>=0 && point[1]>=0 && point[0]<scene.width && point[1]<scene.height
+      && !controller.sourceInputRegions.some(r=>Geometry.rectContains(r,point[0],point[1]))
+      && body.hoverParent.contains(Qt.point(point[0]-body.hoverParent.x,point[1]-body.hoverParent.y))
+    }
+    // A narrow output can move the generic body's center over another module.
+    // Source regions have pointer priority and intentionally exclude body hover.
+    // Probe a painted bridge pixel owned by this body, as in the StyledPopup case.
+    let bridge=null
+    for(let delta=0;delta<(horizontal?scene.width:scene.height) && bridge===null;delta++){
+     for(const tangent of [Math.floor(center-delta),Math.ceil(center+delta)]){
+      const point=horizontal ? [tangent,cross] : [cross,tangent]
+      if(!ownedPoint(point) || Geometry.rectContains(c,point[0],point[1]))continue
+      if(Geometry.distance(point[0],point[1],scene.width,scene.height,ins,
+       AbyssStyle.perimeterRadius,[body.rawPresentationRecord],AbyssStyle.connectionDepth,AbyssStyle.neckRadius)<0){bridge=point;break}
+     }
+    }
+    check(bridge!==null,"generic body has no owned painted bridge probe on "+edge)
+    function paddingPoint(x,y,tangentAxis,extent){
+     for(let delta=0;delta<=extent/2;delta++){
+      for(const direction of [-1,1]){
+       const point=[x,y];point[tangentAxis]+=direction*delta
+       if(ownedPoint(point) && Geometry.distance(point[0],point[1],scene.width,scene.height,ins,
+        AbyssStyle.perimeterRadius,[body.rawPresentationRecord],AbyssStyle.connectionDepth,AbyssStyle.neckRadius)<0)return point
+      }
+     }
+     throw new Error("generic padding has no owned painted probe on "+edge)
+    }
     const points=[
-     [edge==="left" ? ins.left+6 : edge==="right" ? scene.width-ins.right-6 : c.x+c.width/2,
-      edge==="top" ? ins.top+6 : edge==="bottom" ? scene.height-ins.bottom-6 : c.y+c.height/2],
+     bridge,
      [c.x+c.width/2,c.y+c.height/2],
-     [c.x-7,c.y+c.height/2],[c.x+c.width+7,c.y+c.height/2],
-     [c.x+c.width/2,c.y-7],[c.x+c.width/2,c.y+c.height+7]
+     paddingPoint(c.x-7,c.y+c.height/2,1,c.height),
+     paddingPoint(c.x+c.width+7,c.y+c.height/2,1,c.height),
+     paddingPoint(c.x+c.width/2,c.y-7,0,c.width),
+     paddingPoint(c.x+c.width/2,c.y+c.height+7,0,c.width)
     ]
     for(const point of points){
+     check(ownedPoint(point),"generic probe overlaps source/outside input on "+edge+": "+JSON.stringify(point))
      mouseMove(scene,point[0],point[1]);genericHost.hoverKind="";wait(900);render()
      check(genericHost.requestedOpen && root.genericCloses===0,"generic body/bridge/padding idle timer closed a hovered popup on "+edge+": "+JSON.stringify(point))
     }
-    child.destroy();mouseMove(scene,scene.width-10,scene.height/2);wait(900);render()
+    child.destroy()
+    if(edge==="bottom" || edge==="left"){
+     const point=[anchor.x+anchor.width/2,anchor.y+anchor.height/2]
+     check(!ownedPoint(point),"generic body stole source-module priority")
+     mouseMove(anchor,anchor.width/2,anchor.height/2)
+    }else mouseMove(scene,scene.width-10,scene.height/2)
+    wait(900);render()
     check(!genericHost.requestedOpen,"generic popup did not close after final leave")
     check(root.genericCloses===1,"generic dismissal emitted more than once")
     root.genericCloses=0
