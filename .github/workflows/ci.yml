@@ -59,6 +59,8 @@ jobs:
           node --check automation/chat_bridge/legacy_ui_probe.mjs
           node --check automation/chat_bridge/legacy_ui_probe_cli.mjs
           node scripts/test-hadalis-legacy-ui-probe.mjs
+          node --check automation/chat_bridge/legacy_ui_acceptance.mjs
+          node scripts/test-hadalis-legacy-ui-acceptance.mjs
           node --check automation/chat_bridge/scope_probe.mjs
           node --check scripts/inspect-hadalis-native-scope.mjs
           node scripts/test-hadalis-native-scope-probe.mjs
