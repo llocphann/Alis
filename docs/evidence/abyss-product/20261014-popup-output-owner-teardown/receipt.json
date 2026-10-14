@@ -1,0 +1,20 @@
+{
+  "source_sha": "688e7364f9b2dfa200cb8e462500ae796504f24b",
+  "result": "FOCUSED_EXACT_DIRECT_AND_NESTED_PASS",
+  "runtime_change": "Avoid calls/geometry argument reads through destroyed output and Perimeter owners in StyledPopup slots; valid-owner placement unchanged.",
+  "fixture_change": "Current CompactSurfaceRow icon clicks and actual sliders replace retired switches/opaque batch action (SET-R04); independence/zero/policy/persistence preserved.",
+  "checks": {
+    "mandatory_native": "156 checks/25 frames +9 restart checks in each scope",
+    "material": "539 checks +4 restart checks, both scopes"
+  },
+  "failures_preserved": [
+    "canonical1312 actual output-owner presentation/barEdge/positionAlong TypeErrors",
+    "partial guard worktree c2a exposed width/bodyInsets reads; retained FAIL, completed guard688",
+    "simple minimal/churn teardown diagnostics were PASS without reproducing full-case error; do not infer historical error cause from them"
+  ],
+  "limits": [
+    "no new full canonical for688",
+    "filtered driver stdout on success; raw canonical/failed native output preserved",
+    "installed/owner/multi-output gates separate"
+  ]
+}
