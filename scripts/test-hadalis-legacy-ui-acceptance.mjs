@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 /* Only synthetic page + durable-journal mocks. Never connects to Desktop. */
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import {persistHarmlessUiAttempt} from
+  "../automation/chat_bridge/legacy_ui_journal.mjs";
 import {oneShotUiAcceptance} from
   "../automation/chat_bridge/legacy_ui_acceptance.mjs";
 const id="11111111-1111-4111-8111-111111111111";
@@ -96,6 +101,23 @@ await assert.rejects(call({
   persistAttempt:async()=>{throw Error("DISK_FSYNC_FAILED")}
 }),/DISK_FSYNC_FAILED/);
 assert.deepEqual(events,[]);
+// Real offline fsynced journal cannot be replayed or silently overwritten.
+const stateHome=fs.mkdtempSync(path.join(os.tmpdir(),"alis-ui-journal-"));
+try {
+  const record={id:"55555555-5555-4555-8555-555555555555",
+    kind:"harmless-ui-acceptance",outcome:"indeterminate-once-attempted"};
+  assert.equal(persistHarmlessUiAttempt(record,{stateHome}).persisted,true);
+  const file=path.join(stateHome,"hadalis-automation",
+    "legacy-ui-acceptance-attempts",record.id+".json");
+  const body=fs.readFileSync(file,"utf8");
+  assert.equal(JSON.parse(body).id,record.id);
+  assert.equal(fs.statSync(file).mode&0o077,0);
+  assert.ok(!body.includes("AUTO-F01 UI transport acceptance test only"));
+  assert.throws(()=>persistHarmlessUiAttempt(record,{stateHome}),/EEXIST/);
+  const invalid={...record,id:"../../ghp_PRIVATE_PAYLOAD"};
+  assert.throws(()=>persistHarmlessUiAttempt(invalid,{stateHome}),
+    /INVALID_ACCEPTANCE_JOURNAL_RECORD/);
+}finally{fs.rmSync(stateHome,{recursive:true,force:true});}
 // No output can attest a server accepted the test or that a project ID
 // matches. This primitive is deliberately absent from the production CLI.
 console.log("PASS AUTO-F01: owner acceptance one-shot writes intent first, never retries, stays unverified");
