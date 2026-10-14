@@ -41,6 +41,17 @@ New independent, offline-only audit:
 
 This independent audit is **not connected to the production adapter**; integrating the check requires an authenticated transport and known Project/chat membership source. Never use the match status to re-send an indeterminate `user_message_id`.
 
+## Final-turn receipt confusion in the existing projection
+
+Static inspection of `projectTurn()` in `native_adapter.mjs` found two distinct acceptance gaps: it locates the pending user turn using **message ID OR branch node ID**, without requiring that the matching message has the `user` role; and `activeBranch()` may stop silently when an ancestor is missing or the chain is cyclic. Those are unsafe assumptions for a durable response receipt. They remain unproven live failure causes; this is source-level review only.
+
+New *independent* offline shape checker:
+- `automation/chat_bridge/receipt_evidence.mjs` requires a syntactically exact conversation ID and user-message ID, a complete and acyclic parent chain, exactly one matching user-authored message on the current branch, exactly one terminal assistant final response before the next user turn, and an optional exact assistant receipt ID match. All outcomes remain `blocked`, because input snapshot provenance, Project membership and transport capability have not been attested.
+- `scripts/test-hadalis-receipt-evidence.mjs` includes forged node-ID, wrong-role, incomplete/failed tool response, next-turn, duplicate final/user and malformed parent-chain fixtures. No message, Project or conversation payload is emitted.
+- `node scripts/test-hadalis-receipt-evidence.mjs` is offline only and integrated in the native fail-closed CI step.
+
+**Do not** wire this checker into `native_adapter.mjs` while transport is unsupported. After an authenticated source is available, require both *single conversation matching* and *single final-message matching* before projecting a receipt; a reported match in unverified offline data is never proof of send success.
+
 ## Independent diagnostic ledger
 
 `automation/chat_bridge/transport_evidence.mjs` classifies **redacted scope evidence** into categorical blocker codes. The read-only inspector adds it as `transport_evidence`. The ledger **always** returns `status: "blocked"`, `supported: false` and `submission_authorized: false`; it is *not* a capability bridge, a resolver, an API key checker or an escape hatch. Flags copied from user input, mock fixtures or static helper matches cannot authorize submission.
