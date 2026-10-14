@@ -42,6 +42,19 @@ block 'lingering old compositor wants'
 rm -- "$XDG_CONFIG_HOME/systemd/user/niri.service.wants/inir.service"
 ready 'successful cutover while old unit remains for rollback'
 OLD_ENABLED=static; ready 'static unlinked legacy unit'
+# A real canonical cutover retires the original service OUTSIDE the systemd
+# search path and masks its name; only that verified combination is allowed.
+OLD_ENABLED=masked; block 'mask without trusted archive'
+mkdir -p "$tmp/state/alis-cutover-backups"
+printf '%s\n' '[Service]' 'BusName=org.kde.StatusNotifierWatcher' > "$tmp/state/alis-cutover-backups/retired-inir.service"
+ln -s /dev/null "$XDG_CONFIG_HOME/systemd/user/inir.service"
+export XDG_STATE_HOME="$tmp/state"
+ready 'masked old unit with trusted original archive'
+rm "$tmp/state/alis-cutover-backups/retired-inir.service"
+block 'masked old unit without recovery archive'
+printf '%s\n' '[Service]' 'BusName=org.kde.StatusNotifierWatcher' > "$tmp/state/alis-cutover-backups/retired-inir.service"
+OLD_ACTIVE=1; block 'masked original service active'
+OLD_ACTIVE=0
 printf '%s\n' '//@ pragma ShellId inir' > "$XDG_CONFIG_HOME/quickshell/alis/shell.qml"
 block 'unstaged canonical runtime'
 echo 'PASS: update blocked until safe one-owner cutover; retained old unit permitted afterward'
