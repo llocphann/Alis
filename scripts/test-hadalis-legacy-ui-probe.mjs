@@ -244,6 +244,7 @@ try {
     " ?[]:[{visible:true,disabled:false}]);",
     "if(role==='textbox')return locator([{visible:true,disabled:false}]);",
     "if(role==='list')return locator(process.env.MOCK_BLANK_PROJECT==='1'",
+    " ||process.env.MOCK_PROJECT_LANDING==='1'",
     " ?[{visible:true,selected:[]}]:[]);",
     "if(role==='button'&&opt.name==='Send')",
     " return locator(process.env.MOCK_BLANK_PROJECT==='1'",
