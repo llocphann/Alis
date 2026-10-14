@@ -1,0 +1,16 @@
+{
+  "runtime_base": "e31ed66746f7a7570b822b8076281cea3ed98171",
+  "fixture_source": "d5e045ef2a9ddc203c5546afee2276d691f0bb2f",
+  "result": "FOCUSED_EXACT_PASS_DIRECT_AND_NESTED",
+  "cause": "original generic bridge [214.5,1024] lies in clock source rect x160..240/y998..1030 on nested429x1038 scene; body correctly excludes source priority",
+  "change": "Find owned painted bridge and padding outside all sources; retain four padding sides, 900ms dwell, all four edges; add excluded source-module final leave for Bottom/Left. No runtime predicate changed.",
+  "gates": [
+    "QtTest native events and captures, not physical wl_pointer/installed/owner/multi-output",
+    "full47e canonical FAIL preserved; no newer full result"
+  ],
+  "provenance": [
+    "Initial probe-original.py import failure was corrected with PYTHONPATH and retained.",
+    "Intermediate bridge-only fixture failed its explicit padding-source exclusion [214.5,1023]; exact intermediate driver bytes were not retained. Its raw FAIL and receipt remain.",
+    "*.log.gz decompress to original log bytes; direct.log is filtered driver stdout, exact-direct-raw and exact-nested-raw retain full run_qs output."
+  ]
+}

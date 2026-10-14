@@ -1,0 +1,6 @@
+{
+  "source_sha": "e90796e563a1b1a47b98579c1cc89a5d555c2f02",
+  "exit": 0,
+  "scope": "exact clean-source real Dashboard/Overview warm lifecycle in readable fixture lanes; nested private no-focus Wayland",
+  "stdout_scope": "driver output, full native output is printed only on failure"
+}

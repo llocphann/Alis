@@ -1,0 +1,10 @@
+prefer-no-csd
+hotkey-overlay {
+ skip-at-startup
+}
+layout {
+ background-color "#111820"
+}
+overview {
+ backdrop-color "#111820"
+}

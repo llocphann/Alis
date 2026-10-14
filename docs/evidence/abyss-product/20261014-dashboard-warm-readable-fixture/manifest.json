@@ -1,0 +1,17 @@
+{
+  "exact-direct-receipt.json": "ec69a79ce6df4e4f945aee8b2b1c835660f3f36d51be1797a91bb11949bd5644",
+  "exact-direct.log.gz": "fce6d56893c4627ed48990b016af30f269cb5a3d48fa3362bba4b28ea8eed3c9",
+  "exact-nested-receipt.json": "578fbb5967b5422821c4be22c63f1d078220edf4e84f57bf36c0d8eae2951187",
+  "exact-nested.log.gz": "fce6d56893c4627ed48990b016af30f269cb5a3d48fa3362bba4b28ea8eed3c9",
+  "fixed-nested-receipt.json": "efce01cab5bcaa4cbc6ca1d3329220bc042c5077cbcea90f751879a82a8833c2",
+  "fixed-nested.log.gz": "fce6d56893c4627ed48990b016af30f269cb5a3d48fa3362bba4b28ea8eed3c9",
+  "original-direct-receipt.json": "a4ec8a09e2b45082f5e1650bfdda17b0d39352da6353f6cdf25a39b269b1cdf4",
+  "original-direct.log.gz": "fce6d56893c4627ed48990b016af30f269cb5a3d48fa3362bba4b28ea8eed3c9",
+  "original-nested-receipt.json": "a8e5401c527f8af15970f1a189129a1d79d83dd00bc1b8c2f77ff47a236ec96a",
+  "original-nested.log.gz": "ec125fe579d1b3df16985eea3c779d872cfa7ffdd0755f9b94c0959f5a66d97f",
+  "original-test-dashboard-warm-readiness.py": "4599d24a6a4be2d0996af135056792a5c92ebefd68ebfb9a7aef103b43ab1e50",
+  "projection-probe.cjs": "0efbabfc895512f87b0a2747e868f7ef4663e3f71b766f5ea9c86c08bb48c16a",
+  "projection.json": "009c61ba6d40cce4c4e1837bebc6be5ea17de3cab666a5b661b48e04183e33ab",
+  "qualified-fixture.py": "7a1dc09cc9b1b861a39208a526db4f1c51227a4a49c6ca507c2f109c3be22dfe",
+  "receipt.json": "e138a2b2264d3eca54550898f1287e6aac27b4c674643e8bb94b8cfe9369e47c"
+}

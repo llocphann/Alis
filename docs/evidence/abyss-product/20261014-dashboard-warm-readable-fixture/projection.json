@@ -1,0 +1,114 @@
+[
+  {
+    "name": "old",
+    "width": 757,
+    "height": 858,
+    "projected": {
+      "width": 757,
+      "height": 858,
+      "rects": {
+        "system": {
+          "x": 0,
+          "y": 0,
+          "width": 260,
+          "height": 686.4000000000001
+        },
+        "media": {
+          "x": 437,
+          "y": 0,
+          "width": 320,
+          "height": 686.4000000000001
+        }
+      },
+      "overflow": [
+        "weather"
+      ]
+    }
+  },
+  {
+    "name": "twoLanes",
+    "width": 757,
+    "height": 858,
+    "projected": {
+      "width": 757,
+      "height": 858,
+      "rects": {
+        "system": {
+          "x": 0,
+          "y": 0,
+          "width": 340.65000000000003,
+          "height": 343.20000000000005
+        },
+        "media": {
+          "x": 378.5,
+          "y": 0,
+          "width": 340.65000000000003,
+          "height": 686.4000000000001
+        },
+        "weather": {
+          "x": 0,
+          "y": 429,
+          "width": 340.65000000000003,
+          "height": 343.20000000000005
+        }
+      },
+      "overflow": []
+    }
+  },
+  {
+    "name": "old",
+    "width": 757,
+    "height": 690,
+    "projected": {
+      "width": 757,
+      "height": 690,
+      "rects": {
+        "system": {
+          "x": 0,
+          "y": 0,
+          "width": 260,
+          "height": 552
+        },
+        "media": {
+          "x": 437,
+          "y": 0,
+          "width": 320,
+          "height": 552
+        }
+      },
+      "overflow": [
+        "weather"
+      ]
+    }
+  },
+  {
+    "name": "twoLanes",
+    "width": 757,
+    "height": 690,
+    "projected": {
+      "width": 757,
+      "height": 690,
+      "rects": {
+        "system": {
+          "x": 0,
+          "y": 0,
+          "width": 340.65000000000003,
+          "height": 276
+        },
+        "media": {
+          "x": 378.5,
+          "y": 0,
+          "width": 340.65000000000003,
+          "height": 552
+        },
+        "weather": {
+          "x": 0,
+          "y": 345,
+          "width": 340.65000000000003,
+          "height": 276
+        }
+      },
+      "overflow": []
+    }
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "fixture_source": "e90796e563a1b1a47b98579c1cc89a5d555c2f02",
+  "result": "FOCUSED_EXACT_PASS_DIRECT_AND_NESTED",
+  "cause": "old fixture forces three tall columns exceeding readable minima on757x858 canvas; WorkingLayout.project correctly overflows Weather. Projection probe reproduces at858 and690 heights.",
+  "change": "Two valid lanes keep the same actual System/Weather/Media cards active, preserve every identity, hidden lease/input, immediate reuse and 1.2s expiry assertion; runtime unchanged.",
+  "stdout_scope": "driver stdout (full run_qs output printed on failure only)",
+  "gates": [
+    "physical narrow-output/installed/owner/multi-output acceptance remain separate",
+    "full47e canonical FAIL not relabeled"
+  ]
+}
