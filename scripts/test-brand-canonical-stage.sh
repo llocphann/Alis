@@ -44,7 +44,8 @@ MOCK
 printf '#!/bin/sh\n# Canonical CLI and runtime name is Alis.\nexit 0\n' > "$tmp/home/.local/bin/alis"
 printf '#!/bin/sh\nexit 0\n' > "$tmp/home/.local/bin/cargo"
 chmod +x "$tmp/root/native/scripts/install-runtime.sh" "$tmp/home/.local/bin/"*
-export HOME="$tmp/home" XDG_CONFIG_HOME="$HOME/.config" XDG_CACHE_HOME="$HOME/.cache"
+export HOME="$tmp/home"
+export XDG_CONFIG_HOME="$HOME/.config" XDG_CACHE_HOME="$HOME/.cache"
 export XDG_STATE_HOME="$HOME/.local/state" XDG_DATA_HOME="$HOME/.local/share"
 export PATH="$HOME/.local/bin:$PATH"
 helper="$tmp/root/scripts/brand-canonical-stage.sh"
