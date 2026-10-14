@@ -153,6 +153,8 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         resolver_get_receiver_kind: "unknown",
         resolver_get_receiver_comes_from_argument_helper: false,
         resolver_get_receiver_lexical_complete: false,
+        resolver_side_effects_unverified: true,
+        resolver_invocation_permitted: false,
         resolver_shape_complete: false,
         active_provider_identity_count_capped: 0,
         react_container_count_capped: 0,
@@ -506,17 +508,11 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         report.provider_selection = "provider_store_unavailable";
         return report;
       }
-      report.provider_selection = "unique_active_and_full_tree";
-      // Resolve once to TEST the candidate's shape; do not activate transport.
-      // A capability check is not authority to send a message.
-      const resolved = definition.resolve(provider, map);
-      const transport = provider.store.get(resolved);
-      report.resolution_attempted = true;
-      report.prepare_function_present =
-        typeof transport?.prepareCompletionStream === "function";
-      report.start_function_present =
-        typeof transport?.startCompletionStream === "function";
-      report.query_cache_present =
-        typeof transport?.scope?.queryClient?.getQueryCache === "function";
+      // Important safety rule: resolve() itself is NOT a guaranteed read.
+      // The installed minified implementation may allocate/update cached
+      // state when a lookup misses. Never execute arbitrary Desktop-internal
+      // resolvers from this diagnostic, even for a single matching Map.
+      // Method booleans remain false because they are UNCHECKED.
+      report.provider_selection = "unique_provider_resolver_not_invoked";
       return report;
 }
