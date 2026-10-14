@@ -60,6 +60,8 @@ try {
     assert.equal(check.scope_binding_count_bounded, 0);
     assert.equal(check.generalized_pattern_count, 0);
     assert.deepEqual(check.scope_shapes, []);
+    assert.equal(check.stream_anchor_count_bounded, 0);
+    assert.deepEqual(check.stream_neighborhoods, []);
   } finally {
     if (prior == null) delete process.env.HADALIS_DESKTOP_ASAR;
     else process.env.HADALIS_DESKTOP_ASAR = prior;
@@ -102,6 +104,10 @@ try {
     assert.equal(report.generalized_pattern_count, 1);
     assert.equal(report.stream_method_present, true);
     assert.equal(report.scope_shapes.length, 1);
+    assert.equal(report.stream_anchor_count_bounded, 1);
+    assert.equal(report.stream_neighborhoods.length, 1);
+    assert.ok(report.stream_neighborhoods[0].method_shape.includes("async"));
+    assert.ok(report.stream_neighborhoods[0].scope_bindings_within_12k >= 1);
     const json = JSON.stringify(report);
     assert.ok(!json.includes("PRIVATE_FIXTURE_SECRET"));
     assert.ok(!json.includes("ghp_"));
