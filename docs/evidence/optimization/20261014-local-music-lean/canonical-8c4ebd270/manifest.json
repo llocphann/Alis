@@ -1,0 +1,12 @@
+{
+  "scope": "Full frozen clean clone 8c4ebd270: 388 PASS/55 FAIL/1 numbered SKIP plus manual deferred listing. Incidental Weather lines removed from published logs; original hash/bytes local. Actual OS exit not retained by initial launcher; full FAIL summary and final frozen predicate infer 1. Not current-source/owner acceptance.",
+  "files": {
+    "canonical-raw.txt.gz": "11865db5618fe8522581a350663de93a034289a56d256b86d30941351563fcc1",
+    "driver-stdout.txt.gz": "e30c4b041ee22945d8d55c54dec7c5802fbe0c18b3e6c0224362e92bdeea16e9",
+    "failure-index.json.gz": "00398e22f5a3b27b709ff8f00da819102c47285c0915bfdf33e3aa053186f6dc",
+    "frozen-driver.json": "fe99f747b06527dae9fcd84b27d60bc7bb998efc1fe04ec685db984227cdc528",
+    "frozen-driver.sh": "bc6cc2053fca588464c2c804acfb7740fe795c90a9356fe974d984d3e9b3aa98",
+    "process.json": "b58bb3058ebd920f5756aac348ae5abd6d0cb83889a78af432d0a0fb4cfa2c55",
+    "receipt.json": "2252d27b4c3f6153a4f9d18684a4ad4606ab66102717adbbae58a9860a606c44"
+  }
+}

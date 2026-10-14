@@ -1,0 +1,21 @@
+{
+  "source_sha": "8c4ebd2700e41fddf04bbbe28af0c2b1e768a39c",
+  "driver_sha256": "bc6cc2053fca588464c2c804acfb7740fe795c90a9356fe974d984d3e9b3aa98",
+  "status": "FINISHED_LOG_SUMMARY_FAIL",
+  "counts": {
+    "PASS": 388,
+    "FAIL": 55,
+    "SKIP": 1
+  },
+  "listed_skips": 2,
+  "summary": {
+    "passed": 388,
+    "failed": 55
+  },
+  "os_exit_status": null,
+  "inferred_exit": 1,
+  "exit_limitation": "Initial launcher did not retain a parent waiter. Final full FAIL summary and immutable final shell failure predicate establish failure, not an independently captured OS exit.",
+  "raw_sha256": "2bdc9cc4111b18f95f74fbbb0518d57a6e685cb60afa54c12c1d069ddd8da983",
+  "ended_observed": 1791961124.143722,
+  "scope": "Frozen exact source clean-clone canonical. Owner, installed, cold-login and multi-output acceptance separate."
+}

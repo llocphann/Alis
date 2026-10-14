@@ -1,0 +1,9 @@
+{
+  "source_sha": "8c4ebd2700e41fddf04bbbe28af0c2b1e768a39c",
+  "source": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-canonical-alis-8c4ebd270/source",
+  "driver": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/drivers/canonical-alis-8c4ebd2700e41fddf04bbbe28af0c2b1e768a39c.sh",
+  "driver_sha256": "bc6cc2053fca588464c2c804acfb7740fe795c90a9356fe974d984d3e9b3aa98",
+  "raw_log": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-canonical-alis-8c4ebd270/canonical-raw.txt",
+  "stdout": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-canonical-alis-8c4ebd270/driver-stdout.txt",
+  "scope": "Frozen exact source clean-clone canonical. Owner, installed, cold-login and multi-output acceptance separate."
+}
