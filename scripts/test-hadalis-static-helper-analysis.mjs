@@ -169,7 +169,9 @@ let complexSite=aliasFixture(
 assert.deepEqual(complexSite.alias_trace,{
   origin_hint:"complex-or-unsupported-expression",hops_capped:0,
   expression_form:"logical-or-coalescing",expression_scan_complete:true,
-  contains_new_map_syntax:true,mentions_parameter_token:true
+  contains_new_map_syntax:true,mentions_parameter_token:true,
+  expression_token_shape:"id ?? new id ( )",
+  expression_token_shape_complete:true
 });
 complexSite=aliasFixture(
   "let receiver=p?new Map():fallback;receiver.set(s,c);return receiver"
@@ -205,6 +207,8 @@ complexSite=aliasFixture(
 assert.equal(complexSite.alias_trace.expression_form,"computed-member-access");
 assert.equal(complexSite.alias_trace.expression_scan_complete,true);
 assert.equal(complexSite.alias_trace.mentions_parameter_token,false);
+assert.equal(complexSite.alias_trace.expression_token_shape,"id ?. [ id ]");
+assert.equal(complexSite.alias_trace.expression_token_shape_complete,true);
 // Parameter-dependent indexed expression remains syntax-only evidence.
 complexSite=aliasFixture(
   "let receiver=p[key];receiver.set(s,c);return receiver"
@@ -227,6 +231,30 @@ assert.equal(complexSite.alias_trace.expression_form,"logical-or-coalescing");
 assert.ok(!JSON.stringify(complexSite).includes("PRIVATE"));
 assert.ok(!JSON.stringify(complexSite).includes("ghp_FAKE_TOKEN"));
 
+// Token shape must preserve operators/punctuation but never raw identifiers,
+ // numeric literal payloads, string contents, or Unicode source text.
+complexSite=aliasFixture(
+  "let receiver=secretOwner[privateKey]+42;" +
+  "receiver.set(s,c);return receiver"
+);
+assert.equal(complexSite.alias_trace.expression_token_shape,
+  "id [ id ] + 0");
+assert.equal(complexSite.alias_trace.expression_token_shape_complete,true);
+assert.ok(!JSON.stringify(complexSite).includes("secretOwner"));
+assert.ok(!JSON.stringify(complexSite).includes("privateKey"));
+assert.ok(!JSON.stringify(complexSite).includes("42"));
+complexSite=aliasFixture(
+  "let receiver=secretOwner['PRIVATE_VALUE'];" +
+  "receiver.set(s,c);return receiver"
+);
+assert.equal(complexSite.alias_trace.expression_token_shape,
+  "id [ STRING ]");
+assert.ok(!JSON.stringify(complexSite).includes("PRIVATE_VALUE"));
+complexSite=aliasFixture(
+  "let receiver=secretOwner[π];receiver.set(s,c);return receiver"
+);
+assert.equal(complexSite.alias_trace.expression_token_shape_complete,false);
+assert.ok(!JSON.stringify(complexSite).includes("π"));
 const secretAlias=aliasFixture("let ghp_FAKE_SECRET=p;" +
   "let receiver=ghp_FAKE_SECRET;receiver.set(s,c);return receiver");
 assert.deepEqual(secretAlias.alias_trace,{
