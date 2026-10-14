@@ -360,6 +360,40 @@ class TaskflowTests(unittest.TestCase):
                     managed_tasks.start_ordered_queue(approved=True)
             self.assertEqual(queue.view()["state"], "prepared")
 
+    def test_qml_cli_json_contract_in_real_subprocess(self):
+        """Every read-only Settings action must produce exactly one JSON object.
+
+        Catches import failures and stdout-empty errors masked by JSON.parse.
+        """
+        import subprocess
+        root = Path(__file__).resolve().parents[1]
+        cli = root / "scripts/alis-automation-task.py"
+        with tempfile.TemporaryDirectory() as tmp:
+            env = dict(os.environ, XDG_STATE_HOME=tmp + "/state",
+                       XDG_CONFIG_HOME=tmp + "/config")
+            for command in [
+                ["queue-status"],
+                ["github-token-status", "llocphann/Alis"],
+                ["backend-status"],
+                ["cleanup"],
+            ]:
+                completed = subprocess.run(
+                    ["python3", str(cli), *command], cwd=root, env=env,
+                    capture_output=True, text=True, timeout=12, check=False)
+                self.assertEqual(completed.returncode, 0,
+                                 f"{command}: {completed.stderr[:500]}")
+                self.assertFalse(completed.stderr.strip(), command)
+                data = json.loads(completed.stdout)
+                self.assertTrue(data["ok"], command)
+                self.assertEqual(len(completed.stdout.splitlines()), 1, command)
+            failed = subprocess.run(["python3", str(cli),
+                                      "queue-prepare", "INVALID!", "--mode", "ordered"],
+                                     cwd=root, env=env, capture_output=True,
+                                     text=True, timeout=10, check=False)
+            self.assertNotEqual(failed.returncode, 0)
+            self.assertFalse(failed.stderr.strip())
+            self.assertFalse(json.loads(failed.stdout)["ok"])
+
     def test_lookup_code_and_exact_reference(self):
         task = taskflow.resolve("AUTO-R01", api)
         self.assertEqual(task["repository"], "llocphann/Alis")
