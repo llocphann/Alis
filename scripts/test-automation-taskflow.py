@@ -360,6 +360,21 @@ class TaskflowTests(unittest.TestCase):
                     managed_tasks.start_ordered_queue(approved=True)
             self.assertEqual(queue.view()["state"], "prepared")
 
+    def test_settings_waits_for_stream_finished_before_parsing_cli_json(self):
+        qml = (Path(__file__).resolve().parents[1] /
+               "modules/settings/AutomationTaskConfig.qml").read_text()
+        self.assertIn("onStreamFinished: root._automationStdoutClosed", qml)
+        self.assertIn("root._finishAutomationWhenReady(name)", qml)
+        self.assertIn("if (!entry || !entry.exited || !entry.closed)", qml)
+        self.assertIn("Automation helper returned no output", qml)
+        self.assertIn("Backend status unknown", qml)
+        self.assertEqual(qml.count("onStreamFinished: root._automationStdoutClosed"), 8)
+        self.assertEqual(qml.count("JSON.parse("), 1)
+        for process in ("queueProcess", "githubStatusProcess", "backendStatusProcess",
+                        "taskStatusProcess", "activityProcess", "cleanupProcess"):
+            self.assertIn("root._automationExited(\"" + process + "\"", qml)
+            self.assertIn("root._handle_" + process + "(entry.exitCode)", qml)
+
     def test_qml_cli_json_contract_in_real_subprocess(self):
         """Every read-only Settings action must produce exactly one JSON object.
 
