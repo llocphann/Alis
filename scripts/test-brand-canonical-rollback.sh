@@ -22,8 +22,21 @@ shift; action="$1"; shift
 case "$action" in
   is-active) cat "$TEST_HOME/state-${1%.service}" ;;
   stop) printf 'inactive\n' > "$TEST_HOME/state-${1%.service}"; echo "stop:$1" >> "$TEST_HOME/ops" ;;
+  show)
+    unit="$1"; path="$TEST_HOME/config/systemd/user/$unit"
+    if [[ -L "$path" && "$(readlink -- "$path")" == /dev/null ]]; then echo masked
+    elif [[ -f "$path" ]]; then echo loaded
+    else echo not-found; fi ;;
   start)
     echo "start:$1" >> "$TEST_HOME/ops"
+    if [[ "$1" == inir.service && -f "$TEST_HOME/config/systemd/user/alis.service" ]]; then
+      echo 'Two services allocated for the same bus name org.kde.StatusNotifierWatcher' >&2
+      exit 1
+    fi
+    if [[ "$1" == alis.service && -f "$TEST_HOME/config/systemd/user/inir.service" ]]; then
+      echo 'Two services allocated for the same bus name org.kde.StatusNotifierWatcher' >&2
+      exit 1
+    fi
     [[ "${FAIL_LEGACY_START:-0}" != 1 || "$1" != inir.service ]] || exit 1
     printf 'active\n' > "$TEST_HOME/state-${1%.service}" ;;
   daemon-reload) echo reload >> "$TEST_HOME/ops" ;;
@@ -35,6 +48,9 @@ cat > "$HOME/config/systemd/user/inir.service" <<UNIT
 [Service]
 ExecStart=$HOME/bin/inir run --session
 UNIT
+mkdir -p "$HOME/state/alis-cutover-backups"
+mv -- "$HOME/config/systemd/user/inir.service" "$HOME/state/alis-cutover-backups/retired-inir.service"
+ln -s /dev/null "$HOME/config/systemd/user/inir.service"
 cat > "$HOME/config/systemd/user/alis.service" <<'UNIT'
 [Service]
 BusName=org.kde.StatusNotifierWatcher
@@ -58,6 +74,11 @@ fi
   fail 'failed legacy start did not restore Alis'
 [[ -L "$wants/alis.service" && ! -e "$wants/inir.service" ]] ||
   fail 'failed old startup lost Alis wiring'
+[[ -L "$HOME/config/systemd/user/inir.service" &&
+   "$(readlink "$HOME/config/systemd/user/inir.service")" == /dev/null &&
+   -f "$HOME/config/systemd/user/alis.service" &&
+   -f "$HOME/state/alis-cutover-backups/retired-inir.service" ]] ||
+  fail 'failed old start did not re-mask original and recover Alis singleton'
 # Reproduce the deployed managed public shim: private service lifecycle works
 # while public help is disabled. A byte-identical original runtime is required.
 mkdir -p "$HOME/config/quickshell/inir/scripts"
@@ -92,10 +113,16 @@ bash "$helper" --apply --owner-approved > "$tmp/ok" || fail 'approved rollback'
   fail 'two owners after successful rollback'
 [[ -L "$wants/inir.service" && ! -e "$wants/alis.service" ]] ||
   fail 'old compositor link not restored'
-[[ -f "$HOME/config/systemd/user/alis.service" ]] || fail 'Alis unit deleted'
+[[ ! -e "$HOME/config/systemd/user/alis.service" &&
+   -f "$HOME/config/systemd/user/inir.service" &&
+   ! -L "$HOME/config/systemd/user/inir.service" &&
+   ! -e "$HOME/state/alis-cutover-backups/retired-inir.service" ]] ||
+  fail 'post-success rollback still exposes competing D-Bus unit'
+[[ -f "$HOME/state/alis-cutover-backups"/rollback-backup-*/alis.service ]] ||
+  fail 'canonical unit rollback backup missing'
 [[ "$(sha256sum "$HOME/config/alis/config.json" | cut -d' ' -f1)" == "$data_hash" ]] ||
   fail 'settings mutated'
 if bash "$helper" --apply --owner-approved > "$tmp/again" 2>&1; then
   fail 'second rollback accepted without Alis owner'
 fi
-echo 'PASS: consent, dry run, exclusive owner rollback, failed start recovery, byte-preserved settings'
+echo 'PASS: exclusive D-Bus name before and after rollback, failed-start recovery, verified unit archives and preserved settings'
