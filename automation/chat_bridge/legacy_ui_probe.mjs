@@ -41,14 +41,23 @@ export async function inspectLegacyUiReadOnly(page,projectName="Automatic Alis")
     name:new RegExp("^(Project:|Change project:) "+escapeRegex(projectName)+"$")
   });
   const projectLists=page.getByRole("list",{name:"Chats in "+projectName,exact:true});
+  // Inspect the MAIN content region separately from persistent sidebar
+  // navigation. A visible Project heading there can indicate that the
+  // landing view has changed even when the composer retains a generic name.
+  // Never read/return current heading text, chat title, URL or Project ID.
+  const mainRegions=page.getByRole("main");
+  const projectHeadingsInMain=mainRegions.getByRole("heading",{
+    name:projectName,exact:true
+  });
   const sends=page.getByRole("button",{name:"Send",exact:true});
   const stops=page.getByRole("button",{name:/stop/i});
   const [composerCount,scopedComposerCount,genericComposerCount,
-    projectNewChatActionCount,badgeCount,listCount,sendCount,stopCount]=
-    await Promise.all([
+    projectNewChatActionCount,badgeCount,listCount,mainCount,
+    mainProjectHeadingCount,sendCount,stopCount]=await Promise.all([
       countVisible(composers),countVisible(projectScopedComposers),
       countVisible(genericComposers),countVisible(projectNewChatActions),
       countVisible(projectBadge),countVisible(projectLists),
+      countVisible(mainRegions),countVisible(projectHeadingsInMain),
       countVisible(sends),countVisible(stops)
     ]);
   let selectedCount=0;
@@ -78,6 +87,8 @@ export async function inspectLegacyUiReadOnly(page,projectName="Automatic Alis")
     project_badge_count_capped:badgeCount,
     target_project_list_count_capped:listCount,
     selected_target_chat_count_capped:selectedCount,
+    main_region_count_capped:mainCount,
+    target_project_heading_in_main_count_capped:mainProjectHeadingCount,
     send_count_capped:sendCount,
     stop_count_capped:stopCount,
     composer_draft_present:draftPresent,
@@ -131,6 +142,16 @@ export function assessLegacyUiReadiness(snapshot){
     observation_ready:issues.length===0,
     read_only_project_entry_ready:readOnlyProjectEntryReady,
     empty_project_composer_observed:emptyProjectComposer,
+    main_project_view_evidence:
+      s.main_region_count_capped===1 &&
+      s.target_project_heading_in_main_count_capped===1
+        ? "exact-project-heading-in-main"
+        : s.main_region_count_capped===0
+          ? "no-main-region" : s.main_region_count_capped===1
+            ? "no-exact-project-heading-in-main"
+            : "main-region-ambiguous-or-unverified",
+    // Main-region headings only corroborate visual navigation. Never use
+    // them to set project_view_visible, observation_ready or send authority.
     composer_scope_evidence:scopedComposer
       ? "exact-project-scoped-label"
       : unscopedBlankComposer ? "generic-label-without-project-guard"
