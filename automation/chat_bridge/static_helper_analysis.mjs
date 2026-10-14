@@ -123,6 +123,47 @@ function inspectFunctionBody(source, declarationEnd) {
     if(/^[$A-Za-z_][\w$]*\b/.test(tail)) return "identifier-alias";
     return "other-expression";
   };
+  // Categorize (never evaluate) an initializer that is more complex than a
+  // direct identifier alias. Stop at a balanced top-level statement separator.
+  // Report ONLY syntax families and bounded booleans, never code or symbols.
+  const describeComplexRhs = text => {
+    const limit = Math.min(text.length,512);
+    let round=0,square=0,curly=0,stop=-1,malformed=false;
+    for(let i=0;i<limit;i++){
+      const c=text[i];
+      if(round===0 && square===0 && curly===0 &&
+         (c==="," || c===";" || c==="}" || c==="\n" || c==="\r")){
+        stop=i;break;
+      }
+      if(c==="(") round++;
+      else if(c===")") {round--;if(round<0){malformed=true;break;}}
+      else if(c==="[") square++;
+      else if(c==="]") {square--;if(square<0){malformed=true;break;}}
+      else if(c==="{") curly++;
+      else if(c==="}") {curly--;if(curly<0){malformed=true;break;}}
+    }
+    const part=text.slice(0,stop>=0?stop:limit).trim();
+    const closed=round===0&&square===0&&curly===0&&!malformed;
+    const complete=closed&&(stop>=0||text.length<=limit);
+    let family="other-or-unrecognized";
+    if(!complete) family="unbounded-or-unbalanced";
+    else if(/\?\?|\|\||&&/.test(part)) family="logical-or-coalescing";
+    else if(/\?(?!\.)[^:]*:/.test(part)) family="conditional-ternary";
+    else if(/^[(]/.test(part)) family="parenthesized";
+    else if(/^(?:await\s+)?[$A-Za-z_][\w$]*\s*\(/.test(part))
+      family="call-expression";
+    else if(/^(?:await\s+)?[$A-Za-z_][\w$]*(?:\?\.|\.)/.test(part))
+      family="member-access";
+    else if(/[=+\-*\/%<>|&^]/.test(part)) family="operator-expression";
+    const tokens=part.match(/[$A-Za-z_][\w$]*/g)??[];
+    return {
+      expression_form:family,
+      expression_scan_complete:complete,
+      contains_new_map_syntax:/\bnew\s+Map\s*\(/.test(part),
+      mentions_parameter_token:params
+        ? tokens.some(token=>params.has(token)) : false
+    };
+  };
   // Trace only bare "name=otherName" lexical aliases that occur before the
   // write. A chain cannot certify ownership or side-effect freedom; it only
   // identifies a possible origin. Reassignments, cycles, unknown syntax and
@@ -160,7 +201,8 @@ function inspectFunctionBody(source, declarationEnd) {
       const alias = rhs.match(/^([$A-Za-z_][\w$]*)\s*(?=[,;}\n\r]|$)/);
       if (!alias)
         return {origin_hint:"complex-or-unsupported-expression",
-          hops_capped:Math.min(8,hops)};
+          hops_capped:Math.min(8,hops),
+          ...describeComplexRhs(rhs)};
       symbol = alias[1];
       cutoff = found[0].index;
       hops++;
