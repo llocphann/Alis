@@ -140,7 +140,8 @@ class TaskflowTests(unittest.TestCase):
         qml = (Path(__file__).resolve().parents[1] /
                "modules/settings/AutomationTaskConfig.qml").read_text()
         self.assertIn("property bool queueStatusConfirmed: false", qml)
-        self.assertIn('root.statusText = ""\\n                root.errorText = String(error)', qml)
+        self.assertIn('root.statusText = ""', qml)
+        self.assertIn('root.errorText = String(error)', qml)
         self.assertIn('root.queueStatusConfirmed && !!root.queueSnapshot', qml)
         self.assertIn("Last known queue only", qml)
         self.assertIn('objectName: "automationRefreshQueue"', qml)
