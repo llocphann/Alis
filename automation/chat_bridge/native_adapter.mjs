@@ -100,6 +100,18 @@ export function inspectInstalledScopeContract() {
       .replace(/[$A-Za-z_][\w$]*/g, token => whitelist.has(token) ? token : "id")
       .replace(/[0-9]+/g, "0")
       .replace(/\s+/g, " ").slice(0, 300);
+    // These candidates are NOT authenticated transport bindings. The method
+    // neighborhood is a diagnostic signal, never selection authority.
+    const callbacks = [...initial.matchAll(
+      /(?:^|[,;])([\w$]+)\s*=\s*[\w$]+\(\s*[\w$]+\s*,\s*\(\s*\{\s*scope\s*:\s*([\w$]+)\s*\}\s*\)\s*=>\s*new\s+[\w$]+\(\s*\2\s*\)\s*\)/g
+    )];
+    const exportOffset = initial.lastIndexOf("export{");
+    const exportedBindings = new Set(exportOffset >= 0
+      ? [...initial.slice(exportOffset + 7).matchAll(/(?:^|,)([\w$]+)\s+as\s+[\w$]+(?=,|})/g)]
+          .map(match => match[1])
+      : []);
+    const distanceBand = d => d <= 500 ? "0-500" : d <= 2000
+      ? "500-2k" : d <= 8000 ? "2k-8k" : "8k-12k";
     const shape = mentions.slice(0, 3).map(m => {
       const start = Math.max(0, m.index - 110);
       return masked(initial.slice(start, m.index + 190));
@@ -115,6 +127,21 @@ export function inspectInstalledScopeContract() {
       const nearestClass = classHeaders.at(-1);
       const nearStart = Math.max(0, at - 12000), nearEnd = Math.min(initial.length, at + 12000);
       const scopeMentions = [...initial.slice(nearStart, nearEnd).matchAll(/\{scope:([\w$]+)\}/g)];
+      const scopedConstructors = callbacks.filter(x =>
+        Math.abs(x.index - at) <= 12000)
+        .map(x => ({
+          delta: x.index - at, exported: exportedBindings.has(x[1])
+        }))
+        .sort((a, b) => Math.abs(a.delta) - Math.abs(b.delta));
+      const scopedConstructorSummary = {
+        count_in_12k: scopedConstructors.length,
+        exported_in_12k: scopedConstructors.filter(x => x.exported).length,
+        nearest: scopedConstructors.slice(0, 3).map(x => ({
+          direction: x.delta < 0 ? "before" : "after",
+          distance_band: distanceBand(Math.abs(x.delta)),
+          export_binding_present: x.exported
+        }))
+      };
       const distance = nearestClass ? prefix.length - nearestClass.index : null;
       const distanceBand = distance == null ? "none-in-120k"
         : distance <= 1000 ? "0-1k"
@@ -125,6 +152,7 @@ export function inspectInstalledScopeContract() {
         nearest_class_distance_band: distanceBand,
         class_declaration_count_in_120k: classHeaders.length,
         scope_bindings_within_12k: scopeMentions.length,
+        scoped_constructor_candidates: scopedConstructorSummary,
         method_shape: masked(initial.slice(Math.max(0, at - 150),
           Math.min(initial.length, at + 170))),
         nearest_class_shape: nearestClass
@@ -143,7 +171,9 @@ export function inspectInstalledScopeContract() {
       generalized_pattern_count: [...initial.matchAll(broad)].length,
       scope_binding_count_bounded: mentions.length,
       stream_method_present: initial.includes("async startCompletionStream("),
-      scope_shapes: shape, stream_anchor_count_bounded: streamAnchors.length,
+      scope_shapes: shape,
+      scoped_constructor_callbacks_count: callbacks.length,
+      stream_anchor_count_bounded: streamAnchors.length,
       stream_neighborhoods: aroundStream
     };
   } finally { archive.close(); }
