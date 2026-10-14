@@ -13,17 +13,17 @@ schema="$root/modules/common/Config.qml"
 registry="$root/modules/settings/SettingsPageRegistryData.qml"
 migration="$root/sdata/migrations/044-local-music-mpd-state-cleanup.sh"
 dispatch="$root/scripts/native-dispatch"
-mpdd="$root/native/inir-mpdd/src/main.rs"
-mpdd_cargo="$root/native/inir-mpdd/Cargo.toml"
+mpdd="$root/native/alis-mpdd/src/main.rs"
+mpdd_cargo="$root/native/alis-mpdd/Cargo.toml"
 
 grep -Fq 'libc.workspace = true' "$mpdd_cargo" \
-    || fail 'inir-mpdd must retain Linux parent-death lifecycle support'
+    || fail 'alis-mpdd must retain Linux parent-death lifecycle support'
 grep -Fq 'libc::PR_SET_PDEATHSIG' "$mpdd" \
-    || fail 'inir-mpdd daemon/subscriber must die with their owning shell'
+    || fail 'alis-mpdd daemon/subscriber must die with their owning shell'
 grep -Fq 'daemon_socket_in_use' "$mpdd" \
-    || fail 'inir-mpdd must not unlink a live daemon socket'
+    || fail 'alis-mpdd must not unlink a live daemon socket'
 grep -Fq 'io::ErrorKind::ConnectionRefused' "$mpdd" \
-    || fail 'inir-mpdd may reclaim only a demonstrably stale socket'
+    || fail 'alis-mpdd may reclaim only a demonstrably stale socket'
 grep -Fq 'readonly property string nativeDispatchPath: Directories.scriptsPath + "/native-dispatch"' "$service"     || fail 'LocalMusic must route MPD/local lyrics through native-dispatch'
 grep -Fq 'root.nativeDispatchPath, "mpd", "snapshot",' "$service"     || fail 'LocalMusic snapshot must route through native-dispatch'
 grep -Fq 'root.nativeDispatchPath, "mpd-daemon",' "$service"     || fail 'Rust MPD persistent daemon must remain selector-routed'

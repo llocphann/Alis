@@ -7,8 +7,8 @@ cd "$repo_root"
 doctor="sdata/lib/doctor.sh"
 arch_installer="sdata/dist-arch/install-deps.sh"
 generic_installer="sdata/dist-generic/install-deps.sh"
-arch_core="sdata/dist-arch/inir-core/PKGBUILD"
-arch_tracker="sdata/dist-arch/inir-deps/PKGBUILD"
+arch_core="sdata/dist-arch/alis-core/PKGBUILD"
+arch_tracker="sdata/dist-arch/alis-deps/PKGBUILD"
 default_config="defaults/config.json"
 
 python3 - "$doctor" "$arch_installer" "$generic_installer" "$arch_core" "$arch_tracker" "$default_config" <<'PY'
