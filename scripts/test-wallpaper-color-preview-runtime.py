@@ -114,7 +114,7 @@ ShellRoot {
     with private_wayland(folder) as env:
         if env is None:
             raise SystemExit("SKIP: palette preview requires a private Niri surface")
-        config = folder / "config/illogical-impulse"
+        config = folder / "config/alis"
         config.mkdir(parents=True, exist_ok=True)
         data = json.loads((ROOT / "defaults/config.json").read_text())
         data["panelFamily"] = "abyss"

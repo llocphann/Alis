@@ -118,7 +118,7 @@ ShellRoot {
     with private_wayland(folder) as env:
         if env is None:
             print("SKIP: wallpaper background apply requires private Niri"); raise SystemExit(0)
-        config = folder / "config/illogical-impulse"
+        config = folder / "config/alis"
         config.mkdir(parents=True, exist_ok=True)
         data = json.loads((ROOT / "defaults/config.json").read_text())
         data["panelFamily"] = "abyss"

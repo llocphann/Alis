@@ -93,7 +93,7 @@ Window {
   shutil.copy2(candidate,widgets/'WallpaperCrossfader.qml')
  with private_wayland(folder) as env:
   if env is None:raise SystemExit('SKIP: private Niri unavailable')
-  cfg=folder/'config/illogical-impulse/config.json';cfg.parent.mkdir(parents=True,exist_ok=True)
+  cfg=folder/'config/alis/config.json';cfg.parent.mkdir(parents=True,exist_ok=True)
   data=json.loads((ROOT/'defaults/config.json').read_text());data['abyss']['companion']['enabled']=False
   data['background']['transition']['type']='crossfade';data['performance']['reduceAnimations']=False
   for backend in ['opengl','software']:

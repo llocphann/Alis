@@ -121,7 +121,7 @@ Window {
 ''')
  with private_wayland(folder) as env:
   if env is None:print('SKIP: wallpaper native test requires private Niri');raise SystemExit(0)
-  config=folder/'config/illogical-impulse';config.mkdir(parents=True,exist_ok=True)
+  config=folder/'config/alis';config.mkdir(parents=True,exist_ok=True)
   data=json.loads((ROOT/'defaults/config.json').read_text());data.setdefault('wallpapers',{})['directory']=str(folder/'wallpapers');(config/'config.json').write_text(json.dumps(data))
   env.update(WALLPAPER_FIXTURES=str(folder/"wallpapers"),QUOTED_IMAGE=str(odd),WALLPAPER_CAPTURE='/tmp/hadalis-wallpaper-carousel-20261007.png',QSG_RHI_BACKEND='opengl',INIR_EXPERIMENTAL_MELT='0')
   result=run_qs(folder,env,timeout=40);output=result.stdout
