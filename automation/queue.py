@@ -85,7 +85,10 @@ def prepare(raw: str, mode: str = "ordered",
     if mode not in MODES:
         raise tf.TaskError("Unsupported scheduling mode")
     inputs = parse_codes(raw)
-    tasks = [resolver(code) for code in inputs]
+    # The default GitHub intake resolves open Issues in bounded repository
+    # batches. Keep injected per-code resolvers for offline tests and tools.
+    tasks = (tf.resolve_batch(inputs) if resolver is tf.resolve
+             else [resolver(code) for code in inputs])
     keys = [(t["repository"], t["code"]) for t in tasks]
     if len(set(keys)) != len(keys):
         raise tf.TaskError("Multiple references resolve to the same task")
