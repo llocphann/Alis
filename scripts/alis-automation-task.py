@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from automation import taskflow, credentials, lifecycle
+from automation import taskflow, credentials, lifecycle, queue, activity
 
 
 def main():
@@ -16,6 +16,14 @@ def main():
     for action in ("resolve", "prepare"):
         sub = commands.add_parser(action)
         sub.add_argument("code", help="AUTO-R01 or llocphann/Alis#104")
+    batch = commands.add_parser("queue-prepare")
+    batch.add_argument("codes", help="AUTO-R01; ABYSS-R09; BRAND-F01")
+    batch.add_argument("--mode", choices=["ordered", "cloud"], default="ordered")
+    commands.add_parser("queue-status")
+    history = commands.add_parser("activity")
+    history.add_argument("code")
+    history.add_argument("--repo", choices=taskflow.REPOSITORIES,
+                         default="llocphann/Alis")
     verify = commands.add_parser("verify")
     verify.add_argument("bundle", type=Path)
     execute = commands.add_parser("execute")
@@ -50,7 +58,13 @@ def main():
         print(credentials.git_helper(args.repository, args.operation, sys.stdin.read(8193)), end="")
         return 0
     try:
-        if args.action in ("resolve", "prepare"):
+        if args.action == "queue-prepare":
+            result = queue.prepare(args.codes, mode=args.mode)
+        elif args.action == "queue-status":
+            result = queue.view()
+        elif args.action == "activity":
+            result = activity.read(args.code, args.repo)
+        elif args.action in ("resolve", "prepare"):
             task = taskflow.resolve(args.code)
             result = {"ok": True, "task": task} if args.action == "resolve" else taskflow.intake(task)
             if args.action == "prepare":
