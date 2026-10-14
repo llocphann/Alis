@@ -196,6 +196,8 @@ assert.equal(res.active_map_comparison_complete, true);
 assert.equal(res.active_map_topology_complete, true);
 assert.deepEqual(res.active_map_depth_range_capped, [1, 1]);
 assert.equal(res.active_map_ancestor_pair_count_capped, 0);
+assert.deepEqual(res.active_map_ancestor_edges, []);
+assert.equal(res.active_map_depth_limit_reached, false);
 assert.equal(res.active_map_incomparable_pair_count_capped, 21);
 assert.equal(res.active_map_depth_size_profiles.length, 7);
 assert.equal(res.resolver_source_inspected, true);
@@ -242,11 +244,35 @@ nested.currentChild.child = {
 res = await inspect([nested.currentRoot]);
 assert.equal(res.active_provider_map_count_capped, 2);
 assert.equal(res.active_map_ancestor_pair_count_capped, 1);
+assert.deepEqual(res.active_map_ancestor_edges, [[0, 1]]);
 assert.equal(res.active_map_incomparable_pair_count_capped, 0);
 assert.deepEqual(res.active_map_depth_range_capped, [1, 2]);
 assert.deepEqual(res.active_map_depth_size_profiles.map(x => x.min_depth), [1, 2]);
 assert.equal(res.provider_selection, "active_provider_ambiguous");
 assert.equal(res.resolution_attempted, false);
+
+// The original depth=128 ceiling obscured most real Desktop providers.
+const deep = rootsFor(sharedMap);
+let path = deep.currentChild;
+for (let i=0; i<180; i++) {
+  path = {child:path, sibling:null};
+}
+deep.currentRoot.child = path;
+res = await inspect([deep.currentRoot]);
+assert.deepEqual(res.active_map_depth_range_capped, [181,181]);
+assert.equal(res.active_map_depth_limit_reached, false);
+
+const originalResolver = def.resolve;
+def.resolve = function resolve(p,map) {return map.get(scopeId);};
+resolves = 0;
+res = await inspectSeven(sevenMaps);
+assert.equal(res.resolver_source_inspected, true);
+assert.equal(res.resolver_parameter_shape, "two-simple-identifiers");
+assert.equal(res.resolver_first_argument_map_access, false);
+assert.equal(res.resolver_second_argument_map_access, true);
+assert.equal(res.resolution_attempted, false);
+assert.equal(resolves, 0);
+def.resolve = originalResolver;
 
 const unknownRoot = {memoizedProps:{value:sharedMap}};
 res = await inspect([unknownRoot]);
