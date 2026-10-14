@@ -11,7 +11,7 @@ with tempfile.TemporaryDirectory(prefix="alis-placement-memo-") as name:
     folder = Path(name)
     for entry in ["modules", "services", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"]:
         (folder / entry).symlink_to(ROOT / entry)
-    config = folder / "config/illogical-impulse"
+    config = folder / "config/alis"
     config.mkdir(parents=True)
     data = json.loads((ROOT / "defaults/config.json").read_text())
     data["abyss"]["companion"]["enabled"] = False

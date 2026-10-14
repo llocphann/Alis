@@ -82,7 +82,7 @@ ShellRoot {
     with private_wayland(folder) as env:
         if env is None:
             print("SKIP: material pixels require private Niri"); raise SystemExit(0)
-        config = folder / "config/illogical-impulse/config.json"
+        config = folder / "config/alis/config.json"
         config.parent.mkdir(parents=True, exist_ok=True)
         value = json.loads((ROOT / "defaults/config.json").read_text())
         value["panelFamily"] = "abyss"; value["abyss"]["companion"]["enabled"] = False

@@ -11,7 +11,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-indicator-geometry-") as name:
     shell = Path(name)
     for entry in ("modules", "services", "GlobalStates.qml", "qmldir", "assets", "scripts", "defaults", "translations"):
         (shell / entry).symlink_to(ROOT / entry)
-    config = shell / "config/illogical-impulse"
+    config = shell / "config/alis"
     config.mkdir(parents=True)
     options = json.loads((ROOT / "defaults/config.json").read_text())
     options["shellUpdates"]["enabled"] = False
