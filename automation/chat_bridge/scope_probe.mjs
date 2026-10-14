@@ -90,11 +90,30 @@ export async function probeDesktopScopeReadOnly({
     const pages = browser.contexts().flatMap(ctx => ctx.pages())
       .filter(page => page.url() === "app://-/index.html");
     if (pages.length !== 1) throw new Error("Desktop renderer unavailable or ambiguous");
-    const result = await pages[0].evaluate(async ({asset, alias}) => {
+    const result = await pages[0].evaluate(inspectRendererScopeReadOnly,
+      {asset: candidate.initialName, alias: candidate.exportAlias});
+    return {
+      supported: false, purpose: "read-only-runtime-diagnostics",
+      submission_authorized: false,
+      fingerprint_prefix: candidate.fingerprintPrefix,
+      renderer_found: true,
+      ...result
+    };
+  } finally {
+    try { await browser.close(); } catch {}
+  }
+}
+
+// This very function is serialized by page.evaluate and independently exercised
+// on isolated in-memory React Fiber fixtures. No helper closures are required.
+// Test fixtures are ignored inside Desktop (where document exists).
+export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
       // Read-only: dynamic-import installed local app asset, inspect one
       // export and React's existing scope maps. No assignment to window,
       // no dispatch, no API request, no stream method invocation.
-      const initial = await import("./assets/" + asset);
+      const testFixture = typeof document === "undefined" ? fixture : null;
+      const initial = testFixture
+        ? {[alias]: testFixture.definition} : await import("./assets/" + asset);
       const definition = initial[alias];
       const report = {
         exported_definition_present: !!definition,
@@ -118,9 +137,11 @@ export async function probeDesktopScopeReadOnly({
       };
       if (!report.scope_id_present || !report.resolve_function_present)
         return report;
-      const anchors = Array.from(document.body?.children ?? []).flatMap(el =>
-        Object.keys(el).filter(k => k.startsWith("__reactContainer$"))
-          .map(k => el[k]).filter(Boolean));
+      const anchors = testFixture
+        ? testFixture.anchors
+        : Array.from(document.body?.children ?? []).flatMap(el =>
+          Object.keys(el).filter(k => k.startsWith("__reactContainer$"))
+            .map(k => el[k]).filter(Boolean));
       report.react_container_count_capped = Math.min(8, anchors.length);
 
       // React often exposes both current and alternate Fibers. A repeated
@@ -216,15 +237,4 @@ export async function probeDesktopScopeReadOnly({
       report.query_cache_present =
         typeof transport?.scope?.queryClient?.getQueryCache === "function";
       return report;
-    }, {asset: candidate.initialName, alias: candidate.exportAlias});
-    return {
-      supported: false, purpose: "read-only-runtime-diagnostics",
-      submission_authorized: false,
-      fingerprint_prefix: candidate.fingerprintPrefix,
-      renderer_found: true,
-      ...result
-    };
-  } finally {
-    try { await browser.close(); } catch {}
-  }
 }
