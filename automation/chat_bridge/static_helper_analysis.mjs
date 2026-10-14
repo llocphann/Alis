@@ -130,6 +130,61 @@ function inspectFunctionBody(source, declarationEnd) {
   // Categorize (never evaluate) an initializer that is more complex than a
   // direct identifier alias. Stop at a balanced top-level statement separator.
   // Report ONLY syntax families and bounded booleans, never code or symbols.
+  const sanitizeTokenShape = text => {
+    const tokens=[], maxTokens=96, maxChars=320;
+    const keep=new Set(["new","await","void","typeof","delete","true","false",
+      "null","undefined","in","instanceof"]);
+    const punct=["===","!==",">>>","**=","&&=","||=","??=","=>","==","!=",
+      "<=",">=","&&","||","??","?.","++","--","**","<<",">>","+=","-=",
+      "*=","/=","%=","&=","|=","^=","..."];
+    let i=0,complete=true;
+    const push=value=>{
+      if(tokens.length>=maxTokens){complete=false;return false;}
+      tokens.push(value);return true;
+    };
+    while(i<text.length&&tokens.length<maxTokens){
+      const c=text[i];
+      if(/\s/.test(c)){i++;continue;}
+      // Strings have already been masked to STRING, but retain this guard in
+      // case callers change masking order later.
+      if(c==='"'||c==="'"||c==="\`"){
+        const quote=c;let escaped=false;i++;
+        while(i<text.length){
+          const d=text[i++];
+          if(escaped){escaped=false;continue;}
+          if(d==="\\"){escaped=true;continue;}
+          if(d===quote)break;
+        }
+        if(!push("STRING"))break;
+        continue;
+      }
+      if(/[A-Za-z_$]/.test(c)){
+        let j=i+1;while(j<text.length&&/[\w$]/.test(text[j]))j++;
+        const word=text.slice(i,j);
+        if(!push(keep.has(word)?word:"id"))break;
+        i=j;continue;
+      }
+      if(/[0-9]/.test(c)){
+        let j=i+1;while(j<text.length&&/[0-9A-Fa-f_xXobOBn.eE+-]/.test(text[j]))j++;
+        if(!push("0"))break;i=j;continue;
+      }
+      let matched="";
+      for(const p of punct) if(text.startsWith(p,i)&&p.length>matched.length)matched=p;
+      if(matched){if(!push(matched))break;i+=matched.length;continue;}
+      if("()[]{}.,;:?~!+-*/%<>=&|^".includes(c)){
+        if(!push(c))break;i++;continue;
+      }
+      // Do not serialize unknown Unicode/source characters. Mark shape as
+      // incomplete and skip the character.
+      complete=false;i++;
+    }
+    if(i<text.length)complete=false;
+    let shape=tokens.join(" ");
+    if(shape.length>maxChars){shape=shape.slice(0,maxChars);complete=false;}
+    return {expression_token_shape:shape,
+      expression_token_shape_complete:complete};
+  };
+
   const describeComplexRhs = text => {
     const limit = Math.min(text.length,512);
     let round=0,square=0,curly=0,stop=-1,malformed=false;
@@ -170,7 +225,8 @@ function inspectFunctionBody(source, declarationEnd) {
       expression_scan_complete:complete,
       contains_new_map_syntax:/\bnew\s+Map\s*\(/.test(part),
       mentions_parameter_token:params
-        ? tokens.some(token=>params.has(token)) : false
+        ? tokens.some(token=>params.has(token)) : false,
+      ...sanitizeTokenShape(part)
     };
   };
   // Trace only bare "name=otherName" lexical aliases that occur before the
