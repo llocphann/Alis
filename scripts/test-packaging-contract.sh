@@ -22,14 +22,14 @@ srcinfo_value() {
 }
 
 repo_version="$(tr -d '[:space:]' < VERSION)"
-stable_pkg="distro/arch/inir-shell/PKGBUILD"
-stable_srcinfo="distro/arch/inir-shell/.SRCINFO"
-git_pkg="distro/arch/inir-shell-git/PKGBUILD"
-git_srcinfo="distro/arch/inir-shell-git/.SRCINFO"
-meta_pkg="distro/arch/inir-meta/PKGBUILD"
-meta_srcinfo="distro/arch/inir-meta/.SRCINFO"
-stable_hook="distro/arch/inir-shell/inir-shell.install"
-git_hook="distro/arch/inir-shell-git/inir-shell-git.install"
+stable_pkg="distro/arch/alis-shell/PKGBUILD"
+stable_srcinfo="distro/arch/alis-shell/.SRCINFO"
+git_pkg="distro/arch/alis-shell-git/PKGBUILD"
+git_srcinfo="distro/arch/alis-shell-git/.SRCINFO"
+meta_pkg="distro/arch/alis-meta/PKGBUILD"
+meta_srcinfo="distro/arch/alis-meta/.SRCINFO"
+stable_hook="distro/arch/alis-shell/alis-shell.install"
+git_hook="distro/arch/alis-shell-git/alis-shell-git.install"
 makefile="Makefile"
 release_script="scripts/release.sh"
 packaging_workflow=".github/workflows/packaging.yml"
@@ -73,25 +73,25 @@ for pair in \
 done
 
 [[ "$(recipe_value "$stable_pkg" pkgver)" == "$repo_version" ]] \
-  || fail 'inir-shell pkgver does not match VERSION'
+  || fail 'alis-shell pkgver does not match VERSION'
 [[ "$(recipe_value "$meta_pkg" pkgver)" == "$repo_version" ]] \
-  || fail 'inir-meta pkgver does not match VERSION'
+  || fail 'alis-meta pkgver does not match VERSION'
 
 git_version="$(recipe_value "$git_pkg" pkgver)"
 case "$git_version" in
   "$repo_version".r*) ;;
-  *) fail "inir-shell-git pkgver seed does not follow VERSION: $git_version" ;;
+  *) fail "alis-shell-git pkgver seed does not follow VERSION: $git_version" ;;
 esac
 
-source_ref="$(sed -n 's/^_source_ref="${INIR_SOURCE_REF:-\([^}]*\)}"$/\1/p' "$stable_pkg")"
-[[ -n "$source_ref" ]] || fail 'cannot read inir-shell default _source_ref'
+source_ref="$(sed -n 's/^_source_ref="${ALIS_SOURCE_REF:-\([^}]*\)}"$/\1/p' "$stable_pkg")"
+[[ -n "$source_ref" ]] || fail 'cannot read alis-shell default _source_ref'
 git cat-file -e "${source_ref}^{commit}" 2>/dev/null \
-  || fail "inir-shell source ref is not a local commit: $source_ref"
+  || fail "alis-shell source ref is not a local commit: $source_ref"
 git merge-base --is-ancestor "$source_ref" HEAD \
-  || fail "inir-shell source ref is not an ancestor of HEAD: $source_ref"
+  || fail "alis-shell source ref is not an ancestor of HEAD: $source_ref"
 source_version="$(git show "$source_ref:VERSION" | tr -d '[:space:]')"
 [[ "$source_version" == "$repo_version" ]] \
-  || fail "inir-shell source snapshot VERSION=$source_version, repository VERSION=$repo_version"
+  || fail "alis-shell source snapshot VERSION=$source_version, repository VERSION=$repo_version"
 for required_path in \
   shell.qml \
   qmldir \
@@ -102,28 +102,28 @@ for required_path in \
   docs/RELEASING.md \
   native/Cargo.toml \
   native/Cargo.lock \
-  assets/helpers/inir-hadalird-system-provision \
-  assets/polkit/org.inir.hadalird-system-provision.policy; do
+  assets/helpers/alis-hadalird-system-provision \
+  assets/polkit/org.alis.hadalird-system-provision.policy; do
   git cat-file -e "$source_ref:$required_path" 2>/dev/null \
-    || fail "inir-shell source snapshot lacks $required_path"
+    || fail "alis-shell source snapshot lacks $required_path"
 done
 
 source_root_manifest="$(git show "$source_ref:sdata/runtime-root-files.txt")"
 if ! grep -Fxq 'qmldir' <<<"$source_root_manifest"; then
   grep -Fq 'install -Dm644 "$srcroot/qmldir" "$shellroot/qmldir"' "$stable_pkg" \
-    || fail 'inir-shell pinned snapshot omits qmldir and the package compatibility copy is missing'
+    || fail 'alis-shell pinned snapshot omits qmldir and the package compatibility copy is missing'
 fi
 
 srcinfo_source="$(srcinfo_value "$stable_srcinfo" source)"
 [[ "$srcinfo_source" == *"/archive/${source_ref}.tar.gz" ]] \
-  || fail 'inir-shell .SRCINFO source archive drifted from _source_ref'
+  || fail 'alis-shell .SRCINFO source archive drifted from _source_ref'
 
 # The frozen Arch source must ship the root-owned Hadalird Polkit gateway;
 # checking the current checkout alone missed a stale pre-gateway source pin.
 for recipe in "$stable_pkg" "$git_pkg"; do
-  grep -Fq 'install -Dm755 "$srcroot/assets/helpers/inir-hadalird-system-provision"' "$recipe" \
+  grep -Fq 'install -Dm755 "$srcroot/assets/helpers/alis-hadalird-system-provision"' "$recipe" \
     || fail "$recipe does not ship the trusted Hadalird system provisioner"
-  grep -Fq 'install -Dm644 "$srcroot/assets/polkit/org.inir.hadalird-system-provision.policy"' "$recipe" \
+  grep -Fq 'install -Dm644 "$srcroot/assets/polkit/org.alis.hadalird-system-provision.policy"' "$recipe" \
     || fail "$recipe does not ship the Hadalird Polkit policy"
 done
 
@@ -146,10 +146,9 @@ done
 
 # Rust is now part of the shipped runtime. Direct shell packages therefore
 # need Cargo at build time, must be architecture-specific, and must install all
-# four baseline helpers under the selector-owned runtime directory. The pinned
-# non-VCS package source currently predates current-source helpers, so the rolling
-# Companion is separately installed from Hadanion.
-arch_native_bins=(inir-inputd inir-mpdd inir-native inir-theme)
+# four baseline helpers under the selector-owned runtime directory. The optional
+# Companion is separately installed from its pinned package.
+arch_native_bins=(alis-inputd alis-mpdd alis-native alis-theme)
 for pair in \
   "$stable_pkg:$stable_srcinfo" \
   "$git_pkg:$git_srcinfo"; do
@@ -235,7 +234,7 @@ wiki_trigger_count="$(grep -F -c -e "- 'scripts/wiki-sync.sh'" "$packaging_workf
 [[ "$wiki_trigger_count" -eq 2 ]] \
   || fail 'Packaging workflow must watch scripts/wiki-sync.sh for both push and pull_request'
 
-# inir-meta promises the full desktop experience. These packages represent
+# alis-meta promises the full desktop experience. These packages represent
 # default source-installer supplements across shell utilities, visuals, login,
 # wallpaper tooling, task management, and critical fonts.
 meta_required=(
@@ -264,9 +263,9 @@ cmp -s "$stable_hook" "$git_hook" || fail 'stable/git Arch lifecycle hooks diffe
 for hook in "$stable_hook" "$git_hook"; do
   grep -Fq 'post_remove() {' "$hook" \
     || fail "$hook no longer explains per-user service cleanup after package removal"
-  grep -Fq -- "-path '*.wants/inir.service' -type l -delete" "$hook" \
+  grep -Fq -- "-path '*.wants/alis.service' -type l -delete" "$hook" \
     || fail "$hook no longer provides dangling service-link cleanup"
-  grep -Fq "run 'inir service disable' as each affected user" "$hook" \
+  grep -Fq "run 'alis service disable' as each affected user" "$hook" \
     || fail "$hook no longer documents the safe pre-removal service step"
 done
 
@@ -275,17 +274,17 @@ done
 # unit directly, legacy identical user copies are migrated away, custom user
 # overrides are never silently deleted, and service uninstall stays package-owned.
 for pkg in "$stable_pkg" "$git_pkg"; do
-  grep -Fq 'local package_unit="/usr/lib/systemd/user/inir.service"' "$pkg" \
+  grep -Fq 'local package_unit="/usr/lib/systemd/user/alis.service"' "$pkg" \
     || fail "$pkg no longer binds service lifecycle to the package-owned unit"
   grep -Fq 'cmp -s "$user_unit" "$package_unit"' "$pkg" \
     || fail "$pkg no longer safely migrates identical legacy user units"
-  grep -Fq 'custom user inir.service shadows the package unit' "$pkg" \
+  grep -Fq 'custom user alis.service shadows the package unit' "$pkg" \
     || fail "$pkg no longer preserves custom user service overrides"
   grep -Fq 'ln -sf "$package_unit" "$correct_link"' "$pkg" \
     || fail "$pkg no longer retargets existing enabled wiring during legacy-unit migration"
-  grep -Fq 'ln -sf "/usr/lib/systemd/user/inir.service"' "$pkg" \
+  grep -Fq 'ln -sf "/usr/lib/systemd/user/alis.service"' "$pkg" \
     || fail "$pkg no longer wires compositor startup to the package-owned unit"
-  grep -Fq 'inir.service is owned by the pacman package' "$pkg" \
+  grep -Fq 'alis.service is owned by the pacman package' "$pkg" \
     || fail "$pkg can again uninstall package-owned service state through the launcher"
   grep -Fq 'install_end = text.find(install_next_marker, install_start)' "$pkg" \
     || fail "$pkg no longer replaces the complete install_user_service function"
@@ -309,19 +308,19 @@ grep -Fq 'Package-managed installs therefore do not need to hard-depend on EasyE
   || fail 'audio/media docs no longer preserve the package optional-dependency contract'
 
 # Teardown docs must preserve the ownership boundary across all install modes.
-grep -Fq 'inir service disable' "$uninstall_doc" \
+grep -Fq 'alis service disable' "$uninstall_doc" \
   || fail 'uninstall docs no longer remove per-user service wiring before manual/package removal'
-grep -Fq 'inir service uninstall' "$uninstall_doc" \
+grep -Fq 'alis service uninstall' "$uninstall_doc" \
   || fail 'uninstall docs no longer remove the manual make-install user unit before launcher removal'
 grep -Fq 'sudo make uninstall' "$uninstall_doc" \
   || fail 'uninstall docs no longer document Makefile teardown'
-grep -Fq '/usr/lib/systemd/user/inir.service' "$uninstall_doc" \
+grep -Fq '/usr/lib/systemd/user/alis.service' "$uninstall_doc" \
   || fail 'uninstall docs no longer identify pacman service ownership'
-grep -Fq 'NixOS/Home Manager modules own `inir.service` declaratively' "$uninstall_doc" \
+grep -Fq 'NixOS/Home Manager modules own `alis.service` declaratively' "$uninstall_doc" \
   || fail 'uninstall docs no longer preserve declarative Nix service ownership'
-grep -Fq 'Run it as the user whose iNiR service was configured' "$uninstall_doc" \
+grep -Fq 'Run it as the user whose Alis service was configured' "$uninstall_doc" \
   || fail 'uninstall docs no longer warn against root cross-home cleanup'
-grep -Fq -- "-type l -path '*.wants/inir.service' -delete" "$uninstall_doc" \
+grep -Fq -- "-type l -path '*.wants/alis.service' -delete" "$uninstall_doc" \
   || fail 'uninstall docs no longer use the working stale wants-link cleanup glob'
 
 printf '%s\n' '1..1'

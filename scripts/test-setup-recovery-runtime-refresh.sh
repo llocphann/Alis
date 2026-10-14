@@ -46,6 +46,7 @@ export CARGO_TARGET_DIR="$stage/native-target"
 cat > "$XDG_BIN_HOME/cargo" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+[[ "${FAIL_NATIVE_BUILD:-0}" != 1 ]] || exit 1
 release="${CARGO_TARGET_DIR:?}/release"
 mkdir -p "$release"
 for binary in alis-inputd alis-mpdd alis-native alis-theme; do
@@ -85,6 +86,7 @@ IS_UPDATE=false
 STY_CYAN=''; STY_RST=''; STY_FAINT=''; STY_GREEN=''; STY_BLUE=''; STY_YELLOW=''; STY_RED=''; STY_PURPLE=''; STY_BOLD=''; STY_SLANT=''
 tui_info() { :; }
 tui_warn() { :; }
+tui_error() { :; }
 tui_confirm() { return 1; }
 OLD_UNIT=0; OLD_ACTIVE=0; NEW_ACTIVE=0; OLD_ENABLED=disabled
 systemctl() {
@@ -145,12 +147,26 @@ ln -s ../inir.service "$XDG_CONFIG_HOME/systemd/user/niri.service.wants/inir.ser
 blocked_stage 'lingering legacy wants link'
 unlink "$XDG_CONFIG_HOME/systemd/user/niri.service.wants/inir.service"
 
+# Bash errexit is suppressed for functions invoked as an || operand. A build
+# failure must still stop this sourced stage explicitly, without publishing a
+# completed manifest or replacing the public CLI with an unqualified payload.
+export FAIL_NATIVE_BUILD=1
+build_rc=0
+(cd "$repo_root"; run_recovery_stage) > "$stage/failed-build.log" 2>&1 || build_rc=$?
+[[ "$build_rc" == 1 ]] || fail "native build failure was ignored (exit $build_rc)"
+[[ ! -f "$runtime/.alis-manifest" && ! -e "$XDG_BIN_HOME/alis" ]] ||
+    fail 'failed native build finalized manifest or refreshed the public launcher'
+unset FAIL_NATIVE_BUILD
+
 (
     cd "$repo_root"
     run_recovery_stage
 ) || fail 'recovery install-stage execution failed'
 grep -Fxq 'retained rollback unit' "$XDG_CONFIG_HOME/systemd/user/inir.service" ||
     fail 'safe retained legacy unit was modified'
+for binary in alis-inputd alis-mpdd alis-native alis-theme; do
+    [[ -x "$runtime/native/bin/$binary" ]] || fail "successful install lacks native runtime: $binary"
+done
 
 [[ ! -e "$runtime/RetiredRoot.qml" && ! -L "$runtime/RetiredRoot.qml" ]] \
     || fail 'IS_UPDATE=false recovery install preserved retired managed root QML'

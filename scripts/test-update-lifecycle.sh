@@ -19,14 +19,14 @@ payload_tool="$repo_root/sdata/lib/runtime-payload.py"
 updates_service="$repo_root/services/Updates.qml"
 release_script="$repo_root/scripts/release.sh"
 nix_package="$repo_root/nix/package.nix"
-arch_package="$repo_root/distro/arch/inir-shell/PKGBUILD"
-arch_package_srcinfo="$repo_root/distro/arch/inir-shell/.SRCINFO"
-arch_git_package="$repo_root/distro/arch/inir-shell-git/PKGBUILD"
-arch_git_srcinfo="$repo_root/distro/arch/inir-shell-git/.SRCINFO"
-arch_meta_package="$repo_root/distro/arch/inir-meta/PKGBUILD"
-arch_meta_srcinfo="$repo_root/distro/arch/inir-meta/.SRCINFO"
+arch_package="$repo_root/distro/arch/alis-shell/PKGBUILD"
+arch_package_srcinfo="$repo_root/distro/arch/alis-shell/.SRCINFO"
+arch_git_package="$repo_root/distro/arch/alis-shell-git/PKGBUILD"
+arch_git_srcinfo="$repo_root/distro/arch/alis-shell-git/.SRCINFO"
+arch_meta_package="$repo_root/distro/arch/alis-meta/PKGBUILD"
+arch_meta_srcinfo="$repo_root/distro/arch/alis-meta/.SRCINFO"
 arch_dependency_installer="$repo_root/sdata/dist-arch/install-deps.sh"
-arch_dependency_meta="$repo_root/sdata/dist-arch/inir-deps/PKGBUILD"
+arch_dependency_meta="$repo_root/sdata/dist-arch/alis-deps/PKGBUILD"
 
 for required in \
     "$setup_file" "$robust" "$snapshots" "$payload_tool" "$updates_service" "$release_script" \
@@ -48,7 +48,7 @@ if grep -Fq '[[ -n "$NIRI_SOCKET" ]] || [[ -n "$WAYLAND_DISPLAY" ]]' "$snapshots
 fi
 
 # Restart and rollback must go through the lifecycle owner, never fire-and-forget.
-if grep -Fq 'nohup systemctl --user restart inir.service' "$setup_file" \
+if grep -Fq 'nohup systemctl --user restart alis.service' "$setup_file" \
         || grep -Fq 'nohup qs -p "${II_TARGET}"' "$setup_file"; then
     fail 'setup update still performs an asynchronous unverified restart'
 fi
@@ -64,7 +64,7 @@ grep -Fq 'runtime-payload.py" sync-dir' "$setup_file" \
     || fail 'setup update does not use the canonical runtime payload policy'
 
 # Package-managed payloads must preserve package-manager launcher ownership.
-# Otherwise `inir migrate` can materialize a stale raw launcher in ~/.local/bin
+# Otherwise `alis migrate` can materialize a stale raw launcher in ~/.local/bin
 # and shadow the launcher that pacman/Nix updates on the next package upgrade.
 for package_recipe in "$arch_package" "$arch_git_package"; do
     grep -Fq 'get_installed_update_strategy 2>/dev/null || true' "$package_recipe" \
@@ -93,7 +93,7 @@ check_arch_srcinfo "$arch_meta_package" "$arch_meta_srcinfo"
 
 # The non-VCS Arch package's generated metadata must use the same immutable
 # source ref as the PKGBUILD. This catches source URL drift even between releases.
-arch_source_ref="$(sed -n 's/^_source_ref="${INIR_SOURCE_REF:-\([^}]*\)}"$/\1/p' "$arch_package")"
+arch_source_ref="$(sed -n 's/^_source_ref="${ALIS_SOURCE_REF:-\([^}]*\)}"$/\1/p' "$arch_package")"
 arch_srcinfo_source="$(sed -n 's/^[[:space:]]*source = //p' "$arch_package_srcinfo" | head -1)"
 [[ -n "$arch_source_ref" && -n "$arch_srcinfo_source" ]] \
     || fail 'could not resolve Arch non-VCS package source metadata'
@@ -107,16 +107,16 @@ arch_srcinfo_source="$(sed -n 's/^[[:space:]]*source = //p' "$arch_package_srcin
 repo_version="$(tr -d '[:space:]' < "$repo_root/VERSION")"
 dependency_meta_version="$(grep -m1 '^pkgver=' "$arch_dependency_meta" | cut -d= -f2-)"
 [[ "$dependency_meta_version" == "$repo_version" ]] \
-    || fail "inir-deps pkgver=$dependency_meta_version does not match VERSION=$repo_version"
+    || fail "alis-deps pkgver=$dependency_meta_version does not match VERSION=$repo_version"
 grep -Fqx "url='https://github.com/llocphann/Alis'" "$arch_dependency_meta" \
-    || fail 'inir-deps still advertises a non-Alis repository'
-grep -Fq 'inir-deps) continue ;;' "$arch_dependency_installer" \
+    || fail 'alis-deps still advertises a non-Alis repository'
+grep -Fq 'alis-deps) continue ;;' "$arch_dependency_installer" \
     || fail 'Arch installer can resolve aggregate tracker dependencies as an install group'
 grep -Fq '_meta_build_dir="$(mktemp -d)"' "$arch_dependency_installer" \
     || fail 'Arch installer does not stage the dependency meta-package build'
 grep -Fq 'cp -- "$_meta_dir/PKGBUILD" "$_meta_build_dir/PKGBUILD"' "$arch_dependency_installer" \
     || fail 'Arch installer does not copy the dependency meta recipe into staging'
-grep -Fq 'sed -i "s/^pkgver=.*/pkgver=${_inir_ver}/" "$_meta_build_dir/PKGBUILD"' "$arch_dependency_installer" \
+grep -Fq 'sed -i "s/^pkgver=.*/pkgver=${_alis_ver}/" "$_meta_build_dir/PKGBUILD"' "$arch_dependency_installer" \
     || fail 'Arch installer does not patch the staged dependency meta recipe'
 grep -Fq 'for _meta_dep in "${depends[@]}"; do' "$arch_dependency_installer" \
     || fail 'Arch installer does not filter dependency tracker entries by installed packages'
@@ -126,7 +126,7 @@ grep -Fq 'pkg_sudo pacman -U --noconfirm "${local_pkg[0]}"' "$arch_dependency_in
     || fail 'Arch installer does not refresh dependency tracker metadata on rerun'
 grep -Fq 'rm -rf -- "$_meta_build_dir"' "$arch_dependency_installer" \
     || fail 'Arch installer does not clean the dependency meta staging directory'
-if grep -Fq 'sed -i "s/^pkgver=.*/pkgver=${_inir_ver}/" "$_meta_dir/PKGBUILD"' "$arch_dependency_installer"; then
+if grep -Fq 'sed -i "s/^pkgver=.*/pkgver=${_alis_ver}/" "$_meta_dir/PKGBUILD"' "$arch_dependency_installer"; then
     fail 'Arch installer still mutates the tracked dependency meta PKGBUILD'
 fi
 if grep -Fq 'pacman -Udd' "$arch_dependency_installer"; then
@@ -167,7 +167,7 @@ import sys
 
 text = Path(sys.argv[1]).read_text()
 version_consistency = text.split('require_release_version_consistency() {', 1)[1].split('\n}\n\nrequire_release_source_pin() {', 1)[0]
-if 'sdata/dist-arch/inir-deps/PKGBUILD' not in version_consistency:
+if 'sdata/dist-arch/alis-deps/PKGBUILD' not in version_consistency:
     raise SystemExit('release version preflight must include the dependency tracker package')
 
 source_pin = text.split('require_release_source_pin() {', 1)[1].split('\n}\n\nrequire_release_checkout() {', 1)[0]
@@ -293,7 +293,10 @@ PY_UPDATES
 # actual launch/runtime files. This prevents install/update payload drift.
 python3 "$payload_tool" manifest --root "$repo_root" > "$tmp/manifest"
 grep -q '^shell.qml:' "$tmp/manifest" || fail 'runtime manifest is missing shell.qml'
-grep -q '^scripts/inir:' "$tmp/manifest" || fail 'runtime manifest is missing scripts/inir'
+grep -q '^scripts/alis:' "$tmp/manifest" || fail 'runtime manifest is missing scripts/alis'
+if grep -q '^scripts/inir:' "$tmp/manifest"; then
+    fail 'runtime manifest shipped the retired public scripts/inir launcher'
+fi
 for excluded in \
     scripts/qml-check.fish \
     scripts/test-local-distribution.sh \
@@ -309,8 +312,8 @@ done
 # Exercise the verifier with a fake qs process. A fatal startup must fail, a
 # startup marker followed by a long-running shell succeeds, and a silent hang
 # must fail rather than being treated as healthy.
-mkdir -p "$tmp/bin" "$tmp/xdg/quickshell/inir" "$tmp/state"
-printf '%s\n' '// probe shell' > "$tmp/xdg/quickshell/inir/shell.qml"
+mkdir -p "$tmp/bin" "$tmp/xdg/quickshell/alis" "$tmp/state"
+printf '%s\n' '// probe shell' > "$tmp/xdg/quickshell/alis/shell.qml"
 cat > "$tmp/bin/qs" <<'EOF_QS'
 #!/usr/bin/env bash
 case "${MOCK_QS_MODE:-fatal}" in
@@ -342,17 +345,17 @@ log_error() { :; }
 source "$robust"
 
 export MOCK_QS_MODE=fatal
-if verify_qs_loads 1 "$tmp/xdg/quickshell/inir" >/dev/null 2>&1; then
+if verify_qs_loads 1 "$tmp/xdg/quickshell/alis" >/dev/null 2>&1; then
     fail 'fatal Quickshell probe was accepted'
 fi
 
 export MOCK_QS_MODE=boot
-if ! verify_qs_loads 1 "$tmp/xdg/quickshell/inir" >/dev/null 2>&1; then
+if ! verify_qs_loads 1 "$tmp/xdg/quickshell/alis" >/dev/null 2>&1; then
     fail 'healthy startup marker was rejected'
 fi
 
 export MOCK_QS_MODE=silent
-if verify_qs_loads 1 "$tmp/xdg/quickshell/inir" >/dev/null 2>&1; then
+if verify_qs_loads 1 "$tmp/xdg/quickshell/alis" >/dev/null 2>&1; then
     fail 'silent Quickshell timeout was accepted'
 fi
 

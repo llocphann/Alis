@@ -26,7 +26,7 @@ fail() {
 }
 
 runtime="$stage/runtime"
-manifest="$runtime/.inir-manifest"
+manifest="$runtime/.alis-manifest"
 retired_module_dir="$runtime/modules/retired-orphan-fixture"
 live_module_dir="$runtime/modules/dock"
 mkdir -p "$retired_module_dir" "$live_module_dir" "$runtime/scripts"
@@ -38,6 +38,8 @@ mkdir -p "$retired_module_dir" "$live_module_dir" "$runtime/scripts"
 # runtime code rather than depending on a retired compatibility bridge.
 generate_manifest "$repo_root" "$manifest" \
     || fail 'could not generate runtime manifest fixture'
+grep -Fxq '# alis-manifest v2' "$manifest" \
+    || fail 'generated installed manifest does not identify the canonical Alis format'
 printf '%s\n' 'import QtQuick' > "$runtime/RetiredRoot.qml"
 printf '%s\n' 'import QtQuick' > "$retired_module_dir/Stale.qml"
 printf '%s\n' '# retired source-only contract' > "$runtime/scripts/test-packaging-contract.sh"
@@ -78,7 +80,7 @@ path = Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
 start_marker = '    # Finalize manifest\n'
 end_marker = '    # Fix script permissions\n'
-cleanup_call = '    cleanup_orphans "$II_TARGET" "${II_TARGET}/.inir-manifest"\n'
+cleanup_call = '    cleanup_orphans "$II_TARGET" "${II_TARGET}/.alis-manifest"\n'
 
 if text.count(start_marker) != 1 or text.count(end_marker) != 1:
     raise SystemExit("install stage lost the manifest-finalization/permission markers")
@@ -91,9 +93,9 @@ if 'IS_UPDATE' in segment:
     raise SystemExit("install-stage orphan cleanup is still gated by IS_UPDATE")
 PY
 
-grep -Fq 'generate_manifest "$II_SOURCE" "${II_TARGET}/.inir-manifest"' "$repo_root/setup" \
+grep -Fq 'generate_manifest "$II_SOURCE" "${II_TARGET}/.alis-manifest"' "$repo_root/setup" \
     || fail 'setup update no longer generates the canonical installed manifest'
-grep -Fq 'cleanup_orphans "$II_TARGET" "${II_TARGET}/.inir-manifest"' "$repo_root/setup" \
+grep -Fq 'cleanup_orphans "$II_TARGET" "${II_TARGET}/.alis-manifest"' "$repo_root/setup" \
     || fail 'setup update no longer invokes runtime orphan cleanup'
 grep -Fq '"$script_dir/test-runtime-orphan-cleanup.sh"' "$repo_root/scripts/release.sh" \
     || fail 'release helper no longer requires the runtime orphan cleanup contract'
@@ -102,8 +104,8 @@ grep -Fq '"$script_dir/test-runtime-orphan-cleanup.sh"' "$repo_root/scripts/rele
 # full-payload helper. Bypassing it would reintroduce mixed-runtime risk even if
 # make install and repo-copy update remain correct.
 for package_recipe in \
-    "$repo_root/distro/arch/inir-shell/PKGBUILD" \
-    "$repo_root/distro/arch/inir-shell-git/PKGBUILD"; do
+    "$repo_root/distro/arch/alis-shell/PKGBUILD" \
+    "$repo_root/distro/arch/alis-shell-git/PKGBUILD"; do
     grep -Fq 'runtime-payload.py" copy --root "$srcroot" --target "$shellroot"' "$package_recipe" \
         || fail "Arch recipe bypasses canonical runtime payload copy: ${package_recipe#$repo_root/}"
 done

@@ -1,28 +1,28 @@
 # Config System
 
-How configuration works in Hadalis/iNiR, from the user's perspective and from the code side.
+How configuration works in Alis, from the user's perspective and from the code side.
 
 ## For users
 
-Everything is configurable through the graphical Settings UI. Open it with `Super+,` or `inir settings`. You should never need to edit the config file by hand.
+Everything is configurable through the graphical Settings UI. Open it with `Super+,` or `alis settings`. You should never need to edit the config file by hand.
 
-After required migration 019 has been applied, the canonical config file is:
+The canonical config file used by live QML is:
 
 ```
-~/.config/inir/config.json
+~/.config/alis/config.json
 ```
 
-The live QML compatibility path is still `~/.config/illogical-impulse/config.json`. When only the legacy directory exists, migration 019 moves it to `~/.config/inir` and replaces the legacy path with a symlink to the canonical directory. If both real directories exist, or the legacy path is a foreign symlink or another unexpected object, the migration fails closed and preserves the existing state so the user can reconcile it manually before rerunning `inir migrate`. This keeps the current QML path and maintenance tooling on the same data without silently overwriting ambiguous user state.
+The CLI and installer prefer the Alis directory when it exists. Before cutover, they can still read an existing `illogical-impulse` or `inir` directory. Those legacy directories and saved preferences are migration inputs; renaming the product must not silently replace or discard them.
 
-Repo-managed `./setup install` and update flows apply required migrations automatically. Package managers and manual `make install` deliberately do not mutate arbitrary user home directories, so each affected user should run `inir migrate` before first launch (and after an upgrade when migrations are pending). Until migration 019 has run for that user, the QML compatibility path may still be a real legacy directory rather than a symlink. Do not run another user's config migration as root.
+Migration 019 is historical: it moves the original `illogical-impulse` directory into `inir` and creates a compatibility symlink. Its recovery contract is preserved, including refusal to overwrite divergent real directories or foreign symlinks. Canonical Alis installations skip that migration. Do not run old migration 019 to prepare an Alis installation.
 
-This compatibility layout is part of the in-progress namespace cutover. Do not remove the legacy QML path or its migration support until the runtime itself has moved off `illogical-impulse` and that cutover has been validated.
+Repo-managed `./setup install` and update flows apply eligible migrations automatically after the canonical configuration and service ownership are ready. Package managers and manual `make install` deliberately do not mutate arbitrary user home directories. Fresh users must prepare the canonical Alis config before running migrations. Upgrading users must back up settings, reconcile config/state, verify active Niri keybinds and complete an owner-approved single-service handoff before running `alis migrate`. For a repo-copy upgrade, review the staging, cutover and recovery steps in [Canonical Alis cutover](BRAND_R01_CANONICAL_CUTOVER.md). Package-managed upgrades must preserve their package-manager ownership boundary. Do not run another user's config migration as root.
 
-### Optional Alis directory aliases
+### Historical Alis directory aliases
 
-The optional migration `061-alis-namespace-alias` can create `alis` symlinks to already existing `inir` directories under the user's XDG config, cache, data and state homes. It **does not rename or copy** any directory: the current live runtime, migration registry, and saved preferences continue using their original paths. Run `alis migrate` and explicitly accept the optional migration after checking its preview. Fresh installs lacking those directories are left untouched. If a destination is already a real file/directory or an unrelated symlink, including an existing `~/.cache/alis`, migration 061 skips that one destination, preserving its contents. It may still create aliases at the other independent free XDG roots without overwriting user-owned files.
+Migration `061-alis-namespace-alias` remains historical compatibility support for `alis` symlinks to existing `inir` directories under the user's XDG config, cache, data and state homes. It does not rename or copy a directory and skips occupied destinations, including real directories or unrelated symlinks. An alias is not a complete canonical runtime or service handoff; do not use it to bypass the cutover preflight.
 
-To reverse the optional alias, verify that the affected `alis` path is a symlink to `inir`, then remove only the symlink—not the directory it points to. Do not use recursive deletion. A full `inir` → `alis` primary-directory conversion must wait for a coordinated ShellId/service/runtime migration and owner verification.
+To reverse a historical alias, verify that the affected `alis` path is a symlink to `inir`, then remove only the symlink, preserving the directory it points to. A canonical config directory created by the cutover contains copied user data and must not be removed as though it were an alias.
 
 Changes you make in the file are picked up automatically within 50ms. No restart needed.
 
@@ -36,7 +36,7 @@ The Welcome wizard exposes only choices that materially affect the first session
 
 ### Panel family and Abyss
 
-`panelFamily` accepts `ii` (default), `waffle` and `abyss`. Unknown values normalize to `ii`. Select it in Settings → Modules → Panel Style or with `inir panelFamily set abyss`; switching preserves disabled panels using `knownPanels` and `visitedPanelFamilies` rather than replacing `enabledPanels` on every visit.
+`panelFamily` accepts `ii` (default), `waffle` and `abyss`. Unknown values normalize to `ii`. Select it in Settings → Modules → Panel Style or with `alis panelFamily set abyss`; switching preserves disabled panels using `knownPanels` and `visitedPanelFamilies` rather than replacing `enabledPanels` on every visit.
 
 Settings → Modules → **Abyss Style** groups Performance, Surface, Motion, Refraction & Glass, Perimeter, Bar & Dock, and Panels. The `abyss.*` namespace contains `quality`, `surface.opacity/tension/softness`, `motion.intensity`, `perimeter.thickness/radius/visibleInFullscreen`, and `effects.blur/refraction/glow/surfaceHighlight`. Sensible defaults live in both the typed schema and `defaults/config.json`.
 
@@ -183,7 +183,7 @@ The old `bar.modulesLayout`, `bar.edgeModulesLayout`, and `bar.modulesPlacement`
 
 ### Live shell layout
 
-Settings -> Shell Layout and `inir shellLayout` use the same controller as the
+Settings -> Shell Layout and `alis shellLayout` use the same controller as the
 live desktop editor. Existing canonical keys remain authoritative:
 
 - ii bar: `bar.vertical` plus `bar.bottom`
@@ -210,7 +210,7 @@ editor and move between advertised edge slots. For Abyss, the desktop context
 menu's **Edit shell layout** action intentionally enters the same output-local
 live Abyss Edge editor as the Settings header's **Edit Abyss layout** button.
 Other families continue through the shared Shell Layout controller from the
-desktop context menu, Settings -> Shell Layout, or `inir shellLayout open`.
+desktop context menu, Settings -> Shell Layout, or `alis shellLayout open`.
 The editor HUD stays above the edited panels and does not reuse the widget
 canvas or toolbar. Drag any highlighted surface toward a screen edge: legal
 edges light up as full strips, a chip follows the pointer with the drop
@@ -243,7 +243,7 @@ Dragging, resizing or toggling a widget on one desktop therefore does not move
 or hide its peer on another output. Settings -> Monitors shows connected and
 saved-disconnected outputs, with per-widget reset and whole-output reset.
 
-When a new output appears or its logical resolution changes, iNiR initializes
+When a new output appears or its logical resolution changes, Alis initializes
 missing free-placement coordinates against that output's panel-safe work area
 and separates unlocked collisions. Widget content and visual options remain
 global unless the corresponding control is explicitly output-local. The Shell
