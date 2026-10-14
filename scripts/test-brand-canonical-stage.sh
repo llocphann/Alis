@@ -97,6 +97,21 @@ again="$(bash "$helper" --apply --owner-approved 2>&1)" ||
 grep -Fq 'ALREADY STAGED' <<< "$again" || fail 'repeat staging should be idempotent'
 [[ "$(find "$HOME/.local/state/alis-cutover-backups" -type f -name alis | wc -l)" == "$backups_before" ]] ||
     fail 'idempotent stage duplicated legacy launcher backup'
+# A previously canonical user launcher can still be older than the current
+# repo. Only an approved refresh may replace it, after a verified backup.
+printf '\n# previous canonical source revision\n' >> "$HOME/.local/bin/alis"
+stale_hash="$(sha256sum "$HOME/.local/bin/alis" | cut -d' ' -f1)"
+preview_stale="$(bash "$helper" --dry-run)" || fail 'canonical-stale preview'
+[[ "$preview_stale" == *"canonical-stale"* ]] || fail 'missed stale canonical launcher'
+[[ "$(sha256sum "$HOME/.local/bin/alis" | cut -d' ' -f1)" == "$stale_hash" ]] ||
+    fail 'preview modified canonical launcher'
+bash "$helper" --apply --owner-approved > "$tmp/stale-refresh.log" || fail 'stale canonical CLI refresh'
+cmp -s "$HOME/.local/bin/alis" "$tmp/root/scripts/alis" || fail 'stale CLI not refreshed'
+[[ "$(find "$HOME/.local/state/alis-cutover-backups" -type f -name alis | wc -l)" == 2 ]] ||
+    fail 'original canonical launcher was not archived'
+if ! grep -l 'previous canonical source revision' "$HOME"/.local/state/alis-cutover-backups/launcher-*/alis >/dev/null; then
+    fail 'stale source backup does not match previous canonical CLI'
+fi
 [[ -f "$HOME/.config/systemd/user/inir.service" ]] || fail 'original service lost'
 [[ "$(sha256sum "$HOME/.config/inir/config.json" | cut -d' ' -f1)" == "$hash1" ]] || fail 'preferences mutated'
 [[ "$(sha256sum "$HOME/.local/state/quickshell/user/first_run.txt" | cut -d' ' -f1)" == "$hash2" ]] || fail 'first run reset'
