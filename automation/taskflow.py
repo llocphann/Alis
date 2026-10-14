@@ -471,6 +471,8 @@ def save_handoff(code: str, bundle: dict, repository: str = "llocphann/Alis") ->
         if pinned.get(field) != original.get(field):
             raise TaskError("Handoff targets a different Issue or source SHA")
     existing = record.get("handoff")
+    if record.get("status") in TERMINAL_STATES or record.get("unresolved"):
+        raise TaskError("Terminal or unresolved task cannot accept a new handoff")
     if existing and existing.get("id") != checked["id"]:
         raise TaskError("Previous handoff is unacknowledged; reconcile before replacing")
     record["handoff"] = checked
@@ -520,6 +522,45 @@ def run_task(code: str, checkout: Path, repository: str = "llocphann/Alis",
     return receipt
 
 
+
+def _compact_acked_receipt(record: dict, *, dry_run: bool) -> bool:
+    """Drop bulky report bodies, retain immutable anti-replay receipt identity."""
+    summary = record.get("latest_receipt")
+    if not isinstance(summary, dict):
+        return False
+    job_id = summary.get("id")
+    if not isinstance(job_id, str) or not re.fullmatch(r"JOB-[a-f0-9]{24}", job_id):
+        return False
+    receipt_dir = state_dir() / "receipts"
+    if receipt_dir.is_symlink():
+        return False
+    path = receipt_dir / (job_id + ".json")
+    if not path.is_file() or path.is_symlink():
+        return False
+    try:
+        with path.open(encoding="utf-8") as stream:
+            receipt = json.load(stream)
+    except (OSError, ValueError):
+        return False
+    if (receipt.get("id") != job_id or receipt.get("sha256") != summary.get("sha256")
+            or receipt.get("state") not in {"passed", "failed"}
+            or receipt.get("source_sha") != summary.get("source_sha")):
+        return False
+    steps = receipt.get("steps")
+    if not isinstance(steps, list):
+        return False
+    compacted = False
+    for step in steps:
+        if isinstance(step, dict) and isinstance(step.get("output_excerpt"), str):
+            # Keep a digest and exit status, never the stale raw diagnostics.
+            step["output_sha256"] = hashlib.sha256(step["output_excerpt"].encode()).hexdigest()
+            del step["output_excerpt"]
+            compacted = True
+    if compacted and not dry_run:
+        _atomic_json(path, receipt)
+    return compacted
+
+
 def cleanup(*, dry_run: bool = True, now: int | None = None) -> dict:
     """Conservative automatic retention for finished, delivery-acknowledged tasks.
 
@@ -530,7 +571,8 @@ def cleanup(*, dry_run: bool = True, now: int | None = None) -> dict:
     at = int(time.time()) if now is None else now
     workspaces = state_dir() / "tasks"
     stats = {"ok": True, "dry_run": dry_run, "retired_payloads": 0,
-             "deleted_task_files": 0, "preserved_unresolved": 0}
+             "compacted_receipts": 0, "deleted_task_files": 0,
+             "preserved_unresolved": 0}
     if not workspaces.is_dir() or workspaces.is_symlink():
         return stats
     for repo in REPOSITORIES:
@@ -555,6 +597,8 @@ def cleanup(*, dry_run: bool = True, now: int | None = None) -> dict:
                 continue
             if age < DETAIL_TTL:
                 continue
+            if _compact_acked_receipt(record, dry_run=dry_run):
+                stats["compacted_receipts"] += 1
             if age >= TERMINAL_TTL:
                 stats["deleted_task_files"] += 1
                 if not dry_run:

@@ -190,6 +190,38 @@ class TaskflowTests(unittest.TestCase):
             self.assertEqual(taskflow.cleanup(dry_run=False, now=1000+taskflow.TERMINAL_TTL+1)["deleted_task_files"], 1)
             self.assertFalse(path.exists())
 
+    def test_acked_receipt_compacts_without_losing_replay_guard(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            task = taskflow.resolve("AUTO-R01", api)
+            taskflow.intake(task)
+            record = taskflow.load_task("AUTO-R01")
+            record["status"] = "completed"
+            record["delivery_acknowledged_unix"] = 1000
+            job_id = "JOB-" + "a" * 24
+            digest = "c" * 64
+            record["latest_receipt"] = {"id": job_id, "sha256": digest,
+                                        "state": "passed", "source_sha": task["base_sha"]}
+            taskflow._save_task(record)
+            receipt_dir = Path(tmp) / "hadalis-automation/taskflow/receipts"
+            receipt_dir.mkdir(parents=True)
+            path = receipt_dir / (job_id + ".json")
+            original = {"id": job_id, "sha256": digest, "state": "passed",
+                        "source_sha": task["base_sha"],
+                        "steps": [{"argv": ["git", "diff", "--check"],
+                                   "exit_code": 0, "output_excerpt": "old report body"}]}
+            taskflow._atomic_json(path, original)
+            preview = taskflow.cleanup(now=1000+taskflow.DETAIL_TTL+1)
+            self.assertEqual(preview["compacted_receipts"], 1)
+            self.assertIn("output_excerpt", json.loads(path.read_text())["steps"][0])
+            done = taskflow.cleanup(dry_run=False, now=1000+taskflow.DETAIL_TTL+1)
+            self.assertEqual(done["compacted_receipts"], 1)
+            after = json.loads(path.read_text())
+            self.assertEqual(after["id"], job_id)
+            self.assertEqual(after["sha256"], digest)
+            self.assertNotIn("output_excerpt", after["steps"][0])
+            self.assertEqual(len(after["steps"][0]["output_sha256"]), 64)
+            self.assertEqual(taskflow.cleanup(dry_run=False, now=1000+taskflow.DETAIL_TTL+1)["compacted_receipts"], 0)
+
     def test_untrusted_inline_script_cannot_execute_directly(self):
         task = dict(TASK)
         payload = {"schema": "alis.local-handoff.v1", "task": task,
