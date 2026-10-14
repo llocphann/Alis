@@ -80,7 +80,9 @@ if bash "$helper" --dry-run >/dev/null 2>&1; then fail 'symlink launcher accepte
 rm -- "$HOME/.local/bin/alis"
 mv "$tmp/wrapper-for-link" "$HOME/.local/bin/alis"
 if bash "$helper" --apply >/dev/null 2>&1; then fail 'unapproved apply succeeded'; fi
-bash "$helper" --apply --owner-approved | grep -Fq 'STAGED:' || fail 'explicit staging failed'
+applied="$(bash "$helper" --apply --owner-approved 2>&1)" ||
+    { printf 'Stage apply failed:\n%s\n' "$applied" >&2; fail 'explicit staging'; }
+grep -Fq 'STAGED:' <<< "$applied" || fail 'explicit staging lacked installed runtime'
 [[ -x "$HOME/.config/quickshell/alis/native/bin/alis-native" ]] || fail 'native runtime missing'
 grep -Fq '# Canonical CLI and runtime name is Alis.' "$HOME/.local/bin/alis" ||
     fail 'legacy Alis wrapper was not replaced by canonical CLI'
@@ -90,8 +92,9 @@ backups=("$HOME"/.local/state/alis-cutover-backups/launcher-*/alis)
 [[ "$(sha256sum "${backups[0]}" | cut -d' ' -f1)" == "$legacy_hash" ]] ||
     fail 'backed-up legacy launcher bytes changed'
 backups_before="$(find "$HOME/.local/state/alis-cutover-backups" -type f -name alis | wc -l)"
-bash "$helper" --apply --owner-approved | grep -Fq 'ALREADY STAGED' ||
-    fail 'repeat staging should be idempotent'
+again="$(bash "$helper" --apply --owner-approved 2>&1)" ||
+    { printf 'Repeat stage failed:\n%s\n' "$again" >&2; fail 'idempotent stage'; }
+grep -Fq 'ALREADY STAGED' <<< "$again" || fail 'repeat staging should be idempotent'
 [[ "$(find "$HOME/.local/state/alis-cutover-backups" -type f -name alis | wc -l)" == "$backups_before" ]] ||
     fail 'idempotent stage duplicated legacy launcher backup'
 [[ -f "$HOME/.config/systemd/user/inir.service" ]] || fail 'original service lost'
