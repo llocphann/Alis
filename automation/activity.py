@@ -5,6 +5,7 @@ private evidence are copied to the Settings activity surface.
 """
 from __future__ import annotations
 
+import json
 import re
 import time
 
@@ -73,5 +74,32 @@ def read(code: str, repository: str = "llocphann/Alis") -> dict:
                          str(receipt.get("id", ""))[:40],
                          str(receipt.get("state", ""))[:40],
                          str(receipt.get("source_sha", ""))[:12])})
+        job_id = receipt.get("id")
+        if isinstance(job_id, str) and re.fullmatch(r"JOB-[a-f0-9]{24}", job_id):
+            file = tf.state_dir() / "receipts" / (job_id + ".json")
+            if file.is_file() and not file.is_symlink():
+                try:
+                    with file.open(encoding="utf-8") as stream:
+                        detail = json.load(stream)
+                    if (detail.get("id") == job_id and
+                            detail.get("sha256") == receipt.get("sha256") and
+                            detail.get("source_sha") == receipt.get("source_sha")):
+                        steps = detail.get("steps", [])
+                        if isinstance(steps, list):
+                            for step in steps[:8]:
+                                if isinstance(step, dict):
+                                    command = step.get("argv")
+                                    name = command[1] if isinstance(command, list) and len(command) > 1 else "test"
+                                    logs.append({
+                                        "at_unix": int(receipt.get("finished_unix") or 0),
+                                        "kind": "local_test",
+                                        "text": redact(str(name)[:100] + " · exit=" +
+                                                       str(step.get("exit_code")) + "\n" +
+                                                       str(step.get("output_excerpt") or
+                                                           ("[retired output]" if "output_sha256" in step else "")))
+                                    })
+                except (OSError, ValueError, TypeError):
+                    pass
+    logs = logs[-tf.REPORT_LIMIT:]
     return {"ok": True, "code": record["code"], "repository": record["repository"],
             "status": status, "events": events, "logs": logs}
