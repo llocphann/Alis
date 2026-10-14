@@ -52,6 +52,19 @@ offBranch.mapping.orphan={id:"orphan",parent:null,
   message:{id:msg,author:{role:"user"}}};
 check(pending,[offBranch],"NO_ACTIVE_BRANCH_MATCH");
 
+// A collision on the same ACTIVE branch is ambiguous, even if there is
+// only one candidate conversation.
+const sameBranch=snapshot(chatA);
+sameBranch.mapping.extra={id:"extra",parent:"user",
+  message:{id:msg,author:{role:"user"}}};
+sameBranch.mapping.final.parent="extra";
+check(pending,[sameBranch],"DUPLICATE_USER_MESSAGE_ON_BRANCH");
+
+// The presence of an older matching message does not excuse a corrupt chain.
+const brokenAncestor=snapshot(chatA);
+brokenAncestor.mapping.user.parent="missing";
+check(pending,[brokenAncestor],"SNAPSHOT_UNVERIFIED");
+
 // Branch node IDs alone are not proof of authored user-message identity.
 const nodeOnly=snapshot(chatA,different);
 nodeOnly.mapping.user.id=msg;
