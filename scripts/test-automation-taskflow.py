@@ -145,6 +145,30 @@ class TaskflowTests(unittest.TestCase):
             self.assertEqual(len(record["activity"]), activity.EVENT_LIMIT)
             self.assertLessEqual(len(activity.redact("X" * 10000)), activity.BODY_LIMIT)
 
+    def test_diagnostics_read_bounded_local_receipt_without_file_sprawl(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            taskflow.intake(taskflow.resolve("AUTO-R01", api))
+            summary = taskflow.load_task("AUTO-R01")
+            job = "JOB-" + "b" * 24
+            summary["latest_receipt"] = {"id": job, "sha256": "c" * 64,
+                                         "source_sha": TASK["base_sha"],
+                                         "state": "failed", "finished_unix": 1000}
+            taskflow._save_task(summary)
+            target = taskflow.state_dir() / "receipts" / (job + ".json")
+            target.parent.mkdir(parents=True)
+            token = "ghp_" + "z" * 25
+            taskflow._atomic_json(target, {
+                "id": job, "sha256": "c" * 64,
+                "source_sha": TASK["base_sha"], "state": "failed",
+                "steps": [{"argv": ["python3", "scripts/test-fail.py"],
+                           "exit_code": 1, "output_excerpt": "failed token "+token}]})
+            logs = activity.read("AUTO-R01")["logs"]
+            self.assertTrue(any(x["kind"] == "local_test" for x in logs))
+            self.assertTrue(any("exit=1" in x["text"] for x in logs))
+            self.assertNotIn(token, repr(logs))
+            self.assertIn("[REDACTED]", repr(logs))
+            self.assertEqual(len(list((taskflow.state_dir() / "tasks" / "Alis").glob("*.json"))), 1)
+
     def test_queue_activity_logs_settings_contract(self):
         qml = (Path(__file__).resolve().parents[1] /
                "modules/settings/AutomationTaskConfig.qml").read_text()
