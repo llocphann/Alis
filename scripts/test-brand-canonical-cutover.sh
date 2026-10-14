@@ -205,6 +205,24 @@ grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' "$retired" ||
     die 'new service started more than once'
 [[ "$(head -n 1 "$tmp/good/order")" == 'stop inir.service' ]] ||
     die 'started new service before old owner stopped'
+# Exercise BOTH scripts consecutively with one service-manager fixture, not
+# unrelated independent fixtures: the recovered unit bytes and compositor link
+# must match the pre-cutover originals exactly.
+original_good_unit="$tmp/good-original-inir.service"
+cp -p "$tmp/good/state/alis-cutover-backups/retired-inir.service" "$original_good_unit"
+bash "$root/scripts/brand-canonical-rollback.sh" --dry-run > "$tmp/good-rollback-preview" ||
+    die 'approved cutover did not admit read-only rollback preview'
+bash "$root/scripts/brand-canonical-rollback.sh" --apply --owner-approved > "$tmp/good-reverse" ||
+    die 'cutover-to-rollback integration failed'
+[[ "$(cat "$tmp/good/state-inir")" == active &&
+   "$(cat "$tmp/good/state-alis")" == inactive ]] ||
+    die 'reverse handoff had more than one service owner'
+cmp -s "$original_good_unit" "$tmp/good/config/systemd/user/inir.service" ||
+    die 'reverse handoff did not restore byte-identical original unit'
+[[ -L "$tmp/good/config/systemd/user/niri.service.wants/inir.service" &&
+   ! -e "$tmp/good/config/systemd/user/alis.service" &&
+   ! -e "$tmp/good/state/alis-cutover-backups/retired-inir.service" ]] ||
+    die 'reverse handoff left conflicting D-Bus owner or wrong compositor link'
 
 # Original upstream settings may be linked into the public Alis namespace.
 # The script must preserve the historical directory, replace only that
