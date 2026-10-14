@@ -26,6 +26,9 @@ const page=(opts={})=>{
     action:opts.action??[],
     main:opts.main??[{visible:true}],
     mainHeading:opts.mainHeading??[],
+    mainProjectText:opts.mainProjectText??[],
+    mainEmptyState:opts.mainEmptyState??[],
+    mainComposerVisualLabel:opts.mainComposerVisualLabel??[],
     send:opts.send??[{visible:true,disabled:false}],stop:opts.stop??[]};
   data.genericComposer=opts.genericComposer??(
     data.scopedComposer.length>0?[]:data.composer);
@@ -41,6 +44,16 @@ const page=(opts={})=>{
           assert.equal(query.name,"Automatic Alis");
           assert.equal(query.exact,true);
           return makeLocator(data.mainHeading);
+        },
+        getByText(label,query){
+          assert.equal(query.exact,true);
+          if(label==="Automatic Alis")
+            return makeLocator(data.mainProjectText);
+          if(label==="No chats yet")
+            return makeLocator(data.mainEmptyState);
+          if(label==="New chat in Automatic Alis")
+            return makeLocator(data.mainComposerVisualLabel);
+          throw Error("UNEXPECTED_MAIN_TEXT_QUERY");
         }
       };
       if(role==="textbox"&&options.name==="New chat in Automatic Alis" &&
@@ -110,6 +123,34 @@ result=await inspect({badge:[],list:[{visible:true,selected:[]}],send:[],
   action:[{visible:true}],main:[],mainHeading:[]});
 assert.equal(result.main_project_view_evidence,"no-main-region");
 assert.equal(result.read_only_project_entry_ready,false);
+// Actual screenshot: two main regions, central Project name and empty
+// Project, visually scoped bar, but textbox remains generic "Ask ChatGPT".
+// This corroborates the Project *landing page* only, not server identity.
+result=await inspect({badge:[],main:[{visible:true},{visible:true}],
+  mainProjectText:[{visible:true},{visible:true}],
+  mainEmptyState:[{visible:true}],
+  mainComposerVisualLabel:[{visible:true}],
+  action:[{visible:true}],list:[{visible:true,selected:[]}],send:[]});
+assert.equal(result.main_project_view_evidence,
+  "main-region-ambiguous-or-unverified");
+assert.equal(result.project_landing_visual_evidence,
+  "project-empty-landing-corroborated");
+assert.equal(result.project_composer_visual_label_observed,true);
+assert.equal(result.project_view_visible,false);
+assert.equal(result.read_only_project_entry_ready,false);
+assert.equal(result.observation_ready,false);
+assert.equal(result.submission_authorized,false);
+assert.equal(result.project_identity_verified,false);
+assert.equal(result.conversation_identity_verified,false);
+assert.equal(result.durable_server_receipt_verified,false);
+// An unrelated empty-state string without the matching central Project
+// name is not corroborated, even if sidebar remains visible.
+result=await inspect({badge:[],main:[{visible:true},{visible:true}],
+  mainProjectText:[],mainEmptyState:[{visible:true}],
+  action:[{visible:true}],list:[{visible:true,selected:[]}],send:[]});
+assert.equal(result.project_landing_visual_evidence,
+  "empty-state-without-project-text-corroboration");
+assert.equal(result.submission_authorized,false);
 assert.equal(result.submission_authorized,false);
 // A distinctly project-scoped blank composer may legitimately hide Send.
 // This is only "read-only project entry ready"; managed sends stay blocked.
@@ -190,7 +231,10 @@ try {
     "getByRole:(role,opt)=>{",
     "if(role==='main')return {...locator([{visible:true}]),",
     " getByRole:(kind,q)=>locator(process.env.MOCK_MAIN_PROJECT==='1'",
-    " ?[{visible:true}]:[])};",
+    " ?[{visible:true}]:[]),",
+    " getByText:(label,opt)=>locator(process.env.MOCK_PROJECT_LANDING==='1'",
+    " &&(label==='Automatic Alis'||label==='No chats yet'||",
+    " label==='New chat in Automatic Alis')?[{visible:true}]:[])};",
     "if(role==='textbox'&&opt.name==='New chat in Automatic Alis')",
     " return locator(process.env.MOCK_BLANK_PROJECT==='1'",
     " ?[{visible:true,disabled:false}]:[]);",
@@ -249,6 +293,15 @@ try {
     "exact-project-heading-in-main");
   assert.equal(mainReport.project_identity_verified,false);
   assert.equal(mainReport.submission_authorized,false);
+  const landing=run(["probe"],{MOCK_PROJECT_LANDING:"1",
+    MOCK_SHOW_PROJECT_ACTION:"1"});
+  assert.equal(landing.status,0,landing.stderr);
+  const landingReport=JSON.parse(landing.stdout);
+  assert.equal(landingReport.project_landing_visual_evidence,
+    "project-empty-landing-corroborated");
+  assert.equal(landingReport.project_composer_visual_label_observed,true);
+  assert.equal(landingReport.submission_authorized,false);
+  assert.equal(landingReport.project_identity_verified,false);
   const denied=run(["submit"]);
   assert.equal(denied.status,1);
   assert.equal(JSON.parse(denied.stdout).error_code,
