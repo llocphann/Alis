@@ -1,4 +1,4 @@
-name: BRAND-R01 compatibility contracts
+name: BRAND-R01 canonical compatibility contracts
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
     paths:
       - ".github/workflows/brand-contracts.yml"
       - "scripts/alis"
-      - "scripts/inir"
+      - "scripts/brand-recovery-cli.sh"
       - "scripts/test-brand-legacy-cli.sh"
       - "scripts/test-brand-niri-hotkeys.sh"
       - "scripts/repair-niri-alis-keybinds.sh"
@@ -20,8 +20,8 @@ on:
       - "assets/icons/alis-owner-avatar.jpg"
       - "scripts/test-brand-about-identity.py"
       - "modules/waffle/settings/pages/WAboutPage.qml"
-      - "distro/arch/inir-shell/*.install"
-      - "distro/arch/inir-shell-git/*.install"
+      - "distro/arch/alis-shell/*.install"
+      - "distro/arch/alis-shell-git/*.install"
       - "scripts/brand-owner-audit.sh"
       - "scripts/test-brand-owner-audit.sh"
       - "scripts/test-setup-sync-atomic.sh"
@@ -44,8 +44,8 @@ on:
       - "assets/icons/desktop-symbolic.svg"
       - "Makefile"
       - "sdata/subcmd-install/3.files.sh"
-      - "distro/arch/inir-shell/**"
-      - "distro/arch/inir-shell-git/**"
+      - "distro/arch/alis-shell/**"
+      - "distro/arch/alis-shell-git/**"
       - "nix/package.nix"
   workflow_dispatch:
 
@@ -64,18 +64,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash -n scripts/alis scripts/inir scripts/test-brand-legacy-cli.sh scripts/repair-niri-alis-keybinds.sh scripts/test-brand-niri-hotkeys.sh scripts/brand-owner-audit.sh scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh scripts/test-alis-desktop-update.sh sdata/lib/sync-alis-desktop.sh scripts/test-brand-single-owner.sh scripts/test-brand-upgrade-rollback.sh scripts/test-brand-owner-audit.sh scripts/test-setup-sync-atomic.sh sdata/lib/safe-setup-sync.sh
+          bash -n scripts/alis scripts/brand-recovery-cli.sh scripts/test-brand-legacy-cli.sh scripts/repair-niri-alis-keybinds.sh scripts/test-brand-niri-hotkeys.sh scripts/brand-owner-audit.sh scripts/test-brand-entrypoints.sh scripts/test-alis-namespace-alias.sh scripts/test-alis-desktop-update.sh sdata/lib/sync-alis-desktop.sh scripts/test-brand-single-owner.sh scripts/test-brand-upgrade-rollback.sh scripts/test-brand-owner-audit.sh scripts/test-setup-sync-atomic.sh sdata/lib/safe-setup-sync.sh
           bash -n scripts/brand-namespace-rollback.sh scripts/test-brand-namespace-rollback.sh scripts/test-brand-uninstall.sh
           bash -n sdata/migrations/061-alis-namespace-alias.sh sdata/migrations/034-cliphist-text-watcher.sh scripts/test-cliphist-migration-034.sh sdata/subcmd-install/3.files.sh setup
-          test ! -e assets/systemd/alis.service
-          grep -Fq 'ShellId inir' shell.qml
+          test ! -e scripts/inir
+          test ! -e assets/systemd/inir.service
+          test -f assets/systemd/alis.service
+          grep -Fxq '//@ pragma ShellId alis' shell.qml
+          grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' assets/systemd/alis.service
       - name: Setup entrypoint atomic recovery and syntax guard
         shell: bash
         run: bash scripts/test-setup-sync-atomic.sh
       - name: Historical clipboard migration order regression
         shell: bash
         run: bash scripts/test-cliphist-migration-034.sh
-      - name: R5 single-owner ShellId and service compatibility
+      - name: R5 canonical single-owner ShellId and service compatibility
         shell: bash
         run: bash scripts/test-brand-single-owner.sh
       - name: Material and Waffle About identity and owner avatar
@@ -105,17 +108,9 @@ jobs:
       - name: R10 read-only owner audit safety
         shell: bash
         run: bash scripts/test-brand-owner-audit.sh
-      - name: Immutable Arch snapshot includes Alis entrypoints
+      - name: Immutable Arch snapshot contains canonical Alis source
         shell: bash
-        run: |
-          set -euo pipefail
-          ref="$(sed -n 's/^_source_ref="${INIR_SOURCE_REF:-\([^}]*\)}"$/\1/p' distro/arch/inir-shell/PKGBUILD)"
-          test -n "$ref"
-          for path in scripts/alis assets/applications/alis.desktop assets/applications/alis-settings.desktop; do
-            git cat-file -e "$ref:$path"
-          done
-          grep -Fq 'assets/applications/alis-settings.desktop' distro/arch/inir-shell/PKGBUILD
-          grep -Fq 'assets/applications/alis-settings.desktop' distro/arch/inir-shell-git/PKGBUILD
+        run: bash scripts/test-brand-canonical-arch-snapshot.sh
       - name: IPC registry unchanged and documented
         shell: bash
         run: |

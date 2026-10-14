@@ -3315,7 +3315,10 @@ run_ipc_target_command() {
     fi
 
     # Validate function name against registry before forwarding to qs.
+    # Offline target --help must not require the Quickshell binary. Real IPC
+    # calls still check qs availability before resolving the live instance.
     validate_ipc_function "$target" "$1"
+    require_qs
 
     resolve_config_dir
     if ! ensure_running_instance_for_ipc "$config_dir" "${1:-}"; then
@@ -4246,7 +4249,6 @@ case "$command_name" in
             fi
         fi
 
-        require_qs
         run_ipc_target_command "$command_name" "$@"
         ;;
 esac
