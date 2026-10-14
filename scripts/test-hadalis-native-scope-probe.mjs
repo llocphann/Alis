@@ -312,6 +312,39 @@ assert.equal(res.resolution_attempted, false);
 assert.ok(!JSON.stringify(res).includes("ALT_TOKEN_SECRET"));
 def.resolve = originalResolver;
 
+// Reproduce the owner's minified control-flow SHAPE with mock-only helpers.
+// No function is ever invoked: seven ambiguous context Maps must block resolve.
+def.resolve = function resolver(provided, context) {
+  let local = helper(provided, context, fixtureScope),
+      cache = owner.flag === condition ? local.primary : local.fallback,
+      hit = cache.get(owner);
+  if (hit !== void 0) {
+    let result = hit;
+    return observer?.(result, local), result;
+  }
+  let tmp = allocate(context, fixtureScope);
+  tmp.write(fixtureScope.value, local);
+  let output = convert(local, tmp);
+  return cache.write(owner, output), observer?.(output, local), output;
+};
+resolves = 0;
+res = await inspectSeven(sevenMaps);
+assert.equal(res.resolver_helper_flow_status, "lexical-only");
+assert.deepEqual(res.resolver_argument_helper_call_counts_capped, [1, 2]);
+assert.equal(res.resolver_get_receiver_kind,
+  "conditional-property-of-local");
+assert.equal(res.resolver_get_receiver_comes_from_argument_helper, true);
+assert.equal(res.resolver_get_receiver_lexical_complete, true);
+assert.equal(res.provider_selection, "active_provider_ambiguous");
+assert.equal(res.resolution_attempted, false);
+assert.equal(resolves, 0);
+const reportStrings = [res.resolver_masked_shape, res.resolver_alpha_shape];
+for (const rawName of ["provided", "context", "helper", "fixtureScope",
+  "owner", "cache", "resolver", "allocate", "convert", "observer"]) {
+  assert.ok(reportStrings.every(value => !value.includes(rawName)));
+}
+def.resolve = originalResolver;
+
 const unknownRoot = {memoizedProps:{value:sharedMap}};
 res = await inspect([unknownRoot]);
 assert.equal(res.active_root_count_capped, 0);
