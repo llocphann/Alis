@@ -44,6 +44,16 @@ jobs:
       - name: Canonical Alis XDG namespace, migrations and source credits
         shell: bash
         run: bash scripts/test-brand-canonical-config.sh
+      - name: Canonical Arch dependency, native helper and benchmark contracts
+        shell: bash
+        run: |
+          python3 scripts/test-runtime-integration-dependencies.py
+          bash scripts/test-doctor-dependency-routing.sh
+          bash scripts/test-optional-audio-deps-contract.sh
+          bash scripts/test-local-music-mpd-source-contract.sh
+          bash scripts/test-native-production-contract.sh
+          bash scripts/test-native-selector-contract.sh
+          bash scripts/test-native-benchmark-deep-contract.sh
       - name: Check canonical Cargo metadata
         shell: bash
         run: cargo metadata --no-deps --locked --format-version 1 --manifest-path native/Cargo.toml > /dev/null
