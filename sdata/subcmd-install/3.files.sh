@@ -445,6 +445,15 @@ case "${SKIP_NIRI}" in
     ;;
 esac
 
+# Fresh installs need the same override repair as upgrades. Otherwise
+# 75-inir-launcher-binds.kdl is loaded after 70 and still calls blocked inir.
+if [[ -f "${XDG_CONFIG_HOME}/niri/config.kdl" ]]; then
+  if ! bash "${REPO_ROOT}/scripts/repair-niri-alis-keybinds.sh"; then
+    log_error "Niri hotkey launcher repair failed; original files are backed up"
+    return 1
+  fi
+fi
+
 # A running Niri session can start Telex immediately after setup/update; apps
 # already running still need to be relaunched to inherit the new IME environment.
 if command -v fcitx5 >/dev/null 2>&1 && [[ -n "${NIRI_SOCKET:-}" ]] && [[ -x "$ALIS_LAUNCHER_PATH" ]]; then
