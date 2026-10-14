@@ -375,6 +375,72 @@ class TaskflowTests(unittest.TestCase):
             self.assertIn("root._automationExited(\"" + process + "\"", qml)
             self.assertIn("root._handle_" + process + "(entry.exitCode)", qml)
 
+    def test_packaged_automation_runtime_imports_from_installed_layout(self):
+        """Regression for QML installed while its Python package was omitted.
+
+        Materialize only files *listed by the real runtime payload policy* to
+        emulate a fresh package. Never copy source-only code outside manifest.
+        """
+        import os
+        import shutil
+        import subprocess
+        root = Path(__file__).resolve().parents[1]
+        payload = subprocess.run(
+            ["python3", str(root / "sdata/lib/runtime-payload.py"),
+             "list", "--root", str(root)],
+            capture_output=True, text=True, check=True, timeout=30,
+        )
+        paths = set(payload.stdout.splitlines())
+        required = {
+            "scripts/alis-automation-task.py",
+            "scripts/install-hadalis-automation.py",
+            "automation/__init__.py",
+            "automation/taskflow.py",
+            "automation/credentials.py",
+            "automation/queue.py",
+            "automation/managed_tasks.py",
+            "automation/lifecycle.py",
+            "automation/rotation.py",
+            "automation/activity.py",
+            "automation/manager/__init__.py",
+            "automation/manager/control.py",
+            "automation/manager/store.py",
+            "automation/manager/model.py",
+            "automation/chat_bridge/__init__.py",
+            "automation/chat_bridge/controller.py",
+            "automation/worker/__init__.py",
+            "automation/worker/runner.py",
+        }
+        self.assertEqual(required - paths, set(), "missing packaged Automation modules")
+        self.assertNotIn("scripts/test-automation-taskflow.py", paths)
+        self.assertNotIn("automation/__pycache__/taskflow.cpython-312.pyc", paths)
+        with tempfile.TemporaryDirectory() as tmp:
+            installed = Path(tmp) / "installed"
+            for name in paths:
+                if name.startswith("automation/") and name.endswith(".py"):
+                    dest = installed / name
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(root / name, dest)
+            script = installed / "scripts/alis-automation-task.py"
+            script.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(root / "scripts/alis-automation-task.py", script)
+            env = dict(os.environ, XDG_STATE_HOME=tmp + "/state",
+                       XDG_CONFIG_HOME=tmp + "/config", PYTHONPATH="")
+            for action in [
+                ["queue-status"],
+                ["github-token-status", "llocphann/Alis"],
+                ["backend-status"],
+            ]:
+                proc = subprocess.run(
+                    ["python3", "-I", str(script), *action],
+                    cwd=installed, env=env, capture_output=True, text=True,
+                    check=False, timeout=15,
+                )
+                self.assertEqual(proc.returncode, 0,
+                                 action + ": " + proc.stderr[-700:])
+                self.assertFalse(proc.stderr.strip(), action)
+                self.assertTrue(json.loads(proc.stdout)["ok"], action)
+
     def test_qml_cli_json_contract_in_real_subprocess(self):
         """Every read-only Settings action must produce exactly one JSON object.
 
