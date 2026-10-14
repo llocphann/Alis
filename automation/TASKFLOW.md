@@ -47,3 +47,16 @@ Focused behavior tests run via `python3 scripts/test-automation-taskflow.py`; Gi
 `python3 scripts/alis-automation-task.py status AUTO-R01` returns redacted task state to Settings without exposing prompt/script bodies or tokens. The Settings page polls this **read-only** status while a task is selected and displays whether a managed chat rollover is pending.
 
 **Remaining integration:** Restore the original automation services and capability-checked authenticated Desktop bridge under AUTO-F01, and wire its verified limit/delivery callbacks and periodic cleanup. A trusted bridge must recognize actual provider/transport capacity signals, create the next managed chat in the same project, persist the new conversation/message identity, and verify delivery before proceeding. Without those capabilities the system stays in a clearly labeled prepared/pending state; there is no speculative chat rotation or automatic resend.
+
+## Multi-task queue and restored Activity/Logs (AUTO-R01)
+
+Enter multiple canonical GitHub task codes separated by semicolons, e.g. AUTO-R01; ABYSS-R09; BRAND-F01, max 20.
+The Cloudbot chooses task order switch is OFF by default (exact entered order). When ON, Cloudbot reviews the pending canonical Issues, dependencies and pinned SHAs, chooses exactly one eligible Issue, and provides a verifiable decision ID. The queue remains SERIAL: no parallel execution and no automatic bypass of an uncertain task.
+
+Queue metadata is stored only in the compact taskflow/queue.json file; each task owns its prompts, short reports, transient script drafts, current handoff and activity in tasks/<repo>/<TASK_CODE>.json. queue.lock is an advisory coordination lock, not a growing task ledger.
+
+CLI: queue-prepare 'AUTO-R01; ABYSS-R09' --mode ordered|cloud; queue-status; activity AUTO-R01 [--repo owner/repo]. The internal queue.cloud_selection_prompt() prepares a reasoning prompt for a Cloudbot decision. It does not run a model, send a message or authorize execution. Only the restored AUTO-F01 authenticated scheduler may call queue.claim(verified_start=...) and queue.advance(verify_completion=...). Advancing requires confirmed Cloudbot completion and matching delivery acknowledgment; an Issue awaiting Owner verification can leave the execution queue while remaining open for owner review.
+
+Settings shows Tasks, Activity and Logs. Task lifecycle events are capped at 60 records; display up to 40. Diagnostics are bounded and redact known token patterns. Refresh and Copy are available for private inspection; raw logs and historical prompt files are not duplicated. Existing safe cleanup retains pending/uncertain data and excludes repository-wide reusable tests.
+
+Integration still pending: AUTO-F01 authenticated scheduler, real Desktop/cloud message transport, Cloudbot automatic selection callbacks, installed Quickshell acceptance and Owner verification. Preparing a queue does not itself dispatch any task.
