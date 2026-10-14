@@ -1145,7 +1145,7 @@ Scope {
                     readonly property string configuredJoinedEdge:
                         Presentation.joinedEdge(presentationKind,
                             configuredPresentation,edge,along,span,
-                            window.width,window.height)
+                            window?.width ?? 0,window?.height ?? 0)
                     joinedEdge: configuredJoinedEdge.length > 0
                         ? configuredJoinedEdge
                         : (hostedPopup?._liquidAnchor?.popupJoinedEdge ?? "")
@@ -1166,7 +1166,8 @@ Scope {
                     animatePresentation: true
                     externalProgress: hostedPopup?.revealProgress ?? 0
                     embeddedItem: hostedPopup?.contentItem ?? null
-                    edgeInsets: window.bodyInsets(edge,along,span)
+                    edgeInsets: window?.bodyInsets(edge,along,span)
+                        ?? ({left:0,top:0,right:0,bottom:0})
                     padding: 14
                     span: (Geometry.horizontal(edge)
                         ? (embeddedItem?.implicitWidth ?? 1)
@@ -1177,7 +1178,7 @@ Scope {
                     largeSurface: depth
                         > (Geometry.horizontal(edge) ? window.height : window.width)*.42
                     readonly property rect anchorBounds:
-                        hostedPopup?._anchorRect(window.width,window.height)
+                        hostedPopup?._anchorRect(window?.width ?? 0,window?.height ?? 0)
                             ?? Qt.rect(0,0,0,0)
                     along: window?.positionAlong(presentationKind,edge,span,
                         (Geometry.horizontal(edge)
