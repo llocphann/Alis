@@ -146,6 +146,8 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         resolver_first_argument_map_access: false,
         resolver_second_argument_map_access: false,
         resolver_masked_shape: "",
+        resolver_alpha_shape: "",
+        resolver_alpha_complete: false,
         resolver_shape_complete: false,
         active_provider_identity_count_capped: 0,
         react_container_count_capped: 0,
@@ -186,6 +188,29 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
           .replace(/[0-9]+/g, "0")
           .replace(/\s+/g, " ").slice(0, 640);
         report.resolver_shape_complete = erased.length <= 640;
+        // One-to-one ALPHA RENAMING, still no original symbol/literal/value.
+        // Previous all-'id' masking loses variable equality information and
+        // cannot distinguish local aliasing from accesses on function args.
+        // Keep method operators, but only through a strict punctuation and
+        // keyword allowlist. Never return the raw function or its symbols.
+        const protectedWords = new Set([
+          "function", "async", "return", "new", "const", "let", "var",
+          "if", "else", "throw", "try", "catch", "finally", "null",
+          "undefined", "true", "false", "this", "get", "has",
+          "typeof", "void", "delete", "instanceof", "in", "of"
+        ]);
+        const aliases = new Map();
+        const structurallyMasked = erased
+          .replace(/[$A-Za-z_][\\w$]*/g, word => {
+            if (protectedWords.has(word)) return word;
+            if (!aliases.has(word)) aliases.set(word, "v" + aliases.size);
+            return aliases.get(word);
+          })
+          .replace(/\\b(?:\\d+(?:\\.\\d*)?|\\.\\d+)\\b/g, "0")
+          .replace(/[^A-Za-z0-9_$\\s.,;:{}()[\\]=!?+\\-*\\/%<>|&^~]/g, " ")
+          .replace(/\\s+/g, " ").trim();
+        report.resolver_alpha_shape = structurallyMasked.slice(0, 640);
+        report.resolver_alpha_complete = structurallyMasked.length <= 640;
         // Very conservative lexical classification, NOT proof of dependency:
         // handle only two bare identifier arguments. No names/source are sent
         // outside Desktop. A function with destructuring, shadowing, or a
