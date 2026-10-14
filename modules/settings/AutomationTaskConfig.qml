@@ -41,8 +41,8 @@ ContentPage {
     property string githubStatusText: ""
     property string pendingSecretInput: ""
     property string pendingSecretOperation: ""
-    readonly property bool busy: queueProcess.running || prepareProcess.running
-        || cleanupProcess.running || githubSecretProcess.running || githubStatusProcess.running
+    readonly property bool busy: queueProcess.running || cleanupProcess.running
+        || githubSecretProcess.running || githubStatusProcess.running
 
     function refreshGithubStatus(): void {
         if (githubStatusProcess.running || githubSecretProcess.running)
@@ -79,8 +79,14 @@ ContentPage {
         githubSecretProcess.running = true
     }
 
-    onVisibleChanged: if (visible) Qt.callLater(root.refreshGithubStatus)
-    Component.onCompleted: Qt.callLater(root.refreshGithubStatus)
+    onVisibleChanged: if (visible) {
+        Qt.callLater(root.refreshGithubStatus)
+        Qt.callLater(root.refreshQueue)
+    }
+    Component.onCompleted: {
+        Qt.callLater(root.refreshGithubStatus)
+        Qt.callLater(root.refreshQueue)
+    }
 
     function activateSettingsSearchSection(section: string): bool {
         const name = String(section ?? "").toLowerCase()
@@ -91,7 +97,7 @@ ContentPage {
     }
 
     function refreshQueue(): void {
-        if (queueProcess.running || prepareProcess.running)
+        if (queueProcess.running)
             return
         queueOperation = "status"
         queueProcess.command = ["python3", Quickshell.shellPath("scripts/alis-automation-task.py"), "queue-status"]
@@ -195,27 +201,6 @@ ContentPage {
         }
     }
 
-    Process {
-        id: prepareProcess
-        stdout: StdioCollector { id: commandOutput }
-        stderr: StdioCollector { id: commandError }
-        onExited: exitCode => {
-            try {
-                const response = JSON.parse(commandOutput.text)
-                if (exitCode !== 0 || response.ok !== true)
-                    throw new Error(response.error || "Task preparation failed")
-                root.selectedTask = response.task
-                Qt.callLater(root.refreshTaskStatus)
-                // Prepared is not dispatched. AUTO-F01 restores the scheduler.
-                root.statusText = response.duplicate
-                    ? Translation.tr("This task is already prepared.")
-                    : Translation.tr("Task prepared locally.")
-            } catch (error) {
-                root.errorText = String(error)
-                root.selectedTask = null
-            }
-        }
-    }
 
     Process {
         id: taskStatusProcess
@@ -244,8 +229,6 @@ ContentPage {
             if (root.activeSection !== "tasks") root.refreshActivity()
         }
     }
-
-    Component.onCompleted: Qt.callLater(root.refreshQueue)
 
     Process {
         id: cleanupProcess
