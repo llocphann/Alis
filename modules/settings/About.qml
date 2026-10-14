@@ -404,7 +404,7 @@ ContentPage {
 
                 RippleButtonWithIcon {
                     materialIcon: "open_in_new"
-                    mainText: "iNiR"
+                    mainText: "Alis"
                     onClicked: Qt.openUrlExternally("https://github.com/snowarch/iNiR")
                 }
 
