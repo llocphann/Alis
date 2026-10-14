@@ -1,0 +1,1773 @@
+{
+  "error": null,
+  "checks": 354,
+  "completed": 1,
+  "caseIndex": 1,
+  "phase": "drain",
+  "results": [
+    {
+      "case": {
+        "size": [
+          720,
+          650
+        ],
+        "route": "Dashboard",
+        "edge": "top"
+      },
+      "events": [
+        {
+          "phase": "loading",
+          "ms": 816,
+          "p": null,
+          "canvas": null
+        },
+        {
+          "phase": "settling",
+          "ms": 931,
+          "p": null,
+          "canvas": [
+            507,
+            371
+          ]
+        },
+        {
+          "phase": "notes",
+          "ms": 1188,
+          "p": null,
+          "canvas": [
+            507,
+            371
+          ]
+        },
+        {
+          "phase": "open-partial",
+          "ms": 1448,
+          "p": 0,
+          "canvas": [
+            507,
+            371
+          ]
+        },
+        {
+          "phase": "reverse-close",
+          "ms": 1557,
+          "p": 0.35645985185185186,
+          "canvas": [
+            507,
+            371
+          ]
+        },
+        {
+          "phase": "open-full",
+          "ms": 1590,
+          "p": 0.3545620596005926,
+          "canvas": [
+            507,
+            371
+          ]
+        },
+        {
+          "phase": "close-full",
+          "ms": 1890,
+          "p": 1,
+          "canvas": [
+            507,
+            371
+          ]
+        },
+        {
+          "phase": "drain",
+          "ms": 2213,
+          "p": 0,
+          "canvas": [
+            507,
+            371
+          ]
+        }
+      ],
+      "swaps": [
+        {
+          "ms": 1459,
+          "phase": "open-partial",
+          "p": 0.0007278518518518517
+        },
+        {
+          "ms": 1479,
+          "phase": "open-partial",
+          "p": 0.005822814814814814
+        },
+        {
+          "ms": 1480,
+          "phase": "open-partial",
+          "p": 0.018518518518518517
+        },
+        {
+          "ms": 1491,
+          "phase": "open-partial",
+          "p": 0.04455748148148148
+        },
+        {
+          "ms": 1502,
+          "phase": "open-partial",
+          "p": 0.08780800000000002
+        },
+        {
+          "ms": 1520,
+          "phase": "open-partial",
+          "p": 0.14814814814814814
+        },
+        {
+          "ms": 1535,
+          "phase": "open-partial",
+          "p": 0.23727600000000001
+        },
+        {
+          "ms": 1553,
+          "phase": "open-partial",
+          "p": 0.35645985185185186
+        },
+        {
+          "ms": 1570,
+          "phase": "reverse-close",
+          "p": 0.35624354673286146
+        },
+        {
+          "ms": 1586,
+          "phase": "reverse-close",
+          "p": 0.3545620596005926
+        },
+        {
+          "ms": 1603,
+          "phase": "open-full",
+          "p": 0.35503184280076777
+        },
+        {
+          "ms": 1637,
+          "phase": "open-full",
+          "p": 0.35799837119527905
+        },
+        {
+          "ms": 1641,
+          "phase": "open-full",
+          "p": 0.3665146140524335
+        },
+        {
+          "ms": 1678,
+          "phase": "open-full",
+          "p": 0.38332114867738476
+        },
+        {
+          "ms": 1679,
+          "phase": "open-full",
+          "p": 0.38332114867738476
+        },
+        {
+          "ms": 1694,
+          "phase": "open-full",
+          "p": 0.4501824952153196
+        },
+        {
+          "ms": 1703,
+          "phase": "open-full",
+          "p": 0.5077089923468024
+        },
+        {
+          "ms": 1719,
+          "phase": "open-full",
+          "p": 0.5795222343839171
+        },
+        {
+          "ms": 1736,
+          "phase": "open-full",
+          "p": 0.6772810298002963
+        },
+        {
+          "ms": 1753,
+          "phase": "open-full",
+          "p": 0.7750398252166755
+        },
+        {
+          "ms": 1769,
+          "phase": "open-full",
+          "p": 0.8468530672537902
+        },
+        {
+          "ms": 1786,
+          "phase": "open-full",
+          "p": 0.904379564385273
+        },
+        {
+          "ms": 1803,
+          "phase": "open-full",
+          "p": 0.9453254779811622
+        },
+        {
+          "ms": 1819,
+          "phase": "open-full",
+          "p": 0.9712409109232079
+        },
+        {
+          "ms": 1836,
+          "phase": "open-full",
+          "p": 0.9880474455481592
+        },
+        {
+          "ms": 1852,
+          "phase": "open-full",
+          "p": 0.9965636884053135
+        },
+        {
+          "ms": 1869,
+          "phase": "open-full",
+          "p": 0.9995302167998248
+        },
+        {
+          "ms": 1886,
+          "phase": "open-full",
+          "p": 1
+        },
+        {
+          "ms": 1903,
+          "phase": "close-full",
+          "p": 0.9992721481481481
+        },
+        {
+          "ms": 1919,
+          "phase": "close-full",
+          "p": 0.994676
+        },
+        {
+          "ms": 1956,
+          "phase": "close-full",
+          "p": 0.9814814814814815
+        },
+        {
+          "ms": 1957,
+          "phase": "close-full",
+          "p": 0.9554425185185185
+        },
+        {
+          "ms": 1984,
+          "phase": "close-full",
+          "p": 0.9152908148148148
+        },
+        {
+          "ms": 1987,
+          "phase": "close-full",
+          "p": 0.8518518518518519
+        },
+        {
+          "ms": 2003,
+          "phase": "close-full",
+          "p": 0.762724
+        },
+        {
+          "ms": 2019,
+          "phase": "close-full",
+          "p": 0.6514611851851851
+        },
+        {
+          "ms": 2036,
+          "phase": "close-full",
+          "p": 0.5
+        },
+        {
+          "ms": 2053,
+          "phase": "close-full",
+          "p": 0.34853881481481486
+        },
+        {
+          "ms": 2070,
+          "phase": "close-full",
+          "p": 0.23727600000000004
+        },
+        {
+          "ms": 2086,
+          "phase": "close-full",
+          "p": 0.14814814814814814
+        },
+        {
+          "ms": 2102,
+          "phase": "close-full",
+          "p": 0.08470918518518511
+        },
+        {
+          "ms": 2119,
+          "phase": "close-full",
+          "p": 0.04455748148148153
+        },
+        {
+          "ms": 2136,
+          "phase": "close-full",
+          "p": 0.01851851851851849
+        },
+        {
+          "ms": 2153,
+          "phase": "close-full",
+          "p": 0.005323999999999995
+        },
+        {
+          "ms": 2169,
+          "phase": "close-full",
+          "p": 0.0007278518518518684
+        },
+        {
+          "ms": 2186,
+          "phase": "close-full",
+          "p": 0
+        },
+        {
+          "ms": 2202,
+          "phase": "close-full",
+          "p": 0
+        }
+      ],
+      "captures": [
+        {
+          "request": {
+            "phase": "open-partial",
+            "ms": 1453,
+            "p": 0
+          },
+          "phase": "open-partial",
+          "ms": 1479,
+          "p": 0.005822814814814814
+        },
+        {
+          "request": {
+            "phase": "open-partial",
+            "ms": 1479,
+            "p": 0.005822814814814814
+          },
+          "phase": "open-partial",
+          "ms": 1491,
+          "p": 0.04455748148148148
+        },
+        {
+          "request": {
+            "phase": "open-partial",
+            "ms": 1491,
+            "p": 0.04455748148148148
+          },
+          "phase": "open-partial",
+          "ms": 1514,
+          "p": 0.08780800000000002
+        },
+        {
+          "request": {
+            "phase": "open-partial",
+            "ms": 1520,
+            "p": 0.14814814814814814
+          },
+          "phase": "open-partial",
+          "ms": 1542,
+          "p": 0.23727600000000001
+        },
+        {
+          "request": {
+            "phase": "open-partial",
+            "ms": 1553,
+            "p": 0.35645985185185186
+          },
+          "phase": "reverse-close",
+          "ms": 1582,
+          "p": 0.35624354673286146
+        },
+        {
+          "request": {
+            "phase": "reverse-close",
+            "ms": 1586,
+            "p": 0.3545620596005926
+          },
+          "phase": "open-full",
+          "ms": 1610,
+          "p": 0.35503184280076777,
+          "saved": true,
+          "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/short/frames/case-0-opening-0.png"
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1638,
+            "p": 0.35799837119527905
+          },
+          "phase": "open-full",
+          "ms": 1650,
+          "p": 0.3665146140524335,
+          "saved": true,
+          "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/short/frames/case-0-opening-1.png"
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1679,
+            "p": 0.38332114867738476
+          },
+          "phase": "open-full",
+          "ms": 1694,
+          "p": 0.4501824952153196
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1694,
+            "p": 0.4501824952153196
+          },
+          "phase": "open-full",
+          "ms": 1713,
+          "p": 0.5077089923468024
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1719,
+            "p": 0.5795222343839171
+          },
+          "phase": "open-full",
+          "ms": 1741,
+          "p": 0.6772810298002963
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1753,
+            "p": 0.7750398252166755
+          },
+          "phase": "open-full",
+          "ms": 1780,
+          "p": 0.8468530672537902
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1786,
+            "p": 0.904379564385273
+          },
+          "phase": "open-full",
+          "ms": 1808,
+          "p": 0.9453254779811622
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1819,
+            "p": 0.9712409109232079
+          },
+          "phase": "open-full",
+          "ms": 1846,
+          "p": 0.9880474455481592
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1852,
+            "p": 0.9965636884053135
+          },
+          "phase": "open-full",
+          "ms": 1875,
+          "p": 0.9995302167998248
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 1903,
+            "p": 0.9992721481481481
+          },
+          "phase": "close-full",
+          "ms": 1930,
+          "p": 0.994676,
+          "saved": true,
+          "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/short/frames/case-0-closing-0.png"
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 1956,
+            "p": 0.9814814814814815
+          },
+          "phase": "close-full",
+          "ms": 1960,
+          "p": 0.9554425185185185,
+          "saved": true,
+          "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/short/frames/case-0-closing-1.png"
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 1984,
+            "p": 0.9152908148148148
+          },
+          "phase": "close-full",
+          "ms": 1997,
+          "p": 0.8518518518518519
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 2003,
+            "p": 0.762724
+          },
+          "phase": "close-full",
+          "ms": 2024,
+          "p": 0.6514611851851851
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 2036,
+            "p": 0.5
+          },
+          "phase": "close-full",
+          "ms": 2062,
+          "p": 0.34853881481481486
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 2070,
+            "p": 0.23727600000000004
+          },
+          "phase": "close-full",
+          "ms": 2092,
+          "p": 0.14814814814814814
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 2102,
+            "p": 0.08470918518518511
+          },
+          "phase": "close-full",
+          "ms": 2130,
+          "p": 0.04455748148148153
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 2136,
+            "p": 0.01851851851851849
+          },
+          "phase": "close-full",
+          "ms": 2159,
+          "p": 0.005323999999999995
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 2169,
+            "p": 0.0007278518518518684
+          },
+          "phase": "close-full",
+          "ms": 2196,
+          "p": 0
+        }
+      ],
+      "signals": [
+        {
+          "ms": 1459,
+          "phase": "open-partial",
+          "p": 0.0007278518518518517
+        },
+        {
+          "ms": 1478,
+          "phase": "open-partial",
+          "p": 0.005822814814814814
+        },
+        {
+          "ms": 1479,
+          "phase": "open-partial",
+          "p": 0.018518518518518517
+        },
+        {
+          "ms": 1488,
+          "phase": "open-partial",
+          "p": 0.04455748148148148
+        },
+        {
+          "ms": 1502,
+          "phase": "open-partial",
+          "p": 0.08780800000000002
+        },
+        {
+          "ms": 1520,
+          "phase": "open-partial",
+          "p": 0.14814814814814814
+        },
+        {
+          "ms": 1535,
+          "phase": "open-partial",
+          "p": 0.23727600000000001
+        },
+        {
+          "ms": 1552,
+          "phase": "open-partial",
+          "p": 0.35645985185185186
+        },
+        {
+          "ms": 1570,
+          "phase": "reverse-close",
+          "p": 0.35624354673286146
+        },
+        {
+          "ms": 1586,
+          "phase": "reverse-close",
+          "p": 0.3545620596005926
+        },
+        {
+          "ms": 1602,
+          "phase": "open-full",
+          "p": 0.35503184280076777
+        },
+        {
+          "ms": 1637,
+          "phase": "open-full",
+          "p": 0.35799837119527905
+        },
+        {
+          "ms": 1641,
+          "phase": "open-full",
+          "p": 0.3665146140524335
+        },
+        {
+          "ms": 1678,
+          "phase": "open-full",
+          "p": 0.38332114867738476
+        },
+        {
+          "ms": 1685,
+          "phase": "open-full",
+          "p": 0.40923658161943055
+        },
+        {
+          "ms": 1694,
+          "phase": "open-full",
+          "p": 0.4501824952153196
+        },
+        {
+          "ms": 1703,
+          "phase": "open-full",
+          "p": 0.5077089923468024
+        },
+        {
+          "ms": 1719,
+          "phase": "open-full",
+          "p": 0.5795222343839171
+        },
+        {
+          "ms": 1736,
+          "phase": "open-full",
+          "p": 0.6772810298002963
+        },
+        {
+          "ms": 1753,
+          "phase": "open-full",
+          "p": 0.7750398252166755
+        },
+        {
+          "ms": 1769,
+          "phase": "open-full",
+          "p": 0.8468530672537902
+        },
+        {
+          "ms": 1786,
+          "phase": "open-full",
+          "p": 0.904379564385273
+        },
+        {
+          "ms": 1803,
+          "phase": "open-full",
+          "p": 0.9453254779811622
+        },
+        {
+          "ms": 1819,
+          "phase": "open-full",
+          "p": 0.9712409109232079
+        },
+        {
+          "ms": 1836,
+          "phase": "open-full",
+          "p": 0.9880474455481592
+        },
+        {
+          "ms": 1852,
+          "phase": "open-full",
+          "p": 0.9965636884053135
+        },
+        {
+          "ms": 1869,
+          "phase": "open-full",
+          "p": 0.9995302167998248
+        },
+        {
+          "ms": 1886,
+          "phase": "open-full",
+          "p": 1
+        },
+        {
+          "ms": 1903,
+          "phase": "close-full",
+          "p": 0.9992721481481481
+        },
+        {
+          "ms": 1919,
+          "phase": "close-full",
+          "p": 0.994676
+        },
+        {
+          "ms": 1956,
+          "phase": "close-full",
+          "p": 0.9814814814814815
+        },
+        {
+          "ms": 1957,
+          "phase": "close-full",
+          "p": 0.9554425185185185
+        },
+        {
+          "ms": 1984,
+          "phase": "close-full",
+          "p": 0.9152908148148148
+        },
+        {
+          "ms": 1986,
+          "phase": "close-full",
+          "p": 0.8518518518518519
+        },
+        {
+          "ms": 2003,
+          "phase": "close-full",
+          "p": 0.762724
+        },
+        {
+          "ms": 2019,
+          "phase": "close-full",
+          "p": 0.6514611851851851
+        },
+        {
+          "ms": 2036,
+          "phase": "close-full",
+          "p": 0.5
+        },
+        {
+          "ms": 2052,
+          "phase": "close-full",
+          "p": 0.34853881481481486
+        },
+        {
+          "ms": 2070,
+          "phase": "close-full",
+          "p": 0.23727600000000004
+        },
+        {
+          "ms": 2086,
+          "phase": "close-full",
+          "p": 0.14814814814814814
+        },
+        {
+          "ms": 2102,
+          "phase": "close-full",
+          "p": 0.08470918518518511
+        },
+        {
+          "ms": 2119,
+          "phase": "close-full",
+          "p": 0.04455748148148153
+        },
+        {
+          "ms": 2136,
+          "phase": "close-full",
+          "p": 0.01851851851851849
+        },
+        {
+          "ms": 2153,
+          "phase": "close-full",
+          "p": 0.005323999999999995
+        },
+        {
+          "ms": 2169,
+          "phase": "close-full",
+          "p": 0.0007278518518518684
+        },
+        {
+          "ms": 2186,
+          "phase": "close-full",
+          "p": 0
+        },
+        {
+          "ms": 2207,
+          "phase": "close-full",
+          "p": 1
+        },
+        {
+          "ms": 2211,
+          "phase": "close-full",
+          "p": 0
+        }
+      ],
+      "openingImages": 2,
+      "closingImages": 2,
+      "nativeSize": [
+        906,
+        1070
+      ],
+      "allocatedSize": [
+        720,
+        650
+      ],
+      "baselineScene": {
+        "workspace": {
+          "width": 507,
+          "height": 371,
+          "rects": {
+            "welcome": {
+              "x": 0,
+              "y": 0,
+              "width": 200,
+              "height": 80
+            },
+            "clock": {
+              "x": 0,
+              "y": 88,
+              "width": 200,
+              "height": 80
+            },
+            "system": {
+              "x": 0,
+              "y": 176,
+              "width": 260,
+              "height": 180
+            },
+            "github": {
+              "x": 208,
+              "y": 88,
+              "width": 200,
+              "height": 80
+            },
+            "agenda": {
+              "x": 208,
+              "y": 5,
+              "width": 240,
+              "height": 75
+            }
+          },
+          "overflow": [
+            "notifications",
+            "todo",
+            "media",
+            "weather",
+            "calendar"
+          ]
+        },
+        "body": {
+          "edge": "top",
+          "content": {
+            "x": 106.39999999999998,
+            "y": 36,
+            "width": 507.20000000000005,
+            "height": 414.99999999999994
+          },
+          "surface": {
+            "x": 86.39999999999998,
+            "y": -50,
+            "width": 547.2,
+            "height": 521
+          },
+          "depth": 454.99999999999994,
+          "targetDepth": 454.99999999999994,
+          "progress": 1,
+          "span": 547.2,
+          "along": 86.39999999999998
+        },
+        "toolbarRect": {}
+      },
+      "dimensions": [
+        507,
+        371
+      ],
+      "openingFrames": 17,
+      "closingFrames": 17
+    }
+  ],
+  "current": {
+    "case": {
+      "size": [
+        720,
+        650
+      ],
+      "route": "Dashboard",
+      "edge": "top"
+    },
+    "events": [
+      {
+        "phase": "loading",
+        "ms": 816,
+        "p": null,
+        "canvas": null
+      },
+      {
+        "phase": "settling",
+        "ms": 931,
+        "p": null,
+        "canvas": [
+          507,
+          371
+        ]
+      },
+      {
+        "phase": "notes",
+        "ms": 1188,
+        "p": null,
+        "canvas": [
+          507,
+          371
+        ]
+      },
+      {
+        "phase": "open-partial",
+        "ms": 1448,
+        "p": 0,
+        "canvas": [
+          507,
+          371
+        ]
+      },
+      {
+        "phase": "reverse-close",
+        "ms": 1557,
+        "p": 0.35645985185185186,
+        "canvas": [
+          507,
+          371
+        ]
+      },
+      {
+        "phase": "open-full",
+        "ms": 1590,
+        "p": 0.3545620596005926,
+        "canvas": [
+          507,
+          371
+        ]
+      },
+      {
+        "phase": "close-full",
+        "ms": 1890,
+        "p": 1,
+        "canvas": [
+          507,
+          371
+        ]
+      },
+      {
+        "phase": "drain",
+        "ms": 2213,
+        "p": 0,
+        "canvas": [
+          507,
+          371
+        ]
+      }
+    ],
+    "swaps": [
+      {
+        "ms": 1459,
+        "phase": "open-partial",
+        "p": 0.0007278518518518517
+      },
+      {
+        "ms": 1479,
+        "phase": "open-partial",
+        "p": 0.005822814814814814
+      },
+      {
+        "ms": 1480,
+        "phase": "open-partial",
+        "p": 0.018518518518518517
+      },
+      {
+        "ms": 1491,
+        "phase": "open-partial",
+        "p": 0.04455748148148148
+      },
+      {
+        "ms": 1502,
+        "phase": "open-partial",
+        "p": 0.08780800000000002
+      },
+      {
+        "ms": 1520,
+        "phase": "open-partial",
+        "p": 0.14814814814814814
+      },
+      {
+        "ms": 1535,
+        "phase": "open-partial",
+        "p": 0.23727600000000001
+      },
+      {
+        "ms": 1553,
+        "phase": "open-partial",
+        "p": 0.35645985185185186
+      },
+      {
+        "ms": 1570,
+        "phase": "reverse-close",
+        "p": 0.35624354673286146
+      },
+      {
+        "ms": 1586,
+        "phase": "reverse-close",
+        "p": 0.3545620596005926
+      },
+      {
+        "ms": 1603,
+        "phase": "open-full",
+        "p": 0.35503184280076777
+      },
+      {
+        "ms": 1637,
+        "phase": "open-full",
+        "p": 0.35799837119527905
+      },
+      {
+        "ms": 1641,
+        "phase": "open-full",
+        "p": 0.3665146140524335
+      },
+      {
+        "ms": 1678,
+        "phase": "open-full",
+        "p": 0.38332114867738476
+      },
+      {
+        "ms": 1679,
+        "phase": "open-full",
+        "p": 0.38332114867738476
+      },
+      {
+        "ms": 1694,
+        "phase": "open-full",
+        "p": 0.4501824952153196
+      },
+      {
+        "ms": 1703,
+        "phase": "open-full",
+        "p": 0.5077089923468024
+      },
+      {
+        "ms": 1719,
+        "phase": "open-full",
+        "p": 0.5795222343839171
+      },
+      {
+        "ms": 1736,
+        "phase": "open-full",
+        "p": 0.6772810298002963
+      },
+      {
+        "ms": 1753,
+        "phase": "open-full",
+        "p": 0.7750398252166755
+      },
+      {
+        "ms": 1769,
+        "phase": "open-full",
+        "p": 0.8468530672537902
+      },
+      {
+        "ms": 1786,
+        "phase": "open-full",
+        "p": 0.904379564385273
+      },
+      {
+        "ms": 1803,
+        "phase": "open-full",
+        "p": 0.9453254779811622
+      },
+      {
+        "ms": 1819,
+        "phase": "open-full",
+        "p": 0.9712409109232079
+      },
+      {
+        "ms": 1836,
+        "phase": "open-full",
+        "p": 0.9880474455481592
+      },
+      {
+        "ms": 1852,
+        "phase": "open-full",
+        "p": 0.9965636884053135
+      },
+      {
+        "ms": 1869,
+        "phase": "open-full",
+        "p": 0.9995302167998248
+      },
+      {
+        "ms": 1886,
+        "phase": "open-full",
+        "p": 1
+      },
+      {
+        "ms": 1903,
+        "phase": "close-full",
+        "p": 0.9992721481481481
+      },
+      {
+        "ms": 1919,
+        "phase": "close-full",
+        "p": 0.994676
+      },
+      {
+        "ms": 1956,
+        "phase": "close-full",
+        "p": 0.9814814814814815
+      },
+      {
+        "ms": 1957,
+        "phase": "close-full",
+        "p": 0.9554425185185185
+      },
+      {
+        "ms": 1984,
+        "phase": "close-full",
+        "p": 0.9152908148148148
+      },
+      {
+        "ms": 1987,
+        "phase": "close-full",
+        "p": 0.8518518518518519
+      },
+      {
+        "ms": 2003,
+        "phase": "close-full",
+        "p": 0.762724
+      },
+      {
+        "ms": 2019,
+        "phase": "close-full",
+        "p": 0.6514611851851851
+      },
+      {
+        "ms": 2036,
+        "phase": "close-full",
+        "p": 0.5
+      },
+      {
+        "ms": 2053,
+        "phase": "close-full",
+        "p": 0.34853881481481486
+      },
+      {
+        "ms": 2070,
+        "phase": "close-full",
+        "p": 0.23727600000000004
+      },
+      {
+        "ms": 2086,
+        "phase": "close-full",
+        "p": 0.14814814814814814
+      },
+      {
+        "ms": 2102,
+        "phase": "close-full",
+        "p": 0.08470918518518511
+      },
+      {
+        "ms": 2119,
+        "phase": "close-full",
+        "p": 0.04455748148148153
+      },
+      {
+        "ms": 2136,
+        "phase": "close-full",
+        "p": 0.01851851851851849
+      },
+      {
+        "ms": 2153,
+        "phase": "close-full",
+        "p": 0.005323999999999995
+      },
+      {
+        "ms": 2169,
+        "phase": "close-full",
+        "p": 0.0007278518518518684
+      },
+      {
+        "ms": 2186,
+        "phase": "close-full",
+        "p": 0
+      },
+      {
+        "ms": 2202,
+        "phase": "close-full",
+        "p": 0
+      }
+    ],
+    "captures": [
+      {
+        "request": {
+          "phase": "open-partial",
+          "ms": 1453,
+          "p": 0
+        },
+        "phase": "open-partial",
+        "ms": 1479,
+        "p": 0.005822814814814814
+      },
+      {
+        "request": {
+          "phase": "open-partial",
+          "ms": 1479,
+          "p": 0.005822814814814814
+        },
+        "phase": "open-partial",
+        "ms": 1491,
+        "p": 0.04455748148148148
+      },
+      {
+        "request": {
+          "phase": "open-partial",
+          "ms": 1491,
+          "p": 0.04455748148148148
+        },
+        "phase": "open-partial",
+        "ms": 1514,
+        "p": 0.08780800000000002
+      },
+      {
+        "request": {
+          "phase": "open-partial",
+          "ms": 1520,
+          "p": 0.14814814814814814
+        },
+        "phase": "open-partial",
+        "ms": 1542,
+        "p": 0.23727600000000001
+      },
+      {
+        "request": {
+          "phase": "open-partial",
+          "ms": 1553,
+          "p": 0.35645985185185186
+        },
+        "phase": "reverse-close",
+        "ms": 1582,
+        "p": 0.35624354673286146
+      },
+      {
+        "request": {
+          "phase": "reverse-close",
+          "ms": 1586,
+          "p": 0.3545620596005926
+        },
+        "phase": "open-full",
+        "ms": 1610,
+        "p": 0.35503184280076777,
+        "saved": true,
+        "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/short/frames/case-0-opening-0.png"
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1638,
+          "p": 0.35799837119527905
+        },
+        "phase": "open-full",
+        "ms": 1650,
+        "p": 0.3665146140524335,
+        "saved": true,
+        "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/short/frames/case-0-opening-1.png"
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1679,
+          "p": 0.38332114867738476
+        },
+        "phase": "open-full",
+        "ms": 1694,
+        "p": 0.4501824952153196
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1694,
+          "p": 0.4501824952153196
+        },
+        "phase": "open-full",
+        "ms": 1713,
+        "p": 0.5077089923468024
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1719,
+          "p": 0.5795222343839171
+        },
+        "phase": "open-full",
+        "ms": 1741,
+        "p": 0.6772810298002963
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1753,
+          "p": 0.7750398252166755
+        },
+        "phase": "open-full",
+        "ms": 1780,
+        "p": 0.8468530672537902
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1786,
+          "p": 0.904379564385273
+        },
+        "phase": "open-full",
+        "ms": 1808,
+        "p": 0.9453254779811622
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1819,
+          "p": 0.9712409109232079
+        },
+        "phase": "open-full",
+        "ms": 1846,
+        "p": 0.9880474455481592
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1852,
+          "p": 0.9965636884053135
+        },
+        "phase": "open-full",
+        "ms": 1875,
+        "p": 0.9995302167998248
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 1903,
+          "p": 0.9992721481481481
+        },
+        "phase": "close-full",
+        "ms": 1930,
+        "p": 0.994676,
+        "saved": true,
+        "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/short/frames/case-0-closing-0.png"
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 1956,
+          "p": 0.9814814814814815
+        },
+        "phase": "close-full",
+        "ms": 1960,
+        "p": 0.9554425185185185,
+        "saved": true,
+        "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/short/frames/case-0-closing-1.png"
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 1984,
+          "p": 0.9152908148148148
+        },
+        "phase": "close-full",
+        "ms": 1997,
+        "p": 0.8518518518518519
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 2003,
+          "p": 0.762724
+        },
+        "phase": "close-full",
+        "ms": 2024,
+        "p": 0.6514611851851851
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 2036,
+          "p": 0.5
+        },
+        "phase": "close-full",
+        "ms": 2062,
+        "p": 0.34853881481481486
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 2070,
+          "p": 0.23727600000000004
+        },
+        "phase": "close-full",
+        "ms": 2092,
+        "p": 0.14814814814814814
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 2102,
+          "p": 0.08470918518518511
+        },
+        "phase": "close-full",
+        "ms": 2130,
+        "p": 0.04455748148148153
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 2136,
+          "p": 0.01851851851851849
+        },
+        "phase": "close-full",
+        "ms": 2159,
+        "p": 0.005323999999999995
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 2169,
+          "p": 0.0007278518518518684
+        },
+        "phase": "close-full",
+        "ms": 2196,
+        "p": 0
+      }
+    ],
+    "signals": [
+      {
+        "ms": 1459,
+        "phase": "open-partial",
+        "p": 0.0007278518518518517
+      },
+      {
+        "ms": 1478,
+        "phase": "open-partial",
+        "p": 0.005822814814814814
+      },
+      {
+        "ms": 1479,
+        "phase": "open-partial",
+        "p": 0.018518518518518517
+      },
+      {
+        "ms": 1488,
+        "phase": "open-partial",
+        "p": 0.04455748148148148
+      },
+      {
+        "ms": 1502,
+        "phase": "open-partial",
+        "p": 0.08780800000000002
+      },
+      {
+        "ms": 1520,
+        "phase": "open-partial",
+        "p": 0.14814814814814814
+      },
+      {
+        "ms": 1535,
+        "phase": "open-partial",
+        "p": 0.23727600000000001
+      },
+      {
+        "ms": 1552,
+        "phase": "open-partial",
+        "p": 0.35645985185185186
+      },
+      {
+        "ms": 1570,
+        "phase": "reverse-close",
+        "p": 0.35624354673286146
+      },
+      {
+        "ms": 1586,
+        "phase": "reverse-close",
+        "p": 0.3545620596005926
+      },
+      {
+        "ms": 1602,
+        "phase": "open-full",
+        "p": 0.35503184280076777
+      },
+      {
+        "ms": 1637,
+        "phase": "open-full",
+        "p": 0.35799837119527905
+      },
+      {
+        "ms": 1641,
+        "phase": "open-full",
+        "p": 0.3665146140524335
+      },
+      {
+        "ms": 1678,
+        "phase": "open-full",
+        "p": 0.38332114867738476
+      },
+      {
+        "ms": 1685,
+        "phase": "open-full",
+        "p": 0.40923658161943055
+      },
+      {
+        "ms": 1694,
+        "phase": "open-full",
+        "p": 0.4501824952153196
+      },
+      {
+        "ms": 1703,
+        "phase": "open-full",
+        "p": 0.5077089923468024
+      },
+      {
+        "ms": 1719,
+        "phase": "open-full",
+        "p": 0.5795222343839171
+      },
+      {
+        "ms": 1736,
+        "phase": "open-full",
+        "p": 0.6772810298002963
+      },
+      {
+        "ms": 1753,
+        "phase": "open-full",
+        "p": 0.7750398252166755
+      },
+      {
+        "ms": 1769,
+        "phase": "open-full",
+        "p": 0.8468530672537902
+      },
+      {
+        "ms": 1786,
+        "phase": "open-full",
+        "p": 0.904379564385273
+      },
+      {
+        "ms": 1803,
+        "phase": "open-full",
+        "p": 0.9453254779811622
+      },
+      {
+        "ms": 1819,
+        "phase": "open-full",
+        "p": 0.9712409109232079
+      },
+      {
+        "ms": 1836,
+        "phase": "open-full",
+        "p": 0.9880474455481592
+      },
+      {
+        "ms": 1852,
+        "phase": "open-full",
+        "p": 0.9965636884053135
+      },
+      {
+        "ms": 1869,
+        "phase": "open-full",
+        "p": 0.9995302167998248
+      },
+      {
+        "ms": 1886,
+        "phase": "open-full",
+        "p": 1
+      },
+      {
+        "ms": 1903,
+        "phase": "close-full",
+        "p": 0.9992721481481481
+      },
+      {
+        "ms": 1919,
+        "phase": "close-full",
+        "p": 0.994676
+      },
+      {
+        "ms": 1956,
+        "phase": "close-full",
+        "p": 0.9814814814814815
+      },
+      {
+        "ms": 1957,
+        "phase": "close-full",
+        "p": 0.9554425185185185
+      },
+      {
+        "ms": 1984,
+        "phase": "close-full",
+        "p": 0.9152908148148148
+      },
+      {
+        "ms": 1986,
+        "phase": "close-full",
+        "p": 0.8518518518518519
+      },
+      {
+        "ms": 2003,
+        "phase": "close-full",
+        "p": 0.762724
+      },
+      {
+        "ms": 2019,
+        "phase": "close-full",
+        "p": 0.6514611851851851
+      },
+      {
+        "ms": 2036,
+        "phase": "close-full",
+        "p": 0.5
+      },
+      {
+        "ms": 2052,
+        "phase": "close-full",
+        "p": 0.34853881481481486
+      },
+      {
+        "ms": 2070,
+        "phase": "close-full",
+        "p": 0.23727600000000004
+      },
+      {
+        "ms": 2086,
+        "phase": "close-full",
+        "p": 0.14814814814814814
+      },
+      {
+        "ms": 2102,
+        "phase": "close-full",
+        "p": 0.08470918518518511
+      },
+      {
+        "ms": 2119,
+        "phase": "close-full",
+        "p": 0.04455748148148153
+      },
+      {
+        "ms": 2136,
+        "phase": "close-full",
+        "p": 0.01851851851851849
+      },
+      {
+        "ms": 2153,
+        "phase": "close-full",
+        "p": 0.005323999999999995
+      },
+      {
+        "ms": 2169,
+        "phase": "close-full",
+        "p": 0.0007278518518518684
+      },
+      {
+        "ms": 2186,
+        "phase": "close-full",
+        "p": 0
+      },
+      {
+        "ms": 2207,
+        "phase": "close-full",
+        "p": 1
+      },
+      {
+        "ms": 2211,
+        "phase": "close-full",
+        "p": 0
+      }
+    ],
+    "openingImages": 2,
+    "closingImages": 2,
+    "nativeSize": [
+      906,
+      1070
+    ],
+    "allocatedSize": [
+      720,
+      650
+    ],
+    "baselineScene": {
+      "workspace": {
+        "width": 507,
+        "height": 371,
+        "rects": {
+          "welcome": {
+            "x": 0,
+            "y": 0,
+            "width": 200,
+            "height": 80
+          },
+          "clock": {
+            "x": 0,
+            "y": 88,
+            "width": 200,
+            "height": 80
+          },
+          "system": {
+            "x": 0,
+            "y": 176,
+            "width": 260,
+            "height": 180
+          },
+          "github": {
+            "x": 208,
+            "y": 88,
+            "width": 200,
+            "height": 80
+          },
+          "agenda": {
+            "x": 208,
+            "y": 5,
+            "width": 240,
+            "height": 75
+          }
+        },
+        "overflow": [
+          "notifications",
+          "todo",
+          "media",
+          "weather",
+          "calendar"
+        ]
+      },
+      "body": {
+        "edge": "top",
+        "content": {
+          "x": 106.39999999999998,
+          "y": 36,
+          "width": 507.20000000000005,
+          "height": 414.99999999999994
+        },
+        "surface": {
+          "x": 86.39999999999998,
+          "y": -50,
+          "width": 547.2,
+          "height": 521
+        },
+        "depth": 454.99999999999994,
+        "targetDepth": 454.99999999999994,
+        "progress": 1,
+        "span": 547.2,
+        "along": 86.39999999999998
+      },
+      "toolbarRect": {}
+    },
+    "dimensions": [
+      507,
+      371
+    ],
+    "openingFrames": 17,
+    "closingFrames": 17
+  }
+}

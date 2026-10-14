@@ -1,0 +1,102 @@
+{
+  "checks": 597,
+  "timings": [
+    {
+      "round": 0,
+      "mode": "full",
+      "milliseconds": 705,
+      "iterations": 8
+    },
+    {
+      "round": 0,
+      "mode": "lean",
+      "milliseconds": 259,
+      "iterations": 8
+    },
+    {
+      "round": 1,
+      "mode": "lean",
+      "milliseconds": 264,
+      "iterations": 8
+    },
+    {
+      "round": 1,
+      "mode": "full",
+      "milliseconds": 668,
+      "iterations": 8
+    },
+    {
+      "round": 2,
+      "mode": "full",
+      "milliseconds": 690,
+      "iterations": 8
+    },
+    {
+      "round": 2,
+      "mode": "lean",
+      "milliseconds": 359,
+      "iterations": 8
+    },
+    {
+      "round": 3,
+      "mode": "lean",
+      "milliseconds": 340,
+      "iterations": 8
+    },
+    {
+      "round": 3,
+      "mode": "full",
+      "milliseconds": 774,
+      "iterations": 8
+    },
+    {
+      "round": 4,
+      "mode": "full",
+      "milliseconds": 690,
+      "iterations": 8
+    },
+    {
+      "round": 4,
+      "mode": "lean",
+      "milliseconds": 474,
+      "iterations": 8
+    },
+    {
+      "round": 5,
+      "mode": "lean",
+      "milliseconds": 277,
+      "iterations": 8
+    },
+    {
+      "round": 5,
+      "mode": "full",
+      "milliseconds": 708,
+      "iterations": 8
+    },
+    {
+      "round": 6,
+      "mode": "full",
+      "milliseconds": 658,
+      "iterations": 8
+    },
+    {
+      "round": 6,
+      "mode": "lean",
+      "milliseconds": 317,
+      "iterations": 8
+    },
+    {
+      "round": 7,
+      "mode": "lean",
+      "milliseconds": 305,
+      "iterations": 8
+    },
+    {
+      "round": 7,
+      "mode": "full",
+      "milliseconds": 735,
+      "iterations": 8
+    }
+  ],
+  "scope": "QV4 synthetic JSON parse and production interpreter methods; no GPU or whole-shell gain"
+}

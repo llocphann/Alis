@@ -1,0 +1,8 @@
+{
+  "source_sha": "60d34e5f842f563117ea1e269a75b3f5c67ed778",
+  "native_exit": 0,
+  "started": 1791955137.1750352,
+  "ended": 1791955144.784155,
+  "explicit_focus": false,
+  "scope": "Actual composed BodyHost/Field/Dashboard Notes/editor in asynchronous normal event loop; diagnostic, not owner acceptance"
+}

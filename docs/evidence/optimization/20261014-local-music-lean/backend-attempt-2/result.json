@@ -1,0 +1,166 @@
+{
+  "checks": 268,
+  "scope": "Private synthetic library; no owner MPD, routes, volume, playback or config touched",
+  "measurements": [
+    {
+      "size": 10000,
+      "label": "python",
+      "lean": false,
+      "stdout_bytes": 8381290,
+      "elapsed_seconds": 6.7651451470010215,
+      "user_seconds": 4.315018,
+      "system_seconds": 2.40043,
+      "max_rss_kib": 276688
+    },
+    {
+      "size": 10000,
+      "label": "python",
+      "lean": true,
+      "stdout_bytes": 4147039,
+      "elapsed_seconds": 6.693681231990922,
+      "user_seconds": 4.222918,
+      "system_seconds": 2.418924,
+      "max_rss_kib": 276736
+    },
+    {
+      "size": 10000,
+      "label": "rust",
+      "lean": false,
+      "stdout_bytes": 8381290,
+      "elapsed_seconds": 0.2841386270010844,
+      "user_seconds": 0.185996,
+      "system_seconds": 0.085603,
+      "max_rss_kib": 282872
+    },
+    {
+      "size": 10000,
+      "label": "rust",
+      "lean": true,
+      "stdout_bytes": 4147039,
+      "elapsed_seconds": 0.18911217999993823,
+      "user_seconds": 0.12478299999999999,
+      "system_seconds": 0.050520999999999996,
+      "max_rss_kib": 291116
+    },
+    {
+      "size": 10000,
+      "label": "python",
+      "lean": true,
+      "stdout_bytes": 4147039,
+      "elapsed_seconds": 6.724130403003073,
+      "user_seconds": 4.247653,
+      "system_seconds": 2.415146,
+      "max_rss_kib": 291116
+    },
+    {
+      "size": 10000,
+      "label": "python",
+      "lean": false,
+      "stdout_bytes": 8381290,
+      "elapsed_seconds": 6.794815697998274,
+      "user_seconds": 4.273681,
+      "system_seconds": 2.46487,
+      "max_rss_kib": 291116
+    },
+    {
+      "size": 10000,
+      "label": "rust",
+      "lean": true,
+      "stdout_bytes": 4147039,
+      "elapsed_seconds": 0.18451419401390012,
+      "user_seconds": 0.117155,
+      "system_seconds": 0.056575,
+      "max_rss_kib": 295116
+    },
+    {
+      "size": 10000,
+      "label": "rust",
+      "lean": false,
+      "stdout_bytes": 8381290,
+      "elapsed_seconds": 0.2827762509987224,
+      "user_seconds": 0.18423499999999998,
+      "system_seconds": 0.084585,
+      "max_rss_kib": 295116
+    },
+    {
+      "size": 10000,
+      "label": "python",
+      "lean": false,
+      "stdout_bytes": 8381290,
+      "elapsed_seconds": 6.776294762006728,
+      "user_seconds": 4.2765,
+      "system_seconds": 2.445783,
+      "max_rss_kib": 295116
+    },
+    {
+      "size": 10000,
+      "label": "python",
+      "lean": true,
+      "stdout_bytes": 4147039,
+      "elapsed_seconds": 6.778445988005842,
+      "user_seconds": 4.311131,
+      "system_seconds": 2.407188,
+      "max_rss_kib": 314772
+    },
+    {
+      "size": 10000,
+      "label": "rust",
+      "lean": false,
+      "stdout_bytes": 8381290,
+      "elapsed_seconds": 0.2901469180069398,
+      "user_seconds": 0.19003399999999998,
+      "system_seconds": 0.08561099999999999,
+      "max_rss_kib": 314772
+    },
+    {
+      "size": 10000,
+      "label": "rust",
+      "lean": true,
+      "stdout_bytes": 4147039,
+      "elapsed_seconds": 0.18465503898914903,
+      "user_seconds": 0.108945,
+      "system_seconds": 0.060974,
+      "max_rss_kib": 314772
+    },
+    {
+      "size": 10000,
+      "label": "python",
+      "lean": true,
+      "stdout_bytes": 4147039,
+      "elapsed_seconds": 6.920544571999926,
+      "user_seconds": 4.353431,
+      "system_seconds": 2.49293,
+      "max_rss_kib": 314772
+    },
+    {
+      "size": 10000,
+      "label": "python",
+      "lean": false,
+      "stdout_bytes": 8381290,
+      "elapsed_seconds": 6.90478050900856,
+      "user_seconds": 4.396789,
+      "system_seconds": 2.441411,
+      "max_rss_kib": 314772
+    },
+    {
+      "size": 10000,
+      "label": "rust",
+      "lean": true,
+      "stdout_bytes": 4147039,
+      "elapsed_seconds": 0.1884417020046385,
+      "user_seconds": 0.122626,
+      "system_seconds": 0.055508999999999996,
+      "max_rss_kib": 314772
+    },
+    {
+      "size": 10000,
+      "label": "rust",
+      "lean": false,
+      "stdout_bytes": 8381290,
+      "elapsed_seconds": 0.2857824509992497,
+      "user_seconds": 0.18209599999999998,
+      "system_seconds": 0.08848199999999999,
+      "max_rss_kib": 314772
+    }
+  ]
+}

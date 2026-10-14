@@ -1,0 +1,18 @@
+{
+  "baseline_source": "1afffc54d83065dc90ed32da3776e2e6e00bbc30",
+  "candidate_source": "57bbede09a507061df9409b4874e33aa0d0c7906",
+  "compiler_tests": {
+    "passed": 23,
+    "failed": 0
+  },
+  "files": {
+    "baseline/local_music_mpd.py": "29304c57ac6ffc5a6dfc5ae78437d9a2d1d6f05ba59c2f472dfc34dbe077ddb0",
+    "baseline/alis-mpdd": "87d05813f849926a8a9d20dddd948b78abc8c2044eac1be69a2fc9365fb2ca04",
+    "baseline/build.log": "d76b6ac07508e2f48062537220a99df4d4ed5802c44493fb45f8f8a3a608e03f",
+    "build.log": "9dee121cbe178fdd26af6dc20f1f071e46a437eb59ac3fe4bc9322a92425df07",
+    "cargo-test.log": "e765b82485c51dd94eb2f5b7d96a1ff9e3b9db13fcc6d4412a19f6b68a6b0ce7",
+    "cargo-test-initial-fail.log": "cf15cd39670d6c1ff72d084d437c1867b2475e48cc25e5e991af21bb0a16f797",
+    "cargo-test-trait-fail.log": "0f3c63bb9804c21ea6fc3c10876728e216c1d98e6255699b27072d76329e2c48"
+  },
+  "release_binary_sha256": "bef1717f9a350b47d82b604011ec0ee5c3ebd272e56b80df224b53a0d5238cd8"
+}

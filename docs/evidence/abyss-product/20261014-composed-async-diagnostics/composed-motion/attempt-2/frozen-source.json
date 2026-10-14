@@ -1,0 +1,6 @@
+{
+  "source_sha": "3f0018a42e04b59b77dd5000c74173eb398d6671",
+  "qml_sha256": "2c1e048b9d23aec88da57c847c554be77b039515d020bfca677a27a0e502a77e",
+  "driver_sha256": "1fdb3f294c9c9d11fa1dfb8a76a8db9370135637af9ba1830518bccd61d4626c",
+  "scope": "Asynchronous actual composed Dashboard/Overview Notes/editor,16 routes/edges/sizes, real swaps/captures/reversal; no explicit focus"
+}

@@ -1,0 +1,69 @@
+{
+  "source": "32ebde009150be0731b906e6d4b5edae3eb46252",
+  "tests": [
+    {
+      "command": [
+        "python3",
+        "scripts/test-local-music-contract.py"
+      ],
+      "exit": 0,
+      "seconds": 0.16,
+      "log": ".git/maintainer-validation/20261014-music-lean/focused/0.txt"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-local-music-folder-release.py"
+      ],
+      "exit": 0,
+      "seconds": 1.07,
+      "log": ".git/maintainer-validation/20261014-music-lean/focused/1.txt"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-local-music-demand-runtime.py"
+      ],
+      "exit": 1,
+      "seconds": 0.31,
+      "log": ".git/maintainer-validation/20261014-music-lean/focused/2.txt"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-local-music-mutation-runtime.py"
+      ],
+      "exit": 0,
+      "seconds": 8.34,
+      "log": ".git/maintainer-validation/20261014-music-lean/focused/3.txt"
+    },
+    {
+      "command": [
+        "python3",
+        "native/scripts/check-mpd-mutation-parity.py",
+        "native/target/release/alis-mpdd"
+      ],
+      "exit": 0,
+      "seconds": 0.77,
+      "log": ".git/maintainer-validation/20261014-music-lean/focused/4.txt"
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/test-native-benchmark-deep-contract.sh"
+      ],
+      "exit": 0,
+      "seconds": 0.06,
+      "log": ".git/maintainer-validation/20261014-music-lean/focused/5.txt"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test-local-music-lean-snapshot.py"
+      ],
+      "exit": 0,
+      "seconds": 1.32,
+      "log": ".git/maintainer-validation/20261014-music-lean/focused/6.txt"
+    }
+  ]
+}

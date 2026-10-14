@@ -1,0 +1,115 @@
+{
+  "runtime_source": "57bbede09a507061df9409b4874e33aa0d0c7906",
+  "backend_driver_source": "7576228a0f43d6e53742bc706e3fb0b0ac17bb23",
+  "qml_driver_source": "32ebde009150be0731b906e6d4b5edae3eb46252",
+  "final_demand_source": "dc4992ec3f4d5d3b1601801e52574d37f9267a1e",
+  "backend_checks": 268,
+  "qml_checks": 597,
+  "rust_unit_tests": 23,
+  "measurements": {
+    "python": {
+      "stdout_bytes": {
+        "full_median": 8381290.0,
+        "lean_median": 4147039.0,
+        "reduction_percent": 50.52027790471395
+      },
+      "user_seconds": {
+        "full_median": 4.3041725,
+        "lean_median": 4.3871005,
+        "reduction_percent": -1.9266885795120814
+      },
+      "system_seconds": {
+        "full_median": 2.478837,
+        "lean_median": 2.4759255,
+        "reduction_percent": 0.11745427391959273
+      },
+      "elapsed_seconds": {
+        "full_median": 6.827592811001523,
+        "lean_median": 6.917521820505499,
+        "reduction_percent": -1.3171407843635574
+      },
+      "post_exec_rss_peak_kib": {
+        "full_median": 70046.0,
+        "lean_median": 61878.0,
+        "reduction_percent": 11.660908545812754
+      },
+      "post_exec_pss_peak_kib": {
+        "full_median": 58443.5,
+        "lean_median": 50327.0,
+        "reduction_percent": 13.88777195068741
+      }
+    },
+    "rust": {
+      "stdout_bytes": {
+        "full_median": 8381290.0,
+        "lean_median": 4147039.0,
+        "reduction_percent": 50.52027790471395
+      },
+      "user_seconds": {
+        "full_median": 0.19413049999999998,
+        "lean_median": 0.1259825,
+        "reduction_percent": 35.104221129600965
+      },
+      "system_seconds": {
+        "full_median": 0.081033,
+        "lean_median": 0.056389499999999995,
+        "reduction_percent": 30.41168412868831
+      },
+      "elapsed_seconds": {
+        "full_median": 0.3409997220078367,
+        "lean_median": 0.21044837150111562,
+        "reduction_percent": 38.284884731876936
+      },
+      "post_exec_rss_peak_kib": {
+        "full_median": 109984.0,
+        "lean_median": 70486.0,
+        "reduction_percent": 35.91249636310736
+      },
+      "post_exec_pss_peak_kib": {
+        "full_median": 107432.0,
+        "lean_median": 67932.0,
+        "reduction_percent": 36.76744359222578
+      }
+    }
+  },
+  "qml_parse_8_iterations": {
+    "full_median_ms": 697.5,
+    "lean_median_ms": 311.0,
+    "reduction_percent": 55.41218637992831
+  },
+  "scope": "Four alternating pairs per backend, synthetic 10000-track library. Whole desktop/steady CPU/GPU/FPS not measured. Owner services/config/routes/volumes untouched. Full/default snapshot bytes and commands match frozen previous Python/Rust; lean differs only by omitted unused folders. Actual RPC and QV4 state/array identities qualified.",
+  "limitations": [
+    "Python CPU and elapsed did not improve; preserve both measurement rounds.",
+    "wait4 peak RSS includes pre-exec inherited parent high-water marks and is HELD as a helper-memory metric; use reported post-exec cmdline-verified smaps samples only.",
+    "Backend measurement program was loaded at 7576228a0; subsequent fixture-only changes added QV4/demand gates and clean-clone build admission while it ran. Loaded driver bytes retained; production backend bytes unchanged.",
+    "The first optional benchmark launcher failed because /usr/bin/time was unavailable; retained, replaced with per-helper wait4 and post-exec sampling.",
+    "Two demand assertions failed before FileView readback; raw failures retained, final readiness-gated demand PASS. No runtime timing changes.",
+    "Full maintainer canonical and installed/owner acceptance are separate, not inferred from focused tests."
+  ],
+  "files": {
+    "backend-attempt-1-fail.log.gz": "b16e74018805b3bd9c98d99c38b7af0f5297a9fa3eaa620b34f81e9a9cdca143",
+    "backend-attempt-2.log.gz": "50e5f8ecf13c5ac88ef0644debb5556732c82e28e2540d8bec610e3d7e84b7de",
+    "backend.log.gz": "50e5f8ecf13c5ac88ef0644debb5556732c82e28e2540d8bec610e3d7e84b7de",
+    "build-receipt.json": "92ee8954e3a73f25c995f0b3aebf1c27ab5fc4e1618713e6b87c3c66488c9b55",
+    "build.log.gz": "4d4cd83a7a40cf6beb892f5116537a518de3372dbeb23d3fbd06b5f35449790d",
+    "cargo-test-initial-fail.log.gz": "451f0735d5254d2200f09559f20c66a90bf3bba75a8edd26cdeedd4aebb1e57f",
+    "cargo-test-trait-fail.log.gz": "1db73b9d817e2fbd1b954f02956f23faa93e76a2b87d2125963d9ad066915b11",
+    "cargo-test.log.gz": "fdd50a5df5ab1e97d09022c32712c3c89b13ba8e21111678ffeb46bcb8a5d542",
+    "demand-file-readback.txt.gz": "c3605422bdf4e605a1f2efe3cfe71111614992d62aa9e5789a1a724d7aee4c4e",
+    "demand-repeat.txt.gz": "03ffb6428571cbef064dc1c792c35fcc73acc435b637c4666bc9ee76c1dcc7af",
+    "loaded-backend-driver.py": "139e604383082c58b55b96ed8a5548a2883a9c7fba984e0a7d59ff8bd1063615",
+    "backend/result.json": "864ce3667fc2609b6154fe2814c2ff3c9f4ca4d4bda61a96d48decfa86dbfdb9",
+    "backend-attempt-2/result.json": "1c3e03a0c43155aa224602df8ddaa5292eafc36847f3ab80fed87e31431f1f70",
+    "focused/0.txt.gz": "56ff219682fbc6a4daeea9fdcb7eaa31f20609756c8ccb085540b7b34e6214ab",
+    "focused/1.txt.gz": "aa4976871fa4bc03a4a417ac311b55539aaef54eccb97558cb484d6e39b2b10c",
+    "focused/2.txt.gz": "eb5fa1a8abed74a2bae6afbda4de0801c377d122f1ee7cd620951291a3714dee",
+    "focused/3.txt.gz": "e165a733d7fd00dee0556da75782a421e0e83069ef8c3af480548d816822c3c3",
+    "focused/4.txt.gz": "96b91a5a98ced9510fcf2a223ae5a285218ca18a8a261e3e31beb3b73d4b68b8",
+    "focused/5.txt.gz": "6d9dc2cc3cd3e6b98b43dd2cb98abf6d8eeb751925d35ffd3abaeafd615eaa98",
+    "focused/6.txt.gz": "249345cae9670b81b45bbf69b8312d6f46c0cdc93004f1a1f371fe4db6bef810",
+    "focused/receipt.json": "e5a5587f578dbed6c27c0793651411a2e1a5a4bc8761df19c607677b8a58ede7",
+    "qml/raw.txt.gz": "804452d306b79fd126312d381c7ad4f85778b1aa707d4fbddcf534956fd978cd",
+    "qml/result.json": "4c6000a830fb76c47ae9cc97432d60d4cd3ab34f45267a5444f8c9297179e7b2",
+    "qml/shell.qml": "2c086b886faaa4a09786946d6e3b90f34b56db496ea3e5451bed0fc11282a9ba"
+  }
+}

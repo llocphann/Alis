@@ -1,0 +1,1753 @@
+{
+  "error": null,
+  "checks": 339,
+  "completed": 1,
+  "caseIndex": 1,
+  "phase": "drain",
+  "results": [
+    {
+      "case": {
+        "size": [
+          720,
+          650
+        ],
+        "route": "Dashboard",
+        "edge": "top"
+      },
+      "events": [
+        {
+          "phase": "loading",
+          "ms": 822,
+          "p": null,
+          "canvas": null
+        },
+        {
+          "phase": "settling",
+          "ms": 936,
+          "p": null,
+          "canvas": [
+            507,
+            371
+          ]
+        },
+        {
+          "phase": "notes",
+          "ms": 1195,
+          "p": null,
+          "canvas": [
+            507,
+            371
+          ]
+        },
+        {
+          "phase": "open-partial",
+          "ms": 1457,
+          "p": 0,
+          "canvas": [
+            507,
+            371
+          ]
+        },
+        {
+          "phase": "reverse-close",
+          "ms": 1546,
+          "p": 0.34853881481481486,
+          "canvas": [
+            507,
+            371
+          ]
+        },
+        {
+          "phase": "open-full",
+          "ms": 1578,
+          "p": 0.3466831941647408,
+          "canvas": [
+            507,
+            371
+          ]
+        },
+        {
+          "phase": "close-full",
+          "ms": 1894,
+          "p": 1,
+          "canvas": [
+            507,
+            371
+          ]
+        },
+        {
+          "phase": "drain",
+          "ms": 2219,
+          "p": 0,
+          "canvas": [
+            507,
+            371
+          ]
+        }
+      ],
+      "swaps": [
+        {
+          "ms": 1468,
+          "phase": "open-partial",
+          "p": 0.005324
+        },
+        {
+          "ms": 1493,
+          "phase": "open-partial",
+          "p": 0.042592
+        },
+        {
+          "ms": 1496,
+          "phase": "open-partial",
+          "p": 0.08470918518518518
+        },
+        {
+          "ms": 1502,
+          "phase": "open-partial",
+          "p": 0.08470918518518518
+        },
+        {
+          "ms": 1507,
+          "phase": "open-partial",
+          "p": 0.14374800000000001
+        },
+        {
+          "ms": 1524,
+          "phase": "open-partial",
+          "p": 0.2312438518518518
+        },
+        {
+          "ms": 1540,
+          "phase": "open-partial",
+          "p": 0.34853881481481486
+        },
+        {
+          "ms": 1558,
+          "phase": "reverse-close",
+          "p": 0.3483273162984472
+        },
+        {
+          "ms": 1574,
+          "phase": "reverse-close",
+          "p": 0.3466831941647408
+        },
+        {
+          "ms": 1609,
+          "phase": "open-full",
+          "p": 0.34715871201171394
+        },
+        {
+          "ms": 1612,
+          "phase": "open-full",
+          "p": 0.35016145283900774
+        },
+        {
+          "ms": 1647,
+          "phase": "open-full",
+          "p": 0.35878165353206043
+        },
+        {
+          "ms": 1648,
+          "phase": "open-full",
+          "p": 0.35878165353206043
+        },
+        {
+          "ms": 1663,
+          "phase": "open-full",
+          "p": 0.40202512845483346
+        },
+        {
+          "ms": 1674,
+          "phase": "open-full",
+          "p": 0.4434708691032977
+        },
+        {
+          "ms": 1691,
+          "phase": "open-full",
+          "p": 0.5016995925861077
+        },
+        {
+          "ms": 1708,
+          "phase": "open-full",
+          "p": 0.5743894593691625
+        },
+        {
+          "ms": 1725,
+          "phase": "open-full",
+          "p": 0.6733415970823704
+        },
+        {
+          "ms": 1742,
+          "phase": "open-full",
+          "p": 0.7722937347955783
+        },
+        {
+          "ms": 1758,
+          "phase": "open-full",
+          "p": 0.844983601578633
+        },
+        {
+          "ms": 1774,
+          "phase": "open-full",
+          "p": 0.9032123250614431
+        },
+        {
+          "ms": 1791,
+          "phase": "open-full",
+          "p": 0.9446580657099074
+        },
+        {
+          "ms": 1808,
+          "phase": "open-full",
+          "p": 0.9708898485224547
+        },
+        {
+          "ms": 1824,
+          "phase": "open-full",
+          "p": 0.9879015406326804
+        },
+        {
+          "ms": 1841,
+          "phase": "open-full",
+          "p": 0.9965217413257331
+        },
+        {
+          "ms": 1858,
+          "phase": "open-full",
+          "p": 0.9995244821530268
+        },
+        {
+          "ms": 1874,
+          "phase": "open-full",
+          "p": 1
+        },
+        {
+          "ms": 1890,
+          "phase": "open-full",
+          "p": 1
+        },
+        {
+          "ms": 1908,
+          "phase": "close-full",
+          "p": 0.9993931851851852
+        },
+        {
+          "ms": 1925,
+          "phase": "close-full",
+          "p": 0.994676
+        },
+        {
+          "ms": 1956,
+          "phase": "close-full",
+          "p": 0.9814814814814815
+        },
+        {
+          "ms": 1958,
+          "phase": "close-full",
+          "p": 0.957408
+        },
+        {
+          "ms": 1993,
+          "phase": "close-full",
+          "p": 0.9152908148148148
+        },
+        {
+          "ms": 1996,
+          "phase": "close-full",
+          "p": 0.8518518518518519
+        },
+        {
+          "ms": 2007,
+          "phase": "close-full",
+          "p": 0.7687561481481482
+        },
+        {
+          "ms": 2024,
+          "phase": "close-full",
+          "p": 0.6514611851851851
+        },
+        {
+          "ms": 2041,
+          "phase": "close-full",
+          "p": 0.5
+        },
+        {
+          "ms": 2058,
+          "phase": "close-full",
+          "p": 0.3564598518518518
+        },
+        {
+          "ms": 2074,
+          "phase": "close-full",
+          "p": 0.23727600000000004
+        },
+        {
+          "ms": 2091,
+          "phase": "close-full",
+          "p": 0.14814814814814814
+        },
+        {
+          "ms": 2107,
+          "phase": "close-full",
+          "p": 0.087808
+        },
+        {
+          "ms": 2125,
+          "phase": "close-full",
+          "p": 0.04455748148148153
+        },
+        {
+          "ms": 2141,
+          "phase": "close-full",
+          "p": 0.01851851851851849
+        },
+        {
+          "ms": 2159,
+          "phase": "close-full",
+          "p": 0.005822814814814836
+        },
+        {
+          "ms": 2175,
+          "phase": "close-full",
+          "p": 0.0007278518518518684
+        },
+        {
+          "ms": 2191,
+          "phase": "close-full",
+          "p": 0
+        },
+        {
+          "ms": 2208,
+          "phase": "close-full",
+          "p": 0
+        }
+      ],
+      "captures": [
+        {
+          "request": {
+            "phase": "open-partial",
+            "ms": 1464,
+            "p": 0.000606814814814815
+          },
+          "phase": "open-partial",
+          "ms": 1493,
+          "p": 0.042592
+        },
+        {
+          "request": {
+            "phase": "open-partial",
+            "ms": 1496,
+            "p": 0.08470918518518518
+          },
+          "phase": "open-partial",
+          "ms": 1515,
+          "p": 0.14374800000000001
+        },
+        {
+          "request": {
+            "phase": "open-partial",
+            "ms": 1524,
+            "p": 0.2312438518518518
+          },
+          "phase": "reverse-close",
+          "ms": 1553,
+          "p": 0.34853881481481486
+        },
+        {
+          "request": {
+            "phase": "reverse-close",
+            "ms": 1558,
+            "p": 0.3483273162984472
+          },
+          "phase": "open-full",
+          "ms": 1579,
+          "p": 0.3466831941647408,
+          "saved": true,
+          "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/long-source/frames/case-0-opening-0.png"
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1609,
+            "p": 0.34715871201171394
+          },
+          "phase": "open-full",
+          "ms": 1620,
+          "p": 0.35016145283900774,
+          "saved": true,
+          "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/long-source/frames/case-0-opening-1.png"
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1647,
+            "p": 0.35878165353206043
+          },
+          "phase": "open-full",
+          "ms": 1663,
+          "p": 0.40202512845483346
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1663,
+            "p": 0.40202512845483346
+          },
+          "phase": "open-full",
+          "ms": 1684,
+          "p": 0.4434708691032977
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1691,
+            "p": 0.5016995925861077
+          },
+          "phase": "open-full",
+          "ms": 1714,
+          "p": 0.5743894593691625
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1725,
+            "p": 0.6733415970823704
+          },
+          "phase": "open-full",
+          "ms": 1752,
+          "p": 0.7722937347955783
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1758,
+            "p": 0.844983601578633
+          },
+          "phase": "open-full",
+          "ms": 1779,
+          "p": 0.9032123250614431
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1791,
+            "p": 0.9446580657099074
+          },
+          "phase": "open-full",
+          "ms": 1818,
+          "p": 0.9708898485224547
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1824,
+            "p": 0.9879015406326804
+          },
+          "phase": "open-full",
+          "ms": 1846,
+          "p": 0.9965217413257331
+        },
+        {
+          "request": {
+            "phase": "open-full",
+            "ms": 1858,
+            "p": 0.9995244821530268
+          },
+          "phase": "open-full",
+          "ms": 1884,
+          "p": 1
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 1908,
+            "p": 0.9993931851851852
+          },
+          "phase": "close-full",
+          "ms": 1932,
+          "p": 0.994676,
+          "saved": true,
+          "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/long-source/frames/case-0-closing-0.png"
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 1956,
+            "p": 0.9814814814814815
+          },
+          "phase": "close-full",
+          "ms": 1968,
+          "p": 0.957408,
+          "saved": true,
+          "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/long-source/frames/case-0-closing-1.png"
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 1993,
+            "p": 0.9152908148148148
+          },
+          "phase": "close-full",
+          "ms": 2000,
+          "p": 0.8518518518518519
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 2007,
+            "p": 0.7687561481481482
+          },
+          "phase": "close-full",
+          "ms": 2036,
+          "p": 0.6514611851851851
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 2041,
+            "p": 0.5
+          },
+          "phase": "close-full",
+          "ms": 2063,
+          "p": 0.3564598518518518
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 2074,
+            "p": 0.23727600000000004
+          },
+          "phase": "close-full",
+          "ms": 2100,
+          "p": 0.14814814814814814
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 2107,
+            "p": 0.087808
+          },
+          "phase": "close-full",
+          "ms": 2131,
+          "p": 0.04455748148148153
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 2141,
+            "p": 0.01851851851851849
+          },
+          "phase": "close-full",
+          "ms": 2169,
+          "p": 0.005822814814814836
+        },
+        {
+          "request": {
+            "phase": "close-full",
+            "ms": 2175,
+            "p": 0.0007278518518518684
+          },
+          "phase": "close-full",
+          "ms": 2196,
+          "p": 0
+        }
+      ],
+      "signals": [
+        {
+          "ms": 1464,
+          "phase": "open-partial",
+          "p": 0.000606814814814815
+        },
+        {
+          "ms": 1467,
+          "phase": "open-partial",
+          "p": 0.005324
+        },
+        {
+          "ms": 1492,
+          "phase": "open-partial",
+          "p": 0.01742948148148148
+        },
+        {
+          "ms": 1493,
+          "phase": "open-partial",
+          "p": 0.042592
+        },
+        {
+          "ms": 1496,
+          "phase": "open-partial",
+          "p": 0.08470918518518518
+        },
+        {
+          "ms": 1507,
+          "phase": "open-partial",
+          "p": 0.14374800000000001
+        },
+        {
+          "ms": 1524,
+          "phase": "open-partial",
+          "p": 0.2312438518518518
+        },
+        {
+          "ms": 1540,
+          "phase": "open-partial",
+          "p": 0.34853881481481486
+        },
+        {
+          "ms": 1558,
+          "phase": "reverse-close",
+          "p": 0.3483273162984472
+        },
+        {
+          "ms": 1574,
+          "phase": "reverse-close",
+          "p": 0.3466831941647408
+        },
+        {
+          "ms": 1609,
+          "phase": "open-full",
+          "p": 0.34715871201171394
+        },
+        {
+          "ms": 1612,
+          "phase": "open-full",
+          "p": 0.35016145283900774
+        },
+        {
+          "ms": 1647,
+          "phase": "open-full",
+          "p": 0.35878165353206043
+        },
+        {
+          "ms": 1657,
+          "phase": "open-full",
+          "p": 0.375793345642286
+        },
+        {
+          "ms": 1663,
+          "phase": "open-full",
+          "p": 0.40202512845483346
+        },
+        {
+          "ms": 1674,
+          "phase": "open-full",
+          "p": 0.4434708691032977
+        },
+        {
+          "ms": 1691,
+          "phase": "open-full",
+          "p": 0.5016995925861077
+        },
+        {
+          "ms": 1707,
+          "phase": "open-full",
+          "p": 0.5743894593691625
+        },
+        {
+          "ms": 1724,
+          "phase": "open-full",
+          "p": 0.6733415970823704
+        },
+        {
+          "ms": 1741,
+          "phase": "open-full",
+          "p": 0.7722937347955783
+        },
+        {
+          "ms": 1757,
+          "phase": "open-full",
+          "p": 0.844983601578633
+        },
+        {
+          "ms": 1774,
+          "phase": "open-full",
+          "p": 0.9032123250614431
+        },
+        {
+          "ms": 1791,
+          "phase": "open-full",
+          "p": 0.9446580657099074
+        },
+        {
+          "ms": 1808,
+          "phase": "open-full",
+          "p": 0.9708898485224547
+        },
+        {
+          "ms": 1824,
+          "phase": "open-full",
+          "p": 0.9879015406326804
+        },
+        {
+          "ms": 1841,
+          "phase": "open-full",
+          "p": 0.9965217413257331
+        },
+        {
+          "ms": 1858,
+          "phase": "open-full",
+          "p": 0.9995244821530268
+        },
+        {
+          "ms": 1874,
+          "phase": "open-full",
+          "p": 1
+        },
+        {
+          "ms": 1908,
+          "phase": "close-full",
+          "p": 0.9993931851851852
+        },
+        {
+          "ms": 1924,
+          "phase": "close-full",
+          "p": 0.994676
+        },
+        {
+          "ms": 1956,
+          "phase": "close-full",
+          "p": 0.9814814814814815
+        },
+        {
+          "ms": 1958,
+          "phase": "close-full",
+          "p": 0.957408
+        },
+        {
+          "ms": 1993,
+          "phase": "close-full",
+          "p": 0.9152908148148148
+        },
+        {
+          "ms": 1996,
+          "phase": "close-full",
+          "p": 0.8518518518518519
+        },
+        {
+          "ms": 2007,
+          "phase": "close-full",
+          "p": 0.7687561481481482
+        },
+        {
+          "ms": 2024,
+          "phase": "close-full",
+          "p": 0.6514611851851851
+        },
+        {
+          "ms": 2041,
+          "phase": "close-full",
+          "p": 0.5
+        },
+        {
+          "ms": 2057,
+          "phase": "close-full",
+          "p": 0.3564598518518518
+        },
+        {
+          "ms": 2074,
+          "phase": "close-full",
+          "p": 0.23727600000000004
+        },
+        {
+          "ms": 2091,
+          "phase": "close-full",
+          "p": 0.14814814814814814
+        },
+        {
+          "ms": 2107,
+          "phase": "close-full",
+          "p": 0.087808
+        },
+        {
+          "ms": 2125,
+          "phase": "close-full",
+          "p": 0.04455748148148153
+        },
+        {
+          "ms": 2141,
+          "phase": "close-full",
+          "p": 0.01851851851851849
+        },
+        {
+          "ms": 2158,
+          "phase": "close-full",
+          "p": 0.005822814814814836
+        },
+        {
+          "ms": 2175,
+          "phase": "close-full",
+          "p": 0.0007278518518518684
+        },
+        {
+          "ms": 2191,
+          "phase": "close-full",
+          "p": 0
+        },
+        {
+          "ms": 2213,
+          "phase": "close-full",
+          "p": 1
+        },
+        {
+          "ms": 2217,
+          "phase": "close-full",
+          "p": 0
+        }
+      ],
+      "openingImages": 2,
+      "closingImages": 2,
+      "nativeSize": [
+        906,
+        1070
+      ],
+      "allocatedSize": [
+        720,
+        650
+      ],
+      "baselineScene": {
+        "workspace": {
+          "width": 507,
+          "height": 371,
+          "rects": {
+            "welcome": {
+              "x": 0,
+              "y": 0,
+              "width": 200,
+              "height": 80
+            },
+            "clock": {
+              "x": 0,
+              "y": 88,
+              "width": 200,
+              "height": 80
+            },
+            "system": {
+              "x": 0,
+              "y": 176,
+              "width": 260,
+              "height": 180
+            },
+            "github": {
+              "x": 208,
+              "y": 88,
+              "width": 200,
+              "height": 80
+            },
+            "agenda": {
+              "x": 208,
+              "y": 5,
+              "width": 240,
+              "height": 75
+            }
+          },
+          "overflow": [
+            "notifications",
+            "todo",
+            "media",
+            "weather",
+            "calendar"
+          ]
+        },
+        "body": {
+          "edge": "top",
+          "content": {
+            "x": 106.39999999999998,
+            "y": 36,
+            "width": 507.20000000000005,
+            "height": 414.99999999999994
+          },
+          "surface": {
+            "x": 86.39999999999998,
+            "y": -50,
+            "width": 547.2,
+            "height": 521
+          },
+          "depth": 454.99999999999994,
+          "targetDepth": 454.99999999999994,
+          "progress": 1,
+          "span": 547.2,
+          "along": 86.39999999999998
+        },
+        "toolbarRect": {}
+      },
+      "dimensions": [
+        507,
+        371
+      ],
+      "openingFrames": 17,
+      "closingFrames": 17
+    }
+  ],
+  "current": {
+    "case": {
+      "size": [
+        720,
+        650
+      ],
+      "route": "Dashboard",
+      "edge": "top"
+    },
+    "events": [
+      {
+        "phase": "loading",
+        "ms": 822,
+        "p": null,
+        "canvas": null
+      },
+      {
+        "phase": "settling",
+        "ms": 936,
+        "p": null,
+        "canvas": [
+          507,
+          371
+        ]
+      },
+      {
+        "phase": "notes",
+        "ms": 1195,
+        "p": null,
+        "canvas": [
+          507,
+          371
+        ]
+      },
+      {
+        "phase": "open-partial",
+        "ms": 1457,
+        "p": 0,
+        "canvas": [
+          507,
+          371
+        ]
+      },
+      {
+        "phase": "reverse-close",
+        "ms": 1546,
+        "p": 0.34853881481481486,
+        "canvas": [
+          507,
+          371
+        ]
+      },
+      {
+        "phase": "open-full",
+        "ms": 1578,
+        "p": 0.3466831941647408,
+        "canvas": [
+          507,
+          371
+        ]
+      },
+      {
+        "phase": "close-full",
+        "ms": 1894,
+        "p": 1,
+        "canvas": [
+          507,
+          371
+        ]
+      },
+      {
+        "phase": "drain",
+        "ms": 2219,
+        "p": 0,
+        "canvas": [
+          507,
+          371
+        ]
+      }
+    ],
+    "swaps": [
+      {
+        "ms": 1468,
+        "phase": "open-partial",
+        "p": 0.005324
+      },
+      {
+        "ms": 1493,
+        "phase": "open-partial",
+        "p": 0.042592
+      },
+      {
+        "ms": 1496,
+        "phase": "open-partial",
+        "p": 0.08470918518518518
+      },
+      {
+        "ms": 1502,
+        "phase": "open-partial",
+        "p": 0.08470918518518518
+      },
+      {
+        "ms": 1507,
+        "phase": "open-partial",
+        "p": 0.14374800000000001
+      },
+      {
+        "ms": 1524,
+        "phase": "open-partial",
+        "p": 0.2312438518518518
+      },
+      {
+        "ms": 1540,
+        "phase": "open-partial",
+        "p": 0.34853881481481486
+      },
+      {
+        "ms": 1558,
+        "phase": "reverse-close",
+        "p": 0.3483273162984472
+      },
+      {
+        "ms": 1574,
+        "phase": "reverse-close",
+        "p": 0.3466831941647408
+      },
+      {
+        "ms": 1609,
+        "phase": "open-full",
+        "p": 0.34715871201171394
+      },
+      {
+        "ms": 1612,
+        "phase": "open-full",
+        "p": 0.35016145283900774
+      },
+      {
+        "ms": 1647,
+        "phase": "open-full",
+        "p": 0.35878165353206043
+      },
+      {
+        "ms": 1648,
+        "phase": "open-full",
+        "p": 0.35878165353206043
+      },
+      {
+        "ms": 1663,
+        "phase": "open-full",
+        "p": 0.40202512845483346
+      },
+      {
+        "ms": 1674,
+        "phase": "open-full",
+        "p": 0.4434708691032977
+      },
+      {
+        "ms": 1691,
+        "phase": "open-full",
+        "p": 0.5016995925861077
+      },
+      {
+        "ms": 1708,
+        "phase": "open-full",
+        "p": 0.5743894593691625
+      },
+      {
+        "ms": 1725,
+        "phase": "open-full",
+        "p": 0.6733415970823704
+      },
+      {
+        "ms": 1742,
+        "phase": "open-full",
+        "p": 0.7722937347955783
+      },
+      {
+        "ms": 1758,
+        "phase": "open-full",
+        "p": 0.844983601578633
+      },
+      {
+        "ms": 1774,
+        "phase": "open-full",
+        "p": 0.9032123250614431
+      },
+      {
+        "ms": 1791,
+        "phase": "open-full",
+        "p": 0.9446580657099074
+      },
+      {
+        "ms": 1808,
+        "phase": "open-full",
+        "p": 0.9708898485224547
+      },
+      {
+        "ms": 1824,
+        "phase": "open-full",
+        "p": 0.9879015406326804
+      },
+      {
+        "ms": 1841,
+        "phase": "open-full",
+        "p": 0.9965217413257331
+      },
+      {
+        "ms": 1858,
+        "phase": "open-full",
+        "p": 0.9995244821530268
+      },
+      {
+        "ms": 1874,
+        "phase": "open-full",
+        "p": 1
+      },
+      {
+        "ms": 1890,
+        "phase": "open-full",
+        "p": 1
+      },
+      {
+        "ms": 1908,
+        "phase": "close-full",
+        "p": 0.9993931851851852
+      },
+      {
+        "ms": 1925,
+        "phase": "close-full",
+        "p": 0.994676
+      },
+      {
+        "ms": 1956,
+        "phase": "close-full",
+        "p": 0.9814814814814815
+      },
+      {
+        "ms": 1958,
+        "phase": "close-full",
+        "p": 0.957408
+      },
+      {
+        "ms": 1993,
+        "phase": "close-full",
+        "p": 0.9152908148148148
+      },
+      {
+        "ms": 1996,
+        "phase": "close-full",
+        "p": 0.8518518518518519
+      },
+      {
+        "ms": 2007,
+        "phase": "close-full",
+        "p": 0.7687561481481482
+      },
+      {
+        "ms": 2024,
+        "phase": "close-full",
+        "p": 0.6514611851851851
+      },
+      {
+        "ms": 2041,
+        "phase": "close-full",
+        "p": 0.5
+      },
+      {
+        "ms": 2058,
+        "phase": "close-full",
+        "p": 0.3564598518518518
+      },
+      {
+        "ms": 2074,
+        "phase": "close-full",
+        "p": 0.23727600000000004
+      },
+      {
+        "ms": 2091,
+        "phase": "close-full",
+        "p": 0.14814814814814814
+      },
+      {
+        "ms": 2107,
+        "phase": "close-full",
+        "p": 0.087808
+      },
+      {
+        "ms": 2125,
+        "phase": "close-full",
+        "p": 0.04455748148148153
+      },
+      {
+        "ms": 2141,
+        "phase": "close-full",
+        "p": 0.01851851851851849
+      },
+      {
+        "ms": 2159,
+        "phase": "close-full",
+        "p": 0.005822814814814836
+      },
+      {
+        "ms": 2175,
+        "phase": "close-full",
+        "p": 0.0007278518518518684
+      },
+      {
+        "ms": 2191,
+        "phase": "close-full",
+        "p": 0
+      },
+      {
+        "ms": 2208,
+        "phase": "close-full",
+        "p": 0
+      }
+    ],
+    "captures": [
+      {
+        "request": {
+          "phase": "open-partial",
+          "ms": 1464,
+          "p": 0.000606814814814815
+        },
+        "phase": "open-partial",
+        "ms": 1493,
+        "p": 0.042592
+      },
+      {
+        "request": {
+          "phase": "open-partial",
+          "ms": 1496,
+          "p": 0.08470918518518518
+        },
+        "phase": "open-partial",
+        "ms": 1515,
+        "p": 0.14374800000000001
+      },
+      {
+        "request": {
+          "phase": "open-partial",
+          "ms": 1524,
+          "p": 0.2312438518518518
+        },
+        "phase": "reverse-close",
+        "ms": 1553,
+        "p": 0.34853881481481486
+      },
+      {
+        "request": {
+          "phase": "reverse-close",
+          "ms": 1558,
+          "p": 0.3483273162984472
+        },
+        "phase": "open-full",
+        "ms": 1579,
+        "p": 0.3466831941647408,
+        "saved": true,
+        "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/long-source/frames/case-0-opening-0.png"
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1609,
+          "p": 0.34715871201171394
+        },
+        "phase": "open-full",
+        "ms": 1620,
+        "p": 0.35016145283900774,
+        "saved": true,
+        "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/long-source/frames/case-0-opening-1.png"
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1647,
+          "p": 0.35878165353206043
+        },
+        "phase": "open-full",
+        "ms": 1663,
+        "p": 0.40202512845483346
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1663,
+          "p": 0.40202512845483346
+        },
+        "phase": "open-full",
+        "ms": 1684,
+        "p": 0.4434708691032977
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1691,
+          "p": 0.5016995925861077
+        },
+        "phase": "open-full",
+        "ms": 1714,
+        "p": 0.5743894593691625
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1725,
+          "p": 0.6733415970823704
+        },
+        "phase": "open-full",
+        "ms": 1752,
+        "p": 0.7722937347955783
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1758,
+          "p": 0.844983601578633
+        },
+        "phase": "open-full",
+        "ms": 1779,
+        "p": 0.9032123250614431
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1791,
+          "p": 0.9446580657099074
+        },
+        "phase": "open-full",
+        "ms": 1818,
+        "p": 0.9708898485224547
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1824,
+          "p": 0.9879015406326804
+        },
+        "phase": "open-full",
+        "ms": 1846,
+        "p": 0.9965217413257331
+      },
+      {
+        "request": {
+          "phase": "open-full",
+          "ms": 1858,
+          "p": 0.9995244821530268
+        },
+        "phase": "open-full",
+        "ms": 1884,
+        "p": 1
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 1908,
+          "p": 0.9993931851851852
+        },
+        "phase": "close-full",
+        "ms": 1932,
+        "p": 0.994676,
+        "saved": true,
+        "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/long-source/frames/case-0-closing-0.png"
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 1956,
+          "p": 0.9814814814814815
+        },
+        "phase": "close-full",
+        "ms": 1968,
+        "p": 0.957408,
+        "saved": true,
+        "path": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-composed-isolation/long-source/frames/case-0-closing-1.png"
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 1993,
+          "p": 0.9152908148148148
+        },
+        "phase": "close-full",
+        "ms": 2000,
+        "p": 0.8518518518518519
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 2007,
+          "p": 0.7687561481481482
+        },
+        "phase": "close-full",
+        "ms": 2036,
+        "p": 0.6514611851851851
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 2041,
+          "p": 0.5
+        },
+        "phase": "close-full",
+        "ms": 2063,
+        "p": 0.3564598518518518
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 2074,
+          "p": 0.23727600000000004
+        },
+        "phase": "close-full",
+        "ms": 2100,
+        "p": 0.14814814814814814
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 2107,
+          "p": 0.087808
+        },
+        "phase": "close-full",
+        "ms": 2131,
+        "p": 0.04455748148148153
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 2141,
+          "p": 0.01851851851851849
+        },
+        "phase": "close-full",
+        "ms": 2169,
+        "p": 0.005822814814814836
+      },
+      {
+        "request": {
+          "phase": "close-full",
+          "ms": 2175,
+          "p": 0.0007278518518518684
+        },
+        "phase": "close-full",
+        "ms": 2196,
+        "p": 0
+      }
+    ],
+    "signals": [
+      {
+        "ms": 1464,
+        "phase": "open-partial",
+        "p": 0.000606814814814815
+      },
+      {
+        "ms": 1467,
+        "phase": "open-partial",
+        "p": 0.005324
+      },
+      {
+        "ms": 1492,
+        "phase": "open-partial",
+        "p": 0.01742948148148148
+      },
+      {
+        "ms": 1493,
+        "phase": "open-partial",
+        "p": 0.042592
+      },
+      {
+        "ms": 1496,
+        "phase": "open-partial",
+        "p": 0.08470918518518518
+      },
+      {
+        "ms": 1507,
+        "phase": "open-partial",
+        "p": 0.14374800000000001
+      },
+      {
+        "ms": 1524,
+        "phase": "open-partial",
+        "p": 0.2312438518518518
+      },
+      {
+        "ms": 1540,
+        "phase": "open-partial",
+        "p": 0.34853881481481486
+      },
+      {
+        "ms": 1558,
+        "phase": "reverse-close",
+        "p": 0.3483273162984472
+      },
+      {
+        "ms": 1574,
+        "phase": "reverse-close",
+        "p": 0.3466831941647408
+      },
+      {
+        "ms": 1609,
+        "phase": "open-full",
+        "p": 0.34715871201171394
+      },
+      {
+        "ms": 1612,
+        "phase": "open-full",
+        "p": 0.35016145283900774
+      },
+      {
+        "ms": 1647,
+        "phase": "open-full",
+        "p": 0.35878165353206043
+      },
+      {
+        "ms": 1657,
+        "phase": "open-full",
+        "p": 0.375793345642286
+      },
+      {
+        "ms": 1663,
+        "phase": "open-full",
+        "p": 0.40202512845483346
+      },
+      {
+        "ms": 1674,
+        "phase": "open-full",
+        "p": 0.4434708691032977
+      },
+      {
+        "ms": 1691,
+        "phase": "open-full",
+        "p": 0.5016995925861077
+      },
+      {
+        "ms": 1707,
+        "phase": "open-full",
+        "p": 0.5743894593691625
+      },
+      {
+        "ms": 1724,
+        "phase": "open-full",
+        "p": 0.6733415970823704
+      },
+      {
+        "ms": 1741,
+        "phase": "open-full",
+        "p": 0.7722937347955783
+      },
+      {
+        "ms": 1757,
+        "phase": "open-full",
+        "p": 0.844983601578633
+      },
+      {
+        "ms": 1774,
+        "phase": "open-full",
+        "p": 0.9032123250614431
+      },
+      {
+        "ms": 1791,
+        "phase": "open-full",
+        "p": 0.9446580657099074
+      },
+      {
+        "ms": 1808,
+        "phase": "open-full",
+        "p": 0.9708898485224547
+      },
+      {
+        "ms": 1824,
+        "phase": "open-full",
+        "p": 0.9879015406326804
+      },
+      {
+        "ms": 1841,
+        "phase": "open-full",
+        "p": 0.9965217413257331
+      },
+      {
+        "ms": 1858,
+        "phase": "open-full",
+        "p": 0.9995244821530268
+      },
+      {
+        "ms": 1874,
+        "phase": "open-full",
+        "p": 1
+      },
+      {
+        "ms": 1908,
+        "phase": "close-full",
+        "p": 0.9993931851851852
+      },
+      {
+        "ms": 1924,
+        "phase": "close-full",
+        "p": 0.994676
+      },
+      {
+        "ms": 1956,
+        "phase": "close-full",
+        "p": 0.9814814814814815
+      },
+      {
+        "ms": 1958,
+        "phase": "close-full",
+        "p": 0.957408
+      },
+      {
+        "ms": 1993,
+        "phase": "close-full",
+        "p": 0.9152908148148148
+      },
+      {
+        "ms": 1996,
+        "phase": "close-full",
+        "p": 0.8518518518518519
+      },
+      {
+        "ms": 2007,
+        "phase": "close-full",
+        "p": 0.7687561481481482
+      },
+      {
+        "ms": 2024,
+        "phase": "close-full",
+        "p": 0.6514611851851851
+      },
+      {
+        "ms": 2041,
+        "phase": "close-full",
+        "p": 0.5
+      },
+      {
+        "ms": 2057,
+        "phase": "close-full",
+        "p": 0.3564598518518518
+      },
+      {
+        "ms": 2074,
+        "phase": "close-full",
+        "p": 0.23727600000000004
+      },
+      {
+        "ms": 2091,
+        "phase": "close-full",
+        "p": 0.14814814814814814
+      },
+      {
+        "ms": 2107,
+        "phase": "close-full",
+        "p": 0.087808
+      },
+      {
+        "ms": 2125,
+        "phase": "close-full",
+        "p": 0.04455748148148153
+      },
+      {
+        "ms": 2141,
+        "phase": "close-full",
+        "p": 0.01851851851851849
+      },
+      {
+        "ms": 2158,
+        "phase": "close-full",
+        "p": 0.005822814814814836
+      },
+      {
+        "ms": 2175,
+        "phase": "close-full",
+        "p": 0.0007278518518518684
+      },
+      {
+        "ms": 2191,
+        "phase": "close-full",
+        "p": 0
+      },
+      {
+        "ms": 2213,
+        "phase": "close-full",
+        "p": 1
+      },
+      {
+        "ms": 2217,
+        "phase": "close-full",
+        "p": 0
+      }
+    ],
+    "openingImages": 2,
+    "closingImages": 2,
+    "nativeSize": [
+      906,
+      1070
+    ],
+    "allocatedSize": [
+      720,
+      650
+    ],
+    "baselineScene": {
+      "workspace": {
+        "width": 507,
+        "height": 371,
+        "rects": {
+          "welcome": {
+            "x": 0,
+            "y": 0,
+            "width": 200,
+            "height": 80
+          },
+          "clock": {
+            "x": 0,
+            "y": 88,
+            "width": 200,
+            "height": 80
+          },
+          "system": {
+            "x": 0,
+            "y": 176,
+            "width": 260,
+            "height": 180
+          },
+          "github": {
+            "x": 208,
+            "y": 88,
+            "width": 200,
+            "height": 80
+          },
+          "agenda": {
+            "x": 208,
+            "y": 5,
+            "width": 240,
+            "height": 75
+          }
+        },
+        "overflow": [
+          "notifications",
+          "todo",
+          "media",
+          "weather",
+          "calendar"
+        ]
+      },
+      "body": {
+        "edge": "top",
+        "content": {
+          "x": 106.39999999999998,
+          "y": 36,
+          "width": 507.20000000000005,
+          "height": 414.99999999999994
+        },
+        "surface": {
+          "x": 86.39999999999998,
+          "y": -50,
+          "width": 547.2,
+          "height": 521
+        },
+        "depth": 454.99999999999994,
+        "targetDepth": 454.99999999999994,
+        "progress": 1,
+        "span": 547.2,
+        "along": 86.39999999999998
+      },
+      "toolbarRect": {}
+    },
+    "dimensions": [
+      507,
+      371
+    ],
+    "openingFrames": 17,
+    "closingFrames": 17
+  }
+}
