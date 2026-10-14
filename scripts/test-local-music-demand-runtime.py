@@ -73,6 +73,7 @@ ShellRoot {
   function check(value,message){if(!value)throw new Error(message)}
   function statuses(){calls.reload();return calls.text().trim().split("\\n").filter(line=>{
     if(!line)return false;const args=JSON.parse(line);return args[0]==="mpd" && args[1]==="status"}).length}
+  function snapshots(){calls.reload();return calls.text().trim().split("\\n").filter(line=>line).map(line=>JSON.parse(line)).filter(args=>args[0]==="mpd" && args[1]==="snapshot")}
   function quiet(before,message){wait(250);check(statuses()===before,message)}
   function requested(before,message){tryVerify(()=>statuses()===before+1,1500);wait(80);check(statuses()===before+1,message)}
   function runChecks(){try{
@@ -87,8 +88,8 @@ ShellRoot {
    Config.options={dashboard:{music:{enable:true}},sidebar:{music:{mpdHost:"fixture.invalid",mpdPort:6600}}}
    tryVerify(()=>LocalMusic.available && !LocalMusic.scanning,1500)
    wait(350)
-   calls.reload()
-   const scans=calls.text().trim().split("\\n").filter(line=>line).map(line=>JSON.parse(line)).filter(args=>args[0]==="mpd" && args[1]==="snapshot")
+   tryVerify(()=>snapshots().length>0,1500)
+   const scans=snapshots()
    check(scans.length>0 && scans.every(args=>args[args.length-1]==="--lean"),"internal scans did not request the additive lean route: "+JSON.stringify(scans))
    const timer=LocalMusic.fixturePollTimer
    check(timer && timer.interval===30000,"hidden fallback cadence changed")
