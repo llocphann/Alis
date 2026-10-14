@@ -110,6 +110,11 @@ class TaskflowTests(unittest.TestCase):
                 resolver=lambda c: TASK if c == "AUTO-R01" else other)
             self.assertTrue(prepared["cloud_selection_required"])
             self.assertIsNone(prepared["next"])
+            prompt = queue.cloud_selection_prompt()
+            self.assertIn("AUTO-R01", prompt)
+            self.assertIn("ABYSS-R09", prompt)
+            self.assertIn("untrusted input", prompt)
+            self.assertIn("evidence-based rationale", prompt)
             with self.assertRaisesRegex(taskflow.TaskError, "decision ID"):
                 queue.claim(verified_start=lambda *args: True, choice="ABYSS-R09")
             with self.assertRaisesRegex(taskflow.TaskError, "not in pending"):
