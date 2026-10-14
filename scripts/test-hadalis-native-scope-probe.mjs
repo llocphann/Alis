@@ -43,4 +43,52 @@ try {
   // Mock CDP strictly inspects arguments and does not run the renderer
   // callback, ensuring any future accidental send code is rejected by test.
   const mockPath = path.join(dir, "playwright.mjs");
-  fs.writeFileSync(mockPath, String.raw
+    const mockLines = [
+    'export const chromium = {',
+    '  async connectOverCDP(url) {',
+    '    if (url !== "http://127.0.0.1:9222") throw Error("bad CDP target");',
+    '    return {',
+    '      contexts: () => [{pages: () => [{',
+    '        url: () => "app://-/index.html",',
+    '        async evaluate(fn, args) {',
+    '          if (args.alias !== "exportedScope" || args.asset !== "app-initial-fixture.js")',
+    '            throw Error("unverified module binding");',
+    '          const source = fn.toString();',
+    '          if (source.includes(".startCompletionStream(") ||',
+    '              source.includes(".prepareCompletionStream(") ||',
+    '              source.includes("fetch("))',
+    '            throw Error("read-only probe attempted a send or network call");',
+    '          return {',
+    '            exported_definition_present:true, scope_id_present:true,',
+    '            resolve_function_present:true, provider_map_count:1,',
+    '            resolution_attempted:true, prepare_function_present:true,',
+    '            start_function_present:true, query_cache_present:true',
+    '          };',
+    '        }',
+    '      }]}],',
+    '      async close() {}',
+    '    };',
+    '  }',
+    '};'
+  ];
+  fs.writeFileSync(mockPath, mockLines.join("\n"));
+  const report = await probeDesktopScopeReadOnly({
+    asarPath, playwrightModule: pathToFileURL(mockPath).href
+  });
+  assert.equal(report.supported, false);
+  assert.equal(report.submission_authorized, false);
+  assert.equal(report.prepare_function_present, true);
+  assert.equal(report.start_function_present, true);
+  assert.equal(report.fingerprint_prefix.length, 12);
+  assert.ok(!JSON.stringify(report).includes("exportedScope"));
+  assert.ok(!JSON.stringify(report).includes("Constructor"));
+
+  await assert.rejects(
+    () => probeDesktopScopeReadOnly({
+      asarPath, playwrightModule: pathToFileURL(mockPath).href,
+      cdpUrl: "http://example.com:9222"
+    }), /CDP must use loopback/);
+} finally {
+  fs.rmSync(dir, {force:true, recursive:true});
+}
+console.log("PASS: AUTO-F01 unique scope-export match and isolated read-only runtime probe");
