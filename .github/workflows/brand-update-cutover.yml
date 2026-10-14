@@ -10,6 +10,7 @@ on:
       - scripts/test-brand-canonical-stage.sh
       - scripts/test-brand-legacy-owner-update.sh
       - scripts/brand-canonical-cutover.sh
+      - scripts/test-brand-canonical-cutover.sh
       - .github/workflows/brand-update-cutover.yml
   workflow_dispatch:
 permissions:
