@@ -13,10 +13,12 @@ root="$XDG_CONFIG_HOME/niri/config.kdl"
 binds="$XDG_CONFIG_HOME/niri/config.d/70-binds.kdl"
 overrides="$XDG_CONFIG_HOME/niri/config.d/75-inir-launcher-binds.kdl"
 startup="$XDG_CONFIG_HOME/niri/config.d/50-startup.kdl"
+user_extra="$XDG_CONFIG_HOME/niri/config.d/90-user-extra.kdl"
 cat > "$root" <<'KDL'
 include "config.d/70-binds.kdl"
 include "config.d/75-inir-launcher-binds.kdl"
 include "config.d/50-startup.kdl"
+include "config.d/90-user-extra.kdl"
 KDL
 cat > "$binds" <<'KDL'
 binds {
@@ -35,6 +37,17 @@ KDL
 cat > "$startup" <<'KDL'
 spawn-at-startup "inir" "input-method" "start"
 KDL
+# This user's live config overrides 70-binds in the later 90 file.
+# The repair must retain their yazi argument, hotkeys and unrelated commands.
+cat > "$user_extra" <<'KDL'
+binds {
+    Mod+Return { spawn "/home/owner/.local/bin/inir" "terminal"; }
+    Super+E { spawn "/home/owner/.local/bin/inir" "terminal" "yazi"; }
+    Mod+P { spawn "custom-app" "--flag"; }
+    // Old inir path is only mentioned in this comment.
+}
+KDL
+cp "$user_extra" "$tmp/original-user-extra"
 cp "$overrides" "$tmp/original"
 bash -n "$helper" || fail "helper syntax"
 bash "$helper" || fail "repair failed"
@@ -45,11 +58,15 @@ grep -Fq 'Mod+D { maximize-column; }' "$binds" || fail "changed native Mod+D"
 grep -Fq 'exec alis \"$@\"' "$overrides" || fail "stale 75-inir wrapper"
 grep -Fq '"alis-keybind"' "$overrides" || fail "stale 75 shim"
 grep -Fq "spawn-at-startup \"$XDG_BIN_HOME/alis\"" "$startup" || fail "legacy startup"
+grep -Fq 'Mod+Return { spawn "/home/owner/.local/bin/alis" "terminal"; }' "$user_extra" || fail "90 override Super+Enter still uses inir"
+grep -Fq 'Super+E { spawn "/home/owner/.local/bin/alis" "terminal" "yazi"; }' "$user_extra" || fail "90 override Super+E/yazi was lost"
+grep -Fq 'Mod+P { spawn "custom-app" "--flag"; }' "$user_extra" || fail "foreign user bind was changed"
 cmp "$tmp/original" "$overrides.brand-cli.bak" || fail "backup not lossless"
-sha_before="$(sha256sum "$binds" "$overrides" "$startup")"
+cmp "$tmp/original-user-extra" "$user_extra.brand-cli.bak" || fail "custom override backup not lossless"
+sha_before="$(sha256sum "$binds" "$overrides" "$startup" "$user_extra")"
 bash "$helper" || fail "idempotent repair failed"
-[[ "$sha_before" == "$(sha256sum "$binds" "$overrides" "$startup")" ]] || fail "second run changed bytes"
+[[ "$sha_before" == "$(sha256sum "$binds" "$overrides" "$startup" "$user_extra")" ]] || fail "second run changed bytes"
 rm "$overrides"
 if bash "$helper" >/dev/null 2>&1; then fail "missing include silently ignored"; fi
 [[ "$(grep -Fc 'scripts/repair-niri-alis-keybinds.sh' "$repo/setup")" -eq 2 ]] || fail "both update branches not covered"
-echo 'PASS: safe hotkeys repair including 75-inir override'
+echo 'PASS: safe hotkeys repair including 75 and custom 90 overrides'
