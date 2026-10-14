@@ -104,13 +104,47 @@ export function inspectInstalledScopeContract() {
       const start = Math.max(0, m.index - 110);
       return masked(initial.slice(start, m.index + 190));
     });
+    // Generic scope bindings are numerous and unrelated to the transport.
+    // Instead, sample only around the *observed* streaming method. This is
+    // intentionally a structural fingerprint, NOT a candidate native export.
+    const streamAnchors = [...initial.matchAll(/\basync\s+startCompletionStream\s*\(/g)].slice(0, 3);
+    const aroundStream = streamAnchors.map(m => {
+      const at = m.index;
+      const prefix = initial.slice(Math.max(0, at - 120000), at);
+      const classHeaders = [...prefix.matchAll(/\bclass\s+[\w$]+(?:\s+extends\s+[\w$.]+)?\s*\{/g)];
+      const nearestClass = classHeaders.at(-1);
+      const nearStart = Math.max(0, at - 12000), nearEnd = Math.min(initial.length, at + 12000);
+      const scopeMentions = [...initial.slice(nearStart, nearEnd).matchAll(/\{scope:([\w$]+)\}/g)];
+      const distance = nearestClass ? prefix.length - nearestClass.index : null;
+      const distanceBand = distance == null ? "none-in-120k"
+        : distance <= 1000 ? "0-1k"
+        : distance <= 8000 ? "1k-8k"
+        : distance <= 32000 ? "8k-32k" : "32k-120k";
+      return {
+        // A nearby class is not presumed to be the transport owner.
+        nearest_class_distance_band: distanceBand,
+        class_declaration_count_in_120k: classHeaders.length,
+        scope_bindings_within_12k: scopeMentions.length,
+        method_shape: masked(initial.slice(Math.max(0, at - 150),
+          Math.min(initial.length, at + 170))),
+        nearest_class_shape: nearestClass
+          ? masked(prefix.slice(nearestClass.index, nearestClass.index + 180)) : null,
+        closest_scope_shapes: scopeMentions.map(x => ({
+          at: nearStart + x.index,
+          snippet: masked(initial.slice(Math.max(0, nearStart + x.index - 110),
+            Math.min(initial.length, nearStart + x.index + 190)))
+        })).sort((a, b) => Math.abs(a.at - at) - Math.abs(b.at - at))
+          .slice(0, 2).map(x => x.snippet)
+      };
+    });
     return {
       supported: false, purpose: "structure-only", fingerprint_prefix: hash.slice(0, 12),
       legacy_pattern_count: [...initial.matchAll(legacy)].length,
       generalized_pattern_count: [...initial.matchAll(broad)].length,
       scope_binding_count_bounded: mentions.length,
       stream_method_present: initial.includes("async startCompletionStream("),
-      scope_shapes: shape
+      scope_shapes: shape, stream_anchor_count_bounded: streamAnchors.length,
+      stream_neighborhoods: aroundStream
     };
   } finally { archive.close(); }
 }
