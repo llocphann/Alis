@@ -38,6 +38,16 @@ grep -Fxq '//@ pragma ShellId alis' "$cfg/quickshell/alis/shell.qml" ||
   { echo 'Canonical Alis runtime is not staged' >&2; exit 2; }
 [[ ! -e "$new_unit" && ! -L "$new_unit" ]] ||
   { echo "Existing Alis service is user-owned: $new_unit" >&2; exit 2; }
+# Stopping a Type=dbus service does not release its unit's BusName allocation.
+# Archive the old unit OUTSIDE the systemd search path, mask the old name,
+# and daemon-reload before loading the new owner. A mask prevents a system
+# package's lower-priority inir.service from taking over the retired name.
+retire_root="${XDG_STATE_HOME:-$HOME/.local/state}/alis-cutover-backups"
+retired_unit="$retire_root/retired-inir.service"
+[[ ! -e "$retired_unit" && ! -L "$retired_unit" ]] ||
+  { echo "Existing retired service archive requires review: $retired_unit" >&2; exit 2; }
+[[ -f "$old_unit" && ! -L "$old_unit" ]] ||
+  { echo "Legacy unit is not an ordinary file: $old_unit" >&2; exit 2; }
 old_active="$(systemctl --user is-active inir.service 2>/dev/null || true)"
 new_active="$(systemctl --user is-active alis.service 2>/dev/null || true)"
 [[ "$new_active" != active ]] || { echo 'Alis already active; refusing cutover' >&2; exit 2; }
@@ -186,9 +196,13 @@ if [[ "$mode" == dry-run ]]; then
 fi
 # Backups must NOT create XDG_STATE_HOME/alis before the canonical state
 # directory is copied; otherwise cp -a nests inir *inside* alis.
-backup="${XDG_STATE_HOME:-$HOME/.local/state}/alis-cutover-backups/cutover-backup-$(date +%Y%m%d%H%M%S)-${BASHPID}"
+backup="$retire_root/cutover-backup-$(date +%Y%m%d%H%M%S)-${BASHPID}"
 mkdir -p "$backup"
-copied=(); moved_aliases=(); new_links=(); unit_created=false; stopped=false; success=false
+cp -p -- "$old_unit" "$backup/inir.service"
+cmp -s -- "$old_unit" "$backup/inir.service" ||
+  { echo 'Original service backup verification failed' >&2; exit 2; }
+copied=(); moved_aliases=(); new_links=(); unit_created=false; stopped=false
+old_parked=false; old_masked=false; success=false
 rollback() {
   rc=$?
   trap - EXIT
@@ -206,7 +220,23 @@ rollback() {
         mv -- "$backup/alias-$i" "${destinations[i]}" || true
       fi
     done
-    if [[ "$unit_created" == true ]]; then rm -f -- "$new_unit"; fi
+    if [[ "$unit_created" == true && -f "$new_unit" && ! -L "$new_unit" ]]; then
+      rm -- "$new_unit" || true
+    fi
+    if [[ "$old_masked" == true && -L "$old_unit" &&
+          "$(readlink -- "$old_unit")" == /dev/null ]]; then
+      rm -- "$old_unit" || true
+    fi
+    if [[ "$old_parked" == true ]]; then
+      if [[ ! -e "$old_unit" && ! -L "$old_unit" &&
+            -f "$retired_unit" && ! -L "$retired_unit" ]] &&
+         cmp -s -- "$retired_unit" "$backup/inir.service"; then
+        mv -- "$retired_unit" "$old_unit" ||
+          echo 'BLOCKER: manual original service restore required' >&2
+      else
+        echo "BLOCKER: original service unavailable; inspect $backup and $retired_unit" >&2
+      fi
+    fi
     systemctl --user daemon-reload >/dev/null 2>&1 || true
     if [[ "$stopped" == true && "$old_active" == active ]]; then
       systemctl --user start inir.service >/dev/null 2>&1 ||
@@ -234,16 +264,28 @@ for i in "${!sources[@]}"; do
 done
 mkdir -p "$user_units"
 escaped="${launcher//&/\\&}"
+unit_created=true
 sed -e "s|^ExecStart=.*|ExecStart=$escaped run --session|" \
     -e "s|^ExecStopPost=-.*|ExecStopPost=-$escaped cleanup-orphans|" \
     "$template" > "$new_unit"
-unit_created=true
+grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' "$new_unit" ||
+  { echo 'Generated canonical unit lacks tray singleton BusName' >&2; exit 1; }
+mv -- "$old_unit" "$retired_unit"
+old_parked=true
+cmp -s -- "$retired_unit" "$backup/inir.service" ||
+  { echo 'Retired service changed during move' >&2; exit 1; }
+ln -s /dev/null "$old_unit"
+old_masked=true
 for i in "${!old_wants[@]}"; do
   rm -- "${old_wants[i]}"
   ln -s -- "$new_unit" "${new_wants[i]}"
   new_links+=("${new_wants[i]}")
 done
 systemctl --user daemon-reload
+old_load="$(systemctl --user show inir.service -p LoadState --value --no-pager 2>/dev/null || true)"
+new_load="$(systemctl --user show alis.service -p LoadState --value --no-pager 2>/dev/null || true)"
+[[ "$old_load" == masked && "$new_load" == loaded ]] ||
+  { echo "D-Bus ownership not isolated (legacy=$old_load Alis=$new_load)" >&2; exit 1; }
 systemctl --user start alis.service
 [[ "$(systemctl --user is-active alis.service 2>/dev/null || true)" == active ]] ||
   { echo 'New Alis service did not start successfully' >&2; exit 1; }
@@ -251,4 +293,5 @@ systemctl --user start alis.service
   { echo 'Legacy owner reactivated unexpectedly' >&2; exit 1; }
 success=true
 echo 'SUCCESS: alis.service is the sole active systemd shell owner.'
-echo 'Legacy user data and service unit retained for explicit rollback.'
+echo "Original unit archived outside systemd: $retired_unit"
+echo 'Original data retained; legacy name masked for exclusive Alis D-Bus ownership.'
