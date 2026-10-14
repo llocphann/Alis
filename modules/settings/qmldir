@@ -33,3 +33,4 @@ ObsidianThemeSettings 1.0 ObsidianThemeSettings.qml
 
 ObsidianTodoSettings 1.0 ObsidianTodoSettings.qml
 ThinkfanSettings 1.0 ThinkfanSettings.qml
+AutomationTaskConfig 1.0 AutomationTaskConfig.qml

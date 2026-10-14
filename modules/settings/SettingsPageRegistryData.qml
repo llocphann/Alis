@@ -19,7 +19,7 @@ import qs.modules.common
 Singleton {
     id: root
 
-    readonly property var legacyHiddenIndexes: [18, 19, 20, 21, 27, 28, 30, 31, 35, 36]
+    readonly property var legacyHiddenIndexes: [18, 19, 20, 21, 27, 28, 30, 31, 36]
 
     readonly property var pages: [
         {
@@ -226,7 +226,7 @@ Singleton {
         {key:"abyss-waves",name:"Waves & Audio",icon:"waves",desc:"Waves, spectrum and interaction",component:"modules/settings/AbyssWavesConfig.qml"},
         {key:"abyss-popups",name:"Popups",icon:"chat_bubble",desc:"Popup and indicator placement",component:"modules/settings/AbyssPopupsConfig.qml"},
         {key:"abyss-modules",name:"Bar modules",icon:"widgets",desc:"Edge modules and behavior",component:"modules/settings/AbyssModulesConfig.qml"},
-                        null,
+        {key:"automation",name:Translation.tr("Automation"),icon:"smart_toy",desc:Translation.tr("GitHub task-code workflows"),essential:false,component:"modules/settings/AutomationTaskConfig.qml"},
                 null,
         {key:"companion",name:Translation.tr("Companion"),icon:"water_drop",desc:Translation.tr("Aqua and Octo appearance, personality and movement"),essential:true,component:"modules/settings/CompanionConfig.qml"}
         ,{key: "integrations",name:Translation.tr("Integrations"),icon:"extension",desc:Translation.tr("Obsidian, calendar and connected applications"),essential:false,component:"modules/settings/IntegrationsConfig.qml"}
@@ -241,7 +241,7 @@ Singleton {
         { label: Translation.tr("Appearance"), pages: [4, 3, 25, 8] },
         { label: Translation.tr("Desktop & Layout"), pages: Config.options?.panelFamily === "abyss" ? [15,5,14,29,10,11] : [15,26,2,22,23,5,16,14,29,10,11] },
         { label: Translation.tr("System"), pages: [1, 12, 17] },
-        { label: Translation.tr("Features & Services"), pages: [24, 38, 7, 6] },
+        { label: Translation.tr("Features & Services"), pages: [24, 35, 38, 7, 6] },
         { label: Translation.tr("Advanced & Help"), pages: [9, 13] }
     ]
 
@@ -268,6 +268,7 @@ Singleton {
             return _staticSearchIndex
 
         _staticSearchIndex = [
+        {pageIndex:35,pageName:root.pages[35].name,section:"Tasks",label:"Automation task code",description:"Prepare a Cloudbot/Localbot handoff from a GitHub Issue",keywords:["automation","cloudbot","localbot","task","issue","workflow","handoff"]},
         {pageIndex:38,pageName:root.pages[38].name,section:"Calendar Sync",label:"External calendars",description:"ICS/iCal sources",keywords:["calendar","ics","ical","integrations"]},
         {pageIndex:38,pageName:root.pages[38].name,section:"Obsidian",label:"Obsidian theming",description:"Active theme and vault paths",keywords:["obsidian","theme","vault","config","integration"]},
         {pageIndex:37,pageName:root.pages[37].name,section:Translation.tr("Overview"),label:Translation.tr("Enable Companion"),description:Translation.tr("Aqua and Octo appearance, personality and movement"),keywords:["aqua","octo","wull","companion","droplet","pet","mascot","fullscreen","interactive"]},

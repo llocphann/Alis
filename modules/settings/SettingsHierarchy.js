@@ -5,7 +5,7 @@ var definitions = [
  {key:"appearance",name:"Appearance",icon:"palette",pages:["themes","wallpaper","effects","advanced"]},
  {key:"desktop",name:"Desktop",icon:"desktop_windows",pages:["bar","panels","widgets","modules","shell-layout","waffle-style"]},
  {key:"general",name:"General",icon:"settings",pages:["system","monitors","compositor","autostart","shortcuts","about"]},
- {key:"apps",name:"Apps & data",icon:"apps",pages:["ai","integrations","services"]},
+ {key:"apps",name:"Apps & data",icon:"apps",pages:["ai","integrations","services","automation"]},
  {key:"tools",name:"Tools",icon:"build",pages:["tools"]}
 ];
 function parentKey(page) {
