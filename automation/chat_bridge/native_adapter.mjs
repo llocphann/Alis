@@ -84,22 +84,22 @@ function exported(source, name) {
 export function inspectInstalledScopeContract() {
   const archive = asarReader(process.env.HADALIS_DESKTOP_ASAR ?? "/usr/lib/chatgpt/resources/app.asar");
   try {
-    const initialNames = archive.files.filter(n => /^app-initial-.*\\.js$/.test(n));
-    const sharedNames = archive.files.filter(n => /^app-shared-.*\\.js$/.test(n));
+    const initialNames = archive.files.filter(n => /^app-initial-.*\.js$/.test(n));
+    const sharedNames = archive.files.filter(n => /^app-shared-.*\.js$/.test(n));
     if (initialNames.length !== 1 || sharedNames.length !== 1)
       throw new Error("ambiguous Desktop build");
     const initial = archive.read(initialNames[0]);
     const shared = archive.read(sharedNames[0]);
     const hash = crypto.createHash("sha256").update(initial).update(shared).digest("hex");
-    const legacy = /,([\\w$]+)=\\w+\\(\\$,\\(\\{scope:e\\}\\)=>new (\\w+)\\(e\\)\\)\\}\\)\\)\\)\\(\\)\\}\\s*function brn/g;
-    const broad = /,([\\w$]+)\\s*=\\s*[\\w$]+\\(\\$,\\(\\{scope:([\\w$]+)\\}\\)\\s*=>\\s*new\\s+([\\w$]+)\\(\\2\\)/g;
-    const mentions = [...initial.matchAll(/\\{scope:([\\w$]+)\\}/g)].slice(0, 60);
+    const legacy = /,([\w$]+)=\w+\(\$,\(\{scope:e\}\)=>new (\w+)\(e\)\)\}\)\)\)\(\)\}\s*function brn/g;
+    const broad = /,([\w$]+)\s*=\s*[\w$]+\(\$,\(\{scope:([\w$]+)\}\)\s*=>\s*new\s+([\w$]+)\(\2\)/g;
+    const mentions = [...initial.matchAll(/\{scope:([\w$]+)\}/g)].slice(0, 60);
     const whitelist = new Set(["scope", "new", "function", "class", "async", "return", "const", "let", "var"]);
     const masked = snippet => snippet
-      .replace(/(?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'|`(?:[^`\\\\]|\\\\.)*`)/g, "STRING")
-      .replace(/[$A-Za-z_][\\w$]*/g, token => whitelist.has(token) ? token : "id")
+      .replace(/(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)/g, "STRING")
+      .replace(/[$A-Za-z_][\w$]*/g, token => whitelist.has(token) ? token : "id")
       .replace(/[0-9]+/g, "0")
-      .replace(/\\s+/g, " ").slice(0, 300);
+      .replace(/\s+/g, " ").slice(0, 300);
     const shape = mentions.slice(0, 3).map(m => {
       const start = Math.max(0, m.index - 110);
       return masked(initial.slice(start, m.index + 190));
