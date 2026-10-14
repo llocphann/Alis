@@ -18,7 +18,7 @@ make_fixture() {
     printf '%s\n' 'old user prefs' > "$home/config/inir/preferences.json"
     printf '#!/bin/bash\n[[ "${1:-}" == help ]]\n' > "$home/bin/inir"
     chmod +x "$home/bin/inir"
-    printf '%s\n' '[Service]' "ExecStart=$home/bin/inir run --session" > "$home/config/systemd/user/inir.service"
+    printf '%s\n' '[Service]' 'Type=dbus' 'BusName=org.kde.StatusNotifierWatcher' "ExecStart=$home/bin/inir run --session" > "$home/config/systemd/user/inir.service"
     ln -s "$home/config/systemd/user/inir.service" "$home/config/systemd/user/niri.service.wants/inir.service"
     printf 'include "config.d/90-user-extra.kdl"\n' > "$home/config/niri/config.kdl"
     printf 'binds {\n  Super+E { spawn "/usr/bin/nautilus"; }\n}\n' > "$home/config/niri/config.d/90-user-extra.kdl"
@@ -45,8 +45,28 @@ case "$cmd" in
         printf '%s\n' inactive > "$TEST_HOME/state-${1%.service}"
         printf '%s\n' "stop $1" >> "$TEST_HOME/order"
         ;;
+    show)
+        unit="$1"; original="$TEST_HOME/config/systemd/user/$unit"
+        if [[ -L "$original" && "$(readlink -- "$original")" == /dev/null ]]; then echo masked
+        elif [[ -f "$original" ]]; then echo loaded
+        else echo not-found; fi
+        ;;
     start)
         printf '%s\n' "start $1" >> "$TEST_HOME/order"
+        # Reproduce real systemd: two installed Type=dbus units cannot own the
+        # same BusName, even if the other unit is inactive.
+        if [[ "$1" == alis.service &&
+              -f "$TEST_HOME/config/systemd/user/inir.service" ]] &&
+           grep -Fq 'BusName=org.kde.StatusNotifierWatcher' "$TEST_HOME/config/systemd/user/inir.service"; then
+            echo 'Two services allocated for the same bus name org.kde.StatusNotifierWatcher' >&2
+            exit 1
+        fi
+        if [[ "$1" == inir.service &&
+              -f "$TEST_HOME/config/systemd/user/alis.service" ]] &&
+           grep -Fq 'BusName=org.kde.StatusNotifierWatcher' "$TEST_HOME/config/systemd/user/alis.service"; then
+            echo 'Two services allocated for the same bus name org.kde.StatusNotifierWatcher' >&2
+            exit 1
+        fi
         if [[ "$1" == alis.service && "${FAIL_NEW_OWNER:-0}" == 1 ]]; then
             exit 1
         fi
@@ -151,6 +171,16 @@ invoke good --apply --owner-approved > "$tmp/success.log" ||
     die 'Alis compositor service link missing'
 [[ ! -e "$tmp/good/config/systemd/user/niri.service.wants/inir.service" ]] ||
     die 'old wants link still enabled'
+retired="$tmp/good/state/alis-cutover-backups/retired-inir.service"
+[[ -f "$retired" && ! -L "$retired" ]] ||
+    die 'byte-identical original unit was not archived outside systemd'
+[[ -L "$tmp/good/config/systemd/user/inir.service" &&
+   "$(readlink "$tmp/good/config/systemd/user/inir.service")" == /dev/null ]] ||
+    die 'old D-Bus unit was not masked before loading Alis'
+grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' "$retired" ||
+    die 'original D-Bus declaration not retained for recovery'
+[[ "$(cat "$tmp/good/state-inir")" == inactive ]] ||
+    die 'old unit started alongside Alis'
 [[ "$(grep -c 'start alis.service' "$tmp/good/order")" == 1 ]] ||
     die 'new service started more than once'
 [[ "$(head -n 1 "$tmp/good/order")" == 'stop inir.service' ]] ||
@@ -195,6 +225,11 @@ fi
     die 'failed rollback did not restore original compositor link'
 [[ -f "$tmp/rollback/config/inir/preferences.json" ]] ||
     die 'failed rollback deleted original user preference'
+[[ -f "$tmp/rollback/config/systemd/user/inir.service" &&
+   ! -L "$tmp/rollback/config/systemd/user/inir.service" ]] ||
+    die 'failed cutover did not restore the original user unit'
+[[ ! -e "$tmp/rollback/state/alis-cutover-backups/retired-inir.service" ]] ||
+    die 'failed cutover stranded original unit in archive'
 
 
 # An existing canonical cache is not an ownership conflict. The script must
@@ -288,7 +323,7 @@ fi
    "$(cat "$tmp/cache_failure/cache/alis/sentinel")" == 'foreign rollback cache' ]] ||
     die 'failed cutover corrupted either cache'
 
-echo 'PASS: canonical cutover cache collision safety, single owner, and rollback'
+echo 'PASS: canonical cutover reproduces duplicate D-Bus rejection, masks retired unit, preserves recovery archive'
 
 
 make_fixture quiescent
