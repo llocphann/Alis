@@ -81,8 +81,40 @@ assert.deepEqual(r.primary_helper.map_write_receiver_counts,{
   fresh_local_capped:1,direct_parameter_capped:1,other_or_unknown_capped:2
 });
 assert.equal(r.primary_helper.map_write_syntax_present,true);
+assert.deepEqual(r.primary_helper.map_write_unknown_sites,[
+  {receiver_form:"bare-identifier",receiver_initializer_kind:"not-found",
+   owner_origin_hint:"not-applicable"},
+  {receiver_form:"member-property",receiver_initializer_kind:"property-access",
+   owner_origin_hint:"external-member"}
+]);
+assert.equal(r.primary_helper.map_write_unknown_sites_truncated,false);
 assert.equal(r.primary_helper.side_effect_freedom_proven,false);
 assert.equal(r.submission_authorized,false);
+
+// Unknown writes may be via a local alias, a caller-owned parameter member,
+// or an unbound/closure symbol. None is sufficient proof of safe mutation.
+const shapeSrc="resolve(p,c){let a=make(p,c,s),b=build(c,s);return b}";
+const shapeBody="function make(p,c,s){const alias=retrieve(c)," +
+  " holder=retrieve(p),other=new Custom();" +
+  "alias.set(s,c);holder.cache.set(s,p);p.store.clear();" +
+  "other.delete(s);return alias}";
+const shapeBundle=shapeBody+
+  "function build(c,s){return c};class C{"+shapeSrc+"}";
+r=inspect(shapeBundle,"",shapeSrc);
+assert.equal(r.primary_helper.body_inspection,"complete");
+assert.deepEqual(r.primary_helper.map_write_unknown_sites,[
+  {receiver_form:"bare-identifier",receiver_initializer_kind:"helper-call-result",
+   owner_origin_hint:"not-applicable"},
+  {receiver_form:"member-property",receiver_initializer_kind:"property-access",
+   owner_origin_hint:"local-member"},
+  {receiver_form:"member-property",receiver_initializer_kind:"property-access",
+   owner_origin_hint:"parameter-member"},
+  {receiver_form:"bare-identifier",receiver_initializer_kind:"new-other",
+   owner_origin_hint:"not-applicable"}
+]);
+assert.equal(r.primary_helper.map_write_unknown_sites_truncated,false);
+assert.equal(r.primary_helper.side_effect_freedom_proven,false);
+assert.ok(!JSON.stringify(r).includes("retrieve"));
 
 const noWritesBundle="function make(p,c,s){const fresh=new Map();" +
   "return fresh}function build(c,s){return c}" +
