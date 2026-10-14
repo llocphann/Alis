@@ -78,6 +78,45 @@ grep -Fq 'Active Niri shortcut still invokes disabled inir' "$tmp/reject.log" ||
 [[ ! -e "$tmp/reject/config/systemd/user/alis.service" ]] ||
     die 'preflight installed new unit'
 
+make_fixture hidden
+printf 'include "config.d/95-hidden.kdl"\n' >> "$tmp/hidden/config/niri/config.kdl"
+printf 'binds { Super+E { spawn "/home/user/.local/bin/inir" "terminal" "yazi"; } }\n' \
+    > "$tmp/hidden/config/niri/config.d/95-hidden.kdl"
+if invoke hidden --dry-run > "$tmp/hidden.log" 2>&1; then
+    die 'allowed retired CLI in an arbitrary referenced Niri fragment'
+fi
+grep -Fq 'Active Niri shortcut still invokes disabled inir' "$tmp/hidden.log" ||
+    die 'hidden fragment rejection did not identify active retired CLI'
+[[ "$(cat "$tmp/hidden/state-inir")" == active ]] ||
+    die 'hidden fragment preflight stopped the original owner'
+
+make_fixture nested
+printf 'include "config.d/96-nested.kdl"\n' >> "$tmp/nested/config/niri/config.d/90-user-extra.kdl"
+printf 'binds { Mod+Return { exec inir terminal; } }\n' \
+    > "$tmp/nested/config/niri/config.d/96-nested.kdl"
+if invoke nested --dry-run > "$tmp/nested.log" 2>&1; then
+    die 'allowed retired CLI in a nested Niri include'
+fi
+grep -Fq 'Active Niri shortcut still invokes disabled inir' "$tmp/nested.log" ||
+    die 'nested fragment was not inspected'
+
+make_fixture dangling
+printf 'include "config.d/not-present.kdl"\n' >> "$tmp/dangling/config/niri/config.kdl"
+if invoke dangling --dry-run > "$tmp/dangling.log" 2>&1; then
+    die 'accepted missing referenced Niri config during service cutover'
+fi
+grep -Fq 'Unresolved Niri include' "$tmp/dangling.log" ||
+    die 'missing include failure lacks actionable diagnostic'
+
+make_fixture link
+mv "$tmp/link/config/niri/config.kdl" "$tmp/link/config/niri/config-source.kdl"
+ln -s "$tmp/link/config/niri/config-source.kdl" "$tmp/link/config/niri/config.kdl"
+if invoke link --dry-run > "$tmp/link.log" 2>&1; then
+    die 'symlinked Niri entrypoint skipped all keybind preflights'
+fi
+grep -Fq 'Niri root is a symlink' "$tmp/link.log" ||
+    die 'missing explicit symlink review boundary'
+
 make_fixture good
 mkdir -p "$tmp/good/state/inir"
 printf '%s\n' 'private state byte' > "$tmp/good/state/inir/snapshot.dat"

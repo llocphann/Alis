@@ -46,23 +46,61 @@ new_active="$(systemctl --user is-active alis.service 2>/dev/null || true)"
 # still spawned inir and shadowed 70-binds. Refuse to cut over while any
 # active keybind/startup still depends on the retired executable.
 niri_root="$cfg/niri/config.kdl"
-if [[ -f "$niri_root" && ! -L "$niri_root" ]]; then
+# Resolve EVERY active include rather than guessing the names of a few KDL
+# fragments. An owner override can shadow a safe default under any filename.
+# Treat unknown/missing/unreadable includes as blockers, not as safe absence.
+if [[ -L "$niri_root" ]]; then
+  echo "Niri root is a symlink; review it before cutover: $niri_root" >&2
+  exit 2
+fi
+if [[ -f "$niri_root" ]]; then
+  niri_dir="$(realpath -e -- "$cfg/niri")"
   niri_bind_files=("$niri_root")
-  for fragment in 70-binds.kdl 75-inir-launcher-binds.kdl 75-alis-launcher-binds.kdl 90-user-extra.kdl 50-startup.kdl; do
-    if grep -Fq "include \"config.d/$fragment\"" "$niri_root"; then
-      path="$cfg/niri/config.d/$fragment"
-      [[ -f "$path" && ! -L "$path" ]] ||
-        { echo "Niri includes an unsafe or missing keybind file: $path" >&2; exit 2; }
-      niri_bind_files+=("$path")
-    fi
-  done
-  for path in "${niri_bind_files[@]}"; do
+  declare -A seen_niri_files=()
+  for ((index=0; index<${#niri_bind_files[@]}; index++)); do
+    path="${niri_bind_files[index]}"
+    [[ -f "$path" && ! -L "$path" ]] ||
+      { echo "Unsafe/missing Niri config include: $path" >&2; exit 2; }
+    [[ -z "${seen_niri_files[$path]:-}" ]] || continue
+    seen_niri_files["$path"]=1
+    # The actual command may be the first argument to spawn, or be inside
+    # a shell -c override. A retired executable cannot survive the handoff.
     if grep -Ev '^[[:space:]]*(//|#)' "$path" |
-        grep -Eq 'spawn "([^"]*/)?inir"([[:space:]]|;)|exec inir([[:space:]]|\\")'; then
+       grep -Eq 'spawn "([^"]*/)?inir"([[:space:]]|;)|exec ([^[:space:]]*/)?inir([[:space:]]|\\")|spawn "(sh|bash|/bin/sh|/bin/bash)" "[^"]*-c" "[^"]*inir([[:space:]]|\\")'; then
       echo "Active Niri shortcut still invokes disabled inir: $path" >&2
       echo "Repair the bound command to alis, then rerun --dry-run." >&2
       exit 2
     fi
+    declared_includes="$(grep -Ec '^[[:space:]]*include[[:space:]]+' "$path" || true)"
+    parsed_includes="$(sed -nE 's/^[[:space:]]*include[[:space:]]+"([^"]+)".*$/\\1/p' "$path" | wc -l)"
+    if [[ "$declared_includes" != "$parsed_includes" ]]; then
+      echo "Unrecognized active Niri include syntax: $path" >&2
+      exit 2
+    fi
+    while IFS= read -r fragment; do
+      [[ -n "$fragment" ]] || continue
+      case "$fragment" in
+        /*|../*|*/../*|*/..|*/./*|*/.) echo "Unsafe Niri include path: $fragment" >&2; exit 2 ;;
+      esac
+      candidate="$cfg/niri/$fragment"
+      # A nested include can be resolved relative to its including file on
+      # some Niri versions; fail closed if both paths exist and disagree.
+      nested="$(dirname -- "$path")/$fragment"
+      if [[ "$candidate" != "$nested" && -f "$candidate" && -f "$nested" ]]; then
+        if [[ "$(realpath -e -- "$candidate")" != "$(realpath -e -- "$nested")" ]]; then
+          echo "Ambiguous Niri include: $fragment (from $path)" >&2
+          exit 2
+        fi
+      elif [[ ! -f "$candidate" && -f "$nested" ]]; then
+        candidate="$nested"
+      fi
+      [[ -f "$candidate" && ! -L "$candidate" ]] ||
+        { echo "Unresolved Niri include: $candidate" >&2; exit 2; }
+      normalized="$(realpath -e -- "$candidate")"
+      [[ "$normalized" == "$niri_dir/"* ]] ||
+        { echo "Niri include leaves config root: $candidate" >&2; exit 2; }
+      niri_bind_files+=("$normalized")
+    done < <(sed -nE 's/^[[:space:]]*include[[:space:]]+"([^"]+)".*$/\\1/p' "$path")
   done
 fi
 # Package ownership may be recorded under any historical config root.
