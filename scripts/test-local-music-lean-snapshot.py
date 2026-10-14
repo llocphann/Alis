@@ -22,6 +22,32 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def measured_run(cmd, env):
+    # wait4 gives per-helper CPU and peak RSS, without an external time utility
+    # or cumulative child high-water marks from earlier runs.
+    with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as errors:
+        start = time.monotonic()
+        proc = subprocess.Popen(cmd, env=env, stdout=output, stderr=errors)
+        while True:
+            pid, status, usage = os.wait4(proc.pid, os.WNOHANG)
+            if pid:
+                proc.returncode = os.waitstatus_to_exitcode(status)
+                break
+            if time.monotonic() - start > 90:
+                proc.kill()
+                _, status, _ = os.wait4(proc.pid, 0)
+                proc.returncode = os.waitstatus_to_exitcode(status)
+                raise TimeoutError("Private snapshot helper exceeded 90 seconds")
+            time.sleep(.002)
+        elapsed = time.monotonic() - start
+        output.seek(0)
+        errors.seek(0)
+        return subprocess.CompletedProcess(cmd, proc.returncode, output.read(), errors.read()), {
+            "elapsed_seconds": elapsed, "user_seconds": usage.ru_utime,
+            "system_seconds": usage.ru_stime, "max_rss_kib": usage.ru_maxrss,
+        }
+
+
 class LibraryServer:
     def __init__(self, root: Path, size: int):
         self.root = root
@@ -146,27 +172,26 @@ def main():
             sock = tmp / f"daemon-{size}.sock"
             daemon = None
 
-            def run(label, prefix, lean=False, timed=False, suffix=None):
+            def run(label, prefix, lean=False, timed=False, suffix=None, legacy=False):
                 nonlocal checks
                 cmd = [*prefix, "snapshot", "127.0.0.1", str(server.port), str(music)]
                 if lean:
                     cmd.append("--lean")
                 log = out / f"{size}-{label}{suffix or ''}"
-                if timed:
-                    cmd = ["/usr/bin/time", "-f", "%e %U %S %M", "-o", str(log.with_suffix('.time')), *cmd]
                 start = len(server.commands)
-                result = subprocess.run(cmd, env=env, capture_output=True, timeout=90)
+                if timed:
+                    result, metrics = measured_run(cmd, env)
+                else:
+                    result = subprocess.run(cmd, env=env, capture_output=True, timeout=90)
                 assert result.returncode == 0, (cmd, result.returncode, result.stderr.decode())
                 payload = json.loads(result.stdout)
-                assert ("folders" not in payload) == lean, (label, lean, payload.keys())
+                assert ("folders" not in payload) == (lean and not legacy), (label, lean, payload.keys())
                 assert len(payload["tracks"]) == size
                 checks += 3
                 commands = server.commands[start:]
                 if timed:
-                    elapsed, user, system, rss = log.with_suffix('.time').read_text().split()
-                    rows.append({"size": size, "label": label, "lean": lean, "stdout_bytes": len(result.stdout),
-                                 "elapsed_seconds": float(elapsed), "user_seconds": float(user),
-                                 "system_seconds": float(system), "max_rss_kib": int(rss)})
+                    rows.append({"size": size, "label": label, "lean": lean,
+                                 "stdout_bytes": len(result.stdout), **metrics})
                 return payload, commands, result.stdout
 
             try:
@@ -187,7 +212,11 @@ def main():
                         before = run(label, [*prefix, str(path)] + (["--compat"] if not prefix else []))
                         actual = full if prefix else rust_full
                         assert before == actual, "Full snapshot changed vs frozen previous implementation"
-                        checks += 1
+                        # Older helpers ignore the trailing hint and still return
+                        # the complete compatible payload, so upgrades stay safe.
+                        hinted = run(label + "-hinted", [*prefix, str(path)] + (["--compat"] if not prefix else []), True, legacy=True)
+                        assert hinted == before
+                        checks += 2
                 daemon = subprocess.Popen([str(args.rust_binary), "--host", "127.0.0.1", "--port", str(server.port),
                                            "--music-root", str(music), "--socket", str(sock)], env=env,
                                           stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)

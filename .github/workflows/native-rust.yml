@@ -120,29 +120,30 @@ jobs:
 
       - name: Niri customization parity fixtures
         run: |
-          cargo build --locked --manifest-path native/Cargo.toml -p inir-native
-          python3 native/scripts/check-niri-customizations.py native/target/debug/inir-native
-          python3 native/scripts/check-niri-write-parity.py native/target/debug/inir-native
+          cargo build --locked --manifest-path native/Cargo.toml -p alis-native
+          python3 native/scripts/check-niri-customizations.py native/target/debug/alis-native
+          python3 native/scripts/check-niri-write-parity.py native/target/debug/alis-native
 
       - name: MPD isolated status and mutation parity
         run: |
-          cargo build --locked --manifest-path native/Cargo.toml -p inir-mpdd
-          python3 native/scripts/check-mpd-mutation-parity.py native/target/debug/inir-mpdd
+          cargo build --locked --manifest-path native/Cargo.toml -p alis-mpdd
+          python3 native/scripts/check-mpd-mutation-parity.py native/target/debug/alis-mpdd
+          python3 scripts/test-local-music-lean-snapshot.py --rust-binary native/target/debug/alis-mpdd
 
       - name: Clipboard isolated parity
         run: |
-          cargo build --locked --manifest-path native/Cargo.toml -p inir-native
-          python3 native/scripts/check-clipboard-parity.py native/target/debug/inir-native
+          cargo build --locked --manifest-path native/Cargo.toml -p alis-native
+          python3 native/scripts/check-clipboard-parity.py native/target/debug/alis-native
 
       - name: Desktop icon configuration parity
         run: |
-          cargo build --locked --manifest-path native/Cargo.toml -p inir-native
-          python3 native/scripts/check-desktop-icon-parity.py native/target/debug/inir-native
+          cargo build --locked --manifest-path native/Cargo.toml -p alis-native
+          python3 native/scripts/check-desktop-icon-parity.py native/target/debug/alis-native
 
       - name: Install Python theme parity dependencies
         run: python3 -m pip install --disable-pip-version-check --no-input numpy pillow materialyoucolor
 
       - name: Theme image, template and consumer parity
         run: |
-          cargo build --locked --manifest-path native/Cargo.toml -p inir-theme
-          python3 native/scripts/check-theme-parity.py native/target/debug/inir-theme
+          cargo build --locked --manifest-path native/Cargo.toml -p alis-theme
+          python3 native/scripts/check-theme-parity.py native/target/debug/alis-theme
