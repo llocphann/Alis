@@ -65,17 +65,37 @@ if [[ -f "$niri_root" && ! -L "$niri_root" ]]; then
     fi
   done
 fi
-# Package-managed upgrades must be performed declaratively by their manager.
-version="$cfg/inir/version.json"
-if [[ -f "$version" ]] && grep -Eq '"update[_S]trategy"[[:space:]]*:[[:space:]]*"package-manager"' "$version"; then
-  echo 'Package-managed installation: upgrade using Arch or Nix; no mutable unit edits.' >&2
-  exit 2
-fi
+# Package ownership may be recorded under any historical config root.
+# Checking only /inir can incorrectly treat an Arch/Nix installation as a
+# mutable repo-copy install; inspect all previously supported namespaces.
+for version in "$cfg/inir/version.json" "$cfg/illogical-impulse/version.json" "$cfg/alis/version.json"; do
+  if [[ -f "$version" ]] && grep -Eq '"(update_strategy|updateStrategy|package_manager|packageManager)"[[:space:]]*:[[:space:]]*"(package-manager|nix|pacman|aur|arch)"' "$version"; then
+    echo "Package-managed installation metadata detected: $version" >&2
+    echo 'Upgrade declaratively using Arch/Nix; no mutable user-unit edits.' >&2
+    exit 2
+  fi
+done
 roots=("${XDG_CONFIG_HOME:-$HOME/.config}" "${XDG_CACHE_HOME:-$HOME/.cache}"
        "${XDG_DATA_HOME:-$HOME/.local/share}" "${XDG_STATE_HOME:-$HOME/.local/state}")
 sources=(); destinations=(); aliases=()
 for root in "${roots[@]}"; do
-  old="$root/inir"; new="$root/alis"
+  # The original upstream config was illogical-impulse; later compatibility
+  # installs used inir. Both remain untouched, even after successful cutover.
+  # Prefer the actual upstream config.json, but refuse divergent config.json
+  # copies instead of guessing which user's edits should win.
+  old="$root/inir"
+  upstream="$root/illogical-impulse"
+  new="$root/alis"
+  if [[ "$root" == "$cfg" && -f "$upstream/config.json" && ! -L "$upstream" ]]; then
+    if [[ -f "$old/config.json" ]] &&
+       ! cmp -s -- "$upstream/config.json" "$old/config.json"; then
+      echo "Conflicting iNiR/illogical-impulse configs; review before cutover: $upstream and $old" >&2
+      exit 2
+    fi
+    old="$upstream"
+  elif [[ ! -d "$old" && -d "$upstream" && ! -L "$upstream" ]]; then
+    old="$upstream"
+  fi
   [[ -d "$old" && ! -L "$old" ]] || continue
   alias=false
   if [[ -L "$new" && "$(readlink -f -- "$new")" == "$(readlink -f -- "$old")" ]]; then
