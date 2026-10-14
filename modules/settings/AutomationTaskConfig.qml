@@ -17,6 +17,7 @@ ContentPage {
     property string errorText: ""
     property string statusText: ""
     property var selectedTask: null
+    property var taskSnapshot: null
     property string cleanupResult: ""
     property string selectedGithubRepo: "llocphann/Alis"
     property bool githubTokenSaved: false
@@ -69,6 +70,15 @@ ContentPage {
         return true
     }
 
+    function refreshTaskStatus(): void {
+        if (!root.visible || !root.selectedTask || taskStatusProcess.running)
+            return
+        taskStatusProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "status", root.selectedTask.code, "--repo", root.selectedTask.repository]
+        taskStatusProcess.running = true
+    }
+
     function prepareTask(): void {
         if (root.busy)
             return
@@ -80,6 +90,7 @@ ContentPage {
         root.errorText = ""
         root.statusText = ""
         root.selectedTask = null
+        root.taskSnapshot = null
         prepareProcess.command = [
             "python3", Quickshell.shellPath("scripts/alis-automation-task.py"),
             "prepare", code
@@ -97,6 +108,7 @@ ContentPage {
                 if (exitCode !== 0 || response.ok !== true)
                     throw new Error(response.error || "Task preparation failed")
                 root.selectedTask = response.task
+                Qt.callLater(root.refreshTaskStatus)
                 // Prepared is not dispatched. AUTO-F01 restores the scheduler.
                 root.statusText = response.duplicate
                     ? Translation.tr("This task is already prepared.")
@@ -106,6 +118,31 @@ ContentPage {
                 root.selectedTask = null
             }
         }
+    }
+
+    Process {
+        id: taskStatusProcess
+        stdout: StdioCollector { id: taskStatusOutput }
+        stderr: StdioCollector { id: taskStatusError }
+        onExited: exitCode => {
+            try {
+                const reply = JSON.parse(taskStatusOutput.text)
+                if (exitCode !== 0 || reply.ok !== true)
+                    throw new Error(reply.error || "Task status unavailable")
+                if (root.selectedTask && root.selectedTask.code === reply.code
+                        && root.selectedTask.repository === reply.repository)
+                    root.taskSnapshot = reply
+            } catch (error) {
+                root.statusText = Translation.tr("Task status unavailable: %1").arg(String(error))
+            }
+        }
+    }
+
+    Timer {
+        interval: 8000
+        repeat: true
+        running: root.visible && !!root.selectedTask
+        onTriggered: root.refreshTaskStatus()
     }
 
     Process {
@@ -269,6 +306,24 @@ ContentPage {
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
                 text: Translation.tr("Local tests require explicit approval. GitHub Issues remain open for owner verification.")
+            }
+            StyledText {
+                visible: !!root.taskSnapshot
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: Appearance.colors.colOnSurface
+                text: root.taskSnapshot
+                    ? Translation.tr("Task: %1 · local job: %2 · chat rollover: %3")
+                        .arg(root.taskSnapshot.status)
+                        .arg(root.taskSnapshot.current_job || "—")
+                        .arg(root.taskSnapshot.rotation_pending ? "Pending" : "Idle")
+                    : ""
+            }
+            SettingsNote {
+                visible: !!root.taskSnapshot && root.taskSnapshot.rotation_pending
+                warning: true
+                icon: "autorenew"
+                text: Translation.tr("Chat rollover is pending server confirmation; no prompt will be resent blindly.")
             }
         }
     }
