@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import {spawnSync} from "node:child_process";
+import {fileURLToPath,pathToFileURL} from "node:url";
 import {persistHarmlessUiAttempt} from
   "../automation/chat_bridge/legacy_ui_journal.mjs";
 import {oneShotUiAcceptance} from
@@ -118,6 +120,68 @@ try {
   assert.throws(()=>persistHarmlessUiAttempt(invalid,{stateHome}),
     /INVALID_ACCEPTANCE_JOURNAL_RECORD/);
 }finally{fs.rmSync(stateHome,{recursive:true,force:true});}
+// Owner-only CLI integration with mock Playwright. No actual Desktop access.
+const mockRoot=fs.mkdtempSync(path.join(os.tmpdir(),"alis-ui-approved-cli-"));
+try{
+  const mockFile=path.join(mockRoot,"playwright.mjs");
+  const mockLog=path.join(mockRoot,"clicks.txt");
+  fs.writeFileSync(mockFile,[
+    "import fs from 'node:fs';",
+    "const loc=(items=[],type='other')=>({",
+    "count:async()=>items.length,nth:i=>loc([items[i]],type),",
+    "first:()=>loc([items[0]],type),",
+    "isVisible:async()=>items[0]?.visible??false,",
+    "isDisabled:async()=>items[0]?.disabled??false,",
+    "locator:()=>loc([{visible:true}]),",
+    "fill:async()=>{},",
+    "evaluate:async fn=>type==='send'",
+    " ?fn({click:()=>fs.appendFileSync(process.env.MOCK_LOG,'clicked\\n')})",
+    " :fn({textContent:''})",
+    "});",
+    "const page={url:()=> 'app://-/index.html',",
+    "getByRole:(role,o)=>{",
+    "if(role==='textbox')return loc([{visible:true,disabled:false}],'composer');",
+    "if(role==='list')return loc([],'list');",
+    "if(role==='button'&&o.name==='Send')return loc([{visible:true}],'send');",
+    "if(role==='button'&&o.name instanceof RegExp&&o.name.test('Stop'))return loc([]);",
+    "return loc([{visible:true}],'badge');",
+    "}};",
+    "export const chromium={connectOverCDP:async url=>{",
+    "if(url!=='http://127.0.0.1:9222')throw Error('UNEXPECTED_URL');",
+    "return {contexts:()=>[{pages:()=>[page]}],close:async()=>{}}",
+    "}};"
+  ].join("\n"));
+  const cli=fileURLToPath(new URL(
+    "../automation/chat_bridge/legacy_ui_acceptance_cli.mjs",import.meta.url));
+  const run=(args,extra={})=>spawnSync(process.execPath,[cli,...args],{
+    encoding:"utf8",timeout:6000,
+    env:{...process.env,XDG_STATE_HOME:mockRoot,MOCK_LOG:mockLog,
+      HADALIS_CHATGPT_PROJECT:"Automatic Alis",
+      HADALIS_CHATGPT_CDP_URL:"http://127.0.0.1:9222",
+      HADALIS_PLAYWRIGHT_MODULE:pathToFileURL(mockFile).href,...extra}
+  });
+  const notApproved=run([]);
+  assert.equal(notApproved.status,1);
+  assert.equal(JSON.parse(notApproved.stdout).code,"EXPLICIT_APPROVAL_REQUIRED");
+  assert.equal(fs.existsSync(mockLog),false);
+  const fakeId="77777777-7777-4777-8777-777777777777";
+  const first=run(["--owner-approved",fakeId]);
+  assert.equal(first.status,2,first.stderr);
+  assert.equal(JSON.parse(first.stdout).status,"indeterminate");
+  assert.equal(fs.readFileSync(mockLog,"utf8"),"clicked\n");
+  const again=run(["--owner-approved",fakeId]);
+  assert.equal(again.status,2);
+  assert.equal(JSON.parse(again.stdout).code,
+    "ACCEPTANCE_UNAVAILABLE_OR_ALREADY_RECORDED_NO_RETRY");
+  assert.equal(fs.readFileSync(mockLog,"utf8"),"clicked\n");
+  const invalidRemote=run(["--owner-approved",
+    "88888888-8888-4888-8888-888888888888"],{
+    HADALIS_CHATGPT_CDP_URL:"http://example.com:9222"});
+  assert.equal(invalidRemote.status,2);
+  assert.equal(JSON.parse(invalidRemote.stdout).code,"CDP_MUST_BE_LOOPBACK");
+  assert.equal(fs.readFileSync(mockLog,"utf8"),"clicked\n");
+  assert.ok(!first.stdout.includes(fakeId));
+}finally{fs.rmSync(mockRoot,{recursive:true,force:true});}
 // No output can attest a server accepted the test or that a project ID
 // matches. This primitive is deliberately absent from the production CLI.
 console.log("PASS AUTO-F01: owner acceptance one-shot writes intent first, never retries, stays unverified");
