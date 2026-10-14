@@ -1141,7 +1141,7 @@ Scope {
                     semanticOpenOverride:
                         hostedPopup?.liquidSemanticVisible ?? false
                     readonly property var configuredPresentation:
-                        window.presentation(presentationKind)
+                        window?.presentation(presentationKind) ?? ({})
                     readonly property string configuredJoinedEdge:
                         Presentation.joinedEdge(presentationKind,
                             configuredPresentation,edge,along,span,
@@ -1151,8 +1151,8 @@ Scope {
                         : (hostedPopup?._liquidAnchor?.popupJoinedEdge ?? "")
                     controller: liquid
                     anchors.fill: parent
-                    edge: window.positionEdge(presentationKind,
-                        hostedPopup?._attachmentEdge ?? root.barEdge)
+                    edge: window?.positionEdge(presentationKind,
+                        hostedPopup?._attachmentEdge ?? root?.barEdge ?? "top") ?? "top"
                     outputName: window.outputName
                     vacancyRole: presentationKind === "quickNotes"
                         ? "quickNotes"
@@ -1179,10 +1179,10 @@ Scope {
                     readonly property rect anchorBounds:
                         hostedPopup?._anchorRect(window.width,window.height)
                             ?? Qt.rect(0,0,0,0)
-                    along: window.positionAlong(presentationKind,edge,span,
+                    along: window?.positionAlong(presentationKind,edge,span,
                         (Geometry.horizontal(edge)
                             ? anchorBounds.x+anchorBounds.width/2
-                            : anchorBounds.y+anchorBounds.height/2)-span/2)
+                            : anchorBounds.y+anchorBounds.height/2)-span/2) ?? 0
                     obstacles: window.sideObstacles
 
                     onPopupEntryChanged: {
