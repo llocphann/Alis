@@ -31,6 +31,16 @@ Official product references:
 
 A future API-backed alternative would be a **separately authorized product architecture** with explicit migration, different conversation identity, key management and usage/cost semantics. It must not silently claim continuity with `Automatic Alis` or revive the 18 current queued jobs.
 
+## Reconciliation ambiguity discovered in the existing adapter
+
+Static review of `automation/chat_bridge/native_adapter.mjs` found `discoverSubmission()` scans a bounded list of recently updated conversations and **returns the first conversation containing the pending `user_message_id`**. That procedure does not enforce cross-conversation uniqueness, require the message to be on the current active branch, or independently attest ChatGPT Project membership. A positive hit is therefore **not** a proven delivery receipt or authorization to dispatch a new message. This is a **code-level gap**, not evidence that any live user message was misdelivered.
+
+New independent, offline-only audit:
+- `automation/chat_bridge/reconciliation_evidence.mjs` — classifies exact message-ID matches on the current parent chain, duplicate conversation IDs, collisions across conversations, inconsistent pending IDs and corrupt snapshots. It returns categorical evidence only and always `submission_authorized:false` and `project_membership_verified:false`.
+- `scripts/test-hadalis-reconciliation-evidence.mjs` — synthetic fixture tests with private content redacted.
+
+This independent audit is **not connected to the production adapter**; integrating the check requires an authenticated transport and known Project/chat membership source. Never use the match status to re-send an indeterminate `user_message_id`.
+
 ## Independent diagnostic ledger
 
 `automation/chat_bridge/transport_evidence.mjs` classifies **redacted scope evidence** into categorical blocker codes. The read-only inspector adds it as `transport_evidence`. The ledger **always** returns `status: "blocked"`, `supported: false` and `submission_authorized: false`; it is *not* a capability bridge, a resolver, an API key checker or an escape hatch. Flags copied from user input, mock fixtures or static helper matches cannot authorize submission.
