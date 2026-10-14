@@ -21,6 +21,28 @@ assert.equal(r.submission_authorized,false);
 assert.equal(r.supported,false);
 assert.equal(r.helper_identity_relation,"distinct");
 
+// Desktop v8ff0... resolver assigns the fallback helper after an if's
+// closing brace with no semicolon: ...return cached}let tmp=helper(context,scope).
+// Missing "}" in the lexical boundary previously produced "not-found".
+const afterIf = "resolve(provider,context){let a=make(provider,context,scope)," +
+  "b=a.cache.get(key);if(b!==void 0){return b}" +
+  "let c=build(context,scope);return c}";
+const afterIfBundle = "function make(a,b,c){return {cache:new Map()}};" +
+  "const build=(b,c)=>{};class C{" + afterIf + "}";
+r=inspect(afterIfBundle,"",afterIf);
+assert.equal(r.resolver_source_location,"unique-in-initial");
+assert.equal(r.primary_helper.status,"unique-declaration");
+assert.equal(r.secondary_helper.status,"unique-declaration");
+assert.equal(r.secondary_helper.kind,"arrow-function");
+assert.equal(r.helper_identity_relation,"distinct");
+assert.equal(r.static_binding_match_complete,true);
+
+// A declaration is still ambiguous if duplicated, including when the call
+// after the block is recognized. Never pick a function just by location.
+r=inspect(afterIfBundle+";function build(c,d){}","",afterIf);
+assert.equal(r.secondary_helper.status,"ambiguous");
+assert.equal(r.static_binding_match_complete,false);
+
 r=inspect(bundled,bundled);
 assert.equal(r.resolver_source_location,"ambiguous");
 assert.equal(r.static_binding_match_complete,false);
