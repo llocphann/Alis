@@ -268,6 +268,30 @@ assert.equal(constructorSite.receiver_initializer_kind,"new-constructor-no-args"
 assert.deepEqual(constructorSite.alias_trace,{
   origin_hint:"constructor-no-args-unverified",hops_capped:0
 });
+// Unparenthesized new Map is legal. A lexical Map token may be shadowed;
+// this remains syntax evidence, not proof of built-in object ownership.
+constructorSite=aliasFixture(
+  "let receiver=new Map;receiver.set(s,c);return receiver"
+);
+assert.equal(constructorSite.receiver_initializer_kind,"new-map-token-no-args");
+assert.deepEqual(constructorSite.alias_trace,{
+  origin_hint:"new-map-token-no-args-unverified",hops_capped:0
+});
+constructorSite=aliasFixture(
+  "const map=new Map;let receiver=map;" +
+  "receiver.set(s,c);return receiver"
+);
+assert.deepEqual(constructorSite.alias_trace,{
+  origin_hint:"new-map-token-no-args-unverified",hops_capped:1
+});
+// The Map symbol can be shadowed. Never authorize transport from token text.
+constructorSite=aliasFixture(
+  "let Map=custom(p);let receiver=new Map;" +
+  "receiver.set(s,c);return receiver"
+);
+assert.equal(constructorSite.receiver_initializer_kind,"new-map-token-no-args");
+assert.equal(constructorSite.alias_trace.origin_hint,
+  "new-map-token-no-args-unverified");
 constructorSite=aliasFixture(
   "const created=new OtherConstructor;let receiver=created;" +
   "receiver.set(s,c);return receiver"
