@@ -23,6 +23,13 @@ REQUIRED = {
     "settings": "modules/settings/CompanionConfig.qml",
     "binary": "native/bin/alis-companiond",
 }
+# The pinned Companion source still builds/publishes inir-companiond and
+# declares that exact name in its signed release manifest. Both are explicit,
+# fixed paths; never accept a path supplied by an arbitrary manifest.
+COMPATIBLE_BINARIES = frozenset((
+    REQUIRED["binary"],
+    "native/bin/inir-companiond",
+))
 
 
 class CompanionInstallError(RuntimeError):
@@ -50,9 +57,13 @@ def installed_revision(data_home):
         info = json.loads(manifest.read_text())
         if info.get("id") != "hadanion" or type(info.get("hostApi")) is not int or info["hostApi"] != 1:
             return ""
-        if any(info.get(key) != rel or not (release / rel).is_file() for key, rel in REQUIRED.items()):
+        if any(info.get(key) != rel or not (release / rel).is_file()
+               for key, rel in REQUIRED.items() if key != "binary"):
             return ""
-        if not os.access(release / REQUIRED["binary"], os.X_OK):
+        binary = info.get("binary")
+        if binary not in COMPATIBLE_BINARIES or not (release / binary).is_file():
+            return ""
+        if not os.access(release / binary, os.X_OK):
             return ""
         sha = info.get("sourceSha", "")
         return sha if isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{40}", sha) else ""
@@ -90,8 +101,10 @@ def source_checkout(cache, remote, revision):
     if info.get("id") != "hadanion" or info.get("hostApi") != 1:
         raise CompanionInstallError("Incompatible Alis-Companion host API")
     for key, rel in REQUIRED.items():
-        if info.get(key) != rel:
-            raise CompanionInstallError("Unexpected Companion runtime entrypoint")
+        if (info.get(key) not in COMPATIBLE_BINARIES if key == "binary"
+                else info.get(key) != rel):
+            raise CompanionInstallError(
+                f"Unexpected Companion runtime entrypoint: {key}")
     return checkout
 
 
