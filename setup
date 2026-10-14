@@ -2386,6 +2386,12 @@ run_update() {
                 tui_error "Could not refresh the iNiR launcher"
                 return 1
             fi
+            # Even a no-op update must repair active 75-inir override binds
+            # that invoke the now-disabled legacy CLI.
+            if ! bash "${REPO_ROOT}/scripts/repair-niri-alis-keybinds.sh"; then
+                _report_update_failure "niri-hotkeys" "Could not repair Niri hotkey launchers"
+                return 1
+            fi
             sync_user_inir_service_from_repo_if_present >/dev/null 2>&1 || true
             ensure_user_inir_service_enabled >/dev/null 2>&1 || true
             # A matching core SHA does not guarantee a matching Companion.
@@ -2717,6 +2723,12 @@ run_update() {
                 -e 's|spawn "inir" "|spawn "'"${launcher_target_escaped}"'" "|g' \
                 "$niri_config"
         fi
+    fi
+    # After rewriting 70, repair later 75-inir overrides as well; they
+    # otherwise shadow the corrected shortcuts with disabled inir commands.
+    if ! bash "${REPO_ROOT}/scripts/repair-niri-alis-keybinds.sh"; then
+        _report_update_failure "niri-hotkeys" "Could not repair Niri hotkey launchers"
+        return 1
     fi
 
     # DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
