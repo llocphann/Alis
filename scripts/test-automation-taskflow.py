@@ -61,9 +61,11 @@ class TaskflowTests(unittest.TestCase):
             second = taskflow.intake(task)
             self.assertFalse(first["duplicate"])
             self.assertTrue(second["duplicate"])
-            path = Path(tmp) / "hadalis-automation/taskflow" / (first["intake_id"] + ".json")
+            path = Path(tmp) / "hadalis-automation/taskflow/tasks/Alis/AUTO-R01.json"
             persisted = json.loads(path.read_text())
             self.assertEqual(persisted["status"], "prepared")
+            self.assertEqual(persisted["schema"], taskflow.TASK_SCHEMA)
+            self.assertEqual(list(path.parent.glob("AUTO-R01*.json")), [path])
             self.assertFalse(persisted["scheduler_dispatched"])
 
     def test_bundle_allowlist_hash_and_continuation(self):
@@ -89,9 +91,9 @@ class TaskflowTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
             task = taskflow.resolve("AUTO-R01", api)
             first = taskflow.intake(task)
-            file = Path(tmp) / "hadalis-automation/taskflow" / (first["intake_id"] + ".json")
+            file = Path(tmp) / "hadalis-automation/taskflow/tasks/Alis/AUTO-R01.json"
             file.write_text("{incomplete")
-            with self.assertRaisesRegex(taskflow.TaskError, "Incomplete"):
+            with self.assertRaisesRegex(taskflow.TaskError, "incomplete"):
                 taskflow.intake(task)
 
     def test_redaction_and_bounded_subprocess(self):
@@ -130,6 +132,78 @@ class TaskflowTests(unittest.TestCase):
                 self.assertFalse(second["replayed"])
                 self.assertEqual(taskflow.continuation(bundle, first),
                                  payload["next_prompt"])
+
+    def test_single_task_file_embeds_prompts_scripts_and_reports(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            task = taskflow.resolve("AUTO-R01", api)
+            taskflow.intake(task)
+            payload = {"schema": "alis.local-handoff.v1", "task": task,
+                       "commands": [["git", "diff", "--check"]],
+                       "next_prompt": "Cloudbot continues from acknowledged local receipt.",
+                       "checkpoint": "Fixture checkpoint",
+                       "scripts": [{"name": "fixture.py", "content": "print('draft')",
+                                    "purpose": "Review only, never execute directly"}]}
+            bundle = taskflow.package(payload)
+            saved = taskflow.save_handoff("AUTO-R01", bundle)
+            self.assertFalse(saved["duplicate"])
+            record = taskflow.load_task("AUTO-R01")
+            self.assertEqual(record["handoff"]["payload"]["scripts"][0]["content"], "print('draft')")
+            self.assertEqual(record["handoff"]["payload"]["next_prompt"], payload["next_prompt"])
+            self.assertTrue(taskflow.save_handoff("AUTO-R01", bundle)["duplicate"])
+            path = Path(saved["task_file"])
+            self.assertEqual(len(list(path.parent.glob("*.json"))), 1)
+            for n in range(20):
+                taskflow.append_report("AUTO-R01", "test", "log "+str(n), now=100+n)
+            self.assertEqual(len(taskflow.load_task("AUTO-R01")["reports"]), taskflow.REPORT_LIMIT)
+            self.assertEqual(taskflow.cleanup(dry_run=False, now=100000)["deleted_task_files"], 0)
+            self.assertTrue(path.exists())
+
+    def test_retention_guards_and_acknowledged_cleanup(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            task = taskflow.resolve("AUTO-R01", api)
+            taskflow.intake(task)
+            path = Path(tmp) / "hadalis-automation/taskflow/tasks/Alis/AUTO-R01.json"
+            record = taskflow.load_task("AUTO-R01")
+            record["status"] = "retired"
+            record["delivery_acknowledged_unix"] = 1000
+            record["handoff"] = taskflow.package({
+                "schema": "alis.local-handoff.v1", "task": task,
+                "commands": [["git", "diff", "--check"]],
+                "next_prompt": "Continue only after acknowledged receipt.",
+                "checkpoint": "",
+            })
+            record["reports"] = [{"at_unix": 1000, "kind": "test", "text": "report"}]
+            taskflow._save_task(record)
+            self.assertEqual(taskflow.cleanup(now=1000+taskflow.DETAIL_TTL+1)["retired_payloads"], 1)
+            self.assertTrue(taskflow.load_task("AUTO-R01")["cloud_prompt"])
+            self.assertEqual(taskflow.cleanup(dry_run=False, now=1000+taskflow.DETAIL_TTL+1)["retired_payloads"], 1)
+            retained = taskflow.load_task("AUTO-R01")
+            self.assertIsNone(retained["cloud_prompt"])
+            self.assertIsNone(retained["handoff"])
+            self.assertEqual(retained["reports"], [])
+            self.assertTrue(retained["retired_handoff"]["id"].startswith("JOB-"))
+            retained["unresolved"] = True
+            taskflow._save_task(retained)
+            self.assertEqual(taskflow.cleanup(dry_run=False, now=1000+taskflow.TERMINAL_TTL+1)["deleted_task_files"], 0)
+            retained["unresolved"] = False
+            taskflow._save_task(retained)
+            self.assertEqual(taskflow.cleanup(dry_run=False, now=1000+taskflow.TERMINAL_TTL+1)["deleted_task_files"], 1)
+            self.assertFalse(path.exists())
+
+    def test_untrusted_inline_script_cannot_execute_directly(self):
+        task = dict(TASK)
+        payload = {"schema": "alis.local-handoff.v1", "task": task,
+                   "commands": [["git", "diff", "--check"]],
+                   "next_prompt": "Continue after local receipt is confirmed.",
+                   "checkpoint": "", "scripts": [{"name": "../escape.sh", "content": "echo unsafe", "purpose": "bad"}]}
+        with self.assertRaisesRegex(taskflow.TaskError, "script draft"):
+            taskflow.package(payload)
+        payload["scripts"][0]["name"] = "only-review.sh"
+        bundle = taskflow.package(payload)
+        self.assertEqual(taskflow.verify(bundle), bundle)
+        payload["commands"] = [["bash", "only-review.sh"]]
+        with self.assertRaisesRegex(taskflow.TaskError, "Unapproved"):
+            taskflow.package(payload)
 
     def test_no_execution_without_approval_or_pinned_source(self):
         bundle = taskflow.package({"schema": "alis.local-handoff.v1", "task": TASK,

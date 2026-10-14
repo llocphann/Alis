@@ -25,6 +25,16 @@ def main():
     promote = commands.add_parser("continuation")
     promote.add_argument("bundle", type=Path)
     promote.add_argument("receipt", type=Path)
+    store = commands.add_parser("save-handoff")
+    store.add_argument("code")
+    store.add_argument("--repo", default="llocphann/Alis", choices=taskflow.REPOSITORIES)
+    run = commands.add_parser("run-task")
+    run.add_argument("code")
+    run.add_argument("checkout", type=Path)
+    run.add_argument("--repo", default="llocphann/Alis", choices=taskflow.REPOSITORIES)
+    run.add_argument("--approve-local-tests", action="store_true")
+    gc = commands.add_parser("cleanup")
+    gc.add_argument("--apply", action="store_true", help="Purge only terminal delivery-acknowledged payloads")
     args = parser.parse_args()
     try:
         if args.action in ("resolve", "prepare"):
@@ -34,6 +44,15 @@ def main():
                 result["task"] = {"code": task["code"], "repository": task["repository"],
                                   "issue_number": task["issue_number"], "branch": task["branch"],
                                   "base_sha": task["base_sha"], "issue_url": task["issue_url"]}
+        elif args.action == "cleanup":
+            result = taskflow.cleanup(dry_run=not args.apply)
+        elif args.action == "save-handoff":
+            bundle = json.load(sys.stdin)
+            result = taskflow.save_handoff(args.code, bundle, args.repo)
+        elif args.action == "run-task":
+            receipt = taskflow.run_task(args.code, args.checkout, args.repo,
+                                        approved=args.approve_local_tests)
+            result = {"ok": True, "receipt": receipt}
         else:
             with args.bundle.open(encoding="utf-8") as stream:
                 bundle = json.load(stream)

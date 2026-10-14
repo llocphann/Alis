@@ -32,6 +32,13 @@ SHA = re.compile(r"^[a-f0-9]{40}$")
 TEST_SCRIPT = re.compile(r"^scripts/test-[a-zA-Z0-9_-]+\.py$")
 MAX_COMMANDS = 8
 MAX_OUTPUT = 4000
+TASK_SCHEMA = "alis.task-file.v1"
+DETAIL_TTL = 7 * 86400
+TERMINAL_TTL = 30 * 86400
+REPORT_LIMIT = 12
+REPORT_CHARS = 4000
+TERMINAL_STATES = frozenset({"completed", "retired", "cancelled"})
+SCRIPT_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9._-]{0,79}\.(?:py|sh)$")
 
 
 class TaskError(ValueError):
@@ -165,33 +172,95 @@ def _atomic_json(path: Path, payload: dict):
             os.unlink(name)
 
 
+
+def _task_path(code: str, repository: str) -> Path:
+    """One private task-code file per owning repository, never per prompt/run."""
+    if repository not in REPOSITORIES or not CODE.fullmatch(code):
+        raise TaskError("Unknown task code or repository")
+    owner = state_dir() / "tasks"
+    if owner.is_symlink():
+        raise TaskError("Unsafe task workspace")
+    owner.mkdir(mode=0o700, exist_ok=True)
+    directory = owner / repository.split("/")[1]
+    if directory.is_symlink():
+        raise TaskError("Unsafe task directory")
+    directory.mkdir(mode=0o700, exist_ok=True)
+    return directory / (code + ".json")
+
+
+def load_task(code: str, repository: str = "llocphann/Alis") -> dict:
+    path = _task_path(code, repository)
+    if path.is_symlink():
+        raise TaskError("Refusing symlinked task file")
+    try:
+        with path.open(encoding="utf-8") as stream:
+            record = json.load(stream)
+    except (OSError, ValueError):
+        raise TaskError("Task file unavailable or incomplete; manual reconciliation required") from None
+    if (not isinstance(record, dict) or record.get("schema") != TASK_SCHEMA
+            or record.get("code") != code or record.get("repository") != repository
+            or not isinstance(record.get("task"), dict)):
+        raise TaskError("Invalid task file identity")
+    return record
+
+
+def _task_record(task: dict, identifier: str) -> dict:
+    now = int(time.time())
+    return {
+        "schema": TASK_SCHEMA, "code": task["code"],
+        "repository": task["repository"], "issue_number": task["issue_number"],
+        "id": identifier, "task": task, "status": "prepared",
+        "cloud_prompt": internal_prompt(task), "handoff": None,
+        "reports": [], "latest_receipt": None, "retired_handoff": None,
+        "scheduler_dispatched": False, "created_unix": now,
+        "updated_unix": now, "delivery_acknowledged_unix": None,
+        "unresolved": False,
+    }
+
+
+def _save_task(record: dict) -> None:
+    # Reject records that try to write elsewhere. Never replace linked paths.
+    dest = _task_path(record["code"], record["repository"])
+    if dest.is_symlink():
+        raise TaskError("Refusing symlinked task file")
+    _atomic_json(dest, record)
+
+
 def intake(task: dict) -> dict:
-    """Persist task intent only. No implicit execution or Desktop message send."""
-    if task["repository"] not in REPOSITORIES or task["branch"] != REPOSITORIES[task["repository"]]:
+    """One durable task file; a duplicate Issue cannot spawn prompt files."""
+    if task.get("repository") not in REPOSITORIES or task.get("branch") != REPOSITORIES[task["repository"]]:
         raise TaskError("Invalid task repository")
-    if not SHA.fullmatch(task["base_sha"]):
-        raise TaskError("Invalid base SHA")
+    if not SHA.fullmatch(task.get("base_sha", "")) or not CODE.fullmatch(task.get("code", "")):
+        raise TaskError("Invalid task identity or source SHA")
     identity = f"{task['repository']}#{task['issue_number']}:{task['issue_updated_at']}"
     identifier = "INTAKE-" + hashlib.sha256(identity.encode()).hexdigest()[:20]
-    dest = state_dir() / f"{identifier}.json"
-    # Existence alone does not prove that an interrupted write completed.
-    if dest.exists():
+    dest = _task_path(task["code"], task["repository"])
+    if dest.exists() or dest.is_symlink():
+        previous = load_task(task["code"], task["repository"])
+        if previous["issue_number"] != task["issue_number"]:
+            raise TaskError("Task code collision with a different Issue")
+        return {"ok": True, "intake_id": previous["id"], "state": previous["status"],
+                "duplicate": True, "task_file": str(dest)}
+    record = _task_record(task, identifier)
+
+    # Strictly migrate only an old prepared/undispatched intake. Never remove
+    # any pending, uncertain or already-dispatched legacy state.
+    legacy = state_dir() / (identifier + ".json")
+    if legacy.exists():
+        if legacy.is_symlink():
+            raise TaskError("Unsafe legacy task intake")
         try:
-            with dest.open(encoding="utf-8") as stream:
-                previous = json.load(stream)
+            with legacy.open(encoding="utf-8") as stream:
+                old = json.load(stream)
         except (OSError, ValueError):
             raise TaskError("Incomplete previous intake needs manual reconciliation") from None
-        if previous.get("schema") != "alis.task-intake.v1" or previous.get("id") != identifier:
-            raise TaskError("Previous intake identity mismatch")
-        return {"ok": True, "intake_id": identifier, "state": "prepared", "duplicate": True}
-    record = {
-        "schema": "alis.task-intake.v1", "id": identifier,
-        "task": task, "cloud_prompt": internal_prompt(task),
-        "status": "prepared", "scheduler_dispatched": False,
-        "created_unix": int(time.time()),
-    }
-    # Exclusive allocation blocks duplicate enqueuing. Interrupted reservations
-    # remain quarantined rather than being silently replayed.
+        if (old.get("schema") != "alis.task-intake.v1"
+                or old.get("id") != identifier or old.get("task") != task
+                or old.get("status") != "prepared" or old.get("scheduler_dispatched") is not False):
+            raise TaskError("Legacy intake must be manually reconciled before migration")
+
+    # Exclusive reservation prevents simultaneous writers preparing same code.
+    # An incomplete file deliberately blocks retries rather than being replayed.
     try:
         with dest.open("xb") as stream:
             os.chmod(dest, 0o600)
@@ -199,15 +268,18 @@ def intake(task: dict) -> dict:
             stream.flush()
             os.fsync(stream.fileno())
     except FileExistsError:
-        # Another writer may still be flushing the reserved path.
-        raise TaskError("Concurrent task intake is in progress; inspect before retry")
+        raise TaskError("Concurrent task intake needs reconciliation") from None
     directory = os.open(dest.parent, os.O_RDONLY)
     try:
         os.fsync(directory)
     finally:
         os.close(directory)
+    if legacy.exists():
+        legacy.unlink()  # Only acknowledged-safe undispatched v1 intake.
+    cleanup(dry_run=False)  # Opportunistic, never touches active/uncertain tasks.
     return {"ok": True, "intake_id": identifier, "state": "prepared",
-            "duplicate": False, "scheduler_dispatched": False}
+            "duplicate": False, "scheduler_dispatched": False,
+            "task_file": str(dest)}
 
 
 def _allow_command(argv: object) -> bool:
@@ -224,8 +296,21 @@ def package(payload: dict) -> dict:
     """Validate a Cloudbot-authored test plan and hash every material field."""
     if not isinstance(payload, dict) or payload.get("schema") != "alis.local-handoff.v1":
         raise TaskError("Unsupported handoff schema")
-    if set(payload) != {"schema", "task", "commands", "next_prompt", "checkpoint"}:
+    if set(payload) - {"schema", "task", "commands", "next_prompt", "checkpoint", "scripts"} or not {"schema", "task", "commands", "next_prompt", "checkpoint"} <= set(payload):
         raise TaskError("Unexpected handoff fields")
+    # Short-lived Cloudbot-authored script drafts live *inside the task file*.
+    # They are not executable authorization; allowlisted repository tests remain separate.
+    drafts = payload.get("scripts", [])
+    if not isinstance(drafts, list) or len(drafts) > 8:
+        raise TaskError("Invalid embedded script drafts")
+    if any(not isinstance(s, dict) or set(s) != {"name", "content", "purpose"}
+           or not isinstance(s["name"], str) or not SCRIPT_NAME.fullmatch(s["name"])
+           or not isinstance(s["content"], str) or len(s["content"]) > 30000
+           or not isinstance(s["purpose"], str) or len(s["purpose"]) > 500
+           for s in drafts):
+        raise TaskError("Invalid script draft; no executable paths accepted")
+    if sum(len(s["content"]) for s in drafts) > 90000:
+        raise TaskError("Script drafts exceed task size limit")
     task = payload["task"]
     if not isinstance(task, dict) or task.get("repository") not in REPOSITORIES:
         raise TaskError("Unknown task repository")
@@ -374,3 +459,118 @@ def continuation(bundle: dict, receipt: dict) -> str:
     if receipt.get("sha256") != checked["sha256"] or receipt.get("state") != "passed":
         raise TaskError("Cannot continue before acknowledged passing local receipt")
     return checked["payload"]["next_prompt"]
+
+
+def save_handoff(code: str, bundle: dict, repository: str = "llocphann/Alis") -> dict:
+    """Embed the current manifest, scripts and continuation prompt in CODE.json."""
+    checked = verify(bundle)
+    record = load_task(code, repository)
+    pinned = checked["payload"]["task"]
+    original = record["task"]
+    for field in ("code", "repository", "issue_number", "base_sha", "branch"):
+        if pinned.get(field) != original.get(field):
+            raise TaskError("Handoff targets a different Issue or source SHA")
+    existing = record.get("handoff")
+    if existing and existing.get("id") != checked["id"]:
+        raise TaskError("Previous handoff is unacknowledged; reconcile before replacing")
+    record["handoff"] = checked
+    record["status"] = "handoff_ready"
+    record["updated_unix"] = int(time.time())
+    _save_task(record)
+    return {"ok": True, "task_file": str(_task_path(code, repository)),
+            "job_id": checked["id"], "duplicate": existing is not None}
+
+
+def append_report(code: str, kind: str, message: str,
+                  repository: str = "llocphann/Alis", *,
+                  now: int | None = None) -> dict:
+    """Bound short-lived UI/debug reports inside CODE.json, never one file per run."""
+    if kind not in {"diagnostic", "status", "test"} or not isinstance(message, str):
+        raise TaskError("Invalid task report")
+    record = load_task(code, repository)
+    at = int(time.time()) if now is None else now
+    existing = record.get("reports", [])
+    if not isinstance(existing, list):
+        raise TaskError("Invalid report history")
+    record["reports"] = (existing + [{"at_unix": at, "kind": kind,
+                         "text": message[:REPORT_CHARS]}])[-REPORT_LIMIT:]
+    record["updated_unix"] = at
+    _save_task(record)
+    return {"ok": True, "stored_reports": len(record["reports"])}
+
+
+def run_task(code: str, checkout: Path, repository: str = "llocphann/Alis",
+             *, approved: bool = False) -> dict:
+    """Run the approved repo tests referenced by the task's single handoff file."""
+    record = load_task(code, repository)
+    if not record.get("handoff"):
+        raise TaskError("Task has no ready Cloudbot handoff")
+    receipt = run_local(record["handoff"], checkout, approved=approved)
+    # Never mark final completion automatically: Desktop transport must confirm
+    # next-message delivery before prompts/scripts become eligible for deletion.
+    record = load_task(code, repository)
+    record["latest_receipt"] = {
+        "id": receipt["id"], "sha256": receipt["sha256"],
+        "state": receipt["state"], "source_sha": receipt["source_sha"],
+        "finished_unix": receipt.get("finished_unix"),
+    }
+    record["status"] = "awaiting_cloud_ack" if receipt["state"] == "passed" else "needs_review"
+    record["updated_unix"] = int(time.time())
+    _save_task(record)
+    return receipt
+
+
+def cleanup(*, dry_run: bool = True, now: int | None = None) -> dict:
+    """Conservative automatic retention for finished, delivery-acknowledged tasks.
+
+    Preserve immutable receipt identity files: they prevent replay even when a
+    task's large prompt/script content has expired. Never touch arbitrary files
+    or tasks with uncertain/pending delivery.
+    """
+    at = int(time.time()) if now is None else now
+    workspaces = state_dir() / "tasks"
+    stats = {"ok": True, "dry_run": dry_run, "retired_payloads": 0,
+             "deleted_task_files": 0, "preserved_unresolved": 0}
+    if not workspaces.is_dir() or workspaces.is_symlink():
+        return stats
+    for repo in REPOSITORIES:
+        folder = workspaces / repo.split("/")[1]
+        if not folder.is_dir() or folder.is_symlink():
+            continue
+        for path in folder.glob("*.json"):
+            if path.is_symlink() or not CODE.fullmatch(path.stem):
+                continue
+            try:
+                record = load_task(path.stem, repo)
+            except TaskError:
+                stats["preserved_unresolved"] += 1
+                continue
+            age = at - int(record.get("delivery_acknowledged_unix") or 0)
+            settled = (record.get("status") in TERMINAL_STATES
+                       and type(record.get("delivery_acknowledged_unix")) is int
+                       and record["delivery_acknowledged_unix"] > 0
+                       and not record.get("unresolved"))
+            if not settled:
+                stats["preserved_unresolved"] += 1
+                continue
+            if age < DETAIL_TTL:
+                continue
+            if age >= TERMINAL_TTL:
+                stats["deleted_task_files"] += 1
+                if not dry_run:
+                    path.unlink()
+                continue
+            if record.get("cloud_prompt") or record.get("handoff") or record.get("reports"):
+                stats["retired_payloads"] += 1
+                if not dry_run:
+                    old = record.get("handoff")
+                    record["retired_handoff"] = ({"id": old["id"], "sha256": old["sha256"]}
+                                                  if old else record.get("retired_handoff"))
+                    record["cloud_prompt"] = None
+                    record["handoff"] = None
+                    record["reports"] = []
+                    record["retired_payload_unix"] = at
+                    _save_task(record)
+    return stats
+
+
