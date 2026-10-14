@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import {spawnSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
-import {projectTurn, installedContract} from "../automation/chat_bridge/native_adapter.mjs";
+import {projectTurn, installedContract, inspectInstalledScopeContract} from "../automation/chat_bridge/native_adapter.mjs";
 const message = (id, role, status, end, text, recipient = "all", channel = null) =>
   ({id, author:{role}, status, end_turn:end, recipient, channel, content:{parts:[text]}});
 const c = {conversation_id:"chat-A",current_node:"a",mapping:{
@@ -54,6 +54,12 @@ try {
   process.env.HADALIS_DESKTOP_ASAR = archivePath;
   try {
     assert.throws(() => installedContract(), /unsupported Desktop stream contract: conversation-call, api-export, transport-scope, stream-method/);
+    const check = inspectInstalledScopeContract();
+    assert.equal(check.supported, false);
+    assert.equal(check.purpose, "structure-only");
+    assert.equal(check.scope_binding_count_bounded, 0);
+    assert.equal(check.generalized_pattern_count, 0);
+    assert.deepEqual(check.scope_shapes, []);
   } finally {
     if (prior == null) delete process.env.HADALIS_DESKTOP_ASAR;
     else process.env.HADALIS_DESKTOP_ASAR = prior;
@@ -71,6 +77,42 @@ try {
   assert.equal(result.stdout, "");
   assert.match(result.stderr, /DESKTOP_CAPABILITY_UNAVAILABLE/);
   assert.ok(Date.now() - before < 3500, "contract check must fail before CDP");
+  // Positive structural fixture: report a possible binding shape, but never
+  // include a mock secret, constructor name, or raw module source.
+  const sample = Buffer.from(
+    'var z=0,T=mk($,({scope:e})=>new Foo(e));const secret="ghp_PRIVATE_FIXTURE_SECRET";async startCompletionStream('
+  );
+  const syntheticEntries = {
+    "app-initial-fixture.js": {size: sample.length, offset: "0"},
+    "app-shared-fixture.js": {size: shared.length, offset: String(sample.length)}
+  };
+  const syntheticTree = {files:{webview:{files:{assets:{files:syntheticEntries}}}}};
+  const syntheticJson = Buffer.from(JSON.stringify(syntheticTree));
+  const syntheticHeader = Buffer.alloc(16);
+  syntheticHeader.writeUInt32LE(8 + syntheticJson.length, 4);
+  syntheticHeader.writeUInt32LE(syntheticJson.length, 12);
+  fs.writeFileSync(archivePath,
+    Buffer.concat([syntheticHeader, syntheticJson, sample, shared]));
+  const inspectPrior = process.env.HADALIS_DESKTOP_ASAR;
+  process.env.HADALIS_DESKTOP_ASAR = archivePath;
+  try {
+    const report = inspectInstalledScopeContract();
+    assert.equal(report.supported, false);
+    assert.equal(report.scope_binding_count_bounded, 1);
+    assert.equal(report.generalized_pattern_count, 1);
+    assert.equal(report.stream_method_present, true);
+    assert.equal(report.scope_shapes.length, 1);
+    const json = JSON.stringify(report);
+    assert.ok(!json.includes("PRIVATE_FIXTURE_SECRET"));
+    assert.ok(!json.includes("ghp_"));
+    assert.ok(!json.includes("Foo"));
+    assert.ok(!json.includes("T=mk"));
+    assert.ok(!json.includes("secret"));
+    assert.ok(!json.includes("app-initial"));
+  } finally {
+    if (inspectPrior == null) delete process.env.HADALIS_DESKTOP_ASAR;
+    else process.env.HADALIS_DESKTOP_ASAR = inspectPrior;
+  }
 } finally {
   fs.rmSync(temp, {recursive:true, force:true});
 }
