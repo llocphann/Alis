@@ -18,7 +18,7 @@ import tempfile
 import time
 from typing import Callable
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 from urllib.request import Request, urlopen
 
 REPOSITORIES = {
@@ -59,6 +59,20 @@ def _github(endpoint: str):
         raise TaskError("Invalid GitHub API path")
     headers = {"Accept": "application/vnd.github+json", "User-Agent": "Alis-AUTO-R01"}
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if not token:
+        # GitHub connector is used for Cloudbot. Local task intake uses the
+        # matching repository-scoped Secret Service token when configured.
+        repo = next((name for name in REPOSITORIES
+                     if "/repos/" + name + "/" in endpoint or "repo:" + name in unquote(endpoint)),
+                    "llocphann/Alis")
+        from . import credentials
+        if credentials.status(repo)["saved"]:
+            try:
+                token = credentials._lookup(repo)
+            except credentials.CredentialError:
+                raise TaskError("Configured GitHub keyring is locked or unavailable") from None
+            if not token:
+                raise TaskError("Configured GitHub token is unavailable in keyring")
     if token:
         headers["Authorization"] = "Bearer " + token
     try:
