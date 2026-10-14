@@ -257,6 +257,37 @@ complexSite=aliasFixture(
 );
 assert.equal(complexSite.alias_trace.expression_token_shape_complete,false);
 assert.ok(!JSON.stringify(complexSite).includes("π"));
+// Owner's observed anonymized token shape is "new id": JavaScript permits
+// a constructor invocation without parentheses. No constructor executes
+// when the bundle is lexed and no runtime ownership is established.
+let constructorSite=aliasFixture(
+  "let receiver=new UnknownConstructor;receiver.set(s,c);return receiver"
+);
+assert.equal(constructorSite.receiver_form,"bare-identifier");
+assert.equal(constructorSite.receiver_initializer_kind,"new-constructor-no-args");
+assert.deepEqual(constructorSite.alias_trace,{
+  origin_hint:"constructor-no-args-unverified",hops_capped:0
+});
+constructorSite=aliasFixture(
+  "const created=new OtherConstructor;let receiver=created;" +
+  "receiver.set(s,c);return receiver"
+);
+assert.equal(constructorSite.receiver_initializer_kind,"identifier-alias");
+assert.deepEqual(constructorSite.alias_trace,{
+  origin_hint:"constructor-no-args-unverified",hops_capped:1
+});
+// With parentheses the existing initializer classifier remains unchanged.
+constructorSite=aliasFixture(
+  "let receiver=new OtherConstructor();receiver.set(s,c);return receiver"
+);
+assert.equal(constructorSite.receiver_initializer_kind,"new-other");
+// No constructor name or literal from an imported bundle is emitted.
+constructorSite=aliasFixture(
+  "let receiver=new ghp_FAKE_NOT_A_REAL_SECRET;" +
+  "receiver.set(s,c);return receiver"
+);
+assert.equal(constructorSite.receiver_initializer_kind,"new-constructor-no-args");
+assert.ok(!JSON.stringify(constructorSite).includes("ghp_FAKE_NOT_A_REAL_SECRET"));
 const secretAlias=aliasFixture("let ghp_FAKE_SECRET=p;" +
   "let receiver=ghp_FAKE_SECRET;receiver.set(s,c);return receiver");
 assert.deepEqual(secretAlias.alias_trace,{
