@@ -1,0 +1,59 @@
+{
+  "pairs": 1120,
+  "rows": 71436,
+  "fields": 285744,
+  "observableCases": 9,
+  "observableReads": 2091,
+  "results": [
+    {
+      "round": 0,
+      "name": "baseline",
+      "ms": 633,
+      "sum": 24720
+    },
+    {
+      "round": 0,
+      "name": "prototype",
+      "ms": 328,
+      "sum": 24720
+    },
+    {
+      "round": 1,
+      "name": "prototype",
+      "ms": 332,
+      "sum": 24720
+    },
+    {
+      "round": 1,
+      "name": "baseline",
+      "ms": 634,
+      "sum": 24720
+    },
+    {
+      "round": 2,
+      "name": "baseline",
+      "ms": 627,
+      "sum": 24720
+    },
+    {
+      "round": 2,
+      "name": "prototype",
+      "ms": 326,
+      "sum": 24720
+    },
+    {
+      "round": 3,
+      "name": "prototype",
+      "ms": 323,
+      "sum": 24720
+    },
+    {
+      "round": 3,
+      "name": "baseline",
+      "ms": 624,
+      "sum": 24720
+    }
+  ],
+  "scope": "guarded proposal native QV4 numeric parity, default observable read/error/arity control and microbenchmark; actual host integration not qualified",
+  "source_sha": "842a67553e05d95d3e0dc291b40472192984a49c"
+}

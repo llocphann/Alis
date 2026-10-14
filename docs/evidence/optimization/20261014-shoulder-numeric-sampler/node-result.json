@@ -1,0 +1,55 @@
+{
+  "scope": "offline V8 numeric-only research; not QV4/behavior/owner performance qualification",
+  "pairs": 1120,
+  "rows": 71436,
+  "results": [
+    {
+      "round": 0,
+      "name": "baseline",
+      "ms": 2188.067941,
+      "sum": 24720
+    },
+    {
+      "round": 0,
+      "name": "prototype",
+      "ms": 1697.04757,
+      "sum": 24720
+    },
+    {
+      "round": 1,
+      "name": "prototype",
+      "ms": 1697.585438,
+      "sum": 24720
+    },
+    {
+      "round": 1,
+      "name": "baseline",
+      "ms": 2166.148031,
+      "sum": 24720
+    },
+    {
+      "round": 2,
+      "name": "baseline",
+      "ms": 2167.913983,
+      "sum": 24720
+    },
+    {
+      "round": 2,
+      "name": "prototype",
+      "ms": 1687.91683,
+      "sum": 24720
+    },
+    {
+      "round": 3,
+      "name": "prototype",
+      "ms": 1689.521691,
+      "sum": 24720
+    },
+    {
+      "round": 3,
+      "name": "baseline",
+      "ms": 2162.349715,
+      "sum": 24720
+    }
+  ]
+}

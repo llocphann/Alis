@@ -1,0 +1,57 @@
+{
+  "pairs": 1120,
+  "rows": 71436,
+  "fields": 285744,
+  "results": [
+    {
+      "round": 0,
+      "name": "baseline",
+      "ms": 574,
+      "sum": 24720
+    },
+    {
+      "round": 0,
+      "name": "prototype",
+      "ms": 343,
+      "sum": 24720
+    },
+    {
+      "round": 1,
+      "name": "prototype",
+      "ms": 346,
+      "sum": 24720
+    },
+    {
+      "round": 1,
+      "name": "baseline",
+      "ms": 572,
+      "sum": 24720
+    },
+    {
+      "round": 2,
+      "name": "baseline",
+      "ms": 577,
+      "sum": 24720
+    },
+    {
+      "round": 2,
+      "name": "prototype",
+      "ms": 345,
+      "sum": 24720
+    },
+    {
+      "round": 3,
+      "name": "prototype",
+      "ms": 346,
+      "sum": 24720
+    },
+    {
+      "round": 3,
+      "name": "baseline",
+      "ms": 569,
+      "sum": 24720
+    }
+  ],
+  "source_sha": "c265541b8b92eb5e39edb72ae25da8113357583d",
+  "scope": "QV4 numeric-only microbenchmark/parity; public exotic/observable semantics and actual host lifetime not qualified; no production patch"
+}

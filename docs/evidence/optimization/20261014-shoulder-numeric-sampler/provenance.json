@@ -1,0 +1,15 @@
+{
+  "source_sha": "8db6dac8a59f4017f0749a4418a5abc0e89ff256",
+  "accepted_timing": "benchmark-product-result.json",
+  "scope": "400-call matched native QV4 numeric sampler microbenchmark, four alternating pairs; no whole-system/frametime/RAM gain",
+  "held_timing": [
+    "guarded-result.json includes getter controls BEFORE timing; possible feedback polymorphism, not accepted normal-numeric timing"
+  ],
+  "fixture_failures": [
+    "product-worktree: QML Math hook cannot count imported JS namespace operations (0/0), replaced by separate instrumented copies",
+    "product-worktree-final: oracle omitted collapsed input eligibility; corrected without runtime change and retained failure"
+  ],
+  "baseline_sha": "842a67553e05d95d3e0dc291b40472192984a49c",
+  "baseline_bytes_verified": true,
+  "mutation_control": "prepared workspace radius +0.5 rejected numeric case36"
+}

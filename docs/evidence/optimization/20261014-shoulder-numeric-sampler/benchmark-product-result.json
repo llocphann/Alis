@@ -1,0 +1,65 @@
+{
+  "pairs": 1120,
+  "rows": 71436,
+  "fields": 285744,
+  "observableCases": 9,
+  "observableReads": 2091,
+  "results": [
+    {
+      "round": 0,
+      "name": "baseline",
+      "ms": 555,
+      "sum": 24720
+    },
+    {
+      "round": 0,
+      "name": "prototype",
+      "ms": 326,
+      "sum": 24720
+    },
+    {
+      "round": 1,
+      "name": "prototype",
+      "ms": 328,
+      "sum": 24720
+    },
+    {
+      "round": 1,
+      "name": "baseline",
+      "ms": 550,
+      "sum": 24720
+    },
+    {
+      "round": 2,
+      "name": "baseline",
+      "ms": 553,
+      "sum": 24720
+    },
+    {
+      "round": 2,
+      "name": "prototype",
+      "ms": 325,
+      "sum": 24720
+    },
+    {
+      "round": 3,
+      "name": "prototype",
+      "ms": 327,
+      "sum": 24720
+    },
+    {
+      "round": 3,
+      "name": "baseline",
+      "ms": 550,
+      "sum": 24720
+    }
+  ],
+  "source_sha": "8db6dac8a59f4017f0749a4418a5abc0e89ff256",
+  "scope": "native QV4 numeric-only matched function microbenchmark; timing before observable getters; not whole CPU/RAM/GPU/frametime gain",
+  "call_sequence": [
+    "numeric parity",
+    "four alternating matched400-call pairs",
+    "observable fallback controls"
+  ],
+  "exit": 0
+}

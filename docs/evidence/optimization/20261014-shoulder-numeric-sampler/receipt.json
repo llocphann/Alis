@@ -1,0 +1,28 @@
+{
+  "source_sha": "8db6dac8a59f4017f0749a4418a5abc0e89ff256",
+  "result": "FOCUSED_NATIVE_EXACT_PASS",
+  "qualification": [
+    "1120 numeric cases/14 fallback controls/32 host states (24 active), 291704 exact row fields; direct and nested",
+    "488768 native input region checks,772 publications,23040 Regions,768 cohorts; direct and nested",
+    "four-edge sustained native hover, padding/bridge/source-priority/focus/click-only/auto-hide; direct and nested",
+    "mutant prepared radius +0.5 FAIL case36"
+  ],
+  "timing": {
+    "source": "benchmark-product-result.json",
+    "baseline_median_ms_400calls": 551.5,
+    "candidate_median_ms_400calls": 326.5,
+    "reduction_percent": 40.797824116047146,
+    "scope": "matched native QV4 numeric sampler function only; timing before exotic getter controls; no whole CPU/GPU/RAM/frametime claim"
+  },
+  "semantics": [
+    "numeric scalar preparation is opt-in only for locally produced BodyHost snapshots",
+    "external popupShoulders API arity and read/error phases retained",
+    "bounded unexpected numeric values use original arithmetic; no approximate geometry or cached mutable strip arrays"
+  ],
+  "limits": [
+    "no full canonical result for this SHA",
+    "physical wl_pointer, installed/owner and multi-output acceptance independent",
+    "G0 Companion lineage untouched"
+  ],
+  "raw_log_encoding": "*.log.gz contain original lossless log bytes"
+}
