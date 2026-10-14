@@ -8,6 +8,14 @@ MIGRATION_REQUIRED=true
 
 migration_check() {
   local xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+  # BRAND-R01: a masked original unit and canonical user service mean the
+  # handoff is complete. Historic iNiR migrations are ALREADY superseded;
+  # never suggest re-enabling the retired owner or rewriting Alis Niri paths.
+  if [[ -L "$xdg_config_home/systemd/user/inir.service" &&
+        "$(readlink -- "$xdg_config_home/systemd/user/inir.service")" == /dev/null &&
+        -f "$xdg_config_home/systemd/user/alis.service" ]]; then
+    return 1
+  fi
   local startup_cfg="${xdg_config_home}/niri/config.d/50-startup.kdl"
   local monolithic_cfg="${xdg_config_home}/niri/config.kdl"
 
@@ -65,6 +73,14 @@ migration_preview() {
 
 migration_apply() {
   local xdg_config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
+  # A directly invoked historical apply must be harmless after the Alis
+  # singleton handoff, even when the original unit archive is unavailable.
+  if [[ -L "$xdg_config_home/systemd/user/inir.service" &&
+        "$(readlink -- "$xdg_config_home/systemd/user/inir.service")" == /dev/null &&
+        -f "$xdg_config_home/systemd/user/alis.service" ]]; then
+    printf 'SKIP: retired 051 historical clipboard writer migration; Alis owns the session.\n'
+    return 0
+  fi
   local startup_cfg="${xdg_config_home}/niri/config.d/50-startup.kdl"
   local monolithic_cfg="${xdg_config_home}/niri/config.kdl"
 
