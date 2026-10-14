@@ -253,11 +253,11 @@ assert.equal(res.resolution_attempted, false);
 
 // The original depth=128 ceiling obscured most real Desktop providers.
 const deep = rootsFor(sharedMap);
-let path = deep.currentChild;
+let deepCursor = deep.currentChild;
 for (let i=0; i<180; i++) {
-  path = {child:path, sibling:null};
+  deepCursor = {child:deepCursor, sibling:null};
 }
-deep.currentRoot.child = path;
+deep.currentRoot.child = deepCursor;
 res = await inspect([deep.currentRoot]);
 assert.deepEqual(res.active_map_depth_range_capped, [181,181]);
 assert.equal(res.active_map_depth_limit_reached, false);
