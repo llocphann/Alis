@@ -123,6 +123,8 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         unique_provider_map_count_capped: 0,
         active_provider_map_count_capped: 0,
         unique_provider_identity_count_capped: 0,
+        alternate_only_provider_map_count_capped: 0,
+        distinct_maps_share_provider_identity: false,
         active_provider_identity_count_capped: 0,
         react_container_count_capped: 0,
         active_root_count_capped: 0,
@@ -194,6 +196,10 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
       report.unique_provider_map_count_capped = Math.min(8, all.maps.size);
       report.active_provider_map_count_capped = Math.min(8, active.maps.size);
       report.unique_provider_identity_count_capped = Math.min(8, all.providers.size);
+      report.alternate_only_provider_map_count_capped = Math.min(8,
+        [...all.maps].filter(map => !active.maps.has(map)).length);
+      report.distinct_maps_share_provider_identity =
+        all.maps.size > 1 && all.providers.size === 1;
       report.active_provider_identity_count_capped = Math.min(8, active.providers.size);
       report.provider_map_shared_with_active_tree =
         [...active.maps].some(map => all.maps.has(map));
@@ -227,7 +233,7 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
       report.provider_selection = "unique_active_and_full_tree";
       // Resolve once to TEST the candidate's shape; do not activate transport.
       // A capability check is not authority to send a message.
-      const resolved = definition.resolve(provider, maps[0]);
+      const resolved = definition.resolve(provider, map);
       const transport = provider.store.get(resolved);
       report.resolution_attempted = true;
       report.prepare_function_present =
