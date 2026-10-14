@@ -1,6 +1,6 @@
 # Alis task tracking — GitHub Issues
 
-**[Open Alis GitHub Issues](https://github.com/llocphann/Alis/issues?q=is%3Aissue+is%3Aopen)** is the **single active backlog** for Alis `dev`, Alis-Companion and Alis-Intergration. Local and Cloud AI use the same Issues and must not write new tasks or status into Markdown.
+**Issues are owned by the implementation repository:** [Alis (`dev`)](https://github.com/llocphann/Alis/issues) for core shell/host, [Alis-Companion (`main`)](https://github.com/llocphann/Alis-Companion/issues) for Companion, and [Alis-Intergration (`main`)](https://github.com/llocphann/Alis-Intergration/issues) for integrations. Local and Cloud AI create/update Issues in the owning repo and never write new task/status Markdown. Historical Alis MOVED Issues only redirect to their canonical counterparts.
 
 - **New features:** `[DOMAIN-F##]`
 - **Rework/optimization:** `[DOMAIN-R##]`
