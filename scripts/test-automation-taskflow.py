@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from automation import taskflow
+from automation import taskflow, credentials, rotation
 
 TASK = {
     "code": "AUTO-R01", "repository": "llocphann/Alis",
@@ -244,6 +244,118 @@ class TaskflowTests(unittest.TestCase):
         payload["commands"] = [["bash", "only-review.sh"]]
         with self.assertRaisesRegex(taskflow.TaskError, "Unapproved"):
             taskflow.package(payload)
+
+
+    def test_github_keyring_stdin_and_scoped_credential_helper(self):
+        from unittest.mock import Mock
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            fake = Mock(return_value=type("Done", (), {"returncode": 0, "stdout": "", "stderr": ""})())
+            with patch.object(credentials.shutil, "which", return_value="/usr/bin/secret-tool"), \
+                 patch.object(credentials.subprocess, "run", fake):
+                saved = credentials.save("llocphann/Alis", "ghp_example123")
+                self.assertTrue(saved["saved"])
+                self.assertEqual(fake.call_args.kwargs["input"], "ghp_example123")
+                self.assertNotIn("ghp_example123", str(fake.call_args.args))
+                marker = credentials._metadata_path().read_text()
+                self.assertNotIn("ghp_example123", marker)
+                self.assertTrue(credentials.status("llocphann/Alis")["saved"])
+                credentials.clear("llocphann/Alis")
+                self.assertFalse(credentials.status("llocphann/Alis")["saved"])
+            with self.assertRaisesRegex(credentials.CredentialError, "one nonempty"):
+                credentials.save("llocphann/Alis", "token\nbad")
+            with self.assertRaises(credentials.CredentialError):
+                credentials.save("other/repo", "token")
+            with patch.object(credentials, "_lookup", return_value="ghp_for_git_only"):
+                self.assertEqual(credentials.git_helper("llocphann/Alis", "get",
+                    "protocol=https\nhost=github.com\npath=other/repo\n"), "")
+                result = credentials.git_helper("llocphann/Alis", "get",
+                    "protocol=https\nhost=github.com\npath=llocphann/Alis.git\n")
+                self.assertIn("password=ghp_for_git_only", result)
+                self.assertEqual(credentials.git_helper("llocphann/Alis", "store",
+                    "protocol=https\nhost=github.com\npath=llocphann/Alis\n"), "")
+
+    def test_token_and_rotation_settings_exposed_without_prompt_fields(self):
+        qml = (Path(__file__).resolve().parents[1] /
+               "modules/settings/AutomationTaskConfig.qml").read_text()
+        self.assertIn("automationGithubToken", qml)
+        self.assertIn("TextInput.Password", qml)
+        self.assertIn("githubSecretProcess.write(root.pendingSecretInput)", qml)
+        self.assertIn("Automatic chat rollover", qml)
+        self.assertNotIn("automationRotationPrompt", qml)
+        self.assertNotIn("automationContinuationPrompt", qml)
+        cli = (Path(__file__).resolve().parents[1] /
+               "scripts/alis-automation-task.py").read_text()
+        self.assertIn("sys.stdin.read(513)", cli)
+        self.assertIn("github-token-save", cli)
+
+    def test_rotation_requires_authenticated_limit_and_exact_new_chat(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            task = taskflow.resolve("AUTO-R01", api)
+            taskflow.intake(task)
+            with self.assertRaisesRegex(taskflow.TaskError, "AUTO-F01"):
+                rotation.bind_managed_chat("AUTO-R01", "chat-original", "msg-start")
+            with self.assertRaisesRegex(taskflow.TaskError, "did not confirm"):
+                rotation.bind_managed_chat("AUTO-R01", "chat-original", "msg-start",
+                                           verify_session=lambda *args: False)
+            self.assertTrue(rotation.bind_managed_chat("AUTO-R01", "chat-original", "msg-start",
+                      verify_session=lambda cid, mid, prompt: prompt.startswith("You are"))["ok"])
+            self.assertTrue(rotation.bind_managed_chat("AUTO-R01", "chat-original", "msg-start",
+                      verify_session=lambda *args: False)["duplicate"])
+            record = taskflow.load_task("AUTO-R01")
+            record["status"] = "cloud_continuing"
+            taskflow._save_task(record)
+            signal = {"kind": "context_window_exhausted",
+                      "conversation_id": "chat-original", "message_id": "msg-limit"}
+            with self.assertRaisesRegex(taskflow.TaskError, "AUTO-F01"):
+                rotation.observe_chat_limit("AUTO-R01", signal)
+            with self.assertRaisesRegex(taskflow.TaskError, "not verified"):
+                rotation.observe_chat_limit("AUTO-R01", signal, verify_limit=lambda *args: False)
+            invalid = {**signal, "kind": "guess_from_prompt_count"}
+            with self.assertRaisesRegex(taskflow.TaskError, "Unrecognized"):
+                rotation.observe_chat_limit("AUTO-R01", invalid, verify_limit=lambda *args: True)
+            accepted = rotation.observe_chat_limit("AUTO-R01", signal, verify_limit=lambda *args: True)
+            self.assertEqual(accepted["status"], "rotation_pending")
+            self.assertTrue(rotation.observe_chat_limit("AUTO-R01", signal,
+                               verify_limit=lambda *args: False)["duplicate"])
+            saved = taskflow.load_task("AUTO-R01")
+            self.assertIn("AUTO-R01", saved["rotation"]["resume_prompt"])
+            with self.assertRaisesRegex(taskflow.TaskError, "AUTO-F01"):
+                rotation.acknowledge_chat_rotation("AUTO-R01", "chat-next", "msg-next")
+            with self.assertRaisesRegex(taskflow.TaskError, "not authenticated"):
+                rotation.acknowledge_chat_rotation("AUTO-R01", "chat-next", "msg-next",
+                                                   verify_new_chat=lambda *args: False)
+            rec = rotation.acknowledge_chat_rotation("AUTO-R01", "chat-next", "msg-next",
+                verify_new_chat=lambda cid, mid, prompt, previous:
+                    previous == "chat-original" and cid == "chat-next"
+                    and mid == "msg-next" and "AUTO-R01" in prompt)
+            self.assertEqual(rec["status"], "cloud_continuing")
+            done = taskflow.load_task("AUTO-R01")
+            self.assertIsNone(done["rotation"])
+            self.assertEqual(done["managed_chat"]["conversation_id"], "chat-next")
+            self.assertTrue(rotation.acknowledge_chat_rotation("AUTO-R01",
+                     "chat-next", "msg-next", verify_new_chat=lambda *args: False)["duplicate"])
+            signal2 = {"kind": "context_window_near_limit",
+                       "conversation_id": "chat-next", "message_id": "msg-limit2"}
+            self.assertEqual(rotation.observe_chat_limit("AUTO-R01", signal2,
+                           verify_limit=lambda *args: True)["status"], "rotation_pending")
+            record = taskflow.load_task("AUTO-R01")
+            self.assertIsNotNone(record["rotation"]["resume_prompt"])
+
+    def test_rotation_blocks_unresolved_local_receipts(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            taskflow.intake(taskflow.resolve("AUTO-R01", api))
+            rotation.bind_managed_chat("AUTO-R01", "chat-a", "msg-a",
+                 verify_session=lambda *args: True)
+            signal = {"kind": "conversation_turn_limit",
+                      "conversation_id": "chat-a", "message_id": "msg-b"}
+            with self.assertRaisesRegex(taskflow.TaskError, "Unacknowledged"):
+                rotation.observe_chat_limit("AUTO-R01", signal, verify_limit=lambda *args: True)
+            record = taskflow.load_task("AUTO-R01")
+            record["status"] = "cloud_continuing"
+            record["unresolved"] = True
+            taskflow._save_task(record)
+            with self.assertRaisesRegex(taskflow.TaskError, "Unacknowledged"):
+                rotation.observe_chat_limit("AUTO-R01", signal, verify_limit=lambda *args: True)
 
     def test_no_execution_without_approval_or_pinned_source(self):
         bundle = taskflow.package({"schema": "alis.local-handoff.v1", "task": TASK,
