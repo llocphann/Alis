@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from automation import taskflow, credentials
+from automation import taskflow, credentials, lifecycle
 
 
 def main():
@@ -33,6 +33,9 @@ def main():
     run.add_argument("checkout", type=Path)
     run.add_argument("--repo", default="llocphann/Alis", choices=taskflow.REPOSITORIES)
     run.add_argument("--approve-local-tests", action="store_true")
+    check = commands.add_parser("status")
+    check.add_argument("code")
+    check.add_argument("--repo", default="llocphann/Alis", choices=taskflow.REPOSITORIES)
     for action in ("github-token-status", "github-token-save", "github-token-clear"):
         token_cmd = commands.add_parser(action)
         token_cmd.add_argument("repository", choices=taskflow.REPOSITORIES)
@@ -63,6 +66,8 @@ def main():
             result = credentials.clear(args.repository)
         elif args.action == "cleanup":
             result = taskflow.cleanup(dry_run=not args.apply)
+        elif args.action == "status":
+            result = lifecycle.status(args.code, args.repo)
         elif args.action == "save-handoff":
             bundle = json.load(sys.stdin)
             result = taskflow.save_handoff(args.code, bundle, args.repo)

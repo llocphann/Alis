@@ -489,6 +489,12 @@ def save_handoff(code: str, bundle: dict, repository: str = "llocphann/Alis") ->
         raise TaskError("Terminal or unresolved task cannot accept a new handoff")
     if existing and existing.get("id") != checked["id"]:
         raise TaskError("Previous handoff is unacknowledged; reconcile before replacing")
+    if existing is not None:
+        # Idempotent retries never demote an acknowledged local receipt.
+        return {"ok": True, "task_file": str(_task_path(code, repository)),
+                "job_id": checked["id"], "duplicate": True, "state": record["status"]}
+    if record.get("status") != "prepared":
+        raise TaskError("Unexpected task state for new handoff")
     record["handoff"] = checked
     record["status"] = "handoff_ready"
     record["updated_unix"] = int(time.time())
@@ -601,7 +607,11 @@ def cleanup(*, dry_run: bool = True, now: int | None = None) -> dict:
             except TaskError:
                 stats["preserved_unresolved"] += 1
                 continue
-            age = at - int(record.get("delivery_acknowledged_unix") or 0)
+            # Retention starts at the later of verified message delivery and
+            # explicit terminal owner decision, not at an earlier chat send.
+            last_ack = int(record.get("delivery_acknowledged_unix") or 0)
+            terminal = int(record.get("terminal_unix") or 0)
+            age = at - max(last_ack, terminal)
             settled = (record.get("status") in TERMINAL_STATES
                        and type(record.get("delivery_acknowledged_unix")) is int
                        and record["delivery_acknowledged_unix"] > 0
