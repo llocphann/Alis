@@ -31,4 +31,9 @@ for token in 'install -Dm755 "$srcroot/scripts/alis" "$pkgdir/usr/bin/alis"' \
 done
 [[ "$(grep -Fc 'install -Dm755 "$srcroot/scripts/alis" "$pkgdir/usr/bin/alis"' "$pkg")" -eq 1 ]] ||
     fail 'duplicate public CLI installation commands'
+snapshot="$(mktemp -d)"
+trap 'rm -rf -- "$snapshot"' EXIT
+git archive "$ref" scripts/alis scripts/lib shell.qml | tar -x -C "$snapshot"
+ALIS_CLI_GUARD_ROOT="$snapshot" python3 "$root/scripts/test-brand-cli-session-guard.py" ||
+    fail 'pinned CLI can start a second session while original owner is active'
 echo "PASS: canonical Arch snapshot $ref contains Alis ShellId, unit, CLI and native binaries"

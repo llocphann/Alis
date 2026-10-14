@@ -2,7 +2,7 @@
 """No live Quickshell/systemd: reproduce indirect IPC/settings autostart refusal."""
 from pathlib import Path
 import os,tempfile,subprocess
-ROOT=Path(__file__).resolve().parents[1]
+ROOT=Path(os.environ.get('ALIS_CLI_GUARD_ROOT',str(Path(__file__).resolve().parents[1])))
 with tempfile.TemporaryDirectory()as tmp:
  home=Path(tmp);bin=home/'bin';bin.mkdir();(home/'config/alis').mkdir(parents=True)
  qs=bin/'qs';qs.write_text('''#!/bin/bash

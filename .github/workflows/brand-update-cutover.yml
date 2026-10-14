@@ -26,6 +26,9 @@ on:
       - scripts/lib/config-path.sh
       - sdata/lib/environment-variables.sh
       - sdata/lib/versioning.sh
+      - distro/arch/alis-shell/PKGBUILD
+      - distro/arch/alis-shell/.SRCINFO
+      - scripts/test-brand-canonical-arch-snapshot.sh
       - .github/workflows/brand-update-cutover.yml
   workflow_dispatch:
 permissions:
@@ -35,6 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Validate update and pre-cutover stage syntax
         shell: bash
         run: bash -n setup scripts/brand-canonical-stage.sh scripts/brand-canonical-cutover.sh
@@ -57,3 +62,5 @@ jobs:
         run: python3 scripts/test-brand-env-compat.py
       - name: Active quoted commands cannot evade the identity audit
         run: python3 scripts/test-brand-canonical-audit.py
+      - name: Pinned Arch CLI preserves the session-owner boundary
+        run: bash scripts/test-brand-canonical-arch-snapshot.sh
