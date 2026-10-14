@@ -25,6 +25,11 @@ old_unit="$user_units/inir.service"
 new_unit="$user_units/alis.service"
 template="$repo/assets/systemd/alis.service"
 launcher="$(command -v alis)"
+# Do not switch service ownership to a stale public forwarding wrapper or an
+# unrelated user-created executable. This cutover is only for repo-copy installs.
+[[ -f "$launcher" && ! -L "$launcher" ]] &&
+grep -Fq '# Canonical CLI and runtime name is Alis.' "$launcher" ||
+  { echo "Installed alis is not the canonical runtime CLI: $launcher" >&2; exit 2; }
 [[ -f "$template" ]] || { echo 'Missing new service template' >&2; exit 2; }
 grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' "$template" ||
   { echo 'Template is missing tray D-Bus singleton ownership' >&2; exit 2; }
@@ -37,6 +42,29 @@ old_active="$(systemctl --user is-active inir.service 2>/dev/null || true)"
 new_active="$(systemctl --user is-active alis.service 2>/dev/null || true)"
 [[ "$new_active" != active ]] || { echo 'Alis already active; refusing cutover' >&2; exit 2; }
 [[ -f "$old_unit" ]] || { echo 'No existing inir.service; fresh installs use normal setup' >&2; exit 2; }
+# Preflight *effective* Niri includes. Previously, owner's 90-user-extra.kdl
+# still spawned inir and shadowed 70-binds. Refuse to cut over while any
+# active keybind/startup still depends on the retired executable.
+niri_root="$cfg/niri/config.kdl"
+if [[ -f "$niri_root" && ! -L "$niri_root" ]]; then
+  niri_bind_files=("$niri_root")
+  for fragment in 70-binds.kdl 75-inir-launcher-binds.kdl 75-alis-launcher-binds.kdl 90-user-extra.kdl 50-startup.kdl; do
+    if grep -Fq "include \"config.d/$fragment\"" "$niri_root"; then
+      path="$cfg/niri/config.d/$fragment"
+      [[ -f "$path" && ! -L "$path" ]] ||
+        { echo "Niri includes an unsafe or missing keybind file: $path" >&2; exit 2; }
+      niri_bind_files+=("$path")
+    fi
+  done
+  for path in "${niri_bind_files[@]}"; do
+    if grep -Ev '^[[:space:]]*(//|#)' "$path" |
+        grep -Eq 'spawn "([^"]*/)?inir"([[:space:]]|;)|exec inir([[:space:]]|\\")'; then
+      echo "Active Niri shortcut still invokes disabled inir: $path" >&2
+      echo "Repair the bound command to alis, then rerun --dry-run." >&2
+      exit 2
+    fi
+  done
+fi
 # Package-managed upgrades must be performed declaratively by their manager.
 version="$cfg/inir/version.json"
 if [[ -f "$version" ]] && grep -Eq '"update[_S]trategy"[[:space:]]*:[[:space:]]*"package-manager"' "$version"; then
