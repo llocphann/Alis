@@ -85,6 +85,21 @@ def prepare(raw: str, mode: str = "ordered",
     if mode not in MODES:
         raise tf.TaskError("Unsupported scheduling mode")
     inputs = parse_codes(raw)
+    # A durable queue may already be running while the Settings page refreshes.
+    # Check it before contacting GitHub: retrying the same UI input must not
+    # spend rate limit or disturb an active, receipt-pinned job. Verify again
+    # under the lock below after resolving a genuinely new queue.
+    with _lock():
+        existing = _load()
+        if existing and existing.get("state") not in {"finished", "cancelled"}:
+            same = (existing["mode"] == mode and
+                    len(existing["items"]) == len(inputs) and
+                    all(raw_code in {entry["code"],
+                                     f'{entry["repository"]}#{entry["issue_number"]}'}
+                        for raw_code, entry in zip(inputs, existing["items"])))
+            if same:
+                return {**view(existing), "duplicate": True}
+            raise tf.TaskError("An unfinished queue exists; reconcile before replacing")
     # The default GitHub intake resolves open Issues in bounded repository
     # batches. Keep injected per-code resolvers for offline tests and tools.
     tasks = (tf.resolve_batch(inputs) if resolver is tf.resolve
