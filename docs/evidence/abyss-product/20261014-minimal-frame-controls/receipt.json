@@ -1,0 +1,27 @@
+{
+  "scope": "Sequential private no-focus native control runs; identical simple animated Rectangle, asynchronous Timer capture versus blocking QtTest capture wait; no production feature changed",
+  "results": [
+    {
+      "driver": "result.json",
+      "native_exit": 0,
+      "swaps": 151,
+      "grabs": 74,
+      "states": 148,
+      "median_capture_callback_ms": 19.0
+    },
+    {
+      "driver": "blocking-result.json",
+      "native_exit": 0,
+      "swaps": 158,
+      "grabs": 42,
+      "states": 155,
+      "median_capture_callback_ms": 20.0
+    }
+  ],
+  "finding": "Both minimal scenes produce many frame swaps and median19/20ms callbacks. These controls do not reproduce the complex Dashboard field capture latency. Do not attribute that failure to QtTest wait alone or general unfocused-compositor throttling.",
+  "boundaries": [
+    "Not an actual Dashboard/editor frame PASS",
+    "No owner/installed/physical-input/multi-output acceptance or resource gain",
+    "No production runtime patch from these diagnostics"
+  ]
+}
