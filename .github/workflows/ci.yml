@@ -50,6 +50,8 @@ jobs:
           node scripts/test-hadalis-native-session.mjs
           node --check automation/chat_bridge/static_helper_analysis.mjs
           node scripts/test-hadalis-static-helper-analysis.mjs
+          node --check automation/chat_bridge/transport_evidence.mjs
+          node scripts/test-hadalis-transport-evidence.mjs
           node --check automation/chat_bridge/scope_probe.mjs
           node --check scripts/inspect-hadalis-native-scope.mjs
           node scripts/test-hadalis-native-scope-probe.mjs
