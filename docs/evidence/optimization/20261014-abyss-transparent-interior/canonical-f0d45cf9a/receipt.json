@@ -1,0 +1,15 @@
+{
+  "source": "f0d45cf9a8a4c3320cc8e6c9d2afa07fa65718e8",
+  "anchor": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-canonical-core-f0d45cf9a/source",
+  "driver": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/drivers/canonical-core-f0d45cf9a8a4c3320cc8e6c9d2afa07fa65718e8.sh",
+  "driver_sha256": "9c2c6552199c1a2088deea3862aef949859b987e25abedc8e9018deaf9a284a9",
+  "integration_snapshot": "not force-installed; package-owned tests use their source contract",
+  "raw_log": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-canonical-core-f0d45cf9a/canonical.raw.txt",
+  "stdout": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-canonical-core-f0d45cf9a/stdout.txt",
+  "receipt": "/home/llocphann/Shared_Documents/Obsidian-Vault/10_Projects/Alis/.git/maintainer-validation/20261014-canonical-core-f0d45cf9a/receipt.json",
+  "status": "STOPPED",
+  "os_exit_status": -15,
+  "seconds": 1014.8322486877441,
+  "raw_sha256": "416ee880ea705be638c19f333c32203f51c341c2b460f7e35592d1e9c249c1a4",
+  "raw_bytes": 118702
+}

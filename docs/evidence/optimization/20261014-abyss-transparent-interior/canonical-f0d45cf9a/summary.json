@@ -1,0 +1,16 @@
+{
+  "source": "f0d45cf9a8a4c3320cc8e6c9d2afa07fa65718e8",
+  "status": "STOPPED",
+  "os_exit_status": -15,
+  "completed": 233,
+  "counts": {
+    "PASS": 203,
+    "FAIL": 30,
+    "SKIP": 0
+  },
+  "full_summary": false,
+  "raw_sha256": "416ee880ea705be638c19f333c32203f51c341c2b460f7e35592d1e9c249c1a4",
+  "raw_bytes": 118702,
+  "published_weather_lines_omitted": 2,
+  "scope": "Stopped at 5-hour remaining 2%; partial completed checks only, no full canonical PASS or FAIL conclusion"
+}
