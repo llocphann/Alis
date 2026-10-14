@@ -12,6 +12,11 @@ on:
       - scripts/test-config-namespace-migration.sh
       - scripts/test-brand-post-cutover-migration-guards.sh
       - scripts/test-brand-native-installer-invocation.sh
+      - scripts/companion-manager.py
+      - scripts/hadanion-status.py
+      - scripts/test-companion-managed-install.py
+      - scripts/test-companion-entrypoint-discovery.py
+      - sdata/companion-revision.txt
       - native/scripts/install-runtime.sh
       - sdata/migrations/021-systemd-single-instance.sh
       - sdata/migrations/051-cliphist-single-watchers.sh
@@ -59,6 +64,10 @@ jobs:
         run: bash scripts/test-brand-canonical-stage.sh
       - name: Rust runtime installer must work without execute bit during repo-copy updates
         run: bash scripts/test-brand-native-installer-invocation.sh
+      - name: Pinned external Companion and canonical Alis daemon compatibility
+        run: python3 scripts/test-companion-entrypoint-discovery.py
+      - name: Managed Companion install, ownership, pins and failed-upgrade recovery
+        run: python3 scripts/test-companion-managed-install.py
       - name: Original owner preserved on rejected or failed cutover
         shell: bash
         run: bash scripts/test-brand-canonical-cutover.sh
