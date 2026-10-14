@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Real Clock/Weather hover, stable slots and pyramid reveal on four Edges."""
-import json
+import json, os
 import tempfile
 from pathlib import Path
 from native_test_session import private_wayland, run_qs
@@ -118,13 +118,28 @@ ShellRoot {
    }
   }
   function enter(anchor){mouseMove(anchor,anchor.width/2,anchor.height/2)}
+  function leave(){
+   // A fixed (80,80) lies inside Weather on a narrow nested output. Choose
+   // actual blank input space, preserving the existing leave/tail deadlines.
+   for(const fy of [.5,.95,.05,.75,.25])for(const fx of [.5,.95,.05,.75,.25]){
+    const x=scene.width*fx,y=scene.height*fy
+    if(controller.sourceInputRegions.some(r=>x>=r.x && y>=r.y && x<r.x+r.width && y<r.y+r.height))continue
+    let owned=false
+    for(let i=0;i<hosts.count;i++){
+     const host=hosts.itemAt(i)
+     if(host.open && host.hoverParent.contains(Qt.point(x-host.hoverParent.x,y-host.hoverParent.y))){owned=true;break}
+    }
+    if(!owned){mouseMove(scene,x,y);return}
+   }
+   throw new Error("handoff fixture has no blank leave point")
+  }
   function runChecks(){try{
    tryCompare(Config,"ready",true,4000)
    Config.setNestedValue("performance.reduceAnimations",false)
    Weather.data={temp:"25°",wCode:"113",description:"Overcast",sunrise:"06:00",sunset:"18:00",
     hourly:Array.from({length:8},(_,i)=>({label:String(i*3).padStart(2,"0")+":00",temp:"25°",code:"113"}))}
    for(const edge of ["top","bottom","left","right"]){
-    root.edge=edge;mouseMove(scene,80,80);observe(400)
+    root.edge=edge;leave();observe(400)
     for(const dwell of [24,70,110]){
      enter(clockAnchor);observe(300)
      check(clock.requestedVisible,"Clock did not open by hover on "+edge)
@@ -141,7 +156,7 @@ ShellRoot {
      const host=controller._popupHost(controller._popupSlot(weather))
      mouseMove(host.contentParent,host.contentParent.width/2,host.contentParent.height/2);observe(120)
      check(weather.requestedVisible,"Weather content transfer lost its hover lease")
-     mouseMove(scene,80,80);observe(450)
+     leave();observe(450)
      check(!weather.presentationActive && controller.activePopups.length===0,"Weather exit stranded a popup slot "+JSON.stringify({edge,
       request:weather.requestedVisible,content:weather._contentHovered,anchor:weather._anchorHover.hovered,
       hold:weather._liquidSemanticHold,linger:weather._lingerVisible,offset:weather.offsetScale}))
@@ -165,6 +180,8 @@ ShellRoot {
         data["bar"]["weather"]["enable"] = False
         (config / "config.json").write_text(json.dumps(data))
         result = run_qs(folder, env, timeout=110)
+        if os.environ.get("ALIS_WEATHER_HANDOFF_LOG"):
+            Path(os.environ["ALIS_WEATHER_HANDOFF_LOG"]).write_text(result.stdout)
         if result.returncode or "WEATHER_HANDOFF_PASS" not in result.stdout or any(
             token in result.stdout for token in ["WEATHER_HANDOFF_FAIL", "TypeError:", "ReferenceError:", "Binding loop", "Failed to load configuration"]
         ):
