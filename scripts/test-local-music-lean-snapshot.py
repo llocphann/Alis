@@ -28,7 +28,18 @@ def measured_run(cmd, env):
     with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as errors:
         start = time.monotonic()
         proc = subprocess.Popen(cmd, env=env, stdout=output, stderr=errors)
+        samples = []
         while True:
+            try:
+                # Linux wait4 RSS can include the parent's inherited pre-exec
+                # high-water mark. Sample only after argv identifies this helper.
+                proc_root = Path("/proc") / str(proc.pid)
+                actual = proc_root.joinpath("cmdline").read_bytes().rstrip(b"\0").split(b"\0")
+                if actual == [os.fsencode(arg) for arg in cmd]:
+                    values = dict(line.split(":", 1) for line in proc_root.joinpath("smaps_rollup").read_text().splitlines() if ":" in line)
+                    samples.append({key: int(values[key].split()[0]) for key in ["Rss", "Pss"]})
+            except (OSError, KeyError, ValueError):
+                pass
             pid, status, usage = os.wait4(proc.pid, os.WNOHANG)
             if pid:
                 proc.returncode = os.waitstatus_to_exitcode(status)
@@ -44,7 +55,10 @@ def measured_run(cmd, env):
         errors.seek(0)
         return subprocess.CompletedProcess(cmd, proc.returncode, output.read(), errors.read()), {
             "elapsed_seconds": elapsed, "user_seconds": usage.ru_utime,
-            "system_seconds": usage.ru_stime, "max_rss_kib": usage.ru_maxrss,
+            "system_seconds": usage.ru_stime, "wait4_max_rss_kib": usage.ru_maxrss,
+            "post_exec_samples": len(samples),
+            "post_exec_rss_peak_kib": max((value["Rss"] for value in samples), default=0),
+            "post_exec_pss_peak_kib": max((value["Pss"] for value in samples), default=0),
         }
 
 
