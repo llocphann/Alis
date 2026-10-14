@@ -1518,6 +1518,11 @@ Scope {
                 identity: "osd"
                 controller: liquid
                 anchors.fill: parent
+                // IPC/OSD joins the same output-level Pyramid neighborhood as
+                // connected popups. The existing availability animation remains
+                // its only reveal driver (no extra timer or independent window).
+                stackPolicy: "pyramid"
+                externalProgress: 1
                 readonly property string presentationKind: GlobalStates.abyssOsdKind === "media" ? "mediaOsd" : GlobalStates.abyssOsdKind
                 edge: window.positionEdge(presentationKind,root.barEdge)
                 joinedEdge: window.presentation(presentationKind).joinCorner===true
