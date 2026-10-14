@@ -99,12 +99,23 @@ function _popupShoulders(width,height,insets,edge,record,radius,softness,recordR
         var rb=contactEdges[2] && syEnd>=height && sy<height ? physicalContactRadius(surface,radius,popupRadius,surface.width,height-sy) : 0;
         var rl=contactEdges[3] && sx<=0 && sxEnd>0 ? physicalContactRadius(surface,radius,popupRadius,surface.height,sxEnd) : 0;
         var rr=contactEdges[1] && sxEnd>=width && sx<width ? physicalContactRadius(surface,radius,popupRadius,surface.height,width-sx) : 0;
+        // Each strip has one fixed cross coordinate. Prepare that axis once
+        // inside this numeric snapshot, retaining the original SDF arithmetic.
+        // Nothing is retained across calls or shared between different bodies.
+        var lastCross=NaN,workspaceCross=0,surfaceCross=0;
         painted=function(tangent,cross) {
+            if (cross!==lastCross) {
+                lastCross=cross;
+                workspaceCross=h ? Math.abs(cross+.5-wy-wh)-wh+wr : Math.abs(cross+.5-wx-ww)-ww+wr;
+                surfaceCross=h ? Math.abs(cross+.5-sy-sh)-sh+sr : Math.abs(cross+.5-sx-sw)-sw+sr;
+            }
             var x=h ? tangent+.5 : cross+.5;
             var y=h ? cross+.5 : tangent+.5;
-            var qx=Math.abs(x-wx-ww)-ww+wr,qy=Math.abs(y-wy-wh)-wh+wr;
+            var qx=h ? Math.abs(x-wx-ww)-ww+wr : workspaceCross;
+            var qy=h ? workspaceCross : Math.abs(y-wy-wh)-wh+wr;
             var d=-(Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-wr);
-            qx=Math.abs(x-sx-sw)-sw+sr;qy=Math.abs(y-sy-sh)-sh+sr;
+            qx=h ? Math.abs(x-sx-sw)-sw+sr : surfaceCross;
+            qy=h ? surfaceCross : Math.abs(y-sy-sh)-sh+sr;
             var bd=Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-sr;
             var cd=Infinity;
             if(rt>0)cd=Math.min(cd,contactCornerDistance(x,y,sx,sxEnd,rt));
