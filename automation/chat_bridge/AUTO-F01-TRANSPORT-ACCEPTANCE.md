@@ -31,6 +31,17 @@ Official product references:
 
 A future API-backed alternative would be a **separately authorized product architecture** with explicit migration, different conversation identity, key management and usage/cost semantics. It must not silently claim continuity with `Automatic Alis` or revive the 18 current queued jobs.
 
+## Documented integration surfaces reviewed (direction matters)
+
+OpenAI's documented ChatGPT Desktop site tools allow **ChatGPT to operate a website** that exposes tools in its built-in browser (WebMCP). Connected apps/plugins likewise expose supported external service actions *to ChatGPT*. These descriptions are **not an authenticated inbound transport** through which an external local scheduler can append a turn into an existing consumer ChatGPT Project conversation.
+
+Sources reviewed (2026-10-15):
+- https://help.openai.com/en/articles/20001423-using-site-tools-in-the-chatgpt-desktop-app
+- https://help.openai.com/en/articles/11487775-connected-apps-in-chatgpt
+- https://help.openai.com/en/articles/20001277-using-the-built-in-browser-in-the-chatgpt-desktop-app
+
+This comparison does not establish that *no* alternative exists. It establishes that these particular public documents do not provide the required inbound, receipt-attested existing-Project chat transport. Do not treat an MCP app, site tool, desktop automation UI or API Platform project as a drop-in replacement.
+
 ## Reconciliation ambiguity discovered in the existing adapter
 
 Static review of `automation/chat_bridge/native_adapter.mjs` found `discoverSubmission()` scans a bounded list of recently updated conversations and **returns the first conversation containing the pending `user_message_id`**. That procedure does not enforce cross-conversation uniqueness, require the message to be on the current active branch, or independently attest ChatGPT Project membership. A positive hit is therefore **not** a proven delivery receipt or authorization to dispatch a new message. This is a **code-level gap**, not evidence that any live user message was misdelivered.
