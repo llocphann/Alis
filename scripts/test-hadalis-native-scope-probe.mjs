@@ -274,6 +274,27 @@ assert.equal(res.resolution_attempted, false);
 assert.equal(resolves, 0);
 def.resolve = originalResolver;
 
+// The inspected function can contain private data. Source content and symbol
+// names must never leave the Desktop; test the exact renderer callback.
+def.resolve = function scopedResolver(alpha, beta) {
+  const hidden = "ghp_TEST_PRIVATE_LITERAL";
+  /* SECRET_COMMENT_NEVER_EXPORT */
+  return alpha.store.get(beta.has(scopeId) ? beta.get(scopeId) : hidden);
+};
+res = await inspectSeven(sevenMaps);
+assert.equal(res.provider_selection, "active_provider_ambiguous");
+assert.equal(res.resolution_attempted, false);
+assert.equal(res.resolver_shape_complete, true);
+assert.ok(res.resolver_masked_shape.includes(".get("));
+assert.ok(res.resolver_masked_shape.includes(".has("));
+assert.ok(res.resolver_masked_shape.includes("return"));
+for (const privatePart of ["ghp_", "PRIVATE", "SECRET_COMMENT", "scopeId",
+  "scopedResolver", "alpha", "beta", "hidden"]) {
+  assert.ok(!JSON.stringify(res).includes(privatePart),
+    "resolver structural probe must hide " + privatePart);
+}
+def.resolve = originalResolver;
+
 const unknownRoot = {memoizedProps:{value:sharedMap}};
 res = await inspect([unknownRoot]);
 assert.equal(res.active_root_count_capped, 0);
