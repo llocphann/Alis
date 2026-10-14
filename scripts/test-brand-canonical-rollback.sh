@@ -62,6 +62,7 @@ printf 'inactive\n' > "$HOME/state-inir"
 printf 'active\n' > "$HOME/state-alis"
 helper="$repo/scripts/brand-canonical-rollback.sh"
 bash -n "$helper"
+cp -p "$HOME/state/alis-cutover-backups/retired-inir.service" "$tmp/original-old-unit"
 data_hash="$(sha256sum "$HOME/config/alis/config.json" | cut -d' ' -f1)"
 bash "$helper" --dry-run > "$tmp/dry" || fail 'safe preview'
 [[ -L "$wants/alis.service" && ! -e "$wants/inir.service" ]] || fail 'dry run modified wiring'
@@ -118,6 +119,8 @@ bash "$helper" --apply --owner-approved > "$tmp/ok" || fail 'approved rollback'
    ! -L "$HOME/config/systemd/user/inir.service" &&
    ! -e "$HOME/state/alis-cutover-backups/retired-inir.service" ]] ||
   fail 'post-success rollback still exposes competing D-Bus unit'
+cmp -s "$tmp/original-old-unit" "$HOME/config/systemd/user/inir.service" ||
+  fail 'post-success rollback modified original service unit bytes'
 compgen -G "$HOME/state/alis-cutover-backups/rollback-backup-*/alis.service" >/dev/null ||
   fail 'canonical unit rollback backup missing'
 [[ "$(sha256sum "$HOME/config/alis/config.json" | cut -d' ' -f1)" == "$data_hash" ]] ||
