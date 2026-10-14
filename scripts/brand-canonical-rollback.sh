@@ -15,7 +15,7 @@ done
 [[ "$mode" != apply || "$approved" == true ]] ||
   { echo 'Rollback needs --apply --owner-approved' >&2; exit 2; }
 command -v systemctl >/dev/null || exit 2
-cfg="\${XDG_CONFIG_HOME:-$HOME/.config}"
+cfg="${XDG_CONFIG_HOME:-$HOME/.config}"
 units="$cfg/systemd/user"
 legacy="$units/inir.service"
 canonical="$units/alis.service"
@@ -24,7 +24,7 @@ canonical="$units/alis.service"
 grep -Fxq 'BusName=org.kde.StatusNotifierWatcher' "$canonical" ||
   { echo 'Alis unit missing singleton tray watcher' >&2; exit 2; }
 legacy_exec="$(sed -n 's/^ExecStart=//p' "$legacy" | head -n1)"
-legacy_exec="\${legacy_exec%% *}"
+legacy_exec="${legacy_exec%% *}"
 [[ "$legacy_exec" == /* && -x "$legacy_exec" && ! -L "$legacy_exec" ]] ||
   { echo "Previous runtime CLI unavailable: $legacy_exec" >&2; exit 2; }
 # Interim disabled inir shim is NOT a usable original runtime.
@@ -44,7 +44,7 @@ while IFS= read -r -d '' dir; do
     { echo "Foreign legacy wants entry: $old" >&2; exit 2; }
   new_links+=("$new"); old_links+=("$old")
 done < <(find "$units" -maxdepth 1 -type d -name '*.wants' -print0)
-printf 'Previous=%s Canonical=%s Rewire=%d\n' "$old_active" "$new_active" "\${#new_links[@]}"
+printf 'Previous=%s Canonical=%s Rewire=%d\n' "$old_active" "$new_active" "${#new_links[@]}"
 if [[ "$mode" == dry-run ]]; then
   echo 'DRY-RUN: no writes; live Niri still requires owner approval.'
   exit 0
@@ -56,12 +56,12 @@ recover() {
   if [[ "$success" != true ]]; then
     systemctl --user stop inir.service >/dev/null 2>&1 || true
     for ((i=0; i<swapped; i++)); do
-      if [[ -L "\${old_links[i]}" ]] &&
-         [[ "$(readlink -f -- "\${old_links[i]}")" == "$(readlink -f -- "$legacy")" ]]; then
-        rm -- "\${old_links[i]}" || true
+      if [[ -L "${old_links[i]}" ]] &&
+         [[ "$(readlink -f -- "${old_links[i]}")" == "$(readlink -f -- "$legacy")" ]]; then
+        rm -- "${old_links[i]}" || true
       fi
-      if [[ ! -e "\${new_links[i]}" && ! -L "\${new_links[i]}" ]]; then
-        ln -s -- "$canonical" "\${new_links[i]}" || true
+      if [[ ! -e "${new_links[i]}" && ! -L "${new_links[i]}" ]]; then
+        ln -s -- "$canonical" "${new_links[i]}" || true
       fi
     done
     systemctl --user daemon-reload >/dev/null 2>&1 || true
@@ -75,10 +75,10 @@ trap recover EXIT
 systemctl --user stop alis.service
 [[ "$(systemctl --user is-active alis.service 2>/dev/null || true)" != active ]] ||
   { echo 'Alis remained active; refusing to start old service' >&2; exit 1; }
-for i in "\${!new_links[@]}"; do
-  rm -- "\${new_links[i]}"
+for i in "${!new_links[@]}"; do
+  rm -- "${new_links[i]}"
   swapped=$((i + 1))
-  ln -s -- "$legacy" "\${old_links[i]}"
+  ln -s -- "$legacy" "${old_links[i]}"
 done
 systemctl --user daemon-reload
 systemctl --user start inir.service

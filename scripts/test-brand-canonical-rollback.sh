@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Pure synthetic service cutover rollback; no real session or owner data touched.
 set -euo pipefail
-repo="$(cd -- "$(dirname -- "\${BASH_SOURCE[0]}")/.." && pwd)"
+repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp -d)"
 trap 'rm -rf -- "$tmp"' EXIT
 fail() { echo "FAIL: staged service rollback: $*" >&2; exit 1; }
@@ -12,20 +12,20 @@ mkdir -p "$HOME/config/systemd/user/niri.service.wants" "$HOME/config/alis" "$HO
 printf 'private theme bytes\n' > "$HOME/config/alis/config.json"
 cat > "$HOME/bin/inir" <<'OLD'
 #!/usr/bin/env bash
-[[ "\${1:-}" == help ]] || exit 1
+[[ "${1:-}" == help ]] || exit 1
 OLD
 cat > "$HOME/bin/systemctl" <<'MOCK'
 #!/usr/bin/env bash
 set -euo pipefail
-[[ "\${1:-}" == --user ]] || exit 2
+[[ "${1:-}" == --user ]] || exit 2
 shift; action="$1"; shift
 case "$action" in
-  is-active) cat "$TEST_HOME/state-\${1%.service}" ;;
-  stop) printf 'inactive\n' > "$TEST_HOME/state-\${1%.service}"; echo "stop:$1" >> "$TEST_HOME/ops" ;;
+  is-active) cat "$TEST_HOME/state-${1%.service}" ;;
+  stop) printf 'inactive\n' > "$TEST_HOME/state-${1%.service}"; echo "stop:$1" >> "$TEST_HOME/ops" ;;
   start)
     echo "start:$1" >> "$TEST_HOME/ops"
-    [[ "\${FAIL_LEGACY_START:-0}" != 1 || "$1" != inir.service ]] || exit 1
-    printf 'active\n' > "$TEST_HOME/state-\${1%.service}" ;;
+    [[ "${FAIL_LEGACY_START:-0}" != 1 || "$1" != inir.service ]] || exit 1
+    printf 'active\n' > "$TEST_HOME/state-${1%.service}" ;;
   daemon-reload) echo reload >> "$TEST_HOME/ops" ;;
   *) exit 2 ;;
 esac
