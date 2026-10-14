@@ -234,7 +234,7 @@ function inspectFunctionBody(source, declarationEnd) {
       unknownSites.push({receiver_form:"bare-identifier",
         receiver_initializer_kind:kind,
         owner_origin_hint:"not-applicable",
-        ...(kind === "identifier-alias"
+        ...(["identifier-alias","other-expression"].includes(kind)
           ? {alias_trace:traceIdentifierAlias(receiver,m.index)} : {})});
     }
   }
