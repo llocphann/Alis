@@ -26,8 +26,10 @@ export function assessNativeTransportEvidence(report) {
     add("PROVIDER_IDENTITY_NOT_PROVEN");
   }
 
-  if (r.resolution_attempted === true)
-    add("READ_ONLY_CONTRACT_VIOLATION_RESOLVER_INVOKED");
+  if (r.resolution_attempted !== false)
+    add(r.resolution_attempted === true
+      ? "READ_ONLY_CONTRACT_VIOLATION_RESOLVER_INVOKED"
+      : "READ_ONLY_RESOLVER_STATE_UNVERIFIED");
   if (r.resolver_invocation_permitted === true)
     add("READ_ONLY_CONTRACT_VIOLATION_RESOLVER_ALLOWED");
 
@@ -42,7 +44,8 @@ export function assessNativeTransportEvidence(report) {
   const secondary = s.secondary_helper ?? {};
   if (secondary.map_write_syntax_present === true)
     add("SECONDARY_HELPER_WRITE_SYNTAX_PRESENT");
-  if ((secondary.map_write_unknown_sites ?? []).some(x =>
+  if ((Array.isArray(secondary.map_write_unknown_sites)
+        ? secondary.map_write_unknown_sites : []).some(x =>
        x?.receiver_initializer_kind === "new-map-token-no-args"))
     add("MAP_CONSTRUCTOR_IDENTITY_UNVERIFIED");
 
