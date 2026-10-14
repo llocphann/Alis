@@ -22,14 +22,22 @@ export async function inspectLegacyUiReadOnly(page,projectName="Automatic Alis")
   const composerName=new RegExp("^(Ask ChatGPT|Do anything|New chat in "+
     escapeRegex(projectName)+")$");
   const composers=page.getByRole("textbox",{name:composerName});
+  // An open project sidebar is not proof that the CURRENT composer targets
+  // that Project. Query an exact, project-scoped composer label separately.
+  // Do not read/emit its text or the selected conversation title.
+  const projectScopedComposers=page.getByRole("textbox",{
+    name:"New chat in "+projectName,exact:true
+  });
   const projectBadge=page.getByRole("button",{
     name:new RegExp("^(Project:|Change project:) "+escapeRegex(projectName)+"$")
   });
   const projectLists=page.getByRole("list",{name:"Chats in "+projectName,exact:true});
   const sends=page.getByRole("button",{name:"Send",exact:true});
   const stops=page.getByRole("button",{name:/stop/i});
-  const [composerCount,badgeCount,listCount,sendCount,stopCount]=await Promise.all([
-    countVisible(composers),countVisible(projectBadge),countVisible(projectLists),
+  const [composerCount,scopedComposerCount,badgeCount,listCount,
+    sendCount,stopCount]=await Promise.all([
+    countVisible(composers),countVisible(projectScopedComposers),
+    countVisible(projectBadge),countVisible(projectLists),
     countVisible(sends),countVisible(stops)
   ]);
   let selectedCount=0;
@@ -53,6 +61,7 @@ export async function inspectLegacyUiReadOnly(page,projectName="Automatic Alis")
     purpose:"legacy-ui-read-only-probe",
     renderer_matches:true,
     composer_count_capped:composerCount,
+    project_scoped_composer_count_capped:scopedComposerCount,
     project_badge_count_capped:badgeCount,
     target_project_list_count_capped:listCount,
     selected_target_chat_count_capped:selectedCount,
@@ -70,18 +79,40 @@ export function assessLegacyUiReadiness(snapshot){
   const add=x=>{if(!issues.includes(x))issues.push(x);};
   if(s.renderer_matches!==true)add("DESKTOP_RENDERER_UNVERIFIED");
   if(s.composer_count_capped!==1)add("COMPOSER_NOT_UNIQUE");
+  const scopedComposer=s.composer_count_capped===1 &&
+    s.project_scoped_composer_count_capped===1;
+  const selectedTargetChat=s.target_project_list_count_capped===1 &&
+    s.selected_target_chat_count_capped===1;
   const targetView=s.project_badge_count_capped===1 ||
-    (s.target_project_list_count_capped===1 &&
-     s.selected_target_chat_count_capped===1);
+    selectedTargetChat || scopedComposer;
   if(!targetView)add("PROJECT_UI_GUARD_NOT_UNIQUE");
+  // A blank "New chat in <Project>" editor may have no Send control until
+  // text is entered. This is a meaningful *read-only* observation, never
+  // proof of server-side Project identity or submission readiness.
+  const emptyProjectComposer=scopedComposer &&
+    s.selected_target_chat_count_capped===0 &&
+    s.composer_draft_present===false &&
+    s.stop_count_capped===0;
   if(s.stop_count_capped!==0)add("GENERATION_BUSY_OR_UNVERIFIED");
   if(s.composer_draft_present!==false)add("COMPOSER_NOT_EMPTY_OR_UNVERIFIED");
   if(s.composer_disabled!==false)add("COMPOSER_DISABLED_OR_UNVERIFIED");
+  const absentOnBlankProjectComposer=emptyProjectComposer &&
+    s.send_count_capped===0;
   if(s.send_count_capped!==1||s.send_disabled!==false)
-    add("SEND_CONTROL_NOT_READY");
+    add(absentOnBlankProjectComposer
+      ? "SEND_ABSENT_ON_EMPTY_PROJECT_COMPOSER"
+      : "SEND_CONTROL_NOT_READY");
+  const readOnlyProjectEntryReady=emptyProjectComposer &&
+    issues.every(x=>x==="SEND_ABSENT_ON_EMPTY_PROJECT_COMPOSER");
   return {
     purpose:"legacy-ui-transport-assessment",
     observation_ready:issues.length===0,
+    read_only_project_entry_ready:readOnlyProjectEntryReady,
+    empty_project_composer_observed:emptyProjectComposer,
+    send_control_state:absentOnBlankProjectComposer
+      ? "absent-on-empty-project-composer"
+      : s.send_count_capped===1 && s.send_disabled===false
+        ? "visible-enabled" : "missing-disabled-or-ambiguous",
     readiness_issues:issues,
     transport_mode:"legacy-cdp-ui",
     project_view_visible:targetView,
