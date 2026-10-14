@@ -116,6 +116,10 @@ function inspectFunctionBody(source, declarationEnd) {
       "not-found";
     const tail = masked.slice(matches[0].index + matches[0][0].length);
     if(/^new\s+Map\s*\(/.test(tail)) return "new-map";
+    // "new Map" is also legal syntax, but Map may be shadowed in the
+    // module. The token alone never establishes built-in identity.
+    if(/^new\s+Map(?=\s*[,;}\n\r]|$)/.test(tail))
+      return "new-map-token-no-args";
     if(/^new\s+[$A-Za-z_][\w$]*\s*\(/.test(tail)) return "new-other";
     // JS permits `new Constructor` without (). The previous lexer
     // misreported "new" as an identifier alias, concealing a constructor
@@ -228,7 +232,7 @@ function inspectFunctionBody(source, declarationEnd) {
     return {
       expression_form:family,
       expression_scan_complete:complete,
-      contains_new_map_syntax:/\bnew\s+Map\s*\(/.test(part),
+      contains_new_map_syntax:/\bnew\s+Map(?:\s*\(|(?=\s*(?:[,;}\n\r]|$)))/.test(part),
       mentions_parameter_token:params
         ? tokens.some(token=>params.has(token)) : false,
       ...sanitizeTokenShape(part)
@@ -262,6 +266,9 @@ function inspectFunctionBody(source, declarationEnd) {
       const rhs = prefix.slice(found[0].index + found[0][0].length);
       if (/^new\s+Map\s*\(/.test(rhs))
         return {origin_hint:"new-map-syntax",hops_capped:Math.min(8,hops)};
+      if (/^new\s+Map(?=\s*[,;}\n\r]|$)/.test(rhs))
+        return {origin_hint:"new-map-token-no-args-unverified",
+          hops_capped:Math.min(8,hops)};
       if (/^new\s+[$A-Za-z_][\w$]*\s*\(/.test(rhs))
         return {origin_hint:"new-other-syntax",hops_capped:Math.min(8,hops)};
       if (/^new\s+[$A-Za-z_][\w$]*(?=\s*[,;}\n\r]|$)/.test(rhs))
@@ -310,7 +317,7 @@ function inspectFunctionBody(source, declarationEnd) {
         receiver_initializer_kind:kind,
         owner_origin_hint:"not-applicable",
         ...(["identifier-alias","other-expression",
-          "new-constructor-no-args"].includes(kind)
+          "new-constructor-no-args","new-map-token-no-args"].includes(kind)
           ? {alias_trace:traceIdentifierAlias(receiver,m.index)} : {})});
     }
   }
