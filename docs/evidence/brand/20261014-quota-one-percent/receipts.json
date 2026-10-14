@@ -1,0 +1,42 @@
+{
+  "captured_utc": "2026-10-14T15:53:55.935848+00:00",
+  "source_sha": "892c63636d875a5cee2ee16e7a4ba6ebeb6ea8a2",
+  "stop_reason": "Owner updated weekly stop threshold to1% remaining; observed secondary usedPercent99.",
+  "canonical_validation": {
+    "sha": "b182762cfcd64058140ee096ac14e9e075df2ab8",
+    "command": "bash scripts/validate-maintainer-local.sh --current-repo",
+    "result": "STOPPED",
+    "os_exit_code": 143,
+    "scope": "Interrupted at owner threshold; no full canonical or final-source PASS."
+  },
+  "focused_checks": {
+    "observed_exit_code": 0,
+    "scope": "Ran on b182762cf plus subsequently committed edits; fixtures and isolated Wayland, not physical owner acceptance.",
+    "tests": [
+      "test-brand-canonical-stage.sh",
+      "test-brand-canonical-cutover.sh",
+      "test-local-required-contracts.sh",
+      "test-local-distribution.sh (source/offline mode)",
+      "test-hadalird-arch-package.py",
+      "test-hadalird-manager.py",
+      "test-hadalird-optional.py",
+      "test-hadanion-optional.py",
+      "test-hadanion-layer-shell.py (isolated Wayland, not skipped)"
+    ]
+  },
+  "unresolved_source_boundary": {
+    "path": "assets/helpers/alis-hadalird-system-provision",
+    "finding": "TRUSTED payload keys/destinations use Alis names while pinned hashes and external optional package payload retain inir helper/policy names. Preserve external paths, policy IDs and pinned bytes; qualify the full provisioner/consumer map before claiming helpers-install works.",
+    "mutated": false
+  },
+  "artifacts": [
+    {
+      "path": "stopped-b182762-canonical.log",
+      "sha256": "59a186d4a536a07ed8ec52c8031f5c33f6e73cc0ffb29b208252a4016289f6ec"
+    },
+    {
+      "path": "stopped-b182762-driver.log",
+      "sha256": "a1a0937e86f07a2e5bfcab33886ab8a6e526e5fad7a2200f5c30c4742a0a7c84"
+    }
+  ]
+}

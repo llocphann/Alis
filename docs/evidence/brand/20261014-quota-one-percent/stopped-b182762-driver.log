@@ -1,0 +1,21 @@
+Alis maintainer local validation
+Log: /tmp/alis-brand-r01-validation-b182762-20261014/canonical.log
+[01] host tool preflight                                        PASS
+[02] build and baseline shell syntax                            PASS
+[03] tracked shell/package syntax                               PASS
+[04] tracked Python syntax                                      PASS
+[05] tracked JSON syntax                                        PASS
+[06] tracked JavaScript syntax                                  PASS
+[07] tracked Fish syntax                                        PASS
+[08] Niri selected-fullscreen workspace regression              PASS
+[09] NotificationCenter anchor hover lease regression           PASS
+[10] Abyss notification popup geometry transition regression    PASS
+[11] Abyss hover scene geometry diagnostic regression           PASS
+[12] Abyss frame activity diagnostic regression                 PASS
+[13] Shared tooltip hover/click lifecycle contract              PASS
+[14] Native default/custom/styled/Waffle tooltip content lifecycle PASS
+[15] Native static Panel reveal without content resizing        PASS
+[16] Native dynamic Toast/OSD/Utility and reparented form reveal PASS
+[17] Native shared-field optimized/unoptimized exact GPU parity PASS
+[18] Native shared-field transparent-interior exact GPU parity  PASS
+[19] Native shared-field fractional light transparent-interior exact GPU parity PASS

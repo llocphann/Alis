@@ -1,0 +1,124 @@
+Alis maintainer local validation
+Started: 2026-10-14T22:49:09+07:00
+Mode: current-repo
+Repository: https://github.com/llocphann/Alis.git
+Branch: dev
+Strict QML parser: no
+Invocation: bash scripts/validate-maintainer-local.sh --current-repo
+Log: /tmp/alis-brand-r01-validation-b182762-20261014/canonical.log
+Exact SHA: b182762cfcd64058140ee096ac14e9e075df2ab8
+Validator commit: b182762cfcd64058140ee096ac14e9e075df2ab8
+Hostname: unavailable
+Kernel: Linux 7.2.9-arch1-1 x86_64 GNU/Linux
+OS: Arch Linux
+Initial git status:
+  clean
+Tool versions:
+  git: git version 2.56.0
+  bash: GNU bash, version 5.3.20(1)-release (x86_64-pc-linux-gnu)
+  python3: Python 3.14.8
+  node: v22.23.2
+  fish: fish, version 4.9.3
+  make: GNU Make 4.4.1
+  qmlformat: qmlformat 1.0
+  qmlformat6: unavailable
+Nix lane: deferred/non-blocking; dedicated Nix validation is intentionally skipped.
+
+---- CHECK [1]: host tool preflight ----
+Command: require_host_tools
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [2]: build and baseline shell syntax ----
+Command: make build
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [3]: tracked shell/package syntax ----
+Command: tracked_shell_syntax
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [4]: tracked Python syntax ----
+Command: tracked_python_syntax
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [5]: tracked JSON syntax ----
+Command: tracked_json_syntax
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [6]: tracked JavaScript syntax ----
+Command: tracked_js_syntax
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [7]: tracked Fish syntax ----
+Command: tracked_fish_syntax
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [8]: Niri selected-fullscreen workspace regression ----
+Command: node scripts/test-niri-fullscreen-selection.mjs
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [9]: NotificationCenter anchor hover lease regression ----
+Command: node scripts/test-notification-center-hover-lease.mjs
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [10]: Abyss notification popup geometry transition regression ----
+Command: node scripts/test-abyss-notification-transition.mjs
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [11]: Abyss hover scene geometry diagnostic regression ----
+Command: node scripts/test-abyss-hover-geometry-probe.mjs
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [12]: Abyss frame activity diagnostic regression ----
+Command: node scripts/test-abyss-frame-activity-probe.mjs
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [13]: Shared tooltip hover/click lifecycle contract ----
+Command: python3 scripts/test-popup-tooltip-hover-contract.py
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [14]: Native default/custom/styled/Waffle tooltip content lifecycle ----
+Command: python3 scripts/test-tooltip-content-runtime.py
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [15]: Native static Panel reveal without content resizing ----
+Command: python3 scripts/test-abyss-panel-content-size-runtime.py
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [16]: Native dynamic Toast/OSD/Utility and reparented form reveal ----
+Command: python3 scripts/test-abyss-dynamic-content-size-runtime.py
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [17]: Native shared-field optimized/unoptimized exact GPU parity ----
+Command: python3 scripts/test-abyss-field-support-runtime.py
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [18]: Native shared-field transparent-interior exact GPU parity ----
+Command: python3 scripts/test-abyss-transparent-interior-runtime.py
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [19]: Native shared-field fractional light transparent-interior exact GPU parity ----
+Command: python3 scripts/test-abyss-transparent-interior-runtime.py --light --scale 1.5
+Working directory: /tmp/alis-validation.F14LEY/Alis
+Result: PASS
+
+---- CHECK [20]: Native shared-field fractional light/mask exact GPU parity ----
+Command: python3 scripts/test-abyss-field-support-runtime.py --light --scale 1.5
+Working directory: /tmp/alis-validation.F14LEY/Alis
