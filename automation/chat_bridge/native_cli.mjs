@@ -1,8 +1,13 @@
 import {connectNative, nativeRead, resolveProject, nativeSubmit, nativeResume, discoverSubmission, projectTurn} from "./native_adapter.mjs";
 
 let browser;
-// A supervisor crash must not leave an orphan CDP client indefinitely alive.
-const deadline=setTimeout(()=>process.exit(1),45000);deadline.unref();
+// End before Python's 45s subprocess ceiling, returning a safe reason.
+// A timed-out dispatch remains uncertain in persisted manager state: never
+// interpret this as authorization to send the same message a second time.
+const deadline=setTimeout(()=>{
+  console.error("DESKTOP_OPERATION_TIMEOUT");
+  process.exit(1);
+},42000);deadline.unref();
 try {
   let raw = "";
   for await (const chunk of process.stdin) {
