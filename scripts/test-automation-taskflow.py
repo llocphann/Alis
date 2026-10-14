@@ -98,6 +98,54 @@ class TaskflowTests(unittest.TestCase):
         self.assertIn("root.inspectCleanup(true)", qml)
         self.assertIn("cleanupProcess", qml)
 
+    def test_existing_active_queue_is_read_without_requerying_github(self):
+        other = {**TASK, "code": "MUSIC-I02", "issue_number": 80}
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
+                "XDG_STATE_HOME": tmp}):
+            queue.prepare("AUTO-R01; MUSIC-I02",
+                          resolver=lambda code: TASK if code == "AUTO-R01" else other)
+            queue.claim(verified_start=lambda *args: True)
+            with patch.object(taskflow, "resolve_batch",
+                              side_effect=AssertionError("GitHub should not be queried")) as bulk:
+                same = queue.prepare("AUTO-R01; MUSIC-I02")
+                self.assertTrue(same["duplicate"])
+                self.assertEqual(same["state"], "active")
+                self.assertEqual(same["active"]["code"], "AUTO-R01")
+                with self.assertRaisesRegex(taskflow.TaskError, "unfinished queue"):
+                    queue.prepare("MUSIC-I02; AUTO-R01")
+                bulk.assert_not_called()
+
+    def test_cli_import_failure_is_structured_without_private_traceback(self):
+        import shutil
+        # Only the isolated frontend is installed; its automation/ Python
+        # dependencies are deliberately absent. This must return one JSON
+        # error instead of exit 1 with empty stdout.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            script = root / "scripts/alis-automation-task.py"
+            script.parent.mkdir(parents=True)
+            shutil.copy2(Path(__file__).resolve().parents[1] /
+                         "scripts/alis-automation-task.py", script)
+            result = subprocess.run(
+                [sys.executable, "-I", str(script), "queue-status"],
+                cwd=root, text=True, capture_output=True, timeout=10)
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(result.stderr, "")
+            reply = json.loads(result.stdout)
+            self.assertFalse(reply["ok"])
+            self.assertIn("runtime import failed", reply["error"])
+            self.assertNotIn("Traceback", result.stdout)
+
+    def test_queue_ui_does_not_show_stale_prepared_success_on_error(self):
+        qml = (Path(__file__).resolve().parents[1] /
+               "modules/settings/AutomationTaskConfig.qml").read_text()
+        self.assertIn("property bool queueStatusConfirmed: false", qml)
+        self.assertIn('root.statusText = ""\\n                root.errorText = String(error)', qml)
+        self.assertIn('root.queueStatusConfirmed && !!root.queueSnapshot', qml)
+        self.assertIn("Last known queue only", qml)
+        self.assertIn('objectName: "automationRefreshQueue"', qml)
+        self.assertIn("Queue already active", qml)
+
     def test_queue_parse_validation_and_no_partial_queue_on_missing_issue(self):
         self.assertEqual(queue.parse_codes("AUTO-R01; ABYSS-R09"),
                          ["AUTO-R01", "ABYSS-R09"])
