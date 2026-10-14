@@ -201,14 +201,14 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
         ]);
         const aliases = new Map();
         const structurallyMasked = erased
-          .replace(/[$A-Za-z_][\\w$]*/g, word => {
+          .replace(/[$A-Za-z_][\w$]*/g, word => {
             if (protectedWords.has(word)) return word;
             if (!aliases.has(word)) aliases.set(word, "v" + aliases.size);
             return aliases.get(word);
           })
-          .replace(/\\b(?:\\d+(?:\\.\\d*)?|\\.\\d+)\\b/g, "0")
-          .replace(/[^A-Za-z0-9_$\\s.,;:{}()[\\]=!?+\\-*\\/%<>|&^~]/g, " ")
-          .replace(/\\s+/g, " ").trim();
+          .replace(/\b\d+(?:\.\d+)?\b/g, "0")
+          .replace(/[^A-Za-z0-9_$\s.,;:{}()\[\]=!?+\-*\/%<>|&^~]/g, " ")
+          .replace(/\s+/g, " ").trim();
         report.resolver_alpha_shape = structurallyMasked.slice(0, 640);
         report.resolver_alpha_complete = structurallyMasked.length <= 640;
         // Very conservative lexical classification, NOT proof of dependency:
