@@ -28,18 +28,29 @@ export async function inspectLegacyUiReadOnly(page,projectName="Automatic Alis")
   const projectScopedComposers=page.getByRole("textbox",{
     name:"New chat in "+projectName,exact:true
   });
+  const genericComposers=page.getByRole("textbox",{
+    name:/^(Ask ChatGPT|Do anything)$/
+  });
+  // The original Desktop controller used these semantic Project actions
+  // for navigation. This probe only counts them; it never clicks.
+  const projectNewChatActions=page.getByRole("button",{
+    name:new RegExp("^(Start new chat in|New chat in) "+
+      escapeRegex(projectName)+"$")
+  });
   const projectBadge=page.getByRole("button",{
     name:new RegExp("^(Project:|Change project:) "+escapeRegex(projectName)+"$")
   });
   const projectLists=page.getByRole("list",{name:"Chats in "+projectName,exact:true});
   const sends=page.getByRole("button",{name:"Send",exact:true});
   const stops=page.getByRole("button",{name:/stop/i});
-  const [composerCount,scopedComposerCount,badgeCount,listCount,
-    sendCount,stopCount]=await Promise.all([
-    countVisible(composers),countVisible(projectScopedComposers),
-    countVisible(projectBadge),countVisible(projectLists),
-    countVisible(sends),countVisible(stops)
-  ]);
+  const [composerCount,scopedComposerCount,genericComposerCount,
+    projectNewChatActionCount,badgeCount,listCount,sendCount,stopCount]=
+    await Promise.all([
+      countVisible(composers),countVisible(projectScopedComposers),
+      countVisible(genericComposers),countVisible(projectNewChatActions),
+      countVisible(projectBadge),countVisible(projectLists),
+      countVisible(sends),countVisible(stops)
+    ]);
   let selectedCount=0;
   if(listCount===1){
     selectedCount=await countVisible(projectLists.locator(
@@ -62,6 +73,8 @@ export async function inspectLegacyUiReadOnly(page,projectName="Automatic Alis")
     renderer_matches:true,
     composer_count_capped:composerCount,
     project_scoped_composer_count_capped:scopedComposerCount,
+    generic_composer_count_capped:genericComposerCount,
+    project_new_chat_action_count_capped:projectNewChatActionCount,
     project_badge_count_capped:badgeCount,
     target_project_list_count_capped:listCount,
     selected_target_chat_count_capped:selectedCount,
@@ -98,10 +111,19 @@ export function assessLegacyUiReadiness(snapshot){
   if(s.composer_disabled!==false)add("COMPOSER_DISABLED_OR_UNVERIFIED");
   const absentOnBlankProjectComposer=emptyProjectComposer &&
     s.send_count_capped===0;
+  const unscopedBlankComposer=s.composer_count_capped===1 &&
+    s.generic_composer_count_capped===1 &&
+    s.project_scoped_composer_count_capped===0 &&
+    !targetView && s.composer_draft_present===false &&
+    s.stop_count_capped===0;
+  const absentOnBlankUnscopedComposer=unscopedBlankComposer &&
+    s.send_count_capped===0;
   if(s.send_count_capped!==1||s.send_disabled!==false)
     add(absentOnBlankProjectComposer
       ? "SEND_ABSENT_ON_EMPTY_PROJECT_COMPOSER"
-      : "SEND_CONTROL_NOT_READY");
+      : absentOnBlankUnscopedComposer
+        ? "SEND_ABSENT_ON_EMPTY_UNSCOPED_COMPOSER"
+        : "SEND_CONTROL_NOT_READY");
   const readOnlyProjectEntryReady=emptyProjectComposer &&
     issues.every(x=>x==="SEND_ABSENT_ON_EMPTY_PROJECT_COMPOSER");
   return {
@@ -109,10 +131,21 @@ export function assessLegacyUiReadiness(snapshot){
     observation_ready:issues.length===0,
     read_only_project_entry_ready:readOnlyProjectEntryReady,
     empty_project_composer_observed:emptyProjectComposer,
+    composer_scope_evidence:scopedComposer
+      ? "exact-project-scoped-label"
+      : unscopedBlankComposer ? "generic-label-without-project-guard"
+        : s.generic_composer_count_capped===1 &&
+          s.project_scoped_composer_count_capped===0
+          ? "generic-label-with-other-or-unverified-guard"
+          : "unknown-or-ambiguous",
+    project_new_chat_action_visible:
+      s.project_new_chat_action_count_capped===1,
     send_control_state:absentOnBlankProjectComposer
       ? "absent-on-empty-project-composer"
-      : s.send_count_capped===1 && s.send_disabled===false
-        ? "visible-enabled" : "missing-disabled-or-ambiguous",
+      : absentOnBlankUnscopedComposer
+        ? "absent-on-empty-unscoped-composer"
+        : s.send_count_capped===1 && s.send_disabled===false
+          ? "visible-enabled" : "missing-disabled-or-ambiguous",
     readiness_issues:issues,
     transport_mode:"legacy-cdp-ui",
     project_view_visible:targetView,
