@@ -1,0 +1,75 @@
+{
+  "source": "bab43ab375dd312cb804629ca51e29964801687f",
+  "pairs": 16,
+  "profiles": {
+    "4-wave-False": {
+      "gfx_ms_per_frame": {
+        "before": 2.2781460431173226,
+        "after": 1.4209725124491328,
+        "reduction_percent": 37.625925399201726
+      },
+      "cpu_ms_per_frame": {
+        "before": 0.623658798283262,
+        "after": 0.645856507230256,
+        "reduction_percent": -3.559271352877148
+      },
+      "pss_kib": {
+        "before": 244386.0,
+        "after": 249700.5,
+        "reduction_percent": -2.1746335714811815
+      }
+    },
+    "16-wave-False": {
+      "gfx_ms_per_frame": {
+        "before": 3.2922566224684733,
+        "after": 1.7028553728185043,
+        "reduction_percent": 48.276955046665385
+      },
+      "cpu_ms_per_frame": {
+        "before": 0.6709956709956711,
+        "after": 0.6803455723542118,
+        "reduction_percent": -1.3934369121437977
+      },
+      "pss_kib": {
+        "before": 246333.0,
+        "after": 250689.0,
+        "reduction_percent": -1.7683379815128302
+      }
+    },
+    "40-wave-False": {
+      "gfx_ms_per_frame": {
+        "before": 5.855114604043839,
+        "after": 2.4403518045411676,
+        "reduction_percent": 58.32102410334143
+      },
+      "cpu_ms_per_frame": {
+        "before": 0.76335968642673,
+        "after": 0.7600443270772426,
+        "reduction_percent": 0.4343115582912927
+      },
+      "pss_kib": {
+        "before": 245710.5,
+        "after": 249943.5,
+        "reduction_percent": -1.7227591006489344
+      }
+    },
+    "16-wave-True": {
+      "gfx_ms_per_frame": {
+        "before": 4.036160000262933,
+        "after": 3.0094358010869566,
+        "reduction_percent": 25.438144154569972
+      },
+      "cpu_ms_per_frame": {
+        "before": 0.6948976704706216,
+        "after": 0.7181727763569197,
+        "reduction_percent": -3.349429257768985
+      },
+      "pss_kib": {
+        "before": 245618.0,
+        "after": 248334.5,
+        "reduction_percent": -1.1059857176591292
+      }
+    }
+  },
+  "scope": "isolated native OpenGL 2560x1440 field, per-frame own DRM engine time; no whole-desktop/owner/CPU/RAM/FPS gain claim"
+}
