@@ -164,8 +164,12 @@ export async function inspectRendererScopeReadOnly({asset, alias, fixture}) {
             maps.add(value);
             providers.add(value.get(definition.scope.id));
           }
-          stack.push(node.child, node.sibling);
-          if (includeAlternates) stack.push(node.alternate, node.current);
+          if (node.child) stack.push(node.child);
+          if (node.sibling) stack.push(node.sibling);
+          if (includeAlternates) {
+            if (node.alternate) stack.push(node.alternate);
+            if (node.current) stack.push(node.current);
+          }
         }
         return {maps, providers, hits, truncated: stack.length > 0};
       };
