@@ -66,6 +66,43 @@ assert.equal(r.secondary_helper.body_inspection,"complete");
 assert.equal(r.secondary_helper.map_write_syntax_present,false);
 assert.equal(r.secondary_helper.side_effect_freedom_proven,false);
 
+// Classify Map-write RECEIVER syntax only. It cannot establish whether a
+// local Map later escapes into shared state or an indirect callee mutates it.
+const originSource="resolve(p,c){let a=make(p,c,s),b=build(c,s);return b}";
+const originBundle="function make(p,c,s){const fresh=new Map();" +
+  "fresh.set(s,p);p.delete(s);shared.clear();" +
+  "const nested=unknown.p.set(s);return fresh}" +
+  "function build(c,s){return c};class C{"+originSource+"}";
+r=inspect(originBundle,"",originSource);
+assert.equal(r.static_binding_match_complete,true);
+assert.equal(r.primary_helper.body_inspection,"complete");
+assert.equal(r.primary_helper.map_write_origin_status,"lexical-classification-only");
+assert.deepEqual(r.primary_helper.map_write_receiver_counts,{
+  fresh_local_capped:1,direct_parameter_capped:1,other_or_unknown_capped:2
+});
+assert.equal(r.primary_helper.map_write_syntax_present,true);
+assert.equal(r.primary_helper.side_effect_freedom_proven,false);
+assert.equal(r.submission_authorized,false);
+
+const noWritesBundle="function make(p,c,s){const fresh=new Map();" +
+  "return fresh}function build(c,s){return c}" +
+  "class C{"+originSource+"}";
+r=inspect(noWritesBundle,"",originSource);
+assert.equal(r.primary_helper.map_write_origin_status,"no-lexical-calls");
+assert.deepEqual(r.primary_helper.map_write_receiver_counts,{
+  fresh_local_capped:0,direct_parameter_capped:0,other_or_unknown_capped:0
+});
+assert.equal(r.primary_helper.side_effect_freedom_proven,false);
+
+const literalWritesBundle="function make(p,c,s){let x='ghp_TEST.set(x)';" +
+  "/* p.delete(s) */return c}" +
+  "function build(c,s){return c};class C{"+originSource+"}";
+r=inspect(literalWritesBundle,"",originSource);
+assert.deepEqual(r.primary_helper.map_write_receiver_counts,{
+  fresh_local_capped:0,direct_parameter_capped:0,other_or_unknown_capped:0
+});
+assert.ok(!JSON.stringify(r).includes("ghp_TEST"));
+
 const falseSyntaxSrc="resolve(p,c){let a=make(p,c,s),b=build(c,s);return b}";
 const falseSyntaxBundle="function make(p,c,s){const x='secret .set(value) }';" +
   "/* .clear() } */ return {x}}" +
