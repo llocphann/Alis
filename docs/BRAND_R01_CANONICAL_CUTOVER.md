@@ -53,3 +53,39 @@ Run `python3 scripts/brand-canonical-audit.py` in the checkout; nonzero
 `--strict` status means actionable runtime identifiers remain. Historical
 references in archived documentation, original licensing/attribution,
 previous migrations, and explicit upgrade/rollback code are not target names.
+
+## 2026-10-14 implementation verification
+
+The canonical refactor branch is still **not approved for owner installation**.
+Source-stage CI now exercises `bash -n`, Alis-only Cargo metadata and packaging,
+canonical IPC registry generation/check, historical Keyring secret lookup,
+and a fully isolated mock single-service cutover/rollback. The Nix package
+build succeeded after fixing the setup Bash condition.
+
+Additional fixes since the initial isolation:
+
+- `Directories.shellConfig` now uses `~/.config/alis`, matching the installer.
+- Live UI config-open actions, plugins, the Settings window title and the
+  transition logo use Alis. The original upstream icon/name remains historical
+  attribution in About.
+- The owner-gated cutover checks for a canonical installed CLI and legacy
+  active Niri hotkeys **before stopping** the original service. Old
+  `90-user-extra.kdl` executable overrides are a release blocker until fixed.
+- Old `illogical-impulse` config files can be copied losslessly into `alis`;
+  differing old `inir` and original config.json files are refused. Recognized
+  old Alis symlinks are saved for recovery.
+- Backups live under a **separate** `alis-cutover-backups` root so state copied
+  from `state/inir` does not nest under `state/alis/inir`.
+- API secrets are read first from the Alis keyring and then, read-only, from
+  the upstream namespace if no Alis record exists.
+- Runtime-only tests have been updated for the new `alis` config root; tests
+  covering historical migrations must retain their original paths.
+- The generated CLI IPC registry now derives current metadata from
+  `docs/IPC.md` and is checked as part of the source-stage workflow.
+
+**Remaining gates:** historical/compatibility local validator suites must be
+migrated *without weakening functional requirements*, the full packaging and
+Quickshell runtime checks must pass, Arch/Nix upgrade semantics need an
+end-to-end review, and a live Niri cold-login/rollback requires owner approval.
+No source-stage PASS should be called full release acceptance. Do not
+automatically enable `alis.service` while the old service is active.
