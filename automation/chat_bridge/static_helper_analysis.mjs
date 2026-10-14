@@ -77,7 +77,10 @@ export function analyzeStaticResolverHelpers({initial,shared,resolverSource} = {
   const primary = new RegExp("(?:^|[,;{])\\s*(?:let|const|var)?\\s*" +
     "[A-Za-z_$][\\w$]*\\s*=\\s*([A-Za-z_$][\\w$]*)\\s*\\(\\s*" +
     esc(a) + "\\s*,\\s*" + esc(b) + "\\s*,","g");
-  const secondary = new RegExp("(?:^|[,;{])\\s*(?:let|const|var)?\\s*" +
+  // A fallback helper may be assigned immediately after a completed if block:
+  // }let value=helper(context,scope). Include the closing brace as a
+  // statement boundary; do not interpret a failed regex as a missing helper.
+  const secondary = new RegExp("(?:^|[,;{}])\\s*(?:let|const|var)?\\s*" +
     "[A-Za-z_$][\\w$]*\\s*=\\s*([A-Za-z_$][\\w$]*)\\s*\\(\\s*" +
     esc(b) + "\\s*,","g");
   const p = [...body.matchAll(primary)].map(m=>m[1]);
