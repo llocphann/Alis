@@ -38,6 +38,9 @@ jobs:
       - name: Owner-gated single-service cutover and failure rollback regression
         shell: bash
         run: bash scripts/test-brand-canonical-cutover.sh
+      - name: Canonical Alis keyring with legacy-secret read fallback
+        shell: bash
+        run: bash scripts/test-brand-canonical-keyring.sh
       - name: Check canonical Cargo metadata
         shell: bash
         run: cargo metadata --no-deps --locked --format-version 1 --manifest-path native/Cargo.toml > /dev/null
