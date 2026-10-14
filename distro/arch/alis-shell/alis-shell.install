@@ -2,21 +2,17 @@ post_install() {
   cat <<'EOF'
 Alis has been installed.
 
-Recommended next steps for each user who will run the shell:
-  - Initialize or migrate the per-user config compatibility layout with:
-      alis migrate
-  - Start the shell manually with: alis run
-  - Or wire the user service to the detected compositor and start it with:
-      alis service enable
-      alis service start
+User configuration is canonical under ~/.config/alis/config.json.
+Pacman deliberately does not modify or migrate anyone's home directory.
 
-Pacman does not modify user home directories. The live QML compatibility path is:
-  ~/.config/illogical-impulse/config.json
+Fresh users: prepare the canonical Alis config before running migrations,
+then start Alis with 'alis run' or its compositor-specific 'alis service enable'
+and 'alis service start' commands.
 
-Required migration 019 makes ~/.config/alis the canonical config directory and
-links ~/.config/illogical-impulse to it. Run 'alis migrate' as the affected user
-before first launch to establish that layout; do not run it as root for another
-user's home.
+Upgrading from iNiR: do not enable a second service or run old migration 019.
+Back up settings, reconcile user config/state, verify Niri keybinds and
+complete an owner-approved single-service handoff before running 'alis migrate'.
+See docs/BRAND_R01_CANONICAL_CUTOVER.md in the installed documentation.
 
 The packaged runtime lives in:
   /usr/share/quickshell/alis
@@ -27,13 +23,11 @@ post_upgrade() {
   cat <<'EOF'
 Alis has been upgraded.
 
-Recommended next steps for each affected user:
-  - Apply required per-user migrations with: alis migrate
-  - Restart the shell with: alis restart
-  - Package-managed installs use pacman for package updates.
-
-Pacman does not mutate user home directories, so config migrations are performed
-by the affected user through 'alis migrate', not by the package transaction.
+Package-managed installs use pacman for updates. Pacman does not migrate
+user home directories. If inir.service is still present, DO NOT start Alis
+in parallel or run 'alis migrate' yet. Follow the owner-gated rebrand handoff.
+After user config is reconciled and only alis.service owns the shell, run
+'alis migrate' and then 'alis restart' as the affected user.
 EOF
 }
 

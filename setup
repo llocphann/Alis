@@ -75,6 +75,18 @@ run_migrate() {
     tui_title "Alis Migrations"
     echo ""
 
+    # Running historical migration 019 without a canonical Alis directory
+    # would recreate the retired /inir namespace. Never mutate user data or
+    # change a live legacy shell owner as an implicit effect of "alis migrate".
+    if [[ -L "${XDG_CONFIG_HOME}/alis" || ! -d "${XDG_CONFIG_HOME}/alis" ]]; then
+        tui_error "Canonical Alis configuration is not staged. Review the owner-gated migration procedure first; alis migrate cannot safely initialize legacy data."
+        return 2
+    fi
+    if brand_legacy_owner_present; then
+        tui_error "Previous shell service is still installed. Complete the explicit owner-gated Alis cutover before running migrations."
+        return 2
+    fi
+
     sync_launcher_from_repo
 
     # Always apply REQUIRED migrations first
