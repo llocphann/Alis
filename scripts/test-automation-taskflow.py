@@ -288,6 +288,27 @@ class TaskflowTests(unittest.TestCase):
         self.assertIn("sys.stdin.read(513)", cli)
         self.assertIn("github-token-save", cli)
 
+    def test_task_intake_reads_scoped_token_without_exposing_secret(self):
+        import io
+        requests = []
+        class Response:
+            def __enter__(self):
+                return io.BytesIO(b'{"ok":true}')
+            def __exit__(self, *args):
+                return False
+        def capture(request, timeout):
+            requests.append(request)
+            return Response()
+        with patch.dict("os.environ", {"GH_TOKEN": "", "GITHUB_TOKEN": ""}), \
+             patch.object(credentials, "status", return_value={"saved": True}), \
+             patch.object(credentials, "_lookup", return_value="ghp_from_secret_service"), \
+             patch.object(taskflow, "urlopen", side_effect=capture):
+            result = taskflow._github("/repos/llocphann/Alis/issues/104")
+        self.assertTrue(result["ok"])
+        self.assertEqual(len(requests), 1)
+        self.assertEqual(requests[0].get_header("Authorization"), "Bearer ghp_from_secret_service")
+        self.assertNotIn("ghp_from_secret_service", requests[0].full_url)
+
     def test_rotation_requires_authenticated_limit_and_exact_new_chat(self):
         with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
             task = taskflow.resolve("AUTO-R01", api)
