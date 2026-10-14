@@ -298,7 +298,7 @@ for (const privatePart of ["ghp_", "PRIVATE", "SECRET_COMMENT", "scopeId",
     "resolver structural probe must hide " + privatePart);
 }
 const originalShape = res.resolver_alpha_shape;
-def.resolve = function anAlternateName(one,two) {
+def.resolve = function anAlternateName(one, two) {
   const replacement = "fake_ALT_TOKEN_SECRET";
   return one.store.get(two.has(scopeId) ? two.get(scopeId) : replacement);
 };
