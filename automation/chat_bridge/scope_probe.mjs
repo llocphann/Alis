@@ -5,6 +5,7 @@
  */
 import fs from "node:fs";
 import crypto from "node:crypto";
+import {analyzeStaticResolverHelpers} from "./static_helper_analysis.mjs";
 
 const ARCHIVE = "/usr/lib/chatgpt/resources/app.asar";
 const DEFAULT_CDP = "http://127.0.0.1:9222";
@@ -61,7 +62,7 @@ function readInstalledAssets(asarPath = process.env.HADALIS_DESKTOP_ASAR ?? ARCH
     const initial = read(initialName), shared = read(sharedName);
     const fingerprint = crypto.createHash("sha256")
       .update(initial).update(shared).digest("hex");
-    return { initialName, initial, fingerprint };
+    return { initialName, initial, shared, fingerprint };
   } finally { fs.closeSync(fd); }
 }
 
@@ -92,11 +93,46 @@ export async function probeDesktopScopeReadOnly({
     if (pages.length !== 1) throw new Error("Desktop renderer unavailable or ambiguous");
     const result = await pages[0].evaluate(inspectRendererScopeReadOnly,
       {asset: candidate.initialName, alias: candidate.exportAlias});
+    // A second, bounded read reads only the installed method's static source
+    // text to correlate helper *declarations*. It is never logged or returned.
+    // No resolver or helper is executed, no page state is changed.
+    let static_helper_links = {
+      purpose: "static-only-helper-linkage", supported: false,
+      submission_authorized: false,
+      resolver_source_location: "not-checked",
+      static_binding_match_complete: false
+    };
+    if (result.resolve_function_present) {
+      try {
+        const source = await pages[0].evaluate(async ({asset, alias}) => {
+          const module = await import("./assets/" + asset);
+          const resolver = module[alias]?.resolve;
+          if (typeof resolver !== "function") return null;
+          const text = Function.prototype.toString.call(resolver);
+          return text.length <= 8192 ? text : null;
+        }, {asset: candidate.initialName, alias: candidate.exportAlias});
+        const assets = readInstalledAssets(asarPath);
+        if (assets.fingerprint === candidate.fingerprintPrefix ||
+            assets.fingerprint.slice(0,12) === candidate.fingerprintPrefix) {
+          static_helper_links = analyzeStaticResolverHelpers({
+            initial: assets.initial, shared: assets.shared,
+            resolverSource: source
+          });
+        } else {
+          static_helper_links.resolver_source_location = "asset-fingerprint-mismatch";
+        }
+      } catch {
+        // Never expose raw renderer/asset exceptions: they may embed source,
+        // file paths or session details.
+        static_helper_links.resolver_source_location = "inspection-unavailable";
+      }
+    }
     return {
       supported: false, purpose: "read-only-runtime-diagnostics",
       submission_authorized: false,
       fingerprint_prefix: candidate.fingerprintPrefix,
       renderer_found: true,
+      static_helper_links,
       ...result
     };
   } finally {
