@@ -10,6 +10,9 @@ ShaderEffect {
     property real renderScale:1
     property vector4d renderRect:Qt.vector4d(0,0,width,height)
     readonly property real maskOnly:1
+    // Deep body immersion needs the entire mask, including the workspace.
+    readonly property real interiorEnabled:0
+    vertexShader:Qt.resolvedUrl("AbyssField.vert.qsb")
     fragmentShader:Qt.resolvedUrl("AbyssField.frag.qsb")
     readonly property var bodyTexture:bodySource
     readonly property vector4d viewport:sourcePass.viewport

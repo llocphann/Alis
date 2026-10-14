@@ -26,6 +26,7 @@ with tempfile.TemporaryDirectory(prefix='alis-field-support-')as name:
  field=field.replace(old,'readonly property string wallpaperUrl:Qt.resolvedUrl("fixture.png")')
  (variants/'OriginalField.qml').write_text(field)
  (variants/'CandidateField.qml').write_text(field.replace('AbyssField.frag.qsb','CandidateField.frag.qsb'))
+ (variants/'AbyssField.vert.qsb').write_bytes((ROOT/'modules/abyss/looks/AbyssField.vert.qsb').read_bytes())
  (variants/'AbyssGeometry.js').symlink_to(ROOT/'modules/abyss/looks/AbyssGeometry.js')
  # Independent linear fold: preserve current distance/material/wave semantics,
  # remove only the optimization, and keep every one of the40 slots in order.

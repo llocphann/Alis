@@ -318,6 +318,8 @@ run_check 'Native default/custom/styled/Waffle tooltip content lifecycle' python
 run_check 'Native static Panel reveal without content resizing' python3 scripts/test-abyss-panel-content-size-runtime.py
 run_check 'Native dynamic Toast/OSD/Utility and reparented form reveal' python3 scripts/test-abyss-dynamic-content-size-runtime.py
 run_check 'Native shared-field optimized/unoptimized exact GPU parity' python3 scripts/test-abyss-field-support-runtime.py
+run_check 'Native shared-field transparent-interior exact GPU parity' python3 scripts/test-abyss-transparent-interior-runtime.py
+run_check 'Native shared-field fractional light transparent-interior exact GPU parity' python3 scripts/test-abyss-transparent-interior-runtime.py --light --scale 1.5
 run_check 'Native shared-field fractional light/mask exact GPU parity' python3 scripts/test-abyss-field-support-runtime.py --light --scale 1.5
 run_check 'Native generic Popup delayed-loader reveal and cancellation' python3 scripts/test-abyss-generic-reveal-readiness-runtime.py
 run_check 'Dashboard horizontal gesture and stable page order regression' node scripts/test-dashboard-page-policy.mjs

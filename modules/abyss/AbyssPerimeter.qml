@@ -1605,6 +1605,7 @@ Scope {
             }
             AbyssField {
                 id: field
+                boundInterior: true
                 outputName: window.outputName
                 renderScale: window.modelData?.devicePixelRatio ?? 1
                 z: -1

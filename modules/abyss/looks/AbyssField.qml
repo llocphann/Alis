@@ -15,6 +15,9 @@ Item {
         ? WallpaperListener.wallpaperUrlForScreen(root.Window.window?.screen ?? null) : ""
     readonly property bool wallpaperReady: wallpaperImage.status === Image.Ready
     property var records: []
+    // Opt in only from the owned full-screen perimeter; arbitrary callers retain
+    // the full shader and its original observable reads.
+    property bool boundInterior: false
     property var waveTexture: null
     property var waterLink: null
     property var edgeInsets: ({left:8,top:8,right:8,bottom:8})
@@ -62,10 +65,12 @@ Item {
     ShaderEffect {
         id: pass
         anchors.fill: parent
+        vertexShader: Qt.resolvedUrl("AbyssField.vert.qsb")
         fragmentShader: Qt.resolvedUrl("AbyssField.frag.qsb")
         readonly property vector4d viewport: Qt.vector4d(root.width,root.height,0,0)
         readonly property vector4d renderRect:Qt.vector4d(0,0,root.width,root.height)
         readonly property real maskOnly:0
+        readonly property real interiorEnabled: root.boundInterior && root.renderScale>=.5 ? 1 : 0
         readonly property var bodyTexture:wallpaperImage
         readonly property vector4d insets: Qt.vector4d(root.edgeInsets.left,root.edgeInsets.top,root.edgeInsets.right,root.edgeInsets.bottom)
         readonly property vector4d zeroCorners: {
@@ -84,7 +89,7 @@ Item {
         readonly property var wallpaper: wallpaperImage
         readonly property var waveSamples: root.waveTexture
         readonly property vector4d waveMaterial: Qt.vector4d(root.waveTexture?.width ?? 0,
-            root.waveTexture?.activeProfile ? 1 : 0,Appearance.effectsEnabled ? 1 : 0,0)
+            root.waveTexture?.activeProfile ? 1 : 0,Appearance.effectsEnabled ? 1 : 0,root.boundInterior ? root.waveTexture?.encodedHeightCeiling ?? 0 : 0)
         readonly property vector4d effects: Qt.vector4d(AbyssStyle.blurRadius,AbyssStyle.refractionStrength,root.wallpaperReady ? 1 : 0,0)
         readonly property vector4d contentMaterial: Qt.vector4d(AbyssStyle.contentOpacity,AbyssStyle.contentBlurRadius,0,0)
         readonly property vector4d wallpaperCrop: {

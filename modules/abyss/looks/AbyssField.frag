@@ -3,11 +3,13 @@
 // One final distance owns fill, specular rim and shadow. No clock/time uniform.
 layout(location=0) in vec2 qt_TexCoord0;
 layout(location=0) out vec4 fragColor;
+layout(location=1) in vec4 clipBounds;
 layout(std140,binding=0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
     vec4 viewport;
     vec4 renderRect;
+    float interiorEnabled;
     float maskOnly;
     vec4 insets;
     vec4 zeroCorners;
@@ -203,9 +205,15 @@ float field(vec2 p) {
 layout(binding=3) uniform sampler2D bodyTexture;
 void main() {
     vec2 p=renderRect.xy+qt_TexCoord0*renderRect.zw;
-    vec2 wave=waveProfile(p);
-    vec2 interaction=waterInteraction(p);
-    float d=field(p)-wave.x-interaction.x;
+    bool interior=maskOnly<.5 && p.x>clipBounds.x && p.y>clipBounds.y
+        && p.x<clipBounds.z && p.y<clipBounds.w;
+    vec2 wave=vec2(0.0),interaction=vec2(0.0);
+    float d=1e6;
+    if(!interior) {
+        wave=waveProfile(p);
+        interaction=waterInteraction(p);
+        d=field(p)-wave.x-interaction.x;
+    }
     // Derivatives are evaluated before any divergent early return.
     vec2 gradient=vec2(dFdx(d),dFdy(d));
     float aa=max(0.6,fwidth(d)*0.6);

@@ -126,6 +126,8 @@ Item {
     }
     ShaderEffectSource {
         id: textureSource
+        // RG16 encodes height / 256; filtered Hermite sampling is monotone.
+        readonly property real encodedHeightCeiling: 256
         readonly property bool activeProfile: root.crestPeak > .01
         width: samples.width; height: samples.height
         x: -width; y: -height
