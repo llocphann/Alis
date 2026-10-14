@@ -1,0 +1,28 @@
+{
+  "tested_source_sha": "c3143be527b4aaec7372e1037742a3c9908c5ff2",
+  "rebased_fixture_sha": "15f17478cdb3642a4cd21d0bc93313d3f3605969",
+  "rebase_reason": "Preserve two concurrent branding/keybind commits; qualification remains original source SHA, preserved as bundle with1874 prerequisite",
+  "default_exact": {
+    "direct": "PASS16 cases/1261 live motion-state samples",
+    "nested": "PASS16 cases/1249 live motion-state samples",
+    "scope": "Actual Dashboard/Overview visible Source editor, retained full-size workspace, field geometry/native input, Undo/Cancel/Done, intermediate translation/reversal/reduced motion states"
+  },
+  "instant_mutant": "FAIL: disabling reveal Behavior fails partial entry",
+  "partial_frame_lane": {
+    "result": "FAIL / INCONCLUSIVE actual partial-frame proof",
+    "native_process_exit": 0,
+    "driver_exit": 1,
+    "saved_partial_images": 0,
+    "explicit_focus_for_capture": true,
+    "finding": "Progress signals0\u21921 finished by295ms; first awaited image callback arrived1870ms. This does not establish compositor/owner stutter or its root cause.",
+    "owner_focus": "Helper preserves a user-selected new focus target, no forced return if owner switches apps"
+  },
+  "fixture_changes": "Enter actual Source mode before testing notes scroll; sample live state before awaiting image callback. Keep geometry and translation oracles; separate optional image lane. No production Dashboard patch.",
+  "original_failures": "Retained assertion-preserving diagnostic FAIL plus canonical1312 Note scroll FAIL. Exploratory variants are not exact source qualification.",
+  "boundaries": [
+    "No canonical PASS; full1312 remains FAIL393/41/2listed",
+    "No partial image, frametime, physical pointer, installed/multi-output/Owner acceptance",
+    "No whole-task completion",
+    "Exploratory drivers were not immutable and briefly overlapped; accepted c314 exact direct/nested runs were separate and after exploration"
+  ]
+}

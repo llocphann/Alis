@@ -1,0 +1,60 @@
+{
+  "pairs": 1120,
+  "rows": 71436,
+  "fields": 285744,
+  "results": [
+    {
+      "round": 0,
+      "name": "baseline",
+      "ms": 335,
+      "sum": 24720
+    },
+    {
+      "round": 0,
+      "name": "prototype",
+      "ms": 315,
+      "sum": 24720
+    },
+    {
+      "round": 1,
+      "name": "prototype",
+      "ms": 314,
+      "sum": 24720
+    },
+    {
+      "round": 1,
+      "name": "baseline",
+      "ms": 342,
+      "sum": 24720
+    },
+    {
+      "round": 2,
+      "name": "baseline",
+      "ms": 350,
+      "sum": 24720
+    },
+    {
+      "round": 2,
+      "name": "prototype",
+      "ms": 325,
+      "sum": 24720
+    },
+    {
+      "round": 3,
+      "name": "prototype",
+      "ms": 317,
+      "sum": 24720
+    },
+    {
+      "round": 3,
+      "name": "baseline",
+      "ms": 356,
+      "sum": 24720
+    }
+  ],
+  "source_sha": "667a84d9cfd7c14e142a45ac4501c85c72dd576c",
+  "baseline_median_ms": 346.0,
+  "prototype_median_ms": 316.0,
+  "reduction_percent": 8.670520231213873,
+  "scope": "Four alternating 400-call numeric shoulder sampler QV4 microbenchmark; no whole-desktop claim"
+}

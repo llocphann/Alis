@@ -1,0 +1,6 @@
+{
+  "source_sha": "c3143be527b4aaec7372e1037742a3c9908c5ff2",
+  "driver_sha256": "86129bf98a8eace8eb8bd623acad5dade1acaf7dfb6694e3e6586515d0865907",
+  "fixture_sha256": "f32a2eaf8ce6bd56faa25fc4f05f2833b091258af74c8293df837207695637df",
+  "scope": "focused live QML state and native field captures; partial image proof in explicit capture lane only"
+}

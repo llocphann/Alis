@@ -1,0 +1,56 @@
+[
+  {
+    "kind": "sampler",
+    "scope": "direct",
+    "source_sha": "667a84d9cfd7c14e142a45ac4501c85c72dd576c",
+    "exit_code": 0,
+    "started": 1791946818.3645546,
+    "ended": 1791946824.7907934,
+    "explicit_focus": false
+  },
+  {
+    "kind": "regions",
+    "scope": "direct",
+    "source_sha": "667a84d9cfd7c14e142a45ac4501c85c72dd576c",
+    "exit_code": 0,
+    "started": 1791946824.7911987,
+    "ended": 1791946830.0162597,
+    "explicit_focus": false
+  },
+  {
+    "kind": "hover",
+    "scope": "direct",
+    "source_sha": "667a84d9cfd7c14e142a45ac4501c85c72dd576c",
+    "exit_code": 0,
+    "started": 1791946830.016606,
+    "ended": 1791946894.3655047,
+    "explicit_focus": false
+  },
+  {
+    "kind": "sampler",
+    "scope": "nested",
+    "source_sha": "667a84d9cfd7c14e142a45ac4501c85c72dd576c",
+    "exit_code": 0,
+    "started": 1791946894.5683892,
+    "ended": 1791946901.1465259,
+    "explicit_focus": false
+  },
+  {
+    "kind": "regions",
+    "scope": "nested",
+    "source_sha": "667a84d9cfd7c14e142a45ac4501c85c72dd576c",
+    "exit_code": 0,
+    "started": 1791946901.1467974,
+    "ended": 1791946906.4232855,
+    "explicit_focus": false
+  },
+  {
+    "kind": "hover",
+    "scope": "nested",
+    "source_sha": "667a84d9cfd7c14e142a45ac4501c85c72dd576c",
+    "exit_code": 0,
+    "started": 1791946906.4237025,
+    "ended": 1791946980.7017207,
+    "explicit_focus": false
+  }
+]

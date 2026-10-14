@@ -1,0 +1,5 @@
+{
+  "base_sha": "c3143be527b4aaec7372e1037742a3c9908c5ff2",
+  "mutation": "Disable only editor reveal Behavior; catch loss of intermediate translation",
+  "runtime_sha256": "55c822b83823968cf21a8201ab837cb44d4e8b670c7d81d5924785ad4b1a3788"
+}

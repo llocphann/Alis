@@ -1,0 +1,79 @@
+{
+  "source_sha": "667a84d9cfd7c14e142a45ac4501c85c72dd576c",
+  "change": "Compute the fixed cross-axis SDF components once per raster row within the bounded numeric snapshot; no cross-call cache and public fallback unchanged",
+  "native_exact": "Direct+nested1120 numeric/14 observable fallback/32 owned host states/291704 Object.is strip fields; native Region488768 each; sustained four-edge popup hover/focus/source-priority direct+nested",
+  "negative_control": "Stale cross-axis values rejected by exact oracle; original raw retained",
+  "benchmark": {
+    "pairs": 1120,
+    "rows": 71436,
+    "fields": 285744,
+    "results": [
+      {
+        "round": 0,
+        "name": "baseline",
+        "ms": 345,
+        "sum": 24720
+      },
+      {
+        "round": 0,
+        "name": "prototype",
+        "ms": 312,
+        "sum": 24720
+      },
+      {
+        "round": 1,
+        "name": "prototype",
+        "ms": 344,
+        "sum": 24720
+      },
+      {
+        "round": 1,
+        "name": "baseline",
+        "ms": 338,
+        "sum": 24720
+      },
+      {
+        "round": 2,
+        "name": "baseline",
+        "ms": 331,
+        "sum": 24720
+      },
+      {
+        "round": 2,
+        "name": "prototype",
+        "ms": 298,
+        "sum": 24720
+      },
+      {
+        "round": 3,
+        "name": "prototype",
+        "ms": 302,
+        "sum": 24720
+      },
+      {
+        "round": 3,
+        "name": "baseline",
+        "ms": 336,
+        "sum": 24720
+      }
+    ],
+    "source_sha": "667a84d9cfd7c14e142a45ac4501c85c72dd576c",
+    "started": 1791947055.0167227,
+    "ended": 1791947060.3663626,
+    "baseline_median_ms": 337.0,
+    "prototype_median_ms": 307.0,
+    "reduction_percent": 8.902077151335313,
+    "scope": "Serialized four alternating 400-call numeric shoulder sampler QV4 microbenchmark; no whole-desktop claim"
+  },
+  "timing_limits": [
+    "Function microbenchmark only; no whole CPU/GPU/RAM or frametime improvement claim",
+    "One paired prototype sample344ms is slower than corresponding baseline338ms; all samples retained; median337\u2192307ms8.9%",
+    "benchmark-exact-overlap-held intentionally excluded because it overlapped nested hover; fresh serialized benchmark and nested hover repeat supersede it",
+    "Earlier uncommitted research median335\u2192304.5ms9.1% is research, not accepted exact-source estimate"
+  ],
+  "boundaries": [
+    "Full canonical1312 FAIL393/41/2listed remains separate;667 canonical NOT_STARTED",
+    "No installed/physical-pointer/multi-output/Owner acceptance",
+    "No owner restart, audio route/preset/volume change or consent change"
+  ]
+}

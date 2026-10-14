@@ -1,0 +1,58 @@
+{
+  "pairs": 1120,
+  "rows": 71436,
+  "fields": 285744,
+  "results": [
+    {
+      "round": 0,
+      "name": "baseline",
+      "ms": 335,
+      "sum": 24720
+    },
+    {
+      "round": 0,
+      "name": "prototype",
+      "ms": 309,
+      "sum": 24720
+    },
+    {
+      "round": 1,
+      "name": "prototype",
+      "ms": 302,
+      "sum": 24720
+    },
+    {
+      "round": 1,
+      "name": "baseline",
+      "ms": 334,
+      "sum": 24720
+    },
+    {
+      "round": 2,
+      "name": "baseline",
+      "ms": 335,
+      "sum": 24720
+    },
+    {
+      "round": 2,
+      "name": "prototype",
+      "ms": 304,
+      "sum": 24720
+    },
+    {
+      "round": 3,
+      "name": "prototype",
+      "ms": 305,
+      "sum": 24720
+    },
+    {
+      "round": 3,
+      "name": "baseline",
+      "ms": 340,
+      "sum": 24720
+    }
+  ],
+  "baseline_median_ms": 335.0,
+  "prototype_median_ms": 304.5,
+  "reduction_percent": 9.104477611940299
+}

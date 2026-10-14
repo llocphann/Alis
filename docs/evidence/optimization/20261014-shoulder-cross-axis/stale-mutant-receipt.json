@@ -1,0 +1,7 @@
+{
+  "base_sha": "667a84d9cfd7c14e142a45ac4501c85c72dd576c",
+  "exit_code": 1,
+  "started": 1791947061.7440798,
+  "ended": 1791947064.2129536,
+  "mutation": "Retain first cross-axis values for subsequent rows"
+}
