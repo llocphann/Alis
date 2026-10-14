@@ -198,7 +198,9 @@ complexSite=aliasFixture(
 assert.deepEqual(complexSite.alias_trace,{
   origin_hint:"complex-or-unsupported-expression",hops_capped:0,
   expression_form:"computed-member-access",expression_scan_complete:true,
-  contains_new_map_syntax:false,mentions_parameter_token:false
+  contains_new_map_syntax:false,mentions_parameter_token:false,
+  expression_token_shape:"id [ id ]",
+  expression_token_shape_complete:true
 });
 assert.equal(complexSite.receiver_initializer_kind,"identifier-alias");
 complexSite=aliasFixture(
