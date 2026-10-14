@@ -143,7 +143,7 @@ ShellRoot {
   if env is None: raise SystemExit('SKIP: private Wayland needed')
   runtime=p/'private-runtime';runtime.mkdir(mode=0o700)
   env=dict(env,CAPTURE_TEST_ROOT=str(p),WAYLAND_DISPLAY=str(Path(env['XDG_RUNTIME_DIR'])/env['WAYLAND_DISPLAY']),XDG_RUNTIME_DIR=str(runtime))
-  config=p/'config/illogical-impulse';config.mkdir(parents=True,exist_ok=True)
+  config=p/'config/alis';config.mkdir(parents=True,exist_ok=True)
   data=json.loads((ROOT/'defaults/config.json').read_text())
   data['panelFamily']='abyss';data['abyss']['companion']['enabled']=False
   (config/'config.json').write_text(json.dumps(data))

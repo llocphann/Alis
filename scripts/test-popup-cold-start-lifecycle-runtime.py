@@ -162,7 +162,7 @@ ShellRoot {
     with private_wayland(folder) as env:
         if env is None:
             raise SystemExit("SKIP: cold popup lifecycle requires private Niri")
-        cfg = folder / "config/illogical-impulse"
+        cfg = folder / "config/alis"
         cfg.mkdir(parents=True, exist_ok=True)
         data = json.loads((ROOT / "defaults/config.json").read_text())
         data["panelFamily"] = "abyss"
