@@ -128,10 +128,12 @@ function inspectFunctionBody(source, declarationEnd) {
   // identifies a possible origin. Reassignments, cycles, unknown syntax and
   // excessive depth stop in an explicit non-authorizing state.
   const traceIdentifierAlias = (start, siteIndex) => {
-    const prefix = masked.slice(0,siteIndex);
     const seen = new Set();
-    let symbol = start, hops = 0;
+    let symbol = start, hops = 0, cutoff = siteIndex;
     while (hops <= 8) {
+      // Resolve the alias's source at the point it was assigned, rather
+      // than incorrectly following later initializations/reassignments.
+      const prefix = masked.slice(0,cutoff);
       if (seen.has(symbol))
         return {origin_hint:"cycle",hops_capped:Math.min(8,hops)};
       seen.add(symbol);
@@ -160,6 +162,7 @@ function inspectFunctionBody(source, declarationEnd) {
         return {origin_hint:"complex-or-unsupported-expression",
           hops_capped:Math.min(8,hops)};
       symbol = alias[1];
+      cutoff = found[0].index;
       hops++;
     }
     return {origin_hint:"depth-limit",hops_capped:8};
