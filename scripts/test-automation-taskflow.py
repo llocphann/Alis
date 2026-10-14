@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from automation import taskflow, credentials, rotation, lifecycle
+from automation import taskflow, credentials, rotation, lifecycle, queue, activity
 
 TASK = {
     "code": "AUTO-R01", "repository": "llocphann/Alis",
@@ -42,6 +42,115 @@ class TaskflowTests(unittest.TestCase):
         self.assertIn("Clean now", qml)
         self.assertIn("root.inspectCleanup(true)", qml)
         self.assertIn("cleanupProcess", qml)
+
+    def test_queue_parse_validation_and_no_partial_queue_on_missing_issue(self):
+        self.assertEqual(queue.parse_codes("AUTO-R01; ABYSS-R09"),
+                         ["AUTO-R01", "ABYSS-R09"])
+        for raw in ("", "AUTO-R01;", "AUTO-R01; AUTO-R01", "AUTO-R01; rm -rf /",
+                    "AUTO-R01;" * 30):
+            with self.assertRaises(taskflow.TaskError):
+                queue.parse_codes(raw)
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            with self.assertRaisesRegex(taskflow.TaskError, "missing"):
+                queue.prepare("AUTO-R01; ABYSS-R09", resolver=lambda code:
+                    TASK if code == "AUTO-R01" else
+                    (_ for _ in ()).throw(taskflow.TaskError("missing")))
+            self.assertEqual(queue.view()["state"], "empty")
+
+    def test_ordered_queue_serial_claim_and_owner_separated(self):
+        other = {**TASK, "code": "ABYSS-R09", "issue_number": 139,
+                 "issue_url": "https://github.com/llocphann/Alis/issues/139"}
+        resolver = lambda code: TASK if code == "AUTO-R01" else other
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            prepared = queue.prepare("AUTO-R01; ABYSS-R09", resolver=resolver)
+            self.assertEqual([x["code"] for x in prepared["items"]],
+                             ["AUTO-R01", "ABYSS-R09"])
+            self.assertEqual(prepared["mode"], "ordered")
+            self.assertEqual(prepared["next"]["code"], "AUTO-R01")
+            self.assertTrue(queue.prepare("AUTO-R01; ABYSS-R09", resolver=resolver)["duplicate"])
+            with self.assertRaisesRegex(taskflow.TaskError, "unfinished"):
+                queue.prepare("ABYSS-R09; AUTO-R01", resolver=resolver)
+            with self.assertRaisesRegex(taskflow.TaskError, "AUTO-F01"):
+                queue.claim()
+            with self.assertRaisesRegex(taskflow.TaskError, "cannot skip"):
+                queue.claim(verified_start=lambda *args: True, choice="ABYSS-R09")
+            with self.assertRaisesRegex(taskflow.TaskError, "did not authorize"):
+                queue.claim(verified_start=lambda *args: False)
+            first = queue.claim(verified_start=lambda *args: True)
+            self.assertEqual(first["selected"]["code"], "AUTO-R01")
+            with self.assertRaisesRegex(taskflow.TaskError, "not ready"):
+                queue.claim(verified_start=lambda *args: True)
+            with self.assertRaisesRegex(taskflow.TaskError, "AUTO-F01"):
+                queue.advance()
+            with self.assertRaisesRegex(taskflow.TaskError, "still awaiting"):
+                queue.advance(verify_completion=lambda record: True)
+            record = taskflow.load_task("AUTO-R01")
+            record["status"] = "awaiting_owner"
+            record["delivery_acknowledged_unix"] = 10
+            taskflow._save_task(record)
+            with self.assertRaisesRegex(taskflow.TaskError, "rejected"):
+                queue.advance(verify_completion=lambda record: False)
+            advanced = queue.advance(verify_completion=lambda record: True)
+            self.assertEqual(advanced["state"], "waiting")
+            self.assertEqual(advanced["next"]["code"], "ABYSS-R09")
+            self.assertEqual(advanced["items"][0]["state"], "awaiting_owner")
+            second = queue.claim(verified_start=lambda *args: True)
+            self.assertEqual(second["selected"]["code"], "ABYSS-R09")
+            record = taskflow.load_task("ABYSS-R09")
+            record["status"] = "completed"
+            record["delivery_acknowledged_unix"] = 10
+            taskflow._save_task(record)
+            self.assertEqual(queue.advance(verify_completion=lambda record: True)["state"], "finished")
+            self.assertEqual(len(list((taskflow.state_dir()/"tasks"/"Alis").glob("*.json"))), 2)
+
+    def test_cloud_queue_choice_needs_authenticated_decision(self):
+        other = {**TASK, "code": "ABYSS-R09", "issue_number": 139}
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            prepared = queue.prepare("AUTO-R01; ABYSS-R09", mode="cloud",
+                resolver=lambda c: TASK if c == "AUTO-R01" else other)
+            self.assertTrue(prepared["cloud_selection_required"])
+            self.assertIsNone(prepared["next"])
+            with self.assertRaisesRegex(taskflow.TaskError, "decision ID"):
+                queue.claim(verified_start=lambda *args: True, choice="ABYSS-R09")
+            with self.assertRaisesRegex(taskflow.TaskError, "not in pending"):
+                queue.claim(verified_start=lambda *args: True,
+                            choice="NOTREAL-R99", decision_id="decision:001")
+            chosen = queue.claim(verified_start=lambda selected, record:
+                selected["code"] == "ABYSS-R09",
+                choice="ABYSS-R09", decision_id="cloud-choice:0001")
+            self.assertEqual(chosen["selected"]["code"], "ABYSS-R09")
+            self.assertEqual(queue.view()["active"]["code"], "ABYSS-R09")
+            self.assertEqual(queue.view()["items"][0]["state"], "queued")
+
+    def test_activity_log_redaction_and_bounded_events(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
+            taskflow.intake(taskflow.resolve("AUTO-R01", api))
+            record = taskflow.load_task("AUTO-R01")
+            self.assertEqual(record["activity"][0]["kind"], "task_prepared")
+            record["status"] = "handoff_ready"
+            taskflow._save_task(record)
+            token = "ghp_" + "A" * 25
+            taskflow.append_report("AUTO-R01", "diagnostic", "Bearer ghp_"+"A"*25+" "+token)
+            events = activity.read("AUTO-R01")
+            self.assertEqual(events["events"][-1]["kind"], "handoff_ready")
+            self.assertIn("[REDACTED]", events["logs"][0]["text"])
+            self.assertNotIn(token, events["logs"][0]["text"])
+            for i in range(90):
+                activity.append_event(record, "status", "event "+str(i), now=i)
+            self.assertEqual(len(record["activity"]), activity.EVENT_LIMIT)
+            self.assertLessEqual(len(activity.redact("X" * 10000)), activity.BODY_LIMIT)
+
+    def test_queue_activity_logs_settings_contract(self):
+        qml = (Path(__file__).resolve().parents[1] /
+               "modules/settings/AutomationTaskConfig.qml").read_text()
+        self.assertIn("automationCloudSelectToggle", qml)
+        self.assertIn("queue-prepare", qml)
+        self.assertIn("automationActivityLog", qml)
+        self.assertIn("automationDiagnosticLog", qml)
+        self.assertIn("Task codes separated by ;", qml)
+        self.assertEqual(qml.count("Component.onCompleted:"), 1)
+        self.assertNotIn("automationRotationPrompt", qml)
+        self.assertNotIn("prepareProcess", qml)
 
     def test_lookup_code_and_exact_reference(self):
         task = taskflow.resolve("AUTO-R01", api)
@@ -280,7 +389,7 @@ class TaskflowTests(unittest.TestCase):
         self.assertIn("automationGithubToken", qml)
         self.assertIn("TextInput.Password", qml)
         self.assertIn("githubSecretProcess.write(root.pendingSecretInput)", qml)
-        self.assertIn("Automatic chat rollover", qml)
+        self.assertIn("Chat rollover", qml)
         self.assertNotIn("automationRotationPrompt", qml)
         self.assertNotIn("automationContinuationPrompt", qml)
         cli = (Path(__file__).resolve().parents[1] /
