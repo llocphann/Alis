@@ -148,9 +148,9 @@ import QtQuick
 QtObject {function trimFileProtocol(value){return String(value).replace(/^file:\/\//,"")}}
 ''')
     write("bin/native-dispatch", "#!/usr/bin/python3\nimport os,sys\n"
-          "if sys.argv[1:]==['backend-info']: print('mode=python\\ninir-mpdd=missing')\n"
+          "if sys.argv[1:]==['backend-info']: print('mode=python\\nalis-mpdd=missing')\n"
           "elif sys.argv[1]=='mpd':\n"
-          " if os.environ.get('FIXTURE_MPD_BACKEND')=='rust': os.execv(" + repr(str(ROOT / "native/target/release/inir-mpdd")) + ",[" + repr(str(ROOT / "native/target/release/inir-mpdd")) + ",'--compat']+sys.argv[2:])\n"
+          " if os.environ.get('FIXTURE_MPD_BACKEND')=='rust': os.execv(" + repr(str(ROOT / "native/target/release/alis-mpdd")) + ",[" + repr(str(ROOT / "native/target/release/alis-mpdd")) + ",'--compat']+sys.argv[2:])\n"
           " else: os.execv(sys.executable,[sys.executable," + repr(str(ROOT / "scripts/local_music_mpd.py")) + "]+sys.argv[2:])\n"
           "elif sys.argv[1]=='lyrics': print('{\"status\":\"not_found\",\"lines\":[]}')\n"
           "else: sys.exit(64)\n")
@@ -227,7 +227,7 @@ ShellRoot {
         env.pop(key, None)
     try:
         backends = ["python"]
-        if os.access(ROOT / "native/target/release/inir-mpdd", os.X_OK): backends.append("rust")
+        if os.access(ROOT / "native/target/release/alis-mpdd", os.X_OK): backends.append("rust")
         for backend in backends:
             with lock:
                 state.update(queue=[],song=-1,state="stop",clearing=False,errors=[],playlists={})

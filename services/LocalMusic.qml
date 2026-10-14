@@ -397,7 +397,7 @@ Singleton {
         MprisController.ensureMpdMprisBridge(mpdHost, mpdPort)
         _scanProc.command = [
             root.nativeDispatchPath, "mpd", "snapshot",
-            mpdHost, String(mpdPort), configuredLibraryFolder
+            mpdHost, String(mpdPort), configuredLibraryFolder, "--lean"
         ]
         _scanProc.running = true
     }

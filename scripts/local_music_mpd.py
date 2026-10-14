@@ -400,7 +400,7 @@ def _status_payload(client: MpdClient, music_root: str) -> dict[str, Any]:
     }
 
 
-def snapshot(client: MpdClient, override_root: str) -> dict[str, Any]:
+def snapshot(client: MpdClient, override_root: str, include_folders: bool = True) -> dict[str, Any]:
     music_root = _music_root(client, override_root)
     library_records = _records(client.command("listallinfo"))
     tracks = [_track(record, music_root) for record in library_records]
@@ -441,22 +441,24 @@ def snapshot(client: MpdClient, override_root: str) -> dict[str, Any]:
         )
     playlists.sort(key=lambda item: str(item["name"]).casefold())
 
-    folders_map: dict[str, list[dict[str, Any]]] = {}
-    for item in tracks:
-        folder = str(item.get("folder", ""))
-        if folder:
-            folders_map.setdefault(folder, []).append(item)
-    folders = [
-        {
-            "id": "folder:" + folder,
-            "name": Path(folder).name or folder,
-            "subtitle": folder,
-            "kind": "folder",
-            "tracks": values,
-        }
-        for folder, values in sorted(folders_map.items(), key=lambda pair: pair[0].casefold())
-        if len(values) >= 2
-    ]
+    # The internal shell route does not consume the duplicate folder tree.
+    if include_folders:
+        folders_map: dict[str, list[dict[str, Any]]] = {}
+        for item in tracks:
+            folder = str(item.get("folder", ""))
+            if folder:
+                folders_map.setdefault(folder, []).append(item)
+        folders = [
+            {
+                "id": "folder:" + folder,
+                "name": Path(folder).name or folder,
+                "subtitle": folder,
+                "kind": "folder",
+                "tracks": values,
+            }
+            for folder, values in sorted(folders_map.items(), key=lambda pair: pair[0].casefold())
+            if len(values) >= 2
+        ]
 
     payload = _status_payload(client, music_root)
     payload.update(
@@ -464,9 +466,10 @@ def snapshot(client: MpdClient, override_root: str) -> dict[str, Any]:
             "musicRoot": music_root,
             "tracks": tracks,
             "playlists": playlists,
-            "folders": folders,
         }
     )
+    if include_folders:
+        payload["folders"] = folders
     return payload
 
 
@@ -567,7 +570,8 @@ def main() -> int:
         with MpdClient(host, port) as client:
             if mode == "snapshot":
                 root = sys.argv[4] if len(sys.argv) > 4 else ""
-                print(json.dumps(snapshot(client, root), ensure_ascii=False, separators=(",", ":")))
+                include_folders = not (len(sys.argv) > 5 and sys.argv[5] == "--lean")
+                print(json.dumps(snapshot(client, root, include_folders), ensure_ascii=False, separators=(",", ":")))
                 return 0
             if mode == "status":
                 root = sys.argv[4] if len(sys.argv) > 4 else ""

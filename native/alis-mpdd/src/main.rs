@@ -985,7 +985,7 @@ fn populate_library_art(
     }
 }
 
-fn snapshot(client: &mut MpdClient, root: &str) -> Result<Value> {
+fn snapshot(client: &mut MpdClient, root: &str, include_folders: bool) -> Result<Value> {
     let library_records = records(
         &client.command("listallinfo", std::iter::empty::<&str>())?,
         "file",
@@ -1037,36 +1037,40 @@ fn snapshot(client: &mut MpdClient, root: &str) -> Result<Value> {
         }));
     }
 
-    let mut folders: BTreeMap<String, Vec<Value>> = BTreeMap::new();
-    for track in &tracks {
-        let folder = track_value(track, "folder");
-        if !folder.is_empty() {
-            folders
-                .entry(folder)
-                .or_default()
-                .push(Value::Object(track.clone()));
+    let folder_values = if include_folders {
+        let mut folders: BTreeMap<String, Vec<Value>> = BTreeMap::new();
+        for track in &tracks {
+            let folder = track_value(track, "folder");
+            if !folder.is_empty() {
+                folders
+                    .entry(folder)
+                    .or_default()
+                    .push(Value::Object(track.clone()));
+            }
         }
-    }
-    let mut folder_entries = folders.into_iter().collect::<Vec<_>>();
-    folder_entries.sort_by_cached_key(|(folder, _)| casefold_key(folder));
-    let folder_values = folder_entries
-        .into_iter()
-        .filter(|(_, tracks)| tracks.len() >= 2)
-        .map(|(folder, tracks)| {
-            let name = Path::new(&folder)
-                .file_name()
-                .and_then(|value| value.to_str())
-                .unwrap_or(&folder)
-                .to_owned();
-            json!({
-                "id": format!("folder:{folder}"),
-                "name": name,
-                "subtitle": folder,
-                "kind": "folder",
-                "tracks": tracks,
+        let mut folder_entries = folders.into_iter().collect::<Vec<_>>();
+        folder_entries.sort_by_cached_key(|(folder, _)| casefold_key(folder));
+        folder_entries
+            .into_iter()
+            .filter(|(_, tracks)| tracks.len() >= 2)
+            .map(|(folder, tracks)| {
+                let name = Path::new(&folder)
+                    .file_name()
+                    .and_then(|value| value.to_str())
+                    .unwrap_or(&folder)
+                    .to_owned();
+                json!({
+                    "id": format!("folder:{folder}"),
+                    "name": name,
+                    "subtitle": folder,
+                    "kind": "folder",
+                    "tracks": tracks,
+                })
             })
-        })
-        .collect::<Vec<_>>();
+            .collect::<Vec<_>>()
+    } else {
+        Vec::new()
+    };
 
     let mut payload = status_payload_mode_with_art(client, root, true, &mut art_lookup)?;
     let object = payload
@@ -1078,7 +1082,9 @@ fn snapshot(client: &mut MpdClient, root: &str) -> Result<Value> {
         Value::Array(tracks.into_iter().map(Value::Object).collect()),
     );
     object.insert("playlists".into(), Value::Array(playlists));
-    object.insert("folders".into(), Value::Array(folder_values));
+    if include_folders {
+        object.insert("folders".into(), Value::Array(folder_values));
+    }
     Ok(payload)
 }
 
@@ -1136,7 +1142,11 @@ fn handle_operation(
             Ok(payload)
         }
         "snapshot" => {
-            let result = snapshot(client, override_root);
+            let include_folders = params
+                .get("includeFolders")
+                .and_then(Value::as_bool)
+                .unwrap_or(true);
+            let result = snapshot(client, override_root, include_folders);
             if result.is_ok() {
                 *art_lookup = ArtLookup::default();
             }
@@ -1510,7 +1520,11 @@ fn run_compat(args: &[String]) -> i32 {
             "snapshot" => {
                 let override_root = rest.first().map(String::as_str).unwrap_or("");
                 let root = music_root(&mut client, override_root);
-                snapshot(&mut client, &root)
+                snapshot(
+                    &mut client,
+                    &root,
+                    rest.get(1).map(String::as_str) != Some("--lean"),
+                )
             }
             "status" => {
                 let root = rest.first().map(String::as_str).unwrap_or("");
@@ -1672,6 +1686,9 @@ fn legacy_request(args: &[String]) -> Result<Value> {
     let rest = &args[3..];
 
     let (op, params) = match mode {
+        "snapshot" if rest.get(1).map(String::as_str) == Some("--lean") => {
+            (mode, json!({"includeFolders": false}))
+        }
         "snapshot" | "status" => (mode, json!({})),
         "queue" => {
             if rest.len() < 2 {
@@ -2129,6 +2146,35 @@ mod tests {
 
         assert_eq!(request["op"], "status");
         assert_eq!(request["params"], json!({}));
+    }
+
+    #[test]
+    fn parses_and_maps_opt_in_lean_snapshot() {
+        use clap::Parser as _;
+
+        for flag in ["--compat", "--client-compat"] {
+            let args = super::Args::try_parse_from([
+                "alis-mpdd",
+                flag,
+                "snapshot",
+                "127.0.0.1",
+                "6600",
+                "/music",
+                "--lean",
+            ])
+            .expect("trailing lean option should parse");
+            let request = legacy_request(&args.compat_args).expect("lean snapshot RPC");
+            assert_eq!(request["op"], "snapshot");
+            assert_eq!(request["params"], json!({"includeFolders": false}));
+        }
+        let full = legacy_request(&[
+            "snapshot".into(),
+            "127.0.0.1".into(),
+            "6600".into(),
+            "/music".into(),
+        ])
+        .expect("default full snapshot RPC");
+        assert_eq!(full["params"], json!({}));
     }
 
     #[test]

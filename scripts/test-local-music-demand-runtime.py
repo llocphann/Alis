@@ -53,7 +53,7 @@ import json,os,sys
 from pathlib import Path
 with (Path(os.environ["FIXTURE_ROOT"])/"calls").open("a") as f:
     f.write(json.dumps(sys.argv[1:])+"\n")
-if sys.argv[1:]==["backend-info"]: print("mode=python\ninir-mpdd=missing")
+if sys.argv[1:]==["backend-info"]: print("mode=python\nalis-mpdd=missing")
 else: print(json.dumps({"connected":True,"tracks":[],"queue":[],"playlists":[],"state":"stop"}))
 ''')
     (shell / "bin/native-dispatch").chmod(0o755)
