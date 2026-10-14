@@ -143,8 +143,8 @@ list_available_migrations() {
 is_migration_needed() {
     local migration_id="$1"
 
-    # 019 was a historical upstream -> inir directory transition. Canonical
-    # Alis installs must never recreate ~/.config/inir after the owner-gated
+    # 019 was a historical upstream -> alis directory transition. Canonical
+    # Alis installs must never recreate ~/.config/alis after the owner-gated
     # cutover (or silently move the upstream config away from Alis).
     if [[ "$migration_id" == "019-config-dir-rename-compat" &&
           -d "${XDG_CONFIG_HOME:-$HOME/.config}/alis" ]]; then
