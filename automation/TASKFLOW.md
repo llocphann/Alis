@@ -1,6 +1,6 @@
 # AUTO-R01 — GitHub task-code Automation (partial implementation)
 
-This independent, **fail-closed foundation** lets Alis resolve a canonical GitHub Issue from one task code and persist an internal Cloudbot prompt. No user-authored initial/continuation/rotation prompts are required. The previous Automation scheduler and authenticated Desktop message transport were removed from \`dev\` and must be restored under [AUTO-F01](https://github.com/llocphann/Alis/issues/103) before automated dispatch is enabled.
+This independent, **fail-closed foundation** lets Alis resolve a canonical GitHub Issue from one task code and persist an internal Cloudbot prompt. No user-authored initial/continuation/rotation prompts are required. The historical scheduler, native Desktop bridge and bounded worker have now been restored as source on `dev` under [AUTO-F01](https://github.com/llocphann/Alis/issues/103). They are **not installed or auto-started** by the GitHub commit. Actual ChatGPT Desktop/Quickshell acceptance and Owner verification remain separate.
 
 ## Operations
 
@@ -60,3 +60,17 @@ CLI: queue-prepare 'AUTO-R01; ABYSS-R09' --mode ordered|cloud; queue-status; act
 Settings shows Tasks, Activity and Logs. Task lifecycle events are capped at 60 records; display up to 40. Diagnostics are bounded and redact known token patterns. Refresh and Copy are available for private inspection; raw logs and historical prompt files are not duplicated. Existing safe cleanup retains pending/uncertain data and excludes repository-wide reusable tests.
 
 Integration still pending: AUTO-F01 authenticated scheduler, real Desktop/cloud message transport, Cloudbot automatic selection callbacks, installed Quickshell acceptance and Owner verification. Preparing a queue does not itself dispatch any task.
+
+## Integration milestone — existing scheduler, no second daemon (2026-10-15)
+
+Restored modules: automation/manager, automation/chat_bridge and automation/worker; restored installer scripts/install-hadalis-automation.py and original offline regression tests. Historical queue/pending JOB fixtures and results were deliberately not copied into dev. The restored default legacy research profile is disabled/manual, and the first service boot quarantines preexisting legacy desired=run state while retaining all uncertain pending receipts. Existing installed XDG/service aliases remain recognized.
+
+Settings → Automation → Backend can check service health and explicitly install the user units without enabling or starting them. The user enters one or more semicolon-separated task codes and chooses Ordered or Cloudbot selection, then explicitly presses Start. This is an opt-in execution action; queue preparation alone never submits prompts. The restored manager starts units through its existing control flow only for the approved Start.
+
+automation/managed_tasks.py generates internal task-specific initial/continuation/rollover prompts dynamically from the single task JSON, so the manager config stores only a task identifier, not full prompt copies. It routes ordered queues into the restored manager daemon. When a final server-observed Cloudbot DONE response contains a matching managed message and no pending local job, the queue marks that task awaiting_owner and schedules the next serial task. Owner verification remains separate and never auto-closes the GitHub Issue.
+
+For Cloud mode, the existing manager opens a dedicated reasoning turn in the managed Hadalis Cloud project asking Cloudbot to choose exactly one canonical queued Issue. A task choice is accepted only from the server-observed final assistant response, the exact managed conversation/message ID and a single HADALIS_TASK_CHOICE line. Duplicates, stale receipts and unsupported choices are quarantined; the queue does not guess or retry a possibly dispatched chat. The same selector profile is reused for the next choice after a completed task.
+
+One existing manager tick also performs conservative daily cleanup. The restored manager's native ChatGPT transport is based on an installed-build capability probe and may be incompatible with newer Desktop builds; absence of an installed native acceptance receipt is never counted as PASS. The CI regression suite checks offline queue/manager/bridge/worker behavior, while the full canonical validator and physical Niri/Quickshell/ChatGPT Desktop/Localbot run require separate verification.
+
+CLI: python3 scripts/alis-automation-task.py backend-status; queue-prepare 'AUTO-R01; ABYSS-R09' --mode ordered|cloud; start-queue --approve; queue-status; activity AUTO-R01; owner-verify AUTO-R01 --approve. The owner-verification action changes the private task state only, and deliberately leaves the GitHub Issue open.
