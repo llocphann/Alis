@@ -12,6 +12,13 @@ ENTRYPOINTS = {
     "settings": "modules/settings/CompanionConfig.qml",
     "binary": "native/bin/alis-companiond",
 }
+# The source-pinned external package still exports inir-companiond. Both
+# values are fixed known paths; arbitrary manifest-provided paths remain
+# rejected, including for the optional local package.
+COMPATIBLE_BINARIES = frozenset((
+    ENTRYPOINTS["binary"],
+    "native/bin/inir-companiond",
+))
 
 
 def inspect(shell_root, data_home=None):
@@ -31,9 +38,15 @@ def inspect(shell_root, data_home=None):
         if data.get("id") != "hadanion" or type(data.get("hostApi")) is not int or data["hostApi"] != API:
             return {**result, "diagnostic": "incompatible-package"}
         for key, name in ENTRYPOINTS.items():
-            if data.get(key) != name or not (package / name).is_file():
+            if key == "binary":
+                name = data.get("binary")
+                if name not in COMPATIBLE_BINARIES:
+                    raise ValueError("unexpected daemon name")
+            elif data.get(key) != name:
+                raise ValueError("incompatible entrypoint")
+            if not (package / name).is_file():
                 raise ValueError("incomplete package")
-        if not os.access(package / ENTRYPOINTS["binary"], os.X_OK):
+        if not os.access(package / data["binary"], os.X_OK):
             raise ValueError("missing executable")
         version = data.get("version", "")
         if not isinstance(version, str) or not version or len(version) > 64:
