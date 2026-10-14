@@ -7,8 +7,17 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from automation import taskflow, credentials, lifecycle, queue, activity, managed_tasks
-from automation.manager import control as manager_control
+try:
+    from automation import taskflow, credentials, lifecycle, queue, activity, managed_tasks
+    from automation.manager import control as manager_control
+except Exception as error:
+    # Imports happen before argparse and the normal JSON reply contract.
+    # Report a safe typed failure rather than an empty stdout and traceback.
+    print(json.dumps({"ok": False,
+                      "error": "Automation runtime import failed (" +
+                               type(error).__name__ +
+                               "); update the installed Alis Python modules"}), flush=True)
+    raise SystemExit(1)
 
 
 def main():
@@ -128,6 +137,13 @@ def main():
                 result = {"ok": True, "next_prompt": taskflow.continuation(bundle, receipt)}
     except (taskflow.TaskError, credentials.CredentialError, OSError, ValueError, json.JSONDecodeError) as error:
         result = {"ok": False, "error": str(error)}
+    except Exception as error:
+        # Unexpected parser/runtime bugs must still produce exactly one JSON
+        # failure. Never emit exception messages: they may contain private
+        # Issue bodies, user paths, credentials or other untrusted data.
+        result = {"ok": False, "error": "Automation helper internal error during " +
+                  args.action + " (" + type(error).__name__ +
+                  "); refresh queue status before any retry"}
     print(json.dumps(result, ensure_ascii=False))
     return 0 if result["ok"] else 1
 
