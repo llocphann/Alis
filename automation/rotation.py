@@ -122,11 +122,10 @@ def acknowledge_chat_rotation(
     record = tf.load_task(code, repository)
     rotation = record.get("rotation")
     if not isinstance(rotation, dict):
+        previous = record.get("last_rotation")
+        if previous and (previous.get("new_conversation"), previous.get("new_message")) == (cid, mid):
+            return {"ok": True, "duplicate": True, "status": record["status"]}
         raise tf.TaskError("No verified pending rotation")
-    if record.get("status") == "cloud_continuing" and rotation.get("new_conversation"):
-        if (rotation["new_conversation"], rotation["new_message"]) == (cid, mid):
-            return {"ok": True, "duplicate": True, "status": "cloud_continuing"}
-        raise tf.TaskError("Rotation was acknowledged for a different chat")
     if record.get("status") != "rotation_pending":
         raise tf.TaskError("Rotation is not awaiting transport confirmation")
     if cid == rotation["from_conversation"]:
@@ -135,10 +134,12 @@ def acknowledge_chat_rotation(
                        rotation["from_conversation"]) is not True:
         raise tf.TaskError("New chat/message not authenticated")
     now = int(time.time())
-    rotation["new_conversation"] = cid
-    rotation["new_message"] = mid
-    rotation.pop("resume_prompt", None)
-    rotation["acknowledged_unix"] = now
+    record["last_rotation"] = {
+        "new_conversation": cid, "new_message": mid,
+        "from_conversation": rotation["from_conversation"],
+        "reason": rotation["reason"], "acknowledged_unix": now,
+    }
+    record["rotation"] = None
     record["managed_chat"] = {"conversation_id": cid, "message_id": mid,
                               "assigned_unix": now}
     record["status"] = "cloud_continuing"
