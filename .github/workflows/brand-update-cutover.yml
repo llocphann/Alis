@@ -16,6 +16,7 @@ on:
       - scripts/hadanion-status.py
       - scripts/test-companion-managed-install.py
       - scripts/test-companion-entrypoint-discovery.py
+      - scripts/test-companion-pinned-source-contract.py
       - sdata/companion-revision.txt
       - native/scripts/install-runtime.sh
       - sdata/migrations/021-systemd-single-instance.sh
@@ -68,6 +69,8 @@ jobs:
         run: python3 scripts/test-companion-entrypoint-discovery.py
       - name: Managed Companion install, ownership, pins and failed-upgrade recovery
         run: python3 scripts/test-companion-managed-install.py
+      - name: Actual SHA-pinned upstream Companion immutable release and Alis host contract
+        run: python3 scripts/test-companion-pinned-source-contract.py
       - name: Original owner preserved on rejected or failed cutover
         shell: bash
         run: bash scripts/test-brand-canonical-cutover.sh
