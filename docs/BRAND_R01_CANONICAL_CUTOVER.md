@@ -116,3 +116,26 @@ The dedicated regression verifies foreign and symlink launcher rejection,
 explicit consent, byte-for-byte backup, complete-runtime idempotency,
 native build, retained owner unit and untouched synthetic preferences and
 first-run marker.
+
+## Retain an existing user-owned Alis cache during cutover
+
+An earlier Alis installation or another application may already have created
+`$XDG_CACHE_HOME/alis`. If there is also a legacy `inir` or
+`illogical-impulse` cache, the cutover leaves **both caches exactly as found**
+rather than refusing a new session solely because a cache directory exists.
+The dry-run prints `KEEP existing Alis cache unchanged; skip old cache copy`;
+the apply mode neither merges nor removes either cache. Only an existing
+**real directory** is skipped: an Alis cache symlink, file, or other non-directory
+path fails closed and requires owner review.
+
+This cache-only exception does not apply to `$XDG_CONFIG_HOME/alis`,
+`$XDG_DATA_HOME/alis`, or `$XDG_STATE_HOME/alis`: preexisting foreign
+destinations in those namespaces still block cutover to prevent silent
+overwrites. The deterministic cutover test verifies unchanged hashes for both
+caches across a successful service handoff and failure rollback, strict
+rejection of non-cache collisions, and unchanged single-owner semantics.
+
+After updating a reviewed repo checkout, rerun
+`bash scripts/brand-canonical-cutover.sh --dry-run` to inspect **all**
+remaining blockers before any owner-authorized live cutover. A green synthetic
+test does not count as R10 desktop verification.
