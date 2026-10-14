@@ -52,6 +52,16 @@ assert_result absent inactive inactive 2 'BLOCKER:'
 if [[ "$case_expected" == alis ]]; then
     assert_result canonical active inactive 2 'canonical ShellId alis requires alis.service active'
     assert_result canonical_ok inactive active 0 'Session ownership (expected ShellId and sole unit: alis)'
+    mkdir -p "$XDG_CONFIG_HOME/systemd/user" "$XDG_STATE_HOME/alis-cutover-backups"
+    printf '%s\n' '[Service]' 'BusName=org.kde.StatusNotifierWatcher' > "$XDG_STATE_HOME/alis-cutover-backups/retired-inir.service"
+    ln -s /dev/null "$XDG_CONFIG_HOME/systemd/user/inir.service"
+    assert_result canonical_masked inactive active 0 'VERIFIED: original iNiR unit is masked'
+    rm -- "$XDG_STATE_HOME/alis-cutover-backups/retired-inir.service"
+    assert_result missing_archive inactive active 2 'original unit/archive may still allocate'
+    printf '%s\n' '[Service]' 'BusName=org.kde.StatusNotifierWatcher' > "$XDG_STATE_HOME/alis-cutover-backups/retired-inir.service"
+    rm -- "$XDG_CONFIG_HOME/systemd/user/inir.service"
+    printf '%s\n' 'old unmasked unit' > "$XDG_CONFIG_HOME/systemd/user/inir.service"
+    assert_result unmasked_unit inactive active 2 'original unit/archive may still allocate'
 else
     assert_result compatible inactive active 2 'compatibility ShellId inir requires inir.service active'
     assert_result compatible_ok active inactive 0 'Session ownership (expected ShellId and sole unit: inir)'
