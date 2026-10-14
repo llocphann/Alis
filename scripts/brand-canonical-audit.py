@@ -77,6 +77,19 @@ def main() -> int:
                     or "github.com/snowarch/iNiR" in source_line
                 ):
                     continue
+                if (
+                    kind == "service"
+                    and label in {
+                        "distro/arch/alis-shell/alis-shell.install",
+                        "distro/arch/alis-shell-git/alis-shell-git.install",
+                    }
+                    and source_line.strip().startswith(
+                        "user home directories. If inir.service is still present,"
+                    )
+                ):
+                    # Owner warning, not executable systemd setup. All actual
+                    # service commands in these hooks remain audited.
+                    continue
                 total_by_kind[kind] += 1
                 if len(examples[kind]) < args.limit:
                     line = text.count("\n", 0, match.start()) + 1
