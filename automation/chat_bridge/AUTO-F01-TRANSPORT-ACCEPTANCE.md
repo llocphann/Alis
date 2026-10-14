@@ -21,6 +21,16 @@ Target: `llocphann/Alis`, branch `dev`; preserve Project **Automatic Alis**, all
 5. **GitHub capability and local worker segregation:** Only the ChatGPT reasoning agent determines prompts and decisions. The local worker executes deterministic jobs and reports bounded evidence. GitHub capability must be tied to the intended task; no token, credential or message body may appear in a diagnostic report.
 6. **Explicit owner-approved acceptance testing:** Offline/mock and GitHub CI can prove guard behavior; they cannot prove live transport. Require a separately planned, consented end-to-end acceptance procedure that preserves queued work and a verified rollback path. Until then no production activation.
 
+## Product boundary: ChatGPT Projects vs OpenAI API Platform projects
+
+Do **not** equate the owner's ChatGPT Project `Automatic Alis` with an OpenAI API Platform project. API Platform project endpoints manage organization/API access, service accounts, usage and budgets; they are not an attested method to append a user turn to an existing ChatGPT Project conversation. The ChatGPT Projects help article describes conversations, files and project instructions in the ChatGPT product; the distinct API Platform projects article describes API resource administration.
+
+Official product references:
+- https://help.openai.com/en/articles/10169521-using-projects-in-chatgpt
+- https://help.openai.com/en/articles/9186755-managing-projects-in-the-api-platform
+
+A future API-backed alternative would be a **separately authorized product architecture** with explicit migration, different conversation identity, key management and usage/cost semantics. It must not silently claim continuity with `Automatic Alis` or revive the 18 current queued jobs.
+
 ## Independent diagnostic ledger
 
 `automation/chat_bridge/transport_evidence.mjs` classifies **redacted scope evidence** into categorical blocker codes. The read-only inspector adds it as `transport_evidence`. The ledger **always** returns `status: "blocked"`, `supported: false` and `submission_authorized: false`; it is *not* a capability bridge, a resolver, an API key checker or an escape hatch. Flags copied from user input, mock fixtures or static helper matches cannot authorize submission.
