@@ -33,7 +33,18 @@ function popupInput(content,width,height,insets,edge,paintedSurface) {
 // The smooth union paints two concave shoulders beyond the body's tangent
 // bounds. Rasterize only those small shoulder strips, using the same SDF as
 // the field. Expanding the entire body rectangle would capture blank desktop.
+// BodyHost produces plain numeric geometry records locally. Only that path
+// opts into scalar preparation; external callers retain the original reads.
+function popupShouldersSnapshot(width,height,insets,edge,record,radius,softness,recordRadius,roundZeroCorners,cornerWidthInsets) {
+    return _popupShoulders(width,height,insets,edge,record,radius,softness,recordRadius,roundZeroCorners,cornerWidthInsets,true);
+}
+function _shoulderSnapshotNumber(value) {
+    return typeof value === "number" && Number.isFinite(value) && Math.abs(value)<=32768;
+}
 function popupShoulders(width,height,insets,edge,record,radius,softness,recordRadius,roundZeroCorners,cornerWidthInsets) {
+    return _popupShoulders(width,height,insets,edge,record,radius,softness,recordRadius,roundZeroCorners,cornerWidthInsets,false);
+}
+function _popupShoulders(width,height,insets,edge,record,radius,softness,recordRadius,roundZeroCorners,cornerWidthInsets,numericSnapshot) {
     if (!record || !record.surface || record.surface.width <= 0
             || record.surface.height <= 0) return [];
     var h=horizontal(edge),leading=edge === "top" || edge === "left";
@@ -73,13 +84,45 @@ function popupShoulders(width,height,insets,edge,record,radius,softness,recordRa
     var cornerSupport=radius+softness;
     var cornerStart=(h ? insets.left : insets.top)+cornerSupport;
     var cornerEnd=extent-(h ? insets.right : insets.bottom)-cornerSupport;
-    var painted=function(tangent,cross) {
-        var x=h ? tangent+.5 : cross+.5;
-        var y=h ? cross+.5 : tangent+.5;
-        var d=-roundedDistance(x,y,workspaceRect,radius);
-        d=smoothUnion(d,surfaceDistance(x,y,width,height,surface,popupRadius,contactEdges,radius),softness);
-        return d<0;
-    };
+    var painted;
+    if (numericSnapshot === true && _shoulderSnapshotNumber(width) && _shoulderSnapshotNumber(height)
+            && _shoulderSnapshotNumber(radius) && _shoulderSnapshotNumber(softness)
+            && _shoulderSnapshotNumber(popupRadius) && _shoulderSnapshotNumber(surface.x)
+            && _shoulderSnapshotNumber(surface.y) && _shoulderSnapshotNumber(surface.width)
+            && _shoulderSnapshotNumber(surface.height)) {
+        // Reuse scalar geometry only for the caller-owned numeric snapshot.
+        var wx=workspaceRect.x,wy=workspaceRect.y,ww=workspaceRect.width/2,wh=workspaceRect.height/2;
+        var wr=Math.min(radius,ww,wh);
+        var sx=surface.x,sy=surface.y,sw=surface.width/2,sh=surface.height/2;
+        var sr=Math.min(popupRadius,sw,sh),sxEnd=surface.x+surface.width,syEnd=surface.y+surface.height;
+        var rt=contactEdges[0] && sy<=0 && syEnd>0 ? physicalContactRadius(surface,radius,popupRadius,surface.width,syEnd) : 0;
+        var rb=contactEdges[2] && syEnd>=height && sy<height ? physicalContactRadius(surface,radius,popupRadius,surface.width,height-sy) : 0;
+        var rl=contactEdges[3] && sx<=0 && sxEnd>0 ? physicalContactRadius(surface,radius,popupRadius,surface.height,sxEnd) : 0;
+        var rr=contactEdges[1] && sxEnd>=width && sx<width ? physicalContactRadius(surface,radius,popupRadius,surface.height,width-sx) : 0;
+        painted=function(tangent,cross) {
+            var x=h ? tangent+.5 : cross+.5;
+            var y=h ? cross+.5 : tangent+.5;
+            var qx=Math.abs(x-wx-ww)-ww+wr,qy=Math.abs(y-wy-wh)-wh+wr;
+            var d=-(Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-wr);
+            qx=Math.abs(x-sx-sw)-sw+sr;qy=Math.abs(y-sy-sh)-sh+sr;
+            var bd=Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-sr;
+            var cd=Infinity;
+            if(rt>0)cd=Math.min(cd,contactCornerDistance(x,y,sx,sxEnd,rt));
+            if(rb>0)cd=Math.min(cd,contactCornerDistance(x,height-y,sx,sxEnd,rb));
+            if(rl>0)cd=Math.min(cd,contactCornerDistance(y,x,sy,syEnd,rl));
+            if(rr>0)cd=Math.min(cd,contactCornerDistance(y,width-x,sy,syEnd,rr));
+            d=smoothUnion(d,Math.min(bd,cd),softness);
+            return d<0;
+        };
+    } else {
+        painted=function(tangent,cross) {
+            var x=h ? tangent+.5 : cross+.5;
+            var y=h ? cross+.5 : tangent+.5;
+            var d=-roundedDistance(x,y,workspaceRect,radius);
+            d=smoothUnion(d,surfaceDistance(x,y,width,height,surface,popupRadius,contactEdges,radius),softness);
+            return d<0;
+        };
+    }
     var append=function(first,last,cross) {
         rows.push(h ? {x:first,y:cross,width:Math.max(0,last-first),height:1}
             : {x:cross,y:first,width:1,height:Math.max(0,last-first)});

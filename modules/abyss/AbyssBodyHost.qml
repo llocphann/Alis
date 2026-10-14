@@ -224,7 +224,7 @@ Item {
     }
     readonly property var connectionRects: root.includeEdgeConnection
             && root.inputBounds.width > 0 && root.inputBounds.height > 0
-        ? Geometry.popupShoulders(root.width,root.height,root.connectionInsets,root.edge,
+        ? Geometry.popupShouldersSnapshot(root.width,root.height,root.connectionInsets,root.edge,
             root.rawPresentationRecord,AbyssStyle.perimeterRadius,
             AbyssStyle.connectionDepth,AbyssStyle.neckRadius,
             root.controller?.roundZeroCorners,root.controller?.cornerWidthInsets) : []
