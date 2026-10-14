@@ -161,6 +161,47 @@ aliasSite=aliasFixture("let source=compute(p);let receiver=source;" +
 assert.deepEqual(aliasSite.alias_trace,{
   origin_hint:"helper-call-result",hops_capped:1
 });
+// Desktop's first alias attempt reached a compound expression at hop zero.
+// Describe syntax without inferring that any branch returns an owned Map.
+let complexSite=aliasFixture(
+  "let receiver=p??new Map();receiver.set(s,c);return receiver"
+);
+assert.deepEqual(complexSite.alias_trace,{
+  origin_hint:"complex-or-unsupported-expression",hops_capped:0,
+  expression_form:"logical-or-coalescing",expression_scan_complete:true,
+  contains_new_map_syntax:true,mentions_parameter_token:true
+});
+complexSite=aliasFixture(
+  "let receiver=p?new Map():fallback;receiver.set(s,c);return receiver"
+);
+assert.equal(complexSite.alias_trace.expression_form,"conditional-ternary");
+assert.equal(complexSite.alias_trace.contains_new_map_syntax,true);
+assert.equal(complexSite.alias_trace.mentions_parameter_token,true);
+complexSite=aliasFixture(
+  "let receiver=(p);receiver.set(s,c);return receiver"
+);
+assert.equal(complexSite.alias_trace.expression_form,"parenthesized");
+assert.equal(complexSite.alias_trace.expression_scan_complete,true);
+complexSite=aliasFixture(
+  "let receiver=p||secretOther;receiver.set(s,c);return receiver"
+);
+assert.equal(complexSite.alias_trace.expression_form,"logical-or-coalescing");
+assert.equal(complexSite.alias_trace.contains_new_map_syntax,false);
+assert.equal(complexSite.alias_trace.mentions_parameter_token,true);
+complexSite=aliasFixture(
+  "let receiver=p+other;receiver.set(s,c);return receiver"
+);
+assert.equal(complexSite.alias_trace.expression_form,"operator-expression");
+// Never infer purity from a parameter mention or a fresh-Map token.
+// Original symbols and sensitive literals are excluded from diagnostics.
+complexSite=aliasFixture(
+  "let ghp_FAKE_TOKEN='PRIVATE',receiver=p??new Map();" +
+  "receiver.set(s,c);return receiver"
+);
+assert.equal(complexSite.alias_trace.expression_form,"logical-or-coalescing");
+assert.ok(!JSON.stringify(complexSite).includes("PRIVATE"));
+assert.ok(!JSON.stringify(complexSite).includes("ghp_FAKE_TOKEN"));
+
 const secretAlias=aliasFixture("let ghp_FAKE_SECRET=p;" +
   "let receiver=ghp_FAKE_SECRET;receiver.set(s,c);return receiver");
 assert.deepEqual(secretAlias.alias_trace,{
