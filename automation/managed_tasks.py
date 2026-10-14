@@ -144,8 +144,9 @@ def start_ordered_queue(*, approved: bool = False) -> dict:
         return (decision is None and
                 record["repository"] == selected["repository"] and
                 record["code"] == selected["code"] and
-                record["task"]["base_sha"] == record["task"]["base_sha"] and
+                record["task"]["base_sha"] == selected["source_sha"] and
                 record["status"] in {"prepared", "handoff_ready"})
+    queue.approve_ordered_start()
     selected = queue.claim(verified_start=verifier)["selected"]
     pid = _ensure_profile(selected["repository"], selected["code"])
     # This is a real user Start action. Existing manager can start its units;
@@ -165,6 +166,38 @@ def _manager_finished(record: dict, pid: str) -> bool:
         and item.get("response_message_id")
         and (item.get("session") or {}).get("conversation_id")
     )
+
+
+def _schedule_next_authorized() -> dict:
+    """Schedule following Issue in the *same* manager, after prior confirmation."""
+    state = queue.view()
+    if state["mode"] != "ordered" or state["state"] != "waiting":
+        return state
+    with queue._lock():
+        snapshot = queue._load()
+        if not snapshot or not snapshot.get("approved_start"):
+            raise tf.TaskError("Queue has no durable user Start approval")
+    selected = queue.claim(verified_start=lambda item, record, decision:
+                           decision is None and record.get("status") in {"prepared", "handoff_ready"}
+                           and record["task"]["base_sha"] == item["source_sha"])["selected"]
+    pid = _ensure_profile(selected["repository"], selected["code"])
+    def schedule(config, state):
+        profile = next((p for p in config["profiles"] if p["id"] == pid), None)
+        if not profile or not profile["enabled"]:
+            raise tf.TaskError("Prepared managed profile is disabled")
+        item = state["profiles"][pid]
+        if item.get("pending") or item.get("job_id") or item.get("run_active"):
+            raise tf.TaskError("Previously dispatched profile requires reconciliation")
+        if item.get("desired") not in {"stopped", "run"}:
+            raise tf.TaskError("Profile was paused or stopped by owner")
+        if item.get("desired") == "stopped":
+            state["command_seq"] += 1
+            item.update(desired="run", request="initial",
+                        command_seq=state["command_seq"],
+                        next_run_at_unix=int(time.time()), status="scheduled")
+            store.event(state, pid, "task_auto_scheduled", selected["code"])
+    store.change(schedule)
+    return {"ok": True, "state": "scheduled", "selected": selected}
 
 
 def reconcile_once() -> dict:
@@ -195,9 +228,12 @@ def reconcile_once() -> dict:
         }
         record["updated_unix"] = now
         tf._save_task(record)
-    return queue.advance(verify_completion=lambda current:
-                         current.get("status") == "awaiting_owner" and
-                         current.get("delivery", {}).get("conversation_id") is not None)
+    result = queue.advance(verify_completion=lambda current:
+                           current.get("status") == "awaiting_owner" and
+                           current.get("delivery", {}).get("conversation_id") is not None)
+    if result["state"] == "waiting":
+        return _schedule_next_authorized()
+    return result
 
 
 def scheduler_housekeeping(now: int | None = None) -> dict:

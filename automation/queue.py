@@ -109,6 +109,7 @@ def prepare(raw: str, mode: str = "ordered",
         manifest = {
             "schema": QUEUE_SCHEMA, "mode": mode, "state": "prepared",
             "created_unix": now, "updated_unix": now,
+            "approved_start": False,
             "active": None, "selection": None,
             "items": [
                 {"code": task["code"], "repository": task["repository"],
@@ -250,3 +251,16 @@ def cloud_selection_prompt() -> str:
             "safe, request an explicit blocker instead of guessing.\n"
             "Pending tasks:\n" + "\n".join(lines)
         )
+
+
+def approve_ordered_start() -> dict:
+    """Persist explicit owner consent before any actual manager dispatch."""
+    with _lock():
+        doc = _load()
+        if not doc or doc["mode"] != "ordered" or doc["state"] not in {"prepared", "waiting"}:
+            raise tf.TaskError("Cannot approve an unprepared ordered queue")
+        if not doc.get("approved_start"):
+            doc["approved_start"] = True
+            doc["updated_unix"] = int(time.time())
+            _save(doc)
+        return {"ok": True, "approved_start": True}
