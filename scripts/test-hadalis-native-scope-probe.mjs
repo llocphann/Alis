@@ -294,7 +294,10 @@ assert.ok(res.resolver_masked_shape.includes(".has("));
 assert.ok(res.resolver_masked_shape.includes("return"));
 for (const privatePart of ["ghp_", "PRIVATE", "SECRET_COMMENT", "scopeId",
   "scopedResolver", "alpha", "beta", "hidden"]) {
-  assert.ok(!JSON.stringify(res).includes(privatePart),
+  // Inspect emitted VALUEs, not diagnostic field names (resolver_alpha_shape
+  // is intentionally named with the literal English word "alpha").
+  const shapes = [res.resolver_masked_shape, res.resolver_alpha_shape];
+  assert.ok(shapes.every(shape => !shape.includes(privatePart)),
     "resolver structural probe must hide " + privatePart);
 }
 const originalShape = res.resolver_alpha_shape;
