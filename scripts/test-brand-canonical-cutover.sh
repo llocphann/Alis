@@ -190,4 +190,97 @@ fi
 [[ -f "$tmp/rollback/config/inir/preferences.json" ]] ||
     die 'failed rollback deleted original user preference'
 
-echo 'PASS: canonical service cutover dry-run, old-hotkey guard, sole owner, rollback'
+
+# An existing canonical cache is not an ownership conflict. The script must
+# preserve existing canonical and legacy cache bytes, while copying settings.
+make_fixture cache_existing
+mkdir -p "$tmp/cache_existing/cache/inir" "$tmp/cache_existing/cache/alis"
+printf 'historic cache bytes\n' > "$tmp/cache_existing/cache/inir/sentinel.bin"
+printf 'user-created Alis cache bytes\n' > "$tmp/cache_existing/cache/alis/sentinel.bin"
+legacy_cache_hash="$(sha256sum "$tmp/cache_existing/cache/inir/sentinel.bin" | cut -d ' ' -f1)"
+alis_cache_hash="$(sha256sum "$tmp/cache_existing/cache/alis/sentinel.bin" | cut -d ' ' -f1)"
+cache_preview="$(invoke cache_existing --dry-run)" || die 'existing Alis cache blocked dry run'
+[[ "$cache_preview" == *"KEEP existing Alis cache unchanged"* ]] ||
+    die 'missing read-only existing-cache explanation'
+[[ "$cache_preview" != *"COPY $tmp/cache_existing/cache/inir -> $tmp/cache_existing/cache/alis"* ]] ||
+    die 'dry run proposed overwriting a user-owned cache'
+[[ "$(cat "$tmp/cache_existing/state-inir")" == active ]] ||
+    die 'cache preview unexpectedly stopped original service'
+invoke cache_existing --apply --owner-approved > "$tmp/cache-existing.log" ||
+    die 'cache-preserving approved cutover failed'
+[[ "$(sha256sum "$tmp/cache_existing/cache/inir/sentinel.bin" | cut -d ' ' -f1)" == "$legacy_cache_hash" ]] ||
+    die 'cutover changed original cache'
+[[ "$(sha256sum "$tmp/cache_existing/cache/alis/sentinel.bin" | cut -d ' ' -f1)" == "$alis_cache_hash" ]] ||
+    die 'cutover overwrote foreign Alis cache'
+[[ -f "$tmp/cache_existing/config/alis/preferences.json" ]] ||
+    die 'skipping cache prevented config migration'
+[[ "$(cat "$tmp/cache_existing/state-alis")" == active ]] ||
+    die 'cache-preserving cutover failed to establish Alis sole owner'
+
+# Only an existing REAL cache directory is skipped. A file or symlink at the
+# destination must still fail closed before service writes.
+make_fixture cache_file
+mkdir -p "$tmp/cache_file/cache/inir"
+printf 'historic bytes\n' > "$tmp/cache_file/cache/inir/sentinel"
+printf 'foreign file bytes\n' > "$tmp/cache_file/cache/alis"
+if invoke cache_file --dry-run > "$tmp/cache-file.log" 2>&1; then
+    die 'accepted non-directory Alis cache destination'
+fi
+grep -Fq 'not a plain directory' "$tmp/cache-file.log" ||
+    die 'cache file rejection lacked explanation'
+[[ "$(cat "$tmp/cache_file/cache/alis")" == 'foreign file bytes' ]] ||
+    die 'cache file was modified'
+[[ "$(cat "$tmp/cache_file/state-inir")" == active ]] ||
+    die 'cache file preflight stopped old owner'
+
+make_fixture cache_symlink
+mkdir -p "$tmp/cache_symlink/cache/inir" "$tmp/cache_symlink/foreign"
+printf 'external cache bytes\n' > "$tmp/cache_symlink/foreign/sentinel"
+ln -s "$tmp/cache_symlink/foreign" "$tmp/cache_symlink/cache/alis"
+if invoke cache_symlink --dry-run > "$tmp/cache-symlink.log" 2>&1; then
+    die 'accepted symlinked Alis cache destination'
+fi
+[[ -L "$tmp/cache_symlink/cache/alis" &&
+   "$(cat "$tmp/cache_symlink/foreign/sentinel")" == 'external cache bytes' ]] ||
+    die 'preflight mutated symlinked cache'
+
+# Preserve the original strict fail-closed rule for non-cache namespaces.
+for zone in config data state; do
+    make_fixture "noncache_$zone"
+    home="$tmp/noncache_$zone"
+    case "$zone" in
+        config) mkdir -p "$home/config/alis"; printf 'foreign config\n' > "$home/config/alis/sentinel" ;;
+        data) mkdir -p "$home/data/inir" "$home/data/alis"
+              printf 'old data\n' > "$home/data/inir/sentinel"
+              printf 'foreign data\n' > "$home/data/alis/sentinel" ;;
+        state) mkdir -p "$home/state/inir" "$home/state/alis"
+               printf 'old state\n' > "$home/state/inir/sentinel"
+               printf 'foreign state\n' > "$home/state/alis/sentinel" ;;
+    esac
+    if invoke "noncache_$zone" --dry-run > "$tmp/noncache-$zone.log" 2>&1; then
+        die "accepted foreign Alis $zone root"
+    fi
+    grep -Fq 'Foreign Alis data root, refusing overwrite' "$tmp/noncache-$zone.log" ||
+        die "missing explicit $zone collision diagnostic"
+    [[ "$(cat "$home/state-inir")" == active ]] ||
+        die "$zone preflight stopped legacy owner"
+done
+
+# Failed Alis service startup must also preserve both original and foreign
+# cache roots and restore the previous owner.
+make_fixture cache_failure
+mkdir -p "$tmp/cache_failure/cache/inir" "$tmp/cache_failure/cache/alis"
+printf 'historic rollback cache\n' > "$tmp/cache_failure/cache/inir/sentinel"
+printf 'foreign rollback cache\n' > "$tmp/cache_failure/cache/alis/sentinel"
+if FAIL_NEW_OWNER=1 invoke cache_failure --apply --owner-approved > "$tmp/cache-failure.log" 2>&1; then
+    die 'accepted failed Alis service with retained cache'
+fi
+[[ "$(cat "$tmp/cache_failure/state-inir")" == active &&
+   "$(cat "$tmp/cache_failure/state-alis")" == inactive ]] ||
+    die 'failed cutover did not restore sole original owner'
+[[ "$(cat "$tmp/cache_failure/cache/inir/sentinel")" == 'historic rollback cache' &&
+   "$(cat "$tmp/cache_failure/cache/alis/sentinel")" == 'foreign rollback cache' ]] ||
+    die 'failed cutover corrupted either cache'
+
+echo 'PASS: canonical cutover cache collision safety, single owner, and rollback'
+

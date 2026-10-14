@@ -116,7 +116,8 @@ done
 roots=("${XDG_CONFIG_HOME:-$HOME/.config}" "${XDG_CACHE_HOME:-$HOME/.cache}"
        "${XDG_DATA_HOME:-$HOME/.local/share}" "${XDG_STATE_HOME:-$HOME/.local/state}")
 sources=(); destinations=(); aliases=()
-for root in "${roots[@]}"; do
+for root_index in "${!roots[@]}"; do
+  root="${roots[root_index]}"
   # The original upstream config was illogical-impulse; later compatibility
   # installs used inir. Both remain untouched, even after successful cutover.
   # Prefer the actual upstream config.json, but refuse divergent config.json
@@ -135,6 +136,18 @@ for root in "${roots[@]}"; do
     old="$upstream"
   fi
   [[ -d "$old" && ! -L "$old" ]] || continue
+  # Existing canonical caches are disposable runtime artifacts, but may hold
+  # foreign or useful bytes. Never merge, overwrite, rename or delete them.
+  # Only the cache namespace (index 1) may be skipped. Config, user data and
+  # state still fail closed if they conflict.
+  if [[ "$root_index" -eq 1 && ( -e "$new" || -L "$new" ) ]]; then
+    if [[ -d "$new" && ! -L "$new" ]]; then
+      printf 'KEEP existing Alis cache unchanged; skip old cache copy: %s\n' "$new"
+      continue
+    fi
+    echo "Pre-existing Alis cache is not a plain directory: $new" >&2
+    exit 2
+  fi
   alias=false
   if [[ -L "$new" && "$(readlink -f -- "$new")" == "$(readlink -f -- "$old")" ]]; then
     alias=true
