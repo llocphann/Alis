@@ -573,7 +573,13 @@ ContentPage {
             SettingsNote {
                 icon: "hourglass_empty"
                 warning: true
-                text: Translation.tr("Backend offline · tasks prepared only")
+                text: !root.backendInstalled
+                    ? Translation.tr("Backend unavailable · install first")
+                    : root.queueSnapshot?.state === "active"
+                    ? Translation.tr("Cloudbot running · Localbot receipts required")
+                    : root.queueSnapshot?.state === "finished"
+                    ? Translation.tr("Queue finished · owner review may remain")
+                    : Translation.tr("Ready · Start a prepared queue")
             }
             StyledText {
                 Layout.fillWidth: true
