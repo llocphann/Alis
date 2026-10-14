@@ -15,12 +15,10 @@ else
     _config_new="${_xdg_config_home}/alis"
     _config_legacy="${_xdg_config_home}/illogical-impulse"
 
-    if [[ -L "$_config_legacy" && -d "$_config_new" ]]; then
+    if [[ -d "$_config_new" ]]; then
         _alis_config_dir="$_config_new"
     elif [[ -d "$_config_legacy" ]]; then
         _alis_config_dir="$_config_legacy"
-    elif [[ -d "$_config_new" ]]; then
-        _alis_config_dir="$_config_new"
     else
         _alis_config_dir="$_config_new"
     fi

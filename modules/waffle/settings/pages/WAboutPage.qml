@@ -180,7 +180,7 @@ WSettingsPage {
         icon: "people"
 
         WSettingsButton {
-            label: "Alis"
+            label: "iNiR"
             description: "github.com/snowarch/iNiR"
             icon: "open"
             buttonText: Translation.tr("Open")

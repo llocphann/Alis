@@ -35,18 +35,15 @@ ALIS_CONFIG_DIR_NEW="${XDG_CONFIG_HOME}/alis"
 ALIS_CONFIG_DIR_LEGACY="${XDG_CONFIG_HOME}/illogical-impulse"
 
 resolve_alis_config_dir() {
-  if [[ -L "$ALIS_CONFIG_DIR_LEGACY" && -d "$ALIS_CONFIG_DIR_NEW" ]]; then
-    printf '%s' "$ALIS_CONFIG_DIR_NEW"
-    return
-  fi
-
-  if [[ -d "$ALIS_CONFIG_DIR_LEGACY" ]]; then
-    printf '%s' "$ALIS_CONFIG_DIR_LEGACY"
-    return
-  fi
-
+  # Installer tooling and live QML must agree after the cutover.
   if [[ -d "$ALIS_CONFIG_DIR_NEW" ]]; then
     printf '%s' "$ALIS_CONFIG_DIR_NEW"
+    return
+  fi
+
+  # Keep the original location readable before the owner-gated migration.
+  if [[ -d "$ALIS_CONFIG_DIR_LEGACY" ]]; then
+    printf '%s' "$ALIS_CONFIG_DIR_LEGACY"
     return
   fi
 
