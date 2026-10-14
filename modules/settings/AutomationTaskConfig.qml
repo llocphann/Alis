@@ -14,6 +14,22 @@ ContentPage {
     settingsPageIndex: 35
     settingsPageName: Translation.tr("Automation")
 
+    property string activeSection: "tasks"
+    property bool cloudSelectTasks: false
+    property var queueSnapshot: null
+    property var activitySnapshot: null
+    property string historyError: ""
+    readonly property string activityText: {
+        const data = root.activitySnapshot?.events ?? []
+        return data.map(x => new Date(x.at_unix * 1000).toLocaleString()
+            + "  " + x.kind + (x.detail ? " · " + x.detail : "")).join("\n") || Translation.tr("No activity")
+    }
+    readonly property string diagnosticText: {
+        const data = root.activitySnapshot?.logs ?? []
+        return data.map(x => new Date(x.at_unix * 1000).toLocaleString()
+            + "  " + x.kind + ": " + x.text).join("\n\n") || Translation.tr("No logs")
+    }
+
     property string errorText: ""
     property string statusText: ""
     property var selectedTask: null
@@ -25,8 +41,8 @@ ContentPage {
     property string githubStatusText: ""
     property string pendingSecretInput: ""
     property string pendingSecretOperation: ""
-    readonly property bool busy: prepareProcess.running || cleanupProcess.running
-        || githubSecretProcess.running || githubStatusProcess.running
+    readonly property bool busy: queueProcess.running || prepareProcess.running
+        || cleanupProcess.running || githubSecretProcess.running || githubStatusProcess.running
 
     function refreshGithubStatus(): void {
         if (githubStatusProcess.running || githubSecretProcess.running)
@@ -67,8 +83,36 @@ ContentPage {
     Component.onCompleted: Qt.callLater(root.refreshGithubStatus)
 
     function activateSettingsSearchSection(section: string): bool {
+        const name = String(section ?? "").toLowerCase()
+        root.activeSection = name.includes("log") || name.includes("diagnos") ? "logs"
+            : name.includes("activ") || name.includes("histor") ? "activity" : "tasks"
+        Qt.callLater(root.refreshActivity)
         return true
     }
+
+    function refreshQueue(): void {
+        if (queueProcess.running || prepareProcess.running)
+            return
+        queueOperation = "status"
+        queueProcess.command = ["python3", Quickshell.shellPath("scripts/alis-automation-task.py"), "queue-status"]
+        queueProcess.running = true
+    }
+
+    function refreshActivity(): void {
+        if (!root.visible || !root.selectedTask || activityProcess.running)
+            return
+        activityProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "activity", root.selectedTask.code, "--repo", root.selectedTask.repository]
+        activityProcess.running = true
+    }
+
+    function copyHistory(): void {
+        Quickshell.clipboardText = root.activeSection === "logs" ? root.diagnosticText : root.activityText
+    }
+
+    property string queueOperation: ""
+    onActiveSectionChanged: Qt.callLater(root.refreshActivity)
 
     function refreshTaskStatus(): void {
         if (!root.visible || !root.selectedTask || taskStatusProcess.running)
@@ -82,20 +126,73 @@ ContentPage {
     function prepareTask(): void {
         if (root.busy)
             return
-        const code = taskCodeField.text.trim()
-        if (!/^(?:[A-Z][A-Z0-9]{1,15}-(?:F|R|I)[0-9]{2,3}|llocphann\/[A-Za-z0-9-]+#[1-9][0-9]*)$/.test(code)) {
-            root.errorText = Translation.tr("Enter a task code such as AUTO-R01.")
+        const codes = taskCodeField.text.trim()
+        const entries = codes.split(";").map(s => s.trim())
+        if (!entries.length || entries.length > 20 ||
+                entries.some(s => !/^(?:[A-Z][A-Z0-9]{1,15}-(?:F|R|I)[0-9]{2,3}|llocphann\/[A-Za-z0-9-]+#[1-9][0-9]*)$/.test(s))) {
+            root.errorText = Translation.tr("Enter task codes separated by ;")
             return
         }
         root.errorText = ""
         root.statusText = ""
         root.selectedTask = null
         root.taskSnapshot = null
-        prepareProcess.command = [
+        root.activitySnapshot = null
+        root.queueOperation = "prepare"
+        queueProcess.command = [
             "python3", Quickshell.shellPath("scripts/alis-automation-task.py"),
-            "prepare", code
+            "queue-prepare", codes, "--mode", root.cloudSelectTasks ? "cloud" : "ordered"
         ]
-        prepareProcess.running = true
+        queueProcess.running = true
+    }
+
+    Process {
+        id: queueProcess
+        stdout: StdioCollector { id: queueOutput }
+        stderr: StdioCollector { id: queueError }
+        onExited: exitCode => {
+            try {
+                const result = JSON.parse(queueOutput.text)
+                if (exitCode !== 0 || result.ok !== true)
+                    throw new Error(result.error || "Queue unavailable")
+                root.queueSnapshot = result
+                if (result.items && result.items.length) {
+                    const first = result.items[0]
+                    if (!root.selectedTask || !result.items.some(t =>
+                            t.code === root.selectedTask.code && t.repository === root.selectedTask.repository))
+                        root.selectedTask = first
+                    Qt.callLater(root.refreshTaskStatus)
+                    Qt.callLater(root.refreshActivity)
+                }
+                if (root.queueOperation === "prepare")
+                    root.statusText = result.duplicate
+                        ? Translation.tr("Queue already prepared")
+                        : Translation.tr("Queue prepared · awaiting Cloudbot")
+            } catch (error) {
+                root.errorText = String(error)
+            }
+            root.queueOperation = ""
+        }
+    }
+
+    Process {
+        id: activityProcess
+        stdout: StdioCollector { id: activityOutput }
+        stderr: StdioCollector { id: activityError }
+        onExited: exitCode => {
+            try {
+                const result = JSON.parse(activityOutput.text)
+                if (exitCode !== 0 || result.ok !== true)
+                    throw new Error(result.error || "History unavailable")
+                if (root.selectedTask && result.code === root.selectedTask.code
+                        && result.repository === root.selectedTask.repository) {
+                    root.activitySnapshot = result
+                    root.historyError = ""
+                }
+            } catch (error) {
+                root.historyError = String(error)
+            }
+        }
     }
 
     Process {
@@ -142,8 +239,13 @@ ContentPage {
         interval: 8000
         repeat: true
         running: root.visible && !!root.selectedTask
-        onTriggered: root.refreshTaskStatus()
+        onTriggered: {
+            root.refreshTaskStatus()
+            if (root.activeSection !== "tasks") root.refreshActivity()
+        }
     }
+
+    Component.onCompleted: Qt.callLater(root.refreshQueue)
 
     Process {
         id: cleanupProcess
@@ -224,25 +326,37 @@ ContentPage {
     SettingsTaskNavigator {
         icon: "smart_toy"
         title: Translation.tr("Automation")
-        description: Translation.tr("Prepare a Cloudbot task from its GitHub Issue code.")
-        currentValue: "tasks"
+        description: Translation.tr("GitHub tasks · Cloudbot · Localbot")
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
         options: [
-            { displayName: Translation.tr("Tasks"), icon: "task_alt", value: "tasks" }
+            { displayName: Translation.tr("Tasks"), icon: "task_alt", value: "tasks" },
+            { displayName: Translation.tr("Activity"), icon: "history", value: "activity" },
+            { displayName: Translation.tr("Logs"), icon: "monitor_heart", value: "logs" }
         ]
     }
 
     SettingsCardSection {
         expanded: true
         icon: "tag"
-        title: Translation.tr("GitHub task")
+        title: Translation.tr("GitHub tasks")
         settingsTaskSection: "tasks"
+        visible: root.activeSection === "tasks"
 
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
-                text: Translation.tr("Enter the task code. Cloudbot will generate the prompts and local test handoff; no manual prompt templates are needed.")
+                text: Translation.tr("Task codes separated by ;")
+            }
+            SettingsSwitch {
+                objectName: "automationCloudSelectToggle"
+                text: Translation.tr("Cloudbot chooses task order")
+                buttonIcon: "smart_toy"
+                checked: root.cloudSelectTasks
+                autoToggle: false
+                onToggledByUser: checked => root.cloudSelectTasks = checked
             }
             RowLayout {
                 Layout.fillWidth: true
@@ -251,12 +365,12 @@ ContentPage {
                     id: taskCodeField
                     objectName: "automationTaskCode"
                     Layout.fillWidth: true
-                    placeholderText: "AUTO-R01"
+                    placeholderText: "AUTO-R01; ABYSS-R09; BRAND-F01"
                     onAccepted: root.prepareTask()
                 }
                 DialogButton {
                     objectName: "automationPrepareTask"
-                    buttonText: root.busy ? Translation.tr("Preparing…") : Translation.tr("Prepare")
+                    buttonText: root.busy ? Translation.tr("Preparing…") : Translation.tr("Queue tasks")
                     enabled: !root.busy && taskCodeField.text.trim().length > 0
                     onClicked: root.prepareTask()
                 }
@@ -276,16 +390,42 @@ ContentPage {
                 text: root.statusText
             }
             StyledText {
-                visible: !!root.selectedTask
+                visible: !!root.queueSnapshot && root.queueSnapshot.items.length > 0
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colOnSurface
-                text: root.selectedTask
-                    ? root.selectedTask.code + " · " + root.selectedTask.repository
-                        + "\n" + root.selectedTask.branch + " @ "
-                        + root.selectedTask.base_sha.slice(0, 12)
-                        + "\n" + root.selectedTask.issue_url
+                text: root.queueSnapshot
+                    ? root.queueSnapshot.items.map((task, i) =>
+                        (i + 1) + ". " + task.code + " · " + task.state).join("\n")
                     : ""
+            }
+            StyledText {
+                visible: !!root.queueSnapshot && !!root.queueSnapshot.cloud_selection_required
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: Appearance.colors.colSubtext
+                text: Translation.tr("Cloudbot will select the next task")
+            }
+            ConfigSelectionArray {
+                visible: !!root.queueSnapshot && root.queueSnapshot.items.length > 0
+                currentValue: root.selectedTask
+                    ? root.selectedTask.repository + ":" + root.selectedTask.code : ""
+                options: root.queueSnapshot
+                    ? root.queueSnapshot.items.map(t => ({
+                        displayName: t.code + " · " + t.state,
+                        value: t.repository + ":" + t.code
+                    })) : []
+                onSelected: value => {
+                    const entry = root.queueSnapshot.items.find(t =>
+                        t.repository + ":" + t.code === value)
+                    if (entry) {
+                        root.selectedTask = entry
+                        root.taskSnapshot = null
+                        root.activitySnapshot = null
+                        Qt.callLater(root.refreshTaskStatus)
+                        Qt.callLater(root.refreshActivity)
+                    }
+                }
             }
         }
     }
@@ -293,19 +433,20 @@ ContentPage {
     SettingsCardSection {
         expanded: true
         icon: "info"
-        title: Translation.tr("Execution status")
+        title: Translation.tr("Status")
         settingsTaskSection: "tasks"
+        visible: root.activeSection === "tasks"
         SettingsGroup {
             SettingsNote {
                 icon: "hourglass_empty"
                 warning: true
-                text: Translation.tr("Cloudbot/Localbot dispatch is not connected yet. Prepared tasks will not run until the Automation backend is restored and explicitly enabled.")
+                text: Translation.tr("Backend offline · tasks prepared only")
             }
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
-                text: Translation.tr("Local tests require explicit approval. GitHub Issues remain open for owner verification.")
+                text: Translation.tr("Local tests need approval · Owner verifies")
             }
             StyledText {
                 visible: !!root.taskSnapshot
@@ -323,7 +464,7 @@ ContentPage {
                 visible: !!root.taskSnapshot && root.taskSnapshot.rotation_pending
                 warning: true
                 icon: "autorenew"
-                text: Translation.tr("Chat rollover is pending server confirmation; no prompt will be resent blindly.")
+                text: Translation.tr("Chat rollover · awaiting confirmation")
             }
         }
     }
@@ -331,14 +472,15 @@ ContentPage {
     SettingsCardSection {
         expanded: true
         icon: "cleaning_services"
-        title: Translation.tr("Automatic housekeeping")
+        title: Translation.tr("Cleanup")
         settingsTaskSection: "tasks"
+        visible: root.activeSection === "tasks"
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
-                text: Translation.tr("Reports are capped per task. Acknowledged completed tasks lose temporary prompts and scripts after 7 days, and the task file after 30 days. Pending or uncertain jobs are protected.")
+                text: Translation.tr("Old prompts: 7 days · task files: 30 days")
             }
             RowLayout {
                 Layout.fillWidth: true
@@ -363,21 +505,22 @@ ContentPage {
             }
             SettingsNote {
                 icon: "info"
-                text: Translation.tr("Safe cleanup also runs when a new task is prepared. Periodic cleanup requires the restored Automation scheduler.")
+                text: Translation.tr("Pending tasks are protected")
             }
         }
     }
     SettingsCardSection {
         expanded: true
         icon: "key"
-        title: Translation.tr("GitHub credential")
+        title: Translation.tr("GitHub token")
         settingsTaskSection: "tasks"
+        visible: root.activeSection === "tasks"
         SettingsGroup {
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
-                text: Translation.tr("Optional token for Localbot Git operations. Stored in the system keyring; never inserted into Cloudbot prompts, command arguments or task files.")
+                text: Translation.tr("Saved privately in system keyring")
             }
             ConfigSelectionArray {
                 currentValue: root.selectedGithubRepo
@@ -438,12 +581,99 @@ ContentPage {
     SettingsCardSection {
         expanded: true
         icon: "autorenew"
-        title: Translation.tr("Automatic chat rollover")
+        title: Translation.tr("Chat rollover")
         settingsTaskSection: "tasks"
+        visible: root.activeSection === "tasks"
         SettingsGroup {
             SettingsNote {
                 icon: "info"
-                text: Translation.tr("No manual prompt/iteration thresholds. Cloudbot checkpoints are preserved; confirmed context or conversation limits will trigger a new managed chat when the authenticated Desktop bridge is restored.")
+                text: Translation.tr("Auto-detect chat limits · keep checkpoint")
+            }
+        }
+    }
+
+    SettingsCardSection {
+        expanded: true
+        icon: "history"
+        title: Translation.tr("Recent activity")
+        settingsTaskSection: "activity"
+        visible: root.activeSection === "activity"
+        SettingsGroup {
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                DialogButton {
+                    buttonText: Translation.tr("Refresh")
+                    enabled: !activityProcess.running
+                    onClicked: root.refreshActivity()
+                }
+                DialogButton {
+                    buttonText: Translation.tr("Copy")
+                    enabled: !!root.activitySnapshot
+                    onClicked: root.copyHistory()
+                }
+            }
+            StyledText {
+                visible: root.historyError.length > 0
+                Layout.fillWidth: true
+                color: Appearance.colors.colError
+                text: root.historyError
+                wrapMode: Text.WordWrap
+            }
+            ScrollView {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 240
+                TextArea {
+                    id: automationActivityLog
+                    objectName: "automationActivityLog"
+                    text: root.activityText
+                    readOnly: true
+                    selectByMouse: true
+                    wrapMode: TextEdit.Wrap
+                    color: Appearance.colors.colOnSurface
+                    font.pixelSize: Appearance.font.pixelSize.small
+                }
+            }
+        }
+    }
+
+    SettingsCardSection {
+        expanded: true
+        icon: "monitor_heart"
+        title: Translation.tr("Diagnostics")
+        settingsTaskSection: "logs"
+        visible: root.activeSection === "logs"
+        SettingsGroup {
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                DialogButton {
+                    buttonText: Translation.tr("Refresh")
+                    enabled: !activityProcess.running
+                    onClicked: root.refreshActivity()
+                }
+                DialogButton {
+                    buttonText: Translation.tr("Copy")
+                    enabled: !!root.activitySnapshot
+                    onClicked: root.copyHistory()
+                }
+            }
+            SettingsNote {
+                icon: "lock"
+                text: Translation.tr("Private logs · review before sharing")
+            }
+            ScrollView {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 280
+                TextArea {
+                    objectName: "automationDiagnosticLog"
+                    text: root.diagnosticText
+                    readOnly: true
+                    selectByMouse: true
+                    wrapMode: TextEdit.Wrap
+                    color: Appearance.colors.colOnSurface
+                    font.pixelSize: Appearance.font.pixelSize.small
+                }
             }
         }
     }
