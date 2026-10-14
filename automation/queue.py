@@ -170,7 +170,8 @@ def claim(verified_start: Callable[[dict, dict], bool] | None = None,
         if task.get("status") not in {"prepared", "handoff_ready"}:
             raise tf.TaskError("Selected task has unsafe state")
         # Verifier checks actual managed Cloudbot selection/transport readiness.
-        if verified_start(selected, task) is not True:
+        # The verifier must attest to the exact Cloudbot decision ID and SHA.
+        if verified_start(selected, task, decision_id if manifest["mode"] == "cloud" else None) is not True:
             raise tf.TaskError("Cloudbot/transport did not authorize selection")
         selected["state"] = "active"
         manifest["active"] = {"code": selected["code"], "repository": selected["repository"]}

@@ -418,6 +418,9 @@ def _bounded_test(argv: list[str], checkout: Path) -> dict:
             proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             reason = "cleanup_timeout"
+        finally:
+            if proc.stdout:
+                proc.stdout.close()
     # Keep bounded local diagnostics; never export raw execution logs to Git.
     excerpt = captured.decode("utf-8", "replace")
     excerpt = re.sub(r"(?:ghp_[A-Za-z0-9]{15,}|github_pat_[A-Za-z0-9_]{15,}|"

@@ -115,8 +115,8 @@ class TaskflowTests(unittest.TestCase):
             with self.assertRaisesRegex(taskflow.TaskError, "not in pending"):
                 queue.claim(verified_start=lambda *args: True,
                             choice="NOTREAL-R99", decision_id="decision:001")
-            chosen = queue.claim(verified_start=lambda selected, record:
-                selected["code"] == "ABYSS-R09",
+            chosen = queue.claim(verified_start=lambda selected, record, decision_id:
+                selected["code"] == "ABYSS-R09" and decision_id == "cloud-choice:0001",
                 choice="ABYSS-R09", decision_id="cloud-choice:0001")
             self.assertEqual(chosen["selected"]["code"], "ABYSS-R09")
             self.assertEqual(queue.view()["active"]["code"], "ABYSS-R09")
