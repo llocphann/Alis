@@ -112,7 +112,7 @@ def _ensure_profile(repository: str, code: str) -> str:
             "description": PROFILE_PREFIX + repository + ":" + code,
             "mode": "continuous", "stop_on_done": True,
             "requires_github": True,
-            "project_name": "Hadalis Cloud",
+            "project_name": model.DEFAULT_PROJECT,
             "enabled": True,
             "archive_completed": False,
             "delete_completed": False,
@@ -328,7 +328,7 @@ def _ensure_selector() -> str:
         profile = model.new_profile("Cloudbot task selector")
         profile.update({
             "id": SELECTOR_ID, "description": "taskflow-selector",
-            "name": "Cloudbot task selector", "project_name": "Hadalis Cloud",
+            "name": "Cloudbot task selector", "project_name": model.DEFAULT_PROJECT,
             "enabled": True, "mode": "continuous", "stop_on_done": True,
             "requires_github": True, "archive_completed": False,
             "delete_completed": False, "prompt": "Dynamic taskflow selector",
