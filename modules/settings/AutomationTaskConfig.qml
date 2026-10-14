@@ -17,6 +17,9 @@ ContentPage {
     property string activeSection: "tasks"
     property bool cloudSelectTasks: false
     property var queueSnapshot: null
+    property bool backendInstalled: false
+    property var backendServices: ({})
+    property string backendStatusText: ""
     property var activitySnapshot: null
     property string historyError: ""
     readonly property string activityText: {
@@ -43,6 +46,7 @@ ContentPage {
     property string pendingSecretOperation: ""
     readonly property bool busy: queueProcess.running || cleanupProcess.running
         || githubSecretProcess.running || githubStatusProcess.running
+        || installerProcess.running || backendStatusProcess.running
 
     function refreshGithubStatus(): void {
         if (githubStatusProcess.running || githubSecretProcess.running)
@@ -82,10 +86,12 @@ ContentPage {
     onVisibleChanged: if (visible) {
         Qt.callLater(root.refreshGithubStatus)
         Qt.callLater(root.refreshQueue)
+        Qt.callLater(root.refreshBackendStatus)
     }
     Component.onCompleted: {
         Qt.callLater(root.refreshGithubStatus)
         Qt.callLater(root.refreshQueue)
+        Qt.callLater(root.refreshBackendStatus)
     }
 
     function activateSettingsSearchSection(section: string): bool {
@@ -94,6 +100,23 @@ ContentPage {
             : name.includes("activ") || name.includes("histor") ? "activity" : "tasks"
         Qt.callLater(root.refreshActivity)
         return true
+    }
+
+    function refreshBackendStatus(): void {
+        if (backendStatusProcess.running || installerProcess.running)
+            return
+        backendStatusProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"), "backend-status"]
+        backendStatusProcess.running = true
+    }
+
+    function installBackend(): void {
+        if (root.busy || root.backendInstalled)
+            return
+        root.backendStatusText = ""
+        installerProcess.command = ["python3",
+            Quickshell.shellPath("scripts/install-hadalis-automation.py")]
+        installerProcess.running = true
     }
 
     function refreshQueue(): void {
@@ -164,6 +187,36 @@ ContentPage {
     }
 
     Process {
+        id: backendStatusProcess
+        stdout: StdioCollector { id: backendStatusOutput }
+        stderr: StdioCollector { id: backendStatusError }
+        onExited: exitCode => {
+            try {
+                const report = JSON.parse(backendStatusOutput.text)
+                if (exitCode !== 0 || report.ok !== true)
+                    throw new Error(report.error || "Service status unavailable")
+                root.backendInstalled = report.installed === true
+                root.backendServices = report.services
+            } catch (error) {
+                root.backendInstalled = false
+                root.backendStatusText = Translation.tr("Backend status unavailable")
+            }
+        }
+    }
+
+    Process {
+        id: installerProcess
+        stdout: StdioCollector { id: installerOutput }
+        stderr: StdioCollector { id: installerError }
+        onExited: exitCode => {
+            root.backendStatusText = exitCode === 0
+                ? Translation.tr("Backend installed · services not auto-started")
+                : Translation.tr("Install failed · check local system logs")
+            Qt.callLater(root.refreshBackendStatus)
+        }
+    }
+
+    Process {
         id: queueProcess
         stdout: StdioCollector { id: queueOutput }
         stderr: StdioCollector { id: queueError }
@@ -172,7 +225,11 @@ ContentPage {
                 const result = JSON.parse(queueOutput.text)
                 if (exitCode !== 0 || result.ok !== true)
                     throw new Error(result.error || "Queue unavailable")
-                root.queueSnapshot = result
+                if (result.items) {
+                    root.queueSnapshot = result
+                    if (root.queueOperation === "status")
+                        root.cloudSelectTasks = result.mode === "cloud"
+                }
                 if (result.items && result.items.length) {
                     const first = result.items[0]
                     if (!root.selectedTask || !result.items.some(t =>
@@ -241,6 +298,7 @@ ContentPage {
         running: root.visible && !!root.selectedTask
         onTriggered: {
             root.refreshTaskStatus()
+            root.refreshQueue()
             if (root.activeSection !== "tasks") root.refreshActivity()
         }
     }
@@ -336,6 +394,44 @@ ContentPage {
 
     SettingsCardSection {
         expanded: true
+        icon: "dns"
+        title: Translation.tr("Backend")
+        settingsTaskSection: "tasks"
+        visible: root.activeSection === "tasks"
+        SettingsGroup {
+            SettingsNote {
+                icon: root.backendInstalled ? "check_circle" : "warning"
+                warning: !root.backendInstalled
+                text: root.backendInstalled
+                    ? Translation.tr("Installed · start a queue when ready")
+                    : Translation.tr("Backend not installed")
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                DialogButton {
+                    buttonText: Translation.tr("Check status")
+                    enabled: !root.busy
+                    onClicked: root.refreshBackendStatus()
+                }
+                DialogButton {
+                    buttonText: Translation.tr("Install backend")
+                    enabled: !root.busy && !root.backendInstalled
+                    onClicked: root.installBackend()
+                }
+            }
+            StyledText {
+                visible: root.backendStatusText.length > 0
+                Layout.fillWidth: true
+                color: Appearance.colors.colSubtext
+                text: root.backendStatusText
+                wrapMode: Text.WordWrap
+            }
+        }
+    }
+
+    SettingsCardSection {
+        expanded: true
         icon: "tag"
         title: Translation.tr("GitHub tasks")
         settingsTaskSection: "tasks"
@@ -375,7 +471,7 @@ ContentPage {
                 DialogButton {
                     objectName: "automationStartQueue"
                     buttonText: Translation.tr("Start")
-                    enabled: !root.busy && !!root.queueSnapshot
+                    enabled: !root.busy && root.backendInstalled && !!root.queueSnapshot
                         && ["prepared", "waiting"].includes(root.queueSnapshot.state)
                         && ["ordered", "cloud"].includes(root.queueSnapshot.mode)
                     onClicked: root.startQueue()
