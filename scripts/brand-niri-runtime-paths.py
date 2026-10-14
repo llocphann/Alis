@@ -29,10 +29,15 @@ while pending:
   if a.is_file()and b.is_file()and a.resolve()!=b.resolve():raise SystemExit('Ambiguous Niri include')
   pending.append(a if a.is_file()else b)
 changes=[]
+has_canonical_venv=any(re.search(r'^\s*ALIS_VENV\s+',p.read_text(),re.M)for p in files)
 legacy='in'+'ir'
 for p in files:
  text=p.read_text();new=[]
  for line in text.splitlines(keepends=True):
+  venv=re.match(r'^(\s*)INIR_VENV(\s+"[^"\n]+"[^\n]*)',line)
+  if venv and not has_canonical_venv:
+   new.append(venv[1]+'ALIS_VENV'+venv[2]+'\n')
+   has_canonical_venv=True
   if re.match(r'^\s*spawn(?:-at-startup|-sh-at-startup)?\b',line):
    for helper in ['native-dispatch','clipboard-image-store.sh']:
     line=line.replace('/quickshell/'+legacy+'/scripts/'+helper,'/quickshell/alis/scripts/'+helper)
