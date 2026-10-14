@@ -81,7 +81,7 @@ ShellRoot {
 ''')
  with private_wayland(folder,capture_focus=OUTPUT is not None) as env:
   if env is None:raise SystemExit('SKIP: mandatory/type native requires private Niri')
-  cfg=folder/'config/illogical-impulse';cfg.mkdir(parents=True,exist_ok=True)
+  cfg=folder/'config/alis';cfg.mkdir(parents=True,exist_ok=True)
   data=json.loads((ROOT/'defaults/config.json').read_text());data['panelFamily']='abyss';data['panelStyleVersion']=1;data['enabledPanels']=[];data['knownPanels']=['abyssPerimeter','abyssDock'];data['visitedPanelFamilies']=['abyss','waffle'];data['abyss']['companion']['enabled']=False
   (cfg/'config.json').write_text(json.dumps(data))
   for action in ['exercise','restart']:

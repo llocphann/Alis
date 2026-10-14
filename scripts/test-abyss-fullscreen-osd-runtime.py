@@ -160,7 +160,7 @@ ShellRoot {
         runtime.mkdir(mode=0o700)
         env = dict(env, WAYLAND_DISPLAY=str(Path(env.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")) / env["WAYLAND_DISPLAY"]),
                    XDG_RUNTIME_DIR=str(runtime), QSG_RHI_BACKEND="opengl")
-        config = folder / "config/illogical-impulse/config.json"
+        config = folder / "config/alis/config.json"
         config.parent.mkdir(parents=True, exist_ok=True)
         data = json.loads((ROOT / "defaults/config.json").read_text())
         data["panelFamily"] = "abyss"

@@ -50,7 +50,7 @@ ShellRoot {
     for key in ["WAYLAND_DISPLAY","NIRI_SOCKET","DISPLAY","HYPRLAND_INSTANCE_SIGNATURE","QS_CONFIG_NAME","QS_CONFIG_PATH","QS_MANIFEST"]:env.pop(key,None)
     for kind in ["config","cache","data","state"]:
         (folder/kind).mkdir();env[f"XDG_{kind.upper()}_HOME"]=str(folder/kind)
-    config=folder/"config/illogical-impulse/config.json";config.parent.mkdir(parents=True)
+    config=folder/"config/alis/config.json";config.parent.mkdir(parents=True)
     logs=[]
     for index,(content,saved,effective) in enumerate(cases):
         value=json.loads((ROOT/"defaults/config.json").read_text())
