@@ -107,5 +107,86 @@ class Preflight(unittest.TestCase):
             self.assertEqual(ui_preflight._unit_state(), ("inactive", "ui_mode"))
 
 
+    def _write_queue_fixture(self, *, state="prepared"):
+        from automation import queue
+        path = store.state_dir() / "taskflow" / "queue.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        manifest = {
+            "schema": queue.QUEUE_SCHEMA, "mode": "ordered",
+            "state": state, "approved_start": False, "active": None,
+            "items": [{
+                "code": "AI-I01", "repository": "llocphann/Alis",
+                "issue_number": 1, "source_sha": "a" * 40,
+                "state": "queued",
+            }],
+        }
+        path.write_text(json.dumps(manifest))
+        return path
+
+    def test_prepared_queue_has_own_profile_not_generic_profile(self):
+        self._write_queue_fixture()
+        config_path = store.config_path()
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps(self.config))
+        state_path = store.state_path()
+        state_path.write_text(json.dumps(self.state))
+        before = sorted(str(p) for p in Path(self.temp.name).rglob("*"))
+        with patch.object(ui_preflight, "_unit_state",
+                          return_value=("inactive", "native_mode")):
+            report = ui_preflight.check_prepared_queue()
+        after = sorted(str(p) for p in Path(self.temp.name).rglob("*"))
+        self.assertEqual(before, after)
+        self.assertEqual(report["queue_state"], "prepared")
+        self.assertEqual(report["queue_item_count"], 1)
+        self.assertEqual(report["first_task_code"], "AI-I01")
+        self.assertFalse(report["taskflow_profile_present"])
+        self.assertIn("TASKFLOW_PROFILE_NOT_MATERIALIZED",
+                      report["preflight_blockers"])
+        self.assertIn("UI_TASK_QUEUE_INTEGRATION_NOT_ACCEPTED",
+                      report["preflight_blockers"])
+        self.assertFalse(report["queue_ui_admission_available"])
+        self.assertFalse(report["submission_authorized"])
+        self.assertNotIn(self.id, json.dumps(report))
+
+    def test_queue_readiness_blocks_foreign_pending_even_if_stopped(self):
+        self._write_queue_fixture()
+        self.state["profiles"][self.id].update(
+            desired="stopped", pending={"user_message_id": "secret"},
+            session={"conversation_id": "secret"}, run_active=True)
+        config_path = store.config_path()
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps(self.config))
+        store.state_path().write_text(json.dumps(self.state))
+        with patch.object(ui_preflight, "_unit_state",
+                          return_value=("active", "native_mode")):
+            report = ui_preflight.check_prepared_queue()
+        self.assertIn("FOREIGN_PROFILE_UNSETTLED",
+                      report["preflight_blockers"])
+        self.assertIn("NATIVE_SESSION_REQUIRES_REVIEW",
+                      report["preflight_blockers"])
+        self.assertIn("SCHEDULER_CUTOVER_NOT_READY",
+                      report["preflight_blockers"])
+        self.assertNotIn("secret", json.dumps(report))
+        self.assertFalse(report["submission_authorized"])
+
+    def test_queue_diagnosis_does_not_create_missing_directories(self):
+        before = list(Path(self.temp.name).rglob("*"))
+        with patch.object(ui_preflight, "_unit_state",
+                          return_value=("inactive", "native_mode")):
+            report = ui_preflight.check_prepared_queue()
+        self.assertEqual(before, list(Path(self.temp.name).rglob("*")))
+        self.assertIn("NO_PREPARED_QUEUE", report["preflight_blockers"])
+
+    def test_queue_diagnosis_rejects_symlink_manifest(self):
+        path = store.state_dir() / "taskflow" / "queue.json"
+        path.parent.mkdir(parents=True)
+        target = path.parent / "private.json"
+        target.write_text('{"private":"DO_NOT_REVEAL"}')
+        path.symlink_to(target)
+        report = ui_preflight.check_prepared_queue()
+        self.assertEqual(report["preflight_blockers"], ["LOCAL_STATE_UNREADABLE"])
+        self.assertNotIn("DO_NOT_REVEAL", json.dumps(report))
+
+
 if __name__ == "__main__":
     unittest.main()
