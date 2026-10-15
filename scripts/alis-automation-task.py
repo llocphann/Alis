@@ -129,13 +129,32 @@ def main():
             # memory. Never write it to a config file, issue or activity log.
             result = privilege.authenticate(sys.stdin.read(1026))
         elif args.action == "backend-status":
+            from automation.chat_bridge.ui_preflight import check_prepared_queue
             states = manager_control.service_states()
+            ui_check = check_prepared_queue()
+            ui_start_ready = (
+                states["bridge"]["state"] == "active"
+                and states["worker"]["state"] == "active"
+                and ui_check.get("queue_state") == "prepared"
+                and ui_check.get("taskflow_profile_present") is True
+                and ui_check.get("installed_service_mode") == "ui_queue_mode"
+                and ui_check.get("service_state") == "active"
+                and set(ui_check.get("preflight_blockers", [])) == {
+                    "SCHEDULER_CUTOVER_NOT_READY",
+                    "UI_QUEUE_OWNER_ACCEPTANCE_REQUIRED",
+                }
+            )
             result = {"ok": True, "services": {
                 kind: {"state": service.get("state", "unavailable"),
                        "unit": service.get("unit", "")}
                 for kind, service in states.items()
             }, "installed": all(states[name]["state"] != "unavailable"
                                for name in ("bridge", "worker")),
+            "ui_queue_start_available": ui_start_ready,
+            "ui_queue_first_task": (
+                ui_check.get("first_task_code") if ui_start_ready else None),
+            "ui_queue_legacy_native_pending_retained": bool(
+                ui_check.get("legacy_native_pending_retained")),
             **transport_gate.readiness()}
         elif args.action == "start-queue":
             mode = queue.view()["mode"]
