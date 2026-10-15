@@ -16,7 +16,8 @@ try{
   assert.match(SMOKE_ACCEPTANCE_ID,/^[0-9a-f-]{36}$/);
   const PROJECT="Automatic Alis";
   function makePage({initialScoped=false,initialDraft="",assistant=true,
-    chatId=true,ambiguousAction=false}={}){
+    chatId=true,ambiguousAction=false,targetListInitiallyHidden=false,
+    targetListAlwaysHidden=false,targetListAmbiguous=false}={}){
     let scoped=initialScoped,draft=initialDraft,submitted=false;
     let navClicks=0,sendClicks=0,fillCount=0;
     const oldDraft=initialDraft;
@@ -74,7 +75,10 @@ try{
               ?shown():[],"editor");
           }
         }
-        if(role==="list")return loc(shown,"list");
+        if(role==="list")return loc(
+          ()=>targetListAmbiguous?[{visible:true},{visible:true}]:
+            targetListAlwaysHidden||targetListInitiallyHidden&&!scoped
+              ?[]:shown(),"list");
         if(role==="button"){
           if(name==="Send")return loc(shown,"send");
           if(name==="Start new chat in "+PROJECT&&opt.exact)return loc(
@@ -114,7 +118,8 @@ try{
 
   // User's real failure state: foreign/global composer has a draft.
   // One Project navigation, then one journal-before-fill-before-Send.
-  const p=makePage({initialDraft:"FOREIGN_PRIVATE_DRAFT"});
+  const p=makePage({initialDraft:"FOREIGN_PRIVATE_DRAFT",
+    targetListInitiallyHidden:true});
   const r=await oneShotUiSmoke({page:p.page,ownerApproved:true,
     persistAttempt:async record=>{
       await persistAttempt(record);
@@ -158,6 +163,28 @@ try{
   assert.equal(noId.status,"sent_unverified");
   assert.equal(noId.assistant_only_reply_observed,true);
   assert.equal(noId.selected_chat_identity_stable,false);
+
+  // The navigation target must become verifiable after exactly one click.
+  // A sidebar button alone must never be used as Send authority.
+  const listNeverAppears=makePage({initialDraft:"FOREIGN_DRAFT",
+    targetListAlwaysHidden:true});
+  const unverified=await oneShotUiSmoke({page:listNeverAppears.page,
+    ownerApproved:true,persistAttempt:async()=>{throw Error("NO_JOURNAL_ALLOWED");},
+    wait,maxResponsePolls:1});
+  assert.equal(unverified.code,"ALIS_UI_PROJECT_NAVIGATION_NOT_VERIFIED");
+  assert.equal(unverified.navigation_click_attempted,true);
+  assert.equal(listNeverAppears.get().navClicks,1);
+  assert.equal(listNeverAppears.get().fillCount,0);
+  assert.equal(listNeverAppears.get().sendClicks,0);
+
+  const listAmbiguous=makePage({targetListAmbiguous:true});
+  const blockedList=await oneShotUiSmoke({page:listAmbiguous.page,
+    ownerApproved:true,persistAttempt:async()=>{throw Error("NO_JOURNAL_ALLOWED");},
+    wait,maxResponsePolls:1});
+  assert.equal(blockedList.code,"ALIS_UI_NAVIGATION_UNSAFE");
+  assert.ok(blockedList.navigation_blockers.includes("TARGET_PROJECT_LIST_AMBIGUOUS"));
+  assert.equal(listAmbiguous.get().navClicks,0);
+  assert.equal(listAmbiguous.get().sendClicks,0);
 
   const weird=makePage({ambiguousAction:true});
   const ambiguous=await oneShotUiSmoke({page:weird.page,ownerApproved:true,
