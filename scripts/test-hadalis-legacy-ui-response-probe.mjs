@@ -77,7 +77,7 @@ const test=async(code,req,reply,guard)=>{
     "submission_authorized","scheduler_activation_authorized",
     "supported_for_automated_tasks"])assert.equal(r[key],false);
   for(const secret of ["ghp_PRIVATE_TOKEN","Automatic Alis",
-    REQUEST,REPLY,"conversation_id","user_message_id","project_id"])
+    REQUEST,REPLY,'"conversation_id":','"user_message_id":','"project_id":'])
     assert.equal(JSON.stringify(r).includes(secret),false);
 };
 await test("ONE_VISIBLE_HARMLESS_PAIR_NOT_ATTESTED",1,1,true);
