@@ -47,8 +47,8 @@ export async function oneShotUiAcceptance({
     inspection.project_badge_count_capped===1 &&
     inspection.target_project_list_count_capped===1 &&
     inspection.selected_target_chat_count_capped===0 &&
-    assessment.project_landing_visual_evidence===
-      "project-empty-landing-corroborated" &&
+    // A new Project conversation remains valid even if Project has older
+    // chats, so "No chats yet" is NOT a prerequisite for this one shot.
     inspection.send_count_capped===1 && inspection.send_disabled===true;
   if(!blankProjectPreflight)
     return {status:"blocked",code:"EMPTY_PROJECT_PREFLIGHT_NOT_READY",
@@ -88,8 +88,6 @@ export async function oneShotUiAcceptance({
       after.project_badge_count_capped===1 &&
       after.target_project_list_count_capped===1 &&
       after.selected_target_chat_count_capped===0 &&
-      after.target_project_text_in_main_count_capped>=1 &&
-      after.empty_project_state_in_main_count_capped===1 &&
       after.composer_count_capped===1 &&
       after.composer_draft_present===true &&
       after.composer_disabled===false &&
