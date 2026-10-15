@@ -20,7 +20,8 @@ from automation import github_handoff
 from automation.worker import daemon as worker
 
 
-def inspect(job_id: str, *, fetch: bool = True) -> tuple[dict, dict, str]:
+def inspect(job_id: str, *, fetch: bool = True,
+            allow_expired_finished: bool = False) -> tuple[dict, dict, str]:
     if not worker.JOB_RE.fullmatch(job_id):
         raise ValueError("invalid job identity")
     if fetch:
@@ -35,9 +36,10 @@ def inspect(job_id: str, *, fetch: bool = True) -> tuple[dict, dict, str]:
     if not isinstance(job.get("handoff"), dict):
         raise ValueError("job is not using GitHub handoff")
     raw = worker.remote_text(github_handoff.PATH)
-    signal = github_handoff.validate_signal(raw)
+    signal = github_handoff.validate_signal(
+        raw, require_fresh=not allow_expired_finished)
     github_handoff.match_job(signal, job, original)
-    if signal["expires_unix"] < int(time.time()):
+    if not allow_expired_finished and signal["expires_unix"] < int(time.time()):
         raise ValueError("expired signal requires a new job ID and approval")
     return signal, job, original
 
@@ -236,20 +238,93 @@ def running_worker_status(*, now: int | None = None) -> dict:
     }
 
 
+def publish_existing_receipt(job_id: str, expected_digest: str) -> dict:
+    """One approved publication attempt ONLY, never dispatch or execute.
+
+    The durable owner-approved receipt is the execution tombstone. A stale
+    signal may permit publishing the prior result but never new execution.
+    Both this CLI and the running worker use the same job/publish locks.
+    """
+    signal, job, raw = inspect(job_id, allow_expired_finished=True)
+    digest = github_handoff.job_digest(raw)
+    if (signal["status"] != "DONE" or expected_digest != digest
+            or not github_handoff.approval_matches(worker.state_root(), job, raw)):
+        raise ValueError("exact local approval and matching DONE are required")
+    if job.get("profile_id") is not None:
+        raise ValueError("profile-owned receipts must use existing profile publisher")
+    if os.environ.get("HADALIS_WORKER_PUSH_REMOTE"):
+        raise ValueError("push override is not allowed in recovery")
+    from automation.manager.credentials import repository
+    from automation import credentials as scoped_credentials
+    repo = repository(worker.remote_url())
+    if (repo not in scoped_credentials.REPOS
+            or scoped_credentials.status(repo)["saved"] is not True):
+        raise ValueError("repository keyring credential is unavailable")
+    commit = worker.introducing_commit(f"{worker.QUEUE}/{job_id}.json")
+    if worker.first_parent(commit) != job["base_sha"]:
+        raise ValueError("job commit ancestry differs from pinned base")
+    with worker.job_lock(job_id):
+        receipt = worker.load_receipt(job_id)
+        if (not isinstance(receipt, dict)
+                or receipt.get("phase") not in {"finished", "published"}):
+            raise ValueError("no settled durable worker receipt")
+        result = receipt.get("result")
+        if (not isinstance(result, dict)
+                or receipt.get("job") != job_id
+                or receipt.get("input_sha256") != digest
+                or receipt.get("job_commit") != commit
+                or result.get("job") != job_id
+                or result.get("job_commit") != commit
+                or result.get("base_sha") != job["base_sha"]
+                or result.get("input_sha256") != digest
+                or result.get("status") != "passed"
+                or result.get("recovery_required")
+                or receipt.get("workspace") is not None):
+            raise ValueError("stored execution evidence does not match immutable job")
+        if receipt["phase"] == "published":
+            return {"status": "already_published", "receipt_phase": "published",
+                    "no_job_executed_by_this_command": True}
+        receipt["phase"] = "publishing"
+        worker.save_receipt(job_id, receipt)
+        try:
+            # Only publish(), never process_job(), execute(), or --once.
+            worker.publish(job_id, result)
+        except Exception:
+            receipt["phase"] = "finished"
+            receipt["publish_attempts"] = receipt.get("publish_attempts", 0) + 1
+            receipt["publish_after_unix"] = int(time.time()) + min(
+                300, 5 * 2**min(receipt["publish_attempts"], 6))
+            receipt["publish_error"] = "Publication failed; execution receipt retained"
+            worker.save_receipt(job_id, receipt)
+            raise RuntimeError("publication attempt failed; execution receipt retained") from None
+        receipt.update(phase="published", published_at_unix=int(time.time()),
+                       publish_after_unix=0)
+        worker.save_receipt(job_id, receipt)
+        return {"status": "published", "receipt_phase": "published",
+                "no_job_executed_by_this_command": True}
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="AUTO-F01 single-file GitHub handoff")
     command = parser.add_subparsers(dest="command", required=True)
     command.add_parser("doctor",help="Read running worker capability without GitHub mutations")
-    for name in ("status", "approve"):
+    for name in ("status", "approve", "publish-existing"):
         p = command.add_parser(name)
         p.add_argument("job_id")
-        if name == "approve":
+        if name in {"approve", "publish-existing"}:
             p.add_argument("--owner-approved", action="store_true")
             p.add_argument("--expected-sha256", required=True,
                            help="Exact pinned job digest displayed by status")
     args = parser.parse_args(argv)
     if args.command == "doctor":
         print(json.dumps(running_worker_status(), sort_keys=True))
+        return 0
+    if args.command == "publish-existing":
+        if not args.owner_approved:
+            raise ValueError("explicit owner confirmation is required")
+        outcome = publish_existing_receipt(args.job_id, args.expected_sha256)
+        print(json.dumps({"purpose": "auto-f01-existing-receipt-publication",
+                          "job_id": args.job_id, **outcome}, sort_keys=True))
         return 0
     if args.command == "approve" and args.owner_approved is not True:
         raise ValueError("explicit owner approval required before any local job is eligible")
