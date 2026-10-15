@@ -163,9 +163,30 @@ or a UI journal tombstone all **block** cutover. A positive local result
 is **not** authorization to restart the unit or send a prompt.
 
 The second command uses an existing Desktop CDP connection **read-only**.
-It checks whether a unique selected chat key is stable across two samples
-in the configured Alis Project, without exposing chat title, ID, href or
-fingerprint. It explicitly reports no server identity attestation and no
+It separates two distinct states without exposing a chat title, ID, href,
+fingerprint, draft or private DOM content:
+
+- `selected_chat_identity_stable=true` and
+  `diagnosis=ALIS_UI_CHAT_TARGET_OBSERVED`: an **existing selected chat**
+  in the exact Project list has a stable unique UI ID across two samples.
+  This is a UI continuity hint, not server attestation.
+- `selected_chat_identity_stable=false`,
+  `empty_project_entry_ready=true` and
+  `diagnosis=ALIS_UI_EMPTY_PROJECT_ENTRY_OBSERVED`: the exact
+  Project-scoped composer is demonstrably empty and idle, with no selected
+  conversation yet. This is expected when entering an empty Project before
+  the first message. It is **not** selected-chat identity and does **not**
+  authorize a send.
+- Both booleans false: the target is unverified (different Project, generic
+  unscoped editor, changed renderer, existing chat with missing ID, draft,
+  ambiguity or busy UI). Do not work around this by picking a random chat,
+  replacing an unresolved journal or weakening the pinned target guard.
+
+The read-only checker never sends a message. Initial UI Queue sends must
+still be explicitly owner-approved, retain a durable one-shot intent, and
+obtain a unique Project chat ID after the response before any continuation.
+An initial message whose target remains unidentified stops for reconciliation,
+not a replay. All results explicitly deny server identity attestation and
 scheduler submission authority.
 
 A new Alis UI send must also see an assistant-only completion: a **new**
