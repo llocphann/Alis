@@ -33,7 +33,9 @@ def main():
     commands.add_parser("queue-status")
     clear_queue = commands.add_parser("queue-clear")
     clear_queue.add_argument("--approve", action="store_true",
-                             help="Owner confirms removal of idle queue manifest only")
+                             help="Owner confirms pruning queued tasks without stopping active work")
+    clear_queue.add_argument("--expected-queued", required=True,
+                             help="Exact repo:code list shown when owner confirmed")
     commands.add_parser("sudo-status")
     commands.add_parser("sudo-authenticate")
     commands.add_parser("backend-status")
@@ -87,7 +89,8 @@ def main():
         elif args.action == "queue-status":
             result = queue.view()
         elif args.action == "queue-clear":
-            result = queue.clear(approved=args.approve)
+            result = queue.clear(approved=args.approve,
+                                 expected_queued=args.expected_queued)
         elif args.action == "sudo-status":
             from automation.worker import privilege
             result = privilege.auth_status()
