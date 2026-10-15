@@ -1,0 +1,19 @@
+{
+  "runtime_base_sha": "28c146d4a45a123073abeaec445a84f3fb4ecbbf",
+  "test_scope": "New test overlay, not yet committed at run; exact source/overlay hashes in receipts",
+  "native_exit": 0,
+  "test_exit": 0,
+  "reported_kind_scenes": 8,
+  "control_assertions": 369,
+  "gpu_images": 24,
+  "endpoint_rois": 12,
+  "intentional_inherited_zero_hides": 4,
+  "custom_width_affects_exact_rgba_pairs": 4,
+  "qualified": "Actual QtTest mouse control events, transient drafts, Cancel restore, Done private JSON persistence and reopen",
+  "unqualified": [
+    "Owner physical Wayland pointer acceptance",
+    "All themes/scales/multi-output/restart and whole R13 completion",
+    "Frame-time/CPU/GPU gain"
+  ],
+  "production_R13_changes": "None; no source defect reproduced in focused scope"
+}

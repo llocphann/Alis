@@ -1,0 +1,16 @@
+{
+  "source_sha": "28c146d4a45a123073abeaec445a84f3fb4ecbbf",
+  "actual_test_exit": 0,
+  "elapsed_seconds": 36.64470624923706,
+  "capture_focus": false,
+  "children": [
+    {
+      "pid": 699474,
+      "actual_exit": 0
+    },
+    {
+      "pid": 699494,
+      "actual_exit": 0
+    }
+  ]
+}

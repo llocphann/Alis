@@ -1,0 +1,22 @@
+{
+  "source_sha": "28c146d4a45a123073abeaec445a84f3fb4ecbbf",
+  "overlay": [
+    "scripts/test-abyss-round0-editor-controls.py"
+  ],
+  "files": {
+    "scripts/test-abyss-round0-editor-controls.py": "d057ff3e512a4048ff1554e50408c13c2bd19000357517c7bc54ccd39090f2a5",
+    "scripts/native_test_session.py": "342582fc9d61e1ba3d42990fb1d7a7dc7043749beea836ec8f6a85e867a4aa73",
+    "modules/abyss/looks/AbyssField.qml": "305109d6323d2a915a11168ee831a7ed3e13e27b20881e3269d54dacf1294092",
+    "modules/abyss/looks/AbyssField.vert": "7fc5fe0c7f1ff35c1e56dbad27c81af44d1ab539d47bdd1b2fb8eadcca522bc0",
+    "modules/abyss/looks/AbyssField.vert.qsb": "4d81e9e4d04dba6d8fadfd423f3dae2792dd24ca593300766f1112e66009dec7",
+    "modules/abyss/looks/AbyssField.frag": "75b90652cc51400cd9951067e06090457728d13a14ab5259bf3d035e54d4b53f",
+    "modules/abyss/looks/AbyssField.frag.qsb": "2c0fd537c41eb4961af93be0bd2d8ecdb11cf0cc529138dd091765bc09a5d73b",
+    "modules/abyss/looks/AbyssGeometry.js": "f0161dfc484eabfaac905b13ee52abfee909860ee9653fa1fd27c8c84109c1c4",
+    "modules/abyss/looks/AbyssLayout.js": "6117d4b22942913812884a6a6c24975c23c283e38a20a2efe92c78892391a1b1",
+    "modules/abyss/AbyssEdgeEditor.qml": "402cdb611a6c2ebf887d4aedeab5a9d48a3afd8fd8f0158375309c9898631d93",
+    "modules/abyss/looks/AbyssButton.qml": "19099808e02dd77ae0b49a14f4e224cb040d15eac31503210f63b64bba77c6bb",
+    "modules/abyss/looks/AbyssSlider.qml": "470d50c977342f0678bb4ce4e869cec325386272dbc05d09d13e3a2e3c2f0d00",
+    "modules/abyss/bar/AbyssBar.qml": "74a95b76063c182b53a8bdeece924548fc687dd1f80cc9a11ec862cbfb4dab17",
+    "modules/abyss/bar/AbyssBarModule.qml": "a77919149fce53a6909668aff0bdd2a0cf54ce654364f60836c9bac432cc1619"
+  }
+}
