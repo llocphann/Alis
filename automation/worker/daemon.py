@@ -291,7 +291,18 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
     with (state_root()/"publish.lock").open("a+") as lock:
         fcntl.flock(lock,fcntl.LOCK_EX)
         fetch_dev(payload.get("profile_id"))
-        if result_exists(job_id):return
+        already_published=result_exists(job_id)
+        if already_published:
+            # Never trust a same-name remote result blindly. A conflicting
+            # artifact must not acknowledge, overwrite or retire this job.
+            try: published=json.loads(remote_text(target))
+            except (ValueError, RuntimeError):
+                raise RuntimeError("published result unreadable") from None
+            if (not isinstance(published,dict)
+                    or published.get("job")!=job_id
+                    or published.get("input_sha256")!=payload.get("input_sha256")
+                    or published.get("status")!=payload.get("status")):
+                raise RuntimeError("published result identity conflict")
         head=git("rev-parse","origin/dev").stdout.strip()
         if not SHA_RE.fullmatch(head):raise RuntimeError("publication HEAD unavailable")
         checkout=Path(tempfile.mkdtemp(prefix=job_id+"-",dir=publish_dir));shutil.rmtree(checkout)
@@ -300,8 +311,10 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
             if clone.returncode:raise RuntimeError("publication clone failed")
             checked=run(["git","checkout","--detach",head],cwd=checkout,timeout=60)
             if checked.returncode:raise RuntimeError("publication checkout failed")
-            output=checkout/target;output.parent.mkdir(parents=True,exist_ok=True)
-            output.write_text(json.dumps(public_result(payload),indent=2,sort_keys=True)+"\n")
+            output=checkout/target
+            if not already_published:
+                output.parent.mkdir(parents=True,exist_ok=True)
+                output.write_text(json.dumps(public_result(payload),indent=2,sort_keys=True)+"\n")
             # Keep one reusable remote handoff file. Once a *settled* local
             # job result is durably committed, retire only its matching DONE
             # signal in the SAME publication commit. If any identity differs,
@@ -314,12 +327,17 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
                         active.read_text(encoding="utf-8"),payload)
                 except OSError:
                     pass
+            if already_published and not retire_handoff:
+                return
             if retire_handoff:
                 active.unlink()
-            if retire_handoff:
-                staged=run(["git","add","--",target,github_handoff.PATH],cwd=checkout,timeout=60)
+            if retire_handoff and not already_published:
+                paths=[target,github_handoff.PATH]
+            elif retire_handoff:
+                paths=[github_handoff.PATH]
             else:
-                staged=run(["git","add","--",target],cwd=checkout,timeout=60)
+                paths=[target]
+            staged=run(["git","add","--",*paths],cwd=checkout,timeout=60)
             if staged.returncode: raise RuntimeError("publication staging failed")
             for argv in (["git","commit","-m",f"automation: record {job_id} result"],):
                 result=run(argv,cwd=checkout,timeout=60)
