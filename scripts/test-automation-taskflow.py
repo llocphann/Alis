@@ -605,7 +605,7 @@ class TaskflowTests(unittest.TestCase):
         self.assertIn("&& root.backendTransportReady", qml)
         self.assertIn("Alis Desktop loop requires activation", qml)
         self.assertIn("Automation modules missing from installed Alis; update runtime", qml)
-        self.assertEqual(qml.count("onStreamFinished: root._automationStdoutClosed"), 8)
+        self.assertEqual(qml.count("onStreamFinished: root._automationStdoutClosed"), 9)
         self.assertEqual(qml.count("JSON.parse("), 1)
         for process in ("queueProcess", "githubStatusProcess", "backendStatusProcess",
                         "taskStatusProcess", "activityProcess", "cleanupProcess"):
