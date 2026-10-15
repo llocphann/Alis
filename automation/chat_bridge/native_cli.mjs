@@ -21,6 +21,14 @@ try {
   // Quarantine before connecting to Desktop (no project navigation or send).
   if(input.op==="adopt")
     throw new Error("legacy pending identity requires authenticated server evidence");
+  // Structural fingerprints and owner-visible UI smoke tests cannot attest
+  // server-side Project membership, a specific user turn, or durable final
+  // receipt. Keep all managed message mutations disabled at this boundary
+  // until a separately audited authenticated transport is implemented.
+  // No env flag, profile option or unchecked Desktop renderer value can
+  // override this gate. The owner-only one-shot test lives in a separate CLI.
+  if(input.op==="submit" || input.op==="resume")
+    throw new Error("managed submission transport not attested");
   const connection = await connectNative(); browser = connection.browser;
   const page = connection.page;
   let result;
@@ -53,7 +61,9 @@ try {
 } catch (error) {
   // Never serialize a raw request/headers or an HTTP error body.
   const message=String(error.message);
-  const code=message.includes("legacy pending") ? "LEGACY_IDENTITY_AMBIGUOUS"
+  const code=message.includes("managed submission transport not attested")
+    ? "MANAGED_SUBMISSION_NOT_ATTESTED"
+    : message.includes("legacy pending") ? "LEGACY_IDENTITY_AMBIGUOUS"
     : /unsupported|capabilit|export contract|Desktop build/.test(message) ? "DESKTOP_CAPABILITY_UNAVAILABLE"
     : message.includes("GitHub plugin") ? "GITHUB_PLUGIN_UNAVAILABLE"
     : message.includes("project name") ? "PROJECT_UNAVAILABLE_OR_AMBIGUOUS"
