@@ -17,6 +17,7 @@ let sendDisabled=true,keepSendDisabledAfterFill=false;
 let forceForeignDraftAfterFill=false;
 let hiddenComposerBeforeVisible=false,hiddenSendBeforeVisible=false;
 let duplicateVisibleSend=false;
+let projectListHidden=false,projectBadgeHidden=false;
 function loc(items,kind){
   return {
     count:async()=>items.length,
@@ -65,7 +66,8 @@ const page={
       {visible:true,disabled,draft}
     ],"editor");
     if(role==="dialog")return loc([],"dialog");
-    if(role==="list")return loc([{visible:true,selected:[]}],"list");
+    if(role==="list")return loc(projectListHidden?[]:
+      [{visible:true,selected:[]}],"list");
     if(role==="button"&&options.name==="Send")
       return loc([
         ...(hiddenSendBeforeVisible?[{visible:false,disabled:false}]:[]),
@@ -75,7 +77,7 @@ const page={
     if(role==="button"&&options.name instanceof RegExp &&
        options.name.test("Stop"))
       return loc(busy?[{visible:true}]:[],"stop");
-    return loc([{visible:true}],"badge");
+    return loc(projectBadgeHidden?[]:[{visible:true}],"badge");
   }
 };
 const seen=new Set();
@@ -170,6 +172,22 @@ r=await call({acceptanceId:"cccccccc-cccc-4ccc-8ccc-cccccccccccc"});
 assert.equal(r.status,"blocked");
 assert.deepEqual(events,[]);
 duplicateVisibleSend=false;
+
+// Owner's live Desktop new-chat state: exact badge and scoped composer,
+// no chat list visible. Must still journal and click ONCE, never infer ID.
+projectListHidden=true;
+events.length=0;draft="";sendDisabled=true;
+r=await call({acceptanceId:"dddddddd-dddd-4ddd-8ddd-dddddddddddd"});
+assert.equal(r.code,"SINGLE_UI_CLICK_ISSUED_OBSERVE_ONLY");
+assert.deepEqual(events,["durable-intent","fill","click"]);
+events.length=0;draft="";sendDisabled=true;
+// A missing exact Project badge is never compensated by absent chat list.
+projectBadgeHidden=true;
+r=await call({acceptanceId:"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"});
+assert.equal(r.status,"blocked");
+assert.equal(r.code,"EMPTY_PROJECT_PREFLIGHT_NOT_READY");
+assert.deepEqual(events,[]);
+projectBadgeHidden=false;projectListHidden=false;
 // Real offline fsynced journal cannot be replayed or silently overwritten.
 const stateHome=fs.mkdtempSync(path.join(os.tmpdir(),"alis-ui-journal-"));
 try {
