@@ -67,7 +67,7 @@ def _mark_unresolved(profile_id: str, detail: str) -> None:
 
 
 def ui_tick(profile_id: str, *, now: int | None = None,
-            desktop=None) -> str:
+            desktop=None, queue_owner: tuple[str, str, str] | None = None) -> str:
     """One bounded scheduler admission. Never invokes a second native owner."""
     now = int(time.time()) if now is None else now
     desktop = runtime.desktop if desktop is None else desktop
@@ -188,7 +188,32 @@ def ui_tick(profile_id: str, *, now: int | None = None,
         store.event(state, profile_id, "ui_send_prepared", attempt)
         return True
     try:
-        if not store.change_state(prepare):
+        if queue_owner is not None:
+            from automation import queue as task_queue
+            with task_queue._lock():
+                current_queue = task_queue._load()
+                expected_repo, expected_code, expected_sha = queue_owner
+                if (not current_queue
+                        or current_queue.get("mode") != "ordered"
+                        or current_queue.get("state") != "active"
+                        or current_queue.get("approved_start") is not True
+                        or current_queue.get("stop_requested")
+                        or current_queue.get("active") != {
+                            "repository": expected_repo, "code": expected_code}
+                        or sum(
+                            1 for entry in current_queue.get("items", [])
+                            if isinstance(entry, dict)
+                            and entry.get("repository") == expected_repo
+                            and entry.get("code") == expected_code
+                            and entry.get("source_sha") == expected_sha
+                            and entry.get("state") == "active"
+                        ) != 1):
+                    return "ALIS_UI_QUEUE_STOPPED_BEFORE_SUBMISSION"
+                # The intent is durable while queue.lock excludes Stop.
+                admitted = store.change_state(prepare)
+        else:
+            admitted = store.change_state(prepare)
+        if not admitted:
             return "owner_changed"
         # UI journal fsync occurs in runtime.desktop BEFORE composer change.
         # Runtime must not retry an ambiguous/failed click.
@@ -322,7 +347,8 @@ def queue_tick(*, now: int | None = None, desktop=None) -> str:
     # Do not hold queue.lock while observing the Desktop response; Stop can
     # revoke approval while waiting. The actual first send also needs an
     # atomic latest-state recheck inside ui_tick's durable prepare transaction.
-    return ui_tick(pid, now=now, desktop=desktop)
+    return ui_tick(pid, now=now, desktop=desktop,
+                   queue_owner=(active["repository"], active["code"], source_sha))
 
 
 def queue_loop(*, once: bool = False) -> int:
