@@ -358,8 +358,9 @@ class UiSchedulerTests(TestCase):
     def test_ui_done_receipt_advances_only_exact_local_evidence(self):
         pid, task = self._queue_fixture(state="active", approved=True)
         def save(updated):
-            task.clear()
-            task.update(updated)
+            if updated is not task:
+                task.clear()
+                task.update(updated)
         with patch.object(tf, "load_task", return_value=task), \
              patch.object(tf, "_save_task", side_effect=save):
             self.assertEqual(ui_scheduler.queue_tick(
