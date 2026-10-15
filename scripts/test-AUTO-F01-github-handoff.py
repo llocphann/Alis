@@ -294,6 +294,44 @@ class GitHubHandoffTests(unittest.TestCase):
                     self.assertEqual(module.main(["approve",JOB_ID,
                         "--owner-approved","--expected-sha256",sha]),0)
                 self.assertTrue(handoff.approval_matches(state,job,raw))
+    def test_doctor_requires_fresh_installed_handoff_worker(self):
+        import importlib.util
+        cli=Path(__file__).resolve().parent/"AUTO-F01-github-handoff.py"
+        spec=importlib.util.spec_from_file_location("auto_f01_worker_doctor",cli)
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        at=int(time.time())
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            with patch.object(worker,"state_root",return_value=root):
+                self.assertFalse(module.running_worker_status(now=at)[
+                    "worker_supports_github_handoff"])
+                heartbeat=root/"pool.json"
+                heartbeat.write_text(json.dumps({
+                    "heartbeat_at_unix":at,
+                    "github_handoff_contract":handoff.SCHEMA
+                }))
+                self.assertTrue(module.running_worker_status(now=at)[
+                    "worker_supports_github_handoff"])
+                self.assertFalse(module.running_worker_status(now=at)[
+                    "managed_chat_transport_ready"])
+                heartbeat.write_text(json.dumps({
+                    "heartbeat_at_unix":at-100,
+                    "github_handoff_contract":handoff.SCHEMA
+                }))
+                self.assertFalse(module.running_worker_status(now=at)[
+                    "worker_supports_github_handoff"])
+                heartbeat.write_text(json.dumps({
+                    "heartbeat_at_unix":at,
+                    "github_handoff_contract":"legacy-v0"
+                }))
+                self.assertFalse(module.running_worker_status(now=at)[
+                    "worker_supports_github_handoff"])
+                heartbeat.unlink()
+                heartbeat.symlink_to(root/"untrusted")
+                self.assertFalse(module.running_worker_status(now=at)[
+                    "worker_supports_github_handoff"])
+
 
 
     def test_stale_unstarted_manifest_prunes_once_without_touching_receipts(self):
