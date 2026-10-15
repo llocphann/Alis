@@ -146,6 +146,26 @@ def retire_after_receipt(raw_signal: str, payload: dict,
             and signal["job_sha256"] == payload.get("input_sha256"))
 
 
+def retire_matching_handoff(raw_signal: str, raw_job: str,
+                            payload: dict, *, now: int | None = None) -> bool:
+    """Retire an existing DONE control only for its exact settled source job.
+
+    A job ID and digest are not enough to retire a possibly newer, unrelated
+    ACTIVE signal. Match its task code, run UUID and base SHA to the preserved
+    opt-in job as well. Any missing/unreadable source fails closed; the result
+    receipt can still be published without touching the control.
+    """
+    if not retire_opt_in_job(raw_job, payload):
+        return False
+    try:
+        signal = validate_signal(raw_signal, now=now, require_fresh=False)
+        job = json.loads(raw_job)
+        match_job(signal, job, raw_job)
+    except (ValueError, TypeError, KeyError, AttributeError):
+        return False
+    return retire_after_receipt(raw_signal, payload, now=now)
+
+
 def retire_opt_in_job(raw_job: str, payload: dict) -> bool:
     """Delete only an exact settled opt-in queue payload after publication.
 
