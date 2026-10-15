@@ -179,8 +179,16 @@ fingerprint, draft or private DOM content:
   authorize a send.
 - Both booleans false: the target is unverified (different Project, generic
   unscoped editor, changed renderer, existing chat with missing ID, draft,
-  ambiguity or busy UI). Do not work around this by picking a random chat,
-  replacing an unresolved journal or weakening the pinned target guard.
+  ambiguity or busy UI). The same read-only command now returns
+  `target_diagnostics`, containing **only** category/count/boolean signals
+  (Project view/landing, composer scope, selected-chat count, draft-present
+  flag, generation-busy flag and readiness-issue codes). A visually labeled
+  empty Project landing with an unscoped generic composer is reported as
+  `ALIS_UI_PROJECT_LANDING_COMPOSER_UNSCOPED`, **not** an authorized empty
+  Project editor. Missing selected-chat IDs are separately reported as
+  `ALIS_UI_SELECTED_CHAT_KEY_MISSING`. Do not work around these by picking
+  a random chat, replacing an unresolved journal or weakening the pinned
+  target guard.
 
 The read-only checker never sends a message. Initial UI Queue sends must
 still be explicitly owner-approved, retain a durable one-shot intent, and
