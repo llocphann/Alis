@@ -989,7 +989,9 @@ class TaskflowTests(unittest.TestCase):
                 rotation.bind_managed_chat("AUTO-R01", "chat-original", "msg-start",
                                            verify_session=lambda *args: False)
             self.assertTrue(rotation.bind_managed_chat("AUTO-R01", "chat-original", "msg-start",
-                      verify_session=lambda cid, mid, prompt: prompt.startswith("You are"))["ok"])
+                      verify_session=lambda cid, mid, prompt: (
+                          prompt.startswith("[$github](app://connector_76869538009648d5b282a4bb21c3d157)")
+                          and "You are the Cloudbot reasoning agent." in prompt))["ok"])
             self.assertTrue(rotation.bind_managed_chat("AUTO-R01", "chat-original", "msg-start",
                       verify_session=lambda *args: False)["duplicate"])
             record = taskflow.load_task("AUTO-R01")
