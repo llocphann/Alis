@@ -86,6 +86,64 @@ visible reply as proof of server-side identity. Current
 `automation.transport_gate` for native managed task queue remains
 closed and has not been bypassed.
 
+
+### AUTO-F01 ordered Queue -> UI-only loop (owner opt-in)
+
+The queue-only transport is separate from `--ui-loop-profile` and the
+server-attested native gate. It is not a replacement for real installed
+Desktop acceptance. Default installation stays native; no unattended message
+is sent by installing or preparing a profile.
+
+- `python3 scripts/AUTO-F01-ui-preflight.py --queue` is read-only. The
+  first SHA-pinned task owns its own deterministic taskflow profile; do not
+  start an unrelated enabled generic Automation profile.
+- A disabled and explicitly stopped **generic legacy native** profile with a
+  native pending message and session, but no job, may remain in the local
+  manager state while the alternative UI scheduler operates. Its original
+  pending/session/run-active evidence is **not erased, adopted, completed, or
+  replayed**. Enabled, running, job-waiting, missing-config, taskflow, and
+  ambiguous legacy profiles remain blocking. Native and UI managers share
+  the same exclusive `chat-bridge.lock` and cannot run simultaneously.
+- After owner review and **stopping the native bridge service** (not the
+  worker), stage the first exact queue member:
+  `python3 scripts/alis-automation-task.py queue-stage-ui --approve --expected-first llocphann/Alis:AI-I01`.
+  This command only creates idle profile metadata; it does not claim
+  `AI-I01` or change the six-item queue.
+- Only after separately checking the installed Desktop and accepting the
+  limitations, install the *alternate* bridge mode with
+  `python3 scripts/install-hadalis-automation.py --ui-loop-queue`
+  (without `--enable-now` or `--reset-session-state`), then explicitly
+  start `hadalis-chat-bridge.service` under systemd user. These actions
+  modify/restart local services and require the machine owner's consent.
+  `node automation/chat_bridge/desktop_cli.mjs ui-target-check` provides a
+  strictly read-only UI identity observation, NOT acceptance to send.
+- For an **idle, prepared, ordered** queue, a healthy UI queue service, an
+  exact staged profile and unchanged pinned first Issue, Settings offers
+  **Start UI -> Confirm UI Start**. The equivalent *explicitly owner-approved*
+  CLI is `python3 scripts/alis-automation-task.py start-ui-queue --approve --accept-ui-only-receipts --expected-first llocphann/Alis:AI-I01`.
+  It records Start approval, claims only one task and schedules the exact
+  profile. Neither method uses or bypasses the native `start-queue` gate.
+- Each UI turn first persists a no-replay send intent, pins the UI chat
+  fingerprint, and requires a completed assistant-only `ALIS_LOOP` response.
+  The queue moves to the next task only after a matching private response
+  receipt, `DONE`, exact profile, SHA and preserved owner Start. Receipts are
+  explicitly tagged `attestation=local-ui-only`: **not server-confirmed
+  conversation/message IDs**. An unknown or changed chat pauses further sends.
+  Stop revokes next-task admission; an already persisted in-flight UI intent
+  remains for review rather than silently retried.
+- To roll back, use the normal Stop Queue confirmation, inspect pending UI
+  send journals, then stop the UI bridge. Switch the installed unit back to
+  native mode only after explicit reconciliation; do not clear
+  `ui-send-journal/pending.json`, the historical native profile, any worker
+  receipt or the queue manifest to make a green status.
+
+This implementation has offline safety/logic CI. It does **not** certify
+the real installed Desktop's exact composer/selected chat UI, a successful
+live assistant response, server-side receipt identity, uninterrupted
+unattended publication, or full native↔UI↔native host acceptance.
+The owner must verify these on their installed host before relying on
+unattended operation. `stable` is unaffected.
+
 ### Read-only cutover diagnosis (operator side)
 
 Inspect the installed host **without submitting any message or changing
