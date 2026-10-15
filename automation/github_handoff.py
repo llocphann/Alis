@@ -51,16 +51,23 @@ def validate_signal(raw: str, *, now: int | None = None, require_fresh: bool = T
             not isinstance(value["job_id"], str) or
             not JOB.fullmatch(value["job_id"]) or
             not isinstance(value["run_id"], str) or
-            str(uuid.UUID(value["run_id"])) != value["run_id"] or
+            not re.fullmatch(r"[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}", value["run_id"]) or
             not isinstance(value["base_sha"], str) or
             not SHA.fullmatch(value["base_sha"]) or
             not isinstance(value["job_sha256"], str) or
             not DIGEST.fullmatch(value["job_sha256"]) or
+            not isinstance(value["status"], str) or
             value["status"] not in STATUSES or
             type(value["updated_unix"]) is not int or
             type(value["expires_unix"]) is not int):
         raise ValueError("handoff manifest invalid identity")
     at = int(time.time()) if now is None else now
+    try:
+        parsed_uuid = uuid.UUID(value["run_id"])
+    except ValueError:
+        raise ValueError("handoff manifest invalid run ID") from None
+    if str(parsed_uuid) != value["run_id"]:
+        raise ValueError("handoff manifest invalid run ID")
     if (value["updated_unix"] > at + 120 or
             (require_fresh and value["updated_unix"] < at - MAX_LIFETIME) or
             value["expires_unix"] <= value["updated_unix"] or
