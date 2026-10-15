@@ -37,7 +37,9 @@ export async function observeHarmlessUiResponse(page,projectName="Automatic Alis
   return {
     purpose:"legacy-ui-harmless-response-observation",
     status:"read-only",
-    visual_pair_status:pairUnique?"ONE_VISIBLE_HARMLESS_PAIR_NOT_ATTESTED":
+    visual_pair_status:pairUnique&&visualContext
+      ?"ONE_VISIBLE_HARMLESS_PAIR_NOT_ATTESTED":
+      pairUnique?"HARMLESS_PAIR_VISIBLE_PROJECT_CONTEXT_UNVERIFIED":
       requestCount>1||replyCount>1?"AMBIGUOUS_VISIBLE_HARMLESS_MESSAGES":
       "HARMLESS_PAIR_NOT_VISIBLE_OR_INCOMPLETE",
     request_visible_count_capped:requestCount,
