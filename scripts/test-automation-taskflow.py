@@ -334,7 +334,47 @@ class TaskflowTests(unittest.TestCase):
         state = legacy_store.default_state(legacy_model.default_config())
         self.assertEqual(state["profiles"][profile["id"]]["desired"], "stopped")
 
-    def test_ordered_queue_launch_and_native_receipt_advances_without_second_scheduler(self):
+    def test_unattested_transport_blocks_queue_start_without_state_mutation(self):
+        # Real production must leave the owner's pending queue intact even
+        # after a user presses Start. Synthetic success fixtures are isolated
+        # in other tests by explicitly patching the attestation gate.
+        readiness = managed_tasks.transport_gate.readiness()
+        self.assertFalse(readiness["transport_ready"])
+        self.assertFalse(readiness["unattended_submission_authorized"])
+        self.assertFalse(readiness["server_final_receipt_verified"])
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
+                "XDG_STATE_HOME": tmp + "/state",
+                "XDG_CONFIG_HOME": tmp + "/config"}):
+            queue.prepare("AUTO-R01", resolver=lambda _: TASK)
+            before = queue._load()
+            config_before, state_before, _ = legacy_store.read_snapshot()
+            with patch.object(legacy_control, "service_states",
+                              side_effect=AssertionError("NO_SERVICE_CALL")):
+                with self.assertRaisesRegex(taskflow.TaskError,
+                                            "CHATGPT_PROJECT_SERVER_RECEIPT_UNATTESTED"):
+                    managed_tasks.start_ordered_queue(approved=True)
+            self.assertEqual(before, queue._load())
+            self.assertFalse(queue._load()["approved_start"])
+            self.assertEqual(config_before, legacy_store.read_snapshot()[0])
+            self.assertEqual(state_before, legacy_store.read_snapshot()[1])
+            self.assertEqual(managed_tasks.reconcile_once()["state"], "prepared")
+            self.assertEqual(queue._load(), before)
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
+                "XDG_STATE_HOME": tmp + "/state",
+                "XDG_CONFIG_HOME": tmp + "/config"}):
+            queue.prepare("AUTO-R01", mode="cloud", resolver=lambda _: TASK)
+            before = queue._load()
+            with patch.object(legacy_control, "service_states",
+                              side_effect=AssertionError("NO_SERVICE_CALL")):
+                with self.assertRaisesRegex(taskflow.TaskError,
+                                            "CHATGPT_PROJECT_SERVER_RECEIPT_UNATTESTED"):
+                    managed_tasks.start_cloud_queue(approved=True)
+            self.assertEqual(queue._load(), before)
+            self.assertEqual(managed_tasks.reconcile_once()["state"], "prepared")
+            self.assertEqual(queue._load(), before)
+
+    @patch.object(managed_tasks.transport_gate, "require_ready", return_value=None)
+    def test_ordered_queue_launch_and_native_receipt_advances_without_second_scheduler(self, _simulated_verified_transport):
         other = {**TASK, "code": "ABYSS-R09", "issue_number": 191}
         with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
                 "XDG_STATE_HOME": tmp + "/state", "XDG_CONFIG_HOME": tmp + "/config"}):
@@ -383,7 +423,8 @@ class TaskflowTests(unittest.TestCase):
             # The next task can run, but the first Issue is not owner-verified.
             self.assertNotEqual(first["status"], "completed")
 
-    def test_cloud_choice_uses_native_assistant_receipt_and_serially_reselects(self):
+    @patch.object(managed_tasks.transport_gate, "require_ready", return_value=None)
+    def test_cloud_choice_uses_native_assistant_receipt_and_serially_reselects(self, _simulated_verified_transport):
         other = {**TASK, "code": "ABYSS-R09", "issue_number": 151}
         with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
                 "XDG_STATE_HOME": tmp + "/state", "XDG_CONFIG_HOME": tmp + "/config"}):
@@ -494,7 +535,8 @@ class TaskflowTests(unittest.TestCase):
             self.assertTrue(managed_tasks.quarantine_legacy_profiles_once()["already_gated"])
             self.assertEqual(legacy_store.read_snapshot()[1]["profiles"][pid]["desired"], "run")
 
-    def test_ordered_queue_refuses_dispatch_with_missing_worker_service(self):
+    @patch.object(managed_tasks.transport_gate, "require_ready", return_value=None)
+    def test_ordered_queue_refuses_dispatch_with_missing_worker_service(self, _simulated_verified_transport):
         with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
                 "XDG_STATE_HOME": tmp + "/state", "XDG_CONFIG_HOME": tmp + "/config"}):
             queue.prepare("AUTO-R01", resolver=lambda _: TASK)
