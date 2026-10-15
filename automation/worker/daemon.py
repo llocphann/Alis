@@ -451,9 +451,14 @@ def cleanup(*, startup=True) -> None:
         # tombstone. Drop it shortly after the durable result is published;
         # keep the worker receipt indefinitely to prevent execution replay.
         if receipt.get("phase")=="published":
-            approval=github_handoff.approval_path(root,receipt["job"])
-            if approval.is_file() and not approval.is_symlink():
-                approval.unlink()
+            try:
+                approval=github_handoff.approval_path(root,receipt["job"])
+                if approval.is_file() and not approval.is_symlink():
+                    approval.unlink()
+            except (OSError, ValueError):
+                # Unsafe/corrupt optional approval metadata must not interrupt
+                # recovery of other independently owned worker receipts.
+                pass
     if startup:
         for directory in (root/"runs",root/"publish"):
             for path in directory.glob("*"):
