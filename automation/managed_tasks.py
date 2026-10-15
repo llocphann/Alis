@@ -315,7 +315,18 @@ def _schedule_next_authorized() -> dict:
                         command_seq=state["command_seq"],
                         next_run_at_unix=int(time.time()), status="scheduled")
             store.event(state, pid, "task_auto_scheduled", selected["code"])
-    store.change(schedule)
+    # Stop can arrive after claim and before the manager profile is created.
+    # Never schedule that profile after Stop has revoked queue authorization.
+    with queue._lock():
+        current_queue = queue._load()
+        if (not current_queue
+                or current_queue.get("mode") != "ordered"
+                or current_queue.get("state") != "active"
+                or current_queue.get("approved_start") is not True
+                or current_queue.get("stop_requested")
+                or current_queue.get("active") != selected):
+            raise tf.TaskError("Queue authorization changed before next profile start")
+        store.change(schedule)
     return {"ok": True, "state": "scheduled", "selected": selected}
 
 
