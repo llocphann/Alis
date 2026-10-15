@@ -487,7 +487,8 @@ class TaskflowTests(unittest.TestCase):
             self.assertEqual(queue.view()["items"][0]["state"], "active")
             self.assertEqual(queue.view()["items"][1]["state"], "awaiting_owner")
 
-    def test_cloud_choice_rejects_missing_or_multiple_choices(self):
+    @patch.object(managed_tasks.transport_gate, "require_ready", return_value=None)
+    def test_cloud_choice_rejects_missing_or_multiple_choices(self, _simulated_verified_transport):
         with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
                 "XDG_STATE_HOME": tmp + "/state", "XDG_CONFIG_HOME": tmp + "/config"}):
             queue.prepare("AUTO-R01", mode="cloud", resolver=lambda _: TASK)
