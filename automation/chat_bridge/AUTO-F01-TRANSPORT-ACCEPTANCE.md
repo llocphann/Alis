@@ -130,6 +130,28 @@ Synthetic tests exercise matching/missing/duplicate pairs, spoofed UI Project co
 
 **Owner follow-up observed on installed Desktop (2026-10-15):** The owner ran the `observe-acceptance` read-only CLI against the already-existing chat. Its categorical JSON reported `visual_pair_status:"ONE_VISIBLE_HARMLESS_PAIR_NOT_ATTESTED"`, `request_visible_count_capped:1`, `reply_visible_count_capped:1`, `visual_project_guard_observed:true`, `status:"read-only"`; server Project/conversation/user-message verification, final receipt and Scheduler authorization all remained `false`. This corroborates the prior screenshot with a separate **no-send** renderer observation. It is not a server receipt and must not be used to adopt/acknowledge the test as a managed task. The owner also pasted the proposed `systemctl --user show` loop **without any service-state output**; there is currently **no on-device service health conclusion** or startup proof. Await only the actual `LoadState`, `ActiveState`, `SubState`, `Result`, `ExecMainStatus`, and `NRestarts` lines for `hadalis-chatgpt`, `hadalis-chat-bridge`, and `hadalis-worker`. No service restart/start/reset is required for this diagnostic.
 
+## Owner systemd snapshots and restart-window gate (2026-10-15)
+
+Owner-provided read-only `systemctl --user show` confirms **all three units currently loaded/active/running, Result=success, ExecMainStatus=0**:
+
+| Unit | NRestarts (cumulative, as observed) |
+| --- | ---: |
+| `hadalis-chatgpt.service` | 8734 |
+| `hadalis-chat-bridge.service` | 8732 |
+| `hadalis-worker.service` | 8731 |
+
+The near-equal large counters justify investigating possible historic or current restart storms, but **do not prove a currently recurring failure**. No `InvocationID`, `MainPID`, active-since timestamp, restart rate, journal trace or on-device error code across time has been received. Do not infer a common crash cause from counter similarity alone; `Result=success` means only the reported current state, not zero prior failures. The unit templates in `scripts/install-hadalis-automation.py` specify `Restart=on-failure`, `RestartSec=3`; the installed unit properties have not been independently compared with these templates.
+
+Read-only, bounded **12-second** two-snapshot sample (from a clean updated `dev` checkout):
+
+```bash
+python3 scripts/AUTO-F01-service-probe.py probe
+```
+
+The script reads fixed `systemctl --user show` properties of only the three units, reports `restart_count_before`, `restart_count_after`, `restart_delta`, redacted state flags, and whether the process/invocation changed. It does **not** return PID/InvocationID values, service environment, secret tokens, journal text or full unit configuration. It does **not** start/restart/stop units or interact with Desktop, Scheduler, receipts, chat, queue or Github. Interpret `NO_RESTART_DETECTED_IN_SAMPLE` as stable **only within the sampled interval**, `RESTARTS_OBSERVED_IN_WINDOW` as concrete evidence of fresh restarts, and `COUNTER_RESET_OR_UNIT_REPLACED` / `PROCESS_OR_INVOCATION_CHANGED_UNCOUNTED` as requiring targeted inspection. `SAMPLE_UNAVAILABLE_OR_INCOMPLETE` means no diagnosis is supported.
+
+If fresh restarts are observed, preserve original invocation/receipt evidence and collect only **bounded redacted** unit diagnostics locally before changing service policy. No blind `systemctl restart`, `reset-failed`, state deletion, backoff adjustment or Scheduler activation is justified by the cumulative counters. Project/conversation/message/terminal-receipt authorization remains BLOCKED independently of systemd health.
+
 ## Historical owner-approved single-shot acceptance runbook (already executed; DO NOT rerun)
 
 The owner approved **one fixed harmless acceptance** in the ChatGPT conversation. This authorizes only the isolated manual test described below; it does **not** authorize starting the Automation scheduler, sending any of the 18 queued tasks, or replaying an uncertain attempt. GitHub-side changes cannot reach or inspect the owner's live Desktop process. The owner subsequently ran the single approved test on the installed Desktop, as documented above. The original runbook remains for audit only: **its permission is exhausted, and these commands must not be run again without distinct approval and a new test plan.**
