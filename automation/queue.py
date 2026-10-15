@@ -383,9 +383,12 @@ def clear(*, approved: bool = False,
 
         state = manifest.get("state")
         active = manifest.get("active")
-        if state == "active":
-            # Retain EXACT ongoing task, selection, approval and all
-            # completed history; dropping only QUEUED siblings is safe.
+        if state in {"active", "stopping"}:
+            # Retain EXACT ongoing task, selection and all completed
+            # history. A requested Stop has already disabled future queue
+            # scheduling, but may await a missing manager acknowledgment.
+            # The owner may still prune QUEUED siblings without claiming
+            # that the active task/job was successfully stopped.
             claimed = [item for item in manifest["items"]
                        if item.get("state") == "active"]
             selection = manifest.get("selection")
@@ -445,9 +448,9 @@ def clear(*, approved: bool = False,
         name = archive / ("cleared-" + str(time.time_ns()) + "-" +
                           uuid.uuid4().hex + ".json")
         source = _queue_path()
-        if state == "active":
-            # Persist the full original snapshot first, then atomically
-            # replace only the manifest's QUEUED entries.
+        if state in {"active", "stopping"}:
+            # Preserve stopped/requested status and all previous approvals
+            # (including revoked Start) while removing QUEUED entries.
             tf._atomic_json(name, manifest)
             manifest["items"] = [item for item in manifest["items"]
                                  if item.get("state") != "queued"]
