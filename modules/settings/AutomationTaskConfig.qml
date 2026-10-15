@@ -16,6 +16,10 @@ ContentPage {
 
     property string activeSection: "tasks"
     property bool cloudSelectTasks: false
+    property bool clearQueueConfirmation: false
+    property string pendingSudoPassword: ""
+    property string sudoOperation: ""
+    property string sudoStatusText: ""
     property var queueSnapshot: null
     property bool queueStatusConfirmed: false
     property bool backendInstalled: false
@@ -49,6 +53,7 @@ ContentPage {
     property string pendingSecretInput: ""
     property string pendingSecretOperation: ""
     readonly property bool busy: queueProcess.running || cleanupProcess.running
+        || sudoAuthProcess.running
         || githubSecretProcess.running || githubStatusProcess.running
         || installerProcess.running || backendStatusProcess.running
         || ownerActionProcess.running
@@ -127,6 +132,7 @@ ContentPage {
     function refreshQueue(): void {
         if (queueProcess.running)
             return
+        root.clearQueueConfirmation = false
         root.queueStatusConfirmed = false
         queueOperation = "status"
         queueProcess.command = ["python3", Quickshell.shellPath("scripts/alis-automation-task.py"), "queue-status"]
@@ -184,9 +190,9 @@ ContentPage {
         if (root.busy)
             return
         const codes = taskCodeField.text.trim()
-        const entries = codes.split(";").map(s => s.trim())
-        if (!entries.length || entries.length > 20 ||
-                entries.some(s => !/^(?:[A-Z][A-Z0-9]{1,15}-(?:F|R|I)[0-9]{2,3}|llocphann\/[A-Za-z0-9-]+#[1-9][0-9]*)$/.test(s))) {
+        const entries = codes.length ? codes.split(";").map(s => s.trim()) : []
+        if (codes.length && (entries.length > 20 ||
+                entries.some(s => !/^(?:[A-Z][A-Z0-9]{1,15}-(?:F|R|I)[0-9]{2,3}|llocphann\/[A-Za-z0-9-]+#[1-9][0-9]*)$/.test(s)))) {
             root.errorText = Translation.tr("Enter task codes separated by ;")
             return
         }
@@ -202,6 +208,49 @@ ContentPage {
             "queue-prepare", codes, "--mode", root.cloudSelectTasks ? "cloud" : "ordered"
         ]
         queueProcess.running = true
+    }
+
+    function clearQueue(): void {
+        if (root.busy || !root.queueStatusConfirmed || !root.queueSnapshot)
+            return
+        if (!root.clearQueueConfirmation) {
+            root.clearQueueConfirmation = true
+            root.statusText = Translation.tr("Confirm clearing idle queue. Task files and receipts are preserved.")
+            return
+        }
+        root.clearQueueConfirmation = false
+        root.queueStatusConfirmed = false
+        root.errorText = ""
+        root.queueOperation = "clear"
+        queueProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "queue-clear", "--approve"]
+        queueProcess.running = true
+    }
+
+    function authorizeSudo(): void {
+        if (root.busy || sudoPasswordField.text.length === 0)
+            return
+        root.pendingSudoPassword = sudoPasswordField.text
+        sudoPasswordField.clear()
+        root.sudoStatusText = ""
+        root.sudoOperation = "authenticate"
+        sudoAuthProcess.stdinEnabled = true
+        sudoAuthProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "sudo-authenticate"]
+        sudoAuthProcess.running = true
+    }
+
+    function checkSudoStatus(): void {
+        if (root.busy) return
+        root.sudoOperation = "status"
+        root.sudoStatusText = ""
+        sudoAuthProcess.stdinEnabled = false
+        sudoAuthProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "sudo-status"]
+        sudoAuthProcess.running = true
     }
 
     // Quickshell may emit Process.exited before StdioCollector.streamFinished.
@@ -237,6 +286,7 @@ ContentPage {
         else if (name === "cleanupProcess") root._handle_cleanupProcess(entry.exitCode)
         else if (name === "githubStatusProcess") root._handle_githubStatusProcess(entry.exitCode)
         else if (name === "githubSecretProcess") root._handle_githubSecretProcess(entry.exitCode)
+        else if (name === "sudoAuthProcess") root._handle_sudoAuthProcess(entry.exitCode)
     }
 
     Timer {
@@ -313,6 +363,11 @@ ContentPage {
                     if (root.queueOperation === "status")
                         root.cloudSelectTasks = result.mode === "cloud"
                 }
+                if (result.items && !result.items.length) {
+                    root.selectedTask = null
+                    root.taskSnapshot = null
+                    root.activitySnapshot = null
+                }
                 if (result.items && result.items.length) {
                     const first = result.items[0]
                     if (!root.selectedTask || !result.items.some(t =>
@@ -321,11 +376,17 @@ ContentPage {
                     Qt.callLater(root.refreshTaskStatus)
                     Qt.callLater(root.refreshActivity)
                 }
-                if (root.queueOperation === "prepare")
+                if (root.queueOperation === "clear")
+                    root.statusText = result.cleared
+                        ? Translation.tr("Queue cleared · task records and receipts preserved")
+                        : Translation.tr("Queue already empty")
+                else if (root.queueOperation === "prepare")
                     root.statusText = result.state === "active"
                         ? Translation.tr("Queue already active")
                         : result.duplicate
                         ? Translation.tr("Queue already prepared")
+                        : result.auto_discovered
+                        ? Translation.tr("Backend-first tasks discovered · review before Start")
                         : Translation.tr("Queue prepared")
                 else if (root.queueOperation === "start") {
                     root.statusText = Translation.tr("Cloudbot launch requested")
@@ -445,6 +506,21 @@ ContentPage {
             Qt.callLater(root.refreshGithubStatus)
         
     }
+    function _handle_sudoAuthProcess(exitCode) {
+        // Only controlled status text, never stdout/stderr or password.
+        root.pendingSudoPassword = ""
+        try {
+            const result = root.readAutomationReply("sudoAuthProcess",
+                sudoAuthOutput.text, "", exitCode)
+            root.sudoStatusText = result.authenticated === true
+                ? Translation.tr("Sudo cache ready for allowlisted services")
+                : Translation.tr("Sudo authorization unavailable")
+        } catch (error) {
+            root.sudoStatusText = Translation.tr("Sudo authentication failed or broker unavailable")
+        }
+        root.sudoOperation = ""
+    }
+
     Process {
         id: backendStatusProcess
         stdout: StdioCollector {
@@ -475,6 +551,23 @@ ContentPage {
         }
         stderr: StdioCollector { id: queueError }
         onExited: exitCode => root._automationExited("queueProcess", exitCode)
+    }
+
+    Process {
+        id: sudoAuthProcess
+        stdout: StdioCollector {
+            id: sudoAuthOutput
+            onStreamFinished: root._automationStdoutClosed("sudoAuthProcess")
+        }
+        stderr: StdioCollector { id: sudoAuthError }
+        onStarted: {
+            if (root.sudoOperation === "authenticate") {
+                sudoAuthProcess.write(root.pendingSudoPassword)
+                root.pendingSudoPassword = ""
+                sudoAuthProcess.stdinEnabled = false
+            }
+        }
+        onExited: exitCode => root._automationExited("sudoAuthProcess", exitCode)
     }
 
     Process {
@@ -633,7 +726,7 @@ ContentPage {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
-                text: Translation.tr("Task codes separated by ;")
+                text: Translation.tr("Task codes separated by ; · blank discovers Backend-first tasks")
             }
             SettingsSwitch {
                 objectName: "automationCloudSelectToggle"
@@ -650,13 +743,15 @@ ContentPage {
                     id: taskCodeField
                     objectName: "automationTaskCode"
                     Layout.fillWidth: true
-                    placeholderText: "AUTO-R01; ABYSS-R09; BRAND-F01"
+                    placeholderText: Translation.tr("Codes or blank for Backend-first discovery")
                     onAccepted: root.prepareTask()
                 }
                 DialogButton {
                     objectName: "automationPrepareTask"
-                    buttonText: root.busy ? Translation.tr("Preparing…") : Translation.tr("Queue tasks")
-                    enabled: !root.busy && taskCodeField.text.trim().length > 0
+                    buttonText: root.busy ? Translation.tr("Preparing…")
+                        : taskCodeField.text.trim().length === 0
+                        ? Translation.tr("Find tasks") : Translation.tr("Queue tasks")
+                    enabled: !root.busy
                     onClicked: root.prepareTask()
                 }
                 DialogButton {
@@ -664,6 +759,16 @@ ContentPage {
                     buttonText: Translation.tr("Refresh queue")
                     enabled: !root.busy
                     onClicked: root.refreshQueue()
+                }
+                DialogButton {
+                    objectName: "automationClearQueue"
+                    buttonText: root.clearQueueConfirmation
+                        ? Translation.tr("Confirm clear") : Translation.tr("Clear queue")
+                    enabled: !root.busy && root.queueStatusConfirmed
+                        && !!root.queueSnapshot
+                        && ["prepared", "finished", "cancelled"].includes(root.queueSnapshot.state)
+                        && root.queueSnapshot.items.length > 0
+                    onClicked: root.clearQueue()
                 }
                 DialogButton {
                     objectName: "automationStartQueue"
@@ -900,6 +1005,50 @@ ContentPage {
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
                 text: root.githubStatusText
+            }
+        }
+    }
+
+    SettingsCardSection {
+        expanded: true
+        icon: "admin_panel_settings"
+        title: Translation.tr("Administrator access")
+        settingsTaskSection: "tasks"
+        visible: root.activeSection === "tasks"
+        SettingsGroup {
+            SettingsNote {
+                icon: "security"
+                text: Translation.tr("Optional sudo authentication for allowlisted system services. Password is never stored.")
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                MaterialTextField {
+                    id: sudoPasswordField
+                    objectName: "automationSudoPassword"
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Sudo password (not stored)")
+                    echoMode: TextInput.Password
+                    onAccepted: root.authorizeSudo()
+                }
+                DialogButton {
+                    objectName: "automationSudoAuthenticate"
+                    buttonText: Translation.tr("Authorize")
+                    enabled: !root.busy && sudoPasswordField.text.length > 0
+                    onClicked: root.authorizeSudo()
+                }
+                DialogButton {
+                    buttonText: Translation.tr("Check")
+                    enabled: !root.busy
+                    onClicked: root.checkSudoStatus()
+                }
+            }
+            StyledText {
+                visible: root.sudoStatusText.length > 0
+                Layout.fillWidth: true
+                color: Appearance.colors.colSubtext
+                wrapMode: Text.WordWrap
+                text: root.sudoStatusText
             }
         }
     }
