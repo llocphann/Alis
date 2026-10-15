@@ -312,10 +312,12 @@ def clear(*, approved: bool = False) -> dict:
     """
     if approved is not True:
         raise tf.TaskError("Explicit Clear Queue confirmation required")
+    empty = {"ok": True, "mode": "ordered", "state": "empty",
+             "active": None, "items": [], "next": None}
     with _lock():
         manifest = _load()
         if manifest is None:
-            return {**view(None), "cleared": False}
+            return {**empty, "cleared": False}
         if (manifest.get("active") is not None or manifest.get("selection")
                 or manifest.get("state") not in {"prepared", "finished", "cancelled"}):
             raise tf.TaskError("Queue has active or unresolved work; cannot clear")
@@ -354,7 +356,7 @@ def clear(*, approved: bool = False) -> dict:
                 os.fsync(fd)
             finally:
                 os.close(fd)
-        return {**view(None), "cleared": True,
+        return {**empty, "cleared": True,
                 "archived": True, "task_records_preserved": True}
 
 
