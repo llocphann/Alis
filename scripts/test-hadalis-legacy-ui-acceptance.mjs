@@ -13,13 +13,15 @@ import {oneShotUiAcceptance} from
 const id="11111111-1111-4111-8111-111111111111";
 const events=[];
 let disabled=false,draft="",busy=false,clickThrows=false,fillThrows=false;
+let sendDisabled=true,keepSendDisabledAfterFill=false;
 function loc(items,kind){
   return {
     count:async()=>items.length,
     nth:i=>loc([items[i]],kind),
     first:()=>loc([items[0]],kind),
     isVisible:async()=>items[0]?.visible??false,
-    isDisabled:async()=>items[0]?.disabled??false,
+    isDisabled:async()=>kind==="send"?sendDisabled:
+      (items[0]?.disabled??false),
     evaluate:async fn=>{
       if(kind==="send"){
         events.push("click");
@@ -33,8 +35,10 @@ function loc(items,kind){
       assert.match(value,/AUTO-F01 UI transport acceptance test only/);
       assert.ok(!value.includes("secret"));
       if(fillThrows)throw Error("UNKNOWN_COMPOSER_OUTCOME");
+      draft=value;
+      if(!keepSendDisabledAfterFill)sendDisabled=false;
     },
-    locator:()=>loc([{visible:true}],"selected"),
+    locator:()=>loc([],"selected"),
     getByRole:()=>loc([],"heading"),
     getByText:()=>loc([],"text")
   };
@@ -42,10 +46,16 @@ function loc(items,kind){
 const page={
   url:()=> "app://-/index.html",
   getByRole:(role,options)=>{
+    if(role==="main")return {
+      ...loc([{visible:true}],"main"),
+      getByRole:()=>loc([],"heading"),
+      getByText:(label)=>loc(["Automatic Alis","No chats yet"]
+        .includes(label)?[{visible:true}]:[],"text")
+    };
     if(role==="textbox")return loc([{visible:true,disabled,draft}],"editor");
-    if(role==="list")return loc([],"list");
+    if(role==="list")return loc([{visible:true,selected:[]}],"list");
     if(role==="button"&&options.name==="Send")
-      return loc([{visible:true,disabled:false}],"send");
+      return loc([{visible:true,disabled:sendDisabled}],"send");
     if(role==="button"&&options.name instanceof RegExp &&
        options.name.test("Stop"))
       return loc(busy?[{visible:true}]:[],"stop");
@@ -85,6 +95,7 @@ assert.equal(r.status,"indeterminate");
 assert.equal(r.code,"SINGLE_UI_CLICK_ISSUED_OBSERVE_ONLY");
 assert.deepEqual(events,["durable-intent","fill","click"]);
 assert.equal(r.submission_authorized,false);
+draft="";sendDisabled=true;
 await assert.rejects(call(),/duplicate attempt must remain quarantined/);
 assert.deepEqual(events,["durable-intent","fill","click"]);
 events.length=0;
@@ -94,17 +105,28 @@ r=await call({acceptanceId:fresh});
 assert.equal(r.status,"indeterminate");
 assert.equal(r.code,"UI_ATTEMPT_UNCERTAIN_NO_RETRY");
 assert.deepEqual(events,["durable-intent","fill","click"]);
-events.length=0;clickThrows=false;
+events.length=0;clickThrows=false;draft="";sendDisabled=true;
 fillThrows=true;
 r=await call({acceptanceId:"33333333-3333-4333-8333-333333333333"});
 assert.equal(r.status,"indeterminate");
 assert.deepEqual(events,["durable-intent","fill"]);
-events.length=0;fillThrows=false;
+events.length=0;fillThrows=false;draft="";sendDisabled=true;
 await assert.rejects(call({
   acceptanceId:"44444444-4444-4444-8444-444444444444",
   persistAttempt:async()=>{throw Error("DISK_FSYNC_FAILED")}
 }),/DISK_FSYNC_FAILED/);
 assert.deepEqual(events,[]);
+// If Send never becomes enabled after filling, the journal stays
+// indeterminate and absolutely NO Send click is issued.
+events.length=0;draft="";sendDisabled=true;
+keepSendDisabledAfterFill=true;
+r=await call({acceptanceId:"99999999-9999-4999-8999-999999999999"});
+assert.equal(r.status,"indeterminate");
+assert.equal(r.code,"POST_FILL_GUARD_FAILED_NO_SEND");
+assert.deepEqual(events,["durable-intent","fill"]);
+assert.equal(r.submission_authorized,false);
+events.length=0;draft="";sendDisabled=true;
+keepSendDisabledAfterFill=false;
 // Real offline fsynced journal cannot be replayed or silently overwritten.
 const stateHome=fs.mkdtempSync(path.join(os.tmpdir(),"alis-ui-journal-"));
 try {
@@ -129,23 +151,29 @@ try{
   const mockLog=path.join(mockRoot,"clicks.txt");
   fs.writeFileSync(mockFile,[
     "import fs from 'node:fs';",
+    "let draft='';let sendDisabled=true;",
     "const loc=(items=[],type='other')=>({",
     "count:async()=>items.length,nth:i=>loc([items[i]],type),",
     "first:()=>loc([items[0]],type),",
     "isVisible:async()=>items[0]?.visible??false,",
-    "isDisabled:async()=>items[0]?.disabled??false,",
+    "isDisabled:async()=>type==='send'?sendDisabled:(items[0]?.disabled??false),",
     "locator:()=>loc([{visible:true}]),",
     "getByRole:()=>loc([]),",
-    "getByText:()=>loc([]),",
-    "fill:async()=>{},",
+    "getByText:label=>loc((label==='Automatic Alis'||label==='No chats yet')",
+    " ?[{visible:true}]:[]),",
+    "fill:async value=>{draft=value;sendDisabled=false;},",
     "evaluate:async fn=>type==='send'",
     " ?fn({click:()=>fs.appendFileSync(process.env.MOCK_LOG,'clicked\\n')})",
-    " :fn({textContent:''})",
+    " :fn({textContent:draft})",
     "});",
     "const page={url:()=> 'app://-/index.html',",
     "getByRole:(role,o)=>{",
+    "if(role==='main')return {...loc([{visible:true}]),",
+    " getByRole:()=>loc([]),getByText:label=>loc(",
+    " (label==='Automatic Alis'||label==='No chats yet')",
+    " ?[{visible:true}]:[])};",
     "if(role==='textbox')return loc([{visible:true,disabled:false}],'composer');",
-    "if(role==='list')return loc([],'list');",
+    "if(role==='list')return loc([{visible:true,selected:[]}],'list');",
     "if(role==='button'&&o.name==='Send')return loc([{visible:true}],'send');",
     "if(role==='button'&&o.name instanceof RegExp&&o.name.test('Stop'))return loc([]);",
     "return loc([{visible:true}],'badge');",
