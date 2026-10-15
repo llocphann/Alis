@@ -116,6 +116,18 @@ No `definition.resolve()` invocation; no native `submit`/CLI submit, DOM/click/k
 
 **Next engineering gate:** Evaluate only documented, authenticated, read-only Project/conversation/turn identity facilities available in the installed Desktop. Prove exact Project membership, message IDs, association of user turn with final assistant response, and durable receipt semantics **before** considering a production transport adaptation. Existing `native_adapter.mjs` relies on unsupported renderer-internal binding and should not be invoked just to discover these identities. If no supported interface exists, retain UI transport as manual/assisted acceptance only and report `BLOCKED: VERIFIED_IDENTITY_INTERFACE_UNAVAILABLE` rather than expanding the single test to queued work.
 
+## Read-only post-send observation (no replay, 2026-10-15)
+
+The owner already completed the **one** approved harmless send and received the requested visible reply. For future *observation* of that **existing** chat (not an empty Project landing), the read-only Playwright CLI now exposes a separate mode:
+
+```bash
+node automation/chat_bridge/legacy_ui_probe_cli.mjs observe-acceptance
+```
+
+This mode checks only the fixed harmless request string and the fixed `HADALIS_LOOP:DONE` reply, using exact text matching and bounded **visible** counts. It returns no raw message body, Project ID, conversation ID, user-message ID, private draft, URL or credential. `ONE_VISIBLE_HARMLESS_PAIR_NOT_ATTESTED` means exactly one of each fixed text is visible in the renderer **at observation time**; it cannot establish server provenance, message ancestry, response completion, or authenticated membership. `HARMLESS_PAIR_NOT_VISIBLE_OR_INCOMPLETE` can reflect scrolling/virtualization or other UI layout changes, not necessarily delivery failure. Multiple matches remain ambiguous. The same CLI refuses unknown modes including `submit`; this observation is never a permission to click, resend, accept a receipt or enable Scheduler.
+
+Synthetic tests exercise matching/missing/duplicate pairs, spoofed UI Project context, command rejection, loopback-only CDP, fake renderer and output redaction. This is a **reproducible read-only follow-up to the owner screenshot**, not the missing documented provider identity/receipt interface. Do not rerun the one-shot acceptance, rotate a chat or modify the existing 18-task queue.
+
 ## Owner-approved single-shot acceptance runbook (2026-10-15)
 
 The owner approved **one fixed harmless acceptance** in the ChatGPT conversation. This authorizes only the isolated manual test described below; it does **not** authorize starting the Automation scheduler, sending any of the 18 queued tasks, or replaying an uncertain attempt. GitHub-side changes cannot reach or inspect the owner's live Desktop process. The test is **NOT EXECUTED** until the owner invokes the CLI in the actual desktop session; an approval message is not a send receipt.
