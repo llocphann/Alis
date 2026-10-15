@@ -27,9 +27,15 @@ def main():
         sub = commands.add_parser(action)
         sub.add_argument("code", help="AUTO-R01 or llocphann/Alis#104")
     batch = commands.add_parser("queue-prepare")
-    batch.add_argument("codes", help="AUTO-R01; ABYSS-R09; BRAND-F01")
+    batch.add_argument("codes", nargs="?", default="",
+                       help="Optional codes; blank discovers Backend-first GitHub Issues")
     batch.add_argument("--mode", choices=["ordered", "cloud"], default="ordered")
     commands.add_parser("queue-status")
+    clear_queue = commands.add_parser("queue-clear")
+    clear_queue.add_argument("--approve", action="store_true",
+                             help="Owner confirms removal of idle queue manifest only")
+    commands.add_parser("sudo-status")
+    commands.add_parser("sudo-authenticate")
     commands.add_parser("backend-status")
     start_queue = commands.add_parser("start-queue")
     start_queue.add_argument("--approve", action="store_true")
@@ -76,9 +82,20 @@ def main():
         return 0
     try:
         if args.action == "queue-prepare":
-            result = queue.prepare(args.codes, mode=args.mode)
+            result = (queue.prepare(args.codes, mode=args.mode)
+                      if args.codes.strip() else queue.prepare_auto(mode=args.mode))
         elif args.action == "queue-status":
             result = queue.view()
+        elif args.action == "queue-clear":
+            result = queue.clear(approved=args.approve)
+        elif args.action == "sudo-status":
+            from automation.worker import privilege
+            result = privilege.auth_status()
+        elif args.action == "sudo-authenticate":
+            from automation.worker import privilege
+            # Secret remains in this one-shot helper's stdin and the broker's
+            # memory. Never write it to a config file, issue or activity log.
+            result = privilege.authenticate(sys.stdin.read(1026))
         elif args.action == "backend-status":
             states = manager_control.service_states()
             result = {"ok": True, "services": {
