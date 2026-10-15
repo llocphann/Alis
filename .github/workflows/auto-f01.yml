@@ -58,6 +58,8 @@ jobs:
           node --check automation/chat_bridge/alis_ui_smoke.mjs
           node --check automation/chat_bridge/alis_ui_smoke_cli.mjs
           node scripts/test-AUTO-F01-one-shot-smoke.mjs
+          node --check automation/chat_bridge/ui_session_diagnostics.mjs
+          node scripts/test-AUTO-F01-ui-session-inspect.mjs
           node --check automation/chat_bridge/native_adapter.mjs
           node --check automation/chat_bridge/native_cli.mjs
           node scripts/test-hadalis-native-session.mjs
