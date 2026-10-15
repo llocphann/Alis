@@ -9,7 +9,8 @@ import {extractLoopResponse,uiTargetIdentity} from "./desktop_driver.mjs";
 
 // Stable across invocations. The journal rejects another send even if the
 // operator repeats the command after a timeout or ambiguous UI result.
-export const SMOKE_ACCEPTANCE_ID="f7cfa215-4736-4b2c-9f01-5acbda000001";
+export {SMOKE_ACCEPTANCE_ID} from "./alis_ui_smoke_id.mjs";
+import {SMOKE_ACCEPTANCE_ID} from "./alis_ui_smoke_id.mjs";
 const RESPONSE_ACTION=/regenerate|retry|try again|copy/i;
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
