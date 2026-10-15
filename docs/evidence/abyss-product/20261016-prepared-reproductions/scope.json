@@ -1,0 +1,21 @@
+{
+  "r11": {
+    "scope": "Prepared fixture, Python syntax PASS; ALL native/import/animation assertions UNRUN. No production fix.",
+    "archive": "r11-prepared-native-unrun.tar.gz"
+  },
+  "r03": {
+    "scope": "Pure JavaScript replay only; all seven historical cases match on 9c55db1e542ed4beea8129ace33a1e0afd3e41e4. Native drag acceptance UNRUN.",
+    "requested_drag_px": 25,
+    "actual_primary_movement_px": 232.08,
+    "excess_packing_movement_px": 207.08,
+    "archive": "r03-pure-replay.tar.gz"
+  },
+  "r09_impacted": {
+    "scope": "Four focused fixtures report final PASS after internal native-exit guards on eca4a41de + one-file BodyHost overlay. External PID-receipt wrapper subsequently failed KeyError; wrapper PASS is not claimed. Raw fixture output retained; full exact-SHA suite is separate.",
+    "external_wrapper_exit": null,
+    "archive": "r09-impacted-raw.tar.gz"
+  },
+  "r13": {
+    "scope": "scripts/test-abyss-round0-valid-module-ends.py is PREPARED; Python syntax PASS; GPU/native and pixel assertions UNRUN at this checkpoint. No production R13 fix."
+  }
+}
