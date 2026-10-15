@@ -1,0 +1,66 @@
+name: AUTO-F01 focused safety
+
+on:
+  push:
+    paths:
+      - "automation/**"
+      - "scripts/test-hadalis-*.mjs"
+      - "scripts/test-hadalis-automation-*.py"
+      - "scripts/test-hadalis-chat-bridge.py"
+      - "scripts/test-automation-taskflow.py"
+      - "scripts/automation_test_helpers.py"
+      - "scripts/AUTO-F01-*.py"
+      - ".github/workflows/auto-f01.yml"
+  pull_request:
+    paths:
+      - "automation/**"
+      - "scripts/test-hadalis-*.mjs"
+      - "scripts/test-hadalis-automation-*.py"
+      - "scripts/test-hadalis-chat-bridge.py"
+      - "scripts/test-automation-taskflow.py"
+      - "scripts/automation_test_helpers.py"
+      - "scripts/AUTO-F01-*.py"
+      - ".github/workflows/auto-f01.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: auto-f01-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  safety:
+    name: AUTO-F01 deterministic safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Verify task-code handoff
+        run: python3 scripts/test-automation-taskflow.py
+      - name: Verify native Desktop transport cannot send unattended
+        run: |
+          node --check automation/chat_bridge/native_adapter.mjs
+          node --check automation/chat_bridge/native_cli.mjs
+          node scripts/test-hadalis-native-session.mjs
+          node scripts/test-hadalis-static-helper-analysis.mjs
+          node scripts/test-hadalis-transport-evidence.mjs
+          node scripts/test-hadalis-reconciliation-evidence.mjs
+          node scripts/test-hadalis-receipt-evidence.mjs
+          node scripts/test-hadalis-legacy-ui-probe.mjs
+          node scripts/test-hadalis-legacy-ui-response-probe.mjs
+          node scripts/test-hadalis-legacy-ui-acceptance.mjs
+          node scripts/test-hadalis-native-scope-probe.mjs
+      - name: Verify manager, queue, recovery, installer and credentials
+        run: |
+          python3 scripts/test-hadalis-automation-model.py
+          python3 scripts/test-hadalis-automation-storage.py
+          python3 scripts/test-hadalis-automation-recovery.py
+          python3 scripts/test-hadalis-automation-scheduler.py
+          python3 scripts/test-hadalis-automation-startup.py
+          python3 scripts/AUTO-F01-service-probe.py self-test
+          python3 scripts/test-hadalis-chat-bridge.py
+          python3 scripts/test-hadalis-automation-credentials.py
+          python3 scripts/test-hadalis-automation-install.py
