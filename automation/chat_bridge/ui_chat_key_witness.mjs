@@ -62,10 +62,17 @@ export async function witnessUiChatKey(page,project="Automatic Alis",{
   await delay(140);
   const second=await evidence(page,project);
   // Full raw equality, not mere equality of category/count fingerprints.
+  // A different simultaneously selected global conversation cannot be
+  // ignored just because a Project chat entry is stable in the sidebar.
+  const globalConflicts=Boolean(first.globalKey&&
+      first.globalKey!==first.projectKey) ||
+    Boolean(second.globalKey&&second.globalKey!==second.projectKey);
   const projectStable=Boolean(first.projectKey)&&
     first.projectKey===second.projectKey &&
     first.projectSelectedCount===1&&second.projectSelectedCount===1 &&
-    first.projectListCount===1&&second.projectListCount===1;
+    first.projectListCount===1&&second.projectListCount===1 &&
+    first.globalSelectedCount<=1&&second.globalSelectedCount<=1 &&
+    !globalConflicts;
   const globalStable=Boolean(first.globalKey)&&
     first.globalKey===second.globalKey &&
     first.globalSelectedCount===1&&second.globalSelectedCount===1;
