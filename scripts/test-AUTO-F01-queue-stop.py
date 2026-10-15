@@ -152,6 +152,11 @@ class QueueStopTests(unittest.TestCase):
         self.assertIn('result.state === "stopping"', qml)
         self.assertIn('result.state === "stopped"', qml)
         self.assertIn('Queue archived · task records and in-flight receipts preserved', qml)
+        # Backend installation and verified ChatGPT submission are separate.
+        # A healthy installed service must not turn into queue Start authority.
+        self.assertIn('automatic ChatGPT submission not authorized', qml)
+        self.assertIn('CHATGPT_PROJECT_SERVER_RECEIPT_UNATTESTED', qml)
+        self.assertIn('root.backendTransportReady = report.transport_ready === true', qml)
 
 
 if __name__ == "__main__":
