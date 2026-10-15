@@ -31,6 +31,10 @@ ContentPage {
     property bool backendInstalled: false
     property bool backendStatusKnown: false
     property bool backendTransportReady: false
+    property bool uiQueueStartAvailable: false
+    property string uiQueueFirstTask: ""
+    property bool uiQueueStartConfirmation: false
+    property string uiQueueStartTarget: ""
     property string backendTransportBlocker: ""
     property var backendServices: ({})
     property string backendStatusText: ""
@@ -145,6 +149,8 @@ ContentPage {
         // the exact queued list is unchanged. The backend rechecks the
         // live queue atomically before any removal.
         root.queueStatusConfirmed = false
+        root.uiQueueStartConfirmation = false
+        root.uiQueueStartTarget = ""
         queueOperation = "status"
         queueProcess.command = ["python3", Quickshell.shellPath("scripts/alis-automation-task.py"), "queue-status"]
         queueProcess.running = true
@@ -187,14 +193,46 @@ ContentPage {
     }
 
     function startQueue(): void {
-        if (root.busy || !root.queueSnapshot || !root.backendTransportReady)
+        if (root.busy || !root.queueSnapshot || !root.queueStatusConfirmed)
+            return
+        const first = root.queueSnapshot.items.find(item => item.state === "queued")
+        const identity = first ? first.repository + ":" + first.code : ""
+        const uiReady = root.backendInstalled && root.uiQueueStartAvailable
+            && root.queueSnapshot.mode === "ordered"
+            && root.queueSnapshot.state === "prepared"
+            && first && first.code === root.uiQueueFirstTask
+        if (!root.backendTransportReady && !uiReady)
             return
         root.clearQueueConfirmation = false
-        root.queueOperation = "start"
         root.errorText = ""
-        queueProcess.command = ["python3",
-            Quickshell.shellPath("scripts/alis-automation-task.py"),
-            "start-queue", "--approve"]
+        if (uiReady) {
+            if (!root.uiQueueStartConfirmation) {
+                root.uiQueueStartConfirmation = true
+                root.uiQueueStartTarget = identity
+                root.statusText = Translation.tr("Confirm UI-only Start: responses are verified locally, not by the ChatGPT server. Existing native pending records remain preserved.")
+                return
+            }
+            if (root.uiQueueStartTarget !== identity) {
+                root.uiQueueStartConfirmation = false
+                root.uiQueueStartTarget = ""
+                root.errorText = Translation.tr("Queue first task changed · refresh before UI Start")
+                return
+            }
+            root.uiQueueStartConfirmation = false
+            root.uiQueueStartTarget = ""
+            root.queueOperation = "start"
+            queueProcess.command = ["python3",
+                Quickshell.shellPath("scripts/alis-automation-task.py"),
+                "start-ui-queue", "--approve", "--accept-ui-only-receipts",
+                "--expected-first", identity]
+        } else {
+            root.uiQueueStartConfirmation = false
+            root.uiQueueStartTarget = ""
+            root.queueOperation = "start"
+            queueProcess.command = ["python3",
+                Quickshell.shellPath("scripts/alis-automation-task.py"),
+                "start-queue", "--approve"]
+        }
         queueProcess.running = true
     }
 
@@ -427,12 +465,19 @@ ContentPage {
                     && report.unattended_submission_authorized === true
                 root.backendTransportBlocker = typeof report.transport_blocker === "string"
                     ? report.transport_blocker : ""
+                root.uiQueueStartAvailable = report.ui_queue_start_available === true
+                root.uiQueueFirstTask = root.uiQueueStartAvailable
+                    && typeof report.ui_queue_first_task === "string"
+                    ? report.ui_queue_first_task : ""
                 root.backendStatusKnown = true
                 root.backendStatusText = ""
                 root.backendServices = report.services
             } catch (error) {
                 root.backendInstalled = false
                 root.backendTransportReady = false
+                root.uiQueueStartAvailable = false
+                root.uiQueueFirstTask = ""
+                root.uiQueueStartConfirmation = false
                 root.backendTransportBlocker = ""
                 root.backendStatusKnown = false
                 root.backendStatusText = String(error)
@@ -815,6 +860,8 @@ ContentPage {
                     : root.backendInstalled
                     ? (root.backendTransportReady
                         ? Translation.tr("Backend installed · managed transport ready")
+                        : root.uiQueueStartAvailable
+                        ? Translation.tr("Backend installed · UI Queue mode ready for owner confirmation")
                         : Translation.tr("Backend installed · automatic ChatGPT submission not authorized"))
                     : Translation.tr("Backend not installed")
             }
@@ -824,7 +871,9 @@ ContentPage {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
-                text: root.backendTransportBlocker === "CHATGPT_PROJECT_SERVER_RECEIPT_UNATTESTED"
+                text: root.uiQueueStartAvailable
+                    ? Translation.tr("UI Queue mode uses local UI-only response evidence, not server-attested ChatGPT receipts. Starting requires a separate confirmation.")
+                    : root.backendTransportBlocker === "CHATGPT_PROJECT_SERVER_RECEIPT_UNATTESTED"
                     ? Translation.tr("Native ChatGPT transport lacks verified message receipts. UI Loop requires separate owner-approved validation before queue Start.")
                     : Translation.tr("Queue Start is blocked until the managed ChatGPT transport is accepted.")
             }
@@ -921,12 +970,20 @@ ContentPage {
                 }
                 DialogButton {
                     objectName: "automationStartQueue"
-                    buttonText: Translation.tr("Start")
+                    buttonText: root.uiQueueStartConfirmation
+                        ? Translation.tr("Confirm UI Start")
+                        : root.uiQueueStartAvailable && !root.backendTransportReady
+                        ? Translation.tr("Start UI") : Translation.tr("Start")
                     enabled: !root.busy && root.backendInstalled
-                        && root.backendTransportReady
                         && root.queueStatusConfirmed && !!root.queueSnapshot
-                        && ["prepared", "waiting"].includes(root.queueSnapshot.state)
-                        && ["ordered", "cloud"].includes(root.queueSnapshot.mode)
+                        && ((root.backendTransportReady
+                            && ["prepared", "waiting"].includes(root.queueSnapshot.state)
+                            && ["ordered", "cloud"].includes(root.queueSnapshot.mode))
+                            || (root.uiQueueStartAvailable
+                                && root.queueSnapshot.state === "prepared"
+                                && root.queueSnapshot.mode === "ordered"
+                                && root.queueSnapshot.items.some(item =>
+                                    item.state === "queued" && item.code === root.uiQueueFirstTask)))
                     onClicked: root.startQueue()
                 }
             }
