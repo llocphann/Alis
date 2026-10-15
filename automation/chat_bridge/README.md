@@ -209,6 +209,21 @@ two-sample raw-key equality in `ui-target-check`, which is still required
 for any managed continuation. A missing sidebar identity is not solved by
 re-sending the already accepted smoke prompt.
 
+For **future owner-approved harmless tests**, the same single-command smoke
+now also captures `post_send_chat_key_witness` **inside its original Send
+process** as soon as it observes the assistant-only reply. It compares
+actual UI chat keys across two read-only samples, returning one of
+`PROJECT_CHAT_KEY_STABLE_LOCAL_ONLY`,
+`GLOBAL_CHAT_KEY_STABLE_PROJECT_UNVERIFIED`, or
+`CHAT_KEY_MISSING_OR_CHANGED`. Project-sidebar proof still requires the
+strict `uiTargetIdentity` verification before
+`selected_chat_identity_stable=true`; an unbound global chat ID never
+allows Scheduler/Queue activation. No raw ID, chat title, URL or prompt
+content is exposed. A deleted conversation cannot be retrospectively
+sampled: the already-spent immutable smoke ID MUST NOT be reused or reset.
+Any future live test message requires separate owner consent. The existing
+six-item queue and service configuration are unaffected by this work.
+
 ### Read-only cutover diagnosis (operator side)
 
 Inspect the installed host **without submitting any message or changing
