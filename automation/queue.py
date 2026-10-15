@@ -306,6 +306,50 @@ def approve_cloud_start() -> dict:
 
 
 
+
+def request_stop(*, approved: bool = False,
+                 expected_active: str = "") -> dict:
+    """Stop scheduling first; no running action is killed or forgotten."""
+    if approved is not True:
+        raise tf.TaskError("Explicit Stop Queue confirmation required")
+    with _lock():
+        manifest = _load()
+        if not manifest or manifest.get("state") not in {"active", "stopping", "waiting"}:
+            raise tf.TaskError("Queue is not active or selecting")
+        active = manifest.get("active")
+        actual = (f'{active.get("repository")}:{active.get("code")}'
+                  if isinstance(active, dict) else "")
+        if not isinstance(expected_active, str) or actual != expected_active:
+            raise tf.TaskError("Active queue changed; refresh before Stop")
+        if manifest["state"] == "waiting" and actual:
+            raise tf.TaskError("Waiting queue active identity inconsistent")
+        manifest["approved_start"] = False
+        manifest["stop_requested"] = True
+        manifest["state"] = "stopping"
+        manifest["updated_unix"] = int(time.time())
+        _save(manifest)
+        return {"ok": True, "state": "stopping", "active": active,
+                "mode": manifest["mode"], "stop_requested": True,
+                "worker_cancelled": False}
+
+
+def confirm_stopped(*, expected_active: str) -> dict:
+    """Record a completed manager Stop acknowledgment; preserve receipts."""
+    with _lock():
+        manifest = _load()
+        if not manifest or manifest.get("state") != "stopping" or not manifest.get("stop_requested"):
+            raise tf.TaskError("Queue Stop was not requested")
+        active = manifest.get("active")
+        actual = (f'{active.get("repository")}:{active.get("code")}'
+                  if isinstance(active, dict) else "")
+        if actual != expected_active:
+            raise tf.TaskError("Queue changed during Stop; retain evidence")
+        manifest["state"] = "stopped"
+        manifest["updated_unix"] = int(time.time())
+        _save(manifest)
+        return {**view(manifest), "stop_confirmed": True,
+                "worker_cancelled": False}
+
 def clear(*, approved: bool = False,
           expected_queued: str | None = None) -> dict:
     """Remove queued entries without cancelling the active task.
@@ -372,6 +416,14 @@ def clear(*, approved: bool = False,
                         or record.get("handoff") is not None
                         or record.get("latest_receipt") is not None):
                     raise tf.TaskError("Queue task has durable work; cannot clear")
+        elif state == "stopped":
+            # A previously claimed task is retained in the archived queue,
+            # not erased as if it never ran. Removing the queue view requires
+            # a confirmed manager Stop plus a separate Clear confirmation.
+            if (not manifest.get("stop_requested") or manifest.get("approved_start")
+                    or any(item.get("state") not in {"active", "queued", "completed", "awaiting_owner"}
+                           for item in manifest["items"])):
+                raise tf.TaskError("Stopped queue is not reconciled")
         elif state in {"finished", "cancelled"}:
             if (active is not None or manifest.get("selection")
                     or queued or any(item.get("state") == "active"
@@ -405,7 +457,8 @@ def clear(*, approved: bool = False,
                     "removed_queued": len(queued), "archived": True,
                     "active_preserved": True, "task_records_preserved": True}
 
-        # No active work: move the untouched original manifest to history.
+        # A stopped queue retains its full active-task provenance in
+        # history. It does not cancel live processes or delete receipts.
         os.replace(source, name)
         for directory in (archive, source.parent):
             fd = os.open(directory, os.O_RDONLY |
