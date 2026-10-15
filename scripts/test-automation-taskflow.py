@@ -603,7 +603,7 @@ class TaskflowTests(unittest.TestCase):
         self.assertIn("root.backendTransportReady = report.transport_ready === true", qml)
         self.assertIn("&& report.unattended_submission_authorized === true", qml)
         self.assertIn("&& root.backendTransportReady", qml)
-        self.assertIn("managed transport verification required", qml)
+        self.assertIn("Alis Desktop loop requires activation", qml)
         self.assertIn("Automation modules missing from installed Alis; update runtime", qml)
         self.assertEqual(qml.count("onStreamFinished: root._automationStdoutClosed"), 8)
         self.assertEqual(qml.count("JSON.parse("), 1)
