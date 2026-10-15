@@ -147,6 +147,11 @@ class QueueStopTests(unittest.TestCase):
         self.assertIn('["finished", "cancelled", "stopped"]', qml)
         self.assertIn('objectName: "automationSudoSave"', qml)
         self.assertIn('objectName: "automationSudoClear"', qml)
+        # Stop and archived-queue acknowledgments must remain visible after
+        # the UI's immediate queue-status refresh (not silently reset to "").
+        self.assertIn('result.state === "stopping"', qml)
+        self.assertIn('result.state === "stopped"', qml)
+        self.assertIn('Queue archived · task records and in-flight receipts preserved', qml)
 
 
 if __name__ == "__main__":
