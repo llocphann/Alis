@@ -1,0 +1,775 @@
+{
+  "schema_version": 1,
+  "source_sha": "77439bddc018cf6e9486c5088f72c76a0efaf060",
+  "status": "STOPPED_INTERRUPTED",
+  "complete": false,
+  "actual_os_exit": null,
+  "actual_os_exit_note": "Validator and wrapper processes absent after intentional turn interruption; process handle expired; exit-code.txt never written. No inferred signal/exit is reported.",
+  "scope": "Exact committed source, isolated detached caller, canonical --current-repo clean clone; partial execution only.",
+  "counts": {
+    "stages_started": 84,
+    "checks_completed": 83,
+    "passed": 76,
+    "failed": 7,
+    "skipped": 0,
+    "started_unfinished": 1
+  },
+  "validator_script_sha256": "9c2c6552199c1a2088deea3862aef949859b987e25abedc8e9018deaf9a284a9",
+  "failed_stages": [
+    {
+      "index": 24,
+      "name": "Weekly Planner Ctrl/Shift multi-date and compatible Repeat cycles",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 142,
+      "log_end_line": 637
+    },
+    {
+      "index": 32,
+      "name": "Independent Agenda and Todo stores with stable Event ID edits",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 673,
+      "log_end_line": 699
+    },
+    {
+      "index": 48,
+      "name": "Python regression: scripts/test-abyss-compact-editor-runtime.py",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 775,
+      "log_end_line": 791
+    },
+    {
+      "index": 60,
+      "name": "Python regression: scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 847,
+      "log_end_line": 862
+    },
+    {
+      "index": 61,
+      "name": "Python regression: scripts/test-abyss-edge-editor-compact-actions-contract.py",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 863,
+      "log_end_line": 879
+    },
+    {
+      "index": 62,
+      "name": "Python regression: scripts/test-abyss-edge-editor-compact-side-contract.py",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 880,
+      "log_end_line": 895
+    },
+    {
+      "index": 77,
+      "name": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 966,
+      "log_end_line": 981
+    }
+  ],
+  "stages": [
+    {
+      "index": 1,
+      "name": "host tool preflight",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 27,
+      "log_end_line": 31
+    },
+    {
+      "index": 2,
+      "name": "build and baseline shell syntax",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 32,
+      "log_end_line": 36
+    },
+    {
+      "index": 3,
+      "name": "tracked shell/package syntax",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 37,
+      "log_end_line": 41
+    },
+    {
+      "index": 4,
+      "name": "tracked Python syntax",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 42,
+      "log_end_line": 46
+    },
+    {
+      "index": 5,
+      "name": "tracked JSON syntax",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 47,
+      "log_end_line": 51
+    },
+    {
+      "index": 6,
+      "name": "tracked JavaScript syntax",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 52,
+      "log_end_line": 56
+    },
+    {
+      "index": 7,
+      "name": "tracked Fish syntax",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 57,
+      "log_end_line": 61
+    },
+    {
+      "index": 8,
+      "name": "Niri selected-fullscreen workspace regression",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 62,
+      "log_end_line": 66
+    },
+    {
+      "index": 9,
+      "name": "NotificationCenter anchor hover lease regression",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 67,
+      "log_end_line": 71
+    },
+    {
+      "index": 10,
+      "name": "Abyss notification popup geometry transition regression",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 72,
+      "log_end_line": 76
+    },
+    {
+      "index": 11,
+      "name": "Abyss hover scene geometry diagnostic regression",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 77,
+      "log_end_line": 81
+    },
+    {
+      "index": 12,
+      "name": "Abyss frame activity diagnostic regression",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 82,
+      "log_end_line": 86
+    },
+    {
+      "index": 13,
+      "name": "Shared tooltip hover/click lifecycle contract",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 87,
+      "log_end_line": 91
+    },
+    {
+      "index": 14,
+      "name": "Native default/custom/styled/Waffle tooltip content lifecycle",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 92,
+      "log_end_line": 96
+    },
+    {
+      "index": 15,
+      "name": "Native static Panel reveal without content resizing",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 97,
+      "log_end_line": 101
+    },
+    {
+      "index": 16,
+      "name": "Native dynamic Toast/OSD/Utility and reparented form reveal",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 102,
+      "log_end_line": 106
+    },
+    {
+      "index": 17,
+      "name": "Native shared-field optimized/unoptimized exact GPU parity",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 107,
+      "log_end_line": 111
+    },
+    {
+      "index": 18,
+      "name": "Native shared-field transparent-interior exact GPU parity",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 112,
+      "log_end_line": 116
+    },
+    {
+      "index": 19,
+      "name": "Native shared-field fractional light transparent-interior exact GPU parity",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 117,
+      "log_end_line": 121
+    },
+    {
+      "index": 20,
+      "name": "Native shared-field fractional light/mask exact GPU parity",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 122,
+      "log_end_line": 126
+    },
+    {
+      "index": 21,
+      "name": "Native generic Popup delayed-loader reveal and cancellation",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 127,
+      "log_end_line": 131
+    },
+    {
+      "index": 22,
+      "name": "Dashboard horizontal gesture and stable page order regression",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 132,
+      "log_end_line": 136
+    },
+    {
+      "index": 23,
+      "name": "Weekly Planner civil dates, overlap, recurrence and DST regression",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 137,
+      "log_end_line": 141
+    },
+    {
+      "index": 24,
+      "name": "Weekly Planner Ctrl/Shift multi-date and compatible Repeat cycles",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 142,
+      "log_end_line": 637
+    },
+    {
+      "index": 25,
+      "name": "Weekly Planner multi-date single-write storage runtime",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 638,
+      "log_end_line": 642
+    },
+    {
+      "index": 26,
+      "name": "Multi-date Events grouping and Weekly Planner drag/resize policy",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 643,
+      "log_end_line": 647
+    },
+    {
+      "index": 27,
+      "name": "Weekly Planner moved Event inline Calendar focus",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 648,
+      "log_end_line": 652
+    },
+    {
+      "index": 28,
+      "name": "Events persisted data preservation without automatic migration",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 653,
+      "log_end_line": 657
+    },
+    {
+      "index": 29,
+      "name": "Calendar popup three-day civil range and recurrence policy",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 658,
+      "log_end_line": 662
+    },
+    {
+      "index": 30,
+      "name": "Calendar counterclockwise 3-per-edge Agenda dots",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 663,
+      "log_end_line": 667
+    },
+    {
+      "index": 31,
+      "name": "Calendar popup compact event cards, hover controls and dot spacing",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 668,
+      "log_end_line": 672
+    },
+    {
+      "index": 32,
+      "name": "Independent Agenda and Todo stores with stable Event ID edits",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 673,
+      "log_end_line": 699
+    },
+    {
+      "index": 33,
+      "name": "Agenda QML upcoming events and Dashboard startup compatibility",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 700,
+      "log_end_line": 704
+    },
+    {
+      "index": 34,
+      "name": "Screen Edge lock reservations and output packing",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 705,
+      "log_end_line": 709
+    },
+    {
+      "index": 35,
+      "name": "Screen Edge multi-selection transactions",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 710,
+      "log_end_line": 714
+    },
+    {
+      "index": 36,
+      "name": "Screen Edge full module designs and capacity",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 715,
+      "log_end_line": 719
+    },
+    {
+      "index": 37,
+      "name": "Screen Edge grab anchors and safe corners",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 720,
+      "log_end_line": 724
+    },
+    {
+      "index": 38,
+      "name": "Screen Edge zero-width inner corner geometry",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 725,
+      "log_end_line": 729
+    },
+    {
+      "index": 39,
+      "name": "Abyss mandatory structural panels and optional preferences",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 730,
+      "log_end_line": 734
+    },
+    {
+      "index": 40,
+      "name": "Quick Notes Markdown preview, formatting and attachment safety regression",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 735,
+      "log_end_line": 739
+    },
+    {
+      "index": 41,
+      "name": "Quick Notes rail wheel sensitivity and modifier routing regression",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 740,
+      "log_end_line": 744
+    },
+    {
+      "index": 42,
+      "name": "Abyss unified content opacity migration regression",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 745,
+      "log_end_line": 749
+    },
+    {
+      "index": 43,
+      "name": "translation catalog structure",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 750,
+      "log_end_line": 754
+    },
+    {
+      "index": 44,
+      "name": "translation source parity",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 755,
+      "log_end_line": 759
+    },
+    {
+      "index": 45,
+      "name": "Python regression: scripts/test-AUTO-F01-github-handoff.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 760,
+      "log_end_line": 764
+    },
+    {
+      "index": 46,
+      "name": "Python regression: scripts/test-abyss-bar-popup-autohide-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 765,
+      "log_end_line": 769
+    },
+    {
+      "index": 47,
+      "name": "Python regression: scripts/test-abyss-body-placement.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 770,
+      "log_end_line": 774
+    },
+    {
+      "index": 48,
+      "name": "Python regression: scripts/test-abyss-compact-editor-runtime.py",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 775,
+      "log_end_line": 791
+    },
+    {
+      "index": 49,
+      "name": "Python regression: scripts/test-abyss-compact-osd-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 792,
+      "log_end_line": 796
+    },
+    {
+      "index": 50,
+      "name": "Python regression: scripts/test-abyss-connection-region-runtime.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 797,
+      "log_end_line": 801
+    },
+    {
+      "index": 51,
+      "name": "Python regression: scripts/test-abyss-content-opacity-config-runtime.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 802,
+      "log_end_line": 806
+    },
+    {
+      "index": 52,
+      "name": "Python regression: scripts/test-abyss-critical-host-ipc-import.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 807,
+      "log_end_line": 811
+    },
+    {
+      "index": 53,
+      "name": "Python regression: scripts/test-abyss-display-mode-hotplug-source.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 812,
+      "log_end_line": 816
+    },
+    {
+      "index": 54,
+      "name": "Python regression: scripts/test-abyss-display-mode.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 817,
+      "log_end_line": 821
+    },
+    {
+      "index": 55,
+      "name": "Python regression: scripts/test-abyss-dock-attached-menu-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 822,
+      "log_end_line": 826
+    },
+    {
+      "index": 56,
+      "name": "Python regression: scripts/test-abyss-dock-menu-axis-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 827,
+      "log_end_line": 831
+    },
+    {
+      "index": 57,
+      "name": "Python regression: scripts/test-abyss-dock-resident-content-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 832,
+      "log_end_line": 836
+    },
+    {
+      "index": 58,
+      "name": "Python regression: scripts/test-abyss-drag-corners-runtime.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 837,
+      "log_end_line": 841
+    },
+    {
+      "index": 59,
+      "name": "Python regression: scripts/test-abyss-dynamic-content-size-runtime.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 842,
+      "log_end_line": 846
+    },
+    {
+      "index": 60,
+      "name": "Python regression: scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 847,
+      "log_end_line": 862
+    },
+    {
+      "index": 61,
+      "name": "Python regression: scripts/test-abyss-edge-editor-compact-actions-contract.py",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 863,
+      "log_end_line": 879
+    },
+    {
+      "index": 62,
+      "name": "Python regression: scripts/test-abyss-edge-editor-compact-side-contract.py",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 880,
+      "log_end_line": 895
+    },
+    {
+      "index": 63,
+      "name": "Python regression: scripts/test-abyss-edge-editor-toolbar-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 896,
+      "log_end_line": 900
+    },
+    {
+      "index": 64,
+      "name": "Python regression: scripts/test-abyss-edgebar-popup-sizing-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 901,
+      "log_end_line": 905
+    },
+    {
+      "index": 65,
+      "name": "Python regression: scripts/test-abyss-editor-popup-source-runtime.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 906,
+      "log_end_line": 910
+    },
+    {
+      "index": 66,
+      "name": "Python regression: scripts/test-abyss-family-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 911,
+      "log_end_line": 915
+    },
+    {
+      "index": 67,
+      "name": "Python regression: scripts/test-abyss-field-support-runtime.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 916,
+      "log_end_line": 920
+    },
+    {
+      "index": 68,
+      "name": "Python regression: scripts/test-abyss-full-size-modules-runtime.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 921,
+      "log_end_line": 925
+    },
+    {
+      "index": 69,
+      "name": "Python regression: scripts/test-abyss-fullscreen-osd-runtime.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 926,
+      "log_end_line": 930
+    },
+    {
+      "index": 70,
+      "name": "Python regression: scripts/test-abyss-generic-popup-presenter-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 931,
+      "log_end_line": 935
+    },
+    {
+      "index": 71,
+      "name": "Python regression: scripts/test-abyss-generic-reveal-readiness-runtime.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 936,
+      "log_end_line": 940
+    },
+    {
+      "index": 72,
+      "name": "Python regression: scripts/test-abyss-geometry-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 941,
+      "log_end_line": 945
+    },
+    {
+      "index": 73,
+      "name": "Python regression: scripts/test-abyss-input-region-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 946,
+      "log_end_line": 950
+    },
+    {
+      "index": 74,
+      "name": "Python regression: scripts/test-abyss-keyboard-runtime.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 951,
+      "log_end_line": 955
+    },
+    {
+      "index": 75,
+      "name": "Python regression: scripts/test-abyss-launcher-dock-menu-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 956,
+      "log_end_line": 960
+    },
+    {
+      "index": 76,
+      "name": "Python regression: scripts/test-abyss-launcher-hover-owner-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 961,
+      "log_end_line": 965
+    },
+    {
+      "index": 77,
+      "name": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py",
+      "status": "FAIL",
+      "exit_code": 1,
+      "log_line": 966,
+      "log_end_line": 981
+    },
+    {
+      "index": 78,
+      "name": "Python regression: scripts/test-abyss-launcher-preset-popup-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 982,
+      "log_end_line": 986
+    },
+    {
+      "index": 79,
+      "name": "Python regression: scripts/test-abyss-launcher-status-mark-contract.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 987,
+      "log_end_line": 991
+    },
+    {
+      "index": 80,
+      "name": "Python regression: scripts/test-abyss-lossless-allocations.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 992,
+      "log_end_line": 996
+    },
+    {
+      "index": 81,
+      "name": "Python regression: scripts/test-abyss-mandatory-typography-runtime.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 997,
+      "log_end_line": 1001
+    },
+    {
+      "index": 82,
+      "name": "Python regression: scripts/test-abyss-module-field-runtime.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 1002,
+      "log_end_line": 1006
+    },
+    {
+      "index": 83,
+      "name": "Python regression: scripts/test-abyss-module-layout.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "log_line": 1007,
+      "log_end_line": 1011
+    },
+    {
+      "index": 84,
+      "name": "Python regression: scripts/test-abyss-module-locks-runtime.py",
+      "status": "STARTED_UNFINISHED",
+      "exit_code": null,
+      "log_line": 1012,
+      "log_end_line": 1014
+    }
+  ],
+  "not_reached": [
+    "CAVA config refresh regression",
+    "CAVA warm spectrum regression",
+    "EQ idle sweep regression",
+    "EQ private presentation regression",
+    "remaining canonical stages",
+    "final clean-source check",
+    "canonical full summary"
+  ],
+  "acceptance_not_established": [
+    "full canonical acceptance",
+    "active audio quantum/crackle correctness",
+    "installed runtime acceptance",
+    "physical Niri/Quickshell input/visual owner acceptance",
+    "multi-output acceptance"
+  ],
+  "canonical_log": {
+    "sha256": "54e1d81b3d0b6e8669895b967e46043c0fc318369ac02c4351038b570bfd4f77",
+    "bytes": 47986,
+    "publication": "Private raw log omitted; original hash retained."
+  },
+  "terminal_log": {
+    "sha256": "eb0d61a5e1c42c9daaf19156bf176dd978ed772c520766f629feb4d3fa8d437e",
+    "publication": "Private raw log omitted; original hash retained."
+  }
+}
