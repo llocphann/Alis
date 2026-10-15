@@ -153,6 +153,22 @@ class GitHubHandoffTests(unittest.TestCase):
                 self.assertFalse(target.exists())
                 self.assertTrue(worker.load_receipt(JOB_ID))
 
+    def test_only_exact_settled_opt_in_jobs_are_auto_retired(self):
+        job,raw,signal=fixture()
+        valid={"job":JOB_ID,"input_sha256":handoff.job_digest(raw),
+               "status":"passed"}
+        self.assertTrue(handoff.retire_opt_in_job(raw,valid))
+        self.assertFalse(handoff.retire_opt_in_job(raw,{**valid,"status":"indeterminate"}))
+        self.assertFalse(handoff.retire_opt_in_job(raw,{**valid,"job":"JOB-OTHER"}))
+        self.assertFalse(handoff.retire_opt_in_job(raw,{**valid,"input_sha256":"f"*64}))
+        self.assertFalse(handoff.retire_opt_in_job(
+            json.dumps({k:v for k,v in job.items() if k!="handoff"}),valid))
+        self.assertFalse(handoff.retire_opt_in_job("not JSON",valid))
+        self.assertFalse(handoff.retire_opt_in_job(
+            json.dumps({**job,"handoff":{"unexpected":"yes"}}),valid))
+        self.assertFalse(handoff.retire_opt_in_job(
+            json.dumps({**job,"handoff":[]}),valid))
+
     def test_untrusted_json_type_errors_are_categorical(self):
         job,raw,signal=fixture()
         for altered in (
@@ -202,6 +218,10 @@ class GitHubHandoffTests(unittest.TestCase):
                             active=checkout/handoff.PATH
                             active.parent.mkdir(parents=True)
                             active.write_text(json.dumps(active_signal))
+                            if match:
+                                pending=checkout/worker.QUEUE/(JOB_ID+".json")
+                                pending.parent.mkdir(parents=True)
+                                pending.write_text(raw)
                             if exists:
                                 result=checkout/worker.RESULTS/(JOB_ID+".json")
                                 result.parent.mkdir(parents=True)
@@ -221,11 +241,13 @@ class GitHubHandoffTests(unittest.TestCase):
                         self.assertEqual(stage,[])
                         self.assertEqual(pushed,[])
                     elif exists:
-                        self.assertEqual(stage,[("git","add","--",handoff.PATH)])
+                        self.assertEqual(stage,[("git","add","--",handoff.PATH,
+                            worker.QUEUE+"/"+JOB_ID+".json")])
                         self.assertEqual(len(pushed),1)
                     else:
                         self.assertEqual(stage,[("git","add","--",
-                                worker.RESULTS+"/"+JOB_ID+".json",handoff.PATH)])
+                                worker.RESULTS+"/"+JOB_ID+".json",handoff.PATH,
+                                worker.QUEUE+"/"+JOB_ID+".json")])
                         self.assertEqual(len(pushed),1)
         with tempfile.TemporaryDirectory() as tmp:
             state=Path(tmp)
