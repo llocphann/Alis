@@ -111,6 +111,40 @@ class UiSchedulerTests(TestCase):
         self.assertEqual(called, [])
         self.assertIsNone(self.item()["pending"])
 
+    def test_wait_result_accepts_only_owned_settled_receipt(self):
+        self.assertEqual(ui_scheduler.ui_tick(
+            ID, now=200, desktop=lambda *_a, **_k: reply(
+                "ALIS_LOOP:WAIT_RESULT JOB-UNIQUE")), "WAIT_RESULT")
+        self.assertEqual(self.item()["job_id"], "JOB-UNIQUE")
+        foreign = {"job": "JOB-UNIQUE", "profile_id": "other-profile",
+                   "status": "passed", "input_sha256": "a" * 64,
+                   "actions": []}
+        with patch.object(daemon, "job_result", return_value=foreign):
+            self.assertEqual(ui_scheduler.ui_tick(
+                ID, now=202, desktop=lambda *_a, **_k: self.fail("send")),
+                "ui_reconciliation_required")
+        self.assertEqual(self.item()["job_id"], "JOB-UNIQUE")
+        self.assertEqual(self.item()["desired"], "paused")
+
+    def test_wait_result_stays_observational_then_uses_owned_receipt(self):
+        self.assertEqual(ui_scheduler.ui_tick(
+            ID, now=200, desktop=lambda *_a, **_k: reply(
+                "ALIS_LOOP:WAIT_RESULT JOB-OWNED")), "WAIT_RESULT")
+        owned = {"job": "JOB-OWNED", "profile_id": ID,
+                 "status": "failed", "input_sha256": "a" * 64,
+                 "actions": []}
+        with patch.object(daemon, "job_result", return_value=None):
+            self.assertEqual(ui_scheduler.ui_tick(ID, now=202),
+                             "waiting_result")
+        self.assertEqual(self.item()["job_id"], "JOB-OWNED")
+        with patch.object(daemon, "job_result", return_value=owned):
+            self.assertEqual(ui_scheduler.ui_tick(ID, now=215),
+                             "waiting_result")
+        self.assertIsNone(self.item()["job_id"])
+        self.assertEqual(self.item()["last_job_id"], "JOB-OWNED")
+        self.assertEqual(self.item()["last_result"], "failed")
+        self.assertEqual(self.item()["request"], "continuation")
+
     def test_wrong_project_does_not_mutate_state(self):
         with patch.dict(os.environ, {"ALIS_CHATGPT_PROJECT": "Different"}):
             self.assertEqual(ui_scheduler.ui_tick(
