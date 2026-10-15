@@ -172,13 +172,20 @@ def check_prepared_queue() -> dict:
         result["queue_state"] = "empty"
         blockers.append("NO_PREPARED_QUEUE")
         return result
+    mode = raw_queue.get("mode")
+    queue_state = raw_queue.get("state")
     if (raw_queue.get("schema") != queue.QUEUE_SCHEMA
-            or raw_queue.get("mode") not in queue.MODES
+            or not isinstance(mode, str) or mode not in queue.MODES
+            or not isinstance(queue_state, str)
+            or queue_state not in {
+                "prepared", "active", "waiting", "stopping", "stopped",
+                "finished", "cancelled",
+            }
             or not isinstance(raw_queue.get("items"), list)):
         blockers.append("QUEUE_MANIFEST_INVALID")
         return result
     items = raw_queue["items"]
-    result["queue_state"] = raw_queue.get("state")
+    result["queue_state"] = queue_state
     result["queue_item_count"] = len(items)
     if (raw_queue.get("state") != "prepared"
             or raw_queue.get("active") is not None
