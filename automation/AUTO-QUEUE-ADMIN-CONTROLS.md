@@ -16,58 +16,63 @@ The Automation Settings task-input field supports **two paths**:
   candidate exists, it reports an explicit error instead of selecting an
   arbitrary visual task.
 
-## Clear queued tasks while the current task remains active
+## Queue controls: Stop, Clear queued, Clear stopped queue
 
-Settings → Automation → GitHub tasks → **Clear queued** → **Confirm clear**.
+Settings → Automation → GitHub tasks shows separate owner-confirmed controls:
 
-This action now explicitly removes **only entries with state `queued`**,
-including when another item is `active` (for example AUDIO-I01). It does
-not stop/modify the active item, reset its scheduler profile, cancel its
-worker actions, approve any pending handoff, edit underlying per-task JSON,
-or remove any receipt. Previously completed entries and current
-active-task identity/selection stay exactly as they were.
+- **Stop queue → Confirm stop:** atomically revoke queue Start approval and
+  change a live queue from active/waiting to **stopping**, then request
+  **Stop** for that exact manager profile. Once the profile confirms its
+  desired state is stopped, the queue becomes **stopped**. No next task will
+  be dispatched. If the manager profile is missing/unavailable or not
+  acknowledged, the queue stays **stopping / reconciliation required**.
+  Stop does **not** retract a previously sent message, terminate a worker
+  process already executing, discard a job ID or erase a receipt.
+- **Clear queued → Confirm clear:** remove only items with state `queued`
+  (including while the first item is still `active`). Preserve the active
+  item, selected identity, approval, profile, task records and all machine
+  evidence. If the UI shows a last-known queue, its exact ordered
+  `repository:code` list is rechecked under the exclusive queue lock;
+  mismatches do not mutate anything.
+- **Clear stopped queue → Confirm clear:** once Stop was acknowledged,
+  archive the complete stopped queue manifest and return the UI to an
+  empty queue. This is **not** deleting the old worker's action/receipts
+  and is **not** a cancellation of work that was already dispatched.
+  Unacknowledged `stopping` is never considered safely stopped.
 
-The UI may retain a last-known queue snapshot if `queue-status` failed.
-For cleanup only, it can still offer **Clear queued**, since the helper
-requires the exact displayed `repository:task-code` sequence in
-`--expected-queued` and rechecks it under the **exclusive queue.lock**.
-If the live queue has changed, no mutation occurs; refresh and confirm again.
-Unlike Start, cleanup never accepts a stale snapshot as dispatch authority.
+The full original manifest is archived in the local legacy-migration
+`hadalis-automation/taskflow/queue-history/` folder before clearing.
+All per-task records, GitHub pending handoffs, local receipts, historical
+results and active/uncertain worker actions stay in their original stores.
+The UI cannot modify `stable` or delete another task's GitHub data.
+The folder name persists only for backward compatibility with installed
+state, not as product branding.
 
-Before any change, the complete original manifest is archived under the
-private legacy-XDG `hadalis-automation/taskflow/queue-history/` directory.
-The legacy path is for migration compatibility, not product naming.
-For an active queue, only queued entries are removed and the new manifest
-remains `active`. For an undispatched prepared queue, the original manifest
-is moved to history and the UI queue becomes empty. An approved selector,
-`waiting` mode, an unverified active-task identity, or active/uncertain
-job phases fail closed instead of cancelling anything. All GitHub queues
-and worker receipts are outside the scope of this UI operation.
+## Optional sudo password — saved to local Secret Service
 
-No installed service or local task inventory has been changed merely by
-committing this feature; the owner must first update the running Alis UI
-and Python source to expose it.
+Settings → Automation → **Administrator access** offers a masked field,
+**Save password**, **Clear**, and **Check sudo cache**. Saving places the
+password in the operating system's Secret Service keyring under application
+`alis-automation`, kind `sudo-password`, separate from GitHub tokens.
+The password travels through one local stdin invocation to `secret-tool`;
+it is never written into JSON, shell argv, GitHub, task prompts, worker
+receipts or logs. Status returns only `saved`/availability, not plaintext.
+Clear deletes this local keyring entry. The old one-shot
+`sudo-authenticate` CLI remains for compatibility but is not the primary
+Settings workflow.
 
-## Optional sudo password
+**Saving does not grant permanent root mode.** Ordinary work runs as the
+unprivileged Alis worker with `NoNewPrivileges=yes`. A separate, same-UID
+broker may read the saved keyring entry **only after** receiving an
+already SHA-pinned, owner-approved privileged operation, passing its service
+allowlist, and recording the one-shot action intent. The broker checks
+`sudo -n -v` first; only when the cache is absent does it attempt
+`sudo -S -p '' -v` with local Secret Service input. The subsequent
+allowlisted action still uses `sudo -n` and a strict timeout.
 
-Settings → Automation → **Administrator access** uses a masked one-time
-password field. Only when the owner clicks **Authorize** is the password
-transferred to `alis-automation-task.py sudo-authenticate` via ephemeral
-standard input. It is passed over a same-UID, mode-0600 Unix socket to the
-already-installed `hadalis-privilege.service` broker. That broker invokes
-`sudo -S -p '' -v` with a single input; no password appears in command-line
-arguments, settings files, GitHub, receipts, logs, or process environment.
-After submission the Settings buffer is cleared. **Check** consults the
-broker's own noninteractive sudo cache, with no password. The cache may
-expire according to host sudo policy. No permission is implied by a
-successful UI form alone.
-
-**This is not blanket root access.** Existing worker
-`NoNewPrivileges=yes` stays enabled. The broker authorizes only its
-preconfigured `system-service-status` and `system-service-restart`
-operations for specifically allowlisted `*.service` names. Owners can
-configure locally using the existing private
-`~/.config/hadalis/automation-privilege.json` policy:
+The current privileged operation set remains
+`system-service-status` / `system-service-restart` for specifically
+allowlisted systemd unit names. Configure the private local policy:
 
 ```json
 {
@@ -76,13 +81,12 @@ configure locally using the existing private
 }
 ```
 
-Replace `example.service` with an actual, explicitly approved service;
-this JSON is a documented **example**, not a default grant. An absent or
-empty allowlist, failed broker, or polkit-only policy makes the password
-field fail closed. Never add an arbitrary `exec` privilege or forward the
-password through the AI agent's prompts and GitHub handoffs. Root-capable
-actions still require individual pinned-job authorization and durable
-one-attempt receipts.
+Replace `example.service` with a service explicitly approved by the
+owner; this example **does not** add permissions on its own.
+An empty allowlist, invalid policy, unavailable/locked keyring, invalid
+password or unapproved task fails closed. The saved password cannot turn
+an arbitrary GitHub Issue into a root shell. Broader administrator access
+would require a distinct explicit scope and authorization design.
 
 ## Production scope
 
