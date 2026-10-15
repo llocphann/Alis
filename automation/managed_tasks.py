@@ -274,6 +274,112 @@ def start_ordered_queue(*, approved: bool = False) -> dict:
     return {"ok": True, "profile_id": pid, "task": selected, "status": "starting"}
 
 
+
+def start_ui_queue(*, approved: bool = False,
+                   accept_ui_only_receipts: bool = False,
+                   expected_first: str = "") -> dict:
+    """Explicit queue-only UI Start; NEVER authorize the native transport.
+
+    Only an already-staged, idle taskflow profile is admitted after the
+    owner opts in to the local-UI evidence limitations. Neither this function
+    nor its CLI installs/restarts the manager or selects a ChatGPT chat.
+    """
+    if approved is not True or accept_ui_only_receipts is not True:
+        raise tf.TaskError("Explicit owner acceptance of UI-only receipts required")
+    from .chat_bridge import ui_preflight
+    report = ui_preflight.check_prepared_queue()
+    if (report.get("queue_state") != "prepared"
+            or report.get("taskflow_profile_present") is not True
+            or report.get("installed_service_mode") != "ui_queue_mode"
+            or report.get("service_state") != "active"
+            or set(report.get("preflight_blockers", [])) != {
+                "SCHEDULER_CUTOVER_NOT_READY",
+                "UI_QUEUE_OWNER_ACCEPTANCE_REQUIRED",
+            }):
+        raise tf.TaskError("UI Queue Start blocked: service, owner or receipts not ready")
+    with queue._lock():
+        manifest = queue._load()
+        if (not manifest or manifest.get("mode") != "ordered"
+                or manifest.get("state") != "prepared"
+                or manifest.get("approved_start") is not False
+                or manifest.get("active") is not None
+                or manifest.get("selection") is not None):
+            raise tf.TaskError("UI Queue Start requires an unclaimed prepared queue")
+        queued = manifest.get("items", [])
+        if (not queued or queued[0].get("state") != "queued"
+                or queued[0].get("repository") not in tf.REPOSITORIES
+                or not isinstance(queued[0].get("code"), str)
+                or not tf.CODE.fullmatch(queued[0]["code"])):
+            raise tf.TaskError("UI Queue Start first task invalid")
+        first = queued[0]
+        if expected_first != first["repository"] + ":" + first["code"]:
+            raise tf.TaskError("UI Queue Start expected first task changed")
+        task = tf.load_task(first["code"], first["repository"])
+        if (task.get("status") not in {"prepared", "handoff_ready"}
+                or task.get("unresolved")
+                or task.get("task", {}).get("base_sha") != first["source_sha"]
+                or task.get("scheduler_dispatched")
+                or task.get("handoff") is not None
+                or task.get("latest_receipt") is not None):
+            raise tf.TaskError("UI Queue Start task pin or lifecycle changed")
+        pid = profile_id(first["repository"], first["code"])
+        config, state, issues = store.read_snapshot()
+        own = next((p for p in config["profiles"] if p["id"] == pid), None)
+        item = state["profiles"].get(pid)
+        if (issues or not own or not item
+                or reference(own) != (first["repository"], first["code"])
+                or own.get("enabled") is not True
+                or own.get("project_name") != model.DEFAULT_PROJECT
+                or item.get("desired") != "stopped"
+                or item.get("pending") or item.get("job_id")
+                or item.get("session") or item.get("run_active")
+                or item.get("last_ui_response_attempt")):
+            raise tf.TaskError("Prepared UI queue profile is not idle or uniquely owned")
+    # Both queue operations persist owner consent and the unique first claim.
+    # They cannot accidentally fall back to the native transport gate.
+    def verified(selected, record, decision):
+        return (decision is None
+                and selected["repository"] == first["repository"]
+                and selected["code"] == first["code"]
+                and selected["source_sha"] == first["source_sha"]
+                and record.get("status") in {"prepared", "handoff_ready"}
+                and not record.get("unresolved")
+                and record["task"]["base_sha"] == first["source_sha"])
+    queue.approve_ordered_start()
+    selected = queue.claim(verified_start=verified)["selected"]
+
+    def schedule(config, state):
+        owner = next((p for p in config["profiles"] if p["id"] == pid), None)
+        current = state["profiles"].get(pid)
+        if (owner is None or reference(owner) !=
+                (selected["repository"], selected["code"])
+                or not owner.get("enabled") or current is None
+                or current.get("pending") or current.get("job_id")
+                or current.get("run_active")
+                or current.get("session") or current.get("desired") != "stopped"):
+            raise tf.TaskError("UI profile changed after first claim; retain queue for review")
+        state["command_seq"] += 1
+        current.update(desired="run", request="new",
+                       command_seq=state["command_seq"],
+                       next_run_at_unix=int(time.time()),
+                       status="scheduled")
+        store.event(state, pid, "ui_queue_start_owner_accepted",
+                    selected["code"])
+    # Stop may arrive after claim. Recheck inside the same queue lock used
+    # by Stop; no new profile becomes runnable after revoked approval.
+    with queue._lock():
+        current = queue._load()
+        if (not current or current.get("state") != "active"
+                or current.get("approved_start") is not True
+                or current.get("stop_requested")
+                or current.get("active") != selected):
+            raise tf.TaskError("UI Queue Start was stopped before profile admission")
+        store.change_state(schedule)
+    return {"ok": True, "state": "scheduled", "mode": "alis-ui-once",
+            "profile_id": pid, "selected": selected,
+            "owner_acceptance": "local-ui-only", "service_modified": False}
+
+
 def _manager_finished(record: dict, pid: str) -> bool:
     """Read only native-bridge-verified manager receipt, never raw UI text."""
     _, runtime, _ = store.read_snapshot()
