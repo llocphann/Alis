@@ -283,6 +283,45 @@ def execute(data: dict[str, Any], commit: str) -> dict[str, Any]:
         receipt["workspace"]=None;save_receipt(job_id,receipt)
 
 
+def publication_push_auth(job_id: str, payload: dict[str, Any],
+                          origin_remote: str, push_remote: str,
+                          *, approved_opt_in_raw: str | None = None
+                          ) -> tuple[str, list[str]]:
+    """Select one existing credential scope; never read or expose the token.
+
+    Profile-owned work retains the historical manager keyring path. Only an
+    exact digest-bound, locally approved GitHub handoff without a profile may
+    use the repository-keyed token from Automation Settings. In particular,
+    legacy jobs and changed remote payloads never gain that fallback.
+    """
+    from automation.manager.credentials import (
+        git_options as profile_options, repository, has_token)
+    owner=payload.get("profile_id")
+    options=profile_options(owner,push_remote)
+    if has_token(owner) and repository(origin_remote):
+        push_remote="https://github.com/"+repository(origin_remote)+".git"
+        options=profile_options(owner,push_remote)
+    elif (not owner and approved_opt_in_raw is not None
+          and not os.environ.get("HADALIS_WORKER_PUSH_REMOTE")
+          and push_remote==origin_remote
+          and repository(origin_remote) is not None):
+        repo=repository(origin_remote)
+        from automation import credentials as scoped_credentials
+        if repo in scoped_credentials.REPOS:
+            try:
+                job=validate_job(f"{QUEUE}/{job_id}.json",approved_opt_in_raw)
+                eligible=(github_handoff.retire_opt_in_job(approved_opt_in_raw,payload)
+                          and github_handoff.approval_matches(
+                              state_root(),job,approved_opt_in_raw))
+                saved=scoped_credentials.status(repo)["saved"] if eligible else False
+            except (OSError,ValueError,KeyError):
+                saved=False
+            if saved:
+                push_remote="https://github.com/"+repo+".git"
+                options=scoped_credentials.git_options(repo)
+    return push_remote,options
+
+
 def publish(job_id: str, payload: dict[str, Any]) -> None:
     """One publication attempt. Retry this receipt, never its external actions."""
     target=f"{RESULTS}/{job_id}.json";remote=remote_url()
@@ -332,11 +371,13 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
             # source in history and the result tombstone in automation/results.
             pending=checkout/QUEUE/(job_id+".json")
             retire_job=False
+            opt_in_raw=None
             if pending.is_file() and not pending.is_symlink():
                 try:
-                    retire_job=github_handoff.retire_opt_in_job(
-                        pending.read_text(encoding="utf-8"),payload)
-                except OSError:
+                    pending_raw=pending.read_text(encoding="utf-8")
+                    retire_job=github_handoff.retire_opt_in_job(pending_raw,payload)
+                    if retire_job:opt_in_raw=pending_raw
+                except (OSError,UnicodeError):
                     pass
             if already_published and not retire_handoff and not retire_job:
                 return
@@ -358,11 +399,10 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
             fetch_dev(payload.get("profile_id"))
             push_remote=os.environ.get("HADALIS_WORKER_PUSH_REMOTE") or remote
             if urlparse(push_remote).password:raise ValueError("credentials cannot appear in push argv")
-            from automation.manager.credentials import git_options,git_env,repository,has_token
-            owner=payload.get("profile_id")
-            if has_token(owner) and repository(remote):
-                push_remote="https://github.com/"+repository(remote)+".git"
-            pushed=run(["git",*git_options(owner,push_remote),"push",push_remote,"HEAD:dev"],cwd=checkout,timeout=45,env=git_env())
+            from automation.manager.credentials import git_env
+            push_remote,options=publication_push_auth(
+                job_id,payload,remote,push_remote,approved_opt_in_raw=opt_in_raw)
+            pushed=run(["git",*options,"push",push_remote,"HEAD:dev"],cwd=checkout,timeout=45,env=git_env())
             if pushed.returncode:raise RuntimeError("result publication failed; private receipt retained")
         finally:shutil.rmtree(checkout,ignore_errors=True)
 
