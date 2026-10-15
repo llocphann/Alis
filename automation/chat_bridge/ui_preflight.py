@@ -154,7 +154,7 @@ def check_prepared_queue() -> dict:
         "preflight_blockers": [],
     }
     try:
-        raw_queue = _document(taskflow.state_dir() / "queue.json")
+        raw_queue = _document(store.state_dir() / "taskflow" / "queue.json")
         raw_config = _document(store.config_path())
         config, issues = model.normalize_config(
             raw_config if raw_config is not None else model.default_config())
