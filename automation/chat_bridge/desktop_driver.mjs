@@ -13,12 +13,12 @@ const COMPOSER = new RegExp(`^(Ask ChatGPT|Do anything|New chat in ${escapedProj
 const ANY_COMPOSER = /^(Ask ChatGPT|Do anything|New chat in .+)$/;
 const PROJECT = new RegExp(`^(Project:|Change project:) ${escapedProject}$`);
 const GITHUB_MENTION = "[@GitHub](plugin://github@openai-curated-remote)";
-const LOOP_MARKER = /^HADALIS_LOOP:(?:WAIT_RESULT|CONTINUE|ROTATE|DONE|CONNECTOR_BLOCKED)(?:[ \\t]+[A-Za-z0-9._/-]+)?[ \\t]*$/m;
+const LOOP_MARKER = /^(?:ALIS|HADALIS)_LOOP:(?:WAIT_RESULT|CONTINUE|ROTATE|DONE|CONNECTOR_BLOCKED)(?:[ \\t]+[A-Za-z0-9._/-]+)?[ \\t]*$/m;
 const RESPONSE_ACTION = /regenerate|retry|try again|copy/i;
 const STREAM_ERROR = /error in message stream|there was an error generating a response/i;
 
 export function scanLoopMarkerTokens(text) {
-  const token = /HADALIS_LOOP:(?:CONTINUE|ROTATE|DONE)\b|HADALIS_LOOP:WAIT_RESULT[ \\t]+JOB-[A-Za-z0-9._-]+|HADALIS_LOOP:CONNECTOR_BLOCKED[ \\t]+GITHUB\b/g;
+  const token = /(?:ALIS|HADALIS)_LOOP:(?:CONTINUE|ROTATE|DONE)\b|(?:ALIS|HADALIS)_LOOP:WAIT_RESULT[ \\t]+JOB-[A-Za-z0-9._-]+|(?:ALIS|HADALIS)_LOOP:CONNECTOR_BLOCKED[ \\t]+GITHUB\b/g;
   return Array.from(String(text).matchAll(token), match => match[0].trim());
 }
 
@@ -31,7 +31,7 @@ export function markerAfterBaseline(markers, baselineMarkerCount) {
     return null;
   if (fresh.length !== 1)
     throw new Error(
-      `expected exactly one post-submit HADALIS_LOOP marker, got ${fresh.length}: ${JSON.stringify(fresh)}`
+      `expected exactly one post-submit ALIS_LOOP marker, got ${fresh.length}: ${JSON.stringify(fresh)}`
     );
   return fresh[0];
 }
@@ -666,7 +666,7 @@ export async function managedPoll(page, baseline) {
   const response = await extractNearResponseAction(page, baseline.responseActionCount);
   await verifyProject(page);
   if (!response || response.markerCount !== 1)
-    throw new Error("new assistant response has no unique HADALIS_LOOP marker");
+    throw new Error("new assistant response has no unique ALIS_LOOP marker");
   return { completed: true, response };
 }
 
@@ -752,7 +752,7 @@ async function extractNearResponseAction(page, baselineActionCount = 0) {
         continue;
 
       const result = await action.evaluate((button) => {
-        const token = /HADALIS_LOOP:(?:CONTINUE|ROTATE|DONE)\b|HADALIS_LOOP:WAIT_RESULT[ \\t]+JOB-[A-Za-z0-9._-]+|HADALIS_LOOP:CONNECTOR_BLOCKED[ \\t]+GITHUB\b/g;
+        const token = /(?:ALIS|HADALIS)_LOOP:(?:CONTINUE|ROTATE|DONE)\b|(?:ALIS|HADALIS)_LOOP:WAIT_RESULT[ \\t]+JOB-[A-Za-z0-9._-]+|(?:ALIS|HADALIS)_LOOP:CONNECTOR_BLOCKED[ \\t]+GITHUB\b/g;
         const turn = button.closest?.('[data-turn-key]');
         if (turn) {
           // Current Desktop places the answer toolbar next to a shared turn
@@ -825,7 +825,7 @@ export async function extractLoopResponse(
       };
     }
 
-    throw new Error("No post-submit HADALIS_LOOP marker found");
+    throw new Error("No post-submit ALIS_LOOP marker found");
   }
 
   const anchored = await extractNearResponseAction(page);
