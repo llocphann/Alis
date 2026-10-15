@@ -36,7 +36,7 @@ def job_digest(raw: str) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
-def validate_signal(raw: str, *, now: int | None = None) -> dict:
+def validate_signal(raw: str, *, now: int | None = None, require_fresh: bool = True) -> dict:
     if not isinstance(raw, str) or len(raw.encode("utf-8")) > MAX_BYTES:
         raise ValueError("handoff manifest exceeds bound")
     try:
@@ -62,7 +62,7 @@ def validate_signal(raw: str, *, now: int | None = None) -> dict:
         raise ValueError("handoff manifest invalid identity")
     at = int(time.time()) if now is None else now
     if (value["updated_unix"] > at + 120 or
-            value["updated_unix"] < at - MAX_LIFETIME or
+            (require_fresh and value["updated_unix"] < at - MAX_LIFETIME) or
             value["expires_unix"] <= value["updated_unix"] or
             value["expires_unix"] > value["updated_unix"] + MAX_LIFETIME):
         raise ValueError("handoff time window invalid")
@@ -131,7 +131,7 @@ def retire_after_receipt(raw_signal: str, payload: dict,
             {"passed", "failed", "cancelled"}):
         return False
     try:
-        signal = validate_signal(raw_signal, now=now)
+        signal = validate_signal(raw_signal, now=now, require_fresh=False)
     except ValueError:
         return False
     return (signal["status"] == "DONE"
