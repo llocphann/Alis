@@ -37,6 +37,28 @@ async function readStdin() {
 
 async function main() {
   const command = process.argv[2] ?? "observe";
+  if (command === "ui-project-enter") {
+    const cdp = process.env.ALIS_CHATGPT_CDP_URL ??
+      process.env.HADALIS_CHATGPT_CDP_URL ?? "http://127.0.0.1:9222";
+    let loopback = false;
+    try {
+      const url = new URL(cdp);
+      loopback = url.protocol === "http:" &&
+        ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname) &&
+        !url.username && !url.password && url.pathname === "/" &&
+        !url.search && !url.hash;
+    } catch {}
+    if (!loopback) {
+      writeJson({
+        purpose: "alis-ui-project-navigation", status: "blocked",
+        diagnosis: "ALIS_UI_CDP_LOOPBACK_REQUIRED",
+        navigation_click_attempted: false,
+        message_submission_attempted: false,
+        ui_scheduler_authorized: false
+      });
+      return;
+    }
+  }
   let { page } = await connectDesktop();
 
   if (command === "observe") {
