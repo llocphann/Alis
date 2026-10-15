@@ -10,6 +10,7 @@ on:
       - "scripts/test-automation-taskflow.py"
       - "scripts/automation_test_helpers.py"
       - "scripts/AUTO-F01-*.py"
+      - "scripts/test-AUTO-F01-*.py"
       - ".github/workflows/auto-f01.yml"
   pull_request:
     paths:
@@ -20,6 +21,7 @@ on:
       - "scripts/test-automation-taskflow.py"
       - "scripts/automation_test_helpers.py"
       - "scripts/AUTO-F01-*.py"
+      - "scripts/test-AUTO-F01-*.py"
       - ".github/workflows/auto-f01.yml"
   workflow_dispatch:
 
