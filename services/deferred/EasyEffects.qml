@@ -52,6 +52,24 @@ Singleton {
         }
     }
 
+    // Both native quick-toggle and settings UI launches must share the same
+    // child-scoped AUDIO-I01 guard. Starting a GUI for an already-running
+    // EasyEffects daemon cannot retrofit that daemon's existing PipeWire nodes.
+    function openSettings() {
+        if (!root.available) return
+        if (root.nativeInstalled) {
+            if (Quickshell.env("ALIS_AUDIO_I01_LOCK_QUANTUM") !== "0") {
+                const runner = FileUtils.trimFileProtocol(Directories.scriptPath)
+                    + "/audio/easyeffects-quantum-guard.sh"
+                Quickshell.execDetached(["/usr/bin/bash", runner, "easyeffects"])
+            } else {
+                Quickshell.execDetached(["/usr/bin/env", "easyeffects"])
+            }
+        } else {
+            Quickshell.execDetached(["/usr/bin/env", "flatpak", "run", "com.github.wwmm.easyeffects"])
+        }
+    }
+
     function enable() {
         if (!root.available) return
         root.active = true

@@ -69,8 +69,20 @@ raise SystemExit(37)
     )
     assert no_binary.returncode == 127
 
+# Every Alis quick-toggle settings action must route through the same guarded
+# singleton launcher as the normal native EasyEffects toggle.
+for path in [
+    "modules/common/models/quickToggles/EasyEffectsToggle.qml",
+    "modules/sidebarRight/quickToggles/classicStyle/EasyEffectsToggle.qml",
+    "modules/sidebarRight/quickToggles/androidStyle/AndroidEasyEffectsToggle.qml",
+]:
+    surface = (ROOT / path).read_text()
+    assert "EasyEffects.openSettings()" in surface, path
+    assert "flatpak run com.github.wwmm.easyeffects; or easyeffects" not in surface, path
+
 qml = QML.read_text()
-assert 'Quickshell.env("ALIS_AUDIO_I01_LOCK_QUANTUM") !== "0"' in qml
+assert 'function openSettings()' in qml
+assert qml.count('Quickshell.env("ALIS_AUDIO_I01_LOCK_QUANTUM") !== "0"') == 2
 assert '"/audio/easyeffects-quantum-guard.sh"' in qml
 assert 'Quickshell.execDetached(["/usr/bin/env", "easyeffects", "--service-mode"])' in qml
 assert 'Quickshell.execDetached(["/usr/bin/env", "flatpak", "run", "com.github.wwmm.easyeffects", "--service-mode"])' in qml

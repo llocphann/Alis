@@ -27,10 +27,7 @@ AndroidQuickToggleButton {
     }
 
     altAction: () => {
-        ShellExec.execFishOrBashOneLiner(
-            "flatpak run com.github.wwmm.easyeffects; or easyeffects",
-            "/usr/bin/flatpak run com.github.wwmm.easyeffects || /usr/bin/easyeffects"
-        )
+        EasyEffects.openSettings()
         GlobalStates.sidebarRightOpen = false
     }
 
