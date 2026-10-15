@@ -4,7 +4,7 @@
  * One navigation click maximum + one send click maximum, no retries.
  */
 import fs from "node:fs";
-import {oneShotUiSmoke,SMOKE_ACCEPTANCE_ID} from "./alis_ui_smoke.mjs";
+import {SMOKE_ACCEPTANCE_ID} from "./alis_ui_smoke_id.mjs";
 import {persistHarmlessUiAttempt,harmlessUiAttemptExists} from "./legacy_ui_journal.mjs";
 const writeReport=value=>fs.writeSync(1,JSON.stringify(value)+"\n");
 const denied=(code,status="blocked")=>({
@@ -50,6 +50,8 @@ const guard=setTimeout(()=>{
   process.exit(124);
 },24000);
 try{
+  // Import Desktop/CDP only after the immutable one-shot precheck passes.
+  const {oneShotUiSmoke}=await import("./alis_ui_smoke.mjs");
   const path=process.env.ALIS_PLAYWRIGHT_MODULE??
     process.env.HADALIS_PLAYWRIGHT_MODULE??
     "file:///usr/lib/chatgpt/resources/cua_node/lib/node_modules/playwright-core/index.mjs";
