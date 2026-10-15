@@ -420,13 +420,15 @@ def reconcile_ui_once() -> dict:
             record["delivery_acknowledged_unix"] = delivery["ack_unix"]
             record["updated_unix"] = delivery["ack_unix"]
             tf._save_task(record)
-        outcome = queue.advance(verify_completion=lambda current:
-            current.get("status") == "awaiting_owner"
-            and current.get("delivery", {}).get("transport") == "alis-ui-once"
-            and current.get("delivery", {}).get("attestation") == "local-ui-only"
-            and current.get("delivery", {}).get("response_attempt") == attempt
-            and current.get("delivery", {}).get("ui_target_sha256")
-                == session["ui_target_key"])
+    # queue.advance takes queue.lock itself. Stop/clear between verification
+    # and this call cannot be bypassed: advance rechecks active identity.
+    outcome = queue.advance(verify_completion=lambda current:
+        current.get("status") == "awaiting_owner"
+        and current.get("delivery", {}).get("transport") == "alis-ui-once"
+        and current.get("delivery", {}).get("attestation") == "local-ui-only"
+        and current.get("delivery", {}).get("response_attempt") == attempt
+        and current.get("delivery", {}).get("ui_target_sha256")
+            == session["ui_target_key"])
     if outcome.get("state") == "waiting":
         return _schedule_next_authorized()
     return outcome
