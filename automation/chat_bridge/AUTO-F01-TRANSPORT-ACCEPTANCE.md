@@ -130,6 +130,18 @@ Synthetic tests exercise matching/missing/duplicate pairs, spoofed UI Project co
 
 **Owner follow-up observed on installed Desktop (2026-10-15):** The owner ran the `observe-acceptance` read-only CLI against the already-existing chat. Its categorical JSON reported `visual_pair_status:"ONE_VISIBLE_HARMLESS_PAIR_NOT_ATTESTED"`, `request_visible_count_capped:1`, `reply_visible_count_capped:1`, `visual_project_guard_observed:true`, `status:"read-only"`; server Project/conversation/user-message verification, final receipt and Scheduler authorization all remained `false`. This corroborates the prior screenshot with a separate **no-send** renderer observation. It is not a server receipt and must not be used to adopt/acknowledge the test as a managed task. The owner also pasted the proposed `systemctl --user show` loop **without any service-state output**; there is currently **no on-device service health conclusion** or startup proof. Await only the actual `LoadState`, `ActiveState`, `SubState`, `Result`, `ExecMainStatus`, and `NRestarts` lines for `hadalis-chatgpt`, `hadalis-chat-bridge`, and `hadalis-worker`. No service restart/start/reset is required for this diagnostic.
 
+## Cloudbot GitHub app mention in every task prompt (2026-10-15)
+
+The task-code Cloudbot objective, managed prompt composer and task selector now place the owner-selected exact GitHub app link on the **first line** of generated Cloudbot messages:
+
+```text
+[$github](app://connector_76869538009648d5b282a4bb21c3d157)
+```
+
+Applies at `initial`, `continuation`, `rotation` and `Cloudbot auto-select`. Prompt composer strips an existing link (including an older GitHub mention at the start of stored prompts) before adding the standard one once, so reused task files do not accumulate mention lines. Legacy Hadalis profile prompts retain their prior `[@GitHub](plugin://github@openai-curated-remote)` link and are not migrated by this change.
+
+**This is only a serialized user-message link**, not authentication or evidence that the ChatGPT Desktop editor resolved a rich mention or enabled the connector. Keep the native Desktop `transport_gate` **blocked** pending separate supported, authenticated server-side Project/message/response attestation; never unblock based on prompt text or icon detection. The GitHub handoff worker remains a separate owner-approved execution channel. The pending isolated `AUTO-F01` no-op job remains `PREPARING` until explicit local approval; do not switch it to `DONE` as part of prompt changes.
+
 ## Alternative GitHub DONE handoff — deterministic local jobs (2026-10-15)
 
 **Purpose and limits.** The owner proposed avoiding undocumented ChatGPT Desktop server receipt IDs by letting Cloud GPT and Localbot communicate through **GitHub as an explicit coordination channel**. This is a separate, opt-in deterministic-job transport; it does **not** attest ChatGPT Project/conversation/message IDs, replace the user-facing ChatGPT reasoning agent, authorize existing 18 queued tasks or unlock native Desktop Scheduler. Never call this an authenticated ChatGPT Desktop receipt.
