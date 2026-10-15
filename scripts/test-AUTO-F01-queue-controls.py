@@ -159,6 +159,60 @@ class QueueControls(unittest.TestCase):
             queue.clear(approved=True, expected_queued=expected)
         self.assertFalse(queue.clear(approved=True, expected_queued="")["cleared"])
 
+    def test_screenshot_case_one_active_seventeen_queued(self):
+        # Regression for Settings: AUDIO-I01 active must survive clearing
+        # MUSIC-I02, ABYSS-*, DASH-*, etc. No local machine job is touched.
+        codes = [
+            "MUSIC-I02", "ABYSS-R09", "ABYSS-R12", "DASH-R01",
+            "OPT-R01", "AUDIO-R01", "ABYSS-R11", "ABYSS-R03",
+            "OPT-R02", "DASH-R05", "NOTIF-I02", "VIS-R01",
+            "AC-I01", "AC-I02", "AC-R02", "AC-R01", "AC-R03",
+        ]
+        active = {"code": "AUDIO-I01", "repository": "llocphann/Alis"}
+        manifest = {
+            "schema": queue.QUEUE_SCHEMA, "mode": "ordered",
+            "state": "active", "active": dict(active),
+            "selection": {"code": "AUDIO-I01", "decision_id": None,
+                          "selected_unix": 12},
+            "approved_start": True,
+            "items": [{**active, "state": "active", "issue_number": 1,
+                       "source_sha": "a" * 40}] + [
+                {"code": code, "repository": "llocphann/Alis",
+                 "issue_number": i + 2, "source_sha": "a" * 40,
+                 "state": "queued"}
+                for i, code in enumerate(codes)],
+            "created_unix": 1, "updated_unix": 1,
+        }
+        with queue._lock():
+            queue._save(manifest)
+        expected = ";".join("llocphann/Alis:" + code for code in codes)
+        before_active = dict(manifest["items"][0])
+        result = queue.clear(approved=True, expected_queued=expected)
+        self.assertEqual(result["removed_queued"], 17)
+        self.assertEqual(result["state"], "active")
+        self.assertEqual(result["items"], [{
+            "code": "AUDIO-I01", "repository": "llocphann/Alis",
+            "state": "active"}])
+        with queue._lock():
+            saved = queue._load()
+        self.assertEqual(saved["items"], [before_active])
+        self.assertEqual(saved["selection"], manifest["selection"])
+        self.assertEqual(saved["active"], manifest["active"])
+        self.assertEqual(saved["approved_start"], manifest["approved_start"])
+        self.assertEqual(len(list((tf.state_dir() / "queue-history").glob(
+            "cleared-*.json"))), 1)
+
+        # The GUI is allowed to offer cleanup from a last-known snapshot.
+        # It must still send all exact queued identities to the backend.
+        qml = (Path(__file__).resolve().parents[1] /
+               "modules/settings/AutomationTaskConfig.qml").read_text()
+        button = qml.split('objectName: "automationClearQueue"')[1].split(
+            "onClicked: root.clearQueue()", 1)[0]
+        self.assertIn('Translation.tr("Clear queued")', button)
+        self.assertIn('task.state === "queued"', button)
+        self.assertNotIn("root.queueStatusConfirmed", button)
+        self.assertIn('"--expected-queued", targets', qml)
+
     def test_queue_clear_matches_exact_snapshot_and_rejects_waiting_selector(self):
         queue.prepare_auto(api=self.github)
         live = "llocphann/Alis:AUTO-R01;llocphann/Alis:AUTO-I02"
