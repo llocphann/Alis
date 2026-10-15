@@ -204,6 +204,24 @@ try{
   v=run(["--owner-approved"],{ALIS_CHATGPT_CDP_URL:"http://example.com:9222"});
   assert.equal(v.status,1);
   assert.equal(JSON.parse(v.stdout).code,"ALIS_UI_CDP_LOOPBACK_REQUIRED");
+
+  // A journaled one-shot must be rejected BEFORE CDP/import/navigation.
+  // Force the Playwright module to be unimportable: an early journal guard
+  // should still give the explicit no-retry code.
+  const {persistHarmlessUiAttempt}=await import(
+    "../automation/chat_bridge/legacy_ui_journal.mjs");
+  persistHarmlessUiAttempt({
+    id:SMOKE_ACCEPTANCE_ID,kind:"harmless-ui-acceptance",
+    outcome:"indeterminate-once-attempted"
+  },{stateHome:root});
+  v=run(["--owner-approved"],{
+    ALIS_CHATGPT_CDP_URL:"http://127.0.0.1:9222",
+    ALIS_PLAYWRIGHT_MODULE:"file:///nonexistent/never-load-playwright.mjs",
+    XDG_STATE_HOME:root
+  });
+  assert.equal(v.status,1,v.stderr);
+  assert.equal(JSON.parse(v.stdout).code,
+               "ALIS_UI_SMOKE_ALREADY_RECORDED_NO_RETRY");
   console.log("PASS AUTO-F01 one-command mock navigation -> immutable journal -> harmless Send -> assistant-only response -> UI chat key, no retry");
 }finally{
   fs.rmSync(root,{recursive:true,force:true});
