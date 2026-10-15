@@ -160,6 +160,8 @@ export function assessLegacyUiReadiness(snapshot){
     s.composer_draft_present===false &&
     s.stop_count_capped===0;
   if(s.stop_count_capped!==0)add("GENERATION_BUSY_OR_UNVERIFIED");
+  if(Number.isInteger(s.dialog_count_capped) && s.dialog_count_capped!==0)
+    add("MODAL_OPEN_OR_UNVERIFIED");
   if(s.composer_draft_present!==false)add("COMPOSER_NOT_EMPTY_OR_UNVERIFIED");
   if(s.composer_disabled!==false)add("COMPOSER_DISABLED_OR_UNVERIFIED");
   const absentOnBlankProjectComposer=emptyProjectComposer &&
