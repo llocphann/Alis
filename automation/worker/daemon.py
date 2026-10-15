@@ -327,16 +327,27 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
                         active.read_text(encoding="utf-8"),payload)
                 except OSError:
                     pass
-            if already_published and not retire_handoff:
+            # Only opt-in, settled SHA-matching job payloads are retired.
+            # This keeps Git's tip compact while preserving the original
+            # source in history and the result tombstone in automation/results.
+            pending=checkout/QUEUE/(job_id+".json")
+            retire_job=False
+            if pending.is_file() and not pending.is_symlink():
+                try:
+                    retire_job=github_handoff.retire_opt_in_job(
+                        pending.read_text(encoding="utf-8"),payload)
+                except OSError:
+                    pass
+            if already_published and not retire_handoff and not retire_job:
                 return
             if retire_handoff:
                 active.unlink()
-            if retire_handoff and not already_published:
-                paths=[target,github_handoff.PATH]
-            elif retire_handoff:
-                paths=[github_handoff.PATH]
-            else:
-                paths=[target]
+            if retire_job:
+                pending.unlink()
+            paths=[]
+            if not already_published:paths.append(target)
+            if retire_handoff:paths.append(github_handoff.PATH)
+            if retire_job:paths.append(QUEUE+"/"+job_id+".json")
             staged=run(["git","add","--",*paths],cwd=checkout,timeout=60)
             if staged.returncode: raise RuntimeError("publication staging failed")
             for argv in (["git","commit","-m",f"automation: record {job_id} result"],):
