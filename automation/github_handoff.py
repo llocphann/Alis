@@ -146,6 +146,29 @@ def retire_after_receipt(raw_signal: str, payload: dict,
             and signal["job_sha256"] == payload.get("input_sha256"))
 
 
+def retire_opt_in_job(raw_job: str, payload: dict) -> bool:
+    """Delete only an exact settled opt-in queue payload after publication.
+
+    The Git result remains a durable remote tombstone; original immutable
+    source is retained in Git history. Never retire legacy/uncertain jobs.
+    """
+    if not isinstance(payload,dict) or payload.get("status") not in {
+            "passed","failed","cancelled"}:
+        return False
+    try:
+        job=json.loads(raw_job)
+    except (TypeError, ValueError):
+        return False
+    if (not isinstance(job,dict) or
+            not isinstance(job.get("handoff"),dict) or
+            set(job["handoff"])!={"task_code","run_id"} or
+            not isinstance(job.get("id"),str) or
+            not JOB.fullmatch(job["id"])):
+        return False
+    return (payload.get("job")==job["id"] and
+            payload.get("input_sha256")==job_digest(raw_job))
+
+
 EXPIRED_GRACE = 3600
 
 
