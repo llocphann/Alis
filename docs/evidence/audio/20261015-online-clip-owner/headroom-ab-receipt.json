@@ -1,0 +1,22 @@
+{
+  "scope": "Owner-approved Equalizer inputGain -6 dB for10seconds; restore0; no band/preset/route/system-volume commands",
+  "original_db": 0.0,
+  "initial_pids": [
+    "3264"
+  ],
+  "events": [
+    {
+      "event": "gain_lowered",
+      "verified_db": -6.0,
+      "utc": "2026-10-15T13:39:02.151712+00:00",
+      "monotonic_ns": 1070427902951
+    },
+    {
+      "event": "restore_checked",
+      "utc": "2026-10-15T13:39:12.278534+00:00",
+      "monotonic_ns": 1080554724900
+    }
+  ],
+  "restored_db": 0.0,
+  "restored": true
+}

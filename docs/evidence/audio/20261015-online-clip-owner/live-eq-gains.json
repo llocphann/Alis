@@ -1,0 +1,7 @@
+{
+  "scope": "Read-only live Equalizer gain queries; no property writes",
+  "properties": {
+    "inputGain": 0.0,
+    "outputGain": 0.0
+  }
+}

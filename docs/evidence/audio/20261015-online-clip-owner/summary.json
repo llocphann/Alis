@@ -119,5 +119,13 @@
     "verified_restored": "OFF",
     "capture_actual_exit": 0,
     "owner_listening_result": "Pop stopped or clearly reduced during approved bypass while both sources played and clips changed; effects restored afterward."
+  },
+  "headroom_ab": {
+    "owner_approved_seconds": 10,
+    "original_input_gain_db": 0,
+    "verified_during_db": -6,
+    "verified_restored_db": 0,
+    "process_identity_unchanged": true,
+    "owner_listening_result": "Pending response; no permanent change"
   }
 }
