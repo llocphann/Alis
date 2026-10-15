@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import socket
 import struct
+import subprocess
 import time
 
 from automation.manager.store import _write, state_dir
@@ -64,6 +65,92 @@ def request(spec, job_id, index):
         # A request may have been delivered: never retry automatically.
         return {"status":"indeterminate","exit_code":None,"recovery_required":True,
                 "error_code":"administrator_outcome_unknown","timed_out":False,"cancelled":False}
+
+
+def _broker_control(payload: dict) -> dict:
+    """One short same-user Unix socket request; never persist the secret."""
+    try:
+        with socket.socket(socket.AF_UNIX) as channel:
+            channel.settimeout(16)
+            channel.connect(str(socket_path()))
+            channel.sendall(json.dumps(payload).encode("utf-8"))
+            channel.shutdown(socket.SHUT_WR)
+            data = channel.recv(2048)
+            if not data or len(data) >= 2048:
+                raise ValueError("Invalid administrator broker reply")
+            response = json.loads(data)
+            if not isinstance(response, dict):
+                raise ValueError("Invalid administrator broker reply")
+            return response
+    except (OSError, ValueError, socket.timeout):
+        return {"ok": False, "authenticated": False,
+                "reason": "ADMINISTRATOR_BROKER_UNAVAILABLE"}
+
+
+def authenticate(password: str) -> dict:
+    """Send transient password to broker; never on argv, disk or GitHub."""
+    if (not isinstance(password, str) or not 1 <= len(password) <= 1024
+            or any(c in password for c in ("\\0", "\\r", "\\n"))):
+        return {"ok": False, "authenticated": False,
+                "reason": "INVALID_PASSWORD_INPUT"}
+    return _broker_control({"control": "sudo-authenticate", "password": password})
+
+
+def auth_status() -> dict:
+    return _broker_control({"control": "sudo-status"})
+
+
+def _privilege_auth(payload: dict, *, runner=None) -> dict:
+    """Called only by the existing UID-matched broker, never by worker jobs.
+
+    sudo -v primes the broker's own timestamp context, which is also used by
+    subsequent allowlisted sudo -n service actions. It does NOT expand the
+    existing unit/operation allowlist, and does not store passwords or logs.
+    """
+    if payload.get("control") not in {"sudo-status", "sudo-authenticate"}:
+        return {"ok": False, "authenticated": False,
+                "reason": "INVALID_ADMINISTRATOR_CONTROL"}
+    operation = payload["control"]
+    if operation == "sudo-status":
+        if set(payload) != {"control"}:
+            return {"ok": False, "authenticated": False,
+                    "reason": "INVALID_ADMINISTRATOR_CONTROL"}
+    else:
+        password = payload.get("password")
+        if (set(payload) != {"control", "password"} or
+                not isinstance(password, str) or
+                not 1 <= len(password) <= 1024 or
+                any(c in password for c in ("\\0", "\\r", "\\n"))):
+            return {"ok": False, "authenticated": False,
+                    "reason": "INVALID_PASSWORD_INPUT"}
+    try:
+        rules = policy()
+    except (OSError, ValueError, json.JSONDecodeError):
+        return {"ok": False, "authenticated": False,
+                "reason": "INVALID_ADMINISTRATOR_POLICY"}
+    if rules["authentication"] != "sudo-cache":
+        return {"ok": False, "authenticated": False,
+                "reason": "SUDO_CACHE_MODE_NOT_SELECTED"}
+    if not rules["units"]:
+        return {"ok": False, "authenticated": False,
+                "reason": "ADMINISTRATOR_ALLOWLIST_EMPTY"}
+    argv = ["/usr/bin/sudo", "-n", "-v"] if operation == "sudo-status" else [
+        "/usr/bin/sudo", "-S", "-p", "", "-v"]
+    invoke = subprocess.run if runner is None else runner
+    env = {k: v for k, v in os.environ.items() if k in (
+        "PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_ALL")}
+    try:
+        output = invoke(argv, input=None if operation == "sudo-status"
+                        else password + "\\n",
+                        text=True, capture_output=True, timeout=12,
+                        check=False, env=env)
+        success = output.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return {"ok": False, "authenticated": False,
+                "reason": "SUDO_AUTHENTICATION_UNAVAILABLE"}
+    return {"ok": success, "authenticated": success,
+            "reason": "SUDO_CACHE_READY" if success else
+            "SUDO_AUTHENTICATION_FAILED"}
 
 
 def handle(payload, executor=bounded_run):
@@ -128,8 +215,14 @@ def serve():
                             while chunk:=connection.recv(4096):
                                 raw.extend(chunk)
                                 if len(raw)>8192:raise ValueError("administrator request exceeds bound")
-                            result=handle(json.loads(raw))
-                        except Exception:result={"status":"denied","exit_code":126,"error_code":"invalid_administrator_request"}
+                            payload = json.loads(raw)
+                            if isinstance(payload, dict) and "control" in payload:
+                                result = _privilege_auth(payload)
+                            else:
+                                result = handle(payload)
+                        except Exception:
+                            result={"ok": False, "authenticated": False,
+                                    "reason": "INVALID_ADMINISTRATOR_REQUEST"}
                         try:connection.sendall(json.dumps(result).encode())
                         except OSError:pass # Receipt stays usable even if client disappeared.
             finally:path.unlink(missing_ok=True)
