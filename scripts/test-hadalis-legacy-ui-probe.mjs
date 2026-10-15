@@ -14,7 +14,9 @@ const makeLocator=(items=[])=>({
   nth(i){return makeLocator([items[i]]);},
   first(){return makeLocator([items[0]]);},
   async isVisible(){return items[0]?.visible??false;},
-  async isDisabled(){return items[0]?.disabled??false;},
+  async isDisabled(){
+    return items[0]?.disabled===undefined?false:items[0].disabled;
+  },
   async evaluate(fn){return fn({textContent:items[0]?.draft??""});},
   locator(){return makeLocator(items[0]?.selected??[]);},
   click:failWrite,fill:failWrite,focus:failWrite,press:failWrite
