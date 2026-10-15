@@ -17,6 +17,7 @@ Item {
     // Keep the integrated CAVA + DSP graph, but restore the original
     // electric-current connector language on top of it.
     property real eqLightningHighlight: 0.0
+    // The resting sentinel is outside the visible preset sweep.
     property real eqPresetSweepProgress: -0.12
 
     readonly property color eqAccentColor: Appearance.colors.colPrimary
@@ -400,7 +401,7 @@ Item {
                         ctx.lineJoin = "round"
 
                         const sweepActive =
-                            sweep >= -0.12 && sweep <= 1.16
+                            sweep > -0.12 && sweep <= 1.16
 
                         function strokeSampledTrace(stroke, capture) {
                             const samples = capture ? [] : null

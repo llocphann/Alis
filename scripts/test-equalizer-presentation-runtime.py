@@ -110,7 +110,7 @@ ShellRoot {
 ''')
     with private_wayland(folder) as env:
         if env is None: print("SKIP: DSP presentation requires private Niri"); raise SystemExit(0)
-        config = folder / "config/illogical-impulse"
+        config = folder / "config/alis"
         config.mkdir(parents=True, exist_ok=True)
         value = json.loads((ROOT / "defaults/config.json").read_text())
         value["panelFamily"] = "abyss"
