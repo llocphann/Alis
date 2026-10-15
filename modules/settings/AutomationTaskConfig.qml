@@ -31,6 +31,7 @@ ContentPage {
     property bool backendInstalled: false
     property bool backendStatusKnown: false
     property bool backendTransportReady: false
+    property string backendTransportBlocker: ""
     property var backendServices: ({})
     property string backendStatusText: ""
     property var activitySnapshot: null
@@ -424,12 +425,15 @@ ContentPage {
                 // does not attest a managed ChatGPT Project delivery receipt.
                 root.backendTransportReady = report.transport_ready === true
                     && report.unattended_submission_authorized === true
+                root.backendTransportBlocker = typeof report.transport_blocker === "string"
+                    ? report.transport_blocker : ""
                 root.backendStatusKnown = true
                 root.backendStatusText = ""
                 root.backendServices = report.services
             } catch (error) {
                 root.backendInstalled = false
                 root.backendTransportReady = false
+                root.backendTransportBlocker = ""
                 root.backendStatusKnown = false
                 root.backendStatusText = String(error)
             }
@@ -811,8 +815,18 @@ ContentPage {
                     : root.backendInstalled
                     ? (root.backendTransportReady
                         ? Translation.tr("Backend installed · managed transport ready")
-                        : Translation.tr("Backend installed · Alis Desktop loop requires activation"))
+                        : Translation.tr("Backend installed · automatic ChatGPT submission not authorized"))
                     : Translation.tr("Backend not installed")
+            }
+            StyledText {
+                visible: root.backendStatusKnown && root.backendInstalled
+                    && !root.backendTransportReady
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: Appearance.colors.colSubtext
+                text: root.backendTransportBlocker === "CHATGPT_PROJECT_SERVER_RECEIPT_UNATTESTED"
+                    ? Translation.tr("Native ChatGPT transport lacks verified message receipts. UI Loop requires separate owner-approved validation before queue Start.")
+                    : Translation.tr("Queue Start is blocked until the managed ChatGPT transport is accepted.")
             }
             RowLayout {
                 Layout.fillWidth: true
