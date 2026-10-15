@@ -68,14 +68,14 @@ class TaskflowTests(unittest.TestCase):
                 self.assertTrue(prompt.startswith(GITHUB_APP_MENTION+"\n\n"),phase)
                 self.assertEqual(prompt.count(GITHUB_APP_MENTION),1,phase)
                 self.assertTrue(prompt_has_required_github_mention(prompt),phase)
-                self.assertIn("HADALIS_LOOP:CONNECTOR_BLOCKED GITHUB",prompt)
+                self.assertIn("ALIS_LOOP:CONNECTOR_BLOCKED GITHUB",prompt)
         with patch.object(managed_tasks.queue,"cloud_selection_prompt",
                           return_value="Approved queue fixture"):
             for phase in ("initial","continuation","rotation"):
                 prompt=managed_tasks.selector_prompt(phase)
                 self.assertTrue(prompt.startswith(GITHUB_APP_MENTION+"\n\n"),phase)
                 self.assertEqual(prompt.count(GITHUB_APP_MENTION),1,phase)
-                self.assertIn("HADALIS_LOOP:CONNECTOR_BLOCKED GITHUB",prompt)
+                self.assertIn("ALIS_LOOP:CONNECTOR_BLOCKED GITHUB",prompt)
 
 
     def test_bulk_intake_queries_open_issues_only_and_pins_each_repo_once(self):
@@ -440,7 +440,7 @@ class TaskflowTests(unittest.TestCase):
             self.assertEqual(profile["prompt"], "Taskflow dynamic initial prompt")
             self.assertIn("AUTO-R01", legacy_model.effective_prompt(profile, "initial"))
             self.assertNotIn(TASK["issue_url"], profile["prompt"])
-            self.assertIn("HADALIS_LOOP", legacy_model.effective_prompt(profile, "continuation"))
+            self.assertIn("ALIS_LOOP", legacy_model.effective_prompt(profile, "continuation"))
             self.assertEqual(managed_tasks.reconcile_once()["state"], "active")
             def completed(config, state):
                 item = state["profiles"][result["profile_id"]]
@@ -482,7 +482,7 @@ class TaskflowTests(unittest.TestCase):
             _, runtime, _ = legacy_store.read_snapshot()
             selector_profile = next(p for p in legacy_store.read_snapshot()[0]["profiles"]
                                     if p["id"] == managed_tasks.SELECTOR_ID)
-            self.assertIn("HADALIS_TASK_CHOICE", legacy_model.effective_prompt(selector_profile, "initial"))
+            self.assertIn("ALIS_TASK_CHOICE", legacy_model.effective_prompt(selector_profile, "initial"))
             def finished(message_id, conversation="chat-selector-1"):
                 def update(c, state):
                     item = state["profiles"][managed_tasks.SELECTOR_ID]
@@ -498,8 +498,8 @@ class TaskflowTests(unittest.TestCase):
                 legacy_store._write(folder / ("user-"+message_id+".json"), {
                     "conversation_id": conversation,
                     "response": {"message_id": message_id,
-                                 "text": "Evidence reviewed.\nHADALIS_TASK_CHOICE: " + code +
-                                         "\nHADALIS_LOOP:DONE"}})
+                                 "text": "Evidence reviewed.\nALIS_TASK_CHOICE: " + code +
+                                         "\nALIS_LOOP:DONE"}})
             finished("assistant-message-0001")
             with self.assertRaisesRegex(taskflow.TaskError, "receipt"):
                 managed_tasks.reconcile_once()
