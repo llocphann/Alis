@@ -138,6 +138,43 @@ def _ensure_profile(repository: str, code: str) -> str:
     return store.change(transaction)
 
 
+def stop_queue(*, approved: bool = False,
+               expected_active: str = "") -> dict:
+    """Stop automated selection, then stop the exact manager profile.
+
+    This does not run a cancelled job, retract a sent message, terminate
+    an in-flight worker process or discard uncertain receipts. A failed
+    profile Stop leaves the queue in stopping for reconciliation.
+    """
+    if approved is not True:
+        raise tf.TaskError("Explicit Stop Queue approval required")
+    requested = queue.request_stop(
+        approved=True, expected_active=expected_active)
+    active = requested.get("active")
+    owner = (profile_id(active["repository"], active["code"])
+             if active else SELECTOR_ID)
+    try:
+        config, state, issues = store.read_snapshot()
+        if issues:
+            raise tf.TaskError("Manager profile configuration invalid")
+        profile = next((p for p in config["profiles"]
+                        if p["id"] == owner), None)
+        if profile is None or owner not in state["profiles"]:
+            raise tf.TaskError("Active queue profile absent; reconcile before final Stop")
+        control.profile_action("stop", owner)
+        _, checked, _ = store.read_snapshot()
+        runtime = checked["profiles"].get(owner)
+        if not runtime or runtime.get("desired") != "stopped":
+            raise tf.TaskError("Profile Stop not acknowledged")
+    except (tf.TaskError, ValueError, RuntimeError, OSError):
+        # Never reset an uncertain dispatch or pretend the task stopped.
+        return {"ok": True, "state": "stopping",
+                "stop_confirmed": False, "active": active,
+                "needs_reconciliation": True,
+                "worker_cancelled": False}
+    return queue.confirm_stopped(expected_active=expected_active)
+
+
 def start_ordered_queue(*, approved: bool = False) -> dict:
     """Owner explicitly starts entire serial queue; never installs services."""
     if approved is not True:
