@@ -20,6 +20,7 @@ ContentPage {
     property bool queueStatusConfirmed: false
     property bool backendInstalled: false
     property bool backendStatusKnown: false
+    property bool backendTransportReady: false
     property var backendServices: ({})
     property string backendStatusText: ""
     property var activitySnapshot: null
@@ -169,7 +170,7 @@ ContentPage {
     }
 
     function startQueue(): void {
-        if (root.busy || !root.queueSnapshot)
+        if (root.busy || !root.queueSnapshot || !root.backendTransportReady)
             return
         root.queueOperation = "start"
         root.errorText = ""
@@ -285,11 +286,16 @@ ContentPage {
                 if (exitCode !== 0 || report.ok !== true)
                     throw new Error(report.error || "Service status unavailable")
                 root.backendInstalled = report.installed === true
+                // A loaded/running systemd service or a successful UI smoke
+                // does not attest a managed ChatGPT Project delivery receipt.
+                root.backendTransportReady = report.transport_ready === true
+                    && report.unattended_submission_authorized === true
                 root.backendStatusKnown = true
                 root.backendStatusText = ""
                 root.backendServices = report.services
             } catch (error) {
                 root.backendInstalled = false
+                root.backendTransportReady = false
                 root.backendStatusKnown = false
                 root.backendStatusText = String(error)
             }
@@ -586,7 +592,9 @@ ContentPage {
                 text: !root.backendStatusKnown
                     ? Translation.tr("Backend status unknown")
                     : root.backendInstalled
-                    ? Translation.tr("Installed · start a queue when ready")
+                    ? (root.backendTransportReady
+                        ? Translation.tr("Backend installed · managed transport ready")
+                        : Translation.tr("Backend installed · managed transport verification required"))
                     : Translation.tr("Backend not installed")
             }
             RowLayout {
@@ -661,6 +669,7 @@ ContentPage {
                     objectName: "automationStartQueue"
                     buttonText: Translation.tr("Start")
                     enabled: !root.busy && root.backendInstalled
+                        && root.backendTransportReady
                         && root.queueStatusConfirmed && !!root.queueSnapshot
                         && ["prepared", "waiting"].includes(root.queueSnapshot.state)
                         && ["ordered", "cloud"].includes(root.queueSnapshot.mode)
