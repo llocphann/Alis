@@ -272,5 +272,73 @@ class Preflight(unittest.TestCase):
             {"user_message_id": "keep"})
 
 
+    def test_disabled_stopped_native_pending_is_preserved_not_a_new_ui_owner(self):
+        legacy = model.new_profile("Old native")
+        legacy["enabled"] = False
+        self.config["profiles"].append(legacy)
+        original = store.profile_state()
+        original.update(desired="stopped", pending={
+            "user_message_id": "DO_NOT_REVEAL",
+            "phase": "dispatching",
+        }, session={"conversation_id": "DO_NOT_REVEAL"},
+            run_active=True)
+        self.state["profiles"][legacy["id"]] = original
+        snapshot = json.dumps(original, sort_keys=True)
+        report = self.view()
+        self.assertTrue(report["mode_change_preflight_clear"])
+        self.assertTrue(report["legacy_native_pending_retained"])
+        self.assertFalse(report["foreign_work_unsettled"])
+        self.assertFalse(report["native_session_unsettled"])
+        self.assertFalse(report["submission_authorized"])
+        self.assertNotIn("DO_NOT_REVEAL", json.dumps(report))
+        self.assertEqual(json.dumps(original, sort_keys=True), snapshot)
+        # An enabled legacy profile, a job, or a running desired state
+        # must block, even if it retains the same stopped-era pending.
+        for mutation in (
+            lambda: legacy.update(enabled=True),
+            lambda: original.update(job_id="JOB-STILL-ACTIVE"),
+            lambda: original.update(desired="run"),
+        ):
+            legacy["enabled"] = False
+            original.update(job_id=None, desired="stopped")
+            mutation()
+            self.assertIn("FOREIGN_PROFILE_UNSETTLED",
+                          self.view()["preflight_blockers"])
+
+    def test_prepared_queue_stage_with_only_retained_disabled_native_pending(self):
+        path = self._write_queue_fixture()
+        legacy = self.config["profiles"][0]
+        legacy["enabled"] = False
+        self.state["profiles"][self.id].update(
+            desired="stopped", pending={"user_message_id": "KEEP"},
+            session={"conversation_id": "KEEP"}, run_active=True)
+        original_legacy = json.dumps(self.state["profiles"][self.id],
+                                     sort_keys=True)
+        config_path = store.config_path()
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps(self.config))
+        store.state_path().write_text(json.dumps(self.state))
+        original_queue = path.read_bytes()
+        task = {"status": "prepared", "task": {"base_sha": "a" * 40},
+                "unresolved": False, "scheduler_dispatched": False,
+                "handoff": None, "latest_receipt": None}
+        with patch.object(ui_preflight, "_unit_state",
+                          return_value=("inactive", "native_mode")), \
+             patch.object(managed_tasks.tf, "load_task", return_value=task):
+            preflight = ui_preflight.check_prepared_queue()
+            self.assertTrue(preflight["legacy_native_pending_retained"])
+            self.assertNotIn("FOREIGN_PROFILE_UNSETTLED",
+                             preflight["preflight_blockers"])
+            self.assertNotIn("NATIVE_SESSION_REQUIRES_REVIEW",
+                             preflight["preflight_blockers"])
+            staged = managed_tasks.stage_ui_queue(
+                approved=True, expected_first="llocphann/Alis:AI-I01")
+            self.assertEqual(staged["state"], "profile_staged")
+        self.assertEqual(path.read_bytes(), original_queue)
+        after = json.loads(store.state_path().read_text())
+        self.assertEqual(json.dumps(after["profiles"][self.id], sort_keys=True),
+                         original_legacy)
+
+
 if __name__ == "__main__":
     unittest.main()
