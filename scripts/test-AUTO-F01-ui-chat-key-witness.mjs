@@ -7,7 +7,8 @@ const ID_A="1234567890abcdef1234567890abcdef";
 const ID_B="abcdef1234567890abcdef1234567890";
 let mutation=0;
 const makePage=({list=true,global=true,project=true,
-  changing=false,duplicate=false,identityAbsent=false}={})=>{
+  changing=false,duplicate=false,identityAbsent=false,
+  globalConflicting=false}={})=>{
   let sampled=0;
   const node=id=>({visible:true,id});
   const current=()=>sampled===0?ID_A:changing?ID_B:ID_A;
@@ -35,7 +36,7 @@ const makePage=({list=true,global=true,project=true,
       url:()=>"app://-/index.html",
       locator:s=>s==='[aria-current="page"]'
         ?loc(()=>global?duplicate?[node(current()),node(current())]:
-          [node(current())]:[],"global"):loc(()=>[]),
+          [node(globalConflicting?ID_B:current())]:[],"global"):loc(()=>[]),
       getByRole:(role,opt={})=>role==="list"&&opt.name==="Chats in Automatic Alis"
         ?loc(()=>list?[{visible:true}]:[],"list"):loc(()=>[])
     },
@@ -57,6 +58,9 @@ let x=await inspect();
 assert.equal(x.diagnosis,"PROJECT_CHAT_KEY_STABLE_LOCAL_ONLY");
 assert.equal(x.project_chat_key_equal_across_samples,true);
 assert.equal(x.global_chat_key_equal_across_samples,true);
+x=await inspect({globalConflicting:true});
+assert.equal(x.project_chat_key_equal_across_samples,false);
+assert.equal(x.diagnosis,"GLOBAL_CHAT_KEY_STABLE_PROJECT_UNVERIFIED");
 x=await inspect({list:false,project:false});
 assert.equal(x.diagnosis,"GLOBAL_CHAT_KEY_STABLE_PROJECT_UNVERIFIED");
 assert.equal(x.project_chat_key_equal_across_samples,false);
