@@ -80,6 +80,9 @@ def examine(config: dict, state: dict, profile_id: str,
            item["session"].get("transport") != "alis-ui-once")))
         for item in entries.values()) if isinstance(entries, dict) else True
     own_pending = isinstance(own, dict) and bool(own.get("pending"))
+    own_scheduled = isinstance(own, dict) and (
+        own.get("desired") == "run" or bool(own.get("run_active")))
+    own_job_waiting = isinstance(own, dict) and bool(own.get("job_id"))
     reasons = []
     if issues:
         reasons.append("PROFILE_CONFIGURATION_INVALID")
@@ -93,6 +96,10 @@ def examine(config: dict, state: dict, profile_id: str,
         reasons.append("NATIVE_SESSION_REQUIRES_REVIEW")
     if own_pending:
         reasons.append("ORIGINAL_SEND_UNRESOLVED")
+    if own_scheduled:
+        reasons.append("PROFILE_SCHEDULED_REQUIRES_EXPLICIT_STOP")
+    if own_job_waiting:
+        reasons.append("PROFILE_WAITING_ON_JOB")
     if journal_pending:
         reasons.append("UI_JOURNAL_UNRESOLVED")
     if service_state in {"active", "activating"} and service_mode != "ui_mode":
@@ -113,6 +120,8 @@ def examine(config: dict, state: dict, profile_id: str,
         "foreign_work_unsettled": bool(foreign_unsettled),
         "native_session_unsettled": bool(native_unsettled),
         "ui_manager_send_unsettled": bool(own_pending),
+        "profile_already_scheduled": bool(own_scheduled),
+        "profile_waiting_on_job": bool(own_job_waiting),
         "ui_journal_unsettled": bool(journal_pending),
         "preflight_blockers": reasons,
         "mode_change_preflight_clear": not reasons,
