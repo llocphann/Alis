@@ -54,6 +54,36 @@ def main():
             assert item['status']=='completed' and item['iterations']==1
             assert t.count('poll')==0 and t.count('submit')==1
             daemon.tick(104);assert store.read_snapshot()[1]['profiles'][pid]['iterations']==1
+    # A stale/tampered completed receipt for the wrong conversation cannot
+    # advance a profile, even if it uses the exact pending user-message ID.
+    with environment():
+        pid=profile('Receipt mismatch');t=Transport()
+        with patch.object(daemon,'native_command',side_effect=t):
+            daemon.tick(100)
+            pending=t.pending(pid)
+            original_chat=pending['conversation_id']
+            cache=store.state_dir()/'responses'/pid/(pending['user_message_id']+'.json')
+            foreign={'conversation_id':'00000000-0000-4000-8000-000000000000',
+                     'user_message_id':pending['user_message_id'],
+                     'response':{'message_id':'foreign-final','text':'HADALIS_LOOP:DONE'}}
+            store._write(cache,foreign)
+            daemon.tick(102)
+            state=store.read_snapshot()[1]['profiles'][pid]
+            assert state['pending']['user_message_id']==pending['user_message_id']
+            assert state['session']['conversation_id']==original_chat
+            assert state['iterations']==0 and t.count('submit')==1
+            # Malformed cached final also fails closed without losing receipt.
+            store._write(cache,{**foreign,'conversation_id':original_chat,
+                'response':{'message_id':None,'text':'HADALIS_LOOP:DONE'}})
+            daemon.tick(200)
+            assert store.read_snapshot()[1]['profiles'][pid]['pending']
+            assert t.count('submit')==1
+            store._write(cache,{**foreign,'conversation_id':original_chat,
+                'response':{'message_id':'authored-final','text':'HADALIS_LOOP:DONE'}})
+            daemon.tick(300)
+            state=store.read_snapshot()[1]['profiles'][pid]
+            assert state['pending'] is None and state['iterations']==1
+            assert t.count('submit')==1
     for last_action,expected in (("resume","run"),("pause","paused"),("stop","paused")):
         with environment():
             pid=profile('Paused v1');t=Transport()
