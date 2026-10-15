@@ -308,13 +308,11 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
             # leave the manifest intact for the next task and preserve history.
             retire_handoff=False
             active=checkout/github_handoff.PATH
-            if payload.get("status") in {"passed","failed","cancelled"} and active.is_file() and not active.is_symlink():
+            if active.is_file() and not active.is_symlink():
                 try:
-                    signal=github_handoff.validate_signal(active.read_text(encoding="utf-8"))
-                    retire_handoff=(signal["status"]=="DONE" and
-                        signal["job_id"]==job_id and
-                        signal["job_sha256"]==payload.get("input_sha256"))
-                except (OSError, ValueError):
+                    retire_handoff=github_handoff.retire_after_receipt(
+                        active.read_text(encoding="utf-8"),payload)
+                except OSError:
                     pass
             if retire_handoff:
                 active.unlink()
@@ -449,6 +447,13 @@ def cleanup(*, startup=True) -> None:
             # Keep the exactly-once tombstone indefinitely; prune raw artifacts.
             shutil.rmtree(root/"actions"/receipt["job"],ignore_errors=True)
             receipt["result"]=public_result(receipt["result"]);save_receipt(receipt["job"],receipt)
+        # Approval is only a local go/no-go capability, not the anti-replay
+        # tombstone. Drop it shortly after the durable result is published;
+        # keep the worker receipt indefinitely to prevent execution replay.
+        if receipt.get("phase")=="published":
+            approval=github_handoff.approval_path(root,receipt["job"])
+            if approval.is_file() and not approval.is_symlink():
+                approval.unlink()
     if startup:
         for directory in (root/"runs",root/"publish"):
             for path in directory.glob("*"):
