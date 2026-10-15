@@ -45,7 +45,10 @@ export async function oneShotUiAcceptance({
     assessment.empty_project_composer_observed===true &&
     inspection.project_scoped_composer_count_capped===1 &&
     inspection.project_badge_count_capped===1 &&
-    inspection.target_project_list_count_capped===1 &&
+    // Collapsed sidebar list is valid ONLY with both exact Project badge
+    // and exact project-scoped textbox. This is local UI evidence, not
+    // server Project identity or permission for managed Scheduler sends.
+    [0,1].includes(inspection.target_project_list_count_capped) &&
     inspection.selected_target_chat_count_capped===0 &&
     // A new Project conversation remains valid even if Project has older
     // chats, so "No chats yet" is NOT a prerequisite for this one shot.
