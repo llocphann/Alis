@@ -73,6 +73,17 @@ export async function oneShotUiAcceptance({
       return {status:"indeterminate",
         code:"POST_FILL_GUARD_FAILED_NO_SEND",
         acceptance_id_recorded:true,submission_authorized:false};
+    // The categorical probe proves the draft is nonempty, NOT that it is
+    // the harmless acceptance text. Do not risk clicking a user-owned or
+    // externally replaced draft. Compare inside Desktop and return only a
+    // boolean, never the actual draft or message contents.
+    const exactHarmlessDraft=await editor.first().evaluate(
+      (el,expected)=>el.textContent===expected,ACCEPTANCE_TEXT
+    );
+    if(exactHarmlessDraft!==true)
+      return {status:"indeterminate",
+        code:"HARMLESS_DRAFT_MISMATCH_NO_SEND",
+        acceptance_id_recorded:true,submission_authorized:false};
     await send.first().evaluate(el=>el.click());
   }catch{
     return {status:"indeterminate",code:"UI_ATTEMPT_UNCERTAIN_NO_RETRY",
