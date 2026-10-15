@@ -144,6 +144,41 @@ unattended publication, or full native↔UI↔native host acceptance.
 The owner must verify these on their installed host before relying on
 unattended operation. `stable` is unaffected.
 
+### AUTO-F01 one-command, owner-approved harmless Desktop smoke
+
+If the exact `Automatic Alis` Project entry or its sidebar **New chat**
+action is visible, the owner can perform a single bounded smoke test without
+three separate manual commands:
+
+```bash
+node automation/chat_bridge/alis_ui_smoke_cli.mjs --owner-approved
+```
+
+This does **not** start the six-item Automation Queue. It navigates to a
+fresh Project-scoped editor when needed (one exact Project-specific click,
+**preserving any unrelated pre-existing draft**), requires the unique empty
+Project composer + badge + list and a disabled Send, writes an immutable
+private acceptance journal, fills **only** the fixed harmless prompt and
+clicks Send at most once. Afterward, it polls for roughly 9 seconds and
+requires an assistant-only `ALIS_LOOP:DONE` turn and a stable UI chat key.
+It emits one redacted JSON summary and never treats the `ALIS_LOOP:DONE`
+inside the user prompt as assistant evidence.
+
+The smoke journal uses a **fixed ID** across runs. If the journal has already
+been written, rerunning cannot send a second smoke message. In particular,
+`status=sent_unverified` or a timeout is **not** permission to rerun,
+change the ID, reset the journal, or invoke the separate legacy acceptance.
+All receipt booleans for server attestation and manager/queue authority
+remain false even when a local UI reply is observed.
+
+The command does not modify Native profiles, worker receipts, queue state,
+service installation, or the Desktop's unrelated draft. A failed navigation
+is not retried. If the reply is still pending, inspect the Desktop manually;
+the bounded read-only probes can be run later without sending. An
+`AMBIGUOUS_VISIBLE_HARMLESS_MESSAGES` legacy whole-page count is not proof
+of two sends: the text `ALIS_LOOP:DONE` also appears in the user instruction.
+This smoke uses an assistant-turn extraction to avoid that false positive.
+
 ### Read-only cutover diagnosis (operator side)
 
 Inspect the installed host **without submitting any message or changing
