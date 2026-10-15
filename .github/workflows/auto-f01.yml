@@ -73,5 +73,7 @@ jobs:
           python3 scripts/test-hadalis-chat-bridge.py
           python3 scripts/test-AUTO-F01-ui-scheduler.py
           python3 scripts/test-AUTO-F01-ui-preflight.py
+          python3 scripts/test-AUTO-F01-queue-controls.py
+          python3 scripts/test-AUTO-F01-sudo-input.py
           python3 scripts/test-hadalis-automation-credentials.py
           python3 scripts/test-hadalis-automation-install.py
