@@ -31,7 +31,8 @@ const page=(opts={})=>{
     mainProjectText:opts.mainProjectText??[],
     mainEmptyState:opts.mainEmptyState??[],
     mainComposerVisualLabel:opts.mainComposerVisualLabel??[],
-    send:opts.send??[{visible:true,disabled:false}],stop:opts.stop??[]};
+    send:opts.send??[{visible:true,disabled:false}],stop:opts.stop??[],
+    dialogs:opts.dialogs??[]};
   data.genericComposer=opts.genericComposer??(
     data.scopedComposer.length>0?[]:data.composer);
   return {
@@ -66,6 +67,7 @@ const page=(opts={})=>{
         return makeLocator(data.genericComposer);
       if(role==="textbox")return makeLocator(data.composer);
       if(role==="list")return makeLocator(data.list);
+      if(role==="dialog")return makeLocator(data.dialogs);
       if(role==="button"&&options.name==="Send")return makeLocator(data.send);
       if(role==="button"&&options.name instanceof RegExp &&
           options.name.test("Stop"))return makeLocator(data.stop);
@@ -82,6 +84,9 @@ const inspect=async p=>assessLegacyUiReadiness(
 let result=await inspect();
 assert.equal(result.observation_ready,true);
 assert.equal(result.project_view_visible,true);
+const modal=await inspect({dialogs:[{visible:true}]});
+assert.equal(modal.observation_ready,false);
+assert.ok(modal.readiness_issues.includes("MODAL_OPEN_OR_UNVERIFIED"));
 assert.equal(result.project_identity_verified,false);
 assert.equal(result.conversation_identity_verified,false);
 assert.equal(result.submission_authorized,false);
