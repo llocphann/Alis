@@ -186,9 +186,15 @@ fingerprint, draft or private DOM content:
   empty Project landing with an unscoped generic composer is reported as
   `ALIS_UI_PROJECT_LANDING_COMPOSER_UNSCOPED`, **not** an authorized empty
   Project editor. Missing selected-chat IDs are separately reported as
-  `ALIS_UI_SELECTED_CHAT_KEY_MISSING`. Do not work around these by picking
-  a random chat, replacing an unresolved journal or weakening the pinned
-  target guard.
+  `ALIS_UI_SELECTED_CHAT_KEY_MISSING`. If the sidebar includes exactly
+  one `New chat in Automatic Alis` action while the current composer is
+  generic and idle, `ALIS_UI_PROJECT_NEW_CHAT_NAVIGATION_REQUIRED` gives
+  the human-only next step: **click the Project-specific New chat button**
+  inside ChatGPT Desktop and rerun `ui-target-check`. Simply opening the
+  Project sidebar does not redirect the current composer. Navigation alone
+  neither creates an authorized message nor proves a server-side Project ID.
+  Do not work around these checks by picking a random chat, replacing an
+  unresolved journal or weakening the pinned target guard.
 
 The read-only checker never sends a message. Initial UI Queue sends must
 still be explicitly owner-approved, retain a durable one-shot intent, and
