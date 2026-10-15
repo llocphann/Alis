@@ -264,6 +264,81 @@ def ui_tick(profile_id: str, *, now: int | None = None,
     return directive.kind.value
 
 
+
+def queue_tick(*, now: int | None = None, desktop=None) -> str:
+    """Admit only the owner-approved, exact active ordered queue member.
+
+    This NEVER claims a task, approves Start, changes transport gates, or
+    advances a DONE receipt. A prepared queue cannot send anything.
+    """
+    from automation import managed_tasks, queue, taskflow as tf
+    with queue._lock():
+        document = queue._load()
+        if not document:
+            return "queue_idle"
+        if document.get("mode") != "ordered":
+            return "ALIS_UI_QUEUE_MODE_UNSUPPORTED"
+        if document.get("state") in {
+                "prepared", "waiting", "stopping", "stopped",
+                "finished", "cancelled"}:
+            return "queue_idle"
+        if (document.get("state") != "active"
+                or document.get("approved_start") is not True
+                or document.get("stop_requested")
+                or not isinstance(document.get("active"), dict)):
+            return "ALIS_UI_QUEUE_NOT_AUTHORIZED"
+        active = document["active"]
+        members = [
+            member for member in document.get("items", [])
+            if (isinstance(member, dict) and
+                member.get("repository") == active.get("repository")
+                and member.get("code") == active.get("code")
+                and member.get("state") == "active")
+        ]
+        if (len(members) != 1
+                or active.get("repository") not in tf.REPOSITORIES
+                or not isinstance(active.get("code"), str)
+                or not tf.CODE.fullmatch(active["code"])):
+            return "ALIS_UI_QUEUE_OWNER_MISMATCH"
+        source_sha = members[0].get("source_sha")
+        if not isinstance(source_sha, str) or not tf.SHA.fullmatch(source_sha):
+            return "ALIS_UI_QUEUE_OWNER_MISMATCH"
+        pid = managed_tasks.profile_id(active["repository"], active["code"])
+        config, state, issues = store.read_snapshot()
+        owner = next((p for p in config["profiles"] if p["id"] == pid), None)
+        runtime = state["profiles"].get(pid)
+        if (issues or owner is None or runtime is None
+                or managed_tasks.reference(owner) !=
+                (active["repository"], active["code"])
+                or not owner["enabled"]
+                or runtime.get("desired") != "run"):
+            return "ALIS_UI_QUEUE_PROFILE_NOT_RUNNING"
+        record = tf.load_task(active["code"], active["repository"])
+        if (record.get("unresolved")
+                or record.get("task", {}).get("base_sha") != source_sha
+                or record.get("status") not in
+                {"prepared", "handoff_ready", "awaiting_owner"}):
+            return "ALIS_UI_QUEUE_TASK_CHANGED"
+    # Do not hold queue.lock while observing the Desktop response; Stop can
+    # revoke approval while waiting. The actual first send also needs an
+    # atomic latest-state recheck inside ui_tick's durable prepare transaction.
+    return ui_tick(pid, now=now, desktop=desktop)
+
+
+def queue_loop(*, once: bool = False) -> int:
+    """A queue-only alternate manager; no pending tasks implicitly started."""
+    from automation.manager import daemon
+    while True:
+        now = int(time.time())
+        store.change_state(lambda _c, s: daemon._heartbeat(s, now))
+        status = queue_tick(now=now)
+        if once:
+            return 0
+        if status == "ui_reconciliation_required" or status.startswith("ALIS_UI_"):
+            return 75
+        time.sleep(POLL_SECONDS)
+
+
 def loop(profile_id: str, *, once: bool = False) -> int:
     """Called ONLY by manager.daemon after its exclusive shared lock."""
     while True:
