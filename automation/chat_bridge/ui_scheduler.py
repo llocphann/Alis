@@ -36,10 +36,17 @@ def _owner(config: dict, state: dict, profile_id: str) -> tuple[dict, dict]:
     # reconciled by the native owner; UI cannot adopt a server message ID.
     if item.get("session") and item["session"].get("transport") != UI_TRANSPORT:
         raise RuntimeError("ALIS_UI_NATIVE_SESSION_REQUIRES_REVIEW")
+    from automation.chat_bridge.ui_preflight import inert_legacy_native_owner
     for other_id, other in state["profiles"].items():
-        if other_id != profile_id and (other.get("desired") == "run"
-                or other.get("pending") or other.get("job_id")
-                or other.get("run_active")):
+        if other_id == profile_id:
+            continue
+        # The native scheduler is excluded by manager's single flock. Its
+        # disabled/stopped old pending records are NOT our UI send intents;
+        # retain them untouched and never use them as evidence for this owner.
+        if inert_legacy_native_owner(config, other_id, other):
+            continue
+        if (other.get("desired") == "run" or other.get("pending")
+                or other.get("job_id") or other.get("run_active")):
             raise RuntimeError("ALIS_UI_ANOTHER_PROFILE_UNSETTLED")
     if (store.state_dir() / "ui-send-journal" / "pending.json").exists():
         raise RuntimeError("ALIS_UI_SEND_UNCERTAIN_RECONCILIATION_REQUIRED")
