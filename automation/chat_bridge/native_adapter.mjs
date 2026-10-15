@@ -7,43 +7,72 @@ import crypto from "node:crypto";
 
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Never return a *partial* branch on an absent parent, cycle, bad node or
+// truncation: a detached assistant final can otherwise appear to be the
+// successful receipt of a preceding managed user turn.
 export function activeBranch(conversation) {
-  const mapping = conversation?.mapping;
-  if (!mapping || typeof mapping !== "object") throw new Error("conversation mapping unavailable");
-  let id = conversation.current_node;
-  const branch = [], seen = new Set();
-  while (id && mapping[id] && !seen.has(id) && branch.length < 10000) {
+  const mapping=conversation?.mapping;
+  const current=conversation?.current_node;
+  if(!mapping || typeof mapping!=="object" || Array.isArray(mapping) ||
+     typeof current!=="string" || !current)
+    throw new Error("conversation branch unavailable");
+  const branch=[],seen=new Set();
+  let id=current;
+  while(id!==null){
+    if(typeof id!=="string" || !id || seen.has(id) ||
+       branch.length>=10000 ||
+       !Object.prototype.hasOwnProperty.call(mapping,id))
+      throw new Error("conversation branch incomplete or cyclic");
     seen.add(id);
-    const node = mapping[id];
+    const node=mapping[id];
+    if(!node || typeof node!=="object" || Array.isArray(node))
+      throw new Error("conversation branch invalid node");
+    if(node.parent!==null && (typeof node.parent!=="string" || !node.parent))
+      throw new Error("conversation branch invalid parent");
     branch.push(node);
-    id = node.parent;
+    id=node.parent;
   }
   return branch.reverse();
 }
 
-export function projectTurn(conversation, pending) {
-  if (conversation.conversation_id && conversation.conversation_id !== pending.conversation_id)
+export function projectTurn(conversation,pending){
+  // A UI name, absent ID, node key, stale active branch or ambiguous turn
+  // is NOT an authenticated delivery receipt.
+  if(typeof conversation?.conversation_id!=="string" ||
+     !conversation.conversation_id ||
+     conversation.conversation_id!==pending?.conversation_id)
     throw new Error("conversation identity mismatch");
-  const branch = activeBranch(conversation);
-  const start = branch.findIndex(n => n.message?.id === pending.user_message_id || n.id === pending.user_message_id);
-  if (start < 0) return { completed: false, submitted: false };
-  const messages = branch.slice(start + 1).map(n => n.message).filter(Boolean);
-  // A response from a different user turn must never satisfy this receipt.
-  const nextUser = messages.findIndex(m => m.author?.role === "user");
-  const turn = nextUser < 0 ? messages : messages.slice(0, nextUser);
-  const final = turn.findLast(m => m.author?.role === "assistant" &&
-    m.recipient === "all" && (m.channel == null || m.channel === "final") &&
-    m.status === "finished_successfully" && m.end_turn === true);
-  if (!final) {
-    const lastAssistant=turn.findLast(m=>m.author?.role === "assistant");
-    return { completed: false, submitted: true,
-      superseded: nextUser >= 0,
-      ...(nextUser >= 0 ? {successor_user_message_id: messages[nextUser].id} : {}),
-      streamError: turn.some(m => ["failed", "error", "cancelled"].includes(m.status)),
-      terminal_failed: !!lastAssistant && ["failed","error","cancelled"].includes(lastAssistant.status) && lastAssistant.end_turn === true };
+  if(typeof pending?.user_message_id!=="string" || !pending.user_message_id)
+    throw new Error("user message identity unavailable");
+  const branch=activeBranch(conversation);
+  const positions=branch.flatMap((node,i)=>node.message?.id===pending.user_message_id &&
+    node.message?.author?.role==="user" ? [i] : []);
+  if(positions.length>1)throw new Error("duplicate user receipt identity");
+  if(positions.length===0)return {completed:false,submitted:false};
+  const messages=branch.slice(positions[0]+1).map(n=>n.message).filter(Boolean);
+  // A final belonging to a later user turn must never complete this turn.
+  const nextUser=messages.findIndex(m=>m.author?.role==="user");
+  const turn=nextUser<0?messages:messages.slice(0,nextUser);
+  const finals=turn.filter(m=>m.author?.role==="assistant" &&
+    m.recipient==="all" && (m.channel==null || m.channel==="final") &&
+    m.status==="finished_successfully" && m.end_turn===true &&
+    typeof m.id==="string" && m.id.length>0);
+  if(finals.length>1)throw new Error("ambiguous terminal response identity");
+  const final=finals[0];
+  if(!final){
+    const lastAssistant=turn.findLast(m=>m.author?.role==="assistant");
+    return {completed:false,submitted:true,
+      superseded:nextUser>=0,
+      ...(nextUser>=0?{successor_user_message_id:messages[nextUser].id}:{}),
+      streamError:turn.some(m=>["failed","error","cancelled"].includes(m.status)),
+      terminal_failed:!!lastAssistant &&
+        ["failed","error","cancelled"].includes(lastAssistant.status) &&
+        lastAssistant.end_turn===true};
   }
-  return { completed: true, submitted: true, response: {
-    message_id: final.id, text: (final.content?.parts ?? []).filter(p => typeof p === "string").join("\n")
+  return {completed:true,submitted:true,response:{
+    message_id:final.id,
+    text:(Array.isArray(final.content?.parts)?final.content.parts:[])
+      .filter(p=>typeof p==="string").join("\n")
   }};
 }
 
