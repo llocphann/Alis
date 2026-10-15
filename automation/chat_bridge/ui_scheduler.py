@@ -249,6 +249,7 @@ def ui_tick(profile_id: str, *, now: int | None = None,
             return False
         current["pending"] = None
         current["last_success"] = directive.kind.value
+        current["last_ui_response_attempt"] = attempt
         current["loop_state"] = directive.kind.value.lower()
         current["iterations"] += 1
         current["chat_iterations"] += 1
@@ -335,8 +336,14 @@ def queue_tick(*, now: int | None = None, desktop=None) -> str:
         if (issues or owner is None or runtime is None
                 or managed_tasks.reference(owner) !=
                 (active["repository"], active["code"])
-                or not owner["enabled"]
-                or runtime.get("desired") != "run"):
+                or not owner["enabled"]):
+            return "ALIS_UI_QUEUE_PROFILE_NOT_RUNNING"
+        if (runtime.get("desired") == "stopped"
+                and runtime.get("status") == "completed"
+                and runtime.get("last_success") == "DONE"
+                and not runtime.get("pending") and not runtime.get("job_id")):
+            return "queue_completed_pending_reconciliation"
+        if runtime.get("desired") != "run":
             return "ALIS_UI_QUEUE_PROFILE_NOT_RUNNING"
         record = tf.load_task(active["code"], active["repository"])
         if (record.get("unresolved")
