@@ -170,7 +170,7 @@ export const chromium={connectOverCDP:async url=>{
   assert.equal(moved.empty_project_entry_ready,true);
   assert.equal(moved.message_submission_attempted,false);
   assert.equal(moved.ui_scheduler_authorized,false);
-  assert.equal(fs.readFileSync(navLog,"utf8"),"clicked\\n");
+  assert.equal(fs.readFileSync(navLog,"utf8").trim(),"clicked");
   assert.equal(blank.message_submission_attempted,false);
   assert.equal(blank.ui_scheduler_authorized,false);
   assert.equal(selected.ui_scheduler_authorized,false);
