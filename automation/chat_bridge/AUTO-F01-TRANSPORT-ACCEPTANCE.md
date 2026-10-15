@@ -1,7 +1,9 @@
 # AUTO-F01 — Native transport acceptance and fail-closed decision
 
-Status: **UI SMOKE ACCEPTED; MANAGED TRANSPORT BLOCKED** — one owner-approved harmless UI click visibly produced a response, but server-attested Project/conversation/message identity and durable receipt are unverified. Scheduler submission remains unauthorized.
-Target: `llocphann/Alis`, branch `dev`; preserve Project **Automatic Alis**, all 18 queued tasks, reserved `AUDIO-I01`, dispatch intents and response receipts.
+Status: **GITHUB HANDOFF E2E ACCEPTED; UI SMOKE ACCEPTED; MANAGED CHAT TRANSPORT BLOCKED**. The owner-approved, inert `JOB-AUTO-F01-SMOKE-20261015-01` ran once locally and its existing passed receipt was published on `dev` by a separate publication-only recovery. Matching remote DONE/pending artifacts were retired atomically ([result](https://github.com/llocphann/Alis/blob/dev/automation/results/JOB-AUTO-F01-SMOKE-20261015-01.json)). This **does not validate the currently loaded worker's unattended push**; its initial seven retries failed before the explicit recovery. A freshly loaded worker still needs separate owner-approved read-only idle/receipt preflight and unattended-publication acceptance. Server-attested ChatGPT Project/conversation/user-message/final receipt identity remains unavailable, so Scheduler submission remains unauthorized.
+Target: `llocphann/Alis`, branch `dev`; preserve Project **Automatic Alis**, all 18 queued tasks, reserved `AUDIO-I01`, dispatch intents and response receipts. Current `automation/handoff/ACTIVE.json` is `AUDIO-I01` in `PREPARING`, unrelated to this accepted smoke; never release or retire it under AUTO-F01.
+
+Publication replay defense (source head [`29d88b5`](https://github.com/llocphann/Alis/commit/29d88b5a9b51079dc8e23eb7edb2e43d439435cd)): an already-present GitHub result must equal the exact local `public_result(payload)` projection, not just job/digest/status. Conflicting action evidence or extra metadata blocks acknowledgement and cleanup. [Exact-SHA focused CI 38694256502](https://github.com/llocphann/Alis/actions/runs/38694256502) passed three safety suites; full canonical validation and owner-host post-upgrade publication are not claimed. Historical observations below document earlier intermediate states, not current production readiness.
 
 ## Installed Desktop observations (owner-provided)
 
