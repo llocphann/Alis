@@ -115,6 +115,30 @@ class QueueStopTests(unittest.TestCase):
         self.assertEqual(len(snapshot["items"]), 1)
         self.assertEqual(snapshot["items"][0]["state"], "active")
 
+    def test_orphaned_queue_is_stopped_without_lying_about_worker(self):
+        # Queue source can survive a deleted/migrated profile. No native
+        # profile exists to dispatch new steps, and approved_start has been
+        # revoked. Do not deadlock cleanup forever waiting for absent owner.
+        with patch.object(managed_tasks.store, "read_snapshot",
+                          return_value=({"profiles": []}, {"profiles": {}}, [])), \
+             patch.object(managed_tasks.control, "profile_action",
+                          side_effect=AssertionError("cannot stop absent profile")):
+            result = managed_tasks.stop_queue(
+                approved=True, expected_active=self.identity)
+        self.assertTrue(result["stop_confirmed"])
+        self.assertFalse(result["profile_stop_confirmed"])
+        self.assertFalse(result["worker_cancelled"])
+        self.assertTrue(result["needs_reconciliation"])
+        self.assertEqual(queue.view()["state"], "stopped")
+        cleared = queue.clear(
+            approved=True, expected_queued="llocphann/Alis:MUSIC-I02")
+        self.assertTrue(cleared["cleared"])
+        self.assertEqual(queue.view()["state"], "empty")
+        archive = list((tf.state_dir() / "queue-history").glob("cleared-*.json"))
+        self.assertEqual(len(archive), 1)
+        self.assertEqual(json.loads(archive[0].read_text())["active"],
+                         self.active)
+
     def test_stop_ui_and_credential_hooks_are_available(self):
         qml = (Path(__file__).resolve().parents[1] /
                "modules/settings/AutomationTaskConfig.qml").read_text()
