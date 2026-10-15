@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import {spawnSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
-import {projectTurn, installedContract, inspectInstalledScopeContract} from "../automation/chat_bridge/native_adapter.mjs";
+import {projectTurn, reconcileSubmissionCandidates, installedContract, inspectInstalledScopeContract} from "../automation/chat_bridge/native_adapter.mjs";
 const message = (id, role, status, end, text, recipient = "all", channel = null) =>
   ({id, author:{role}, status, end_turn:end, recipient, channel, content:{parts:[text]}});
 const c = {conversation_id:"chat-A",current_node:"a",mapping:{
@@ -87,6 +87,52 @@ assert.equal(projectTurn(finalFromNextUser,expected).completed,false);
 assert.equal(projectTurn(finalFromNextUser,expected).superseded,true);
 assert.equal(projectTurn(finalFromNextUser,
   {...expected,user_message_id:"user-2"}).response.message_id,"response-1");
+
+// Reconciliation scans bounded server snapshots; a node ID, off-branch
+// user, duplicate candidate or in-memory hint is never sufficient.
+const reconMessage="33333333-3333-4333-8333-333333333333";
+const chatA="11111111-1111-4111-8111-111111111111";
+const chatB="22222222-2222-4222-8222-222222222222";
+const recon={user_message_id:reconMessage};
+const candidate=(chat,id=reconMessage)=>({
+  conversation_id:chat,current_node:"a",mapping:{
+    u:{id:"u",parent:null,message:
+      message(id,"user","finished_successfully",true,"PRIVATE")},
+    a:{id:"a",parent:"u",message:
+      message("assistant","assistant","finished_successfully",true,"DONE")}
+  }
+});
+assert.deepEqual(reconcileSubmissionCandidates(recon,[candidate(chatA)]),
+  {conversation_id:chatA});
+assert.deepEqual(reconcileSubmissionCandidates(recon,[candidate(chatA,"other")]),
+  {conversation_id:null});
+assert.deepEqual(reconcileSubmissionCandidates(recon,[
+  candidate(chatA,"other"),candidate(chatB)]),{conversation_id:chatB});
+assert.throws(()=>reconcileSubmissionCandidates(recon,[
+  candidate(chatA),candidate(chatB)]),/ambiguous user message/);
+assert.throws(()=>reconcileSubmissionCandidates(recon,[
+  candidate(chatA),candidate(chatA)]),/ambiguous candidate/);
+assert.throws(()=>reconcileSubmissionCandidates(
+  {user_message_id:"invalid"},[candidate(chatA)]),/invalid pending/);
+assert.throws(()=>reconcileSubmissionCandidates(
+  recon,Array(13).fill(candidate(chatA))),/bounded/);
+const candidateSpoof=candidate(chatA,"actual");
+candidateSpoof.mapping.u.id=reconMessage;
+assert.equal(reconcileSubmissionCandidates(recon,[candidateSpoof]).conversation_id,
+  null,"node-key forgery cannot prove user submit");
+const candidateOffBranch=candidate(chatA,"other");
+candidateOffBranch.mapping.orphan={id:"orphan",parent:null,
+  message:message(reconMessage,"user","finished_successfully",true,"PRIVATE")};
+assert.equal(reconcileSubmissionCandidates(recon,[candidateOffBranch]).conversation_id,
+  null,"off-branch user is not the submitted turn");
+const candidateBroken=candidate(chatA);
+candidateBroken.mapping.u.parent="missing";
+assert.throws(()=>reconcileSubmissionCandidates(recon,[candidateBroken]),
+  /incomplete|cyclic/);
+const candidateWrongRole=candidate(chatA);
+candidateWrongRole.mapping.u.message.author.role="assistant";
+assert.equal(reconcileSubmissionCandidates(recon,[candidateWrongRole])
+  .conversation_id,null);
 
 // Construct an intentionally incompatible tiny ASAR-like fixture containing
 // no app credentials or actual Desktop source. Unsupported contracts must be
