@@ -49,7 +49,8 @@ export async function oneShotUiAcceptance({
     inspection.selected_target_chat_count_capped===0 &&
     // A new Project conversation remains valid even if Project has older
     // chats, so "No chats yet" is NOT a prerequisite for this one shot.
-    inspection.send_count_capped===1 && inspection.send_disabled===true;
+    inspection.send_count_capped===1 && inspection.send_disabled===true &&
+    inspection.dialog_count_capped===0;
   if(!blankProjectPreflight)
     return {status:"blocked",code:"EMPTY_PROJECT_PREFLIGHT_NOT_READY",
       readiness_issues:assessment.readiness_issues,submission_authorized:false};
@@ -92,6 +93,7 @@ export async function oneShotUiAcceptance({
       after.composer_draft_present===true &&
       after.composer_disabled===false &&
       after.stop_count_capped===0 &&
+      after.dialog_count_capped===0 &&
       after.send_count_capped===1 && after.send_disabled===false;
     if(!projectStable)
       return {status:"indeterminate",
