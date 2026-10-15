@@ -144,7 +144,7 @@ export const chromium={connectOverCDP:async url=>{
   assert.equal(check("landing").target_diagnostics.project_landing_visual_evidence,
                "project-empty-landing-corroborated");
   const navLog=path.join(root,"navigation-attempts.txt");
-  const projectEnter=(scenario,approved=true)=>spawnSync(
+  const projectEnter=(scenario,approved=true,override={})=>spawnSync(
     process.execPath,[cli,"ui-project-enter",
       ...(approved?["--approve-navigation"]:[])],{
       encoding:"utf8",timeout:6000,
@@ -152,11 +152,16 @@ export const chromium={connectOverCDP:async url=>{
         ALIS_PLAYWRIGHT_MODULE:pathToFileURL(mock).href,
         ALIS_CHATGPT_CDP_URL:"http://127.0.0.1:9222",
         ALIS_CHATGPT_PROJECT:"Automatic Alis",
-        MOCK_NAV_LOG:navLog,MOCK_SCENARIO:scenario}
+        MOCK_NAV_LOG:navLog,MOCK_SCENARIO:scenario,...override}
     });
   const denied=projectEnter("nav",false);
   assert.equal(denied.status,0,denied.stderr);
   assert.equal(JSON.parse(denied.stdout).navigation_click_attempted,false);
+  assert.equal(fs.existsSync(navLog),false);
+  const remote=projectEnter("nav",true,{ALIS_CHATGPT_CDP_URL:"http://example.com:9222"});
+  assert.equal(remote.status,0,remote.stderr);
+  assert.equal(JSON.parse(remote.stdout).diagnosis,
+               "ALIS_UI_CDP_LOOPBACK_REQUIRED");
   assert.equal(fs.existsSync(navLog),false);
   const outside=projectEnter("generic");
   assert.equal(outside.status,0,outside.stderr);
