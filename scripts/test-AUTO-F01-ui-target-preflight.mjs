@@ -107,7 +107,7 @@ export const chromium={connectOverCDP:async url=>{
   assert.equal(selected.empty_project_entry_ready,false);
   assert.equal(selected.diagnosis,"ALIS_UI_CHAT_TARGET_OBSERVED");
   const expected={
-    generic:"ALIS_UI_PROJECT_VIEW_UNVERIFIED",
+    generic:"ALIS_UI_PROJECT_NEW_CHAT_NAVIGATION_REQUIRED",
     draft:"ALIS_UI_COMPOSER_HAS_DRAFT",
     "missing-id":"ALIS_UI_SELECTED_CHAT_KEY_MISSING",
     ambiguous:"ALIS_UI_MULTIPLE_SELECTED_CHATS",
@@ -124,6 +124,10 @@ export const chromium={connectOverCDP:async url=>{
     assert.equal(result.server_identity_attested,false);
     assert.equal(result.ui_scheduler_authorized,false);
   }
+  assert.equal(check("generic").recommended_owner_action,
+               "OPEN_NEW_CHAT_IN_CONFIGURED_PROJECT_MANUALLY");
+  assert.equal(check("blank").recommended_owner_action,
+               "REVIEW_PROJECT_TARGET_WITHOUT_SENDING");
   assert.equal(check("missing-id").target_diagnostics.selected_chat_count_capped,1);
   assert.equal(check("ambiguous").target_diagnostics.selected_chat_count_capped,2);
   assert.equal(check("draft").target_diagnostics.draft_present,true);
