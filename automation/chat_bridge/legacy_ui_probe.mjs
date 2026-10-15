@@ -15,6 +15,21 @@ const countVisible=async locator=>{
   return bounded(visible);
 };
 const safe=async fn=>{try{return await fn();}catch{return null;}};
+// The unique VISIBLE role match may not be .first() when the Desktop keeps
+// hidden old editors/buttons mounted. Never read state from a hidden clone.
+const oneVisible=async locator=>{
+  const n=await locator.count();
+  if(!Number.isInteger(n)||n<1||n>100)return null;
+  let match=null;
+  for(let i=0;i<n;i++){
+    const item=locator.nth(i);
+    if(await item.isVisible()){
+      if(match!==null)return null;
+      match=item;
+    }
+  }
+  return match;
+};
 
 export async function inspectLegacyUiReadOnly(page,projectName="Automatic Alis"){
   if(!PROJECT.test(projectName))throw Error("INVALID_PROJECT_NAME");
@@ -84,14 +99,18 @@ export async function inspectLegacyUiReadOnly(page,projectName="Automatic Alis")
   let draftPresent=null;
   let composerDisabled=null;
   if(composerCount===1){
-    const editor=composers.first();
-    draftPresent=await safe(()=>editor.evaluate(el=>{
-      // Only a boolean leaves Desktop; do not export existing draft text.
-      return (el.textContent??"").length!==0;
-    }));
-    composerDisabled=await safe(()=>editor.isDisabled());
+    const editor=await safe(()=>oneVisible(composers));
+    if(editor){
+      draftPresent=await safe(()=>editor.evaluate(el=>{
+        // Only a boolean leaves Desktop; do not export existing draft text.
+        return (el.textContent??"").length!==0;
+      }));
+      composerDisabled=await safe(()=>editor.isDisabled());
+    }
   }
-  const sendDisabled=sendCount===1?await safe(()=>sends.first().isDisabled()):null;
+  const visibleSend=sendCount===1?await safe(()=>oneVisible(sends)):null;
+  const sendDisabled=visibleSend?
+    await safe(()=>visibleSend.isDisabled()):null;
   return {
     purpose:"legacy-ui-read-only-probe",
     renderer_matches:true,
