@@ -17,6 +17,36 @@ from automation.manager import model, store
 UNIT = "hadalis-chat-bridge.service"  # persisted compatibility unit
 
 
+def inert_legacy_native_owner(config: dict, profile_id: str,
+                              item: dict) -> bool:
+    """Recognize a *preserved*, disabled old native conversation.
+
+    This does not resolve, clear, send or adopt its original pending message.
+    Only the separately opted-in single-owner UI scheduler may disregard
+    this inert record; the native scheduler must still be stopped at cutover.
+    """
+    if not isinstance(item, dict):
+        return False
+    owners = [p for p in config.get("profiles", [])
+              if p.get("id") == profile_id]
+    if len(owners) != 1:
+        return False
+    profile = owners[0]
+    if (profile.get("enabled") is not False
+            or profile.get("description", "").startswith("taskflow:")
+            or profile.get("description") == "taskflow-selector"
+            or item.get("desired") != "stopped"
+            or item.get("job_id") or item.get("remove_requested")):
+        return False
+    pending, session = item.get("pending"), item.get("session")
+    if not isinstance(pending, dict) or not isinstance(session, dict):
+        return False
+    if (pending.get("transport") == "alis-ui-once"
+            or session.get("transport") == "alis-ui-once"):
+        return False
+    return bool(pending) and bool(session)
+
+
 def _document(path: Path) -> dict | None:
     if path.is_symlink():
         raise ValueError("ALIS_UI_SOURCE_IS_SYMLINK")
@@ -66,9 +96,10 @@ def examine(config: dict, state: dict, profile_id: str,
     entries = state.get("profiles", {})
     own = entries.get(profile_id) if isinstance(entries, dict) else None
     foreign_unsettled = isinstance(entries, dict) and any(
-        pid != profile_id and isinstance(item, dict) and
-        (item.get("desired") == "run" or item.get("pending") or
-         item.get("job_id") or item.get("run_active"))
+        pid != profile_id and isinstance(item, dict)
+        and not inert_legacy_native_owner(config, pid, item)
+        and (item.get("desired") == "run" or item.get("pending")
+             or item.get("job_id") or item.get("run_active"))
         for pid, item in entries.items())
     native_unsettled = any(
         isinstance(item, dict) and
@@ -78,7 +109,10 @@ def examine(config: dict, state: dict, profile_id: str,
          (item.get("session") and
           (not isinstance(item["session"], dict) or
            item["session"].get("transport") != "alis-ui-once")))
-        for item in entries.values()) if isinstance(entries, dict) else True
+        for pid, item in entries.items()
+        if not (pid != profile_id and
+                inert_legacy_native_owner(config, pid, item))
+        ) if isinstance(entries, dict) else True
     own_pending = isinstance(own, dict) and bool(own.get("pending"))
     own_scheduled = isinstance(own, dict) and (
         own.get("desired") == "run" or bool(own.get("run_active")))
@@ -118,6 +152,9 @@ def examine(config: dict, state: dict, profile_id: str,
         "profile_found": len(profiles) == 1 and isinstance(own, dict),
         "profile_enabled": bool(profiles and profiles[0].get("enabled")),
         "foreign_work_unsettled": bool(foreign_unsettled),
+        "legacy_native_pending_retained": any(
+            pid != profile_id and inert_legacy_native_owner(config, pid, it)
+            for pid, it in entries.items()) if isinstance(entries, dict) else False,
         "native_session_unsettled": bool(native_unsettled),
         "ui_manager_send_unsettled": bool(own_pending),
         "profile_already_scheduled": bool(own_scheduled),
@@ -214,8 +251,14 @@ def check_prepared_queue() -> dict:
         == (first["repository"], first["code"]))
     if not result["taskflow_profile_present"]:
         blockers.append("TASKFLOW_PROFILE_NOT_MATERIALIZED")
+    isolated = [
+        pid for pid, item in state.get("profiles", {}).items()
+        if pid != expected_id and inert_legacy_native_owner(config, pid, item)
+    ]
+    result["legacy_native_pending_retained"] = bool(isolated)
     if any(
             pid != expected_id and isinstance(item, dict)
+            and not inert_legacy_native_owner(config, pid, item)
             and (item.get("pending") or item.get("job_id")
                  or item.get("run_active") or item.get("desired") == "run")
             for pid, item in state.get("profiles", {}).items()):
@@ -228,7 +271,8 @@ def check_prepared_queue() -> dict:
                 or (item.get("pending") or item.get("session")).get("transport")
                     != "alis-ui-once"
             )
-            for item in state.get("profiles", {}).values()):
+            for pid, item in state.get("profiles", {}).items()
+            if pid not in isolated):
         blockers.append("NATIVE_SESSION_REQUIRES_REVIEW")
     service, mode = _unit_state()
     result["installed_service_mode"] = mode
