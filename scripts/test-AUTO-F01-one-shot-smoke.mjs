@@ -18,7 +18,7 @@ try{
   function makePage({initialScoped=false,initialDraft="",assistant=true,
     chatId=true,ambiguousAction=false,targetListInitiallyHidden=false,
     targetListAlwaysHidden=false,targetListAmbiguous=false,
-    navDelayReads=0}={}){
+    navDelayReads=0,dialogAfterNav=false}={}){
     let scoped=initialScoped,draft=initialDraft,submitted=false;
     let navClicks=0,sendClicks=0,fillCount=0;
     let pendingScope=false,navReadCount=0;
@@ -70,6 +70,8 @@ try{
       url:()=>"app://-/index.html",
       getByRole:(role,opt={})=>{
         const name=opt.name;
+        if(role==="dialog")
+          return loc(()=>dialogAfterNav&&scoped?shown():[],"dialog");
         if(role==="main"){
           if(pendingScope&&++navReadCount>=navDelayReads){
             pendingScope=false;scoped=true;
@@ -204,6 +206,20 @@ try{
   assert.equal(listNeverAppears.get().navClicks,1);
   assert.equal(listNeverAppears.get().fillCount,0);
   assert.equal(listNeverAppears.get().sendClicks,0);
+
+  // A navigation confirmation dialog can leave the target Project
+  // visually selected while still blocking the underlying composer.
+  const dialog=makePage({dialogAfterNav:true});
+  const modalResult=await oneShotUiSmoke({page:dialog.page,
+    ownerApproved:true,persistAttempt:async()=>{throw Error("NO_JOURNAL_ALLOWED");},
+    wait,maxResponsePolls:1,maxNavigationPolls:4});
+  assert.equal(modalResult.status,"unverified");
+  assert.equal(modalResult.post_navigation_diagnostics.dialog_count_capped,1);
+  assert.ok(modalResult.post_navigation_diagnostics.readiness_issues
+    .includes("MODAL_OPEN_OR_UNVERIFIED"));
+  assert.equal(dialog.get().navClicks,1);
+  assert.equal(dialog.get().sendClicks,0);
+  assert.equal(dialog.get().fillCount,0);
 
   const listAmbiguous=makePage({targetListAmbiguous:true});
   const blockedList=await oneShotUiSmoke({page:listAmbiguous.page,
