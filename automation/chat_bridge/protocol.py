@@ -5,6 +5,28 @@ from enum import Enum
 import re
 
 GITHUB_MENTION = "[@GitHub](plugin://github@openai-curated-remote)"
+# ChatGPT consumer GitHub app reference requested by the owner. Keep the
+# legacy rich-mention token separate: a literal app link does not prove that
+# ChatGPT Desktop resolved/connected the GitHub app.
+GITHUB_APP_MENTION = "[$github](app://connector_76869538009648d5b282a4bb21c3d157)"
+
+
+def cloud_github_prompt(body: str) -> str:
+    """Exactly one owner-selected app link at the top of a Cloudbot prompt.
+
+    Existing task bundles may already contain this prefix. Normalize them at
+    runtime without touching persisted task files or changing authority.
+    """
+    if not isinstance(body,str) or not body.strip():
+        raise ValueError("Cloudbot prompt body missing")
+    objective=body.lstrip()
+    for mention in (GITHUB_APP_MENTION,GITHUB_MENTION):
+        if objective.startswith(mention):
+            objective=objective[len(mention):].lstrip("\r\n")
+            break
+    return GITHUB_APP_MENTION + "\n\n" + objective
+
+
 REPOSITORY = "llocphann/Hadalis"
 BRANCH = "dev"
 
