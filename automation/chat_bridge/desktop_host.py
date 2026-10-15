@@ -111,7 +111,7 @@ def main() -> int:
     except KeyboardInterrupt:
         return 0
     except Exception as exc:
-        print(f"hadalis ChatGPT host error: {exc}", file=sys.stderr)
+        print(f"Alis ChatGPT host error: {exc}", file=sys.stderr)
         return 1
 
 
