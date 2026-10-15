@@ -104,7 +104,8 @@ async function main() {
           diagnosis = "ALIS_UI_GENERATION_NOT_IDLE";
         } else if (observation.composer_draft_present === true) {
           diagnosis = "ALIS_UI_COMPOSER_HAS_DRAFT";
-        } else if (scope === "generic-label-with-other-or-unverified-guard" &&
+        } else if ((scope === "generic-label-with-other-or-unverified-guard" ||
+                    scope === "generic-label-without-project-guard") &&
                    evidence === "project-empty-landing-corroborated") {
           diagnosis = "ALIS_UI_PROJECT_LANDING_COMPOSER_UNSCOPED";
         } else if (!assessment.project_view_visible) {
