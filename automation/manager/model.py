@@ -5,8 +5,13 @@ from pathlib import Path
 import uuid
 
 from automation.chat_bridge.protocol import (
-    CONTINUATION_PROMPT, GITHUB_MENTION, ROTATION_BOOTSTRAP_PROMPT,
+    CONTINUATION_PROMPT, GITHUB_APP_MENTION,
+    GITHUB_MENTION as LEGACY_GITHUB_MENTION, ROTATION_BOOTSTRAP_PROMPT,
 )
+
+# Public prompts use the current Alis GitHub app mention; retain the
+# old rich mention only when reading existing profile text.
+GITHUB_MENTION = GITHUB_APP_MENTION
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ID = "strict-lossless-research"
@@ -14,7 +19,7 @@ MODES = {"manual", "continuous", "interval", "duration", "iterations"}
 LIMIT_ACTIONS = {"stop", "pause", "rotate"}
 MAX_PROFILES = 64
 GENERIC_PROMPT = "Carry out this profile's objective step by step. Set the objective here before starting.\n"
-CUSTOM_CONTINUATION_PROMPT = "Continue this profile's objective from its latest checkpoint and local evidence. Finish with one HADALIS_LOOP directive.\n"
+CUSTOM_CONTINUATION_PROMPT = "Continue this Alis profile's objective from its latest checkpoint and GitHub worker receipt. Finish with one ALIS_LOOP directive.\n"
 CUSTOM_ROTATION_PROMPT = "Resume this profile's objective from its durable checkpoint in this fresh managed conversation.\n"
 
 # The settings page advertises these as pending until a semantic Desktop action
@@ -74,8 +79,8 @@ def default_profile() -> dict:
     profile = deepcopy(PROFILE_DEFAULTS)
     profile.update({
         "id": DEFAULT_ID,
-        "name": "Strict-lossless optimization research",
-        "description": "Continuous Hadalis research on current dev",
+        "name": "Alis Automation",
+        "description": "Alis automation research on current dev",
         "enabled": False,
         "mode": "manual",
         "prompt": default_prompt(),
@@ -196,20 +201,25 @@ def new_profile(name: str, *, copy: dict | None = None) -> dict:
     return validate_profile(source)
 
 
-SAFETY_PREAMBLE = """ChatGPT is the only reasoning agent. Local services are deterministic transport and execution only.
-Stay in this ChatGPT conversation. Do not switch to Work mode or hand off to Work mode.
-Use only HADALIS_LOOP:CONTINUE, WAIT_RESULT JOB-..., ROTATE, DONE, or CONNECTOR_BLOCKED GITHUB as the final directive.
-Work through the objective: observe, gather evidence, diagnose, change, test, inspect, recover and iterate as needed.
-For debugging, collect bounded diagnostics before drawing conclusions. Cite evidence IDs, source SHA, timestamps and exit status for each conclusion. Do not infer a failure cause from symptoms alone.
-Emit each machine-debug conclusion as HADALIS_DIAGNOSIS:{"conclusion":"...","evidence_ids":["JOB-...:0"]}. Cite observed worker evidence; unsupported diagnoses cannot trigger further actions. Collect new diagnostics when evidence is missing.
-After a confirmed generation failure, a distinct recovery turn may be scheduled. Inspect existing Git changes and job receipts first; never re-execute an indeterminate action or reuse an existing job ID for new execution.
-Dispatch explicit SHA-pinned jobs using automation/queue/pending. Workers can collect diagnostics while Quickshell is down. Raw logs/config/screenshots remain private locally; only bounded sanitized observations and provenance may be shared with this managed chat, never raw machine data in Git results.
-Jobs support exec argv, diagnostics checks (services/processes/journal/git/resources/runtime/hardware/config/crashes/screenshot), allowlisted privileged service actions and validated shell_deploy. Include this profile's ID in profile_id. Use resource leases only for shared mutable resources. The worker uses an isolated pinned clone: normal code commits should be made through GitHub after fetching current dev, with local jobs for tests/evidence. Deploy risky shell changes only through shell_deploy, which requires canonical validation and rollback. Read automation/worker/README.md for schemas before dispatch.
-Use WAIT_RESULT to await a job, then inspect its result and evidence before deciding the next step. Privileged actions use the typed allowlist broker, a clear reason and system authentication; never put passwords or credentials in a prompt, config, job, argv or log.
-Before ROTATE, optionally emit one HADALIS_CHECKPOINT:{"phase":"...","summary":"...","next":"...","evidence_ids":[]} line. Preserve checkpoints for long tasks, testing and recovery.
+SAFETY_PREAMBLE = """ChatGPT is the only reasoning agent for Alis Automation.
+Chat Bridge transports messages; Localbot deterministically executes only
+separately approved, SHA-pinned jobs. Use exactly one ALIS_LOOP directive:
+CONTINUE, WAIT_RESULT JOB-..., ROTATE, DONE or CONNECTOR_BLOCKED GITHUB.
+Before any action verify the active task code, owner authorization, current
+source SHA, GitHub Issue/checkpoint and earlier worker receipts.
+Never replay uncertain actions, overwrite evidence or reuse a job ID.
+For debugging cite evidence IDs, source SHA, timestamps and exit status.
+Use ALIS_DIAGNOSIS:{"conclusion":"...","evidence_ids":["JOB-...:0"]}
+only for conclusions supported by actual worker evidence. Preserve
+credentials, logs and screenshots privately. ALIS_CHECKPOINT:{"phase":"...",
+"summary":"...","next":"...","evidence_ids":[]} can capture state before
+ROTATE. WAIT_RESULT is for an already approved pinned job; the worker
+cannot choose new research or expand the task scope on its own.
 """
-REPOSITORY_PREAMBLE = """GitHub is the authoritative source of truth for llocphann/Hadalis dev.
-Explicitly use the GitHub connector, verify repository access and fetch current dev before each repository audit or write. Read AGENTS.md. If unavailable, emit HADALIS_LOOP:CONNECTOR_BLOCKED GITHUB and stop.
+REPOSITORY_PREAMBLE = """GitHub is authoritative for llocphann/Alis dev.
+Use the owner-selected GitHub app and fetch the current dev HEAD.
+Read AGENTS.md and the assigned task Issue before changes. If GitHub is
+unavailable, emit ALIS_LOOP:CONNECTOR_BLOCKED GITHUB and stop.
 """
 
 
@@ -228,12 +238,12 @@ def effective_prompt(profile: dict, kind: str) -> str:
     if profile["id"] == DEFAULT_ID and prompt == legacy:
         return prompt
     body = prompt
-    if body.lstrip().startswith(GITHUB_MENTION):
-        body = body.lstrip()[len(GITHUB_MENTION):].lstrip("\r\n")
+    if body.lstrip().startswith((GITHUB_MENTION, LEGACY_GITHUB_MENTION)):
+        body = body.lstrip().split(")", 1)[1].lstrip("\r\n")
     if kind == "rotation":
         objective = profile["prompt"].lstrip()
-        if objective.startswith(GITHUB_MENTION):
-            objective = objective[len(GITHUB_MENTION):].lstrip("\r\n")
+        if objective.startswith((GITHUB_MENTION, LEGACY_GITHUB_MENTION)):
+            objective = objective.split(")", 1)[1].lstrip("\r\n")
         body += "\n\nProfile objective:\n" + objective
     prefix = GITHUB_MENTION + "\n\n" + REPOSITORY_PREAMBLE if profile["requires_github"] else ""
     return prefix + SAFETY_PREAMBLE + "\n" + body
