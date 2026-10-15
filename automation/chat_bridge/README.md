@@ -85,3 +85,34 @@ Do not delete `ui-send-journal/pending.json` manually or treat a
 visible reply as proof of server-side identity. Current
 `automation.transport_gate` for native managed task queue remains
 closed and has not been bypassed.
+
+### Read-only cutover diagnosis (operator side)
+
+Inspect the installed host **without submitting any message or changing
+systemd**:
+
+```bash
+python3 scripts/AUTO-F01-ui-preflight.py strict-lossless-research
+node automation/chat_bridge/desktop_cli.mjs ui-target-check
+```
+
+The first command reads existing manager configuration/state and the
+installed bridge unit, without using the manager transaction lock (which
+may perform recovery writes). It returns redacted booleans and categorical
+blockers only. A still-active native bridge, pending/native sessions,
+profiles scheduled to run, any outstanding job, another profile's work,
+or a UI journal tombstone all **block** cutover. A positive local result
+is **not** authorization to restart the unit or send a prompt.
+
+The second command uses an existing Desktop CDP connection **read-only**.
+It checks whether a unique selected chat key is stable across two samples
+in the configured Alis Project, without exposing chat title, ID, href or
+fingerprint. It explicitly reports no server identity attestation and no
+scheduler submission authority.
+
+A new Alis UI send must also see an assistant-only completion: a **new**
+response toolbar plus exactly one `ALIS_LOOP` directive extracted from
+the associated assistant message container. Counting markers in the page
+body is insufficient because the prompt itself can contain examples.
+Missing toolbars/assistant containers block continuation, not fall back
+to an ambiguous marker.
