@@ -67,7 +67,9 @@ async function main() {
       // Recognize that READ-ONLY phase separately; never interpret it as
       // permission to submit, nor relax continuation's pinned-chat guard.
       try {
-        const observation = await inspectLegacyUiReadOnly(page);
+        const project = process.env.ALIS_CHATGPT_PROJECT ??
+          process.env.HADALIS_CHATGPT_PROJECT ?? "Automatic Alis";
+        const observation = await inspectLegacyUiReadOnly(page, project);
         const assessment = assessLegacyUiReadiness(observation);
         projectEntryReady = assessment.read_only_project_entry_ready === true;
         if (projectEntryReady)
