@@ -130,7 +130,7 @@ def desktop(command: str, prompt: str | None = None) -> dict[str, Any]:
     if intent is not None:
         # Only a complete response permits the NEXT distinct send.
         # This is UI observation, not server-side managed-chat attestation.
-        extract_response_text(payload)
+        parse_loop_directive(extract_response_text(payload))
         acknowledge_completed(*intent)
     return payload
 
@@ -167,7 +167,10 @@ def result_exists(job_id: str) -> bool:
         payload = json.loads(result.stdout)
     except ValueError:
         raise RuntimeError("Alis job result invalid JSON") from None
+    digest = payload.get("input_sha256") if isinstance(payload, dict) else None
     if (not isinstance(payload, dict) or payload.get("job") != job_id
+            or not isinstance(digest, str) or len(digest) != 64
+            or any(ch not in "0123456789abcdef" for ch in digest)
             or payload.get("status") not in
             {"passed", "failed", "cancelled", "indeterminate"}):
         raise RuntimeError("Alis job result identity/status mismatch")
