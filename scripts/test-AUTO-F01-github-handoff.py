@@ -65,6 +65,14 @@ class GitHubHandoffTests(unittest.TestCase):
                        "status":"indeterminate"}))
             self.assertFalse(handoff.retire_after_receipt(
                 ready,{"job":JOB_ID,"input_sha256":"f"*64,"status":"failed"}))
+            # An old completed job is still safe to prune from Git's tip:
+            # the stale signal cannot authorize execution again.
+            far_future=signal["updated_unix"]+handoff.MAX_LIFETIME+300
+            with self.assertRaises(ValueError):
+                handoff.validate_signal(ready,now=far_future)
+            self.assertTrue(handoff.retire_after_receipt(
+                ready,{"job":JOB_ID,"input_sha256":handoff.job_digest(raw),
+                       "status":"passed"},now=far_future))
             bad={**signal,"job_sha256":"f"*64}
             with self.assertRaisesRegex(ValueError,"does not match"):
                 handoff.ready(json.dumps(bad),job,raw,state)
