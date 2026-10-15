@@ -69,6 +69,14 @@ def main() -> None:
             assert "Chat bridge is inactive" in snapshot["scheduler_problem"]
             assert not repeated["runtime"]["events"]
             assert snapshot["services"]["bridge"]["state"] == "inactive"
+            # Services running != supported authenticated ChatGPT transport.
+            assert snapshot["transport_ready"] is False
+            assert snapshot["transport_status"] == "blocked"
+            assert snapshot["transport_blocker"] == "CHATGPT_PROJECT_SERVER_RECEIPT_UNATTESTED"
+            assert snapshot["unattended_submission_authorized"] is False
+            assert snapshot["capabilities"]["managed_submission"] is False
+            assert snapshot["capabilities"]["authenticated_final_receipt"] is False
+
 
             with patch.object(control, "service_states", return_value=services()):
                 stale_heartbeat = control.status()
