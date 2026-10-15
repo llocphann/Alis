@@ -1,0 +1,32 @@
+{
+  "source_sha": "28c146d4a45a123073abeaec445a84f3fb4ecbbf",
+  "source_kind": "frozen-git-archive",
+  "source_root": "/tmp/alis-r11-width-toggle-28c146d4a/source",
+  "source_sha256": {
+    "modules/abyss/bar/AbyssBar.qml": "74a95b76063c182b53a8bdeece924548fc687dd1f80cc9a11ec862cbfb4dab17",
+    "modules/abyss/bar/AbyssBarModule.qml": "a77919149fce53a6909668aff0bdd2a0cf54ce654364f60836c9bac432cc1619",
+    "modules/abyss/looks/AbyssLayout.js": "6117d4b22942913812884a6a6c24975c23c283e38a20a2efe92c78892391a1b1",
+    "modules/abyss/AbyssPerimeter.qml": "372ccda2b6ffa4718e9c5a246091dc8c70bd03d9e4be79042e59f6787165d437",
+    "modules/abyss/looks/AbyssField.qml": "305109d6323d2a915a11168ee831a7ed3e13e27b20881e3269d54dacf1294092",
+    "modules/abyss/looks/AbyssField.frag": "75b90652cc51400cd9951067e06090457728d13a14ab5259bf3d035e54d4b53f",
+    "modules/abyss/looks/AbyssField.frag.qsb": "2c0fd537c41eb4961af93be0bd2d8ecdb11cf0cc529138dd091765bc09a5d73b",
+    "scripts/native_test_session.py": "342582fc9d61e1ba3d42990fb1d7a7dc7043749beea836ec8f6a85e867a4aa73",
+    "defaults/config.json": "e2d13181b84e21243b15ffa739ecadf16ba14912e5587f6aa69ed2f63f9c0223"
+  },
+  "fixture_sha256": "36a90116b5172f47c7a796f19a8fe72de8d2fe0879580a7894f2c1b23dda4970",
+  "test_sha256": "425d3e69700ca0c950e8fa36f58a84ea2842aa322ab135de77b1039098f3667b",
+  "classification": "NATIVE_REGRESSION_FAIL",
+  "scope": "Actual AbyssBar and AbyssField frame properties; not composed Perimeter, compositor input mask or Owner acceptance",
+  "process_exit": 0,
+  "source_after_sha256": {
+    "modules/abyss/bar/AbyssBar.qml": "74a95b76063c182b53a8bdeece924548fc687dd1f80cc9a11ec862cbfb4dab17",
+    "modules/abyss/bar/AbyssBarModule.qml": "a77919149fce53a6909668aff0bdd2a0cf54ce654364f60836c9bac432cc1619",
+    "modules/abyss/looks/AbyssLayout.js": "6117d4b22942913812884a6a6c24975c23c283e38a20a2efe92c78892391a1b1",
+    "modules/abyss/AbyssPerimeter.qml": "372ccda2b6ffa4718e9c5a246091dc8c70bd03d9e4be79042e59f6787165d437",
+    "modules/abyss/looks/AbyssField.qml": "305109d6323d2a915a11168ee831a7ed3e13e27b20881e3269d54dacf1294092",
+    "modules/abyss/looks/AbyssField.frag": "75b90652cc51400cd9951067e06090457728d13a14ab5259bf3d035e54d4b53f",
+    "modules/abyss/looks/AbyssField.frag.qsb": "2c0fd537c41eb4961af93be0bd2d8ecdb11cf0cc529138dd091765bc09a5d73b",
+    "scripts/native_test_session.py": "342582fc9d61e1ba3d42990fb1d7a7dc7043749beea836ec8f6a85e867a4aa73",
+    "defaults/config.json": "e2d13181b84e21243b15ffa739ecadf16ba14912e5587f6aa69ed2f63f9c0223"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "runtime_base_sha": "28c146d4a45a123073abeaec445a84f3fb4ecbbf",
+  "native_exit": 0,
+  "test_exit": 1,
+  "classification": "Genuine motion regression RED; source/import/identity/input/backing oracles did not fail",
+  "checks": 5067,
+  "phase_traces": 32,
+  "gpu_images": 16,
+  "observed_motion_failures": 172,
+  "scope": "Actual Bar/Field frame properties, not full Perimeter/native compositor pointer or Owner acceptance",
+  "production_fix": "Pending; private candidate must be validated before deployment",
+  "fixture": "scripts/test-abyss-width-affects-modules-runtime.py"
+}
