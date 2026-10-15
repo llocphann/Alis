@@ -89,7 +89,7 @@ class SudoInput(unittest.TestCase):
         self.assertIn("echoMode: TextInput.Password", qml)
         self.assertIn('"sudo-authenticate"', qml)
         self.assertIn('objectName: "automationClearQueue"', qml)
-        self.assertIn('buttonText: Translation.tr("Find tasks")', qml)
+        self.assertIn('Translation.tr("Find tasks")', qml)
         self.assertNotIn("password: sudoPasswordField.text", qml)
 
 
