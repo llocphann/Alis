@@ -58,8 +58,32 @@ async function scopedEntry(page,projectName){
     observation.send_disabled===true};
 }
 
+// Only bounded accessibility counts, enums and booleans, never URL, ID,
+// title, draft text, screenshot, message body or raw DOM. Include the reason
+// *after* one navigation click so an owner can diagnose without 3 commands.
+function safeEntryDiagnostics(entry){
+  if(!entry)return {inspection:"unavailable"};
+  const s=entry.observation,a=entry.assessment;
+  return {
+    inspection:"completed",
+    project_list_count_capped:s.target_project_list_count_capped,
+    project_badge_count_capped:s.project_badge_count_capped,
+    selected_chat_count_capped:s.selected_target_chat_count_capped,
+    composer_count_capped:s.composer_count_capped,
+    project_scoped_composer_count_capped:s.project_scoped_composer_count_capped,
+    composer_scope_evidence:a.composer_scope_evidence,
+    project_landing_visual_evidence:a.project_landing_visual_evidence,
+    draft_present:s.composer_draft_present,
+    composer_disabled:s.composer_disabled,
+    generation_busy:s.stop_count_capped!==0,
+    send_control_state:a.send_control_state,
+    readiness_issues:a.readiness_issues
+  };
+}
+
 export async function oneShotUiSmoke({page,projectName="Automatic Alis",
-  persistAttempt,ownerApproved=false,wait=sleep,maxResponsePolls=36}={}){
+  persistAttempt,ownerApproved=false,wait=sleep,maxResponsePolls=36,
+  maxNavigationPolls=18}={}){
   if(ownerApproved!==true||typeof persistAttempt!=="function")
     return report("EXPLICIT_APPROVAL_AND_JOURNAL_REQUIRED");
   let before;
@@ -96,16 +120,24 @@ export async function oneShotUiSmoke({page,projectName="Automatic Alis",
     try{await action.evaluate(button=>button.click());}
     catch{return report("ALIS_UI_NAVIGATION_UNCERTAIN_NO_RETRY",{
       status:"uncertain",navigation_click_attempted:true});}
-    // Fast bounded settling; no second click on unverified navigation.
-    let ready=false;
-    for(let i=0;i<8;i++){
-      await wait(150);
-      try{before=await scopedEntry(page,projectName);ready=before.ready;}
-      catch{ready=false;}
-      if(ready)break;
+    // Allow an async Desktop route transition (up to ~3.2 seconds).
+    // Require two consecutive verified states before touching the editor;
+    // one transient Project badge is never proof of the final destination.
+    // Never click again, even if the navigation remains unverified.
+    let stableReadiness=0;
+    for(let i=0;i<maxNavigationPolls;i++){
+      await wait(180);
+      try{
+        before=await scopedEntry(page,projectName);
+        stableReadiness=before.ready?stableReadiness+1:0;
+      }catch{
+        stableReadiness=0;
+      }
+      if(stableReadiness>=2)break;
     }
-    if(!ready)return report("ALIS_UI_PROJECT_NAVIGATION_NOT_VERIFIED",{
-      status:"unverified",navigation_click_attempted:true});
+    if(stableReadiness<2)return report("ALIS_UI_PROJECT_NAVIGATION_NOT_VERIFIED",{
+      status:"unverified",navigation_click_attempted:true,
+      post_navigation_diagnostics:safeEntryDiagnostics(before)});
   }
 
   let baseline;
