@@ -173,5 +173,53 @@ class UiSchedulerTests(TestCase):
             ID, now=200, desktop=lambda *_a, **_k: self.fail("send")), "idle")
 
 
+    def test_disabled_stopped_old_native_pending_is_preserved_during_new_ui_turn(self):
+        original = {"user_message_id": "DO_NOT_REVEAL",
+                    "prepared_at_unix": 1}
+        def add_old(config, state):
+            old = model.new_profile("Old native")
+            old["enabled"] = False
+            config["profiles"].append(old)
+            item = store.profile_state()
+            item.update(
+                desired="stopped", status="stopping",
+                pending=dict(original),
+                session={"conversation_id": "OLD_PRIVATE_CONVERSATION"},
+                run_active=True,
+            )
+            state["profiles"][old["id"]] = item
+            return old["id"]
+        legacy_id = store.change(add_old)
+        calls = []
+        result = ui_scheduler.ui_tick(
+            ID, now=200,
+            desktop=lambda *_args, **_kw: (
+                calls.append("once") or reply("ALIS_LOOP:DONE")))
+        self.assertEqual(result, "DONE")
+        self.assertEqual(calls, ["once"])
+        original_after = store.read_snapshot()[1]["profiles"][legacy_id]
+        self.assertEqual(original_after["pending"], original)
+        self.assertTrue(original_after["run_active"])
+        self.assertEqual(original_after["session"]["conversation_id"],
+                         "OLD_PRIVATE_CONVERSATION")
+        self.assertEqual(original_after["desired"], "stopped")
+
+    def test_disabled_pending_with_local_job_is_not_isolated(self):
+        def add_old(config, state):
+            old = model.new_profile("Old native")
+            old["enabled"] = False
+            config["profiles"].append(old)
+            item = store.profile_state()
+            item.update(
+                desired="stopped", pending={"user_message_id": "old"},
+                session={"conversation_id": "old"}, run_active=True,
+                job_id="JOB-PENDING")
+            state["profiles"][old["id"]] = item
+        store.change(add_old)
+        self.assertEqual(ui_scheduler.ui_tick(
+            ID, now=200, desktop=lambda *_a, **_k: self.fail("send")),
+            "ALIS_UI_ANOTHER_PROFILE_UNSETTLED")
+
+
 if __name__ == "__main__":
     main()
