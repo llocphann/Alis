@@ -365,6 +365,14 @@ def queue_loop(*, once: bool = False) -> int:
         now = int(time.time())
         store.change_state(lambda _c, s: daemon._heartbeat(s, now))
         status = queue_tick(now=now)
+        if status in {"DONE", "queue_completed_pending_reconciliation"}:
+            from automation import managed_tasks, taskflow
+            try:
+                managed_tasks.reconcile_ui_once()
+            except (taskflow.TaskError, ValueError, RuntimeError, OSError):
+                # Original local UI receipt and queue ownership are retained.
+                # An unverified DONE cannot silently schedule a new Issue.
+                status = "ALIS_UI_QUEUE_RECONCILIATION_REQUIRED"
         if once:
             return 0
         if status == "ui_reconciliation_required" or status.startswith("ALIS_UI_"):
