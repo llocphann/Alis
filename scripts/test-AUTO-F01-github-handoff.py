@@ -153,6 +153,29 @@ class GitHubHandoffTests(unittest.TestCase):
                 self.assertFalse(target.exists())
                 self.assertTrue(worker.load_receipt(JOB_ID))
 
+    def test_retired_expired_control_does_not_execute_remaining_pending_job(self):
+        # An expired ACTIVE signal may be removed while the immutable pending
+        # payload stays in Git history/tip. Absence is never implicit DONE.
+        job,raw,signal=fixture()
+        with tempfile.TemporaryDirectory() as tmp:
+            state=Path(tmp)
+            def read(path,*,ref="origin/dev"):
+                if path==JOB_PATH:
+                    self.assertEqual(ref,COMMIT)
+                    return raw
+                if path==handoff.PATH:
+                    raise RuntimeError("control does not exist on remote")
+                raise AssertionError(path)
+            with (patch.object(worker,"state_root",return_value=state),
+                  patch.object(worker,"introducing_commit",return_value=COMMIT),
+                  patch.object(worker,"remote_text",side_effect=read),
+                  patch.object(worker,"execute",side_effect=AssertionError("must not execute")),
+                  patch.object(worker,"publish",side_effect=AssertionError("must not publish"))):
+                self.assertIsNone(worker.process_job(JOB_PATH,publish_now=False))
+                self.assertIsNone(worker.process_job(JOB_PATH,publish_now=False))
+                self.assertIsNone(worker.load_receipt(JOB_ID))
+                self.assertFalse(handoff.approval_path(state,JOB_ID).exists())
+
     def test_only_exact_settled_opt_in_jobs_are_auto_retired(self):
         job,raw,signal=fixture()
         valid={"job":JOB_ID,"input_sha256":handoff.job_digest(raw),
