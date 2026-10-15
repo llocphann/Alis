@@ -217,7 +217,7 @@ WantedBy=default.target
     )
 
     write_unit(units/"hadalis-privilege.service",f"""[Unit]
-Description=Hadalis allowlisted administrator broker
+Description=Alis allowlisted administrator broker
 
 [Service]
 Type=simple
