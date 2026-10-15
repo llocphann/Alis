@@ -48,7 +48,7 @@ If the GitHub connector cannot be verified, stop with
 ALIS_LOOP:CONNECTOR_BLOCKED GITHUB. Never substitute unauthenticated web
 results or pretend that a worker response is a ChatGPT message receipt.
 
-Do not switch to Work mode. Do not ask the owner to type "continue" during an
+Do NOT switch to Work mode. Do not ask the owner to type "continue" during an
 already approved, safely resumable loop. Stop when the actual assigned task is
 complete, an owner gate is required, or available evidence cannot resolve an
 uncertain action. Do not invent work simply to keep the loop active.
