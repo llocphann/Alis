@@ -222,13 +222,20 @@ class GitHubHandoffTests(unittest.TestCase):
         local={"job":JOB_ID,"input_sha256":handoff.job_digest(raw),
                "status":"passed","actions":[],"profile_id":None}
         remote_result=worker.public_result(local)
-        for exists,match in ((False,True),(True,True),(True,False)):
-            with self.subTest(exists=exists,match=match):
+        cases=((False,"match"),(True,"match"),(True,"other_job"),
+               (True,"other_run"),(True,"other_task"),(True,"other_base"),
+               (True,"preparing"))
+        for exists,kind in cases:
+            with self.subTest(exists=exists,kind=kind):
                 with tempfile.TemporaryDirectory() as tmp:
                     state=Path(tmp)
                     actions=[]
                     active_signal={**signal}
-                    if not match:active_signal["job_id"]="JOB-OTHER"
+                    if kind=="other_job":active_signal["job_id"]="JOB-OTHER"
+                    if kind=="other_run":active_signal["run_id"]=str(uuid.uuid4())
+                    if kind=="other_task":active_signal["task_code"]="AUTO-R01"
+                    if kind=="other_base":active_signal["base_sha"]="f"*40
+                    if kind=="preparing":active_signal["status"]="PREPARING"
                     def fake_git(*args,**kwargs):
                         if args==("rev-parse","origin/dev"):
                             return SimpleNamespace(returncode=0,
@@ -244,7 +251,7 @@ class GitHubHandoffTests(unittest.TestCase):
                             active=checkout/handoff.PATH
                             active.parent.mkdir(parents=True)
                             active.write_text(json.dumps(active_signal))
-                            if match:
+                            if kind!="other_job":
                                 pending=checkout/worker.QUEUE/(JOB_ID+".json")
                                 pending.parent.mkdir(parents=True)
                                 pending.write_text(raw)
@@ -263,9 +270,15 @@ class GitHubHandoffTests(unittest.TestCase):
                         worker.publish(JOB_ID,local)
                     stage=[a for a in actions if a[:3]==("git","add","--")]
                     pushed=[a for a in actions if a[:2]==("git","push")]
-                    if exists and not match:
+                    if exists and kind=="other_job":
                         self.assertEqual(stage,[])
                         self.assertEqual(pushed,[])
+                    elif exists and kind!="match":
+                        # The unrelated ACTIVE survives; the settled job's
+                        # exact own pending file can still be retired.
+                        self.assertEqual(stage,[("git","add","--",
+                            worker.QUEUE+"/"+JOB_ID+".json")])
+                        self.assertEqual(len(pushed),1)
                     elif exists:
                         self.assertEqual(stage,[("git","add","--",handoff.PATH,
                             worker.QUEUE+"/"+JOB_ID+".json")])
