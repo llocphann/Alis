@@ -311,6 +311,21 @@ def _poll(config: dict, state: dict, profile_id: str, now: int) -> None:
             result = {"completed":True, "conversation_id":receipt["conversation_id"], "response":receipt["response"]}
         else:
             result = native_command("poll", pending=pending)
+        # A cached receipt and a fresh transport response must obey the
+        # same exact conversation/turn shape. Never let a stale or foreign
+        # conversation silently replace an acknowledged managed session.
+        conversation_id = result.get("conversation_id")
+        if (pending.get("conversation_id") and
+                conversation_id != pending["conversation_id"]):
+            raise ValueError("managed response conversation identity mismatch")
+        if result.get("completed"):
+            response_payload = result.get("response")
+            if (not isinstance(conversation_id, str) or not conversation_id or
+                    not isinstance(response_payload, dict) or
+                    not isinstance(response_payload.get("message_id"), str) or
+                    not response_payload["message_id"] or
+                    not isinstance(response_payload.get("text"), str)):
+                raise ValueError("completed response receipt is malformed")
         if not result.get("completed"):
             if result.get("superseded"):
                 # A user advanced this managed conversation before its final
