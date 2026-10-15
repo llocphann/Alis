@@ -274,5 +274,66 @@ class GitHubHandoffTests(unittest.TestCase):
                 self.assertTrue(handoff.approval_matches(state,job,raw))
 
 
+    def test_stale_unstarted_manifest_prunes_once_without_touching_receipts(self):
+        from types import SimpleNamespace
+        from automation.manager import credentials
+        job,raw,signal=fixture()
+        at=signal["updated_unix"]+3600+handoff.EXPIRED_GRACE+10
+        with self.assertRaises(ValueError):
+            handoff.validate_signal(json.dumps(signal),now=at)
+        self.assertEqual(handoff.expired_for_retirement(json.dumps(signal),now=at),JOB_ID)
+        self.assertIsNone(handoff.expired_for_retirement(json.dumps(signal),
+                                                         now=signal["expires_unix"]))
+        cases=("expired_unstarted","pending_receipt","control_changed","push_failed")
+        for case in cases:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp); actions=[]
+                approval=handoff.approval_path(root,JOB_ID)
+                approval.parent.mkdir()
+                approval.write_text(json.dumps(handoff.approval_payload(job,raw)))
+                if case=="pending_receipt":
+                    worker.save_receipt(JOB_ID,{"job":JOB_ID,"phase":"executing"})
+                def git(*args,**kw):
+                    if args==("rev-parse","origin/dev"):
+                        return SimpleNamespace(returncode=0,
+                            stdout=BASE+"\n",stderr="")
+                    raise AssertionError("unexpected git query")
+                def run(argv,*,cwd=None,timeout=None,env=None):
+                    actions.append(tuple(argv))
+                    if argv[:3]==["git","clone","--shared"]:
+                        Path(argv[-1]).mkdir(parents=True)
+                    if argv[:3]==["git","checkout","--detach"]:
+                        active=Path(cwd)/handoff.PATH
+                        active.parent.mkdir(parents=True)
+                        source={**signal,"run_id":str(uuid.uuid4())} if case=="control_changed" else signal
+                        active.write_text(json.dumps(source))
+                    exit_code=1 if case=="push_failed" and "push" in argv else 0
+                    return SimpleNamespace(returncode=exit_code,stdout="",stderr="")
+                with (patch.object(worker,"state_root",return_value=root),
+                      patch.object(worker,"fetch_dev"),
+                      patch.object(worker,"remote_text",return_value=json.dumps(signal)),
+                      patch.object(worker,"remote_url",return_value="https://github.com/llocphann/Alis.git"),
+                      patch.object(worker,"git",side_effect=git),
+                      patch.object(worker,"run",side_effect=run),
+                      patch.object(credentials,"status",return_value={"github":{}})):
+                    if case=="push_failed":
+                        with self.assertRaisesRegex(RuntimeError,"cleanup push failed"):
+                            worker.prune_expired_handoff(now=at)
+                    else:
+                        result=worker.prune_expired_handoff(now=at)
+                        expect={
+                            "expired_unstarted":"expired_unstarted_handoff_pruned",
+                            "pending_receipt":"unresolved_receipt_preserved",
+                            "control_changed":"control_changed_or_receipt"}
+                        self.assertEqual(result,expect[case])
+                did_push=any("push" in argv for argv in actions)
+                self.assertEqual(did_push,case in ("expired_unstarted","push_failed"))
+                self.assertEqual(approval.exists(),case!="expired_unstarted")
+                if case=="pending_receipt":
+                    self.assertEqual(worker.load_receipt(JOB_ID)["phase"],"executing")
+                else:
+                    self.assertIsNone(worker.load_receipt(JOB_ID))
+
+
 if __name__=="__main__":
     unittest.main()
