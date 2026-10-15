@@ -112,7 +112,7 @@ assert.equal(JSON.parse(extra.stdout).submission_authorized,false);
 const root=fs.mkdtempSync(path.join(os.tmpdir(),"alis-ui-reply-"));
 try{
   const fake=path.join(root,"playwright.mjs");
-  fs.writeFileSync(fake,\`
+  fs.writeFileSync(fake,`
   const req=${JSON.stringify(REQUEST)};
   const reply=${JSON.stringify(REPLY)};
   const loc=items=>({
@@ -151,7 +151,7 @@ try{
     if(url!=="http://127.0.0.1:9222")throw Error("UNEXPECTED_CDP_URL");
     return {contexts:()=>[{pages:()=>[page]}],close:async()=>{}};
   }};
-  \`);
+  `);
   const outcome=spawnSync(process.execPath,[cli,"observe-acceptance"],{
     encoding:"utf8",timeout:6000,env:{...process.env,
       HADALIS_PLAYWRIGHT_MODULE:pathToFileURL(fake).href,
