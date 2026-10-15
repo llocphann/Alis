@@ -108,6 +108,7 @@ def profile_state() -> dict:
         "remove_requested": False,
         # Durable identity; never derived from whichever chat is visible.
         "session": None, "checkpoint": None, "response_message_id": None,
+        "last_ui_response_attempt": None,
         "recovery": None, "run_active": False,
         "last_transport_at_unix": 0, "job_evidence": [], "job_summary": None,
         "generation_recoveries": 0, "failed_turn": None,
