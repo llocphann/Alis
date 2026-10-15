@@ -6,6 +6,7 @@
 import {inspectLegacyUiReadOnly,assessLegacyUiReadiness} from "./legacy_ui_probe.mjs";
 import {oneShotUiAcceptance} from "./legacy_ui_acceptance.mjs";
 import {extractLoopResponse,uiTargetIdentity} from "./desktop_driver.mjs";
+import {witnessUiChatKey} from "./ui_chat_key_witness.mjs";
 
 // Stable across invocations. The journal rejects another send even if the
 // operator repeats the command after a timeout or ambiguous UI result.
@@ -192,23 +193,46 @@ export async function oneShotUiSmoke({page,projectName="Automatic Alis",
         replied=true;
     }catch{}
     if(replied){
+      // Capture *inside the original send process*, before the owner can
+      // leave/delete the conversation. The witness compares two raw chat
+      // IDs privately and only exports categorical results; it never
+      // authorizes the scheduler or invents Project membership.
+      let witness={diagnosis:"CHAT_KEY_WITNESS_UNAVAILABLE",
+        project_chat_key_equal_across_samples:false,
+        global_chat_key_equal_across_samples:false};
       try{
-        const first=await uiTargetIdentity(page);
-        await wait(130);
-        const second=await uiTargetIdentity(page);
-        if(first===second)return {
-          ...sent,status:"observed",code:"ALIS_UI_SMOKE_ASSISTANT_AND_CHAT_OBSERVED",
-          assistant_only_reply_observed:true,
-          selected_chat_identity_stable:true
-        };
+        witness=await witnessUiChatKey(page,projectName,{delay:wait});
       }catch{}
+      // The original stronger identity test is still mandatory before
+      // describing the Project sidebar chat as a stable selected identity.
+      // Three bounded attempts allow UI list mounting, never another Send.
+      for(let attempt=0;attempt<3;attempt++){
+        try{
+          const first=await uiTargetIdentity(page);
+          await wait(130);
+          const second=await uiTargetIdentity(page);
+          if(first===second && witness.project_chat_key_equal_across_samples)
+            return {
+              ...sent,status:"observed",
+              code:"ALIS_UI_SMOKE_ASSISTANT_AND_CHAT_OBSERVED",
+              assistant_only_reply_observed:true,
+              selected_chat_identity_stable:true,
+              post_send_chat_key_witness:witness
+            };
+        }catch{}
+        if(attempt<2)await wait(200);
+      }
+      return {
+        ...sent,
+        code:"ALIS_UI_SMOKE_REPLY_OBSERVED_CHAT_ID_UNAVAILABLE",
+        assistant_only_reply_observed:true,
+        post_send_chat_key_witness:witness
+      };
     }
     await wait(250);
   }
   return {
-    ...sent,code:replied
-      ?"ALIS_UI_SMOKE_REPLY_OBSERVED_CHAT_ID_UNAVAILABLE"
-      :"ALIS_UI_SMOKE_REPLY_PENDING_NO_RETRY",
-    assistant_only_reply_observed:replied
+    ...sent,code:"ALIS_UI_SMOKE_REPLY_PENDING_NO_RETRY",
+    assistant_only_reply_observed:false
   };
 }
