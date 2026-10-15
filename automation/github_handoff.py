@@ -146,6 +146,25 @@ def retire_after_receipt(raw_signal: str, payload: dict,
             and signal["job_sha256"] == payload.get("input_sha256"))
 
 
+EXPIRED_GRACE = 3600
+
+
+def expired_for_retirement(raw_signal: str, *, now: int | None = None) -> str | None:
+    """Return only an expired, structurally valid handoff job ID.
+
+    This is not execution authorization and never removes pending worker
+    receipts. The caller must still check local receipts under publication
+    and use fast-forward-only Git commit semantics.
+    """
+    at = int(time.time()) if now is None else now
+    try:
+        signal = validate_signal(raw_signal, now=at, require_fresh=False)
+    except ValueError:
+        return None
+    return (signal["job_id"] if signal["expires_unix"] + EXPIRED_GRACE < at
+            else None)
+
+
 def approval_payload(job: dict, raw_job: str, *, now: int | None = None) -> dict:
     if not isinstance(job.get("handoff"), dict):
         raise ValueError("job is not opted into GitHub handoff")
