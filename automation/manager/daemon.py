@@ -516,6 +516,21 @@ def _step_session(profile_id: str, now: int) -> None:
     if profile_id not in state["profiles"] or not any(p["id"]==profile_id for p in config["profiles"]): return
     item = state["profiles"][profile_id]
     if item["remove_requested"]: return
+    # A prior opt-in UI sender owns its own uncertain/settled messages.
+    # The native scheduler can never reinterpret its session as a native
+    # conversation or adopt the same UI attempt after transport switch.
+    if ((item.get("pending") or {}).get("transport") == "alis-ui-once"
+            or (item.get("session") or {}).get("transport") == "alis-ui-once"):
+        def quarantine(_config, state):
+            current = state["profiles"].get(profile_id)
+            if not current:
+                return
+            current["desired"] = "paused"
+            current["run_active"] = False
+            current["status"] = "ui_transport_requires_review"
+            current["last_error"] = "Alis UI session cannot be adopted by native transport"
+        change_state(quarantine)
+        return
     if item["pending"]:
         _poll(config,state,profile_id,now); return
     if item["desired"] != "run" or not _profile(config,profile_id)["enabled"]:
@@ -594,7 +609,11 @@ def main() -> int:
     parser=argparse.ArgumentParser(description="Independent Alis workflow scheduler")
     parser.add_argument("--once",action="store_true")
     parser.add_argument("--reset-state",action="store_true")
+    parser.add_argument("--ui-loop-profile",metavar="PROFILE_ID",
+        help="Explicit single-owner Alis UI protocol, not native transport")
     args=parser.parse_args()
+    if args.ui_loop_profile and args.reset_state:
+        raise SystemExit("Alis UI mode cannot reset existing chat state")
     from automation import managed_tasks
     managed_tasks.quarantine_legacy_profiles_once()
     lock_path=state_dir()/"chat-bridge.lock";lock_path.parent.mkdir(parents=True,exist_ok=True)
@@ -606,6 +625,11 @@ def main() -> int:
             if any(i["pending"] or i["job_id"] for i in state["profiles"].values()):
                 raise SystemExit("cannot reset unresolved submissions/jobs; recovery metadata must be retained")
             state_path().unlink(missing_ok=True);return 0
+        if args.ui_loop_profile:
+            # The same flock protects the installed native manager and the
+            # historic UI loop. No separate service/daemon or concurrent sender.
+            from automation.chat_bridge.ui_scheduler import loop
+            return loop(args.ui_loop_profile,once=args.once)
         with ThreadPoolExecutor(max_workers=CONCURRENCY) as pool:
             while True:
                 from automation.worker.deployment import recover
