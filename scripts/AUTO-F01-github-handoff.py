@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 from pathlib import Path
 import sys
 import time
@@ -40,8 +41,52 @@ def inspect(job_id: str, *, fetch: bool = True) -> tuple[dict, dict, str]:
     return signal, job, original
 
 
+def installed_worker_info() -> dict:
+    """Categorical service/source provenance, no PID, argv, paths or secrets exposed.
+
+    Running services can keep the *old imported code* until a controlled
+    restart; updating a repository checkout is not a process upgrade.
+    """
+    result = {
+        "worker_service_active": False,
+        "worker_unit_matches_checkout": False,
+        "worker_process_matches_checkout": False,
+    }
+    try:
+        observed=subprocess.run(
+            ["systemctl","--user","show","hadalis-worker.service",
+             "--no-pager","--property=ActiveState,MainPID,WorkingDirectory"],
+            capture_output=True,text=True,timeout=5,check=False)
+        if observed.returncode or len(observed.stdout)>8192:
+            return result
+        values=dict(line.split("=",1) for line in observed.stdout.splitlines()
+                    if "=" in line)
+        result["worker_service_active"]=values.get("ActiveState")=="active"
+        root=Path(__file__).resolve().parents[1]
+        working=values.get("WorkingDirectory","")
+        result["worker_unit_matches_checkout"]=(
+            bool(working) and Path(working).resolve()==root)
+        raw_pid=values.get("MainPID","")
+        if not raw_pid.isascii() or not raw_pid.isdecimal():
+            return result
+        pid=int(raw_pid)
+        if not 1<=pid<=4194304:return result
+        proc=Path("/proc")/str(pid)
+        expected=root/"automation"/"worker"/"daemon.py"
+        cmd=(proc/"cmdline").read_bytes()[:16384].split(b"\\0")
+        proc_cwd=Path(os.readlink(proc/"cwd")).resolve()
+        args=[os.fsdecode(x) for x in cmd if x]
+        result["worker_process_matches_checkout"]=(
+            result["worker_service_active"] and proc_cwd==root and
+            any(Path(x).is_absolute() and Path(x).resolve()==expected
+                for x in args))
+    except (OSError,ValueError,subprocess.TimeoutExpired):
+        return result
+    return result
+
+
 def running_worker_status(*, now: int | None = None) -> dict:
-    """Read only the local runtime heartbeat, never the GitHub job queue."""
+    """Read-only heartbeat and installed unit/proc provenance; no GitHub IO."""
     at = int(time.time()) if now is None else now
     path = worker.state_root() / "pool.json"
     try:
@@ -54,11 +99,32 @@ def running_worker_status(*, now: int | None = None) -> dict:
     fresh = (type(observed) is int and 0 <= at-observed <= 30)
     contract = (isinstance(snapshot,dict) and
                 snapshot.get("github_handoff_contract") == github_handoff.SCHEMA)
+    installed=installed_worker_info()
+    if not fresh:
+        diagnosis="WORKER_HEARTBEAT_MISSING_OR_STALE"
+    elif contract:
+        diagnosis="RUNNING_WORKER_HANDOFF_CONTRACT_OBSERVED"
+    elif installed["worker_process_matches_checkout"]:
+        diagnosis="RUNNING_WORKER_OLDER_CODE_MAY_REQUIRE_CONTROLLED_RESTART"
+    elif installed["worker_unit_matches_checkout"]:
+        diagnosis="WORKER_PROCESS_VERSION_UNVERIFIED"
+    else:
+        diagnosis="INSTALLED_WORKER_SOURCE_MISMATCH_OR_UNVERIFIED"
+    active_tasks=(snapshot.get("running") if isinstance(snapshot,dict) else None)
+    publishing=(snapshot.get("publishing") if isinstance(snapshot,dict) else None)
     return {
         "purpose": "auto-f01-github-handoff-doctor",
         "status": "read-only",
+        "diagnosis":diagnosis,
+        **installed,
         "worker_heartbeat_fresh": fresh,
         "worker_supports_github_handoff": bool(fresh and contract),
+        "worker_has_active_work_observed": (
+            bool(active_tasks) or publishing is True
+            if isinstance(active_tasks,list) and isinstance(publishing,bool)
+            else None),
+        "worker_restart_authorized":False,
+        "no_services_modified":True,
         "managed_chat_transport_ready": False,
         "scheduler_submission_authorized": False
     }
