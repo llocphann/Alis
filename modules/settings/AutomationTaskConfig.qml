@@ -17,10 +17,15 @@ ContentPage {
     property string activeSection: "tasks"
     property bool cloudSelectTasks: false
     property bool clearQueueConfirmation: false
+    property bool stopQueueConfirmation: false
+    property string stopQueueTarget: ""
     property string clearQueueTarget: ""
     property string pendingSudoPassword: ""
     property string sudoOperation: ""
     property string sudoStatusText: ""
+    property bool sudoCredentialSaved: false
+    property bool sudoKeyringAvailable: false
+    property bool sudoStatusKnown: false
     property var queueSnapshot: null
     property bool queueStatusConfirmed: false
     property bool backendInstalled: false
@@ -96,11 +101,13 @@ ContentPage {
 
     onVisibleChanged: if (visible) {
         Qt.callLater(root.refreshGithubStatus)
+        Qt.callLater(root.refreshSudoCredentialStatus)
         Qt.callLater(root.refreshQueue)
         Qt.callLater(root.refreshBackendStatus)
     }
     Component.onCompleted: {
         Qt.callLater(root.refreshGithubStatus)
+        Qt.callLater(root.refreshSudoCredentialStatus)
         Qt.callLater(root.refreshQueue)
         Qt.callLater(root.refreshBackendStatus)
     }
@@ -221,6 +228,36 @@ ContentPage {
             .map(task => task.repository + ":" + task.code).join(";")
     }
 
+    function stopQueue(): void {
+        if (root.busy || !root.queueSnapshot) return
+        const active = root.queueSnapshot.active
+        const identity = active ? active.repository + ":" + active.code : ""
+        if (!["active", "waiting", "stopping"].includes(root.queueSnapshot.state))
+            return
+        if (!root.stopQueueConfirmation) {
+            root.stopQueueTarget = identity
+            root.stopQueueConfirmation = true
+            root.statusText = Translation.tr("Confirm Stop: no next task will start. In-flight jobs and receipts remain for review.")
+            return
+        }
+        if (root.stopQueueTarget !== identity) {
+            root.stopQueueConfirmation = false
+            root.stopQueueTarget = ""
+            root.errorText = Translation.tr("Active task changed · refresh before Stop")
+            return
+        }
+        root.stopQueueConfirmation = false
+        root.stopQueueTarget = ""
+        root.clearQueueConfirmation = false
+        root.queueStatusConfirmed = false
+        root.queueOperation = "stop"
+        root.errorText = ""
+        queueProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "queue-stop", "--approve", "--expected-active", identity]
+        queueProcess.running = true
+    }
+
     function clearQueue(): void {
         // A stale display may still offer a cleanup action. This is safe:
         // the backend must match the exact on-screen queue snapshot under
@@ -228,12 +265,14 @@ ContentPage {
         if (root.busy || !root.queueSnapshot)
             return
         const targets = root.queuedTaskIdentities(root.queueSnapshot)
-        if (!targets.length && !["finished", "cancelled"].includes(root.queueSnapshot.state))
+        if (!targets.length && !["finished", "cancelled", "stopped"].includes(root.queueSnapshot.state))
             return
         if (!root.clearQueueConfirmation) {
             root.clearQueueTarget = targets
             root.clearQueueConfirmation = true
-            root.statusText = Translation.tr("Confirm removal of queued tasks only. The active task, job receipts and history stay intact.")
+            root.statusText = root.queueSnapshot.state === "stopped"
+                ? Translation.tr("Confirm archiving stopped queue. Prior active job and receipts remain in history.")
+                : Translation.tr("Confirm removal of queued tasks only. Active job and receipts stay intact.")
             return
         }
         if (root.clearQueueTarget !== targets) {
@@ -253,23 +292,43 @@ ContentPage {
         queueProcess.running = true
     }
 
-    function authorizeSudo(): void {
+    function refreshSudoCredentialStatus(): void {
+        if (sudoAuthProcess.running) return
+        root.sudoOperation = "status"
+        sudoAuthProcess.stdinEnabled = false
+        sudoAuthProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "sudo-credential-status"]
+        sudoAuthProcess.running = true
+    }
+
+    function saveSudoPassword(): void {
         if (root.busy || sudoPasswordField.text.length === 0)
             return
         root.pendingSudoPassword = sudoPasswordField.text
         sudoPasswordField.clear()
-        root.sudoStatusText = ""
-        root.sudoOperation = "authenticate"
+        root.sudoOperation = "save"
         sudoAuthProcess.stdinEnabled = true
         sudoAuthProcess.command = ["python3",
             Quickshell.shellPath("scripts/alis-automation-task.py"),
-            "sudo-authenticate"]
+            "sudo-credential-save"]
+        sudoAuthProcess.running = true
+    }
+
+    function clearSudoPassword(): void {
+        if (root.busy || !root.sudoCredentialSaved) return
+        root.sudoOperation = "clear"
+        root.pendingSudoPassword = ""
+        sudoAuthProcess.stdinEnabled = false
+        sudoAuthProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "sudo-credential-clear"]
         sudoAuthProcess.running = true
     }
 
     function checkSudoStatus(): void {
         if (root.busy) return
-        root.sudoOperation = "status"
+        root.sudoOperation = "check"
         root.sudoStatusText = ""
         sudoAuthProcess.stdinEnabled = false
         sudoAuthProcess.command = ["python3",
@@ -383,6 +442,15 @@ ContentPage {
                 if (exitCode !== 0 || result.ok !== true)
                     throw new Error(result.error || "Queue unavailable")
                 if (result.items) {
+                    if (root.stopQueueConfirmation) {
+                        const active = result.active
+                        const current = active ? active.repository + ":" + active.code : ""
+                        if (current !== root.stopQueueTarget
+                                || !["active", "waiting", "stopping"].includes(result.state)) {
+                            root.stopQueueConfirmation = false
+                            root.stopQueueTarget = ""
+                        }
+                    }
                     if (root.clearQueueConfirmation
                             && root.clearQueueTarget !== root.queuedTaskIdentities(result)) {
                         root.clearQueueConfirmation = false
@@ -406,7 +474,12 @@ ContentPage {
                     Qt.callLater(root.refreshTaskStatus)
                     Qt.callLater(root.refreshActivity)
                 }
-                if (root.queueOperation === "clear")
+                if (root.queueOperation === "stop") {
+                    root.statusText = result.stop_confirmed
+                        ? Translation.tr("Queue stopped · no next task will start. In-flight work remains intact.")
+                        : Translation.tr("Stop requested · manager acknowledgment pending")
+                    Qt.callLater(root.refreshQueue)
+                } else if (root.queueOperation === "clear")
                     root.statusText = result.cleared
                         ? Translation.tr("Removed %1 queued tasks · active job and receipts preserved")
                             .arg(result.removed_queued || 0)
@@ -538,16 +611,28 @@ ContentPage {
         
     }
     function _handle_sudoAuthProcess(exitCode) {
-        // Only controlled status text, never stdout/stderr or password.
+        const operation = root.sudoOperation
         root.pendingSudoPassword = ""
         try {
             const result = root.readAutomationReply("sudoAuthProcess",
                 sudoAuthOutput.text, "", exitCode)
-            root.sudoStatusText = result.authenticated === true
-                ? Translation.tr("Sudo cache ready for allowlisted services")
-                : Translation.tr("Sudo authorization unavailable")
+            if (exitCode !== 0 || result.ok !== true)
+                throw new Error("Keyring operation failed")
+            if (["save", "clear", "status"].includes(operation)) {
+                root.sudoStatusKnown = true
+                root.sudoCredentialSaved = result.saved === true
+                root.sudoKeyringAvailable = result.keyring_available === true
+                root.sudoStatusText = result.saved
+                    ? Translation.tr("Sudo password saved to local keyring · used only for approved administrator tasks")
+                    : Translation.tr("No sudo password saved")
+            } else {
+                root.sudoStatusText = result.authenticated === true
+                    ? Translation.tr("Sudo cache ready for approved administrator tasks")
+                    : Translation.tr("Sudo cache unavailable · saved password used on demand")
+            }
         } catch (error) {
-            root.sudoStatusText = Translation.tr("Sudo authentication failed or broker unavailable")
+            root.sudoStatusText = Translation.tr("Sudo keyring or authentication unavailable")
+            if (operation === "status") root.sudoStatusKnown = false
         }
         root.sudoOperation = ""
     }
@@ -592,7 +677,7 @@ ContentPage {
         }
         stderr: StdioCollector { id: sudoAuthError }
         onStarted: {
-            if (root.sudoOperation === "authenticate") {
+            if (root.sudoOperation === "save") {
                 sudoAuthProcess.write(root.pendingSudoPassword)
                 root.pendingSudoPassword = ""
                 sudoAuthProcess.stdinEnabled = false
@@ -798,9 +883,17 @@ ContentPage {
                         : Translation.tr("Clear queued")
                     enabled: !root.busy && !!root.queueSnapshot
                         && (root.queueSnapshot.items.some(task => task.state === "queued")
-                            || (["finished", "cancelled"].includes(root.queueSnapshot.state)
+                            || (["finished", "cancelled", "stopped"].includes(root.queueSnapshot.state)
                                 && root.queueSnapshot.items.length > 0))
                     onClicked: root.clearQueue()
+                }
+                DialogButton {
+                    objectName: "automationStopQueue"
+                    buttonText: root.stopQueueConfirmation
+                        ? Translation.tr("Confirm stop") : Translation.tr("Stop queue")
+                    enabled: !root.busy && !!root.queueSnapshot
+                        && ["active", "waiting", "stopping"].includes(root.queueSnapshot.state)
+                    onClicked: root.stopQueue()
                 }
                 DialogButton {
                     objectName: "automationStartQueue"
@@ -1050,7 +1143,7 @@ ContentPage {
         SettingsGroup {
             SettingsNote {
                 icon: "security"
-                text: Translation.tr("Optional sudo authentication for allowlisted system services. Password is never stored.")
+                text: Translation.tr("Optional sudo password is stored in the local Secret Service keyring, separate from GitHub. Ordinary tasks run without root; approved allowlisted administrator actions use it only when necessary.")
             }
             RowLayout {
                 Layout.fillWidth: true
@@ -1059,21 +1152,38 @@ ContentPage {
                     id: sudoPasswordField
                     objectName: "automationSudoPassword"
                     Layout.fillWidth: true
-                    placeholderText: Translation.tr("Sudo password (not stored)")
+                    placeholderText: Translation.tr("Sudo password · local keyring")
                     echoMode: TextInput.Password
-                    onAccepted: root.authorizeSudo()
+                    onAccepted: root.saveSudoPassword()
                 }
                 DialogButton {
-                    objectName: "automationSudoAuthenticate"
-                    buttonText: Translation.tr("Authorize")
+                    objectName: "automationSudoSave"
+                    buttonText: Translation.tr("Save password")
                     enabled: !root.busy && sudoPasswordField.text.length > 0
-                    onClicked: root.authorizeSudo()
+                        && root.sudoKeyringAvailable
+                    onClicked: root.saveSudoPassword()
                 }
                 DialogButton {
-                    buttonText: Translation.tr("Check")
+                    objectName: "automationSudoClear"
+                    buttonText: Translation.tr("Clear")
+                    enabled: !root.busy && root.sudoCredentialSaved
+                    onClicked: root.clearSudoPassword()
+                }
+                DialogButton {
+                    buttonText: Translation.tr("Check sudo cache")
                     enabled: !root.busy
                     onClicked: root.checkSudoStatus()
                 }
+            }
+            SettingsNote {
+                icon: root.sudoCredentialSaved ? "lock" : "key"
+                text: !root.sudoStatusKnown
+                    ? Translation.tr("Local sudo keyring status unknown")
+                    : !root.sudoKeyringAvailable
+                    ? Translation.tr("System keyring unavailable · unlock Secret Service")
+                    : root.sudoCredentialSaved
+                    ? Translation.tr("Sudo password saved locally · no automatic root for ordinary tasks")
+                    : Translation.tr("No sudo password saved locally")
             }
             StyledText {
                 visible: root.sudoStatusText.length > 0
