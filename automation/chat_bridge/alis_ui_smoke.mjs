@@ -51,7 +51,10 @@ async function scopedEntry(page,projectName){
   const assessment=assessLegacyUiReadiness(observation);
   return {observation,assessment,ready:assessment.read_only_project_entry_ready===true &&
     observation.project_badge_count_capped===1 &&
-    observation.target_project_list_count_capped===1 &&
+    // ChatGPT can collapse the Project's Chats list on a new-chat landing.
+    // The exact scoped textbox + exact Project badge are BOTH required;
+    // list absence is never treated as proof of Project membership alone.
+    [0,1].includes(observation.target_project_list_count_capped) &&
     observation.selected_target_chat_count_capped===0 &&
     observation.project_scoped_composer_count_capped===1 &&
     observation.send_count_capped===1 &&
