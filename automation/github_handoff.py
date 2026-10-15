@@ -124,6 +124,21 @@ def ready(raw_signal: str, job: dict, raw_job: str, state: Path,
     return {"ready": True, "job_id":job["id"], "run_id": signal["run_id"]}
 
 
+def retire_after_receipt(raw_signal: str, payload: dict,
+                         *, now: int | None = None) -> bool:
+    """Retire only the exact acknowledged job; no unrelated/new signal."""
+    if (not isinstance(payload, dict) or payload.get("status") not in
+            {"passed", "failed", "cancelled"}):
+        return False
+    try:
+        signal = validate_signal(raw_signal, now=now)
+    except ValueError:
+        return False
+    return (signal["status"] == "DONE"
+            and signal["job_id"] == payload.get("job")
+            and signal["job_sha256"] == payload.get("input_sha256"))
+
+
 def approval_payload(job: dict, raw_job: str, *, now: int | None = None) -> dict:
     if not isinstance(job.get("handoff"), dict):
         raise ValueError("job is not opted into GitHub handoff")
