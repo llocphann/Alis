@@ -195,6 +195,24 @@ try {
   assert.equal(adopt.status,1,String(adopt.error??""));
   assert.match(adopt.stderr,/LEGACY_IDENTITY_AMBIGUOUS/);
   assert.equal(adopt.stdout,"");
+  // Even when a future Desktop bundle superficially matches the historical
+  // source regex, manager submit/resume must fail BEFORE CDP/renderer access.
+  for(const op of ["submit","resume"]){
+    const guarded=spawnSync(process.execPath,[cliPath],{
+      input:JSON.stringify({op,user_message_id:"33333333-3333-4333-8333-333333333333",
+        parent_message_id:"44444444-4444-4444-8444-444444444444",
+        prompt:"PRIVATE_AUTOMATION_PROMPT"}),
+      encoding:"utf8",timeout:3500,env:{...process.env,
+        HADALIS_DESKTOP_ASAR:archivePath,
+        HADALIS_PLAYWRIGHT_MODULE:"file:///unavailable-playwright/module.mjs",
+        HADALIS_CHATGPT_CDP_URL:"http://127.0.0.1:9"}
+    });
+    assert.equal(guarded.status,1,op);
+    assert.equal(guarded.stdout,"",op);
+    assert.match(guarded.stderr,/MANAGED_SUBMISSION_NOT_ATTESTED/,op);
+    assert.equal(guarded.stderr.includes("PRIVATE_AUTOMATION_PROMPT"),false);
+  }
+
 
   // Positive structural fixture: report a possible binding shape, but never
   // include a mock secret, constructor name, or raw module source.
