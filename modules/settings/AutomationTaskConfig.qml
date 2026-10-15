@@ -17,6 +17,7 @@ ContentPage {
     property string activeSection: "tasks"
     property bool cloudSelectTasks: false
     property bool clearQueueConfirmation: false
+    property string clearQueueTarget: ""
     property string pendingSudoPassword: ""
     property string sudoOperation: ""
     property string sudoStatusText: ""
@@ -132,7 +133,9 @@ ContentPage {
     function refreshQueue(): void {
         if (queueProcess.running)
             return
-        root.clearQueueConfirmation = false
+        // A read-only refresh must not erase a user's confirmation if
+        // the exact queued list is unchanged. The backend rechecks the
+        // live queue atomically before any removal.
         root.queueStatusConfirmed = false
         queueOperation = "status"
         queueProcess.command = ["python3", Quickshell.shellPath("scripts/alis-automation-task.py"), "queue-status"]
@@ -212,21 +215,41 @@ ContentPage {
         queueProcess.running = true
     }
 
+    function queuedTaskIdentities(snapshot): string {
+        if (!snapshot || !snapshot.items) return ""
+        return snapshot.items.filter(task => task.state === "queued")
+            .map(task => task.repository + ":" + task.code).join(";")
+    }
+
     function clearQueue(): void {
-        if (root.busy || !root.queueStatusConfirmed || !root.queueSnapshot)
+        // A stale display may still offer a cleanup action. This is safe:
+        // the backend must match the exact on-screen queue snapshot under
+        // queue.lock, and never cancels/edits the active task.
+        if (root.busy || !root.queueSnapshot)
+            return
+        const targets = root.queuedTaskIdentities(root.queueSnapshot)
+        if (!targets.length && !["finished", "cancelled"].includes(root.queueSnapshot.state))
             return
         if (!root.clearQueueConfirmation) {
+            root.clearQueueTarget = targets
             root.clearQueueConfirmation = true
-            root.statusText = Translation.tr("Confirm clearing idle queue. Task files and receipts are preserved.")
+            root.statusText = Translation.tr("Confirm removal of queued tasks only. The active task, job receipts and history stay intact.")
+            return
+        }
+        if (root.clearQueueTarget !== targets) {
+            root.clearQueueConfirmation = false
+            root.clearQueueTarget = ""
+            root.errorText = Translation.tr("Queue changed · refresh and confirm again")
             return
         }
         root.clearQueueConfirmation = false
+        root.clearQueueTarget = ""
         root.queueStatusConfirmed = false
         root.errorText = ""
         root.queueOperation = "clear"
         queueProcess.command = ["python3",
             Quickshell.shellPath("scripts/alis-automation-task.py"),
-            "queue-clear", "--approve"]
+            "queue-clear", "--approve", "--expected-queued", targets]
         queueProcess.running = true
     }
 
@@ -360,7 +383,11 @@ ContentPage {
                 if (exitCode !== 0 || result.ok !== true)
                     throw new Error(result.error || "Queue unavailable")
                 if (result.items) {
-                    root.clearQueueConfirmation = false
+                    if (root.clearQueueConfirmation
+                            && root.clearQueueTarget !== root.queuedTaskIdentities(result)) {
+                        root.clearQueueConfirmation = false
+                        root.clearQueueTarget = ""
+                    }
                     root.queueSnapshot = result
                     root.queueStatusConfirmed = true
                     if (root.queueOperation === "status")
@@ -381,8 +408,9 @@ ContentPage {
                 }
                 if (root.queueOperation === "clear")
                     root.statusText = result.cleared
-                        ? Translation.tr("Queue cleared · task records and receipts preserved")
-                        : Translation.tr("Queue already empty")
+                        ? Translation.tr("Removed %1 queued tasks · active job and receipts preserved")
+                            .arg(result.removed_queued || 0)
+                        : Translation.tr("No queued tasks to clear")
                 else if (root.queueOperation === "prepare")
                     root.statusText = result.state === "active"
                         ? Translation.tr("Queue already active")
@@ -766,11 +794,12 @@ ContentPage {
                 DialogButton {
                     objectName: "automationClearQueue"
                     buttonText: root.clearQueueConfirmation
-                        ? Translation.tr("Confirm clear") : Translation.tr("Clear queue")
-                    enabled: !root.busy && root.queueStatusConfirmed
-                        && !!root.queueSnapshot
-                        && ["prepared", "finished", "cancelled"].includes(root.queueSnapshot.state)
-                        && root.queueSnapshot.items.length > 0
+                        ? Translation.tr("Confirm clear")
+                        : Translation.tr("Clear queued")
+                    enabled: !root.busy && !!root.queueSnapshot
+                        && (root.queueSnapshot.items.some(task => task.state === "queued")
+                            || (["finished", "cancelled"].includes(root.queueSnapshot.state)
+                                && root.queueSnapshot.items.length > 0))
                     onClicked: root.clearQueue()
                 }
                 DialogButton {
