@@ -131,6 +131,109 @@ def examine(config: dict, state: dict, profile_id: str,
     }
 
 
+
+def check_prepared_queue() -> dict:
+    """Read-only AUTO-R01 queue admission diagnosis, never auto-create a profile.
+
+    A generic, enabled Automation profile is NOT the owner of a prepared
+    task-code queue. The queue's first SHA-pinned Issue will acquire its own
+    deterministic profile only after separately authorized queue admission.
+    """
+    from automation import managed_tasks, queue, taskflow
+    result = {
+        "purpose": "auto-f01-queue-ui-readiness",
+        "status": "read-only",
+        "queue_state": "unknown",
+        "queue_item_count": 0,
+        "first_task_code": None,
+        "taskflow_profile_present": False,
+        "queue_ui_admission_available": False,
+        "native_transport_authorized": False,
+        "submission_authorized": False,
+        "service_modified": False,
+        "preflight_blockers": [],
+    }
+    try:
+        raw_queue = _document(taskflow.state_dir() / "queue.json")
+        raw_config = _document(store.config_path())
+        config, issues = model.normalize_config(
+            raw_config if raw_config is not None else model.default_config())
+        raw_state = _document(store.state_path())
+        state = store.normalize_state(
+            raw_state if raw_state is not None else store.default_state(config),
+            config)
+    except (OSError, ValueError):
+        result["preflight_blockers"] = ["LOCAL_STATE_UNREADABLE"]
+        return result
+    blockers = result["preflight_blockers"]
+    if issues:
+        blockers.append("PROFILE_CONFIGURATION_INVALID")
+    if raw_queue is None:
+        result["queue_state"] = "empty"
+        blockers.append("NO_PREPARED_QUEUE")
+        return result
+    if (raw_queue.get("schema") != queue.QUEUE_SCHEMA
+            or raw_queue.get("mode") not in queue.MODES
+            or not isinstance(raw_queue.get("items"), list)):
+        blockers.append("QUEUE_MANIFEST_INVALID")
+        return result
+    items = raw_queue["items"]
+    result["queue_state"] = raw_queue.get("state")
+    result["queue_item_count"] = len(items)
+    if (raw_queue.get("state") != "prepared"
+            or raw_queue.get("active") is not None
+            or raw_queue.get("approved_start") is not False):
+        blockers.append("QUEUE_NOT_IDLE_PREPARED")
+        return result
+    if not (1 <= len(items) <= queue.MAX_ITEMS):
+        blockers.append("QUEUE_MANIFEST_INVALID")
+        return result
+    first = items[0]
+    if (not isinstance(first, dict)
+            or first.get("repository") not in taskflow.REPOSITORIES
+            or not isinstance(first.get("code"), str)
+            or not taskflow.CODE.fullmatch(first["code"])
+            or first.get("state") != "queued"
+            or not isinstance(first.get("source_sha"), str)
+            or not taskflow.SHA.fullmatch(first["source_sha"])):
+        blockers.append("QUEUE_MANIFEST_INVALID")
+        return result
+    result["first_task_code"] = first["code"]
+    expected_id = managed_tasks.profile_id(first["repository"], first["code"])
+    profile = next((p for p in config["profiles"]
+                    if p["id"] == expected_id), None)
+    result["taskflow_profile_present"] = bool(
+        profile and managed_tasks.reference(profile)
+        == (first["repository"], first["code"]))
+    if not result["taskflow_profile_present"]:
+        blockers.append("TASKFLOW_PROFILE_NOT_MATERIALIZED")
+    if any(
+            pid != expected_id and isinstance(item, dict)
+            and (item.get("pending") or item.get("job_id")
+                 or item.get("run_active") or item.get("desired") == "run")
+            for pid, item in state.get("profiles", {}).items()):
+        blockers.append("FOREIGN_PROFILE_UNSETTLED")
+    if any(
+            isinstance(item, dict) and
+            (item.get("pending") or item.get("session"))
+            and (
+                not isinstance(item.get("pending") or item.get("session"), dict)
+                or (item.get("pending") or item.get("session")).get("transport")
+                    != "alis-ui-once"
+            )
+            for item in state.get("profiles", {}).values()):
+        blockers.append("NATIVE_SESSION_REQUIRES_REVIEW")
+    service, mode = _unit_state()
+    result["installed_service_mode"] = mode
+    result["service_state"] = service
+    if service != "inactive" or mode not in {"native_mode", "ui_mode"}:
+        blockers.append("SCHEDULER_CUTOVER_NOT_READY")
+    # The existing Start Queue CLI is still guarded by native,
+    # server-attested transport. Never imply the UI prototype can bypass it.
+    blockers.append("UI_TASK_QUEUE_INTEGRATION_NOT_ACCEPTED")
+    return result
+
+
 def check(profile_id: str) -> dict:
     if not re.fullmatch(r"[A-Za-z0-9._:-]{1,100}", profile_id):
         raise ValueError("ALIS_UI_PROFILE_ID_INVALID")
