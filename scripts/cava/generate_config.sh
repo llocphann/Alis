@@ -77,6 +77,7 @@ bars = ${BARS}
 [input]
 method = ${METHOD}
 source = ${MONITOR}
+active = 0
 
 [output]
 method = raw

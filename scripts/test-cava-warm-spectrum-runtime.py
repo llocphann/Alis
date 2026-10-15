@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Actual analyzer owner and spectrum, using an owned silent fake CAVA pipe."""
-import json, os, tempfile
+import json, os, shutil, tempfile
 from pathlib import Path
 from native_test_session import private_wayland, run_qs
 ROOT=Path(__file__).resolve().parents[1]
@@ -9,6 +9,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-cava-warm-") as name:
  for entry in ["modules","services","GlobalStates.qml","qmldir","assets","defaults","translations"]:(folder/entry).symlink_to(ROOT/entry)
  generator=folder/"scripts/cava/generate_config.sh";generator.parent.mkdir(parents=True)
  generator.write_text('#!/bin/sh\nprintf "%s\\n" "$4" > "$1"\nif [ "${7:-}" = "--print-config" ]; then cat "$1"; fi\n');generator.chmod(0o700)
+ shutil.copy2(ROOT/"scripts/cava/run.sh",generator.with_name("run.sh"))
  binary=folder/"bin";binary.mkdir();cava=binary/"cava"
  cava.write_text('''#!/usr/bin/env python3
 import os,sys,time
@@ -66,7 +67,7 @@ ShellRoot {
 ''')
  with private_wayland(folder) as env:
   if env is None:print("SKIP: CAVA warm spectrum requires private Niri");raise SystemExit(0)
-  config=folder/"config/illogical-impulse";config.mkdir(parents=True,exist_ok=True)
+  config=folder/"config/alis";config.mkdir(parents=True,exist_ok=True)
   value=json.loads((ROOT/"defaults/config.json").read_text());value["panelFamily"]="abyss"
   (config/"config.json").write_text(json.dumps(value))
   env.update(PATH=str(binary)+os.pathsep+env["PATH"],CAVA_LOG=str(folder/"starts.log"),QSG_RHI_BACKEND="opengl")

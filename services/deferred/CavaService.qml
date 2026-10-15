@@ -51,6 +51,7 @@ Singleton {
 
     readonly property string configPath: FileUtils.trimFileProtocol(Directories.cache) + "/cava_config.txt"
     readonly property string scriptPath: FileUtils.trimFileProtocol(Directories.scriptPath) + "/cava/generate_config.sh"
+    readonly property string runnerPath: FileUtils.trimFileProtocol(Directories.scriptPath) + "/cava/run.sh"
 
     // Mirror CavaProcess's previous config schema reading
     readonly property int requestedFramerate: Math.max(15, Math.min(165,
@@ -378,7 +379,7 @@ Singleton {
     Process {
         id: cavaProc
         running: false
-        command: ["cava", "-p", root.configPath]
+        command: ["/usr/bin/bash", root.runnerPath, "-p", root.configPath]
         onRunningChanged: {
             if (running) {
                 dataWatchdog.restart()

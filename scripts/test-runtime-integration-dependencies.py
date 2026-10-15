@@ -34,7 +34,9 @@ def main() -> None:
     thinkfan_docs = read("docs/THINKFAN.md")
 
     # CAVA is a real process dependency of the shared visualizer service.
-    require(cava, 'command: ["cava", "-p", root.configPath]', "CavaService.qml")
+    require(cava, '"/cava/run.sh"', "CavaService.qml")
+    require(cava, 'command: ["/usr/bin/bash", root.runnerPath, "-p", root.configPath]', "CavaService.qml")
+    require(read("scripts/cava/run.sh"), 'exec cava "$@"', "CAVA process wrapper")
     require(doctor, '"cava:cava"', "doctor.sh")
     require(generic, 'check_cmd "cava" "CAVA audio visualizer"', "generic installer")
     require(generic, "pipewire, pipewire-pulse, wireplumber, playerctl, pavucontrol, cava",

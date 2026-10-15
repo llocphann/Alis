@@ -56,6 +56,7 @@ elif args!=['list','clients']: raise SystemExit(2)
     parsed = configparser.ConfigParser()
     parsed.read_string(baseline)
     assert parsed["input"]["source"] == "101"
+    assert parsed["input"]["active"] == "0"
     assert parsed["output"]["channels"] == "stereo"
     assert parsed["output"]["ascii_max_range"] == "1000"
     for settings in [
@@ -76,6 +77,7 @@ elif args!=['list','clients']: raise SystemExit(2)
     scripts.mkdir(parents=True)
     shutil.copy2(ROOT / "scripts/cava/generate_config.sh", scripts / "generate_config.real.sh")
     shutil.copy2(ROOT / "scripts/cava/resolve_audio_source.py", scripts / "resolve_audio_source.py")
+    shutil.copy2(ROOT / "scripts/cava/run.sh", scripts / "run.sh")
     executable(scripts / "generate_config.sh", '''#!/usr/bin/env bash
 exec python3 "$(dirname -- "$0")/generate_config.fixture.py" "$@"
 ''')
@@ -93,6 +95,7 @@ raise SystemExit(subprocess.call(['bash',str(pathlib.Path(__file__).with_name('g
 import configparser, json, os, pathlib, signal, sys, time
 root=pathlib.Path(os.environ['CAVA_FIXTURE'])
 config=configparser.ConfigParser();config.read(sys.argv[-1]);count=int(config['general']['bars'])
+assert config['input']['active']=='0'
 def event(kind):
  overlap=[]
  if kind=='start':
@@ -103,7 +106,7 @@ def event(kind):
      stat=pathlib.Path('/proc',str(item['pid']),'stat').read_text()
      if stat.split(') ',1)[1][0]!='Z':overlap.append(item['pid'])
     except FileNotFoundError:pass
- with (root/'events.jsonl').open('a') as f:f.write(json.dumps({'event':kind,'pid':os.getpid(),'bars':count,'source':config['input']['source'],'rate':config['general']['framerate'],'overlap':overlap})+'\\n')
+ with (root/'events.jsonl').open('a') as f:f.write(json.dumps({'event':kind,'pid':os.getpid(),'bars':count,'source':config['input']['source'],'rate':config['general']['framerate'],'overlap':overlap,'props':os.environ.get('PIPEWIRE_PROPS'),'latency':os.environ.get('PIPEWIRE_LATENCY')})+'\\n')
 def stop(*_):event('stop');raise SystemExit(0)
 signal.signal(signal.SIGTERM,stop);event('start')
 while True:
@@ -214,6 +217,8 @@ ShellRoot {
         config.mkdir(parents=True, exist_ok=True)
         (config / "config.json").write_text((ROOT / "defaults/config.json").read_text())
         native_env.update(PATH=env["PATH"], CAVA_FIXTURE=str(folder), QSG_RHI_BACKEND="opengl")
+        native_env.pop("PIPEWIRE_PROPS", None)
+        native_env.pop("PIPEWIRE_LATENCY", None)
         result = run_qs(folder, native_env, 65)
         failures = ["CAVA_REFRESH_FAIL", "ReferenceError:", "TypeError:", "Binding loop", "Failed to load configuration"]
         if result.returncode or "CAVA_REFRESH_PASS" not in result.stdout or any(x in result.stdout for x in failures):
@@ -223,6 +228,7 @@ ShellRoot {
     for record in records:
         if record["event"] == "start":
             assert not record["overlap"], f"overlapping analyzer processes: {record}"
+            assert record["props"] == "{ node.latency = null }" and record["latency"] is None, record
     probe = subprocess.run([str(binary / "probe-cava-pids")], env=env, capture_output=True, text=True, check=True)
     assert json.loads(probe.stdout) == [], f"analyzer survived test teardown: {probe.stdout}"
     print("CAVA_REFRESH_PASS ten expected starts; no concurrent/idle capture; only fixture pactl/CAVA used")
