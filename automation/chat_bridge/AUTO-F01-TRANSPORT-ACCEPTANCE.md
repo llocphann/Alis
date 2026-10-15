@@ -130,6 +130,45 @@ Synthetic tests exercise matching/missing/duplicate pairs, spoofed UI Project co
 
 **Owner follow-up observed on installed Desktop (2026-10-15):** The owner ran the `observe-acceptance` read-only CLI against the already-existing chat. Its categorical JSON reported `visual_pair_status:"ONE_VISIBLE_HARMLESS_PAIR_NOT_ATTESTED"`, `request_visible_count_capped:1`, `reply_visible_count_capped:1`, `visual_project_guard_observed:true`, `status:"read-only"`; server Project/conversation/user-message verification, final receipt and Scheduler authorization all remained `false`. This corroborates the prior screenshot with a separate **no-send** renderer observation. It is not a server receipt and must not be used to adopt/acknowledge the test as a managed task. The owner also pasted the proposed `systemctl --user show` loop **without any service-state output**; there is currently **no on-device service health conclusion** or startup proof. Await only the actual `LoadState`, `ActiveState`, `SubState`, `Result`, `ExecMainStatus`, and `NRestarts` lines for `hadalis-chatgpt`, `hadalis-chat-bridge`, and `hadalis-worker`. No service restart/start/reset is required for this diagnostic.
 
+## Alternative GitHub DONE handoff — deterministic local jobs (2026-10-15)
+
+**Purpose and limits.** The owner proposed avoiding undocumented ChatGPT Desktop server receipt IDs by letting Cloud GPT and Localbot communicate through **GitHub as an explicit coordination channel**. This is a separate, opt-in deterministic-job transport; it does **not** attest ChatGPT Project/conversation/message IDs, replace the user-facing ChatGPT reasoning agent, authorize existing 18 queued tasks or unlock native Desktop Scheduler. Never call this an authenticated ChatGPT Desktop receipt.
+
+**One reusable ephemeral remote control file:** `automation/handoff/ACTIVE.json` on `Alis/dev`, only created when there is an approved handoff to prepare. No per-poll log files, no repeated prompts or script scattered across the repo. It is overwritten on material state changes, **not** on each polling interval. The immutable SHA-pinned job remains in the pre-existing `automation/queue/pending/JOB-...json`; public result goes to the existing `automation/results/JOB-...json`. The existing `hadalis-worker` already fetches `origin/dev` every 10 seconds by default (`HADALIS_WORKER_POLL_SECONDS`), so there is no second daemon/timer.
+
+**Exact JSON contract for the control file** (illustrative; do NOT publish placeholders or use this as a live job):
+
+```json
+{
+  "schema": "alis.github-handoff.v1",
+  "task_code": "AUTO-F01",
+  "run_id": "10000000-0000-4000-8000-000000000001",
+  "job_id": "JOB-AUTO-F01-demo",
+  "base_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "job_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "status": "PREPARING",
+  "updated_unix": 1792036800,
+  "expires_unix": 1792040400
+}
+```
+
+A matching new worker job opts into this protocol using `"handoff":{"task_code":"AUTO-F01","run_id":"<same UUID>"}`. Cloud GPT must first fully author the pinned job file, check its exact UTF-8 SHA-256, and publish/update only the same control file from `PREPARING` to `DONE` **after** it has completed preparing and reviewing that job. **`DONE` means the *handoff is ready for a separate authorized local execution*, NOT that the Issue or assistant response is finished.** Do not put a ChatGPT token, prompt body, private logs, shell commands or runtime state in the control file.
+
+**Local execution consent:** Before the worker may execute a *new opt-in job*, the owner must explicitly bind the full immutable job digest locally once:
+
+```bash
+python3 scripts/AUTO-F01-github-handoff.py status JOB-<id>
+python3 scripts/AUTO-F01-github-handoff.py approve JOB-<id> --owner-approved
+```
+
+The `status` operation is read-only. `approve` validates the job, current signal and matching IDs, persists a short fsynced local `handoff-approvals/JOB-<id>.json`, and **does not execute**. Approval without the exact remote job and matching signal is rejected. Review the job's concrete actions before approving; the manifest alone is not a review of shell commands.
+
+**Execution and fail closed:** On each already-existing bounded poll, a new opt-in job is not started and has **no execution receipt created** until all are true: control file is well formed and fresh (max lifetime 24 hours), `status=DONE`, `job_id`, `run_id`, task code, `base_sha` and exact SHA-256 of the pinned job match, and the owner’s local digest-specific approval exists. Missing, expired, malformed, overwritten, ambiguous or unapproved signals never start a new job. No automatic retry of any indeterminate execution or migration of an existing pending job ID. Existing SHA pin, action allowlist, receipts, resource leases and private diagnostics remain in force.
+
+**Automatic cleanup:** Successful *publication* of a settled job result (`passed`, `failed`, `cancelled`) stages deletion of the **matching** `ACTIVE.json` in the **same Git push** as `automation/results/JOB-...json`, without deleting a newer/different task’s control file. Existing private receipts remain as anti-replay tombstones; a now-unnecessary local approval file is removed on the worker's next periodic 5-minute cleanup after publication. Uncertain/nonterminal jobs retain their signal and receipt for reconciliation. Git history is immutable: deleting a file from the latest tree does **not** erase earlier commits, so the manifest intentionally contains only IDs, digests, timestamps and status.
+
+**Production distinction:** This opt-in GitHub job protocol is a candidate production path for **deterministic local commands after explicit approval** and CI/live acceptance. It does NOT autonomously give ChatGPT a background runtime that writes status updates every few seconds; Cloud GPT only writes when actually invoked or scheduled. ChatGPT's Project ID is unnecessary for this *separate* GitHub job channel, but still required for native ChatGPT Desktop auto-chat scheduling/rotation. Keep AUTO-F01's native transport gate blocked until those different guarantees are proven.
+
 ## Owner systemd snapshots and restart-window gate (2026-10-15)
 
 Owner-provided read-only `systemctl --user show` confirms **all three units currently loaded/active/running, Result=success, ExecMainStatus=0**:
