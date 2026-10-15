@@ -22,9 +22,21 @@ is_managed() {
     [[ -f "$target" && ! -L "$target" ]] && cmp -s -- "$source_file" "$target"
 }
 case "$1" in
-    enable)
-        if [[ ! -f "$desktop" || -L "$desktop" ]] ||
-           ! grep -Eq '^Exec=(/usr/bin/)?easyeffects --hide-window --service-mode[[:space:]]*$' "$desktop"; then
+    enable|prepare)
+        # prepare is used by Alis setup. It can stage an inert drop-in before
+        # users enable native EasyEffects autostart. No .desktop is created.
+        if [[ "$1" == "prepare" ]] && ! command -v easyeffects >/dev/null 2>&1; then
+            printf '%s\n' 'AUDIO-I01: native EasyEffects not installed; skipping optional autostart guard.'
+            exit 0
+        fi
+        if [[ "$1" == "prepare" && ! -e "$desktop" && ! -L "$desktop" ]]; then
+            : # Native EasyEffects present but autostart is not enabled yet.
+        elif [[ ! -f "$desktop" || -L "$desktop" ]] ||
+             ! grep -Eq '^Exec=(/usr/bin/)?easyeffects --hide-window --service-mode[[:space:]]*$' "$desktop"; then
+            if [[ "$1" == "prepare" ]]; then
+                printf '%s\n' 'AUDIO-I01: nonstandard/Flatpak EasyEffects autostart; preserving it without changes.'
+                exit 0
+            fi
             printf 'AUDIO-I01: expected native EasyEffects XDG autostart command not found: %s\n' "$desktop" >&2
             exit 65
         fi

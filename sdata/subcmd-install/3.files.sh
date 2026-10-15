@@ -299,6 +299,30 @@ case "${SKIP_QUICKSHELL}" in
 
     log_success "Quickshell alis config installed"
 
+    # AUDIO-I01: a native EasyEffects XDG autostart must inherit the owner-
+    # verified quantum guard even when it launches before Alis. Prepare a
+    # systemd drop-in for native EasyEffects if installed, without creating
+    # an autostart entry or starting any audio process.
+    # Fresh installs and ordinary updates share this guarded step.
+    if [[ "${ALIS_AUDIO_I01_AUTOSTART_GUARD:-1}" != "0" ]]; then
+      _alis_ee_guard="${II_TARGET}/scripts/audio/easyeffects-autostart-guard.sh"
+      _alis_ee_unit_dropin="${XDG_CONFIG_HOME}/systemd/user/app-com.github.wwmm.easyeffects@autostart.service.d/90-alis-audio-i01-quantum.conf"
+      if [[ -f "$_alis_ee_guard" ]]; then
+        if bash "$_alis_ee_guard" prepare; then
+          if [[ -f "$_alis_ee_unit_dropin" && ! -L "$_alis_ee_unit_dropin" ]]; then
+            if command -v systemctl >/dev/null 2>&1; then
+              systemctl --user daemon-reload >/dev/null 2>&1 ||
+                log_warning "EasyEffects autostart guard prepared; reload user systemd after login."
+            fi
+          fi
+        else
+          log_warning "AUDIO-I01 autostart guard preparation did not complete; preserving existing user configuration."
+        fi
+      else
+        log_warning "AUDIO-I01 autostart guard helper missing from installed runtime."
+      fi
+    fi
+
     # Install Python packages now that requirements.txt is in place
     showfun install-python-packages
     v install-python-packages

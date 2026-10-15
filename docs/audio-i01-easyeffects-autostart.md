@@ -6,6 +6,26 @@ The owner found an active generated systemd user unit `app-com.github.wwmm.easye
 
 The Alis-managed unit drop-in adds `After=pipewire.service wireplumber.service` and `Environment="PIPEWIRE_PROPS={ node.lock-quantum = true }"` to exactly that generated user service. systemd drop-ins are supported for generated XDG autostart services, without rewriting the owner's desktop entry. `After=` orders already participating units and does **not** guarantee they will be started or fully ready; the environment is applied to newly launched native EasyEffects. This does not set global force-quantum, change IR/EQ or routing, or add any blind process restarts.
 
+## Fresh source installs and updates
+
+For `./setup install` and `./setup update`, Alis now invokes
+`easyeffects-autostart-guard.sh prepare` after syncing the runtime payload.
+When **native EasyEffects is already installed**, the installer safely stages
+the **drop-in only**, even if the user has not enabled its XDG autostart yet.
+It **does not** install EasyEffects itself, create an EasyEffects `.desktop`
+autostart entry, or start/restart EasyEffects/PipeWire. This also means a fresh
+Alis user who never installs EasyEffects will not have an audio daemon started.
+If the user's XDG autostart Exec is Flatpak, customized, a symlink, or otherwise
+unrecognized, the installer skips that entry rather than overwriting it.
+Foreign/modified drop-ins are preserved and reported as warnings.
+
+Disable installer auto-preparation, if desired, with
+`ALIS_AUDIO_I01_AUTOSTART_GUARD=0 ./setup install`.
+Package-manager installs (e.g., pacman) intentionally do **not** mutate
+per-user systemd configuration from package hooks; users of such installs
+must use the manual enable command below. If native EasyEffects is installed
+only *after* Alis, enable the guard manually or rerun Alis setup.
+
 ## Enable once (no sudo)
 
 Update Alis dev, then run:

@@ -14,11 +14,28 @@ unit='app-com.github.wwmm.easyeffects@autostart.service'
 desktop="$XDG_CONFIG_HOME/autostart/com.github.wwmm.easyeffects.desktop"
 target="$XDG_CONFIG_HOME/systemd/user/$unit.d/90-alis-audio-i01-quantum.conf"
 mkdir -p "$(dirname "$desktop")"
+# Installer integration must use the installed runtime helper without
+# implicitly enabling EasyEffects as an autostart application.
+installer="$root/sdata/subcmd-install/3.files.sh"
+grep -Fq '"$_alis_ee_guard" prepare' "$installer"
+grep -Fq 'ALIS_AUDIO_I01_AUTOSTART_GUARD:-1' "$installer"
+mkdir -p "$sandbox/bin"
+printf '#!/bin/sh\nexit 0\n' > "$sandbox/bin/easyeffects"
+chmod +x "$sandbox/bin/easyeffects"
+PATH="$sandbox/bin:$PATH" "$manager" prepare >/dev/null
+cmp -s "$source_file" "$target"
+[[ ! -e "$desktop" ]] || { echo 'prepare unexpectedly created autostart' >&2; exit 1; }
+"$manager" disable >/dev/null
 if "$manager" enable >/dev/null 2>&1; then echo 'Enabled without autostart entry' >&2; exit 1; fi
 [[ ! -e "$target" ]]
 printf '%s\n' '[Desktop Entry]' 'Type=Application' 'Exec=flatpak run com.github.wwmm.easyeffects' > "$desktop"
 if "$manager" enable >/dev/null 2>&1; then echo 'Decorated untested Flatpak autostart' >&2; exit 1; fi
+PATH="$sandbox/bin:$PATH" "$manager" prepare | grep -Fq 'preserving it without changes'
+[[ ! -e "$target" ]] || { echo 'Prepared foreign autostart' >&2; exit 1; }
 printf '%s\n' '[Desktop Entry]' 'Type=Application' 'Exec=easyeffects --hide-window --service-mode' > "$desktop"
+PATH="$sandbox/bin:$PATH" "$manager" prepare >/dev/null
+cmp -s "$source_file" "$target"
+"$manager" disable >/dev/null
 "$manager" status | grep -Fq 'disabled'
 "$manager" enable >/dev/null
 cmp -s "$source_file" "$target"
