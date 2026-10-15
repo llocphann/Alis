@@ -12,13 +12,13 @@ from urllib.parse import urlparse
 from urllib.request import urlopen
 
 CDP_URL = os.environ.get(
-    "HADALIS_CHATGPT_CDP_URL",
+    "ALIS_CHATGPT_CDP_URL",
     "http://127.0.0.1:9222",
 ).rstrip("/")
-CHATGPT_BIN = os.environ.get("HADALIS_CHATGPT_BIN") or shutil.which("chatgpt")
-START_TIMEOUT = float(os.environ.get("HADALIS_CHATGPT_START_TIMEOUT_SECONDS", "30"))
-POLL_SECONDS = float(os.environ.get("HADALIS_CHATGPT_HOST_POLL_SECONDS", "2"))
-MAX_MISSES = int(os.environ.get("HADALIS_CHATGPT_HOST_MAX_MISSES", "3"))
+CHATGPT_BIN = os.environ.get("ALIS_CHATGPT_BIN") or os.environ.get("HADALIS_CHATGPT_BIN") or shutil.which("chatgpt")
+START_TIMEOUT = float(os.environ.get("ALIS_CHATGPT_START_TIMEOUT_SECONDS", os.environ.get("HADALIS_CHATGPT_START_TIMEOUT_SECONDS", "30")))
+POLL_SECONDS = float(os.environ.get("ALIS_CHATGPT_HOST_POLL_SECONDS", os.environ.get("HADALIS_CHATGPT_HOST_POLL_SECONDS", "2")))
+MAX_MISSES = int(os.environ.get("ALIS_CHATGPT_HOST_MAX_MISSES", os.environ.get("HADALIS_CHATGPT_HOST_MAX_MISSES", "3")))
 
 
 def cdp_parts() -> tuple[str, int]:
@@ -27,7 +27,7 @@ def cdp_parts() -> tuple[str, int]:
         parsed.scheme != "http"
         or parsed.hostname not in {"127.0.0.1", "localhost", "::1"}
     ):
-        raise RuntimeError("HADALIS_CHATGPT_CDP_URL must use loopback HTTP")
+        raise RuntimeError("ALIS_CHATGPT_CDP_URL must use loopback HTTP")
     return parsed.hostname, parsed.port or 80
 
 
