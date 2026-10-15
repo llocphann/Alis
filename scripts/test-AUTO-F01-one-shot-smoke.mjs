@@ -69,6 +69,10 @@ try{
     });
     const page={
       url:()=>"app://-/index.html",
+      // Desktop's global selected conversation can survive while its
+      // Project sidebar list is collapsed; this is only an unbound key.
+      locator:selector=>selector==='[aria-current="page"]'
+        ?loc(()=>submitted?shown():[],"selected"):loc(()=>[],"none"),
       getByRole:(role,opt={})=>{
         const name=opt.name;
         if(role==="dialog")
@@ -199,6 +203,10 @@ try{
   assert.equal(collapsed.status,"sent_unverified");
   assert.equal(collapsed.assistant_only_reply_observed,true);
   assert.equal(collapsed.selected_chat_identity_stable,false);
+  assert.equal(collapsed.post_send_chat_key_witness.diagnosis,
+               "GLOBAL_CHAT_KEY_STABLE_PROJECT_UNVERIFIED");
+  assert.equal(collapsed.post_send_chat_key_witness
+    .project_chat_key_equal_across_samples,false);
   assert.equal(collapsed.message_submission_verified,false);
   assert.equal(collapsed.server_identity_attested,false);
   assert.equal(listNeverAppears.get().navClicks,1);
