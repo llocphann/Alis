@@ -301,8 +301,9 @@ class GitHubHandoffTests(unittest.TestCase):
         from automation.manager import credentials
         job,raw,signal=fixture()
         at=signal["updated_unix"]+3600+handoff.EXPIRED_GRACE+10
-        with self.assertRaises(ValueError):
-            handoff.validate_signal(json.dumps(signal),now=at)
+        with tempfile.TemporaryDirectory() as sample_root:
+            with self.assertRaisesRegex(handoff.HandoffWait,"expired"):
+                handoff.ready(json.dumps(signal),job,raw,Path(sample_root),now=at)
         self.assertEqual(handoff.expired_for_retirement(json.dumps(signal),now=at),JOB_ID)
         self.assertIsNone(handoff.expired_for_retirement(json.dumps(signal),
                                                          now=signal["expires_unix"]))
