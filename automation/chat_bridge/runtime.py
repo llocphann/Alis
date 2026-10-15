@@ -23,14 +23,14 @@ ROOT = Path(__file__).resolve().parents[2]
 DESKTOP_CLI = ROOT / "automation" / "chat_bridge" / "desktop_cli.mjs"
 INITIAL_PROMPT_FILE = ROOT / "automation" / "chat_bridge" / "INITIAL_PROMPT.md"
 RESULTS_DIR = "automation/results"
-POLL_SECONDS = float(os.environ.get("HADALIS_RESULT_POLL_SECONDS", "10"))
+POLL_SECONDS = float(os.environ.get("ALIS_RESULT_POLL_SECONDS", os.environ.get("HADALIS_RESULT_POLL_SECONDS", "10")))
 DESKTOP_TIMEOUT_SECONDS = float(
-    os.environ.get("HADALIS_DESKTOP_TIMEOUT_SECONDS", "720")
+    os.environ.get("ALIS_DESKTOP_TIMEOUT_SECONDS", os.environ.get("HADALIS_DESKTOP_TIMEOUT_SECONDS", "720"))
 )
 
-CONTINUOUS_RESEARCH = os.environ.get(
+CONTINUOUS_RESEARCH = os.environ.get("ALIS_CONTINUOUS_RESEARCH", os.environ.get(
     "HADALIS_CONTINUOUS_RESEARCH", "0"
-).strip().lower() in {"1", "true", "yes", "on"}
+)).strip().lower() in {"1", "true", "yes", "on"}
 
 
 def state_root() -> Path:
