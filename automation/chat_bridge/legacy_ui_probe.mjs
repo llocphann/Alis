@@ -141,6 +141,11 @@ export function assessLegacyUiReadiness(snapshot){
   if(s.composer_disabled!==false)add("COMPOSER_DISABLED_OR_UNVERIFIED");
   const absentOnBlankProjectComposer=emptyProjectComposer &&
     s.send_count_capped===0;
+  // The current Desktop exposes exactly one disabled Send button when the
+  // target Project's new-chat editor is empty. That is an idle UI state,
+  // NOT a usable sending control and NOT a failure of CDP compatibility.
+  const disabledOnBlankProjectComposer=emptyProjectComposer &&
+    s.send_count_capped===1 && s.send_disabled===true;
   const unscopedBlankComposer=s.composer_count_capped===1 &&
     s.generic_composer_count_capped===1 &&
     s.project_scoped_composer_count_capped===0 &&
@@ -151,11 +156,16 @@ export function assessLegacyUiReadiness(snapshot){
   if(s.send_count_capped!==1||s.send_disabled!==false)
     add(absentOnBlankProjectComposer
       ? "SEND_ABSENT_ON_EMPTY_PROJECT_COMPOSER"
+      : disabledOnBlankProjectComposer
+        ? "SEND_DISABLED_ON_EMPTY_PROJECT_COMPOSER"
       : absentOnBlankUnscopedComposer
         ? "SEND_ABSENT_ON_EMPTY_UNSCOPED_COMPOSER"
         : "SEND_CONTROL_NOT_READY");
   const readOnlyProjectEntryReady=emptyProjectComposer &&
-    issues.every(x=>x==="SEND_ABSENT_ON_EMPTY_PROJECT_COMPOSER");
+    (absentOnBlankProjectComposer||disabledOnBlankProjectComposer) &&
+    issues.length===1 &&
+    (issues[0]==="SEND_ABSENT_ON_EMPTY_PROJECT_COMPOSER" ||
+     issues[0]==="SEND_DISABLED_ON_EMPTY_PROJECT_COMPOSER");
   return {
     purpose:"legacy-ui-transport-assessment",
     observation_ready:issues.length===0,
@@ -196,6 +206,8 @@ export function assessLegacyUiReadiness(snapshot){
       s.project_new_chat_action_count_capped===1,
     send_control_state:absentOnBlankProjectComposer
       ? "absent-on-empty-project-composer"
+      : disabledOnBlankProjectComposer
+        ? "disabled-on-empty-project-composer"
       : absentOnBlankUnscopedComposer
         ? "absent-on-empty-unscoped-composer"
         : s.send_count_capped===1 && s.send_disabled===false
