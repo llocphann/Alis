@@ -31,6 +31,9 @@ def main():
                        help="Optional codes; blank discovers Backend-first GitHub Issues")
     batch.add_argument("--mode", choices=["ordered", "cloud"], default="ordered")
     commands.add_parser("queue-status")
+    stop_queue = commands.add_parser("queue-stop")
+    stop_queue.add_argument("--approve", action="store_true")
+    stop_queue.add_argument("--expected-active", required=True)
     clear_queue = commands.add_parser("queue-clear")
     clear_queue.add_argument("--approve", action="store_true",
                              help="Owner confirms pruning queued tasks without stopping active work")
@@ -88,6 +91,9 @@ def main():
                       if args.codes.strip() else queue.prepare_auto(mode=args.mode))
         elif args.action == "queue-status":
             result = queue.view()
+        elif args.action == "queue-stop":
+            result = managed_tasks.stop_queue(
+                approved=args.approve, expected_active=args.expected_active)
         elif args.action == "queue-clear":
             result = queue.clear(approved=args.approve,
                                  expected_queued=args.expected_queued)
