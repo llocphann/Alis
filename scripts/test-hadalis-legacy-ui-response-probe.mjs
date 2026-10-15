@@ -139,8 +139,8 @@ try{
       if(role==="textbox")return typeof opt.name==="string"?yes():
         opt.name?.test?.("New chat in Automatic Alis")?yes():no();
       if(role==="list")return yes();
-      if(role==="button"&&opt.name==="Send")return
-        loc([{visible:true,disabled:true}]);
+      if(role==="button"&&opt.name==="Send")
+        return loc([{visible:true,disabled:true}]);
       if(role==="button"&&opt.name?.test?.("Stop"))return no();
       if(role==="button"&&opt.name?.test?.("Project: Automatic Alis"))
         return yes();
