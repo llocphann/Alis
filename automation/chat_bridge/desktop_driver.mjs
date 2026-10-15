@@ -92,6 +92,33 @@ async function projectGuardCount(page) {
   return (await selected.count()) === 1 && (await visibleCount(selected)) === 1 ? 1 : 0;
 }
 
+// Read a stable UI sidebar chat key, never a title, visible text or Project
+// label. This is local UI continuity evidence, NOT server attestation. Builds
+// without a unique chat ID/href fail closed before a continuation can send.
+export async function uiTargetIdentity(page) {
+  await verifyProject(page);
+  const selected = page.getByRole("list", {
+    name: `Chats in ${PROJECT_NAME}`, exact: true
+  }).locator('[role="button"][aria-current="page"]');
+  if ((await selected.count()) !== 1 || (await visibleCount(selected)) !== 1)
+    throw new Error("ALIS_UI_CHAT_IDENTITY_UNAVAILABLE");
+  const source = await selected.evaluate(node => {
+    for (const key of ["data-conversation-id", "data-chat-id"]) {
+      const value = node.getAttribute(key) || node.closest(`[${key}]`)?.getAttribute(key);
+      if (value && /^[a-zA-Z0-9_-]{12,128}$/.test(value))
+        return `id:${value}`;
+    }
+    const link = node.closest('a[href]') || node.querySelector('a[href]');
+    const href = link?.getAttribute("href");
+    // Only an actual conversation path, never a label or generic sidebar URL.
+    if (href && /(?:^|\\/)c\\/[a-zA-Z0-9_-]{12,128}(?:$|[?#/])/.test(href))
+      return `href:${href.split(/[?#]/)[0]}`;
+    return null;
+  });
+  if (!source) throw new Error("ALIS_UI_CHAT_IDENTITY_UNAVAILABLE");
+  return source;
+}
+
 async function verifyProject(page) {
   if ((await projectGuardCount(page)) !== 1) {
     const error = new Error(`${PROJECT_NAME} project guard is not visible; waiting for target chat`);
