@@ -15,6 +15,12 @@ try {
     if (raw.length > 200000) throw new Error("request exceeds bound");
   }
   const input = JSON.parse(raw);
+  // V1's text/time-window heuristic can match the wrong conversation or a
+  // previously generated prompt. Without a trusted original user-message ID
+  // it must NOT convert an uncertain legacy send into an acknowledged receipt.
+  // Quarantine before connecting to Desktop (no project navigation or send).
+  if(input.op==="adopt")
+    throw new Error("legacy pending identity requires authenticated server evidence");
   const connection = await connectNative(); browser = connection.browser;
   const page = connection.page;
   let result;
@@ -41,21 +47,6 @@ try {
     if (!pending.conversation_id) result = {completed: false, submitted: false, uncertain: true};
     else result = {...projectTurn(await nativeRead(page, `/conversation/${pending.conversation_id}`), pending),
       conversation_id: pending.conversation_id};
-  } else if (input.op === "adopt") {
-    const projectId = await resolveProject(page, input.project_name);
-    const list = await nativeRead(page, `/gizmos/${projectId}/conversations`, {limit: 40, owned_only: true});
-    const matches = [];
-    for (const c of (list.items ?? []).slice(0, 12)) {
-      const history = await nativeRead(page, `/conversation/${c.id}`);
-      for (const n of Object.values(history.mapping ?? {})) {
-        const m = n.message;
-        if (m?.author?.role === "user" && Math.abs(m.create_time - input.prepared_at_unix) <= 90 &&
-            (m.content?.parts ?? []).some(p => typeof p === "string" && p.includes(input.match_text)))
-          matches.push({conversation_id: c.id, project_id: projectId, user_message_id: m.id});
-      }
-    }
-    if (matches.length !== 1) throw new Error("legacy pending chat cannot be uniquely identified; receipt preserved");
-    result = matches[0];
   } else if (input.op === "probe") result = {supported: true, fingerprint: connection.contract.fingerprint};
   else throw new Error("unknown native operation");
   console.log(JSON.stringify(result));
