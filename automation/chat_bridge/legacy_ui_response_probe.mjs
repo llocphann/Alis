@@ -8,8 +8,8 @@
  */
 import {inspectLegacyUiReadOnly} from "./legacy_ui_probe.mjs";
 const ACCEPTANCE_TEXT="AUTO-F01 UI transport acceptance test only. "+
-  "Do not use any connectors or tools. Reply with exactly: HADALIS_LOOP:DONE";
-const EXPECTED_REPLY="HADALIS_LOOP:DONE";
+  "Do not use any connectors or tools. Reply with exactly: ALIS_LOOP:DONE";
+const EXPECTED_REPLY="ALIS_LOOP:DONE";
 
 const visibleCount=async locator=>{
   const total=await locator.count();
