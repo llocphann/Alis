@@ -1,4 +1,4 @@
-# Hadalis Chat Bridge
+# Alis Chat Bridge
 
 ChatGPT is the only reasoning agent. This layer transports explicit objectives and interprets only loop directives. Worker commands and code decisions come from ChatGPT; GitHub is authoritative for repository state. Session IDs, Desktop state, raw logs and credentials stay private locally.
 
@@ -19,3 +19,19 @@ HADALIS_LOOP:CONNECTOR_BLOCKED GITHUB
 The Python protocol validates the marker. Streaming text, tool steps, user prompts and replies from another user turn cannot complete a receipt. The scheduler saves submission intent before IPC and completion before continuation. An ambiguous send only permits observation of its original message ID. Read-only stream reattachment does not create a user message or a new generation. A server-proven terminal failure can schedule a distinct reconciliation step; it never replays uncertain effects. Project/conversation IDs survive Desktop restarts and reboot. Independent profiles progress through a bounded scheduler and resource-specific leases.
 
 See automation/manager/README.md and docs/AUTOMATION_ARCHITECTURE.md for migration, checkpoint, recovery, evidence and acceptance contracts. Run `node scripts/test-hadalis-native-session.mjs` for message projection behavior; `HADALIS_TEST_INSTALLED_DESKTOP=1` also probes the installed adapter contract. Real acceptance is opt-in and never changes production profiles.
+
+## Alis protocol redesign (2026-10-15)
+
+The canonical loop directives for new prompts are ALIS_LOOP:CONTINUE,
+ALIS_LOOP:WAIT_RESULT JOB-..., ALIS_LOOP:ROTATE, ALIS_LOOP:DONE and
+ALIS_LOOP:CONNECTOR_BLOCKED GITHUB. The parser still accepts historical
+HADALIS_LOOP directives from saved conversations for lossless migration.
+Worker handoffs and receipts stay on GitHub with SHA-pinned job identities.
+The legacy UI path now uses an fsynced, one-shot send journal and never
+falls back from a click to Enter/CDP/Wayland resubmission. Any uncertain UI
+send stops and preserves its intent for reconciliation, not replay.
+
+The installed manager still uses the native adapter. The UI loop is not
+silently activated by this change; its Desktop binding needs separate owner
+acceptance. Existing hadalis-* service and XDG names are legacy compatibility
+aliases only, not Alis product branding.
