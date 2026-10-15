@@ -583,7 +583,10 @@ def main() -> int:
                         try:future.result()
                         except Exception:last_error="Job metadata processing failed; private receipts preserved"
                         del running[job_id]
-                _write(root/"pool.json",{"heartbeat_at_unix":now,"running":list(running),"limit":MAX_WORKERS,"publishing":publisher is not None and not publisher.done(),"last_error":last_error})
+                _write(root/"pool.json",{"heartbeat_at_unix":now,"running":list(running),
+                    "limit":MAX_WORKERS,"publishing":publisher is not None and not publisher.done(),
+                    "github_handoff_contract":github_handoff.SCHEMA,
+                    "last_error":last_error})
                 if now-last_cleanup>=300:
                     cleanup(startup=False);last_cleanup=now
                 if publisher is None or publisher.done():
