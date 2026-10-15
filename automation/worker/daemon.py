@@ -339,10 +339,13 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
             try: published=json.loads(remote_text(target))
             except (ValueError, RuntimeError):
                 raise RuntimeError("published result unreadable") from None
+            # A same-name, same-digest result is not sufficient evidence that
+            # the remote receipt is OUR settled execution. Check the complete
+            # strict public projection, including per-action evidence identity,
+            # before acknowledging it or retiring any matching handoff.
+            # Never overwrite a conflicting remote result or replay actions.
             if (not isinstance(published,dict)
-                    or published.get("job")!=job_id
-                    or published.get("input_sha256")!=payload.get("input_sha256")
-                    or published.get("status")!=payload.get("status")):
+                    or published != public_result(payload)):
                 raise RuntimeError("published result identity conflict")
         head=git("rev-parse","origin/dev").stdout.strip()
         if not SHA_RE.fullmatch(head):raise RuntimeError("publication HEAD unavailable")
