@@ -164,4 +164,4 @@ def parse_loop_directive(response_text: str) -> LoopDirective:
 def prompt_has_required_github_mention(prompt: str) -> bool:
     """The connector mention must be the first non-empty line of every autonomous prompt."""
     first = next((line.strip() for line in prompt.splitlines() if line.strip()), "")
-    return first == GITHUB_MENTION
+    return first in {GITHUB_MENTION, GITHUB_APP_MENTION}
