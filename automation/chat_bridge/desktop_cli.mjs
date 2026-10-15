@@ -48,6 +48,33 @@ async function main() {
     return;
   }
 
+  if (command === "ui-target-check") {
+    // A strictly read-only owner preflight. Do not return titles, chat IDs,
+    // links, fingerprints or raw DOM contents in a copyable report.
+    let stable = false;
+    let diagnosis = "ALIS_UI_CHAT_IDENTITY_UNAVAILABLE";
+    try {
+      const before = await uiTargetIdentity(page);
+      await page.waitForTimeout(250);
+      const after = await uiTargetIdentity(page);
+      stable = before === after;
+      diagnosis = stable ? "ALIS_UI_CHAT_TARGET_OBSERVED" :
+        "ALIS_UI_CHAT_TARGET_CHANGED";
+    } catch {
+      stable = false;
+    }
+    writeJson({
+      purpose: "alis-ui-target-preflight",
+      status: "read-only",
+      selected_chat_identity_stable: stable,
+      diagnosis,
+      message_submission_attempted: false,
+      server_identity_attested: false,
+      ui_scheduler_authorized: false
+    });
+    return;
+  }
+
   if (command === "new-chat") {
     if (process.argv[3] && process.argv[3] !== "--unowned-previous-chat")
       throw new Error("unknown new-chat option");
@@ -133,8 +160,7 @@ async function main() {
       completionBaseline
     );
     const response = await extractLoopResponse(page, {
-      allowMarkerOnly: true,
-      baselineMarkerCount: completionBaseline.markerCount
+      baselineResponseActionCount: completionBaseline.responseActionCount
     });
 
     // After an initial send, the UI may not yet have exposed a persistent
