@@ -1,0 +1,136 @@
+{
+  "source_sha": "77439bddc018cf6e9486c5088f72c76a0efaf060",
+  "scope": "Compact technical evidence only; not a task tracker or acceptance of causal/performance/Owner outcomes",
+  "original_preparation_manifest": {
+    "source_sha": "77439bddc018cf6e9486c5088f72c76a0efaf060",
+    "source_repository": "https://github.com/llocphann/Alis",
+    "source_ref": "dev",
+    "original_fixture_path": "docs/evidence/abyss-product/20261014-composed-async-diagnostics/composed-motion/shell.qml",
+    "original_fixture_sha256": "2c1e048b9d23aec88da57c847c554be77b039515d020bfca677a27a0e502a77e",
+    "instrumented_fixture_sha256": "b5b1eb7625c6b950a2cfcff4769362c8dff5db73977b795d713a97cab525924f",
+    "temporary_source_changes": [
+      {
+        "path": "modules/dashboard/DashboardCanvas.qml",
+        "before_sha256": "e6f3fa38199331f09d94956d64f3ffb197ef8c46f8cb7a9b78c038f7147ce7c4",
+        "after_sha256": "5254be532bf25cba5fcf7dbdcfac58c6733534c4fba69207a600cfcc74c4a947",
+        "scope": "Loader lifecycle logging only"
+      }
+    ],
+    "invariants": [
+      "Original16 case order and sizes",
+      "Four physical edges",
+      "Original source easing/durations/geometry",
+      "Original partial/reversal/close/input checks",
+      "Original8ms asynchronous step loop",
+      "Original note text",
+      "No-grab lane retains pending flow with frame-swapped acknowledgment",
+      "Canonical private XDG config/alis"
+    ],
+    "not_started": [
+      "native smoke",
+      "paired measured reproduction",
+      "owner smoothness acceptance"
+    ],
+    "run_gate": "run_pair.py requires --host-quiet-confirmed; no native process starts during preparation",
+    "classification": "A delayed grab callback alone is not GUI/motion stutter. Only explicitly intermediate-progress swap intervals are classified as active motion; endpoint-only gaps stay separate."
+  },
+  "temporary_source_delta": {
+    "path": "source-instrumentation.patch",
+    "before_sha256": "e6f3fa38199331f09d94956d64f3ffb197ef8c46f8cb7a9b78c038f7147ce7c4",
+    "after_sha256": "5254be532bf25cba5fcf7dbdcfac58c6733534c4fba69207a600cfcc74c4a947"
+  },
+  "original_driver_hashes": {
+    "prepare.py": "9f3e55b8cf270d84dbe50426572d5d350ae69bfc80fb27693cf60346a54b50a1",
+    "run_pair.py": "f929587d64d280b10b6c5e4247e508ed2215d6dcd133f65c3bc0535168acabf4",
+    "analyze.py": "d0e980f53ddeefbf0521cf230e81b2c947c611e39d967e0c4984093e88cc9095"
+  },
+  "private_raw_logs": [
+    {
+      "lane": "00-grab",
+      "private_raw_path": "/tmp/alis-r09-pair-77439bddc-quiet-01/00-grab/raw.log",
+      "original_sha256": "3baed14526869c70f7ac914f5c1ba8fdcf2f314fdff41a0d6598f0601896d2f2",
+      "original_bytes": 619466,
+      "omitted_reason": "Unstructured runtime stdout can include host paths and incidental Weather/location diagnostics; publish only explicit diagnostic JSON records.",
+      "scan_non_diagnostic_line_counts": {
+        "host_path": 2,
+        "weather_location": 4,
+        "media_identity": 0,
+        "credential_pattern": 0
+      }
+    },
+    {
+      "lane": "01-no-grab",
+      "private_raw_path": "/tmp/alis-r09-pair-77439bddc-quiet-01/01-no-grab/raw.log",
+      "original_sha256": "c6b542d5b0653bae551ba05a127e29458c1c5d19929a706db47fbe5af527af7a",
+      "original_bytes": 561043,
+      "omitted_reason": "Unstructured runtime stdout can include host paths and incidental Weather/location diagnostics; publish only explicit diagnostic JSON records.",
+      "scan_non_diagnostic_line_counts": {
+        "host_path": 2,
+        "weather_location": 4,
+        "media_identity": 0,
+        "credential_pattern": 0
+      }
+    }
+  ],
+  "private_images": {
+    "path": "/tmp/alis-r09-pair-77439bddc-quiet-01/00-grab/frames",
+    "published": false,
+    "qualification": "Native frame files retained privately; no pixel oracle or screenshot acceptance claimed"
+  },
+  "compressed": {
+    "qualified-summary.json.gz": {
+      "sha256": "ead4fe41898bc6a716a543df3f4ead65062a6281e56e39addd82e7c8c2e5225b",
+      "uncompressed_sha256": "711abfe5e2b0dd49a75d77f7503ca273fe08dd4b25e0d2da82428539dd094115",
+      "uncompressed_bytes": 107041
+    },
+    "00-grab/result.json.gz": {
+      "sha256": "5fcf70f3ff644eac39cd18dacd6f98b511f542dc7f5fac1cb420a2d59a71bf87",
+      "uncompressed_sha256": "3cfec87576acaf0fc0df16e57d19502b5d400251459a2d28aae854e9b3fe0ad2",
+      "uncompressed_bytes": 297637
+    },
+    "00-grab/diagnostic-events.json.gz": {
+      "sha256": "543ca4a76d9adc1b83e4a8e5fab18ffcaec465159608035b02b23d73ef2a6f13",
+      "uncompressed_sha256": "cf0b3895543053b963841aad6d46ecdb7b508eac7c509528f25320b244aa445b",
+      "uncompressed_bytes": 341088
+    },
+    "00-grab/external.jsonl.gz": {
+      "sha256": "777b0d430c17776a134c7e2a5f04c50f5685c98ecd7971abf9c18f928b88a723",
+      "uncompressed_sha256": "858027c09b427846b161cbce40847671ff7cd7e44071ddab7343f985f1d40f93",
+      "uncompressed_bytes": 67861
+    },
+    "01-no-grab/result.json.gz": {
+      "sha256": "27efd012785c49e30c7454d1af51add9dc07ac1353733d598808c83dd4620bdd",
+      "uncompressed_sha256": "3b14295857fa2e214485826a4a826d5d5132bc33c23ee19ad163ebc146793a45",
+      "uncompressed_bytes": 358242
+    },
+    "01-no-grab/diagnostic-events.json.gz": {
+      "sha256": "07607eabd388ab621ecc6f9051c05f4f26b36e1467291ec251a2a14132d5189a",
+      "uncompressed_sha256": "69a91cba842dfffbc7c2b35a831af0cbe117075b7c97ada7ca0f3b9811a2a2b7",
+      "uncompressed_bytes": 213660
+    },
+    "01-no-grab/external.jsonl.gz": {
+      "sha256": "be718cc388b45e7fd0569db6ae6a7d0e022b3cc55bea022a259e5cc29e589507",
+      "uncompressed_sha256": "d7fe280201da1a2d78c2c775fe45ccf46723ac2b21a3fa9172b89cd59a1bd6dc",
+      "uncompressed_bytes": 60079
+    }
+  },
+  "files": {
+    "00-grab/diagnostic-events.json.gz": "543ca4a76d9adc1b83e4a8e5fab18ffcaec465159608035b02b23d73ef2a6f13",
+    "00-grab/external.jsonl.gz": "777b0d430c17776a134c7e2a5f04c50f5685c98ecd7971abf9c18f928b88a723",
+    "00-grab/receipt.json": "88d795d11fe2ae3977b6d3eac3f44a56c3c9a9a6083fa75de8fb164821d8dc9a",
+    "00-grab/result.json.gz": "5fcf70f3ff644eac39cd18dacd6f98b511f542dc7f5fac1cb420a2d59a71bf87",
+    "01-no-grab/diagnostic-events.json.gz": "07607eabd388ab621ecc6f9051c05f4f26b36e1467291ec251a2a14132d5189a",
+    "01-no-grab/external.jsonl.gz": "be718cc388b45e7fd0569db6ae6a7d0e022b3cc55bea022a259e5cc29e589507",
+    "01-no-grab/receipt.json": "0839454b59692d71629e0f4e3360b5ceb483bdc664e3cd230722c079500beceb",
+    "01-no-grab/result.json.gz": "27efd012785c49e30c7454d1af51add9dc07ac1353733d598808c83dd4620bdd",
+    "README.md": "7ac0e0c80b2d1bea473af45dd9c77bfa78999dcddcf32e92278fda992198e7b1",
+    "bounded-pair-summary.json": "41603567359a2c63502573c4a292a2753cbc6b461f11a5ffab81e352b83922bb",
+    "handoff.json": "abc088743fec65df91d2bc8aa4fea79a965182aa38d4df9f5c0877911fb58a0b",
+    "harness.qml": "b5b1eb7625c6b950a2cfcff4769362c8dff5db73977b795d713a97cab525924f",
+    "qualified-summary.json.gz": "ead4fe41898bc6a716a543df3f4ead65062a6281e56e39addd82e7c8c2e5225b",
+    "reproduce/analyze.py": "d0e980f53ddeefbf0521cf230e81b2c947c611e39d967e0c4984093e88cc9095",
+    "reproduce/prepare.py": "576f3ef0eceae363d66f9511a62a1755e578a4cb525f85174a3a1a0b7fc8a371",
+    "reproduce/run_pair.py": "f929587d64d280b10b6c5e4247e508ed2215d6dcd133f65c3bc0535168acabf4",
+    "source-instrumentation.patch": "00c57223cc0e3d74eb741400d0cfe3b2b34d0e3065d1dc21306009866a0dbb81"
+  }
+}

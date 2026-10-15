@@ -1,0 +1,20 @@
+--- a/modules/dashboard/DashboardCanvas.qml
++++ b/modules/dashboard/DashboardCanvas.qml
+@@ -2029,6 +2029,17 @@
+                     clip: true
+ 
+                     Loader {
++                        function diagnostic(event) {
++                            console.info("R09_COMPONENT_EVENT", JSON.stringify({event:event,
++                                epochMs:Date.now(), widget:String(cardWrap.modelData),
++                                active:active, status:status, warm:root.warmContent,
++                                visible:cardWrap.visible, width:width, height:height}))
++                        }
++                        onActiveChanged: diagnostic("widget.active")
++                        onStatusChanged: diagnostic("widget.status")
++                        onLoaded: diagnostic("widget.loaded")
++                        Component.onCompleted: diagnostic("widget.completed")
++                        Component.onDestruction: diagnostic("widget.destroyed")
+                         anchors.fill: parent
+                         sourceComponent: root._widgetMap[String(cardWrap.modelData)] ?? null
+                         active: cardWrap.visible || root.warmContent

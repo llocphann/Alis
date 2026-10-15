@@ -1,0 +1,22 @@
+{
+  "source_sha": "77439bddc018cf6e9486c5088f72c76a0efaf060",
+  "scope": "One diagnostic pair, no production changes or owner/FPS/causal acceptance",
+  "native_exits": [
+    0,
+    0
+  ],
+  "cases_completed": [
+    16,
+    16
+  ],
+  "checks": [
+    5521,
+    5159
+  ],
+  "cleanup": "Owned QS50111/50827 and private Niri50081/50795 verified gone after pair",
+  "historical_callback": "The historical4716ms composed callback was not reproduced; one current pair does not establish its cause.",
+  "private_handoff_path": "/tmp/alis-r09-paired-20261015/handoff.json",
+  "private_evidence_path": "/tmp/alis-r09-pair-77439bddc-quiet-01",
+  "reproduction": "Copy reproduce/*.py into a NEW /tmp workspace, set ALIS_DIAGNOSTIC_REPO to a checkout containing77439bddc, run prepare.py, then run_pair.py only after explicit host-quiet/budget authorization.",
+  "source_copy": "Not included; only the Loader logging source delta and the exact loaded harness are published."
+}

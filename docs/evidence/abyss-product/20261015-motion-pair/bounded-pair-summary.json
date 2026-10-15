@@ -1,0 +1,118 @@
+{
+  "source_sha": "77439bddc018cf6e9486c5088f72c76a0efaf060",
+  "scope": "One instrumented pair; no causal, FPS, resource-gain or owner-smoothness acceptance",
+  "lanes": [
+    {
+      "lane": "00-grab",
+      "exit": 0,
+      "completed": 16,
+      "checks": 5521,
+      "max_callback_ms": [
+        53,
+        {
+          "size": [
+            720,
+            650
+          ],
+          "route": "Overview",
+          "edge": "left"
+        },
+        "open-partial"
+      ],
+      "max_heartbeat_ms": [
+        1623,
+        {
+          "size": [
+            1280,
+            900
+          ],
+          "route": "Dashboard",
+          "edge": "top"
+        },
+        "loading"
+      ],
+      "max_active_progress_swap_ms": [
+        150,
+        {
+          "size": [
+            1280,
+            900
+          ],
+          "route": "Overview",
+          "edge": "bottom"
+        },
+        "open-full"
+      ],
+      "cpu_status": {
+        "sampled_seconds": 33.34,
+        "cpu_seconds": 25.83,
+        "samples": 331,
+        "max_rss_mib": 665.7
+      },
+      "cleanup": {
+        "qs_pid": 50111,
+        "qs_alive": false,
+        "private_niri_pids": [
+          50081
+        ],
+        "private_niri_alive": []
+      }
+    },
+    {
+      "lane": "01-no-grab",
+      "exit": 0,
+      "completed": 16,
+      "checks": 5159,
+      "max_callback_ms": [
+        38,
+        {
+          "size": [
+            720,
+            650
+          ],
+          "route": "Dashboard",
+          "edge": "right"
+        },
+        "close-full"
+      ],
+      "max_heartbeat_ms": [
+        842,
+        {
+          "size": [
+            1280,
+            900
+          ],
+          "route": "Dashboard",
+          "edge": "top"
+        },
+        "loading"
+      ],
+      "max_active_progress_swap_ms": [
+        44,
+        {
+          "size": [
+            720,
+            650
+          ],
+          "route": "Dashboard",
+          "edge": "right"
+        },
+        "close-full"
+      ],
+      "cpu_status": {
+        "sampled_seconds": 29.41,
+        "cpu_seconds": 16.06,
+        "samples": 292,
+        "max_rss_mib": 628.6
+      },
+      "cleanup": {
+        "qs_pid": 50827,
+        "qs_alive": false,
+        "private_niri_pids": [
+          50795
+        ],
+        "private_niri_alive": []
+      }
+    }
+  ]
+}

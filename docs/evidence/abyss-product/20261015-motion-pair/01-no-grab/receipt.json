@@ -1,0 +1,33 @@
+{
+  "source_sha": "77439bddc018cf6e9486c5088f72c76a0efaf060",
+  "mode": "no-grab",
+  "index": 1,
+  "native_exit": 0,
+  "os_timeout": false,
+  "started_ns": 1792067181703687951,
+  "ended_ns": 1792067214625637743,
+  "qs_pid": 50827,
+  "explicit_focus": false,
+  "host_quiet_confirmed_by_caller": true,
+  "instrumented": true,
+  "loadavg_start": [
+    3.79638671875,
+    2.66162109375,
+    2.3994140625
+  ],
+  "loadavg_end": [
+    3.65087890625,
+    2.748046875,
+    2.43798828125
+  ],
+  "clock_ticks_per_second": 100,
+  "page_size": 4096,
+  "os_deadline_seconds": 120,
+  "scope": "Diagnostic composed sequence; no source promotion, performance gain or owner acceptance",
+  "result_present": true,
+  "hashes": {
+    "raw.log": "c6b542d5b0653bae551ba05a127e29458c1c5d19929a706db47fbe5af527af7a",
+    "external.jsonl": "d7fe280201da1a2d78c2c775fe45ccf46723ac2b21a3fa9172b89cd59a1bd6dc",
+    "result.json": "c2641ca38401d5a249de69810a4799e118335530a42345f5b8b1db27f8ff3359"
+  }
+}
