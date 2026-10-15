@@ -365,12 +365,6 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
             # leave the manifest intact for the next task and preserve history.
             retire_handoff=False
             active=checkout/github_handoff.PATH
-            if active.is_file() and not active.is_symlink():
-                try:
-                    retire_handoff=github_handoff.retire_after_receipt(
-                        active.read_text(encoding="utf-8"),payload)
-                except OSError:
-                    pass
             # Only opt-in, settled SHA-matching job payloads are retired.
             # This keeps Git's tip compact while preserving the original
             # source in history and the result tombstone in automation/results.
@@ -382,6 +376,15 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
                     pending_raw=pending.read_text(encoding="utf-8")
                     retire_job=github_handoff.retire_opt_in_job(pending_raw,payload)
                     if retire_job:opt_in_raw=pending_raw
+                except (OSError,UnicodeError):
+                    pass
+            # Check the full immutable source identity (task code, run UUID,
+            # base SHA and digest) before deleting any live handoff. A newer
+            # or unrelated ACTIVE control must survive this publication.
+            if retire_job and opt_in_raw is not None and active.is_file() and not active.is_symlink():
+                try:
+                    retire_handoff=github_handoff.retire_matching_handoff(
+                        active.read_text(encoding="utf-8"),opt_in_raw,payload)
                 except (OSError,UnicodeError):
                     pass
             if already_published and not retire_handoff and not retire_job:
