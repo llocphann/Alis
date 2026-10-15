@@ -239,6 +239,21 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(len(children), 2)
         self.assertTrue(all(child.poll() is not None for child in children))
 
+    def test_fast_refresh_does_not_shorten_duration(self):
+        self.fake("pw-top", "import itertools,sys,time\n"
+                  "limit=next((int(a.split('=',1)[1]) for a in sys.argv[1:] if a.startswith('--iterations=')),0)\n"
+                  "time.sleep(.1)\n"
+                  "for i in itertools.count():\n"
+                  " if limit and i>=limit: break\n"
+                  " print(" + repr(HEADER) + ",flush=True)\n"
+                  " print('R 10 1024 48000 1us 2us 0.1 0.1 30 F32LE fixture',flush=True)\n"
+                  " time.sleep(.005)\n")
+        result = self.run_trace("fast-top.jsonl")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        records = [json.loads(line) for line in (self.root / "fast-top.jsonl").read_text().splitlines()]
+        self.assertEqual(records[-1]["event"], "complete")
+        self.assertGreater(records[-1]["frames"], 65)
+
     def test_fail_closed_format_early_exit_and_input_limit(self):
         self.fake("pw-top", "import time\nprint(" + repr(SECRET) + ",flush=True)\ntime.sleep(10)\n")
         self.assertNotEqual(self.run_trace("bad-top").returncode, 0)

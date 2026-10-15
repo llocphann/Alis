@@ -249,8 +249,11 @@ def collect(args, writer):
     decoder = json.JSONDecoder()
     marker_rejected = False
     try:
+        # Refreshes can arrive faster than once per second (including graph
+        # changes). Bound both owned tools by our monotonic deadline, not by
+        # a guessed number of pw-top refreshes.
         for name, command in (("graph", ["pw-dump", "--monitor", "--no-colors"]),
-                              ("top", ["pw-top", "--batch-mode", "--iterations=65"])):
+                              ("top", ["pw-top", "--batch-mode"])):
             child = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                      stdin=subprocess.DEVNULL, start_new_session=True)
             children[name] = child
