@@ -60,7 +60,8 @@ try{
       },
       locator:selector=>kind==="list" &&
         selector==='[role="button"][aria-current="page"]'
-        ?loc(()=>submitted?shown():[],"selected"):loc(()=>[],"none"),
+        ?loc(()=>resolve().length===1&&submitted?shown():[],"selected")
+        :loc(()=>[],"none"),
       getByRole:()=>loc(()=>[],"none"),
       getByText:label=>kind==="main"
         ?loc(()=>scoped&&["Automatic Alis","No chats yet"].includes(label)
