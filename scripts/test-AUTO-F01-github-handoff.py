@@ -400,6 +400,68 @@ class GitHubHandoffTests(unittest.TestCase):
                 self.assertFalse(module.running_worker_status(now=at)[
                     "worker_restart_preflight_clear"])
 
+    def test_receipt_inventory_reports_only_categorical_blockers(self):
+        import importlib.util
+        cli=Path(__file__).resolve().parent/"AUTO-F01-github-handoff.py"
+        spec=importlib.util.spec_from_file_location("auto_f01_receipt_categorizer",cli)
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            with patch.object(module.worker,"state_root",return_value=root):
+                empty=module.pending_receipt_health()
+                self.assertTrue(empty["worker_receipt_inventory_complete"])
+                self.assertEqual(empty["worker_receipt_count_capped"],0)
+                folder=root/"receipts"
+                folder.mkdir()
+                private=folder/"JOB-private-123.json"
+                private.write_text(json.dumps({"phase":"published",
+                                               "token":"SECRET-DO-NOT-EMIT"}))
+                report=module.pending_receipt_health()
+                self.assertTrue(report["worker_receipt_inventory_complete"])
+                self.assertEqual(report["worker_receipt_phase_counts"]["published"],1)
+                self.assertNotIn("SECRET-DO-NOT-EMIT",json.dumps(report))
+                self.assertNotIn("JOB-private-123",json.dumps(report))
+                private.write_text(json.dumps({"phase":"finished"}))
+                report=module.pending_receipt_health()
+                self.assertTrue(report["worker_unsettled_receipts_present"])
+                self.assertEqual(report["worker_receipt_phase_counts"]["finished"],1)
+                self.assertIsNone(report["worker_receipt_inventory_blocker"])
+                tests=[
+                    ('{"phase":"historical-v0"}',
+                     "RECEIPT_ENTRY_UNKNOWN_OR_LEGACY_PHASE"),
+                    ('{"phase":{} }',"RECEIPT_ENTRY_UNKNOWN_OR_LEGACY_PHASE"),
+                    ('{"phase":"published"',"RECEIPT_ENTRY_INVALID_JSON"),
+                    ('[]',"RECEIPT_ENTRY_NOT_OBJECT"),
+                    ('x'*65537,"RECEIPT_ENTRY_SIZE_LIMIT_EXCEEDED"),
+                ]
+                for raw,expected in tests:
+                    private.write_text(raw)
+                    report=module.pending_receipt_health()
+                    self.assertFalse(report["worker_receipt_inventory_complete"])
+                    self.assertIsNone(report["worker_unsettled_receipts_present"])
+                    self.assertEqual(report["worker_receipt_inventory_blocker"],expected)
+                    self.assertNotIn("JOB-private-123",json.dumps(report))
+                private.unlink()
+                other=folder/"private-debug.tmp"
+                other.write_text("some important data; do not delete")
+                report=module.pending_receipt_health()
+                self.assertEqual(report["worker_receipt_inventory_blocker"],
+                                 "RECEIPT_ENTRY_UNEXPECTED_FILENAME")
+                self.assertTrue(other.exists(),"doctor must be read-only")
+                other.unlink()
+                private.symlink_to(root/"private-unreadable")
+                report=module.pending_receipt_health()
+                self.assertEqual(report["worker_receipt_inventory_blocker"],
+                                 "RECEIPT_ENTRY_SYMLINK")
+                private.unlink()
+                folder.rmdir()
+                folder.symlink_to(root/"private-unreadable")
+                report=module.pending_receipt_health()
+                self.assertEqual(report["worker_receipt_inventory_blocker"],
+                                 "UNSAFE_RECEIPT_DIRECTORY_SYMLINK")
+                self.assertFalse(report["worker_receipt_inventory_complete"])
+
     def test_doctor_checks_real_unit_process_without_printing_pid_paths(self):
         import importlib.util
         import os
