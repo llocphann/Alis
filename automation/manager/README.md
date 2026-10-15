@@ -1,4 +1,4 @@
-# Hadalis Automation control
+# Alis Automation control
 
 Settings is a frontend to the installed `~/.local/share/hadalis-automation/control.py` JSON endpoint. The installer also delegates old repo-copy control scripts to that backend before they can overwrite migrated state. Configuration stays at `$XDG_CONFIG_HOME/hadalis/automation.json`; durable runtime, recovery copies and bounded events stay privately under `$XDG_STATE_HOME/hadalis-automation`. Migration preserves existing profiles, prompts, continuous-loop semantics and uncertain submissions. Config/state transactions recover atomically after an interrupted write.
 
