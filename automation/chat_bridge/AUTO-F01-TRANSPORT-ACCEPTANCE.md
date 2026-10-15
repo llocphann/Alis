@@ -154,6 +154,14 @@ Synthetic tests exercise matching/missing/duplicate pairs, spoofed UI Project co
 
 A matching new worker job opts into this protocol using `"handoff":{"task_code":"AUTO-F01","run_id":"<same UUID>"}`. Cloud GPT must first fully author the pinned job file, check its exact UTF-8 SHA-256, and publish/update only the same control file from `PREPARING` to `DONE` **after** it has completed preparing and reviewing that job. **`DONE` means the *handoff is ready for a separate authorized local execution*, NOT that the Issue or assistant response is finished.** Do not put a ChatGPT token, prompt body, private logs, shell commands or runtime state in the control file.
 
+**On-device compatibility gate before staging a live GitHub job:** Since the owner may still have an older `hadalis-worker` Python process running after fetching new repo commits, always first check the actual currently running worker heartbeat **without modifying it**:
+
+```bash
+python3 scripts/AUTO-F01-github-handoff.py doctor
+```
+
+Do **not** create a live GitHub job while `worker_supports_github_handoff` is `false`: an older worker may reject the new `handoff` field and publish an `invalid` result before the new gate is loaded. `doctor` requires a recent worker heartbeat (<=30 s old) with the matching capability marker emitted by the running worker, not merely the presence of updated repository code or running systemd units. This is still not a guarantee of network access, safe execution or authenticated ChatGPT messages. If false, inspect the installed unit and upgrade plan before changing the worker; do not blindly restart the owner’s services or reset its receipts.
+
 **Local execution consent:** Before the worker may execute a *new opt-in job*, the owner must explicitly bind the full immutable job digest locally once:
 
 ```bash
