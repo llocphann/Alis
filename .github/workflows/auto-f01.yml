@@ -11,6 +11,7 @@ on:
       - "scripts/automation_test_helpers.py"
       - "scripts/AUTO-F01-*.py"
       - "scripts/test-AUTO-F01-*.py"
+      - "scripts/test-AUTO-F01-*.mjs"
       - ".github/workflows/auto-f01.yml"
   pull_request:
     paths:
@@ -22,6 +23,7 @@ on:
       - "scripts/automation_test_helpers.py"
       - "scripts/AUTO-F01-*.py"
       - "scripts/test-AUTO-F01-*.py"
+      - "scripts/test-AUTO-F01-*.mjs"
       - ".github/workflows/auto-f01.yml"
   workflow_dispatch:
 
@@ -46,6 +48,8 @@ jobs:
         run: |
           node --check automation/chat_bridge/desktop_driver.mjs
           node --check automation/chat_bridge/desktop_cli.mjs
+          node --check automation/chat_bridge/ui_response_gate.mjs
+          node scripts/test-AUTO-F01-ui-response-gate.mjs
           node --check automation/chat_bridge/native_adapter.mjs
           node --check automation/chat_bridge/native_cli.mjs
           node scripts/test-hadalis-native-session.mjs
