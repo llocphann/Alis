@@ -69,13 +69,26 @@ export async function oneShotUiSmoke({page,projectName="Automatic Alis",
     const s=before.observation;
     // Navigation is allowed away from a *foreign draft* without erasing it,
     // but never from a busy generation or ambiguous Project/sidebar.
-    if(s.target_project_list_count_capped!==1||
-       s.project_new_chat_action_count_capped!==1||
-       s.selected_target_chat_count_capped>1||
-       s.composer_count_capped!==1||
-       s.composer_disabled!==false||
-       s.stop_count_capped!==0)
-      return report("ALIS_UI_NAVIGATION_UNSAFE");
+    // A Project navigation button is usable even when the user's current
+    // chat belongs to another Project: ChatGPT hides the target Project's
+    // chat list in that view. We never treat the button as submission proof.
+    // Require one uniquely named navigation control and re-verify the
+    // exact Project badge/list/scoped EMPTY editor after navigating.
+    const blockers=[];
+    if(![0,1].includes(s.target_project_list_count_capped))
+      blockers.push("TARGET_PROJECT_LIST_AMBIGUOUS");
+    if(s.project_new_chat_action_count_capped!==1)
+      blockers.push("PROJECT_NEW_CHAT_ACTION_NOT_UNIQUE");
+    if(s.selected_target_chat_count_capped!==0)
+      blockers.push("TARGET_CHAT_ALREADY_SELECTED");
+    if(s.composer_count_capped!==1||s.composer_disabled!==false)
+      blockers.push("ACTIVE_COMPOSER_NOT_UNIQUE_OR_DISABLED");
+    if(s.stop_count_capped!==0)
+      blockers.push("GENERATION_ACTIVE");
+    if(blockers.length)
+      return report("ALIS_UI_NAVIGATION_UNSAFE",{
+        navigation_blockers:blockers
+      });
     const action=await exactNavigationAction(page,projectName);
     if(!action)return report("ALIS_UI_PROJECT_NEW_CHAT_ACTION_AMBIGUOUS");
     navigated=true;
