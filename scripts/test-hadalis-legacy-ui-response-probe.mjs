@@ -81,7 +81,7 @@ const test=async(code,req,reply,guard)=>{
     assert.equal(JSON.stringify(r).includes(secret),false);
 };
 await test("ONE_VISIBLE_HARMLESS_PAIR_NOT_ATTESTED",1,1,true);
-await test("ONE_VISIBLE_HARMLESS_PAIR_NOT_ATTESTED",1,1,false);
+await test("HARMLESS_PAIR_VISIBLE_PROJECT_CONTEXT_UNVERIFIED",1,1,false);
 await test("HARMLESS_PAIR_NOT_VISIBLE_OR_INCOMPLETE",1,0,true);
 await test("HARMLESS_PAIR_NOT_VISIBLE_OR_INCOMPLETE",0,1,true);
 await test("AMBIGUOUS_VISIBLE_HARMLESS_MESSAGES",2,1,true);
