@@ -1,4 +1,4 @@
-# Hadalis deterministic worker
+# Alis deterministic worker
 
 The worker is the **hands**, never the brain. ChatGPT remains the only component that chooses commands, patches, goals, or next development steps.
 
