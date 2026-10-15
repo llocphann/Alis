@@ -281,9 +281,12 @@ def check_prepared_queue() -> dict:
     result["service_state"] = service
     if service != "inactive" or mode not in {"native_mode", "ui_mode", "ui_queue_mode"}:
         blockers.append("SCHEDULER_CUTOVER_NOT_READY")
-    # The existing Start Queue CLI is still guarded by native,
-    # server-attested transport. Never imply the UI prototype can bypass it.
-    blockers.append("UI_TASK_QUEUE_INTEGRATION_NOT_ACCEPTED")
+    # Native Start remains server-receipt-gated. The separate queue-only
+    # UI path requires explicit, informed owner acceptance of UI-only receipts.
+    if service == "active" and mode == "ui_queue_mode":
+        blockers.append("UI_QUEUE_OWNER_ACCEPTANCE_REQUIRED")
+    else:
+        blockers.append("UI_TASK_QUEUE_INTEGRATION_NOT_ACCEPTED")
     return result
 
 
