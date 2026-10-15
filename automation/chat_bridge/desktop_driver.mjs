@@ -529,68 +529,19 @@ export async function submitPrompt(page, prompt) {
     )
   };
 
-  // Match the known-good feasibility probe exactly: after fill(), allow
-  // ChatGPT's React/composer state to settle, then activate the semantic
-  // Send control through HTMLElement.click() before trying any key path.
+  // A send is an irreversible operation. Attempt one semantic click only.
+  // If the UI does not acknowledge it, the result is INDETERMINATE: do not
+  // try Enter, CDP, Wayland or another click. The owning Python bridge has
+  // already fsynced a one-shot intent before invoking this subprocess.
   await page.waitForTimeout(300);
-
   if (await send.isDisabled())
-    throw new Error("Send is disabled after composer settle");
+    throw new Error("ALIS_UI_SEND_DISABLED_NO_ATTEMPT");
 
   await send.evaluate(element => element.click());
+  if (!await waitForSubmissionStart(page, composer, 2500))
+    throw new Error("ALIS_UI_SEND_UNCERTAIN_NO_RETRY");
 
-  if (await waitForSubmissionStart(page, composer, 2500))
-    return completionBaseline;
-
-  // Keep the action deterministic and coordinate-free. Start with the
-  // normal editor gesture while explicitly restoring focus after fill().
-  await composer.focus();
-  await page.keyboard.press("Enter");
-
-  if (await waitForSubmissionStart(page, composer))
-    return completionBaseline;
-
-  // Playwright key synthesis can be ignored by Electron/Chromium in some
-  // embedded-editor states. Dispatch the Enter key through the underlying
-  // Chromium DevTools protocol next; this does not depend on OS focus.
-  await composer.focus();
-  await dispatchCdpEnter(page);
-
-  if (await waitForSubmissionStart(page, composer))
-    return completionBaseline;
-
-  // Then exercise the semantic Send control through a full event sequence.
-  // This still avoids screen coordinates and pointer hit-testing.
-  await dispatchSemanticClick(send);
-
-  if (await waitForSubmissionStart(page, composer))
-    return completionBaseline;
-
-  // Final DOM fallback for builds where the button's native click path is
-  // wired differently from delegated pointer handlers.
-  await send.evaluate(element => element.click());
-
-  if (await waitForSubmissionStart(page, composer))
-    return completionBaseline;
-
-  // Last-resort platform input: focus the real ChatGPT window through niri
-  // by stable window id, then inject a real Wayland Return key with wtype.
-  // This is still coordinate-free and is only reached after all CDP/DOM
-  // submission paths have been verified ineffective.
-  const nativeWayland = await dispatchNativeWaylandEnter();
-
-  if (nativeWayland.ok && await waitForSubmissionStart(page, composer, 2500))
-    return completionBaseline;
-
-  const diagnostic = await page.evaluate(() => ({
-    activeTag: document.activeElement?.tagName ?? null,
-    activeRole: document.activeElement?.getAttribute?.("role") ?? null,
-    activeAriaLabel: document.activeElement?.getAttribute?.("aria-label") ?? null
-  }));
-
-  throw new Error(
-    `prompt did not submit after keyboard, CDP Enter, semantic Send, or native Wayland Return: ${JSON.stringify({ diagnostic, nativeWayland })}`
-  );
+  return completionBaseline;
 }
 
 async function loopMarkerTokens(page) {
