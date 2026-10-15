@@ -40,9 +40,34 @@ def inspect(job_id: str, *, fetch: bool = True) -> tuple[dict, dict, str]:
     return signal, job, original
 
 
+def running_worker_status(*, now: int | None = None) -> dict:
+    """Read only the local runtime heartbeat, never the GitHub job queue."""
+    at = int(time.time()) if now is None else now
+    path = worker.state_root() / "pool.json"
+    try:
+        if path.is_symlink() or path.stat().st_size > 8192:
+            raise ValueError("worker heartbeat unavailable")
+        snapshot = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        snapshot = {}
+    observed = snapshot.get("heartbeat_at_unix") if isinstance(snapshot,dict) else None
+    fresh = (type(observed) is int and 0 <= at-observed <= 30)
+    contract = (isinstance(snapshot,dict) and
+                snapshot.get("github_handoff_contract") == github_handoff.SCHEMA)
+    return {
+        "purpose": "auto-f01-github-handoff-doctor",
+        "status": "read-only",
+        "worker_heartbeat_fresh": fresh,
+        "worker_supports_github_handoff": bool(fresh and contract),
+        "managed_chat_transport_ready": False,
+        "scheduler_submission_authorized": False
+    }
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="AUTO-F01 single-file GitHub handoff")
     command = parser.add_subparsers(dest="command", required=True)
+    command.add_parser("doctor",help="Read running worker capability without GitHub mutations")
     for name in ("status", "approve"):
         p = command.add_parser(name)
         p.add_argument("job_id")
@@ -51,6 +76,9 @@ def main(argv: list[str]) -> int:
             p.add_argument("--expected-sha256", required=True,
                            help="Exact pinned job digest displayed by status")
     args = parser.parse_args(argv)
+    if args.command == "doctor":
+        print(json.dumps(running_worker_status(), sort_keys=True))
+        return 0
     if args.command == "approve" and args.owner_approved is not True:
         raise ValueError("explicit owner approval required before any local job is eligible")
     signal, job, raw = inspect(args.job_id)
