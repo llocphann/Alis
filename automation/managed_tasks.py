@@ -319,6 +319,119 @@ def _schedule_next_authorized() -> dict:
     return {"ok": True, "state": "scheduled", "selected": selected}
 
 
+
+def reconcile_ui_once() -> dict:
+    """Advance only after the exact profile's durable UI-only DONE evidence.
+
+    UI evidence is intentionally NOT presented as a server-attested
+    conversation/message receipt. Native admission and delivery proofs remain
+    separate and the historical manager/native transport gate stays closed.
+    """
+    import json
+    import re
+    from .chat_bridge.protocol import DirectiveKind, parse_loop_directive
+    snapshot = queue.view()
+    if snapshot.get("mode") != "ordered" or snapshot.get("state") != "active":
+        return {"ok": True, "state": snapshot["state"]}
+    active = snapshot.get("active")
+    if not isinstance(active, dict):
+        raise tf.TaskError("Active UI queue identity requires review")
+    with queue._lock():
+        manifest = queue._load()
+        if (not manifest or manifest.get("state") != "active"
+                or manifest.get("approved_start") is not True
+                or manifest.get("stop_requested")
+                or manifest.get("active") != active):
+            return {"ok": True, "state": "stop_or_owner_changed"}
+        selected = [it for it in manifest["items"]
+                    if it.get("state") == "active"
+                    and it.get("repository") == active["repository"]
+                    and it.get("code") == active["code"]]
+        if len(selected) != 1:
+            raise tf.TaskError("Active UI queue member not unique")
+        pinned_sha = selected[0]["source_sha"]
+        if not isinstance(pinned_sha, str) or not tf.SHA.fullmatch(pinned_sha):
+            raise tf.TaskError("Active UI queue pin unavailable")
+        pid = profile_id(active["repository"], active["code"])
+        config, state, issues = store.read_snapshot()
+        profile = next((p for p in config["profiles"] if p["id"] == pid), None)
+        item = state["profiles"].get(pid)
+        if (issues or profile is None or item is None
+                or reference(profile) !=
+                (active["repository"], active["code"])):
+            raise tf.TaskError("UI queue profile identity unavailable")
+        if (item.get("status") != "completed"
+                or item.get("desired") != "stopped"
+                or item.get("last_success") != "DONE"
+                or item.get("pending") or item.get("job_id")
+                or item.get("run_active")):
+            return {"ok": True, "state": "active"}
+        session = item.get("session")
+        attempt = item.get("last_ui_response_attempt")
+        if (not isinstance(session, dict)
+                or session.get("transport") != "alis-ui-once"
+                or not isinstance(session.get("ui_target_key"), str)
+                or not re.fullmatch(r"[a-f0-9]{64}", session["ui_target_key"])
+                or not isinstance(attempt, str)
+                or not re.fullmatch(r"[0-9a-f-]{36}", attempt)):
+            raise tf.TaskError("UI-only completion lacks local evidence")
+        receipt_path = (store.state_dir() / "ui-responses" / pid /
+                        (attempt + ".json"))
+        if (receipt_path.is_symlink() or not receipt_path.is_file()
+                or receipt_path.stat().st_size > 125000):
+            raise tf.TaskError("UI response evidence is unavailable or unsafe")
+        try:
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            if (receipt.get("transport") != "alis-ui-once"
+                    or receipt.get("attempt_id") != attempt
+                    or receipt.get("directive") != "DONE"
+                    or parse_loop_directive(receipt["response"]).kind
+                    is not DirectiveKind.DONE):
+                raise tf.TaskError("UI response evidence mismatch")
+        except (OSError, ValueError, KeyError, TypeError):
+            raise tf.TaskError("UI response evidence requires review") from None
+        record = tf.load_task(active["code"], active["repository"])
+        if (record.get("unresolved")
+                or record.get("task", {}).get("base_sha") != pinned_sha
+                or record.get("status") not in
+                {"prepared", "handoff_ready", "awaiting_owner"}):
+            raise tf.TaskError("UI queue task pin or lifecycle changed")
+        delivery = {
+            "transport": "alis-ui-once",
+            "attestation": "local-ui-only",
+            "ui_target_sha256": session["ui_target_key"],
+            "response_attempt": attempt,
+            "conversation_id": None,
+            "ack_unix": int(time.time()),
+        }
+        if record.get("status") == "awaiting_owner":
+            if record.get("delivery") != delivery:
+                # Preserve previously written local receipt after crash, and
+                # never overwrite provenance for an attempted repeat.
+                prior = record.get("delivery") or {}
+                if (prior.get("transport") != "alis-ui-once"
+                        or prior.get("ui_target_sha256") != session["ui_target_key"]
+                        or prior.get("response_attempt") != attempt
+                        or prior.get("attestation") != "local-ui-only"):
+                    raise tf.TaskError("Existing UI task delivery conflicts")
+        else:
+            record["status"] = "awaiting_owner"
+            record["delivery"] = delivery
+            record["delivery_acknowledged_unix"] = delivery["ack_unix"]
+            record["updated_unix"] = delivery["ack_unix"]
+            tf._save_task(record)
+        outcome = queue.advance(verify_completion=lambda current:
+            current.get("status") == "awaiting_owner"
+            and current.get("delivery", {}).get("transport") == "alis-ui-once"
+            and current.get("delivery", {}).get("attestation") == "local-ui-only"
+            and current.get("delivery", {}).get("response_attempt") == attempt
+            and current.get("delivery", {}).get("ui_target_sha256")
+                == session["ui_target_key"])
+    if outcome.get("state") == "waiting":
+        return _schedule_next_authorized()
+    return outcome
+
+
 def reconcile_once() -> dict:
     """Called by *existing* manager tick; do not create a second scheduler."""
     view = queue.view()
