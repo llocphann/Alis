@@ -128,9 +128,11 @@ This mode checks only the fixed harmless request string and the fixed `HADALIS_L
 
 Synthetic tests exercise matching/missing/duplicate pairs, spoofed UI Project context, command rejection, loopback-only CDP, fake renderer and output redaction. This is a **reproducible read-only follow-up to the owner screenshot**, not the missing documented provider identity/receipt interface. Do not rerun the one-shot acceptance, rotate a chat or modify the existing 18-task queue.
 
-## Owner-approved single-shot acceptance runbook (2026-10-15)
+**Owner follow-up observed on installed Desktop (2026-10-15):** The owner ran the `observe-acceptance` read-only CLI against the already-existing chat. Its categorical JSON reported `visual_pair_status:"ONE_VISIBLE_HARMLESS_PAIR_NOT_ATTESTED"`, `request_visible_count_capped:1`, `reply_visible_count_capped:1`, `visual_project_guard_observed:true`, `status:"read-only"`; server Project/conversation/user-message verification, final receipt and Scheduler authorization all remained `false`. This corroborates the prior screenshot with a separate **no-send** renderer observation. It is not a server receipt and must not be used to adopt/acknowledge the test as a managed task. The owner also pasted the proposed `systemctl --user show` loop **without any service-state output**; there is currently **no on-device service health conclusion** or startup proof. Await only the actual `LoadState`, `ActiveState`, `SubState`, `Result`, `ExecMainStatus`, and `NRestarts` lines for `hadalis-chatgpt`, `hadalis-chat-bridge`, and `hadalis-worker`. No service restart/start/reset is required for this diagnostic.
 
-The owner approved **one fixed harmless acceptance** in the ChatGPT conversation. This authorizes only the isolated manual test described below; it does **not** authorize starting the Automation scheduler, sending any of the 18 queued tasks, or replaying an uncertain attempt. GitHub-side changes cannot reach or inspect the owner's live Desktop process. The test is **NOT EXECUTED** until the owner invokes the CLI in the actual desktop session; an approval message is not a send receipt.
+## Historical owner-approved single-shot acceptance runbook (already executed; DO NOT rerun)
+
+The owner approved **one fixed harmless acceptance** in the ChatGPT conversation. This authorizes only the isolated manual test described below; it does **not** authorize starting the Automation scheduler, sending any of the 18 queued tasks, or replaying an uncertain attempt. GitHub-side changes cannot reach or inspect the owner's live Desktop process. The owner subsequently ran the single approved test on the installed Desktop, as documented above. The original runbook remains for audit only: **its permission is exhausted, and these commands must not be run again without distinct approval and a new test plan.**
 
 **Preflight on the owner's machine:** Use a clean `Alis/dev` checkout updated by an ordinary fast-forward after checking for concurrent local work. Never force-reset or delete worktrees, task state, journals, receipts or queues. Confirm Desktop is open to the **empty** new-chat page in the existing Project `Automatic Alis`, with no user draft.
 
@@ -144,7 +146,7 @@ node automation/chat_bridge/legacy_ui_probe_cli.mjs probe
 
 Only continue if the probe confirms `read_only_project_entry_ready:true`, exactly one Project-scoped composer, one Project badge, one disabled Send, no Stop, an empty draft, and the corroborated empty Project landing. If it does not, **stop without sending**, do not work around the guards.
 
-**Exactly one intentional, owner-approved test attempt** (one invocation, fresh UUID generated locally; no shell loop and no automatic retry):
+**Historical command used for the one already-completed owner-approved test — DO NOT RUN AGAIN** (shown for audit, not as an action):
 
 ```bash
 acceptance_id="$(node -p 'require("node:crypto").randomUUID()')"
