@@ -108,6 +108,18 @@ async function main() {
                     scope === "generic-label-without-project-guard") &&
                    evidence === "project-empty-landing-corroborated") {
           diagnosis = "ALIS_UI_PROJECT_LANDING_COMPOSER_UNSCOPED";
+        } else if (!assessment.project_view_visible &&
+                   observation.target_project_list_count_capped === 1 &&
+                   observation.project_new_chat_action_count_capped === 1 &&
+                   observation.selected_target_chat_count_capped === 0 &&
+                   observation.project_badge_count_capped === 0 &&
+                   observation.composer_count_capped === 1 &&
+                   observation.composer_draft_present === false &&
+                   observation.composer_disabled === false &&
+                   observation.stop_count_capped === 0) {
+          // Sidebar Project navigation is visible, but the current editor
+          // is still global. The action is for the human, never an auto-click.
+          diagnosis = "ALIS_UI_PROJECT_NEW_CHAT_NAVIGATION_REQUIRED";
         } else if (!assessment.project_view_visible) {
           diagnosis = "ALIS_UI_PROJECT_VIEW_UNVERIFIED";
         }
@@ -122,6 +134,10 @@ async function main() {
       empty_project_entry_ready: projectEntryReady,
       diagnosis,
       target_diagnostics: targetDiagnostics,
+      recommended_owner_action:
+        diagnosis === "ALIS_UI_PROJECT_NEW_CHAT_NAVIGATION_REQUIRED"
+          ? "OPEN_NEW_CHAT_IN_CONFIGURED_PROJECT_MANUALLY"
+          : "REVIEW_PROJECT_TARGET_WITHOUT_SENDING",
       message_submission_attempted: false,
       server_identity_attested: false,
       ui_scheduler_authorized: false
