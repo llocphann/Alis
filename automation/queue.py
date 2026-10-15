@@ -348,8 +348,10 @@ def clear(*, approved: bool = False,
             if (not isinstance(active, dict) or len(claimed) != 1
                     or not isinstance(selection, dict)
                     or any(active.get(key) != claimed[0].get(key)
-                           or selection.get(key) != active.get(key)
                            for key in ("repository", "code"))
+                    or selection.get("code") != active.get("code")
+                    or ("repository" in selection and
+                        selection["repository"] != active.get("repository"))
                     or any(item.get("state") not in
                            {"queued", "active", "completed", "awaiting_owner"}
                            for item in manifest["items"])):
