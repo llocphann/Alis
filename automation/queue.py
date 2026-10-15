@@ -356,3 +356,126 @@ def clear(*, approved: bool = False) -> dict:
                 os.close(fd)
         return {**view(None), "cleared": True,
                 "archived": True, "task_records_preserved": True}
+
+
+
+# Task-code-free intake is a discovery workflow, never direct job execution.
+# A conservative source/label ranking prefers deterministic Backend work and
+# omits high-risk visual/UX redesign. Issue text is data, not instructions.
+BACKEND_WORDS = re.compile(
+    r"\b(?:backend|back-end|api|daemon|worker|service|scheduler|"
+    r"automation|database|db|security|credential|auth|integration|"
+    r"protocol|queue|receipt|pipeline|ci|test|regression|performance|"
+    r"logging|cache|dependency|build|packaging|rust|python)\b", re.I)
+VISUAL_COMPLEX_WORDS = re.compile(
+    r"\b(?:animation|animated|transitions?|redesign|visual design|"
+    r"shader|qml|quickshell|layout|theming|css|ux|frontend|"
+    r"front-end|responsive|motion|blur|graphic|3d|widget)\b", re.I)
+BLOCKED_LABELS = {
+    "blocked", "on hold", "needs owner approval", "needs information",
+    "in progress", "work in progress", "wip", "duplicate", "do not automate",
+}
+
+
+def discover_backend_candidates(api=None, *, limit: int = 8) -> list[dict]:
+    """Find a small, reviewable, pinned Issue queue; no code is executed.
+
+    Use only canonical open coded Issues and issue labels/title for ranking.
+    Treat listing/search bodies as untrusted input and never infer owner
+    approval from a discovery result.
+    """
+    api = tf._github if api is None else api
+    if not 1 <= limit <= MAX_ITEMS:
+        raise tf.TaskError("Invalid discovery limit")
+    found = []
+    for repo_index, repo in enumerate(tf.REPOSITORIES):
+        for page in range(1, 11):
+            issues = api(f"/repos/{repo}/issues?state=open&per_page=100&page={page}")
+            if not isinstance(issues, list):
+                raise tf.TaskError("Open GitHub Issue listing unavailable")
+            for issue in issues:
+                if (not isinstance(issue, dict) or
+                        issue.get("state") != "open" or "pull_request" in issue):
+                    continue
+                code = tf._code_of_title(issue.get("title", ""))
+                if not code or code == "AUTO-F01":
+                    continue  # Never auto-select the controlling transport task.
+                labels = {
+                    entry["name"].casefold().strip()
+                    for entry in issue.get("labels", []) if
+                    isinstance(entry, dict) and isinstance(entry.get("name"), str)
+                }
+                if labels & BLOCKED_LABELS:
+                    continue
+                title = issue.get("title", "")
+                signal = title + " " + " ".join(labels)
+                if VISUAL_COMPLEX_WORDS.search(signal):
+                    continue
+                backend = bool(BACKEND_WORDS.search(signal))
+                urgent = 20 if labels & {"critical", "priority:p0", "p0"} else (
+                    10 if labels & {"high", "priority:p1", "p1"} else 0)
+                number = issue.get("number")
+                if type(number) is not int or number < 1:
+                    continue
+                found.append((not backend, -urgent, repo_index, number,
+                              repo, code, issue))
+            if len(issues) < 100:
+                break
+        else:
+            raise tf.TaskError("Open Issue pagination incomplete; cannot auto-select")
+    found.sort(key=lambda row: row[:4])
+    unique_codes = set()
+    selected = []
+    for _, _, _, _, repo, code, issue in found:
+        # A code duplicated across repositories is ambiguous, even when
+        # titles seem similar; require owner input rather than guessing.
+        occurrences = {(r, n) for _, _, _, n, r, c, _ in found if c == code}
+        if len(occurrences) != 1 or code in unique_codes:
+            continue
+        unique_codes.add(code)
+        selected.append((repo, issue))
+        if len(selected) == limit:
+            break
+    if not selected:
+        raise tf.TaskError("No eligible open Backend/nonvisual Alis Issues; enter a task code")
+    pinned = {}
+    result = []
+    for repo, issue in selected:
+        if repo not in pinned:
+            pinned[repo] = api(
+                f"/repos/{repo}/branches/{tf.REPOSITORIES[repo]}")
+        result.append(tf._task_from_issue(repo, issue, pinned[repo], api))
+    return result
+
+
+def prepare_auto(*, mode: str = "ordered", api=None) -> dict:
+    """Blank input discovers reviewable work but never grants Start approval."""
+    if mode not in MODES:
+        raise tf.TaskError("Unsupported scheduling mode")
+    with _lock():
+        existing = _load()
+        if existing and existing.get("state") not in {"finished", "cancelled"}:
+            if (existing.get("source") == "auto-discovery" and
+                    existing.get("mode") == mode):
+                return {**view(existing), "duplicate": True,
+                        "auto_discovered": True}
+            raise tf.TaskError("An unfinished queue exists; clear or finish it first")
+    candidates = discover_backend_candidates(api)
+    mapping = {task["code"]: task for task in candidates}
+    # prepare() takes its own lock and validates every pin/job state before
+    # persisting. A concurrent owner Start cannot be overwritten.
+    result = prepare(";".join(mapping), mode=mode,
+                     resolver=lambda code: mapping[code])
+    if result.get("duplicate"):
+        raise tf.TaskError("Existing manually prepared queue was not replaced")
+    with _lock():
+        doc = _load()
+        if (not doc or doc.get("state") != "prepared" or
+                doc.get("approved_start") or doc.get("active") or
+                [(x["code"], x["repository"]) for x in doc["items"]] !=
+                [(x["code"], x["repository"]) for x in candidates]):
+            raise tf.TaskError("Automatic candidate state changed; review queue")
+        doc["source"] = "auto-discovery"
+        doc["selection_policy"] = "backend-first-nonvisual"
+        _save(doc)
+        return {**view(doc), "duplicate": False, "auto_discovered": True}
