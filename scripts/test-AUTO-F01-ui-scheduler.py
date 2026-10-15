@@ -12,6 +12,8 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from automation.chat_bridge import ui_scheduler
 from automation.manager import daemon, model, store
+from automation import queue, managed_tasks, taskflow as tf
+import json
 
 KEY = "a" * 64
 OTHER_KEY = "b" * 64
@@ -219,6 +221,97 @@ class UiSchedulerTests(TestCase):
         self.assertEqual(ui_scheduler.ui_tick(
             ID, now=200, desktop=lambda *_a, **_k: self.fail("send")),
             "ALIS_UI_ANOTHER_PROFILE_UNSETTLED")
+
+
+    def _queue_fixture(self, *, state="prepared", approved=False,
+                       source_sha="a" * 40):
+        pid = managed_tasks.profile_id("llocphann/Alis", "AI-I01")
+        def register(config, runtime):
+            owner = model.new_profile("AI-I01")
+            owner.update(
+                id=pid, name="AI-I01",
+                description="taskflow:llocphann/Alis:AI-I01",
+                enabled=True, project_name=model.DEFAULT_PROJECT)
+            config["profiles"].append(owner)
+            item = store.profile_state()
+            item.update(desired="run", request="new")
+            runtime["profiles"][pid] = item
+            # The standalone default generic profile should never send.
+            config["profiles"][0]["enabled"] = False
+            runtime["profiles"][ID].update(desired="stopped")
+        store.change(register)
+        manifest = {
+            "schema": queue.QUEUE_SCHEMA, "mode": "ordered",
+            "state": state, "approved_start": approved,
+            "active": {"repository": "llocphann/Alis", "code": "AI-I01"}
+                if state == "active" else None,
+            "items": [{
+                "repository": "llocphann/Alis", "code": "AI-I01",
+                "source_sha": source_sha,
+                "state": "active" if state == "active" else "queued",
+            }],
+        }
+        with queue._lock():
+            queue._save(manifest)
+        record = {
+            "status": "prepared", "unresolved": False,
+            "task": {"base_sha": "a" * 40, "issue_url": "https://github.com/llocphann/Alis/issues/1"},
+            "cloud_prompt": "Implement task AI-I01 on dev safely",
+        }
+        return pid, record
+
+    def test_queue_mode_never_starts_prepared_queue(self):
+        _, task = self._queue_fixture()
+        before = queue.view()
+        with patch.object(tf, "load_task", return_value=task):
+            result = ui_scheduler.queue_tick(
+                now=200, desktop=lambda *_a, **_k: self.fail("send"))
+        self.assertEqual(result, "queue_idle")
+        self.assertEqual(queue.view(), before)
+
+    def test_queue_mode_requires_approved_exact_identity_and_sha(self):
+        pid, task = self._queue_fixture(state="active", approved=False)
+        with patch.object(tf, "load_task", return_value=task):
+            self.assertEqual(ui_scheduler.queue_tick(
+                now=200, desktop=lambda *_a, **_k: self.fail("send")),
+                "ALIS_UI_QUEUE_NOT_AUTHORIZED")
+        with queue._lock():
+            doc = queue._load()
+            doc["approved_start"] = True
+            queue._save(doc)
+        with patch.object(tf, "load_task", return_value=task):
+            self.assertEqual(ui_scheduler.queue_tick(
+                now=200, desktop=lambda *_a, **_k: reply("ALIS_LOOP:DONE")),
+                "DONE")
+        self.assertEqual(store.read_snapshot()[1]["profiles"][pid]["status"],
+                         "completed")
+        self.assertEqual(queue.view()["state"], "active")
+        self.assertIsNotNone(queue.view()["active"])
+
+    def test_queue_mode_stale_sha_and_stop_race_never_submit(self):
+        _, task = self._queue_fixture(state="active", approved=True)
+        task["task"]["base_sha"] = "b" * 40
+        with patch.object(tf, "load_task", return_value=task):
+            self.assertEqual(ui_scheduler.queue_tick(
+                now=200, desktop=lambda *_a, **_k: self.fail("send")),
+                "ALIS_UI_QUEUE_TASK_CHANGED")
+        task["task"]["base_sha"] = "a" * 40
+        original = ui_scheduler.ui_tick
+        def stop_before_intent(*a, **kw):
+            with queue._lock():
+                doc = queue._load()
+                doc["approved_start"] = False
+                doc["state"] = "stopping"
+                doc["stop_requested"] = True
+                queue._save(doc)
+            return original(*a, **kw)
+        with patch.object(tf, "load_task", return_value=task), \
+             patch.object(ui_scheduler, "ui_tick", side_effect=stop_before_intent):
+            self.assertEqual(ui_scheduler.queue_tick(
+                now=200, desktop=lambda *_a, **_k: self.fail("send")),
+                "ALIS_UI_QUEUE_STOPPED_BEFORE_SUBMISSION")
+        pid = managed_tasks.profile_id("llocphann/Alis", "AI-I01")
+        self.assertIsNone(store.read_snapshot()[1]["profiles"][pid]["pending"])
 
 
 if __name__ == "__main__":
