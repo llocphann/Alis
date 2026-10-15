@@ -356,6 +356,69 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
         finally:shutil.rmtree(checkout,ignore_errors=True)
 
 
+def prune_expired_handoff(*, now: int | None = None) -> str:
+    """One safe Git commit at most per expired control; no new service.
+
+    A committed immutable job is NOT executable after signal expiry. Keep the
+    single control file if any local worker receipt exists, because the action
+    might be executing or waiting for remote publication. If remote changes
+    during the prune, a non-fast-forward push fails safely; retry later.
+    """
+    at=int(time.time()) if now is None else now
+    root=state_root()
+    with (root/"publish.lock").open("a+") as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX)
+        fetch_dev()
+        try:
+            raw=remote_text(github_handoff.PATH)
+        except RuntimeError:
+            return "no_handoff"
+        job_id=github_handoff.expired_for_retirement(raw,now=at)
+        if job_id is None:return "not_expired_or_invalid"
+        if load_receipt(job_id):return "unresolved_receipt_preserved"
+        remote=remote_url()
+        if urlparse(remote).password:raise ValueError("credential-bearing remote URL is unsupported")
+        head=git("rev-parse","origin/dev").stdout.strip()
+        if not SHA_RE.fullmatch(head):raise RuntimeError("cleanup HEAD unavailable")
+        publish_dir=root/"publish";publish_dir.mkdir(exist_ok=True,mode=0o700)
+        checkout=Path(tempfile.mkdtemp(prefix="handoff-prune-",dir=publish_dir))
+        shutil.rmtree(checkout)
+        try:
+            clone=run(["git","clone","--shared","--branch","dev","--no-checkout",
+                       str(ROOT),str(checkout)],timeout=60)
+            if clone.returncode:raise RuntimeError("cleanup clone failed")
+            checked=run(["git","checkout","--detach",head],cwd=checkout,timeout=60)
+            if checked.returncode:raise RuntimeError("cleanup checkout failed")
+            active=checkout/github_handoff.PATH
+            if active.is_symlink() or not active.is_file() or active.stat().st_size>github_handoff.MAX_BYTES:
+                return "control_changed"
+            current=active.read_text(encoding="utf-8")
+            if current!=raw or load_receipt(job_id):
+                return "control_changed_or_receipt"
+            active.unlink()
+            for argv in (["git","add","--",github_handoff.PATH],
+                         ["git","commit","-m","automation: retire expired handoff"]):
+                if run(argv,cwd=checkout,timeout=60).returncode:
+                    raise RuntimeError("cleanup commit failed")
+            # Existing scoped Git credentials, same as receipt publisher.
+            fetch_dev()
+            push_remote=os.environ.get("HADALIS_WORKER_PUSH_REMOTE") or remote
+            if urlparse(push_remote).password:raise ValueError("credentials cannot appear in push argv")
+            from automation.manager.credentials import git_options,git_env,repository,status
+            owner=next((pid for pid,saved in status()["github"].items() if saved),None)
+            if owner and repository(remote):
+                push_remote="https://github.com/"+repository(remote)+".git"
+            pushed=run(["git",*git_options(owner,push_remote),"push",push_remote,
+                        "HEAD:dev"],cwd=checkout,timeout=45,env=git_env())
+            if pushed.returncode:raise RuntimeError("expired handoff cleanup push failed")
+        finally:
+            shutil.rmtree(checkout,ignore_errors=True)
+        approval=github_handoff.approval_path(root,job_id)
+        if approval.is_file() and not approval.is_symlink() and not load_receipt(job_id):
+            approval.unlink()
+        return "expired_unstarted_handoff_pruned"
+
+
 def publish_receipt(job_id):
     with job_lock(job_id):
         receipt=load_receipt(job_id)
@@ -500,7 +563,7 @@ def main() -> int:
         _write(root/"pool-v2.json",{"version":2,"started_at_unix":int(time.time())})
         if args.once:
             result=process_one();print(json.dumps({"outcome":result}));return 0
-        running={};publisher=None;last_fetch=0;last_cleanup=0;last_error=None
+        running={};publisher=None;last_fetch=0;last_cleanup=0;last_remote_cleanup=0;last_error=None
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as execution, ThreadPoolExecutor(max_workers=1) as publication:
             while True:
                 now=int(time.time())
@@ -514,7 +577,13 @@ def main() -> int:
                     cleanup(startup=False);last_cleanup=now
                 if publisher is None or publisher.done():
                     ready=[p.stem for p in (root/"receipts").glob("*.json") if (lambda r:r.get("result") and r["phase"]!="published" and now>=r.get("publish_after_unix",0))(json.loads(p.read_text()))]
-                    publisher=publication.submit(publish_receipt,ready[0]) if ready else None
+                    if ready:
+                        publisher=publication.submit(publish_receipt,ready[0])
+                    elif now-last_remote_cleanup>=300:
+                        last_remote_cleanup=now
+                        publisher=publication.submit(prune_expired_handoff)
+                    else:
+                        publisher=None
                 if now-last_fetch>=POLL and len(running)<MAX_WORKERS:
                     last_fetch=now
                     try:
