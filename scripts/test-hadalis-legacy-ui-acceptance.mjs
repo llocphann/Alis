@@ -14,6 +14,7 @@ const id="11111111-1111-4111-8111-111111111111";
 const events=[];
 let disabled=false,draft="",busy=false,clickThrows=false,fillThrows=false;
 let sendDisabled=true,keepSendDisabledAfterFill=false;
+let forceForeignDraftAfterFill=false;
 function loc(items,kind){
   return {
     count:async()=>items.length,
@@ -22,20 +23,21 @@ function loc(items,kind){
     isVisible:async()=>items[0]?.visible??false,
     isDisabled:async()=>kind==="send"?sendDisabled:
       (items[0]?.disabled??false),
-    evaluate:async fn=>{
+    evaluate:async (fn,expected)=>{
       if(kind==="send"){
         events.push("click");
         if(clickThrows)throw Error("UNKNOWN_CLICK_OUTCOME");
         return fn({click:()=>{}}); // only one attempted click
       }
-      return fn({textContent:items[0]?.draft??""});
+      return fn({textContent:kind==="editor"?draft:(items[0]?.draft??"")},
+        expected);
     },
     fill:async value=>{
       events.push("fill");
       assert.match(value,/AUTO-F01 UI transport acceptance test only/);
       assert.ok(!value.includes("secret"));
       if(fillThrows)throw Error("UNKNOWN_COMPOSER_OUTCOME");
-      draft=value;
+      draft=forceForeignDraftAfterFill?"ghp_FOREIGN_DRAFT":value;
       if(!keepSendDisabledAfterFill)sendDisabled=false;
     },
     locator:()=>loc([],"selected"),
@@ -127,6 +129,17 @@ assert.deepEqual(events,["durable-intent","fill"]);
 assert.equal(r.submission_authorized,false);
 events.length=0;draft="";sendDisabled=true;
 keepSendDisabledAfterFill=false;
+// An unrelated draft inserted after fill must NEVER be submitted, even
+// though it makes the Send control enabled and all UI visual guards pass.
+forceForeignDraftAfterFill=true;
+r=await call({acceptanceId:"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"});
+assert.equal(r.status,"indeterminate");
+assert.equal(r.code,"HARMLESS_DRAFT_MISMATCH_NO_SEND");
+assert.deepEqual(events,["durable-intent","fill"]);
+assert.equal(r.submission_authorized,false);
+assert.ok(!JSON.stringify(r).includes("ghp_FOREIGN_DRAFT"));
+events.length=0;draft="";sendDisabled=true;
+forceForeignDraftAfterFill=false;
 // Real offline fsynced journal cannot be replayed or silently overwritten.
 const stateHome=fs.mkdtempSync(path.join(os.tmpdir(),"alis-ui-journal-"));
 try {
@@ -162,9 +175,9 @@ try{
     "getByText:label=>loc((label==='Automatic Alis'||label==='No chats yet')",
     " ?[{visible:true}]:[]),",
     "fill:async value=>{draft=value;sendDisabled=false;},",
-    "evaluate:async fn=>type==='send'",
+    "evaluate:async (fn,expected)=>type==='send'",
     " ?fn({click:()=>fs.appendFileSync(process.env.MOCK_LOG,'clicked\\n')})",
-    " :fn({textContent:draft})",
+    " :fn({textContent:draft},expected)",
     "});",
     "const page={url:()=> 'app://-/index.html',",
     "getByRole:(role,o)=>{",
