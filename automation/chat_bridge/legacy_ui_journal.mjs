@@ -6,6 +6,17 @@ import os from "node:os";
 import path from "node:path";
 const UUID=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 
+// Read-only admission check; a recorded test may have clicked Send even
+// when its response was lost. Never navigate/create another chat for it.
+export function harmlessUiAttemptExists(id,{
+  stateHome=process.env.XDG_STATE_HOME ??
+    path.join(os.homedir(),".local","state")
+}={}){
+  if(!UUID.test(id))throw Error("INVALID_ACCEPTANCE_ID");
+  return fs.existsSync(path.join(stateHome,"hadalis-automation",
+    "legacy-ui-acceptance-attempts",id+".json"));
+}
+
 export function persistHarmlessUiAttempt(record,{
   stateHome=process.env.XDG_STATE_HOME ??
     path.join(os.homedir(),".local","state")
