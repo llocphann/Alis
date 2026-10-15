@@ -153,5 +153,126 @@ class GitHubHandoffTests(unittest.TestCase):
                 self.assertFalse(target.exists())
                 self.assertTrue(worker.load_receipt(JOB_ID))
 
+    def test_untrusted_json_type_errors_are_categorical(self):
+        job,raw,signal=fixture()
+        for altered in (
+            {**signal,"status":["DONE"]},
+            {**signal,"status":{"value":"DONE"}},
+            {**signal,"run_id":[]},
+            {**signal,"run_id":{"id":RUN_ID}},
+            {**signal,"schema":[]},
+            {**signal,"base_sha":[]},
+        ):
+            with self.assertRaises(ValueError):
+                handoff.validate_signal(json.dumps(altered))
+            self.assertFalse(handoff.retire_after_receipt(
+                json.dumps(altered),{"job":JOB_ID,
+                    "input_sha256":handoff.job_digest(raw),
+                    "status":"passed"}))
+
+    def test_publication_recovers_already_present_receipt_and_retires_only_matching_active(self):
+        # All git interactions are synthetic. No GitHub writes, no real
+        # checkout, no worker execution and no real credentials.
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        job,raw,signal=fixture()
+        signal["status"]="DONE"
+        local={"job":JOB_ID,"input_sha256":handoff.job_digest(raw),
+               "status":"passed","actions":[],"profile_id":None}
+        remote_result={k:local[k] for k in ("job","input_sha256","status")}
+        for exists,match in ((False,True),(True,True),(True,False)):
+            with self.subTest(exists=exists,match=match):
+                with tempfile.TemporaryDirectory() as tmp:
+                    state=Path(tmp)
+                    actions=[]
+                    active_signal={**signal}
+                    if not match:active_signal["job_id"]="JOB-OTHER"
+                    def fake_git(*args,**kwargs):
+                        if args==("rev-parse","origin/dev"):
+                            return SimpleNamespace(returncode=0,
+                                                   stdout=BASE+"\n",stderr="")
+                        raise AssertionError("unexpected git query "+str(args))
+                    def fake_run(argv,*,cwd=None,timeout=None,env=None):
+                        actions.append(tuple(argv))
+                        if argv[:3]==["git","clone","--shared"]:
+                            checkout=Path(argv[-1])
+                            checkout.mkdir(parents=True)
+                        elif argv[:3]==["git","checkout","--detach"]:
+                            checkout=Path(cwd)
+                            active=checkout/handoff.PATH
+                            active.parent.mkdir(parents=True)
+                            active.write_text(json.dumps(active_signal))
+                            if exists:
+                                result=checkout/worker.RESULTS/(JOB_ID+".json")
+                                result.parent.mkdir(parents=True)
+                                result.write_text(json.dumps(remote_result))
+                        return SimpleNamespace(returncode=0,stdout="",stderr="")
+                    with (patch.object(worker,"state_root",return_value=state),
+                          patch.object(worker,"remote_url",return_value="https://github.com/llocphann/Alis.git"),
+                          patch.object(worker,"fetch_dev"),
+                          patch.object(worker,"result_exists",return_value=exists),
+                          patch.object(worker,"remote_text",return_value=json.dumps(remote_result)),
+                          patch.object(worker,"git",side_effect=fake_git),
+                          patch.object(worker,"run",side_effect=fake_run)):
+                        worker.publish(JOB_ID,local)
+                    stage=[a for a in actions if a[:3]==("git","add","--")]
+                    pushed=[a for a in actions if a[:2]==("git","push")]
+                    if exists and not match:
+                        self.assertEqual(stage,[])
+                        self.assertEqual(pushed,[])
+                    elif exists:
+                        self.assertEqual(stage,[("git","add","--",handoff.PATH)])
+                        self.assertEqual(len(pushed),1)
+                    else:
+                        self.assertEqual(stage,[("git","add","--",
+                                worker.RESULTS+"/"+JOB_ID+".json",handoff.PATH)])
+                        self.assertEqual(len(pushed),1)
+        with tempfile.TemporaryDirectory() as tmp:
+            state=Path(tmp)
+            conflicting={**remote_result,"input_sha256":"0"*64}
+            with (patch.object(worker,"state_root",return_value=state),
+                  patch.object(worker,"remote_url",return_value="https://github.com/llocphann/Alis.git"),
+                  patch.object(worker,"fetch_dev"),
+                  patch.object(worker,"result_exists",return_value=True),
+                  patch.object(worker,"remote_text",return_value=json.dumps(conflicting)),
+                  patch.object(worker,"run",side_effect=AssertionError("no git writes"))):
+                with self.assertRaisesRegex(RuntimeError,"identity conflict"):
+                    worker.publish(JOB_ID,local)
+
+    def test_owner_digest_confirmation_required_before_local_approval(self):
+        import contextlib
+        import importlib.util
+        import io
+        from unittest.mock import patch
+        from types import ModuleType
+        cli=Path(__file__).resolve().parent/"AUTO-F01-github-handoff.py"
+        spec=importlib.util.spec_from_file_location("auto_f01_approval_cli",cli)
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        job,raw,signal=fixture()
+        sha=handoff.job_digest(raw)
+        with tempfile.TemporaryDirectory() as tmp:
+            state=Path(tmp)
+            with (patch.object(module,"inspect",return_value=(signal,job,raw)),
+                  patch.object(module.worker,"state_root",return_value=state),
+                  patch.object(module.worker,"load_receipt",return_value=None)):
+                with self.assertRaisesRegex(ValueError,"approved job digest"):
+                    module.main(["approve",JOB_ID,"--owner-approved",
+                                 "--expected-sha256","0"*64])
+                self.assertFalse(handoff.approval_path(state,JOB_ID).exists())
+                out=io.StringIO()
+                with contextlib.redirect_stdout(out):
+                    self.assertEqual(module.main(["status",JOB_ID]),0)
+                status=json.loads(out.getvalue())
+                self.assertEqual(status["job_sha256"],sha)
+                self.assertEqual(status["action_kinds"],["exec"])
+                self.assertEqual(status["action_count"],1)
+                self.assertFalse(status["dispatch_ready"])
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(module.main(["approve",JOB_ID,
+                        "--owner-approved","--expected-sha256",sha]),0)
+                self.assertTrue(handoff.approval_matches(state,job,raw))
+
+
 if __name__=="__main__":
     unittest.main()
