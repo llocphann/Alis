@@ -58,6 +58,34 @@ def main():
         bridge=(unit_dir/"hadalis-chat-bridge.service").read_text()
         assert "WantedBy=default.target" in bridge
         assert "Requires=hadalis-chatgpt" not in bridge and "PartOf=" not in bridge
+        # Explicit UI selection reuses the very same bridge service; it
+        # never installs a second sender, starts a job or enables profiles.
+        with patch.dict(os.environ, {"XDG_DATA_HOME": str(data_home),
+                                     "XDG_STATE_HOME": str(base/"state"),
+                                     "XDG_CONFIG_HOME": str(base/".config"),
+                                     "XDG_DATA_DIRS": str(base / "vendor")}), \
+             patch.object(installer.Path, "home", return_value=base), \
+             patch.object(sys, "argv", [
+                 "install-hadalis-automation.py",
+                 "--ui-loop-profile", "strict-lossless-research"]), \
+             patch.object(installer, "require_command",
+                          side_effect=lambda name: "/usr/bin/" + name), \
+             patch.object(installer.shutil, "which", return_value=None), \
+             patch.object(installer.subprocess, "run") as ui_actions:
+            assert installer.main() == 0
+            ui_actions.assert_called_once_with(
+                ["/usr/bin/systemctl", "--user", "daemon-reload"], check=True)
+        ui_bridge=(unit_dir/"hadalis-chat-bridge.service").read_text()
+        assert 'daemon --ui-loop-profile "strict-lossless-research"' in ui_bridge
+        assert "Description=Alis deterministic ChatGPT bridge" in ui_bridge
+        with patch.object(sys, "argv", [
+                "install-hadalis-automation.py", "--ui-loop-profile", "../../bad"]):
+            try:
+                installer.main()
+            except ValueError as exc:
+                assert "invalid Alis UI profile" in str(exc)
+            else:
+                raise AssertionError("unsafe UI owner profile ID accepted")
         worker=(unit_dir/"hadalis-worker.service").read_text()
         assert "TasksMax=" in worker and "MemoryMax=" in worker and "NoNewPrivileges=yes" in worker
         broker=(unit_dir/"hadalis-privilege.service").read_text()
