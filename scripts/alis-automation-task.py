@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 try:
-    from automation import taskflow, credentials, lifecycle, queue, activity, managed_tasks
+    from automation import taskflow, credentials, lifecycle, queue, activity, managed_tasks, transport_gate
     from automation.manager import control as manager_control
 except Exception as error:
     # Imports happen before argparse and the normal JSON reply contract.
@@ -86,7 +86,8 @@ def main():
                        "unit": service.get("unit", "")}
                 for kind, service in states.items()
             }, "installed": all(states[name]["state"] != "unavailable"
-                               for name in ("bridge", "worker"))}
+                               for name in ("bridge", "worker")),
+            **transport_gate.readiness()}
         elif args.action == "start-queue":
             mode = queue.view()["mode"]
             result = (managed_tasks.start_cloud_queue(approved=args.approve)
