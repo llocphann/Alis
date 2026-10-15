@@ -382,22 +382,61 @@ export async function nativeSubmit(page, input) {
   }, input);
 }
 
-export async function discoverSubmission(page, pending) {
-  const receipt = await page.evaluate(id => {
-    const r = window.__hadalisReceipts?.get(id);
-    return r ? {conversation_id: r.conversation_id, streamError: r.streamError} : null;
-  }, pending.user_message_id);
-  if (receipt?.conversation_id) return receipt;
-  const list = await nativeRead(page, pending.project_id
-    ? `/gizmos/${pending.project_id}/conversations` : "/conversations", {limit: 40, owned_only: true, order: "updated"});
-  // Limit history scans per reconciliation; no guessing by title or UI.
-  const recent = (list.items ?? []).filter(c => Number(c.create_time) >= pending.prepared_at_unix - 120).slice(0, 12);
-  for (const item of recent) {
-    const conversation = await nativeRead(page, `/conversation/${item.id}`);
-    if (Object.values(conversation.mapping ?? {}).some(n => n.message?.id === pending.user_message_id || n.id === pending.user_message_id))
-      return {conversation_id: item.id};
+// Strict reconciliation is *not* a transport attestation: all candidate
+// histories must already originate from an authenticated supported provider.
+// It only prevents false acknowledgement from stale node keys, off-branch
+// messages, duplicate conversations, and malformed branches.
+export function reconcileSubmissionCandidates(pending,candidates){
+  if(!UUID.test(pending?.user_message_id))
+    throw new Error("invalid pending user message identity");
+  if(!Array.isArray(candidates) || candidates.length>12)
+    throw new Error("submission candidate list not bounded");
+  const ids=new Set(),hits=[];
+  for(const conversation of candidates){
+    const id=conversation?.conversation_id;
+    if(!UUID.test(id) || ids.has(id))
+      throw new Error("ambiguous candidate conversation identity");
+    ids.add(id);
+    const observation=projectTurn(conversation,{
+      conversation_id:id,user_message_id:pending.user_message_id
+    });
+    if(observation.submitted===true)hits.push(id);
   }
-  return {conversation_id: null};
+  if(hits.length>1)throw new Error("ambiguous user message across conversations");
+  return {conversation_id:hits[0]??null};
+}
+
+export async function discoverSubmission(page,pending){
+  if(!UUID.test(pending?.user_message_id))
+    throw new Error("invalid pending user message identity");
+  const receipt=await page.evaluate(id=>{
+    const r=window.__hadalisReceipts?.get(id);
+    return r ? {conversation_id:r.conversation_id,streamError:r.streamError}:null;
+  },pending.user_message_id);
+  if(receipt?.conversation_id){
+    if(!UUID.test(receipt.conversation_id))
+      throw new Error("invalid in-memory receipt conversation");
+    // An in-memory callback or tab-local hint cannot by itself attest that
+    // the exact user-authored message persisted to the server.
+    const c=await nativeRead(page,`/conversation/${receipt.conversation_id}`);
+    const verified=reconcileSubmissionCandidates(pending,[c]);
+    if(verified.conversation_id)
+      return {...verified,streamError:receipt.streamError===true};
+  }
+  const list=await nativeRead(page,pending.project_id
+    ? `/gizmos/${pending.project_id}/conversations` : "/conversations",
+    {limit:40,owned_only:true,order:"updated"});
+  if(!Array.isArray(list?.items))throw new Error("conversation index unavailable");
+  const recent=list.items
+    .filter(c=>Number.isFinite(Number(c?.create_time)) &&
+      Number(c.create_time)>=pending.prepared_at_unix-120)
+    .slice(0,12);
+  const candidates=[];
+  for(const item of recent){
+    if(!UUID.test(item?.id))throw new Error("invalid conversation candidate");
+    candidates.push(await nativeRead(page,`/conversation/${item.id}`));
+  }
+  return reconcileSubmissionCandidates(pending,candidates);
 }
 
 export async function nativeResume(page, pending) {
