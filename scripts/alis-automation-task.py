@@ -51,6 +51,10 @@ def main():
     commands.add_parser("backend-status")
     start_queue = commands.add_parser("start-queue")
     start_queue.add_argument("--approve", action="store_true")
+    ui_start = commands.add_parser("start-ui-queue")
+    ui_start.add_argument("--approve", action="store_true")
+    ui_start.add_argument("--accept-ui-only-receipts", action="store_true")
+    ui_start.add_argument("--expected-first", required=True)
     history = commands.add_parser("activity")
     history.add_argument("code")
     history.add_argument("--repo", choices=taskflow.REPOSITORIES,
@@ -138,6 +142,11 @@ def main():
             result = (managed_tasks.start_cloud_queue(approved=args.approve)
                       if mode == "cloud"
                       else managed_tasks.start_ordered_queue(approved=args.approve))
+        elif args.action == "start-ui-queue":
+            result = managed_tasks.start_ui_queue(
+                approved=args.approve,
+                accept_ui_only_receipts=args.accept_ui_only_receipts,
+                expected_first=args.expected_first)
         elif args.action == "activity":
             result = activity.read(args.code, args.repo)
         elif args.action in ("resolve", "prepare"):
