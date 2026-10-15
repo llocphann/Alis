@@ -94,6 +94,12 @@ def ui_tick(profile_id: str, *, now: int | None = None,
         return "ALIS_UI_UNCERTAIN_RESTART_REQUIRES_REVIEW"
     if not new_chat and item.get("session") is None:
         return "ALIS_UI_SESSION_NOT_BOUND"
+    pinned_target = ((item.get("session") or {}).get("ui_target_key")
+                     if not new_chat else None)
+    if not new_chat and (not isinstance(pinned_target, str)
+            or len(pinned_target) != 64
+            or any(c not in "0123456789abcdef" for c in pinned_target)):
+        return "ALIS_UI_TARGET_IDENTITY_REQUIRES_REVIEW"
     if kind == "rotation" and not item.get("checkpoint"):
         return "ALIS_UI_ROTATION_CHECKPOINT_REQUIRED"
     prompt_kind = ("rotation" if kind == "rotation" else
@@ -135,9 +141,18 @@ def ui_tick(profile_id: str, *, now: int | None = None,
             return "owner_changed"
         # UI journal fsync occurs in runtime.desktop BEFORE composer change.
         # Runtime must not retry an ambiguous/failed click.
-        payload = desktop(command, prompt)
+        if pinned_target is not None:
+            payload = desktop(command, prompt, target_key=pinned_target)
+        else:
+            payload = desktop(command, prompt)
         text = runtime.extract_response_text(payload)
         directive = parse_loop_directive(text)
+        observed_target = payload.get("ui_target_key")
+        if (not isinstance(observed_target, str)
+                or len(observed_target) != 64
+                or any(c not in "0123456789abcdef" for c in observed_target)
+                or (pinned_target is not None and observed_target != pinned_target)):
+            raise RuntimeError("ALIS_UI_CHAT_IDENTITY_UNVERIFIED")
         if len(text) > PRIVATE_RESPONSE_LIMIT:
             raise RuntimeError("ALIS_UI_RESPONSE_EXCEEDS_BOUND")
         from automation.manager import daemon
@@ -169,6 +184,7 @@ def ui_tick(profile_id: str, *, now: int | None = None,
                 "transport": UI_TRANSPORT,
                 "project_name": profile["project_name"],
                 "local_run_id": str(uuid.uuid4()),
+                "ui_target_key": observed_target,
             }
         if checkpoint is not None:
             current["checkpoint"] = checkpoint
