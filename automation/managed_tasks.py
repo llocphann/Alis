@@ -160,7 +160,15 @@ def stop_queue(*, approved: bool = False,
         profile = next((p for p in config["profiles"]
                         if p["id"] == owner), None)
         if profile is None or owner not in state["profiles"]:
-            raise tf.TaskError("Active queue profile absent; reconcile before final Stop")
+            # This is an orphaned queue entry, not an active manager writer.
+            # Revoking queue approval already prevents scheduling. Archive
+            # is allowed after owner Stop; NEVER claim that an independently
+            # running worker action was cancelled or that a native session
+            # was verified.
+            terminal = queue.confirm_stopped(expected_active=expected_active)
+            return {**terminal, "profile_stop_confirmed": False,
+                    "needs_reconciliation": True,
+                    "worker_cancelled": False}
         control.profile_action("stop", owner)
         _, checked, _ = store.read_snapshot()
         runtime = checked["profiles"].get(owner)
@@ -172,7 +180,8 @@ def stop_queue(*, approved: bool = False,
                 "stop_confirmed": False, "active": active,
                 "needs_reconciliation": True,
                 "worker_cancelled": False}
-    return queue.confirm_stopped(expected_active=expected_active)
+    return {**queue.confirm_stopped(expected_active=expected_active),
+            "profile_stop_confirmed": True, "worker_cancelled": False}
 
 
 def start_ordered_queue(*, approved: bool = False) -> dict:
