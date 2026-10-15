@@ -1,0 +1,10 @@
+{
+  "owner_report": "Disabling only Convolver in EasyEffects eliminates the crackle",
+  "scope": "Owner listening report plus read-only live Convolver properties; no setting changes",
+  "utc": "2026-10-15T13:47:16.046177+00:00",
+  "live_properties": {
+    "bypass": "false",
+    "inputGain": 0.0,
+    "outputGain": 0.0
+  }
+}
