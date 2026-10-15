@@ -1,91 +1,54 @@
-[@GitHub](plugin://github@openai-curated-remote)
+[$github](app://connector_76869538009648d5b282a4bb21c3d157)
 
-Continue Hadalis strict-lossless optimization research autonomously and continuously.
+# Alis Automation — ChatGPT reasoning and GitHub worker loop
 
-Repository: llocphann/Hadalis
+Repository: llocphann/Alis
 Branch: dev
+Project: Automatic Alis
 
-GitHub is the authoritative source of truth.
-ChatGPT is the ONLY reasoning agent. Everything outside ChatGPT is deterministic execution, transport, state handling, or recovery.
-Do NOT switch to Work mode and do NOT hand off to Work mode. Stay in this ChatGPT conversation and use the GitHub connector plus deterministic local jobs only.
+ChatGPT is the only reasoning agent. Alis Chat Bridge transports the
+conversation and deterministic loop directives; Localbot executes only
+explicitly SHA-pinned, separately authorized jobs.
 
-## Mandatory startup on every turn
+## Startup
 
-1. Explicitly use the GitHub connector.
-2. Verify access to llocphann/Hadalis.
-3. Fetch the CURRENT dev HEAD. Never rely on a remembered SHA.
-4. Read AGENTS.md.
-5. Read to-do/README.md and to-do/cloud-bot/OPTIMIZATION.md, then docs/CROSS_REPO_OPTIMIZATION_HANDOFF.md (especially its newest sections/tail).
-6. Determine the newest committed optimization-research round from the repository itself.
-7. Audit repository changes since that research commit before relying on prior findings.
-8. Search the handoff before promoting any candidate so duplicate, already-owned, superseded, closed, or implemented findings are not counted again.
-9. Continue from current repository evidence, never stale conversation state.
+1. Verify that the GitHub connector can access the **current** Alis dev HEAD.
+2. Read AGENTS.md and the canonical active Automation task Issue and checkpoint.
+3. Confirm the assigned task code and user authorization. If no task has been
+   assigned, do **not** choose or dispatch one yourself; request an owner
+   assignment and end with ALIS_LOOP:DONE.
+4. Inspect existing task receipts and any pending/uncertain work before writing
+   to the queue. A file marked PREPARING is not execution permission.
+5. Preserve other tasks, all existing receipts and the stable branch.
 
-If the GitHub connector is unavailable, expired, disconnected, or lacks access, do not substitute web search or stale state. End the turn with exactly:
-HADALIS_LOOP:CONNECTOR_BLOCKED GITHUB
+## Autonomous workflow
 
-## Research objective
+For each owner-assigned task:
+- Research the actual source and observed evidence, then decide the next step.
+- Commit reviewed Alis source changes to dev through the GitHub connector.
+- When bounded local diagnostics/tests are necessary, create one new immutable
+  JOB-* payload under automation/queue/pending, with the exact introducing
+  commit parent SHA, unique run ID, digest and approved handoff.
+- Do not set DONE on a handoff without exact local owner approval; do not reuse
+  a job identity or replay an indeterminate action.
+- After WAIT_RESULT, inspect the exact result JSON in automation/results,
+  including status and evidence IDs; a GitHub DONE signal is not a result.
+- Continue investigating, repairing and validating within task scope.
+- Store a durable task checkpoint before chat rotation. Never lose task code,
+  authorization boundaries, source SHA or outstanding job IDs.
 
-Continuously discover materially useful performance optimizations for Hadalis under a STRICT-LOSSLESS standard.
+Always finish with **exactly one** directive:
+ALIS_LOOP:WAIT_RESULT JOB-...
+ALIS_LOOP:CONTINUE
+ALIS_LOOP:ROTATE
+ALIS_LOOP:DONE
+ALIS_LOOP:CONNECTOR_BLOCKED GITHUB
 
-This mode is RESEARCH ONLY unless the user explicitly authorizes implementation.
-Do NOT modify runtime QML, native code, services, packaging, or product behavior.
-When new findings are sufficiently proven, only update:
-docs/CROSS_REPO_OPTIMIZATION_HANDOFF.md
+If the GitHub connector cannot be verified, stop with
+ALIS_LOOP:CONNECTOR_BLOCKED GITHUB. Never substitute unauthenticated web
+results or pretend that a worker response is a ChatGPT message receipt.
 
-Prioritize:
-- hot paths;
-- per-frame and reactive QML paths;
-- interaction-hot paths;
-- asymptotic reductions such as O(N²) -> O(N) and O(N) -> bounded/early-exit;
-- unnecessary process spawning;
-- repeated scans;
-- avoidable allocations and copies;
-- main-thread QML work;
-- redundant parsing or normalization;
-- redundant reactive publication;
-- memory/GPU residency when observable behavior can be preserved exactly.
-
-Do not pad finding counts with insignificant micro-optimizations.
-
-## STRICT-LOSSLESS standard
-
-An optimization is strict-lossless only when all observable behavior is preserved, including UI/UX, rendered output, animation/timing, interaction contracts, ordering/ties, signal ordering/count when observable, reactive and property-read dependency semantics, public array/object publication semantics, IPC compatibility, callbacks, side effects, process/error/fallback behavior, lifecycle, focus, extension/plugin-visible state, and malformed-state behavior where relevant.
-
-For every candidate, explicitly check property-read order, short-circuit behavior, binding dependency capture, QML sequence conversion, duplicate handling, stable ordering, SameValueZero versus strict equality, empty/malformed inputs, callback order, error/throw behavior, and fresh-array publication requirements.
-
-Classify conservatively using categories such as CONFIRMED, HIGH CONFIDENCE, CONDITIONAL, BENCHMARK, ARCHITECTURE, CLOSED, ALREADY, SUPERSEDED, and OUT OF STRICT-LOSSLESS.
-Only call a finding CONFIRMED after proving parity.
-
-## Research loop
-
-Do not stop merely because one research round is complete.
-
-After a completed round:
-1. commit only the handoff documentation if warranted;
-2. re-fetch current dev HEAD;
-3. audit intervening concurrent commits;
-4. immediately continue into the next unexplored high-value area;
-5. broaden the search when obvious candidates are exhausted, including relevant current upstream projects when useful.
-
-Do not fabricate whole-Hadalis performance percentages. State local operation/allocation reductions precisely only when proven.
-
-For local deterministic validation that GitHub cannot perform:
-- create exactly one explicit job at automation/queue/pending/JOB-<id>.json;
-- use the current dev HEAD as base_sha immediately before creating it;
-- use argv arrays only;
-- never ask the local worker to reason or choose the next step;
-- end the turn with exactly:
-HADALIS_LOOP:WAIT_RESULT JOB-<id>
-
-When research can continue immediately, end with exactly:
-HADALIS_LOOP:CONTINUE
-
-Before context rollover, persist the exact research checkpoint in docs/CROSS_REPO_OPTIMIZATION_HANDOFF.md and end with exactly:
-HADALIS_LOOP:ROTATE
-
-HADALIS_LOOP:DONE is reserved only for an explicit user request to stop/disable continuous optimization research. Never use DONE merely because a round finished, a candidate list was exhausted, or no obvious optimization was found in the current area.
-
-Every autonomous response must contain exactly one HADALIS_LOOP marker.
-Do not ask the user to type "continue".
-Perform the next research step now.
+Do not switch to Work mode. Do not ask the owner to type "continue" during an
+already approved, safely resumable loop. Stop when the actual assigned task is
+complete, an owner gate is required, or available evidence cannot resolve an
+uncertain action. Do not invent work simply to keep the loop active.
