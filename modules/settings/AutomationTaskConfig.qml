@@ -476,7 +476,9 @@ ContentPage {
                 }
                 if (root.queueOperation === "stop") {
                     root.statusText = result.stop_confirmed
-                        ? Translation.tr("Queue stopped · no next task will start. In-flight work remains intact.")
+                        ? result.profile_stop_confirmed === false
+                            ? Translation.tr("Queue scheduling stopped · manager profile missing. Prior worker actions remain independent.")
+                            : Translation.tr("Queue stopped · no next task will start. In-flight work remains intact.")
                         : Translation.tr("Stop requested · manager acknowledgment pending")
                     Qt.callLater(root.refreshQueue)
                 } else if (root.queueOperation === "clear")
