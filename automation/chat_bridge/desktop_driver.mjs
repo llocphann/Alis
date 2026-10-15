@@ -111,7 +111,7 @@ export async function uiTargetIdentity(page) {
     const link = node.closest('a[href]') || node.querySelector('a[href]');
     const href = link?.getAttribute("href");
     // Only an actual conversation path, never a label or generic sidebar URL.
-    if (href && /(?:^|\\/)c\\/[a-zA-Z0-9_-]{12,128}(?:$|[?#/])/.test(href))
+    if (href && /(?:^|\/)c\/[a-zA-Z0-9_-]{12,128}(?:$|[?#/])/.test(href))
       return `href:${href.split(/[?#]/)[0]}`;
     return null;
   });
