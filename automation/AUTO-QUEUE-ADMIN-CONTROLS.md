@@ -16,22 +16,37 @@ The Automation Settings task-input field supports **two paths**:
   candidate exists, it reports an explicit error instead of selecting an
   arbitrary visual task.
 
-## Clear Queue
+## Clear queued tasks while the current task remains active
 
-Settings → Automation → GitHub tasks → **Clear queue** → **Confirm clear**.
-The helper requires `queue-clear --approve`, performs the mutation under
-the exclusive queue flock and archives the original manifest privately in
-`~/.local/state/hadalis-automation/taskflow/queue-history/`. The path is a
-legacy migration alias, not product branding.
+Settings → Automation → GitHub tasks → **Clear queued** → **Confirm clear**.
 
-The operation is accepted only when a queue is undispatched/idle, or is
-already terminal and has no active/queued work. It refuses an approved
-selector, an active or waiting queue, a claimed task, a task with an active
-handoff, unresolved work or existing job receipts. Individual task records,
-historical results, worker receipt inventory, GitHub queue files, pending
-AUDIO-I01 payload and worker services are never deleted or cancelled by
-Clear Queue. An archive remains for audit/restore; this UI action never
-automatically resumes an archived queue.
+This action now explicitly removes **only entries with state `queued`**,
+including when another item is `active` (for example AUDIO-I01). It does
+not stop/modify the active item, reset its scheduler profile, cancel its
+worker actions, approve any pending handoff, edit underlying per-task JSON,
+or remove any receipt. Previously completed entries and current
+active-task identity/selection stay exactly as they were.
+
+The UI may retain a last-known queue snapshot if `queue-status` failed.
+For cleanup only, it can still offer **Clear queued**, since the helper
+requires the exact displayed `repository:task-code` sequence in
+`--expected-queued` and rechecks it under the **exclusive queue.lock**.
+If the live queue has changed, no mutation occurs; refresh and confirm again.
+Unlike Start, cleanup never accepts a stale snapshot as dispatch authority.
+
+Before any change, the complete original manifest is archived under the
+private legacy-XDG `hadalis-automation/taskflow/queue-history/` directory.
+The legacy path is for migration compatibility, not product naming.
+For an active queue, only queued entries are removed and the new manifest
+remains `active`. For an undispatched prepared queue, the original manifest
+is moved to history and the UI queue becomes empty. An approved selector,
+`waiting` mode, an unverified active-task identity, or active/uncertain
+job phases fail closed instead of cancelling anything. All GitHub queues
+and worker receipts are outside the scope of this UI operation.
+
+No installed service or local task inventory has been changed merely by
+committing this feature; the owner must first update the running Alis UI
+and Python source to expose it.
 
 ## Optional sudo password
 
