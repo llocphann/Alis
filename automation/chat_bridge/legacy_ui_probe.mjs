@@ -76,18 +76,21 @@ export async function inspectLegacyUiReadOnly(page,projectName="Automatic Alis")
   const projectComposerLabelInMain=mainRegions.getByText(
     "New chat in "+projectName,{exact:true}
   );
+  // A pending confirmation modal can intercept Project navigation. Count
+  // dialogs without reading their contents, titles, buttons or draft text.
+  const dialogs=page.getByRole("dialog");
   const sends=page.getByRole("button",{name:"Send",exact:true});
   const stops=page.getByRole("button",{name:/stop/i});
   const [composerCount,scopedComposerCount,genericComposerCount,
     projectNewChatActionCount,badgeCount,listCount,mainCount,
     mainProjectHeadingCount,mainProjectTextCount,mainEmptyStateCount,
-    mainComposerVisualLabelCount,sendCount,stopCount]=await Promise.all([
+    mainComposerVisualLabelCount,dialogCount,sendCount,stopCount]=await Promise.all([
       countVisible(composers),countVisible(projectScopedComposers),
       countVisible(genericComposers),countVisible(projectNewChatActions),
       countVisible(projectBadge),countVisible(projectLists),
       countVisible(mainRegions),countVisible(projectHeadingsInMain),
       countVisible(projectTextInMain),countVisible(emptyProjectStateInMain),
-      countVisible(projectComposerLabelInMain),
+      countVisible(projectComposerLabelInMain),countVisible(dialogs),
       countVisible(sends),countVisible(stops)
     ]);
   let selectedCount=0;
@@ -127,6 +130,7 @@ export async function inspectLegacyUiReadOnly(page,projectName="Automatic Alis")
     empty_project_state_in_main_count_capped:mainEmptyStateCount,
     project_composer_visual_label_in_main_count_capped:
       mainComposerVisualLabelCount,
+    dialog_count_capped:dialogCount,
     send_count_capped:sendCount,
     stop_count_capped:stopCount,
     composer_draft_present:draftPresent,
