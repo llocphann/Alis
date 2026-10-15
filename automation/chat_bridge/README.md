@@ -35,3 +35,53 @@ The installed manager still uses the native adapter. The UI loop is not
 silently activated by this change; its Desktop binding needs separate owner
 acceptance. Existing hadalis-* service and XDG names are legacy compatibility
 aliases only, not Alis product branding.
+
+### Explicit single-owner UI scheduler
+
+The existing `automation.manager.daemon` now has a separate
+`--ui-loop-profile PROFILE_ID` option, using the **same**
+`chat-bridge.lock` as native manager mode. Installer option
+`--ui-loop-profile PROFILE_ID` generates that command in the existing
+`hadalis-chat-bridge.service` unit; its default remains native mode.
+Installing a unit **does not** start a profile, release a job, approve
+a handoff, restart the running service or switch modes in memory.
+Operators must opt in deliberately after checking no native pending
+messages, unowned profile work or journal tombstones remain. Running
+native and UI mode simultaneously fails via the exclusive lock.
+
+The opted-in UI profile must already be enabled and explicitly started
+using the existing profile controls, and its configured Project must
+match the UI target Project. Only one enabled/running profile may own
+the UI. This is a conservative single-owner mode, not the native
+multi-profile concurrency feature.
+
+The UI scheduler stores a `transport:alis-ui-once` pending intent inside
+the existing durable manager state *before* attempting the Desktop
+subprocess. It then invokes the bridge's fsynced UI journal and one-shot
+Send. On completion, a private local UI response is written before
+clearing the pending manager entry. After any crash, timeout, ambiguous
+response or missing selected-chat identity, the profile is paused
+with pending evidence intact; a restart cannot send it again.
+
+The selected Project **alone** is not enough: the Desktop driver must
+read a unique selected chat ID/conversation href and pin a local
+SHA-256 fingerprint. Each subsequent continuation checks the exact
+same fingerprint **before** filling the editor. Unknown/changed
+UI structure is a hard stop, not permission to use a different chat.
+The fingerprint is a UI continuity hint, not a server-authenticated
+ChatGPT receipt.
+
+`WAIT_RESULT` only resumes when the result belongs to the exact
+profile, job ID, SHA-256 and settled status. Existing ownerless jobs,
+including old smoke jobs, cannot awaken a different Alis profile.
+After `DONE`, this mode stops even if the historical profile was
+configured for continuous research.
+
+**Still required before unattended production:** explicit installed
+Desktop acceptance proving the UI provides a stable unique selected-chat
+identity in the current renderer; safe switch/rollback between modes
+with all existing receipts and native message intents preserved.
+Do not delete `ui-send-journal/pending.json` manually or treat a
+visible reply as proof of server-side identity. Current
+`automation.transport_gate` for native managed task queue remains
+closed and has not been bypassed.
