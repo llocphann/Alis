@@ -178,6 +178,7 @@ ContentPage {
     function startQueue(): void {
         if (root.busy || !root.queueSnapshot || !root.backendTransportReady)
             return
+        root.clearQueueConfirmation = false
         root.queueOperation = "start"
         root.errorText = ""
         queueProcess.command = ["python3",
@@ -189,6 +190,7 @@ ContentPage {
     function prepareTask(): void {
         if (root.busy)
             return
+        root.clearQueueConfirmation = false
         const codes = taskCodeField.text.trim()
         const entries = codes.length ? codes.split(";").map(s => s.trim()) : []
         if (codes.length && (entries.length > 20 ||
@@ -358,6 +360,7 @@ ContentPage {
                 if (exitCode !== 0 || result.ok !== true)
                     throw new Error(result.error || "Queue unavailable")
                 if (result.items) {
+                    root.clearQueueConfirmation = false
                     root.queueSnapshot = result
                     root.queueStatusConfirmed = true
                     if (root.queueOperation === "status")
