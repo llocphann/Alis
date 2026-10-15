@@ -483,8 +483,10 @@ ContentPage {
                     Qt.callLater(root.refreshQueue)
                 } else if (root.queueOperation === "clear")
                     root.statusText = result.cleared
-                        ? Translation.tr("Removed %1 queued tasks · active job and receipts preserved")
-                            .arg(result.removed_queued || 0)
+                        ? result.state === "empty"
+                            ? Translation.tr("Queue archived · task records and in-flight receipts preserved")
+                            : Translation.tr("Removed %1 queued tasks · active job and receipts preserved")
+                                .arg(result.removed_queued || 0)
                         : Translation.tr("No queued tasks to clear")
                 else if (root.queueOperation === "prepare")
                     root.statusText = result.state === "active"
@@ -502,6 +504,10 @@ ContentPage {
                         ? Translation.tr("Queue active")
                         : result.state === "prepared"
                         ? Translation.tr("Queue prepared")
+                        : result.state === "stopping"
+                        ? Translation.tr("Stop requested · manager acknowledgment pending")
+                        : result.state === "stopped"
+                        ? Translation.tr("Queue stopped · no next task will start. In-flight work remains intact.")
                         : ""
                 }
                 root.errorText = ""
