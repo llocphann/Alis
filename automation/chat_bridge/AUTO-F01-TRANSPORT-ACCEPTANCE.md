@@ -103,3 +103,31 @@ The read-only probe now separately counts a composer with the **exact accessible
 ## Explicit exclusions
 
 No `definition.resolve()` invocation; no native `submit`/CLI submit, DOM/click/keyboard/UI fallback, transport injection, speculative `native_adapter.mjs` modifications, scheduler start/reset, queue replay, chat rotation or attempt to choose between the seven Maps. The next engineering investigation should evaluate available **supported transport capabilities** and exact identity/receipt requirements separately from the private bundled React implementation.
+
+
+## Owner-approved single-shot acceptance runbook (2026-10-15)
+
+The owner approved **one fixed harmless acceptance** in the ChatGPT conversation. This authorizes only the isolated manual test described below; it does **not** authorize starting the Automation scheduler, sending any of the 18 queued tasks, or replaying an uncertain attempt. GitHub-side changes cannot reach or inspect the owner's live Desktop process. The test is **NOT EXECUTED** until the owner invokes the CLI in the actual desktop session; an approval message is not a send receipt.
+
+**Preflight on the owner's machine:** Use a clean `Alis/dev` checkout updated by an ordinary fast-forward after checking for concurrent local work. Never force-reset or delete worktrees, task state, journals, receipts or queues. Confirm Desktop is open to the **empty** new-chat page in the existing Project `Automatic Alis`, with no user draft.
+
+```bash
+# From a clean Alis/dev checkout with the current code already installed:
+git branch --show-current
+git rev-parse HEAD
+git status --porcelain
+node automation/chat_bridge/legacy_ui_probe_cli.mjs probe
+```
+
+Only continue if the probe confirms `read_only_project_entry_ready:true`, exactly one Project-scoped composer, one Project badge, one disabled Send, no Stop, an empty draft, and the corroborated empty Project landing. If it does not, **stop without sending**, do not work around the guards.
+
+**Exactly one intentional, owner-approved test attempt** (one invocation, fresh UUID generated locally; no shell loop and no automatic retry):
+
+```bash
+acceptance_id="$(node -p 'require("node:crypto").randomUUID()')"
+node automation/chat_bridge/legacy_ui_acceptance_cli.mjs --owner-approved "$acceptance_id"
+```
+
+This CLI accepts no custom prompt or task code. Its only prompt asks for `HADALIS_LOOP:DONE` without using tools/connectors. It journals the UUID durably before any editor mutation, verifies the exact fixed draft, and may issue at most one Send click. **A nonzero exit and `status:"indeterminate"` are expected even when a click is issued.** A code such as `SINGLE_UI_CLICK_ISSUED_OBSERVE_ONLY` records a local action attempt, not authenticated server delivery or a completed assistant response. `POST_FILL_*_NO_SEND` and `HARMLESS_DRAFT_MISMATCH_NO_SEND` are no-send but still must not be retried under the same or a new UUID without a new explicit decision.
+
+Afterward, visually inspect the target Project/chat once and report **only** the categorical CLI result and whether a single harmless response appeared. Do not share private chat contents or journal details. Do not run this command in GitHub Actions, a cloud container, or a second desktop session: it must connect to the owner's existing local ChatGPT Desktop. Production Scheduler/queue activation remains blocked until separate server-verified Project, conversation, user-message and terminal receipt identities are available.
