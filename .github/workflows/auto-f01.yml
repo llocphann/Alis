@@ -44,6 +44,8 @@ jobs:
         run: python3 scripts/test-automation-taskflow.py
       - name: Verify native Desktop transport cannot send unattended
         run: |
+          node --check automation/chat_bridge/desktop_driver.mjs
+          node --check automation/chat_bridge/desktop_cli.mjs
           node --check automation/chat_bridge/native_adapter.mjs
           node --check automation/chat_bridge/native_cli.mjs
           node scripts/test-hadalis-native-session.mjs
