@@ -73,7 +73,7 @@ def installed_worker_info() -> dict:
         if not 1<=pid<=4194304:return result
         proc=Path("/proc")/str(pid)
         expected=root/"automation"/"worker"/"daemon.py"
-        cmd=(proc/"cmdline").read_bytes()[:16384].split(b"\\0")
+        cmd=(proc/"cmdline").read_bytes()[:16384].split(bytes([0]))
         proc_cwd=Path(os.readlink(proc/"cwd")).resolve()
         args=[os.fsdecode(x) for x in cmd if x]
         result["worker_process_matches_checkout"]=(
@@ -102,8 +102,10 @@ def running_worker_status(*, now: int | None = None) -> dict:
     installed=installed_worker_info()
     if not fresh:
         diagnosis="WORKER_HEARTBEAT_MISSING_OR_STALE"
-    elif contract:
+    elif contract and installed["worker_process_matches_checkout"] and installed["worker_unit_matches_checkout"]:
         diagnosis="RUNNING_WORKER_HANDOFF_CONTRACT_OBSERVED"
+    elif contract:
+        diagnosis="WORKER_HANDOFF_MARKER_SOURCE_UNVERIFIED"
     elif installed["worker_process_matches_checkout"]:
         diagnosis="RUNNING_WORKER_OLDER_CODE_MAY_REQUIRE_CONTROLLED_RESTART"
     elif installed["worker_unit_matches_checkout"]:
@@ -118,7 +120,9 @@ def running_worker_status(*, now: int | None = None) -> dict:
         "diagnosis":diagnosis,
         **installed,
         "worker_heartbeat_fresh": fresh,
-        "worker_supports_github_handoff": bool(fresh and contract),
+        "worker_supports_github_handoff": bool(fresh and contract and
+                                               installed["worker_process_matches_checkout"] and
+                                               installed["worker_unit_matches_checkout"]),
         "worker_has_active_work_observed": (
             bool(active_tasks) or publishing is True
             if isinstance(active_tasks,list) and isinstance(publishing,bool)
