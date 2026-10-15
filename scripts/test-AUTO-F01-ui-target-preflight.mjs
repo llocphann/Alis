@@ -45,7 +45,10 @@ const p={
   evaluate:fail,
   keyboard:{press:fail,insertText:fail},
   getByRole:(role,q={})=>{
-    if(role==="main")return loc([{visible:true}],"main");
+    if(role==="main")return {...loc([{visible:true}],"main"),
+      getByText:(name)=>loc(scenario==="landing" &&
+        (name==="Automatic Alis"||name==="No chats yet")
+        ?[{visible:true}]:[]) };
     if(role==="textbox") {
       if(typeof q.name==="string")
         return loc(q.name==="New chat in Automatic Alis"&&scoped?editor:[]);
@@ -103,15 +106,29 @@ export const chromium={connectOverCDP:async url=>{
   assert.equal(selected.selected_chat_identity_stable,true);
   assert.equal(selected.empty_project_entry_ready,false);
   assert.equal(selected.diagnosis,"ALIS_UI_CHAT_TARGET_OBSERVED");
-  for(const scenario of ["generic","draft","missing-id","ambiguous"]){
+  const expected={
+    generic:"ALIS_UI_PROJECT_VIEW_UNVERIFIED",
+    draft:"ALIS_UI_COMPOSER_HAS_DRAFT",
+    "missing-id":"ALIS_UI_SELECTED_CHAT_KEY_MISSING",
+    ambiguous:"ALIS_UI_MULTIPLE_SELECTED_CHATS",
+    landing:"ALIS_UI_PROJECT_LANDING_COMPOSER_UNSCOPED"
+  };
+  for(const [scenario,diagnosis] of Object.entries(expected)){
     const result=check(scenario);
     assert.equal(result.selected_chat_identity_stable,false,scenario);
     assert.equal(result.empty_project_entry_ready,false,scenario);
-    assert.equal(result.diagnosis,"ALIS_UI_CHAT_IDENTITY_UNAVAILABLE",scenario);
+    assert.equal(result.diagnosis,diagnosis,scenario);
+    assert.equal(result.target_diagnostics.inspection,"completed");
+    assert.ok(Array.isArray(result.target_diagnostics.readiness_issues));
     assert.equal(result.message_submission_attempted,false);
     assert.equal(result.server_identity_attested,false);
     assert.equal(result.ui_scheduler_authorized,false);
   }
+  assert.equal(check("missing-id").target_diagnostics.selected_chat_count_capped,1);
+  assert.equal(check("ambiguous").target_diagnostics.selected_chat_count_capped,2);
+  assert.equal(check("draft").target_diagnostics.draft_present,true);
+  assert.equal(check("landing").target_diagnostics.project_landing_visual_evidence,
+               "project-empty-landing-corroborated");
   assert.equal(blank.message_submission_attempted,false);
   assert.equal(blank.ui_scheduler_authorized,false);
   assert.equal(selected.ui_scheduler_authorized,false);
