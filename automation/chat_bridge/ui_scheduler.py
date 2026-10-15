@@ -343,6 +343,13 @@ def queue_tick(*, now: int | None = None, desktop=None) -> str:
                 and runtime.get("last_success") == "DONE"
                 and not runtime.get("pending") and not runtime.get("job_id")):
             return "queue_completed_pending_reconciliation"
+        if (runtime.get("desired") == "stopped"
+                and runtime.get("status") in {"idle", "disabled", "scheduled"} 
+                and not runtime.get("pending") and not runtime.get("job_id")
+                and not runtime.get("run_active")):
+            # Queue claim and profile Start have separate durable records.
+            # The single manager waits for explicit profile scheduling.
+            return "queue_claim_waiting_profile_start"
         if runtime.get("desired") != "run":
             return "ALIS_UI_QUEUE_PROFILE_NOT_RUNNING"
         record = tf.load_task(active["code"], active["repository"])
