@@ -90,6 +90,11 @@ class SudoInput(unittest.TestCase):
         self.assertIn('"sudo-authenticate"', qml)
         self.assertIn('objectName: "automationClearQueue"', qml)
         self.assertIn('Translation.tr("Find tasks")', qml)
+        self.assertIn("root.clearQueueConfirmation = false", qml)
+        self.assertIn('"queue-clear", "--approve"', qml)
+        self.assertIn('root.pendingSudoPassword = ""', qml)
+        self.assertIn('sudoPasswordField.clear()', qml)
+        self.assertIn('sudoAuthProcess.stdinEnabled = false', qml)
         self.assertNotIn("password: sudoPasswordField.text", qml)
 
 
