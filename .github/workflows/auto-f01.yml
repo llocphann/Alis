@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - "automation/**"
+      - "modules/settings/AutomationTaskConfig.qml"
+      - "scripts/alis-automation-task.py"
       - "scripts/test-hadalis-*.mjs"
       - "scripts/test-hadalis-automation-*.py"
       - "scripts/test-hadalis-chat-bridge.py"
@@ -16,6 +18,8 @@ on:
   pull_request:
     paths:
       - "automation/**"
+      - "modules/settings/AutomationTaskConfig.qml"
+      - "scripts/alis-automation-task.py"
       - "scripts/test-hadalis-*.mjs"
       - "scripts/test-hadalis-automation-*.py"
       - "scripts/test-hadalis-chat-bridge.py"
