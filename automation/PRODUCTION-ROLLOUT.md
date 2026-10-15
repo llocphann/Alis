@@ -80,3 +80,43 @@ uncertain evidence, restart a busy worker, or reuse a job identity.
 operational for **explicitly owner-gated individual jobs**; this is an existing
 limited mode, not an authorization to dispatch any job. Whole-system automated
 production and `stable` cutover are **not yet accepted**.
+
+## Alis continuation redesign — owner-selected architecture
+
+The owner selected the historic Chat Bridge **automatic UI continuation**
+protocol, with GitHub as the single deterministic job/receipt transport.
+`ALIS_LOOP` is canonical; `HADALIS_LOOP` remains read-only compatibility
+for persisted legacy chat responses, not current branding.
+
+- `CONTINUE`: the bridge prepares the next Alis continuation turn.
+- `WAIT_RESULT JOB-...`: the bridge checks the exact settled GitHub
+  result job identity/digest, then prepares the next continuation.
+- `ROTATE`: continue in a new conversation only after a saved task checkpoint
+  and a verified target UI context.
+- `DONE`: terminal for the assigned task, even in historical
+  continuous-research configurations.
+- `CONNECTOR_BLOCKED GITHUB`: pause rather than invent results.
+
+The restored UI subprocess now attempts **one** Send click only; no
+Enter/CDP/Wayland retry cascade. The Python controller fsyncs a private
+`alis.chat-ui-send.v1` attempt before filling the composer. If the click,
+request, or response is uncertain, the intent remains pending across restart
+and blocks any duplicate send. A complete parsed loop marker is required
+before archiving an attempt as UI-observed. This is still a **UI observation**,
+not a server-attested managed-chat receipt.
+
+**Deployment distinction:** GitHub worker code and the historical bridge
+controller remain separate. The installed scheduler still selects the native
+adapter and stays blocked for unmanaged server identities. Source-level UI
+hardening is not automatic activation, not proof of safe ownership of an
+already-open Desktop conversation, and not authorization to restart
+`hadalis-chat-bridge.service`. The next integration must bind an
+owner-selected task and ChatGPT Project conversation to a single opt-in UI
+controller, prevent concurrent native/UI writers, and test behavior after
+crash/reboot with a live installed Desktop **before** enabling unattended
+sends. No other task's pending job or local receipt may be modified.
+
+New user-facing name and protocol: **Alis**. Existing `hadalis-automation`
+XDG directories, old profile ID, user service aliases and installed filename
+contracts remain until explicit lossless migration; they are not product
+branding. The historical queue and `stable` remain protected.
