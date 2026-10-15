@@ -12,6 +12,7 @@ import time
 from typing import Any
 
 from automation.chat_bridge.controller import BridgeAction, BridgeState, transition
+from automation.chat_bridge.send_journal import prepare_send, acknowledge_completed
 from automation.chat_bridge.protocol import (
     CONTINUATION_PROMPT,
     ROTATION_BOOTSTRAP_PROMPT,
@@ -108,21 +109,30 @@ def run(
 
 
 def desktop(command: str, prompt: str | None = None) -> dict[str, Any]:
+    # A one-shot intent is fsynced before ANY Desktop UI mutation.
+    # A crash, ambiguous click, timeout or incomplete response keeps the
+    # pending tombstone: never silently send a duplicate after a restart.
+    intent = (prepare_send(state_root(), command, prompt)
+              if command in {"send", "rotate-send"} else None)
     result = run(
         ["node", str(DESKTOP_CLI), command],
         input_text=prompt,
         timeout=DESKTOP_TIMEOUT_SECONDS,
     )
     if result.returncode != 0:
-        raise RuntimeError(
-            f"desktop bridge failed ({result.returncode}): {result.stderr.strip()}"
-        )
+        # Never surface raw stderr: it can contain private UI context.
+        raise RuntimeError("ALIS_UI_SEND_UNCERTAIN_NO_RETRY" if intent else
+                           "Alis Desktop observation failed")
     try:
-        return json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(
-            f"desktop bridge returned invalid JSON: {result.stdout[:1000]!r}"
-        ) from exc
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        raise RuntimeError("Alis Desktop response invalid; no send retry") from None
+    if intent is not None:
+        # Only a complete response permits the NEXT distinct send.
+        # This is UI observation, not server-side managed-chat attestation.
+        extract_response_text(payload)
+        acknowledge_completed(*intent)
+    return payload
 
 
 def extract_response_text(payload: dict[str, Any]) -> str:
@@ -142,12 +152,26 @@ def git_fetch_dev() -> None:
 
 
 def result_exists(job_id: str) -> bool:
+    # Only a structurally settled receipt for this EXACT job can release a
+    # WAIT_RESULT. A pending job or DONE signal is never a worker result.
+    if not job_id.startswith("JOB-") or not all(
+            c.isalnum() or c in "._-" for c in job_id):
+        raise ValueError("invalid Alis job identity")
     path = f"{RESULTS_DIR}/{job_id}.json"
-    result = run(
-        ["git", "cat-file", "-e", f"origin/dev:{path}"],
-        timeout=30,
-    )
-    return result.returncode == 0
+    result = run(["git", "show", f"origin/dev:{path}"], timeout=30)
+    if result.returncode != 0:
+        return False
+    if len(result.stdout) > 65536:
+        raise RuntimeError("Alis job result exceeds public metadata bound")
+    try:
+        payload = json.loads(result.stdout)
+    except ValueError:
+        raise RuntimeError("Alis job result invalid JSON") from None
+    if (not isinstance(payload, dict) or payload.get("job") != job_id
+            or payload.get("status") not in
+            {"passed", "failed", "cancelled", "indeterminate"}):
+        raise RuntimeError("Alis job result identity/status mismatch")
+    return True
 
 
 def wait_for_result(job_id: str) -> None:
@@ -173,13 +197,6 @@ def process_response(
     continuous_research: bool = CONTINUOUS_RESEARCH,
 ) -> tuple[bool, str | None, str | None]:
     state, action, job_id = resolve_directive(response_text)
-
-    if action is BridgeAction.STOP and continuous_research:
-        # In continuous research mode, DONE means only that the current turn
-        # has no more work. Keep the service alive and ask ChatGPT for the next
-        # research step instead of terminating the autonomous loop.
-        save_state(BridgeState.READY)
-        return False, "send", CONTINUATION_PROMPT
 
     save_state(state, job_id)
 
@@ -215,8 +232,8 @@ def attach_until_marker() -> dict[str, Any]:
         except RuntimeError as exc:
             message = str(exc)
             retryable = (
-                "No completed assistant HADALIS_LOOP response found" in message
-                or "No HADALIS_LOOP marker found near completed assistant response" in message
+                "No completed assistant ALIS_LOOP response found" in message
+                or "No ALIS_LOOP marker found near completed assistant response" in message
             )
             if not retryable:
                 raise
@@ -271,7 +288,7 @@ def run_loop(payload: dict[str, Any]) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Deterministic Hadalis ChatGPT Desktop loop controller"
+        description="Deterministic Alis ChatGPT Desktop loop controller"
     )
     parser.add_argument(
         "--initial-prompt-file",
@@ -298,7 +315,7 @@ def main() -> int:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:
             raise SystemExit(
-                "another hadalis-chat-bridge instance is already running"
+                "another Alis Chat Bridge instance is already running"
             ) from exc
 
         if args.reset_state:
