@@ -39,7 +39,12 @@ missing tools, premature tool exits or bounds fail closed with a nonzero exit.
 Missing/reused identities reject affected rows; a run with fewer than two frames
 or zero accepted mature samples is incomplete. Output must end with a `complete`
 record containing accepted/rejected counts. Exit 0 means collection completed;
-it is not active-playback, listening or owner acceptance. `--interval` bounds the event-loop wait; it
+it is not active-playback, listening or owner acceptance.
+At the intentional deadline, a partial live packet and its unfinished top frame
+are discarded with a `deadline_tail_discarded` record containing byte/row counts
+only. Previously completed records remain usable; this does not upgrade older
+incomplete runs or make the trace a complete snapshot of every transition.
+`--interval` bounds the event-loop wait; it
 does not increase `pw-top`'s sampling frequency. Receipt timestamps are not
 sample-accurate audio timing; top frames retain their header-receipt time as well
 as their completion time, and short transitions can fall between samples.

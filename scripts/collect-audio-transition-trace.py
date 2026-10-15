@@ -278,6 +278,8 @@ def collect(args, writer):
                 if name == "graph":
                     while buffers[name].strip():
                         text = buffers[name].lstrip()
+                        if not text.startswith("["):
+                            raise TraceError("unsupported-graph-format")
                         try:
                             value, end = decoder.raw_decode(text)
                         except json.JSONDecodeError:
@@ -294,9 +296,17 @@ def collect(args, writer):
                         elif line.strip() and not marker_rejected:
                             writer.emit("marker_rejected")
                             marker_rejected = True
-        top.finish()
-        if buffers["graph"].strip() or buffers["top"].strip():
-            raise TraceError("truncated-tool-output")
+        # A live stream can be midway through its next packet at our deadline.
+        # Keep completed records, explicitly discard that boundary tail and
+        # its in-progress top frame, and never reinterpret earlier failed runs.
+        graph_tail = len(buffers["graph"].strip().encode())
+        top_tail = len(buffers["top"].strip().encode())
+        if graph_tail or top_tail:
+            writer.emit("deadline_tail_discarded", graph_bytes=graph_tail,
+                        top_bytes=top_tail, unfinished_top_rows=len(top.rows))
+            top.rows, top.identity = [], None
+        else:
+            top.finish()
         if top.frames < 2 or not top.mature_samples:
             raise TraceError("insufficient-mature-frames")
         writer.emit("complete", frames=top.frames, accepted_samples=top.mature_samples,

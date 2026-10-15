@@ -254,6 +254,20 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(records[-1]["event"], "complete")
         self.assertGreater(records[-1]["frames"], 65)
 
+    def test_deadline_discards_partial_live_packet_without_publishing_it(self):
+        self.fake("pw-dump", "import sys,time\nprint(" + repr(json.dumps([node(), client(), link()]))
+                  + ",flush=True)\ntime.sleep(.75)\nsys.stdout.write('[{\"private\":\"' + "
+                  + repr(SECRET) + ");sys.stdout.flush()\ntime.sleep(10)\n")
+        result = self.run_trace("boundary.jsonl")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        raw = (self.root / "boundary.jsonl").read_text()
+        self.assertNotIn(SECRET, raw)
+        records = [json.loads(line) for line in raw.splitlines()]
+        tails = [r for r in records if r["event"] == "deadline_tail_discarded"]
+        self.assertEqual(len(tails), 1)
+        self.assertGreater(tails[0]["graph_bytes"], 0)
+        self.assertEqual(records[-1]["event"], "complete")
+
     def test_fail_closed_format_early_exit_and_input_limit(self):
         self.fake("pw-top", "import time\nprint(" + repr(SECRET) + ",flush=True)\ntime.sleep(10)\n")
         self.assertNotEqual(self.run_trace("bad-top").returncode, 0)
