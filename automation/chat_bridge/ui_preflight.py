@@ -81,7 +81,9 @@ def _unit_state() -> tuple[str, str]:
     exec_start = fields.get("ExecStart", "")
     if "-m automation.manager.daemon" not in exec_start:
         return "unexpected_entrypoint", "unknown"
-    if "--ui-loop-profile" in exec_start:
+    if "--ui-loop-queue" in exec_start:
+        mode = "ui_queue_mode"
+    elif "--ui-loop-profile" in exec_start:
         mode = "ui_mode"
     else:
         mode = "native_mode"
@@ -138,11 +140,11 @@ def examine(config: dict, state: dict, profile_id: str,
         reasons.append("UI_JOURNAL_UNRESOLVED")
     if service_state in {"active", "activating"} and service_mode != "ui_mode":
         reasons.append("NATIVE_SCHEDULER_ACTIVE")
-    if service_state in {"active", "activating"} and service_mode == "ui_mode":
+    if service_state in {"active", "activating"} and service_mode in {"ui_mode", "ui_queue_mode"}:
         reasons.append("UI_SCHEDULER_ALREADY_RUNNING")
     if service_state != "inactive":
         reasons.append("SERVICE_NOT_INACTIVE_FOR_CUTOVER")
-    if service_mode not in {"native_mode", "ui_mode"}:
+    if service_mode not in {"native_mode", "ui_mode", "ui_queue_mode"}:
         reasons.append("UNIT_ENTRYPOINT_UNKNOWN")
     return {
         "purpose": "auto-f01-ui-cutover-preflight",
@@ -277,7 +279,7 @@ def check_prepared_queue() -> dict:
     service, mode = _unit_state()
     result["installed_service_mode"] = mode
     result["service_state"] = service
-    if service != "inactive" or mode not in {"native_mode", "ui_mode"}:
+    if service != "inactive" or mode not in {"native_mode", "ui_mode", "ui_queue_mode"}:
         blockers.append("SCHEDULER_CUTOVER_NOT_READY")
     # The existing Start Queue CLI is still guarded by native,
     # server-attested transport. Never imply the UI prototype can bypass it.
