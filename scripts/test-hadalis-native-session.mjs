@@ -181,6 +181,21 @@ try {
   assert.equal(result.stdout, "");
   assert.match(result.stderr, /DESKTOP_CAPABILITY_UNAVAILABLE/);
   assert.ok(Date.now() - before < 3500, "contract check must fail before CDP");
+  // Legacy v1 had no durable exact user message ID. A time-window/body
+  // substring match is never enough to adopt/acknowledge a submitted turn.
+  // The adoption op MUST reject before importing CDP on an incompatible build.
+  const adopt=spawnSync(process.execPath,[cliPath],{
+    input:JSON.stringify({op:"adopt",project_name:"Automatic Alis",
+      prepared_at_unix:100,match_text:"PRIVATE_HEURISTIC"}),
+    encoding:"utf8",timeout:3500,env:{...process.env,
+      HADALIS_DESKTOP_ASAR:archivePath,
+      HADALIS_PLAYWRIGHT_MODULE:"file:///unavailable-playwright/module.mjs",
+      HADALIS_CHATGPT_CDP_URL:"http://127.0.0.1:9"}
+  });
+  assert.equal(adopt.status,1,String(adopt.error??""));
+  assert.match(adopt.stderr,/LEGACY_IDENTITY_AMBIGUOUS/);
+  assert.equal(adopt.stdout,"");
+
   // Positive structural fixture: report a possible binding shape, but never
   // include a mock secret, constructor name, or raw module source.
   const sample = Buffer.from(
