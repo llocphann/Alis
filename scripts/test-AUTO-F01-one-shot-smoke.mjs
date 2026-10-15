@@ -17,9 +17,11 @@ try{
   const PROJECT="Automatic Alis";
   function makePage({initialScoped=false,initialDraft="",assistant=true,
     chatId=true,ambiguousAction=false,targetListInitiallyHidden=false,
-    targetListAlwaysHidden=false,targetListAmbiguous=false}={}){
+    targetListAlwaysHidden=false,targetListAmbiguous=false,
+    navDelayReads=0}={}){
     let scoped=initialScoped,draft=initialDraft,submitted=false;
     let navClicks=0,sendClicks=0,fillCount=0;
+    let pendingScope=false,navReadCount=0;
     const oldDraft=initialDraft;
     const shown=()=>[{visible:true}];
     const loc=(resolve,kind)=>({
@@ -42,7 +44,11 @@ try{
             ?"1234567890abcdef1234567890abcdef":null,
           closest:()=>null,querySelector:()=>null,
           click:()=>{
-            if(kind==="nav"){navClicks++;scoped=true;draft="";}
+            if(kind==="nav"){
+              navClicks++;
+              if(navDelayReads>0)pendingScope=true;else scoped=true;
+              draft="";
+            }
             else if(kind==="send"){sendClicks++;submitted=true;draft="";}
             else throw Error("FORBIDDEN_CLICK");
           }
@@ -64,7 +70,12 @@ try{
       url:()=>"app://-/index.html",
       getByRole:(role,opt={})=>{
         const name=opt.name;
-        if(role==="main")return loc(shown,"main");
+        if(role==="main"){
+          if(pendingScope&&++navReadCount>=navDelayReads){
+            pendingScope=false;scoped=true;
+          }
+          return loc(shown,"main");
+        }
         if(role==="textbox"){
           if(typeof name==="string")return loc(
             ()=>name==="New chat in "+PROJECT&&scoped?shown():[],"editor");
@@ -166,6 +177,15 @@ try{
 
   // The navigation target must become verifiable after exactly one click.
   // A sidebar button alone must never be used as Send authority.
+  const slowlyNavigated=makePage({initialDraft:"FOREIGN_DRAFT",
+    targetListInitiallyHidden:true,navDelayReads:12});
+  const delayed=await oneShotUiSmoke({page:slowlyNavigated.page,
+    ownerApproved:true,persistAttempt:async()=>{},wait,
+    maxNavigationPolls:18,maxResponsePolls:1});
+  assert.equal(delayed.status,"observed",JSON.stringify(delayed));
+  assert.equal(slowlyNavigated.get().navClicks,1);
+  assert.equal(slowlyNavigated.get().sendClicks,1);
+
   const listNeverAppears=makePage({initialDraft:"FOREIGN_DRAFT",
     targetListAlwaysHidden:true});
   const unverified=await oneShotUiSmoke({page:listNeverAppears.page,
@@ -173,6 +193,14 @@ try{
     wait,maxResponsePolls:1});
   assert.equal(unverified.code,"ALIS_UI_PROJECT_NAVIGATION_NOT_VERIFIED");
   assert.equal(unverified.navigation_click_attempted,true);
+  assert.equal(unverified.post_navigation_diagnostics.inspection,"completed");
+  assert.equal(unverified.post_navigation_diagnostics.project_list_count_capped,0);
+  assert.equal(unverified.post_navigation_diagnostics.project_badge_count_capped,1);
+  assert.equal(unverified.post_navigation_diagnostics.composer_scope_evidence,
+               "exact-project-scoped-label");
+  assert.ok(unverified.post_navigation_diagnostics.readiness_issues
+            .every(code=>typeof code==="string"));
+  assert.equal(JSON.stringify(unverified).includes("FOREIGN_DRAFT"),false);
   assert.equal(listNeverAppears.get().navClicks,1);
   assert.equal(listNeverAppears.get().fillCount,0);
   assert.equal(listNeverAppears.get().sendClicks,0);
