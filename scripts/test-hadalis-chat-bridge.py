@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
+from types import SimpleNamespace
+from unittest.mock import patch
 import os
 import sys
 import tempfile
@@ -14,6 +17,8 @@ from automation.chat_bridge.controller import (  # noqa: E402
     BridgeState,
     transition,
 )
+from automation.chat_bridge import runtime
+from automation.chat_bridge.send_journal import prepare_send, acknowledge_completed
 from automation.chat_bridge.runtime import (  # noqa: E402
     clear_state,
     load_state,
@@ -22,7 +27,7 @@ from automation.chat_bridge.runtime import (  # noqa: E402
 )
 from automation.chat_bridge.protocol import (  # noqa: E402
     CONTINUATION_PROMPT,
-    GITHUB_MENTION,
+    GITHUB_APP_MENTION,
     ROTATION_BOOTSTRAP_PROMPT,
     DirectiveKind,
     ProtocolError,
@@ -42,16 +47,18 @@ def expect_protocol_error(text: str) -> None:
 def main() -> None:
     assert prompt_has_required_github_mention(CONTINUATION_PROMPT)
     assert prompt_has_required_github_mention(ROTATION_BOOTSTRAP_PROMPT)
-    assert CONTINUATION_PROMPT.splitlines()[0] == GITHUB_MENTION
-    assert ROTATION_BOOTSTRAP_PROMPT.splitlines()[0] == GITHUB_MENTION
+    assert CONTINUATION_PROMPT.splitlines()[0] == GITHUB_APP_MENTION
+    assert ROTATION_BOOTSTRAP_PROMPT.splitlines()[0] == GITHUB_APP_MENTION
     assert "fetch the current dev head" in CONTINUATION_PROMPT.casefold()
-    assert "strict-lossless optimization research" in CONTINUATION_PROMPT.casefold()
-    assert "do not stop after one round" in CONTINUATION_PROMPT.casefold()
+    assert "active alis automation task" in CONTINUATION_PROMPT.casefold()
+    assert "exact job-id receipt" in CONTINUATION_PROMPT.casefold()
     assert "do not switch to work mode" in CONTINUATION_PROMPT.casefold()
     assert "do not switch to work mode" in ROTATION_BOOTSTRAP_PROMPT.casefold()
-    assert "HADALIS_LOOP:CONNECTOR_BLOCKED GITHUB" in CONTINUATION_PROMPT
+    assert "ALIS_LOOP:CONNECTOR_BLOCKED GITHUB" in CONTINUATION_PROMPT
 
-    wait = parse_loop_directive("notes\nHADALIS_LOOP:WAIT_RESULT JOB-000127\n")
+    wait = parse_loop_directive("notes\nALIS_LOOP:WAIT_RESULT JOB-000127\n")
+    # Migration: accept old saved markers without generating new ones.
+    assert parse_loop_directive("HADALIS_LOOP:CONTINUE").kind is DirectiveKind.CONTINUE
     assert wait.kind is DirectiveKind.WAIT_RESULT
     assert wait.argument == "JOB-000127"
     wait_transition = transition(BridgeState.READY, wait)
@@ -59,26 +66,27 @@ def main() -> None:
     assert wait_transition.action is BridgeAction.WAIT_RESULT
     assert wait_transition.job_id == "JOB-000127"
 
-    cont = parse_loop_directive("HADALIS_LOOP:CONTINUE")
+    cont = parse_loop_directive("ALIS_LOOP:CONTINUE")
     assert transition(BridgeState.WAIT_LOCAL, cont).action is BridgeAction.SEND_CONTINUATION
 
-    rotate = parse_loop_directive("HADALIS_LOOP:ROTATE")
+    rotate = parse_loop_directive("ALIS_LOOP:ROTATE")
     assert transition(BridgeState.READY, rotate).state is BridgeState.ROTATE_PENDING
 
-    blocked = parse_loop_directive("HADALIS_LOOP:CONNECTOR_BLOCKED GITHUB")
+    blocked = parse_loop_directive("ALIS_LOOP:CONNECTOR_BLOCKED GITHUB")
     blocked_transition = transition(BridgeState.READY, blocked)
     assert blocked_transition.state is BridgeState.CONNECTOR_BLOCKED
     assert blocked_transition.action is BridgeAction.WAIT_CONNECTOR
 
-    done = parse_loop_directive("HADALIS_LOOP:DONE")
+    done = parse_loop_directive("ALIS_LOOP:DONE")
     assert transition(BridgeState.READY, done).state is BridgeState.DONE
 
     expect_protocol_error("")
-    expect_protocol_error("HADALIS_LOOP:WAIT_RESULT")
-    expect_protocol_error("HADALIS_LOOP:WAIT_RESULT ../../escape")
-    expect_protocol_error("HADALIS_LOOP:CONTINUE unexpected")
-    expect_protocol_error("HADALIS_LOOP:CONNECTOR_BLOCKED OTHER")
-    expect_protocol_error("HADALIS_LOOP:CONTINUE\nHADALIS_LOOP:DONE")
+    expect_protocol_error("ALIS_LOOP:WAIT_RESULT")
+    expect_protocol_error("ALIS_LOOP:WAIT_RESULT ../../escape")
+    expect_protocol_error("ALIS_LOOP:CONTINUE unexpected")
+    expect_protocol_error("ALIS_LOOP:CONNECTOR_BLOCKED OTHER")
+    expect_protocol_error("ALIS_LOOP:CONTINUE\nALIS_LOOP:DONE")
+    expect_protocol_error("ALIS_LOOP:CONTINUE\nHADALIS_LOOP:DONE")
 
     try:
         transition(BridgeState.DONE, cont)
@@ -98,13 +106,46 @@ def main() -> None:
             assert load_state() == (BridgeState.DONE, None)
 
             done, command, prompt = process_response(
-                "HADALIS_LOOP:DONE",
+                "ALIS_LOOP:DONE",
                 continuous_research=True,
             )
-            assert done is False
-            assert command == "send"
-            assert prompt == CONTINUATION_PROMPT
-            assert load_state() == (BridgeState.READY, None)
+            assert done is True and command is None and prompt is None
+            assert load_state() == (BridgeState.DONE, None)
+
+            # One UI attempt is durable before any subprocess invocation.
+            state = runtime.state_root()
+            intent, identity = prepare_send(state, "send", "private-test-prompt")
+            record = json.loads(intent.read_text())
+            assert record["schema"] == "alis.chat-ui-send.v1"
+            assert record["prompt_sha256"] and "private-test-prompt" not in intent.read_text()
+            try:
+                prepare_send(state, "send", "private-test-prompt")
+            except RuntimeError as error:
+                assert "RECONCILIATION_REQUIRED" in str(error)
+            else:
+                raise AssertionError("unsettled UI send must block every retry")
+            acknowledge_completed(intent, identity)
+            assert not intent.exists()
+            assert (state / "ui-send-journal" / "observed" /
+                    (identity + ".json")).exists()
+
+            # A timeout after send may have taken effect. Repeated startup
+            # or process retry MUST NOT invoke a second Desktop subprocess.
+            with patch.object(runtime, "run", side_effect=TimeoutError("uncertain")) as invoked:
+                try:
+                    runtime.desktop("send", "one-shot")
+                except TimeoutError:
+                    pass
+                else:
+                    raise AssertionError("simulated UI timeout was accepted")
+                assert invoked.call_count == 1
+                try:
+                    runtime.desktop("send", "one-shot")
+                except RuntimeError as error:
+                    assert "RECONCILIATION_REQUIRED" in str(error)
+                else:
+                    raise AssertionError("ambiguous send was replayed")
+                assert invoked.call_count == 1
 
             clear_state()
             assert load_state() is None
@@ -114,7 +155,7 @@ def main() -> None:
         else:
             os.environ["XDG_STATE_HOME"] = old_state_home
 
-    print("PASS: Hadalis chat-bridge protocol, state, and deterministic transitions")
+    print("PASS: Alis chat-bridge protocol, state, and deterministic transitions")
 
 
 if __name__ == "__main__":
