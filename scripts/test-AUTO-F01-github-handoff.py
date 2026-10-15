@@ -303,7 +303,11 @@ class GitHubHandoffTests(unittest.TestCase):
         at=int(time.time())
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
-            with patch.object(worker,"state_root",return_value=root):
+            installed={"worker_service_active":True,
+                       "worker_unit_matches_checkout":True,
+                       "worker_process_matches_checkout":True}
+            with (patch.object(worker,"state_root",return_value=root),
+                  patch.object(module,"installed_worker_info",return_value=installed)):
                 self.assertFalse(module.running_worker_status(now=at)[
                     "worker_supports_github_handoff"])
                 heartbeat=root/"pool.json"
@@ -313,6 +317,12 @@ class GitHubHandoffTests(unittest.TestCase):
                 }))
                 self.assertTrue(module.running_worker_status(now=at)[
                     "worker_supports_github_handoff"])
+                assert module.running_worker_status(now=at)["diagnosis"]=="RUNNING_WORKER_HANDOFF_CONTRACT_OBSERVED"
+                with patch.object(module,"installed_worker_info",return_value={
+                        **installed,"worker_process_matches_checkout":False}):
+                    report=module.running_worker_status(now=at)
+                    self.assertFalse(report["worker_supports_github_handoff"])
+                    self.assertEqual(report["diagnosis"],"WORKER_HANDOFF_MARKER_SOURCE_UNVERIFIED")
                 self.assertFalse(module.running_worker_status(now=at)[
                     "managed_chat_transport_ready"])
                 heartbeat.write_text(json.dumps({
@@ -327,12 +337,46 @@ class GitHubHandoffTests(unittest.TestCase):
                 }))
                 self.assertFalse(module.running_worker_status(now=at)[
                     "worker_supports_github_handoff"])
+                self.assertEqual(module.running_worker_status(now=at)["diagnosis"],
+                                 "RUNNING_WORKER_OLDER_CODE_MAY_REQUIRE_CONTROLLED_RESTART")
                 heartbeat.unlink()
                 heartbeat.symlink_to(root/"untrusted")
                 self.assertFalse(module.running_worker_status(now=at)[
                     "worker_supports_github_handoff"])
 
 
+
+    def test_doctor_checks_real_unit_process_without_printing_pid_paths(self):
+        import importlib.util
+        import os
+        from types import SimpleNamespace
+        cli=Path(__file__).resolve().parent/"AUTO-F01-github-handoff.py"
+        spec=importlib.util.spec_from_file_location("auto_f01_worker_doctor_proc",cli)
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        root=Path(__file__).resolve().parents[1]
+        script=(root/"automation"/"worker"/"daemon.py").resolve()
+        sample=SimpleNamespace(returncode=0,stdout=(
+            "ActiveState=active\\nMainPID=41341\\nWorkingDirectory="+str(root)+"\\n"))
+        command=b"/usr/bin/python3\\x00"+os.fsencode(str(script))+b"\\x00"
+        with (patch.object(module.subprocess,"run",return_value=sample),
+              patch.object(Path,"read_bytes",return_value=command),
+              patch.object(module.os,"readlink",return_value=str(root))):
+            details=module.installed_worker_info()
+            self.assertEqual(details,{
+                "worker_service_active":True,
+                "worker_unit_matches_checkout":True,
+                "worker_process_matches_checkout":True})
+            self.assertNotIn("41341",json.dumps(details))
+            self.assertNotIn(str(root),json.dumps(details))
+        with (patch.object(module.subprocess,"run",return_value=sample),
+              patch.object(Path,"read_bytes",return_value=command),
+              patch.object(module.os,"readlink",return_value="/tmp/other-checkout")):
+            details=module.installed_worker_info()
+            self.assertFalse(details["worker_process_matches_checkout"])
+        bad=SimpleNamespace(returncode=1,stdout="",stderr="PRIVATE-CREDENTIAL")
+        with patch.object(module.subprocess,"run",return_value=bad):
+            self.assertFalse(module.installed_worker_info()["worker_service_active"])
 
     def test_stale_unstarted_manifest_prunes_once_without_touching_receipts(self):
         from types import SimpleNamespace
