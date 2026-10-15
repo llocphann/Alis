@@ -86,42 +86,64 @@ def installed_worker_info() -> dict:
 
 
 def pending_receipt_health() -> dict:
-    """Fail-closed receipt inventory, not a mutation or content export.
+    """Bounded, read-only receipt phase inventory, without IDs or contents.
 
-    A worker can have unpublished/uncertain durable receipts even when the
-    heartbeat reports no running future and no active publisher. Do not
-    restart until those have been reconciled.
+    An unreadable/legacy entry is diagnosed categorically and remains
+    untouched. Do not infer a safe restart from partial inventory evidence.
     """
     root=worker.state_root() / "receipts"
-    problem={"worker_receipt_inventory_complete":False,
-             "worker_unsettled_receipts_present":None,
-             "worker_receipt_count_capped":None}
-    if root.is_symlink():return problem
+    known={"published","preparing","executing","finished","publishing"}
+
+    def blocked(reason: str) -> dict:
+        return {
+            "worker_receipt_inventory_complete":False,
+            "worker_receipt_inventory_blocker":reason,
+            "worker_unsettled_receipts_present":None,
+            "worker_receipt_count_capped":None,
+            "worker_receipt_phase_counts":None,
+        }
+
+    if root.is_symlink():return blocked("UNSAFE_RECEIPT_DIRECTORY_SYMLINK")
     if not root.exists():
-        # A worker with no jobs may never have created receipts/.
-        return {"worker_receipt_inventory_complete":True,
-                "worker_unsettled_receipts_present":False,
-                "worker_receipt_count_capped":0}
-    if not root.is_dir():return problem
+        return {
+            "worker_receipt_inventory_complete":True,
+            "worker_receipt_inventory_blocker":None,
+            "worker_unsettled_receipts_present":False,
+            "worker_receipt_count_capped":0,
+            "worker_receipt_phase_counts":{k:0 for k in sorted(known)},
+        }
+    if not root.is_dir():return blocked("RECEIPT_DIRECTORY_NOT_DIRECTORY")
+    counts={k:0 for k in sorted(known)}
     total=0
-    unsettled=False
     try:
         for item in root.iterdir():
             total+=1
-            if total>4096:return problem
-            if (not item.name.endswith(".json") or item.is_symlink()
-                    or not item.is_file() or item.stat().st_size>65536):
-                return problem
-            receipt=json.loads(item.read_text(encoding="utf-8"))
-            if not isinstance(receipt,dict) or receipt.get("phase") not in (
-                "published","preparing","executing","finished","publishing"):
-                return problem
-            if receipt["phase"]!="published":unsettled=True
-    except (OSError,ValueError):
-        return problem
-    return {"worker_receipt_inventory_complete":True,
-            "worker_unsettled_receipts_present":unsettled,
-            "worker_receipt_count_capped":min(total,4096)}
+            if total>4096:return blocked("RECEIPT_DIRECTORY_LIMIT_EXCEEDED")
+            if item.is_symlink():return blocked("RECEIPT_ENTRY_SYMLINK")
+            if not item.is_file():return blocked("RECEIPT_ENTRY_NOT_REGULAR_FILE")
+            if not item.name.endswith(".json"):
+                return blocked("RECEIPT_ENTRY_UNEXPECTED_FILENAME")
+            if item.stat().st_size>65536:
+                return blocked("RECEIPT_ENTRY_SIZE_LIMIT_EXCEEDED")
+            try:
+                receipt=json.loads(item.read_text(encoding="utf-8"))
+            except (ValueError,UnicodeError):
+                return blocked("RECEIPT_ENTRY_INVALID_JSON")
+            if not isinstance(receipt,dict):
+                return blocked("RECEIPT_ENTRY_NOT_OBJECT")
+            phase=receipt.get("phase")
+            if not isinstance(phase,str) or phase not in known:
+                return blocked("RECEIPT_ENTRY_UNKNOWN_OR_LEGACY_PHASE")
+            counts[phase]+=1
+    except OSError:
+        return blocked("RECEIPT_DIRECTORY_OR_ENTRY_IO_ERROR")
+    return {
+        "worker_receipt_inventory_complete":True,
+        "worker_receipt_inventory_blocker":None,
+        "worker_unsettled_receipts_present":total!=counts["published"],
+        "worker_receipt_count_capped":total,
+        "worker_receipt_phase_counts":counts,
+    }
 
 
 def running_worker_status(*, now: int | None = None) -> dict:
