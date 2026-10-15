@@ -299,3 +299,60 @@ def approve_cloud_start() -> dict:
             doc["updated_unix"] = int(time.time())
             _save(doc)
         return {"ok": True, "approved_start": True}
+
+
+
+def clear(*, approved: bool = False) -> dict:
+    """Remove only an undispatched/terminal UI queue; never delete task receipts.
+
+    The queue manifest itself is archived for recovery, under its original
+    exclusive flock. There is no operation for an active, previously approved,
+    waiting-for-selector or uncertain queue. Task data and Git handoffs live
+    outside this manifest and must never be pruned here.
+    """
+    if approved is not True:
+        raise tf.TaskError("Explicit Clear Queue confirmation required")
+    with _lock():
+        manifest = _load()
+        if manifest is None:
+            return {**view(None), "cleared": False}
+        if (manifest.get("active") is not None or manifest.get("selection")
+                or manifest.get("state") not in {"prepared", "finished", "cancelled"}):
+            raise tf.TaskError("Queue has active or unresolved work; cannot clear")
+        if manifest.get("state") == "prepared":
+            if manifest.get("approved_start"):
+                raise tf.TaskError("Approved queue may already have a selector pending")
+            if any(item.get("state") != "queued" for item in manifest["items"]):
+                raise tf.TaskError("Queue has claimed task state; cannot clear")
+            for item in manifest["items"]:
+                record = tf.load_task(item["code"], item["repository"])
+                if (record.get("status") != "prepared"
+                        or record.get("unresolved")
+                        or record.get("scheduler_dispatched")
+                        or record.get("handoff") is not None
+                        or record.get("latest_receipt") is not None):
+                    raise tf.TaskError("Queue task has durable work; cannot clear")
+        else:
+            if any(item.get("state") in {"queued", "active"}
+                   for item in manifest["items"]):
+                raise tf.TaskError("Finished queue still contains unfinished items")
+        source = _queue_path()
+        archive = tf.state_dir() / "queue-history"
+        if archive.is_symlink():
+            raise tf.TaskError("Unsafe queue archive")
+        archive.mkdir(mode=0o700, parents=True, exist_ok=True)
+        import uuid
+        name = archive / ("cleared-" + str(time.time_ns()) + "-" +
+                          uuid.uuid4().hex + ".json")
+        # Durable rename retains exact original approvals/identities for
+        # forensic audit, but removes the active UI queue view.
+        os.replace(source, name)
+        for directory in (archive, source.parent):
+            fd = os.open(directory, os.O_RDONLY |
+                         getattr(os, "O_DIRECTORY", 0))
+            try:
+                os.fsync(fd)
+            finally:
+                os.close(fd)
+        return {**view(None), "cleared": True,
+                "archived": True, "task_records_preserved": True}
