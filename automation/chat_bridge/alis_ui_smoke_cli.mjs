@@ -3,8 +3,10 @@
  * Explicit approval is needed; never called by queue or native scheduler.
  * One navigation click maximum + one send click maximum, no retries.
  */
+import fs from "node:fs";
 import {oneShotUiSmoke,SMOKE_ACCEPTANCE_ID} from "./alis_ui_smoke.mjs";
 import {persistHarmlessUiAttempt,harmlessUiAttemptExists} from "./legacy_ui_journal.mjs";
+const writeReport=value=>fs.writeSync(1,JSON.stringify(value)+"\n");
 const denied=(code,status="blocked")=>({
   purpose:"alis-ui-one-shot-smoke",
   status,code,navigation_click_attempted:false,
@@ -16,7 +18,7 @@ const denied=(code,status="blocked")=>({
   queue_started:false
 });
 if(process.argv.length!==3||process.argv[2]!=="--owner-approved"){
-  console.log(JSON.stringify(denied("EXPLICIT_OWNER_APPROVAL_REQUIRED")));
+  writeReport(denied("EXPLICIT_OWNER_APPROVAL_REQUIRED"));
   process.exit(1);
 }
 const cdp=process.env.ALIS_CHATGPT_CDP_URL??
@@ -29,22 +31,22 @@ try{
     !u.username&&!u.password&&u.pathname==="/"&&!u.search&&!u.hash;
 }catch{}
 if(!local){
-  console.log(JSON.stringify(denied("ALIS_UI_CDP_LOOPBACK_REQUIRED")));
+  writeReport(denied("ALIS_UI_CDP_LOOPBACK_REQUIRED"));
   process.exit(1);
 }
 // An already recorded attempt must not even open another empty Project chat.
 try {
   if (harmlessUiAttemptExists(SMOKE_ACCEPTANCE_ID)) {
-    console.log(JSON.stringify(denied("ALIS_UI_SMOKE_ALREADY_RECORDED_NO_RETRY")));
+    writeReport(denied("ALIS_UI_SMOKE_ALREADY_RECORDED_NO_RETRY"));
     process.exit(1);
   }
 } catch {
-  console.log(JSON.stringify(denied("ALIS_UI_SMOKE_JOURNAL_PRECHECK_UNAVAILABLE")));
+  writeReport(denied("ALIS_UI_SMOKE_JOURNAL_PRECHECK_UNAVAILABLE"));
   process.exit(1);
 }
 let browser;
 const guard=setTimeout(()=>{
-  console.log(JSON.stringify(denied("ALIS_UI_SMOKE_DEADLINE_NO_RETRY","uncertain")));
+  writeReport(denied("ALIS_UI_SMOKE_DEADLINE_NO_RETRY","uncertain"));
   process.exit(124);
 },24000);
 try{
@@ -62,12 +64,12 @@ try{
     page:pages[0],projectName:project,ownerApproved:true,
     persistAttempt:record=>persistHarmlessUiAttempt(record)
   });
-  console.log(JSON.stringify(result));
+  writeReport(result);
   process.exitCode=result.status==="observed"?0:
     result.status==="blocked"?1:2;
 }catch{
   // Suppress private CDP / Playwright context; never send again on error.
-  console.log(JSON.stringify(denied("ALIS_UI_SMOKE_UNAVAILABLE_NO_RETRY","uncertain")));
+  writeReport(denied("ALIS_UI_SMOKE_UNAVAILABLE_NO_RETRY","uncertain"));
   process.exitCode=2;
 }finally{
   clearTimeout(guard);
