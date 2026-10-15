@@ -18,7 +18,7 @@ try{
   function makePage({initialScoped=false,initialDraft="",assistant=true,
     chatId=true,ambiguousAction=false,targetListInitiallyHidden=false,
     targetListAlwaysHidden=false,targetListAmbiguous=false,
-    navDelayReads=0,dialogAfterNav=false}={}){
+    navDelayReads=0,dialogAfterNav=false,badgeNeverVisible=false}={}){
     let scoped=initialScoped,draft=initialDraft,submitted=false;
     let navClicks=0,sendClicks=0,fillCount=0;
     let pendingScope=false,navReadCount=0;
@@ -100,7 +100,7 @@ try{
           if(name instanceof RegExp){
             if(name.test("Stop"))return loc(()=>[],"none");
             if(name.test("Project: "+PROJECT))return loc(
-              ()=>scoped?shown():[],"badge");
+              ()=>scoped&&!badgeNeverVisible?shown():[],"badge");
             if(name.test("New chat in "+PROJECT))return loc(shown,"nav");
             if(name.test("regenerate")||name.test("copy"))return loc(
               ()=>submitted?shown():[],"action");
@@ -188,24 +188,49 @@ try{
   assert.equal(slowlyNavigated.get().navClicks,1);
   assert.equal(slowlyNavigated.get().sendClicks,1);
 
+  // Owner's exact Desktop state after navigating: Project list remains
+  // collapsed (zero) while exact badge/scoped empty composer are present.
+  // Permit the harmless one-shot, but DO NOT fake a chat ID/attestation.
   const listNeverAppears=makePage({initialDraft:"FOREIGN_DRAFT",
     targetListAlwaysHidden:true});
-  const unverified=await oneShotUiSmoke({page:listNeverAppears.page,
+  const collapsed=await oneShotUiSmoke({page:listNeverAppears.page,
+    ownerApproved:true,persistAttempt:async()=>{},wait,maxResponsePolls:1});
+  assert.equal(collapsed.status,"sent_unverified");
+  assert.equal(collapsed.assistant_only_reply_observed,true);
+  assert.equal(collapsed.selected_chat_identity_stable,false);
+  assert.equal(collapsed.message_submission_verified,false);
+  assert.equal(collapsed.server_identity_attested,false);
+  assert.equal(listNeverAppears.get().navClicks,1);
+  assert.equal(listNeverAppears.get().fillCount,1);
+  assert.equal(listNeverAppears.get().sendClicks,1);
+
+  // A second run already on the collapsed Project composer must not click
+  // New Chat again; both same-project controls remain mandatory.
+  const alreadyScopedCollapsed=makePage({initialScoped:true,
+    targetListAlwaysHidden:true});
+  const already=await oneShotUiSmoke({page:alreadyScopedCollapsed.page,
+    ownerApproved:true,persistAttempt:async()=>{},wait,maxResponsePolls:1});
+  assert.equal(already.status,"sent_unverified");
+  assert.equal(alreadyScopedCollapsed.get().navClicks,0);
+  assert.equal(alreadyScopedCollapsed.get().sendClicks,1);
+
+  // The badge alone is insufficient; fail before journal/fill/send.
+  const badgeMissing=makePage({targetListAlwaysHidden:true,
+    badgeNeverVisible:true,initialDraft:"FOREIGN_PRIVATE_DRAFT"});
+  const unverified=await oneShotUiSmoke({page:badgeMissing.page,
     ownerApproved:true,persistAttempt:async()=>{throw Error("NO_JOURNAL_ALLOWED");},
     wait,maxResponsePolls:1});
   assert.equal(unverified.code,"ALIS_UI_PROJECT_NAVIGATION_NOT_VERIFIED");
   assert.equal(unverified.navigation_click_attempted,true);
   assert.equal(unverified.post_navigation_diagnostics.inspection,"completed");
   assert.equal(unverified.post_navigation_diagnostics.project_list_count_capped,0);
-  assert.equal(unverified.post_navigation_diagnostics.project_badge_count_capped,1);
+  assert.equal(unverified.post_navigation_diagnostics.project_badge_count_capped,0);
   assert.equal(unverified.post_navigation_diagnostics.composer_scope_evidence,
                "exact-project-scoped-label");
-  assert.ok(unverified.post_navigation_diagnostics.readiness_issues
-            .every(code=>typeof code==="string"));
-  assert.equal(JSON.stringify(unverified).includes("FOREIGN_DRAFT"),false);
-  assert.equal(listNeverAppears.get().navClicks,1);
-  assert.equal(listNeverAppears.get().fillCount,0);
-  assert.equal(listNeverAppears.get().sendClicks,0);
+  assert.equal(JSON.stringify(unverified).includes("FOREIGN_PRIVATE_DRAFT"),false);
+  assert.equal(badgeMissing.get().navClicks,1);
+  assert.equal(badgeMissing.get().fillCount,0);
+  assert.equal(badgeMissing.get().sendClicks,0);
 
   // A navigation confirmation dialog can leave the target Project
   // visually selected while still blocking the underlying composer.
