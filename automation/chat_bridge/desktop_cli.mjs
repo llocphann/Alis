@@ -145,6 +145,106 @@ async function main() {
     return;
   }
 
+  if (command === "ui-project-enter") {
+    // This is optional OWNER-APPROVED UI navigation only. It does not
+    // touch the composer, create a message, or approve an Automation queue.
+    // At most one semantic click; never retry an uncertain navigation.
+    if (process.argv.length !== 4 ||
+        process.argv[3] !== "--approve-navigation") {
+      writeJson({
+        purpose: "alis-ui-project-navigation",
+        status: "blocked",
+        diagnosis: "ALIS_UI_NAVIGATION_APPROVAL_REQUIRED",
+        navigation_click_attempted: false,
+        message_submission_attempted: false,
+        ui_scheduler_authorized: false
+      });
+      return;
+    }
+    const project = process.env.ALIS_CHATGPT_PROJECT ??
+      process.env.HADALIS_CHATGPT_PROJECT ?? "Automatic Alis";
+    const observed = await inspectLegacyUiReadOnly(page, project);
+    const assessment = assessLegacyUiReadiness(observed);
+    // Only leave an unowned, idle, empty *generic* editor when there is a
+    // single visible project-new-chat action and no selected Project chat.
+    const safe = observed.target_project_list_count_capped === 1 &&
+      observed.project_new_chat_action_count_capped === 1 &&
+      observed.selected_target_chat_count_capped === 0 &&
+      observed.composer_count_capped === 1 &&
+      observed.generic_composer_count_capped === 1 &&
+      observed.project_scoped_composer_count_capped === 0 &&
+      observed.composer_draft_present === false &&
+      observed.composer_disabled === false &&
+      observed.stop_count_capped === 0 &&
+      observed.send_count_capped <= 1 &&
+      (observed.send_count_capped === 0 ||
+       observed.send_disabled === true) &&
+      assessment.project_view_visible === false;
+    if (!safe) {
+      writeJson({
+        purpose: "alis-ui-project-navigation", status: "blocked",
+        diagnosis: "ALIS_UI_NAVIGATION_PRECONDITION_FAILED",
+        navigation_click_attempted: false,
+        message_submission_attempted: false,
+        ui_scheduler_authorized: false
+      });
+      return;
+    }
+    const escaped = project.replace(/[.*+?^$()|[\]{}\\]/g, "\\  if (command === "new-chat") {");
+    const action = page.getByRole("button", {
+      name: new RegExp("^(Start new chat in|New chat in) " + escaped + "$")
+    });
+    let exactlyOne = await action.count() === 1;
+    exactlyOne = exactlyOne && await action.isVisible() &&
+      !(await action.isDisabled());
+    if (!exactlyOne) {
+      writeJson({
+        purpose: "alis-ui-project-navigation", status: "blocked",
+        diagnosis: "ALIS_UI_PROJECT_ACTION_NOT_UNIQUE",
+        navigation_click_attempted: false,
+        message_submission_attempted: false,
+        ui_scheduler_authorized: false
+      });
+      return;
+    }
+    // Playwright's evaluate invokes exactly one DOM click, never fills or
+    // submits a prompt. A failed/uncertain click is not replayed.
+    try {
+      await action.evaluate(button => button.click());
+    } catch {
+      writeJson({
+        purpose: "alis-ui-project-navigation", status: "uncertain",
+        diagnosis: "ALIS_UI_NAVIGATION_CLICK_UNCERTAIN_NO_RETRY",
+        navigation_click_attempted: true,
+        message_submission_attempted: false,
+        ui_scheduler_authorized: false
+      });
+      return;
+    }
+    await page.waitForTimeout(400);
+    let ready = false;
+    let diagnosis = "ALIS_UI_PROJECT_NAVIGATION_NOT_VERIFIED";
+    try {
+      const after = await inspectLegacyUiReadOnly(page, project);
+      const result = assessLegacyUiReadiness(after);
+      ready = result.read_only_project_entry_ready === true;
+      if (ready) diagnosis = "ALIS_UI_EMPTY_PROJECT_ENTRY_OBSERVED";
+    } catch {
+      // Navigation can detach its original renderer; do not click again.
+    }
+    writeJson({
+      purpose: "alis-ui-project-navigation",
+      status: ready ? "observed" : "unverified",
+      diagnosis,
+      empty_project_entry_ready: ready,
+      navigation_click_attempted: true,
+      message_submission_attempted: false,
+      server_identity_attested: false,
+      ui_scheduler_authorized: false
+    });
+    return;
+  }
+
   if (command === "new-chat") {
     if (process.argv[3] && process.argv[3] !== "--unowned-previous-chat")
       throw new Error("unknown new-chat option");
