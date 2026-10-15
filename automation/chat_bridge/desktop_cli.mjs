@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from "node:fs";
+import {createHash} from "node:crypto";
 
 import {
   connectDesktop,
@@ -12,6 +13,7 @@ import {
   openHadalisNewChat,
   retryFailedStream,
   submitPrompt,
+  uiTargetIdentity,
   waitForCompletion
 } from "./desktop_driver.mjs";
 
@@ -108,6 +110,18 @@ async function main() {
     if (command === "rotate-send")
       page = await openHadalisNewChat(page);
 
+    // For managed Alis UI mode, require same uniquely selected conversation
+    // between turns. A missing/changed chat must block BEFORE composer.fill.
+    const expectedTarget = process.argv[3] || null;
+    if (expectedTarget) {
+      if (command !== "send" || !/^[0-9a-f]{64}$/.test(expectedTarget))
+        throw new Error("ALIS_UI_TARGET_ARGUMENT_INVALID");
+      const current = createHash("sha256")
+        .update(await uiTargetIdentity(page)).digest("hex");
+      if (current !== expectedTarget)
+        throw new Error("ALIS_UI_TARGET_CHANGED_NO_SEND");
+    }
+
     const prompt = await readStdin();
     if (!prompt.trim())
       throw new Error("stdin prompt is empty");
@@ -123,7 +137,11 @@ async function main() {
       baselineMarkerCount: completionBaseline.markerCount
     });
 
-    writeJson({ generation, response });
+    // After an initial send, the UI may not yet have exposed a persistent
+    // chat ID. That is an uncertain mapping: never advance to the next send.
+    const uiTarget = createHash("sha256")
+      .update(await uiTargetIdentity(page)).digest("hex");
+    writeJson({ generation, response, ui_target_key: uiTarget });
     return;
   }
 
