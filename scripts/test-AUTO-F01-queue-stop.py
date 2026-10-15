@@ -98,9 +98,22 @@ class QueueStopTests(unittest.TestCase):
         self.assertTrue(result["needs_reconciliation"])
         self.assertFalse(result["stop_confirmed"])
         self.assertEqual(queue.view()["state"], "stopping")
-        with self.assertRaises(tf.TaskError):
-            queue.clear(approved=True, expected_queued="llocphann/Alis:MUSIC-I02")
+        # The orphaned manager leaves the ACTIVE item intact. The owner
+        # can still remove ONLY queued siblings, never erase the uncertain
+        # active job or claim it was stopped.
+        result = queue.clear(
+            approved=True, expected_queued="llocphann/Alis:MUSIC-I02")
+        self.assertTrue(result["cleared"])
+        self.assertEqual(result["state"], "stopping")
+        self.assertEqual(result["removed_queued"], 1)
+        self.assertTrue(result["active_preserved"])
+        self.assertEqual(result["active"], self.active)
         self.assertEqual(self.state["profiles"][self.owner]["desired"], "run")
+        with queue._lock():
+            snapshot = queue._load()
+        self.assertFalse(snapshot["approved_start"])
+        self.assertEqual(len(snapshot["items"]), 1)
+        self.assertEqual(snapshot["items"][0]["state"], "active")
 
     def test_stop_ui_and_credential_hooks_are_available(self):
         qml = (Path(__file__).resolve().parents[1] /
