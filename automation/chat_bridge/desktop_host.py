@@ -13,7 +13,7 @@ from urllib.request import urlopen
 
 CDP_URL = os.environ.get(
     "ALIS_CHATGPT_CDP_URL",
-    "http://127.0.0.1:9222",
+    os.environ.get("HADALIS_CHATGPT_CDP_URL", "http://127.0.0.1:9222"),
 ).rstrip("/")
 CHATGPT_BIN = os.environ.get("ALIS_CHATGPT_BIN") or os.environ.get("HADALIS_CHATGPT_BIN") or shutil.which("chatgpt")
 START_TIMEOUT = float(os.environ.get("ALIS_CHATGPT_START_TIMEOUT_SECONDS", os.environ.get("HADALIS_CHATGPT_START_TIMEOUT_SECONDS", "30")))
