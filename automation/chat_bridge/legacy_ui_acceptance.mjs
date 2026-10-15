@@ -8,7 +8,7 @@ import {inspectLegacyUiReadOnly,assessLegacyUiReadiness}
   from "./legacy_ui_probe.mjs";
 const ID=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const ACCEPTANCE_TEXT="AUTO-F01 UI transport acceptance test only. "+
-  "Do not use any connectors or tools. Reply with exactly: HADALIS_LOOP:DONE";
+  "Do not use any connectors or tools. Reply with exactly: ALIS_LOOP:DONE";
 
 // Accessible-role locators can match hidden, stale duplicates. A categorical
 // count of ONE visible control must never be followed by .first(): that can
