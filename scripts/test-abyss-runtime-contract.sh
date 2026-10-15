@@ -11,8 +11,8 @@ trap 'rm -rf -- "$abyss_test_root"' EXIT
 for entry in modules services GlobalStates.qml qmldir assets scripts defaults translations; do
     ln -s "$repo_root/$entry" "$abyss_test_root/$entry"
 done
-mkdir -p "$abyss_test_root/config/illogical-impulse"
-cp "$repo_root/defaults/config.json" "$abyss_test_root/config/illogical-impulse/config.json"
+mkdir -p "$abyss_test_root/config/alis"
+cp "$repo_root/defaults/config.json" "$abyss_test_root/config/alis/config.json"
 cat > "$abyss_test_root/Content.qml" <<'QML'
 import QtQuick
 Item { property string outputName: ""; signal closeRequested() }

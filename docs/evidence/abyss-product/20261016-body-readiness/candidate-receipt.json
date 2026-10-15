@@ -1,0 +1,7 @@
+{
+  "source_sha": "eca4a41de023083eee86647a0d2fd1abecdfc22e",
+  "native_exit": 0,
+  "body_host_sha256": "f8913bb7c048fd5bf027117c4a7aaee93eb9cc5853fb111e00f4200d4f6767a0",
+  "fixture_sha256": "5e942b4ea8ed7d560e8b937e8b52739d9d3d9335077bd6ba1e06b4d304493dac",
+  "scope": "Private no-grab functional reveal; no performance/owner acceptance"
+}

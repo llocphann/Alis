@@ -82,7 +82,7 @@ ShellRoot {
     with private_wayland(folder) as env:
         if env is None:
             raise SystemExit("Private Niri required")
-        config = folder / "config/illogical-impulse"
+        config = folder / "config/alis"
         config.mkdir(parents=True, exist_ok=True)
         (config / "config.json").write_text((ROOT / "defaults/config.json").read_text())
         result = run_qs(folder, env, 35)

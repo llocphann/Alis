@@ -73,7 +73,7 @@ ShellRoot {
 ''')
  with private_wayland(folder) as env:
   if env is None:print("SKIP: Dashboard warm test requires private Niri");raise SystemExit(0)
-  cfg=folder/"config/illogical-impulse";cfg.mkdir(parents=True,exist_ok=True)
+  cfg=folder/"config/alis";cfg.mkdir(parents=True,exist_ok=True)
   data=json.loads((ROOT/"defaults/config.json").read_text());data["panelFamily"]="abyss";data["abyss"]["companion"]["enabled"]=False
   (cfg/"config.json").write_text(json.dumps(data));env["QSG_RHI_BACKEND"]="opengl"
   result=run_qs(folder,env,35)

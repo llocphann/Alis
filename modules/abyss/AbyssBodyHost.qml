@@ -161,7 +161,10 @@ Item {
     // Keep that motion independent from allocator availability: otherwise the
     // host's Behavior would re-animate every incoming reveal frame.
     property real externalProgress: -1
-    property real availabilityProgress: presented ? 1 : 0
+    // Loading is driven by semantic open below. Wait for its content before
+    // starting reveal so a cold load cannot consume the animation behind an
+    // empty panel; warm content and embedded items remain ready immediately.
+    property real availabilityProgress: presented && ready ? 1 : 0
     property real progress: (externalProgress >= 0
         ? Math.max(0,Math.min(1,externalProgress)) : 1) * availabilityProgress
     readonly property var requestedRecord: Geometry.panel(width,height,edgeInsets,edge,requestedAlong,span,depth,1,padding,[],largeSurface)

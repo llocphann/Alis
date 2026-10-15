@@ -1,0 +1,9 @@
+{
+  "error": "Error: EMPTY_PLATE_BEFORE_CONTENT_READY",
+  "checks": 13,
+  "completed": 0,
+  "caseIndex": 0,
+  "phase": "delayed-ready",
+  "results": [],
+  "fixture_exit": 1
+}

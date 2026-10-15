@@ -254,7 +254,7 @@ ShellRoot {
 ''')
  with private_wayland(folder,capture_focus=CAPTURE is not None) as env:
   if env is None:print("SKIP: Dashboard field requires private Niri");raise SystemExit(0)
-  config=folder/"config/illogical-impulse";config.mkdir(parents=True,exist_ok=True)
+  config=folder/"config/alis";config.mkdir(parents=True,exist_ok=True)
   value=json.loads((ROOT/"defaults/config.json").read_text());value["panelFamily"]="abyss";value["abyss"]["companion"]["enabled"]=False
   (config/"config.json").write_text(json.dumps(value));env["QSG_RHI_BACKEND"]="opengl"
   if CAPTURE:env["ALIS_DASHBOARD_FIELD_CAPTURE_DIR"]=str(CAPTURE)
