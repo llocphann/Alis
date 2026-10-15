@@ -56,10 +56,10 @@ Singleton {
         if (!root.available) return
         root.active = true
         if (root.nativeInstalled) {
-            // AUDIO-I01: opt-in diagnostic only. The normal launch stays unchanged.
-            // This guard is scoped to EasyEffects' child environment, not PipeWire's
-            // global clock.force-quantum metadata.
-            if (Quickshell.env("ALIS_AUDIO_I01_LOCK_QUANTUM") === "1") {
+            // AUDIO-I01: owner A/B confirmed stable quantum and no online-clip pops.
+            // Apply only when Alis starts a native EasyEffects process.
+            // Set ALIS_AUDIO_I01_LOCK_QUANTUM=0 before Quickshell starts to opt out.
+            if (Quickshell.env("ALIS_AUDIO_I01_LOCK_QUANTUM") !== "0") {
                 const runner = FileUtils.trimFileProtocol(Directories.scriptPath)
                     + "/audio/easyeffects-quantum-guard.sh"
                 Quickshell.execDetached(["/usr/bin/bash", runner, "easyeffects", "--service-mode"])

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# AUDIO-I01 controlled A/B: lock active graph quantum from this EasyEffects
-# process only. This is not a global PipeWire setting or a permanent workaround.
+# AUDIO-I01: keep graph quantum steady for native EasyEffects launched by Alis.
+# Set ALIS_AUDIO_I01_LOCK_QUANTUM=0 to disable this provisional mitigation.
 set -euo pipefail
 
 if (( $# == 0 )); then
@@ -8,17 +8,16 @@ if (( $# == 0 )); then
     exit 64
 fi
 
-if [[ "${ALIS_AUDIO_I01_LOCK_QUANTUM:-}" == "1" ]]; then
-    # The owner may already have latency/quantum overrides. Do not clobber,
-    # merge guesses, or proceed with an ambiguous diagnostic.
+if [[ "${ALIS_AUDIO_I01_LOCK_QUANTUM:-1}" != "0" ]]; then
+    # Respect owner PipeWire environment overrides, even explicitly empty ones.
+    # They take precedence; EasyEffects must remain launchable in this case.
     if [[ -v PIPEWIRE_PROPS || -v PIPEWIRE_QUANTUM || -v PIPEWIRE_LATENCY ]]; then
-        printf '%s\n' 'AUDIO-I01: explicit PIPEWIRE_PROPS/QUANTUM/LATENCY detected; refusing quantum-lock probe (exit 78).' >&2
-        exit 78
+        printf '%s\n' 'AUDIO-I01: existing PipeWire environment override; starting without Alis quantum lock.' >&2
+    else
+        # PipeWire 1.6.9 pw_filter_connect reads this into new filter nodes.
+        # This does not set global clock.force-quantum metadata.
+        export PIPEWIRE_PROPS='{ node.lock-quantum = true }'
     fi
-    # PipeWire 1.6.9 filter.c reads PIPEWIRE_PROPS when pw_filter_connect()
-    # creates EasyEffects filters. This does not force a particular quantum:
-    # it prevents automatic changes while the decorated graph node is active.
-    export PIPEWIRE_PROPS='{ node.lock-quantum = true }'
 fi
 
 exec "$@"

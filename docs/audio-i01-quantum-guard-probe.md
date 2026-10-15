@@ -1,87 +1,74 @@
-# AUDIO-I01: optional native EasyEffects quantum-lock comparison
+# AUDIO-I01: native EasyEffects quantum stability mitigation
 
-**Status: experimental diagnostic, NOT a confirmed fix.** This probe is opt-in
-and defaults to OFF. It is for [AUDIO-I01](https://github.com/llocphann/Alis/issues/81):
-short audio pops on starting NEW online clips while Local Music continues playing.
-The earlier popup/sidebar/dashboard symptom has separate owner-verified resolution.
+**Status: provisionally effective on the owner's native EasyEffects 8.3.0.**
+The owner reported `node.lock-quantum=true`, stable `pw-top` QUANT, and **no audible "tẹt"**
+when switching online clips while uninterrupted Local Music continued, in an
+approved live manual A/B. This is a real listening acceptance of that trial,
+not proof of the underlying Convolver reset mechanism or broad compatibility.
+Track: [AUDIO-I01](https://github.com/llocphann/Alis/issues/81).
 
-## Why this experiment exists
+## Why
 
-The owner observed browser nodes attaching/detaching and physical-driver
-quantum switching `1024 ↔ 2048` during the same 45-second listening-confirmed
-pop reproduction. Driver ERR deltas were zero; timestamps of individual pops
-were not recorded. **That does not prove the quantum changes caused the pops.**
-
-In EasyEffects 8.3.0,
+The owner's earlier 45-second listening-confirmed crackle capture had browser
+stream churn and physical-driver QUANT `1024 ↔ 2048`, while ERR deltas stayed 0.
+No individual audible-click timestamps were collected. In EasyEffects 8.3.0,
 [`PluginBase::on_process`](https://github.com/wwmm/easyeffects/blob/v8.3.0/src/plugin_base.cpp#L64-L103)
-calls plugin `setup()` on changes to callback buffer size or rate.
+calls `setup()` if rate or callback buffer size changes, while
 [`Convolver::setup`](https://github.com/wwmm/easyeffects/blob/v8.3.0/src/convolver.cpp#L250-L304)
-marks itself not-ready and asynchronously initializes zita;
-[`process()`](https://github.com/wwmm/easyeffects/blob/v8.3.0/src/convolver.cpp#L307-L339)
-temporarily copies unprocessed input while not ready. This is a *candidate
-discontinuity mechanism*, not a measured reset in the owner's process.
-The upstream [Convolver latency issue](https://github.com/wwmm/easyeffects/issues/4579)
-describes this behavior.
+temporarily marks the convolver not-ready and reinitializes zita. During
+initialization, [`process()`](https://github.com/wwmm/easyeffects/blob/v8.3.0/src/convolver.cpp#L307-L339)
+passes through unprocessed input. The maintainer discussed the problem in
+[EasyEffects #4579](https://github.com/wwmm/easyeffects/issues/4579).
+**The owner's actual reset/ready transitions have not been traced directly.**
 
-PipeWire documents `node.lock-quantum = true` as preventing **automatic**
-quantum changes while the node is active. Forced changes are still possible.
-[PipeWire scheduling properties](https://docs.pipewire.org/page_man_pipewire-props_7.html).
-The PipeWire 1.6.9
-[`pw_filter_connect()` path](https://github.com/PipeWire/pipewire/blob/1.6.9/src/pipewire/filter.c)
-reads `PIPEWIRE_PROPS` into each filter's node properties, so the probe
-uses only the native EasyEffects child process environment. It does **not**
-write `clock.force-quantum`, set global PipeWire metadata, change the
-selected DSP preset, IR, EQ, or volume.
+PipeWire [`node.lock-quantum`](https://docs.pipewire.org/page_man_pipewire-props_7.html)
+inhibits *automatic* changes of graph quantum while an affected node is
+active; forced changes are still possible. PipeWire 1.6.9
+[`pw_filter_connect()`](https://github.com/PipeWire/pipewire/blob/1.6.9/src/pipewire/filter.c)
+reads the child process's `PIPEWIRE_PROPS` when creating filter nodes.
 
-## Safety and activation
+## Default behavior on Alis dev
 
-- Default Alis native and Flatpak EasyEffects launch behavior is unchanged.
-- Only native EasyEffects started via the **Alis toggle** with
-  `ALIS_AUDIO_I01_LOCK_QUANTUM=1` inherited by the **running Quickshell process**
-  uses `scripts/audio/easyeffects-quantum-guard.sh`.
-  The flag needs to be set **before launching Quickshell**; exporting it in a
-  separate terminal does not update an already running Quickshell process.
-- Alternatively, after voluntarily exiting any already-running native
-  EasyEffects process, an owner may launch it directly from a **dev checkout**:
-  ```bash
-  ALIS_AUDIO_I01_LOCK_QUANTUM=1 bash scripts/audio/easyeffects-quantum-guard.sh easyeffects --service-mode
-  ```
-  Do not execute this while another EasyEffects service is running: a second
-  launcher may connect to the existing daemon, so the new property will not
-  necessarily be applied.
-- If any `PIPEWIRE_PROPS`, `PIPEWIRE_QUANTUM`, or `PIPEWIRE_LATENCY`
-  variable is explicitly inherited (including an empty value), the opt-in
-  wrapper exits 78 **without starting** the process; owner settings are
-  neither merged nor overwritten. It never stops another process.
-- The property affects scheduling for the graph connected to EasyEffects
-  while filters are active. That is **not** an isolated Convolver parameter;
-  a locked quantum may change latency/behavior for other applications.
-  No auto-deploy, auto-restart, or unattended production enablement is safe.
+- When Alis itself **starts a new native EasyEffects process**, it now uses
+  `scripts/audio/easyeffects-quantum-guard.sh` **by default**, passing
+  `PIPEWIRE_PROPS='{ node.lock-quantum = true }'` to the child only.
+- No existing EasyEffects instance is restarted, no global PipeWire metadata
+  (including `clock.force-quantum`) is written, and no EasyEffects preset,
+  impulse response, gain, device route or system volume is modified.
+- Flatpak EasyEffects startup is unchanged. Native EasyEffects started
+  independently of Alis also remains independent of this launcher.
+- An existing `PIPEWIRE_PROPS`, `PIPEWIRE_QUANTUM`, or `PIPEWIRE_LATENCY`
+  environment setting (including an explicitly empty value) **takes priority**:
+  Alis does not inject a lock and still launches EasyEffects normally, with a
+  warning. It never overwrites or merges unrecognized owner properties.
+- **Opt out:** set `ALIS_AUDIO_I01_LOCK_QUANTUM=0` in the **Quickshell process
+  startup environment** before launching Alis. The Alis native launcher
+  then uses the original `easyeffects --service-mode` command directly.
+  Exporting this variable in an unrelated terminal will not change an
+  already running Quickshell process.
+- The guard script itself honors `ALIS_AUDIO_I01_LOCK_QUANTUM=0` when called
+  directly. Any setting change only takes effect for *newly created filters*.
 
-## Controlled owner A/B/A and rollback
+## Validation and rollback
 
-1. With the original preset (`DolbyMusic`, original gains, original routing),
-   first document audible pops while switching NEW online clips during
-   uninterrupted playback of the same Local Music track.
-2. **Only with the owner's explicit approval**, fully exit EasyEffects;
-   restart the native version with the opt-in guard, observe whether the
-   active Convolver filter node has `node.lock-quantum=true` in `pw-dump`.
-   If not, the experiment is invalid.
-3. Repeat the same clip-switch comparison, log owner listening and actual
-   driver `pw-top` quantum and ERR deltas. No change in reported behavior
-   means no cure. A reduction alone still requires volume-matched replication.
-4. **Restore:** fully exit only the opted-in EasyEffects process, unset
-   `ALIS_AUDIO_I01_LOCK_QUANTUM` in the startup environment, and launch
-   native EasyEffects normally. Verify original plugin/IR/gain/bypass settings
-   and `node.lock-quantum` absent on newly created filters. If it was enabled
-   through the Alis toggle, a restart of Quickshell without the flag is
-   required before comparing the non-opt-in launch.
-5. Validate popup/sidebar/dashboard as a regression and retest Local Music +
-   online overlap before declaring any fix. Stop immediately if audio routing
-   or playback becomes unstable.
+1. Restart only EasyEffects via the native Alis toggle (after it fully exits).
+   Verify `pw-dump` shows `node.lock-quantum=true` on newly started
+   `ee_soe_*` filters; if the property is absent, the test is invalid.
+2. Play the same unchanged Local Music track while repeatedly starting new
+   Facebook/YouTube/other online clips. Confirm hearing, `pw-top` quantum and
+   ERR deltas; repeat after normal logout/reboot and compare browser types.
+3. Verify the popup/sidebar/dashboard audio regression, other applications'
+   playback, and whether added graph-lock latency affects interactive apps.
+4. For an adverse result, stop EasyEffects cleanly; opt out as above, restart
+   Alis/Quickshell without the feature and start EasyEffects normally.
+   Verify `node.lock-quantum` no longer appears on the new filter nodes.
+   If needed, revert only this AUDIO-I01 commit in `dev` after checking its
+   exact changed paths; never reset concurrent work or modify `stable`.
+5. Do not close the issue until integrated Alis toggle/restart and sustained
+   owner listening regression have passed; no assumption of zero artifacts
+   outside the tested conditions.
 
-**Limitations:** Requires actual native EasyEffects process creation. It does
-not retrofit filters on an existing process, does not affect Flatpak, and does
-not fix EasyEffects' internal zita implementation. Instrumented reset/ready
-events in EasyEffects or matched audible click markers are still required
-before attributing the artifact to buffer reinitialization.
+**Limitations:** The property affects scheduling for the connected audio
+graph, not merely Convolver. It can influence latency for other software.
+It is a mitigation of observed runtime behavior, not a source patch to
+EasyEffects' zita-convolver internals.

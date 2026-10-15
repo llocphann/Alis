@@ -43,7 +43,7 @@ raise SystemExit(37)
             env=env | extra, capture_output=True, text=True, timeout=5,
         )
 
-    for case, props in [({}, None), ({ENV_NAME: "0"}, None), ({ENV_NAME: "1"}, EXPECTED)]:
+    for case, props in [({}, EXPECTED), ({ENV_NAME: "0"}, None), ({ENV_NAME: "1"}, EXPECTED)]:
         result = invoke(case)
         assert result.returncode == 37, (case, result.stderr)
         record = json.loads(result.stdout)
@@ -54,8 +54,12 @@ raise SystemExit(37)
     for owner_override in ("PIPEWIRE_PROPS", "PIPEWIRE_QUANTUM", "PIPEWIRE_LATENCY"):
         for value in ("", "1024/48000"):
             result = invoke({ENV_NAME: "1", owner_override: value})
-            assert result.returncode == 78 and not result.stdout, (owner_override, result)
-            assert "refusing quantum-lock probe" in result.stderr
+            assert result.returncode == 37, (owner_override, result.stderr)
+            record = json.loads(result.stdout)
+            assert record["props"] == (value if owner_override == "PIPEWIRE_PROPS" else None), record
+            assert record["quantum"] == (value if owner_override == "PIPEWIRE_QUANTUM" else None), record
+            assert record["latency"] == (value if owner_override == "PIPEWIRE_LATENCY" else None), record
+            assert "starting without Alis quantum lock" in result.stderr
 
     missing = subprocess.run(["/usr/bin/bash", str(WRAPPER)], capture_output=True, text=True)
     assert missing.returncode == 64
@@ -66,8 +70,8 @@ raise SystemExit(37)
     assert no_binary.returncode == 127
 
 qml = QML.read_text()
-assert 'Quickshell.env("ALIS_AUDIO_I01_LOCK_QUANTUM") === "1"' in qml
+assert 'Quickshell.env("ALIS_AUDIO_I01_LOCK_QUANTUM") !== "0"' in qml
 assert '"/audio/easyeffects-quantum-guard.sh"' in qml
 assert 'Quickshell.execDetached(["/usr/bin/env", "easyeffects", "--service-mode"])' in qml
 assert 'Quickshell.execDetached(["/usr/bin/env", "flatpak", "run", "com.github.wwmm.easyeffects", "--service-mode"])' in qml
-print("AUDIO_I01_LOCK_PASS default unchanged; native opt-in; environment conflicts fail closed; argv literal; no DSP/PipeWire process")
+print("AUDIO_I01_LOCK_PASS native default-on; explicit opt-out; owner PipeWire overrides preserved; argv literal; no DSP/PipeWire process")
