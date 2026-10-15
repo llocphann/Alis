@@ -155,6 +155,40 @@ def main() -> None:
         else:
             os.environ["XDG_STATE_HOME"] = old_state_home
 
+    # Successful read-only/synthetic completion retires ONE send intent; it
+    # never grants native server-verified transport readiness.
+    with tempfile.TemporaryDirectory() as tmp:
+        with patch.dict(os.environ, {"XDG_STATE_HOME": tmp}):
+            response = json.dumps({"response": {"text": "ALIS_LOOP:CONTINUE"},
+                                   "generation": {"done": True}})
+            with patch.object(runtime, "run", return_value=SimpleNamespace(
+                    returncode=0, stdout=response, stderr="")) as invoked:
+                result = runtime.desktop("send", "one distinct Alis turn")
+            assert result["response"]["text"] == "ALIS_LOOP:CONTINUE"
+            assert invoked.call_count == 1
+            journal = runtime.state_root() / "ui-send-journal"
+            assert not (journal / "pending.json").exists()
+            assert len(list((journal / "observed").glob("*.json"))) == 1
+
+    # WAIT_RESULT must bind a settled public GitHub receipt to exact job
+    # identity and SHA-256, not a same-path placeholder or DONE signal.
+    good = {"job": "JOB-000127", "status": "passed",
+            "input_sha256": "a" * 64, "actions": []}
+    with patch.object(runtime, "run", return_value=SimpleNamespace(
+            returncode=0, stdout=json.dumps(good), stderr="")):
+        assert runtime.result_exists("JOB-000127")
+    for bad in ({**good, "job": "JOB-OTHER"},
+                {**good, "input_sha256": "invalid"},
+                {**good, "status": "preparing"}):
+        with patch.object(runtime, "run", return_value=SimpleNamespace(
+                returncode=0, stdout=json.dumps(bad), stderr="")):
+            try:
+                runtime.result_exists("JOB-000127")
+            except RuntimeError:
+                pass
+            else:
+                raise AssertionError("foreign/unfinished GitHub result accepted")
+
     print("PASS: Alis chat-bridge protocol, state, and deterministic transitions")
 
 
