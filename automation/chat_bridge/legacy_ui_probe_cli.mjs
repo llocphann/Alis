@@ -18,22 +18,22 @@ try {
     process.argv.length===3?process.argv[2]:null;
   if(!["probe","observe-acceptance"].includes(mode))
     throw Error("UNSUPPORTED_READ_ONLY_OPERATION");
-  const cdpUrl=process.env.HADALIS_CHATGPT_CDP_URL ??
-    "http://127.0.0.1:9222";
+  const cdpUrl=process.env.ALIS_CHATGPT_CDP_URL ??
+    process.env.HADALIS_CHATGPT_CDP_URL ?? "http://127.0.0.1:9222";
   const parsed=new URL(cdpUrl);
   if(parsed.protocol!=="http:"||
      !["127.0.0.1","localhost","[::1]"].includes(parsed.hostname)||
      parsed.username||parsed.password||parsed.pathname!=="/"||
      parsed.search||parsed.hash)
     throw Error("CDP_MUST_BE_LOOPBACK");
-  const moduleUrl=process.env.HADALIS_PLAYWRIGHT_MODULE ??
-    "file:///usr/lib/chatgpt/resources/cua_node/lib/node_modules/playwright-core/index.mjs";
+  const moduleUrl=process.env.ALIS_PLAYWRIGHT_MODULE ??
+    process.env.HADALIS_PLAYWRIGHT_MODULE ?? "file:///usr/lib/chatgpt/resources/cua_node/lib/node_modules/playwright-core/index.mjs";
   const {chromium}=await import(moduleUrl);
   browser=await chromium.connectOverCDP(cdpUrl,{timeout:9000});
   const pages=browser.contexts().flatMap(c=>c.pages())
     .filter(p=>p.url()==="app://-/index.html");
   if(pages.length!==1)throw Error("DESKTOP_MAIN_PAGE_NOT_UNIQUE");
-  const project=process.env.HADALIS_CHATGPT_PROJECT??"Automatic Alis";
+  const project=process.env.ALIS_CHATGPT_PROJECT??process.env.HADALIS_CHATGPT_PROJECT??"Automatic Alis";
   if(mode==="observe-acceptance"){
     console.log(JSON.stringify(await observeHarmlessUiResponse(pages[0],project)));
   }else{
