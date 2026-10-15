@@ -264,7 +264,10 @@ def _submit(config: dict, state: dict, profile_id: str, now: int) -> None:
 
 
 def _checkpoint(text: str) -> dict | None:
-    lines = [line[len("HADALIS_CHECKPOINT:"):].strip() for line in text.splitlines() if line.startswith("HADALIS_CHECKPOINT:")]
+    # Accept saved legacy checkpoints, but newly emitted ones are Alis.
+    prefixes = ("ALIS_CHECKPOINT:", "HADALIS_CHECKPOINT:")
+    lines = [line[len(prefix):].strip() for line in text.splitlines()
+             for prefix in prefixes if line.startswith(prefix)]
     if not lines: return None
     if len(lines) != 1 or len(lines[0]) > 6000: raise ValueError("invalid checkpoint envelope")
     data = json.loads(lines[0])
@@ -280,7 +283,9 @@ def _checkpoint(text: str) -> dict | None:
 
 
 def _reports(text, evidence_ids):
-    lines=[x[len("HADALIS_DIAGNOSIS:"):] for x in text.splitlines() if x.startswith("HADALIS_DIAGNOSIS:")]
+    prefixes = ("ALIS_DIAGNOSIS:", "HADALIS_DIAGNOSIS:")
+    lines = [line[len(prefix):] for line in text.splitlines()
+             for prefix in prefixes if line.startswith(prefix)]
     if len(lines)>16:raise ValueError("diagnosis report exceeds bound")
     reports=[]
     for line in lines:
@@ -586,7 +591,7 @@ def tick(now: int | None = None, executor: ThreadPoolExecutor | None = None) -> 
 
 
 def main() -> int:
-    parser=argparse.ArgumentParser(description="Independent Hadalis workflow scheduler")
+    parser=argparse.ArgumentParser(description="Independent Alis workflow scheduler")
     parser.add_argument("--once",action="store_true")
     parser.add_argument("--reset-state",action="store_true")
     args=parser.parse_args()
@@ -595,7 +600,7 @@ def main() -> int:
     lock_path=state_dir()/"chat-bridge.lock";lock_path.parent.mkdir(parents=True,exist_ok=True)
     with lock_path.open("a+") as handle:
         try: fcntl.flock(handle,fcntl.LOCK_EX|fcntl.LOCK_NB)
-        except BlockingIOError: raise SystemExit("another Hadalis scheduler is running")
+        except BlockingIOError: raise SystemExit("another Alis scheduler is running")
         if args.reset_state:
             _,state,_=read_snapshot()
             if any(i["pending"] or i["job_id"] for i in state["profiles"].values()):
