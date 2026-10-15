@@ -1,0 +1,134 @@
+{
+  "scope": "Repository generator and wrapper; owned temporary native CAVA; no global settings, deployment, preset/routing/volume changes or PCM storage",
+  "source_sha": "77439bddc018cf6e9486c5088f72c76a0efaf060",
+  "physical_ids": [
+    58
+  ],
+  "identity_before": {
+    "owner_pid": "1988",
+    "installed_sha": "a2d7d0ab3",
+    "runtime_hashes": {
+      "version.json": "33af05416e1a0e2b5d3d51705f4a8eeeebf07b4428520894e8ac6624cc9bde5f",
+      "services/deferred/CavaService.qml": "614f1898586df1b833168d377ec6912ad2252f3560481b09d006e79fa44003f8",
+      "modules/mediaControls/EqualizerPanel.qml": "72592cce414579452ad8b523cf9ef72dd5952111068656afae73a48175056f92",
+      "scripts/equalizer-control.sh": "c581dc0fc86b27f1cfb9fb9e463457e5cf8fd8380895b5f0c70066b13285f5ec"
+    },
+    "cache_sha256": "dd560b26a36edae909bf6497d1178cf63379569bc2f9799be6dfabf3beeb0792"
+  },
+  "before": {
+    "physical_nodes": [
+      {
+        "id": 58,
+        "serial": 59,
+        "state": "suspended"
+      }
+    ],
+    "mature_statistics": [
+      {
+        "iteration": 1,
+        "id": 58,
+        "state": "S",
+        "quantum": 0,
+        "rate": 0,
+        "errors": 0
+      },
+      {
+        "iteration": 2,
+        "id": 58,
+        "state": "S",
+        "quantum": 0,
+        "rate": 0,
+        "errors": 0
+      }
+    ]
+  },
+  "frames": {
+    "complete": 66,
+    "nonzero": 0,
+    "invalid": 0
+  },
+  "owned_pid": 28996,
+  "nodes": [
+    {
+      "id": 104,
+      "serial": 278,
+      "client_pid": 28996,
+      "secure_pid": 28996,
+      "latency_present": false,
+      "latency": null,
+      "passive": true,
+      "always_process": null,
+      "state": "suspended"
+    }
+  ],
+  "ownership_verified": true,
+  "during": {
+    "physical_nodes": [
+      {
+        "id": 58,
+        "serial": 59,
+        "state": "suspended"
+      }
+    ],
+    "mature_statistics": [
+      {
+        "iteration": 1,
+        "id": 58,
+        "state": "S",
+        "quantum": 0,
+        "rate": 0,
+        "errors": 0
+      },
+      {
+        "iteration": 2,
+        "id": 58,
+        "state": "S",
+        "quantum": 0,
+        "rate": 0,
+        "errors": 0
+      }
+    ]
+  },
+  "child_exit": -15,
+  "after": {
+    "physical_nodes": [
+      {
+        "id": 58,
+        "serial": 59,
+        "state": "suspended"
+      }
+    ],
+    "mature_statistics": [
+      {
+        "iteration": 1,
+        "id": 58,
+        "state": "S",
+        "quantum": 0,
+        "rate": 0,
+        "errors": 0
+      },
+      {
+        "iteration": 2,
+        "id": 58,
+        "state": "S",
+        "quantum": 0,
+        "rate": 0,
+        "errors": 0
+      }
+    ]
+  },
+  "remaining_analyzers": [],
+  "identity_after": {
+    "owner_pid": "1988",
+    "installed_sha": "a2d7d0ab3",
+    "runtime_hashes": {
+      "version.json": "33af05416e1a0e2b5d3d51705f4a8eeeebf07b4428520894e8ac6624cc9bde5f",
+      "services/deferred/CavaService.qml": "614f1898586df1b833168d377ec6912ad2252f3560481b09d006e79fa44003f8",
+      "modules/mediaControls/EqualizerPanel.qml": "72592cce414579452ad8b523cf9ef72dd5952111068656afae73a48175056f92",
+      "scripts/equalizer-control.sh": "c581dc0fc86b27f1cfb9fb9e463457e5cf8fd8380895b5f0c70066b13285f5ec"
+    },
+    "cache_sha256": "dd560b26a36edae909bf6497d1178cf63379569bc2f9799be6dfabf3beeb0792"
+  },
+  "runtime_and_cache_preserved": true,
+  "listening_acceptance": "NOT OBSERVED"
+}
