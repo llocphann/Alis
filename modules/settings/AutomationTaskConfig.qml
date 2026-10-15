@@ -880,6 +880,8 @@ ContentPage {
                     objectName: "automationClearQueue"
                     buttonText: root.clearQueueConfirmation
                         ? Translation.tr("Confirm clear")
+                        : root.queueSnapshot?.state === "stopped"
+                        ? Translation.tr("Clear stopped queue")
                         : Translation.tr("Clear queued")
                     enabled: !root.busy && !!root.queueSnapshot
                         && (root.queueSnapshot.items.some(task => task.state === "queued")
