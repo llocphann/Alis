@@ -14,6 +14,7 @@ from types import SimpleNamespace
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from automation.chat_bridge import ui_preflight
 from automation.manager import model, store
+from automation import managed_tasks, queue, taskflow as tf
 
 
 class Preflight(unittest.TestCase):
@@ -201,6 +202,74 @@ class Preflight(unittest.TestCase):
                 self.assertNotIn("DO_NOT_REVEAL", json.dumps(report))
                 self.assertFalse(report["submission_authorized"])
         # This remains an inspection tool, not a repair or an admission tool.
+
+
+    def test_ui_queue_staging_requires_idle_native_and_exact_owner(self):
+        path = self._write_queue_fixture()
+        self.config["profiles"][0]["enabled"] = True
+        config_path = store.config_path()
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps(self.config))
+        store.state_path().write_text(json.dumps(self.state))
+        original = path.read_bytes()
+        task = {"status": "prepared", "task": {"base_sha": "a" * 40},
+                "unresolved": False, "scheduler_dispatched": False,
+                "handoff": None, "latest_receipt": None}
+        exact = "llocphann/Alis:AI-I01"
+        with patch.object(ui_preflight, "_unit_state",
+                          return_value=("inactive", "native_mode")), \
+             patch.object(managed_tasks.tf, "load_task",
+                          return_value=task):
+            with self.assertRaises(tf.TaskError):
+                managed_tasks.stage_ui_queue(expected_first=exact)
+            with self.assertRaises(tf.TaskError):
+                managed_tasks.stage_ui_queue(
+                    approved=True, expected_first="llocphann/Alis:AI-I02")
+            self.assertEqual(len(store.read_snapshot()[0]["profiles"]), 1)
+            staged = managed_tasks.stage_ui_queue(
+                approved=True, expected_first=exact)
+            self.assertEqual(staged["state"], "profile_staged")
+            self.assertFalse(staged["start_approved"])
+            self.assertFalse(staged["submission_authorized"])
+            self.assertFalse(staged["service_modified"])
+            self.assertTrue(staged["queue_unchanged"])
+            self.assertEqual(path.read_bytes(), original)
+            profiles, runtime, _ = store.read_snapshot()
+            staged_profile = next(
+                p for p in profiles["profiles"] if p["id"] == staged["profile_id"])
+            self.assertEqual(managed_tasks.reference(staged_profile),
+                             ("llocphann/Alis", "AI-I01"))
+            self.assertTrue(staged_profile["enabled"])
+            self.assertEqual(runtime["profiles"][staged["profile_id"]]["desired"],
+                             "stopped")
+            self.assertIsNone(runtime["profiles"][staged["profile_id"]]["pending"])
+            again = managed_tasks.stage_ui_queue(
+                approved=True, expected_first=exact)
+            self.assertEqual(again["profile_id"], staged["profile_id"])
+            self.assertEqual(path.read_bytes(), original)
+
+    def test_ui_queue_staging_preserves_old_pending_and_active_native_service(self):
+        path = self._write_queue_fixture()
+        config_path = store.config_path()
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps(self.config))
+        self.state["profiles"][self.id].update(
+            desired="stopped", pending={"user_message_id": "keep"},
+            session={"conversation_id": "keep"}, run_active=True)
+        store.state_path().write_text(json.dumps(self.state))
+        original = path.read_bytes()
+        for service in (("active", "native_mode"), ("inactive", "native_mode")):
+            with patch.object(ui_preflight, "_unit_state",
+                              return_value=service), \
+                 patch.object(managed_tasks, "_ensure_profile",
+                              side_effect=AssertionError("must not stage")):
+                with self.assertRaises(tf.TaskError):
+                    managed_tasks.stage_ui_queue(
+                        approved=True, expected_first="llocphann/Alis:AI-I01")
+        self.assertEqual(path.read_bytes(), original)
+        self.assertEqual(
+            json.loads(store.state_path().read_text())["profiles"][self.id]["pending"],
+            {"user_message_id": "keep"})
 
 
 if __name__ == "__main__":
