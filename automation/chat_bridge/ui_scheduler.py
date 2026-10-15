@@ -70,7 +70,10 @@ def ui_tick(profile_id: str, *, now: int | None = None,
     try:
         profile, item = _owner(config, state, profile_id)
     except RuntimeError as error:
-        # Preserve every existing native/foreign receipt: no mutation at all.
+        # Preserve every existing native/foreign receipt; an abandoned
+        # UI attempt must never automatically clear a pending tombstone.
+        if str(error) == "ALIS_UI_SEND_UNCERTAIN_RECONCILIATION_REQUIRED":
+            _mark_unresolved(profile_id, str(error))
         return str(error)
     if item.get("pending"):
         # Anything left after a previous process boundary is potentially sent.
@@ -81,10 +84,51 @@ def ui_tick(profile_id: str, *, now: int | None = None,
     if not profile["enabled"] or item["desired"] != "run":
         return "idle"
     if item.get("job_id"):
-        # The existing manager waits on GitHub/local worker receipt, never
-        # authorizes or re-executes a pending job.
+        # A legacy/public result with no owner is NOT authority to resume
+        # this specific Alis task. Identity and SHA-256 are mandatory; never
+        # accept somebody else's historical JOB-* as a wakeup.
+        job_id = item["job_id"]
+        if item.get("next_job_poll_at_unix") and now < item["next_job_poll_at_unix"]:
+            return "waiting_result"
         from automation.manager import daemon
-        daemon._wait_result(config, state, profile_id, now)
+        try:
+            payload = daemon.job_result(job_id)
+            if payload is not None:
+                digest = payload.get("input_sha256")
+                if (payload.get("job") != job_id
+                        or payload.get("profile_id") != profile_id
+                        or payload.get("status") not in
+                        {"passed", "failed", "cancelled", "indeterminate"}
+                        or not isinstance(digest, str) or len(digest) != 64
+                        or any(c not in "0123456789abcdef" for c in digest)):
+                    raise RuntimeError("ALIS_UI_FOREIGN_JOB_RESULT")
+                from automation.worker.privacy import chat_result
+                summary = chat_result(payload)
+            else:
+                summary = None
+        except Exception:
+            _mark_unresolved(profile_id, "Worker receipt needs reconciliation")
+            return "ui_reconciliation_required"
+
+        def observed(_config, state):
+            current = state["profiles"].get(profile_id)
+            if not current or current.get("job_id") != job_id:
+                return
+            if payload is None:
+                current["next_job_poll_at_unix"] = now + 10
+                current["status"] = "waiting_result"
+                return
+            current.update(
+                last_job_id=job_id, last_result=payload["status"],
+                job_id=None, next_job_poll_at_unix=None,
+                request="continuation", status="continuing",
+                job_summary=summary)
+            current["job_evidence"] = (
+                current.get("job_evidence", []) + [
+                    a["evidence_id"] for a in summary.get("actions", [])
+                    if a.get("evidence_id")])[-128:]
+            store.event(state, profile_id, "ui_job_result", job_id)
+        store.change_state(observed)
         return "waiting_result"
     if item.get("next_run_at_unix") and now < item["next_run_at_unix"]:
         return "scheduled"
@@ -224,6 +268,6 @@ def loop(profile_id: str, *, once: bool = False) -> int:
         state = ui_tick(profile_id, now=now)
         if once:
             return 0
-        if state == "ui_reconciliation_required":
+        if state == "ui_reconciliation_required" or state.startswith("ALIS_UI_"):
             return 75
         time.sleep(POLL_SECONDS)
