@@ -15,6 +15,8 @@ const events=[];
 let disabled=false,draft="",busy=false,clickThrows=false,fillThrows=false;
 let sendDisabled=true,keepSendDisabledAfterFill=false;
 let forceForeignDraftAfterFill=false;
+let hiddenComposerBeforeVisible=false,hiddenSendBeforeVisible=false;
+let duplicateVisibleSend=false;
 function loc(items,kind){
   return {
     count:async()=>items.length,
@@ -24,6 +26,9 @@ function loc(items,kind){
     isDisabled:async()=>kind==="send"?sendDisabled:
       (items[0]?.disabled??false),
     evaluate:async (fn,expected)=>{
+      // A hidden duplicate must never be read or clicked, regardless of
+      // its position before the one visible accessible-role control.
+      if(items[0]?.visible===false)throw Error("HIDDEN_CONTROL_USED");
       if(kind==="send"){
         events.push("click");
         if(clickThrows)throw Error("UNKNOWN_CLICK_OUTCOME");
@@ -33,6 +38,7 @@ function loc(items,kind){
         expected);
     },
     fill:async value=>{
+      if(items[0]?.visible===false)throw Error("HIDDEN_COMPOSER_USED");
       events.push("fill");
       assert.match(value,/AUTO-F01 UI transport acceptance test only/);
       assert.ok(!value.includes("secret"));
@@ -54,10 +60,17 @@ const page={
       getByText:(label)=>loc(["Automatic Alis","No chats yet"]
         .includes(label)?[{visible:true}]:[],"text")
     };
-    if(role==="textbox")return loc([{visible:true,disabled,draft}],"editor");
+    if(role==="textbox")return loc([
+      ...(hiddenComposerBeforeVisible?[{visible:false,disabled,draft:"foreign"}]:[]),
+      {visible:true,disabled,draft}
+    ],"editor");
     if(role==="list")return loc([{visible:true,selected:[]}],"list");
     if(role==="button"&&options.name==="Send")
-      return loc([{visible:true,disabled:sendDisabled}],"send");
+      return loc([
+        ...(hiddenSendBeforeVisible?[{visible:false,disabled:false}]:[]),
+        {visible:true,disabled:sendDisabled},
+        ...(duplicateVisibleSend?[{visible:true,disabled:sendDisabled}]:[])
+      ],"send");
     if(role==="button"&&options.name instanceof RegExp &&
        options.name.test("Stop"))
       return loc(busy?[{visible:true}]:[],"stop");
@@ -140,6 +153,22 @@ assert.equal(r.submission_authorized,false);
 assert.ok(!JSON.stringify(r).includes("ghp_FOREIGN_DRAFT"));
 events.length=0;draft="";sendDisabled=true;
 forceForeignDraftAfterFill=false;
+// Regression: the uniquely visible editor/Send can come AFTER hidden DOM
+// duplicates. .first() would mutate or click a hidden foreign control.
+hiddenComposerBeforeVisible=true;hiddenSendBeforeVisible=true;
+r=await call({acceptanceId:"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"});
+assert.equal(r.status,"indeterminate");
+assert.equal(r.code,"SINGLE_UI_CLICK_ISSUED_OBSERVE_ONLY");
+assert.deepEqual(events,["durable-intent","fill","click"]);
+events.length=0;draft="";sendDisabled=true;
+hiddenComposerBeforeVisible=false;hiddenSendBeforeVisible=false;
+// Multiple visible Send controls are ambiguous; reject BEFORE journaling or
+// touching any editor, even with otherwise valid Project evidence.
+duplicateVisibleSend=true;
+r=await call({acceptanceId:"cccccccc-cccc-4ccc-8ccc-cccccccccccc"});
+assert.equal(r.status,"blocked");
+assert.deepEqual(events,[]);
+duplicateVisibleSend=false;
 // Real offline fsynced journal cannot be replayed or silently overwritten.
 const stateHome=fs.mkdtempSync(path.join(os.tmpdir(),"alis-ui-journal-"));
 try {
