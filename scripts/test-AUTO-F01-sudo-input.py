@@ -87,7 +87,9 @@ class SudoInput(unittest.TestCase):
                "modules/settings/AutomationTaskConfig.qml").read_text()
         self.assertIn('objectName: "automationSudoPassword"', qml)
         self.assertIn("echoMode: TextInput.Password", qml)
-        self.assertIn('"sudo-authenticate"', qml)
+        self.assertIn('"sudo-credential-save"', qml)
+        self.assertIn('"sudo-credential-clear"', qml)
+        self.assertIn('"sudo-credential-status"', qml)
         self.assertIn('objectName: "automationClearQueue"', qml)
         self.assertIn('Translation.tr("Find tasks")', qml)
         self.assertIn("root.clearQueueConfirmation = false", qml)
@@ -95,6 +97,8 @@ class SudoInput(unittest.TestCase):
         self.assertIn('root.pendingSudoPassword = ""', qml)
         self.assertIn('sudoPasswordField.clear()', qml)
         self.assertIn('sudoAuthProcess.stdinEnabled = false', qml)
+        self.assertIn('root.sudoCredentialSaved', qml)
+        self.assertIn('Translation.tr("Save password")', qml)
         self.assertNotIn("password: sudoPasswordField.text", qml)
 
 
