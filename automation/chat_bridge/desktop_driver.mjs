@@ -13,6 +13,7 @@ const COMPOSER = new RegExp(`^(Ask ChatGPT|Do anything|New chat in ${escapedProj
 const ANY_COMPOSER = /^(Ask ChatGPT|Do anything|New chat in .+)$/;
 const PROJECT = new RegExp(`^(Project:|Change project:) ${escapedProject}$`);
 const GITHUB_MENTION = "[@GitHub](plugin://github@openai-curated-remote)";
+const GITHUB_APP_MENTION = "[$github](app://connector_76869538009648d5b282a4bb21c3d157)";
 const LOOP_MARKER = /^(?:ALIS|HADALIS)_LOOP:(?:WAIT_RESULT|CONTINUE|ROTATE|DONE|CONNECTOR_BLOCKED)(?:[ \\t]+[A-Za-z0-9._/-]+)?[ \\t]*$/m;
 const RESPONSE_ACTION = /regenerate|retry|try again|copy/i;
 const STREAM_ERROR = /error in message stream|there was an error generating a response/i;
@@ -429,7 +430,7 @@ function splitGitHubMentionPrompt(prompt) {
   const lines = prompt.split(/\r?\n/);
   const index = lines.findIndex(line => line.trim());
 
-  if (index < 0 || lines[index].trim() !== GITHUB_MENTION)
+  if (index < 0 || ![GITHUB_MENTION, GITHUB_APP_MENTION].includes(lines[index].trim()))
     return null;
 
   return lines.slice(index + 1).join("\n");
