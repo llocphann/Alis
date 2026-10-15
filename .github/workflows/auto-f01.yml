@@ -54,6 +54,7 @@ jobs:
           node --check automation/chat_bridge/desktop_cli.mjs
           node --check automation/chat_bridge/ui_response_gate.mjs
           node scripts/test-AUTO-F01-ui-response-gate.mjs
+          node scripts/test-AUTO-F01-ui-target-preflight.mjs
           node --check automation/chat_bridge/native_adapter.mjs
           node --check automation/chat_bridge/native_cli.mjs
           node scripts/test-hadalis-native-session.mjs
