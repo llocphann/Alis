@@ -11,6 +11,7 @@ const root = fs.mkdtempSync(path.join(os.tmpdir(), "alis-target-check-"));
 try {
   const mock = path.join(root, "playwright.mjs");
   fs.writeFileSync(mock, `
+import fs from "node:fs";
 const scenario=process.env.MOCK_SCENARIO;
 const fail=()=>{throw Error("MOCK_READ_ONLY_MUTATION");};
 const loc=(items=[],tag="")=>({
@@ -22,7 +23,12 @@ const loc=(items=[],tag="")=>({
     textContent:items[0]?.draft??"",
     getAttribute:key=>items[0]?.attributes?.[key]??null,
     closest:()=>null,
-    querySelector:()=>null
+    querySelector:()=>null,
+    click:()=> {
+      if(tag!=="nav")throw Error("MOCK_FORBIDDEN_CLICK");
+      fs.appendFileSync(process.env.MOCK_NAV_LOG, "clicked\\n");
+      scoped=true;
+    }
   }),
   locator:selector=>tag==="list" &&
     selector==='[role="button"][aria-current="page"]'
@@ -35,7 +41,7 @@ const loc=(items=[],tag="")=>({
   getByText:()=>loc([]),
   click:fail,fill:fail,focus:fail,press:fail
 });
-const scoped=scenario==="blank"||scenario==="draft";
+let scoped=scenario==="blank"||scenario==="draft";
 const draft=scenario==="draft"?"ghp_DO_NOT_EXPOSE":"";
 const editor=scoped?[{visible:true,disabled:false,draft}]
                    :[{visible:true,disabled:false,draft:""}];
@@ -61,8 +67,12 @@ const p={
     }
     if(role==="list")return loc([{visible:true}],"list");
     if(role==="button") {
-      if(q.name==="Send")return loc(scoped?[{visible:true,disabled:true}]
-                                           :[{visible:true,disabled:false}]);
+      if(q.name==="New chat in Automatic Alis"&&q.exact===true)
+        return loc([{visible:true,disabled:false}],"nav");
+      if(q.name==="Start new chat in Automatic Alis"&&q.exact===true)
+        return loc([]);
+      if(q.name==="Send")return loc(scoped||scenario==="nav"
+        ?[{visible:true,disabled:true}]:[{visible:true,disabled:false}]);
       if(q.name instanceof RegExp && q.name.test("Stop"))return loc([]);
       if(q.name instanceof RegExp &&
          (q.name.test("Project: Automatic Alis") ||
@@ -133,6 +143,34 @@ export const chromium={connectOverCDP:async url=>{
   assert.equal(check("draft").target_diagnostics.draft_present,true);
   assert.equal(check("landing").target_diagnostics.project_landing_visual_evidence,
                "project-empty-landing-corroborated");
+  const navLog=path.join(root,"navigation-attempts.txt");
+  const projectEnter=(scenario,approved=true)=>spawnSync(
+    process.execPath,[cli,"ui-project-enter",
+      ...(approved?["--approve-navigation"]:[])],{
+      encoding:"utf8",timeout:6000,
+      env:{...process.env,
+        ALIS_PLAYWRIGHT_MODULE:pathToFileURL(mock).href,
+        ALIS_CHATGPT_CDP_URL:"http://127.0.0.1:9222",
+        ALIS_CHATGPT_PROJECT:"Automatic Alis",
+        MOCK_NAV_LOG:navLog,MOCK_SCENARIO:scenario}
+    });
+  const denied=projectEnter("nav",false);
+  assert.equal(denied.status,0,denied.stderr);
+  assert.equal(JSON.parse(denied.stdout).navigation_click_attempted,false);
+  assert.equal(fs.existsSync(navLog),false);
+  const outside=projectEnter("generic");
+  assert.equal(outside.status,0,outside.stderr);
+  assert.equal(JSON.parse(outside.stdout).diagnosis,
+               "ALIS_UI_NAVIGATION_PRECONDITION_FAILED");
+  assert.equal(fs.existsSync(navLog),false);
+  const navigation=projectEnter("nav");
+  assert.equal(navigation.status,0,navigation.stderr);
+  const moved=JSON.parse(navigation.stdout);
+  assert.equal(moved.navigation_click_attempted,true);
+  assert.equal(moved.empty_project_entry_ready,true);
+  assert.equal(moved.message_submission_attempted,false);
+  assert.equal(moved.ui_scheduler_authorized,false);
+  assert.equal(fs.readFileSync(navLog,"utf8"),"clicked\\n");
   assert.equal(blank.message_submission_attempted,false);
   assert.equal(blank.ui_scheduler_authorized,false);
   assert.equal(selected.ui_scheduler_authorized,false);
