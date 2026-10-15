@@ -346,6 +346,60 @@ class GitHubHandoffTests(unittest.TestCase):
 
 
 
+    def test_receipt_aware_restart_preflight_fails_closed(self):
+        import importlib.util
+        cli=Path(__file__).resolve().parent/"AUTO-F01-github-handoff.py"
+        spec=importlib.util.spec_from_file_location("auto_f01_restart_preflight",cli)
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        at=int(time.time())
+        unit={"worker_service_active":True,
+              "worker_unit_matches_checkout":True,
+              "worker_process_matches_checkout":True}
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            with (patch.object(module.worker,"state_root",return_value=root),
+                  patch.object(module,"installed_worker_info",return_value=unit)):
+                heartbeat=root/"pool.json"
+                heartbeat.write_text(json.dumps({
+                    "heartbeat_at_unix":at,"github_handoff_contract":"legacy",
+                    "running":[],"publishing":False}))
+                report=module.running_worker_status(now=at)
+                self.assertTrue(report["worker_restart_preflight_clear"])
+                self.assertFalse(report["worker_restart_authorized"])
+                self.assertTrue(report["worker_receipt_inventory_complete"])
+                receipts=root/"receipts"
+                receipts.mkdir()
+                local=receipts/"JOB-no-retry.json"
+                for phase in ("preparing","executing","finished","publishing"):
+                    local.write_text(json.dumps({"phase":phase}))
+                    report=module.running_worker_status(now=at)
+                    self.assertFalse(report["worker_restart_preflight_clear"],phase)
+                    self.assertTrue(report["worker_unsettled_receipts_present"])
+                local.write_text(json.dumps({"phase":"published"}))
+                report=module.running_worker_status(now=at)
+                self.assertTrue(report["worker_restart_preflight_clear"])
+                local.write_text("{")
+                self.assertFalse(module.running_worker_status(now=at)[
+                    "worker_receipt_inventory_complete"])
+                local.unlink()
+                local.symlink_to(root/"untrusted.json")
+                self.assertFalse(module.running_worker_status(now=at)[
+                    "worker_restart_preflight_clear"])
+                local.unlink()
+                for running,publishing in ((["JOB-active"],False),
+                                           ([],True),(None,None)):
+                    heartbeat.write_text(json.dumps({
+                        "heartbeat_at_unix":at,"github_handoff_contract":"legacy",
+                        "running":running,"publishing":publishing}))
+                    self.assertFalse(module.running_worker_status(now=at)[
+                        "worker_restart_preflight_clear"])
+                heartbeat.write_text(json.dumps({
+                    "heartbeat_at_unix":at-100,"github_handoff_contract":"legacy",
+                    "running":[],"publishing":False}))
+                self.assertFalse(module.running_worker_status(now=at)[
+                    "worker_restart_preflight_clear"])
+
     def test_doctor_checks_real_unit_process_without_printing_pid_paths(self):
         import importlib.util
         import os
