@@ -10,6 +10,24 @@ const ID=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const ACCEPTANCE_TEXT="AUTO-F01 UI transport acceptance test only. "+
   "Do not use any connectors or tools. Reply with exactly: HADALIS_LOOP:DONE";
 
+// Accessible-role locators can match hidden, stale duplicates. A categorical
+// count of ONE visible control must never be followed by .first(): that can
+// select a different HIDDEN control and evaluate(click) bypasses visibility.
+// Bind only the uniquely visible element, before AND after filling the editor.
+async function uniquelyVisible(locator){
+  const n=await locator.count();
+  if(!Number.isInteger(n)||n<1||n>100)return null;
+  let unique=null;
+  for(let i=0;i<n;i++){
+    const candidate=locator.nth(i);
+    if(await candidate.isVisible()){
+      if(unique!==null)return null;
+      unique=candidate;
+    }
+  }
+  return unique;
+}
+
 export async function oneShotUiAcceptance({
   page,projectName="Automatic Alis",acceptanceId,
   ownerApproved=false,persistAttempt
@@ -41,7 +59,15 @@ export async function oneShotUiAcceptance({
     name:new RegExp("^(Ask ChatGPT|Do anything|New chat in "+
       projectName.replace(/[.*+?^$()|[\]{}\\]/g,"\\$&")+")$")
   });
-  const send=page.getByRole("button",{name:"Send",exact:true});
+  const sendLocator=page.getByRole("button",{name:"Send",exact:true});
+  // Resolve unique VISIBLE controls, not the first DOM match (which may
+  // be a hidden previous composer or Send button).
+  const [preEditor,preSend]=await Promise.all([
+    uniquelyVisible(editor),uniquelyVisible(sendLocator)
+  ]);
+  if(!preEditor||!preSend)
+    return {status:"blocked",code:"VISIBLE_CONTROLS_NOT_UNIQUE",
+      submission_authorized:false};
   // The caller-supplied journal must fsync an immutable no-replay record and
   // reject IDs it has ever seen. No queue or prompt body is persisted here.
   // If a persist operation throws, NO UI mutation has occurred.
@@ -52,7 +78,7 @@ export async function oneShotUiAcceptance({
   try {
     // Only one native semantic click. Unlike historical fallback chains,
     // never press Enter after an uncertain click.
-    await editor.first().fill(ACCEPTANCE_TEXT);
+    await preEditor.fill(ACCEPTANCE_TEXT);
     // Re-read the exact Project, editor and Send semantics AFTER filling.
     // If anything is ambiguous, leave the durable journal quarantined and
     // DO NOT click. Do not retry, press Enter or inspect message contents.
@@ -77,14 +103,23 @@ export async function oneShotUiAcceptance({
     // the harmless acceptance text. Do not risk clicking a user-owned or
     // externally replaced draft. Compare inside Desktop and return only a
     // boolean, never the actual draft or message contents.
-    const exactHarmlessDraft=await editor.first().evaluate(
+    // Rebind after the renderer may have changed during fill. Even if
+    // only ONE control is visible, .first() could target a hidden clone.
+    const [activeEditor,activeSend]=await Promise.all([
+      uniquelyVisible(editor),uniquelyVisible(sendLocator)
+    ]);
+    if(!activeEditor||!activeSend)
+      return {status:"indeterminate",
+        code:"POST_FILL_VISIBLE_CONTROL_AMBIGUOUS_NO_SEND",
+        acceptance_id_recorded:true,submission_authorized:false};
+    const exactHarmlessDraft=await activeEditor.evaluate(
       (el,expected)=>el.textContent===expected,ACCEPTANCE_TEXT
     );
     if(exactHarmlessDraft!==true)
       return {status:"indeterminate",
         code:"HARMLESS_DRAFT_MISMATCH_NO_SEND",
         acceptance_id_recorded:true,submission_authorized:false};
-    await send.first().evaluate(el=>el.click());
+    await activeSend.evaluate(el=>el.click());
   }catch{
     return {status:"indeterminate",code:"UI_ATTEMPT_UNCERTAIN_NO_RETRY",
       acceptance_id_recorded:true,submission_authorized:false};
