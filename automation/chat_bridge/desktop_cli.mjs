@@ -16,6 +16,7 @@ import {
   uiTargetIdentity,
   waitForCompletion
 } from "./desktop_driver.mjs";
+import {inspectLegacyUiReadOnly, assessLegacyUiReadiness} from "./legacy_ui_probe.mjs";
 
 function writeJson(payload) {
   fs.writeSync(1, JSON.stringify(payload) + "\n");
@@ -52,6 +53,7 @@ async function main() {
     // A strictly read-only owner preflight. Do not return titles, chat IDs,
     // links, fingerprints or raw DOM contents in a copyable report.
     let stable = false;
+    let projectEntryReady = false;
     let diagnosis = "ALIS_UI_CHAT_IDENTITY_UNAVAILABLE";
     try {
       const before = await uiTargetIdentity(page);
@@ -61,12 +63,24 @@ async function main() {
       diagnosis = stable ? "ALIS_UI_CHAT_TARGET_OBSERVED" :
         "ALIS_UI_CHAT_TARGET_CHANGED";
     } catch {
-      stable = false;
+      // A truly blank Project composer has no existing conversation ID.
+      // Recognize that READ-ONLY phase separately; never interpret it as
+      // permission to submit, nor relax continuation's pinned-chat guard.
+      try {
+        const observation = await inspectLegacyUiReadOnly(page);
+        const assessment = assessLegacyUiReadiness(observation);
+        projectEntryReady = assessment.read_only_project_entry_ready === true;
+        if (projectEntryReady)
+          diagnosis = "ALIS_UI_EMPTY_PROJECT_ENTRY_OBSERVED";
+      } catch {
+        // Keep a bounded categorical blocker. No raw DOM, URL or draft.
+      }
     }
     writeJson({
       purpose: "alis-ui-target-preflight",
       status: "read-only",
       selected_chat_identity_stable: stable,
+      empty_project_entry_ready: projectEntryReady,
       diagnosis,
       message_submission_attempted: false,
       server_identity_attested: false,
