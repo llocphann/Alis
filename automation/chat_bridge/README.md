@@ -189,6 +189,26 @@ the bounded read-only probes can be run later without sending. An
 of two sends: the text `ALIS_LOOP:DONE` also appears in the user instruction.
 This smoke uses an assistant-turn extraction to avoid that false positive.
 
+Once the owner sees the fixed harmless prompt and the assistant-only
+`ALIS_LOOP:DONE` reply, **do not repeat the smoke** (the private attempt
+journal is immutable). To diagnose a missing UI conversation ID without
+another send, use:
+
+```bash
+node automation/chat_bridge/desktop_cli.mjs ui-session-inspect
+```
+
+This is read-only and emits a single redacted JSON. It distinguishes an
+exact selected chat inside the Project's chat list, a global selected chat
+whose Project membership is unverified, and a Project-scoped editor with no
+selected chat key. No raw chat IDs, title, URL, href, prompt or draft are
+printed. Even if its sampled accessibility counts are unchanged, it never
+asserts server identity, a stable chat ID or UI Scheduler permission by
+itself. Do not confuse `PROJECT_SIDEBAR_CHAT_KEY_OBSERVED` with the stronger
+two-sample raw-key equality in `ui-target-check`, which is still required
+for any managed continuation. A missing sidebar identity is not solved by
+re-sending the already accepted smoke prompt.
+
 ### Read-only cutover diagnosis (operator side)
 
 Inspect the installed host **without submitting any message or changing
