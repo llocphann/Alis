@@ -4,6 +4,7 @@
  */
 import {inspectLegacyUiReadOnly,assessLegacyUiReadiness}
   from "./legacy_ui_probe.mjs";
+import {observeHarmlessUiResponse} from "./legacy_ui_response_probe.mjs";
 let browser;
 const guard=setTimeout(()=>{
   console.log(JSON.stringify({purpose:"legacy-ui-transport-assessment",
@@ -12,7 +13,10 @@ const guard=setTimeout(()=>{
   process.exit(124);
 },20000);
 try {
-  if(process.argv.length>2&&process.argv[2]!=="probe")
+  // Explicit no-send operations only. No mode for submit, Enter or retry.
+  const mode=process.argv.length===2?"probe":
+    process.argv.length===3?process.argv[2]:null;
+  if(!["probe","observe-acceptance"].includes(mode))
     throw Error("UNSUPPORTED_READ_ONLY_OPERATION");
   const cdpUrl=process.env.HADALIS_CHATGPT_CDP_URL ??
     "http://127.0.0.1:9222";
@@ -30,10 +34,14 @@ try {
     .filter(p=>p.url()==="app://-/index.html");
   if(pages.length!==1)throw Error("DESKTOP_MAIN_PAGE_NOT_UNIQUE");
   const project=process.env.HADALIS_CHATGPT_PROJECT??"Automatic Alis";
-  const snapshot=await inspectLegacyUiReadOnly(pages[0],project);
-  const readiness=assessLegacyUiReadiness(snapshot);
-  console.log(JSON.stringify({...snapshot,...readiness,
-    purpose:"legacy-ui-read-only-transport-probe"}));
+  if(mode==="observe-acceptance"){
+    console.log(JSON.stringify(await observeHarmlessUiResponse(pages[0],project)));
+  }else{
+    const snapshot=await inspectLegacyUiReadOnly(pages[0],project);
+    const readiness=assessLegacyUiReadiness(snapshot);
+    console.log(JSON.stringify({...snapshot,...readiness,
+      purpose:"legacy-ui-read-only-transport-probe"}));
+  }
 } catch(error){
   const allowed=new Set(["UNSUPPORTED_READ_ONLY_OPERATION",
     "CDP_MUST_BE_LOOPBACK","DESKTOP_MAIN_PAGE_NOT_UNIQUE",
