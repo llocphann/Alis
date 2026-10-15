@@ -190,13 +190,20 @@ async function main() {
       });
       return;
     }
-    const escaped = project.replace(/[.*+?^$()|[\]{}\\]/g, "\\  if (command === "new-chat") {");
-    const action = page.getByRole("button", {
-      name: new RegExp("^(Start new chat in|New chat in) " + escaped + "$")
-    });
-    let exactlyOne = await action.count() === 1;
-    exactlyOne = exactlyOne && await action.isVisible() &&
-      !(await action.isDisabled());
+    const actionChoices = [
+      page.getByRole("button", {name: "Start new chat in " + project, exact: true}),
+      page.getByRole("button", {name: "New chat in " + project, exact: true})
+    ];
+    const actions = [];
+    let ambiguous = false;
+    for (const candidate of actionChoices) {
+      const count = await candidate.count();
+      if (count > 1) ambiguous = true;
+      if (count === 1 && await candidate.isVisible()) actions.push(candidate);
+    }
+    const exactlyOne = !ambiguous && actions.length === 1 &&
+      !(await actions[0].isDisabled());
+    const action = actions[0];
     if (!exactlyOne) {
       writeJson({
         purpose: "alis-ui-project-navigation", status: "blocked",
