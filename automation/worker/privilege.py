@@ -1,7 +1,7 @@
 """Least-privilege requests to a separate same-user authentication broker.
 
-Workers retain NoNewPrivileges. Passwords are handled only by the OS agent or
-sudo's existing cache; this protocol has no credential field.
+Workers retain NoNewPrivileges. Passwords can be fetched only inside broker from local Secret Service after
+an allowlisted, approved service action. Jobs have no password field.
 """
 from __future__ import annotations
 import fcntl
@@ -153,6 +153,45 @@ def _privilege_auth(payload: dict, *, runner=None) -> dict:
             "SUDO_AUTHENTICATION_FAILED"}
 
 
+def _prime_saved_sudo_for_approved_action(*, runner=None) -> bool:
+    """Only called AFTER allowlist and durable action intent.
+
+    Most jobs never call this function and remain entirely unprivileged.
+    sudo -n first preserves an existing cache without accessing keyring.
+    A saved password is fetched on demand from local Secret Service, never
+    from a GitHub job, argv, environment or task receipt.
+    """
+    execute = subprocess.run if runner is None else runner
+    env = {k: v for k, v in os.environ.items() if k in
+           {"PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_ALL"}}
+    try:
+        cached = execute(["/usr/bin/sudo", "-n", "-v"], input=None,
+                         text=True, capture_output=True, timeout=8,
+                         check=False, env=env)
+        if cached.returncode == 0:
+            return True
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    try:
+        from automation import sudo_credentials
+        secret = sudo_credentials._lookup_for_broker()
+    except (ValueError, OSError):
+        return False
+    if not secret:
+        return False
+    try:
+        authenticated = execute(
+            ["/usr/bin/sudo", "-S", "-p", "", "-v"],
+            input=secret + "\n", text=True, capture_output=True,
+            timeout=12, check=False, env=env)
+        return authenticated.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    finally:
+        # No secret included in returned values or durable receipts.
+        secret = None
+
+
 def handle(payload, executor=bounded_run):
     if set(payload)!={"key","spec"} or not re.fullmatch(r"JOB-[A-Za-z0-9._-]+:[0-9]{1,2}",payload["key"]):
         raise ValueError("invalid administrator request identity")
@@ -182,7 +221,11 @@ def handle(payload, executor=bounded_run):
               else ["/usr/bin/pkexec","--disable-internal-agent"]) + argv
         receipt={"key":payload["key"],"input_sha256":digest,"phase":"dispatching","at_unix":int(time.time()),
                  "operation":spec["operation"],"unit":spec["unit"],"reason":spec["reason"],"authentication":rules["authentication"]}
-        _write(path,receipt) # Durable audit precedes the only elevation point.
+        _write(path,receipt) # Durable audit precedes any authentication or elevation.
+        # Production-only on-demand broker privilege; injected test runners
+        # must never accidentally invoke real sudo on the CI host.
+        if rules["authentication"] == "sudo-cache" and executor is bounded_run:
+            _prime_saved_sudo_for_approved_action()
         env={k:v for k,v in os.environ.items() if k in {"PATH","HOME","USER","LANG","DISPLAY","WAYLAND_DISPLAY","XDG_RUNTIME_DIR","DBUS_SESSION_BUS_ADDRESS"}}
         try:
             result=executor(argv,cwd=Path("/"),timeout=30,capture=16384,env=env,
