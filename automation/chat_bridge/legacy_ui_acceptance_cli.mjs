@@ -23,14 +23,14 @@ const guard=setTimeout(()=>{
   process.exit(124);
 },25000);
 try{
-  const url=process.env.HADALIS_CHATGPT_CDP_URL??"http://127.0.0.1:9222";
+  const url=process.env.ALIS_CHATGPT_CDP_URL??process.env.HADALIS_CHATGPT_CDP_URL??"http://127.0.0.1:9222";
   const parsed=new URL(url);
   if(parsed.protocol!=="http:"||
     !["localhost","127.0.0.1","[::1]"].includes(parsed.hostname)||
     parsed.username||parsed.password||parsed.pathname!=="/"||
     parsed.search||parsed.hash)
     throw Error("CDP_MUST_BE_LOOPBACK");
-  const moduleUrl=process.env.HADALIS_PLAYWRIGHT_MODULE??
+  const moduleUrl=process.env.ALIS_PLAYWRIGHT_MODULE??process.env.HADALIS_PLAYWRIGHT_MODULE??
     "file:///usr/lib/chatgpt/resources/cua_node/lib/node_modules/playwright-core/index.mjs";
   const {chromium}=await import(moduleUrl);
   browser=await chromium.connectOverCDP(url,{timeout:9000});
@@ -39,7 +39,7 @@ try{
   if(pages.length!==1)throw Error("DESKTOP_MAIN_PAGE_NOT_UNIQUE");
   const result=await oneShotUiAcceptance({
     page:pages[0],ownerApproved:true,acceptanceId:args[1],
-    projectName:process.env.HADALIS_CHATGPT_PROJECT??"Automatic Alis",
+    projectName:process.env.ALIS_CHATGPT_PROJECT??process.env.HADALIS_CHATGPT_PROJECT??"Automatic Alis",
     persistAttempt:record=>persistHarmlessUiAttempt(record)
   });
   console.log(JSON.stringify({purpose:"owner-only-harmless-ui-acceptance",
