@@ -85,6 +85,45 @@ def installed_worker_info() -> dict:
     return result
 
 
+def pending_receipt_health() -> dict:
+    """Fail-closed receipt inventory, not a mutation or content export.
+
+    A worker can have unpublished/uncertain durable receipts even when the
+    heartbeat reports no running future and no active publisher. Do not
+    restart until those have been reconciled.
+    """
+    root=worker.state_root() / "receipts"
+    problem={"worker_receipt_inventory_complete":False,
+             "worker_unsettled_receipts_present":None,
+             "worker_receipt_count_capped":None}
+    if root.is_symlink():return problem
+    if not root.exists():
+        # A worker with no jobs may never have created receipts/.
+        return {"worker_receipt_inventory_complete":True,
+                "worker_unsettled_receipts_present":False,
+                "worker_receipt_count_capped":0}
+    if not root.is_dir():return problem
+    total=0
+    unsettled=False
+    try:
+        for item in root.iterdir():
+            total+=1
+            if total>4096:return problem
+            if (not item.name.endswith(".json") or item.is_symlink()
+                    or not item.is_file() or item.stat().st_size>65536):
+                return problem
+            receipt=json.loads(item.read_text(encoding="utf-8"))
+            if not isinstance(receipt,dict) or receipt.get("phase") not in (
+                "published","preparing","executing","finished","publishing"):
+                return problem
+            if receipt["phase"]!="published":unsettled=True
+    except (OSError,ValueError):
+        return problem
+    return {"worker_receipt_inventory_complete":True,
+            "worker_unsettled_receipts_present":unsettled,
+            "worker_receipt_count_capped":min(total,4096)}
+
+
 def running_worker_status(*, now: int | None = None) -> dict:
     """Read-only heartbeat and installed unit/proc provenance; no GitHub IO."""
     at = int(time.time()) if now is None else now
@@ -114,11 +153,22 @@ def running_worker_status(*, now: int | None = None) -> dict:
         diagnosis="INSTALLED_WORKER_SOURCE_MISMATCH_OR_UNVERIFIED"
     active_tasks=(snapshot.get("running") if isinstance(snapshot,dict) else None)
     publishing=(snapshot.get("publishing") if isinstance(snapshot,dict) else None)
+    receipt_health=pending_receipt_health()
+    restart_preflight_ok=(
+        fresh and installed["worker_service_active"] and
+        installed["worker_unit_matches_checkout"] and
+        installed["worker_process_matches_checkout"] and
+        active_tasks==[] and publishing is False and
+        receipt_health["worker_receipt_inventory_complete"] is True and
+        receipt_health["worker_unsettled_receipts_present"] is False
+    )
     return {
         "purpose": "auto-f01-github-handoff-doctor",
         "status": "read-only",
         "diagnosis":diagnosis,
         **installed,
+        **receipt_health,
+        "worker_restart_preflight_clear":restart_preflight_ok,
         "worker_heartbeat_fresh": fresh,
         "worker_supports_github_handoff": bool(fresh and contract and
                                                installed["worker_process_matches_checkout"] and
