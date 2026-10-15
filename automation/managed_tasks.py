@@ -9,7 +9,7 @@ import hashlib
 import time
 
 from . import queue, taskflow as tf, transport_gate
-from .chat_bridge.protocol import cloud_github_prompt
+from .chat_bridge.protocol import cloud_github_prompt, GITHUB_APP_MENTION, GITHUB_MENTION
 from .manager import control, model, store
 
 PROFILE_PREFIX = "taskflow:"
@@ -77,6 +77,12 @@ def prompt(profile: dict, kind: str) -> str:
         raise tf.TaskError("Unsupported managed prompt phase")
     if not isinstance(body, str) or not body.strip():
         raise tf.TaskError("Cloudbot prompt missing; do not dispatch")
+    # Stored task code bundles (and validated next prompts) may already carry
+    # a mention; keep exactly one at the start of the generated user message.
+    for mention in (GITHUB_APP_MENTION, GITHUB_MENTION):
+        if body.lstrip().startswith(mention):
+            body = body.lstrip()[len(mention):].lstrip("\r\n")
+            break
     # Retained manager wire protocol is needed for trusted response parsing;
     # no user-authored initial/continuation/rotation prompts.
     return cloud_github_prompt((
