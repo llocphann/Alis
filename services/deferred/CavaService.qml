@@ -31,6 +31,9 @@ Singleton {
     property int _processBars: 0
     property int _warmBars: 0
     property bool _pendingConfigGeneration: false
+    property string _generationConfigText: ""
+    property string _processConfigText: ""
+    property bool _forceRestart: false
     readonly property int _subscribers: _legacySubscribers + _sampleRequests.length
     readonly property bool active: _subscribers > 0
 
@@ -86,6 +89,8 @@ Singleton {
             frameClear.stop()
             if (!cavaProc.running)
                 root._generateConfig()
+            else if (root._pendingConfigGeneration)
+                configRestart.restart()
         } else if (wasActive && !root.active) {
             stopDebounce.restart()
         }
@@ -111,7 +116,7 @@ Singleton {
         root._suppressConfigRestart = false
         root._afterSubscriptionChange(wasActive)
         if (wasActive && root.active && root.effectiveBars !== previousBars)
-            configRestart.restart()
+            root._scheduleConfigRefresh()
         return requestId
     }
 
@@ -128,7 +133,7 @@ Singleton {
         root._sampleRequests = next
         root._suppressConfigRestart = false
         if (root.active && root.effectiveBars !== previousBars)
-            configRestart.restart()
+            root._scheduleConfigRefresh()
     }
 
     function unsubscribe(requestId): void {
@@ -143,15 +148,30 @@ Singleton {
         }
         root._afterSubscriptionChange(wasActive)
         if (wasActive && root.active && root.effectiveBars !== previousBars)
-            configRestart.restart()
+            root._scheduleConfigRefresh()
     }
 
-    // Live config changes — restart cava with new parameters
-    onCfgFramerateChanged: if (active) configRestart.restart()
-    onCfgSensitivityChanged: if (active) configRestart.restart()
-    onCfgStereoChanged: if (active) configRestart.restart()
-    onEffectiveBarsChanged: if (active && !root._suppressConfigRestart) configRestart.restart()
-    onPlayerDesktopEntryChanged: if (active) sourceRefresh.restart()
+    // Resolve changes while the current analyzer stays alive. Only different
+    // complete config bytes (or a genuinely stalled stream) need a restart.
+    onCfgFramerateChanged: root._scheduleConfigRefresh()
+    onCfgSensitivityChanged: root._scheduleConfigRefresh()
+    onCfgStereoChanged: root._scheduleConfigRefresh()
+    onEffectiveBarsChanged: if (!root._suppressConfigRestart) root._scheduleConfigRefresh()
+    onPlayerDesktopEntryChanged: root._scheduleSourceRefresh()
+
+    function _scheduleConfigRefresh(): void {
+        root._pendingConfigGeneration = true
+        if (root.active) {
+            configRestart.restart()
+        }
+    }
+
+    function _scheduleSourceRefresh(): void {
+        root._pendingConfigGeneration = true
+        if (root.active) {
+            sourceRefresh.restart()
+        }
+    }
 
     function _publishFrame(parsed): void {
         // Wave renderers stretch short input across their full width. The raw
@@ -165,6 +185,7 @@ Singleton {
         // if the selected PipeWire/Pulse source stalls, regenerate the config
         // and resolve the source again instead of leaving an invisible EQ.
         dataWatchdog.restart()
+        root._forceRestart = false
 
         let peak = 0
         let sum = 0
@@ -214,23 +235,39 @@ Singleton {
             root._pendingConfigGeneration = true
             return
         }
+        if (configRestart.running || sourceRefresh.running)
+            return
+        root._pendingConfigGeneration = false
         root._generationBars = root.effectiveBars
         configGen.running = true
+    }
+
+    function _startGeneratedConfig(): void {
+        if (!root.active)
+            return
+        if (root._pendingConfigGeneration || configGen.running
+                || configRestart.running || sourceRefresh.running) {
+            root._generateConfig()
+            return
+        }
+        root._processBars = root._generationBars
+        root._processConfigText = root._generationConfigText
+        root._warmBars = root._generationBars
+        root._forceRestart = false
+        cavaProc.running = true
     }
 
     Connections {
         target: MprisController
         function onTrackChanged(): void {
-            if (root.active)
-                sourceRefresh.restart()
+            root._scheduleSourceRefresh()
         }
     }
 
     Connections {
         target: YtMusic
         function onCurrentVideoIdChanged(): void {
-            if (root.active)
-                sourceRefresh.restart()
+            root._scheduleSourceRefresh()
         }
     }
 
@@ -256,8 +293,10 @@ Singleton {
         interval: 2400
         repeat: false
         onTriggered: {
-            if (root.active && cavaProc.running)
+            if (root.active && cavaProc.running) {
+                root._forceRestart = true
                 configRestart.restart()
+            }
         }
     }
 
@@ -276,16 +315,7 @@ Singleton {
     Timer {
         id: configRestart
         interval: 300
-        onTriggered: {
-            if (configGen.running) {
-                root._pendingConfigGeneration = true
-            } else if (cavaProc.running) {
-                root._pendingRestart = true
-                cavaProc.running = false
-            } else if (root.active) {
-                root._generateConfig()
-            }
-        }
+        onTriggered: root._generateConfig()
     }
 
     // Defer process teardown so brief unsubscribe/subscribe cycles
@@ -298,6 +328,9 @@ Singleton {
             if (!root.active) {
                 root._pendingRestart = false
                 root._pendingConfigGeneration = false
+                root._forceRestart = false
+                configRestart.stop()
+                sourceRefresh.stop()
                 configGen.running = false
                 cavaProc.running = false
                 root._warmBars = 0
@@ -313,18 +346,31 @@ Singleton {
         command: ["/usr/bin/bash", root.scriptPath, root.configPath,
             String(root.cfgFramerate), String(root.cfgSensitivity),
             String(root._generationBars), String(root.cfgStereo),
-            root.playerDesktopEntry]
+            root.playerDesktopEntry, "--print-config"]
+        stdout: StdioCollector { id: generatedConfig }
         onExited: (code, status) => {
-            if (root._pendingConfigGeneration && root.active) {
-                root._pendingConfigGeneration = false
+            if (!root.active) {
+                root._pendingConfigGeneration = true
+                return
+            }
+            if (root._pendingConfigGeneration || configRestart.running || sourceRefresh.running) {
                 root._generateConfig()
-            } else if (code === 0 && root.active) {
-                root._processBars = root._generationBars
-                root._warmBars = root._generationBars
-                cavaProc.running = true
-            } else if (root.active) {
-                signalRelease.restart()
-                frameClear.restart()
+            } else if (code === 0 && generatedConfig.text.length > 0) {
+                root._generationConfigText = generatedConfig.text
+                if (!cavaProc.running) {
+                    root._startGeneratedConfig()
+                } else if (root._forceRestart || root._generationConfigText !== root._processConfigText) {
+                    root._pendingRestart = true
+                    cavaProc.running = false
+                }
+            } else {
+                // A failed refresh must not tear down a healthy current stream.
+                // Retry at the existing source debounce cadence while demanded.
+                if (!cavaProc.running) {
+                    signalRelease.restart()
+                    frameClear.restart()
+                }
+                root._scheduleSourceRefresh()
             }
         }
     }
@@ -340,10 +386,10 @@ Singleton {
                 dataWatchdog.stop()
                 if (root._pendingRestart && root.active) {
                     root._pendingRestart = false
-                    root._generateConfig()
+                    root._startGeneratedConfig()
                 } else if (root.active) {
                     signalRelease.restart()
-                    sourceRefresh.restart()
+                    root._scheduleSourceRefresh()
                 } else if (!root.active) {
                     signalRelease.restart()
                     frameClear.restart()

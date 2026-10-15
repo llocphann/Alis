@@ -8,7 +8,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-cava-warm-") as name:
  folder=Path(name)
  for entry in ["modules","services","GlobalStates.qml","qmldir","assets","defaults","translations"]:(folder/entry).symlink_to(ROOT/entry)
  generator=folder/"scripts/cava/generate_config.sh";generator.parent.mkdir(parents=True)
- generator.write_text('#!/bin/sh\nprintf "%s\\n" "$4" > "$1"\n');generator.chmod(0o700)
+ generator.write_text('#!/bin/sh\nprintf "%s\\n" "$4" > "$1"\nif [ "${7:-}" = "--print-config" ]; then cat "$1"; fi\n');generator.chmod(0o700)
  binary=folder/"bin";binary.mkdir();cava=binary/"cava"
  cava.write_text('''#!/usr/bin/env python3
 import os,sys,time
