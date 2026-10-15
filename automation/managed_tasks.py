@@ -138,6 +138,68 @@ def _ensure_profile(repository: str, code: str) -> str:
     return store.change(transaction)
 
 
+
+def stage_ui_queue(*, approved: bool = False,
+                   expected_first: str = "") -> dict:
+    """Owner-approved, non-dispatching profile stage for alternate UI Loop.
+
+    This creates only the profile of the first exact SHA-pinned queued Issue,
+    leaving the queue prepared, without enabling Start, changing a unit, or
+    contacting ChatGPT. A stale/foreign/native-unsettled cutover fails closed.
+    """
+    if approved is not True:
+        raise tf.TaskError("Explicit UI Queue profile staging approval required")
+    from .chat_bridge import ui_preflight
+    with queue._lock():
+        manifest = queue._load()
+        if (not manifest or manifest.get("mode") != "ordered"
+                or manifest.get("state") != "prepared"
+                or manifest.get("approved_start") is not False
+                or manifest.get("active") is not None
+                or manifest.get("selection") is not None):
+            raise tf.TaskError("UI Queue staging requires idle prepared ordered queue")
+        items = manifest.get("items")
+        if (not isinstance(items, list) or not 1 <= len(items) <= queue.MAX_ITEMS
+                or any(not isinstance(item, dict)
+                       or item.get("state") != "queued"
+                       or item.get("repository") not in tf.REPOSITORIES
+                       or not isinstance(item.get("code"), str)
+                       or not tf.CODE.fullmatch(item["code"])
+                       or not isinstance(item.get("source_sha"), str)
+                       or not tf.SHA.fullmatch(item["source_sha"])
+                       for item in items)):
+            raise tf.TaskError("Queue manifest is invalid for UI profile staging")
+        first = items[0]
+        identity = f'{first["repository"]}:{first["code"]}'
+        if expected_first != identity:
+            raise tf.TaskError("Queue first task changed; refresh before UI staging")
+        report = ui_preflight.check_prepared_queue()
+        allowed = {"TASKFLOW_PROFILE_NOT_MATERIALIZED",
+                   "UI_TASK_QUEUE_INTEGRATION_NOT_ACCEPTED"}
+        if (report.get("queue_state") != "prepared"
+                or report.get("first_task_code") != first["code"]
+                or report.get("queue_item_count") != len(items)
+                or any(blocker not in allowed for blocker in
+                       report.get("preflight_blockers", []))):
+            raise tf.TaskError("UI Queue staging blocked by unsettled manager or service")
+        record = tf.load_task(first["code"], first["repository"])
+        if (record.get("status") not in {"prepared", "handoff_ready"}
+                or record.get("unresolved") or record.get("scheduler_dispatched")
+                or record.get("handoff") is not None
+                or record.get("latest_receipt") is not None
+                or record["task"].get("base_sha") != first["source_sha"]):
+            raise tf.TaskError("First task has changed or has durable work")
+        pid = _ensure_profile(first["repository"], first["code"])
+        # Recheck exact queue snapshot under its original lock. A new
+        # profile is only idle metadata, not scheduling/transport approval.
+        if queue._load() != manifest:
+            raise tf.TaskError("Queue changed while staging; no task was claimed")
+        return {"ok": True, "state": "profile_staged",
+                "first_task": identity, "profile_id": pid,
+                "queue_unchanged": True, "start_approved": False,
+                "submission_authorized": False, "service_modified": False}
+
+
 def stop_queue(*, approved: bool = False,
                expected_active: str = "") -> dict:
     """Stop automated selection, then stop the exact manager profile.
