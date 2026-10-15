@@ -191,10 +191,20 @@ fingerprint, draft or private DOM content:
   generic and idle, `ALIS_UI_PROJECT_NEW_CHAT_NAVIGATION_REQUIRED` gives
   the human-only next step: **click the Project-specific New chat button**
   inside ChatGPT Desktop and rerun `ui-target-check`. Simply opening the
-  Project sidebar does not redirect the current composer. Navigation alone
-  neither creates an authorized message nor proves a server-side Project ID.
-  Do not work around these checks by picking a random chat, replacing an
-  unresolved journal or weakening the pinned target guard.
+  Project sidebar does not redirect the current composer. For the exact
+  idle, draft-free sidebar-only condition, an **optional, explicit**
+  *navigation-only* command is also available:
+  `node automation/chat_bridge/desktop_cli.mjs ui-project-enter --approve-navigation`.
+  It requires local CDP, uniquely identifies the Project's new-chat action,
+  performs at most **one DOM navigation click**, never types/sends and
+  never changes the queue or credentials. It returns either
+  `ALIS_UI_EMPTY_PROJECT_ENTRY_OBSERVED` or an unverified/blocked
+  categorical result. An unverified result is NOT reason to click blindly
+  again: inspect the Desktop UI or share a redacted screenshot before
+  continuing. Navigation alone neither creates an authorized message nor
+  proves a server-side Project ID. Do not work around these checks by
+  picking a random chat, replacing an unresolved journal or weakening the
+  pinned target guard.
 
 The read-only checker never sends a message. Initial UI Queue sends must
 still be explicitly owner-approved, retain a durable one-shot intent, and
