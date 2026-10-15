@@ -1,11 +1,11 @@
 import { spawnSync } from "node:child_process";
 
-const PLAYWRIGHT = process.env.HADALIS_PLAYWRIGHT_MODULE ?? "file:///usr/lib/chatgpt/resources/cua_node/lib/node_modules/playwright-core/index.mjs";
+const PLAYWRIGHT = process.env.ALIS_PLAYWRIGHT_MODULE ?? process.env.HADALIS_PLAYWRIGHT_MODULE ?? "file:///usr/lib/chatgpt/resources/cua_node/lib/node_modules/playwright-core/index.mjs";
 const { chromium } = await import(PLAYWRIGHT);
 
-const CDP = process.env.HADALIS_CHATGPT_CDP_URL ?? "http://127.0.0.1:9222";
+const CDP = process.env.ALIS_CHATGPT_CDP_URL ?? process.env.HADALIS_CHATGPT_CDP_URL ?? "http://127.0.0.1:9222";
 const MAIN_URL = "app://-/index.html";
-const PROJECT_NAME = process.env.HADALIS_CHATGPT_PROJECT ?? "Automatic Alis";
+const PROJECT_NAME = process.env.ALIS_CHATGPT_PROJECT ?? process.env.HADALIS_CHATGPT_PROJECT ?? "Automatic Alis";
 if (!/^[A-Za-z0-9 ._-]{1,80}$/.test(PROJECT_NAME))
   throw new Error("invalid configured ChatGPT project name");
 const escapedProject = PROJECT_NAME.replaceAll(".", "\\.");
