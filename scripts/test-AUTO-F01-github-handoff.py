@@ -169,6 +169,32 @@ class GitHubHandoffTests(unittest.TestCase):
         self.assertFalse(handoff.retire_opt_in_job(
             json.dumps({**job,"handoff":[]}),valid))
 
+    def test_control_retirement_matches_run_task_and_base_not_just_job_digest(self):
+        job,raw,signal=fixture()
+        signal["status"]="DONE"
+        local={"job":JOB_ID,"input_sha256":handoff.job_digest(raw),
+               "status":"passed"}
+        self.assertTrue(handoff.retire_matching_handoff(
+            json.dumps(signal),raw,local))
+        mismatches=(
+            {**signal,"run_id":str(uuid.uuid4())},
+            {**signal,"task_code":"AUTO-R01"},
+            {**signal,"base_sha":"f"*40},
+            {**signal,"job_id":"JOB-UNRELATED"},
+            {**signal,"status":"PREPARING"},
+            {**signal,"job_sha256":"f"*64},
+        )
+        for other in mismatches:
+            with self.subTest(other=other):
+                self.assertFalse(handoff.retire_matching_handoff(
+                    json.dumps(other),raw,local))
+        self.assertFalse(handoff.retire_matching_handoff(
+            json.dumps(signal),"not JSON",local))
+        self.assertFalse(handoff.retire_matching_handoff(
+            json.dumps(signal),raw,{**local,"status":"indeterminate"}))
+        self.assertFalse(handoff.retire_matching_handoff(
+            json.dumps(signal),raw,{**local,"input_sha256":"0"*64}))
+
     def test_untrusted_json_type_errors_are_categorical(self):
         job,raw,signal=fixture()
         for altered in (
