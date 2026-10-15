@@ -609,10 +609,13 @@ def main() -> int:
     parser=argparse.ArgumentParser(description="Independent Alis workflow scheduler")
     parser.add_argument("--once",action="store_true")
     parser.add_argument("--reset-state",action="store_true")
-    parser.add_argument("--ui-loop-profile",metavar="PROFILE_ID",
+    ui_group = parser.add_mutually_exclusive_group()
+    ui_group.add_argument("--ui-loop-profile",metavar="PROFILE_ID",
         help="Explicit single-owner Alis UI protocol, not native transport")
+    ui_group.add_argument("--ui-loop-queue", action="store_true",
+        help="Queue-only UI observer; never claims or starts prepared tasks")
     args=parser.parse_args()
-    if args.ui_loop_profile and args.reset_state:
+    if (args.ui_loop_profile or args.ui_loop_queue) and args.reset_state:
         raise SystemExit("Alis UI mode cannot reset existing chat state")
     from automation import managed_tasks
     managed_tasks.quarantine_legacy_profiles_once()
@@ -630,6 +633,11 @@ def main() -> int:
             # historic UI loop. No separate service/daemon or concurrent sender.
             from automation.chat_bridge.ui_scheduler import loop
             return loop(args.ui_loop_profile,once=args.once)
+        if args.ui_loop_queue:
+            # Prepared queues remain idle; only an already owner-approved
+            # active SHA-pinned member is eligible for a UI send intent.
+            from automation.chat_bridge.ui_scheduler import queue_loop
+            return queue_loop(once=args.once)
         with ThreadPoolExecutor(max_workers=CONCURRENCY) as pool:
             while True:
                 from automation.worker.deployment import recover
