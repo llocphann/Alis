@@ -19,6 +19,7 @@ from urllib.parse import urlparse
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from automation.manager.store import _write
+from automation import github_handoff
 from automation.worker.process import bounded_run, process_identity, is_same_process, kill_group
 from automation.worker.privacy import public_result
 from typing import Any
@@ -131,7 +132,18 @@ def validate_job(path: str, raw: str) -> dict[str, Any]:
     base_sha = data.get("base_sha")
     if not isinstance(base_sha, str) or SHA_RE.fullmatch(base_sha) is None:
         raise ValueError("base_sha must be a full SHA")
-    if set(data)-{"id","base_sha","actions","profile_id","resources"}: raise ValueError("unknown job fields")
+    if set(data)-{"id","base_sha","actions","profile_id","resources","handoff"}: raise ValueError("unknown job fields")
+    handoff=data.get("handoff")
+    if handoff is not None:
+        if (not isinstance(handoff,dict) or set(handoff)!={"task_code","run_id"}
+                or not isinstance(handoff["task_code"],str)
+                or not github_handoff.CODE.fullmatch(handoff["task_code"])):
+            raise ValueError("invalid opt-in handoff reference")
+        try:
+            if str(__import__("uuid").UUID(handoff["run_id"])) != handoff["run_id"]:
+                raise ValueError("invalid handoff run ID")
+        except (TypeError, ValueError, AttributeError):
+            raise ValueError("invalid handoff run ID") from None
     owner=data.get("profile_id")
     if owner is not None and (not isinstance(owner,str) or not re.fullmatch(r"[a-z0-9-]{1,80}",owner)):
         raise ValueError("invalid profile ownership")
@@ -290,7 +302,28 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
             if checked.returncode:raise RuntimeError("publication checkout failed")
             output=checkout/target;output.parent.mkdir(parents=True,exist_ok=True)
             output.write_text(json.dumps(public_result(payload),indent=2,sort_keys=True)+"\n")
-            for argv in (["git","add",target],["git","commit","-m",f"automation: record {job_id} result"]):
+            # Keep one reusable remote handoff file. Once a *settled* local
+            # job result is durably committed, retire only its matching DONE
+            # signal in the SAME publication commit. If any identity differs,
+            # leave the manifest intact for the next task and preserve history.
+            retire_handoff=False
+            active=checkout/github_handoff.PATH
+            if payload.get("status") in {"passed","failed","cancelled"} and active.is_file() and not active.is_symlink():
+                try:
+                    signal=github_handoff.validate_signal(active.read_text(encoding="utf-8"))
+                    retire_handoff=(signal["status"]=="DONE" and
+                        signal["job_id"]==job_id and
+                        signal["job_sha256"]==payload.get("input_sha256"))
+                except (OSError, ValueError):
+                    pass
+            if retire_handoff:
+                active.unlink()
+            if retire_handoff:
+                staged=run(["git","add","--",target,github_handoff.PATH],cwd=checkout,timeout=60)
+            else:
+                staged=run(["git","add","--",target],cwd=checkout,timeout=60)
+            if staged.returncode: raise RuntimeError("publication staging failed")
+            for argv in (["git","commit","-m",f"automation: record {job_id} result"],):
                 result=run(argv,cwd=checkout,timeout=60)
                 if result.returncode:raise RuntimeError("publication commit failed")
             # Refetch immediately before the remote ref update. A race is a
@@ -330,6 +363,21 @@ def process_job(path: str, *, publish_now=True):
     with job_lock(job_id):
         prior=load_receipt(job_id)
         if prior and prior["phase"]=="published":return None
+        # Opt-in GitHub handoffs may be published before GPT's DONE signal.
+        # Read only and wait, with *no* local execution receipt mutation, until
+        # DONE is fresh, the exact immutable job matches and the owner approved
+        # its specific content digest. Never bypass uncertain prior executions.
+        if not prior or (prior.get("phase")=="preparing" and not prior.get("result")):
+            control_commit=introducing_commit(path)
+            control_raw=remote_text(path,ref=control_commit)
+            control_data=validate_job(path,control_raw)
+            if control_data.get("handoff") is not None:
+                try:
+                    github_handoff.ready(
+                        remote_text(github_handoff.PATH),
+                        control_data,control_raw,state_root())
+                except (github_handoff.HandoffWait, ValueError, RuntimeError):
+                    return None
         if prior and prior.get("result"):
             payload=prior["result"]
         else:
