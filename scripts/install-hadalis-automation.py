@@ -117,8 +117,11 @@ def main() -> int:
     )
     parser.add_argument("--push-remote",default=os.environ.get("HADALIS_WORKER_PUSH_REMOTE"),
                         help="optional credential-free worker publication remote (for example an SSH Git URL)")
-    parser.add_argument("--ui-loop-profile", metavar="PROFILE_ID",
-                        help="EXPLICIT Alis single-owner UI scheduler mode; no automatic profile activation")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--ui-loop-profile", metavar="PROFILE_ID",
+                       help="EXPLICIT Alis single-owner UI scheduler mode; no automatic profile activation")
+    group.add_argument("--ui-loop-queue", action="store_true",
+                       help="EXPLICIT queue-only UI scheduler; leaves prepared queues idle")
     args = parser.parse_args()
     if args.ui_loop_profile is not None and not re.fullmatch(
             r"[A-Za-z0-9._:-]{1,100}", args.ui_loop_profile):
@@ -190,7 +193,8 @@ WantedBy=default.target
     # lock. The alternate transport is an explicit installer choice; no
     # profile is enabled, queued or restarted by writing the unit.
     ui_arg = (" --ui-loop-profile " + quote(args.ui_loop_profile)
-              if args.ui_loop_profile else "")
+              if args.ui_loop_profile else
+              " --ui-loop-queue" if args.ui_loop_queue else "")
     write_unit(
         units / "hadalis-chat-bridge.service",
         f"""[Unit]
