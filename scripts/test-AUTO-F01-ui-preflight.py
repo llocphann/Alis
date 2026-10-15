@@ -70,6 +70,18 @@ class Preflight(unittest.TestCase):
         self.state["profiles"][self.id]["pending"] = {"transport": "alis-ui-once"}
         self.assertIn("ORIGINAL_SEND_UNRESOLVED", self.view()["preflight_blockers"])
 
+    def test_profile_scheduled_or_waiting_blocks_cutover(self):
+        self.state["profiles"][self.id]["desired"] = "run"
+        self.assertIn("PROFILE_SCHEDULED_REQUIRES_EXPLICIT_STOP",
+                      self.view()["preflight_blockers"])
+        self.state["profiles"][self.id]["desired"] = "stopped"
+        self.state["profiles"][self.id]["job_id"] = "JOB-EXISTING"
+        self.assertIn("PROFILE_WAITING_ON_JOB", self.view()["preflight_blockers"])
+        self.state["profiles"][self.id]["job_id"] = None
+        self.state["profiles"][self.id]["run_active"] = True
+        self.assertIn("PROFILE_SCHEDULED_REQUIRES_EXPLICIT_STOP",
+                      self.view()["preflight_blockers"])
+
     def test_foreign_profile_and_unconfigured_block(self):
         self.state["profiles"]["other"] = {"desired": "run"}
         self.assertIn("FOREIGN_PROFILE_UNSETTLED", self.view()["preflight_blockers"])
