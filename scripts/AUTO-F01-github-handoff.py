@@ -15,7 +15,6 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from automation import github_handoff
-from automation.manager.store import _write
 from automation.worker import daemon as worker
 
 
@@ -49,10 +48,18 @@ def main(argv: list[str]) -> int:
         p.add_argument("job_id")
         if name == "approve":
             p.add_argument("--owner-approved", action="store_true")
+            p.add_argument("--expected-sha256", required=True,
+                           help="Exact pinned job digest displayed by status")
     args = parser.parse_args(argv)
     if args.command == "approve" and args.owner_approved is not True:
         raise ValueError("explicit owner approval required before any local job is eligible")
     signal, job, raw = inspect(args.job_id)
+    digest = github_handoff.job_digest(raw)
+    if args.command == "approve":
+        # Owner must review the exact immutable job before granting execution.
+        # The GitHub status file alone is not approval of executable actions.
+        if args.expected_sha256 != digest:
+            raise ValueError("approved job digest does not match")
     state = worker.state_root()
     approved = github_handoff.approval_matches(state, job, raw)
     if args.command == "approve" and not approved:
@@ -81,6 +88,11 @@ def main(argv: list[str]) -> int:
         "status":signal["status"],
         "task_code":signal["task_code"],
         "job_id":job["id"],
+        "run_id":job["handoff"]["run_id"],
+        "base_sha":job["base_sha"],
+        "job_sha256":digest,
+        "action_count":len(job["actions"]),
+        "action_kinds":[next(iter(a)) for a in job["actions"]],
         "approved_for_exact_job":approved,
         "dispatch_ready":signal["status"]=="DONE" and approved,
         "server_chat_receipt_verified":False,
