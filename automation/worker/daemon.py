@@ -286,7 +286,7 @@ def execute(data: dict[str, Any], commit: str) -> dict[str, Any]:
 def publication_push_auth(job_id: str, payload: dict[str, Any],
                           origin_remote: str, push_remote: str,
                           *, approved_opt_in_raw: str | None = None
-                          ) -> tuple[str, list[str]]:
+                          ) -> tuple[str, list[str], bool]:
     """Select one existing credential scope; never read or expose the token.
 
     Profile-owned work retains the historical manager keyring path. Only an
@@ -298,6 +298,7 @@ def publication_push_auth(job_id: str, payload: dict[str, Any],
         git_options as profile_options, repository, has_token)
     owner=payload.get("profile_id")
     options=profile_options(owner,push_remote)
+    repo_scoped=False
     if has_token(owner) and repository(origin_remote):
         push_remote="https://github.com/"+repository(origin_remote)+".git"
         options=profile_options(owner,push_remote)
@@ -319,7 +320,8 @@ def publication_push_auth(job_id: str, payload: dict[str, Any],
             if saved:
                 push_remote="https://github.com/"+repo+".git"
                 options=scoped_credentials.git_options(repo)
-    return push_remote,options
+                repo_scoped=True
+    return push_remote,options,repo_scoped
 
 
 def publish(job_id: str, payload: dict[str, Any]) -> None:
@@ -400,9 +402,14 @@ def publish(job_id: str, payload: dict[str, Any]) -> None:
             push_remote=os.environ.get("HADALIS_WORKER_PUSH_REMOTE") or remote
             if urlparse(push_remote).password:raise ValueError("credentials cannot appear in push argv")
             from automation.manager.credentials import git_env
-            push_remote,options=publication_push_auth(
+            push_remote,options,repo_scoped=publication_push_auth(
                 job_id,payload,remote,push_remote,approved_opt_in_raw=opt_in_raw)
-            pushed=run(["git",*options,"push",push_remote,"HEAD:dev"],cwd=checkout,timeout=45,env=git_env())
+            if repo_scoped:
+                from automation import credentials as repo_credentials
+                push_env=repo_credentials.git_env()
+            else:
+                push_env=git_env()
+            pushed=run(["git",*options,"push",push_remote,"HEAD:dev"],cwd=checkout,timeout=45,env=push_env)
             if pushed.returncode:raise RuntimeError("result publication failed; private receipt retained")
         finally:shutil.rmtree(checkout,ignore_errors=True)
 
