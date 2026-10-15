@@ -9,8 +9,8 @@ import {fileURLToPath,pathToFileURL} from "node:url";
 import {observeHarmlessUiResponse} from
   "../automation/chat_bridge/legacy_ui_response_probe.mjs";
 const REQUEST="AUTO-F01 UI transport acceptance test only. "+
-  "Do not use any connectors or tools. Reply with exactly: HADALIS_LOOP:DONE";
-const REPLY="HADALIS_LOOP:DONE";
+  "Do not use any connectors or tools. Reply with exactly: ALIS_LOOP:DONE";
+const REPLY="ALIS_LOOP:DONE";
 let requestCount=1,replyCount=1,projectGuard=true;
 let mutationAttempts=0;
 const loc=items=>({
