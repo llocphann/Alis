@@ -67,5 +67,6 @@ jobs:
           python3 scripts/AUTO-F01-service-probe.py self-test
           python3 scripts/test-AUTO-F01-github-handoff.py
           python3 scripts/test-hadalis-chat-bridge.py
+          python3 scripts/test-AUTO-F01-ui-scheduler.py
           python3 scripts/test-hadalis-automation-credentials.py
           python3 scripts/test-hadalis-automation-install.py
