@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import stat
 import subprocess
 from pathlib import Path
 import sys
@@ -85,6 +86,14 @@ def installed_worker_info() -> dict:
     return result
 
 
+# Receipt payloads may legitimately embed bounded command outcomes. The old
+# 64 KiB ceiling covered metadata only and falsely blocked large real receipts.
+# Limit both *individual* reads and aggregate doctor memory/IO; worker's
+# historical evidence budget is 256 MiB, but doctor is deliberately smaller.
+MAX_RECEIPT_INSPECT_BYTES=16*1024*1024
+MAX_RECEIPT_TOTAL_BYTES=64*1024*1024
+
+
 def pending_receipt_health() -> dict:
     """Bounded, read-only receipt phase inventory, without IDs or contents.
 
@@ -115,6 +124,7 @@ def pending_receipt_health() -> dict:
     if not root.is_dir():return blocked("RECEIPT_DIRECTORY_NOT_DIRECTORY")
     counts={k:0 for k in sorted(known)}
     total=0
+    scanned_bytes=0
     try:
         for item in root.iterdir():
             total+=1
@@ -123,10 +133,30 @@ def pending_receipt_health() -> dict:
             if not item.is_file():return blocked("RECEIPT_ENTRY_NOT_REGULAR_FILE")
             if not item.name.endswith(".json"):
                 return blocked("RECEIPT_ENTRY_UNEXPECTED_FILENAME")
-            if item.stat().st_size>65536:
-                return blocked("RECEIPT_ENTRY_SIZE_LIMIT_EXCEEDED")
+            # Do not follow a swapped symlink. Never log or export content.
+            flags=os.O_RDONLY | getattr(os,"O_CLOEXEC",0) | getattr(os,"O_NOFOLLOW",0)
+            descriptor=os.open(item,flags)
             try:
-                receipt=json.loads(item.read_text(encoding="utf-8"))
+                info=os.fstat(descriptor)
+                if not stat.S_ISREG(info.st_mode):
+                    return blocked("RECEIPT_ENTRY_NOT_REGULAR_FILE")
+                if info.st_size>MAX_RECEIPT_INSPECT_BYTES:
+                    return blocked("RECEIPT_ENTRY_SIZE_LIMIT_EXCEEDED")
+                if scanned_bytes+info.st_size>MAX_RECEIPT_TOTAL_BYTES:
+                    return blocked("RECEIPT_INVENTORY_TOTAL_SIZE_LIMIT_EXCEEDED")
+                with os.fdopen(descriptor,"rb",closefd=False) as stream:
+                    raw=stream.read(MAX_RECEIPT_INSPECT_BYTES+1)
+                after=os.fstat(descriptor)
+                if len(raw)>MAX_RECEIPT_INSPECT_BYTES:
+                    return blocked("RECEIPT_ENTRY_SIZE_LIMIT_EXCEEDED")
+                if (after.st_size!=info.st_size or len(raw)!=info.st_size
+                        or after.st_mtime_ns!=info.st_mtime_ns):
+                    return blocked("RECEIPT_ENTRY_CHANGED_DURING_SCAN")
+                scanned_bytes+=len(raw)
+            finally:
+                os.close(descriptor)
+            try:
+                receipt=json.loads(raw)
             except (ValueError,UnicodeError):
                 return blocked("RECEIPT_ENTRY_INVALID_JSON")
             if not isinstance(receipt,dict):
