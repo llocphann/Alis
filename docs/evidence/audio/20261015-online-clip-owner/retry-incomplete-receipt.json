@@ -1,0 +1,29 @@
+{
+  "source_sha": "e770ea08216743427ff1b94443a93ecfdcd22235",
+  "identity_before": {
+    "installed_sha": "89d2c0a18",
+    "owner_pid": "2086",
+    "runtime_hashes": {
+      "version.json": "f51d2eaf15786e57344442cd875aeb65471c9d6ae8c33ff4e3d64b87012c7177",
+      "services/deferred/CavaService.qml": "614f1898586df1b833168d377ec6912ad2252f3560481b09d006e79fa44003f8",
+      "scripts/equalizer-control.sh": "c581dc0fc86b27f1cfb9fb9e463457e5cf8fd8380895b5f0c70066b13285f5ec"
+    }
+  },
+  "started_utc": "2026-10-15T13:26:58.401735+00:00",
+  "requested_seconds": 45,
+  "scope": "Owner-controlled same-local-track online-clip transitions; read-only metadata, no PCM",
+  "previous_incomplete_capture": "alis-audio-owner-45s-a3ln4qnp",
+  "actual_exit": 1,
+  "ended_utc": "2026-10-15T13:27:43.472450+00:00",
+  "identity_after": {
+    "installed_sha": "89d2c0a18",
+    "owner_pid": "2086",
+    "runtime_hashes": {
+      "version.json": "f51d2eaf15786e57344442cd875aeb65471c9d6ae8c33ff4e3d64b87012c7177",
+      "services/deferred/CavaService.qml": "614f1898586df1b833168d377ec6912ad2252f3560481b09d006e79fa44003f8",
+      "scripts/equalizer-control.sh": "c581dc0fc86b27f1cfb9fb9e463457e5cf8fd8380895b5f0c70066b13285f5ec"
+    }
+  },
+  "stable_runtime_identity": true,
+  "trace_sha256": "82427b401926c185bf203e5b93f13b2d761a5550b8dfe0e5122898467975d214"
+}

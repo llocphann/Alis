@@ -1,0 +1,24 @@
+{
+  "scope": "Owner-approved 10-second global EasyEffects bypass; restore original OFF; no preset/routing/volume commands",
+  "source_sha": "0263ef6db2564268f32bc7ba05ed541e7704fb92",
+  "initial_state": "2",
+  "initial_pids": [
+    "3264"
+  ],
+  "events": [
+    {
+      "event": "bypass_on",
+      "verified_state": "1",
+      "utc": "2026-10-15T13:33:55.236987+00:00",
+      "monotonic_ns": 763513177242
+    },
+    {
+      "event": "restore_checked",
+      "utc": "2026-10-15T13:34:05.878660+00:00",
+      "monotonic_ns": 774154848381
+    }
+  ],
+  "restored_state": "2",
+  "restored": true,
+  "capture_actual_exit": 0
+}

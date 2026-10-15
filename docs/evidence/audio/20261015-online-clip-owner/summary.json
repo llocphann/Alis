@@ -1,0 +1,123 @@
+{
+  "owner_reports": {
+    "pop_during_repeated_online_clip_switching": "near-continuous while scrolling clips/shorts/reels",
+    "comparison": "pop only when Local Music and online clip play together",
+    "exact_audible_timestamps": null
+  },
+  "interpretation": "Owner comparison implicates the EasyEffects processing path or its gain/headroom when sources mix; no individual plugin, clipping mechanism or causal quantum fault is proven. Zero observed ERR deltas do not disprove audible distortion. Browser node churn is not a count of clip switches. Both original captures remain incomplete.",
+  "captures": [
+    {
+      "label": "first-incomplete",
+      "source_sha": "89d2c0a184bf9871f397240277269a4f95f73dac",
+      "actual_exit": 1,
+      "stable_runtime_identity": true,
+      "last_record": {
+        "event": "incomplete",
+        "utc": "2026-10-15T13:24:26.827528+00:00",
+        "monotonic_ns": 195103706137,
+        "reason": "tool-ended-early"
+      },
+      "trace_sha256": "bcf76bde5973ecde81ae355a6ea9821a2a6aeec1e00eda53017731118b5f1e72",
+      "driver_identity": [
+        58,
+        59
+      ],
+      "accepted_driver_samples": 63,
+      "driver_rates": [
+        48000
+      ],
+      "driver_quantum_counts": {
+        "1024": 10,
+        "2048": 53
+      },
+      "driver_err_totals": [
+        0
+      ],
+      "observed_driver_err_deltas": {
+        "0": 62
+      },
+      "browser_node_identities": 31,
+      "browser_identity_removals": 30,
+      "local_node_identities": [
+        [
+          104,
+          320
+        ]
+      ],
+      "cava_node_identities": []
+    },
+    {
+      "label": "retry-incomplete",
+      "source_sha": "e770ea08216743427ff1b94443a93ecfdcd22235",
+      "actual_exit": 1,
+      "stable_runtime_identity": true,
+      "last_record": {
+        "event": "incomplete",
+        "utc": "2026-10-15T13:27:43.459409+00:00",
+        "monotonic_ns": 391735598901,
+        "reason": "truncated-tool-output"
+      },
+      "trace_sha256": "82427b401926c185bf203e5b93f13b2d761a5550b8dfe0e5122898467975d214",
+      "driver_identity": [
+        58,
+        59
+      ],
+      "accepted_driver_samples": 44,
+      "driver_rates": [
+        48000
+      ],
+      "driver_quantum_counts": {
+        "1024": 43,
+        "2048": 1
+      },
+      "driver_err_totals": [
+        0
+      ],
+      "observed_driver_err_deltas": {
+        "0": 43
+      },
+      "browser_node_identities": 1,
+      "browser_identity_removals": 1,
+      "local_node_identities": [
+        [
+          104,
+          899
+        ]
+      ],
+      "cava_node_identities": []
+    }
+  ],
+  "collector_regression_tests": {
+    "tests": 14,
+    "exit": 0,
+    "seconds": 8.244
+  },
+  "collector_fixes": [
+    "e770ea08216743427ff1b94443a93ecfdcd22235",
+    "0263ef6db"
+  ],
+  "full_canonical": "Not established at these source commits",
+  "deadline_smoke": {
+    "seconds": 3,
+    "actual_exit": 0,
+    "last_record": {
+      "event": "complete",
+      "utc": "2026-10-15T13:31:02.690492+00:00",
+      "monotonic_ns": 590966679009,
+      "frames": 5,
+      "accepted_samples": 5,
+      "rejected_rows": 101,
+      "acceptance": "collection-only"
+    },
+    "scope": "Collector completion only, not the owner 45-second listening reproduction."
+  },
+  "bypass_ab": {
+    "source_sha": "0263ef6db2564268f32bc7ba05ed541e7704fb92",
+    "owner_approved_seconds": 10,
+    "initial_state": "OFF",
+    "verified_during": "ON",
+    "verified_restored": "OFF",
+    "capture_actual_exit": 0,
+    "owner_listening_result": "Pop stopped or clearly reduced during approved bypass while both sources played and clips changed; effects restored afterward."
+  }
+}

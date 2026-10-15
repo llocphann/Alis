@@ -1,0 +1,17 @@
+{
+  "source_sha": "89d2c0a184bf9871f397240277269a4f95f73dac",
+  "identity_before": {
+    "installed_sha": "89d2c0a18",
+    "owner_pid": "2086"
+  },
+  "started_utc": "2026-10-15T13:23:54.762154+00:00",
+  "requested_seconds": 45,
+  "scope": "Owner-controlled same-local-track online-clip transitions; read-only metadata, no PCM",
+  "actual_exit": 1,
+  "ended_utc": "2026-10-15T13:24:26.837010+00:00",
+  "identity_after": {
+    "installed_sha": "89d2c0a18",
+    "owner_pid": "2086"
+  },
+  "stable_runtime_identity": true
+}
