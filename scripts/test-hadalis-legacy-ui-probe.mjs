@@ -143,6 +143,62 @@ assert.equal(result.submission_authorized,false);
 assert.equal(result.project_identity_verified,false);
 assert.equal(result.conversation_identity_verified,false);
 assert.equal(result.durable_server_receipt_verified,false);
+// Owner's exact 2026-10-15 probe: scoped empty Project composer and
+// disabled Send, even though there are two main regions and the visual
+// composer label is not separately found as a text node.
+result=await inspect({
+  composer:[{visible:true,disabled:false,draft:""}],
+  scopedComposer:[{visible:true,disabled:false,draft:""}],
+  genericComposer:[],
+  badge:[{visible:true}],
+  list:[{visible:true,selected:[]}],
+  action:[{visible:true}],
+  main:[{visible:true},{visible:true}],
+  mainHeading:[{visible:true}],
+  mainProjectText:[{visible:true},{visible:true}],
+  mainEmptyState:[{visible:true}],
+  mainComposerVisualLabel:[],
+  send:[{visible:true,disabled:true}],
+  stop:[]
+});
+assert.equal(result.main_project_view_evidence,
+  "main-region-ambiguous-or-unverified");
+assert.equal(result.project_landing_visual_evidence,
+  "project-empty-landing-corroborated");
+assert.equal(result.project_composer_visual_label_observed,false);
+assert.equal(result.project_view_visible,true);
+assert.equal(result.empty_project_composer_observed,true);
+assert.equal(result.send_control_state,"disabled-on-empty-project-composer");
+assert.equal(result.read_only_project_entry_ready,true);
+assert.equal(result.observation_ready,false);
+assert.deepEqual(result.readiness_issues,
+  ["SEND_DISABLED_ON_EMPTY_PROJECT_COMPOSER"]);
+assert.equal(result.project_identity_verified,false);
+assert.equal(result.conversation_identity_verified,false);
+assert.equal(result.durable_server_receipt_verified,false);
+assert.equal(result.submission_authorized,false);
+assert.equal(result.scheduler_activation_authorized,false);
+assert.equal(result.supported_for_automated_tasks,false);
+// A missing disabled state, a nonempty draft, a busy generation or
+// duplicated visible Send buttons are not a quiet empty Project editor.
+const base={badge:[{visible:true}],scopedComposer:[{visible:true}],
+  genericComposer:[],list:[{visible:true,selected:[]}]};
+result=await inspect({...base,send:[{visible:true,disabled:null}]});
+assert.equal(result.read_only_project_entry_ready,false);
+assert.ok(result.readiness_issues.includes("SEND_CONTROL_NOT_READY"));
+result=await inspect({...base,
+  composer:[{visible:true,disabled:false,draft:"ghp_FAKE_DRAFT"}],
+  send:[{visible:true,disabled:true}]});
+assert.equal(result.read_only_project_entry_ready,false);
+assert.equal(result.observation_ready,false);
+assert.ok(!JSON.stringify(result).includes("ghp_FAKE_DRAFT"));
+result=await inspect({...base,stop:[{visible:true}],
+  send:[{visible:true,disabled:true}]});
+assert.equal(result.read_only_project_entry_ready,false);
+result=await inspect({...base,
+  send:[{visible:true,disabled:true},{visible:true,disabled:true}]});
+assert.equal(result.read_only_project_entry_ready,false);
+assert.ok(result.readiness_issues.includes("SEND_CONTROL_NOT_READY"));
 // An unrelated empty-state string without the matching central Project
 // name is not corroborated, even if sidebar remains visible.
 result=await inspect({badge:[],main:[{visible:true},{visible:true}],
