@@ -314,5 +314,87 @@ class UiSchedulerTests(TestCase):
         self.assertIsNone(store.read_snapshot()[1]["profiles"][pid]["pending"])
 
 
+    def test_ui_queue_start_requires_exact_owner_and_separate_receipt_consent(self):
+        pid, task = self._queue_fixture()
+        def reset(_config, state):
+            state["profiles"][pid].update(desired="stopped", request=None)
+        store.change_state(reset)
+        report = {
+            "queue_state": "prepared",
+            "taskflow_profile_present": True,
+            "installed_service_mode": "ui_queue_mode",
+            "service_state": "active",
+            "preflight_blockers": [
+                "SCHEDULER_CUTOVER_NOT_READY",
+                "UI_QUEUE_OWNER_ACCEPTANCE_REQUIRED",
+            ],
+        }
+        from automation.chat_bridge import ui_preflight
+        with patch.object(tf, "load_task", return_value=task), \
+             patch.object(ui_preflight, "check_prepared_queue", return_value=report):
+            for kw in (
+                {},
+                {"approved": True},
+                {"approved": True, "accept_ui_only_receipts": True,
+                 "expected_first": "llocphann/Alis:AI-I02"},
+            ):
+                with self.assertRaises(tf.TaskError):
+                    managed_tasks.start_ui_queue(**kw)
+                self.assertEqual(queue.view()["state"], "prepared")
+            started = managed_tasks.start_ui_queue(
+                approved=True, accept_ui_only_receipts=True,
+                expected_first="llocphann/Alis:AI-I01")
+            self.assertEqual(started["state"], "scheduled")
+            self.assertEqual(started["owner_acceptance"], "local-ui-only")
+            self.assertFalse(started["service_modified"])
+            self.assertEqual(queue.view()["state"], "active")
+            self.assertTrue(store.read_snapshot()[1]["profiles"][pid]["desired"]
+                            == "run")
+            with self.assertRaises(tf.TaskError):
+                managed_tasks.start_ui_queue(
+                    approved=True, accept_ui_only_receipts=True,
+                    expected_first="llocphann/Alis:AI-I01")
+
+    def test_ui_done_receipt_advances_only_exact_local_evidence(self):
+        pid, task = self._queue_fixture(state="active", approved=True)
+        def save(updated):
+            task.clear()
+            task.update(updated)
+        with patch.object(tf, "load_task", return_value=task), \
+             patch.object(tf, "_save_task", side_effect=save):
+            self.assertEqual(ui_scheduler.queue_tick(
+                now=200, desktop=lambda *_a, **_k: reply("ALIS_LOOP:DONE")),
+                "DONE")
+            self.assertEqual(ui_scheduler.queue_tick(now=201),
+                             "queue_completed_pending_reconciliation")
+            outcome = managed_tasks.reconcile_ui_once()
+            self.assertEqual(outcome["state"], "finished")
+            self.assertEqual(queue.view()["state"], "finished")
+            self.assertEqual(task["status"], "awaiting_owner")
+            self.assertEqual(task["delivery"]["attestation"], "local-ui-only")
+            self.assertIsNone(task["delivery"]["conversation_id"])
+            self.assertFalse(task["unresolved"])
+            self.assertTrue(task["delivery_acknowledged_unix"])
+            self.assertEqual(task["delivery"]["transport"], "alis-ui-once")
+            self.assertIsNone(store.read_snapshot()[1]["profiles"][pid]["pending"])
+
+    def test_ui_done_tampered_receipt_blocks_next_task(self):
+        pid, task = self._queue_fixture(state="active", approved=True)
+        with patch.object(tf, "load_task", return_value=task):
+            self.assertEqual(ui_scheduler.queue_tick(
+                now=200, desktop=lambda *_a, **_k: reply("ALIS_LOOP:DONE")),
+                "DONE")
+            attempt = store.read_snapshot()[1]["profiles"][pid][
+                "last_ui_response_attempt"]
+            path = store.state_dir() / "ui-responses" / pid / (attempt + ".json")
+            payload = json.loads(path.read_text())
+            payload["directive"] = "CONTINUE"
+            path.write_text(json.dumps(payload))
+            with self.assertRaises(tf.TaskError):
+                managed_tasks.reconcile_ui_once()
+            self.assertEqual(queue.view()["state"], "active")
+            self.assertEqual(task["status"], "prepared")
+
+
 if __name__ == "__main__":
     main()
