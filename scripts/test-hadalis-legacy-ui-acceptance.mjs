@@ -157,7 +157,7 @@ try{
     "first:()=>loc([items[0]],type),",
     "isVisible:async()=>items[0]?.visible??false,",
     "isDisabled:async()=>type==='send'?sendDisabled:(items[0]?.disabled??false),",
-    "locator:()=>loc([{visible:true}]),",
+    "locator:()=>loc([]),",
     "getByRole:()=>loc([]),",
     "getByText:label=>loc((label==='Automatic Alis'||label==='No chats yet')",
     " ?[{visible:true}]:[]),",
