@@ -36,6 +36,48 @@ def api(endpoint):
 
 
 class TaskflowTests(unittest.TestCase):
+    def test_github_app_mention_is_first_in_all_cloudbot_prompt_phases(self):
+        from automation.chat_bridge.protocol import (
+            GITHUB_APP_MENTION, GITHUB_MENTION, cloud_github_prompt,
+            prompt_has_required_github_mention)
+        self.assertEqual(
+            GITHUB_APP_MENTION,
+            "[$github](app://connector_76869538009648d5b282a4bb21c3d157)")
+        prepared = taskflow.internal_prompt(TASK)
+        self.assertTrue(prepared.startswith(GITHUB_APP_MENTION+"\n\n"))
+        self.assertEqual(prepared.count(GITHUB_APP_MENTION),1)
+        self.assertTrue(prompt_has_required_github_mention(prepared))
+        self.assertEqual(cloud_github_prompt(prepared),prepared)
+        self.assertTrue(prompt_has_required_github_mention(
+            GITHUB_MENTION+"\n\nlegacy prompt"))
+        fake = {
+            "task": TASK,
+            "cloud_prompt": prepared,
+            "unresolved": False,
+            "latest_receipt": None,
+            "handoff": None,
+            "rotation": None,
+        }
+        profile={
+            "id": managed_tasks.profile_id(TASK["repository"],TASK["code"]),
+            "description": "taskflow:"+TASK["repository"]+":"+TASK["code"],
+        }
+        with patch.object(taskflow,"load_task",return_value=fake):
+            for phase in ("initial","continuation","rotation"):
+                prompt=managed_tasks.prompt(profile,phase)
+                self.assertTrue(prompt.startswith(GITHUB_APP_MENTION+"\n\n"),phase)
+                self.assertEqual(prompt.count(GITHUB_APP_MENTION),1,phase)
+                self.assertTrue(prompt_has_required_github_mention(prompt),phase)
+                self.assertIn("HADALIS_LOOP:CONNECTOR_BLOCKED GITHUB",prompt)
+        with patch.object(managed_tasks.queue,"cloud_selection_prompt",
+                          return_value="Approved queue fixture"):
+            for phase in ("initial","continuation","rotation"):
+                prompt=managed_tasks.selector_prompt(phase)
+                self.assertTrue(prompt.startswith(GITHUB_APP_MENTION+"\n\n"),phase)
+                self.assertEqual(prompt.count(GITHUB_APP_MENTION),1,phase)
+                self.assertIn("HADALIS_LOOP:CONNECTOR_BLOCKED GITHUB",prompt)
+
+
     def test_bulk_intake_queries_open_issues_only_and_pins_each_repo_once(self):
         requests = []
         def listing(endpoint):
