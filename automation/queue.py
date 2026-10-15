@@ -305,31 +305,64 @@ def approve_cloud_start() -> dict:
 
 
 
-def clear(*, approved: bool = False) -> dict:
-    """Remove only an undispatched/terminal UI queue; never delete task receipts.
 
-    The queue manifest itself is archived for recovery, under its original
-    exclusive flock. There is no operation for an active, previously approved,
-    waiting-for-selector or uncertain queue. Task data and Git handoffs live
-    outside this manifest and must never be pruned here.
+def clear(*, approved: bool = False,
+          expected_queued: str | None = None) -> dict:
+    """Remove queued entries without cancelling the active task.
+
+    A human explicitly confirms the precise QUEUED list. The current
+    manifest is always rechecked under queue.lock before mutation. A live
+    active task and all nonqueued/history entries remain unchanged. No
+    local job, task record, receipt, Git handoff, service or profile is
+    touched. Archive the original manifest before a rewrite.
     """
     if approved is not True:
         raise tf.TaskError("Explicit Clear Queue confirmation required")
     empty = {"ok": True, "mode": "ordered", "state": "empty",
              "active": None, "items": [], "next": None}
+    if expected_queued is not None and (
+            not isinstance(expected_queued, str) or
+            len(expected_queued) > 4000):
+        raise tf.TaskError("Invalid expected queued-task snapshot")
     with _lock():
         manifest = _load()
         if manifest is None:
-            return {**empty, "cleared": False}
-        if (manifest.get("active") is not None or manifest.get("selection")
-                or manifest.get("state") not in {"prepared", "finished", "cancelled"}):
-            raise tf.TaskError("Queue has active or unresolved work; cannot clear")
-        if manifest.get("state") == "prepared":
-            if manifest.get("approved_start"):
-                raise tf.TaskError("Approved queue may already have a selector pending")
+            if expected_queued not in (None, ""):
+                raise tf.TaskError("Queue changed since display; refresh before clearing")
+            return {**empty, "cleared": False, "removed_queued": 0}
+        queued = [item for item in manifest["items"]
+                  if item.get("state") == "queued"]
+        observed = ";".join(
+            f'{item["repository"]}:{item["code"]}' for item in queued)
+        if expected_queued is not None and expected_queued != observed:
+            raise tf.TaskError("Queue changed since display; refresh before clearing")
+
+        state = manifest.get("state")
+        active = manifest.get("active")
+        if state == "active":
+            # Retain EXACT ongoing task, selection, approval and all
+            # completed history; dropping only QUEUED siblings is safe.
+            claimed = [item for item in manifest["items"]
+                       if item.get("state") == "active"]
+            selection = manifest.get("selection")
+            if (not isinstance(active, dict) or len(claimed) != 1
+                    or not isinstance(selection, dict)
+                    or any(active.get(key) != claimed[0].get(key)
+                           or selection.get(key) != active.get(key)
+                           for key in ("repository", "code"))
+                    or any(item.get("state") not in
+                           {"queued", "active", "completed", "awaiting_owner"}
+                           for item in manifest["items"])):
+                raise tf.TaskError("Active task identity uncertain; cannot clear queued items")
+            if not queued:
+                return {**view(manifest), "cleared": False,
+                        "removed_queued": 0, "active_preserved": True}
+        elif state == "prepared":
+            if active is not None or manifest.get("selection") or manifest.get("approved_start"):
+                raise tf.TaskError("An approved selector or task is unresolved; cannot clear")
             if any(item.get("state") != "queued" for item in manifest["items"]):
                 raise tf.TaskError("Queue has claimed task state; cannot clear")
-            for item in manifest["items"]:
+            for item in queued:
                 record = tf.load_task(item["code"], item["repository"])
                 if (record.get("status") != "prepared"
                         or record.get("unresolved")
@@ -337,11 +370,19 @@ def clear(*, approved: bool = False) -> dict:
                         or record.get("handoff") is not None
                         or record.get("latest_receipt") is not None):
                     raise tf.TaskError("Queue task has durable work; cannot clear")
+        elif state in {"finished", "cancelled"}:
+            if (active is not None or manifest.get("selection")
+                    or queued or any(item.get("state") == "active"
+                                     for item in manifest["items"])):
+                raise tf.TaskError("Terminal queue still has unresolved work")
         else:
-            if any(item.get("state") in {"queued", "active"}
-                   for item in manifest["items"]):
-                raise tf.TaskError("Finished queue still contains unfinished items")
-        source = _queue_path()
+            # WAITING can already have a Cloudbot selector in-flight. There
+            # is no reliable cancellation receipt for that selector.
+            raise tf.TaskError("Queue is selecting or uncertain; cannot clear safely")
+
+        if not manifest["items"] and not queued:
+            return {**view(manifest), "cleared": False, "removed_queued": 0}
+
         archive = tf.state_dir() / "queue-history"
         if archive.is_symlink():
             raise tf.TaskError("Unsafe queue archive")
@@ -349,8 +390,20 @@ def clear(*, approved: bool = False) -> dict:
         import uuid
         name = archive / ("cleared-" + str(time.time_ns()) + "-" +
                           uuid.uuid4().hex + ".json")
-        # Durable rename retains exact original approvals/identities for
-        # forensic audit, but removes the active UI queue view.
+        source = _queue_path()
+        if state == "active":
+            # Persist the full original snapshot first, then atomically
+            # replace only the manifest's QUEUED entries.
+            tf._atomic_json(name, manifest)
+            manifest["items"] = [item for item in manifest["items"]
+                                 if item.get("state") != "queued"]
+            manifest["updated_unix"] = int(time.time())
+            _save(manifest)
+            return {**view(manifest), "cleared": True,
+                    "removed_queued": len(queued), "archived": True,
+                    "active_preserved": True, "task_records_preserved": True}
+
+        # No active work: move the untouched original manifest to history.
         os.replace(source, name)
         for directory in (archive, source.parent):
             fd = os.open(directory, os.O_RDONLY |
@@ -360,8 +413,8 @@ def clear(*, approved: bool = False) -> dict:
             finally:
                 os.close(fd)
         return {**empty, "cleared": True,
-                "archived": True, "task_records_preserved": True}
-
+                "removed_queued": len(queued), "archived": True,
+                "active_preserved": False, "task_records_preserved": True}
 
 
 # Task-code-free intake is a discovery workflow, never direct job execution.
