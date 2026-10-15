@@ -55,6 +55,9 @@ async function main() {
     let stable = false;
     let projectEntryReady = false;
     let diagnosis = "ALIS_UI_CHAT_IDENTITY_UNAVAILABLE";
+    // Category-only observations. Never emit current draft, title, IDs,
+    // URLs, fingerprints, accessible-tree text, or DOM strings.
+    let targetDiagnostics = {inspection: "not_available"};
     try {
       const before = await uiTargetIdentity(page);
       await page.waitForTimeout(250);
@@ -72,8 +75,41 @@ async function main() {
         const observation = await inspectLegacyUiReadOnly(page, project);
         const assessment = assessLegacyUiReadiness(observation);
         projectEntryReady = assessment.read_only_project_entry_ready === true;
-        if (projectEntryReady)
+        const evidence = assessment.project_landing_visual_evidence;
+        const scope = assessment.composer_scope_evidence;
+        targetDiagnostics = {
+          inspection: "completed",
+          project_view_visible: assessment.project_view_visible === true,
+          project_landing_visual_evidence: evidence,
+          composer_scope_evidence: scope,
+          selected_chat_count_capped: observation.selected_target_chat_count_capped,
+          project_list_count_capped: observation.target_project_list_count_capped,
+          project_badge_count_capped: observation.project_badge_count_capped,
+          project_new_chat_action_visible:
+            assessment.project_new_chat_action_visible === true,
+          composer_count_capped: observation.composer_count_capped,
+          draft_present: observation.composer_draft_present,
+          generation_busy: observation.stop_count_capped !== 0,
+          send_control_state: assessment.send_control_state,
+          readiness_issues: assessment.readiness_issues,
+        };
+        if (projectEntryReady) {
           diagnosis = "ALIS_UI_EMPTY_PROJECT_ENTRY_OBSERVED";
+        } else if (observation.selected_target_chat_count_capped > 1) {
+          diagnosis = "ALIS_UI_MULTIPLE_SELECTED_CHATS";
+        } else if (observation.selected_target_chat_count_capped === 1 &&
+                   observation.target_project_list_count_capped === 1) {
+          diagnosis = "ALIS_UI_SELECTED_CHAT_KEY_MISSING";
+        } else if (observation.stop_count_capped !== 0) {
+          diagnosis = "ALIS_UI_GENERATION_NOT_IDLE";
+        } else if (observation.composer_draft_present === true) {
+          diagnosis = "ALIS_UI_COMPOSER_HAS_DRAFT";
+        } else if (scope === "generic-label-with-other-or-unverified-guard" &&
+                   evidence === "project-empty-landing-corroborated") {
+          diagnosis = "ALIS_UI_PROJECT_LANDING_COMPOSER_UNSCOPED";
+        } else if (!assessment.project_view_visible) {
+          diagnosis = "ALIS_UI_PROJECT_VIEW_UNVERIFIED";
+        }
       } catch {
         // Keep a bounded categorical blocker. No raw DOM, URL or draft.
       }
@@ -84,6 +120,7 @@ async function main() {
       selected_chat_identity_stable: stable,
       empty_project_entry_ready: projectEntryReady,
       diagnosis,
+      target_diagnostics: targetDiagnostics,
       message_submission_attempted: false,
       server_identity_attested: false,
       ui_scheduler_authorized: false
