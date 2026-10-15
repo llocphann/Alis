@@ -188,5 +188,20 @@ class Preflight(unittest.TestCase):
         self.assertNotIn("DO_NOT_REVEAL", json.dumps(report))
 
 
+    def test_queue_diagnosis_fail_closed_on_untrusted_status_fields(self):
+        path = self._write_queue_fixture()
+        for field in ("mode", "state"):
+            for bad in (["secret"], {"sensitive": "DO_NOT_REVEAL"}):
+                content = json.loads(path.read_text())
+                content[field] = bad
+                path.write_text(json.dumps(content))
+                report = ui_preflight.check_prepared_queue()
+                self.assertEqual(report["preflight_blockers"],
+                                 ["QUEUE_MANIFEST_INVALID"])
+                self.assertNotIn("DO_NOT_REVEAL", json.dumps(report))
+                self.assertFalse(report["submission_authorized"])
+        # This remains an inspection tool, not a repair or an admission tool.
+
+
 if __name__ == "__main__":
     unittest.main()
