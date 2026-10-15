@@ -90,7 +90,7 @@ def _broker_control(payload: dict) -> dict:
 def authenticate(password: str) -> dict:
     """Send transient password to broker; never on argv, disk or GitHub."""
     if (not isinstance(password, str) or not 1 <= len(password) <= 1024
-            or any(c in password for c in ("\\0", "\\r", "\\n"))):
+            or any(c in password for c in ("\0", "\r", "\n"))):
         return {"ok": False, "authenticated": False,
                 "reason": "INVALID_PASSWORD_INPUT"}
     return _broker_control({"control": "sudo-authenticate", "password": password})
@@ -120,7 +120,7 @@ def _privilege_auth(payload: dict, *, runner=None) -> dict:
         if (set(payload) != {"control", "password"} or
                 not isinstance(password, str) or
                 not 1 <= len(password) <= 1024 or
-                any(c in password for c in ("\\0", "\\r", "\\n"))):
+                any(c in password for c in ("\0", "\r", "\n"))):
             return {"ok": False, "authenticated": False,
                     "reason": "INVALID_PASSWORD_INPUT"}
     try:
@@ -141,7 +141,7 @@ def _privilege_auth(payload: dict, *, runner=None) -> dict:
         "PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_ALL")}
     try:
         output = invoke(argv, input=None if operation == "sudo-status"
-                        else password + "\\n",
+                        else password + "\n",
                         text=True, capture_output=True, timeout=12,
                         check=False, env=env)
         success = output.returncode == 0
