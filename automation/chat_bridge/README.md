@@ -172,8 +172,14 @@ All receipt booleans for server attestation and manager/queue authority
 remain false even when a local UI reply is observed.
 
 The command does not modify Native profiles, worker receipts, queue state,
-service installation, or the Desktop's unrelated draft. A failed navigation
-is not retried. If the reply is still pending, inspect the Desktop manually;
+service installation, or the Desktop's unrelated draft. After a single
+Project navigation click it now allows roughly **3.2 seconds** for the
+renderer to settle and requires **two consecutive** Project-scoped idle
+checks before any composer fill. If the UI remains unverified, the
+single-command result includes `post_navigation_diagnostics` (bounded
+counts and categorical states only, including a pending dialog count), not
+private chat text or titles. A modal dialog always blocks any Send. A failed
+navigation is not retried. If the reply is still pending, inspect the Desktop manually;
 the bounded read-only probes can be run later without sending. An
 `AMBIGUOUS_VISIBLE_HARMLESS_MESSAGES` legacy whole-page count is not proof
 of two sends: the text `ALIS_LOOP:DONE` also appears in the user instruction.
