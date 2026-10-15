@@ -1,0 +1,18 @@
+{
+  "source_sha": "28c146d4a45a123073abeaec445a84f3fb4ecbbf",
+  "tracked_source_hashes_unchanged": true,
+  "tracked_diff": "",
+  "owned_children": [
+    {
+      "pid": 687147,
+      "actual_exit": 0,
+      "post_run_state": "absent"
+    },
+    {
+      "pid": 687169,
+      "actual_exit": 0,
+      "post_run_state": "absent"
+    }
+  ],
+  "capture_focus": false
+}

@@ -1,0 +1,17 @@
+{
+  "source_sha": "28c146d4a45a123073abeaec445a84f3fb4ecbbf",
+  "native_exit": 0,
+  "test_exit": 0,
+  "status": "Focused PASS, no production R13 defect reproduced in this scope",
+  "scenes": 40,
+  "gpu_captures": 80,
+  "visible_endpoint_rois": 104,
+  "joined_nonjoined_rgba_comparisons": 4,
+  "owner_acceptance": "UNRUN",
+  "not_qualified": [
+    "Actual editor control events (next focused probe)",
+    "Inherited 0px sizing semantics as a visible contact",
+    "Installed desktop input/shadows, persistence/restart, output rotation/fractional/multi-output and full acceptance",
+    "GPU/CPU performance gain"
+  ]
+}
