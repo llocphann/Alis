@@ -117,6 +117,63 @@ class QueueControls(unittest.TestCase):
                 queue.clear(approved=True)
         self.assertEqual(sentinel.read_text(), '{"immutable":true}')
 
+    def test_active_clear_removes_only_queued_siblings_and_preserves_owner(self):
+        queue.prepare_auto(api=self.github)
+        queue.approve_ordered_start()
+        selected = queue.claim(
+            verified_start=lambda item, record, decision: True)["selected"]
+        self.assertEqual(selected["code"], "AUTO-R01")
+        original = (tf.state_dir() / "queue.json").read_bytes()
+        first = tf._task_path("AUTO-R01", "llocphann/Alis")
+        waiting = tf._task_path("AUTO-I02", "llocphann/Alis")
+        before_active, before_waiting = first.read_bytes(), waiting.read_bytes()
+        receipt = tf.state_dir() / "worker" / "receipts" / "JOB-UNRELATED.json"
+        receipt.parent.mkdir(parents=True, exist_ok=True)
+        receipt.write_text('{"immutable":true}')
+        expected = "llocphann/Alis:AUTO-I02"
+        with self.assertRaises(tf.TaskError):
+            queue.clear(approved=True, expected_queued="llocphann/Alis:WRONG")
+        self.assertEqual(original, (tf.state_dir() / "queue.json").read_bytes())
+        cleared = queue.clear(approved=True, expected_queued=expected)
+        self.assertTrue(cleared["cleared"])
+        self.assertEqual(cleared["removed_queued"], 1)
+        self.assertTrue(cleared["active_preserved"])
+        self.assertEqual(cleared["state"], "active")
+        self.assertEqual(cleared["active"], selected)
+        self.assertEqual([(x["code"], x["state"]) for x in cleared["items"]],
+                         [("AUTO-R01", "active")])
+        self.assertEqual(first.read_bytes(), before_active)
+        self.assertEqual(waiting.read_bytes(), before_waiting)
+        self.assertEqual(receipt.read_text(), '{"immutable":true}')
+        with queue._lock():
+            after = queue._load()
+        self.assertEqual(after["active"], selected)
+        self.assertTrue(after["approved_start"])
+        self.assertEqual(after["selection"]["code"], "AUTO-R01")
+        self.assertIsNone(cleared["next"])
+        archived = list((tf.state_dir() / "queue-history").glob("cleared-*.json"))
+        self.assertEqual(len(archived), 1)
+        self.assertEqual(json.loads(archived[0].read_bytes()),
+                         json.loads(original))
+        with self.assertRaises(tf.TaskError):
+            queue.clear(approved=True, expected_queued=expected)
+        self.assertFalse(queue.clear(approved=True, expected_queued="")["cleared"])
+
+    def test_queue_clear_matches_exact_snapshot_and_rejects_waiting_selector(self):
+        queue.prepare_auto(api=self.github)
+        live = "llocphann/Alis:AUTO-R01;llocphann/Alis:AUTO-I02"
+        with self.assertRaises(tf.TaskError):
+            queue.clear(approved=True, expected_queued="llocphann/Alis:AUTO-I02")
+        with queue._lock():
+            doc = queue._load()
+            doc["state"] = "waiting"
+            doc["approved_start"] = True
+            queue._save(doc)
+        with self.assertRaises(tf.TaskError):
+            queue.clear(approved=True, expected_queued=live)
+        self.assertEqual([x["state"] for x in queue.view()["items"]],
+                         ["queued", "queued"])
+
     def test_no_backend_candidates_fails_without_writing_queue(self):
         def no_issues(path):
             return [] if "/issues?state=open" in path else self.github(path)
