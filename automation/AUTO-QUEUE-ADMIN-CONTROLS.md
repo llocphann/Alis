@@ -24,12 +24,17 @@ Settings → Automation → GitHub tasks shows separate owner-confirmed controls
   change a live queue from active/waiting to **stopping**, then request
   **Stop** for that exact manager profile. Once the profile confirms its
   desired state is stopped, the queue becomes **stopped**. No next task will
-  be dispatched. If the manager profile is missing/unavailable or not
-  acknowledged, the queue stays **stopping / reconciliation required**.
-  Stop does **not** retract a previously sent message, terminate a worker
-  process already executing, discard a job ID or erase a receipt.
+  be dispatched. If a manager profile still exists but is unavailable
+  or fails to acknowledge Stop, the queue stays **stopping / reconciliation
+  required**. If the old profile no longer exists, the queue itself can be
+  marked stopped after revoking approval, with an explicit **manager missing /
+  worker still independent** warning. This permits archiving an orphaned
+  queue without pretending to have cancelled an older worker action. Stop
+  does **not** retract a sent message, terminate a worker process, discard
+  a job ID or erase a receipt.
 - **Clear queued → Confirm clear:** remove only items with state `queued`
-  (including while the first item is still `active`). Preserve the active
+  (including while the first item is still `active` or its Stop is in
+  **stopping** pending manager reconciliation). Preserve the active
   item, selected identity, approval, profile, task records and all machine
   evidence. If the UI shows a last-known queue, its exact ordered
   `repository:code` list is rechecked under the exclusive queue lock;
