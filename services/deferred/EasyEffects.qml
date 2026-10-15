@@ -56,7 +56,16 @@ Singleton {
         if (!root.available) return
         root.active = true
         if (root.nativeInstalled) {
-            Quickshell.execDetached(["/usr/bin/env", "easyeffects", "--service-mode"])
+            // AUDIO-I01: opt-in diagnostic only. The normal launch stays unchanged.
+            // This guard is scoped to EasyEffects' child environment, not PipeWire's
+            // global clock.force-quantum metadata.
+            if (Quickshell.env("ALIS_AUDIO_I01_LOCK_QUANTUM") === "1") {
+                const runner = FileUtils.trimFileProtocol(Directories.scriptPath)
+                    + "/audio/easyeffects-quantum-guard.sh"
+                Quickshell.execDetached(["/usr/bin/bash", runner, "easyeffects", "--service-mode"])
+            } else {
+                Quickshell.execDetached(["/usr/bin/env", "easyeffects", "--service-mode"])
+            }
         } else {
             Quickshell.execDetached(["/usr/bin/env", "flatpak", "run", "com.github.wwmm.easyeffects", "--service-mode"])
         }
