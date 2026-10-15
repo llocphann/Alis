@@ -9,6 +9,7 @@ from .model import (CUSTOM_CONTINUATION_PROMPT, CUSTOM_ROTATION_PROMPT,
                     DEFAULT_ID, MAX_PROFILES, MAINTENANCE_DEFAULTS, PROFILE_DEFAULTS,
                     default_prompt, new_profile, update_profile)
 from .store import change, change_state, event, profile_state, read_snapshot, state_dir, _write
+from automation import transport_gate
 
 UNITS = {
     "chatgpt": "hadalis-chatgpt.service",
@@ -125,7 +126,12 @@ def status() -> dict:
             "credentials":credential_status(),
             "services": services,"worker_pool":pool,
             "scheduler_problem": _scheduler_problem(services, state, int(time.time())),
+            **transport_gate.readiness(),
             "capabilities": {
+                "managed_submission": False,
+                "server_project_membership": False,
+                "authenticated_final_receipt": False,
+                "automatic_chat_rotation": False,
                 "archive_chat": False, "delete_chat": False,
                 "stuck_generation_recovery": False, "composer_recovery": False,
                 "stream_poll_recovery": True, "transport_retry": True,
