@@ -55,7 +55,8 @@ async function scopedEntry(page,projectName){
     observation.selected_target_chat_count_capped===0 &&
     observation.project_scoped_composer_count_capped===1 &&
     observation.send_count_capped===1 &&
-    observation.send_disabled===true};
+    observation.send_disabled===true &&
+    observation.dialog_count_capped===0};
 }
 
 // Only bounded accessibility counts, enums and booleans, never URL, ID,
@@ -74,6 +75,7 @@ function safeEntryDiagnostics(entry){
     composer_scope_evidence:a.composer_scope_evidence,
     project_landing_visual_evidence:a.project_landing_visual_evidence,
     draft_present:s.composer_draft_present,
+    dialog_count_capped:s.dialog_count_capped,
     composer_disabled:s.composer_disabled,
     generation_busy:s.stop_count_capped!==0,
     send_control_state:a.send_control_state,
@@ -110,6 +112,8 @@ export async function oneShotUiSmoke({page,projectName="Automatic Alis",
       blockers.push("ACTIVE_COMPOSER_NOT_UNIQUE_OR_DISABLED");
     if(s.stop_count_capped!==0)
       blockers.push("GENERATION_ACTIVE");
+    if(s.dialog_count_capped!==0)
+      blockers.push("MODAL_ALREADY_OPEN");
     if(blockers.length)
       return report("ALIS_UI_NAVIGATION_UNSAFE",{
         navigation_blockers:blockers
