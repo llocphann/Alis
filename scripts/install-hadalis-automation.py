@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -99,7 +100,7 @@ def install_desktop_launcher(chatgpt: str) -> Path | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Install Hadalis autonomous user services"
+        description="Install Alis autonomous user services"
     )
     parser.add_argument(
         "--enable-now",
@@ -116,7 +117,12 @@ def main() -> int:
     )
     parser.add_argument("--push-remote",default=os.environ.get("HADALIS_WORKER_PUSH_REMOTE"),
                         help="optional credential-free worker publication remote (for example an SSH Git URL)")
+    parser.add_argument("--ui-loop-profile", metavar="PROFILE_ID",
+                        help="EXPLICIT Alis single-owner UI scheduler mode; no automatic profile activation")
     args = parser.parse_args()
+    if args.ui_loop_profile is not None and not re.fullmatch(
+            r"[A-Za-z0-9._:-]{1,100}", args.ui_loop_profile):
+        raise ValueError("invalid Alis UI profile ID")
     if args.push_remote and (urlparse(args.push_remote).password or any(ch.isspace() for ch in args.push_remote)):
         raise ValueError("worker push remote cannot contain credentials or whitespace")
 
@@ -136,7 +142,7 @@ def main() -> int:
     write_unit(
         units / "hadalis-chatgpt.service",
         f"""[Unit]
-Description=ChatGPT Desktop for Hadalis automation
+Description=ChatGPT Desktop for Alis automation
 PartOf=graphical-session.target
 
 [Service]
@@ -158,7 +164,7 @@ WantedBy=graphical-session.target
     write_unit(
         units / "hadalis-worker.service",
         f"""[Unit]
-Description=Hadalis deterministic local worker
+Description=Alis deterministic local worker
 
 [Service]
 Type=simple
@@ -180,15 +186,20 @@ WantedBy=default.target
 """,
     )
 
+    # Always keep the same installed unit name and exclusive scheduler
+    # lock. The alternate transport is an explicit installer choice; no
+    # profile is enabled, queued or restarted by writing the unit.
+    ui_arg = (" --ui-loop-profile " + quote(args.ui_loop_profile)
+              if args.ui_loop_profile else "")
     write_unit(
         units / "hadalis-chat-bridge.service",
         f"""[Unit]
-Description=Hadalis deterministic ChatGPT bridge
+Description=Alis deterministic ChatGPT bridge
 
 [Service]
 Type=simple
 WorkingDirectory={ROOT}
-ExecStart={quote(python)} -m automation.manager.daemon
+ExecStart={quote(python)} -m automation.manager.daemon{ui_arg}
 {environment("PYTHONUNBUFFERED", "1")}
 {environment("HADALIS_CHATGPT_CDP_URL", "http://127.0.0.1:9222")}
 Restart=on-failure
