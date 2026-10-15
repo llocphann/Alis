@@ -583,5 +583,148 @@ class GitHubHandoffTests(unittest.TestCase):
                     self.assertFalse(receipt_file.exists())
 
 
+    def test_repository_keyring_publication_only_for_approved_opt_in(self):
+        from automation import credentials as scoped
+        from automation.manager import credentials as manager
+        job,raw,_=fixture()
+        origin="https://github.com/llocphann/Alis.git"
+        payload={"job":JOB_ID,"job_commit":COMMIT,
+                 "input_sha256":handoff.job_digest(raw),"status":"passed"}
+        with tempfile.TemporaryDirectory() as tmp:
+            state=Path(tmp)
+            approval=handoff.approval_path(state,JOB_ID)
+            approval.parent.mkdir()
+            approval.write_text(json.dumps(handoff.approval_payload(job,raw)))
+            with (patch.object(worker,"state_root",return_value=state),
+                  patch.object(manager,"has_token",return_value=False),
+                  patch.object(manager,"git_options",return_value=[]),
+                  patch.object(scoped,"status",return_value={"saved":True}),
+                  patch.object(scoped,"git_options",return_value=["-c","SCOPED_HELPER"]) as opt,
+                  patch.dict("os.environ",{"HADALIS_WORKER_PUSH_REMOTE":""})):
+                remote,options,scoped_auth=worker.publication_push_auth(
+                    JOB_ID,payload,origin,origin,approved_opt_in_raw=raw)
+                self.assertEqual(remote,origin)
+                self.assertTrue(scoped_auth)
+                self.assertEqual(options,["-c","SCOPED_HELPER"])
+                opt.assert_called_once_with("llocphann/Alis")
+                for candidate,claim in (
+                    (None,payload),
+                    (raw,{**payload,"input_sha256":"0"*64}),
+                    (json.dumps({k:v for k,v in job.items()
+                                 if k!="handoff"}),payload),
+                ):
+                    _,options,scoped_auth=worker.publication_push_auth(
+                        JOB_ID,claim,origin,origin,approved_opt_in_raw=candidate)
+                    self.assertFalse(scoped_auth)
+                    self.assertEqual(options,[])
+                approval.unlink()
+                _,_,scoped_auth=worker.publication_push_auth(
+                    JOB_ID,payload,origin,origin,approved_opt_in_raw=raw)
+                self.assertFalse(scoped_auth)
+                approval.write_text(json.dumps(handoff.approval_payload(job,raw)))
+                with patch.dict("os.environ",{"HADALIS_WORKER_PUSH_REMOTE":"locked"}):
+                    _,_,scoped_auth=worker.publication_push_auth(
+                        JOB_ID,payload,origin,origin,approved_opt_in_raw=raw)
+                    self.assertFalse(scoped_auth)
+                _,_,scoped_auth=worker.publication_push_auth(
+                    JOB_ID,payload,"https://github.com/other/repo.git",
+                    "https://github.com/other/repo.git",approved_opt_in_raw=raw)
+                self.assertFalse(scoped_auth)
+
+    def test_publication_recovery_uses_existing_receipt_and_never_executes(self):
+        import importlib.util
+        cli=Path(__file__).resolve().parent/"AUTO-F01-github-handoff.py"
+        spec=importlib.util.spec_from_file_location("auto_f01_publish_existing_cli",cli)
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        job,raw,signal=fixture()
+        signal["status"]="DONE"
+        digest=handoff.job_digest(raw)
+        payload={"job":JOB_ID,"base_sha":BASE,"job_commit":COMMIT,
+                 "input_sha256":digest,"status":"passed","actions":[]}
+        with tempfile.TemporaryDirectory() as tmp:
+            state=Path(tmp)
+            path=handoff.approval_path(state,JOB_ID)
+            path.parent.mkdir(parents=True)
+            path.write_text(json.dumps(handoff.approval_payload(job,raw)))
+            receipt={"job":JOB_ID,"job_commit":COMMIT,
+                     "input_sha256":digest,"phase":"finished",
+                     "publish_attempts":7,"result":payload,"workspace":None}
+            published=[]
+            with (patch.object(module,"inspect",return_value=(signal,job,raw)),
+                  patch.object(worker,"state_root",return_value=state),
+                  patch.object(worker,"remote_url",
+                               return_value="https://github.com/llocphann/Alis.git"),
+                  patch.object(worker,"introducing_commit",return_value=COMMIT),
+                  patch.object(worker,"first_parent",return_value=BASE),
+                  patch.object(worker,"publish",
+                               side_effect=lambda *args:published.append(args)),
+                  patch.object(worker,"execute",
+                               side_effect=AssertionError("execution replay")),
+                  patch.object(worker,"process_job",
+                               side_effect=AssertionError("dispatch replay")),
+                  patch.dict("os.environ",{"HADALIS_WORKER_PUSH_REMOTE":""})):
+                from automation import credentials as scoped
+                with patch.object(scoped,"status",return_value={"saved":True}):
+                    worker.save_receipt(JOB_ID,receipt)
+                    with self.assertRaisesRegex(ValueError,"exact local approval"):
+                        module.publish_existing_receipt(JOB_ID,"0"*64)
+                    self.assertEqual(worker.load_receipt(JOB_ID)["phase"],"finished")
+                    ok=module.publish_existing_receipt(JOB_ID,digest)
+                    self.assertEqual(ok["status"],"published")
+                    self.assertEqual(len(published),1)
+                    self.assertEqual(published[0],(JOB_ID,payload))
+                    self.assertEqual(worker.load_receipt(JOB_ID)["phase"],"published")
+                    repeat=module.publish_existing_receipt(JOB_ID,digest)
+                    self.assertEqual(repeat["status"],"already_published")
+                    self.assertEqual(len(published),1)
+                    worker.save_receipt(JOB_ID,{
+                        **receipt,"result":{**payload,"input_sha256":"0"*64}})
+                    with self.assertRaisesRegex(ValueError,"stored execution evidence"):
+                        module.publish_existing_receipt(JOB_ID,digest)
+                    self.assertEqual(len(published),1)
+
+    def test_publication_recovery_push_failure_retains_original_evidence(self):
+        import importlib.util
+        cli=Path(__file__).resolve().parent/"AUTO-F01-github-handoff.py"
+        spec=importlib.util.spec_from_file_location("auto_f01_publish_failure_cli",cli)
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        job,raw,signal=fixture()
+        signal["status"]="DONE"
+        digest=handoff.job_digest(raw)
+        payload={"job":JOB_ID,"base_sha":BASE,"job_commit":COMMIT,
+                 "input_sha256":digest,"status":"passed","actions":[]}
+        with tempfile.TemporaryDirectory() as tmp:
+            state=Path(tmp)
+            approval=handoff.approval_path(state,JOB_ID)
+            approval.parent.mkdir()
+            approval.write_text(json.dumps(handoff.approval_payload(job,raw)))
+            with (patch.object(module,"inspect",return_value=(signal,job,raw)),
+                  patch.object(worker,"state_root",return_value=state),
+                  patch.object(worker,"remote_url",
+                               return_value="https://github.com/llocphann/Alis.git"),
+                  patch.object(worker,"introducing_commit",return_value=COMMIT),
+                  patch.object(worker,"first_parent",return_value=BASE),
+                  patch.object(worker,"publish",
+                               side_effect=RuntimeError("PRIVATE_PUSH_SECRET")),
+                  patch.dict("os.environ",{"HADALIS_WORKER_PUSH_REMOTE":""})):
+                from automation import credentials as scoped
+                with patch.object(scoped,"status",return_value={"saved":True}):
+                    worker.save_receipt(JOB_ID,{
+                        "job":JOB_ID,"input_sha256":digest,"job_commit":COMMIT,
+                        "phase":"finished","result":payload,"publish_attempts":5})
+                    try:
+                        module.publish_existing_receipt(JOB_ID,digest)
+                    except RuntimeError as exc:
+                        self.assertNotIn("PRIVATE_PUSH_SECRET",str(exc))
+                    else:
+                        self.fail("failed Git push must be surfaced")
+                    stored=worker.load_receipt(JOB_ID)
+                    self.assertEqual(stored["phase"],"finished")
+                    self.assertEqual(stored["result"],payload)
+                    self.assertEqual(stored["publish_attempts"],6)
+
+
 if __name__=="__main__":
     unittest.main()
