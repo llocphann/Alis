@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import time
 
-from . import queue, taskflow as tf
+from . import queue, taskflow as tf, transport_gate
 from .manager import control, model, store
 
 PROFILE_PREFIX = "taskflow:"
@@ -135,6 +135,9 @@ def start_ordered_queue(*, approved: bool = False) -> dict:
     """Owner explicitly starts entire serial queue; never installs services."""
     if approved is not True:
         raise tf.TaskError("Explicit Start approval required")
+    # Reject *before* queue.approve/claim, profile installation, scheduler
+    # start, or service changes; the owner's existing queued work is retained.
+    transport_gate.require_ready()
     view = queue.view()
     if view["mode"] != "ordered" or view["state"] not in {"prepared", "waiting"}:
         raise tf.TaskError("Ordered queue is not ready for Start")
@@ -204,6 +207,13 @@ def _schedule_next_authorized() -> dict:
 def reconcile_once() -> dict:
     """Called by *existing* manager tick; do not create a second scheduler."""
     view = queue.view()
+    # An already-approved queue is NOT an authorization to advance on an
+    # unauthenticated/legacy native receipt after backend or Desktop restart.
+    # Returning the current view is a no-op: preserve original queue state.
+    try:
+        transport_gate.require_ready()
+    except tf.TaskError:
+        return {**view, "transport_blocker": transport_gate.BLOCKER}
     if view["state"] != "active" or not view.get("active"):
         if view.get("mode") == "cloud":
             return reconcile_cloud_selection()
@@ -346,6 +356,7 @@ def start_cloud_queue(*, approved: bool = False) -> dict:
     """Start exactly one authenticated ChatGPT selection turn, not the task yet."""
     if approved is not True:
         raise tf.TaskError("Explicit Start approval required")
+    transport_gate.require_ready()
     v = queue.view()
     if v["mode"] != "cloud" or v["state"] not in {"prepared", "waiting"}:
         raise tf.TaskError("No pending Cloudbot-choice queue")
