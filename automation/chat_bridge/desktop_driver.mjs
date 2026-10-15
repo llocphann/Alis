@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import {requireFreshAssistantTurn} from "./ui_response_gate.mjs";
 
 const PLAYWRIGHT = process.env.ALIS_PLAYWRIGHT_MODULE ?? process.env.HADALIS_PLAYWRIGHT_MODULE ?? "file:///usr/lib/chatgpt/resources/cua_node/lib/node_modules/playwright-core/index.mjs";
 const { chromium } = await import(PLAYWRIGHT);
@@ -675,12 +676,12 @@ export async function waitForCompletion(
     const responseActionAdvanced =
       responseActionCount > baselineResponseActionCount;
 
-    // For a prompt we just submitted, only a NEW protocol marker can complete
-    // the turn. Response-toolbar changes are not sufficient because they may
-    // belong to an older assistant response and can cause the next prompt to
-    // be pasted while the current generation is still running.
+    // Prompts often contain ALIS_LOOP examples, so whole-page marker counts
+    // are never proof that a NEW assistant generation has completed.
+    // The send path requires a NEW assistant action and a subsequent
+    // assistant-only extraction. Non-send observation retains its baseline.
     const completionAdvanced = hasSubmitBaseline
-      ? markerAdvanced
+      ? responseActionAdvanced
       : (markerAdvanced || responseActionAdvanced);
 
     if (completionAdvanced && stopCount === 0) {
@@ -698,7 +699,7 @@ export async function waitForCompletion(
       const responseActionAdvanced2 =
         responseActionCount2 > baselineResponseActionCount;
       const completionAdvanced2 = hasSubmitBaseline
-        ? markerAdvanced2
+        ? responseActionAdvanced2
         : (markerAdvanced2 || responseActionAdvanced2);
 
       if (completionAdvanced2 && stopCount2 === 0) {
@@ -788,23 +789,29 @@ async function extractNearResponseAction(page, baselineActionCount = 0) {
 
 export async function extractLoopResponse(
   page,
-  { allowMarkerOnly = false, baselineMarkerCount = null } = {}
+  { allowMarkerOnly = false, baselineMarkerCount = null,
+    baselineResponseActionCount = null } = {}
 ) {
-  if (baselineMarkerCount !== null) {
-    const markers = await loopMarkerTokens(page);
-    const fresh = markerAfterBaseline(markers, baselineMarkerCount);
-    if (fresh !== null) {
-      return {
-        depth: 0,
-        text: fresh,
-        markerOnly: true,
-        markerCount: markers.length,
-        baselineMarkerCount,
-        extractionSignal: "post-submit-marker-delta"
-      };
-    }
+  if (baselineResponseActionCount !== null) {
+    const actions = page.getByRole("button", { name: RESPONSE_ACTION });
+    const count = await visibleCount(actions);
+    const stops = await visibleCount(page.getByRole("button", { name: /stop/i }));
+    // The response must be inside the newest assistant container associated
+    // with a newly exposed response toolbar, never body-wide prompt text.
+    const response = count > baselineResponseActionCount && stops === 0
+      ? await extractNearResponseAction(page, baselineResponseActionCount)
+      : null;
+    await verifyProject(page);
+    return requireFreshAssistantTurn({
+      response, baselineActionCount: baselineResponseActionCount,
+      currentActionCount: count, generationActive: stops !== 0
+    });
+  }
 
-    throw new Error("No post-submit ALIS_LOOP marker found");
+  if (baselineMarkerCount !== null) {
+    // Legacy marker-only observations cannot prove which side authored the
+    // text. Refuse to use this branch for a new send/turn completion.
+    throw new Error("ALIS_UI_ASSISTANT_BASELINE_REQUIRED");
   }
 
   const anchored = await extractNearResponseAction(page);
@@ -823,7 +830,7 @@ export async function extractLoopResponse(
     }
   }
 
-  throw new Error("No completed assistant HADALIS_LOOP response found");
+  throw new Error("No completed assistant ALIS_LOOP response found");
 }
 
 export async function handoverCheck(page) {
