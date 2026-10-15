@@ -594,7 +594,7 @@ ContentPage {
                     : root.backendInstalled
                     ? (root.backendTransportReady
                         ? Translation.tr("Backend installed · managed transport ready")
-                        : Translation.tr("Backend installed · managed transport verification required"))
+                        : Translation.tr("Backend installed · Alis Desktop loop requires activation"))
                     : Translation.tr("Backend not installed")
             }
             RowLayout {
