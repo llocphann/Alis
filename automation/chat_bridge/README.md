@@ -156,8 +156,12 @@ node automation/chat_bridge/alis_ui_smoke_cli.mjs --owner-approved
 
 This does **not** start the six-item Automation Queue. It navigates to a
 fresh Project-scoped editor when needed (one exact Project-specific click,
-**preserving any unrelated pre-existing draft**), requires the unique empty
-Project composer + badge + list and a disabled Send, writes an immutable
+**preserving any unrelated pre-existing draft**), requires one unique
+**exact Project-scoped empty composer AND exact Project badge** with a
+disabled Send and no selected target chat. A Project sidebar chat list may
+be hidden/collapsed (count 0) on the new-chat landing; an ambiguous list
+(count >1) is forbidden. The list's absence alone never authorizes a send.
+The smoke writes an immutable
 private acceptance journal, fills **only** the fixed harmless prompt and
 clicks Send at most once. Afterward, it polls for roughly 9 seconds and
 requires an assistant-only `ALIS_LOOP:DONE` turn and a stable UI chat key.
