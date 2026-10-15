@@ -17,6 +17,7 @@ import {
   waitForCompletion
 } from "./desktop_driver.mjs";
 import {inspectLegacyUiReadOnly, assessLegacyUiReadiness} from "./legacy_ui_probe.mjs";
+import {inspectUiSessionIdentity} from "./ui_session_diagnostics.mjs";
 
 function writeJson(payload) {
   fs.writeSync(1, JSON.stringify(payload) + "\n");
@@ -68,6 +69,17 @@ async function main() {
 
   if (command === "handover-check") {
     writeJson(await handoverCheck(page));
+    return;
+  }
+
+  if (command === "ui-session-inspect") {
+    // Read-only diagnosis following an already journaled one-shot Send.
+    // Do not expose chat IDs/URLs/titles or make this Scheduler authority.
+    if (process.argv.length !== 3)
+      throw new Error("ui-session-inspect takes no arguments");
+    const project = process.env.ALIS_CHATGPT_PROJECT ??
+      process.env.HADALIS_CHATGPT_PROJECT ?? "Automatic Alis";
+    writeJson(await inspectUiSessionIdentity(page, project));
     return;
   }
 
