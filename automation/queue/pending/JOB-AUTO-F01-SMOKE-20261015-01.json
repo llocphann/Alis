@@ -1,1 +1,0 @@
-{"actions":[{"exec":{"argv":["/usr/bin/true"],"timeout_seconds":10}}],"base_sha":"2071df559ec218d8c7cc2cebc98f5314db1fd967","handoff":{"run_id":"f1281df4-e626-4a07-89e3-cc16194e654e","task_code":"AUTO-F01"},"id":"JOB-AUTO-F01-SMOKE-20261015-01"}
