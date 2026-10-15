@@ -427,13 +427,28 @@ class GitHubHandoffTests(unittest.TestCase):
                 self.assertTrue(report["worker_unsettled_receipts_present"])
                 self.assertEqual(report["worker_receipt_phase_counts"]["finished"],1)
                 self.assertIsNone(report["worker_receipt_inventory_blocker"])
+                # Legitimate receipts store command evidence and can greatly
+                # exceed 64 KiB; doctor must still inspect them, never print.
+                private.write_text(json.dumps({
+                    "phase":"published","result":{"actions":[{
+                        "stdout":"SECRET-DO-NOT-EMIT"*7000
+                    }]}}))
+                large=module.pending_receipt_health()
+                self.assertTrue(large["worker_receipt_inventory_complete"])
+                self.assertFalse(large["worker_unsettled_receipts_present"])
+                self.assertEqual(large["worker_receipt_phase_counts"]["published"],1)
+                self.assertNotIn("SECRET-DO-NOT-EMIT",json.dumps(large))
+                # Aggregate bound is distinct from the individual file bound.
+                with patch.object(module,"MAX_RECEIPT_TOTAL_BYTES",4096):
+                    self.assertEqual(module.pending_receipt_health()[
+                        "worker_receipt_inventory_blocker"],
+                        "RECEIPT_INVENTORY_TOTAL_SIZE_LIMIT_EXCEEDED")
                 tests=[
                     ('{"phase":"historical-v0"}',
                      "RECEIPT_ENTRY_UNKNOWN_OR_LEGACY_PHASE"),
                     ('{"phase":{} }',"RECEIPT_ENTRY_UNKNOWN_OR_LEGACY_PHASE"),
                     ('{"phase":"published"',"RECEIPT_ENTRY_INVALID_JSON"),
                     ('[]',"RECEIPT_ENTRY_NOT_OBJECT"),
-                    ('x'*65537,"RECEIPT_ENTRY_SIZE_LIMIT_EXCEEDED"),
                 ]
                 for raw,expected in tests:
                     private.write_text(raw)
@@ -442,6 +457,14 @@ class GitHubHandoffTests(unittest.TestCase):
                     self.assertIsNone(report["worker_unsettled_receipts_present"])
                     self.assertEqual(report["worker_receipt_inventory_blocker"],expected)
                     self.assertNotIn("JOB-private-123",json.dumps(report))
+                # Sparse oversized receipt: enforce upper bound without
+                # allocating a huge Python string or copying private content.
+                with private.open("wb") as handle:
+                    handle.truncate(module.MAX_RECEIPT_INSPECT_BYTES+1)
+                report=module.pending_receipt_health()
+                self.assertEqual(report["worker_receipt_inventory_blocker"],
+                                 "RECEIPT_ENTRY_SIZE_LIMIT_EXCEEDED")
+                self.assertFalse(report["worker_receipt_inventory_complete"])
                 private.unlink()
                 other=folder/"private-debug.tmp"
                 other.write_text("some important data; do not delete")
