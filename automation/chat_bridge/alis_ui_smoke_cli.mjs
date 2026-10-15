@@ -3,8 +3,8 @@
  * Explicit approval is needed; never called by queue or native scheduler.
  * One navigation click maximum + one send click maximum, no retries.
  */
-import {oneShotUiSmoke} from "./alis_ui_smoke.mjs";
-import {persistHarmlessUiAttempt} from "./legacy_ui_journal.mjs";
+import {oneShotUiSmoke,SMOKE_ACCEPTANCE_ID} from "./alis_ui_smoke.mjs";
+import {persistHarmlessUiAttempt,harmlessUiAttemptExists} from "./legacy_ui_journal.mjs";
 const denied=(code,status="blocked")=>({
   purpose:"alis-ui-one-shot-smoke",
   status,code,navigation_click_attempted:false,
@@ -30,6 +30,16 @@ try{
 }catch{}
 if(!local){
   console.log(JSON.stringify(denied("ALIS_UI_CDP_LOOPBACK_REQUIRED")));
+  process.exit(1);
+}
+// An already recorded attempt must not even open another empty Project chat.
+try {
+  if (harmlessUiAttemptExists(SMOKE_ACCEPTANCE_ID)) {
+    console.log(JSON.stringify(denied("ALIS_UI_SMOKE_ALREADY_RECORDED_NO_RETRY")));
+    process.exit(1);
+  }
+} catch {
+  console.log(JSON.stringify(denied("ALIS_UI_SMOKE_JOURNAL_PRECHECK_UNAVAILABLE")));
   process.exit(1);
 }
 let browser;
