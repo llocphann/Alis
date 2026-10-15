@@ -126,6 +126,15 @@
     "verified_during_db": -6,
     "verified_restored_db": 0,
     "process_identity_unchanged": true,
-    "owner_listening_result": "Pending response; no permanent change"
+    "owner_listening_result": "INCONCLUSIVE: Owner did not compare during first attempt"
+  },
+  "headroom_retry": {
+    "owner_listening_result": "Pop stopped or clearly reduced at -6 dB during concurrent playback",
+    "verified_original_db": 0,
+    "verified_during_db": -6,
+    "verified_restored_db": 0,
+    "preparation_seconds": 5,
+    "comparison_seconds": 10,
+    "interpretation": "Supports gain/headroom involvement; reduced loudness is a confounder and no digital clipping meter or PCM proof was collected. No permanent gain or preset change authorized/applied."
   }
 }

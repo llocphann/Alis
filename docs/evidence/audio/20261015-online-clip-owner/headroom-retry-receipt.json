@@ -1,0 +1,15 @@
+{
+  "scope": "Repeat same owner-approved10s gain comparison after5s preparation; previous listening result inconclusive",
+  "original_db": 0.0,
+  "events": [
+    {
+      "event": "minus6",
+      "verified_db": -6.0,
+      "utc": "2026-10-15T13:41:05.580034+00:00"
+    }
+  ],
+  "restored_db": 0.0,
+  "restored": true,
+  "restored_utc": "2026-10-15T13:41:15.705726+00:00",
+  "owner_listening_result": "Pop stopped or clearly reduced during the repeated -6 dB window"
+}
