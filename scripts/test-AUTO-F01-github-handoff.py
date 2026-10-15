@@ -195,7 +195,7 @@ class GitHubHandoffTests(unittest.TestCase):
         signal["status"]="DONE"
         local={"job":JOB_ID,"input_sha256":handoff.job_digest(raw),
                "status":"passed","actions":[],"profile_id":None}
-        remote_result={k:local[k] for k in ("job","input_sha256","status")}
+        remote_result=worker.public_result(local)
         for exists,match in ((False,True),(True,True),(True,False)):
             with self.subTest(exists=exists,match=match):
                 with tempfile.TemporaryDirectory() as tmp:
@@ -249,17 +249,26 @@ class GitHubHandoffTests(unittest.TestCase):
                                 worker.RESULTS+"/"+JOB_ID+".json",handoff.PATH,
                                 worker.QUEUE+"/"+JOB_ID+".json")])
                         self.assertEqual(len(pushed),1)
-        with tempfile.TemporaryDirectory() as tmp:
-            state=Path(tmp)
-            conflicting={**remote_result,"input_sha256":"0"*64}
-            with (patch.object(worker,"state_root",return_value=state),
-                  patch.object(worker,"remote_url",return_value="https://github.com/llocphann/Alis.git"),
-                  patch.object(worker,"fetch_dev"),
-                  patch.object(worker,"result_exists",return_value=True),
-                  patch.object(worker,"remote_text",return_value=json.dumps(conflicting)),
-                  patch.object(worker,"run",side_effect=AssertionError("no git writes"))):
-                with self.assertRaisesRegex(RuntimeError,"identity conflict"):
-                    worker.publish(JOB_ID,local)
+        # An existing same-name/digest/status artifact is still unsafe when
+        # its action receipt or other public evidence was changed remotely.
+        conflicting_receipts=(
+            {**remote_result,"input_sha256":"0"*64},
+            {**remote_result,"actions":[{"index":0,"exit_code":1}]},
+            {**remote_result,"evidence_location":"tampered"},
+            {**remote_result,"unexpected_private_field":"not an allowlisted projection"},
+        )
+        for conflicting in conflicting_receipts:
+            with self.subTest(conflicting=conflicting):
+                with tempfile.TemporaryDirectory() as tmp:
+                    state=Path(tmp)
+                    with (patch.object(worker,"state_root",return_value=state),
+                          patch.object(worker,"remote_url",return_value="https://github.com/llocphann/Alis.git"),
+                          patch.object(worker,"fetch_dev"),
+                          patch.object(worker,"result_exists",return_value=True),
+                          patch.object(worker,"remote_text",return_value=json.dumps(conflicting)),
+                          patch.object(worker,"run",side_effect=AssertionError("no git writes"))):
+                        with self.assertRaisesRegex(RuntimeError,"identity conflict"):
+                            worker.publish(JOB_ID,local)
 
     def test_owner_digest_confirmation_required_before_local_approval(self):
         import contextlib
