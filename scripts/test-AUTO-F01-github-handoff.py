@@ -357,8 +357,8 @@ class GitHubHandoffTests(unittest.TestCase):
         root=Path(__file__).resolve().parents[1]
         script=(root/"automation"/"worker"/"daemon.py").resolve()
         sample=SimpleNamespace(returncode=0,stdout=(
-            "ActiveState=active\\nMainPID=41341\\nWorkingDirectory="+str(root)+"\\n"))
-        command=b"/usr/bin/python3\\x00"+os.fsencode(str(script))+b"\\x00"
+            "ActiveState=active\nMainPID=41341\nWorkingDirectory="+str(root)+"\n"))
+        command=b"/usr/bin/python3\x00"+os.fsencode(str(script))+b"\x00"
         with (patch.object(module.subprocess,"run",return_value=sample),
               patch.object(Path,"read_bytes",return_value=command),
               patch.object(module.os,"readlink",return_value=str(root))):
