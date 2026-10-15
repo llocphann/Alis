@@ -314,8 +314,11 @@ class GitHubHandoffTests(unittest.TestCase):
                 approval=handoff.approval_path(root,JOB_ID)
                 approval.parent.mkdir()
                 approval.write_text(json.dumps(handoff.approval_payload(job,raw)))
+                receipt_file=root/"receipts"/(JOB_ID+".json")
                 if case=="pending_receipt":
-                    worker.save_receipt(JOB_ID,{"job":JOB_ID,"phase":"executing"})
+                    receipt_file.parent.mkdir()
+                    receipt_file.write_text(json.dumps(
+                        {"job":JOB_ID,"phase":"executing"}))
                 def git(*args,**kw):
                     if args==("rev-parse","origin/dev"):
                         return SimpleNamespace(returncode=0,
@@ -353,9 +356,10 @@ class GitHubHandoffTests(unittest.TestCase):
                 self.assertEqual(did_push,case in ("expired_unstarted","push_failed"))
                 self.assertEqual(approval.exists(),case!="expired_unstarted")
                 if case=="pending_receipt":
-                    self.assertEqual(worker.load_receipt(JOB_ID)["phase"],"executing")
+                    self.assertEqual(json.loads(
+                        receipt_file.read_text())["phase"],"executing")
                 else:
-                    self.assertIsNone(worker.load_receipt(JOB_ID))
+                    self.assertFalse(receipt_file.exists())
 
 
 if __name__=="__main__":
