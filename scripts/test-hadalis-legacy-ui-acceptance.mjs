@@ -64,6 +64,7 @@ const page={
       ...(hiddenComposerBeforeVisible?[{visible:false,disabled,draft:"foreign"}]:[]),
       {visible:true,disabled,draft}
     ],"editor");
+    if(role==="dialog")return loc([],"dialog");
     if(role==="list")return loc([{visible:true,selected:[]}],"list");
     if(role==="button"&&options.name==="Send")
       return loc([
@@ -215,6 +216,7 @@ try{
     " (label==='Automatic Alis'||label==='No chats yet')",
     " ?[{visible:true}]:[])};",
     "if(role==='textbox')return loc([{visible:true,disabled:false}],'composer');",
+    "if(role==='dialog')return loc([]);",
     "if(role==='list')return loc([{visible:true,selected:[]}],'list');",
     "if(role==='button'&&o.name==='Send')return loc([{visible:true}],'send');",
     "if(role==='button'&&o.name instanceof RegExp&&o.name.test('Stop'))return loc([]);",
