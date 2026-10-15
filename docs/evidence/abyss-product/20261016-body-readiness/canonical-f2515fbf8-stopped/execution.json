@@ -1,0 +1,41 @@
+{
+  "source_sha": "f2515fbf845e746e1e4a8deb2b59757f313c9f48",
+  "started_utc": "2026-10-15T17:27:06.663790+00:00",
+  "supervisor_pid": 315015,
+  "command": [
+    "bash",
+    "scripts/validate-maintainer-local.sh",
+    "--current-repo"
+  ],
+  "cwd": "/tmp/alis-canonical-f2515fbf8.HB7Qkl/source",
+  "status": "STOPPED",
+  "stop_control": "/tmp/alis-canonical-f2515fbf8.HB7Qkl/STOP",
+  "maximum_seconds": 7200,
+  "maximum_log_bytes": 67108864,
+  "validator_pid": 315019,
+  "validator_process_group": 315019,
+  "stop_reason": "STOP control file",
+  "owned_at_stop": [
+    {
+      "pid": 315019,
+      "ppid": 315015,
+      "state": "S",
+      "start_ticks": "1475494"
+    },
+    {
+      "pid": 348606,
+      "ppid": 315019,
+      "state": "S",
+      "start_ticks": "1545423"
+    },
+    {
+      "pid": 348607,
+      "ppid": 348606,
+      "state": "R",
+      "start_ticks": "1545427"
+    }
+  ],
+  "remaining_owned_at_stop": [],
+  "actual_os_exit": -15,
+  "ended_utc": "2026-10-15T17:38:46.243245+00:00"
+}

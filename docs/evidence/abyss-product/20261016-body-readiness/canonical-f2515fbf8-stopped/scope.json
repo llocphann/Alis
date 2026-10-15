@@ -1,0 +1,23 @@
+{
+  "source_sha": "f2515fbf845e746e1e4a8deb2b59757f313c9f48",
+  "suite_status": "STOPPED at owner five-hour quota threshold; incomplete, not PASS",
+  "actual_os_exit": -15,
+  "completed_passes": 120,
+  "completed_failures": [
+    "[25] Weekly Planner Ctrl/Shift multi-date and compatible Repeat cycles FAIL",
+    "[33] Independent Agenda and Todo stores with stable Event ID edits FAIL",
+    "[56] Python regression: scripts/test-abyss-compact-editor-runtime.py FAIL",
+    "[68] Python regression: scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py FAIL",
+    "[69] Python regression: scripts/test-abyss-edge-editor-compact-actions-contract.py FAIL",
+    "[70] Python regression: scripts/test-abyss-edge-editor-compact-side-contract.py FAIL",
+    "[85] Python regression: scripts/test-abyss-launcher-live-editor-contract.py FAIL",
+    "[92] Python regression: scripts/test-abyss-module-locks-runtime.py FAIL",
+    "[93] Python regression: scripts/test-abyss-multi-selection-runtime.py FAIL",
+    "[100] Python regression: scripts/test-abyss-panel-material-settings-runtime.py FAIL",
+    "[129] Python regression: scripts/test-automation-taskflow.py     FAIL"
+  ],
+  "completed_skips": [],
+  "owned_processes_remaining": [],
+  "uncompleted_checks": "UNRUN/STOPPED; no inferred result",
+  "owner_installed_desktop_acceptance": "UNRUN"
+}
