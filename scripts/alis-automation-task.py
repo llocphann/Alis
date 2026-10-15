@@ -41,6 +41,9 @@ def main():
                              help="Exact repo:code list shown when owner confirmed")
     commands.add_parser("sudo-status")
     commands.add_parser("sudo-authenticate")
+    commands.add_parser("sudo-credential-status")
+    commands.add_parser("sudo-credential-save")
+    commands.add_parser("sudo-credential-clear")
     commands.add_parser("backend-status")
     start_queue = commands.add_parser("start-queue")
     start_queue.add_argument("--approve", action="store_true")
@@ -97,6 +100,15 @@ def main():
         elif args.action == "queue-clear":
             result = queue.clear(approved=args.approve,
                                  expected_queued=args.expected_queued)
+        elif args.action == "sudo-credential-status":
+            from automation import sudo_credentials
+            result = sudo_credentials.status()
+        elif args.action == "sudo-credential-save":
+            from automation import sudo_credentials
+            result = sudo_credentials.save(sys.stdin.read(1026))
+        elif args.action == "sudo-credential-clear":
+            from automation import sudo_credentials
+            result = sudo_credentials.clear()
         elif args.action == "sudo-status":
             from automation.worker import privilege
             result = privilege.auth_status()
