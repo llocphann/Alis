@@ -31,6 +31,10 @@ def main():
                        help="Optional codes; blank discovers Backend-first GitHub Issues")
     batch.add_argument("--mode", choices=["ordered", "cloud"], default="ordered")
     commands.add_parser("queue-status")
+    stage_queue = commands.add_parser("queue-stage-ui")
+    stage_queue.add_argument("--approve", action="store_true",
+                             help="Stage first task's profile only; no Send, Start or unit change")
+    stage_queue.add_argument("--expected-first", required=True)
     stop_queue = commands.add_parser("queue-stop")
     stop_queue.add_argument("--approve", action="store_true")
     stop_queue.add_argument("--expected-active", required=True)
@@ -94,6 +98,9 @@ def main():
                       if args.codes.strip() else queue.prepare_auto(mode=args.mode))
         elif args.action == "queue-status":
             result = queue.view()
+        elif args.action == "queue-stage-ui":
+            result = managed_tasks.stage_ui_queue(
+                approved=args.approve, expected_first=args.expected_first)
         elif args.action == "queue-stop":
             result = managed_tasks.stop_queue(
                 approved=args.approve, expected_active=args.expected_active)
