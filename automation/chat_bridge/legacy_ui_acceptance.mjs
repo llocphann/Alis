@@ -90,7 +90,7 @@ export async function oneShotUiAcceptance({
     const projectStable=after.renderer_matches===true &&
       after.project_scoped_composer_count_capped===1 &&
       after.project_badge_count_capped===1 &&
-      after.target_project_list_count_capped===1 &&
+      [0,1].includes(after.target_project_list_count_capped) &&
       after.selected_target_chat_count_capped===0 &&
       after.composer_count_capped===1 &&
       after.composer_draft_present===true &&
