@@ -161,6 +161,20 @@ class QueueControls(unittest.TestCase):
         prior = tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes()
         shifted = {**task, "base_sha": "b" * 40}
         parked = queue.prepare("AUTO-R01", resolver=lambda _code: shifted)
+        if parked["items"][0]["reason"] == "saved_work_requires_review":
+            from automation.manager import store
+            from automation import managed_tasks
+            try:
+                config, state, issues = store.read_snapshot()
+                pid = managed_tasks.profile_id("llocphann/Alis", "AUTO-R01")
+                print("MANAGER_INERT_DIAG", {
+                    "issues": issues, "profile_present":
+                        any(p.get("id") == pid for p in config.get("profiles", [])),
+                    "item_present": pid in state.get("profiles", {}),
+                    "inert": queue._task_manager_inert("llocphann/Alis", "AUTO-R01")
+                })
+            except Exception as exc:
+                print("MANAGER_INERT_EXCEPTION", type(exc).__name__)
         self.assertEqual(parked["state"], "review_required")
         self.assertEqual(parked["items"][0]["reason"], "source_pin_unverified")
         self.assertIsNone(parked["next"])
