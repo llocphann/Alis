@@ -66,6 +66,24 @@ assert "GlobalStates.notificationCenterExplicitOpen" in perimeter
 assert "NotificationCenterPopup {" in corners
 assert "QuickNotesPopup {" in corners
 
+# Module Icon must disable the actual legacy ScreenCorners popup Loader,
+# independent of Bar visibility, auto-hide, or per-output bar eligibility.
+assert 'function moduleOwnsCornerHover(options,panelFamily,kind)' in layout
+assert 'return ModuleLayout.moduleOwnsCornerHover(' in corners
+owner_gate=corners.split('function hasUnifiedEdgeReplacement(kind): bool {',1)[1].split('\n        }',1)[0]
+assert 'GlobalStates.barOpen' not in owner_gate
+assert 'ModuleLayout.hasEnabledModule' not in owner_gate
+assert 'enabledPanels' not in owner_gate
+assert 'Config.options?.panelFamily ?? "ii",kind' in owner_gate
+assert '&& !cornerPanelWindow.hasUnifiedEdgeReplacement("notesTimers")' in corners
+assert '&& !cornerPanelWindow.hasUnifiedEdgeReplacement("notificationActivity")' in corners
+assert 'active: cornerPanelWindow.shouldShowQuickNotesCorner' in corners
+assert 'active: cornerPanelWindow.notificationCenterHostNeeded' in corners
+assert 'hoverAllowed: cornerPanelWindow.shouldShowQuickNotesCorner' in corners
+assert 'cornerPanelWindow.shouldShowNotificationCenterCorner' in corners
+assert 'property bool hoverAllowed: true' in notes
+assert 'hoverActivates: root.hoverAllowed' in notes
+
 # Editor focus/popup contents are retained, not rewritten as new services.
 assert "onNotesEditorFocusChanged:" in perimeter
 assert "onEditorFocusedChanged:" in module
