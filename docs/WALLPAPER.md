@@ -12,8 +12,16 @@ Pick a wallpaper and the entire desktop follows. Colors propagate to the shell, 
 
 Choose **Liquid** under Settings → Appearance → Background → Motion.
 The `alisMelt` preference uses the bundled GLSL/QSB shader. Saved
-`inirMelt` preferences still use the same shader. Alis keeps the old
-wallpaper visible until a shader frame has been presented.
+`inirMelt` preferences still use the same shader. Abyss Liquid now reveals
+wallpapers with an organic, softly refracting fluid front instead of discrete
+vertical columns. Its ink, depth and highlight colors follow the live Material 3
+theme (`m3primary`, `m3primaryContainer`, `m3secondary`); switching themes
+also changes the next Liquid transition without editing saved preferences.
+
+The effect's shader binary is built from `alisMelt.frag` by the
+`alis-liquid-qsb-bake.yml` dev workflow. Updating only the GLSL source is
+insufficient: deployed Quickshell uses the compiled `.frag.qsb` asset. Alis
+keeps the old wallpaper visible until a shader frame has been presented.
 
 If the graphics renderer is software-only, shader compilation fails, or
 the compositor stalls, the Ready-slot fade fallback applies the new
