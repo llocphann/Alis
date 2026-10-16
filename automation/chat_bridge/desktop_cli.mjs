@@ -16,6 +16,7 @@ import {
   uiTargetIdentity,
   uiOnlyTurnIdentity,
   observeSubmittedPrompt,
+  waitForSubmittedPrompt,
   resumeUiChat,
   waitForCompletion
 } from "./desktop_driver.mjs";
@@ -399,25 +400,14 @@ async function main() {
       throw error;
     }
 
-    const completionBaseline = await submitPrompt(page, prompt, {
+    await submitPrompt(page, prompt, {
       targetKey:command==='send'?(process.argv[3]??null):null
     });
-    const generation = await waitForCompletion(
-      page,
-      600000,
-      completionBaseline
-    );
-    await extractLoopResponse(page, {
-      baselineResponseActionCount: completionBaseline.responseActionCount
+    const observed=await waitForSubmittedPrompt(page,prompt,{
+      targetKey:command==='send'?(process.argv[3]??null):null,
+      chatLabel:command==='send'?(process.env.ALIS_UI_RESUME_CHAT_LABEL??null):null
     });
-
-    // After an initial send, the UI may not yet have exposed a persistent
-    // chat ID. That is an uncertain mapping: never advance to the next send.
-    if(command==='rotate-send')await uiOnlyTurnIdentity(page,{initialPrompt:prompt});
-    const observed=await observeSubmittedPrompt(page,prompt,{
-      targetKey:command==='send'?(process.argv[3]??null):null});
-    if(!observed.completed)throw Error('ALIS_UI_ORIGINAL_ASSISTANT_FINAL_UNVERIFIED');
-    writeJson({generation,...observed});
+    writeJson({generation:{submittedOriginalObserved:true},...observed});
     return;
   }
 

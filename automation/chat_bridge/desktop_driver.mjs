@@ -208,6 +208,42 @@ export async function observeSubmittedPrompt(page,prompt,{targetKey=null,archive
       extractionSignal:'submitted-user-turn-assistant'}};
 }
 
+export async function waitForSubmittedPrompt(page,prompt,{
+  targetKey=null,chatLabel=null,timeoutMs=600000,pollMs=2000
+}={}) {
+  // Cached/virtualized chats can reduce global Copy counts between turns.
+  // Only the exact submitted input and its own settled assistant can finish
+  // this send. A different visible chat is never a completion signal.
+  const deadline=Date.now()+timeoutMs;
+  let key=targetKey,label=chatLabel;
+  while(Date.now()<deadline) {
+    try {
+      if(key===null) {
+        key=createHash('sha256').update(
+          await uiOnlyTurnIdentity(page,{initialPrompt:prompt})).digest('hex');
+      }
+      if(label!==null)await resumeUiChat(page,label,{targetKey:key});
+      const result=await observeSubmittedPrompt(page,prompt,{targetKey:key});
+      if(result.completed)return result;
+      // A title is only a navigation candidate. Retain the first-turn key
+      // and verify it again if this owned window later shows another chat.
+      const selected=page.getByRole('list',{name:`Chats in ${PROJECT_NAME}`,exact:true})
+        .locator('[role="button"][aria-current="page"]');
+      if(await selected.count()===1&&await selected.isVisible()) {
+        const next=await selected.getAttribute('aria-label');
+        if(typeof next==='string'&&next.trim()&&next.length<=250&&!/[\x00-\x1f]/.test(next))label=next;
+      }
+    } catch(error) {
+      // DOM publication can lag the acknowledged click. Retry observation
+      // only; a later user turn, changed target or invalid final fails closed.
+      if(!['ALIS_UI_TURN_ANCHOR_UNAVAILABLE','ALIS_UI_SUBMITTED_PROMPT_NOT_UNIQUE']
+          .includes(error.message))throw error;
+    }
+    await sleep(pollMs);
+  }
+  throw Error('ALIS_UI_ORIGINAL_RESPONSE_TIMEOUT_NO_RESEND');
+}
+
 async function verifyProject(page) {
   if ((await projectGuardCount(page)) !== 1) {
     const error = new Error(`${PROJECT_NAME} project guard is not visible; waiting for target chat`);
