@@ -543,6 +543,38 @@ class Preflight(unittest.TestCase):
             self.assertIn("FOREIGN_PROFILE_UNSETTLED",
                           self.view()["preflight_blockers"])
 
+    def test_preflight_redacts_remaining_ui_pending_profile_role(self):
+        self._write_queue_fixture()
+        other = model.new_profile("Sensitive other")
+        self.config["profiles"].append(other)
+        other_id = other["id"]
+        other_state = store.profile_state()
+        other_state.update(desired="stopped",
+                           pending={"transport": "alis-ui-once",
+                                    "attempt_id": "PRIVATE_SEND",
+                                    "ui_target_key": "PRIVATE_CHAT"})
+        self.state["profiles"][other_id] = other_state
+        config_path = store.config_path()
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps(self.config))
+        store.state_path().write_text(json.dumps(self.state))
+        with patch.object(ui_preflight, "_unit_state",
+                          return_value=("failed", "ui_queue_mode")):
+            report = ui_preflight.check_prepared_queue()
+        self.assertEqual(report["foreign_pending_count"], 1)
+        self.assertIn("FOREIGN_PROFILE_UNSETTLED",
+                      report["preflight_blockers"])
+        self.assertEqual(report["foreign_unsettled_summary"], [{
+            "role": "other", "scheduled": False,
+            "pending": True, "pending_kind": "ui_once",
+            "job": False, "run_active": False,
+        }])
+        visible = json.dumps(report)
+        for private in ("PRIVATE_SEND", "PRIVATE_CHAT", other_id,
+                        "Sensitive other"):
+            self.assertNotIn(private, visible)
+        self.assertFalse(report["submission_authorized"])
+
     def test_historical_native_session_without_pending_never_blocks_new_ui_task(self):
         self._write_queue_fixture()
         historical = self.config["profiles"][0]
