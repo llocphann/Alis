@@ -105,14 +105,13 @@ def _task_manager_inert(repo: str, code: str) -> bool:
         if issues:
             return False
         pid = managed_tasks.profile_id(repo, code)
-        profile = next((p for p in config.get("profiles", [])
-                        if p.get("id") == pid), None)
         item = state.get("profiles", {}).get(pid, {})
         if not isinstance(item, dict):
             return False
+        # Installed/enabled but STOPPED and session-free is inert. An
+        # enabled profile alone cannot prove that a job was ever sent.
         return (
-            (profile is None or profile.get("enabled") is False)
-            and item.get("pending") is None
+            item.get("pending") is None
             and item.get("job_id") is None
             and item.get("session") is None
             and item.get("run_active") is not True
