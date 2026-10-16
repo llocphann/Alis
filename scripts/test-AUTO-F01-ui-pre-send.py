@@ -108,21 +108,61 @@ class PreSendTests(TestCase):
         self.assertEqual(saved["evidence"], "owner-confirmed-not-sent")
         self.assertIs(saved["delivery_acknowledged"], False)
 
-    def test_scheduler_pauses_unsent_with_no_success_or_delivery_counter(self):
+    def test_bounded_auto_retry_only_proven_pre_send_failure(self):
         def enable(config, state):
             config["profiles"][0]["enabled"] = True
             state["profiles"][model.DEFAULT_ID].update(desired="run", request="new")
         store.change(enable)
+        attempted = []
         def failed(_command, prompt, **kwargs):
+            attempted.append(_command)
             raise runtime.UiNotSent("ALIS_UI_GITHUB_PICKER_UNAVAILABLE",
                                     hashlib.sha256(prompt.encode()).hexdigest())
-        self.assertEqual(ui_scheduler.ui_tick(model.DEFAULT_ID, desktop=failed), "ui_composition_failed")
+        now = 1000
+        self.assertEqual(ui_scheduler.ui_tick(model.DEFAULT_ID, now=now, desktop=failed),
+                         "ui_retry_wait")
         item = store.read_snapshot()[1]["profiles"][model.DEFAULT_ID]
         self.assertIsNone(item["pending"])
-        self.assertEqual(item["desired"], "paused")
+        self.assertEqual(item["desired"], "run")
+        self.assertEqual(item["ui_pre_send_failures"], 1)
+        self.assertEqual(item["next_run_at_unix"], 1005)
         self.assertEqual(item["prompts_sent"], 0)
         self.assertEqual(item["iterations"], 0)
+        self.assertEqual(ui_scheduler.ui_tick(model.DEFAULT_ID, now=1004,
+                                             desktop=failed), "scheduled")
+        self.assertEqual(len(attempted), 1)
+        self.assertEqual(ui_scheduler.ui_tick(model.DEFAULT_ID, now=1005,
+                                             desktop=failed), "ui_retry_wait")
+        self.assertEqual(store.read_snapshot()[1]["profiles"][model.DEFAULT_ID]
+                         ["next_run_at_unix"], 1020)
+        self.assertEqual(ui_scheduler.ui_tick(model.DEFAULT_ID, now=1019,
+                                             desktop=failed), "scheduled")
+        self.assertEqual(ui_scheduler.ui_tick(model.DEFAULT_ID, now=1020,
+                                             desktop=failed), "ui_composition_failed")
+        item = store.read_snapshot()[1]["profiles"][model.DEFAULT_ID]
+        self.assertEqual(item["desired"], "paused")
+        self.assertEqual(item["ui_pre_send_failures"], 3)
+        self.assertEqual(item["prompts_sent"], 0)
+        self.assertEqual(item["iterations"], 0)
+        self.assertEqual(len(attempted), 3)
         self.assertEqual(ui_scheduler.ui_tick(model.DEFAULT_ID, desktop=failed), "idle")
+
+    def test_pending_send_journal_disables_automatic_retry(self):
+        def enable(config,state):
+            config["profiles"][0]["enabled"] = True
+            state["profiles"][model.DEFAULT_ID].update(desired="run", request="new")
+        store.change(enable)
+        journal = store.state_dir() / "ui-send-journal" / "pending.json"
+        journal.parent.mkdir(parents=True, exist_ok=True)
+        journal.write_text('{"schema":"alis.chat-ui-send.v1"}')
+        def failed(_command,prompt,**kwargs):
+            raise runtime.UiNotSent("ALIS_UI_PRE_SEND_FAILED",
+                                    hashlib.sha256(prompt.encode()).hexdigest())
+        self.assertEqual(ui_scheduler.ui_tick(model.DEFAULT_ID,
+                         now=3000, desktop=failed), "ALIS_UI_SEND_UNCERTAIN_RECONCILIATION_REQUIRED")
+        self.assertEqual(store.read_snapshot()[1]["profiles"]
+                         [model.DEFAULT_ID]["prompts_sent"], 0)
+        self.assertTrue(journal.exists())
 
 
 if __name__ == "__main__":
