@@ -122,7 +122,21 @@ def prepare(raw: str, mode: str = "ordered",
         for task in tasks:
             previous = tf.intake(task)
             if previous["state"] not in {"prepared", "handoff_ready"}:
-                raise tf.TaskError("Task already active elsewhere; queue not started")
+                # The old message ("active elsewhere") falsely implied that
+                # a worker is running. It can equally mean awaiting_owner or
+                # a previously finished task; NEVER reset its durable record.
+                raise tf.TaskError(
+                    f'{task["code"]} has saved task state '
+                    f'{previous["state"]}; queue not started. '
+                    'Review task status and prior receipts first')
+            recorded = tf.load_task(task["code"], task["repository"])
+            if (recorded.get("unresolved") or
+                    recorded.get("scheduler_dispatched") is not False or
+                    recorded.get("issue_number") != task["issue_number"] or
+                    recorded.get("task", {}).get("base_sha") != task["base_sha"]):
+                raise tf.TaskError(
+                    f'{task["code"]} has prior work or a different source pin; '
+                    'queue not started. Review the saved task before retrying')
         now = int(time.time())
         manifest = {
             "schema": QUEUE_SCHEMA, "mode": mode, "state": "prepared",
@@ -541,7 +555,9 @@ def discover_backend_candidates(api=None, *, limit: int = 8) -> list[dict]:
             raise tf.TaskError("Open Issue pagination incomplete; cannot auto-select")
     found.sort(key=lambda row: row[:4])
     unique_codes = set()
+    pinned = {}
     selected = []
+    skipped_saved = []
     for _, _, _, _, repo, code, issue in found:
         # A code duplicated across repositories is ambiguous, even when
         # titles seem similar; require owner input rather than guessing.
@@ -549,19 +565,43 @@ def discover_backend_candidates(api=None, *, limit: int = 8) -> list[dict]:
         if len(occurrences) != 1 or code in unique_codes:
             continue
         unique_codes.add(code)
-        selected.append((repo, issue))
-        if len(selected) == limit:
-            break
-    if not selected:
-        raise tf.TaskError("No eligible open Backend/nonvisual Alis Issues; enter a task code")
-    pinned = {}
-    result = []
-    for repo, issue in selected:
+        # Read existing task metadata BEFORE selecting an Issue. An open
+        # GitHub Issue is not proof that a previous local run was settled.
+        # Never modify or delete prior checkpoints, receipts or handoffs.
+        existing_path = tf._task_path(code, repo)
+        if existing_path.is_symlink():
+            raise tf.TaskError(f'{code} has an unsafe saved task; review locally')
+        if existing_path.exists():
+            prior = tf.load_task(code, repo)  # malformed => fail closed
+            if (prior.get("status") not in {"prepared", "handoff_ready"} or
+                    prior.get("unresolved") or
+                    prior.get("scheduler_dispatched") is not False or
+                    prior.get("issue_number") != issue["number"]):
+                skipped_saved.append(code)
+                continue
         if repo not in pinned:
             pinned[repo] = api(
                 f"/repos/{repo}/branches/{tf.REPOSITORIES[repo]}")
-        result.append(tf._task_from_issue(repo, issue, pinned[repo], api))
-    return result
+        task = tf._task_from_issue(repo, issue, pinned[repo], api)
+        if existing_path.exists():
+            prior = tf.load_task(code, repo)
+            if prior.get("task", {}).get("base_sha") != task["base_sha"]:
+                # New HEAD must not silently repin a saved local task.
+                skipped_saved.append(code)
+                continue
+        selected.append(task)
+        if len(selected) == limit:
+            break
+    if not selected:
+        if skipped_saved:
+            raise tf.TaskError(
+                "No fresh Backend tasks available: open Issues have saved "
+                "local work or source pins requiring review ("
+                + ", ".join(skipped_saved[:4])
+                + ("…" if len(skipped_saved) > 4 else "") + "). "
+                "Nothing was started or reset")
+        raise tf.TaskError("No eligible open Backend/nonvisual Alis Issues; enter a task code")
+    return selected
 
 
 def prepare_auto(*, mode: str = "ordered", api=None) -> dict:
