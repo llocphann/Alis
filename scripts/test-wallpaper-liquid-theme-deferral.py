@@ -6,6 +6,8 @@ root = Path(__file__).resolve().parents[1]
 service = (root / "services/Wallpapers.qml").read_text()
 desktop = (root / "modules/background/Background.qml").read_text()
 waffle = (root / "modules/waffle/background/WaffleBackground.qml").read_text()
+palette = (root / "services/MaterialThemeLoader.qml").read_text()
+color_runtime = (root / "scripts/test-wallpaper-color-preview-runtime.py").read_text()
 shader = (root / "modules/common/widgets/WallpaperCrossfader.qml").read_text()
 runtime = (root / "scripts/test-wallpaper-background-apply-runtime.py").read_text()
 
@@ -55,4 +57,25 @@ require('tryVerify(()=>Wallpapers._pendingLiquidThemePath==="",3500)' in runtime
 require('root._shaderTexturePrimeSwaps < 2' in shader
         and 'fragmentShader: root._activeShader !== ""' in shader,
         "previously restored working Liquid shader/texture lifecycle must stay unchanged")
+require('root._shouldDeferThemeForLiquid(normalizedPath))' in service
+        and 'MaterialThemeLoader.previewWallpaperPresented(rendered)' in service,
+        "carousel highlights must defer palette generation until their own rendered frame")
+require('function previewWallpaperColors(path: string, thumbnail = "", deferUntilPresented = false)' in palette
+        and 'root._previewWaitingForPresentation = Boolean(deferUntilPresented)' in palette,
+        "normal callers must retain immediate palettes while Liquid defers work")
+require('if (root._previewWaitingForPresentation || previewProcess.running' in palette
+        and 'root._previewPending = {serial: ++root._previewSerial' in palette,
+        "rapid preview selections must coalesce to the newest pending palette request")
+require('String(path ?? "") !== root.previewPath' in palette,
+        "stale compositor frame must never release the newer palette request")
+require('previewFrameDeadline.interval = 2400' in palette
+        and 'previewFrameDeadline.interval = 180' in palette,
+        "preview palette must wait for shader presentation with a bounded fallback")
+require('previewFrameDeadline.stop()' in palette
+        and 'root._previewWaitingForPresentation = false' in palette,
+        "closing/canceling the preview must disarm deferred palette work")
+require('"/usr/bin/nice", "-n", "10"' in palette,
+        "preview palette worker must not compete at normal CPU priority")
+require('MaterialThemeLoader.previewWallpaperPresented(root.images+"b.png")' in color_runtime,
+        "native palette test must exercise Liquid presentation handoff")
 print("WALL-R01 theme deferral source contract: PASS (native Niri rendering not run)")
