@@ -537,7 +537,6 @@ for token in (
     "property bool escapeArmed: false",
     "root.escapeArmed = true",
     "root.leaveEditorMode()",
-    "root.dismissPresentation()",
     "keyboardFocus: root.editorFocused || root.todoDialogOpen || root.escapeArmed",
 ):
     require(popup, token, "Quick Notes popup two-stage Escape missing")
@@ -569,8 +568,20 @@ for token in (
 ):
     require(styled_popup, token,
             "Graceful slide-under popup close contract missing")
-require(popup, "root.retractPresentation()",
-        "Quick Notes second Escape should use the normal slide retract")
+# Assert the actual Escape state machine, not just a stray call elsewhere.
+# First Escape releases editing and arms the lease; second Escape retracts
+# with StyledPopup's graceful slide tail. Forced eviction may still dismiss.
+escape_shortcut = re.search(
+    r"Shortcut\s*\{\s*sequences:\s*\[StandardKey\.Cancel\]"
+    r"[\s\S]*?onActivated:\s*\{\s*if\s*\(root\.editorFocused\)\s*\{"
+    r"\s*root\.escapeArmed\s*=\s*true"
+    r"\s*root\.leaveEditorMode\(\)\s*\}\s*else\s*\{"
+    r"\s*root\.escapeArmed\s*=\s*false"
+    r"\s*root\.retractPresentation\(\)\s*\}\s*\}",
+    popup,
+)
+if escape_shortcut is None:
+    fail("Quick Notes Escape must leave editing first and gracefully retract on second press")
 
 for token in (
     "event.key === Qt.Key_U",
