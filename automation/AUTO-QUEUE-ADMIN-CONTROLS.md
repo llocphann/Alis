@@ -31,7 +31,16 @@ Settings → Automation → GitHub tasks shows separate owner-confirmed controls
   worker still independent** warning. This permits archiving an orphaned
   queue without pretending to have cancelled an older worker action. Stop
   does **not** retract a sent message, terminate a worker process, discard
-  a job ID or erase a receipt.
+  a job ID or erase a receipt. The second Stop confirmation is bound to
+  the SHA-256 identity of the complete displayed queue, not only its active
+  task code. If another queue with the same first task replaces it, Stop
+  rejects stale confirmation before revoking the newer run's approval.
+- **Start UI → Confirm UI Start:** explicitly acknowledges local UI-only
+  response evidence (not server-attested Project membership) for the exact
+  prepared queue snapshot. Backend rechecks that snapshot under the queue
+  lock immediately before recording Start approval. If any later task, pin
+  or queue generation changed, Start rejects it without dispatch. The
+  existing native transport gate remains unchanged.
 - **Clear queued → Confirm clear:** remove only items with state `queued`
   (including while the first item is still `active` or its Stop is in
   **stopping** pending manager reconciliation). Preserve the active
