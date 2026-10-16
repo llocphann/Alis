@@ -104,6 +104,14 @@ ShellRoot {
    Wallpapers.previewWallpaper(root.images+"missing.png");wait(500)
    check(snapshot()===updated,"failed latest generation left colors from a different wallpaper")
    Wallpapers.cancelWallpaperPreview()
+   // Liquid previews must postpone CPU palette work until the previewed frame
+   // is presented, then still apply/cancel the latest palette correctly.
+   MaterialThemeLoader.previewWallpaperColors(root.images+"b.png","",true)
+   check(MaterialThemeLoader._previewWaitingForPresentation,"Liquid preview palette started too early")
+   check(MaterialThemeLoader._previewPending!==null,"deferred palette request was lost")
+   MaterialThemeLoader.previewWallpaperPresented(root.images+"b.png")
+   tryVerify(()=>paletteIs(root.b),4000)
+   MaterialThemeLoader.cancelColorPreview()
    check(Config.revision===revision && Config.options.background.wallpaperPath===wallpaper,"preview mutated a durable setting")
    console.info("WALLPAPER_COLOR_PREVIEW_PASS")
   }catch(e){console.error("WALLPAPER_COLOR_PREVIEW_FAIL",e.message,e.stack)}Qt.quit()}
