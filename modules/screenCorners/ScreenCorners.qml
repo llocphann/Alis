@@ -94,7 +94,8 @@ Scope {
         function hasUnifiedEdgeReplacement(kind): bool {
             // The selectable Edgebar mode restores the mature physical
             // corner dwell target; module-hosted popups do not compete for it.
-            return ModuleLayout.unifiedLauncherMode(Config.options?.abyss?.modules) === "module"
+            return ModuleLayout.unifiedLauncherMode(
+                Config.options?.abyss?.modules,kind) === "module"
                 && GlobalStates.barOpen
                 && (Config.options?.enabledPanels ?? []).includes("abyssBar")
                 && Geometry.targets(outputName,Config.options?.bar?.screenList ?? [],
