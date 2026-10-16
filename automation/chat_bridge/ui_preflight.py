@@ -234,15 +234,19 @@ def check_prepared_queue() -> dict:
     if not (1 <= len(items) <= queue.MAX_ITEMS):
         blockers.append("QUEUE_MANIFEST_INVALID")
         return result
-    first = items[0]
-    if (not isinstance(first, dict)
-            or first.get("repository") not in taskflow.REPOSITORIES
-            or not isinstance(first.get("code"), str)
-            or not taskflow.CODE.fullmatch(first["code"])
-            or first.get("state") != "queued"
-            or not isinstance(first.get("source_sha"), str)
-            or not taskflow.SHA.fullmatch(first["source_sha"])):
+    if any(not isinstance(entry, dict)
+           or entry.get("state") not in {"queued", "deferred"}
+           or entry.get("repository") not in taskflow.REPOSITORIES
+           or not isinstance(entry.get("code"), str)
+           or not taskflow.CODE.fullmatch(entry["code"])
+           or not isinstance(entry.get("source_sha"), str)
+           or not taskflow.SHA.fullmatch(entry["source_sha"])
+           for entry in items):
         blockers.append("QUEUE_MANIFEST_INVALID")
+        return result
+    first = next((entry for entry in items if entry["state"] == "queued"), None)
+    if first is None:
+        blockers.append("NO_ELIGIBLE_NEW_TASK")
         return result
     result["first_task_code"] = first["code"]
     expected_id = managed_tasks.profile_id(first["repository"], first["code"])
