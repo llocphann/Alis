@@ -26,6 +26,7 @@ ContentPage {
             "sizing & surface": "appearance",
             "audio spectrum": "spectrum",
             "behavior & clock": "behavior",
+            "module behavior": "behavior",
             "modules": "modules",
             "bar module layout": "modules",
             "resources": "modules",
