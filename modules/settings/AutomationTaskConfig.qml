@@ -79,6 +79,9 @@ ContentPage {
     property bool backendTransportReady: false
     property bool uiQueueStartAvailable: false
     property bool uiQueueStageAvailable: false
+    property bool uiQueueIdleLegacyStopAvailable: false
+    property bool uiQueueIdleLegacyStopConfirmation: false
+    property string uiQueueIdleLegacyStopSnapshotId: ""
     property string uiQueueFirstTask: ""
     property var uiQueuePreflightBlockers: []
     property var uiQueueProfileCounts: ({})
@@ -104,6 +107,8 @@ ContentPage {
         if (root.uiQueueStartAvailable || root.backendTransportReady) return ""
         if (root.uiQueueStageAvailable)
             return Translation.tr("Prepare UI creates an idle task profile; after readiness refresh, confirm Start UI separately. No message is sent by Prepare.")
+        if (root.uiQueueIdleLegacyStopAvailable)
+            return Translation.tr("Legacy default Automation profile is still scheduled but has no pending send or job. Confirm Stop idle legacy to revoke its schedule, preserve its session and unblock UI Queue preparation.")
         const blockers = root.uiQueuePreflightBlockers || []
         if (blockers.includes("TASKFLOW_PROFILE_NOT_IDLE"))
             return Translation.tr("Start blocked: the task profile retains a running state, UI session, original pending send or job. Reconcile the original evidence; do not create a duplicate task.")
@@ -283,6 +288,40 @@ ContentPage {
             Quickshell.shellPath("scripts/alis-automation-task.py"),
             "status", root.selectedTask.code, "--repo", root.selectedTask.repository]
         taskStatusProcess.running = true
+    }
+
+    function stopIdleLegacyForUiQueue(): void {
+        if (root.busy || !root.queueStatusConfirmed
+                || !root.uiQueueIdleLegacyStopAvailable || !root.queueSnapshot
+                || root.queueSnapshot.mode !== "ordered"
+                || root.queueSnapshot.state !== "prepared")
+            return
+        const snapshotId = root.queueSnapshot.snapshot_id || ""
+        if (!/^[a-f0-9]{64}$/.test(snapshotId)) {
+            root.errorText = Translation.tr("Queue identity unavailable · Refresh")
+            return
+        }
+        if (!root.uiQueueIdleLegacyStopConfirmation) {
+            root.uiQueueIdleLegacyStopConfirmation = true
+            root.uiQueueIdleLegacyStopSnapshotId = snapshotId
+            root.statusText = Translation.tr("Confirm Stop idle legacy profile: revoke ONLY its unsent schedule. Previous chats, pending receipts and queue tasks remain preserved.")
+            return
+        }
+        if (root.uiQueueIdleLegacyStopSnapshotId !== snapshotId) {
+            root.uiQueueIdleLegacyStopConfirmation = false
+            root.uiQueueIdleLegacyStopSnapshotId = ""
+            root.errorText = Translation.tr("Queue changed · Refresh before stopping legacy profile")
+            return
+        }
+        root.uiQueueIdleLegacyStopConfirmation = false
+        root.uiQueueIdleLegacyStopSnapshotId = ""
+        root.queueOperation = "stop-idle-legacy"
+        root.errorText = ""
+        queueProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "queue-stop-idle-legacy", "--approve",
+            "--expected-snapshot-id", snapshotId]
+        queueProcess.running = true
     }
 
     function stageUiQueue(): void {
@@ -786,6 +825,8 @@ ContentPage {
                     ? report.transport_blocker : ""
                 root.uiQueueStartAvailable = report.ui_queue_start_available === true
                 root.uiQueueStageAvailable = report.ui_queue_stage_available === true
+                root.uiQueueIdleLegacyStopAvailable =
+                    report.ui_queue_idle_legacy_stop_available === true
                 root.uiQueueFirstTask = (root.uiQueueStartAvailable || root.uiQueueStageAvailable)
                     && typeof report.ui_queue_first_task === "string"
                     ? report.ui_queue_first_task : ""
@@ -806,6 +847,8 @@ ContentPage {
                 root.backendTransportReady = false
                 root.uiQueueStartAvailable = false
                 root.uiQueueStageAvailable = false
+                root.uiQueueIdleLegacyStopAvailable = false
+                root.uiQueueIdleLegacyStopConfirmation = false
                 root.uiQueueFirstTask = ""
                 root.uiQueuePreflightBlockers = []
                 root.uiQueueProfileCounts = ({})
@@ -833,6 +876,12 @@ ContentPage {
                             root.resetChatConfirmation = false
                             root.resetChatTarget = ""
                         }
+                    }
+                    if (root.uiQueueIdleLegacyStopConfirmation
+                            && (root.uiQueueIdleLegacyStopSnapshotId !== (result.snapshot_id || "")
+                                || result.state !== "prepared")) {
+                        root.uiQueueIdleLegacyStopConfirmation = false
+                        root.uiQueueIdleLegacyStopSnapshotId = ""
                     }
                     if (root.uiQueueStageConfirmation) {
                         const first = (result.items || []).find(item => item.state === "queued")
@@ -904,6 +953,9 @@ ContentPage {
                     Qt.callLater(root.refreshQueue)
                 } else if (root.queueOperation === "stage-ui") {
                     root.statusText = Translation.tr("Idle UI profile prepared · no job started. Rechecking service readiness.")
+                    Qt.callLater(root.refreshBackendStatus)
+                } else if (root.queueOperation === "stop-idle-legacy") {
+                    root.statusText = Translation.tr("Idle legacy schedule stopped · previous chats and receipts preserved")
                     Qt.callLater(root.refreshBackendStatus)
                 } else if (root.queueOperation === "clear")
                     root.statusText = result.cleared
@@ -1427,6 +1479,18 @@ ContentPage {
                     onClicked: root.stopQueue()
                 }
                 DialogButton {
+                    objectName: "automationStopIdleLegacy"
+                    buttonText: root.uiQueueIdleLegacyStopConfirmation
+                        ? Translation.tr("Confirm legacy Stop")
+                        : Translation.tr("Stop idle legacy")
+                    visible: root.uiQueueIdleLegacyStopAvailable
+                        && !!root.queueSnapshot
+                        && root.queueSnapshot.state === "prepared"
+                    enabled: !root.busy && root.queueStatusConfirmed
+                        && root.uiQueueIdleLegacyStopAvailable
+                    onClicked: root.stopIdleLegacyForUiQueue()
+                }
+                DialogButton {
                     objectName: "automationStageUiQueue"
                     buttonText: root.uiQueueStageConfirmation
                         ? Translation.tr("Confirm Prepare") : Translation.tr("Prepare UI")
@@ -1485,6 +1549,7 @@ ContentPage {
                         || root.stopQueueConfirmation
                         || root.uiQueueStartConfirmation
                         || root.uiQueueStageConfirmation
+                        || root.uiQueueIdleLegacyStopConfirmation
                         || root.resetChatConfirmation)
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
