@@ -378,6 +378,49 @@ ContentPage {
         queueProcess.running = true
     }
 
+    function queueTag(task): string {
+        if (!task) return Translation.tr("Blocked")
+        const state = task.state || ""
+        if (state === "verified" || state === "owner_verified"
+                || (state === "deferred" && task.reason === "already_completed"))
+            return Translation.tr("Verified")
+        if (state === "completed" || state === "done")
+            return Translation.tr("Done")
+        if (state === "active" || state === "working")
+            return Translation.tr("Working")
+        if (state === "queued") return Translation.tr("Queue")
+        if (state === "waiting") return Translation.tr("Waiting")
+        if (state === "paused" || state === "stopped")
+            return Translation.tr("Paused")
+        if (state === "failed" || state === "cancelled")
+            return Translation.tr("Blocked")
+        if (state === "deferred") return root.parkedReason(task.reason)
+        return Translation.tr("Needs review")
+    }
+
+    function queueTagColor(task): color {
+        if (!task) return Appearance.colors.colSubtext
+        if (task.state === "verified" || task.state === "owner_verified"
+                || (task.state === "deferred" && task.reason === "already_completed"))
+            return Appearance.colors.colPrimary
+        if (task.state === "completed" || task.state === "done")
+            return Appearance.colors.colOnSurface
+        if (task.state === "active" || task.state === "working")
+            return Appearance.colors.colPrimary
+        if (task.state === "queued")
+            return Appearance.colors.colSubtext
+        return Appearance.colors.colError
+    }
+
+    function selectQueueTask(entry): void {
+        if (!entry) return
+        root.selectedTask = entry
+        root.taskSnapshot = null
+        root.activitySnapshot = null
+        Qt.callLater(root.refreshTaskStatus)
+        Qt.callLater(root.refreshActivity)
+    }
+
     function parkedReason(reason): string {
         if (reason === "cloud_ack_pending") return Translation.tr("Ack pending")
         if (reason === "owner_review_pending") return Translation.tr("Owner review")
@@ -1212,28 +1255,79 @@ ContentPage {
                 color: Appearance.colors.colPrimary
                 text: root.statusText
             }
-            // The task chips are the ONLY queue list. Keep their existing
-            // task-selection callback for status/activity/owner review.
-            ConfigSelectionArray {
-                wrapFullLabels: true
+            // Vertical queue: exactly ten rows per column, up to the
+            // backend's twenty-item bound. The fixed-width status tags form
+            // aligned vertical lanes across all rows and both columns.
+            GridLayout {
+                objectName: "automationQueueGrid"
                 visible: !!root.queueSnapshot && root.queueSnapshot.items.length > 0
-                currentValue: root.selectedTask
-                    ? root.selectedTask.repository + ":" + root.selectedTask.code : ""
-                options: root.queueSnapshot
-                    ? root.queueSnapshot.items.map(t => ({
-                        displayName: t.code + " · " + (t.state === "deferred"
-                            ? root.parkedReason(t.reason) : t.state),
-                        value: t.repository + ":" + t.code
-                    })) : []
-                onSelected: value => {
-                    const entry = root.queueSnapshot.items.find(t =>
-                        t.repository + ":" + t.code === value)
-                    if (entry) {
-                        root.selectedTask = entry
-                        root.taskSnapshot = null
-                        root.activitySnapshot = null
-                        Qt.callLater(root.refreshTaskStatus)
-                        Qt.callLater(root.refreshActivity)
+                Layout.fillWidth: true
+                columns: 2
+                rows: 10
+                flow: GridLayout.TopToBottom
+                columnSpacing: 10
+                rowSpacing: 5
+
+                Repeater {
+                    model: root.queueSnapshot
+                        ? root.queueSnapshot.items.slice(0, 20) : []
+                    delegate: Rectangle {
+                        id: queueTaskRow
+                        required property var modelData
+                        required property int index
+                        readonly property bool isSelected: !!root.selectedTask
+                            && root.selectedTask.code === modelData.code
+                            && root.selectedTask.repository === modelData.repository
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        Layout.preferredHeight: 36
+                        radius: 9
+                        color: isSelected
+                            ? Appearance.colors.colLayer2 : Appearance.colors.colLayer1
+                        border.width: isSelected ? 1 : 0
+                        border.color: Appearance.colors.colPrimary
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 8
+                            spacing: 8
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: queueTaskRow.modelData.code
+                                color: Appearance.colors.colOnSurface
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                            }
+                            Rectangle {
+                                objectName: "automationTaskStatusTag"
+                                Layout.preferredWidth: 112
+                                Layout.preferredHeight: 24
+                                radius: 7
+                                color: Appearance.colors.colLayer2
+                                border.width: 1
+                                border.color: root.queueTagColor(queueTaskRow.modelData)
+                                StyledText {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 5
+                                    anchors.rightMargin: 5
+                                    text: root.queueTag(queueTaskRow.modelData)
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    font.pixelSize: Appearance.font.pixelSize.small
+                                    color: root.queueTagColor(queueTaskRow.modelData)
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 1
+                                }
+                            }
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.selectQueueTask(queueTaskRow.modelData)
+                        }
                     }
                 }
             }
