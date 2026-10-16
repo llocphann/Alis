@@ -81,6 +81,7 @@ ContentPage {
     property string uiQueueFirstTask: ""
     property bool uiQueueStartConfirmation: false
     property string uiQueueStartTarget: ""
+    property string uiQueueStartSnapshotId: ""
     property string backendTransportBlocker: ""
     property var backendServices: ({})
     property string backendStatusText: ""
@@ -197,6 +198,7 @@ ContentPage {
         root.queueStatusConfirmed = false
         root.uiQueueStartConfirmation = false
         root.uiQueueStartTarget = ""
+        root.uiQueueStartSnapshotId = ""
         queueOperation = "status"
         queueProcess.command = ["python3", Quickshell.shellPath("scripts/alis-automation-task.py"), "queue-status"]
         queueProcess.running = true
@@ -243,6 +245,7 @@ ContentPage {
             return
         const first = root.queueSnapshot.items.find(item => item.state === "queued")
         const identity = first ? first.repository + ":" + first.code : ""
+        const snapshotId = root.queueSnapshot.snapshot_id || ""
         const uiReady = root.backendInstalled && root.uiQueueStartAvailable
             && root.queueSnapshot.mode === "ordered"
             && root.queueSnapshot.state === "prepared"
@@ -252,28 +255,38 @@ ContentPage {
         root.clearQueueConfirmation = false
         root.errorText = ""
         if (uiReady) {
+            if (!/^[a-f0-9]{64}$/.test(snapshotId)) {
+                root.errorText = Translation.tr("Queue identity unavailable · update Automation backend and refresh")
+                return
+            }
             if (!root.uiQueueStartConfirmation) {
                 root.uiQueueStartConfirmation = true
                 root.uiQueueStartTarget = identity
+                root.uiQueueStartSnapshotId = snapshotId
                 root.statusText = Translation.tr("Confirm UI-only Start: responses are verified locally, not by the ChatGPT server. Existing native pending records remain preserved.")
                 return
             }
-            if (root.uiQueueStartTarget !== identity) {
+            if (root.uiQueueStartTarget !== identity
+                    || root.uiQueueStartSnapshotId !== snapshotId) {
                 root.uiQueueStartConfirmation = false
                 root.uiQueueStartTarget = ""
-                root.errorText = Translation.tr("Queue first task changed · refresh before UI Start")
+                root.uiQueueStartSnapshotId = ""
+                root.errorText = Translation.tr("Queue changed · refresh before UI Start")
                 return
             }
             root.uiQueueStartConfirmation = false
             root.uiQueueStartTarget = ""
+            root.uiQueueStartSnapshotId = ""
             root.queueOperation = "start"
             queueProcess.command = ["python3",
                 Quickshell.shellPath("scripts/alis-automation-task.py"),
                 "start-ui-queue", "--approve", "--accept-ui-only-receipts",
-                "--expected-first", identity]
+                "--expected-first", identity,
+                "--expected-snapshot-id", snapshotId]
         } else {
             root.uiQueueStartConfirmation = false
             root.uiQueueStartTarget = ""
+            root.uiQueueStartSnapshotId = ""
             root.queueOperation = "start"
             queueProcess.command = ["python3",
                 Quickshell.shellPath("scripts/alis-automation-task.py"),
@@ -286,6 +299,9 @@ ContentPage {
         if (root.busy)
             return
         root.clearQueueConfirmation = false
+        root.uiQueueStartConfirmation = false
+        root.uiQueueStartTarget = ""
+        root.uiQueueStartSnapshotId = ""
         const codes = taskCodeField.text.trim()
         const entries = codes.length ? codes.split(";").map(s => s.trim()) : []
         if (codes.length && (entries.length > 20 ||
