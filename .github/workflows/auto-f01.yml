@@ -55,6 +55,7 @@ jobs:
           node --check automation/chat_bridge/ui_response_gate.mjs
           node scripts/test-AUTO-F01-ui-response-gate.mjs
           node scripts/test-AUTO-F01-ui-target-preflight.mjs
+          node scripts/test-AUTO-F01-github-picker.mjs
           node --check automation/chat_bridge/alis_ui_smoke.mjs
           node --check automation/chat_bridge/alis_ui_smoke_cli.mjs
           node scripts/test-AUTO-F01-one-shot-smoke.mjs
@@ -84,6 +85,7 @@ jobs:
           python3 scripts/test-AUTO-F01-github-handoff.py
           python3 scripts/test-hadalis-chat-bridge.py
           python3 scripts/test-AUTO-F01-ui-scheduler.py
+          python3 scripts/test-AUTO-F01-ui-pre-send.py
           python3 scripts/test-AUTO-F01-ui-preflight.py
           python3 scripts/test-AUTO-F01-queue-controls.py
           python3 scripts/test-AUTO-F01-sudo-input.py

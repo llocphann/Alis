@@ -87,3 +87,43 @@ def acknowledge_completed(pending: Path, attempt: str) -> None:
     os.replace(pending, archive / (attempt + ".json"))
     _sync_directory(archive)
     _sync_directory(folder)
+
+
+def acknowledge_not_sent(pending: Path, attempt: str, digest: str,
+                         *, evidence: str) -> None:
+    """Keep an unsent tombstone; never count it as observed/delivered.
+
+    Callers must bind either the child CLI's typed pre-Send failure receipt
+    or a direct Owner confirmation to the exact pending attempt and hash.
+    Unknown/crashed/possibly clicked attempts do not qualify.
+    """
+    try:
+        valid_attempt = isinstance(attempt, str) and str(uuid.UUID(attempt)) == attempt
+    except ValueError:
+        valid_attempt = False
+    if (not valid_attempt or not isinstance(digest, str) or len(digest) != 64
+            or any(c not in "0123456789abcdef" for c in digest)):
+        raise ValueError("Invalid not-sent attempt identity")
+    if evidence not in {"desktop-pre-send-receipt", "owner-confirmed-not-sent"}:
+        raise ValueError("Explicit not-sent evidence required")
+    folder = _private_directory(pending.parent)
+    if pending.name != "pending.json" or pending.is_symlink():
+        raise RuntimeError("ALIS_UI_SEND_JOURNAL_MISMATCH")
+    record = json.loads(pending.read_text(encoding="utf-8"))
+    if (not isinstance(record, dict)
+            or record.get("schema") != SCHEMA or record.get("id") != attempt
+            or record.get("phase") != "attempted"
+            or record.get("prompt_sha256") != digest):
+        raise RuntimeError("ALIS_UI_SEND_JOURNAL_MISMATCH")
+    archive = _private_directory(folder / "not-sent")
+    destination = archive / (attempt + ".json")
+    if destination.exists() or destination.is_symlink():
+        raise RuntimeError("ALIS_UI_NOT_SENT_TOMBSTONE_CONFLICT")
+    # Archive the original intent first, preserving no-replay identity even
+    # if recording the Owner/CLI evidence is interrupted afterwards.
+    os.replace(pending, destination)
+    _sync_directory(archive)
+    _sync_directory(folder)
+    from automation.manager.store import _write
+    _write(destination, {**record, "outcome": "not_sent", "evidence": evidence,
+                         "delivery_acknowledged": False})

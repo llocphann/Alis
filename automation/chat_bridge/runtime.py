@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -12,7 +13,7 @@ import time
 from typing import Any
 
 from automation.chat_bridge.controller import BridgeAction, BridgeState, transition
-from automation.chat_bridge.send_journal import prepare_send, acknowledge_completed
+from automation.chat_bridge.send_journal import prepare_send, acknowledge_completed, acknowledge_not_sent
 from automation.chat_bridge.protocol import (
     CONTINUATION_PROMPT,
     ROTATION_BOOTSTRAP_PROMPT,
@@ -96,6 +97,7 @@ def run(
     *,
     input_text: str | None = None,
     timeout: float | None = None,
+    extra_env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         argv,
@@ -105,7 +107,15 @@ def run(
         capture_output=True,
         check=False,
         timeout=timeout,
+        env={**os.environ, **(extra_env or {})},
     )
+
+
+class UiNotSent(RuntimeError):
+    """Exact CLI receipt proves a normal failure before its single Send."""
+    def __init__(self, code: str, digest: str):
+        super().__init__(code)
+        self.prompt_sha256 = digest
 
 
 def desktop(command: str, prompt: str | None = None,
@@ -125,8 +135,29 @@ def desktop(command: str, prompt: str | None = None,
         argv,
         input_text=prompt,
         timeout=DESKTOP_TIMEOUT_SECONDS,
+        extra_env={"ALIS_UI_ATTEMPT_ID": intent[1]} if intent else None,
     )
     if result.returncode != 0:
+        if intent and result.returncode == 1 and len(result.stdout) <= 4096:
+            try:
+                failure = json.loads(result.stdout)
+            except ValueError:
+                failure = None
+            digest = hashlib.sha256(prompt.encode()).hexdigest()
+            if (isinstance(failure, dict)
+                    and set(failure) == {"schema", "attempt_id", "prompt_sha256",
+                                         "send_attempted", "code"}
+                    and failure["schema"] == "alis.ui-dispatch-failure.v1"
+                    and failure["attempt_id"] == intent[1]
+                    and failure["prompt_sha256"] == digest
+                    and failure["send_attempted"] is False
+                    and isinstance(failure["code"], str)
+                    and failure["code"] in {"ALIS_UI_GITHUB_PICKER_UNAVAILABLE",
+                                             "ALIS_UI_GITHUB_MENTION_UNVERIFIED",
+                                             "ALIS_UI_PRE_SEND_FAILED"}):
+                acknowledge_not_sent(*intent, digest,
+                                     evidence="desktop-pre-send-receipt")
+                raise UiNotSent(failure["code"], digest)
         # Never surface raw stderr: it can contain private UI context.
         raise RuntimeError("ALIS_UI_SEND_UNCERTAIN_NO_RETRY" if intent else
                            "Alis Desktop observation failed")

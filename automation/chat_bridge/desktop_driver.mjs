@@ -464,12 +464,7 @@ function splitGitHubMentionPrompt(prompt) {
   return lines.slice(index + 1).join("\n");
 }
 
-export async function selectGitHubMention(page, composer) {
-  await composer.fill("");
-  await composer.focus();
-  await page.keyboard.insertText("@");
-  await sleep(700);
-
+async function clickGitHubPicker(page) {
   // Other plugins mention GitHub in their descriptions (e.g. Code Review).
   // Match the entry's leading name instead of any word in its description.
   const pickerName = /^GitHub(?:\s|$)/i;
@@ -503,12 +498,23 @@ export async function selectGitHubMention(page, composer) {
     }
   }
 
+  return null;
+}
+
+export async function selectGitHubMention(page, composer) {
+  await composer.fill("");
+  await composer.focus();
+  await page.keyboard.insertText("@");
+  await sleep(700);
+  let selected=await clickGitHubPicker(page);
+  if (selected) return selected;
+  // Filter a long picker, then inspect its actual options again. Enter can
+  // submit an ordinary composer when no picker owns focus: never use it.
   await page.keyboard.insertText("GitHub");
-  await sleep(500);
-  await page.keyboard.press("ArrowDown");
-  await page.keyboard.press("Enter");
-  await sleep(500);
-  return "keyboard-picker";
+  await sleep(700);
+  selected=await clickGitHubPicker(page);
+  if (selected) return selected;
+  throw new Error("ALIS_UI_GITHUB_PICKER_UNAVAILABLE");
 }
 
 async function populatePrompt(page, composer, prompt) {
@@ -544,6 +550,8 @@ async function populatePrompt(page, composer, prompt) {
 }
 
 export async function submitPrompt(page, prompt) {
+  let sendAttempted=false;
+  try {
   const composer = await requireIdleComposer(page);
 
   await populatePrompt(page, composer, prompt);
@@ -566,11 +574,23 @@ export async function submitPrompt(page, prompt) {
   if (await send.isDisabled())
     throw new Error("ALIS_UI_SEND_DISABLED_NO_ATTEMPT");
 
+  sendAttempted=true;
   await send.evaluate(element => element.click());
   if (!await waitForSubmissionStart(page, composer, 2500))
     throw new Error("ALIS_UI_SEND_UNCERTAIN_NO_RETRY");
 
   return completionBaseline;
+  } catch (error) {
+    // Only this in-process boundary can prove a normal failure preceded the
+    // single Send click. Crashes/timeouts have no such receipt and stay unsure.
+    error.uiSendAttempted=sendAttempted;
+    error.uiFailureCode=String(error.message).includes("ALIS_UI_GITHUB_PICKER_UNAVAILABLE")
+      ? "ALIS_UI_GITHUB_PICKER_UNAVAILABLE"
+      : String(error.message).includes("rich mention")
+        ? "ALIS_UI_GITHUB_MENTION_UNVERIFIED"
+        : "ALIS_UI_PRE_SEND_FAILED";
+    throw error;
+  }
 }
 
 async function loopMarkerTokens(page) {

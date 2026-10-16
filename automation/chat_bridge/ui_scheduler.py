@@ -239,6 +239,21 @@ def ui_tick(profile_id: str, *, now: int | None = None,
             "transport": UI_TRANSPORT, "attempt_id": attempt,
             "directive": directive.kind.value, "response": text,
             "at_unix": int(time.time())})
+    except runtime.UiNotSent as error:
+        def unsent(_config, state):
+            current = state["profiles"].get(profile_id)
+            if (current and current.get("pending") == pending
+                    and pending["prompt_sha256"] == error.prompt_sha256):
+                current.update(pending=None,
+                               desired="paused" if current["desired"] == "run" else current["desired"], run_active=False,
+                               status="ui_composition_failed", last_error=str(error))
+                store.event(state, profile_id, "ui_not_sent", str(error))
+                return True
+            return False
+        if store.change_state(unsent):
+            return "ui_composition_failed"
+        _mark_unresolved(profile_id, "Pre-Send failure identity mismatch")
+        return "ui_reconciliation_required"
     except Exception:
         _mark_unresolved(profile_id, "UI send or observation is uncertain")
         return "ui_reconciliation_required"

@@ -29,6 +29,8 @@ function writeError(error) {
   fs.writeSync(2, detail + "\n");
 }
 
+let dispatchIdentity=null;
+
 async function readStdin() {
   const chunks = [];
   for await (const chunk of process.stdin)
@@ -363,6 +365,10 @@ async function main() {
     const prompt = await readStdin();
     if (!prompt.trim())
       throw new Error("stdin prompt is empty");
+    const attempt=process.env.ALIS_UI_ATTEMPT_ID;
+    if (/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(attempt ?? ""))
+      dispatchIdentity={attempt_id:attempt,
+        prompt_sha256:createHash("sha256").update(prompt).digest("hex")};
 
     const completionBaseline = await submitPrompt(page, prompt);
     const generation = await waitForCompletion(
@@ -388,7 +394,10 @@ async function main() {
 main().then(
   () => process.exit(0),
   error => {
-    writeError(error);
+    if (dispatchIdentity && error.uiSendAttempted === false)
+      writeJson({schema:"alis.ui-dispatch-failure.v1",...dispatchIdentity,
+        send_attempted:false,code:error.uiFailureCode});
+    else writeError(error);
     process.exit(1);
   }
 );
