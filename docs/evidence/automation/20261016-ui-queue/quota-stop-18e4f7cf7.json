@@ -1,0 +1,40 @@
+{
+  "schema": "alis.quota-stop-evidence.v1",
+  "source_head_before_checkpoint": "7a9f5483e99d0bbb82adf3f8df6165dc8b4cf2f9",
+  "quota": {
+    "primary_used_percent": 97,
+    "resets_at": 1792141615,
+    "resume_after_unix": 1792141675
+  },
+  "maintainer": {
+    "source_sha": "18e4f7cf7e88ddaad33764fbc08d9490836cc746",
+    "status": "STOPPED",
+    "actual_os_exit": -15,
+    "remaining_owned_after_exit": []
+  },
+  "partial_logged_results": {
+    "PASS": 186,
+    "FAIL": 21,
+    "SKIP": 0
+  },
+  "started_checks": 208,
+  "started_without_settled_result": 1,
+  "partial_count_scope": "logged Result lines only; stopped/unrun checks are not PASS",
+  "canonical_log_sha256": "293e0f9c268ea7c000b5ee0b4c22bc0b0a2774cebb204769579d69fbd9c7b4e3",
+  "ui_bridge": {
+    "status": "STOPPED",
+    "systemd_exec_main_code": "2",
+    "systemd_exec_main_status": "15",
+    "main_pid_after_stop": 0,
+    "ui_idle_observed": true,
+    "external_model_terminal_receipt": "UNCONFIRMED",
+    "original_pending_retained": true,
+    "accepted_turns": 2,
+    "replayed_sends": 0
+  },
+  "queue_admission": "REVOKED; original order and active task retained for supervised recovery",
+  "local_job": "JOB-80c855ddf741f8776d58f140 already PASS; never rerun on duplicate approval",
+  "integration_head_after_cloud_effects": "d03f4b5e6d8dc70bfd062a2e80c2cddf32bc56c4",
+  "integration_new_head_validation": "UNRUN; do not reuse installer PASS from 3c5356a21bfb for this successor",
+  "owner_acceptance": "UNRUN"
+}
