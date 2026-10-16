@@ -75,8 +75,63 @@ def parse_codes(raw: str) -> list[str]:
     return values
 
 
+def _pristine_task(record: dict, live: dict) -> bool:
+    """No earlier Cloudbot dispatch, Localbot work, handoff or receipt.
+
+    A source pin is immutable after execution. For a PREPARED-only task we
+    may reuse its original SHA after verifying GitHub ancestry; we never
+    rewrite task.base_sha, saved prompts or history.
+    """
+    saved = record.get("task")
+    if not isinstance(saved, dict):
+        return False
+    if any(saved.get(k) != live.get(k) for k in
+           ("code", "repository", "issue_number", "branch", "issue_updated_at",
+            "title", "body", "comments")):
+        return False
+    return (
+        record.get("status") == "prepared"
+        and record.get("scheduler_dispatched") is False
+        and record.get("unresolved") is False
+        and record.get("handoff") is None
+        and record.get("latest_receipt") is None
+        and record.get("retired_handoff") is None
+        and record.get("delivery_acknowledged_unix") is None
+        and record.get("reports") == []
+        and not record.get("rotation")
+        and not record.get("checkpoint")
+        and not record.get("job_id")
+        and isinstance(saved.get("base_sha"), str)
+        and bool(tf.SHA.fullmatch(saved["base_sha"]))
+        and record.get("cloud_prompt") == tf.internal_prompt(saved)
+    )
+
+
+def _verified_ancestor_pin(repo: str, original: str, current: str,
+                           compare_api: Callable[[str], object] | None) -> bool:
+    if original == current:
+        return True
+    if compare_api is None:
+        return False
+    # Require BOTH endpoint identity and a trusted merge-base signal:
+    # status alone or a newer HEAD is not enough to update a task.
+    try:
+        comparison = compare_api(
+            f"/repos/{repo}/compare/{original}...{current}")
+    except (tf.TaskError, OSError, ValueError):
+        return False
+    return (isinstance(comparison, dict)
+            and comparison.get("status") == "ahead"
+            and comparison.get("behind_by") == 0
+            and isinstance(comparison.get("ahead_by"), int)
+            and comparison["ahead_by"] > 0
+            and comparison.get("base_commit", {}).get("sha") == original
+            and comparison.get("merge_base_commit", {}).get("sha") == original)
+
+
 def prepare(raw: str, mode: str = "ordered",
-            resolver: Callable[[str], dict] = tf.resolve) -> dict:
+            resolver: Callable[[str], dict] = tf.resolve,
+            comparison_api: Callable[[str], object] | None = None) -> dict:
     """Resolve ALL canonical Issues before writing any queue state.
 
     The queue is single-active and serial, never silently replaced while work
@@ -99,8 +154,18 @@ def prepare(raw: str, mode: str = "ordered",
                                      f'{entry["repository"]}#{entry["issue_number"]}'}
                         for raw_code, entry in zip(inputs, existing["items"])))))
             if same:
-                return {**view(existing), "duplicate": True}
-            raise tf.TaskError("An unfinished queue exists; reconcile before replacing")
+                # A review-only manifest has never claimed a task. It may be
+                # re-evaluated against fresh GitHub ancestry/Issue metadata,
+                # preserving saved task files and without granting Start.
+                if (existing.get("state") != "review_required"
+                        or existing.get("active") is not None
+                        or existing.get("approved_start")
+                        or existing.get("selection")
+                        or any(item.get("state") != "deferred"
+                               for item in existing.get("items", []))):
+                    return {**view(existing), "duplicate": True}
+            else:
+                raise tf.TaskError("An unfinished queue exists; reconcile before replacing")
     # The default GitHub intake resolves open Issues in bounded repository
     # batches. Keep injected per-code resolvers for offline tests and tools.
     tasks = (tf.resolve_batch(inputs) if resolver is tf.resolve
@@ -119,33 +184,42 @@ def prepare(raw: str, mode: str = "ordered",
                     (current.get("requested") == inputs or
                     [(x["repository"], x["code"]) for x in current["items"]] == keys))
             if same:
-                return {**view(current), "duplicate": True}
-            raise tf.TaskError("An unfinished queue exists; reconcile before replacing")
-        ready, deferred = [], []
+                if (current.get("state") != "review_required"
+                        or current.get("active") is not None
+                        or current.get("approved_start")
+                        or current.get("selection")
+                        or any(item.get("state") != "deferred"
+                               for item in current.get("items", []))):
+                    return {**view(current), "duplicate": True}
+            else:
+                raise tf.TaskError("An unfinished queue exists; reconcile before replacing")
+        classified = []
+        checked_ancestry = {}
+        compare_api = (comparison_api if comparison_api is not None else
+                       (tf._github if resolver is tf.resolve else None))
         for task in tasks:
-            # Intake is idempotent. Never reset an existing Cloudbot/Localbot
-            # file to make a task look new, especially awaiting_cloud_ack.
+            # An existing record is an immutable intake. Never change
+            # source_sha because the dev branch advanced.
             previous = tf.intake(task)
             record = tf.load_task(task["code"], task["repository"])
-            saved_task = record.get("task")
-            if (not isinstance(saved_task, dict) or
-                    record.get("issue_number") != task["issue_number"]):
+            saved = record.get("task")
+            if (not isinstance(saved, dict)
+                    or record.get("issue_number") != task["issue_number"]):
                 raise tf.TaskError(
                     f'{task["code"]} has inconsistent Issue identity; '
-                    'no queue was created')
-            item = {
-                "code": task["code"], "repository": task["repository"],
-                "issue_number": task["issue_number"],
-                "source_sha": task["base_sha"],
-            }
+                    'queue unchanged')
+            original_sha = saved.get("base_sha")
+            if not isinstance(original_sha, str) or not tf.SHA.fullmatch(original_sha):
+                raise tf.TaskError("Saved task pin missing; manual review required")
+            item = {"code": task["code"], "repository": task["repository"],
+                    "issue_number": task["issue_number"],
+                    "source_sha": original_sha}
             state = previous["state"]
-            # Defer, rather than replay, previously delivered local work.
-            # The original signed handoff, worker receipt, checkpoint and
-            # pending ChatGPT acknowledgement remain immutable.
+            # The actual work state outranks source drift: an old ACK,
+            # dispatched job or owner review cannot be classified as an
+            # unrelated Pin changed merely because HEAD moved.
             reason = None
-            if saved_task.get("base_sha") != task["base_sha"]:
-                reason = "source_pin_changed"
-            elif record.get("unresolved"):
+            if record.get("unresolved"):
                 reason = "unresolved_work"
             elif state not in {"prepared", "handoff_ready"}:
                 reason = {
@@ -163,21 +237,37 @@ def prepare(raw: str, mode: str = "ordered",
                 reason = "previous_handoff_pending"
             elif record.get("latest_receipt") is not None:
                 reason = "previous_receipt_exists"
-            if reason is None:
-                ready.append({**item, "state": "queued"})
+            elif not _pristine_task(record, task):
+                reason = "saved_work_requires_review"
             else:
-                deferred.append({**item, "state": "deferred", "reason": reason})
+                key = (task["repository"], original_sha, task["base_sha"])
+                if key not in checked_ancestry:
+                    checked_ancestry[key] = _verified_ancestor_pin(
+                        task["repository"], original_sha,
+                        task["base_sha"], compare_api)
+                if not checked_ancestry[key]:
+                    reason = "source_pin_unverified"
+            if reason is None:
+                classified.append({**item, "state": "queued"})
+            else:
+                classified.append({**item, "state": "deferred",
+                                   "reason": reason})
         now = int(time.time())
         manifest = {
             "schema": QUEUE_SCHEMA, "mode": mode,
-            "state": "prepared" if ready else "review_required",
-            "created_unix": now, "updated_unix": now,
+            "state": ("prepared" if any(x["state"] == "queued"
+                                         for x in classified)
+                      else "review_required"),
+            "created_unix": (current.get("created_unix", now)
+                             if current and current.get("state") == "review_required"
+                             else now),
+            "updated_unix": now,
             "requested": inputs,
             "approved_start": False,
             "active": None, "selection": None,
             # Never silently drop the original request. Deferred tasks are
             # visible, cannot be scheduled, and do not block safe siblings.
-            "items": ready + deferred,
+            "items": classified,
         }
         _save(manifest)
         return {**view(manifest), "duplicate": False}
