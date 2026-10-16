@@ -382,6 +382,72 @@ class Preflight(unittest.TestCase):
             self.assertIn("FOREIGN_PROFILE_UNSETTLED",
                           self.view()["preflight_blockers"])
 
+    def test_historical_native_session_without_pending_never_blocks_new_ui_task(self):
+        self._write_queue_fixture()
+        historical = self.config["profiles"][0]
+        historical["enabled"] = True
+        original = self.state["profiles"][self.id]
+        original.update(desired="stopped", status="idle",
+                        session={"conversation_id": "PRIVATE_HISTORICAL_CHAT"},
+                        pending=None, job_id=None, run_active=False)
+        old_bytes = json.dumps(original, sort_keys=True)
+        config_path = store.config_path()
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps(self.config))
+        store.state_path().write_text(json.dumps(self.state))
+        with patch.object(ui_preflight, "_unit_state",
+                          return_value=("active", "ui_queue_mode")):
+            report = ui_preflight.check_prepared_queue()
+        self.assertEqual(report["queue_state"], "prepared")
+        self.assertEqual(report["historical_native_session_count"], 1)
+        self.assertEqual(report["native_unsettled_count"], 0)
+        self.assertEqual(report["foreign_running_count"], 0)
+        self.assertNotIn("NATIVE_SESSION_REQUIRES_REVIEW", report["preflight_blockers"])
+        self.assertNotIn("FOREIGN_PROFILE_UNSETTLED", report["preflight_blockers"])
+        self.assertNotIn("PRIVATE_HISTORICAL_CHAT", json.dumps(report))
+        self.assertEqual(json.dumps(original, sort_keys=True), old_bytes)
+        self.assertFalse(report["submission_authorized"])
+
+        # An unsettled native pending, job, running state, or uncertain
+        # status MUST still block; never translate an ID into send approval.
+        original["pending"] = {"id": "DO_NOT_RESEND"}
+        with patch.object(ui_preflight, "_unit_state",
+                          return_value=("active", "ui_queue_mode")):
+            store.state_path().write_text(json.dumps(self.state))
+            blocked = ui_preflight.check_prepared_queue()
+            self.assertIn("NATIVE_SESSION_REQUIRES_REVIEW",
+                          blocked["preflight_blockers"])
+            self.assertIn("FOREIGN_PROFILE_UNSETTLED",
+                          blocked["preflight_blockers"])
+        original["pending"] = None
+        for mutate in (
+            lambda: original.update(job_id="JOB-PRESERVED"),
+            lambda: original.update(desired="run", job_id=None),
+            lambda: original.update(desired="stopped", run_active=True),
+            lambda: original.update(run_active=False, status="stopping"),
+        ):
+            original.update(desired="stopped", status="idle",
+                            job_id=None, run_active=False)
+            mutate()
+            self.assertFalse(ui_preflight.inert_native_session_history(
+                self.config, self.id, original))
+        self.assertTrue(ui_preflight.has_unresolved_native_transport({
+            "pending": {"transport": "alis-ui-once"},
+            "session": {"conversation_id": "native-historical"}}))
+
+    def test_ui_preflight_historical_foreign_session_does_not_block_cutover(self):
+        legacy = model.new_profile("Past native")
+        self.config["profiles"].append(legacy)
+        old = store.profile_state()
+        old.update(desired="stopped", status="completed",
+                   session={"conversation_id": "OLD_PRIVATE"})
+        self.state["profiles"][legacy["id"]] = old
+        preview = self.view()
+        self.assertFalse(preview["native_session_unsettled"])
+        self.assertFalse(preview["foreign_work_unsettled"])
+        self.assertTrue(preview["mode_change_preflight_clear"])
+        self.assertNotIn("OLD_PRIVATE", json.dumps(preview))
+
     def test_prepared_queue_stage_with_only_retained_disabled_native_pending(self):
         path = self._write_queue_fixture()
         legacy = self.config["profiles"][0]
