@@ -477,6 +477,16 @@ Item {
     }
 
     function add(kind): void {
+        // A unified launcher is one module entry, never a second instance of
+        // Notes/Timers or Notifications/Activities on the same output.
+        if (Placement.isUnifiedKind(kind)) {
+            const present=draft.find(p => p.kind === kind && p.enabled)
+            if (present) {
+                select(present.id)
+                feedback="This unified module is already on this output"
+                return
+            }
+        }
         if (draft.length >= 24) return
         const existing = draft.find(p => p.kind === kind && !p.enabled)
         if (existing) {
@@ -1064,6 +1074,21 @@ Item {
                             enabled:root.targets.length>0
                             
                             onClicked:root.batch("enabled",root.allTargetsDisabled)
+                            }
+                            AbyssButton {
+                            objectName:"abyssUnifiedModuleIconVisibility"
+                            visible:root.targets.length>0
+                                && root.targets.every(p=>Placement.isUnifiedKind(p.kind))
+                            Layout.maximumHeight:root.editorActionSize
+                            Layout.maximumWidth:root.editorActionSize
+                            Layout.preferredWidth:root.editorActionSize
+                            compact:true;editorSquare:true
+                            glyph:checked ? "visibility" : "visibility_off"
+                            text:checked ? "Hide icon" : "Show icon"
+                            description:"Show the circular anchor, or hide only the icon while keeping physical Screen Edge hover"
+                            checkable:true
+                            checked:root.targets.length>0 && root.targets.every(p=>p.showIcon!==false)
+                            onToggled:root.batch("showIcon",checked)
                             }
                             AbyssButton {
                             Layout.maximumHeight:root.editorActionSize
