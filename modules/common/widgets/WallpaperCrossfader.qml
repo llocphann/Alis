@@ -5,6 +5,7 @@ import QtQuick.Effects
 import Quickshell
 
 import qs.modules.common
+import qs.modules.abyss.looks
 
 Item {
     id: root
@@ -983,12 +984,18 @@ Item {
         property var source: fromImage
         property var source1: fromImage
         property var source2: toImage
-        // Liquid material is bound to live Material 3 tokens. Preview theming
-        // and manual theme changes update the ink without recompiling the QSB.
-        // Qt ShaderEffect maps QML color properties to GLSL vec4 uniforms.
-        property color liquidAccent: Appearance.m3colors.m3primary
-        property color liquidDepth: Appearance.m3colors.m3primaryContainer
-        property color liquidHighlight: Appearance.m3colors.m3secondary
+        // The Liquid front is the same material as the Abyss Panel shader:
+        // the source of these values is precisely AbyssField's surface,
+        // raised, rim, shadow and glow, not a second accent-colored palette.
+        // Surface opacity, quality/effects policy and live theme follow
+        // AbyssStyle automatically without adding any texture captures.
+        property color liquidSurface: AbyssStyle.surface
+        property color liquidRaised: AbyssStyle.surfaceRaised
+        property color liquidRim: AbyssStyle.specular
+        property color liquidShadow: AbyssStyle.shadow
+        property color liquidGlow: AbyssStyle.glow
+        property real liquidHighlightStrength: AbyssStyle.highlightStrength
+        property real liquidMotionIntensity: AbyssStyle.motionIntensity
         property real time: 0
         property real progress: root._clamp01(transitionState.progress)
         property real aspectX: width / Math.max(1, height)
