@@ -29,6 +29,7 @@ Singleton {
     property var _previewBaseline: null
     property var _previewPalette: null
     property var _previewPending: null
+    property bool _previewWaitingForPresentation: false
     property bool _previewExternalDeferred: false
 
     function _snapshotColors(): var {
@@ -45,7 +46,7 @@ Singleton {
         return result
     }
 
-    function previewWallpaperColors(path: string, thumbnail = ""): void {
+    function previewWallpaperColors(path: string, thumbnail = "", deferUntilPresented = false): void {
         if (!path) { root.cancelColorPreview(); return }
         if (!root.previewActive) {
             root._previewBaseline = root._snapshotColors()
@@ -68,13 +69,43 @@ Singleton {
             soften: settings?.softenColors ?? false, "invert-hue": settings?.colorInvert ?? false
         }
         root.previewPath = path
-        root._previewPending = {serial: ++root._previewSerial, command: ["/usr/bin/python3",
+        // Generating palette colors decodes the source and launches a native
+        // process. When Liquid is revealing this wallpaper, do not compete
+        // with its GPU upload. A deadline still handles hidden/no-frame previews.
+        root._previewWaitingForPresentation = Boolean(deferUntilPresented)
+        root._previewPending = {serial: ++root._previewSerial, command: ["/usr/bin/nice", "-n", "10", "/usr/bin/python3",
             Quickshell.shellPath("scripts/colors/preview-palette.py"), path, JSON.stringify(options)]}
-        root._startNextPreview()
+        if (root._previewWaitingForPresentation) {
+            previewFrameDeadline.interval = 2400
+            previewFrameDeadline.restart()
+        } else {
+            previewFrameDeadline.stop()
+            root._startNextPreview()
+        }
+    }
+
+    function previewWallpaperPresented(path: string): void {
+        if (!root.previewActive || !root._previewWaitingForPresentation
+                || String(path ?? "") !== root.previewPath)
+            return
+        // Let the compositor finish the final Liquid frame before invoking
+        // Python/native palette generation; latest selection still wins.
+        previewFrameDeadline.interval = 180
+        previewFrameDeadline.restart()
+    }
+
+    Timer {
+        id: previewFrameDeadline
+        repeat: false
+        interval: 2400
+        onTriggered: {
+            root._previewWaitingForPresentation = false
+            root._startNextPreview()
+        }
     }
 
     function _startNextPreview(): void {
-        if (previewProcess.running || !root._previewPending) return
+        if (root._previewWaitingForPresentation || previewProcess.running || !root._previewPending) return
         const request = root._previewPending
         root._previewPending = null
         previewProcess.serial = request.serial
@@ -100,6 +131,8 @@ Singleton {
 
     function cancelColorPreview(): void {
         if (!root.previewActive) return
+        previewFrameDeadline.stop()
+        root._previewWaitingForPresentation = false
         root.previewActive = false
         root.previewPath = ""
         ++root._previewSerial
