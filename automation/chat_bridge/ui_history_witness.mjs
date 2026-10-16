@@ -7,6 +7,7 @@ import {createHash} from "node:crypto";
 import {uiAnchorSource,matchingSubmittedUnit,submittedPromptMatches} from "./ui_turn_anchor.mjs";
 
 const SHA=/^[0-9a-f]{64}$/;
+const UUID=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const TOKEN=/\nAlis UI request token: [0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\n/;
 
 export function virtualizedRecoveryEligible(prompt,targetKey,expectedUserCount=null) {
@@ -37,8 +38,8 @@ export function validateVirtualizedHistory({
   catch {throw Error("ALIS_UI_HISTORY_ORIGINAL_PROMPT_UNVERIFIED");}
   if (match.index!==latestUnits.length-1
       || !submittedPromptMatches(match.unit,prompt)
-      || typeof match.unit.turn_key!=="string"
-      || typeof match.unit.message_id!=="string"
+      || typeof match.unit.turn_key!=="string" || !UUID.test(match.unit.turn_key)
+      || typeof match.unit.message_id!=="string" || !UUID.test(match.unit.message_id)
       || latestUnits.filter(u=>u.turn_key===match.unit.turn_key
                         || u.message_id===match.unit.message_id).length!==1)
     throw Error("ALIS_UI_HISTORY_LATER_TURN_UNVERIFIED");
