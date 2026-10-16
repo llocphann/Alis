@@ -8,8 +8,8 @@ positions = (root / "modules/abyss/settings/AbyssPositionSettings.qml").read_tex
 
 for needle in [
     "if (root.editingPopups)",
-    "edge === previewBody.edge",
-    "previewBody.joinedEdge",
+    "previewBody.targetRecord?.content",
+    "Placement.toolbarEdgeForRects",
     "onPreviewPositionChanged: root.scheduleToolbarRelocation()",
     "onPreviewKindChanged: root.scheduleToolbarRelocation()",
     "id: toolbarScroll",
