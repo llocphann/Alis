@@ -97,6 +97,15 @@ jobs:
           python3 scripts/test-hadalis-automation-credentials.py
           python3 scripts/test-hadalis-automation-install.py
 
+      - name: Verify ABYSS-R15 unified Edge modules
+        shell: bash
+        run: |
+          python3 scripts/test-abyss-unified-edge-modules-contract.py
+          node scripts/test-abyss-unified-edge-modules.mjs
+          python3 scripts/test-abyss-module-layout.py
+          node scripts/test-abyss-full-size-modules.mjs
+          node scripts/test-abyss-multi-selection.mjs
+
       - name: Run canonical local validator
         shell: bash
         run: |
