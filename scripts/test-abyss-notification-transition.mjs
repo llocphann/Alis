@@ -221,7 +221,7 @@ same('existing availability/readiness guard stays active',
 same('pyramid close and reversal still track normalized external progress',
     host.includes('root.externalProgress') && host.includes('root.pyramidClosing')
     && host.includes('root.pyramidReopening'),true);
-const progressMatch=host.match(/property real progress: ([^\n]+\n\s*\?[^\n]+\n\s*:[^\n]+)/);
+const progressMatch=host.match(/property real progress: ([^\n]+\n\s*\?[^\n]+)/);
 assert.ok(progressMatch,'missing actual QML combined progress');
 const progressFn=new Function('externalProgress','availabilityProgress',
     'return ('+progressMatch[1].trim()+');');
