@@ -553,6 +553,61 @@ class QueueControls(unittest.TestCase):
         self.assertNotIn("root.queueStatusConfirmed", button)
         self.assertIn('"--expected-queued", targets', qml)
 
+    def test_clear_rejects_stale_queue_generation_even_with_same_queued_codes(self):
+        queue.prepare_auto(api=self.github)
+        initial = queue.view()
+        expected = ";".join(
+            item["repository"] + ":" + item["code"]
+            for item in initial["items"] if item["state"] == "queued")
+        old_id = initial["snapshot_id"]
+        self.assertEqual(len(old_id), 64)
+        with queue._lock():
+            changed = queue._load()
+            changed["created_unix"] += 1
+            queue._save(changed)
+        current_bytes = (tf.state_dir() / "queue.json").read_bytes()
+        with self.assertRaisesRegex(tf.TaskError, "Queue changed"):
+            queue.clear(approved=True, expected_queued=expected,
+                        expected_snapshot_id=old_id)
+        self.assertEqual((tf.state_dir() / "queue.json").read_bytes(),
+                         current_bytes)
+        self.assertEqual(queue.view()["items"], initial["items"])
+        with self.assertRaisesRegex(tf.TaskError, "Invalid queue snapshot"):
+            queue.clear(approved=True, expected_queued=expected,
+                        expected_snapshot_id="not-a-digest")
+        fresh = queue.view()["snapshot_id"]
+        self.assertNotEqual(fresh, old_id)
+        cleared = queue.clear(approved=True, expected_queued=expected,
+                              expected_snapshot_id=fresh)
+        self.assertEqual(cleared["state"], "empty")
+        with self.assertRaisesRegex(tf.TaskError, "Queue generation changed"):
+            queue.clear(approved=True, expected_queued="",
+                        expected_snapshot_id=fresh)
+
+    def test_clear_requires_fresh_snapshot_after_stop_transition(self):
+        queue.prepare_auto(api=self.github)
+        queue.claim(verified_start=lambda *_args: True)
+        active = queue.view()
+        target = active["active"]["repository"] + ":" + active["active"]["code"]
+        queued = ";".join(x["repository"] + ":" + x["code"]
+                          for x in active["items"] if x["state"] == "queued")
+        queue.request_stop(approved=True, expected_active=target)
+        current = queue.view()
+        self.assertEqual(current["state"], "stopping")
+        self.assertNotEqual(active["snapshot_id"], current["snapshot_id"])
+        with self.assertRaisesRegex(tf.TaskError, "Queue changed"):
+            queue.clear(approved=True, expected_queued=queued,
+                        expected_snapshot_id=active["snapshot_id"])
+        result = queue.clear(approved=True, expected_queued=queued,
+                             expected_snapshot_id=current["snapshot_id"])
+        self.assertTrue(result["active_preserved"])
+        self.assertEqual(result["state"], "stopping")
+        self.assertEqual(result["removed_queued"], 1)
+        qml = (Path(__file__).resolve().parents[1] /
+               "modules/settings/AutomationTaskConfig.qml").read_text()
+        self.assertIn('"--expected-snapshot-id", snapshotId', qml)
+        self.assertIn("clearQueueSnapshotId", qml)
+
     def test_queue_clear_matches_exact_snapshot_and_rejects_waiting_selector(self):
         queue.prepare_auto(api=self.github)
         live = "llocphann/Alis:AUTO-R01;llocphann/Alis:AUTO-I02"
