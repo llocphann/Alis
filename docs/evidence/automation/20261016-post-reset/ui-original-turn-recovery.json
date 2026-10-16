@@ -1,0 +1,24 @@
+{
+  "schema": "alis.ui-history-recovery-evidence.v1",
+  "source_sha": "8ab08765ae48769ea9395dddaad836c38a4d4888",
+  "actual_observer_exit": 0,
+  "scope": "local UI only, no native server attestation",
+  "original_turn_reconciled": true,
+  "before_completed_iterations": 5,
+  "after_completed_iterations": 6,
+  "original_intent_replayed": false,
+  "new_ui_send_count_during_recovery": 0,
+  "original_pending_retired_after_manager_commit": true,
+  "local_fixture_failed_receipts_retained": 2,
+  "focused_workflow_counts_at_source": {
+    "PASS": 57,
+    "FAIL": 0
+  },
+  "window_rebind": "Unique current UI window accepted only after original first-turn and full frozen pending input proof; old pin backed up privately",
+  "private_observation_sha256": "86b1b23c890447bacfe557ab290a22ee62667926614c064ee88866cb7e192e4f",
+  "queue_resume_source": "b0c1594e3ee30ebfa52538dc308fd1d741569da6",
+  "same_stopped_queue_reauthorized_without_send_or_worker_replay": true,
+  "next_fixture_job": "JOB-e9df8277fe90a8f92ae23ba7",
+  "next_fixture_state": "passed",
+  "full_maintainer_gate": "UNRUN at latest source; older stopped/failed receipts remain separate"
+}

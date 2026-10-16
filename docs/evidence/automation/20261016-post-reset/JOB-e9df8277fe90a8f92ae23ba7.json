@@ -1,0 +1,62 @@
+{
+  "id": "JOB-e9df8277fe90a8f92ae23ba7",
+  "sha256": "e9df8277fe90a8f92ae23ba7251263fd5d60e2e10fa8e1252701e705b706d0f8",
+  "source_sha": "36e8879fe8723aabcc830728386ce7420d090fcf",
+  "state": "passed",
+  "started_unix": 1792160448,
+  "finished_unix": 1792160456,
+  "continuation_ready": true,
+  "schema": "alis.local-test-evidence.v1",
+  "task": "NOTES-F01",
+  "repository": "llocphann/Alis",
+  "branch": "dev",
+  "intake_base_sha": "b3b66d4a22f220e3cf328ff5f549a8e5a8a0f72b",
+  "approval_mode": "Owner-authorized reviewed fixture auto-approval",
+  "scope": "Real private Niri/Quickshell fixture tests and isolated XDG disk readbacks; no Owner notes/vault/installed desktop acceptance",
+  "steps": [
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "bounded_excerpt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-quick-notes-corner-contract.py"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "bounded_excerpt_sha256": "06f43fc61b069af1ad814873e89b24b8b60e3dbab8a005775c729395260c8882"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-quick-notes-markdown-runtime.py"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "bounded_excerpt_sha256": "8f1d1f4bf54e2433d242a49bd3fadef408660ccea292870c940b6201861a1b83"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-quick-notes-image-runtime.py"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "bounded_excerpt_sha256": "7006bcf215529093b70ec3b3aaf1fab51988189ad3a091756dadb5befd19b7af"
+    }
+  ],
+  "native_markers": [
+    "QUICK_NOTES_MARKDOWN_NATIVE_PASS",
+    "QUICK_NOTES_MARKDOWN_RESTART_PASS",
+    "QUICK_NOTES_IMAGE_PASS",
+    "QUICK_NOTES_IMAGE_RESTART_PASS"
+  ],
+  "owner_verification": "pending"
+}
