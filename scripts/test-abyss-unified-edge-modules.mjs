@@ -70,4 +70,49 @@ for (const kind of ["notesTimers","notificationActivity"]) {
         check(clone(source).length===2,"data-preserving non-destructive placements");
     }
 }
+// Installed Alis config defaults enable automatic replacement even when an
+// existing user has never opened Edit Abyss Layout. Per-output migration
+// markers protect explicit disable/removal and persist across relaunch.
+for (const [mode,original] of [
+    ["not configured",{autoUnifiedEdgeLaunchers:true,configured:false}],
+    ["pre-existing configured",{autoUnifiedEdgeLaunchers:true,configured:true,
+        placements:[{id:"clock",kind:"clock",edge:"top",position:.5}]}],
+    ["legacy per-output profile",{autoUnifiedEdgeLaunchers:true,configured:true,
+        placements:[],outputLayouts:[{outputName:"eDP-1",
+            placements:[{id:"clock",kind:"clock",edge:"left",position:.5}]}]}]
+]) {
+    const notes=layout.resolve(original,"eDP-1",[]);
+    check(layout.hasEnabledModule(original,"eDP-1","notesTimers"),
+        `auto-enable notes on ${mode}`);
+    check(layout.hasEnabledModule(original,"eDP-1","notificationActivity"),
+        `auto-enable notifications on ${mode}`);
+    check(notes.filter(p=>layout.isUnifiedKind(p.kind)).length===2,
+        "exactly two unified launchers, never duplicates");
+    check(original.placements===undefined || !original.placements.some(p=>layout.isUnifiedKind(p.kind)),
+        "legacy config source not mutated in place");
+
+    // Saving a module-free output must not add launchers again later.
+    const save=layout.saveProfile(original,"eDP-1",[],8,true);
+    const configured={...original,outputLayouts:save["abyss.modules.outputLayouts"]};
+    check(configured.outputLayouts.find(x=>x.outputName==="eDP-1").unifiedLaunchersConfigured,
+        "output configuration is marked explicitly migrated");
+    check(!layout.hasEnabledModule(configured,"eDP-1","notesTimers"),
+        "owner removal remains removed after restart");
+    check(!layout.hasEnabledModule(configured,"eDP-1","notificationActivity"),
+        "owner removal cannot trigger duplicate activity surfaces");
+    if(original.outputLayouts?.length) {
+        check(layout.hasEnabledModule(configured,"HDMI-A-1","notesTimers"),
+            "untouched output retains migration eligibility");
+    }
+}
+const globalSave=layout.saveProfile(
+    {autoUnifiedEdgeLaunchers:true},"eDP-1",[],8,false);
+check(globalSave["abyss.modules.unifiedLaunchersConfigured"]===true,
+    "global Done marks a completed migration");
+check(layout.resolve(
+    {autoUnifiedEdgeLaunchers:true,configured:true,
+        unifiedLaunchersConfigured:globalSave["abyss.modules.unifiedLaunchersConfigured"],
+        placements:globalSave["abyss.modules.placements"]},
+    "HDMI-A-1",[]).length===0,
+    "globally removed launchers never resurrect");
 console.log("ABYSS_R15_LAYOUT_POLICY_PASS",checks);
