@@ -572,12 +572,12 @@ for token in (
 # First Escape releases editing and arms the lease; second Escape retracts
 # with StyledPopup's graceful slide tail. Forced eviction may still dismiss.
 escape_shortcut = re.search(
-    r"Shortcut\\s*\\{\\s*sequences:\\s*\\[StandardKey\\.Cancel\\]"
-    r"[\\s\\S]*?onActivated:\\s*\\{\\s*if\\s*\\(root\\.editorFocused\\)\\s*\\{"
-    r"\\s*root\\.escapeArmed\\s*=\\s*true"
-    r"\\s*root\\.leaveEditorMode\\(\\)\\s*\\}\\s*else\\s*\\{"
-    r"\\s*root\\.escapeArmed\\s*=\\s*false"
-    r"\\s*root\\.retractPresentation\\(\\)\\s*\\}\\s*\\}",
+    r"Shortcut\s*\{\s*sequences:\s*\[StandardKey\.Cancel\]"
+    r"[\s\S]*?onActivated:\s*\{\s*if\s*\(root\.editorFocused\)\s*\{"
+    r"\s*root\.escapeArmed\s*=\s*true"
+    r"\s*root\.leaveEditorMode\(\)\s*\}\s*else\s*\{"
+    r"\s*root\.escapeArmed\s*=\s*false"
+    r"\s*root\.retractPresentation\(\)\s*\}\s*\}",
     popup,
 )
 if escape_shortcut is None:
