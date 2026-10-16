@@ -61,6 +61,16 @@ for symbol in [
 ]:
     require(symbol in card, "missing UI contract: " + symbol)
 
+require('objectName: "automationResetChat"' in card,
+        "missing owner-confirmed Reset chat control")
+require('onClicked: root.resetActiveChat()' in card,
+        "Reset chat must route through guarded queue action")
+require('"queue-reset-chat", "--approve", "--expected-active", identity' in qml,
+        "Reset Chat must be pinned to the exact active task")
+require('root.resetChatConfirmation' in card,
+        "Reset Chat must require an additional owner confirmation")
+require('root.chatResetNotice' in qml,
+        "Reset request must appear in the compact Job Status")
 require("root.stopAcknowledgementPending = true" in qml,
         "stop request must remain visibly pending until manager ack")
 require("root.stopAcknowledgementPending = false" in qml,
