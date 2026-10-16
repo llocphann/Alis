@@ -15,7 +15,10 @@ Item {
     required property string edge
     property var draftPlacements: null
     property var draftOptions: null
+    property string draftLauncherMode: ""
     property bool editing: false
+    readonly property string launcherMode: editing && draftLauncherMode.length
+        ? draftLauncherMode : Layout.unifiedLauncherMode(Config.options?.abyss?.modules)
     property var draggedIds: []
     property var liquidController: null
     property var measuredExtents: ({})
@@ -45,7 +48,9 @@ Item {
         root.vertical, Config.options?.bar?.modules ?? {})
     readonly property var placements: draftPlacements ?? Layout.resolve(Config.options?.abyss?.modules,outputName,
         Layout.seed(zones,edge,width,height))
-    readonly property var layoutRecords: Layout.geometry(placements,width,height,layoutOptions,Appearance.fontSizeScale)
+    readonly property var activePlacements: Layout.livePlacements(
+        placements,{launcherMode: launcherMode},editing)
+    readonly property var layoutRecords: Layout.geometry(activePlacements,width,height,layoutOptions,Appearance.fontSizeScale)
     readonly property var renderedRecords: {
         const revision=root.revision
         return layoutRecords.map(record=>{
@@ -63,11 +68,11 @@ Item {
 
     property var moduleIds: []
     function syncModuleIds(): void {
-        const next=placements.filter(p=>p.enabled).map(p=>p.id)
+        const next=activePlacements.filter(p=>p.enabled).map(p=>p.id)
         if (JSON.stringify(next)!==JSON.stringify(moduleIds)) moduleIds=next
     }
     function itemForId(id): var { return modules.itemAt(moduleIds.indexOf(id)) }
-    onPlacementsChanged: syncModuleIds()
+    onActivePlacementsChanged: syncModuleIds()
     Component.onCompleted: syncModuleIds()
     Repeater {
         id: modules
@@ -135,7 +140,8 @@ Item {
             outputName: root.outputName
             vertical: placement?.edge === "left" || placement?.edge === "right"
             compact: placement?.compact ?? false
-            showIcon: placement?.showIcon !== false
+            showIcon: (!module.unifiedEdgeLauncher || root.launcherMode === "module")
+                && placement?.showIcon !== false
             onNotesEditorFocusChanged: (outputName, focused) => root.notesEditorFocusChanged(outputName, focused)
             visible: geometry !== undefined && !geometry.capacityConflict
             enabled: !root.editing && visible

@@ -8,6 +8,16 @@ var labels = {distroIcon:"Launcher",activeWindow:"Active window",
     timer:"Timer",shellUpdate:"Updates",weather:"Weather",taskbar:"Taskbar",
     notesTimers:"QuickNotes & Timers",notificationActivity:"Notifications & Activities"};
 function isUnifiedKind(kind) { return kind === "notesTimers" || kind === "notificationActivity"; }
+function unifiedLauncherMode(options) {
+    return options?.launcherMode === "edgebar" ? "edgebar" : "module";
+}
+// In Edgebar mode the legacy corner is the *sole* source. The module's
+// persisted placement and icon preference remain intact for mode reversal.
+function livePlacements(placements, options, editing) {
+    var all=normalize(placements,"top");
+    return editing || unifiedLauncherMode(options)==="module" ? all
+        : all.filter(function(p) { return !isUnifiedKind(p.kind); });
+}
 // Legacy corner launchers stay available until an enabled replacement is
 // actually installed on this output. No mutation or destructive migration.
 function hasEnabledModule(options,outputName,kind) {

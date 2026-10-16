@@ -73,4 +73,29 @@ assert "onEditorFocusedChanged:" in module
 assert "selectedMainTab" in notes and "popupPinned" in notes
 assert "selectedTab" in center and "Notifications" in center
 
+# ABYSS-R15: mode switch must have a single active hover owner. Edgebar
+# mode unmounts module popups and their compositor regions, not just the icon.
+config = read("modules/common/Config.qml")
+assert 'property string launcherMode: "module"' in config
+assert 'function unifiedLauncherMode(options)' in layout
+assert 'function livePlacements(placements, options, editing)' in layout
+assert 'root.activePlacements' not in bar or 'const next=activePlacements.filter(' in bar
+assert 'readonly property var activePlacements: Layout.livePlacements(' in bar
+assert 'Layout.geometry(activePlacements,width,height' in bar
+assert 'const next=activePlacements.filter(p=>p.enabled)' in bar
+assert 'onActivePlacementsChanged: syncModuleIds()' in bar
+assert 'root.launcherMode === "module"' in bar
+assert 'ModuleLayout.unifiedLauncherMode(Config.options?.abyss?.modules) === "module"' in corners
+assert 'ModuleLayout.livePlacements(placements,Config.options?.abyss?.modules,false)' in perimeter
+assert 'bar.activePlacements,bar.layoutOptions' in perimeter
+assert 'draftLauncherMode: editor.visible ? editor.launcherMode : ""' in perimeter
+assert 'property string launcherMode: "module"' in editor
+assert 'objectName: "abyssUnifiedLauncherModuleMode"' in editor
+assert 'objectName: "abyssUnifiedLauncherEdgebarMode"' in editor
+assert 'onClicked: root.launcherMode = "edgebar"' in editor
+assert 'onClicked: root.launcherMode = "module"' in editor
+assert 'writes["abyss.modules.launcherMode"]=launcherMode' in editor
+assert 'launcherMode:launcherMode' in editor
+assert 'launcherMode:Placement.unifiedLauncherMode(options)' in editor
+assert 'onLauncherModeChanged: root.queueHistory()' in editor
 print("ABYSS-R15 unified edge module source contract: ok")

@@ -115,4 +115,42 @@ check(layout.resolve(
         placements:globalSave["abyss.modules.placements"]},
     "HDMI-A-1",[]).length===0,
     "globally removed launchers never resurrect");
+// Switching sources must be exclusive and must not rewrite module records or
+// reset per-output icon preference. Every physical edge follows the same rule.
+check(layout.unifiedLauncherMode({})==="module","fresh installations prefer modules");
+check(layout.unifiedLauncherMode({launcherMode:"garbage"})==="module",
+    "unknown legacy mode fails safe to module");
+check(layout.unifiedLauncherMode({launcherMode:"edgebar"})==="edgebar",
+    "legacy hover mode explicitly selected");
+for(const edge of edges) {
+    const original=layout.normalize([
+        {id:"mNotes",kind:"notesTimers",edge,position:.2,showIcon:false},
+        {id:"clock",kind:"clock",edge,position:.5},
+        {id:"mCenter",kind:"notificationActivity",edge,position:.8,showIcon:true}
+    ],edge);
+    const before=JSON.stringify(original);
+    const moduleMode=layout.livePlacements(original,{launcherMode:"module"},false);
+    const cornerMode=layout.livePlacements(original,{launcherMode:"edgebar"},false);
+    check(moduleMode.filter(p=>layout.isUnifiedKind(p.kind)).length===2,
+        `both module launchers own hover on ${edge}`);
+    check(cornerMode.length===1 && cornerMode[0].kind==="clock",
+        `legacy Edgebar hover completely unmounts both launchers on ${edge}`);
+    check(layout.livePlacements(original,{launcherMode:"edgebar"},true).length===3,
+        "editor keeps saved module handles selectable in hover mode");
+    check(layout.livePlacements(original,{launcherMode:"module"},false)
+        .find(p=>p.kind==="notesTimers").showIcon===false,
+        "owner's explicit hide icon survives switching back");
+    check(JSON.stringify(original)===before,
+        "transient launcher mode never writes historical saved placements");
+}
+const preservedProfile={configured:true,launcherMode:"edgebar",placements:[
+    {id:"first",kind:"notesTimers",edge:"left",position:.4,showIcon:true},
+    {id:"second",kind:"notificationActivity",edge:"right",position:.7,showIcon:false}
+]};
+const oldEntries=layout.resolve(preservedProfile,"eDP-1",[]);
+check(layout.livePlacements(oldEntries,preservedProfile,false).length===0,
+    "legacy mode has zero invisible mouse sources");
+check(layout.livePlacements(oldEntries,
+    {...preservedProfile,launcherMode:"module"},false).length===2,
+    "re-entering module mode uses original output positions");
 console.log("ABYSS_R15_LAYOUT_POLICY_PASS",checks);
