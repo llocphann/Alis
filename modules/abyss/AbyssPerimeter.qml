@@ -1162,9 +1162,9 @@ Scope {
                     edge: window?.positionEdge(presentationKind,
                         hostedPopup?._attachmentEdge ?? root?.barEdge ?? "top") ?? "top"
                     outputName: window.outputName
-                    vacancyRole: presentationKind === "quickNotes"
+                    vacancyRole: (presentationKind === "quickNotes" || presentationKind === "notesTimers")
                         ? "quickNotes"
-                        : (presentationKind === "notificationCenter"
+                        : ((presentationKind === "notificationCenter" || presentationKind === "notificationActivity")
                             ? "notificationCenter" : "")
                     open: window.presented && field.ready
                         && (hostedPopup?.presentationActive ?? false)
