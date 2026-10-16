@@ -67,7 +67,8 @@ Scope {
                 // The explicit notification hotkey must still mount its
                 // existing mature popup when the unified launcher replaces
                 // the legacy corner and Abyss Bar is normally auto-hidden.
-                || (GlobalStates.notificationCenterExplicitOpen
+                || (ModuleLayout.unifiedLauncherMode(Config.options?.abyss?.modules) === "module"
+                    && GlobalStates.notificationCenterExplicitOpen
                     && GlobalStates.notificationCenterPresentationOutput === name
                     && ModuleLayout.hasEnabledModule(
                         Config.options?.abyss?.modules,name,"notificationActivity"))
@@ -84,7 +85,10 @@ Scope {
         const vertical = !Geometry.horizontal(root.barEdge)
         const zones = Geometry.barZones((vertical ? Config.options?.bar?.verticalLayout : Config.options?.bar?.layout) ?? {},vertical,Config.options?.bar?.modules ?? {})
         const placements = ModuleLayout.resolve(Config.options?.abyss?.modules,name,ModuleLayout.seed(zones,root.barEdge,screen?.width ?? 1920,screen?.height ?? 1080))
-        return ModuleLayout.edgeInsetsForModules(placements,options,Appearance.fontSizeScale,AbyssStyle.perimeterThickness,AbyssStyle.barThickness,reservation)
+        return ModuleLayout.edgeInsetsForModules(
+            ModuleLayout.livePlacements(placements,Config.options?.abyss?.modules,false),
+            options,Appearance.fontSizeScale,AbyssStyle.perimeterThickness,
+            AbyssStyle.barThickness,reservation)
     }
     Connections {
         target: Quickshell
@@ -926,7 +930,7 @@ Scope {
                 [],bar.layoutOptions,Appearance.fontSizeScale,
                 AbyssStyle.perimeterThickness,AbyssStyle.barThickness,false)
             readonly property var nativeInsets: bar.visible
-                ? ModuleLayout.edgeInsetsForModules(bar.placements,bar.layoutOptions,
+                ? ModuleLayout.edgeInsetsForModules(bar.activePlacements,bar.layoutOptions,
                     Appearance.fontSizeScale,AbyssStyle.perimeterThickness,
                     AbyssStyle.barThickness,false)
                 : configuredInsets
