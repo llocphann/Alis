@@ -97,6 +97,7 @@ jobs:
           python3 scripts/test-AUTO-F01-ui-result-commit.py
           python3 scripts/test-AUTO-F01-failed-receipt.py
           python3 scripts/test-AUTO-F01-ui-preflight.py
+          python3 scripts/test-AUTO-F01-ui-recovery-preview.py
           python3 scripts/test-AUTO-F01-queue-controls.py
           python3 scripts/test-AUTO-F01-sudo-input.py
           python3 scripts/test-AUTO-F01-queue-stop.py
