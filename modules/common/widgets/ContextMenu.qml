@@ -69,15 +69,25 @@ Loader {
     // The caller supplies coordinates in anchorItem.parent space. A new click
     // while this menu is open fades it out before moving the anchor, so the old
     // popup never jumps or slides to the new location at full opacity.
-    function requestOpenAt(x: real, y: real): void {
+    function requestOpenAt(x: real, y: real, newModel: var): void {
         const nextX = Number(x)
         const nextY = Number(y)
         if (!isFinite(nextX) || !isFinite(nextY) || !root.anchorItem)
             return
         if (root.active && root.item && root.fadeOnly) {
-            root.item.retargetAnchor(nextX, nextY)
+            if (Appearance.animationsEnabled) {
+                root.item.retargetAnchor(nextX, nextY, newModel)
+            } else {
+                if (newModel !== undefined)
+                    root.model = newModel
+                root.anchorItem.x = nextX
+                root.anchorItem.y = nextY
+                root.item.anchor.updateAnchor()
+            }
             return
         }
+        if (newModel !== undefined)
+            root.model = newModel
         root.anchorItem.x = nextX
         root.anchorItem.y = nextY
         if (root.active && root.item)
@@ -111,6 +121,8 @@ Loader {
         property real relocationOpacity: 1
         property real pendingAnchorX: 0
         property real pendingAnchorY: 0
+        property var pendingMenuModel: null
+        property bool pendingMenuModelUpdate: false
         // Popup animations can sweep the content under a stationary pointer,
         // especially when the desktop menu opens near a retracted Abyss Edge.
         // A transient hover during this entrance is not a user visit: only
@@ -150,8 +162,9 @@ Loader {
                 // Skip the shared slide/scale presentation for desktop menus.
                 popupWindow.sourceEdgeMargin = popupWindow.settledMargin;
                 popupWindow.entranceSettled = true;
-                popupWindow.relocationOpacity = 0;
-                fadeOnlyOpenAnim.start();
+                popupWindow.relocationOpacity = Appearance.animationsEnabled ? 0 : 1;
+                if (Appearance.animationsEnabled)
+                    fadeOnlyOpenAnim.start();
             } else {
                 openAnim.start();
             }
@@ -219,9 +232,13 @@ Loader {
             }
         }
 
-        function retargetAnchor(x: real, y: real): void {
+        function retargetAnchor(x: real, y: real, newModel: var): void {
             popupWindow.pendingAnchorX = x;
             popupWindow.pendingAnchorY = y;
+            if (newModel !== undefined) {
+                popupWindow.pendingMenuModel = newModel;
+                popupWindow.pendingMenuModelUpdate = true;
+            }
             // Repeated clicks replace the pending location and cancel any
             // unfinished exit/entrance animation; latest click always wins.
             fadeOnlyOpenAnim.stop();
@@ -308,6 +325,11 @@ Loader {
             }
             ScriptAction {
                 script: {
+                    // Defer model changes until the menu is invisible.
+                    if (popupWindow.pendingMenuModelUpdate) {
+                        root.model = popupWindow.pendingMenuModel;
+                        popupWindow.pendingMenuModelUpdate = false;
+                    }
                     if (root.anchorItem) {
                         root.anchorItem.x = popupWindow.pendingAnchorX;
                         root.anchorItem.y = popupWindow.pendingAnchorY;
@@ -315,6 +337,8 @@ Loader {
                     }
                 }
             }
+            // Give the Wayland compositor one frame to apply the new anchor.
+            PauseAnimation { duration: 16 }
             NumberAnimation {
                 target: popupWindow
                 property: "relocationOpacity"

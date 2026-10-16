@@ -1764,8 +1764,7 @@ Scope {
                             const position = desktopItemDelegate.mapToItem(
                                 desktopMenuAnchor.parent, anchorX, anchorY)
                             if (desktopContextMenu.active) desktopContextMenu.close()
-                            desktopItemContextMenu.model = menuModel
-                            desktopItemContextMenu.requestOpenAt(position.x, position.y)
+                            desktopItemContextMenu.requestOpenAt(position.x, position.y, menuModel)
                         }
                         onContextMenuCloseRequested: {
                             if (desktopItemContextMenu.active)

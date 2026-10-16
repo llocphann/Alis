@@ -15,10 +15,12 @@ for label, block in (("desktop", bare), ("desktop item", managed)):
     assert "fadeInDuration: 130" in block, label
 
 assert "desktopContextMenu.requestOpenAt(mouse.x, mouse.y)" in desktop
-assert "desktopItemContextMenu.requestOpenAt(position.x, position.y)" in desktop
-assert "function requestOpenAt(x: real, y: real): void" in menu
-assert "root.item.retargetAnchor(nextX, nextY)" in menu
-assert "function retargetAnchor(x: real, y: real): void" in menu
+assert "desktopItemContextMenu.requestOpenAt(position.x, position.y, menuModel)" in desktop
+assert "function requestOpenAt(x: real, y: real, newModel: var): void" in menu
+assert "root.item.retargetAnchor(nextX, nextY, newModel)" in menu
+assert "popupWindow.pendingMenuModelUpdate" in menu
+assert "PauseAnimation { duration: 16 }" in menu
+assert "function retargetAnchor(x: real, y: real, newModel: var): void" in menu
 assert "fadeOnlyOpenAnim.stop();" in menu
 assert "fadeOnlyCloseAnim.stop();" in menu
 assert "relocationAnim.stop();" in menu
