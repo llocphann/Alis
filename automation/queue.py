@@ -92,6 +92,36 @@ def parse_codes(raw: str) -> list[str]:
     return values
 
 
+def _task_manager_inert(repo: str, code: str) -> bool:
+    """A PREPARED task is not pristine if a manager still owns its session.
+
+    This is a read-only manager snapshot, taken while queue.lock is held.
+    It never clears foreign, historical, or locally unresolved work.
+    """
+    try:
+        from .manager import store
+        from . import managed_tasks
+        config, state, issues = store.read_snapshot()
+        if issues:
+            return False
+        pid = managed_tasks.profile_id(repo, code)
+        profile = next((p for p in config.get("profiles", [])
+                        if p.get("id") == pid), None)
+        item = state.get("profiles", {}).get(pid, {})
+        if not isinstance(item, dict):
+            return False
+        return (
+            (profile is None or profile.get("enabled") is False)
+            and item.get("pending") is None
+            and item.get("job_id") is None
+            and item.get("session") is None
+            and item.get("run_active") is not True
+            and item.get("desired") != "run"
+        )
+    except (OSError, ValueError, RuntimeError, KeyError, TypeError):
+        return False
+
+
 def _pristine_task(record: dict, live: dict) -> bool:
     """No earlier Cloudbot dispatch, Localbot work, handoff or receipt.
 
@@ -124,6 +154,7 @@ def _pristine_task(record: dict, live: dict) -> bool:
         # a historic saved prompt is NOT evidence that execution started.
         and isinstance(record.get("cloud_prompt"), str)
         and bool(record["cloud_prompt"].strip())
+        and _task_manager_inert(live["repository"], live["code"])
     )
 
 
