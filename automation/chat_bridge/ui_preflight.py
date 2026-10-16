@@ -255,6 +255,7 @@ def check_prepared_queue() -> dict:
         "foreign_job_count": 0,
         "native_unsettled_count": 0,
         "historical_native_session_count": 0,
+        "foreign_unsettled_summary": [],
         "idle_default_stop_available": False,
         "native_transport_authorized": False,
         "submission_authorized": False,
@@ -366,6 +367,33 @@ def check_prepared_queue() -> dict:
         bool(item.get("pending")) for item in foreign)
     result["foreign_job_count"] = sum(
         bool(item.get("job_id")) for item in foreign)
+    # Locally actionable but privacy-bounded diagnosis. No profile labels,
+    # IDs, conversation keys, worker IDs, prompts or pending payloads.
+    profile_config = {p.get("id"): p for p in config["profiles"]}
+    for pid, item in entries.items():
+        if pid == expected_id or pid in isolated or not isinstance(item, dict):
+            continue
+        if not (item.get("pending") or item.get("job_id")
+                or item.get("run_active") or item.get("desired") == "run"):
+            continue
+        role = (
+            "legacy_default" if pid == model.DEFAULT_ID else
+            "taskflow" if managed_tasks.reference(profile_config.get(pid, {}))
+                is not None else
+            "selector" if pid == managed_tasks.SELECTOR_ID else "other")
+        pending = item.get("pending")
+        pending_kind = (
+            "ui_once" if isinstance(pending, dict)
+            and pending.get("transport") == "alis-ui-once" else
+            "native_or_unknown" if pending else "none")
+        result["foreign_unsettled_summary"].append({
+            "role": role,
+            "scheduled": item.get("desired") == "run",
+            "pending": bool(pending),
+            "pending_kind": pending_kind,
+            "job": bool(item.get("job_id")),
+            "run_active": bool(item.get("run_active")),
+        })
     if any((item.get("pending") or item.get("job_id")
             or item.get("run_active") or item.get("desired") == "run")
            for item in foreign):
