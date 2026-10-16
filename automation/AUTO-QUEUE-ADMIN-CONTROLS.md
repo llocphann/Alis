@@ -79,7 +79,10 @@ authorization. The alternate UI path is:
    pending/handoff checks.
 3. If the bridge is **active in native or single-profile UI mode**,
    there is no safe one-click conversion. Settings now explains the
-   actual blocker. Separately verify all existing sessions/jobs are
+   actual blocker. A taskflow profile already present but holding an
+   original pending send, local UI session, worker job or running state
+   is also **not idle** and cannot be offered as Start-ready; its
+   original evidence needs reconciliation first. Separately verify all existing sessions/jobs are
    settled and explicitly reconfigure the installer with
    `--ui-loop-queue` during a safe service cutover. Do not restart
    live services, reset unresolved sends or reuse historical receipts
