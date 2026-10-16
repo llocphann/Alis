@@ -16,6 +16,37 @@ The Automation Settings task-input field supports **two paths**:
   candidate exists, it reports an explicit error instead of selecting an
   arbitrary visual task.
 
+## Old "Pin changed" queue recovery
+
+An older saved queue can still show six or more deferred entries with
+`source_pin_changed` after Alis is updated. That legacy label is NOT
+proof that all GitHub sources changed: it was emitted before worker/ACK
+state outranked branch-tip drift in the classifier. The current backend
+does not generate that legacy reason for new queues.
+
+For a fully parked `review_required` queue, leave the task-code input
+blank: **Find** becomes **Recheck**. This is an explicit, no-send
+classification of the **same originally requested** queue, not a new
+Backend-first discovery. A stale UI snapshot is rejected under
+`queue.lock`. The recheck verifies every original task file still
+exists, re-resolves canonical open Issues, and preserves all task files,
+saved base SHA, history, handoffs, pending messages, receipts, manager
+profiles, and worker jobs. No Start approval is carried forward or
+granted. Prior `awaiting_cloud_ack` work becomes **Ack pending**, prior
+owner-review work becomes **Owner review**, unverified ancestry becomes
+**Pin unverified**, and truly pristine ancestor-pinned work may become
+**Queue**. The latest local manager session and original GitHub Issue
+metadata must also pass all ordinary gates.
+
+If the original task file, exact GitHub Issue evidence, or ancestor
+proof is absent, remain parked and inspect the original evidence rather
+than clearing/re-pinning/replaying. An active/selected/partially
+completed queue is not eligible for recheck. This is not a workaround
+for the separate native ChatGPT server receipt authorization gate.
+For old installed Settings builds that do not offer **Recheck**,
+update Alis `dev` and reload the installed UI/backend first; do not
+assume a GitHub source-only update immediately changes running QML.
+
 ## Queue controls: Stop, Clear queued, Clear stopped queue
 
 Settings → Automation → GitHub tasks shows separate owner-confirmed controls:
