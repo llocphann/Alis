@@ -148,22 +148,19 @@ Item {
         property string glyph: ""
         property string description: ""
         property Item trigger: hit
-        // Covers the geometry margin even at the smallest legal module scale.
-        readonly property real edgeReach: 36
+        // A live unified module always paints its circular button. Toggling
+        // Show icon off in Settings unmounts this launcher and gives hover
+        // ownership back to the legacy Screen Corner Edgebar.
         implicitWidth: 36*Appearance.fontSizeScale
         implicitHeight: 32*Appearance.fontSizeScale
         readonly property real iconDiameter: 30*Appearance.fontSizeScale
         MouseArea {
             id: hit
-            // The drawn icon, not the invisible physical-edge extension, is
-            // the sole hover source in icon mode. Iconless mode preserves the
-            // prior edge reach for owners who deliberately hide the glyph.
-            x: moduleRoot.showIcon ? (parent.width-parent.iconDiameter)/2 : 0
-            y: moduleRoot.showIcon ? (parent.height-parent.iconDiameter)/2
-                : moduleRoot.attachedEdge === "bottom" ? 0 : -parent.edgeReach
-            width: moduleRoot.showIcon ? parent.iconDiameter : parent.width
-            height: moduleRoot.showIcon ? parent.iconDiameter
-                : parent.height+parent.edgeReach
+            x: (parent.width-parent.iconDiameter)/2
+            y: (parent.height-parent.iconDiameter)/2
+            width: parent.iconDiameter
+            height: parent.iconDiameter
+            enabled: moduleRoot.showIcon
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton
             Accessible.role: Accessible.Button
@@ -195,7 +192,8 @@ Item {
             moduleRoot: root
             glyph: "sticky_note_2"
             description: "QuickNotes & Timers"
-            // Hover is intentionally still active with no painted icon.
+            // Live Module Icon hover and click are both confined to the
+            // painted glyph; Edgebar Hover uses the original corner popup.
             // Click toggles the mature popup's own independent pin state.
             Connections {
                 target: notesFace.trigger

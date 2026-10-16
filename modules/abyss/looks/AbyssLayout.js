@@ -14,7 +14,13 @@ function unifiedLauncherMode(options,kind) {
     var value=kind==="notesTimers" ? options?.notesTimersMode
         : kind==="notificationActivity" ? options?.notificationActivityMode
         : options?.launcherMode;
-    if(value!=="module" && value!=="edgebar") value=options?.launcherMode;
+    if(value!=="module" && value!=="edgebar") {
+        // Old Settings "Hide icon" was saved separately from the mode.
+        // Migrate that intent into a real legacy Edgebar source only when
+        // the user has not selected an explicit per-feature presentation.
+        value=isUnifiedKind(kind) && iconVisibilityPreference(options,kind)===false
+            ? "edgebar" : options?.launcherMode;
+    }
     return value==="edgebar" ? "edgebar" : "module";
 }
 // Mode selects popup *ownership* without rewriting placement or icon state.
