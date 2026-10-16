@@ -1602,15 +1602,15 @@ Scope {
                 // dismiss that menu even though the user never left it.
                 // Close on desktop left-click, action selection or Escape.
                 closeOnHoverLost: false
-                // Return available Screen Edge gaps to the desktop. A menu
-                // opened near a physical output corner must keep all rows:
-                // slide within bounds, never resize them into nothing.
-                popupAdjustment: PopupAdjustment.SlideX | PopupAdjustment.SlideY
+                // Follow the pointer with a slide-only context menu. The
+                // explicit horizontal anchor in ContextMenu fixes the former
+                // half-menu-width drift; Flip keeps corner clicks close to
+                // the pointer while Slide avoids clipping or resizing rows.
+                popupAdjustment: PopupAdjustment.FlipX | PopupAdjustment.FlipY
+                    | PopupAdjustment.SlideX | PopupAdjustment.SlideY
                 popupAbove: desktopMenuAnchor.y > bgRoot.height - 230
-                fadeOnly: true
+                cursorSlide: true
                 scaleContent: false
-                fadeOutDuration: 90
-                fadeInDuration: 130
                 model: GlobalStates.widgetEditMode ? [
                     { text: Translation.tr("Manage widgets"), iconName: "tune", monochromeIcon: true,
                         action: () => { widgetManagerPanel.shown = true } },
@@ -1678,15 +1678,15 @@ Scope {
                 // Same click-initiated lifecycle as the bare-desktop menu.
                 // Do not let pointer transitions across edge gaps cancel it.
                 closeOnHoverLost: false
-                // Return available Screen Edge gaps to the desktop. A menu
-                // opened near a physical output corner must keep all rows:
-                // slide within bounds, never resize them into nothing.
-                popupAdjustment: PopupAdjustment.SlideX | PopupAdjustment.SlideY
+                // Follow the pointer with a slide-only context menu. The
+                // explicit horizontal anchor in ContextMenu fixes the former
+                // half-menu-width drift; Flip keeps corner clicks close to
+                // the pointer while Slide avoids clipping or resizing rows.
+                popupAdjustment: PopupAdjustment.FlipX | PopupAdjustment.FlipY
+                    | PopupAdjustment.SlideX | PopupAdjustment.SlideY
                 popupAbove: desktopMenuAnchor.y > bgRoot.height - 230
-                fadeOnly: true
+                cursorSlide: true
                 scaleContent: false
-                fadeOutDuration: 90
-                fadeInDuration: 130
             }
 
             WidgetCanvas {
