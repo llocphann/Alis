@@ -37,8 +37,12 @@ Settings → Automation → GitHub tasks shows separate owner-confirmed controls
   **stopping** pending manager reconciliation). Preserve the active
   item, selected identity, approval, profile, task records and all machine
   evidence. If the UI shows a last-known queue, its exact ordered
-  `repository:code` list is rechecked under the exclusive queue lock;
-  mismatches do not mutate anything.
+  `repository:code` list **and** the opaque SHA-256 identity of the
+  complete durable queue snapshot are rechecked under the exclusive queue
+  lock. A new queue with identical codes, an intervening Start/Stop, or a
+  changed active selection rejects a stale Clear instead of mutating that
+  different version. Refresh and confirm again; a hash is only a comparison
+  token, never approval or a transport receipt.
 - **Clear stopped queue → Confirm clear:** once Stop was acknowledged,
   archive the complete stopped queue manifest and return the UI to an
   empty queue. This is **not** deleting the old worker's action/receipts
