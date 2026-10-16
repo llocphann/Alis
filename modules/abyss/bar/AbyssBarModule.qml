@@ -148,14 +148,16 @@ Item {
         property string glyph: ""
         property string description: ""
         property Item trigger: hit
+        // Covers the geometry margin even at the smallest legal module scale.
+        readonly property real edgeReach: 36
         implicitWidth: 36*Appearance.fontSizeScale
         implicitHeight: 32*Appearance.fontSizeScale
         MouseArea {
             id: hit
             x: 0
-            y: (moduleRoot.attachedEdge === "top" || moduleRoot.attachedEdge === "right") ? -8 : 0
+            y: (moduleRoot.attachedEdge === "top" || moduleRoot.attachedEdge === "right") ? -parent.edgeReach : 0
             width: parent.width
-            height: parent.height+8
+            height: parent.height+parent.edgeReach
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton
             Accessible.role: Accessible.Button
@@ -164,7 +166,8 @@ Item {
                 width: 30*Appearance.fontSizeScale
                 height: width
                 x: (parent.width-width)/2
-                y: (parent.height-height)/2
+                y: ((hit.parent.moduleRoot.attachedEdge === "top" || hit.parent.moduleRoot.attachedEdge === "right")
+                    ? hit.parent.edgeReach : 0) + (hit.parent.height-height)/2
                 radius: width/2
                 color: Appearance.colors.colLayer1
                 border.width: 1
