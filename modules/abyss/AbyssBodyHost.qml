@@ -33,6 +33,10 @@ Item {
     // StyledPopup. Suppress this host's second availability tween for that
     // explicitly opted-in surface, without changing loading/readiness gates.
     property bool singleExternalReveal: false
+    // Transient notifications do not need the generic spring/settle tail:
+    // one monotonic pass has fewer animation frames and avoids the visible
+    // change of direction at the end of a small notification banner.
+    property bool monotonicNotificationReveal: false
     property bool stableContentSize: false
     // Some owners need content-owned hold-open state even while visually closed.
     // Keep those contents resident so open never depends on a Loader whose
@@ -526,14 +530,19 @@ Item {
         SequentialAnimation {
             NumberAnimation {
                 to: availabilityMotion.targetValue > 0
-                    ? availabilityMotion.targetValue+AbyssStyle.motionOvershoot : 0
-                duration: Math.round(AbyssStyle.motionNormal
-                    *(1+Math.min(0.5,Math.sqrt(root.mass)*0.1)))
+                    ? availabilityMotion.targetValue
+                        + (root.monotonicNotificationReveal ? 0 : AbyssStyle.motionOvershoot)
+                    : 0
+                duration: root.monotonicNotificationReveal
+                    ? AbyssStyle.motionNormal
+                    : Math.round(AbyssStyle.motionNormal
+                        *(1+Math.min(0.5,Math.sqrt(root.mass)*0.1)))
                 easing.type: root.presented ? Easing.OutCubic : Easing.InCubic
             }
             NumberAnimation {
                 to: availabilityMotion.targetValue
-                duration: root.presented && AbyssStyle.motionOvershoot > 0
+                duration: !root.monotonicNotificationReveal
+                    && root.presented && AbyssStyle.motionOvershoot > 0
                     ? Math.round(AbyssStyle.motionSettle
                         *(1+Math.min(0.5,Math.sqrt(root.mass)*0.1))) : 0
                 easing.type: Easing.OutCubic

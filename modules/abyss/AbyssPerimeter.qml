@@ -1474,6 +1474,10 @@ Scope {
                 // behind the shrinking reveal clip. Its closing surface must
                 // not relayout content as the Notification Center opens.
                 stableContentSize: true
+                // A short toast should glide out and back in without the
+                // generic popup's second overshoot/settle animation pass.
+                // Keep the existing content-size settle and timeout gates.
+                monotonicNotificationReveal: true
                 // Keep the banner's ListView loaded at target size while its
                 // delegates settle, before the visible reveal and allocator
                 // begin. On recording stop the saved-file-path card can require

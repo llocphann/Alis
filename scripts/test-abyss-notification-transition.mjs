@@ -111,6 +111,8 @@ same('center does not alter multi-notification banner height',
     state({centerOpen:true,toastCount:3,toastHeight:320}).height,348);
 same('notification entry is a stable-content-size clipped host',
     banner.includes('stableContentSize: true'),true);
+same('transient banner opts into monotonic one-phase motion',
+    banner.includes('monotonicNotificationReveal: true'),true);
 same('no center/tall-screen branch remains in banner host',
     !banner.includes('centerOnOutput') && !banner.includes('contentKind: centerOnOutput'),
     true);
@@ -205,6 +207,15 @@ same('reveal suppression only disables host availability Behavior',
 same('single external reveal defaults OFF for unrelated popup and toast hosts',
     host.includes('property bool singleExternalReveal: false')
     && !banner.includes('singleExternalReveal:'),true);
+same('generic panel motion remains the default',
+    host.includes('property bool monotonicNotificationReveal: false'),true);
+same('transient notification omits the overshoot amplitude',
+    host.includes('(root.monotonicNotificationReveal ? 0 : AbyssStyle.motionOvershoot)'),true);
+same('transient notification skips the entire settle pass',
+    host.includes('duration: !root.monotonicNotificationReveal')
+    && host.includes('&& root.presented && AbyssStyle.motionOvershoot > 0'),true);
+same('transient opening and closing retain opposite cubic easing',
+    host.includes('easing.type: root.presented ? Easing.OutCubic : Easing.InCubic'),true);
 same('existing availability/readiness guard stays active',
     host.includes('property real availabilityProgress: presented && ready ? 1 : 0'),true);
 same('pyramid close and reversal still track normalized external progress',
