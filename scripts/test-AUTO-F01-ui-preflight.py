@@ -261,7 +261,7 @@ class Preflight(unittest.TestCase):
         first = "llocphann/Alis:AI-I01"
         original_snapshot = queue.view()["snapshot_id"]
         with patch.object(ui_preflight, "_unit_state",
-                          return_value=("active", "ui_queue_mode")), \\
+                          return_value=("active", "ui_queue_mode")), \
              patch.object(managed_tasks.tf, "load_task", return_value=task):
             with self.assertRaisesRegex(tf.TaskError, "changed"):
                 managed_tasks.stage_ui_queue(
