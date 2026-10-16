@@ -257,6 +257,20 @@ def check_prepared_queue() -> dict:
         == (first["repository"], first["code"]))
     if not result["taskflow_profile_present"]:
         blockers.append("TASKFLOW_PROFILE_NOT_MATERIALIZED")
+    else:
+        # A profile merely existing in config cannot unlock Start. It may
+        # retain an original uncertain UI send or a worker receipt.
+        # Match start_ui_queue's actual idle/owner checks, without reads
+        # that expose the private session or changing any state.
+        runtime = state.get("profiles", {}).get(expected_id)
+        if (not profile.get("enabled")
+                or profile.get("project_name") != model.DEFAULT_PROJECT
+                or not isinstance(runtime, dict)
+                or runtime.get("desired") != "stopped"
+                or runtime.get("pending") or runtime.get("job_id")
+                or runtime.get("session") or runtime.get("run_active")
+                or runtime.get("last_ui_response_attempt")):
+            blockers.append("TASKFLOW_PROFILE_NOT_IDLE")
     isolated = [
         pid for pid, item in state.get("profiles", {}).items()
         if pid != expected_id and inert_legacy_native_owner(config, pid, item)
