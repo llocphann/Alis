@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import {requireFreshAssistantTurn} from "./ui_response_gate.mjs";
 import {pinnedUiWindow} from "./ui_surface.mjs";
-import {createHash} from "node:crypto";
+import {createHash,randomUUID} from "node:crypto";
 import {uiAnchorSource,matchingSubmittedUnit,submittedPromptMatches} from "./ui_turn_anchor.mjs";
 import {virtualizedRecoveryEligible,validateVirtualizedHistory} from "./ui_history_witness.mjs";
 
@@ -169,46 +169,87 @@ export async function resumeUiChat(page,label,{
   if(readOnlyHistory)await verifyProject(page);
 }
 
-async function historyScrollBoundary(page,boundary) {
-  return page.evaluate(which=>{
-    const unit=document.querySelector('[data-chatgpt-search-unit-key$=":user"]');
-    if(!unit)return {ok:false};
-    let owner=unit.parentElement,scrollable=[];
-    while(owner&&owner!==document.body) {
-      const style=getComputedStyle(owner);
-      if (/(auto|scroll)/.test(style.overflowY)
-          && owner.scrollHeight>owner.clientHeight+80)
-        scrollable.push(owner);
-      owner=owner.parentElement;
-    }
-    if(scrollable.length!==1)return {ok:false};
-    const host=scrollable[0],extent=host.scrollHeight-host.clientHeight;
-    const reverse=getComputedStyle(host).flexDirection==='column-reverse'
-       || (host.firstElementChild
-           && getComputedStyle(host.firstElementChild).flexDirection==='column-reverse');
-    host.scrollTop=which==='oldest'?-host.scrollHeight:host.scrollHeight;
-    const top=host.scrollTop;
-    const reached=which==='oldest'
-      ?(reverse?top<=-extent+3:Math.abs(top)<=3)
-      :(reverse?Math.abs(top)<=3:top>=extent-3);
-    return {ok:reached,extent:Math.round(extent)};
-  },boundary);
+async function captureHistoryScope(page) {
+  // A short-lived DOM witness for READ-ONLY recovery. Desktop does not
+  // always expose conversation IDs in its sidebar. Keep the actual selected
+  // row and message scroller alive instead; neither a label nor this local
+  // nonce is a chat identity. The saved first-turn key is still mandatory.
+  await verifyProject(page);
+  const selected=page.getByRole('list',{name:`Chats in ${PROJECT_NAME}`,exact:true})
+    .locator('[role="button"][aria-current="page"]');
+  if(await selected.count()!==1||await visibleCount(selected)!==1)
+    throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
+  const row=await selected.elementHandle();
+  const fingerprint=node=>JSON.stringify(['aria-label','data-chat-id','data-conversation-id','href']
+    .map(k=>node.getAttribute(k)));
+  const signature=await row.evaluate(fingerprint);
+  async function firstItem() {
+    const items=await visibleItems(page.locator('[data-chatgpt-search-unit-key$=":user"]'));
+    if(!items.length)throw Error('ALIS_UI_HISTORY_SCROLL_UNVERIFIED');
+    return items[0];
+  }
+  const item=await firstItem();
+  const handle=await item.evaluateHandle(node=>{
+    const hosts=[];
+    for(let n=node.parentElement;n&&n!==document.body;n=n.parentElement)
+      if(/(auto|scroll)/.test(getComputedStyle(n).overflowY)
+         &&n.scrollHeight>n.clientHeight+80)hosts.push(n);
+    return hosts.length===1?hosts[0]:null;
+  });
+  const host=handle.asElement();
+  if(!host){await handle.dispose();await row.dispose();throw Error('ALIS_UI_HISTORY_SCROLL_UNVERIFIED');}
+  const witness='local-ui-history:'+randomUUID();
+  async function check() {
+    await verifyProject(page);
+    if(await selected.count()!==1||await visibleCount(selected)!==1
+       ||!await selected.evaluate((node,original)=>node===original,row)
+       ||!await row.evaluate((node,sig)=>node.isConnected
+          &&node.getAttribute('aria-current')==='page'
+          &&JSON.stringify(['aria-label','data-chat-id','data-conversation-id','href']
+             .map(k=>node.getAttribute(k)))===sig,signature)
+       ||!await host.evaluate(node=>node.isConnected))
+      throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
+    const current=await firstItem();
+    if(!await current.evaluate((node,original)=>{
+      for(let n=node.parentElement;n;n=n.parentElement)if(n===original)return true;
+      return false;
+    },host))throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
+    return witness;
+  }
+  async function scroll(boundary) {
+    await check();
+    return host.evaluate((node,which)=>{
+      const extent=node.scrollHeight-node.clientHeight;
+      const reverse=getComputedStyle(node).flexDirection==='column-reverse'
+        ||(node.firstElementChild
+           &&getComputedStyle(node.firstElementChild).flexDirection==='column-reverse');
+      node.scrollTop=which==='oldest'?(reverse?-node.scrollHeight:0)
+        :(reverse?0:node.scrollHeight);
+      const top=node.scrollTop;
+      return {ok:which==='oldest'
+        ?(reverse?top<=-extent+3:Math.abs(top)<=3)
+        :(reverse?Math.abs(top)<=3:top>=extent-3)};
+    },boundary);
+  }
+  return {check,scroll,dispose:async()=>{await handle.dispose();await row.dispose();}};
 }
 
 async function observeVirtualizedSubmittedPrompt(page,prompt,targetKey) {
   // Recovery observation ONLY, never used as a composer admission signal.
   // Keep one selected-chat UI identity across scrolling to both endpoints;
   // no title-only match, chat switch, Send, draft edit or journal mutation.
-  const selectedBefore=await uiTargetIdentity(page);
   if(await visibleCount(page.getByRole('button',{name:/stop/i})))
     return {completed:false};
+  const scope=await captureHistoryScope(page);
+  try {
+  const selectedBefore=await scope.check();
   let firstUnits=null,oldestReached=false;
   for(let attempt=0;attempt<6;attempt++) {
-    const step=await historyScrollBoundary(page,'oldest');
+    const step=await scope.scroll('oldest');
     if(!step.ok)throw Error('ALIS_UI_HISTORY_SCROLL_UNVERIFIED');
     oldestReached=true;
     await sleep(300);
-    if(await uiTargetIdentity(page)!==selectedBefore)
+    if(await scope.check()!==selectedBefore)
       throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
     const units=await submittedUnits(page);
     try {
@@ -217,17 +258,17 @@ async function observeVirtualizedSubmittedPrompt(page,prompt,targetKey) {
     } catch {}
   }
   if(!firstUnits)throw Error('ALIS_UI_HISTORY_ANCHOR_MISMATCH');
-  const lastStep=await historyScrollBoundary(page,'newest');
+  const lastStep=await scope.scroll('newest');
   if(!lastStep.ok)throw Error('ALIS_UI_HISTORY_SCROLL_UNVERIFIED');
   await sleep(350);
   async function lastSample() {
-    if(await uiTargetIdentity(page)!==selectedBefore)
+    if(await scope.check()!==selectedBefore)
       throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
     const items=await visibleItems(page.locator('[data-chatgpt-search-unit-key$=":user"]'));
     const units=await submittedUnits(page,items);
     const bound=validateVirtualizedHistory({
       project:PROJECT_NAME,targetKey,prompt,
-      selectedBefore,selectedAfter:await uiTargetIdentity(page),
+      selectedBefore,selectedAfter:await scope.check(),
       firstUnits,latestUnits:units,
       oldestReached,newestReached:true
     });
@@ -250,7 +291,7 @@ async function observeVirtualizedSubmittedPrompt(page,prompt,targetKey) {
   if(first.stops||!first.assistant_count||!first.action_count)
     return {completed:false};
   await sleep(450);
-  const next=await historyScrollBoundary(page,'newest');
+  const next=await scope.scroll('newest');
   if(!next.ok)throw Error('ALIS_UI_HISTORY_SCROLL_UNVERIFIED');
   const second=await lastSample();
   if(JSON.stringify(first)!==JSON.stringify(second)||second.stops)
@@ -260,7 +301,7 @@ async function observeVirtualizedSubmittedPrompt(page,prompt,targetKey) {
      ||markers.length!==1
      ||/error in message stream|there was an error generating a response/i.test(second.text))
     throw Error('ALIS_UI_HISTORY_ORIGINAL_FINAL_UNVERIFIED');
-  if(await uiTargetIdentity(page)!==selectedBefore)
+  if(await scope.check()!==selectedBefore)
     throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
   return {completed:true,delivery_observed:true,idle_observed:true,
     attestation:'local-ui-user-turn-v1',
@@ -270,6 +311,7 @@ async function observeVirtualizedSubmittedPrompt(page,prompt,targetKey) {
       .locator('[role="button"][aria-current="page"]').getAttribute('aria-label'),
     response:{text:second.text,markerCount:markers.length,
       extractionSignal:'submitted-user-turn-assistant'}};
+  } finally {await scope.dispose();}
 }
 
 export async function observeSubmittedPrompt(page,prompt,{

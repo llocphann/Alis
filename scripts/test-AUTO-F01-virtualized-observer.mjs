@@ -24,22 +24,39 @@ try {
   const key=createHash('sha256').update(uiAnchorSource('Automatic Alis',[first])).digest('hex');
   let mode='newest',selector='original-ui-chat-id-12345',navigation=0;
   let changedChatOnOldest=false,stopGeneration=false,alterFirst=false,extraUser=false;
+  let metadata=false,reverse=true,rowConnected=true,hostConnected=true;
+  let replacedRow=false,foreignHost=false,detachOnOldest=false,replaceOnOldest=false;
   const forbid=()=>{throw Error('SEND_OR_EDIT_FORBIDDEN');};
+  class Handle {
+    constructor(value){this.value=value;}
+    async evaluate(fn,arg){return fn(this.value,arg instanceof Handle?arg.value:arg);}
+    asElement(){return this.value?this:null;}
+    async dispose(){}
+  }
   const viewport={
     parentElement:null,scrollHeight:1000,clientHeight:300,firstElementChild:{},
-    get scrollTop(){return mode==='oldest'?-700:0;},
-    set scrollTop(v){mode=v<0?'oldest':'newest';if(changedChatOnOldest&&mode==='oldest')selector='foreign-ui-chat-id-12345';}
+    get isConnected(){return hostConnected;},
+    get scrollTop(){return mode==='oldest'?(reverse?-700:0):(reverse?0:700);},
+    set scrollTop(v){
+      mode=reverse?(v<0?'oldest':'newest'):(v>0?'newest':'oldest');
+      if(mode==='oldest'){
+        if(changedChatOnOldest)selector='foreign-ui-chat-id-12345';
+        if(detachOnOldest)rowConnected=false;
+        if(replaceOnOldest)replacedRow=true;
+      }
+    }
   };
   const fakeDocument={body:{},querySelector:()=>({parentElement:viewport})};
   viewport.parentElement=fakeDocument.body;
   globalThis.document=fakeDocument;
-  globalThis.getComputedStyle=el=>el===viewport?{overflowY:'scroll',flexDirection:'column-reverse'}:
+  globalThis.getComputedStyle=el=>el===viewport?{overflowY:'scroll',flexDirection:reverse?'column-reverse':'column'}:
     {overflowY:'visible',flexDirection:'row'};
   const currentRows=()=>mode==='oldest'
     ?[{...(alterFirst?{...first,turn_key:'99999999-9999-9999-9999-999999999999'}:first)}]
     :extraUser?[latest,{...first}]:[latest];
   const node=u=>({
     innerText:u.text,
+    parentElement:foreignHost?fakeDocument.body:viewport,
     getAttribute:k=>k==='data-chatgpt-search-message-ids'?u.message_id:null,
     querySelectorAll:()=>[],
     closest:q=>q==='[data-turn-key]'?{
@@ -53,18 +70,24 @@ try {
     count:async()=>currentRows().length,
     nth:i=>({
       isVisible:async()=>true,
-      evaluate:async fn=>fn(node(currentRows()[i])),
+      evaluate:async(fn,arg)=>fn(node(currentRows()[i]),arg instanceof Handle?arg.value:arg),
+      evaluateHandle:async fn=>new Handle(fn(node(currentRows()[i]))),
       click:forbid,fill:forbid
     })
   });
+  const selectedNode={
+    get isConnected(){return rowConnected;},
+    getAttribute:k=>k==='data-chat-id'?(metadata?selector:null)
+      :k==='aria-label'?selector:k==='aria-current'?'page':null,
+    closest:()=>null,querySelector:()=>null
+  };
   const selected={
     count:async()=>1,isVisible:async()=>true,
     nth:()=>({isVisible:async()=>true}),
     getAttribute:async key=>key==='aria-label'?'Cloudbot original chat':null,
-    evaluate:async fn=>fn({
-      getAttribute:k=>k==='data-chat-id'?selector:null,
-      closest:()=>null,querySelector:()=>null
-    })
+    elementHandle:async()=>new Handle(selectedNode),
+    evaluate:async(fn,arg)=>fn(replacedRow?{...selectedNode}:selectedNode,
+                             arg instanceof Handle?arg.value:arg)
   };
   const candidate={
     count:async()=>1,isVisible:async()=>true,
@@ -93,6 +116,15 @@ try {
   assert.equal(good.response.extractionSignal,'submitted-user-turn-assistant');
   assert.equal(good.response.markerCount,1);
   assert.equal(navigation,0);
+  // The real desktop has no sidebar conversation ID. A label is never
+  // substituted for the saved first-turn key or the actual DOM handles.
+  for(const direction of [false,true]){
+    mode='newest';reverse=direction;
+    assert.equal((await observeSubmittedPrompt(page,prompt,{targetKey:key})).completed,true);
+  }
+  metadata=true;mode='newest';
+  assert.equal((await observeSubmittedPrompt(page,prompt,{targetKey:key})).completed,true);
+  metadata=false;
   mode='newest';
   await assert.rejects(()=>resumeUiChat(page,'Cloudbot original chat',{targetKey:key}),
                        /RESUME_TARGET_MISMATCH/);
@@ -104,6 +136,17 @@ try {
   await assert.rejects(()=>observeSubmittedPrompt(page,prompt,{targetKey:key}),
                        /HISTORY_CHAT_CHANGED/);
   changedChatOnOldest=false;selector='original-ui-chat-id-12345';
+  for(const fault of ['detach','replace']){
+    mode='newest';detachOnOldest=fault==='detach';replaceOnOldest=fault==='replace';
+    await assert.rejects(()=>observeSubmittedPrompt(page,prompt,{targetKey:key}),/HISTORY_CHAT_CHANGED/);
+    rowConnected=true;replacedRow=false;detachOnOldest=false;replaceOnOldest=false;
+  }
+  mode='newest';hostConnected=false;
+  await assert.rejects(()=>observeSubmittedPrompt(page,prompt,{targetKey:key}),/HISTORY_CHAT_CHANGED/);
+  hostConnected=true;
+  mode='newest';foreignHost=true;
+  await assert.rejects(()=>observeSubmittedPrompt(page,prompt,{targetKey:key}),/HISTORY_SCROLL_UNVERIFIED/);
+  foreignHost=false;
   mode='newest';alterFirst=true;
   await assert.rejects(()=>observeSubmittedPrompt(page,prompt,{targetKey:key}),
                        /HISTORY_ANCHOR_MISMATCH/);
