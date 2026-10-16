@@ -55,6 +55,39 @@ class QueueStopTests(unittest.TestCase):
                                expected_active="llocphann/Alis:OTHER")
         self.assertEqual(queue.view(), before)
 
+    def test_stop_requires_exact_queue_snapshot_and_keeps_manager_untouched(self):
+        initial = queue.view()
+        old_id = initial["snapshot_id"]
+        self.assertEqual(len(old_id), 64)
+        with queue._lock():
+            manifest = queue._load()
+            # This simulates a different queue generation with the same
+            # active Issue and same queued sibling IDs on screen.
+            manifest["created_unix"] += 1
+            queue._save(manifest)
+        actual = queue.view()
+        self.assertNotEqual(old_id, actual["snapshot_id"])
+        with patch.object(managed_tasks.control, "profile_action",
+                          side_effect=AssertionError("must not touch manager")):
+            with self.assertRaisesRegex(tf.TaskError, "Queue changed"):
+                managed_tasks.stop_queue(
+                    approved=True, expected_active=self.identity,
+                    expected_snapshot_id=old_id)
+        self.assertEqual(queue.view(), actual)
+        self.assertTrue(queue._load()["approved_start"])
+        with self.assertRaisesRegex(tf.TaskError, "Invalid Stop Queue"):
+            queue.request_stop(approved=True, expected_active=self.identity,
+                               expected_snapshot_id="malformed")
+        self.assertEqual(queue.view(), actual)
+        requested = queue.request_stop(approved=True,
+                                       expected_active=self.identity,
+                                       expected_snapshot_id=actual["snapshot_id"])
+        self.assertEqual(requested["state"], "stopping")
+        self.assertNotEqual(queue.view()["snapshot_id"], old_id)
+        with self.assertRaisesRegex(tf.TaskError, "Queue changed"):
+            queue.request_stop(approved=True, expected_active=self.identity,
+                               expected_snapshot_id=actual["snapshot_id"])
+
     def test_stop_preserves_ongoing_job_then_clear_archives_queue(self):
         def fake_action(action, profile_id):
             self.assertEqual((action, profile_id), ("stop", self.owner))
@@ -144,6 +177,8 @@ class QueueStopTests(unittest.TestCase):
                "modules/settings/AutomationTaskConfig.qml").read_text()
         self.assertIn('objectName: "automationStopQueue"', qml)
         self.assertIn('"queue-stop", "--approve", "--expected-active", identity', qml)
+        self.assertIn('"--expected-snapshot-id", snapshotId', qml)
+        self.assertIn("stopQueueSnapshotId", qml)
         self.assertIn('["finished", "cancelled", "stopped", "review_required"]', qml)
         self.assertIn('objectName: "automationSudoSave"', qml)
         self.assertIn('objectName: "automationSudoClear"', qml)
