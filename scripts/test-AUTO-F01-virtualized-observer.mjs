@@ -30,6 +30,7 @@ try {
   class Handle {
     constructor(value){this.value=value;}
     async evaluate(fn,arg){return fn(this.value,arg instanceof Handle?arg.value:arg);}
+    async evaluateHandle(fn){return new Handle(fn(this.value));}
     asElement(){return this.value?this:null;}
     async dispose(){}
   }
@@ -72,6 +73,7 @@ try {
       isVisible:async()=>true,
       evaluate:async(fn,arg)=>fn(node(currentRows()[i]),arg instanceof Handle?arg.value:arg),
       evaluateHandle:async fn=>new Handle(fn(node(currentRows()[i]))),
+      elementHandle:async()=>new Handle(node(currentRows()[i])),
       click:forbid,fill:forbid
     })
   });
@@ -85,7 +87,7 @@ try {
     count:async()=>1,isVisible:async()=>true,
     nth:()=>({isVisible:async()=>true}),
     getAttribute:async key=>key==='aria-label'?'Cloudbot original chat':null,
-    elementHandle:async()=>new Handle(selectedNode),
+    elementHandle:async()=>new Handle(replacedRow?{...selectedNode}:selectedNode),
     evaluate:async(fn,arg)=>fn(replacedRow?{...selectedNode}:selectedNode,
                              arg instanceof Handle?arg.value:arg)
   };

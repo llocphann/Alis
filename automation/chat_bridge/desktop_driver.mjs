@@ -195,7 +195,14 @@ async function captureHistoryScope(page) {
     .locator('[role="button"][aria-current="page"]');
   if(await selected.count()!==1||await visibleCount(selected)!==1)
     throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
-  const row=await selected.elementHandle();
+  async function element(locator) {
+    try {
+      const value=await locator.elementHandle({timeout:1000});
+      if(value)return value;
+    } catch {}
+    throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
+  }
+  const row=await element(selected);
   const fingerprint=node=>JSON.stringify(['aria-label','data-chat-id','data-conversation-id','href']
     .map(k=>node.getAttribute(k)));
   const signature=await row.evaluate(fingerprint);
@@ -205,31 +212,39 @@ async function captureHistoryScope(page) {
     return items[0];
   }
   const item=await firstItem();
-  const handle=await item.evaluateHandle(node=>{
+  const initial=await element(item);
+  const handle=await initial.evaluateHandle(node=>{
     const hosts=[];
     for(let n=node.parentElement;n&&n!==document.body;n=n.parentElement)
       if(/(auto|scroll)/.test(getComputedStyle(n).overflowY)
          &&n.scrollHeight>n.clientHeight+80)hosts.push(n);
     return hosts.length===1?hosts[0]:null;
   });
+  await initial.dispose();
   const host=handle.asElement();
   if(!host){await handle.dispose();await row.dispose();throw Error('ALIS_UI_HISTORY_SCROLL_UNVERIFIED');}
   const witness='local-ui-history:'+randomUUID();
   async function check() {
     await verifyProject(page);
-    if(await selected.count()!==1||await visibleCount(selected)!==1
-       ||!await selected.evaluate((node,original)=>node===original,row)
-       ||!await row.evaluate((node,sig)=>node.isConnected
+    if(await selected.count()!==1||await visibleCount(selected)!==1)
+      throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
+    const currentRow=await element(selected);
+    let sameRow;
+    try {sameRow=await currentRow.evaluate((node,original)=>node===original,row);}
+    finally {await currentRow.dispose();}
+    if(!sameRow||!await row.evaluate((node,sig)=>node.isConnected
           &&node.getAttribute('aria-current')==='page'
           &&JSON.stringify(['aria-label','data-chat-id','data-conversation-id','href']
              .map(k=>node.getAttribute(k)))===sig,signature)
        ||!await host.evaluate(node=>node.isConnected))
       throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
-    const current=await firstItem();
-    if(!await current.evaluate((node,original)=>{
+    const current=await element(await firstItem());
+    let sameHost;
+    try {sameHost=await current.evaluate((node,original)=>{
       for(let n=node.parentElement;n;n=n.parentElement)if(n===original)return true;
       return false;
-    },host))throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
+    },host);} finally {await current.dispose();}
+    if(!sameHost)throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
     return witness;
   }
   async function scroll(boundary) {
@@ -434,10 +449,14 @@ export async function waitForSubmittedPrompt(page,prompt,{
         if(typeof next==='string'&&next.trim()&&next.length<=250&&!/[\x00-\x1f]/.test(next))label=next;
       }
     } catch(error) {
-      // DOM publication can lag the acknowledged click. Retry observation
-      // only; a later user turn, changed target or invalid final fails closed.
-      if(!['ALIS_UI_TURN_ANCHOR_UNAVAILABLE','ALIS_UI_SUBMITTED_PROMPT_NOT_UNIQUE']
-          .includes(error.message))throw error;
+      // Only repeat observation, bound to the same saved input and key.
+      // A transient view/remount must not lose an already-clicked Send.
+      // A wrong original anchor, later user input or invalid final still
+      // fails closed; no retry of submission or receipt inference occurs.
+      if(error.code!=='HADALIS_DESKTOP_VIEW_CHANGED'
+         &&!['ALIS_UI_TURN_ANCHOR_UNAVAILABLE','ALIS_UI_SUBMITTED_PROMPT_NOT_UNIQUE',
+             'ALIS_UI_HISTORY_CHAT_CHANGED','ALIS_UI_HISTORY_SCROLL_UNVERIFIED']
+           .includes(error.message))throw error;
     }
     await sleep(pollMs);
   }

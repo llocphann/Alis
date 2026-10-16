@@ -51,4 +51,17 @@ await assert.rejects(()=>waitForSubmittedPrompt(missing.page,'Exact pending inpu
   targetKey:missing.key,timeoutMs:8,pollMs:0}),/TIMEOUT_NO_RESEND/);
 const initial=fixture();initial.setRows([initial.first]);
 assert.equal((await waitForSubmittedPrompt(initial.page,'Original input')).completed,true);
+for(const transient of ['HADALIS_DESKTOP_VIEW_CHANGED','ALIS_UI_HISTORY_CHAT_CHANGED',
+                        'ALIS_UI_HISTORY_SCROLL_UNVERIFIED']) {
+  const resumed=fixture();const original=resumed.page.getByRole;let interrupted=false;
+  resumed.page.getByRole=(...args)=>{
+    if(!interrupted){interrupted=true;const error=Error(transient);
+      if(transient==='HADALIS_DESKTOP_VIEW_CHANGED')error.code=transient;
+      throw error;}
+    return original(...args);
+  };
+  assert.equal((await waitForSubmittedPrompt(resumed.page,'Exact pending input',{
+    targetKey:resumed.key,pollMs:0})).completed,true);
+  assert(interrupted,'A transient view failure must have actually occurred');
+}
 console.log('PASS: exact submitted-turn wait survives global-count changes and rejects later/foreign/missing/busy responses without Send');
