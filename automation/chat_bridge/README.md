@@ -224,6 +224,38 @@ sampled: the already-spent immutable smoke ID MUST NOT be reused or reset.
 Any future live test message requires separate owner consent. The existing
 six-item queue and service configuration are unaffected by this work.
 
+### Vertical task board and conservative self-recovery
+
+The Automation GitHub Tasks card displays up to 20 SHA-pinned queue
+entries in **two vertical columns of ten**, with fixed-width aligned
+status tags. Primary tags are **Verified** (owner-completed saved task),
+**Done**, **Working** and **Queue**; additional honest states such as
+**Paused**, **Ack pending**, **Owner review** and **Blocked** stay visible.
+Clicking a row still selects the task's status/activity. No duplicate
+text list is rendered.
+
+The owner-approved UI-only scheduler has two non-replay recovery paths:
+
+1. An **authenticated Desktop pre-Send failure receipt** (prompt hash
+   matches and the old pending-send journal is gone) can schedule a
+   bounded automatic retry after 5, then 15 seconds. The third proven
+   failure pauses the profile for review. Retry counts/backoff are
+   persisted across manager restarts; completed turns reset this counter.
+   **Unknown click/submit outcome never takes this path.**
+2. If the Cloudbot previously requested `WAIT_RESULT JOB-...`, an
+   absent local worker receipt after 180 seconds is marked stalled.
+   The manager continues read-only polling of **the original job ID**
+   with bounded backoff. A late receipt must match the original job,
+   owner profile and SHA digest. It **never** launches a replacement
+   worker process or resends the original ChatGPT prompt.
+
+A journaled-but-uncertain UI Send, missing/mismatched worker receipt,
+unknown session/Project identity or changed task SHA remains
+`Needs review`. These cannot be automatically marked Verified or
+restarted: without proof, re-running risks duplicate real changes.
+The queue still requires the original owner Start consent and exclusive
+service mode; neither a UI change nor a CI pass starts a host queue.
+
 ### Automatic safe handling of saved task conflicts
 
 When the owner queues several task codes, Alis **never overwrites** an
