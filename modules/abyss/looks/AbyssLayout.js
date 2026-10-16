@@ -32,6 +32,15 @@ function moduleOwnsCornerHover(options,panelFamily,kind) {
     return panelFamily==="abyss" && isUnifiedKind(kind)
         && unifiedLauncherMode(options,kind)==="module";
 }
+// The settings mode is the only hover switch for an Abyss launcher.
+// Legacy quickNotes.enable, notificationCenter.enable/hoverEnable and old
+// per-monitor eligibility may have been disabled before the Panels Quick
+// Notes controls were removed. They must not strand Edgebar mode with no
+// input window. The classic ii and Waffle behavior remains unchanged.
+function edgebarOwnsCornerHover(options,panelFamily,kind) {
+    return panelFamily==="abyss" && isUnifiedKind(kind)
+        && unifiedLauncherMode(options,kind)==="edgebar";
+}
 // Mode selects popup *ownership* without rewriting placement or icon state.
 function livePlacements(placements, options, editing) {
     var all=normalize(placements,"top");
