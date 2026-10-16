@@ -67,6 +67,25 @@ ShellRoot {
    tryCompare(wall,"ready",true,4000)
    tryVerify(()=>!wall.transitionBusy,4000)
    check(wall.visible && wall.opacity===1,"desktop wallpaper is hidden")
+   // Parallax is explicitly off in this fixture, even though its workspace
+   // and sidebar sub-flags stay true as in a normal saved configuration.
+   // Internal Liquid must not keep a zoomed/shifted parallax container.
+   const layout=findChild(window.contentItem,"desktopWallpaperContainer")
+   check(layout && !window.dynamicParallaxRequested && !layout.useParallax,
+       "disabled parallax still owns desktop wallpaper geometry")
+   const sw=window.screen.width, sh=window.screen.height
+   const neutral=()=>Math.abs(layout.x)<0.5 && Math.abs(layout.y)<0.5
+       && Math.abs(layout.width-sw)<0.5 && Math.abs(layout.height-sh)<0.5
+   check(neutral(),"disabled parallax displaced desktop wallpaper")
+   const oldWidth=window.wallpaperWidth, oldHeight=window.wallpaperHeight
+   // Simulate async magick identify replacing the wallpaper dimensions
+   // during Liquid; only the decoded crop may change, not container geometry.
+   window.wallpaperWidth=1536
+   window.wallpaperHeight=2048
+   check(neutral(),"new wallpaper metrics shifted desktop with parallax off")
+   window.wallpaperWidth=oldWidth
+   window.wallpaperHeight=oldHeight
+   check(neutral(),"wallpaper metrics restoration moved desktop with parallax off")
    capture(wall,"before")
    check(!AwwwBackend.enabled && !window.externalMainWallpaperActive,"liquid mode has another wallpaper owner")
    GlobalStates.wallpaperLauncherOpen=true
@@ -128,6 +147,10 @@ ShellRoot {
         data["background"]["wallpaperPath"] = str(folder / "wallpapers/a.png")
         # Exercise an existing user config: legacy melt must remain usable without shader priming.
         data["background"]["transition"]["type"] = "inirMelt"
+        data["background"]["parallax"]["enable"] = False
+        data["background"]["parallax"]["enableWorkspace"] = True
+        data["background"]["parallax"]["enableSidebar"] = True
+        data["background"]["pan"] = {"x": 0, "y": 0, "zoom": 1}
         data["background"]["effects"]["enableBlur"] = False
         data["background"]["widgets"] = {"clock": {"enable": False}}
         data.setdefault("wallpapers", {})["directory"] = str(folder / "wallpapers")
