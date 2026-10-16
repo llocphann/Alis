@@ -1,0 +1,26 @@
+{
+  "schema": "alis.ui-queue-progress-evidence.v1",
+  "source_sha": "519c5dd3c8c4acaa23e76c2786c43ba6baa37fad",
+  "at_unix": 1792161766,
+  "scope": "live local UI and reviewed private native fixtures, not server-attested transport or Owner desktop acceptance",
+  "notes_completed_ui_iterations": 7,
+  "notes_final_directive": "DONE",
+  "notes_original_sixth_reconciled_without_replay": true,
+  "one_intervening_ui_attempt_proven_not_sent": true,
+  "new_distinct_passed_receipt_followup_observed": true,
+  "notes_final_ui_receipt_sha256": "de9a02dbe1723443840d1f64929f19055f256468a1fbb20ac6c9554c0ed4852a",
+  "notes_task_status": "awaiting_owner",
+  "verified_local_job": "JOB-e9df8277fe90a8f92ae23ba7",
+  "verified_local_job_sha": "36e8879fe8723aabcc830728386ce7420d090fcf",
+  "queue_active": "UTIL-F01",
+  "queue_order_preserved": true,
+  "todo_deferred_owner_review": true,
+  "native_transport_gate": "unchanged, closed",
+  "owner_verification": "pending",
+  "canonical_validation": {
+    "source_sha": "519c5dd3c8c4acaa23e76c2786c43ba6baa37fad",
+    "state": "RUNNING",
+    "not_full_pass": true
+  },
+  "next_owned_bridge": "initial UTIL UI turn supervised; no reviewed UTIL local job has run yet"
+}
