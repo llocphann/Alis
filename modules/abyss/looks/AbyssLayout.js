@@ -8,15 +8,21 @@ var labels = {distroIcon:"Launcher",activeWindow:"Active window",
     timer:"Timer",shellUpdate:"Updates",weather:"Weather",taskbar:"Taskbar",
     notesTimers:"QuickNotes & Timers",notificationActivity:"Notifications & Activities"};
 function isUnifiedKind(kind) { return kind === "notesTimers" || kind === "notificationActivity"; }
-function unifiedLauncherMode(options) {
-    return options?.launcherMode === "edgebar" ? "edgebar" : "module";
+function unifiedLauncherMode(options,kind) {
+    // Legacy one-switch profiles keep their chosen mode until the user
+    // explicitly changes either feature in Settings.
+    var value=kind==="notesTimers" ? options?.notesTimersMode
+        : kind==="notificationActivity" ? options?.notificationActivityMode
+        : options?.launcherMode;
+    if(value!=="module" && value!=="edgebar") value=options?.launcherMode;
+    return value==="edgebar" ? "edgebar" : "module";
 }
-// In Edgebar mode the legacy corner is the *sole* source. The module's
-// persisted placement and icon preference remain intact for mode reversal.
+// Mode selects popup *ownership* without rewriting placement or icon state.
 function livePlacements(placements, options, editing) {
     var all=normalize(placements,"top");
-    return editing || unifiedLauncherMode(options)==="module" ? all
-        : all.filter(function(p) { return !isUnifiedKind(p.kind); });
+    return editing ? all : all.filter(function(p) {
+        return !isUnifiedKind(p.kind) || unifiedLauncherMode(options,p.kind)==="module";
+    });
 }
 // Legacy corner launchers stay available until an enabled replacement is
 // actually installed on this output. No mutation or destructive migration.
@@ -420,20 +426,25 @@ function edgeInsetsForModules(placements, options, fontScale, thickness, minimum
         // already supply localSurfaces; only Wayland reservations span the
         // whole side to keep application windows clear of that foreground.
         if(!reservation && insets[edge]===0)return;
-        var enabled = placements.filter(function(p) { return p.enabled && p.edge===edge && moduleSize(p,options)>0; });
+        // Tiny feature launchers are local Edge affordances; they must never
+        // thicken a whole edge's workspace/window padding or exclusive zone.
+        var enabled = placements.filter(function(p) {
+            return p.enabled && p.edge===edge && !isUnifiedKind(p.kind)
+                && moduleSize(p,options)>0;
+        });
         if (!enabled.length) return;
         // Wayland reserves a whole edge. Local paint still reserves enough room
         // for its module so application windows cannot obscure that foreground.
         if (reservation || (options?.edgeWidthAffectsModules?.[edge]!==false
                 && (enabled.length!==1 || options?.singleModuleExpansion?.[edge]!=="local")))
-            insets[edge] = Math.max(insets[edge],minimum,stripDepth(placements,edge,options,fontScale));
+            insets[edge] = Math.max(insets[edge],minimum,stripDepth(enabled,edge,options,fontScale));
     });
     return insets;
 }
 function localSurfaces(records, width, height, options, fontScale, minimum) {
     records=records.filter(function(p) {return !p.capacityConflict;});
     var surfaces=records.filter(function(p) {
-        return edgeThickness(options,p.edge)===0 || options?.edgeWidthAffectsModules?.[p.edge]===false || options?.singleModuleExpansion?.[p.edge]==="local"
+        return isUnifiedKind(p.kind) || edgeThickness(options,p.edge)===0 || options?.edgeWidthAffectsModules?.[p.edge]===false || options?.singleModuleExpansion?.[p.edge]==="local"
             && records.filter(function(other) { return other.edge===p.edge; }).length===1;
     }).map(function(p) {
         // Geometry records express depth in pixels, unlike placement depth's
