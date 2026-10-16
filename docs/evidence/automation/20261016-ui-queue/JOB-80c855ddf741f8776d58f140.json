@@ -1,0 +1,39 @@
+{
+  "id": "JOB-80c855ddf741f8776d58f140",
+  "sha256": "80c855ddf741f8776d58f1406b067fa9225bb0e6e1c4744e940df8b9690e8474",
+  "source_sha": "3c5356a21bfb5450fe7dd12a9923425d67abba03",
+  "state": "passed",
+  "started_unix": 1792128505,
+  "finished_unix": 1792128505,
+  "continuation_ready": true,
+  "schema": "alis.local-test-evidence.v1",
+  "task": "AI-I01",
+  "repository": "llocphann/Alis-Intergration",
+  "branch": "main",
+  "intake_base_sha": "9b547066bf910d3fe7139aae62bfe2ca47b4318d",
+  "owner_approved_exact_job": true,
+  "scope": "offline installer fixtures; installed host and Owner acceptance UNRUN",
+  "steps": [
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "redacted_bounded_excerpt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "truncated": false
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-install.py"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "redacted_bounded_excerpt_sha256": "29b04712fa7cc3aa9971947a5bd70d2ab238804b8486202787f4278bed0be314",
+      "truncated": false
+    }
+  ]
+}

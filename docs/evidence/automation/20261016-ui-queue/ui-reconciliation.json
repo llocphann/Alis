@@ -1,0 +1,33 @@
+{
+  "schema": "alis.ui-reconciliation-evidence.v1",
+  "source_sha": "6550d9835",
+  "scope": "supervised local UI only; no server Project/conversation attestation",
+  "queue_repository": "llocphann/Alis-Intergration",
+  "queue_order": [
+    "AI-I01",
+    "AI-I02",
+    "HELPER-I01",
+    "INT-R01",
+    "INT-R02",
+    "INT-R03"
+  ],
+  "active_task": "AI-I01",
+  "not_sent_attempts": 1,
+  "not_sent_evidence": "direct Owner confirmation, exact original attempt/hash archived without delivery acknowledgement",
+  "sent_user_turns": 2,
+  "completed_assistant_turns": 2,
+  "directives": [
+    "CONTINUE",
+    "CONTINUE"
+  ],
+  "replayed_sends": 0,
+  "reconciliation_checks": [
+    "complete original prompt matched",
+    "original local UI turn/message keys retained privately",
+    "assistant-only final with unique marker and settled idle UI",
+    "separate owned window target and bound resume candidate",
+    "foreign native pending records preserved"
+  ],
+  "native_transport_gate": "CLOSED",
+  "owner_verification": "UNRUN"
+}
