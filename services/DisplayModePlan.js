@@ -79,3 +79,9 @@ function mirrorPairConnected(names,pair) {
     return !!source && !!target && source !== target
         && names.includes(source) && names.includes(target);
 }
+
+// Only the currently requested connected pair may be restarted after exit.
+function mirrorRestartAllowed(queuedRevision, currentRevision, applying, names, pair) {
+    return Number.isInteger(queuedRevision) && queuedRevision === currentRevision
+        && !applying && mirrorPairConnected(names, pair);
+}

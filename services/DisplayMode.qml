@@ -197,7 +197,11 @@ Singleton {
         _runNextAction()
     }
 
+    // Cancel even an already scheduled callback when Stop/Apply supersedes it.
+    property int _mirrorIntentRevision: 0
+
     function stopMirror(manual=false): void {
+        _mirrorIntentRevision += 1
         _pendingMirrorRestart = null
         if (!mirrorProcess.running) return
         // A manual Stop deserves a confirmation; a stop as part of a new
@@ -289,7 +293,14 @@ Singleton {
             if (root._pendingMirrorRestart) {
                 const restart = root._pendingMirrorRestart
                 root._pendingMirrorRestart = null
-                Qt.callLater(() => root._launchMirror(restart))
+                const revision = root._mirrorIntentRevision
+                Qt.callLater(() => {
+                    // The queued callback must not revive a superseded mirror.
+                    if (DisplayPlan.mirrorRestartAllowed(revision,
+                            root._mirrorIntentRevision, root.applying,
+                            root.connectedOutputs, restart))
+                        root._launchMirror(restart)
+                })
                 return
             }
             const stoppedMessage=DisplayPlan.mirrorStoppedMessage(expectedStop,manualStop)
