@@ -184,7 +184,8 @@ async function historyScrollBoundary(page,boundary) {
     if(scrollable.length!==1)return {ok:false};
     const host=scrollable[0],extent=host.scrollHeight-host.clientHeight;
     const reverse=getComputedStyle(host).flexDirection==='column-reverse'
-       || getComputedStyle(host.firstElementChild).flexDirection==='column-reverse';
+       || (host.firstElementChild
+           && getComputedStyle(host.firstElementChild).flexDirection==='column-reverse');
     host.scrollTop=which==='oldest'?-host.scrollHeight:host.scrollHeight;
     const top=host.scrollTop;
     const reached=which==='oldest'
