@@ -81,6 +81,7 @@ ContentPage {
     property bool uiQueueStageAvailable: false
     property string uiQueueFirstTask: ""
     property var uiQueuePreflightBlockers: []
+    property var uiQueueProfileCounts: ({})
     property string uiQueueServiceMode: ""
     property string uiQueueServiceState: ""
     property bool uiQueueStageConfirmation: false
@@ -107,8 +108,12 @@ ContentPage {
         if (blockers.includes("TASKFLOW_PROFILE_NOT_IDLE"))
             return Translation.tr("Start blocked: the task profile retains a running state, UI session, original pending send or job. Reconcile the original evidence; do not create a duplicate task.")
         if (blockers.includes("FOREIGN_PROFILE_UNSETTLED")
-                || blockers.includes("NATIVE_SESSION_REQUIRES_REVIEW"))
-            return Translation.tr("Start blocked: a previous profile/session or job requires evidence reconciliation. Do not reset or replay it.")
+                || blockers.includes("NATIVE_SESSION_REQUIRES_REVIEW")) {
+            const counts = root.uiQueueProfileCounts || {}
+            return Translation.tr("Start blocked by other profiles: %1 scheduled/running, %2 pending sends, %3 local jobs, %4 native sessions requiring review. Historical idle sessions are ignored. Use Backend status to reconcile the original work; no automatic reset or replay.")
+                .arg(counts.running || 0).arg(counts.pending || 0)
+                .arg(counts.jobs || 0).arg(counts.native_unsettled || 0)
+        }
         if (root.uiQueueServiceState === "active"
                 && root.uiQueueServiceMode === "native_mode")
             return Translation.tr("Start blocked: bridge is running in native mode. Native server receipts are not attested; switch to queue-only UI mode only after checking and stopping existing work.")
@@ -790,6 +795,9 @@ ContentPage {
                     ? report.ui_queue_service_state : ""
                 root.uiQueuePreflightBlockers = Array.isArray(report.ui_queue_preflight_blockers)
                     ? report.ui_queue_preflight_blockers : []
+                root.uiQueueProfileCounts = report.ui_queue_profile_counts
+                    && typeof report.ui_queue_profile_counts === "object"
+                    ? report.ui_queue_profile_counts : ({})
                 root.backendStatusKnown = true
                 root.backendStatusText = ""
                 root.backendServices = report.services
@@ -800,6 +808,7 @@ ContentPage {
                 root.uiQueueStageAvailable = false
                 root.uiQueueFirstTask = ""
                 root.uiQueuePreflightBlockers = []
+                root.uiQueueProfileCounts = ({})
                 root.uiQueueServiceMode = ""
                 root.uiQueueServiceState = ""
                 root.uiQueueStartConfirmation = false
