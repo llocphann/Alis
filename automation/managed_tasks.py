@@ -284,7 +284,7 @@ def request_ui_chat_reset(*, approved: bool = False,
         if (record.get("unresolved")
                 or record.get("task", {}).get("base_sha") != members[0]["source_sha"]
                 or record.get("status") not in {
-                    "prepared", "handoff_ready", "awaiting_cloud_ack", "awaiting_owner"
+                    "prepared", "handoff_ready", "awaiting_cloud_ack"
                 }):
             raise tf.TaskError("Task or work receipt requires review")
         config, state, issues = store.read_snapshot()
@@ -319,6 +319,7 @@ def request_ui_chat_reset(*, approved: bool = False,
             receipt = json.loads(original.read_text(encoding="utf-8"))
             if (receipt.get("transport") != ui_scheduler.UI_TRANSPORT
                     or receipt.get("attempt_id") != attempt
+                    or receipt.get("directive") != current.get("last_success")
                     or receipt.get("directive") not in {"CONTINUE", "WAIT_RESULT", "ROTATE"}):
                 raise tf.TaskError("Original response cannot be safely resumed")
         except (OSError, ValueError, TypeError, KeyError):
