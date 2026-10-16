@@ -11,41 +11,30 @@ Canonical scope: [Issue #106](https://github.com/llocphann/Alis/issues/106). Fea
 - Existing ScreenCorners are not deleted. For an output with an enabled replacement, its *matching* legacy corner trigger is suppressed; disabling or removing the replacement restores that legacy entry. Other outputs and the `stable` branch remain unchanged.
 - Notification toasts and older unrelated Bar timer indicator are left untouched. The new components do **not** create duplicate providers, timers or notification stores.
 
-## Independent access modes in Module Behavior
+## Independent access modes in the Modules subtab
 
-Go to **Alis Settings → Abyss → Bar modules → Module behavior**, or search
-Settings for **Quick Notes & Notifications access modes**. Configure both
-features separately:
+Go to **Alis Settings → Abyss → Modules & Behavior → Modules** (Bar modules).
+Configure each feature with its single canonical **Show icon** switch:
 
-- **Quick Notes & Timers** → **Module Icon** or **Edgebar Hover**.
-- **Notifications & Activities** → **Module Icon** or **Edgebar Hover**.
+- **Show Quick Notes & Timers icon**: On = **Module Icon**; Off = **Edgebar Hover**.
+- **Show Notifications & Activities icon**: On = **Module Icon**; Off = **Edgebar Hover**.
 
-The independent modes persist immediately. Each feature suppresses only its own
-legacy corner trigger when its module launcher is enabled. An Edgebar Hover
-selection unmounts *only that feature's* module popup/source and activates its
-historical corner hover (subject to the original feature/monitor/fullscreen
-settings). Mixed configurations are supported.
+There are **no duplicate per-feature mode selectors in Behavior & clock**.
+Settings search for **Quick Notes & Notifications access modes** navigates
+to **Modules**, not Behavior & clock. The choices persist immediately and
+can be mixed independently on one output or across multiple outputs.
 
-In **Module Icon** mode, hovering anywhere on the physical Screen Edge outside
-the painted icon does not open that feature. Only the module's circular icon
-opens the mature popup; no duplicate name tooltip appears.
-
-In **Settings → Abyss → Bar modules → Modules**, the independent **Show Quick
-Notes & Timers icon** and **Show Notifications & Activities icon** switches
-are alternative controls for those **same modes**, not decoration flags:
-
-- On = **Module Icon**. The module and its circular source are mounted.
-- Off = **Edgebar Hover**. The module icon, popup host and input region are
-  unmounted, and the matching legacy corner hover source returns.
-
-Changing either switch instantly updates the matching Module Behavior selection
-and vice versa. There is no invisible module with a hidden edge hitbox. Earlier
-`iconVisibility.hide` settings migrate to Edgebar when there is no explicit
-new per-feature mode; explicitly choosing Module Icon restores the visible icon.
-Saved module positions survive both transitions.
+When a switch is on, the visible circular icon is the only hover source
+for that feature, with no name tooltip. When off, that feature's module
+popup/input is unmounted and its former corner Edgebar Hover returns.
+A previously stored per-output module position is retained for switching
+back. Earlier `iconVisibility.hide` profiles are interpreted as Edgebar
+only until a new explicit mode is set. No separate invisible hover module
+remains. Runtime corner eligibility still respects fullscreen and native
+Niri Overview corner ownership.
 
 **Edit Abyss Layout** controls physical placement/size/enable/remove only,
-not icon decoration or the access-mode switches.
+not these access-mode switches.
 
 ## Exclusive hover ownership across Bar lifecycle
 
