@@ -140,6 +140,52 @@ class FailedReceiptTests(TestCase):
               'expected_response_attempt':attempt,'expected_snapshot_id':queue.view()['snapshot_id'],**changes}
         return managed_tasks.save_reviewed_ui_repair_handoff('AUTO-R01',repair,**args)
 
+    def stopped_reviewed_queue(self):
+        attempt,repair=self.prepare_ui_review_and_repair()
+        queue.request_stop(approved=True,expected_active='llocphann/Alis:AUTO-R01')
+        store.change_state(lambda c,s:s['profiles'][self.pid].update(desired='stopped'))
+        queue.confirm_stopped(expected_active='llocphann/Alis:AUTO-R01')
+        return attempt,repair
+
+    def resume_reviewed_queue(self,**changes):
+        return managed_tasks.resume_reviewed_ui_queue(**{
+            'approved':True,'accept_ui_only_receipts':True,
+            'expected_active':'llocphann/Alis:AUTO-R01',
+            'expected_snapshot_id':queue.view()['snapshot_id'],**changes})
+
+    def test_resume_retains_exact_task_profile_receipts_without_dispatch(self):
+        attempt,repair=self.stopped_reviewed_queue()
+        old_task=self.record();old_profile=store.read_snapshot()[1]['profiles'][self.pid]
+        with patch.object(tf,'run_local',side_effect=AssertionError('No replay')), \
+                patch.object(ui_scheduler.runtime,'desktop',side_effect=AssertionError('No Send')):
+            result=self.resume_reviewed_queue()
+        self.assertTrue(result['ok']);self.assertFalse(result['profile_scheduled'])
+        self.assertFalse(result['service_modified']);self.assertEqual(queue.view()['state'],'active')
+        self.assertEqual(store.read_snapshot()[1]['profiles'][self.pid],old_profile)
+        self.assertEqual(self.record(),old_task)
+        self.assertFalse(self.save_repair(attempt,repair)['duplicate'])
+
+    def test_resume_rejects_unapproved_stale_or_different_stopped_queue(self):
+        self.stopped_reviewed_queue();before=queue.view()
+        for changes in [{'approved':False},{'accept_ui_only_receipts':False},
+                        {'expected_snapshot_id':'b'*64},{'expected_active':'llocphann/Alis:OTHER-R01'}]:
+            with self.assertRaises(tf.TaskError):self.resume_reviewed_queue(**changes)
+            self.assertEqual(queue.view(),before)
+        store.change_state(lambda c,s:s['profiles'][self.pid].update(pending={'transport':'alis-ui-once'}))
+        with self.assertRaises(tf.TaskError):self.resume_reviewed_queue()
+        self.assertEqual(queue.view(),before)
+
+    def test_resume_rejects_foreign_response_and_contradictory_observed_intent(self):
+        attempt,_=self.stopped_reviewed_queue();before=queue.view()
+        path=store.state_dir()/'ui-responses'/self.pid/(attempt+'.json')
+        original=json.loads(path.read_text())
+        for change in [{'ui_target_key':'b'*64},{'directive':'DONE'},
+                       {'ui_send_intent':{**original['ui_send_intent'],'id':str(uuid.uuid4())}}]:
+            store._write(path,{**original,**change})
+            with self.assertRaises((tf.TaskError,FileNotFoundError)):
+                self.resume_reviewed_queue()
+            self.assertEqual(queue.view(),before)
+
     def test_reviewed_repair_preserves_failed_plan_and_never_runs_or_advances(self):
         attempt,repair=self.prepare_ui_review_and_repair();before=queue.view()
         with patch.object(tf,'run_local',side_effect=AssertionError('No execution during handoff')):

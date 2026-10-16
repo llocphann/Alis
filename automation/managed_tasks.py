@@ -663,6 +663,122 @@ def start_ui_queue(*, approved: bool = False,
             "owner_acceptance": "local-ui-only", "service_modified": False}
 
 
+def resume_reviewed_ui_queue(*, approved: bool = False,
+                             accept_ui_only_receipts: bool = False,
+                             expected_active: str = "",
+                             expected_snapshot_id: str = "") -> dict:
+    """Re-authorize the same stopped queue after original UI reconciliation.
+
+    Retain its task, order, receipts and paused profile. This does not start
+    services, make a profile runnable, send a prompt or execute a local job.
+    """
+    import fcntl
+    import re
+    import uuid
+    from .chat_bridge import runtime, ui_scheduler
+    from .chat_bridge.protocol import parse_loop_directive, DirectiveKind
+    from .lifecycle import _verified_local_receipt
+
+    if approved is not True or accept_ui_only_receipts is not True:
+        raise tf.TaskError("Explicit UI-only queue resume approval required")
+    if (not isinstance(expected_snapshot_id, str)
+            or not re.fullmatch(r"[a-f0-9]{64}", expected_snapshot_id)):
+        raise tf.TaskError("Exact stopped queue snapshot required")
+    with runtime.lock_path().open("a+") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise tf.TaskError("Original UI manager still owns the turn") from None
+        with queue._lock():
+            manifest = queue._load()
+            active = (manifest or {}).get("active")
+            if (not manifest or queue._snapshot_id(manifest) != expected_snapshot_id
+                    or manifest.get("mode") != "ordered" or manifest.get("state") != "stopped"
+                    or manifest.get("approved_start") is not False
+                    or manifest.get("stop_requested") is not True or not isinstance(active, dict)
+                    or expected_active != f'{active.get("repository")}:{active.get("code")}'):
+                raise tf.TaskError("Stopped queue ownership changed")
+            repository, code = active.get("repository"), active.get("code")
+            if repository not in tf.REPOSITORIES or not isinstance(code, str) or not tf.CODE.fullmatch(code):
+                raise tf.TaskError("Original active task invalid")
+            pid = profile_id(repository, code)
+            config, state, issues = store.read_snapshot()
+            if issues:
+                raise tf.TaskError("Invalid manager configuration")
+            profile, item = ui_scheduler._owner(config, state, pid)
+            session = item.get("session") or {}
+            attempt = item.get("last_ui_response_attempt")
+            try:
+                valid_attempt = isinstance(attempt, str) and str(uuid.UUID(attempt)) == attempt
+            except ValueError:
+                valid_attempt = False
+            if (not profile["enabled"] or reference(profile) != (repository, code)
+                    or item.get("desired") not in {"stopped", "paused"}
+                    or item.get("pending") or item.get("job_id") or item.get("run_active")
+                    or item.get("last_success") != "CONTINUE" or not valid_attempt
+                    or session.get("transport") != "alis-ui-once"
+                    or not isinstance(session.get("ui_target_key"), str)
+                    or not re.fullmatch(r"[a-f0-9]{64}", session.get("ui_target_key") or "")):
+                raise tf.TaskError("Original UI turn must be reconciled before Resume")
+            record = tf.load_task(code, repository)
+            entries = manifest.get("items")
+            if not isinstance(entries, list) or any(not isinstance(m, dict) for m in entries):
+                raise tf.TaskError("Original queue members invalid")
+            members = [m for m in entries if m.get("state") == "active"]
+            if (len(members) != 1 or members[0].get("repository") != repository
+                    or members[0].get("code") != code
+                    or members[0].get("source_sha") != record["task"]["base_sha"]
+                    or record.get("unresolved") or record.get("managed_chat")
+                    or record.get("delivery") or record.get("rotation")
+                    or record.get("status") not in {"prepared", "handoff_ready", "needs_review", "awaiting_cloud_ack"}):
+                raise tf.TaskError("Original active task changed")
+            if record.get("latest_receipt"):
+                _verified_local_receipt(record, **({"allow_failed": True}
+                    if record["latest_receipt"].get("state") == "failed" else {}))
+            def read_proof(path):
+                try:
+                    return ui_scheduler._read_private_receipt(path)
+                except (OSError, ValueError, RuntimeError):
+                    raise tf.TaskError("Original UI proof missing or invalid") from None
+            response = read_proof(store.state_dir() / "ui-responses" / pid / (attempt + ".json"))
+            if (response.get("transport") != "alis-ui-once" or response.get("attempt_id") != attempt
+                    or response.get("directive") != "CONTINUE"
+                    or response.get("ui_target_key") != session["ui_target_key"]
+                    or not isinstance(response.get("response"), str)
+                    or parse_loop_directive(response.get("response", "")).kind is not DirectiveKind.CONTINUE):
+                raise tf.TaskError("Original completed UI receipt mismatch")
+            intent = response.get("ui_send_intent") or {}
+            if not isinstance(intent, dict):
+                raise tf.TaskError("Original observed UI journal required")
+            jid = intent.get("id", "")
+            try:
+                valid_jid = isinstance(jid, str) and str(uuid.UUID(jid)) == jid
+            except ValueError:
+                valid_jid = False
+            if (not valid_jid
+                    or set(intent) != {"id", "command", "prompt_sha256"}
+                    or intent.get("command") not in {"send", "rotate-send"}
+                    or not re.fullmatch(r"[a-f0-9]{64}", intent.get("prompt_sha256") or "")):
+                raise tf.TaskError("Original observed UI journal required")
+            journal = read_proof(store.state_dir() /
+                "ui-send-journal/observed" / (jid + ".json"))
+            if (journal.get("schema") != "alis.chat-ui-send.v1" or journal.get("phase") != "attempted"
+                    or any(journal.get(k) != v for k, v in intent.items())):
+                raise tf.TaskError("Original observed UI journal mismatch")
+            def reviewed(c, s):
+                current = s["profiles"].get(pid)
+                owner = next((p for p in c["profiles"] if p["id"] == pid), None)
+                if current != item or owner != profile:
+                    raise tf.TaskError("Profile changed during queue Resume")
+                store.event(s, pid, "ui_queue_resume_authorized", "Same reconciled task; no dispatch")
+            store.change_state(reviewed)
+            manifest.update(state="active", approved_start=True, stop_requested=False,
+                            updated_unix=int(time.time()))
+            queue._save(manifest)
+    return {"ok": True, "state": "active", "profile_id": pid,
+            "selected": active, "profile_scheduled": False, "service_modified": False}
+
+
 def save_reviewed_ui_repair_handoff(
         code: str, bundle: dict, repository: str = "llocphann/Alis", *,
         approved: bool = False, expected_job_id: str = "",
