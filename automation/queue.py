@@ -125,15 +125,21 @@ def prepare(raw: str, mode: str = "ordered",
                 # The old message ("active elsewhere") falsely implied that
                 # a worker is running. It can equally mean awaiting_owner or
                 # a previously finished task; NEVER reset its durable record.
+                status = previous["state"]
+                label = (status if isinstance(status, str) and
+                         re.fullmatch(r"[a-z][a-z0-9_]{0,39}", status)
+                         else "unrecognized")
                 raise tf.TaskError(
                     f'{task["code"]} has saved task state '
-                    f'{previous["state"]}; queue not started. '
+                    f'{label}; queue not started. '
                     'Review task status and prior receipts first')
             recorded = tf.load_task(task["code"], task["repository"])
+            saved_task = recorded.get("task")
             if (recorded.get("unresolved") or
                     recorded.get("scheduler_dispatched") is not False or
                     recorded.get("issue_number") != task["issue_number"] or
-                    recorded.get("task", {}).get("base_sha") != task["base_sha"]):
+                    not isinstance(saved_task, dict) or
+                    saved_task.get("base_sha") != task["base_sha"]):
                 raise tf.TaskError(
                     f'{task["code"]} has prior work or a different source pin; '
                     'queue not started. Review the saved task before retrying')
@@ -585,7 +591,9 @@ def discover_backend_candidates(api=None, *, limit: int = 8) -> list[dict]:
         task = tf._task_from_issue(repo, issue, pinned[repo], api)
         if existing_path.exists():
             prior = tf.load_task(code, repo)
-            if prior.get("task", {}).get("base_sha") != task["base_sha"]:
+            recorded_task = prior.get("task")
+            if (not isinstance(recorded_task, dict) or
+                    recorded_task.get("base_sha") != task["base_sha"]):
                 # New HEAD must not silently repin a saved local task.
                 skipped_saved.append(code)
                 continue
