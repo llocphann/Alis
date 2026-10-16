@@ -499,10 +499,17 @@ def cloud_selection_prompt() -> str:
         )
 
 
-def approve_ordered_start() -> dict:
-    """Persist explicit owner consent before any actual manager dispatch."""
+def approve_ordered_start(*, expected_snapshot_id: str | None = None) -> dict:
+    """Persist owner Start consent only for the version the owner confirmed."""
+    if expected_snapshot_id is not None and (
+            not isinstance(expected_snapshot_id, str)
+            or re.fullmatch(r"[a-f0-9]{64}", expected_snapshot_id) is None):
+        raise tf.TaskError("Invalid Start Queue snapshot identity")
     with _lock():
         doc = _load()
+        if (expected_snapshot_id is not None
+                and (doc is None or _snapshot_id(doc) != expected_snapshot_id)):
+            raise tf.TaskError("Queue changed since Start confirmation; refresh")
         if not doc or doc["mode"] != "ordered" or doc["state"] not in {"prepared", "waiting"}:
             raise tf.TaskError("Cannot approve an unprepared ordered queue")
         if not doc.get("approved_start"):
