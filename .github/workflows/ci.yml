@@ -44,6 +44,12 @@ jobs:
           python3 scripts/test-automation-taskflow.py
           python3 scripts/test-automation-task-layout.py
 
+      - name: Verify desktop context-menu click and fade relocation
+        shell: bash
+        run: |
+          python3 scripts/test-desktop-context-menu-hover-contract.py
+          python3 scripts/test-desktop-context-menu-fade-relocation-contract.py
+
       - name: Verify native Desktop adapter fails closed without sending
         shell: bash
         run: |
