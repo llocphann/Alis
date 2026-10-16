@@ -78,7 +78,14 @@ ContentPage {
     property bool backendStatusKnown: false
     property bool backendTransportReady: false
     property bool uiQueueStartAvailable: false
+    property bool uiQueueStageAvailable: false
     property string uiQueueFirstTask: ""
+    property var uiQueuePreflightBlockers: []
+    property string uiQueueServiceMode: ""
+    property string uiQueueServiceState: ""
+    property bool uiQueueStageConfirmation: false
+    property string uiQueueStageTarget: ""
+    property string uiQueueStageSnapshotId: ""
     property bool uiQueueStartConfirmation: false
     property string uiQueueStartTarget: ""
     property string uiQueueStartSnapshotId: ""
@@ -199,6 +206,9 @@ ContentPage {
         root.uiQueueStartConfirmation = false
         root.uiQueueStartTarget = ""
         root.uiQueueStartSnapshotId = ""
+        root.uiQueueStageConfirmation = false
+        root.uiQueueStageTarget = ""
+        root.uiQueueStageSnapshotId = ""
         queueOperation = "status"
         queueProcess.command = ["python3", Quickshell.shellPath("scripts/alis-automation-task.py"), "queue-status"]
         queueProcess.running = true
@@ -238,6 +248,49 @@ ContentPage {
             Quickshell.shellPath("scripts/alis-automation-task.py"),
             "status", root.selectedTask.code, "--repo", root.selectedTask.repository]
         taskStatusProcess.running = true
+    }
+
+    function stageUiQueue(): void {
+        if (root.busy || !root.queueStatusConfirmed || !root.uiQueueStageAvailable
+                || !root.queueSnapshot || root.queueSnapshot.state !== "prepared"
+                || root.queueSnapshot.mode !== "ordered")
+            return
+        const first = root.queueSnapshot.items.find(item => item.state === "queued")
+        const identity = first ? first.repository + ":" + first.code : ""
+        const snapshotId = root.queueSnapshot.snapshot_id || ""
+        if (!first || first.code !== root.uiQueueFirstTask
+                || !/^[a-f0-9]{64}$/.test(snapshotId)) {
+            root.errorText = Translation.tr("Queue identity changed · Refresh before Prepare UI")
+            return
+        }
+        if (!root.uiQueueStageConfirmation) {
+            root.uiQueueStageConfirmation = true
+            root.uiQueueStageTarget = identity
+            root.uiQueueStageSnapshotId = snapshotId
+            root.statusText = Translation.tr(
+                "Confirm Prepare UI: create an idle profile for %1. No task, ChatGPT send, service restart or queue Start occurs."
+            ).arg(first.code)
+            return
+        }
+        if (root.uiQueueStageTarget !== identity
+                || root.uiQueueStageSnapshotId !== snapshotId) {
+            root.uiQueueStageConfirmation = false
+            root.uiQueueStageTarget = ""
+            root.uiQueueStageSnapshotId = ""
+            root.errorText = Translation.tr("Queue changed · Refresh before Prepare UI")
+            return
+        }
+        root.uiQueueStageConfirmation = false
+        root.uiQueueStageTarget = ""
+        root.uiQueueStageSnapshotId = ""
+        root.uiQueueStageAvailable = false
+        root.queueOperation = "stage-ui"
+        root.errorText = ""
+        queueProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "queue-stage-ui", "--approve", "--expected-first", identity,
+            "--expected-snapshot-id", snapshotId]
+        queueProcess.running = true
     }
 
     function startQueue(): void {
@@ -309,6 +362,9 @@ ContentPage {
         root.uiQueueStartConfirmation = false
         root.uiQueueStartTarget = ""
         root.uiQueueStartSnapshotId = ""
+        root.uiQueueStageConfirmation = false
+        root.uiQueueStageTarget = ""
+        root.uiQueueStageSnapshotId = ""
         const codes = taskCodeField.text.trim()
         const entries = codes.length ? codes.split(";").map(s => s.trim()) : []
         if (codes.length && (entries.length > 20 ||
@@ -694,9 +750,16 @@ ContentPage {
                 root.backendTransportBlocker = typeof report.transport_blocker === "string"
                     ? report.transport_blocker : ""
                 root.uiQueueStartAvailable = report.ui_queue_start_available === true
-                root.uiQueueFirstTask = root.uiQueueStartAvailable
+                root.uiQueueStageAvailable = report.ui_queue_stage_available === true
+                root.uiQueueFirstTask = (root.uiQueueStartAvailable || root.uiQueueStageAvailable)
                     && typeof report.ui_queue_first_task === "string"
                     ? report.ui_queue_first_task : ""
+                root.uiQueueServiceMode = typeof report.ui_queue_service_mode === "string"
+                    ? report.ui_queue_service_mode : ""
+                root.uiQueueServiceState = typeof report.ui_queue_service_state === "string"
+                    ? report.ui_queue_service_state : ""
+                root.uiQueuePreflightBlockers = Array.isArray(report.ui_queue_preflight_blockers)
+                    ? report.ui_queue_preflight_blockers : []
                 root.backendStatusKnown = true
                 root.backendStatusText = ""
                 root.backendServices = report.services
@@ -704,7 +767,11 @@ ContentPage {
                 root.backendInstalled = false
                 root.backendTransportReady = false
                 root.uiQueueStartAvailable = false
+                root.uiQueueStageAvailable = false
                 root.uiQueueFirstTask = ""
+                root.uiQueuePreflightBlockers = []
+                root.uiQueueServiceMode = ""
+                root.uiQueueServiceState = ""
                 root.uiQueueStartConfirmation = false
                 root.backendTransportBlocker = ""
                 root.backendStatusKnown = false
