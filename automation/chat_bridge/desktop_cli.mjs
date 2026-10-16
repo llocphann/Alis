@@ -361,7 +361,11 @@ async function main() {
     const expectedUserCount=countOption===null?null:Number(countOption.split('=')[1]);
     if(process.env.ALIS_UI_RESUME_CHAT_LABEL)
       await resumeUiChat(page,process.env.ALIS_UI_RESUME_CHAT_LABEL,
-        {targetKey,initialPrompt:targetKey===null?prompt:null});
+        {targetKey,initialPrompt:targetKey===null?prompt:null,
+         // This observation-only branch verifies the original turn by a
+         // bounded history walk after navigation when virtualization hides
+         // the first turn. Never pass it to Send/rotate-send.
+         readOnlyHistory:targetKey!==null});
     if(targetKey===null)await uiOnlyTurnIdentity(page,{initialPrompt:prompt});
     writeJson(await observeSubmittedPrompt(page,prompt,{targetKey,expectedUserCount}));
     return;
