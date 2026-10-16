@@ -373,8 +373,19 @@ class TaskflowTests(unittest.TestCase):
         profile = legacy_model.default_profile()
         self.assertFalse(profile["enabled"])
         self.assertEqual(profile["mode"], "manual")
-        state = legacy_store.default_state(legacy_model.default_config())
-        self.assertEqual(state["profiles"][profile["id"]]["desired"], "stopped")
+        with tempfile.TemporaryDirectory() as tmp, patch.object(
+                legacy_store, "state_dir", return_value=Path(tmp)):
+            state = legacy_store.default_state(legacy_model.default_config())
+            self.assertEqual(state["profiles"][profile["id"]]["desired"], "stopped")
+            # A saved connector block is deliberately retained as paused;
+            # this fixture must never read the owner's real legacy state.
+            (Path(tmp) / "chat-bridge.json").write_text(json.dumps({
+                "state": "connector_blocked"}))
+            blocked = legacy_store.default_state(legacy_model.default_config())
+            restored = blocked["profiles"][profile["id"]]
+            self.assertEqual(restored["desired"], "paused")
+            self.assertEqual(restored["status"], "connector_blocked")
+            self.assertEqual(restored["loop_state"], "connector_blocked")
 
     def test_unattested_transport_blocks_queue_start_without_state_mutation(self):
         # Real production must leave the owner's pending queue intact even
