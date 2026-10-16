@@ -56,6 +56,12 @@ for an Edge is preserved rather than forcibly equalized.
 
 This is an **automatic default placement**, not a destructive rewriting of historical corner coordinates. New modules are initially seeded at the respective bottom corner; the owner can reposition them in the editor. Original corner size, style and history settings remain intact for fallback. Exact previous physical anchor geometry is **not imported**; output profiles and rollback remain explicitly controlled by the user.
 
+## Owner-reported fixes (popup rims, Settings icons and Edge hover)
+
+- **Popup rim:** when a Quick Notes / Notifications popup overlaps its own local Edge launcher, skip only that same-kind mini-surface during clearance; unrelated module surfaces are still respected. This prevents the self-inflated 48px+ attachment clearance that exaggerated the inner border near screen corners.
+- **Settings icon toggles:** `abyss.modules.iconVisibility.notesTimers` and `notificationActivity` are now declared JsonAdapter properties, with `inherit` / `show` / `hide` values. The default `inherit` preserves earlier per-output icon settings. Settings is the only active control surface; the Edit Abyss Layout icon button is no longer present.
+- **Module Icon hover:** the existing StyledPopup ancestor-hover check was broad enough to count hover over the entire Bar module. The two unified popup sources opt into `strictSourceHover`, recognizing only their painted icon's exact MouseArea. Legacy broad Bar popups remain unchanged. Explicitly hidden icons still expose the bounded local Edge hover source, as documented.
+
 ## Checks and review gates
 
 Source assertion checks and an additional Node placement/profile regression have been added under `scripts/test-abyss-unified-edge-modules*`. Locally run:
