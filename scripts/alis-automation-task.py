@@ -34,6 +34,9 @@ def main():
     legacy_stop = commands.add_parser("queue-stop-idle-legacy")
     legacy_stop.add_argument("--approve", action="store_true")
     legacy_stop.add_argument("--expected-snapshot-id", required=True)
+    bridge_recover = commands.add_parser("queue-recover-bridge")
+    bridge_recover.add_argument("--approve", action="store_true")
+    bridge_recover.add_argument("--expected-snapshot-id", required=True)
     recheck = commands.add_parser("queue-recheck")
     recheck.add_argument("--expected-snapshot-id", required=True,
                          help="Version of the exact fully parked queue displayed in Settings")
@@ -127,6 +130,10 @@ def main():
             result = managed_tasks.stop_idle_legacy_default_for_ui_queue(
                 approved=args.approve,
                 expected_snapshot_id=args.expected_snapshot_id)
+        elif args.action == "queue-recover-bridge":
+            result = managed_tasks.recover_failed_ui_bridge(
+                approved=args.approve,
+                expected_snapshot_id=args.expected_snapshot_id)
         elif args.action == "queue-stage-ui":
             result = managed_tasks.stage_ui_queue(
                 approved=args.approve, expected_first=args.expected_first,
@@ -201,12 +208,34 @@ def main():
                     "UI_QUEUE_OWNER_ACCEPTANCE_REQUIRED",
                 }
             )
+            with queue._lock():
+                manifest = queue._load()
+                inactive_prepared_queue = bool(
+                    manifest and manifest.get("mode") == "ordered"
+                    and manifest.get("state") == "prepared"
+                    and manifest.get("approved_start") is False
+                    and manifest.get("active") is None
+                    and manifest.get("selection") is None
+                    and not manifest.get("stop_requested")
+                    and any(item.get("state") == "queued"
+                            for item in manifest.get("items", [])))
+            bridge = states["bridge"]
+            recover_bridge_ready = (
+                inactive_prepared_queue
+                and bridge.get("state") in {"blocked", "failed"}
+                and bridge.get("exec_main_status") == "75"
+                and bridge.get("unit") == manager_control.UNITS["bridge"]
+                and service == ("failed", "ui_queue_mode")
+            )
             result = {"ok": True, "services": {
-                kind: {"state": service.get("state", "unavailable"),
-                       "unit": service.get("unit", "")}
-                for kind, service in states.items()
+                kind: {"state": record.get("state", "unavailable"),
+                       "unit": record.get("unit", ""),
+                       "result": record.get("result", ""),
+                       "exit_status": record.get("exec_main_status", "")}
+                for kind, record in states.items()
             }, "installed": all(states[name]["state"] != "unavailable"
                                for name in ("bridge", "worker")),
+            "ui_queue_bridge_recover_available": recover_bridge_ready,
             "ui_queue_start_available": ui_start_ready,
             "ui_queue_stage_available": ui_stage_ready,
             "ui_queue_idle_legacy_stop_available": bool(
