@@ -247,6 +247,103 @@ def stop_queue(*, approved: bool = False,
             "profile_stop_confirmed": True, "worker_cancelled": False}
 
 
+def request_ui_chat_reset(*, approved: bool = False,
+                          expected_active: str = "") -> dict:
+    """Owner-approved recovery in a NEW Project chat; never replay old UI work.
+
+    Stage only a one-shot scheduler request. The manager itself later verifies
+    Project UI and journals the distinct new prompt before attempting Send.
+    A pending UI message, active local job, unverified original response,
+    foreign session or stale queue must remain untouched.
+    """
+    import json
+    import re
+    from .chat_bridge import ui_scheduler
+
+    if approved is not True:
+        raise tf.TaskError("Explicit Reset Chat approval required")
+    with queue._lock():
+        manifest = queue._load()
+        active = manifest.get("active") if isinstance(manifest, dict) else None
+        if (not manifest or manifest.get("mode") != "ordered"
+                or manifest.get("state") != "active"
+                or manifest.get("approved_start") is not True
+                or manifest.get("stop_requested") is True
+                or not isinstance(active, dict)
+                or expected_active !=
+                    active.get("repository", "") + ":" + active.get("code", "")):
+            raise tf.TaskError("Active queue changed; refresh before Reset Chat")
+        members = [m for m in manifest.get("items", [])
+                   if isinstance(m, dict) and m.get("repository") == active["repository"]
+                   and m.get("code") == active["code"] and m.get("state") == "active"]
+        if len(members) != 1 or not isinstance(members[0].get("source_sha"), str) \
+                or not tf.SHA.fullmatch(members[0]["source_sha"]):
+            raise tf.TaskError("Active task pin requires review")
+        pid = profile_id(active["repository"], active["code"])
+        record = tf.load_task(active["code"], active["repository"])
+        if (record.get("unresolved")
+                or record.get("task", {}).get("base_sha") != members[0]["source_sha"]
+                or record.get("status") not in {
+                    "prepared", "handoff_ready", "awaiting_cloud_ack", "awaiting_owner"
+                }):
+            raise tf.TaskError("Task or work receipt requires review")
+        config, state, issues = store.read_snapshot()
+        if issues:
+            raise tf.TaskError("Manager configuration requires review")
+        try:
+            owner, current = ui_scheduler._owner(config, state, pid)
+        except RuntimeError:
+            raise tf.TaskError("UI session/journal requires reconciliation") from None
+        session = current.get("session")
+        attempt = current.get("last_ui_response_attempt")
+        if (reference(owner) != (active["repository"], active["code"])
+                or not owner.get("enabled") or current.get("desired") != "run"
+                or current.get("pending") is not None
+                or current.get("job_id") is not None
+                or current.get("status") in {
+                    "ui_reconciliation_required", "connector_blocked", "completed",
+                    "checkpoint_required", "recovery_required"
+                }
+                or current.get("request") in {"manual_reset", "rotation"}
+                or not isinstance(session, dict)
+                or session.get("transport") != ui_scheduler.UI_TRANSPORT
+                or not re.fullmatch(r"[a-f0-9]{64}", session.get("ui_target_key") or "")
+                or not isinstance(attempt, str)
+                or not re.fullmatch(r"[0-9a-f-]{36}", attempt)):
+            raise tf.TaskError("Reset Chat blocked: pending work or UI identity requires review")
+        original = store.state_dir() / "ui-responses" / pid / (attempt + ".json")
+        if (original.is_symlink() or not original.is_file()
+                or original.stat().st_size > 125000):
+            raise tf.TaskError("Original completed UI response evidence missing")
+        try:
+            receipt = json.loads(original.read_text(encoding="utf-8"))
+            if (receipt.get("transport") != ui_scheduler.UI_TRANSPORT
+                    or receipt.get("attempt_id") != attempt
+                    or receipt.get("directive") not in {"CONTINUE", "WAIT_RESULT", "ROTATE"}):
+                raise tf.TaskError("Original response cannot be safely resumed")
+        except (OSError, ValueError, TypeError, KeyError):
+            raise tf.TaskError("Original response evidence requires review") from None
+        # Recheck the exact active entry inside the manager transaction while
+        # queue.lock serializes Stop and task advance. No session, checkpoint,
+        # receipt, pending intent or worker state is removed or rewritten.
+        def stage(checked_config, checked_state):
+            p, item = ui_scheduler._owner(checked_config, checked_state, pid)
+            if p != owner or item != current:
+                raise tf.TaskError("Manager changed; refresh before Reset Chat")
+            checked_state["command_seq"] += 1
+            item.update(request="manual_reset", status="ui_chat_reset_requested",
+                        next_run_at_unix=int(time.time()),
+                        command_seq=checked_state["command_seq"], last_error="")
+            store.event(checked_state, pid, "ui_chat_reset_requested",
+                        "Owner requested fresh Project chat; original receipt preserved")
+            return True
+        store.change_state(stage)
+        return {"ok": True, "state": "reset_scheduled",
+                "active": dict(active), "previous_session_preserved": True,
+                "original_receipt_preserved": True, "new_message_sent": False,
+                "queue_unchanged": True}
+
+
 def start_ordered_queue(*, approved: bool = False) -> dict:
     """Owner explicitly starts entire serial queue; never installs services."""
     if approved is not True:
