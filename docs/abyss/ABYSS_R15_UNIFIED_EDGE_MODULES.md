@@ -13,13 +13,13 @@ Canonical scope: [Issue #106](https://github.com/llocphann/Alis/issues/106). Fea
 
 ## Exclusive QuickNotes / Notifications access modes
 
-In **Edit Abyss Layout → Modules**, switch the joint *Notes / Notifications* selector:
+In **Alis Settings → Abyss → Bar modules → Modules**, choose the joint **Quick Notes & Notifications · Access mode** selector. The option is also discoverable through Settings search for **Edgebar Hover** or **Quick Notes**. There is no mode switch in the Edit Abyss Layout control bar.
 
 - **Module** (default): The placed QuickNotes & Timers and Notifications & Activities launchers are the only hover sources on the corresponding outputs; each matching legacy ScreenCorners/Edgebar hover trigger is suppressed when its unified module is enabled. Show/hide icon remains configurable independently in the module toolbar.
 - **Edgebar Hover**: Both unified launcher instances are excluded from the live module geometry and hover/input masks, so their icons and popup sources are absent. The legacy QuickNotes bottom-left and Notifications bottom-right dwell-triggered corners are restored, respecting existing feature enable/hover/monitor/fullscreen conditions. The module placement and per-icon `showIcon` choices remain stored unchanged, not deleted.
 - Switching back to **Module** restores the existing module positions and each user's earlier icon preference, without duplicate launchers, note/timer/notification providers, or activity stores.
 
-The mode is **one global choice for the two features across outputs**, while physical module placements remain per-output. Preview it inside the editor, use **Done** to persist, **Cancel** to discard and **Undo** to return to the previous mode. When Edgebar Hover is selected, keyboard-open Notifications continue through the legacy corner host and do not unnecessarily start an auto-hidden Abyss bar.
+The mode is **one global choice for the two features across outputs**, while physical module placements remain per-output. Settings writes the mode directly and takes effect immediately; switching back in Settings restores the previous presentation. **Edit Abyss Layout** remains responsible only for per-output module placement, size, icon visibility and Done/Cancel/Undo for those layout edits. When Edgebar Hover is selected, keyboard-open Notifications continue through the legacy corner host and do not unnecessarily start an auto-hidden Abyss bar.
 
 ## Automatic placement with reversible per-output migration
 
@@ -46,7 +46,7 @@ A source contract cannot prove native Quickshell/Niri behavior. **No PASS claim 
 
 - 4 edges, icon visible/hidden, 0px/nonzero widths, width-affects-modules, scaled and rotated modules
 - compact/fractional scaling, multiple outputs and disconnected/reconnected screens; no doubled corner or phantom input masks
-- automatic defaults on legacy configured/unconfigured and multiple output layouts; Editor Undo/Done, disable/remove rollback
+- automatic defaults on legacy configured/unconfigured and multiple output layouts; mode change in Alis Settings independently of Editor Undo/Done; layout Editor Undo/Done, disable/remove rollback
 - Notes Markdown reading/editing, Todo, pin/focus/Escape, timers while switching tabs
 - Notification unread/history, Activity tab, explicit hotkeys and uninterrupted transient toasts; no extra marking-read on layout preview
 - hover transfer and popup continuity without pop-in, premature close, stutter or duplicate processes
