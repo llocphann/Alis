@@ -60,6 +60,20 @@ ShellRoot {
      check(todo.list[1].done,"failure reverted memory")
      mode("600");todo.refresh();settle("explicit refresh retry");tryCompare(todo,"ready",true,1800)
      check(todo.list[1].done && todo.errorMessage.length===0,"retry lost desired change/error did not clear")
+     // A second denied-write interval must coalesce several distinct edits,
+     // rather than replaying a stale first failure on recovery.
+     const beforeBatch=JSON.stringify(jsonDisk());mode("400")
+     check(todo.markUnfinished(1),"denied-write unfinished rejected")
+     check(todo.markDone(0),"denied-write done rejected")
+     check(todo.deleteItem(1),"denied-write delete rejected")
+     check(todo.addTask("recovered private task"),"denied-write add rejected")
+     tryVerify(()=>!todo._jsonSaving,1800,"batched failed save never acknowledged")
+     check(todo.persistenceBusy && todo.errorCode==="INTERNAL_SAVE_FAILED","batched failure was hidden")
+     check(JSON.stringify(jsonDisk())===beforeBatch,"batched denied writes changed disk")
+     check(todo.list.length===2 && todo.list[0].done && todo.list[1].content==="recovered private task" && !todo.list[1].done,
+           "batched failed edits lost in-memory state")
+     mode("600");check(todo.retrySave(),"explicit retry rejected");settle("batched explicit retry")
+     check(todo.errorMessage.length===0 && !todo.persistenceBusy,"batched retry failed to acknowledge durability")
     }
     external.setText("# external edit\n- [x] external private task\n")
     tryVerify(()=>todo.list.length===1 && todo.list[0].content==="external private task" && todo.list[0].done,2500,"external TXT did not synchronize")
