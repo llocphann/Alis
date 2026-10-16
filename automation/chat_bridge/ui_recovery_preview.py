@@ -103,7 +103,7 @@ def preview(manifest: dict | None, config: dict, state: dict,
     reply["first_turn_anchor_present"] = True
     # Read only the existing original journal. No recovery writes or
     # authorization from a file's mere presence.
-    if journal_path.is_symlink():
+    if journal_path.is_symlink() or journal_path.parent.is_symlink():
         reply["original_journal"] = "unsafe_path"
         reply["reason"] = "ORIGINAL_JOURNAL_UNVERIFIED"
         return reply
@@ -122,7 +122,13 @@ def preview(manifest: dict | None, config: dict, state: dict,
         reply["reason"] = "ORIGINAL_JOURNAL_UNVERIFIED"
         return reply
     command = "send" if pending["kind"] == "continuation" else "rotate-send"
-    if (not isinstance(journal, dict)
+    journal_id = journal.get("id") if isinstance(journal, dict) else None
+    try:
+        valid_journal_id = (isinstance(journal_id, str)
+                            and str(uuid.UUID(journal_id)) == journal_id)
+    except (ValueError, AttributeError):
+        valid_journal_id = False
+    if (not valid_journal_id or not isinstance(journal, dict)
             or journal.get("schema") != "alis.chat-ui-send.v1"
             or journal.get("phase") != "attempted"
             or journal.get("prompt_sha256") != digest
