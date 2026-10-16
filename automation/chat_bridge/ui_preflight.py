@@ -77,6 +77,32 @@ def inert_native_session_history(config: dict, profile_id: str,
     )
 
 
+def idle_legacy_default_can_stop(config: dict, state: dict) -> bool:
+    """Only the original, non-taskflow default profile can be stopped safely.
+
+    Merely scheduled, without a pending send, worker job or dispatch intent;
+    the user must still explicitly confirm before any state is mutated.
+    """
+    owners = [p for p in config.get("profiles", [])
+              if p.get("id") == model.DEFAULT_ID]
+    if len(owners) != 1:
+        return False
+    profile = owners[0]
+    item = state.get("profiles", {}).get(model.DEFAULT_ID)
+    return bool(
+        isinstance(item, dict)
+        and not str(profile.get("description", "")).startswith("taskflow:")
+        and item.get("desired") == "run"
+        and item.get("status") in {"scheduled", "idle", "scheduler_unavailable"}
+        and item.get("pending") is None
+        and item.get("job_id") is None
+        and item.get("run_active") is False
+        and item.get("recovery") is None
+        and item.get("failed_turn") is None
+        and not item.get("remove_requested")
+    )
+
+
 def has_unresolved_native_transport(item: dict) -> bool:
     """Inspect both session and pending; an UI pending cannot mask native session."""
     if not isinstance(item, dict):
@@ -229,6 +255,7 @@ def check_prepared_queue() -> dict:
         "foreign_job_count": 0,
         "native_unsettled_count": 0,
         "historical_native_session_count": 0,
+        "idle_default_stop_available": False,
         "native_transport_authorized": False,
         "submission_authorized": False,
         "service_modified": False,
@@ -325,6 +352,9 @@ def check_prepared_queue() -> dict:
     }
     result["legacy_native_pending_retained"] = bool(isolated)
     result["historical_native_session_count"] = len(history_only)
+    result["idle_default_stop_available"] = (
+        idle_legacy_default_can_stop(config, state)
+        and expected_id != model.DEFAULT_ID)
     foreign = [
         item for pid, item in entries.items()
         if pid != expected_id and isinstance(item, dict) and pid not in isolated
