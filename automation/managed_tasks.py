@@ -204,7 +204,8 @@ def stage_ui_queue(*, approved: bool = False,
 
 
 def stop_queue(*, approved: bool = False,
-               expected_active: str = "") -> dict:
+               expected_active: str = "",
+               expected_snapshot_id: str | None = None) -> dict:
     """Stop automated selection, then stop the exact manager profile.
 
     This does not run a cancelled job, retract a sent message, terminate
@@ -214,7 +215,8 @@ def stop_queue(*, approved: bool = False,
     if approved is not True:
         raise tf.TaskError("Explicit Stop Queue approval required")
     requested = queue.request_stop(
-        approved=True, expected_active=expected_active)
+        approved=True, expected_active=expected_active,
+        expected_snapshot_id=expected_snapshot_id)
     active = requested.get("active")
     owner = (profile_id(active["repository"], active["code"])
              if active else SELECTOR_ID)
