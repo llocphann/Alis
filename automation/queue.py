@@ -488,7 +488,7 @@ def clear(*, approved: bool = False,
             # not erased as if it never ran. Removing the queue view requires
             # a confirmed manager Stop plus a separate Clear confirmation.
             if (not manifest.get("stop_requested") or manifest.get("approved_start")
-                    or any(item.get("state") not in {"active", "queued", "completed", "awaiting_owner"}
+                    or any(item.get("state") not in {"active", "queued", "deferred", "completed", "awaiting_owner"}
                            for item in manifest["items"])):
                 raise tf.TaskError("Stopped queue is not reconciled")
         elif state in {"finished", "cancelled"}:
