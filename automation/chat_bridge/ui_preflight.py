@@ -379,6 +379,9 @@ def check_prepared_queue() -> dict:
     service, mode = _unit_state()
     result["installed_service_mode"] = mode
     result["service_state"] = service
+    result["idle_default_stop_available"] = (
+        result["idle_default_stop_available"]
+        and (service, mode) == ("active", "ui_queue_mode"))
     if service != "inactive" or mode not in {"native_mode", "ui_mode", "ui_queue_mode"}:
         blockers.append("SCHEDULER_CUTOVER_NOT_READY")
     # Native Start remains server-receipt-gated. The separate queue-only
