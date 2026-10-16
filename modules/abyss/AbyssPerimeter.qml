@@ -625,7 +625,10 @@ Scope {
             function presentation(kind) { return Presentation.resolve(Config.options?.abyss?.positions,kind,outputName) }
             function positionEdge(kind,fallback) { return Presentation.edge(presentation(kind),fallback) }
             function positionAlong(kind,edge,span,fallback) { return Presentation.along(presentation(kind),edge,span,width,height,fallback,nativeInsets) }
-            function bodyInsets(edge,along,span) { return ModuleLayout.clearanceInsets(nativeInsets,bar.visible ? bar.deformations : [],edge,along,span) }
+            function bodyInsets(edge,along,span,ownLauncherKind = "") {
+                return ModuleLayout.clearanceInsets(nativeInsets,
+                    bar.visible ? bar.deformations : [],edge,along,span,ownLauncherKind)
+            }
             readonly property bool fullscreenCovered: GameMode.hasFullscreenOnOutput(outputName)
             readonly property bool presented: !GlobalStates.screenLocked
                 && (!fullscreenCovered || (Config.options?.abyss?.perimeter?.visibleInFullscreen ?? false))
@@ -1179,7 +1182,14 @@ Scope {
                     animatePresentation: true
                     externalProgress: hostedPopup?.revealProgress ?? 0
                     embeddedItem: hostedPopup?.contentItem ?? null
-                    edgeInsets: window?.bodyInsets(edge,along,span)
+                    // Unified popups originate from local mini-launchers.
+                    // Exclude the SAME launcher from clearance, otherwise its
+                    // own local surface displaces the popup away from the Edge
+                    // and makes the inward left/right rim visibly thicker.
+                    edgeInsets: window?.bodyInsets(edge,along,span,
+                        (presentationKind === "notesTimers"
+                         || presentationKind === "notificationActivity")
+                            ? presentationKind : "")
                         ?? ({left:0,top:0,right:0,bottom:0})
                     padding: 14
                     span: (Geometry.horizontal(edge)
