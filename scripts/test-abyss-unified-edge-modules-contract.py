@@ -55,7 +55,7 @@ assert "Placement.saveProfile(" in editor
 assert 'if(["remove","locked","enabled","joinCorner"].concat(placementKeys)' in layout
 
 # Existing corner fallback and explicit notification hotkey remain supported.
-assert "ModuleLayout.hasEnabledModule(" in corners
+assert "ModuleLayout.moduleOwnsCornerHover(" in corners
 assert "moduleAnchorMode: true" in module
 assert 'liquidPresentationKind: "notesTimers"' in module
 assert 'liquidPresentationKind: "notificationActivity"' in module
@@ -107,7 +107,7 @@ assert 'notesTimers: Config.options?.abyss?.modules?.iconVisibility?.notesTimers
 assert 'notificationActivity: Config.options?.abyss?.modules?.iconVisibility?.notificationActivity' in bar
 assert 'notesTimersMode: Config.options?.abyss?.modules?.notesTimersMode' in bar
 assert 'notificationActivityMode: Config.options?.abyss?.modules?.notificationActivityMode' in bar
-assert 'ModuleLayout.unifiedLauncherMode(' in corners and ',kind) === "module"' in corners
+assert 'return ModuleLayout.moduleOwnsCornerHover(' in corners
 assert '"notificationActivity") === "module"' in perimeter
 assert 'ModuleLayout.livePlacements(placements,Config.options?.abyss?.modules,false)' in perimeter
 assert 'bar.activePlacements,bar.layoutOptions' in perimeter
