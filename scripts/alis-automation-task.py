@@ -31,6 +31,9 @@ def main():
                        help="Optional codes; blank discovers Backend-first GitHub Issues")
     batch.add_argument("--mode", choices=["ordered", "cloud"], default="ordered")
     commands.add_parser("queue-status")
+    legacy_stop = commands.add_parser("queue-stop-idle-legacy")
+    legacy_stop.add_argument("--approve", action="store_true")
+    legacy_stop.add_argument("--expected-snapshot-id", required=True)
     recheck = commands.add_parser("queue-recheck")
     recheck.add_argument("--expected-snapshot-id", required=True,
                          help="Version of the exact fully parked queue displayed in Settings")
@@ -120,6 +123,10 @@ def main():
         elif args.action == "queue-recheck":
             result = queue.recheck_review_queue(
                 expected_snapshot_id=args.expected_snapshot_id)
+        elif args.action == "queue-stop-idle-legacy":
+            result = managed_tasks.stop_idle_legacy_default_for_ui_queue(
+                approved=args.approve,
+                expected_snapshot_id=args.expected_snapshot_id)
         elif args.action == "queue-stage-ui":
             result = managed_tasks.stage_ui_queue(
                 approved=args.approve, expected_first=args.expected_first,
@@ -202,6 +209,8 @@ def main():
                                for name in ("bridge", "worker")),
             "ui_queue_start_available": ui_start_ready,
             "ui_queue_stage_available": ui_stage_ready,
+            "ui_queue_idle_legacy_stop_available": bool(
+                ui_check.get("idle_default_stop_available")),
             "ui_queue_first_task": (
                 ui_check.get("first_task_code")
                 if ui_start_ready or ui_stage_ready else None),
