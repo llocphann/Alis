@@ -433,7 +433,7 @@ def queue_tick(*, now: int | None = None, desktop=None) -> str:
             return "ALIS_UI_QUEUE_MODE_UNSUPPORTED"
         if document.get("state") in {
                 "prepared", "waiting", "stopping", "stopped",
-                "finished", "cancelled"}:
+                "finished", "cancelled", "review_required"}:
             return "queue_idle"
         if (document.get("state") != "active"
                 or document.get("approved_start") is not True
