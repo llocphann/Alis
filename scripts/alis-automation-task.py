@@ -220,6 +220,15 @@ def main():
                     and any(item.get("state") == "queued"
                             for item in manifest.get("items", [])))
             bridge = states["bridge"]
+            # Read-only diagnostic; never grants UI Send, receipt acceptance or
+            # queue Start. Preserve the original private files in place.
+            from automation.chat_bridge.ui_recovery_preview import preview as recovery_preview
+            from automation.manager import store as manager_store
+            config, runtime_state, config_issues = manager_store.read_snapshot()
+            recovery_status = recovery_preview(
+                manifest, config if not config_issues else {},
+                runtime_state if not config_issues else {},
+                manager_store.state_dir() / "ui-send-journal" / "pending.json")
             recover_bridge_ready = (
                 inactive_prepared_queue
                 and bridge.get("state") in {"blocked", "failed"}
@@ -236,6 +245,7 @@ def main():
             }, "installed": all(states[name]["state"] != "unavailable"
                                for name in ("bridge", "worker")),
             "ui_queue_bridge_recover_available": recover_bridge_ready,
+            "ui_queue_pending_recovery_preview": recovery_status,
             "ui_queue_start_available": ui_start_ready,
             "ui_queue_stage_available": ui_stage_ready,
             "ui_queue_idle_legacy_stop_available": bool(
