@@ -202,11 +202,24 @@ def stage_ui_queue(*, approved: bool = False,
         if (report.get("queue_state") != "prepared"
                 or report.get("first_task_code") != first["code"]
                 or report.get("queue_item_count") != len(items)
-                or "TASKFLOW_PROFILE_NOT_MATERIALIZED"
-                    not in report.get("preflight_blockers", [])
                 or any(blocker not in allowed for blocker in
                        report.get("preflight_blockers", []))):
             raise tf.TaskError("UI Queue staging blocked by unsettled manager or service")
+        if report.get("taskflow_profile_present"):
+            # Idempotent owner approval must not re-create an idle profile;
+            # however an already-active/sent profile is NEVER a staged one.
+            config, state, issues = store.read_snapshot()
+            pid = profile_id(first["repository"], first["code"])
+            owner = next((p for p in config["profiles"] if p["id"] == pid), None)
+            runtime = state["profiles"].get(pid)
+            if (issues or owner is None or runtime is None
+                    or reference(owner) != (first["repository"], first["code"])
+                    or owner.get("enabled") is not True
+                    or runtime.get("desired") != "stopped"
+                    or runtime.get("pending") or runtime.get("job_id")
+                    or runtime.get("run_active") or runtime.get("session")
+                    or runtime.get("last_ui_response_attempt")):
+                raise tf.TaskError("Previously staged UI profile requires reconciliation")
         record = tf.load_task(first["code"], first["repository"])
         if (record.get("status") not in {"prepared", "handoff_ready"}
                 or record.get("unresolved") or record.get("scheduler_dispatched")
