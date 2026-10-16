@@ -9,6 +9,8 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import "../abyss/looks/AbyssLayout.js" as ModuleLayout
+import "../abyss/looks/AbyssGeometry.js" as Geometry
 
 Scope {
     id: screenCorners
@@ -86,6 +88,17 @@ Scope {
             && cornerOpenMatchesPosition && !fullscreen
         readonly property string cornerName: cornerPanelWindow.corner
         readonly property string outputName: cornerPanelWindow.screen?.name ?? ""
+        // Keep legacy corner anchors as an exact rollback path on every output
+        // where its unified Abyss replacement is absent or disabled. The
+        // module owns only the matching feature, never unrelated hot corners.
+        function hasUnifiedEdgeReplacement(kind): bool {
+            return GlobalStates.barOpen
+                && (Config.options?.enabledPanels ?? []).includes("abyssBar")
+                && Geometry.targets(outputName,Config.options?.bar?.screenList ?? [],
+                    Quickshell.screens.map(screen => screen.name))
+                && ModuleLayout.hasEnabledModule(
+                    Config.options?.abyss?.modules,outputName,kind)
+        }
         // Orbit was retired from the live graph. Only the compositor's real
         // overview hot corner keeps priority over shell corner interactions.
         readonly property bool niriOverviewOwnsCorner: CompositorService.isNiri
@@ -170,6 +183,7 @@ Scope {
         readonly property bool shouldShowQuickNotesCorner:
             (Config.options?.panelFamily ?? "ii") !== "waffle"
             && (Config.options?.quickNotes?.enable ?? true)
+            && !cornerPanelWindow.hasUnifiedEdgeReplacement("notesTimers")
             && cornerPanelWindow.quickNotesMonitorAllowed
             && (screenCorners.quickNotesEditorOutput.length === 0
                 || screenCorners.quickNotesEditorOutput === outputName)
@@ -241,6 +255,7 @@ Scope {
             (Config.options?.panelFamily ?? "ii") !== "waffle"
             && (Config.options?.notificationCenter?.enable ?? true)
             && (Config.options?.notificationCenter?.hoverEnable ?? true)
+            && !cornerPanelWindow.hasUnifiedEdgeReplacement("notificationActivity")
             && cornerPanelWindow.notificationCenterTargetsOutput()
             && cornerPanelWindow.isBottomRight
             && !cornerPanelWindow.niriOverviewOwnsCorner
@@ -251,6 +266,7 @@ Scope {
         readonly property bool notificationCenterHostNeeded:
             (Config.options?.panelFamily ?? "ii") !== "waffle"
             && (Config.options?.notificationCenter?.enable ?? true)
+            && !cornerPanelWindow.hasUnifiedEdgeReplacement("notificationActivity")
             && cornerPanelWindow.notificationCenterTargetsOutput()
             && cornerPanelWindow.isBottomRight
             && (!fullscreen || notificationCenterAllowedInFullscreen)
