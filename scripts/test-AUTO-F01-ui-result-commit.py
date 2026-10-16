@@ -170,8 +170,14 @@ class ResultCommitTests(TestCase):
         ):
             store._write(response_path, {**response, "ui_send_intent": invalid})
             with patch.object(runtime, "desktop") as ui:
-                with self.assertRaisesRegex(RuntimeError, "LEGACY_RESPONSE_MISMATCH"):
-                    ui_scheduler.reconcile_pending(ID)
+                try:
+                    result = ui_scheduler.reconcile_pending(ID)
+                except RuntimeError as error:
+                    self.assertIn("LEGACY_RESPONSE_MISMATCH", str(error),
+                                  msg=repr(invalid))
+                else:
+                    self.fail("Unrejected retired intent " + repr(invalid)
+                              + "; result=" + repr(result))
                 ui.assert_not_called()
             self.assertEqual(self.item()["prompts_sent"], 0)
             self.assertIsNotNone(self.item()["pending"])
