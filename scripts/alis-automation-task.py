@@ -211,6 +211,13 @@ def main():
             "ui_queue_service_mode": ui_check.get("installed_service_mode"),
             "ui_queue_service_state": ui_check.get("service_state"),
             "ui_queue_preflight_blockers": ui_check.get("preflight_blockers", []),
+            "ui_queue_profile_counts": {
+                "running": ui_check.get("foreign_running_count", 0),
+                "pending": ui_check.get("foreign_pending_count", 0),
+                "jobs": ui_check.get("foreign_job_count", 0),
+                "native_unsettled": ui_check.get("native_unsettled_count", 0),
+                "historical_sessions": ui_check.get("historical_native_session_count", 0),
+            },
             "ui_queue_legacy_native_pending_retained": bool(
                 ui_check.get("legacy_native_pending_retained")),
             **transport_gate.readiness()}
