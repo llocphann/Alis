@@ -95,19 +95,30 @@ function withUnifiedEdgeModules(placements, shouldAdd) {
     });
     return normalize(normalized,"top");
 }
+// Icon appearance is a Settings concern, independent of where an editor
+// places a launcher. A missing override retains historical per-placement
+// showIcon values, including existing per-output layouts.
+function withSettingsIconVisibility(placements, options) {
+    var preferences=options?.iconVisibility;
+    return placements.map(function(p) {
+        var preference=preferences?.[p.kind];
+        return isUnifiedKind(p.kind) && typeof preference === "boolean"
+            ? Object.assign({},p,{showIcon:preference}) : p;
+    });
+}
 function resolve(options, outputName, fallback) {
     var profiles = Array.from(options?.outputLayouts || []);
     var profile = profiles.find(function(p) { return p.outputName === outputName; });
     // Output-specific overrides independently remember completed migrations.
     // A global editor save must not accidentally suppress first-run launchers
     // on an unrelated output with its own older legacy profile.
-    if (profile) return withUnifiedEdgeModules(profile.placements,
+    if (profile) return withSettingsIconVisibility(withUnifiedEdgeModules(profile.placements,
         options?.autoUnifiedEdgeLaunchers===true
-        && profile.unifiedLaunchersConfigured!==true);
-    return withUnifiedEdgeModules(options?.configured
+        && profile.unifiedLaunchersConfigured!==true),options);
+    return withSettingsIconVisibility(withUnifiedEdgeModules(options?.configured
         ? options.placements : fallback,
         options?.autoUnifiedEdgeLaunchers===true
-        && options?.unifiedLaunchersConfigured!==true);
+        && options?.unifiedLaunchersConfigured!==true),options);
 }
 // QML JsonObject also enumerates QObject signals. Persist only the four owned
 // Edge fields, never objectNameChanged/destroyed or other QObject internals.
@@ -280,10 +291,9 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
     var placementKeys=["edge","position","alignment","size","customSize","depth"];
     if(placementKeys.indexOf(action)>=0 && items.some(function(p) {return p.locked;}))
         return deny("Unlock every selected module before changing its placement or size");
-    if(["remove","locked","enabled","joinCorner","showIcon"].concat(placementKeys).indexOf(action)<0)
+    // Icon appearance is only adjustable in Settings > Module behavior.
+    if(["remove","locked","enabled","joinCorner"].concat(placementKeys).indexOf(action)<0)
         return deny("This action cannot be applied to modules");
-    if(action==="showIcon" && items.some(function(p) {return !isUnifiedKind(p.kind);}))
-        return deny("Only unified edge launchers support hiding their icons");
     var records=(action==="locked" || action==="joinCorner") && value ? (displayedRecords || geometry(placements,width,height,options,fontScale)) : [];
     if(action==="joinCorner" && value && items.some(function(p) {
         return !cornerForModule(records,p.id,width,height);
