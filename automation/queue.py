@@ -122,11 +122,14 @@ def _verified_ancestor_pin(repo: str, original: str, current: str,
         return False
     return (isinstance(comparison, dict)
             and comparison.get("status") == "ahead"
-            and comparison.get("behind_by") == 0
-            and isinstance(comparison.get("ahead_by"), int)
+            and type(comparison.get("behind_by")) is int
+            and comparison["behind_by"] == 0
+            and type(comparison.get("ahead_by")) is int
             and comparison["ahead_by"] > 0
-            and comparison.get("base_commit", {}).get("sha") == original
-            and comparison.get("merge_base_commit", {}).get("sha") == original)
+            and isinstance(comparison.get("base_commit"), dict)
+            and isinstance(comparison.get("merge_base_commit"), dict)
+            and comparison["base_commit"].get("sha") == original
+            and comparison["merge_base_commit"].get("sha") == original)
 
 
 def prepare(raw: str, mode: str = "ordered",
@@ -763,7 +766,8 @@ def prepare_auto(*, mode: str = "ordered", api=None) -> dict:
     # prepare() takes its own lock and validates every pin/job state before
     # persisting. A concurrent owner Start cannot be overwritten.
     result = prepare(";".join(mapping), mode=mode,
-                     resolver=lambda code: mapping[code])
+                     resolver=lambda code: mapping[code],
+                     comparison_api=(tf._github if api is None else api))
     if result.get("duplicate"):
         raise tf.TaskError("Existing manually prepared queue was not replaced")
     with _lock():
