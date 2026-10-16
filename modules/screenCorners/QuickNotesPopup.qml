@@ -60,11 +60,15 @@ Bar.StyledPopup {
     readonly property real requestedPopupHeight: Math.max(300,
         Math.min(640, Config.options?.quickNotes?.popupHeight ?? 300))
 
+    // The corner's hover permission is revoked as soon as Settings chooses
+    // Module Icon, before the old ScreenCorners Loader finishes detaching.
+    // Module-hosted instances keep the default true and use their icon.
+    property bool hoverAllowed: true
     hoverTarget: root.anchorItem
     barAutoHideHoldEnabled: false
     attachmentEdgeOverride: root.cornerAttachmentEdge
     attachmentThicknessOverride: root.cornerAttachmentThickness
-    hoverActivates: true
+    hoverActivates: root.hoverAllowed
     alternativeVisibleCondition: root.editorFocused || root.todoDialogOpen
         || root.entryBridgeHeld || root.popupPinned || root.escapeArmed
     // Pre-arm click-to-focus before the first editor click. OnDemand does not

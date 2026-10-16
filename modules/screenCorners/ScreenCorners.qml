@@ -88,20 +88,17 @@ Scope {
             && cornerOpenMatchesPosition && !fullscreen
         readonly property string cornerName: cornerPanelWindow.corner
         readonly property string outputName: cornerPanelWindow.screen?.name ?? ""
-        // Keep legacy corner anchors as an exact rollback path on every output
-        // where its unified Abyss replacement is absent or disabled. The
-        // module owns only the matching feature, never unrelated hot corners.
+        // One hover source per feature. When Alis Settings says Module Icon
+        // the ScreenCorners hover surface must be disabled unconditionally,
+        // even when Bar is auto-hidden, temporarily closed or editing.
+        // The older implementation consulted barOpen / enabledPanels /
+        // module availability and resurrected this corner while the selected
+        // Module Icon remained responsible for the same popup.
+        // For the classic ii panel family these Abyss modes do not apply.
         function hasUnifiedEdgeReplacement(kind): bool {
-            // The selectable Edgebar mode restores the mature physical
-            // corner dwell target; module-hosted popups do not compete for it.
-            return ModuleLayout.unifiedLauncherMode(
-                Config.options?.abyss?.modules,kind) === "module"
-                && GlobalStates.barOpen
-                && (Config.options?.enabledPanels ?? []).includes("abyssBar")
-                && Geometry.targets(outputName,Config.options?.bar?.screenList ?? [],
-                    Quickshell.screens.map(screen => screen.name))
-                && ModuleLayout.hasEnabledModule(
-                    Config.options?.abyss?.modules,outputName,kind)
+            return ModuleLayout.moduleOwnsCornerHover(
+                Config.options?.abyss?.modules,
+                Config.options?.panelFamily ?? "ii",kind)
         }
         // Orbit was retired from the live graph. Only the compositor's real
         // overview hot corner keeps priority over shell corner interactions.
@@ -413,6 +410,10 @@ Scope {
                     QuickNotesPopup {
                         id: quickNotesPopup
                         anchorItem: quickNotesAnchor
+                        // Secondary guard while the corner Loader detaches:
+                        // a stale dwell timer must not reopen a legacy popup
+                        // after this feature switched to Module Icon.
+                        hoverAllowed: cornerPanelWindow.shouldShowQuickNotesCorner
                         cornerAttachmentEdge: cornerPanelWindow.quickNotesAttachmentEdge
                         cornerAttachmentThickness: cornerPanelWindow.quickNotesAttachmentThickness
                         onEditorFocusedChanged:
