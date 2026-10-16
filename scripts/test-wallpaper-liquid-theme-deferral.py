@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""WALL-R01: keep expensive color generation off the Liquid GPU transition."""
+from pathlib import Path
+
+root = Path(__file__).resolve().parents[1]
+service = (root / "services/Wallpapers.qml").read_text()
+desktop = (root / "modules/background/Background.qml").read_text()
+waffle = (root / "modules/waffle/background/WaffleBackground.qml").read_text()
+shader = (root / "modules/common/widgets/WallpaperCrossfader.qml").read_text()
+runtime = (root / "scripts/test-wallpaper-background-apply-runtime.py").read_text()
+
+
+def require(value, description):
+    if not value:
+        raise AssertionError(description)
+
+
+require('function _shouldDeferThemeForLiquid(path: string): bool' in service
+        and '(type === "alisMelt" || type === "inirMelt")' in service
+        and '!AwwwBackend.active' in service,
+        "only internal Liquid and its saved alias can defer theme generation")
+require('!WallpaperListener.isVideoPath(path)' in service
+        and '!WallpaperListener.isGifPath(path)' in service,
+        "videos and GIFs must keep their existing apply flow")
+require('function _deferLiquidTheme(path: string, darkMode: bool)' in service
+        and 'function liquidWallpaperTransitionFinished(displayedSource: string)' in service,
+        "deferred owner lifecycle must be exposed")
+require('FileUtils.trimFileProtocol(String(displayedSource ?? "")) !== pending' in service,
+        "a stale or preview transition must not flush a newer wallpaper")
+require('liquidThemeDeadline.interval = 2600' in service
+        and 'onTriggered: root._flushLiquidTheme()' in service,
+        "hidden or frame-starved surfaces must eventually apply theme changes")
+require('liquidThemeDeadline.interval = 150' in service,
+        "theme work must not begin until after the final compositor swap")
+require('root._pendingLiquidThemePath = ""' in service
+        and 'root._queueWallpaperScript(path, darkMode, false)' in service,
+        "flush must atomically drain the latest request")
+require('if (root._pendingLiquidThemePath !== "")' in service,
+        "ThemeService suppression must survive the deferred interval")
+
+main = service.split('function apply(path, darkMode', 1)[1].split('function applyColorsOnly', 1)[0]
+require('Config.setNestedValue("background.wallpaperPath", normalizedPath)' in main
+        and 'root._deferLiquidTheme(normalizedPath, darkMode)' in main
+        and main.index('Config.setNestedValue("background.wallpaperPath", normalizedPath)')
+            < main.index('root._deferLiquidTheme(normalizedPath, darkMode)'),
+        "real wallpaper source must change immediately before any deferred theme work")
+require('liquidThemeDeadline.stop()' in main
+        and 'root._queueWallpaperScript(normalizedPath, darkMode, false)' in main,
+        "non-Liquid backend must keep the immediate apply path")
+require('Wallpapers.liquidWallpaperTransitionFinished(wallpaper.renderState().displayedSource)' in desktop
+        and 'Wallpapers.liquidWallpaperTransitionFinished(wallpaper.renderState().displayedSource)' in waffle,
+        "both desktop families must release deferred colors on actual transition finish")
+require('tryVerify(()=>Wallpapers._pendingLiquidThemePath==="",3500)' in runtime,
+        "native regression test must exercise hidden-wallpaper deadline")
+require('root._shaderTexturePrimeSwaps < 2' in shader
+        and 'fragmentShader: root._activeShader !== ""' in shader,
+        "previously restored working Liquid shader/texture lifecycle must stay unchanged")
+print("WALL-R01 theme deferral source contract: PASS (native Niri rendering not run)")
