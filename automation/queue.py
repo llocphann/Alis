@@ -23,6 +23,23 @@ MODES = frozenset(("ordered", "cloud"))
 SAFE_FINISHED = frozenset(("awaiting_owner", "completed"))
 CHOICE_ID = re.compile(r"^[A-Za-z0-9_.:-]{8,160}$")
 
+# Read-only supervisor signals: a recommendation is never a receipt or a
+# scheduler authorization. Every unknown state requires reconciliation.
+RECOVERY_HINTS = {
+    "source_pin_unverified": ("recheck_original_git_ancestry", False),
+    "cloud_ack_pending": ("reconcile_original_cloud_delivery", True),
+    "owner_review_pending": ("await_owner_verification", True),
+    "previous_dispatch_unsettled": ("reconcile_original_job", True),
+    "previous_handoff_pending": ("reconcile_original_job", True),
+    "previous_receipt_exists": ("reconcile_original_job", True),
+    "unresolved_work": ("reconcile_original_intent", True),
+    "cloud_continuation_pending": ("observe_original_cloud_turn", True),
+    "already_completed": ("preserve_completed_task", False),
+    "saved_work_requires_review": ("inspect_saved_task_evidence", True),
+    "local_receipt_needs_review": ("inspect_original_receipt", True),
+}
+
+
 
 def _queue_path() -> Path:
     path = tf.state_dir() / "queue.json"
@@ -287,13 +304,25 @@ def view(manifest: dict | None = None) -> dict:
         return {"ok": True, "mode": "ordered", "state": "empty",
                 "active": None, "items": [], "next": None}
     items = [{key: item[key] for key in ("code", "repository", "state")}
-             | ({"reason": item["reason"]} if item.get("state") == "deferred"
+             | ({"reason": item["reason"],
+                 "recovery_action": RECOVERY_HINTS.get(
+                     item["reason"], ("manual_reconciliation", True))[0],
+                 "needs_evidence_review": RECOVERY_HINTS.get(
+                     item["reason"], ("manual_reconciliation", True))[1]}
+                if item.get("state") == "deferred"
                 and isinstance(item.get("reason"), str) else {})
              for item in manifest["items"]]
     next_item = next((x for x in items if x["state"] == "queued"), None)
     return {"ok": True, "mode": manifest["mode"], "state": manifest["state"],
             "active": manifest["active"], "items": items,
             "deferred_count": sum(x["state"] == "deferred" for x in items),
+            "recovery": {
+                "can_recheck_pin": sum(
+                    x.get("recovery_action") == "recheck_original_git_ancestry"
+                    for x in items),
+                "must_reconcile_evidence": sum(
+                    x.get("needs_evidence_review") is True for x in items),
+            },
             "next": next_item if manifest["mode"] == "ordered" else None,
             "cloud_selection_required": manifest["mode"] == "cloud"
                  and manifest["active"] is None and next_item is not None}
