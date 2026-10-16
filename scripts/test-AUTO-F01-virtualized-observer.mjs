@@ -83,7 +83,7 @@ try {
       };
       assert.equal(role,'list');
       assert.equal(q.name,'Chats in Automatic Alis');
-      return {locator:()=>selected,getByRole:()=>candidate};
+      return {count:async()=>1,locator:()=>selected,getByRole:()=>candidate};
     },
     keyboard:{insertText:forbid}
   };
