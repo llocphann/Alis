@@ -83,9 +83,18 @@ class UiSchedulerTests(TestCase):
             ui_scheduler.reconcile_pending(ID, observer=self.observed_original)
         self.assertEqual(self.item()["prompts_sent"], 1)
 
-    def test_reconcile_changed_prompt_preserves_original_journal(self):
+    def test_reconcile_changed_config_uses_durable_original_input(self):
         self.uncertain_original()
+        original = self.item()["pending"]["prompt"]
         store.change(lambda c, s: c["profiles"][0].update(prompt="changed owner prompt"))
+        def observed(command, prompt, **kwargs):
+            self.assertEqual(prompt, original)
+            return self.observed_original(command, prompt, **kwargs)
+        self.assertEqual(ui_scheduler.reconcile_pending(ID, observer=observed), "ui_reconciled_CONTINUE")
+
+    def test_reconcile_tampered_input_preserves_original_journal(self):
+        self.uncertain_original()
+        store.change_state(lambda c, s: s["profiles"][ID]["pending"].update(prompt="changed input"))
         with self.assertRaises(RuntimeError), patch.object(runtime, "desktop") as observed:
             ui_scheduler.reconcile_pending(ID)
         observed.assert_not_called()

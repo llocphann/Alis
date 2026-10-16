@@ -239,7 +239,7 @@ def local_handoff_instructions(task: dict) -> str:
             "scripts/test-<name>.py; bash scripts/validate-maintainer-local.sh. "
             "Other commands need separate manual review. Return CONTINUE while awaiting "
             "that gate, never WAIT_RESULT for an unsubmitted job.\n" +
-            json.dumps(example, ensure_ascii=False))
+            json.dumps(example, ensure_ascii=False).replace("`", "\\u0060"))
 
 
 def internal_prompt(task: dict) -> str:

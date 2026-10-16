@@ -229,6 +229,9 @@ def ui_tick(profile_id: str, *, now: int | None = None,
         "transport": UI_TRANSPORT, "attempt_id": attempt,
         "phase": "dispatching", "kind": prompt_kind,
         "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
+        # Private manager state already owns task prompts. Retain this exact
+        # immutable input so source/config changes cannot corrupt recovery.
+        "prompt": prompt,
         "prepared_at_unix": now,
     }
 
@@ -330,7 +333,7 @@ def ui_tick(profile_id: str, *, now: int | None = None,
 
 
 def reconcile_pending(profile_id: str, *, chat_label: str | None = None,
-                      observer=None) -> str:
+                      observer=None, original_prompt: str | None = None) -> str:
     """Observe the exact original submitted turn. Never sends or resumes.
 
     An explicit supervised recovery holds the existing manager lock. A crash
@@ -350,7 +353,9 @@ def reconcile_pending(profile_id: str, *, chat_label: str | None = None,
                 or pending.get("kind") not in {"initial", "continuation", "rotation"}
                 or item.get("desired") == "run"):
             raise RuntimeError("ALIS_UI_RECONCILE_PAUSED_ORIGINAL_REQUIRED")
-        prompt = pending_prompt(profile, item, pending["kind"])
+        prompt = pending.get("prompt") or original_prompt or pending_prompt(profile, item, pending["kind"])
+        if not isinstance(prompt, str) or len(prompt) > PRIVATE_RESPONSE_LIMIT:
+            raise RuntimeError("ALIS_UI_ORIGINAL_PROMPT_REQUIRED")
         digest = hashlib.sha256(prompt.encode()).hexdigest()
         path = store.state_dir() / "ui-send-journal/pending.json"
         if path.is_symlink() or not path.is_file() or path.stat().st_size > 4096:

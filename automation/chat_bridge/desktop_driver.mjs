@@ -132,6 +132,7 @@ async function submittedUnits(page) {
     nodes.map(node=>({text:node.innerText,
       turn_key:node.closest('[data-turn-key]')?.getAttribute('data-turn-key'),
       message_id:node.getAttribute('data-chatgpt-search-message-ids'),
+      inline_code:[...node.querySelectorAll('code')].map(n=>n.textContent),
       expand_control:[...node.querySelectorAll('button')].some(b=>
         /^Show (more|less)$/.test(b.innerText.trim()))})));
 }

@@ -11,7 +11,15 @@ export function submittedPromptMatches(unit,prompt) {
     actual=actual.replace(/\s*…?\s*Show (?:more|less)\s*$/,"");
   const mention=MENTION.test(prompt);
   if(mention)actual=actual.replace(/^GitHub\s+/,"");
-  return normalize(actual)===normalize(prompt.replace(MENTION,""));
+  let expected=prompt.replace(MENTION,"");
+  const code=[...expected.matchAll(/`([^`\n]+)`/g)].map(x=>x[1]);
+  // Desktop renders inline-code delimiters. Plain-text stripping alone
+  // would weaken identity; require the exact matching DOM code spans too.
+  if(code.length) {
+    if(!Array.isArray(unit.inline_code)||JSON.stringify(unit.inline_code)!==JSON.stringify(code))return false;
+    expected=expected.replace(/`([^`\n]+)`/g,'$1');
+  }
+  return normalize(actual)===normalize(expected);
 }
 
 export function matchingSubmittedUnit(units,prompt) {
