@@ -1,11 +1,20 @@
 // Persist normalized positions; derive pixel geometry independently per output.
 var catalog = ["distroIcon","activeWindow","resources","media",
     "workspaces","clock","utilButtons","battery","tray",
-    "timer","shellUpdate","weather","taskbar"];
+    "timer","shellUpdate","weather","taskbar","notesTimers","notificationActivity"];
 var labels = {distroIcon:"Launcher",activeWindow:"Active window",
     resources:"System resources",media:"Media",workspaces:"Workspaces",clock:"Clock",
     utilButtons:"Quick actions",battery:"Battery",tray:"System tray",
-    timer:"Timer",shellUpdate:"Updates",weather:"Weather",taskbar:"Taskbar"};
+    timer:"Timer",shellUpdate:"Updates",weather:"Weather",taskbar:"Taskbar",
+    notesTimers:"QuickNotes & Timers",notificationActivity:"Notifications & Activities"};
+function isUnifiedKind(kind) { return kind === "notesTimers" || kind === "notificationActivity"; }
+// Legacy corner launchers stay available until an enabled replacement is
+// actually installed on this output. No mutation or destructive migration.
+function hasEnabledModule(options,outputName,kind) {
+    return resolve(options,outputName,[]).some(function(p) {
+        return p.enabled && p.kind === kind;
+    });
+}
 function label(kind) { return labels[kind] || kind; }
 function bounded(value, fallback, low, high) {
     var number = Number(value);
@@ -14,7 +23,8 @@ function bounded(value, fallback, low, high) {
 function extent(kind, vertical) {
     var sizes = {utilButtons:36,distroIcon:88,
         activeWindow:178,resources:178,media:166,workspaces:192,clock:104,battery:72,
-        tray:72,timer:68,shellUpdate:86,weather:80,taskbar:40};
+        tray:72,timer:68,shellUpdate:86,weather:80,taskbar:40,
+        notesTimers:36,notificationActivity:36};
     // A side Edge rotates this same full design, so its along-axis extent
     // remains the horizontal width. It never chooses a compact substitute.
     return sizes[kind] || 48;
@@ -35,6 +45,7 @@ function normalize(list, fallbackEdge) {
             customSize:p.customSize === true || (p.customSize === undefined && Number.isFinite(Number(p.size)) && Number(p.size)!==1),
             size:bounded(p.size,1,0.6,1.8),depth:bounded(p.depth,1,0.5,2),
             influence:bounded(p.influence,1,0,2),compact:p.compact === true,joinCorner:p.joinCorner === true,
+            showIcon:p.showIcon !== false,
             locked:p.locked === true,
             lockPosition:p.locked === true ? bounded(p.lockPosition,bounded(p.position,.5,0,1),0,1) : undefined,
             lockScale:p.locked === true ? bounded(p.lockScale,1,.01,1) : undefined};
@@ -92,7 +103,10 @@ function edgeThickness(options, edge, fallback) {
 function moduleSize(placement, options) {
     var inheritedWidth=options?.edgeWidthAffectsModules?.[placement.edge]===false
         ? bounded(options?.edgeThickness,16,10,40) : edgeThickness(options,placement.edge);
-    return (placement.customSize ? placement.size : edgeSize(options,placement.edge)*inheritedWidth/16)*bounded(options?.size,1,.6,1.8);
+    // Unified launchers must retain a bounded physical hover target when the
+    // decorative Edge is 0px. Hiding their icon never removes the hit zone.
+    var width = isUnifiedKind(placement.kind) ? Math.max(12,inheritedWidth) : inheritedWidth;
+    return (placement.customSize ? placement.size : edgeSize(options,placement.edge)*width/16)*bounded(options?.size,1,.6,1.8);
 }
 function project(x, y, width, height, preferredEdge) {
     var distances = [y,width-x,height-y,x];
@@ -192,8 +206,10 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
     var placementKeys=["edge","position","alignment","size","customSize","depth"];
     if(placementKeys.indexOf(action)>=0 && items.some(function(p) {return p.locked;}))
         return deny("Unlock every selected module before changing its placement or size");
-    if(["remove","locked","enabled","joinCorner"].concat(placementKeys).indexOf(action)<0)
+    if(["remove","locked","enabled","joinCorner","showIcon"].concat(placementKeys).indexOf(action)<0)
         return deny("This action cannot be applied to modules");
+    if(action==="showIcon" && items.some(function(p) {return !isUnifiedKind(p.kind);}))
+        return deny("Only unified edge launchers support hiding their icons");
     var records=(action==="locked" || action==="joinCorner") && value ? (displayedRecords || geometry(placements,width,height,options,fontScale)) : [];
     if(action==="joinCorner" && value && items.some(function(p) {
         return !cornerForModule(records,p.id,width,height);
