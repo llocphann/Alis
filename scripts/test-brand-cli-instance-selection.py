@@ -32,7 +32,8 @@ if a==['list','--all','--json']:
 elif a==['list','--all']:
  for row in rows:print('  Config path: '+row['config_path'])
 elif len(a)>=3 and a[0]=='-p' and a[2]=='list':
- if a[1] in json.loads(os.environ['CURRENT_CONFIGS']):print('Instance own-fixture:\\n  Config path: '+a[1]+'/shell.qml')
+ if a[1]==os.environ['OTHER_DISPLAY_ALIAS']:print('Instance current-owner:\\n  Config path: '+os.environ['REAL_CONFIG']+'/shell.qml')
+ elif a[1] in json.loads(os.environ['CURRENT_CONFIGS']):print('Instance own-fixture:\\n  Config path: '+a[1]+'/shell.qml')
  else:print('No running instances for "'+a[1]+'/shell.qml"')
 elif len(a)>=3 and a[0]=='-p' and a[2]=='log':
  print(json.dumps({'log_config':a[1]}))
@@ -47,6 +48,7 @@ else:sys.exit(83)
     env = dict(os.environ, HOME=str(base), XDG_CONFIG_HOME=str(base/"config"),
                XDG_STATE_HOME=str(base/"state"), XDG_CACHE_HOME=str(base/"cache"),
                CALLS=str(calls), INVENTORY=str(inventory), CURRENT_CONFIGS=json.dumps([str(current),str(foreign)]),
+               OTHER_DISPLAY_ALIAS=str(other_display), REAL_CONFIG=str(current),
                ALIS_SYSTEM_RUNTIME_DIR=str(base/"absent-system"),
                ALIS_FALLBACK_SYSTEM_RUNTIME_DIR=str(base/"absent-fallback"))
     for key in ["ALIS_RUNTIME_DIR","INIR_RUNTIME_DIR","HADALIS_RUNTIME_DIR","QS_CONFIG_NAME","QS_CONFIG_PATH","QS_MANIFEST"]:

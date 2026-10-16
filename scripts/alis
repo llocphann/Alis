@@ -1508,7 +1508,7 @@ canonicalize_path() {
 detect_running_instance_dir() {
     # Find the config directory of an already-running Alis shell instance.
     # Returns 0 and prints the dir if found, returns 1 otherwise.
-    local running_paths="" running_path dir listing
+    local running_paths="" running_path dir listing listed_path
 
     if command -v jq >/dev/null 2>&1; then
         local json_output
@@ -1542,10 +1542,16 @@ detect_running_instance_dir() {
         # Quickshell's path-scoped list filters the CURRENT display. Its
         # --all inventory deliberately does not, including JSON output.
         listing="$("$qs_bin" -p "$dir" list 2>/dev/null || true)"
-        if grep -Eq '^Instance [[:alnum:]_.-]+:' <<<"$listing"; then
-            printf '%s' "$dir"
-            return 0
-        fi
+        # The same ShellId can resolve to another config on this display.
+        # Bind the returned path too; a private clone must not be adopted
+        # merely because it shares the production ShellId.
+        while IFS= read -r listed_path; do
+            [[ -n "$listed_path" ]] || continue
+            if [[ "$(canonicalize_path "$listed_path")" == "$(canonicalize_path "$dir/shell.qml")" ]]; then
+                printf '%s' "$dir"
+                return 0
+            fi
+        done < <(printf '%s' "$listing" | sed -n 's/^[[:space:]]*Config path:[[:space:]]*//p')
     done <<<"$running_paths"
 
     return 1
