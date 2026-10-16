@@ -35,16 +35,15 @@ for (const kind of ["notesTimers","notificationActivity"]) {
         check(!zero.some(p=>p.kind==="clock"),
             "old legacy inherited module keeps original zero-width policy");
 
-        const visible = layout.checkedBatch(
+        // Settings exclusively owns launcher icon visibility. The live
+        // layout editor cannot override an explicit global icon choice.
+        const unsupported = layout.checkedBatch(
             source,[kind],"showIcon",true,1920,1080,options,1
         );
-        check(!visible.rejected && visible.placements.find(p=>p.kind===kind).showIcon,
-            "show icon is an atomic editor transaction");
-        check(!visible.placements.find(p=>p.kind==="clock").showIcon === false,
-            "unrelated module remains untouched");
-        const blocked = layout.checkedBatch(source,["existing"],"showIcon",false,
-            1920,1080,options,1);
-        check(!!blocked.rejected, "old indicators cannot be edited as launchers");
+        check(!!unsupported.rejected,
+            "live editor cannot mutate Settings-only icon preference");
+        check(source.find(p=>p.kind===kind).showIcon===false,
+            "unsupported transaction leaves placement visibility intact");
 
         const saved = layout.saveProfile(
             {outputLayouts:[{outputName:"B",placements:[{id:"foreign",kind:"clock",edge:"right"}]}]},
@@ -202,5 +201,70 @@ for(const edge of edges) {
     const surfaces=layout.localSurfaces(records,width,height,opts,1,48);
     check(surfaces.filter(p=>p.edge===edge).length>=1,
         `icon bodies still have localized screen-edge paint on ${edge}`);
+}
+// The persisted JsonAdapter values must override old per-output icon settings
+// without changing physical placement or silently throwing away a legacy
+// "hidden" preference when the user has not yet made a Settings choice.
+for(const value of ["show","hide","inherit",true,false,"true","false"]) {
+    const expected=value==="show"||value===true||value==="true" ? true
+        : value==="hide"||value===false||value==="false" ? false : null;
+    check(layout.iconVisibilityPreference(
+        {iconVisibility:{notesTimers:value}},"notesTimers")===expected,
+        "JSON schema icon override accepts "+String(value));
+}
+const persisted={
+    autoUnifiedEdgeLaunchers:true,configured:true,placements:[],
+    outputLayouts:[{outputName:"eDP-1",unifiedLaunchersConfigured:true,
+        placements:[
+            {id:"notes-id",kind:"notesTimers",edge:"left",position:.3,showIcon:true},
+            {id:"notice-id",kind:"notificationActivity",edge:"right",position:.7,showIcon:false}
+        ]}],
+    iconVisibility:{notesTimers:"hide",notificationActivity:"show"}
+};
+let resolved=layout.resolve(persisted,"eDP-1",[]);
+check(resolved.find(p=>p.kind==="notesTimers").showIcon===false,
+    "Settings hide propagates to an already-saved per-output Note launcher");
+check(resolved.find(p=>p.kind==="notificationActivity").showIcon===true,
+    "Settings show propagates to an already-saved per-output Notification launcher");
+check(resolved.find(p=>p.kind==="notesTimers").edge==="left",
+    "Settings icon change does not move the launcher");
+const baseProfile=clone(persisted);
+baseProfile.iconVisibility={notesTimers:"inherit",notificationActivity:"inherit"};
+resolved=layout.resolve(baseProfile,"eDP-1",[]);
+check(resolved.find(p=>p.kind==="notesTimers").showIcon===true,
+    "inherit retains legacy visible Notes icon");
+check(resolved.find(p=>p.kind==="notificationActivity").showIcon===false,
+    "inherit retains legacy hidden Notification icon");
+
+// Regression: a mini module's own local paint reaches 48px or more from the
+// attached edge; feeding that local surface back into its popup clearance
+// artificially moved the popup body inward. Other modules remain obstacles.
+for(const edge of edges) {
+    const saved=layout.normalize([
+        {id:"notes",kind:"notesTimers",edge,position:.24,showIcon:true},
+        {id:"notice",kind:"notificationActivity",edge,position:.78,showIcon:true}
+    ],edge);
+    const opts={edgeThickness:16,edgeThicknesses:{top:16,right:16,bottom:16,left:16},
+        edgeWidthAffectsModules:{top:true,right:true,bottom:true,left:true}};
+    const local=layout.localSurfaces(
+        layout.geometry(saved,1920,1080,opts,1),1920,1080,opts,1,48);
+    check(local.filter(p=>p.kind==="notesTimers").length===1,
+        "Notes local geometry retains its owner kind on "+edge);
+    check(local.filter(p=>p.kind==="notificationActivity").length===1,
+        "Notification local geometry retains its owner kind on "+edge);
+    for(const kind of ["notesTimers","notificationActivity"]) {
+        const own=local.find(p=>p.kind===kind);
+        const base={top:16,right:16,bottom:16,left:16};
+        const oldInsets=layout.clearanceInsets(base,local,edge,own.along,own.span);
+        const fixed=layout.clearanceInsets(base,local,edge,own.along,own.span,kind);
+        check(oldInsets[edge]>=48,
+            "pre-fix popup was displaced by its own local launcher on "+edge);
+        check(fixed[edge]===16,
+            "own Edge launcher is excluded from popup clearance on "+edge);
+        for(const otherEdge of edges.filter(e=>e!==edge)) {
+            check(fixed[otherEdge]===16,
+                "popup side clearance must not thicken unrelated "+otherEdge);
+        }
+    }
 }
 console.log("ABYSS_R15_LAYOUT_POLICY_PASS",checks);

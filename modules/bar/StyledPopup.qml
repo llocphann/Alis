@@ -219,15 +219,21 @@ LazyLoader {
     property string attachmentEdgeOverride: ""
     property real attachmentThicknessOverride: -1
     property bool hoverActivates: true
+    // Opt-in for launchers whose actual icon is smaller than their owner Bar
+    // module. Legacy popups can still use the ancestor hover for broad zones.
+    // A strict source accepts only its own MouseArea / HoverHandler.
+    property bool strictSourceHover: false
     // Read live module and source pointer state, never an event-copied latch:
     // nested controls can consume hover transitions while still tracking their
     // own MouseArea.containsMouse. All sources release when the pointer leaves.
     readonly property bool moduleHoverActive: root._sourceHoverReady && !!(
-        root._liquidAnchor?.hovered
-        || root._liquidAnchor?.feature?.containsMouse
-        || root._liquidAnchor?.feature?.hovered
-        || root.hoverTarget?.containsMouse
-        || root.hoverTarget?.hovered)
+        root.strictSourceHover
+            ? (root.hoverTarget?.containsMouse || root.hoverTarget?.hovered)
+            : (root._liquidAnchor?.hovered
+                || root._liquidAnchor?.feature?.containsMouse
+                || root._liquidAnchor?.feature?.hovered
+                || root.hoverTarget?.containsMouse
+                || root.hoverTarget?.hovered))
     property bool barAutoHideHoldEnabled: true
     property int _barPopupHoverLeaseId: 0
     property bool alternativeVisibleCondition: false

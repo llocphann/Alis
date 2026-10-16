@@ -48,8 +48,8 @@ ContentPage {
     // until the user chooses a global preference (including multi-output vaults).
     function unifiedLauncherIconShown(kind): bool {
         const modules=Config.options?.abyss?.modules
-        const override=modules?.iconVisibility?.[kind]
-        if (typeof override === "boolean") return override
+        const override=ModuleLayout.iconVisibilityPreference(modules,kind)
+        if (override !== null) return override
         const global=Array.from(modules?.placements ?? []).find(p=>p?.kind===kind)
         if (global) return global.showIcon!==false
         for (const profile of Array.from(modules?.outputLayouts ?? [])) {
@@ -707,7 +707,7 @@ ContentPage {
                         autoToggle: false
                         checked: root.unifiedLauncherIconShown("notesTimers")
                         onToggledByUser: checked =>
-                            Config.setNestedValue("abyss.modules.iconVisibility.notesTimers",checked)
+                            Config.setNestedValue("abyss.modules.iconVisibility.notesTimers",checked ? "show" : "hide")
                     }
                     SettingsSwitch {
                         objectName: "abyssSettingsNotificationActivityIcon"
@@ -716,7 +716,7 @@ ContentPage {
                         autoToggle: false
                         checked: root.unifiedLauncherIconShown("notificationActivity")
                         onToggledByUser: checked =>
-                            Config.setNestedValue("abyss.modules.iconVisibility.notificationActivity",checked)
+                            Config.setNestedValue("abyss.modules.iconVisibility.notificationActivity",checked ? "show" : "hide")
                     }
                 }
                 SettingsNote {

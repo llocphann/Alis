@@ -206,6 +206,7 @@ Item {
                 // Use the module kind for placement; legacy corner IPC
                 // offsets must never override the draggable module anchor.
                 liquidPresentationKind: "notesTimers"
+                strictSourceHover: true
                 anchorItem: notesFace.trigger
                 cornerAttachmentEdge: root.attachedEdge
                 cornerAttachmentThickness: -1
@@ -232,6 +233,7 @@ Item {
             NotificationCenterPopup {
                 id: notificationPopup
                 liquidPresentationKind: "notificationActivity"
+                strictSourceHover: true
                 anchorItem: notificationFace.trigger
                 outputName: root.outputName
                 moduleAnchorMode: true
