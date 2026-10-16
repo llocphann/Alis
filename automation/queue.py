@@ -282,6 +282,10 @@ def advance(verify_completion: Callable[[dict], bool] | None = None) -> dict:
             else "review_required" if any(x["state"] == "deferred"
                                           for x in manifest["items"])
             else "finished")
+        if manifest["state"] == "review_required":
+            # No further UI/Native sends are authorized without a fresh,
+            # explicit owner's review of the parked task evidence.
+            manifest["approved_start"] = False
         _save(manifest)
         return view(manifest)
 
