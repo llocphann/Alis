@@ -179,6 +179,66 @@ class RecoveryPreview(unittest.TestCase):
         old.rename(archive / "different-id.json")
         self.assertEqual(self.inspect()["original_journal"], "archive_review_required")
 
+    def test_interrupted_and_not_sent_journals_do_not_authorize_retry(self):
+        pid = next(iter(self.state["profiles"]))
+        self.state["profiles"][pid]["pending"]["prepared_at_unix"] = 12
+        self.path.unlink()
+        interrupted = self.path.parent / "interrupted"
+        interrupted.mkdir()
+        observed_path = interrupted / (JID + ".json")
+        observed_path.write_text(json.dumps({
+            **self.journal, "at_unix": 13,
+            "outcome": "interrupted_delivered",
+            "proof_sha256": "a" * 64,
+            "delivery_acknowledged": True,
+            "completion_acknowledged": False,
+        }))
+        report = self.inspect()
+        self.assertEqual(report["original_journal"],
+                         "original_interrupted_delivery")
+        self.assertFalse(report["read_only_observation_candidate"])
+        self.assertFalse(report["send_or_queue_start_authorized"])
+        self.assertTrue(report["owner_confirmation_required"])
+
+        # Distinct journal IDs, even for a matching prompt, cannot be
+        # silently combined into a terminal or a retry permission.
+        not_sent = self.path.parent / "not-sent"
+        not_sent.mkdir()
+        second_jid = "66666666-7777-8888-9999-aaaaaaaaaaaa"
+        secondary = not_sent / (second_jid + ".json")
+        secondary.write_text(json.dumps({
+            **self.journal, "id": second_jid, "at_unix": 13,
+            "outcome": "not_sent",
+            "evidence": "owner-confirmed-not-sent",
+            "delivery_acknowledged": False,
+        }))
+        self.assertEqual(self.inspect()["original_journal"],
+                         "tombstone_conflict")
+        secondary.unlink()
+        observed_path.unlink()
+        self.assertEqual(self.inspect()["original_journal"],
+                         "retired_evidence_unverified")
+        secondary.write_text(json.dumps({
+            **self.journal, "id": second_jid, "at_unix": 13,
+            "outcome": "not_sent",
+            "evidence": "owner-confirmed-not-sent",
+            "delivery_acknowledged": False,
+        }))
+        self.assertEqual(self.inspect()["original_journal"],
+                         "original_confirmed_not_sent")
+        self.assertFalse(self.inspect()["read_only_observation_candidate"])
+        secondary.write_text(json.dumps({
+            **self.journal, "id": second_jid, "at_unix": 13,
+            "outcome": "not_sent", "evidence": "unverified",
+            "delivery_acknowledged": False,
+        }))
+        self.assertEqual(self.inspect()["original_journal"],
+                         "tombstone_review_required")
+        secondary.unlink()
+        secondary.symlink_to(self.path.parent / "missing.json")
+        self.assertEqual(self.inspect()["original_journal"],
+                         "tombstone_review_required")
+
     def test_missing_retired_evidence_and_symlink_fail_closed(self):
         self.state["profiles"][next(iter(self.state["profiles"]))]["pending"][
             "prepared_at_unix"] = 12
