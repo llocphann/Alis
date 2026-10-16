@@ -237,6 +237,9 @@ Variants {
                     source: wallpaperContainer.needsStaticTexture
                         ? panelRoot.wallpaperUrl : ""
                     visible: !panelRoot.wallpaperIsGif && !panelRoot.wallpaperIsVideo && ready
+                    onTransitionFinished: {
+                        Wallpapers.liquidWallpaperTransitionFinished(wallpaper.renderState().displayedSource)
+                    }
                     opacity: panelRoot.showInternalStaticWallpaper ? 1 : 0
                     layer.enabled: wallpaperContainer.needsStaticTexture
                         && !panelRoot.showInternalStaticWallpaper
