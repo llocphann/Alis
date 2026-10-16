@@ -177,6 +177,10 @@ class QueueControls(unittest.TestCase):
         first = queue.prepare("AUTO-R01", resolver=lambda _: newer)
         self.assertEqual(first["state"], "review_required")
         self.assertEqual(first["items"][0]["reason"], "source_pin_unverified")
+        self.assertEqual(first["items"][0]["recovery_action"],
+                         "recheck_original_git_ancestry")
+        self.assertFalse(first["items"][0]["needs_evidence_review"])
+        self.assertEqual(first["recovery"]["can_recheck_pin"], 1)
         with queue._lock():
             created_before = queue._load()["created_unix"]
         calls = []
@@ -191,6 +195,7 @@ class QueueControls(unittest.TestCase):
                                  comparison_api=trusted_compare)
         self.assertEqual(rechecked["state"], "prepared", rechecked)
         self.assertFalse(rechecked["duplicate"])
+        self.assertEqual(rechecked["recovery"]["can_recheck_pin"], 0)
         self.assertEqual(rechecked["items"][0]["state"], "queued")
         self.assertEqual(rechecked["next"]["code"], "AUTO-R01")
         self.assertEqual(calls, [
@@ -222,6 +227,10 @@ class QueueControls(unittest.TestCase):
            comparison_api=lambda endpoint: calls.append(endpoint))
         self.assertEqual(result["state"], "review_required")
         self.assertEqual(result["items"][0]["reason"], "cloud_ack_pending")
+        self.assertEqual(result["items"][0]["recovery_action"],
+                         "reconcile_original_cloud_delivery")
+        self.assertTrue(result["items"][0]["needs_evidence_review"])
+        self.assertEqual(result["recovery"]["must_reconcile_evidence"], 1)
         self.assertEqual(result["items"][0]["state"], "deferred")
         self.assertEqual(result["items"][0]["code"], "AUTO-R01")
         self.assertEqual(result["deferred_count"], 1)
