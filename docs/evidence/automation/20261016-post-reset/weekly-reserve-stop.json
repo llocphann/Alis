@@ -1,0 +1,30 @@
+{
+  "schema": "alis.weekly-reserve-stop.v1",
+  "at_unix": 1792162482,
+  "primary_used_percent": 35,
+  "weekly_used_percent": 99,
+  "weekly_reset_unix": 1792652634,
+  "source_head_before_evidence": "1ec0dd93e4638770d80070a67bd53b6e11393eed",
+  "stop_reason": "Reserve Owner minimum 1 percent weekly; admission revoked at 98, cleanup complete at 99",
+  "notes_scope": "Cloudbot DONE plus verified JOB-e9df8277fe90a8f92ae23ba7 at36e8879fe; Issue28 open Awaiting Owner verification",
+  "util_initial_original_reconciled": true,
+  "util_completed_ui_iterations": 1,
+  "util_last_directive": "CONTINUE",
+  "util_ui_receipt_sha256": "11608ef134bab2903dbd8b1382e6ff04c835a8efcadc089400ead58fedb23840",
+  "util_task_state": "prepared",
+  "util_local_jobs_executed": 0,
+  "queue_state": "stopped",
+  "queue_active": "UTIL-F01",
+  "queue_order_preserved": true,
+  "no_pending_ui_send_or_worker_job": true,
+  "owned_ui_idle": true,
+  "bridge_main_pid": 0,
+  "bridge_actual_exit": {
+    "ExecMainCode": 1,
+    "ExecMainStatus": 75
+  },
+  "owned_remaining_after_exit": [],
+  "canonical_scope": "Exact519c5dd3c STOPPED exit-15,165PASS18FAIL184started1unsettled; not fullPASS",
+  "focused_scope": "Exact519c5dd3c 57/57 local focused PASS; not CI or installed Owner desktop acceptance",
+  "next": "Read fresh Issue29 and exact original accepted initial response, review its manifest/source before any new job. Resume same stopped queue with exact snapshot; never clear/reprepare or resend the original initial prompt."
+}
