@@ -144,7 +144,7 @@ class QueueStopTests(unittest.TestCase):
                "modules/settings/AutomationTaskConfig.qml").read_text()
         self.assertIn('objectName: "automationStopQueue"', qml)
         self.assertIn('"queue-stop", "--approve", "--expected-active", identity', qml)
-        self.assertIn('["finished", "cancelled", "stopped"]', qml)
+        self.assertIn('["finished", "cancelled", "stopped", "review_required"]', qml)
         self.assertIn('objectName: "automationSudoSave"', qml)
         self.assertIn('objectName: "automationSudoClear"', qml)
         # Stop and archived-queue acknowledgments must remain visible after
