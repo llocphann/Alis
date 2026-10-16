@@ -16,6 +16,84 @@ from automation import managed_tasks
 _SHA = re.compile(r"[0-9a-f]{64}\Z")
 _TAIL = re.compile(r"\nAlis UI request token: ([0-9a-f-]{36})\n\Z")
 _MAX_PRIVATE_JOURNAL = 120_000
+_MAX_ARCHIVE_ENTRIES = 512
+
+
+def _private_record(path: Path) -> dict | None:
+    """Bounded, no-follow read; not a receipt acceptance or a write."""
+    import os
+    import stat
+    if path.parent.is_symlink() or path.is_symlink():
+        return None
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        try:
+            info = os.fstat(fd)
+            if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                    or not 0 < info.st_size <= _MAX_PRIVATE_JOURNAL):
+                return None
+            with os.fdopen(fd, "r", encoding="utf-8") as stream:
+                fd = -1
+                data = json.load(stream)
+        finally:
+            if fd >= 0:
+                os.close(fd)
+    except (OSError, ValueError, UnicodeError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _retired_attempt_evidence(journal_path: Path, profile_id: str,
+                              attempt: str, digest: str, command: str,
+                              prepared_at: object) -> str:
+    """Legacy retired journal classification, never a completion signal."""
+    if type(prepared_at) is not int or prepared_at < 0:
+        return "retired_evidence_unverified"
+    root = journal_path.parent.parent
+    if (journal_path.parent.is_symlink()
+            or root.is_symlink()):
+        return "unsafe_path"
+    response = _private_record(root / "ui-responses" / profile_id /
+                               (attempt + ".json"))
+    if (response is None or response.get("transport") != "alis-ui-once"
+            or response.get("attempt_id") != attempt
+            or not isinstance(response.get("response"), str)
+            or type(response.get("at_unix")) is not int
+            or response["at_unix"] < prepared_at):
+        return "retired_evidence_unverified"
+    archive = journal_path.parent / "observed"
+    if archive.is_symlink() or not archive.is_dir():
+        return "retired_evidence_unverified"
+    matches = 0
+    visited = 0
+    try:
+        for record_path in archive.glob("*.json"):
+            visited += 1
+            if visited > _MAX_ARCHIVE_ENTRIES:
+                return "archive_review_required"
+            record = _private_record(record_path)
+            if record is None:
+                return "archive_review_required"
+            if (record.get("schema") == "alis.chat-ui-send.v1"
+                    and record.get("phase") == "attempted"
+                    and record.get("prompt_sha256") == digest
+                    and record.get("command") == command
+                    and type(record.get("at_unix")) is int
+                    and prepared_at <= record["at_unix"] <= response["at_unix"]):
+                record_id = record.get("id")
+                try:
+                    valid_id = (isinstance(record_id, str)
+                                and str(uuid.UUID(record_id)) == record_id)
+                except (ValueError, AttributeError):
+                    valid_id = False
+                if not valid_id or record_path.name != record_id + ".json":
+                    return "archive_review_required"
+                matches += 1
+    except (OSError, ValueError):
+        return "retired_evidence_unverified"
+    if matches != 1:
+        return "archive_ambiguous" if matches > 1 else "retired_evidence_unverified"
+    return "unique_retired_attempt"
 
 
 def preview(manifest: dict | None, config: dict, state: dict,
@@ -107,21 +185,24 @@ def preview(manifest: dict | None, config: dict, state: dict,
         reply["original_journal"] = "unsafe_path"
         reply["reason"] = "ORIGINAL_JOURNAL_UNVERIFIED"
         return reply
-    try:
-        if not journal_path.is_file():
-            reply["original_journal"] = "missing"
+    command = "send" if pending["kind"] == "continuation" else "rotate-send"
+    if not journal_path.exists():
+        status = _retired_attempt_evidence(
+            journal_path, pid, attempt, digest, command,
+            pending.get("prepared_at_unix"))
+        reply["original_journal"] = status
+        if status == "unique_retired_attempt":
+            reply["phase"] = "retired_original_observation_candidate"
+            reply["read_only_observation_candidate"] = True
+            reply["reason"] = "LIVE_UI_AND_RETIRED_RESPONSE_COMPARISON_REQUIRED"
+        else:
             reply["reason"] = "ORIGINAL_JOURNAL_UNVERIFIED"
-            return reply
-        if journal_path.stat().st_size > _MAX_PRIVATE_JOURNAL:
-            reply["original_journal"] = "invalid"
-            reply["reason"] = "ORIGINAL_JOURNAL_UNVERIFIED"
-            return reply
-        journal = json.loads(journal_path.read_text(encoding="utf-8"))
-    except (OSError, ValueError, UnicodeError):
+        return reply
+    journal = _private_record(journal_path)
+    if journal is None:
         reply["original_journal"] = "unreadable"
         reply["reason"] = "ORIGINAL_JOURNAL_UNVERIFIED"
         return reply
-    command = "send" if pending["kind"] == "continuation" else "rotate-send"
     journal_id = journal.get("id") if isinstance(journal, dict) else None
     try:
         valid_journal_id = (isinstance(journal_id, str)
