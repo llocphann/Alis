@@ -35,16 +35,15 @@ for (const kind of ["notesTimers","notificationActivity"]) {
         check(!zero.some(p=>p.kind==="clock"),
             "old legacy inherited module keeps original zero-width policy");
 
-        const visible = layout.checkedBatch(
+        // Settings exclusively owns launcher icon visibility. The live
+        // layout editor cannot override an explicit global icon choice.
+        const unsupported = layout.checkedBatch(
             source,[kind],"showIcon",true,1920,1080,options,1
         );
-        check(!visible.rejected && visible.placements.find(p=>p.kind===kind).showIcon,
-            "show icon is an atomic editor transaction");
-        check(!visible.placements.find(p=>p.kind==="clock").showIcon === false,
-            "unrelated module remains untouched");
-        const blocked = layout.checkedBatch(source,["existing"],"showIcon",false,
-            1920,1080,options,1);
-        check(!!blocked.rejected, "old indicators cannot be edited as launchers");
+        check(!!unsupported.rejected,
+            "live editor cannot mutate Settings-only icon preference");
+        check(source.find(p=>p.kind===kind).showIcon===false,
+            "unsupported transaction leaves placement visibility intact");
 
         const saved = layout.saveProfile(
             {outputLayouts:[{outputName:"B",placements:[{id:"foreign",kind:"clock",edge:"right"}]}]},
