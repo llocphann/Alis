@@ -1508,35 +1508,45 @@ canonicalize_path() {
 detect_running_instance_dir() {
     # Find the config directory of an already-running Alis shell instance.
     # Returns 0 and prints the dir if found, returns 1 otherwise.
-    local running_path=""
+    local running_paths="" running_path dir listing
 
     if command -v jq >/dev/null 2>&1; then
         local json_output
         json_output="$($qs_bin list --all --json 2>/dev/null || true)"
         if [[ -n "$json_output" && "$json_output" != "[]" ]]; then
-            running_path="$(printf '%s' "$json_output" | jq -r '
-                [.[] | (.config_path // .configPath // empty) | select(endswith("/shell.qml"))]
-                | .[0] // empty
+            running_paths="$(printf '%s' "$json_output" | jq -r '
+                .[] | (.config_path // .configPath // empty)
+                | select(type == "string" and endswith("/shell.qml"))
             ' 2>/dev/null || true)"
         fi
     fi
 
     # Fallback: parse text output
-    if [[ -z "$running_path" ]]; then
+    if [[ -z "$running_paths" ]]; then
         local text_output
         text_output="$($qs_bin list --all 2>/dev/null || true)"
         if [[ -n "$text_output" ]]; then
-            running_path="$(printf '%s' "$text_output" | sed -n 's/^[[:space:]]*Config path:[[:space:]]*//p' | grep '/shell\.qml$' | head -1)"
+            running_paths="$(printf '%s' "$text_output" | sed -n 's/^[[:space:]]*Config path:[[:space:]]*//p' | grep '/shell\.qml$' || true)"
         fi
     fi
 
-    if [[ -n "$running_path" ]]; then
-        local dir="${running_path%/shell.qml}"
-        if [[ -d "$dir" && -f "$dir/shell.qml" ]]; then
+    while IFS= read -r running_path; do
+        [[ -n "$running_path" ]] || continue
+        dir="${running_path%/shell.qml}"
+        [[ -d "$dir" && -f "$dir/shell.qml" ]] || continue
+        # --all includes private tests and OTHER display connections. A
+        # temporary shell.qml is not the installed Alis runtime. Explicit
+        # --config/ALIS_RUNTIME_DIR still bypass this automatic discovery.
+        grep -Eq '^[[:space:]]*//@[[:space:]]+pragma[[:space:]]+ShellId[[:space:]]+alis[[:space:]]*$' \
+            "$dir/shell.qml" || continue
+        # Quickshell's path-scoped list filters the CURRENT display. Its
+        # --all inventory deliberately does not, including JSON output.
+        listing="$("$qs_bin" -p "$dir" list 2>/dev/null || true)"
+        if grep -Eq '^Instance [[:alnum:]_.-]+:' <<<"$listing"; then
             printf '%s' "$dir"
             return 0
         fi
-    fi
+    done <<<"$running_paths"
 
     return 1
 }
