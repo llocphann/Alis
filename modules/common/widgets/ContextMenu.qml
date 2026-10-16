@@ -31,6 +31,11 @@ Loader {
     // Cursor-positioned desktop menus use a quick slide-only reveal. Other
     // ContextMenu consumers retain the regular fade/scale profile.
     property bool cursorSlide: false
+    // A cursor menu belongs to the desktop PanelWindow, never to a moving
+    // one-pixel Item. Coordinates are local to that window's content.
+    property var cursorAnchorWindow: null
+    property real cursorAnchorX: 0
+    property real cursorAnchorY: 0
 
     // Mapped xdg-popups are not reliably reanchorable on Niri. Queue the
     // latest click, slide the old menu away, then remap a single new popup.
@@ -108,6 +113,10 @@ Loader {
             root.model = newModel
         root.anchorItem.x = nextX
         root.anchorItem.y = nextY
+        if (root.cursorSlide) {
+            root.cursorAnchorX = nextX
+            root.cursorAnchorY = nextY
+        }
         if (root.active && root.item)
             root.item.anchor.updateAnchor()
         root.requestOpen()
@@ -130,6 +139,8 @@ Loader {
             }
             root.anchorItem.x = root.relocationX
             root.anchorItem.y = root.relocationY
+            root.cursorAnchorX = root.relocationX
+            root.cursorAnchorY = root.relocationY
             if (root.relocationModelProvided)
                 root.model = root.relocationModel
             root.relocationQueued = false
@@ -162,7 +173,10 @@ Loader {
 
     sourceComponent: PopupWindow {
         id: popupWindow
-        visible: true
+        // Do not map a cursor popup until anchor.window is explicitly valid.
+        // Otherwise Niri can put remapped popups at the output origin (0,0).
+        property bool cursorAnchorReady: false
+        visible: !root.cursorSlide || popupWindow.cursorAnchorReady
         grabFocus: root.keyboardGrab && CompositorService.isNiri
         property bool closing: false
         // Popup animations can sweep the content under a stationary pointer,
@@ -198,6 +212,15 @@ Loader {
         }
 
         Component.onCompleted: {
+            if (root.cursorSlide) {
+                // A reliable window-relative anchor per Quickshell PopupAnchor:
+                // bypass item-to-window geometry cached on the previous popup.
+                // The point is already in this PanelWindow's coordinate space.
+                popupWindow.anchor.window = root.cursorAnchorWindow;
+                popupWindow.cursorAnchorReady = popupWindow.anchor.window !== null;
+                if (!popupWindow.cursorAnchorReady)
+                    console.warn("[DesktopContextMenu] Missing desktop parent window");
+            }
             realContent.shown = true;
             Qt.callLater(() => keyHandler.forceActiveFocus());
             if (Appearance.animationsEnabled)
@@ -224,11 +247,24 @@ Loader {
             adjustment: root.popupAdjustment ?? ((root.popupSide !== 0)
                 ? (PopupAdjustment.ResizeX | PopupAdjustment.SlideY)
                 : (PopupAdjustment.ResizeY | PopupAdjustment.SlideX))
-            item: root.anchorItem
-            rect.x: Number(root.anchorRect?.x ?? 0)
-            rect.y: Number(root.anchorRect?.y ?? 0)
-            rect.width: Number(root.anchorRect?.width ?? (root.anchorItem?.width ?? 0))
-            rect.height: Number(root.anchorRect?.height ?? (root.anchorItem?.height ?? 0))
+            // Non-desktop menus retain item anchoring unchanged. Cursor menus
+            // use an explicit anchor.window, set before mapping above.
+            item: root.cursorSlide ? null : root.anchorItem
+            rect.x: root.cursorSlide ? Math.round(root.cursorAnchorX)
+                : Number(root.anchorRect?.x ?? 0)
+            rect.y: root.cursorSlide ? Math.round(root.cursorAnchorY)
+                : Number(root.anchorRect?.y ?? 0)
+            rect.width: root.cursorSlide ? 1
+                : Number(root.anchorRect?.width ?? (root.anchorItem?.width ?? 0))
+            rect.height: root.cursorSlide ? 1
+                : Number(root.anchorRect?.height ?? (root.anchorItem?.height ?? 0))
+            onAnchoring: {
+                if (root.cursorSlide && Quickshell.env("ALIS_CONTEXT_MENU_DEBUG") === "1")
+                    console.info("[DesktopContextMenu] anchoring",
+                        "output", popupWindow.screen?.name ?? "?",
+                        "at", root.cursorAnchorX, root.cursorAnchorY,
+                        "rect", popupWindow.anchor.rect.x, popupWindow.anchor.rect.y)
+            }
             // A single vertical Edge flag centers the popup on the X axis.
             // Cursor menus need an explicit LEFT anchor / RIGHT expansion so
             // their top-left corner lands next to the pointer, not centered.

@@ -1572,10 +1572,10 @@ Scope {
                         return
                     }
                     if (desktopItemContextMenu.active) desktopItemContextMenu.close()
-                    // Map the click into the anchor parent's coordinate space
-                    // (important during wallpaper pan and scaled outputs).
+                    // Map to window-local scene coordinates. Unlike an Item
+                    // anchor, these are stable across PopupWindow remapping.
                     const point = desktopContextHitArea.mapToItem(
-                        desktopMenuAnchor.parent, mouse.x, mouse.y)
+                        null, mouse.x, mouse.y)
                     desktopContextMenu.requestOpenAt(point.x, point.y)
                 }
             }
@@ -1590,6 +1590,7 @@ Scope {
                 id: desktopContextMenu
                 z: 27
                 anchorItem: desktopMenuAnchor
+                cursorAnchorWindow: bgRoot
                 // Left as false: ContextMenu's own closeOnFocusLost backdrop
                 // (see the desktop MouseArea above) blocks clicks on the menu's
                 // own items on Niri. Left-click-to-close is handled by that
@@ -1674,6 +1675,7 @@ Scope {
                 id: desktopItemContextMenu
                 z: 27
                 anchorItem: desktopMenuAnchor
+                cursorAnchorWindow: bgRoot
                 closeOnFocusLost: false
                 // Same click-initiated lifecycle as the bare-desktop menu.
                 // Do not let pointer transitions across edge gaps cancel it.
@@ -1773,7 +1775,7 @@ Scope {
                         dragEnabled: !GlobalStates.screenLocked && !GlobalStates.shellLayoutEditMode
                         onContextMenuRequested: (menuModel, anchorX, anchorY) => {
                             const position = desktopItemDelegate.mapToItem(
-                                desktopMenuAnchor.parent, anchorX, anchorY)
+                                null, anchorX, anchorY)
                             if (desktopContextMenu.active) desktopContextMenu.close()
                             desktopItemContextMenu.requestOpenAt(position.x, position.y, menuModel)
                         }
