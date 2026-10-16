@@ -200,8 +200,20 @@ def ui_tick(profile_id: str, *, now: int | None = None,
             if not current or current.get("job_id") != job_id:
                 return
             if payload is None:
-                current["next_job_poll_at_unix"] = now + 10
-                current["status"] = "waiting_result"
+                # After a restart, keep observing the *same* worker job ID.
+                # An absent receipt cannot distinguish a slow worker from
+                # a crashed one: NEVER start an additional local job.
+                last_activity = current.get("last_activity_at_unix")
+                age = (max(0, now - last_activity)
+                       if type(last_activity) is int and last_activity > 0 else 0)
+                stalled = age >= 180
+                if stalled and current.get("status") != "waiting_result_stalled":
+                    store.event(state, profile_id, "ui_job_stalled",
+                                "No verified worker receipt; polling original job")
+                current["next_job_poll_at_unix"] = now + (
+                    min(60, 10 + (age // 60) * 10) if stalled else 10)
+                current["status"] = ("waiting_result_stalled" if stalled
+                                     else "waiting_result")
                 return
             current.update(
                 last_job_id=job_id, last_result=payload["status"],
