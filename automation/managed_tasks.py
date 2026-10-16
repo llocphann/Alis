@@ -512,8 +512,11 @@ def reconcile_ui_once() -> dict:
         if (record.get("unresolved")
                 or record.get("task", {}).get("base_sha") != pinned_sha
                 or record.get("status") not in
-                {"prepared", "handoff_ready", "awaiting_owner"}):
+                {"prepared", "handoff_ready", "awaiting_owner", "awaiting_cloud_ack"}):
             raise tf.TaskError("UI queue task pin or lifecycle changed")
+        if record.get("status") == "awaiting_cloud_ack":
+            from .lifecycle import _verified_local_receipt
+            _verified_local_receipt(record)
         delivery = {
             "transport": "alis-ui-once",
             "attestation": "local-ui-only",

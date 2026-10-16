@@ -347,6 +347,20 @@ class UiSchedulerTests(TestCase):
         self.assertEqual(result, "queue_idle")
         self.assertEqual(queue.view(), before)
 
+    def test_ui_followup_requires_authentic_local_receipt(self):
+        from automation import lifecycle
+        _, task = self._queue_fixture(state="active", approved=True)
+        task["status"] = "awaiting_cloud_ack"
+        with patch.object(tf, "load_task", return_value=task):
+            self.assertEqual(ui_scheduler.queue_tick(desktop=lambda *_a, **_k: self.fail("send")),
+                             "ALIS_UI_QUEUE_LOCAL_RECEIPT_REQUIRES_REVIEW")
+            with patch.object(lifecycle, "_verified_local_receipt", return_value={}) as gate:
+                self.assertEqual(ui_scheduler.queue_tick(desktop=lambda *_a, **_k: reply("ALIS_LOOP:DONE")), "DONE")
+                gate.assert_called_once_with(task)
+            with self.assertRaises(tf.TaskError):
+                managed_tasks.reconcile_ui_once()
+            self.assertEqual(queue.view()["state"], "active")
+
     def test_queue_mode_requires_approved_exact_identity_and_sha(self):
         pid, task = self._queue_fixture(state="active", approved=False)
         with patch.object(tf, "load_task", return_value=task):

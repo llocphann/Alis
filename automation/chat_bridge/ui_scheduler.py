@@ -467,8 +467,14 @@ def queue_tick(*, now: int | None = None, desktop=None) -> str:
         if (record.get("unresolved")
                 or record.get("task", {}).get("base_sha") != source_sha
                 or record.get("status") not in
-                {"prepared", "handoff_ready", "awaiting_owner"}):
+                {"prepared", "handoff_ready", "awaiting_owner", "awaiting_cloud_ack"}):
             return "ALIS_UI_QUEUE_TASK_CHANGED"
+        if record.get("status") == "awaiting_cloud_ack":
+            from automation.lifecycle import _verified_local_receipt
+            try:
+                _verified_local_receipt(record)
+            except tf.TaskError:
+                return "ALIS_UI_QUEUE_LOCAL_RECEIPT_REQUIRES_REVIEW"
     # Do not hold queue.lock while observing the Desktop response; Stop can
     # revoke approval while waiting. The actual first send also needs an
     # atomic latest-state recheck inside ui_tick's durable prepare transaction.
