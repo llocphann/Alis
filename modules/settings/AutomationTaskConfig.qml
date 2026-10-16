@@ -18,6 +18,8 @@ ContentPage {
     property bool cloudSelectTasks: false
     property bool clearQueueConfirmation: false
     property bool stopQueueConfirmation: false
+    property bool resetChatConfirmation: false
+    property string resetChatTarget: ""
     property string stopQueueTarget: ""
     property string clearQueueTarget: ""
     property string pendingSudoPassword: ""
