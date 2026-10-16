@@ -148,7 +148,16 @@ ContentPage {
                 || preview.active_code !== q.active.code)
             return ""
         if (preview.read_only_observation_candidate === true)
-            return Translation.tr("Original UI turn preserved for %1. Read-only observation prerequisites are present, but live chat history continuity, terminal receipt and Owner verification are still REQUIRED. Do not resend, resume or advance the queue.").arg(q.active.code)
+            return Translation.tr("Original UI turn preserved for %1 (%2). Read-only observation prerequisites are present, but live chat continuity, terminal receipt and Owner verification remain REQUIRED. No resend or queue advancement.")
+                .arg(q.active.code).arg(preview.original_journal || "original")
+        if (preview.original_journal === "original_interrupted_delivery")
+            return Translation.tr("Original UI delivery for %1 was interrupted. Delivery evidence is NOT a completed response; preserve the failed receipt and request Owner review. Do not resend.").arg(q.active.code)
+        if (preview.original_journal === "original_confirmed_not_sent")
+            return Translation.tr("Original UI attempt for %1 has a not-sent tombstone. It does NOT authorize automatic retry; review the original failure and require separate Owner approval.").arg(q.active.code)
+        if (["tombstone_conflict", "tombstone_review_required",
+             "archive_ambiguous", "archive_review_required"].includes(preview.original_journal))
+            return Translation.tr("Conflicting or unsafe original send evidence for %1 (%2). Manual inspection is required; neither completion nor retry is authorized.")
+                .arg(q.active.code).arg(preview.original_journal)
         return Translation.tr("Original UI recovery for %1 remains blocked: %2. Preserve its journal, pending message and worker receipts; inspect backend-status without replay.").arg(q.active.code).arg(preview.reason || "PREVIEW_NOT_READY")
     }
     property var activitySnapshot: null
