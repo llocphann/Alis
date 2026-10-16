@@ -119,7 +119,17 @@ def _complete_observed(profile_id, profile, pending, directive, observed_target,
 
 
 def pending_prompt(profile, item, kind):
-    prompt = model.effective_prompt(profile, kind)
+    prompt = model.effective_prompt(profile, "rotation" if kind == "manual_reset" else kind)
+    if kind == "manual_reset":
+        prompt += (
+            "\nOWNER-APPROVED CHAT RESET: the previous chat was abandoned "
+            "because its UI/generation became unreliable. This is a NEW "
+            "conversation, NOT permission to repeat previous jobs or "
+            "unverified changes. Read the pinned GitHub Issue, current dev "
+            "state, saved local receipts and checkpoint before proposing "
+            "the next distinct step. Reconcile prior effects first; do not "
+            "claim a result without fresh evidence.\n"
+        )
     prompt += "\nManaged Alis profile ID: " + profile["id"] + "\n"
     if item.get("checkpoint"):
         prompt += "\nSaved checkpoint:\n" + json.dumps(
@@ -207,7 +217,7 @@ def ui_tick(profile_id: str, *, now: int | None = None,
     if item.get("next_run_at_unix") and now < item["next_run_at_unix"]:
         return "scheduled"
     kind = item.get("request") or ("continuation" if item.get("session") else "initial")
-    new_chat = kind in {"initial", "new", "rotation"}
+    new_chat = kind in {"initial", "new", "rotation", "manual_reset"}
     if kind in {"restart", "recovery"}:
         return "ALIS_UI_UNCERTAIN_RESTART_REQUIRES_REVIEW"
     if not new_chat and item.get("session") is None:
@@ -220,9 +230,9 @@ def ui_tick(profile_id: str, *, now: int | None = None,
         return "ALIS_UI_TARGET_IDENTITY_REQUIRES_REVIEW"
     if kind == "rotation" and not item.get("checkpoint"):
         return "ALIS_UI_ROTATION_CHECKPOINT_REQUIRED"
-    prompt_kind = ("rotation" if kind == "rotation" else
+    prompt_kind = ("rotation" if kind in {"rotation", "manual_reset"} else
                    "initial" if new_chat else "continuation")
-    prompt = pending_prompt(profile, item, prompt_kind)
+    prompt = pending_prompt(profile, item, kind if kind == "manual_reset" else prompt_kind)
     command = "rotate-send" if new_chat else "send"
     attempt = str(uuid.uuid4())
     pending = {
@@ -283,6 +293,12 @@ def ui_tick(profile_id: str, *, now: int | None = None,
             if label is not None:
                 kwargs["chat_label"] = label
             payload = desktop(command, prompt, **kwargs)
+        elif kind == "manual_reset":
+            # Explicit owner escape from a stuck OLD chat. A distinct fresh
+            # Project composer must be checked before any new UI send. This
+            # does not clear the old session/receipt or retry an old prompt.
+            payload = desktop(command, prompt, new_chat_unowned=True,
+                              owner_chat_reset=True)
         elif new_chat and item.get("session") is None:
             # An initial task owns no earlier UI chat. Navigate to its Project
             # without touching a foreign composer or stopping its generation.
