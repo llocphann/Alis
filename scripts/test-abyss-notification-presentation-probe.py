@@ -58,4 +58,18 @@ frames=module.sanitize_frames([{"output":"Display X","count":20,"p95":35,
                 "popupMotion":[{"kind":"privateContent"}]}]}])
 assert frames[0]["metrics"]["p95"] == 35
 assert "privateContent" not in str(frames)
-print("ABYSS_NOTIFICATION_PHASE_SOURCE_PASS 22 source/collector contracts")
+# NOTIF-I04: a cold grouped model must be measured even if the initial
+# ListView contentHeight is zero and no height-changed callback is delivered.
+assert "property int popupMeasureAttempts: 0" in content
+assert "popupMeasureAttemptLimit: 10" in content
+assert "function onPopupAppNameListChanged(): void" in content
+measure=content[content.index("function schedulePopupMeasurement(): void"):
+                content.index("Component.onCompleted:",content.index("function schedulePopupMeasurement(): void"))]
+assert "if (Number(popupLoader.item?.contentHeight ?? 0) > 0)" not in measure
+assert "popupMeasureTimer.restart()" in measure
+assert "view.forceLayout()" in measure
+assert "popupMeasureAttempts < root.popupMeasureAttemptLimit" in measure
+assert "if (!Number.isFinite(height) || height <= 0)" in measure
+assert measure.index("height <= 0") < measure.index("root.popupLayoutReady=true")
+assert "root.popupMeasureAttempts=0" in content
+print("ABYSS_NOTIFICATION_PHASE_SOURCE_PASS 31 source/collector contracts")
