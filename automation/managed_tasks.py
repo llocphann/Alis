@@ -141,7 +141,8 @@ def _ensure_profile(repository: str, code: str) -> str:
 
 
 def stage_ui_queue(*, approved: bool = False,
-                   expected_first: str = "") -> dict:
+                   expected_first: str = "",
+                   expected_snapshot_id: str | None = None) -> dict:
     """Owner-approved, non-dispatching profile stage for alternate UI Loop.
 
     This creates only the profile of the first exact SHA-pinned queued Issue,
@@ -159,6 +160,9 @@ def stage_ui_queue(*, approved: bool = False,
                 or manifest.get("active") is not None
                 or manifest.get("selection") is not None):
             raise tf.TaskError("UI Queue staging requires idle prepared ordered queue")
+        if (expected_snapshot_id is not None
+                and queue._snapshot_id(manifest) != expected_snapshot_id):
+            raise tf.TaskError("UI Queue changed since Prepare UI confirmation")
         items = manifest.get("items")
         if (not isinstance(items, list) or not 1 <= len(items) <= queue.MAX_ITEMS
                 or any(not isinstance(item, dict)
