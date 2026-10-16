@@ -150,6 +150,41 @@ class ResultCommitTests(TestCase):
         self.assertEqual(self.item()["desired"], "paused")
         self.assertIsNone(self.item()["pending"])
 
+    def test_retired_response_must_bind_exact_archived_journal_if_present(self):
+        self.legacy_completed_but_pending()
+        archive = store.state_dir() / "ui-send-journal" / "observed"
+        record = json.loads(next(archive.glob("*.json")).read_text())
+        pending = self.item()["pending"]
+        response_path = (store.state_dir() / "ui-responses" / ID /
+                         (pending["attempt_id"] + ".json"))
+        response = json.loads(response_path.read_text())
+        proper = {"id": record["id"], "command": record["command"],
+                  "prompt_sha256": record["prompt_sha256"]}
+        for invalid in (
+            {"id": "66666666-7777-8888-9999-aaaaaaaaaaaa",
+             "command": proper["command"], "prompt_sha256": proper["prompt_sha256"]},
+            {**proper, "command": "rotate-send"},
+            {**proper, "prompt_sha256": "f" * 64},
+            {**proper, "untrusted_field": True},
+            None,
+        ):
+            store._write(response_path, {**response, "ui_send_intent": invalid})
+            with patch.object(runtime, "desktop") as ui:
+                with self.assertRaisesRegex(RuntimeError, "LEGACY_RESPONSE_MISMATCH"):
+                    ui_scheduler.reconcile_pending(ID)
+                ui.assert_not_called()
+            self.assertEqual(self.item()["prompts_sent"], 0)
+            self.assertIsNotNone(self.item()["pending"])
+            self.assertFalse((store.state_dir() / "ui-send-journal" / "pending.json").exists())
+        store._write(response_path, {**response, "ui_send_intent": proper})
+        def observe(command, prompt, **kwargs):
+            self.assertEqual(command, "observe-submitted")
+            return self.payload(prompt)
+        self.assertEqual(ui_scheduler.reconcile_pending(ID, observer=observe),
+                         "ui_reconciled_CONTINUE")
+        self.assertEqual(self.item()["prompts_sent"], 1)
+        self.assertIsNone(self.item()["pending"])
+
     def test_legacy_changed_or_missing_response_cannot_infer_completion(self):
         self.legacy_completed_but_pending()
         def changed(command, prompt, **kwargs):
