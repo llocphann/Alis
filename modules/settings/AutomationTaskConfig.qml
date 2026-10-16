@@ -298,6 +298,13 @@ ContentPage {
     function prepareTask(): void {
         if (root.busy)
             return
+        // The empty input is NOT permission to replace an old, fully
+        // parked queue with different auto-discovered Issues. Recheck the
+        // displayed original set first, preserving every original receipt.
+        if (!taskCodeField.text.trim().length && root.reviewRecheckAvailable) {
+            root.recheckQueue()
+            return
+        }
         root.clearQueueConfirmation = false
         root.uiQueueStartConfirmation = false
         root.uiQueueStartTarget = ""
@@ -321,6 +328,32 @@ ContentPage {
             "python3", Quickshell.shellPath("scripts/alis-automation-task.py"),
             "queue-prepare", codes, "--mode", root.cloudSelectTasks ? "cloud" : "ordered"
         ]
+        queueProcess.running = true
+    }
+
+    readonly property bool reviewRecheckAvailable: !!root.queueSnapshot
+        && root.queueStatusConfirmed && root.queueSnapshot.state === "review_required"
+        && root.queueSnapshot.items.length > 0
+        && root.queueSnapshot.items.every(task => task.state === "deferred")
+
+    function recheckQueue(): void {
+        if (root.busy || !root.reviewRecheckAvailable) return
+        const snapshotId = root.queueSnapshot.snapshot_id || ""
+        if (!/^[a-f0-9]{64}$/.test(snapshotId)) {
+            root.errorText = Translation.tr("Queue identity unavailable · update Alis backend and refresh")
+            return
+        }
+        root.clearQueueConfirmation = false
+        root.stopQueueConfirmation = false
+        root.uiQueueStartConfirmation = false
+        root.errorText = ""
+        root.statusText = ""
+        root.queuePrepareError = ""
+        root.queueStatusConfirmed = false
+        root.queueOperation = "recheck"
+        queueProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "queue-recheck", "--expected-snapshot-id", snapshotId]
         queueProcess.running = true
     }
 
@@ -454,7 +487,7 @@ ContentPage {
         if (reason === "owner_review_pending") return Translation.tr("Owner review")
         if (reason === "already_completed") return Translation.tr("Completed")
         if (reason === "cloud_continuation_pending") return Translation.tr("Cloud pending")
-        if (reason === "source_pin_changed") return Translation.tr("Pin changed")
+        if (reason === "source_pin_changed") return Translation.tr("Legacy pin · recheck")
         if (reason === "source_pin_unverified") return Translation.tr("Pin unverified")
         if (reason === "saved_work_requires_review") return Translation.tr("Review record")
         if (reason === "previous_dispatch_unsettled") return Translation.tr("Job pending")
@@ -759,6 +792,10 @@ ContentPage {
                             : Translation.tr("Removed %1 queued tasks · active job and receipts preserved")
                                 .arg(result.removed_queued || 0)
                         : Translation.tr("No queued tasks to clear")
+                else if (root.queueOperation === "recheck")
+                    root.statusText = Translation.tr("Queue rechecked · %1 ready · %2 parked; saved receipts untouched")
+                        .arg((result.items || []).filter(t => t.state === "queued").length)
+                        .arg(result.deferred_count || 0)
                 else if (root.queueOperation === "prepare")
                     root.statusText = result.state === "active"
                         ? Translation.tr("Queue already active")
@@ -797,7 +834,7 @@ ContentPage {
                 root.stopAcknowledgementPending = false
                 root.statusText = ""
                 root.errorText = String(error)
-                if (failedOperation === "prepare") {
+                if (failedOperation === "prepare" || failedOperation === "recheck") {
                     root.queuePrepareError = root.errorText
                     prepareFailureRefresh.restart()
                 }
@@ -1227,7 +1264,9 @@ ContentPage {
                     objectName: "automationPrepareTask"
                     buttonText: root.busy ? Translation.tr("Wait")
                         : taskCodeField.text.trim().length === 0
-                        ? Translation.tr("Find") : Translation.tr("Queue")
+                        ? (root.reviewRecheckAvailable
+                            ? Translation.tr("Recheck") : Translation.tr("Find"))
+                        : Translation.tr("Queue")
                     enabled: !root.busy
                     onClicked: root.prepareTask()
                 }
