@@ -39,6 +39,7 @@ Item {
     signal popupHoverStateChanged(string kind, string edge, real along, bool hovered)
     signal interaction(string edge, real along, real span, real strength)
     signal layoutRepairRequested()
+    signal notesEditorFocusChanged(string outputName, bool focused)
     readonly property var zones: Geometry.barZones(
         (root.vertical ? Config.options?.bar?.verticalLayout : Config.options?.bar?.layout) ?? {},
         root.vertical, Config.options?.bar?.modules ?? {})
@@ -90,13 +91,22 @@ Item {
             // stale after dynamic placement/scale changes. Round outwards so
             // fractional DPI never clips the first/last hover pixel.
             // Edit Mode uses its own dedicated handle regions instead.
+            readonly property bool hiddenEdgeLauncher:
+                (module.kind === "notesTimers" || module.kind === "notificationActivity")
+                && module.placement?.showIcon === false
+            // Iconless mode still has one strictly bounded source hitbox at the
+            // literal physical edge, rather than an invisible full-width layer.
             readonly property Region inputRegion: Region {
-                x: Math.floor(module.x)
-                y: Math.floor(module.y)
+                x: module.hiddenEdgeLauncher && module.attachedEdge === "left"
+                    ? 0 : Math.floor(module.x)
+                y: module.hiddenEdgeLauncher && module.attachedEdge === "top"
+                    ? 0 : Math.floor(module.y)
                 width: module.visible && module.enabled
-                    ? Math.max(0, Math.ceil(module.x + module.width) - Math.floor(module.x)) : 0
+                    ? Math.max(0, (module.hiddenEdgeLauncher && module.attachedEdge === "right"
+                        ? root.width : Math.ceil(module.x + module.width)) - x) : 0
                 height: module.visible && module.enabled
-                    ? Math.max(0, Math.ceil(module.y + module.height) - Math.floor(module.y)) : 0
+                    ? Math.max(0, (module.hiddenEdgeLauncher && module.attachedEdge === "bottom"
+                        ? root.height : Math.ceil(module.y + module.height)) - y) : 0
             }
             // Quickshell Region documents cases where geometry does not
             // invalidate its compositor mask automatically. Explicitly
@@ -111,6 +121,7 @@ Item {
             onHeightChanged: {invalidateInputRegion();settleDimensionChange()}
             onVisibleChanged: invalidateInputRegion()
             onEnabledChanged: invalidateInputRegion()
+            onHiddenEdgeLauncherChanged: invalidateInputRegion()
             readonly property var geometry: root.layoutRecords.find(rec => rec.id === modelData)
             liquidController: root.liquidController
             attachedEdge: placement?.edge ?? "top"
@@ -122,6 +133,8 @@ Item {
             outputName: root.outputName
             vertical: placement?.edge === "left" || placement?.edge === "right"
             compact: placement?.compact ?? false
+            showIcon: placement?.showIcon !== false
+            onNotesEditorFocusChanged: (outputName, focused) => root.notesEditorFocusChanged(outputName, focused)
             visible: geometry !== undefined && !geometry.capacityConflict
             enabled: !root.editing && visible
             property bool motionReady: false
