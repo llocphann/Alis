@@ -643,7 +643,7 @@ async function populatePrompt(page, composer, prompt) {
   return { githubMention: true, method };
 }
 
-export async function submitPrompt(page, prompt) {
+export async function submitPrompt(page, prompt, {targetKey=null}={}) {
   let sendAttempted=false;
   try {
   const composer = await requireIdleComposer(page);
@@ -665,6 +665,17 @@ export async function submitPrompt(page, prompt) {
   // try Enter, CDP, Wayland or another click. The owning Python bridge has
   // already fsynced a one-shot intent before invoking this subprocess.
   await page.waitForTimeout(300);
+  await verifyProject(page);
+  if(targetKey!==null&&createHash('sha256').update(await uiOnlyTurnIdentity(page)).digest('hex')!==targetKey)
+    throw Error('ALIS_UI_TARGET_CHANGED_NO_SEND');
+  const body=splitGitHubMentionPrompt(prompt);
+  const live=await composer.innerText();
+  const normalized=value=>value.replace(/\s+/g,' ').trim();
+  if(normalized(body??prompt)!==normalized(body===null?live:live.replace(/^GitHub\s*/,'')))
+    throw Error('ALIS_UI_COMPOSER_CHANGED_NO_SEND');
+  if(body!==null&&!await composer.evaluate(element=>element.querySelectorAll(
+    '[app-mention-name="github"], [data-prompt-link-href="plugin://github@openai-curated-remote"]'
+  ).length===1))throw Error('GitHub rich mention was removed before Send');
   if (await send.isDisabled())
     throw new Error("ALIS_UI_SEND_DISABLED_NO_ATTEMPT");
 

@@ -399,7 +399,9 @@ async function main() {
       throw error;
     }
 
-    const completionBaseline = await submitPrompt(page, prompt);
+    const completionBaseline = await submitPrompt(page, prompt, {
+      targetKey:command==='send'?(process.argv[3]??null):null
+    });
     const generation = await waitForCompletion(
       page,
       600000,

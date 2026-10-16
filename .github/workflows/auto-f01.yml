@@ -59,6 +59,7 @@ jobs:
           node scripts/test-AUTO-F01-ui-surface.mjs
           node scripts/test-AUTO-F01-ui-turn-anchor.mjs
           node scripts/test-AUTO-F01-archived-observation.mjs
+          node scripts/test-AUTO-F01-before-send.mjs
           node --check automation/chat_bridge/alis_ui_smoke.mjs
           node --check automation/chat_bridge/alis_ui_smoke_cli.mjs
           node scripts/test-AUTO-F01-one-shot-smoke.mjs
