@@ -63,6 +63,8 @@ def main():
     ui_start.add_argument("--approve", action="store_true")
     ui_start.add_argument("--accept-ui-only-receipts", action="store_true")
     ui_start.add_argument("--expected-first", required=True)
+    ui_start.add_argument("--expected-snapshot-id",
+                          help="Exact reviewed queue snapshot; reject stale UI Start")
     history = commands.add_parser("activity")
     history.add_argument("code")
     history.add_argument("--repo", choices=taskflow.REPOSITORIES,
@@ -178,7 +180,8 @@ def main():
             result = managed_tasks.start_ui_queue(
                 approved=args.approve,
                 accept_ui_only_receipts=args.accept_ui_only_receipts,
-                expected_first=args.expected_first)
+                expected_first=args.expected_first,
+                expected_snapshot_id=args.expected_snapshot_id)
         elif args.action == "activity":
             result = activity.read(args.code, args.repo)
         elif args.action in ("resolve", "prepare"):
