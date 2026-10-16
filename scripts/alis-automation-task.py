@@ -31,6 +31,9 @@ def main():
                        help="Optional codes; blank discovers Backend-first GitHub Issues")
     batch.add_argument("--mode", choices=["ordered", "cloud"], default="ordered")
     commands.add_parser("queue-status")
+    recheck = commands.add_parser("queue-recheck")
+    recheck.add_argument("--expected-snapshot-id", required=True,
+                         help="Version of the exact fully parked queue displayed in Settings")
     reset_chat = commands.add_parser("queue-reset-chat")
     reset_chat.add_argument("--approve", action="store_true",
                             help="Request a fresh Project chat for the exact active task; no direct Send")
@@ -112,6 +115,9 @@ def main():
                       if args.codes.strip() else queue.prepare_auto(mode=args.mode))
         elif args.action == "queue-status":
             result = queue.view()
+        elif args.action == "queue-recheck":
+            result = queue.recheck_review_queue(
+                expected_snapshot_id=args.expected_snapshot_id)
         elif args.action == "queue-stage-ui":
             result = managed_tasks.stage_ui_queue(
                 approved=args.approve, expected_first=args.expected_first)
