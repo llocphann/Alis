@@ -20,6 +20,7 @@ ContentPage {
     property bool stopQueueConfirmation: false
     property bool resetChatConfirmation: false
     property string resetChatTarget: ""
+    property bool chatResetNotice: false
     property string stopQueueTarget: ""
     property string clearQueueTarget: ""
     property string pendingSudoPassword: ""
