@@ -53,7 +53,7 @@ assert 'objectName:"abyssUnifiedModuleIconVisibility"' not in editor
 assert 'root.batch("showIcon",checked)' not in editor
 assert "Placement.isUnifiedKind(kind)" in editor
 assert "Placement.saveProfile(" in editor
-assert "if(action===\"showIcon\"" in layout
+assert 'if(["remove","locked","enabled","joinCorner"].concat(placementKeys)' in layout
 
 # Existing corner fallback and explicit notification hotkey remain supported.
 assert "ModuleLayout.hasEnabledModule(" in corners
