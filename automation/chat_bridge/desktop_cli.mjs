@@ -369,11 +369,15 @@ async function main() {
     if (/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(attempt ?? ""))
       dispatchIdentity={attempt_id:attempt,
         prompt_sha256:createHash("sha256").update(prompt).digest("hex")};
+    const ownerReset=command === "rotate-send" &&
+      process.argv[3] === "--owner-chat-reset";
     const unowned=command === "rotate-send" &&
-      process.argv[3] === "--unowned-previous-chat";
+      (process.argv[3] === "--unowned-previous-chat" || ownerReset);
     try {
       if (command === "rotate-send")
-        page = await openHadalisNewChat(page, {unownedPreviousChat:unowned});
+        page = await openHadalisNewChat(page, {
+          unownedPreviousChat:unowned, ownerChatReset:ownerReset
+        });
 
     // For managed Alis UI mode, require same uniquely selected conversation
     // between turns. A missing/changed chat must block BEFORE composer.fill.
