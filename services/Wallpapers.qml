@@ -64,7 +64,8 @@ Singleton {
         root.internalPreviewMonitor = String(monitorName ?? "")
         root.internalPreviewPath = normalizedPath
         MaterialThemeLoader.previewWallpaperColors(normalizedPath,
-            root._videoThumbDir + "/" + MD5.hash(normalizedPath) + ".jpg")
+            root._videoThumbDir + "/" + MD5.hash(normalizedPath) + ".jpg",
+            root._shouldDeferThemeForLiquid(normalizedPath))
         // No-op for videos, GIFs, and when awww is not running.
         AwwwBackend.previewImage(normalizedPath, monitorName)
     }
@@ -568,8 +569,14 @@ Singleton {
     }
 
     function liquidWallpaperTransitionFinished(displayedSource: string): void {
+        const rendered = FileUtils.trimFileProtocol(String(displayedSource ?? ""))
+        // Carousel highlights are previews, not committed Apply calls. Their
+        // palette subprocess must wait for the actual Liquid texture/animation.
+        if (root.internalPreviewActive && rendered === root.internalPreviewPath)
+            MaterialThemeLoader.previewWallpaperPresented(rendered)
+
         const pending = root._pendingLiquidThemePath
-        if (!pending || FileUtils.trimFileProtocol(String(displayedSource ?? "")) !== pending)
+        if (!pending || rendered !== pending)
             return
         // Give the final swap a small margin so the palette update cannot
         // interrupt the last Liquid frame. Rapid requests reset the deadline.
