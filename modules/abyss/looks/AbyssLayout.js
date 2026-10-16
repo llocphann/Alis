@@ -66,11 +66,38 @@ function seed(zones, edge, width, height) {
     });
     return normalize(result,edge);
 }
+// New installations and existing layouts opt into these two launchers by
+// default, without changing stored placements. Explicit per-output or global
+// Done records a durable migration marker, so removing an entry never causes
+// it to reappear after restart. With autoUnifiedEdgeLaunchers disabled, callers
+// that construct temporary/baseline layout objects remain unchanged.
+function withUnifiedEdgeModules(placements, shouldAdd) {
+    var normalized = normalize(placements,"top");
+    if (!shouldAdd) return normalized;
+    var defaults=[
+        {id:"notesTimers",kind:"notesTimers",edge:"bottom",position:.065,showIcon:true},
+        {id:"notificationActivity",kind:"notificationActivity",edge:"bottom",position:.935,showIcon:true}
+    ];
+    defaults.forEach(function(p) {
+        if (!normalized.some(function(entry) { return entry.kind===p.kind; })
+                && normalized.length<24)
+            normalized.push(p);
+    });
+    return normalize(normalized,"top");
+}
 function resolve(options, outputName, fallback) {
     var profiles = Array.from(options?.outputLayouts || []);
     var profile = profiles.find(function(p) { return p.outputName === outputName; });
-    if (profile) return normalize(profile.placements,"top");
-    return options?.configured ? normalize(options.placements,"top") : fallback;
+    // Output-specific overrides independently remember completed migrations.
+    // A global editor save must not accidentally suppress first-run launchers
+    // on an unrelated output with its own older legacy profile.
+    if (profile) return withUnifiedEdgeModules(profile.placements,
+        options?.autoUnifiedEdgeLaunchers===true
+        && profile.unifiedLaunchersConfigured!==true);
+    return withUnifiedEdgeModules(options?.configured
+        ? options.placements : fallback,
+        options?.autoUnifiedEdgeLaunchers===true
+        && options?.unifiedLaunchersConfigured!==true);
 }
 // QML JsonObject also enumerates QObject signals. Persist only the four owned
 // Edge fields, never objectNameChanged/destroyed or other QObject internals.
@@ -322,11 +349,11 @@ function saveProfile(options, outputName, placements, gap, outputOnly, edgeSizes
     if (outputOnly) {
         var existing = profiles.find(function(p) { return p.outputName===outputName; });
         profiles = profiles.filter(function(p) { return p.outputName!==outputName; });
-        profiles.push(Object.assign({},existing,{outputName:outputName,placements:normalized,gap:bounded(gap,8,0,32),
+        profiles.push(Object.assign({},existing,{outputName:outputName,placements:normalized,unifiedLaunchersConfigured:true,gap:bounded(gap,8,0,32),
             edgeSizes:edgeMap(edgeSizes ?? current.edgeSizes),singleModuleExpansion:expansion,size:scale,edgeThicknesses:thicknesses,edgeWidthAffectsModules:affects,edgeJoinModules:joins,edgeModuleRadii:radii,edgeRoundZeroCorners:zeroCorners}));
         return {"abyss.modules.outputLayouts":profiles};
     }
-    return {"abyss.modules.configured":true,"abyss.modules.placements":normalized,
+    return {"abyss.modules.configured":true,"abyss.modules.unifiedLaunchersConfigured":true,"abyss.modules.placements":normalized,
         "abyss.modules.gap":bounded(gap,8,0,32),"abyss.modules.outputLayouts":profiles.filter(function(p) { return p.outputName!==outputName; }),
         "abyss.modules.edgeSizes":edgeMap(edgeSizes ?? options?.edgeSizes),
         "abyss.modules.singleModuleExpansion":expansion,"abyss.modules.size":scale,
