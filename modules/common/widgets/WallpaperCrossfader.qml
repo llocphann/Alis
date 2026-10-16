@@ -49,13 +49,11 @@ Item {
 
     // ── Internal state ─────────────────────────────────────────────────
     property bool _transitioning: false
-    // Melt's frame-swapped/ShaderEffect handoff is unreliable on real desktop
-    // compositors. Existing saved alisMelt profiles must still change images.
-    // Only opt in to the experimental shader explicitly; the safe path uses
-    // the already-loaded image slots and an ordinary crossfade (no frame lease).
-    readonly property bool experimentalMelt: Quickshell.env("ALIS_EXPERIMENTAL_MELT") === "1"
-    readonly property var shaderTransitionTypes: ["alisMelt"]
-    readonly property bool shaderTransitionRequested: experimentalMelt
+    // Liquid is a real shader transition by default, not a disguised fade.
+    // A local opt-out is retained for driver recovery; unsupported renderers,
+    // compile errors and stalled frames fall back to the Ready-slot crossfade.
+    readonly property var shaderTransitionTypes: ["alisMelt", "inirMelt"]
+    readonly property bool shaderTransitionRequested: Quickshell.env("ALIS_DISABLE_LIQUID_SHADER") !== "1"
         && (isShaderTransitionType(transitionType)
             || String(transitionType ?? "") === "shaderRandom")
     readonly property bool transitionBusy: _transitioning
@@ -146,7 +144,7 @@ Item {
             const index = Math.floor(Math.random() * shaderTransitionTypes.length)
             return shaderTransitionTypes[Math.max(0, Math.min(shaderTransitionTypes.length - 1, index))]
         }
-        return isShaderTransitionType(raw) ? raw : ""
+        return isShaderTransitionType(raw) ? "alisMelt" : ""
     }
 
     function _startShaderTransitionIfReady(): void {
@@ -167,6 +165,13 @@ Item {
     function _requestShaderPrimeFrame(): void {
         const window = root.Window.window
         if (root._shaderTexturePrimePending && root.visible && window?.visible)
+            window.update()
+    }
+
+    function _requestShaderPresentationFrame(): void {
+        const window = root.Window.window
+        if (root._shaderRequestedActive && shaderTransition.shaderReady
+                && !shaderTransition.shaderPresented && root.visible && window?.visible)
             window.update()
     }
 
@@ -226,6 +231,7 @@ Item {
     function _normalizedTransitionType(rawType: string): string {
         switch (String(rawType ?? "crossfade")) {
         case "alisMelt":
+        case "inirMelt":
         case "shaderRandom":
             return "crossfade"
         case "none":
@@ -367,6 +373,12 @@ Item {
 
             pendingSource = newSource
 
+            // A newer selection can arrive during a frame lease, before
+            // _transitioning becomes true. Cancel the old lease so the latest
+            // Ready image is loaded rather than leaving the queue stranded.
+            if (root._shaderTexturePrimePending && newSource !== root._shaderTexturePrimeSource)
+                root._cancelShaderTexturePrime()
+
             // Always decode into the spare slot, including reduced motion.
             // A failed selection must not replace the last successfully shown
             // image or publish a source which has never reached Image.Ready.
@@ -483,11 +495,11 @@ Item {
             if (root._activeShader === "")
                 transitionAnim.restart()
             else {
-                if (shaderTransition.status === ShaderEffect.Compiled) {
+                if (shaderTransition.status === ShaderEffect.Compiled)
                     shaderTransition.shaderReady = true
-                    shaderTransition.shaderPresented = true
-                }
-                Qt.callLater(root._startShaderTransitionIfReady)
+                // Compilation is NOT proof of a presented shader frame.
+                // Keep the old Ready image visible until frameSwapped.
+                Qt.callLater(root._requestShaderPresentationFrame)
             }
         }
     }
@@ -568,6 +580,15 @@ Item {
         }
 
         function onFrameSwapped(): void {
+            // First render with the shader at near-zero opacity; only then
+            // reveal it and start progress. A compiler callback alone can
+            // precede a usable texture on Qt/Wayland.
+            if (root._shaderRequestedActive && shaderTransition.shaderReady
+                    && !shaderTransition.shaderPresented
+                    && shaderTransition.status === ShaderEffect.Compiled) {
+                shaderTransition.shaderPresented = true
+                Qt.callLater(root._startShaderTransitionIfReady)
+            }
             if (!root._shaderTexturePrimePending)
                 return
 
@@ -942,7 +963,8 @@ Item {
         anchors.fill: parent
         z: (root._shaderTexturePrimePending || root._shaderRequestedActive) ? 20 : -1
         visible: root._shaderTexturePrimePending || root._shaderRequestedActive
-        opacity: root._shaderTexturePrimePending ? 0.001 : (shaderPresented ? 1 : 0)
+        opacity: root._shaderTexturePrimePending || (root._shaderRequestedActive && !shaderPresented)
+            ? 0.001 : (shaderPresented ? 1 : 0)
         property bool shaderReady: false
         property bool shaderPresented: false
 
@@ -978,10 +1000,8 @@ Item {
             Qt.callLater(() => {
                 if (status === ShaderEffect.Compiled) {
                     shaderReady = true
-                    if (root._shaderRequestedActive) {
-                        shaderPresented = true
-                        root._startShaderTransitionIfReady()
-                    }
+                    if (root._shaderRequestedActive)
+                        root._requestShaderPresentationFrame()
                 }
             })
         }
@@ -990,10 +1010,8 @@ Item {
                 return
             if (status === ShaderEffect.Compiled) {
                 shaderReady = true
-                if (root._shaderRequestedActive) {
-                    shaderPresented = true
-                    root._startShaderTransitionIfReady()
-                }
+                if (root._shaderRequestedActive)
+                    Qt.callLater(root._requestShaderPresentationFrame)
             } else if (status === ShaderEffect.Error) {
                 console.warn("[WallpaperCrossfader] Shader failed:", log)
                 shaderReady = false
@@ -1020,8 +1038,7 @@ Item {
             if (root._shaderRequestedActive && fragmentShader !== ""
                     && status === ShaderEffect.Compiled) {
                 shaderReady = true
-                shaderPresented = true
-                root._startShaderTransitionIfReady()
+                Qt.callLater(root._requestShaderPresentationFrame)
             }
         }
 
