@@ -121,12 +121,15 @@ class UiNotSent(RuntimeError):
 def desktop(command: str, prompt: str | None = None,
             target_key: str | None = None,
             new_chat_unowned: bool = False,
+            owner_chat_reset: bool = False,
             chat_label: str | None = None) -> dict[str, Any]:
     # A one-shot intent is fsynced before ANY Desktop UI mutation.
     # A crash, ambiguous click, timeout or incomplete response keeps the
     # pending tombstone: never silently send a duplicate after a restart.
     if new_chat_unowned and command != "rotate-send":
         raise ValueError("Unowned navigation applies only to an initial new chat")
+    if owner_chat_reset and (not new_chat_unowned or command != "rotate-send"):
+        raise ValueError("ALIS_UI_RESET_REQUIRES_NEW_CHAT")
     extra_env = {}
     surface = state_root() / "ui-window.json"
     if surface.exists() or surface.is_symlink():
@@ -155,7 +158,8 @@ def desktop(command: str, prompt: str | None = None,
         raise ValueError("ALIS_UI_TARGET_ARGUMENT_INVALID")
     argv = ["node", str(DESKTOP_CLI), command]
     if new_chat_unowned:
-        argv.append("--unowned-previous-chat")
+        argv.append("--owner-chat-reset" if owner_chat_reset
+                    else "--unowned-previous-chat")
     if target_key is not None:
         argv.append(target_key)
     result = run(
