@@ -7,6 +7,7 @@ import qs.modules.common.widgets
 import qs.services
 import qs.modules.screenCorners
 import qs.modules.notificationCenter
+import "looks/AbyssLayout.js" as ModuleLayout
 
 // Mature corner content joins the existing StyledPopup/field path.
 Item {
@@ -36,20 +37,29 @@ Item {
             && NiriService.isOverviewHotCornerActive(root.outputName, cornerName)
     }
 
+    // This is the ACTUAL Abyss corner owner. ScreenCorners.qml belongs to
+    // ii/Waffle and never owns the Abyss perimeter's hit masks. A saved
+    // Module Icon mode must revoke this corner's MouseArea and popup; selecting
+    // Edgebar Hover must restore it even if the retired Panels Quick Notes
+    // toggle left quickNotes.enable=false or monitorMode=primary.
+    readonly property bool notesEdgebarMode:
+        ModuleLayout.edgebarOwnsCornerHover(
+            Config.options?.abyss?.modules,
+            Config.options?.panelFamily ?? "ii","notesTimers")
+    readonly property bool centerEdgebarMode:
+        ModuleLayout.edgebarOwnsCornerHover(
+            Config.options?.abyss?.modules,
+            Config.options?.panelFamily ?? "ii","notificationActivity")
     readonly property bool notesAvailable: presentationEnabled && !blocked
-        && (Config.options?.quickNotes?.enable ?? true)
-        && ((Config.options?.quickNotes?.monitorMode ?? "all") !== "primary"
-            || outputName === (GlobalStates.primaryScreen?.name ?? Quickshell.screens[0]?.name ?? ""))
+        && notesEdgebarMode
         && (quickNotesEditorOutput.length === 0
             || quickNotesEditorOutput === outputName)
         && !root.niriOverviewOwnsCorner("bottomLeft")
     readonly property bool centerAvailable: presentationEnabled && !blocked
+        && centerEdgebarMode
         // Quick Notes may own the keyboard while Notification Center remains a
         // pointer-only surface. Do not hide the whole popup just because the
         // notes editor has focus; keyboard arbitration is handled below.
-        && (Config.options?.notificationCenter?.enable ?? true)
-        && (Config.options?.enabledPanels ?? []).includes("abyssNotificationCenter")
-        && targets(Config.options?.notificationCenter?.screenList ?? [])
         && !root.niriOverviewOwnsCorner("bottomRight")
     function targets(list): bool {
         return !list.length || list.includes(outputName)
