@@ -318,14 +318,15 @@ require(
     "Notification Center close grace must live in the Notifications settings card",
 )
 
-quick_notes_start = interface.index('title: Translation.tr("Bottom-left Quick Notes")')
-quick_notes_end = interface.index("SettingsCardSection {", quick_notes_start)
-quick_notes_settings = interface[quick_notes_start:quick_notes_end]
+# The legacy Quick Notes card was deliberately removed from Panels.
+# Notification close-grace is still only owned by its own notification card.
 forbid(
-    quick_notes_settings,
-    "notificationCenter.closeGraceMs",
-    "Quick Notes settings must not mutate Notification Center close grace",
+    interface,
+    'title: Translation.tr("Bottom-left Quick Notes")',
+    "Panels must not recreate the obsolete Bottom-left Quick Notes card",
 )
+if interface.count('Config.setNestedValue("notificationCenter.closeGraceMs", value)') != 1:
+    fail("Notification close grace must have one canonical Settings writer")
 require(monitors, 'path: "notificationCenter.screenList"',
         "Monitor Visibility must expose a dedicated Notification Center screen list")
 require(registry, 'label: Translation.tr("Notification center")',
