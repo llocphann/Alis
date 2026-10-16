@@ -59,6 +59,7 @@ try {
   });
   const selected={
     count:async()=>1,isVisible:async()=>true,
+    nth:()=>({isVisible:async()=>true}),
     getAttribute:async key=>key==='aria-label'?'Cloudbot original chat':null,
     evaluate:async fn=>fn({
       getAttribute:k=>k==='data-chat-id'?selector:null,
@@ -67,6 +68,7 @@ try {
   };
   const candidate={
     count:async()=>1,isVisible:async()=>true,
+    nth:()=>({isVisible:async()=>true}),
     click:async()=>{navigation++;},
     evaluate:forbid
   };
