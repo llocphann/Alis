@@ -169,10 +169,22 @@ def _retired_attempt_evidence(journal_path: Path, profile_id: str,
                 if not valid_id or record_path.name != record_id + ".json":
                     return "archive_review_required"
                 matches += 1
+                matched_id = record_id
     except (OSError, ValueError):
         return "retired_evidence_unverified"
     if matches != 1:
         return "archive_ambiguous" if matches > 1 else "retired_evidence_unverified"
+    # A legacy response may predate ui_send_intent. If it does carry that
+    # provenance, do not classify a different archived journal as the
+    # original, even when both share a full prompt SHA and time window.
+    if "ui_send_intent" in response:
+        intent = response["ui_send_intent"]
+        if (not isinstance(intent, dict)
+                or set(intent) != {"id", "command", "prompt_sha256"}
+                or intent != {"id": matched_id, "command": command,
+                              "prompt_sha256": digest}):
+            return "retired_response_intent_mismatch"
+        return "unique_retired_attempt_bound"
     return "unique_retired_attempt"
 
 
@@ -285,7 +297,8 @@ def preview(manifest: dict | None, config: dict, state: dict,
             journal_path, pid, attempt, digest, command,
             pending.get("prepared_at_unix"))
         reply["original_journal"] = status
-        if status == "unique_retired_attempt":
+        if status in {"unique_retired_attempt",
+                      "unique_retired_attempt_bound"}:
             reply["phase"] = "retired_original_observation_candidate"
             reply["read_only_observation_candidate"] = True
             reply["reason"] = "LIVE_UI_AND_RETIRED_RESPONSE_COMPARISON_REQUIRED"
