@@ -92,6 +92,8 @@ Item {
     property var edgeRoundZeroCorners: ({top:false,right:false,bottom:false,left:false})
     property var edgeModuleRadii: ({top:-1,right:-1,bottom:-1,left:-1})
     property real moduleScale: 1
+    // One globally selected hover owner for both unified launchers.
+    property string launcherMode: "module"
     property var singleModuleExpansion: ({top:"edge",right:"edge",bottom:"edge",left:"edge"})
     property string editingEdge: "top"
     // Keep the editor controls on the least-contended Screen Edge. The selected
@@ -234,7 +236,7 @@ Item {
         return JSON.parse(JSON.stringify({draft:draft,gap:gap,edgeSizes:edgeSizes,
             edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,
             edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeRoundZeroCorners:edgeRoundZeroCorners,moduleScale:moduleScale,
-            singleModuleExpansion:singleModuleExpansion,outputOnly:outputOnly,
+            singleModuleExpansion:singleModuleExpansion,launcherMode:launcherMode,outputOnly:outputOnly,
             draftPositions:draftPositions,positionEdits:positionEdits}))
     }
     function queueHistory(): void {
@@ -255,7 +257,8 @@ Item {
     }
     function sourceSignature(): string {
         const options=Config.options?.abyss?.modules
-        const values={configured:options?.configured,placements:Array.from(options?.placements || []),gap:options?.gap,size:options?.size}
+        const values={configured:options?.configured,placements:Array.from(options?.placements || []),gap:options?.gap,size:options?.size,
+            launcherMode:Placement.unifiedLauncherMode(options)}
         for(const key of ["edgeSizes","edgeThicknesses","edgeWidthAffectsModules","edgeJoinModules","edgeModuleRadii","edgeRoundZeroCorners","singleModuleExpansion"])values[key]=Placement.edgeMap(options?.[key])
         return JSON.stringify({global:values,profile:Array.from(options?.outputLayouts || []).find(p=>p.outputName===outputName) || null})
     }
@@ -332,6 +335,7 @@ Item {
         draft = JSON.parse(JSON.stringify(Placement.resolve(Config.options?.abyss?.modules,outputName,
             Placement.seed(moduleLayer.zones,moduleLayer.edge,width,height))))
         const options = Placement.optionsForOutput(Config.options?.abyss?.modules,outputName)
+        launcherMode=Placement.unifiedLauncherMode(Config.options?.abyss?.modules)
         gap = options.gap
         edgeSizes = Object.assign({top:1,right:1,bottom:1,left:1},options.edgeSizes)
         edgeThicknesses = Object.assign({top:-1,right:-1,bottom:-1,left:-1},options.edgeThicknesses)
@@ -362,6 +366,7 @@ Item {
             let positions=Config.options?.abyss?.positions ?? []
             positionEdits.forEach(edit=>positions=Presentation.save(positions,edit.kind,edit.outputName,edit.values))
             if(positionEdits.length) writes["abyss.positions"]=positions
+            writes["abyss.modules.launcherMode"]=launcherMode
             Config.setNestedValues(writes)
         }
         guides = []
@@ -381,6 +386,7 @@ Item {
             Placement.seed(moduleLayer.zones,moduleLayer.edge,width,height),
             Config.options?.abyss?.modules?.autoUnifiedEdgeLaunchers === true)
         gap = 8
+        launcherMode = "module"
         edgeSizes = {top:1,right:1,bottom:1,left:1}
         moduleScale = 1
         edgeThicknesses = {top:-1,right:-1,bottom:-1,left:-1}
@@ -458,6 +464,7 @@ Item {
     onEdgeModuleRadiiChanged: root.queueHistory()
     onEdgeRoundZeroCornersChanged: root.queueHistory()
     onModuleScaleChanged: root.queueHistory()
+    onLauncherModeChanged: root.queueHistory()
     onSingleModuleExpansionChanged: root.queueHistory()
     onDraftPositionsChanged: root.queueHistory()
     onPositionEditsChanged: root.queueHistory()
@@ -841,6 +848,45 @@ Item {
                     text:root.layoutConflicts[0] || root.feedback
                     Layout.fillWidth:true;Layout.minimumWidth:0;wrapMode:Text.WordWrap
                     color:Appearance.colors.colError
+                }
+
+                // The pair is mutually exclusive. Selecting Edgebar Hover
+                // unmounts both module launchers at runtime (including popup
+                // hover regions); their placements and icon preferences survive.
+                RowLayout {
+                    objectName: "abyssUnifiedLauncherMode"
+                    visible: !root.editingPopups
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    spacing: 4 * Appearance.fontSizeScale
+                    AbyssLabel {
+                        text: "Notes / Notifications"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        elide: Text.ElideRight
+                    }
+                    SelectionGroupButton {
+                        objectName: "abyssUnifiedLauncherModuleMode"
+                        buttonIcon: "widgets"
+                        buttonText: "Module"
+                        toggled: root.launcherMode === "module"
+                        horizontalPadding: 4*Appearance.fontSizeScale
+                        verticalPadding: 2*Appearance.fontSizeScale
+                        baseHeight: 28*Appearance.fontSizeScale
+                        Layout.preferredWidth: 82*Appearance.fontSizeScale
+                        onClicked: root.launcherMode = "module"
+                    }
+                    SelectionGroupButton {
+                        objectName: "abyssUnifiedLauncherEdgebarMode"
+                        buttonIcon: "pan_tool_alt"
+                        buttonText: "Edgebar Hover"
+                        toggled: root.launcherMode === "edgebar"
+                        horizontalPadding: 4*Appearance.fontSizeScale
+                        verticalPadding: 2*Appearance.fontSizeScale
+                        baseHeight: 28*Appearance.fontSizeScale
+                        Layout.preferredWidth: 120*Appearance.fontSizeScale
+                        onClicked: root.launcherMode = "edgebar"
+                    }
                 }
 
                 // Wide Edges show tabs and output scope on one row.
