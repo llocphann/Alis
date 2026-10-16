@@ -500,7 +500,7 @@ class UiSchedulerTests(TestCase):
             queue._save(newer)
         new_id = queue.view()["snapshot_id"]
         self.assertNotEqual(old_id, new_id)
-        with patch.object(tf, "load_task", return_value=task), \\
+        with patch.object(tf, "load_task", return_value=task), \
              patch.object(ui_preflight, "check_prepared_queue", return_value=report):
             with self.assertRaisesRegex(tf.TaskError, "snapshot changed"):
                 managed_tasks.start_ui_queue(
@@ -543,8 +543,8 @@ class UiSchedulerTests(TestCase):
                 changed["created_unix"] = 12345
                 queue._save(changed)
             return original(**kwargs)
-        with patch.object(tf, "load_task", return_value=task), \\
-             patch.object(ui_preflight, "check_prepared_queue", return_value=report), \\
+        with patch.object(tf, "load_task", return_value=task), \
+             patch.object(ui_preflight, "check_prepared_queue", return_value=report), \
              patch.object(queue, "approve_ordered_start",
                           side_effect=change_between_validation_and_approval):
             with self.assertRaisesRegex(tf.TaskError, "Queue changed"):
