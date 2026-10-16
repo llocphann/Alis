@@ -154,6 +154,8 @@ ContentPage {
             return Translation.tr("Original UI delivery for %1 was interrupted. Delivery evidence is NOT a completed response; preserve the failed receipt and request Owner review. Do not resend.").arg(q.active.code)
         if (preview.original_journal === "original_confirmed_not_sent")
             return Translation.tr("Original UI attempt for %1 has a not-sent tombstone. It does NOT authorize automatic retry; review the original failure and require separate Owner approval.").arg(q.active.code)
+        if (preview.original_journal === "retired_response_intent_mismatch")
+            return Translation.tr("Archived response for %1 names a different journal ID, send command or prompt SHA. Preserve the original send evidence for Owner review. No Desktop observation or retry is permitted.").arg(q.active.code)
         if (["tombstone_conflict", "tombstone_review_required",
              "archive_ambiguous", "archive_review_required"].includes(preview.original_journal))
             return Translation.tr("Conflicting or unsafe original send evidence for %1 (%2). Manual inspection is required; neither completion nor retry is authorized.")
