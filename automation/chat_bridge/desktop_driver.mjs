@@ -568,9 +568,16 @@ async function clickGitHubPicker(page) {
     page.getByRole("menuitemradio", { name: pickerName }),
     page.getByRole("button", { name: pickerName })
   ];
+  // A chat title/header can itself begin with GitHub. Only actual mention
+  // menu entries may qualify; a matching name elsewhere is never a picker.
+  const inPicker = item => item.evaluate(element => Boolean(element.closest(
+    '[data-mention-section-items], [role="listbox"], [role="menu"]'
+  )));
 
   for (const locator of roleLocators) {
-    const candidates = await visibleItems(locator);
+    const candidates = [];
+    for (const item of await visibleItems(locator))
+      if (await inPicker(item)) candidates.push(item);
     if (!candidates.length) continue;
     if (candidates.length !== 1) throw new Error("GitHub mention picker is ambiguous");
 
@@ -585,7 +592,7 @@ async function clickGitHubPicker(page) {
       'xpath=ancestor-or-self::*[@role="option" or @role="menuitem" or @role="menuitemradio" or self::button][1]'
     );
 
-    if ((await clickable.count()) === 1) {
+    if ((await clickable.count()) === 1 && await inPicker(clickable)) {
       await clickable.evaluate(element => element.click());
       await sleep(500);
       return "text-ancestor-click";
