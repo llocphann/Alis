@@ -1478,6 +1478,13 @@ Scope {
                 // generic popup's second overshoot/settle animation pass.
                 // Keep the existing content-size settle and timeout gates.
                 monotonicNotificationReveal: true
+                // Recording has priority over this banner when their Edge
+                // anchors overlap. Snap the banner to the allocator's chosen
+                // inward tier BEFORE its first reveal pixel. Animating that
+                // initial reflow at the same time as the slide creates a
+                // visible sideways/downward kink. Once visible, peer-induced
+                // placement changes still animate as before.
+                animatePlacementChanges: progress > 0.001
                 // Keep the banner's ListView loaded at target size while its
                 // delegates settle, before the visible reveal and allocator
                 // begin. On recording stop the saved-file-path card can require

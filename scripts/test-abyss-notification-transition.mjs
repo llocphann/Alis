@@ -113,6 +113,15 @@ same('notification entry is a stable-content-size clipped host',
     banner.includes('stableContentSize: true'),true);
 same('transient banner opts into monotonic one-phase motion',
     banner.includes('monotonicNotificationReveal: true'),true);
+const revealGate=banner.match(/animatePlacementChanges:\s*([^\n]+)/);
+assert.ok(revealGate,'transient banner must gate initial tier reflow');
+const mayReflow=new Function('progress','return ('+revealGate[1].trim()+');');
+for(const [progress,allowed] of [[0,false],[0.0005,false],[0.002,true],[0.5,true],[1,true],[0,false]]) {
+    same('toast initial tier snap / live reflow at progress '+progress,
+        mayReflow(progress),allowed);
+}
+same('no extra delay added to the notification reveal path',
+    !banner.includes('Timer {') && !banner.includes('Qt.callLater('),true);
 same('no center/tall-screen branch remains in banner host',
     !banner.includes('centerOnOutput') && !banner.includes('contentKind: centerOnOutput'),
     true);
