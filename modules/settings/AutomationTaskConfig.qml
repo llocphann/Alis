@@ -1060,8 +1060,10 @@ ContentPage {
                         ? Translation.tr("Confirm UI Start")
                         : root.uiQueueStartAvailable && !root.backendTransportReady
                         ? Translation.tr("Start UI") : Translation.tr("Start")
+                    // The native transport can Start a waiting queue;
+                    // hiding the control in that state would regress resume.
                     visible: !root.queueSnapshot
-                        || !["active", "waiting", "stopping"].includes(root.queueSnapshot.state)
+                        || !["active", "stopping"].includes(root.queueSnapshot.state)
                     enabled: !root.busy && root.backendInstalled
                         && root.queueStatusConfirmed && !!root.queueSnapshot
                         && ((root.backendTransportReady
