@@ -13,6 +13,10 @@ StyledListView { // Scrollable window
     property bool popup: false
     property string dataMode: popup ? "transient" : "history"
     property bool popupPresentation: popup
+    // Optional presentation-only closing snapshot. Normal popup, history and
+    // Waffle callers leave both null and continue using live Notifications.
+    property var transientAppNamesOverride: null
+    property var transientGroupsOverride: null
     // History surfaces may prefer full notification content. Overflow belongs
     // to the ListView, so cards are not collapsed merely because they share a
     // group; the user can still collapse a group explicitly.
@@ -71,7 +75,7 @@ StyledListView { // Scrollable window
 
     model: ScriptModel {
         values: root.dataMode === "transient"
-            ? Notifications.popupAppNameList
+            ? (root.transientAppNamesOverride ?? Notifications.popupAppNameList)
             : Notifications.appNamesMatching(root.filterQuery)
     }
     delegate: NotificationGroup {
@@ -85,7 +89,7 @@ StyledListView { // Scrollable window
         anchors.left: parent?.left
         anchors.right: parent?.right
         notificationGroup: root.dataMode === "transient"
-            ? Notifications.popupGroupsByAppName[modelData]
+            ? (root.transientGroupsOverride ?? Notifications.popupGroupsByAppName)[modelData]
             : Notifications.groupsByAppName[modelData]
         onExternalLinkOpened: root.externalLinkOpened()
         onNotificationActionInvoked: root.notificationActionInvoked()

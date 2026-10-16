@@ -10,6 +10,9 @@ Item {
     id: root
     property string kind: "popup"
     property string outputName: ""
+    // Set by AbyssBodyHost after Loader readiness. This is presentation-only;
+    // history and timeout ownership continue to belong to Notifications.
+    property var participant: null
     signal closeRequested()
     readonly property bool center: kind === "center"
     readonly property real desiredWidth: Appearance.sizes.notificationPopupWidth
@@ -25,6 +28,53 @@ Item {
     // distinguish ListView's provisional layout from the committed size.
     readonly property real measuredPopupHeight:
         Number(popupLoader.item?.contentHeight ?? 0)
+    // A transient timeout clears live popup groups before the shared Abyss
+    // surface has finished retracting. Preserve independent value snapshots
+    // so a destroyed transient QtObject cannot be dereferenced mid-close.
+    // This snapshot is used only after input has been revoked; all interactive
+    // notifications continue to use live service wrappers while open.
+    property var closingAppNames: []
+    property var closingGroups: ({})
+    readonly property bool closingVisualTail: !root.center && root.participant !== null
+        && !root.participant.open && root.participant.visualResident
+        && root.closingAppNames.length > 0
+    function captureClosingSnapshot(): void {
+        if (root.center || Notifications.popupList.length === 0)
+            return
+        const names=Notifications.popupAppNameList
+        const groups=Notifications.popupGroupsByAppName
+        if (names.length === 0) return
+        const copied=Object.create(null)
+        for (const name of names) {
+            const group=groups[name]
+            if (!group) return
+            copied[name]={
+                appName:String(group.appName ?? name),
+                appIcon:String(group.appIcon ?? ""),
+                time:Number(group.time ?? 0),
+                hasCritical:group.hasCritical === true,
+                notifications:(group.notifications ?? []).map(notif => ({
+                    notificationId:Number(notif?.notificationId ?? -1),
+                    appName:String(notif?.appName ?? name),
+                    appIcon:String(notif?.appIcon ?? ""),
+                    summary:String(notif?.summary ?? ""),
+                    body:String(notif?.body ?? ""),
+                    image:String(notif?.image ?? ""),
+                    time:Number(notif?.time ?? 0),
+                    urgency:notif?.urgency ?? "normal",
+                    // No native action/notification reference can outlive a
+                    // dismissed transient wrapper. Closing controls have no
+                    // input, so retain labels solely to preserve card height.
+                    actions:(notif?.actions ?? []).map(action => ({
+                        text:String(action?.text ?? ""),
+                        identifier:String(action?.identifier ?? "")
+                    }))
+                }))
+            }
+        }
+        root.closingGroups=copied
+        root.closingAppNames=names.slice()
+    }
     function schedulePopupMeasurement(): void {
         if (root.center || !(Notifications.popupList?.length > 0))
             return
@@ -42,17 +92,31 @@ Item {
     }
     Component.onCompleted: {
         if (center) Notifications.markAllRead()
-        else Qt.callLater(() => root.schedulePopupMeasurement())
+        else Qt.callLater(() => {
+            root.captureClosingSnapshot()
+            root.schedulePopupMeasurement()
+        })
     }
     onCenterChanged: {
         popupMeasureTimer.stop()
         root.popupLayoutReady=false
         root.settledPopupHeight=0
+        root.closingAppNames=[]
+        root.closingGroups=({})
         if (center) Notifications.markAllRead()
-        else Qt.callLater(() => root.schedulePopupMeasurement())
+        else Qt.callLater(() => {
+            root.captureClosingSnapshot()
+            root.schedulePopupMeasurement()
+        })
     }
     Connections {
         target: Notifications
+        // These cached groups are published after popupList changes. Snapshot
+        // their last COMPLETE nonempty state before the timeout empties the
+        // model, without delaying history/unread/notification actions.
+        function onPopupAppNameListChanged(): void {
+            root.captureClosingSnapshot()
+        }
         function onPopupListChanged(): void {
             if (Notifications.popupList.length === 0) {
                 popupMeasureTimer.stop()
@@ -80,7 +144,17 @@ Item {
         anchors.fill: parent
         active: !root.center
         onLoaded: root.schedulePopupMeasurement()
-        sourceComponent: NotificationListView { popup: true; clip: true }
+        sourceComponent: NotificationListView {
+            popup: true
+            clip: true
+            // The final live model can become empty while the field is still
+            // painting its retract tail. Keep the previous card until the
+            // same host's progress reaches zero, then Loader unloads it.
+            transientAppNamesOverride: root.closingVisualTail
+                ? root.closingAppNames : null
+            transientGroupsOverride: root.closingVisualTail
+                ? root.closingGroups : null
+        }
     }
     Connections {
         target: popupLoader.item
