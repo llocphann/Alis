@@ -50,8 +50,9 @@ assert "ubuf.liquidSurface.a" in shader and "ubuf.liquidShadow.a" in shader, \
     "Panel opacity and premultiplied shadow strength must be honored"
 assert "ubuf.liquidHighlightStrength" in shader and "ubuf.liquidGlow.rgb" in shader, \
     "Abyss material highlight/glow settings must shape the new shader"
-assert shader.count("texture(source1,") >= 2 and shader.count("texture(source2,") >= 2, \
-    "two wallpaper texture sources and exact endpoints must remain")
+assert (shader.count("texture(source1,") >= 2
+        and shader.count("texture(source2,") >= 2), \
+    "two wallpaper texture sources and exact endpoints must remain"
 assert "if (p <= 0.0001)" in shader and "if (p >= 0.9999)" in shader, \
     "transition must preserve untinted 0/100 percent frames"
 assert "fragColor = vec4(tinted, scene.a) * ubuf.qt_Opacity;" in shader, \
