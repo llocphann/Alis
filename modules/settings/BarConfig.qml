@@ -43,20 +43,12 @@ ContentPage {
         return true
     }
 
-    // Settings exclusively owns the visible/hidden state for each unified
-    // Screen Edge launcher. Existing per-placement values remain the fallback
-    // until the user chooses a global preference (including multi-output vaults).
+    // A launcher icon is a presentation MODE, not a paint-only toggle.
+    // Both this switch and Module Behavior edit the same per-feature key.
+    // Turning it off unmounts the module and restores the legacy Edgebar.
     function unifiedLauncherIconShown(kind): bool {
-        const modules=Config.options?.abyss?.modules
-        const override=ModuleLayout.iconVisibilityPreference(modules,kind)
-        if (override !== null) return override
-        const global=Array.from(modules?.placements ?? []).find(p=>p?.kind===kind)
-        if (global) return global.showIcon!==false
-        for (const profile of Array.from(modules?.outputLayouts ?? [])) {
-            const stored=Array.from(profile?.placements ?? []).find(p=>p?.kind===kind)
-            if (stored) return stored.showIcon!==false
-        }
-        return true
+        return ModuleLayout.unifiedLauncherMode(
+            Config.options?.abyss?.modules,kind)==="module"
     }
 
     readonly property bool isVertical: Config.options?.bar?.vertical ?? false
@@ -707,7 +699,7 @@ ContentPage {
                         autoToggle: false
                         checked: root.unifiedLauncherIconShown("notesTimers")
                         onToggledByUser: checked =>
-                            Config.setNestedValue("abyss.modules.iconVisibility.notesTimers",checked ? "show" : "hide")
+                            Config.setNestedValue("abyss.modules.notesTimersMode",checked ? "module" : "edgebar")
                     }
                     SettingsSwitch {
                         objectName: "abyssSettingsNotificationActivityIcon"
@@ -716,11 +708,11 @@ ContentPage {
                         autoToggle: false
                         checked: root.unifiedLauncherIconShown("notificationActivity")
                         onToggledByUser: checked =>
-                            Config.setNestedValue("abyss.modules.iconVisibility.notificationActivity",checked ? "show" : "hide")
+                            Config.setNestedValue("abyss.modules.notificationActivityMode",checked ? "module" : "edgebar")
                     }
                 }
                 SettingsNote {
-                    text: Translation.tr("These settings apply across outputs. Hiding an icon keeps its physical Screen Edge hover target active; the popup still opens on hover.")
+                    text: Translation.tr("On: use the visible module icon only. Off: remove this module's live hover area and restore its original Screen Corner Edgebar hover. This is synchronized with Module Behavior; saved placement remains available.")
                 }
             }
 
