@@ -47,6 +47,30 @@ Saved module positions survive both transitions.
 **Edit Abyss Layout** controls physical placement/size/enable/remove only,
 not icon decoration or the access-mode switches.
 
+## Exclusive hover ownership across Bar lifecycle
+
+When either feature selects **Module Icon** (or enables its Settings **Show icon**
+switch), the legacy ScreenCorners hover window is **not eligible to load**
+for that feature for as long as the Abyss panel family is active. This
+suppression is derived directly from the chosen access mode, and **never**
+depends on transient `GlobalStates.barOpen`, auto-hide/reveal, module
+availability, output Bar inclusion or popup animation state.
+
+- **Quick Notes → Module Icon:** bottom-left legacy dwell popup stops receiving
+  hover entirely; only the placed Notes/Timers icon can open Quick Notes.
+- **Notifications → Module Icon:** bottom-right legacy dwell popup and its
+  legacy host are disabled; only the Notifications/Activities icon owns hover.
+- **Edgebar Hover:** only the selected feature's legacy corner popup returns;
+  the corresponding module icon/popup is unmounted.
+- Independent mixed modes work; the classic **ii** panel family keeps its
+  original ScreenCorners interactions and is unaffected by Abyss settings.
+
+A secondary `hoverAllowed` guard on the mature legacy Quick Notes popup
+revokes mouse-hover activation in the same binding turn as the corner Loader
+deactivates. Existing editor focus and data stores remain unchanged. Confirm
+with actual pointer hover on both the icon and physical bottom corner after
+switching, including while the Bar auto-hides.
+
 ## Window padding and local Edge paint
 
 Quick Notes and Notification launcher icons are small localized Edge sources,
