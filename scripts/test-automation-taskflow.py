@@ -213,6 +213,7 @@ class TaskflowTests(unittest.TestCase):
             self.assertEqual([x["code"] for x in prepared["items"]],
                              ["AUTO-R01", "ABYSS-R09"])
             self.assertEqual(prepared["mode"], "ordered")
+            self.assertIsNotNone(prepared["next"], prepared)
             self.assertEqual(prepared["next"]["code"], "AUTO-R01")
             self.assertTrue(queue.prepare("AUTO-R01; ABYSS-R09", resolver=resolver)["duplicate"])
             with self.assertRaisesRegex(taskflow.TaskError, "unfinished"):
