@@ -206,9 +206,13 @@ separately. `original_interrupted_delivery` means a response's delivery
 was observed but its completion was **not** confirmed;
 `original_confirmed_not_sent` means the intent was explicitly reported
 unsent. Neither tombstone is a completed response or permission for
-Alis to send again. Contradictory tombstones, malformed records,
-symlinks, missing originals and ambiguous archives all require manual
-Owner review without replay.
+Alis to send again. Contradictory tombstones, or a matching `observed` journal alongside
+either `interrupted` or `not-sent` evidence for the same original
+prompt, are a **hard conflict**, even when the journal UUIDs differ.
+Malformed records, symlinks, missing originals and ambiguous archives
+also require manual Owner review without replay. Backend status never
+echoes an unrecognized disk queue-state string; it reports `invalid`
+rather than potentially exposing private corrupt state.
 
 If the journal is missing or mismatched, the pending is not eligible
 for automatic observation-based acceptance. Inspect the original
