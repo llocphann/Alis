@@ -112,6 +112,9 @@ def profile_state() -> dict:
         "recovery": None, "run_active": False,
         "last_transport_at_unix": 0, "job_evidence": [], "job_summary": None,
         "generation_recoveries": 0, "failed_turn": None,
+        # Only retry after an exact pre-Send negative receipt. Never retry
+        # uncertain UI sends or local worker jobs on a process restart.
+        "ui_pre_send_failures": 0,
     }
 
 
