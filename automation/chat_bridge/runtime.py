@@ -122,7 +122,8 @@ def desktop(command: str, prompt: str | None = None,
             target_key: str | None = None,
             new_chat_unowned: bool = False,
             owner_chat_reset: bool = False,
-            chat_label: str | None = None) -> dict[str, Any]:
+            chat_label: str | None = None,
+            defer_acknowledgement: bool = False) -> dict[str, Any]:
     # A one-shot intent is fsynced before ANY Desktop UI mutation.
     # A crash, ambiguous click, timeout or incomplete response keeps the
     # pending tombstone: never silently send a duplicate after a restart.
@@ -200,7 +201,15 @@ def desktop(command: str, prompt: str | None = None,
         # Only a complete response permits the NEXT distinct send.
         # This is UI observation, not server-side managed-chat attestation.
         parse_loop_directive(extract_response_text(payload))
-        acknowledge_completed(*intent)
+        if defer_acknowledgement:
+            # The UI manager must commit its bound result before retiring
+            # the send journal. A crash between the two remains recoverable.
+            payload["ui_send_intent"] = {
+                "id": intent[1], "command": command,
+                "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
+            }
+        else:
+            acknowledge_completed(*intent)
     return payload
 
 

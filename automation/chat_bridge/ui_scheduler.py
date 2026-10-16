@@ -59,7 +59,7 @@ def _mark_unresolved(profile_id: str, detail: str) -> None:
         item = state["profiles"].get(profile_id)
         if not item:
             return
-        item["desired"] = "paused"
+        item["desired"] = "stopped" if item.get("desired") == "stopped" else "paused"
         item["status"] = "ui_reconciliation_required"
         item["last_error"] = detail[:160]
         store.event(state, profile_id, "ui_reconciliation_required",
@@ -67,11 +67,59 @@ def _mark_unresolved(profile_id: str, detail: str) -> None:
     store.change_state(pause)
 
 
+def _same_pending(current, expected):
+    # Pause/Stop adjust polling only. They cannot change which immutable
+    # request owns a returning response, or discard its completed delivery.
+    return (isinstance(current, dict) and isinstance(expected, dict)
+            and {k: v for k, v in current.items() if k != "poll_after_unix"}
+                == {k: v for k, v in expected.items() if k != "poll_after_unix"})
+
+
+def _read_private_receipt(path):
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > PRIVATE_RESPONSE_LIMIT * 3:
+        raise RuntimeError("ALIS_UI_ORIGINAL_JOURNAL_REQUIRED")
+    value = json.loads(path.read_text())
+    if not isinstance(value, dict):
+        raise RuntimeError("ALIS_UI_ORIGINAL_JOURNAL_REQUIRED")
+    return value
+
+
+def _finish_committed_journal(profile_id, item):
+    """Finish a post-manager-commit crash without UI observation or recount."""
+    attempt = item.get("last_ui_response_attempt")
+    if not isinstance(attempt, str) or str(uuid.UUID(attempt)) != attempt:
+        raise RuntimeError("ALIS_UI_ORIGINAL_JOURNAL_REQUIRED")
+    response = _read_private_receipt(store.state_dir() / "ui-responses" /
+                                     profile_id / (attempt + ".json"))
+    intent = response.get("ui_send_intent")
+    if (response.get("transport") != UI_TRANSPORT or response.get("attempt_id") != attempt
+            or not isinstance(intent, dict) or set(intent) != {"id", "command", "prompt_sha256"}
+            or response.get("ui_target_key") != (item.get("session") or {}).get("ui_target_key")
+            or response.get("directive") != item.get("last_success")):
+        raise RuntimeError("ALIS_UI_COMMITTED_RECEIPT_MISMATCH")
+    path = store.state_dir() / "ui-send-journal/pending.json"
+    journal = _read_private_receipt(path)
+    if (journal.get("schema") != "alis.chat-ui-send.v1" or journal.get("phase") != "attempted"
+            or any(journal.get(k) != v for k, v in intent.items())):
+        raise RuntimeError("ALIS_UI_COMMITTED_RECEIPT_MISMATCH")
+    runtime.acknowledge_completed(path, intent["id"])
+    def settled(_config, state):
+        current = state["profiles"].get(profile_id)
+        if (current and current.get("pending") is None
+                and current.get("last_ui_response_attempt") == attempt
+                and current.get("desired") != "run"):
+            if current.get("status") == "ui_reconciliation_required":
+                current["status"] = "paused" if current["desired"] == "paused" else "idle"
+                current["last_error"] = ""
+    store.change_state(settled)
+    return "ui_committed_journal_retired"
+
+
 def _complete_observed(profile_id, profile, pending, directive, observed_target,
                        checkpoint, now, new_chat, chat_label=None):
     def complete(_config, state):
         current = state["profiles"].get(profile_id)
-        if not current or current.get("pending") != pending:
+        if not current or not _same_pending(current.get("pending"), pending):
             return False
         current["pending"] = None
         current["last_success"] = directive.kind.value
@@ -113,6 +161,8 @@ def _complete_observed(profile_id, profile, pending, directive, observed_target,
             current.update(request="continuation", status="continuing")
         if current["desired"] != "run":
             current["run_active"] = False
+            if current["status"] in {"continuing", "rotating"}:
+                current["status"] = "paused" if current["desired"] == "paused" else "idle"
         return True
     if not store.change_state(complete):
         return "owner_changed_after_response"
@@ -148,6 +198,7 @@ def ui_tick(profile_id: str, *, now: int | None = None,
             desktop=None, queue_owner: tuple[str, str, str] | None = None) -> str:
     """One bounded scheduler admission. Never invokes a second native owner."""
     now = int(time.time()) if now is None else now
+    managed_ack = desktop is None or desktop is runtime.desktop
     desktop = runtime.desktop if desktop is None else desktop
     config, state, issues = store.read_snapshot()
     if issues:
@@ -300,24 +351,25 @@ def ui_tick(profile_id: str, *, now: int | None = None,
             return "owner_changed"
         # UI journal fsync occurs in runtime.desktop BEFORE composer change.
         # Runtime must not retry an ambiguous/failed click.
+        ack_options = {"defer_acknowledgement": True} if managed_ack else {}
         if pinned_target is not None:
             label = (item.get("session") or {}).get("ui_chat_label")
             kwargs = {"target_key": pinned_target}
             if label is not None:
                 kwargs["chat_label"] = label
-            payload = desktop(command, prompt, **kwargs)
+            payload = desktop(command, prompt, **kwargs, **ack_options)
         elif kind == "manual_reset":
             # Explicit owner escape from a stuck OLD chat. A distinct fresh
             # Project composer must be checked before any new UI send. This
             # does not clear the old session/receipt or retry an old prompt.
             payload = desktop(command, prompt, new_chat_unowned=True,
-                              owner_chat_reset=True)
+                              owner_chat_reset=True, **ack_options)
         elif new_chat and item.get("session") is None:
             # An initial task owns no earlier UI chat. Navigate to its Project
             # without touching a foreign composer or stopping its generation.
-            payload = desktop(command, prompt, new_chat_unowned=True)
+            payload = desktop(command, prompt, new_chat_unowned=True, **ack_options)
         else:
-            payload = desktop(command, prompt)
+            payload = desktop(command, prompt, **ack_options)
         text = runtime.extract_response_text(payload)
         directive = parse_loop_directive(text)
         observed_target = payload.get("ui_target_key")
@@ -330,11 +382,19 @@ def ui_tick(profile_id: str, *, now: int | None = None,
             raise RuntimeError("ALIS_UI_RESPONSE_EXCEEDS_BOUND")
         from automation.manager import daemon
         checkpoint = daemon._checkpoint(text)
+        intent = payload.get("ui_send_intent")
+        if managed_ack and (not isinstance(intent, dict)
+                or set(intent) != {"id", "command", "prompt_sha256"}
+                or str(uuid.UUID(intent.get("id", ""))) != intent["id"]
+                or intent["command"] != command or intent["prompt_sha256"] != pending["prompt_sha256"]):
+            raise RuntimeError("ALIS_UI_SEND_INTENT_MISMATCH")
         response_path = (store.state_dir() / "ui-responses" /
                          profile_id / (attempt + ".json"))
         store._write(response_path, {
             "transport": UI_TRANSPORT, "attempt_id": attempt,
             "directive": directive.kind.value, "response": text,
+            "ui_target_key": observed_target,
+            **({"ui_send_intent": intent} if managed_ack else {}),
             "at_unix": int(time.time())})
     except runtime.UiNotSent as error:
         # Auto-recover only a cryptographically matched, explicit NO-SEND
@@ -344,7 +404,7 @@ def ui_tick(profile_id: str, *, now: int | None = None,
         safely_not_sent = not journal.exists() and not journal.is_symlink()
         def unsent(_config, state):
             current = state["profiles"].get(profile_id)
-            if (not current or current.get("pending") != pending
+            if (not current or not _same_pending(current.get("pending"), pending)
                     or pending["prompt_sha256"] != error.prompt_sha256):
                 return False
             count = current.get("ui_pre_send_failures", 0)
@@ -385,9 +445,17 @@ def ui_tick(profile_id: str, *, now: int | None = None,
         _mark_unresolved(profile_id, "UI send or observation is uncertain")
         return "ui_reconciliation_required"
 
-    return _complete_observed(profile_id, profile, pending, directive,
-                              observed_target, checkpoint, now, new_chat,
-                              payload.get("ui_chat_label"))
+    status = _complete_observed(profile_id, profile, pending, directive,
+                                observed_target, checkpoint, now, new_chat,
+                                payload.get("ui_chat_label"))
+    if managed_ack and status != "owner_changed_after_response":
+        try:
+            runtime.acknowledge_completed(store.state_dir() / "ui-send-journal/pending.json",
+                                          intent["id"])
+        except Exception:
+            _mark_unresolved(profile_id, "Result committed; original send journal cleanup required")
+            return "ui_reconciliation_required"
+    return status
 
 
 
@@ -408,19 +476,55 @@ def reconcile_pending(profile_id: str, *, chat_label: str | None = None,
             raise RuntimeError("ALIS_UI_INVALID_CONFIGURATION")
         profile, item = _owner(config, state, profile_id, allow_journal=True)
         pending = item.get("pending")
+        if pending is None and item.get("desired") != "run":
+            return _finish_committed_journal(profile_id, item)
         if (not isinstance(pending, dict) or pending.get("transport") != UI_TRANSPORT
                 or pending.get("kind") not in {"initial", "continuation", "rotation"}
                 or item.get("desired") == "run"):
             raise RuntimeError("ALIS_UI_RECONCILE_PAUSED_ORIGINAL_REQUIRED")
+        if (not isinstance(pending.get("attempt_id"), str)
+                or str(uuid.UUID(pending["attempt_id"])) != pending["attempt_id"]):
+            raise RuntimeError("ALIS_UI_ORIGINAL_JOURNAL_REQUIRED")
         prompt = pending.get("prompt") or original_prompt or pending_prompt(profile, item, pending["kind"])
         if not isinstance(prompt, str) or len(prompt) > PRIVATE_RESPONSE_LIMIT:
             raise RuntimeError("ALIS_UI_ORIGINAL_PROMPT_REQUIRED")
         digest = hashlib.sha256(prompt.encode()).hexdigest()
         path = store.state_dir() / "ui-send-journal/pending.json"
-        if path.is_symlink() or not path.is_file() or path.stat().st_size > 4096:
-            raise RuntimeError("ALIS_UI_ORIGINAL_JOURNAL_REQUIRED")
-        journal = json.loads(path.read_text())
         command = "send" if pending["kind"] == "continuation" else "rotate-send"
+        legacy_response = None
+        retired = False
+        if not path.exists() and not path.is_symlink():
+            # Legacy runtime retired the journal before the manager commit.
+            # Require the same manager-attempt response, one matching archived
+            # intent within its original time window, AND fresh full-turn UI
+            # proof. Never restore a retired journal or infer another Send.
+            legacy_response = _read_private_receipt(store.state_dir() / "ui-responses" /
+                                        profile_id / (pending["attempt_id"] + ".json"))
+            if (legacy_response.get("transport") != UI_TRANSPORT
+                    or legacy_response.get("attempt_id") != pending["attempt_id"]
+                    or not isinstance(legacy_response.get("response"), str)
+                    or type(legacy_response.get("at_unix")) is not int):
+                raise RuntimeError("ALIS_UI_LEGACY_RESPONSE_MISMATCH")
+            archive = store.state_dir() / "ui-send-journal/observed"
+            if archive.is_symlink() or not archive.is_dir():
+                raise RuntimeError("ALIS_UI_ORIGINAL_JOURNAL_REQUIRED")
+            matches = []
+            for candidate in archive.glob("*.json"):
+                record = _read_private_receipt(candidate)
+                if (record.get("prompt_sha256") == digest and record.get("command") == command
+                        and type(record.get("at_unix")) is int
+                        and pending["prepared_at_unix"] <= record["at_unix"] <= legacy_response["at_unix"]):
+                    if (not isinstance(record.get("id"), str)
+                            or str(uuid.UUID(record["id"])) != record["id"]
+                            or candidate.name != record["id"] + ".json"):
+                        raise RuntimeError("ALIS_UI_ORIGINAL_JOURNAL_REQUIRED")
+                    matches.append(record)
+            if len(matches) != 1:
+                raise RuntimeError("ALIS_UI_ORIGINAL_JOURNAL_REQUIRED")
+            journal = matches[0]
+            retired = True
+        else:
+            journal = _read_private_receipt(path)
         if (pending.get("prompt_sha256") != digest or journal.get("prompt_sha256") != digest
                 or journal.get("schema") != "alis.chat-ui-send.v1"
                 or journal.get("phase") != "attempted" or journal.get("command") != command):
@@ -442,6 +546,8 @@ def reconcile_pending(profile_id: str, *, chat_label: str | None = None,
         text = runtime.extract_response_text(payload)
         if len(text) > PRIVATE_RESPONSE_LIMIT:
             raise RuntimeError("ALIS_UI_RESPONSE_EXCEEDS_BOUND")
+        if legacy_response is not None and text != legacy_response["response"]:
+            raise RuntimeError("ALIS_UI_LEGACY_RESPONSE_MISMATCH")
         directive = parse_loop_directive(text)
         from automation.manager import daemon
         checkpoint = daemon._checkpoint(text)
@@ -449,6 +555,9 @@ def reconcile_pending(profile_id: str, *, chat_label: str | None = None,
                      (pending["attempt_id"] + ".json"), {
             "transport": UI_TRANSPORT, "attempt_id": pending["attempt_id"],
             "directive": directive.kind.value, "response": text,
+            "ui_target_key": observed_target,
+            "ui_send_intent": {"id": journal["id"], "command": command,
+                               "prompt_sha256": digest},
             "attestation": "local-ui-user-turn-v1", "at_unix": int(time.time())})
         status = _complete_observed(profile_id, profile, pending, directive,
                                     observed_target, checkpoint, int(time.time()),
@@ -457,7 +566,8 @@ def reconcile_pending(profile_id: str, *, chat_label: str | None = None,
             return status
         # Commit the bound manager receipt first. No subsequent send can pass
         # the retained journal if this final archival step is interrupted.
-        runtime.acknowledge_completed(path, journal["id"])
+        if not retired:
+            runtime.acknowledge_completed(path, journal["id"])
         return "ui_reconciled_" + status
 
 
