@@ -204,6 +204,21 @@ class Preflight(unittest.TestCase):
         # This remains an inspection tool, not a repair or an admission tool.
 
 
+    def test_ui_queue_start_button_has_safe_staging_and_mode_diagnosis(self):
+        qml = (Path(__file__).resolve().parents[1] /
+               "modules/settings/AutomationTaskConfig.qml").read_text()
+        cli = (Path(__file__).resolve().parents[1] /
+               "scripts/alis-automation-task.py").read_text()
+        self.assertIn('objectName: "automationStageUiQueue"', qml)
+        self.assertIn("function stageUiQueue()", qml)
+        self.assertIn('"queue-stage-ui", "--approve", "--expected-first", identity', qml)
+        self.assertIn('"--expected-snapshot-id", snapshotId', qml)
+        self.assertIn('uiQueueStageAvailable = report.ui_queue_stage_available === true', qml)
+        self.assertIn('root.uiQueueServiceMode === "native_mode"', qml)
+        self.assertIn("root.refreshBackendStatus", qml)
+        self.assertIn('"ui_queue_stage_available": ui_stage_ready', cli)
+        self.assertIn('"ui_queue_service_mode": ui_check.get("installed_service_mode")', cli)
+
     def test_ui_queue_staging_requires_idle_native_and_exact_owner(self):
         path = self._write_queue_fixture()
         self.config["profiles"][0]["enabled"] = True
@@ -289,6 +304,23 @@ class Preflight(unittest.TestCase):
                          "stopped")
         self.assertIsNone(runtime["profiles"][staged["profile_id"]]["pending"])
         self.assertFalse(queue._load()["approved_start"])
+        # Already-started/sent UI state must not be mistaken for an idle,
+        # idempotently staged profile on a later owner click.
+        store.change_state(lambda _config, state:
+            state["profiles"][staged["profile_id"]].update(
+                desired="run", pending={"transport": "alis-ui-once",
+                                        "attempt_id": "ORIGINAL_UNRESOLVED"}))
+        with patch.object(ui_preflight, "_unit_state",
+                          return_value=("active", "ui_queue_mode")), \
+             patch.object(managed_tasks.tf, "load_task", return_value=task):
+            with self.assertRaisesRegex(tf.TaskError, "reconciliation"):
+                managed_tasks.stage_ui_queue(
+                    approved=True, expected_first=first,
+                    expected_snapshot_id=original_snapshot)
+        self.assertEqual(original_queue.read_bytes(), saved_queue)
+        self.assertEqual(store.read_snapshot()[1]["profiles"]
+                         [staged["profile_id"]]["pending"]["attempt_id"],
+                         "ORIGINAL_UNRESOLVED")
 
     def test_ui_queue_staging_preserves_old_pending_and_active_native_service(self):
         path = self._write_queue_fixture()
