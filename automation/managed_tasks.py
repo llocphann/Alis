@@ -663,6 +663,134 @@ def start_ui_queue(*, approved: bool = False,
             "owner_acceptance": "local-ui-only", "service_modified": False}
 
 
+def save_reviewed_ui_repair_handoff(
+        code: str, bundle: dict, repository: str = "llocphann/Alis", *,
+        approved: bool = False, expected_job_id: str = "",
+        expected_response_attempt: str = "", expected_snapshot_id: str = "") -> dict:
+    """Replace a settled failed plan after its exact UI-only Cloudbot review.
+
+    No Send, worker execution, native acknowledgement, queue advancement or
+    Owner acceptance. Preserve the full previous plan and no-replay receipt.
+    """
+    import fcntl
+    import json
+    import re
+    import uuid
+    from .chat_bridge import runtime, ui_scheduler
+    from .lifecycle import _verified_local_receipt
+
+    if approved is not True:
+        raise tf.TaskError("Reviewed repair handoff approval required")
+    try:
+        valid_attempt = isinstance(expected_response_attempt, str) and str(uuid.UUID(expected_response_attempt)) == expected_response_attempt
+    except ValueError:
+        valid_attempt = False
+    if (not isinstance(expected_job_id, str) or not re.fullmatch(r"JOB-[a-f0-9]{24}", expected_job_id)
+            or not isinstance(expected_snapshot_id, str) or not re.fullmatch(r"[a-f0-9]{64}", expected_snapshot_id)
+            or not valid_attempt):
+        raise tf.TaskError("Exact repair identity required")
+    checked = tf.verify(bundle)
+    pid = profile_id(repository, code)
+    with runtime.lock_path().open("a+") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise tf.TaskError("Original UI manager still owns the turn") from None
+        with queue._lock():
+            manifest = queue._load()
+            active = {"repository": repository, "code": code}
+            if (not manifest or queue._snapshot_id(manifest) != expected_snapshot_id
+                    or manifest.get("state") != "active" or manifest.get("active") != active
+                    or manifest.get("approved_start") is not True or manifest.get("stop_requested")):
+                raise tf.TaskError("Repair queue ownership changed")
+            config, state, issues = store.read_snapshot()
+            if issues:
+                raise tf.TaskError("Invalid manager configuration")
+            profile, item = ui_scheduler._owner(config, state, pid, allow_journal=True)
+            session = item.get("session") or {}
+            if (reference(profile) != (repository, code)
+                    or item.get("desired") not in {"paused", "stopped"}
+                    or item.get("pending") or item.get("job_id") or item.get("run_active")
+                    or item.get("last_success") != "CONTINUE"
+                    or item.get("last_ui_response_attempt") != expected_response_attempt
+                    or session.get("transport") != "alis-ui-once"
+                    or not isinstance(session.get("ui_target_key"), str)
+                    or not re.fullmatch(r"[a-f0-9]{64}", session["ui_target_key"])
+                    or (store.state_dir() / "ui-send-journal/pending.json").exists()):
+                raise tf.TaskError("Original failed-receipt UI review is unsettled")
+            record = tf.load_task(code, repository)
+            reviews = record.get("failed_handoff_reviews", [])
+            if not isinstance(reviews, list) or any(not isinstance(r, dict) for r in reviews):
+                raise tf.TaskError("Invalid failed handoff history")
+            for review in reviews:
+                tf.verify(review.get("handoff"))
+                if not isinstance(review.get("ui_review"), dict):
+                    raise tf.TaskError("Invalid failed handoff review")
+            if (record.get("status") == "handoff_ready" and record.get("handoff") == checked
+                    and record.get("latest_receipt") is None
+                    and any(r.get("job_id") == expected_job_id
+                            and r.get("ui_review", {}).get("response_attempt") == expected_response_attempt
+                            for r in reviews)):
+                return {"ok": True, "duplicate": True, "job_id": checked["id"], "state": "handoff_ready"}
+            if (record.get("status") != "needs_review" or record.get("unresolved")
+                    or record.get("managed_chat") or record.get("delivery") or record.get("rotation")):
+                raise tf.TaskError("Failed task needs its original transport review")
+            old = _verified_local_receipt(record, allow_failed=True)
+            if old["id"] != expected_job_id or record["latest_receipt"]["state"] != "failed":
+                raise tf.TaskError("Different failed handoff")
+            for key in ("repository", "code", "issue_number", "base_sha", "branch"):
+                if checked["payload"]["task"].get(key) != record["task"].get(key):
+                    raise tf.TaskError("Repair changed original Issue or intake pin")
+            new_sha = tf.execution_sha(checked["payload"])
+            if (new_sha == tf.execution_sha(old["payload"])
+                    or any(tf.execution_sha(r["handoff"]["payload"]) == new_sha for r in reviews)
+                    or (tf.state_dir() / "receipts" / (checked["id"] + ".json")).exists()):
+                raise tf.TaskError("Repair requires new source, never a spent job replay")
+            response_path = store.state_dir() / "ui-responses" / pid / (expected_response_attempt + ".json")
+            response = ui_scheduler._read_private_receipt(response_path)
+            text = response.get("response")
+            if (response.get("transport") != "alis-ui-once"
+                    or response.get("attempt_id") != expected_response_attempt
+                    or response.get("directive") != "CONTINUE"
+                    or response.get("ui_target_key") != session["ui_target_key"]
+                    or not isinstance(text, str) or len(text) > 120000):
+                raise tf.TaskError("Failed receipt review identity mismatch")
+            from .chat_bridge.protocol import parse_loop_directive, DirectiveKind
+            if parse_loop_directive(text).kind is not DirectiveKind.CONTINUE:
+                raise tf.TaskError("Repair review is not a continuation")
+            for value in (old["id"], old["sha256"], tf.execution_sha(old["payload"])):
+                if not re.search(r"(?<![A-Za-z0-9])" + re.escape(value) + r"(?![A-Za-z0-9])", text):
+                    raise tf.TaskError("Cloudbot has not reviewed the exact failed job")
+            intent = response.get("ui_send_intent") or {}
+            journal_id = intent.get("id", "")
+            if (str(uuid.UUID(journal_id)) != journal_id or intent.get("command") != "send"
+                    or not re.fullmatch(r"[a-f0-9]{64}", intent.get("prompt_sha256", ""))):
+                raise tf.TaskError("Original observed send intent required")
+            observed = ui_scheduler._read_private_receipt(store.state_dir() /
+                "ui-send-journal/observed" / (journal_id + ".json"))
+            if (observed.get("schema") != "alis.chat-ui-send.v1" or observed.get("phase") != "attempted"
+                    or any(observed.get(k) != v for k, v in intent.items())
+                    or type(observed.get("at_unix")) is not int
+                    or observed["at_unix"] < record["latest_receipt"]["finished_unix"]
+                    or type(response.get("at_unix")) is not int
+                    or response["at_unix"] < observed["at_unix"]):
+                raise tf.TaskError("Failed receipt review predates or conflicts with the job")
+            reviews = reviews + [{"job_id": old["id"], "handoff": old,
+                "receipt": record["latest_receipt"], "ui_review": {
+                    "attestation": "local-ui-only", "response_attempt": expected_response_attempt,
+                    "target_sha256": session["ui_target_key"],
+                    "response_file_sha256": hashlib.sha256(response_path.read_bytes()).hexdigest(),
+                    "at_unix": int(time.time())}}]
+            if len(reviews) > 12 or len(json.dumps(reviews).encode()) > 1024 * 1024:
+                raise tf.TaskError("Failed review history full; preserve evidence for review")
+            record.update(handoff=checked, latest_receipt=None, status="handoff_ready",
+                          failed_handoff_reviews=reviews,
+                          retired_handoff={"id": old["id"], "sha256": old["sha256"]},
+                          updated_unix=int(time.time()))
+            tf._save_task(record)
+    return {"ok": True, "duplicate": False, "job_id": checked["id"], "state": "handoff_ready"}
+
+
 def _manager_finished(record: dict, pid: str) -> bool:
     """Read only native-bridge-verified manager receipt, never raw UI text."""
     _, runtime, _ = store.read_snapshot()

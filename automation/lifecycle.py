@@ -49,6 +49,7 @@ def _verified_local_receipt(record: dict, *, allow_failed: bool = False) -> dict
         if (not isinstance(steps, list) or not 1 <= len(steps) <= len(commands)
                 or persisted.get("continuation_ready") is not False
                 or type(persisted.get("finished_unix")) is not int
+                or persisted["finished_unix"] != summary.get("finished_unix")
                 or any(not isinstance(s, dict) or s.get("argv") != commands[i]
                        for i, s in enumerate(steps))
                 or any(type(s.get("exit_code")) is not int or s["exit_code"] != 0
