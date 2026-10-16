@@ -556,18 +556,70 @@ for retired in ("readingOnHover", "allowManualReading", "enterMarkdownReading"):
 forbid(sidebar_quick_note, "autoMarkdownReading: true",
        "Sidebar Left should retain Source-first entry")
 
-# Mode transitions and the second Escape must preserve the shared edge
-# retract geometry rather than immediately unmapping/fading the surface.
+# Retraction is intentionally different from forced owner eviction.
+# Scope assertions to each method: QML often uses unqualified property names
+# inside its own root object, so requiring a literal "root." is incorrect.
+def _scoped(source: str, opening: str, closing: str, label: str) -> str:
+    before, found, tail = source.partition(opening)
+    if not found:
+        fail(f"Graceful slide-under popup close contract missing ({label}: opening)")
+    body, found, after = tail.partition(closing)
+    if not found:
+        fail(f"Graceful slide-under popup close contract missing ({label}: closing)")
+    return body
+
+
+require(styled_popup, "property bool _gracefulDismissal: false",
+        "Graceful slide-under state flag missing")
+retract = _scoped(styled_popup, "function retractPresentation(): void {",
+                  "function dismissPresentation(): void {", "retractPresentation")
 for token in (
-    "function retractPresentation(): void {",
-    "property bool _gracefulDismissal: false",
-    "root._gracefulDismissal = true",
-    "root._beginRetract()",
-    "root._finishGracefulDismissal()",
-    "root._lingerVisible = false",
+    "_gracefulDismissal = true",
+    "_liquidDismissed = true",
+    "if (_lingerVisible)",
+    "_beginRetract()",
+    "requestClose()",
 ):
-    require(styled_popup, token,
-            "Graceful slide-under popup close contract missing")
+    require(retract, token, "Graceful slide-under retract path missing")
+
+forced_dismiss = _scoped(styled_popup, "function dismissPresentation(): void {",
+                         "property QtObject _liquidPresentationConnections",
+                         "dismissPresentation")
+for token in ("_gracefulDismissal = false", "_lingerVisible = false",
+              "offsetScale = 1", "requestClose()"):
+    require(forced_dismiss, token, "Forced owner eviction contract missing")
+
+finish_retract = _scoped(styled_popup,
+                         "function _finishGracefulDismissal(): void {",
+                         "property bool _lingerVisible", "finishGracefulDismissal")
+for token in ("root._gracefulDismissal = false", "root._liquidDismissed = false"):
+    require(finish_retract, token, "Graceful close completion contract missing")
+
+begin_retract = _scoped(styled_popup, "function _beginRetract(): void {",
+                        "function _syncRequestedVisibility(): void {", "beginRetract")
+for token in ("if (!root._lingerVisible)", "root.offsetScale = 1",
+              "retractTimer.restart()", "root._finishGracefulDismissal()"):
+    require(begin_retract, token, "Slide-under retract animation contract missing")
+
+retract_timer = _scoped(styled_popup,
+                        "property QtObject _retractTimerObject: Timer {",
+                        "function _anchorRect(", "retractTimer")
+for token in ("interval: Math.max(1, SurfaceMotion.duration + 16)",
+              "root._lingerVisible = false", "root._finishGracefulDismissal()"):
+    require(retract_timer, token, "Slide-under retract completion timer missing")
+
+visible_sync = _scoped(styled_popup,
+                       "function _syncRequestedVisibility(): void {",
+                       "onRequestedVisibleChanged:", "syncRequestedVisibility")
+for token in ("root._lingerVisible = true", "root._beginRetract()"):
+    require(visible_sync, token, "Popup visible/retract lifecycle missing")
+require(styled_popup,
+        "onRequestedVisibleChanged: root._syncRequestedVisibility()",
+        "Popup visibility synchronization missing")
+require(styled_popup,
+        "(root.requestedVisible || root._lingerVisible)",
+        "Popup must stay resident for the animation tail")
+
 # Assert the actual Escape state machine, not just a stray call elsewhere.
 # First Escape releases editing and arms the lease; second Escape retracts
 # with StyledPopup's graceful slide tail. Forced eviction may still dismiss.
