@@ -42,6 +42,8 @@ def main():
     stage_queue.add_argument("--approve", action="store_true",
                              help="Stage first task's profile only; no Send, Start or unit change")
     stage_queue.add_argument("--expected-first", required=True)
+    stage_queue.add_argument("--expected-snapshot-id",
+                             help="Exact reviewed queue generation before profile staging")
     stop_queue = commands.add_parser("queue-stop")
     stop_queue.add_argument("--approve", action="store_true")
     stop_queue.add_argument("--expected-active", required=True)
@@ -120,7 +122,8 @@ def main():
                 expected_snapshot_id=args.expected_snapshot_id)
         elif args.action == "queue-stage-ui":
             result = managed_tasks.stage_ui_queue(
-                approved=args.approve, expected_first=args.expected_first)
+                approved=args.approve, expected_first=args.expected_first,
+                expected_snapshot_id=args.expected_snapshot_id)
         elif args.action == "queue-reset-chat":
             result = managed_tasks.request_ui_chat_reset(
                 approved=args.approve, expected_active=args.expected_active)
