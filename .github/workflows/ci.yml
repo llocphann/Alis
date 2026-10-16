@@ -106,6 +106,12 @@ jobs:
           node scripts/test-abyss-full-size-modules.mjs
           node scripts/test-abyss-multi-selection.mjs
 
+      - name: Verify Panels Quick Notes card removal keeps existing popup contracts
+        shell: bash
+        run: |
+          python3 scripts/test-quick-notes-corner-contract.py
+          python3 scripts/test-notification-center-contract.py
+
       - name: Run canonical local validator
         shell: bash
         run: |
