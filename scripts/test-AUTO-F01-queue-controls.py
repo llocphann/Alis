@@ -208,7 +208,8 @@ class QueueControls(unittest.TestCase):
                "modules/settings/AutomationTaskConfig.qml").read_text()
         button = qml.split('objectName: "automationClearQueue"')[1].split(
             "onClicked: root.clearQueue()", 1)[0]
-        self.assertIn('Translation.tr("Clear queued")', button)
+        self.assertIn('Translation.tr("Clear")', button)
+        self.assertIn('Translation.tr("Confirm clear")', button)
         self.assertIn('task.state === "queued"', button)
         self.assertNotIn("root.queueStatusConfirmed", button)
         self.assertIn('"--expected-queued", targets', qml)
