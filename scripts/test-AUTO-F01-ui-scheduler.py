@@ -225,6 +225,37 @@ class UiSchedulerTests(TestCase):
         self.assertEqual(self.item()["last_result"], "failed")
         self.assertEqual(self.item()["request"], "continuation")
 
+    def test_stalled_job_recovers_by_polling_same_id_after_restart(self):
+        self.assertEqual(ui_scheduler.ui_tick(
+            ID, now=1000, desktop=lambda *_a, **_k: reply(
+                "ALIS_LOOP:WAIT_RESULT JOB-UNCHANGED")), "WAIT_RESULT")
+        self.assertEqual(self.item()["job_id"], "JOB-UNCHANGED")
+        # State is persisted across repeated manager ticks; missing receipt
+        # never triggers a second worker submission or another ChatGPT send.
+        with patch.object(daemon, "job_result", return_value=None):
+            self.assertEqual(ui_scheduler.ui_tick(ID, now=1185,
+                    desktop=lambda *_a, **_k: self.fail("no send")),
+                    "waiting_result")
+        current = self.item()
+        self.assertEqual(current["job_id"], "JOB-UNCHANGED")
+        self.assertEqual(current["status"], "waiting_result_stalled")
+        self.assertEqual(current["next_job_poll_at_unix"], 1245)
+        with patch.object(daemon, "job_result", return_value=None):
+            self.assertEqual(ui_scheduler.ui_tick(ID, now=1244,
+                    desktop=lambda *_a, **_k: self.fail("no send")),
+                    "waiting_result")
+        self.assertEqual(self.item()["job_id"], "JOB-UNCHANGED")
+        owned = {"job": "JOB-UNCHANGED", "profile_id": ID,
+                 "status": "passed", "input_sha256": "a" * 64,
+                 "actions": []}
+        with patch.object(daemon, "job_result", return_value=owned):
+            self.assertEqual(ui_scheduler.ui_tick(ID, now=1245,
+                    desktop=lambda *_a, **_k: self.fail("no send")),
+                    "waiting_result")
+        self.assertIsNone(self.item()["job_id"])
+        self.assertEqual(self.item()["last_job_id"], "JOB-UNCHANGED")
+        self.assertEqual(self.item()["last_result"], "passed")
+
     def test_wrong_project_does_not_mutate_state(self):
         with patch.dict(os.environ, {"ALIS_CHATGPT_PROJECT": "Different"}):
             self.assertEqual(ui_scheduler.ui_tick(
