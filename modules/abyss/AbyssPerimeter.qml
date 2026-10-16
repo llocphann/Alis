@@ -64,6 +64,13 @@ Scope {
             && (!(Config.options?.bar?.autoHide?.enable ?? false)
                 || root.revealedBars[name]
                 || GlobalStates.barPopupHoverHeld(name)
+                // The explicit notification hotkey must still mount its
+                // existing mature popup when the unified launcher replaces
+                // the legacy corner and Abyss Bar is normally auto-hidden.
+                || (GlobalStates.notificationCenterExplicitOpen
+                    && GlobalStates.notificationCenterPresentationOutput === name
+                    && ModuleLayout.hasEnabledModule(
+                        Config.options?.abyss?.modules,name,"notificationActivity"))
                 || (GlobalStates.superDown && (Config.options?.bar?.autoHide?.showWhenPressingSuper ?? true))
                 || (GlobalStates.abyssPopupKind.length > 0
                     && GlobalStates.resolveOutputName(GlobalStates.abyssPopupTargetOutput,[]) === name))
@@ -833,6 +840,7 @@ Scope {
                 HoverHandler { id: barHover; onHoveredChanged: { if (hovered) { barClose.stop(); root.setBarRevealed(window.outputName,true) } else barClose.restart() } }
                 onInteraction: (edge,along,span,strength) => liquid.impulse(edge,along,span,strength)
                 onLayoutRepairRequested: GlobalStates.startAbyssEditing(window.outputName)
+                onNotesEditorFocusChanged: (outputName, focused) => root.setQuickNotesEditorOutput(outputName, focused)
                 onPopupRequested: (kind,edge,along) => {
                     companionExtension.yieldToUser()
                     const same = GlobalStates.abyssPopupKind === kind
