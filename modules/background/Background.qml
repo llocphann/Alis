@@ -1143,6 +1143,7 @@ Scope {
             // Wallpaper container - used as reference for blur and widgets
             Item {
                 id: wallpaperContainer
+                objectName: "desktopWallpaperContainer"
                 property int chunkSize: bgRoot.usePerMonitorRange ?
                     (bgRoot.effectiveWorkspaceLast - bgRoot.effectiveWorkspaceFirst + 1) :
                     (Config?.options?.bar?.workspaces?.shown ?? 10)
@@ -1180,7 +1181,16 @@ Scope {
                 property real effectiveValueX: Math.max(0, Math.min(1, valueX))
                 property real effectiveValueY: Math.max(0, Math.min(1, valueY))
 
-                readonly property bool useParallax: bgRoot.fillMode === "fill"
+                // A rendered internal wallpaper does not imply that Parallax
+                // is enabled. In Liquid mode awww is deliberately inactive;
+                // without this gate every image gets the 1.02x parallax scale
+                // even with Parallax off. Async wallpaper dimensions then
+                // re-center that oversized container, making the whole image
+                // jump left/right mid-transition.
+                // Manual Pan/Zoom remains independently supported below via
+                // effectiveHasPan and must not re-enable workspace parallax.
+                readonly property bool useParallax: bgRoot.dynamicParallaxRequested
+                    && bgRoot.fillMode === "fill"
                     && !bgRoot.wallpaperIsGif
                     && !bgRoot.wallpaperIsVideo
                     && !bgRoot.externalMainWallpaperActive
