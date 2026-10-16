@@ -5,6 +5,7 @@ on:
     branches: [dev]
     paths:
       - "modules/common/widgets/wallpaperTransitions/alisMelt.frag"
+      - "scripts/test-wallpaper-abyss-liquid.py"
       - ".github/workflows/alis-liquid-qsb-bake.yml"
 
 permissions:
