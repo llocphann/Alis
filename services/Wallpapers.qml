@@ -25,6 +25,11 @@ Singleton {
     property string _queuedApplyPath: ""
     property bool _queuedApplyDarkMode: Appearance.m3colors.darkmode
     property bool _queuedApplyNoSwitch: false
+    // Keep the expensive wallpaper/color generation away from the Liquid
+    // render handoff. The latest global selection wins until the compositor
+    // has finished painting it; a deadline covers hidden/instant surfaces.
+    property string _pendingLiquidThemePath: ""
+    property bool _pendingLiquidThemeDarkMode: false
     readonly property string backendProvider: "awww"
     readonly property bool awwwBackendEnabled: true
 
@@ -543,6 +548,50 @@ Singleton {
         root.wallpaperBlurTransitionRequested(_transitionTargetMonitors(monitorName), _wallpaperTransitionSettleMs())
     }
 
+    function _shouldDeferThemeForLiquid(path: string): bool {
+        const type = String(Config.options?.background?.transition?.type ?? "")
+        return (type === "alisMelt" || type === "inirMelt")
+            && !AwwwBackend.active
+            && (Config.options?.background?.transition?.enable ?? true)
+            && Appearance.animationsEnabled
+            && !WallpaperListener.isVideoPath(path)
+            && !WallpaperListener.isGifPath(path)
+    }
+
+    function _deferLiquidTheme(path: string, darkMode: bool): void {
+        root._pendingLiquidThemePath = FileUtils.trimFileProtocol(String(path ?? ""))
+        root._pendingLiquidThemeDarkMode = darkMode
+        // Config already updates the actual wallpaper immediately. Only
+        // switchwall.sh/color extraction waits until the Liquid animation ends.
+        liquidThemeDeadline.interval = 2600
+        liquidThemeDeadline.restart()
+    }
+
+    function liquidWallpaperTransitionFinished(displayedSource: string): void {
+        const pending = root._pendingLiquidThemePath
+        if (!pending || FileUtils.trimFileProtocol(String(displayedSource ?? "")) !== pending)
+            return
+        // Give the final swap a small margin so the palette update cannot
+        // interrupt the last Liquid frame. Rapid requests reset the deadline.
+        liquidThemeDeadline.interval = 150
+        liquidThemeDeadline.restart()
+    }
+
+    function _flushLiquidTheme(): void {
+        const path = root._pendingLiquidThemePath
+        const darkMode = root._pendingLiquidThemeDarkMode
+        root._pendingLiquidThemePath = ""
+        if (path !== "")
+            root._queueWallpaperScript(path, darkMode, false)
+    }
+
+    Timer {
+        id: liquidThemeDeadline
+        repeat: false
+        interval: 2600
+        onTriggered: root._flushLiquidTheme()
+    }
+
     function _runWallpaperScript(path: string, darkMode: bool, noSwitch: bool): void {
         const normalizedPath = FileUtils.trimFileProtocol(String(path ?? ""))
         if (!normalizedPath || normalizedPath.length === 0)
@@ -616,6 +665,12 @@ Singleton {
         id: _applySuppressTimer
         interval: 3000
         onTriggered: {
+            if (root._pendingLiquidThemePath !== "") {
+                // Continue suppressing ThemeService's parallel color generation
+                // until the deferred owned apply starts or the deadline fires.
+                _applySuppressTimer.restart()
+                return
+            }
             if (!applyProc.running && applyProc.pendingRequestKey === "")
                 root._applyInProgress = false
         }
@@ -710,10 +765,18 @@ Singleton {
             return
         }
 
-        // Always set wallpaper path from QML to avoid race condition with Config write timer
+        // Always set wallpaper path from QML to avoid race condition with Config write timer.
+        // Liquid owns its own compositor frames. A concurrent switchwall.sh run
+        // performs CPU-heavy color extraction and can stall texture upload.
         Config.setNestedValue("background.wallpaperPath", normalizedPath)
         Config.setNestedValue("background.thumbnailPath", "")
-        root._queueWallpaperScript(normalizedPath, darkMode, false)
+        if (root._shouldDeferThemeForLiquid(normalizedPath)) {
+            root._deferLiquidTheme(normalizedPath, darkMode)
+        } else {
+            liquidThemeDeadline.stop()
+            root._pendingLiquidThemePath = ""
+            root._queueWallpaperScript(normalizedPath, darkMode, false)
+        }
         root.changed()
     }
 
