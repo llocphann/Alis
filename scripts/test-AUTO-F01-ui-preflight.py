@@ -313,6 +313,9 @@ class Preflight(unittest.TestCase):
         with patch.object(ui_preflight, "_unit_state",
                           return_value=("active", "ui_queue_mode")), \
              patch.object(managed_tasks.tf, "load_task", return_value=task):
+            blocked = ui_preflight.check_prepared_queue()
+            self.assertIn("TASKFLOW_PROFILE_NOT_IDLE", blocked["preflight_blockers"])
+            self.assertFalse(blocked["submission_authorized"])
             with self.assertRaisesRegex(tf.TaskError, "reconciliation"):
                 managed_tasks.stage_ui_queue(
                     approved=True, expected_first=first,
