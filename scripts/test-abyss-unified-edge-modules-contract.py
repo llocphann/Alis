@@ -188,16 +188,21 @@ settings = read("modules/settings/BarConfig.qml")
 style = read("modules/abyss/settings/AbyssStyleSettings.qml")
 index = read("modules/settings/SettingsPageRegistryData.qml")
 abyss_page = read("modules/settings/AbyssConfig.qml")
-assert 'objectName: "abyssNotesTimersAccessMode"' in settings
-assert 'objectName: "abyssNotificationActivityAccessMode"' in settings
-assert 'Config.setNestedValue("abyss.modules.notesTimersMode",value)' in settings
-assert 'Config.setNestedValue("abyss.modules.notificationActivityMode",value)' in settings
+# Only Modules (not the Behavior & clock tab) owns the per-kind mode
+# switches. Never recreate duplicate selectors under Behavior & clock.
+assert 'objectName: "abyssNotesTimersAccessMode"' not in settings
+assert 'objectName: "abyssNotificationActivityAccessMode"' not in settings
+assert 'Choose one opening behavior for Quick Notes' not in settings
+assert 'Choose one opening behavior for notifications' not in settings
+assert 'objectName: "abyssSettingsQuickNotesTimersIcon"' in settings
+assert 'objectName: "abyssSettingsNotificationActivityIcon"' in settings
+assert 'Config.setNestedValue("abyss.modules.notesTimersMode",checked ? "module" : "edgebar")' in settings
+assert 'Config.setNestedValue("abyss.modules.notificationActivityMode",checked ? "module" : "edgebar")' in settings
 assert 'ModuleLayout.unifiedLauncherMode(' in settings
-assert '{displayName: "Module Icon",value: "module"}' in settings
-assert '{displayName: "Edgebar Hover",value: "edgebar"}' in settings
 assert 'objectName:"abyssUnifiedLauncherSettingsMode"' not in style
+assert '"modules": "modules"' in settings
 assert '"module behavior"' in abyss_page
-assert 'section: Translation.tr("Module behavior")' in index
+assert 'section: Translation.tr("Modules")' in index
 assert 'Quick Notes & Notifications access modes' in index
 assert 'launcherMode' not in editor
 assert 'draftLauncherMode' not in bar
