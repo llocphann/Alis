@@ -140,6 +140,61 @@ def _ensure_profile(repository: str, code: str) -> str:
 
 
 
+def stop_idle_legacy_default_for_ui_queue(
+        *, approved: bool = False,
+        expected_snapshot_id: str = "") -> dict:
+    """Owner-confirmed stop of ONLY an unsent legacy generic profile.
+
+    This never touches the queue, worker files, receipts or saved sessions.
+    No automatic manager/service restart. Under an active queue-only daemon,
+    the old generic profile cannot dispatch; validate again atomically just
+    before revoking its desired=run intent.
+    """
+    if approved is not True:
+        raise tf.TaskError("Explicit idle legacy profile Stop approval required")
+    from .chat_bridge import ui_preflight
+    if (not isinstance(expected_snapshot_id, str)
+            or len(expected_snapshot_id) != 64
+            or any(ch not in "0123456789abcdef"
+                   for ch in expected_snapshot_id)):
+        raise tf.TaskError("Invalid legacy profile Stop queue snapshot")
+    with queue._lock():
+        doc = queue._load()
+        if doc is None or queue._snapshot_id(doc) != expected_snapshot_id:
+            raise tf.TaskError("Queue changed since legacy profile Stop; refresh")
+        if (doc.get("mode") != "ordered"
+                or doc.get("state") != "prepared"
+                or doc.get("active") is not None
+                or doc.get("approved_start")
+                or not any(it.get("state") == "queued"
+                           for it in doc.get("items", []))):
+            raise tf.TaskError("No idle prepared UI queue for legacy Stop")
+        checked = ui_preflight.check_prepared_queue()
+        if not checked.get("idle_default_stop_available"):
+            raise tf.TaskError(
+                "Legacy profile Stop blocked; original send or manager needs review")
+
+        def revoke(config, state):
+            if not ui_preflight.idle_legacy_default_can_stop(config, state):
+                raise tf.TaskError(
+                    "Legacy profile changed; preserve pending work for review")
+            item = state["profiles"][model.DEFAULT_ID]
+            # This is a one-time Stop of scheduling intent only. The old
+            # session/checkpoint/evidence remains byte-for-byte intact.
+            item["desired"] = "stopped"
+            item["status"] = "idle"
+            item["next_run_at_unix"] = None
+            store.event(state, model.DEFAULT_ID, "ui_queue_legacy_idle_stopped",
+                        "Owner-confirmed only; saved conversation retained")
+            return True
+
+        store.change_state(revoke)
+    return {"ok": True, "state": "legacy_idle_stopped",
+            "old_session_preserved": True, "worker_cancelled": False,
+            "queue_unchanged": True, "new_message_sent": False,
+            "service_modified": False}
+
+
 def stage_ui_queue(*, approved: bool = False,
                    expected_first: str = "",
                    expected_snapshot_id: str | None = None) -> dict:
