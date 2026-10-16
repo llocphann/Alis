@@ -23,6 +23,7 @@ ContentPage {
     property bool chatResetNotice: false
     property string stopQueueTarget: ""
     property string clearQueueTarget: ""
+    property string clearQueueSnapshotId: ""
     property string pendingSudoPassword: ""
     property string sudoOperation: ""
     property string sudoStatusText: ""
@@ -443,31 +444,41 @@ ContentPage {
         if (root.busy || !root.queueSnapshot)
             return
         const targets = root.queuedTaskIdentities(root.queueSnapshot)
+        const snapshotId = root.queueSnapshot.snapshot_id || ""
+        if (!/^[a-f0-9]{64}$/.test(snapshotId)) {
+            root.errorText = Translation.tr("Queue identity unavailable · update the Automation backend and refresh")
+            return
+        }
         if (!targets.length && !["finished", "cancelled", "stopped",
                 "review_required"].includes(root.queueSnapshot.state))
             return
         if (!root.clearQueueConfirmation) {
             root.clearQueueTarget = targets
+            root.clearQueueSnapshotId = snapshotId
             root.clearQueueConfirmation = true
             root.statusText = root.queueSnapshot.state === "stopped"
                 ? Translation.tr("Confirm archiving stopped queue. Prior active job and receipts remain in history.")
                 : Translation.tr("Confirm removal of queued tasks only. Active job and receipts stay intact.")
             return
         }
-        if (root.clearQueueTarget !== targets) {
+        if (root.clearQueueTarget !== targets
+                || root.clearQueueSnapshotId !== snapshotId) {
             root.clearQueueConfirmation = false
             root.clearQueueTarget = ""
+            root.clearQueueSnapshotId = ""
             root.errorText = Translation.tr("Queue changed · refresh and confirm again")
             return
         }
         root.clearQueueConfirmation = false
         root.clearQueueTarget = ""
+        root.clearQueueSnapshotId = ""
         root.queueStatusConfirmed = false
         root.errorText = ""
         root.queueOperation = "clear"
         queueProcess.command = ["python3",
             Quickshell.shellPath("scripts/alis-automation-task.py"),
-            "queue-clear", "--approve", "--expected-queued", targets]
+            "queue-clear", "--approve", "--expected-queued", targets,
+            "--expected-snapshot-id", snapshotId]
         queueProcess.running = true
     }
 
@@ -667,9 +678,11 @@ ContentPage {
                         }
                     }
                     if (root.clearQueueConfirmation
-                            && root.clearQueueTarget !== root.queuedTaskIdentities(result)) {
+                            && (root.clearQueueTarget !== root.queuedTaskIdentities(result)
+                                || root.clearQueueSnapshotId !== (result.snapshot_id || ""))) {
                         root.clearQueueConfirmation = false
                         root.clearQueueTarget = ""
+                        root.clearQueueSnapshotId = ""
                     }
                     root.queueSnapshot = result
                     // Stop can be acknowledged asynchronously by the manager.
