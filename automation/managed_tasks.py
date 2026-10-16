@@ -199,6 +199,8 @@ def stage_ui_queue(*, approved: bool = False,
             raise tf.TaskError(
                 "UI Queue profile staging requires an inactive manager "
                 "or a running queue-only UI manager")
+        if "TASKFLOW_PROFILE_NOT_IDLE" in report.get("preflight_blockers", []):
+            raise tf.TaskError("Previously staged UI profile requires reconciliation")
         if (report.get("queue_state") != "prepared"
                 or report.get("first_task_code") != first["code"]
                 or report.get("queue_item_count") != len(items)
