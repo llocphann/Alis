@@ -47,6 +47,8 @@ def main():
                              help="Owner confirms pruning queued tasks without stopping active work")
     clear_queue.add_argument("--expected-queued", required=True,
                              help="Exact repo:code list shown when owner confirmed")
+    clear_queue.add_argument("--expected-snapshot-id",
+                             help="Opaque durable queue version from queue-status; reject stale UI Clear")
     commands.add_parser("sudo-status")
     commands.add_parser("sudo-authenticate")
     commands.add_parser("sudo-credential-status")
@@ -117,7 +119,8 @@ def main():
                 approved=args.approve, expected_active=args.expected_active)
         elif args.action == "queue-clear":
             result = queue.clear(approved=args.approve,
-                                 expected_queued=args.expected_queued)
+                                 expected_queued=args.expected_queued,
+                                 expected_snapshot_id=args.expected_snapshot_id)
         elif args.action == "sudo-credential-status":
             from automation import sudo_credentials
             result = sudo_credentials.status()
