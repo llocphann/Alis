@@ -43,6 +43,22 @@ ContentPage {
         return true
     }
 
+    // Settings exclusively owns the visible/hidden state for each unified
+    // Screen Edge launcher. Existing per-placement values remain the fallback
+    // until the user chooses a global preference (including multi-output vaults).
+    function unifiedLauncherIconShown(kind): bool {
+        const modules=Config.options?.abyss?.modules
+        const override=modules?.iconVisibility?.[kind]
+        if (typeof override === "boolean") return override
+        const global=Array.from(modules?.placements ?? []).find(p=>p?.kind===kind)
+        if (global) return global.showIcon!==false
+        for (const profile of Array.from(modules?.outputLayouts ?? [])) {
+            const stored=Array.from(profile?.placements ?? []).find(p=>p?.kind===kind)
+            if (stored) return stored.showIcon!==false
+        }
+        return true
+    }
+
     readonly property bool isVertical: Config.options?.bar?.vertical ?? false
     readonly property bool spectrumEnabled: Config.options?.bar?.visualizer?.enable ?? false
     readonly property color workspaceThemeIndicatorColor: Appearance.zzzEverywhere ? Appearance.zzz.accentSoft
@@ -675,6 +691,36 @@ ContentPage {
                         checked: Config.options?.bar?.modules?.rightSidebarButton ?? true
                         onCheckedChanged: Config.setNestedValue("bar.modules.rightSidebarButton", checked)
                     }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Unified Screen Edge launcher icons")
+                visible: root.abyssContent
+
+                ConfigRow {
+                    uniform: true
+                    SettingsSwitch {
+                        objectName: "abyssSettingsQuickNotesTimersIcon"
+                        buttonIcon: "sticky_note_2"
+                        text: Translation.tr("Show Quick Notes & Timers icon")
+                        autoToggle: false
+                        checked: root.unifiedLauncherIconShown("notesTimers")
+                        onToggledByUser: checked =>
+                            Config.setNestedValue("abyss.modules.iconVisibility.notesTimers",checked)
+                    }
+                    SettingsSwitch {
+                        objectName: "abyssSettingsNotificationActivityIcon"
+                        buttonIcon: "notifications"
+                        text: Translation.tr("Show Notifications & Activities icon")
+                        autoToggle: false
+                        checked: root.unifiedLauncherIconShown("notificationActivity")
+                        onToggledByUser: checked =>
+                            Config.setNestedValue("abyss.modules.iconVisibility.notificationActivity",checked)
+                    }
+                }
+                SettingsNote {
+                    text: Translation.tr("These settings apply across outputs. Hiding an icon keeps its physical Screen Edge hover target active; the popup still opens on hover.")
                 }
             }
 
