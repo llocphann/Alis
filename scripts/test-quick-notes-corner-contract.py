@@ -86,7 +86,8 @@ for token in (
     "property real cornerAttachmentThickness:",
     "attachmentEdgeOverride: root.cornerAttachmentEdge",
     "attachmentThicknessOverride: root.cornerAttachmentThickness",
-    "hoverActivates: true",
+    "property bool hoverAllowed: true",
+    "hoverActivates: root.hoverAllowed",
     "property bool entryBridgeHeld: false",
     "alternativeVisibleCondition: root.editorFocused || root.todoDialogOpen",
     "id: entryBridgeTimer",
@@ -472,33 +473,25 @@ for key, value in expected_defaults.items():
     if default_quick_notes.get(key) != value:
         fail(f"defaults/config.json Quick Notes {key} does not match Config.qml schema")
 
-for token in (
+# The old Panels > Tools "Bottom-left Quick Notes" Settings card and its
+# search result were explicitly retired. Keep runtime corner/config defaults
+# and the real popup tests above/below, but never recreate that parallel UI.
+for removed in (
     'title: Translation.tr("Bottom-left Quick Notes")',
-    'text: Translation.tr("Hover to reveal; click to type.")',
-    'Config.options?.quickNotes?.enable ?? true',
+    'text: Translation.tr("Enable bottom-left Quick Notes")',
     'Config.setNestedValue("quickNotes.enable", checked)',
-    'Config.options?.quickNotes?.monitorMode ?? "all"',
     'Config.setNestedValue("quickNotes.monitorMode", newValue)',
-    'Translation.tr("Primary only")',
-    'Translation.tr("All monitors")',
     'Config.setNestedValue("quickNotes.hoverDelayMs", value)',
     'Config.setNestedValue("quickNotes.cornerSize", value)',
     'Config.setNestedValue("quickNotes.popupWidth", value)',
     'Config.setNestedValue("quickNotes.popupHeight", value)',
 ):
-    require(settings, token, "Quick Notes Settings controls missing")
-
-for token in (
+    forbid(settings, removed, "Panels must not recreate legacy Quick Notes card")
+for removed in (
     'section: Translation.tr("Bottom-left Quick Notes")',
     'label: Translation.tr("Quick Notes corner")',
-    '"quick notes"',
-    '"bottom left"',
-    '"hover"',
-    '"monitor"',
-    '"primary"',
-    '"all monitors"',
 ):
-    require(registry, token, "Quick Notes Settings search metadata missing")
+    forbid(registry, removed, "Retired Panels corner card must not appear in search")
 
 # Quick Notes Reading/Source is focus-driven on Dashboard and the popup;
 # Sidebar Left and the full Notepad retain their existing Source-first entry.

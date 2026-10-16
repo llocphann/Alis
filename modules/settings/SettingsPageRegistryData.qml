@@ -1140,13 +1140,6 @@ Singleton {
             keywords: ["super+g", "super g", "overlay", "floating", "tools", "widgets", "desktop", "notes", "image", "crosshair", "mixer", "resources", "fps", "recorder"]
         },
         {
-            pageIndex: 5, pageName: root.pages[5].name,
-            section: Translation.tr("Bottom-left Quick Notes"),
-            label: Translation.tr("Quick Notes corner"),
-            description: Translation.tr("Hover the bottom-left screen corner to reveal the shared Notepad"),
-            keywords: ["quick notes", "notes", "notepad", "bottom left", "corner", "hover", "screen edge", "popup", "memo", "write", "monitor", "primary", "all monitors"]
-        },
-        {
             pageIndex: 6, pageName: root.pages[6].name,
             section: Translation.tr("On-screen display"),
             label: Translation.tr("On-screen display"),
