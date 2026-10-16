@@ -11,6 +11,16 @@ Canonical scope: [Issue #106](https://github.com/llocphann/Alis/issues/106). Fea
 - Existing ScreenCorners are not deleted. For an output with an enabled replacement, its *matching* legacy corner trigger is suppressed; disabling or removing the replacement restores that legacy entry. Other outputs and the `stable` branch remain unchanged.
 - Notification toasts and older unrelated Bar timer indicator are left untouched. The new components do **not** create duplicate providers, timers or notification stores.
 
+## Exclusive QuickNotes / Notifications access modes
+
+In **Edit Abyss Layout → Modules**, switch the joint *Notes / Notifications* selector:
+
+- **Module** (default): The placed QuickNotes & Timers and Notifications & Activities launchers are the only hover sources on the corresponding outputs; each matching legacy ScreenCorners/Edgebar hover trigger is suppressed when its unified module is enabled. Show/hide icon remains configurable independently in the module toolbar.
+- **Edgebar Hover**: Both unified launcher instances are excluded from the live module geometry and hover/input masks, so their icons and popup sources are absent. The legacy QuickNotes bottom-left and Notifications bottom-right dwell-triggered corners are restored, respecting existing feature enable/hover/monitor/fullscreen conditions. The module placement and per-icon `showIcon` choices remain stored unchanged, not deleted.
+- Switching back to **Module** restores the existing module positions and each user's earlier icon preference, without duplicate launchers, note/timer/notification providers, or activity stores.
+
+The mode is **one global choice for the two features across outputs**, while physical module placements remain per-output. Preview it inside the editor, use **Done** to persist, **Cancel** to discard and **Undo** to return to the previous mode. When Edgebar Hover is selected, keyboard-open Notifications continue through the legacy corner host and do not unnecessarily start an auto-hidden Abyss bar.
+
 ## Automatic placement with reversible per-output migration
 
 1. The first startup with the converted code automatically **adds both launchers in memory** at the bottom left/right of every applicable output, even if the user already has a custom Edge layout. No original serialized placement entry is deleted.
