@@ -38,9 +38,11 @@ jobs:
           node scripts/test-notification-group-key-policy.mjs
           python3 scripts/test-abyss-notification-presentation-probe.py
 
-      - name: Verify Automation task-code handoff
+      - name: Verify Automation task-code handoff and compact UI
         shell: bash
-        run: python3 scripts/test-automation-taskflow.py
+        run: |
+          python3 scripts/test-automation-taskflow.py
+          python3 scripts/test-automation-task-layout.py
 
       - name: Verify native Desktop adapter fails closed without sending
         shell: bash
