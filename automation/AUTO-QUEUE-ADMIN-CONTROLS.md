@@ -130,6 +130,48 @@ safe service cutover to `--ui-loop-queue` is separately required.
 The installation on the Owner desktop and its live receipts must be
 verified there; these source changes alone do not turn on Start.
 
+## Bridge blocked after UI Queue safety exit (75)
+
+An installed unit is not necessarily an active sender. Under
+`--ui-loop-queue`, `ALIS_UI_*` safety failures exit with status **75**;
+the installed unit uses `RestartPreventExitStatus=75`. Its service can
+therefore remain **failed/blocked** after an earlier unsafe queue attempt,
+even when the current queue has since become `prepared`. Normal
+`backend-status` now includes the bridge's `exit_status`, `result`,
+`ui_queue_bridge_recover_available`, and a privacy-bounded list of
+unsettled profile **roles** and pending **transport types**. It never
+returns conversation/message IDs, job tokens, profile names or prompts.
+
+When the **queue-only UI unit** has specifically failed with status 75
+and the exact ordered queue is still **prepared, unapproved and
+inactive**, Settings offers **Recover Bridge**. The first click is a
+warning; the second explicitly requests one `systemctl --user start
+hadalis-chat-bridge.service` on the same exact queue snapshot. This
+neither resets systemd's failure counters nor restarts an already active
+service, changes unit mode, starts any queue, sends ChatGPT text, or
+consumes/discards the previous pending record. If startup fails again,
+inspect the local user service journal; the failed unit remains a gate.
+
+**Important:** Bridge recovery is only one gate. A reported
+`ui_queue_profile_counts.pending > 0` outside protected inert legacy
+records is still an unresolved original send, even if
+`native_unsettled=0` (for example a prior `alis-ui-once` UI attempt).
+It must be reconciled with its exact first-send journal and local
+receipt; there is no generic Clear Pending or force-start operation.
+The new `ui_queue_unsettled_profiles` list shows only categorical
+roles and booleans for identifying which class of work to inspect.
+
+For host-side diagnosis without mutating services or queue:
+```sh
+python3 scripts/alis-automation-task.py backend-status
+systemctl --user show hadalis-chat-bridge.service \\
+  -p ActiveState -p Result -p ExecMainStatus
+journalctl --user -u hadalis-chat-bridge.service -n 40 --no-pager
+```
+Review journal output for secrets or conversation details before
+sharing it. A recent `journalctl` cause can differ from an old exit 75,
+so do not infer the original failure solely from a saved unit status.
+
 ## Queue controls: Stop, Clear queued, Clear stopped queue
 
 Settings → Automation → GitHub tasks shows separate owner-confirmed controls:
