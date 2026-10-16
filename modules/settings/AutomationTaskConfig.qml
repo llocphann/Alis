@@ -486,6 +486,13 @@ ContentPage {
     }
 
     Timer {
+        id: resetNoticeTimer
+        interval: 7000
+        repeat: false
+        onTriggered: root.chatResetNotice = false
+    }
+
+    Timer {
         id: ioCompletionFallback
         interval: 350
         repeat: false
