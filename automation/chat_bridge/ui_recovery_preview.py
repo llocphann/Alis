@@ -104,6 +104,29 @@ def _retired_attempt_evidence(journal_path: Path, profile_id: str,
     if len(tombstones) > 1:
         return "tombstone_conflict"
     if tombstones:
+        # A retained "observed" journal and an interrupted/not-sent
+        # tombstone for the SAME SHA are contradictory, irrespective of
+        # their distinct journal IDs. Never accept either as authoritative.
+        observed = journal_path.parent / "observed"
+        if observed.is_symlink():
+            return "archive_review_required"
+        if observed.exists():
+            if not observed.is_dir():
+                return "archive_review_required"
+            count = 0
+            try:
+                for path in observed.glob("*.json"):
+                    count += 1
+                    if count > _MAX_ARCHIVE_ENTRIES:
+                        return "archive_review_required"
+                    record = _private_record(path)
+                    if record is None:
+                        return "archive_review_required"
+                    if (record.get("prompt_sha256") == digest
+                            and record.get("command") == command):
+                        return "tombstone_conflict"
+            except (OSError, ValueError):
+                return "archive_review_required"
         return ("original_interrupted_delivery" if tombstones[0] == "interrupted_delivered"
                 else "original_confirmed_not_sent")
     root = journal_path.parent.parent
@@ -168,7 +191,14 @@ def preview(manifest: dict | None, config: dict, state: dict,
     }
     if not isinstance(manifest, dict):
         return reply
-    reply["queue_state"] = str(manifest.get("state", "invalid"))[:48]
+    # State is a fixed protocol enum, never echo untrusted disk text.
+    state_name = manifest.get("state")
+    reply["queue_state"] = (
+        state_name if isinstance(state_name, str)
+        and state_name in {"prepared", "waiting", "active", "stopping",
+                           "stopped", "review_required", "finished",
+                           "cancelled", "empty"}
+        else "invalid")
     active = manifest.get("active")
     if (manifest.get("mode") != "ordered"
             or manifest.get("state") not in {"stopping", "stopped"}
@@ -195,9 +225,15 @@ def preview(manifest: dict | None, config: dict, state: dict,
     except (ValueError, KeyError, TypeError):
         reply["reason"] = "QUEUE_ACTIVE_MEMBER_UNVERIFIED"
         return reply
-    profiles = [profile for profile in config.get("profiles", [])
-                if profile.get("id") == pid]
-    item = state.get("profiles", {}).get(pid)
+    configured = config.get("profiles") if isinstance(config, dict) else None
+    running = state.get("profiles") if isinstance(state, dict) else None
+    if (not isinstance(configured, list)
+            or not isinstance(running, dict)
+            or any(not isinstance(profile, dict) for profile in configured)):
+        reply["reason"] = "ORIGINAL_PROFILE_MISSING"
+        return reply
+    profiles = [profile for profile in configured if profile.get("id") == pid]
+    item = running.get(pid)
     if len(profiles) != 1 or not isinstance(item, dict):
         reply["reason"] = "ORIGINAL_PROFILE_MISSING"
         return reply
@@ -231,7 +267,8 @@ def preview(manifest: dict | None, config: dict, state: dict,
         reply["reason"] = "ORIGINAL_PROMPT_UNVERIFIED"
         return reply
     reply["original_prompt_integrity"] = True
-    target = (item.get("session") or {}).get("ui_target_key")
+    session = item.get("session")
+    target = session.get("ui_target_key") if isinstance(session, dict) else None
     if not isinstance(target, str) or not _SHA.fullmatch(target):
         reply["reason"] = "FIRST_TURN_ANCHOR_MISSING"
         return reply
