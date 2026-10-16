@@ -49,8 +49,8 @@ assert "onHiddenEdgeLauncherChanged: invalidateInputRegion()" in bar
 assert "edgeReach: 36" in module
 
 # Editor keeps output placement, singletons per unified kind and undo/history.
-assert 'objectName:"abyssUnifiedModuleIconVisibility"' in editor
-assert 'root.batch("showIcon",checked)' in editor
+assert 'objectName:"abyssUnifiedModuleIconVisibility"' not in editor
+assert 'root.batch("showIcon",checked)' not in editor
 assert "Placement.isUnifiedKind(kind)" in editor
 assert "Placement.saveProfile(" in editor
 assert "if(action===\"showIcon\"" in layout
@@ -128,5 +128,31 @@ assert 'launcherMode' not in editor
 assert 'draftLauncherMode' not in bar
 assert 'draftLauncherMode' not in perimeter
 assert 'Placement.saveProfile(' in editor
-assert 'root.batch("showIcon",checked)' in editor
+# Persistent toggles must use declared JsonAdapter keys, not assignments to
+# an undeclared object, which silently fail in Qt's persisted configuration.
+assert 'property JsonObject iconVisibility: JsonObject' in config
+assert 'property string notesTimers: "inherit"' in config
+assert 'property string notificationActivity: "inherit"' in config
+assert 'function iconVisibilityPreference(options,kind)' in layout
+assert 'const override=ModuleLayout.iconVisibilityPreference(modules,kind)' in settings
+for kind in ("notesTimers","notificationActivity"):
+    assert f'Config.setNestedValue("abyss.modules.iconVisibility.{kind}",checked ? "show" : "hide")' in settings
+
+# The containing Bar item often owns a wider mouse target than the icon.
+# Strict owner hover must exclude the Bar's ancestor hover state, while
+# retaining normal broad-zone hover for every existing non-unified popup.
+styled = read("modules/bar/StyledPopup.qml")
+assert 'property bool strictSourceHover: false' in styled
+assert 'root.strictSourceHover' in styled
+assert 'root.hoverTarget?.containsMouse || root.hoverTarget?.hovered' in styled
+assert module.count('strictSourceHover: true') == 2
+
+# The prior thick inner rim came from avoiding the local surface of the very
+# launcher whose popup was being presented; unrelated obstacles remain.
+assert 'function clearanceInsets(insets, localRecords, edge, along, span, popupOwnerKind)' in layout
+assert 'if (popupOwnerKind && record.kind===popupOwnerKind) return;' in layout
+assert 'var record={kind:p.kind,edge:p.edge' in layout
+assert 'function bodyInsets(edge,along,span,ownLauncherKind = "")' in perimeter
+assert 'presentationKind === "notesTimers"' in perimeter
+assert 'presentationKind === "notificationActivity"' in perimeter
 print("ABYSS-R15 unified edge module source contract: ok")
