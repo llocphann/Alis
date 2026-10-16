@@ -136,6 +136,107 @@ class QueueControls(unittest.TestCase):
         self.assertEqual(tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes(),
                          prior)
 
+    def test_pristine_old_sha_is_verified_ancestor_without_repin_or_replay(self):
+        original = queue.discover_backend_candidates(self.github)[0]
+        queue.prepare("AUTO-R01", resolver=lambda _: original)
+        queue.clear(approved=True)
+        saved_file = tf._task_path("AUTO-R01", "llocphann/Alis")
+        bytes_before = saved_file.read_bytes()
+        newer = {**original, "base_sha": "c" * 40}
+        first = queue.prepare("AUTO-R01", resolver=lambda _: newer)
+        self.assertEqual(first["state"], "review_required")
+        self.assertEqual(first["items"][0]["reason"], "source_pin_unverified")
+        with queue._lock():
+            created_before = queue._load()["created_unix"]
+        calls = []
+        def trusted_compare(endpoint):
+            calls.append(endpoint)
+            self.assertEqual(endpoint,
+                "/repos/llocphann/Alis/compare/" + ("a" * 40) + "..." + ("c" * 40))
+            return {"status": "ahead", "ahead_by": 5, "behind_by": 0,
+                    "base_commit": {"sha": "a" * 40},
+                    "merge_base_commit": {"sha": "a" * 40}}
+        rechecked = queue.prepare("AUTO-R01", resolver=lambda _: newer,
+                                 comparison_api=trusted_compare)
+        self.assertEqual(rechecked["state"], "prepared", rechecked)
+        self.assertFalse(rechecked["duplicate"])
+        self.assertEqual(rechecked["items"][0]["state"], "queued")
+        self.assertEqual(rechecked["next"]["code"], "AUTO-R01")
+        self.assertEqual(calls, [
+            "/repos/llocphann/Alis/compare/" + ("a" * 40) + "..." + ("c" * 40)])
+        self.assertEqual(saved_file.read_bytes(), bytes_before)
+        self.assertEqual(tf.load_task("AUTO-R01")["task"]["base_sha"], "a" * 40)
+        with queue._lock():
+            manifest = queue._load()
+        self.assertEqual(manifest["items"][0]["source_sha"], "a" * 40)
+        self.assertEqual(manifest["created_unix"], created_before)
+        self.assertFalse(manifest["approved_start"])
+        self.assertTrue(queue.prepare("AUTO-R01",
+             resolver=lambda _: self.fail("must not recontact GitHub"))["duplicate"])
+
+    def test_saved_cloud_ack_outranks_head_drift_and_never_auto_replays(self):
+        task = queue.discover_backend_candidates(self.github)[0]
+        queue.prepare("AUTO-R01", resolver=lambda _: task)
+        queue.clear(approved=True)
+        record = tf.load_task("AUTO-R01")
+        record["status"] = "awaiting_cloud_ack"
+        record["scheduler_dispatched"] = True
+        record["latest_receipt"] = {"id": "JOB-DURABLE"}
+        tf._save_task(record)
+        file = tf._task_path("AUTO-R01", "llocphann/Alis")
+        original = file.read_bytes()
+        advanced = {**task, "base_sha": "c" * 40}
+        calls = []
+        result = queue.prepare("AUTO-R01", resolver=lambda _: advanced,
+           comparison_api=lambda endpoint: calls.append(endpoint))
+        self.assertEqual(result["state"], "review_required")
+        self.assertEqual(result["items"][0]["reason"], "cloud_ack_pending")
+        self.assertEqual(result["items"][0]["state"], "deferred")
+        self.assertEqual(result["items"][0]["code"], "AUTO-R01")
+        self.assertEqual(result["deferred_count"], 1)
+        self.assertIsNone(result["next"])
+        self.assertFalse(calls)
+        self.assertEqual(file.read_bytes(), original)
+
+    def test_git_comparison_must_prove_original_sha_is_merge_base(self):
+        task = queue.discover_backend_candidates(self.github)[0]
+        queue.prepare("AUTO-R01", resolver=lambda _: task)
+        queue.clear(approved=True)
+        file = tf._task_path("AUTO-R01", "llocphann/Alis")
+        original = file.read_bytes()
+        advanced = {**task, "base_sha": "c" * 40}
+        for claim in [
+            {"status": "diverged", "ahead_by": 5, "behind_by": 2,
+             "base_commit": {"sha": "a" * 40},
+             "merge_base_commit": {"sha": "f" * 40}},
+            {"status": "ahead", "ahead_by": 5, "behind_by": 0,
+             "base_commit": {"sha": "a" * 40},
+             "merge_base_commit": None},
+            {"status": "ahead", "ahead_by": 5, "behind_by": 0,
+             "base_commit": {"sha": "b" * 40},
+             "merge_base_commit": {"sha": "a" * 40}},
+        ]:
+            result = queue.prepare("AUTO-R01", resolver=lambda _: advanced,
+                              comparison_api=lambda _endpoint: claim)
+            self.assertEqual(result["state"], "review_required")
+            self.assertEqual(result["items"][0]["reason"],
+                             "source_pin_unverified")
+        self.assertEqual(file.read_bytes(), original)
+
+    def test_issue_updated_prevents_reuse_of_stale_prompt_even_if_ancestor(self):
+        task = queue.discover_backend_candidates(self.github)[0]
+        queue.prepare("AUTO-R01", resolver=lambda _: task)
+        queue.clear(approved=True)
+        file = tf._task_path("AUTO-R01", "llocphann/Alis")
+        original = file.read_bytes()
+        advanced = {**task, "base_sha": "c" * 40,
+                    "issue_updated_at": "2026-10-17T00:00:00Z"}
+        result = queue.prepare("AUTO-R01", resolver=lambda _: advanced,
+            comparison_api=lambda _endpoint: self.fail("not pristine"))
+        self.assertEqual(result["state"], "review_required")
+        self.assertEqual(result["items"][0]["reason"], "saved_work_requires_review")
+        self.assertEqual(file.read_bytes(), original)
+
     def test_manual_queue_parks_ack_pending_first_and_keeps_other_tasks(self):
         # The user explicitly supplied AI-I01 first. Its past local receipt
         # may have been delivered already: do not replay it or block AI-I02.
