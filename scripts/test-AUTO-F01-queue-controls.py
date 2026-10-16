@@ -115,10 +115,11 @@ class QueueControls(unittest.TestCase):
         record["status"] = "awaiting_owner"
         tf._save_task(record)
         prior = tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes()
-        with self.assertRaisesRegex(tf.TaskError,
-                                    "AUTO-R01 has saved task state awaiting_owner"):
-            queue.prepare("AUTO-R01", resolver=lambda _code: task)
-        self.assertEqual(queue.view()["state"], "empty")
+        parked = queue.prepare("AUTO-R01", resolver=lambda _code: task)
+        self.assertEqual(parked["state"], "review_required")
+        self.assertEqual(parked["deferred_count"], 1)
+        self.assertEqual(parked["items"][0]["reason"], "owner_review_pending")
+        self.assertIsNone(parked["next"])
         self.assertEqual(tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes(),
                          prior)
 
@@ -128,11 +129,70 @@ class QueueControls(unittest.TestCase):
         queue.clear(approved=True)
         prior = tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes()
         shifted = {**task, "base_sha": "b" * 40}
-        with self.assertRaisesRegex(tf.TaskError, "different source pin"):
-            queue.prepare("AUTO-R01", resolver=lambda _code: shifted)
-        self.assertEqual(queue.view()["state"], "empty")
+        parked = queue.prepare("AUTO-R01", resolver=lambda _code: shifted)
+        self.assertEqual(parked["state"], "review_required")
+        self.assertEqual(parked["items"][0]["reason"], "source_pin_changed")
+        self.assertIsNone(parked["next"])
         self.assertEqual(tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes(),
                          prior)
+
+    def test_manual_queue_parks_ack_pending_first_and_keeps_other_tasks(self):
+        # The user explicitly supplied AI-I01 first. Its past local receipt
+        # may have been delivered already: do not replay it or block AI-I02.
+        candidates = queue.discover_backend_candidates(self.github)
+        mapping = {x["code"]: x for x in candidates}
+        task = mapping["AUTO-R01"]
+        queue.prepare("AUTO-R01", resolver=lambda _code: task)
+        queue.clear(approved=True)
+        record = tf.load_task("AUTO-R01")
+        record["status"] = "awaiting_cloud_ack"
+        record["latest_receipt"] = {"id": "JOB-PERSISTED"}
+        tf._save_task(record)
+        saved_path = tf._task_path("AUTO-R01", "llocphann/Alis")
+        before = saved_path.read_bytes()
+        prepared = queue.prepare("AUTO-R01;AUTO-I02",
+                                 resolver=lambda code: mapping[code])
+        self.assertEqual(prepared["state"], "prepared")
+        self.assertEqual(prepared["deferred_count"], 1)
+        self.assertEqual([item["code"] for item in prepared["items"]],
+                         ["AUTO-I02", "AUTO-R01"])
+        self.assertEqual(prepared["items"][0]["state"], "queued")
+        self.assertEqual(prepared["items"][1]["reason"], "cloud_ack_pending")
+        self.assertEqual(prepared["next"]["code"], "AUTO-I02")
+        self.assertFalse(queue._load()["approved_start"])
+        self.assertEqual(saved_path.read_bytes(), before)
+        duplicate = queue.prepare("AUTO-R01;AUTO-I02",
+                                  resolver=lambda _code: self.fail("must not resolve"))
+        self.assertTrue(duplicate["duplicate"])
+        self.assertEqual(saved_path.read_bytes(), before)
+        claimed = queue.claim(verified_start=lambda *_args: True)
+        self.assertEqual(claimed["selected"]["code"], "AUTO-I02")
+        first = queue.view()
+        self.assertEqual(first["active"]["code"], "AUTO-I02")
+        self.assertEqual(first["items"][1]["reason"], "cloud_ack_pending")
+
+    def test_all_deferred_tasks_can_only_be_archived_by_explicit_owner(self):
+        task = queue.discover_backend_candidates(self.github)[0]
+        queue.prepare("AUTO-R01", resolver=lambda _code: task)
+        queue.clear(approved=True)
+        record = tf.load_task("AUTO-R01")
+        record["status"] = "awaiting_cloud_ack"
+        record["latest_receipt"] = {"id": "JOB-IMMUTABLE"}
+        tf._save_task(record)
+        location = tf._task_path("AUTO-R01", "llocphann/Alis")
+        before = location.read_bytes()
+        result = queue.prepare("AUTO-R01", resolver=lambda _code: task)
+        self.assertEqual(result["state"], "review_required")
+        self.assertEqual(result["deferred_count"], 1)
+        self.assertIsNone(result["next"])
+        with self.assertRaises(tf.TaskError):
+            queue.approve_ordered_start()
+        with self.assertRaises(tf.TaskError):
+            queue.clear(expected_queued="")
+        cleared = queue.clear(approved=True, expected_queued="")
+        self.assertEqual(cleared["state"], "empty")
+        self.assertEqual(location.read_bytes(), before)
+        self.assertTrue(list((tf.state_dir() / "queue-history").glob("cleared-*.json")))
 
     def test_clear_requires_confirmation_preserves_original_task_records(self):
         queue.prepare_auto(api=self.github)
