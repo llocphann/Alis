@@ -26,6 +26,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fish jq rsync
 
+      - name: Verify disabled-Parallax wallpaper geometry and Liquid shader contract
+        shell: bash
+        run: |
+          python3 scripts/test-wallpaper-parallax-optout.py
+          python3 scripts/test-wallpaper-liquid-contract.py
+          python3 scripts/test-wallpaper-abyss-liquid.py
+
       - name: Verify notification retention and Mark-all-read policies
         shell: bash
         run: |
