@@ -1325,6 +1325,9 @@ Scope {
                     }
 
                     onTransitionFinished: {
+                        // Wallpaper colors are generated only after the actual
+                        // Liquid frame sequence, never during GPU texture upload.
+                        Wallpapers.liquidWallpaperTransitionFinished(wallpaper.renderState().displayedSource)
                         if (bgRoot._parallaxWaitingCrossfader && bgRoot._parallaxTransitionReason === "wallpaper")
                             bgRoot.settleParallaxAfterTransition()
                     }
