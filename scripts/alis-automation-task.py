@@ -224,7 +224,15 @@ def main():
             # queue Start. Preserve the original private files in place.
             from automation.chat_bridge.ui_recovery_preview import preview as recovery_preview
             from automation.manager import store as manager_store
-            config, runtime_state, config_issues = manager_store.read_snapshot()
+            # A newly installed instance may not have the managed first
+            # prompt/state yet. Do not initialize or read the manager unless
+            # a STOPPED original queue actually needs pending diagnostics.
+            if (isinstance(manifest, dict)
+                    and manifest.get("state") in {"stopping", "stopped"}
+                    and isinstance(manifest.get("active"), dict)):
+                config, runtime_state, config_issues = manager_store.read_snapshot()
+            else:
+                config, runtime_state, config_issues = {}, {}, []
             recovery_status = recovery_preview(
                 manifest, config if not config_issues else {},
                 runtime_state if not config_issues else {},
