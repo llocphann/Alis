@@ -1,0 +1,8 @@
+{
+  "source_sha": "a92e8fb91f0c2bc9f191723e21c9e9db629466ae",
+  "before_sha256": "e90d6b4d419e4fbae574c74b5f465887ad0af24dcb3e7eba2a9520d13d217b53",
+  "after_sha256": "02700436f4cd1c082a82e7e9391716568bd43c4df805398dd66c88c6efc9d153",
+  "backup_saved": true,
+  "desktop_restarted": false,
+  "scope": "Only user-local alis CLI replaced after exact before-hash comparison; original and intermediate bytes backed up privately."
+}

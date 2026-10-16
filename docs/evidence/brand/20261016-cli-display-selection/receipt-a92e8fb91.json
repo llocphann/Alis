@@ -1,0 +1,46 @@
+{
+  "schema": "alis.cli-display-regression.v1",
+  "source_sha": "a92e8fb91f0c2bc9f191723e21c9e9db629466ae",
+  "state": "PASS",
+  "private_compositor_ready": true,
+  "same_shell_id_on_another_display": true,
+  "private_first_inventory": true,
+  "path_scoped_host_probe_did_not_return_private_config": true,
+  "automatic_selection_skipped_private": true,
+  "installed_logs_actual_exit": 0,
+  "wrong_display_reader_error": false,
+  "production_restarted": false,
+  "private_fixture_cleaned": true,
+  "focused_checks": [
+    {
+      "argv": [
+        "python3",
+        "scripts/test-brand-cli-instance-selection.py"
+      ],
+      "actual_exit": 0,
+      "state": "PASS"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-brand-cli-session-guard.py"
+      ],
+      "actual_exit": 0,
+      "state": "PASS"
+    },
+    {
+      "argv": [
+        "bash",
+        "-n",
+        "scripts/alis"
+      ],
+      "actual_exit": 0,
+      "state": "PASS"
+    }
+  ],
+  "scope": "Default CLI runtime selection and local log-reader regression; full canonical source qualification and Owner acceptance remain separate.",
+  "earlier_probe_findings": [
+    "Initial native probe exposed shared-ShellId path aliasing; selection now verifies the actual current-display config path.",
+    "A subsequent standalone probe omitted canonicalize_path; the harness dependency was corrected before the recorded native PASS."
+  ]
+}
