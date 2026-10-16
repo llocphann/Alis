@@ -198,8 +198,9 @@ Item {
             }
             QuickNotesPopup {
                 id: notesPopup
-                // Reuse the existing popup policy/vacancy placement identity.
-                liquidPresentationKind: "quickNotes"
+                // Use the module kind for placement; legacy corner IPC
+                // offsets must never override the draggable module anchor.
+                liquidPresentationKind: "notesTimers"
                 anchorItem: notesFace.trigger
                 cornerAttachmentEdge: root.attachedEdge
                 cornerAttachmentThickness: -1
@@ -225,7 +226,7 @@ Item {
             }
             NotificationCenterPopup {
                 id: notificationPopup
-                liquidPresentationKind: "notificationCenter"
+                liquidPresentationKind: "notificationActivity"
                 anchorItem: notificationFace.trigger
                 outputName: root.outputName
                 moduleAnchorMode: true
