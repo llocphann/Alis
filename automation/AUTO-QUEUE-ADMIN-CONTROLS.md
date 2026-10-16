@@ -95,6 +95,41 @@ The new `backend-status` response exposes bounded
 for diagnosis. No private chat IDs, secrets or prompt contents are
 included; no readiness check authorizes any delivery.
 
+## Previously running profile still blocks Start
+
+A queue can be **Ready** with eligible tasks while the UI-only Start gate
+correctly rejects an unrelated old profile. Alis distinguishes:
+
+- **Historical native chat only** — a stopped, idle/completed/disabled
+  profile with no pending message, job, running intent, error recovery or
+  removal. This session is preserved and does not itself block another
+  queue. A session is *not* a pending Send receipt; saved native pending
+  sends still block until reconciled.
+- **Old default Automation profile scheduled but never sent** — if the
+  original default profile is `desired=run` but has no pending Send, job,
+  running action or uncertain recovery, the **active queue-only UI manager**
+  cannot dispatch it. Settings may offer **Stop idle legacy**. Clicking
+  and confirming revokes only this default profile's dormant schedule.
+  The operation rechecks the exact full queue snapshot and the manager
+  profile under its state lock. It preserves the entire old session,
+  checkpoint, chat history, job/receipt files, and queued task records.
+  No worker is killed, no ChatGPT message sent and no service restarted.
+  Recheck backend status before using the separate **Prepare UI** and
+  **Start UI** confirmations.
+- **Genuinely unsettled old work** — a profile with a pending message,
+  job, `run_active` state or other unmatched evidence. Start remains
+  blocked. The status reply now includes redacted *counts* of scheduled,
+  pending, job, native-session and harmless historical-session records.
+  It does not include private conversation IDs or prompt data. Resolve
+  the exact original evidence in the existing manager; do not Clear,
+  re-pin or replay it simply to make Start available.
+
+If the installed service is still **native** or **single-profile UI**,
+an old schedule Stop cannot silently change its mode. Owner-approved
+safe service cutover to `--ui-loop-queue` is separately required.
+The installation on the Owner desktop and its live receipts must be
+verified there; these source changes alone do not turn on Start.
+
 ## Queue controls: Stop, Clear queued, Clear stopped queue
 
 Settings → Automation → GitHub tasks shows separate owner-confirmed controls:
