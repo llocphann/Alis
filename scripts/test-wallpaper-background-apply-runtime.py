@@ -95,6 +95,9 @@ ShellRoot {
    window.visible=true
    tryVerify(()=>!wall.transitionBusy,5000)
    check(wall.renderState().displayedSource.endsWith('/c.png'),"hidden desktop apply did not catch up when shown: "+JSON.stringify(wall.renderState()))
+   // Hidden/instant swaps cannot emit transitionFinished. Verify that the
+   // deferred color helper still runs through its bounded safety deadline.
+   tryVerify(()=>Wallpapers._pendingLiquidThemePath==="",3500)
    capture(wall,"shown")
    // A loaded image with no presentation window must never wait forever for
    // frameSwapped. Attach it only after the handoff has finished, then capture
