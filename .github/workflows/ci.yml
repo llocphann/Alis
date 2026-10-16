@@ -105,6 +105,9 @@ jobs:
           python3 scripts/test-abyss-module-layout.py
           node scripts/test-abyss-full-size-modules.mjs
           node scripts/test-abyss-multi-selection.mjs
+          # Validates the actual AbyssCorners field host; native pointer
+          # portion runs only when Quickshell/Wayland is available.
+          bash scripts/test-abyss-corner-content.sh
 
       - name: Verify Panels Quick Notes card removal keeps existing popup contracts
         shell: bash
