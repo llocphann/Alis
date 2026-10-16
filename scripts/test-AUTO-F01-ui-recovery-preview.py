@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+"""Read-only recovery preflight never promotes an original UI send."""
+from __future__ import annotations
+import copy
+import hashlib
+import json
+from pathlib import Path
+import tempfile
+import unittest
+
+from automation import managed_tasks
+from automation.chat_bridge import ui_recovery_preview
+
+REPO = "llocphann/Alis"
+CODE = "NOTES-F01"
+ATTEMPT = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+JID = "11111111-2222-3333-4444-555555555555"
+PROMPT = "[$github](app://connector_76869538009648d5b282a4bb21c3d157)\n\nOriginal diagnostic pending\nAlis UI request token: " + ATTEMPT + "\n"
+DIGEST = hashlib.sha256(PROMPT.encode("utf-8")).hexdigest()
+
+
+class RecoveryPreview(unittest.TestCase):
+    def setUp(self):
+        self.home = tempfile.TemporaryDirectory()
+        self.addCleanup(self.home.cleanup)
+        root = Path(self.home.name) / "ui-send-journal"
+        root.mkdir()
+        self.path = root / "pending.json"
+        pid = managed_tasks.profile_id(REPO, CODE)
+        self.manifest = {
+            "mode": "ordered", "state": "stopping",
+            "active": {"repository": REPO, "code": CODE},
+            "stop_requested": True, "approved_start": False,
+            "items": [{"repository": REPO, "code": CODE, "state": "active"}],
+        }
+        self.config = {"profiles": [
+            {"id": pid, "description": f"taskflow:{REPO}:{CODE}"}]}
+        self.state = {"profiles": {pid: {
+            "desired": "stopped", "status": "ui_reconciliation_required",
+            "run_active": False, "job_id": None,
+            "session": {"ui_target_key": "f" * 64,
+                        "local_run_id": "PRIVATE_CONVERSATION_ID"},
+            "pending": {
+                "transport": "alis-ui-once", "attempt_id": ATTEMPT,
+                "kind": "continuation", "prompt": PROMPT,
+                "prompt_sha256": DIGEST, "PRIVATE_SECRET": "NEVER_PRINT",
+            },
+        }}}
+        self.journal = {"schema": "alis.chat-ui-send.v1",
+                        "phase": "attempted",
+                        "id": JID, "prompt_sha256": DIGEST,
+                        "command": "send"}
+        self.write_journal()
+
+    def write_journal(self):
+        self.path.write_text(json.dumps(self.journal), encoding="utf-8")
+
+    def inspect(self):
+        return ui_recovery_preview.preview(
+            self.manifest, self.config, self.state, self.path)
+
+    def test_matching_original_is_candidate_not_accepted_receipt(self):
+        before = self.path.read_bytes()
+        original = json.dumps((self.manifest, self.config, self.state),
+                              sort_keys=True)
+        result = self.inspect()
+        self.assertTrue(result["read_only_observation_candidate"])
+        self.assertTrue(result["ui_pending"])
+        self.assertTrue(result["original_prompt_integrity"])
+        self.assertTrue(result["first_turn_anchor_present"])
+        self.assertEqual(result["original_journal"], "matching_attempt")
+        self.assertEqual(result["phase"], "original_observation_candidate")
+        self.assertTrue(result["owner_confirmation_required"])
+        self.assertFalse(result["send_or_queue_start_authorized"])
+        self.assertEqual(self.path.read_bytes(), before)
+        self.assertEqual(json.dumps((self.manifest, self.config, self.state),
+                                    sort_keys=True), original)
+        visible = json.dumps(result)
+        for private in (ATTEMPT, JID, PROMPT, DIGEST,
+                        "PRIVATE_CONVERSATION_ID", "NEVER_PRINT", "profile-"):
+            self.assertNotIn(private, visible)
+
+    def test_no_authority_if_not_paused_and_revoked(self):
+        for state in ("active", "prepared", "waiting", "finished", "review_required"):
+            self.manifest["state"] = state
+            self.assertFalse(self.inspect()["read_only_observation_candidate"])
+        self.manifest["state"] = "stopping"
+        for field, unsafe in (("stop_requested", False),
+                               ("approved_start", True),
+                               ("active", None)):
+            prior = self.manifest[field]
+            self.manifest[field] = unsafe
+            self.assertFalse(self.inspect()["read_only_observation_candidate"])
+            self.manifest[field] = prior
+        pid = next(iter(self.state["profiles"]))
+        for key, value in (("desired", "run"),
+                           ("job_id", "JOB-NOT-COMPLETE"),
+                           ("run_active", True)):
+            original = self.state["profiles"][pid][key]
+            self.state["profiles"][pid][key] = value
+            self.assertFalse(self.inspect()["read_only_observation_candidate"])
+            self.state["profiles"][pid][key] = original
+
+    def test_prompt_identity_and_journal_fail_closed(self):
+        pid = next(iter(self.state["profiles"]))
+        pending = self.state["profiles"][pid]["pending"]
+        for key, value in (
+            ("prompt", PROMPT.replace(ATTEMPT, "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")),
+            ("prompt", PROMPT + "later text"),
+            ("prompt", PROMPT + "\nAlis UI request token: " + ATTEMPT + "\n"),
+            ("prompt_sha256", "0" * 64),
+            ("attempt_id", "INVALID-ATTEMPT"),
+            ("transport", "native"),
+        ):
+            original = pending[key]
+            pending[key] = value
+            self.assertFalse(self.inspect()["read_only_observation_candidate"])
+            pending[key] = original
+        for field, value in (("phase", "prepared"),
+                             ("command", "rotate-send"),
+                             ("prompt_sha256", "a" * 64),
+                             ("id", "NOT-A-UUID")):
+            original = self.journal[field]
+            self.journal[field] = value
+            self.write_journal()
+            self.assertEqual(self.inspect()["reason"],
+                             "ORIGINAL_JOURNAL_UNVERIFIED")
+            self.journal[field] = original
+        self.write_journal()
+        self.path.unlink()
+        self.assertEqual(self.inspect()["original_journal"], "missing")
+        self.path.symlink_to(Path(self.home.name) / "private.json")
+        self.assertEqual(self.inspect()["original_journal"], "unsafe_path")
+
+    def test_fresh_queue_is_not_recovery_candidate(self):
+        self.assertFalse(ui_recovery_preview.preview(
+            None, self.config, self.state, self.path)["read_only_observation_candidate"])
+        bad = copy.deepcopy(self.manifest)
+        bad["items"][0]["state"] = "awaiting_owner"
+        self.assertEqual(ui_recovery_preview.preview(
+            bad, self.config, self.state, self.path)["reason"],
+            "QUEUE_ACTIVE_MEMBER_UNVERIFIED")
+
+
+if __name__ == "__main__":
+    unittest.main()
