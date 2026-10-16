@@ -1,26 +1,31 @@
 #!/usr/bin/env python3
-"""Desktop context menus must re-map to the newest click, not move an active xdg-popup."""
+"""Desktop context popup: slide-only motion, precise pointer anchor, safe remap."""
 from pathlib import Path
+import re
 
-root = Path(__file__).resolve().parents[1]
-desktop = (root / "modules/background/Background.qml").read_text()
-menu = (root / "modules/common/widgets/ContextMenu.qml").read_text()
+repo = Path(__file__).resolve().parents[1]
+desktop = (repo / "modules/background/Background.qml").read_text()
+menu = (repo / "modules/common/widgets/ContextMenu.qml").read_text()
 
 bare = desktop.split("id: desktopContextMenu", 1)[1].split("model:", 1)[0]
 managed = desktop.split("id: desktopItemContextMenu", 1)[1].split("WidgetCanvas {", 1)[0]
-for label, block in (("desktop", bare), ("desktop item", managed)):
-    assert "fadeOnly: true" in block, label
-    assert "scaleContent: false" in block, label
-    assert "fadeOutDuration: 90" in block, label
-    assert "fadeInDuration: 130" in block, label
-    assert "closeOnHoverLost: false" in block, label
-    assert "popupAdjustment: PopupAdjustment.SlideX | PopupAdjustment.SlideY" in block, label
-    assert "popupAbove: desktopMenuAnchor.y > bgRoot.height - 230" in block, label
-    # Duplicate QML property assignments make both ContextMenu instances invalid.
-    assert block.count("popupAbove:") == 1, f"{label}: duplicate popupAbove assignment"
 
-# The click source and the anchor are siblings; never assume event-local coords
-# are the anchor's coordinate space.
+# Catch the exact duplicate-property bug that previously prevented loading.
+for label, block in (("desktop", bare), ("desktop item", managed)):
+    assert block.count("popupAbove:") == 1, (label, "duplicate popupAbove")
+    assert block.count("popupAdjustment:") == 1, (label, "duplicate popupAdjustment")
+    assert "cursorSlide: true" in block, label
+    assert "scaleContent: false" in block, label
+    assert "fadeOnly: true" not in block, label
+    assert "closeOnHoverLost: false" in block, label
+    assert "closeOnFocusLost: false" in block, label
+    for token in ("PopupAdjustment.FlipX", "PopupAdjustment.FlipY",
+                  "PopupAdjustment.SlideX", "PopupAdjustment.SlideY"):
+        assert token in block, (label, token)
+    assert "PopupAdjustment.Resize" not in block, label
+    assert "popupAbove: desktopMenuAnchor.y > bgRoot.height - 230" in block, label
+
+# Map desktop and desktop-item click coordinates to the anchor's parent.
 assert "id: desktopContextHitArea" in desktop
 assert "desktopContextHitArea.mapToItem(" in desktop
 assert "desktopMenuAnchor.parent, mouse.x, mouse.y" in desktop
@@ -28,15 +33,20 @@ assert "desktopContextMenu.requestOpenAt(point.x, point.y)" in desktop
 assert "desktopItemDelegate.mapToItem(" in desktop
 assert "desktopItemContextMenu.requestOpenAt(position.x, position.y, menuModel)" in desktop
 
-# A Wayland PopupWindow that is already mapped must be destroyed BEFORE the
-# requested anchor is moved: anchor.updateAnchor() alone doesn't move it on Niri.
-assert "property bool relocationQueued: false" in menu
-assert "property bool relocationCommitting: false" in menu
+# With only a vertical Edges.Top/Bottom flag, the popup is CENTERED around
+# the cursor horizontally. Pair Edges.Left of the anchor with Edges.Right
+# expansion of the popup to place its left edge at the clicked X position.
+assert "property bool cursorSlide: false" in menu
+assert re.search(r"gravity:\s*root\.cursorSlide\s*\?\s*\(\(root\.popupAbove\s*\?\s*Edges\.Top\s*:\s*Edges\.Bottom\)\s*\|\s*Edges\.Right\)", menu)
+assert re.search(r"edges:\s*root\.cursorSlide\s*\?\s*\(\(root\.popupAbove\s*\?\s*Edges\.Top\s*:\s*Edges\.Bottom\)\s*\|\s*Edges\.Left\)", menu)
+
+# Remap xdg-popup only after the old surface exits; newest click wins.
 assert "function requestOpenAt(x: real, y: real, newModel: var): void" in menu
-assert "root.relocationQueued = true" in menu
+assert "if (root.relocationQueued)" in menu
 assert "root.relocationX = nextX" in menu
 assert "root.relocationY = nextY" in menu
-assert "root.item.fadeForRelocation()" in menu
+assert "root.item.slideForRelocation()" in menu
+assert "function slideForRelocation(): void" in menu
 assert "function commitRelocation(): void" in menu
 assert "root.relocationCommitting = true" in menu
 assert "root.active = false" in menu
@@ -44,19 +54,19 @@ assert "Qt.callLater(() => {" in menu
 assert "root.anchorItem.x = root.relocationX" in menu
 assert "root.anchorItem.y = root.relocationY" in menu
 assert "root.relocationModelProvided" in menu
-assert "function fadeForRelocation(): void" in menu
 assert "ScriptAction { script: root.commitRelocation() }" in menu
-assert "root.relocationQueued = false" in menu
 assert "GlobalStates.activeContextMenu && GlobalStates.activeContextMenu !== root" in menu
 
-# Fade body and shadow as one layer. Other ContextMenu consumers retain the
-# older reveal profile, and animation-disabled mode does an immediate swap.
-assert "opacity: popupWindow.relocationOpacity" in menu
-assert "root.fadeOnly ? 1" in menu
-assert "property bool fadeOnly: false" in menu
-assert "if (Appearance.animationsEnabled)" in menu
-assert "else\n                root.commitRelocation()" in menu
-assert "popupWindow.anchor.updateAnchor()" not in menu
-assert "pendingAnchorX" not in menu
+# Slide animation, no fading or scaling for either desktop menu.
+assert "target: popupWindow" in menu
+assert 'property: "sourceEdgeMargin"' in menu
+assert "id: openAnim" in menu
+assert "id: closeAnim" in menu
+assert "id: relocationAnim" in menu
+assert "opacity: root.cursorSlide ? 1" in menu
+assert "enabled: Appearance.animationsEnabled && !root.cursorSlide" in menu
+assert "property real relocationOpacity" not in menu
+assert "fadeOnlyOpenAnim" not in menu
+assert "fadeOnlyCloseAnim" not in menu
 
-print("PASS: desktop context menu remap, pointer mapping and corner-clamp contracts")
+print("PASS: desktop context menu slide, cursor anchor, corner flip and remap contracts")
