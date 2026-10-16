@@ -553,6 +553,34 @@ class QueueControls(unittest.TestCase):
         self.assertNotIn("root.queueStatusConfirmed", button)
         self.assertIn('"--expected-queued", targets', qml)
 
+    def test_identical_queue_recreated_same_second_has_new_generation(self):
+        # Old approval cannot target a new manifest, even if all task codes,
+        # timestamps, order, and pinned GitHub source bytes are identical.
+        with patch.object(queue.time, "time", return_value=1792100000):
+            first = queue.prepare_auto(api=self.github)
+            first_id = first["snapshot_id"]
+            with queue._lock():
+                original = queue._load()
+            expected = ";".join(x["repository"] + ":" + x["code"]
+                                for x in first["items"] if x["state"] == "queued")
+            queue.clear(approved=True, expected_queued=expected,
+                        expected_snapshot_id=first_id)
+            later = queue.prepare_auto(api=self.github)
+            with queue._lock():
+                recreated = queue._load()
+        self.assertEqual(original["created_unix"], recreated["created_unix"])
+        self.assertEqual(original["requested"], recreated["requested"])
+        self.assertEqual(original["items"], recreated["items"])
+        self.assertNotEqual(original["generation"], recreated["generation"])
+        self.assertNotEqual(first_id, later["snapshot_id"])
+        with self.assertRaisesRegex(tf.TaskError, "Queue changed"):
+            queue.approve_ordered_start(expected_snapshot_id=first_id)
+        with self.assertRaisesRegex(tf.TaskError, "Queue changed"):
+            queue.clear(approved=True, expected_queued=expected,
+                        expected_snapshot_id=first_id)
+        self.assertFalse(queue._load()["approved_start"])
+        self.assertEqual(queue.view()["state"], "prepared")
+
     def test_clear_rejects_stale_queue_generation_even_with_same_queued_codes(self):
         queue.prepare_auto(api=self.github)
         initial = queue.view()
