@@ -28,13 +28,12 @@ Loader {
     property var anchorRect: null
     property var popupAdjustment: null
     property bool scaleContent: Config.options?.panelFamily === "abyss" ? false : Appearance.motion.popupReveal.enableScale
-    // Desktop click menus can use fade-only presentation and animated re-anchoring.
-    property bool fadeOnly: false
-    property int fadeInDuration: 130
-    property int fadeOutDuration: 90
+    // Cursor-positioned desktop menus use a quick slide-only reveal. Other
+    // ContextMenu consumers retain the regular fade/scale profile.
+    property bool cursorSlide: false
 
-    // A mapped xdg-popup cannot always be re-anchored on Niri. Queue the
-    // latest click and recreate exactly one native popup after fading out.
+    // Mapped xdg-popups are not reliably reanchorable on Niri. Queue the
+    // latest click, slide the old menu away, then remap a single new popup.
     property bool relocationQueued: false
     property bool relocationCommitting: false
     property real relocationX: 0
@@ -93,14 +92,14 @@ Loader {
             }
             return
         }
-        if (root.active && root.item && root.fadeOnly) {
+        if (root.active && root.item && root.cursorSlide) {
             root.relocationQueued = true
             root.relocationX = nextX
             root.relocationY = nextY
             root.relocationModel = newModel
             root.relocationModelProvided = newModel !== undefined
             if (Appearance.animationsEnabled)
-                root.item.fadeForRelocation()
+                root.item.slideForRelocation()
             else
                 root.commitRelocation()
             return
@@ -166,7 +165,6 @@ Loader {
         visible: true
         grabFocus: root.keyboardGrab && CompositorService.isNiri
         property bool closing: false
-        property real relocationOpacity: 1
         // Popup animations can sweep the content under a stationary pointer,
         // especially when the desktop menu opens near a retracted Abyss Edge.
         // A transient hover during this entrance is not a user visit: only
@@ -202,15 +200,11 @@ Loader {
         Component.onCompleted: {
             realContent.shown = true;
             Qt.callLater(() => keyHandler.forceActiveFocus());
-            if (root.fadeOnly) {
-                // Skip the shared slide/scale presentation for desktop menus.
+            if (Appearance.animationsEnabled)
+                openAnim.start();
+            else {
                 popupWindow.sourceEdgeMargin = popupWindow.settledMargin;
                 popupWindow.entranceSettled = true;
-                popupWindow.relocationOpacity = Appearance.animationsEnabled ? 0 : 1;
-                if (Appearance.animationsEnabled)
-                    fadeOnlyOpenAnim.start();
-            } else {
-                openAnim.start();
             }
         }
 
@@ -235,12 +229,17 @@ Loader {
             rect.y: Number(root.anchorRect?.y ?? 0)
             rect.width: Number(root.anchorRect?.width ?? (root.anchorItem?.width ?? 0))
             rect.height: Number(root.anchorRect?.height ?? (root.anchorItem?.height ?? 0))
-            gravity: root.popupSide !== 0
-                ? root.popupSide
-                : (root.popupAbove ? Edges.Top : Edges.Bottom)
-            edges: root.popupSide !== 0
-                ? root.popupSide
-                : (root.popupAbove ? Edges.Top : Edges.Bottom)
+            // A single vertical Edge flag centers the popup on the X axis.
+            // Cursor menus need an explicit LEFT anchor / RIGHT expansion so
+            // their top-left corner lands next to the pointer, not centered.
+            gravity: root.cursorSlide
+                ? ((root.popupAbove ? Edges.Top : Edges.Bottom) | Edges.Right)
+                : (root.popupSide !== 0 ? root.popupSide
+                    : (root.popupAbove ? Edges.Top : Edges.Bottom))
+            edges: root.cursorSlide
+                ? ((root.popupAbove ? Edges.Top : Edges.Bottom) | Edges.Left)
+                : (root.popupSide !== 0 ? root.popupSide
+                    : (root.popupAbove ? Edges.Top : Edges.Bottom))
         }
 
         CompositorFocusGrab {
@@ -264,11 +263,12 @@ Loader {
         function close(): void {
             if (root.noSmoothClosing || !Appearance.animationsEnabled) {
                 root.active = false;
-            } else if (root.fadeOnly) {
-                fadeOnlyOpenAnim.stop();
+            } else if (root.cursorSlide) {
+                openAnim.stop();
                 relocationAnim.stop();
                 popupWindow.closing = true;
-                fadeOnlyCloseAnim.restart();
+                realContent.shown = false;
+                closeAnim.restart();
             } else {
                 popupWindow.closing = true;
                 realContent.shown = false;
@@ -276,11 +276,11 @@ Loader {
             }
         }
 
-        function fadeForRelocation(): void {
-            fadeOnlyOpenAnim.stop();
-            fadeOnlyCloseAnim.stop();
+        function slideForRelocation(): void {
+            openAnim.stop();
+            closeAnim.stop();
             relocationAnim.stop();
-            popupWindow.closing = false;
+            popupWindow.closing = true;
             relocationAnim.start();
         }
 
@@ -306,7 +306,8 @@ Loader {
             target: popupWindow
             property: "sourceEdgeMargin"
             to: popupWindow.settledMargin
-            duration: Appearance.animation.elementMoveEnter.duration
+            duration: root.cursorSlide ? Math.min(165, Appearance.animation.elementMoveEnter.duration)
+                : Appearance.animation.elementMoveEnter.duration
             easing.type: Appearance.animation.elementMoveEnter.type
             easing.bezierCurve: Appearance.motion.popupReveal.enterBezierCurve
             onStopped: {
@@ -322,7 +323,8 @@ Loader {
                 target: popupWindow
                 property: "sourceEdgeMargin"
                 to: popupWindow.isHorizontalPopup ? -popupWindow.implicitWidth : -popupWindow.implicitHeight
-                duration: Appearance.animation.elementMoveExit.duration
+                duration: root.cursorSlide ? Math.min(115, Appearance.animation.elementMoveExit.duration)
+                    : Appearance.animation.elementMoveExit.duration
                 easing.type: Appearance.animation.elementMoveExit.type
                 easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve
             }
@@ -331,207 +333,183 @@ Loader {
             }
         }
 
-        NumberAnimation {
-            id: fadeOnlyOpenAnim
-            target: popupWindow
-            property: "relocationOpacity"
-            to: 1
-            duration: root.fadeInDuration
-            easing.type: Easing.OutCubic
-        }
-        SequentialAnimation {
-            id: fadeOnlyCloseAnim
-            NumberAnimation {
-                target: popupWindow
-                property: "relocationOpacity"
-                to: 0
-                duration: root.fadeOutDuration
-                easing.type: Easing.OutQuad
-            }
-            ScriptAction { script: root.active = false }
-        }
         SequentialAnimation {
             id: relocationAnim
-            NumberAnimation {
+            PropertyAnimation {
                 target: popupWindow
-                property: "relocationOpacity"
-                to: 0
-                duration: root.fadeOutDuration
-                easing.type: Easing.OutQuad
+                property: "sourceEdgeMargin"
+                to: popupWindow.isHorizontalPopup
+                    ? -popupWindow.implicitWidth : -popupWindow.implicitHeight
+                duration: Math.min(115, Appearance.animation.elementMoveExit.duration)
+                easing.type: Appearance.animation.elementMoveExit.type
+                easing.bezierCurve: Appearance.animation.elementMoveExit.bezierCurve
             }
             ScriptAction { script: root.commitRelocation() }
         }
 
         color: "transparent"
 
-        // Fade the menu and its shadow together, without altering shared
-        // PopupWindow input, anchoring or the normal menu presentation.
-        Item {
-            id: fadeLayer
-            anchors.fill: parent
-            opacity: popupWindow.relocationOpacity
+        StyledRectangularShadow {
+            target: realContent
+        }
 
-            StyledRectangularShadow {
-                target: realContent
+        GlassBackground {
+            id: realContent
+            z: 1
+            property bool shown: false
+            anchors {
+                // Vertical popup (above/below)
+                left: !popupWindow.isHorizontalPopup ? parent.left : (popupWindow.isLeftSide ? undefined : parent.left)
+                right: !popupWindow.isHorizontalPopup ? parent.right : (popupWindow.isLeftSide ? parent.right : undefined)
+                top: !popupWindow.isHorizontalPopup ? (root.popupAbove ? undefined : parent.top) : parent.top
+                bottom: !popupWindow.isHorizontalPopup ? (root.popupAbove ? parent.bottom : undefined) : parent.bottom
+
+                margins: root.ambientShadowWidth + root.visualMargin
+                bottomMargin: !popupWindow.isHorizontalPopup && root.popupAbove ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
+                topMargin: !popupWindow.isHorizontalPopup && !root.popupAbove ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
+                leftMargin: popupWindow.isHorizontalPopup && !popupWindow.isLeftSide ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
+                rightMargin: popupWindow.isHorizontalPopup && popupWindow.isLeftSide ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
+            }
+            fallbackColor: root.panelFallbackColor
+            alisColor: Appearance.alis.colLayer2
+            auroraTransparency: Appearance.aurora.popupTransparentize
+            radius: root.panelRadius
+            border.width: root.panelBorderWidth
+            border.color: root.panelBorderColor
+            opacity: root.cursorSlide ? 1
+                : (Appearance.motion.popupReveal.enableFade ? (shown ? 1 : 0) : 1)
+            scale: shown ? 1
+                : (root.scaleContent
+                    ? Appearance.motion.popupReveal.closedScale
+                    : 1)
+            transformOrigin: popupWindow.isHorizontalPopup
+                ? (popupWindow.isLeftSide ? Item.Left : Item.Right)
+                : (root.popupAbove ? Item.Bottom : Item.Top)
+
+            implicitWidth: menuColumn.implicitWidth + (root.padding * 2)
+            implicitHeight: menuColumn.implicitHeight + (root.padding * 2)
+
+            Behavior on opacity {
+                enabled: Appearance.animationsEnabled && !root.cursorSlide
+                animation: NumberAnimation {
+                    duration: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.duration
+                        : Appearance.animation.elementMoveEnter.duration
+                    easing.type: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.type
+                        : Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.bezierCurve
+                        : Appearance.motion.popupReveal.enterBezierCurve
+                }
             }
 
-            GlassBackground {
-                id: realContent
-                z: 1
-                property bool shown: false
-                anchors {
-                    // Vertical popup (above/below)
-                    left: !popupWindow.isHorizontalPopup ? parent.left : (popupWindow.isLeftSide ? undefined : parent.left)
-                    right: !popupWindow.isHorizontalPopup ? parent.right : (popupWindow.isLeftSide ? parent.right : undefined)
-                    top: !popupWindow.isHorizontalPopup ? (root.popupAbove ? undefined : parent.top) : parent.top
-                    bottom: !popupWindow.isHorizontalPopup ? (root.popupAbove ? parent.bottom : undefined) : parent.bottom
-
-                    margins: root.ambientShadowWidth + root.visualMargin
-                    bottomMargin: !popupWindow.isHorizontalPopup && root.popupAbove ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
-                    topMargin: !popupWindow.isHorizontalPopup && !root.popupAbove ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
-                    leftMargin: popupWindow.isHorizontalPopup && !popupWindow.isLeftSide ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
-                    rightMargin: popupWindow.isHorizontalPopup && popupWindow.isLeftSide ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
+            Behavior on scale {
+                enabled: Appearance.animationsEnabled && root.scaleContent
+                animation: NumberAnimation {
+                    duration: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.duration
+                        : Appearance.animation.elementMoveEnter.duration
+                    easing.type: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.type
+                        : Appearance.animation.elementMoveEnter.type
+                    easing.bezierCurve: popupWindow.closing
+                        ? Appearance.animation.elementMoveExit.bezierCurve
+                        : Appearance.motion.popupReveal.enterBezierCurve
                 }
-                fallbackColor: root.panelFallbackColor
-                alisColor: Appearance.alis.colLayer2
-                auroraTransparency: Appearance.aurora.popupTransparentize
-                radius: root.panelRadius
-                border.width: root.panelBorderWidth
-                border.color: root.panelBorderColor
-                opacity: root.fadeOnly ? 1 : (Appearance.motion.popupReveal.enableFade ? (shown ? 1 : 0) : 1)
-                scale: shown ? 1
-                    : (root.scaleContent
-                        ? Appearance.motion.popupReveal.closedScale
-                        : 1)
-                transformOrigin: popupWindow.isHorizontalPopup
-                    ? (popupWindow.isLeftSide ? Item.Left : Item.Right)
-                    : (root.popupAbove ? Item.Bottom : Item.Top)
+            }
 
-                implicitWidth: menuColumn.implicitWidth + (root.padding * 2)
-                implicitHeight: menuColumn.implicitHeight + (root.padding * 2)
+            ColumnLayout {
+                id: menuColumn
+                anchors.centerIn: parent
+                spacing: 0
 
-                Behavior on opacity {
-                    enabled: Appearance.animationsEnabled
-                    animation: NumberAnimation {
-                        duration: popupWindow.closing
-                            ? Appearance.animation.elementMoveExit.duration
-                            : Appearance.animation.elementMoveEnter.duration
-                        easing.type: popupWindow.closing
-                            ? Appearance.animation.elementMoveExit.type
-                            : Appearance.animation.elementMoveEnter.type
-                        easing.bezierCurve: popupWindow.closing
-                            ? Appearance.animation.elementMoveExit.bezierCurve
-                            : Appearance.motion.popupReveal.enterBezierCurve
-                    }
-                }
-
-                Behavior on scale {
-                    enabled: Appearance.animationsEnabled && root.scaleContent
-                    animation: NumberAnimation {
-                        duration: popupWindow.closing
-                            ? Appearance.animation.elementMoveExit.duration
-                            : Appearance.animation.elementMoveEnter.duration
-                        easing.type: popupWindow.closing
-                            ? Appearance.animation.elementMoveExit.type
-                            : Appearance.animation.elementMoveEnter.type
-                        easing.bezierCurve: popupWindow.closing
-                            ? Appearance.animation.elementMoveExit.bezierCurve
-                            : Appearance.motion.popupReveal.enterBezierCurve
-                    }
-                }
-
-                ColumnLayout {
-                    id: menuColumn
-                    anchors.centerIn: parent
-                    spacing: 0
-
-                    Repeater {
-                        model: root.model
-                        delegate: DelegateChooser {
-                            role: "type"
-                            DelegateChoice {
-                                roleValue: "separator"
-                                Rectangle {
-                                    Layout.topMargin: 2
-                                    Layout.bottomMargin: 2
-                                    Layout.fillWidth: true
-                                    implicitHeight: 1
-                                    color: Appearance.colors.colOutlineVariant
-                                }
+                Repeater {
+                    model: root.model
+                    delegate: DelegateChooser {
+                        role: "type"
+                        DelegateChoice {
+                            roleValue: "separator"
+                            Rectangle {
+                                Layout.topMargin: 2
+                                Layout.bottomMargin: 2
+                                Layout.fillWidth: true
+                                implicitHeight: 1
+                                color: Appearance.colors.colOutlineVariant
                             }
-                            DelegateChoice {
-                                roleValue: undefined
-                                RippleButton {
-                                    id: menuBtn
-                                    Layout.fillWidth: true
+                        }
+                        DelegateChoice {
+                            roleValue: undefined
+                            RippleButton {
+                                id: menuBtn
+                                Layout.fillWidth: true
 
-                                    required property var modelData
-                                    enabled: modelData.enabled !== false
-                                    opacity: enabled ? 1 : 0.45
-                                    buttonHovered: enabled && menuHover.hovered
+                                required property var modelData
+                                enabled: modelData.enabled !== false
+                                opacity: enabled ? 1 : 0.45
+                                buttonHovered: enabled && menuHover.hovered
 
-                                    implicitWidth: Math.max(140, menuRow.implicitWidth + 20)
-                                    implicitHeight: 32
-                                    buttonRadius: Appearance.rounding.small
-                                    colBackground: "transparent"
-                                    colBackgroundHover: ColorUtils.transparentize(
-                                        Appearance.colors.colPrimary, 0.85)
-                                    colRipple: ColorUtils.transparentize(
-                                        Appearance.colors.colPrimary, 0.7)
+                                implicitWidth: Math.max(140, menuRow.implicitWidth + 20)
+                                implicitHeight: 32
+                                buttonRadius: Appearance.rounding.small
+                                colBackground: "transparent"
+                                colBackgroundHover: ColorUtils.transparentize(
+                                    Appearance.colors.colPrimary, 0.85)
+                                colRipple: ColorUtils.transparentize(
+                                    Appearance.colors.colPrimary, 0.7)
 
-                                    onClicked: {
-                                        if (!enabled) return;
-                                        // Some actions remove the delegate that owns this menu.
-                                        // Close first so the follow-up does not dereference a
-                                        // context-menu loader destroyed by its own action.
-                                        const action = modelData.action;
-                                        root.close();
-                                        if (action) action();
-                                    }
+                                onClicked: {
+                                    if (!enabled) return;
+                                    // Some actions remove the delegate that owns this menu.
+                                    // Close first so the follow-up does not dereference a
+                                    // context-menu loader destroyed by its own action.
+                                    const action = modelData.action;
+                                    root.close();
+                                    if (action) action();
+                                }
 
-                                    HoverHandler {
-                                        id: menuHover
-                                    }
+                                HoverHandler {
+                                    id: menuHover
+                                }
 
-                                    contentItem: RowLayout {
-                                        id: menuRow
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 8
-                                        anchors.rightMargin: anchors.leftMargin
-                                        spacing: 8
+                                contentItem: RowLayout {
+                                    id: menuRow
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 8
+                                    anchors.rightMargin: anchors.leftMargin
+                                    spacing: 8
 
-                                        Loader {
-                                            active: root.hasIcons
-                                            visible: active
-                                            Layout.alignment: Qt.AlignVCenter
+                                    Loader {
+                                        active: root.hasIcons
+                                        visible: active
+                                        Layout.alignment: Qt.AlignVCenter
 
-                                            sourceComponent: menuBtn.modelData.monochromeIcon === true ? materialIconComp : iconImageComp
+                                        sourceComponent: menuBtn.modelData.monochromeIcon === true ? materialIconComp : iconImageComp
 
-                                            Component {
-                                                id: materialIconComp
-                                                MaterialSymbol {
-                                                    text: menuBtn.modelData.iconName ?? ""
-                                                    iconSize: Appearance.font.pixelSize.normal
-                                                    color: Appearance.colors.colOnSurface
-                                                }
-                                            }
-
-                                            Component {
-                                                id: iconImageComp
-                                                IconImage {
-                                                    source: Quickshell.iconPath(menuBtn.modelData.iconName ?? "", "application-x-executable")
-                                                    implicitSize: Appearance.font.pixelSize.normal
-                                                }
+                                        Component {
+                                            id: materialIconComp
+                                            MaterialSymbol {
+                                                text: menuBtn.modelData.iconName ?? ""
+                                                iconSize: Appearance.font.pixelSize.normal
+                                                color: Appearance.colors.colOnSurface
                                             }
                                         }
 
-                                        StyledText {
-                                            text: menuBtn.modelData.text ?? ""
-                                            color: Appearance.colors.colOnSurface
-                                            font.pixelSize: Appearance.font.pixelSize.small
-                                            Layout.fillWidth: true
-                                            Layout.alignment: Qt.AlignVCenter
+                                        Component {
+                                            id: iconImageComp
+                                            IconImage {
+                                                source: Quickshell.iconPath(menuBtn.modelData.iconName ?? "", "application-x-executable")
+                                                implicitSize: Appearance.font.pixelSize.normal
+                                            }
                                         }
+                                    }
+
+                                    StyledText {
+                                        text: menuBtn.modelData.text ?? ""
+                                        color: Appearance.colors.colOnSurface
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
                                     }
                                 }
                             }
@@ -539,8 +517,8 @@ Loader {
                     }
                 }
             }
-
         }
+
 
         HoverHandler {
             id: popupHoverHandler
