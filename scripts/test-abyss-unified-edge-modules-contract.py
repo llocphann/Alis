@@ -15,6 +15,7 @@ corners = read("modules/screenCorners/ScreenCorners.qml")
 notes = read("modules/screenCorners/QuickNotesPopup.qml")
 center = read("modules/notificationCenter/NotificationCenterPopup.qml")
 perimeter = read("modules/abyss/AbyssPerimeter.qml")
+abyss_corners = read("modules/abyss/AbyssCorners.qml")
 
 for kind, label in (
     ("notesTimers", "QuickNotes & Timers"),
@@ -102,6 +103,39 @@ assert 'Config.options?.notificationCenter?.enable ?? true' in notification_gate
 assert 'cornerPanelWindow.notificationCenterTargetsOutput()' in notification_gate
 assert 'active: cornerPanelWindow.shouldShowQuickNotesCorner' in corners
 assert 'active: cornerPanelWindow.notificationCenterHostNeeded' in corners
+
+# The actual Abyss perimeter embeds AbyssCorners, not ii's
+# ScreenCorners. Edgebar ownership must be gated at the native
+# AbyssCorners anchors and input regions, including legacy-disabled profiles.
+assert 'AbyssCorners {' in perimeter
+assert 'Region { item:corners.notesAvailable ? corners.notesAnchor : emptyInput }' in perimeter
+assert 'Region { item:corners.centerAvailable ? corners.centerAnchor : emptyInput }' in perimeter
+assert 'import "looks/AbyssLayout.js" as ModuleLayout' in abyss_corners
+assert 'readonly property bool notesEdgebarMode:' in abyss_corners
+assert 'readonly property bool centerEdgebarMode:' in abyss_corners
+assert 'ModuleLayout.edgebarOwnsCornerHover(' in abyss_corners
+notes_policy=abyss_corners.split('readonly property bool notesAvailable:',1)[1].split('readonly property bool centerAvailable:',1)[0]
+center_policy=abyss_corners.split('readonly property bool centerAvailable:',1)[1].split('function targets(list)',1)[0]
+assert '&& notesEdgebarMode' in notes_policy
+assert '&& centerEdgebarMode' in center_policy
+for obsolete in (
+    'Config.options?.quickNotes?.enable',
+    'Config.options?.quickNotes?.monitorMode',
+):
+    assert obsolete not in notes_policy, obsolete
+for obsolete in (
+    'Config.options?.notificationCenter?.enable',
+    'Config.options?.notificationCenter?.hoverEnable',
+    'Config.options?.enabledPanels',
+    'Config.options?.notificationCenter?.screenList',
+):
+    assert obsolete not in center_policy, obsolete
+assert 'kind:"quickNotes";allowed:root.notesAvailable' in abyss_corners
+assert 'kind:"notificationCenter";allowed:root.centerAvailable' in abyss_corners
+assert 'hoverActivates:root.notesAvailable' in abyss_corners
+assert 'hoverAllowed:root.centerAvailable' in abyss_corners
+assert 'if (!notesAvailable && notesPopup.presentationActive)' in abyss_corners
+assert 'if (!centerAvailable && centerPopup.presentationActive)' in abyss_corners
 
 # Editor focus/popup contents are retained, not rewritten as new services.
 assert "onNotesEditorFocusChanged:" in perimeter
