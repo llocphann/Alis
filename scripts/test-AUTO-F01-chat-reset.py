@@ -138,6 +138,21 @@ class ChatResetTests(unittest.TestCase):
         with self.assertRaises(tf.TaskError):
             self.request()
 
+    def test_awaiting_owner_or_mismatched_receipt_never_resets(self):
+        self.record["status"] = "awaiting_owner"
+        before = self.entry()
+        with self.assertRaises(tf.TaskError):
+            self.request()
+        self.assertEqual(self.entry(), before)
+        self.record["status"] = "prepared"
+        store._write(self.receipt_path, {
+            "transport": ui_scheduler.UI_TRANSPORT,
+            "attempt_id": ATTEMPT,
+            "directive": "WAIT_RESULT", "response": "ALIS_LOOP:WAIT_RESULT JOB-OLD"})
+        with self.assertRaises(tf.TaskError):
+            self.request()
+        self.assertEqual(self.entry(), before)
+
     def test_stale_queue_identity_or_no_approval_does_not_mutate(self):
         before = self.entry()
         with self.assertRaises(tf.TaskError):
