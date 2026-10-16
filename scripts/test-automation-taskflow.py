@@ -692,7 +692,8 @@ class TaskflowTests(unittest.TestCase):
                     check=False, timeout=15,
                 )
                 self.assertEqual(proc.returncode, 0,
-                                 str(action) + ": " + proc.stderr[-700:])
+                                 str(action) + ": " + proc.stdout[-450:] +
+                                 " " + proc.stderr[-700:])
                 self.assertFalse(proc.stderr.strip(), action)
                 self.assertTrue(json.loads(proc.stdout)["ok"], action)
 
