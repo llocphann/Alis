@@ -795,6 +795,17 @@ ContentPage {
                             root.resetChatTarget = ""
                         }
                     }
+                    if (root.uiQueueStageConfirmation) {
+                        const first = (result.items || []).find(item => item.state === "queued")
+                        const current = first ? first.repository + ":" + first.code : ""
+                        if (current !== root.uiQueueStageTarget
+                                || root.uiQueueStageSnapshotId !== (result.snapshot_id || "")
+                                || result.state !== "prepared") {
+                            root.uiQueueStageConfirmation = false
+                            root.uiQueueStageTarget = ""
+                            root.uiQueueStageSnapshotId = ""
+                        }
+                    }
                     if (root.stopQueueConfirmation) {
                         const active = result.active
                         const current = active ? active.repository + ":" + active.code : ""
@@ -852,6 +863,9 @@ ContentPage {
                             : Translation.tr("Queue stopped · no next task will start. In-flight work remains intact.")
                         : Translation.tr("Stop requested · manager acknowledgment pending")
                     Qt.callLater(root.refreshQueue)
+                } else if (root.queueOperation === "stage-ui") {
+                    root.statusText = Translation.tr("Idle UI profile prepared · no job started. Rechecking service readiness.")
+                    Qt.callLater(root.refreshBackendStatus)
                 } else if (root.queueOperation === "clear")
                     root.statusText = result.cleared
                         ? result.state === "empty"
@@ -859,11 +873,12 @@ ContentPage {
                             : Translation.tr("Removed %1 queued tasks · active job and receipts preserved")
                                 .arg(result.removed_queued || 0)
                         : Translation.tr("No queued tasks to clear")
-                else if (root.queueOperation === "recheck")
+                else if (root.queueOperation === "recheck") {
                     root.statusText = Translation.tr("Queue rechecked · %1 ready · %2 parked; saved receipts untouched")
                         .arg((result.items || []).filter(t => t.state === "queued").length)
                         .arg(result.deferred_count || 0)
-                else if (root.queueOperation === "prepare")
+                    Qt.callLater(root.refreshBackendStatus)
+                } else if (root.queueOperation === "prepare") {
                     root.statusText = result.state === "active"
                         ? Translation.tr("Queue already active")
                         : result.duplicate
@@ -871,10 +886,12 @@ ContentPage {
                         : result.auto_discovered
                         ? Translation.tr("Backend-first tasks discovered · review before Start")
                         : Translation.tr("Queue prepared")
-                else if (root.queueOperation === "start") {
+                    Qt.callLater(root.refreshBackendStatus)
+                } else if (root.queueOperation === "start") {
                     root.statusText = Translation.tr("Cloudbot launch requested")
                     Qt.callLater(root.refreshQueue)
                 } else if (root.queueOperation === "status") {
+                    Qt.callLater(root.refreshBackendStatus)
                     root.statusText = result.state === "active"
                         ? Translation.tr("Queue active")
                         : result.state === "prepared"
@@ -1364,6 +1381,17 @@ ContentPage {
                     onClicked: root.stopQueue()
                 }
                 DialogButton {
+                    objectName: "automationStageUiQueue"
+                    buttonText: root.uiQueueStageConfirmation
+                        ? Translation.tr("Confirm Prepare") : Translation.tr("Prepare UI")
+                    visible: root.uiQueueStageAvailable
+                        && !!root.queueSnapshot && root.queueSnapshot.state === "prepared"
+                        && root.queueSnapshot.mode === "ordered"
+                    enabled: !root.busy && root.queueStatusConfirmed
+                        && root.uiQueueStageAvailable && !!root.queueSnapshot
+                    onClicked: root.stageUiQueue()
+                }
+                DialogButton {
                     objectName: "automationStartQueue"
                     buttonText: root.uiQueueStartConfirmation
                         ? Translation.tr("Confirm UI Start")
@@ -1402,6 +1430,7 @@ ContentPage {
                     && (root.clearQueueConfirmation
                         || root.stopQueueConfirmation
                         || root.uiQueueStartConfirmation
+                        || root.uiQueueStageConfirmation
                         || root.resetChatConfirmation)
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
