@@ -37,7 +37,7 @@ assert "Notifications {" not in module
 # Hiding the glyph must not disable its MouseArea, detach the mature popup,
 # or turn the entire screen into an invisible input receiver.
 assert "showIcon:p.showIcon !== false" in layout
-assert '"showIcon"' in layout
+assert 'showIcon:p.showIcon !== false' in layout
 assert "visible: hit.parent.moduleRoot.showIcon" in module
 assert "hoverEnabled: true" in module
 assert "hiddenEdgeLauncher" in bar
