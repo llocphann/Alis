@@ -162,7 +162,7 @@ def stage_ui_queue(*, approved: bool = False,
         items = manifest.get("items")
         if (not isinstance(items, list) or not 1 <= len(items) <= queue.MAX_ITEMS
                 or any(not isinstance(item, dict)
-                       or item.get("state") != "queued"
+                       or item.get("state") not in {"queued", "deferred"}
                        or item.get("repository") not in tf.REPOSITORIES
                        or not isinstance(item.get("code"), str)
                        or not tf.CODE.fullmatch(item["code"])
@@ -170,7 +170,9 @@ def stage_ui_queue(*, approved: bool = False,
                        or not tf.SHA.fullmatch(item["source_sha"])
                        for item in items)):
             raise tf.TaskError("Queue manifest is invalid for UI profile staging")
-        first = items[0]
+        first = next((item for item in items if item["state"] == "queued"), None)
+        if first is None:
+            raise tf.TaskError("All tasks need reconciliation; cannot stage a new job")
         identity = f'{first["repository"]}:{first["code"]}'
         if expected_first != identity:
             raise tf.TaskError("Queue first task changed; refresh before UI staging")
