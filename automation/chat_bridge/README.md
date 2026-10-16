@@ -224,6 +224,43 @@ sampled: the already-spent immutable smoke ID MUST NOT be reused or reset.
 Any future live test message requires separate owner consent. The existing
 six-item queue and service configuration are unaffected by this work.
 
+### Owner-approved Reset Chat for a stuck active Automation task
+
+In **Automation → GitHub tasks**, press **Reset chat** then **Confirm reset**
+for the current active task. It is **not** Clear Queue, Stop Queue, a
+manager-service reinstall or a replay of the existing ChatGPT message.
+The backend checks the exact `repo:task-code` under `queue.lock`, the
+SHA-pinned active Issue and the same managed UI session, then writes the
+`manual_reset` request to the existing manager state. The small Job Status
+shows a short **Reset requested** acknowledgment; the next manager tick
+performs any actual chat navigation and distinctly journaled Send.
+
+The reset **refuses to proceed** if the previous UI message is pending or
+uncertain, the local worker job has not settled, manager/project identity is
+unverified, the UI-send journal has an unresolved intent, the original
+completed assistant response receipt is missing, or the queue is no longer
+active/owner-approved. **Do not delete or replace these records to force
+reset.** Resolve the original message/job first. Neither queue order nor
+already recorded worker results are cleared.
+
+When safe, the UI scheduler opens a fresh conversation in the configured
+**Automatic Alis** Project, even when the old composer is stuck, then sends
+a NEW recovery-oriented prompt containing the task's pinned GitHub Issue,
+durable checkpoint and available worker summary. It tells Cloudbot to
+reconcile previous effects and not repeat uncertain jobs. The old session
+and evidence remain on disk until a newly observed response establishes a
+distinct UI session. Sending remains blocked if the new Project view or
+local identity cannot be verified. This mechanism supplies **local UI-only**
+evidence, never server-side conversation attestation or permission to start
+another unapproved Queue.
+
+The equivalent operator-only CLI is:
+```bash
+python3 scripts/alis-automation-task.py queue-reset-chat --approve --expected-active llocphann/Alis:AI-I01
+```
+Replace the exact active identity based on a fresh queue status. The command
+stages the reset and does **not** itself send a ChatGPT message.
+
 ### Read-only cutover diagnosis (operator side)
 
 Inspect the installed host **without submitting any message or changing
