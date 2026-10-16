@@ -195,6 +195,66 @@ def stop_idle_legacy_default_for_ui_queue(
             "service_modified": False}
 
 
+def recover_failed_ui_bridge(*, approved: bool = False,
+                             expected_snapshot_id: str = "") -> dict:
+    """Owner-confirmed one-shot start of a *failed* queue-only UI service.
+
+    Only an unapproved, fully prepared ordered queue qualifies. Starting the
+    queue-only watcher in this state cannot dispatch or send: queue_tick()
+    returns queue_idle before it inspects profile/pending work. This never
+    resets a failed unit, erases previous receipts or approves Queue Start.
+    """
+    import subprocess
+    if approved is not True:
+        raise tf.TaskError("Explicit failed UI Bridge recovery approval required")
+    if (not isinstance(expected_snapshot_id, str)
+            or len(expected_snapshot_id) != 64
+            or any(ch not in "0123456789abcdef"
+                   for ch in expected_snapshot_id)):
+        raise tf.TaskError("Invalid Bridge recovery queue snapshot")
+    from .chat_bridge import ui_preflight
+    with queue._lock():
+        manifest = queue._load()
+        if not manifest or queue._snapshot_id(manifest) != expected_snapshot_id:
+            raise tf.TaskError("Queue changed since Bridge recovery; refresh")
+        if (manifest.get("mode") != "ordered"
+                or manifest.get("state") != "prepared"
+                or manifest.get("approved_start") is not False
+                or manifest.get("active") is not None
+                or manifest.get("selection") is not None
+                or manifest.get("stop_requested")
+                or not isinstance(manifest.get("items"), list)
+                or not any(it.get("state") == "queued"
+                           for it in manifest["items"])):
+            raise tf.TaskError("Failed Bridge recovery requires idle, unapproved ordered queue")
+        # Verify installed service identity and unit mode, not a display label
+        # or whichever service happens to be running on the desktop.
+        observed = control.service_states().get("bridge", {})
+        service, mode = ui_preflight._unit_state()
+        if (observed.get("state") not in {"blocked", "failed"}
+                or observed.get("unit") != control.UNITS["bridge"]
+                or observed.get("exec_main_status") != "75"
+                or service != "failed" or mode != "ui_queue_mode"):
+            raise tf.TaskError(
+                "Bridge changed or is not the failed queue-only UI service")
+        # Only the user service and fixed unit may be started. No sudo, no
+        # reset-failed, no restarting active senders, no worker interaction.
+        try:
+            proc = subprocess.run(
+                ["systemctl", "--user", "start", control.UNITS["bridge"]],
+                capture_output=True, text=True, timeout=15, check=False)
+        except (OSError, subprocess.TimeoutExpired):
+            raise tf.TaskError(
+                "Bridge start could not be requested; inspect user journal") from None
+        if proc.returncode:
+            raise tf.TaskError(
+                "Bridge remains failed; inspect user journal and original pending work")
+    return {"ok": True, "state": "bridge_start_requested",
+            "queue_unchanged": True, "start_approved": False,
+            "pending_preserved": True, "chatgpt_message_sent": False,
+            "worker_replayed": False, "service_start_requested": True}
+
+
 def stage_ui_queue(*, approved: bool = False,
                    expected_first: str = "",
                    expected_snapshot_id: str | None = None) -> dict:
