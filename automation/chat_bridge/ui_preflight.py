@@ -47,6 +47,48 @@ def inert_legacy_native_owner(config: dict, profile_id: str,
     return bool(pending) and bool(session)
 
 
+def inert_native_session_history(config: dict, profile_id: str,
+                                 item: dict) -> bool:
+    """Historical-only native session cannot dispatch from an idle profile.
+
+    A preserved conversation identifier is not itself an in-flight Send.
+    This narrow exception never applies to an uncertain pending prompt,
+    running/scheduled profile, local job, removal or recovery state.
+    It changes admission classification only, not the durable record.
+    """
+    if not isinstance(item, dict):
+        return False
+    profiles = [p for p in config.get("profiles", [])
+                if p.get("id") == profile_id]
+    if len(profiles) != 1:
+        return False
+    session = item.get("session")
+    return bool(
+        isinstance(session, dict) and session
+        and session.get("transport") != "alis-ui-once"
+        and item.get("desired") == "stopped"
+        and item.get("status") in {"idle", "completed", "disabled"}
+        and item.get("pending") is None
+        and item.get("job_id") is None
+        and item.get("run_active") is False
+        and not item.get("remove_requested")
+        and item.get("recovery") is None
+        and item.get("failed_turn") is None
+    )
+
+
+def has_unresolved_native_transport(item: dict) -> bool:
+    """Inspect both session and pending; an UI pending cannot mask native session."""
+    if not isinstance(item, dict):
+        return True
+    return any(
+        bool(item.get(key)) and (
+            not isinstance(item[key], dict)
+            or item[key].get("transport") != "alis-ui-once")
+        for key in ("pending", "session")
+    )
+
+
 def _document(path: Path) -> dict | None:
     if path.is_symlink():
         raise ValueError("ALIS_UI_SOURCE_IS_SYMLINK")
@@ -104,16 +146,11 @@ def examine(config: dict, state: dict, profile_id: str,
              or item.get("job_id") or item.get("run_active"))
         for pid, item in entries.items())
     native_unsettled = any(
-        isinstance(item, dict) and
-        ((item.get("pending") and
-          (not isinstance(item["pending"], dict) or
-           item["pending"].get("transport") != "alis-ui-once")) or
-         (item.get("session") and
-          (not isinstance(item["session"], dict) or
-           item["session"].get("transport") != "alis-ui-once")))
+        has_unresolved_native_transport(item)
         for pid, item in entries.items()
-        if not (pid != profile_id and
-                inert_legacy_native_owner(config, pid, item))
+        if not (pid != profile_id and (
+            inert_legacy_native_owner(config, pid, item)
+            or inert_native_session_history(config, pid, item)))
         ) if isinstance(entries, dict) else True
     own_pending = isinstance(own, dict) and bool(own.get("pending"))
     own_scheduled = isinstance(own, dict) and (
@@ -187,6 +224,11 @@ def check_prepared_queue() -> dict:
         "first_task_code": None,
         "taskflow_profile_present": False,
         "queue_ui_admission_available": False,
+        "foreign_running_count": 0,
+        "foreign_pending_count": 0,
+        "foreign_job_count": 0,
+        "native_unsettled_count": 0,
+        "historical_native_session_count": 0,
         "native_transport_authorized": False,
         "submission_authorized": False,
         "service_modified": False,
@@ -271,28 +313,38 @@ def check_prepared_queue() -> dict:
                 or runtime.get("session") or runtime.get("run_active")
                 or runtime.get("last_ui_response_attempt")):
             blockers.append("TASKFLOW_PROFILE_NOT_IDLE")
-    isolated = [
-        pid for pid, item in state.get("profiles", {}).items()
+    entries = state.get("profiles", {})
+    isolated = {
+        pid for pid, item in entries.items()
         if pid != expected_id and inert_legacy_native_owner(config, pid, item)
-    ]
+    }
+    history_only = {
+        pid for pid, item in entries.items()
+        if pid != expected_id
+        and inert_native_session_history(config, pid, item)
+    }
     result["legacy_native_pending_retained"] = bool(isolated)
-    if any(
-            pid != expected_id and isinstance(item, dict)
-            and not inert_legacy_native_owner(config, pid, item)
-            and (item.get("pending") or item.get("job_id")
-                 or item.get("run_active") or item.get("desired") == "run")
-            for pid, item in state.get("profiles", {}).items()):
+    result["historical_native_session_count"] = len(history_only)
+    foreign = [
+        item for pid, item in entries.items()
+        if pid != expected_id and isinstance(item, dict) and pid not in isolated
+    ]
+    result["foreign_running_count"] = sum(
+        item.get("desired") == "run" or bool(item.get("run_active"))
+        for item in foreign)
+    result["foreign_pending_count"] = sum(
+        bool(item.get("pending")) for item in foreign)
+    result["foreign_job_count"] = sum(
+        bool(item.get("job_id")) for item in foreign)
+    if any((item.get("pending") or item.get("job_id")
+            or item.get("run_active") or item.get("desired") == "run")
+           for item in foreign):
         blockers.append("FOREIGN_PROFILE_UNSETTLED")
-    if any(
-            isinstance(item, dict) and
-            (item.get("pending") or item.get("session"))
-            and (
-                not isinstance(item.get("pending") or item.get("session"), dict)
-                or (item.get("pending") or item.get("session")).get("transport")
-                    != "alis-ui-once"
-            )
-            for pid, item in state.get("profiles", {}).items()
-            if pid not in isolated):
+    result["native_unsettled_count"] = sum(
+        has_unresolved_native_transport(item)
+        for pid, item in entries.items()
+        if pid not in isolated and pid not in history_only)
+    if result["native_unsettled_count"]:
         blockers.append("NATIVE_SESSION_REQUIRES_REVIEW")
     service, mode = _unit_state()
     result["installed_service_mode"] = mode
