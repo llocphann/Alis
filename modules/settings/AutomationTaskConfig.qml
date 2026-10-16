@@ -561,6 +561,15 @@ ContentPage {
                 if (exitCode !== 0 || result.ok !== true)
                     throw new Error(result.error || "Queue unavailable")
                 if (result.items) {
+                    if (root.resetChatConfirmation) {
+                        const target = result.active
+                            ? result.active.repository + ":" + result.active.code : ""
+                        if (target !== root.resetChatTarget
+                                || result.state !== "active") {
+                            root.resetChatConfirmation = false
+                            root.resetChatTarget = ""
+                        }
+                    }
                     if (root.stopQueueConfirmation) {
                         const active = result.active
                         const current = active ? active.repository + ":" + active.code : ""
@@ -602,7 +611,11 @@ ContentPage {
                     Qt.callLater(root.refreshTaskStatus)
                     Qt.callLater(root.refreshActivity)
                 }
-                if (root.queueOperation === "stop") {
+                if (root.queueOperation === "reset-chat") {
+                    root.statusText = Translation.tr(
+                        "New chat requested · awaiting manager acknowledgment")
+                    Qt.callLater(root.refreshQueue)
+                } else if (root.queueOperation === "stop") {
                     root.statusText = result.stop_confirmed
                         ? result.profile_stop_confirmed === false
                             ? Translation.tr("Queue scheduling stopped · manager profile missing. Prior worker actions remain independent.")
