@@ -31,6 +31,10 @@ def main():
                        help="Optional codes; blank discovers Backend-first GitHub Issues")
     batch.add_argument("--mode", choices=["ordered", "cloud"], default="ordered")
     commands.add_parser("queue-status")
+    reset_chat = commands.add_parser("queue-reset-chat")
+    reset_chat.add_argument("--approve", action="store_true",
+                            help="Request a fresh Project chat for the exact active task; no direct Send")
+    reset_chat.add_argument("--expected-active", required=True)
     stage_queue = commands.add_parser("queue-stage-ui")
     stage_queue.add_argument("--approve", action="store_true",
                              help="Stage first task's profile only; no Send, Start or unit change")
@@ -105,6 +109,9 @@ def main():
         elif args.action == "queue-stage-ui":
             result = managed_tasks.stage_ui_queue(
                 approved=args.approve, expected_first=args.expected_first)
+        elif args.action == "queue-reset-chat":
+            result = managed_tasks.request_ui_chat_reset(
+                approved=args.approve, expected_active=args.expected_active)
         elif args.action == "queue-stop":
             result = managed_tasks.stop_queue(
                 approved=args.approve, expected_active=args.expected_active)
