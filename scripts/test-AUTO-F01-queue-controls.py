@@ -70,6 +70,70 @@ class QueueControls(unittest.TestCase):
         self.assertEqual(doc["selection_policy"], "backend-first-nonvisual")
         self.assertIsNone(doc["active"])
 
+    def test_auto_discovery_skips_saved_active_task_and_keeps_record_bytes(self):
+        prepared = queue.prepare_auto(api=self.github)
+        self.assertEqual(len(prepared["items"]), 2)
+        queue.clear(approved=True)
+        record = tf.load_task("AUTO-R01")
+        record["status"] = "awaiting_owner"
+        record["latest_receipt"] = {"immutable": "previous-job"}
+        tf._save_task(record)
+        original_path = tf._task_path("AUTO-R01", "llocphann/Alis")
+        original = original_path.read_bytes()
+        result = queue.prepare_auto(api=self.github)
+        self.assertEqual(result["state"], "prepared")
+        self.assertEqual([x["code"] for x in result["items"]], ["AUTO-I02"])
+        self.assertEqual(original_path.read_bytes(), original)
+        self.assertFalse(result["active"])
+        self.assertFalse(queue._load()["approved_start"])
+
+    def test_auto_discovery_all_saved_work_fails_without_queue_or_replay(self):
+        queue.prepare_auto(api=self.github)
+        queue.clear(approved=True)
+        snapshots = {}
+        for code in ("AUTO-R01", "AUTO-I02"):
+            record = tf.load_task(code)
+            record["status"] = "awaiting_owner"
+            record["scheduler_dispatched"] = True
+            tf._save_task(record)
+            path = tf._task_path(code, "llocphann/Alis")
+            snapshots[code] = path.read_bytes()
+        with self.assertRaisesRegex(tf.TaskError,
+                                    "No fresh Backend tasks available.*AUTO-R01"):
+            queue.prepare_auto(api=self.github)
+        self.assertEqual(queue.view()["state"], "empty")
+        for code, original in snapshots.items():
+            self.assertEqual(tf._task_path(code, "llocphann/Alis").read_bytes(),
+                             original)
+
+    def test_explicit_task_conflict_reports_actual_state_not_active_elsewhere(self):
+        task = queue.discover_backend_candidates(self.github)[0]
+        self.assertEqual(task["code"], "AUTO-R01")
+        queue.prepare("AUTO-R01", resolver=lambda _code: task)
+        queue.clear(approved=True)
+        record = tf.load_task("AUTO-R01")
+        record["status"] = "awaiting_owner"
+        tf._save_task(record)
+        prior = tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes()
+        with self.assertRaisesRegex(tf.TaskError,
+                                    "AUTO-R01 has saved task state awaiting_owner"):
+            queue.prepare("AUTO-R01", resolver=lambda _code: task)
+        self.assertEqual(queue.view()["state"], "empty")
+        self.assertEqual(tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes(),
+                         prior)
+
+    def test_prior_source_pin_is_not_silently_reused_in_new_queue(self):
+        task = queue.discover_backend_candidates(self.github)[0]
+        queue.prepare("AUTO-R01", resolver=lambda _code: task)
+        queue.clear(approved=True)
+        prior = tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes()
+        shifted = {**task, "base_sha": "b" * 40}
+        with self.assertRaisesRegex(tf.TaskError, "different source pin"):
+            queue.prepare("AUTO-R01", resolver=lambda _code: shifted)
+        self.assertEqual(queue.view()["state"], "empty")
+        self.assertEqual(tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes(),
+                         prior)
+
     def test_clear_requires_confirmation_preserves_original_task_records(self):
         queue.prepare_auto(api=self.github)
         first = tf._task_path("AUTO-R01", "llocphann/Alis")
