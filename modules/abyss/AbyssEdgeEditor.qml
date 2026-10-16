@@ -377,7 +377,9 @@ Item {
     }
     function reset(): void {
         clearDrag();rememberHistory()
-        draft = Placement.seed(moduleLayer.zones,moduleLayer.edge,width,height)
+        draft = Placement.withUnifiedEdgeModules(
+            Placement.seed(moduleLayer.zones,moduleLayer.edge,width,height),
+            Config.options?.abyss?.modules?.autoUnifiedEdgeLaunchers === true)
         gap = 8
         edgeSizes = {top:1,right:1,bottom:1,left:1}
         moduleScale = 1
