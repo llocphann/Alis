@@ -22,7 +22,7 @@ ContentPage {
             "right":"sidebars", "open":"sidebars", "media & content":"sidebars"}
         const value = aliases[label] ?? label
         if (["surface","waves","spectrum","modules","bar","dock","sidebars","popups","editor","interaction","performance"].includes(value)) {
-            root.barSection = ["behavior","behavior & clock","clock","auto hide"].includes(label) ? "behavior" : "modules"
+            root.barSection = ["behavior","module behavior","behavior & clock","clock","auto hide"].includes(label) ? "behavior" : "modules"
             root.sidebarSection = ({"left sidebar":"left","right sidebar":"right","media & content":"media","opening":"open"}[label] ?? (["general","left","right","media","open"].includes(label) ? label : "general"))
             activeSection = value
             if (value === "bar" && moduleSettings.item)
