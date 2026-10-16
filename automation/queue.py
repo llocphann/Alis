@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -77,6 +78,18 @@ def _load() -> dict | None:
 
 def _save(manifest: dict):
     tf._atomic_json(_queue_path(), manifest)
+
+
+def _snapshot_id(manifest: dict) -> str:
+    """Opaque CAS token for a complete, exact persisted queue snapshot.
+
+    A reused queued-code list alone cannot distinguish a previous queue
+    generation or changes in the active selection/approval/receipt state.
+    This digest is never itself authorization to clear or start a job.
+    """
+    serialized = json.dumps(manifest, sort_keys=True, separators=(",", ":"),
+                            ensure_ascii=False)
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
 def parse_codes(raw: str) -> list[str]:
@@ -332,7 +345,7 @@ def view(manifest: dict | None = None) -> dict:
             manifest = _load()
     if manifest is None:
         return {"ok": True, "mode": "ordered", "state": "empty",
-                "active": None, "items": [], "next": None}
+                "active": None, "items": [], "next": None, "snapshot_id": ""}
     items = [{key: item[key] for key in ("code", "repository", "state")}
              | ({"reason": item["reason"],
                  "recovery_action": RECOVERY_HINTS.get(
@@ -345,6 +358,7 @@ def view(manifest: dict | None = None) -> dict:
     next_item = next((x for x in items if x["state"] == "queued"), None)
     return {"ok": True, "mode": manifest["mode"], "state": manifest["state"],
             "active": manifest["active"], "items": items,
+            "snapshot_id": _snapshot_id(manifest),
             "deferred_count": sum(x["state"] == "deferred" for x in items),
             "recovery": {
                 "can_recheck_pin": sum(
@@ -560,7 +574,8 @@ def confirm_stopped(*, expected_active: str) -> dict:
                 "worker_cancelled": False}
 
 def clear(*, approved: bool = False,
-          expected_queued: str | None = None) -> dict:
+          expected_queued: str | None = None,
+          expected_snapshot_id: str | None = None) -> dict:
     """Remove queued entries without cancelling the active task.
 
     A human explicitly confirms the precise QUEUED list. The current
@@ -577,12 +592,21 @@ def clear(*, approved: bool = False,
             not isinstance(expected_queued, str) or
             len(expected_queued) > 4000):
         raise tf.TaskError("Invalid expected queued-task snapshot")
+    if expected_snapshot_id is not None and (
+            not isinstance(expected_snapshot_id, str)
+            or re.fullmatch(r"[a-f0-9]{64}", expected_snapshot_id) is None):
+        raise tf.TaskError("Invalid queue snapshot identity")
     with _lock():
         manifest = _load()
         if manifest is None:
+            if expected_snapshot_id is not None:
+                raise tf.TaskError("Queue generation changed; refresh before clearing")
             if expected_queued not in (None, ""):
                 raise tf.TaskError("Queue changed since display; refresh before clearing")
             return {**empty, "cleared": False, "removed_queued": 0}
+        if (expected_snapshot_id is not None
+                and expected_snapshot_id != _snapshot_id(manifest)):
+            raise tf.TaskError("Queue changed since display; refresh before clearing")
         queued = [item for item in manifest["items"]
                   if item.get("state") == "queued"]
         observed = ";".join(
