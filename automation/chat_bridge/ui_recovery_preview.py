@@ -49,6 +49,8 @@ def _retired_attempt_evidence(journal_path: Path, profile_id: str,
     """Archived journal classification only; never a completion signal."""
     if type(prepared_at) is not int or prepared_at < 0:
         return "retired_evidence_unverified"
+    if journal_path.parent.is_symlink() or journal_path.parent.parent.is_symlink():
+        return "unsafe_path"
     # Journal attempt UUID and manager UI attempt UUID are deliberately
     # different. Find exact SHA-bound archived attempts, not a filename
     # constructed from the manager's pending attempt ID.
