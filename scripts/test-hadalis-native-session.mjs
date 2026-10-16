@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import {spawnSync} from "node:child_process";
 import {fileURLToPath} from "node:url";
-import {projectTurn, reconcileSubmissionCandidates, installedContract, inspectInstalledScopeContract} from "../automation/chat_bridge/native_adapter.mjs";
+import {projectTurn, reconcileSubmissionCandidates, nativeSubmit, nativeResume, installedContract, inspectInstalledScopeContract} from "../automation/chat_bridge/native_adapter.mjs";
 const message = (id, role, status, end, text, recipient = "all", channel = null) =>
   ({id, author:{role}, status, end_turn:end, recipient, channel, content:{parts:[text]}});
 const c = {conversation_id:"chat-A",current_node:"a",mapping:{
@@ -42,6 +42,22 @@ const source=()=>({conversation_id:"chat-A",current_node:"final",mapping:{
 }});
 const expected={conversation_id:"chat-A",user_message_id:"actual-user"};
 assert.equal(projectTurn(source(),expected).response.message_id,"response-1");
+// A matching conversation and user turn still cannot attest a different
+// Project. Only the authenticated conversation's explicit Project ID counts.
+const projectId="g-p-11111111111111111111111111111111";
+const projectExpected={...expected,project_id:projectId};
+const projectSource=()=>({...source(),gizmo_id:projectId});
+assert.equal(projectTurn(projectSource(),projectExpected).completed,true);
+assert.throws(()=>projectTurn(source(),projectExpected),/Project identity/);
+assert.throws(()=>projectTurn({...projectSource(),gizmo_id:"g-p-other"},projectExpected),/Project identity/);
+assert.throws(()=>projectTurn({...projectSource(),conversation_mode:{
+  kind:"gizmo_interaction",gizmo_id:"g-p-other"}},projectExpected),/Project identity/);
+assert.throws(()=>projectTurn({...projectSource(),conversation_mode:{
+  kind:"primary_assistant"}},projectExpected),/Project identity/);
+assert.equal(projectTurn({...projectSource(),conversation_mode:{
+  kind:"gizmo_interaction",gizmo_id:projectId}},projectExpected).completed,true);
+for(const project_id of ["", "../conversations", "g-p-x\n", 1, {}, "x".repeat(201)])
+  assert.throws(()=>projectTurn(projectSource(),{...expected,project_id}),/invalid Project/);
 assert.equal(projectTurn(source(),{...expected,user_message_id:"root"}).submitted,false,
   "node IDs must never attest authored user messages");
 const spoof=source();
@@ -104,6 +120,12 @@ const candidate=(chat,id=reconMessage)=>({
 });
 assert.deepEqual(reconcileSubmissionCandidates(recon,[candidate(chatA)]),
   {conversation_id:chatA});
+assert.deepEqual(reconcileSubmissionCandidates({...recon,project_id:projectId},[
+  {...candidate(chatA),gizmo_id:projectId}]),{conversation_id:chatA});
+assert.throws(()=>reconcileSubmissionCandidates({...recon,project_id:projectId},[
+  candidate(chatA)]),/Project identity/);
+assert.throws(()=>reconcileSubmissionCandidates({...recon,project_id:projectId},[
+  {...candidate(chatA),gizmo_id:"g-p-other"}]),/Project identity/);
 assert.deepEqual(reconcileSubmissionCandidates(recon,[candidate(chatA,"other")]),
   {conversation_id:null});
 assert.deepEqual(reconcileSubmissionCandidates(recon,[
@@ -133,6 +155,31 @@ const candidateWrongRole=candidate(chatA);
 candidateWrongRole.mapping.u.message.author.role="assistant";
 assert.equal(reconcileSubmissionCandidates(recon,[candidateWrongRole])
   .conversation_id,null);
+
+// Existing-chat submit/resume must reject a wrong Project before reaching
+// the mutable transport. The mock performs no Desktop connection or Send.
+for(const action of [nativeSubmit,nativeResume]) {
+  const calls=[];
+  const page={evaluate:async(_fn,input)=>{
+    calls.push(input);
+    if(input.path===`/conversation/${chatA}`)
+      return {...candidate(chatA),gizmo_id:"g-p-other"};
+    throw new Error("mutable transport must not be reached");
+  }};
+  await assert.rejects(action(page,{conversation_id:chatA,project_id:projectId,
+    user_message_id:reconMessage,parent_message_id:chatB,prompt:"fixture"}),/Project identity/);
+  assert.equal(calls.length,1);
+  assert.equal(calls[0].path,`/conversation/${chatA}`);
+  const verifiedCalls=[];
+  const verifiedPage={evaluate:async(_fn,input)=>{
+    verifiedCalls.push(input);
+    return input.path ? {...candidate(chatA),gizmo_id:projectId} : {fixture:true};
+  }};
+  await action(verifiedPage,{conversation_id:chatA,project_id:projectId,
+    user_message_id:reconMessage,parent_message_id:chatB,prompt:"fixture"});
+  assert.equal(verifiedCalls.length,2,"verified Project may reach the transport after its read");
+  assert.equal(verifiedCalls[0].path,`/conversation/${chatA}`);
+}
 
 // Construct an intentionally incompatible tiny ASAR-like fixture containing
 // no app credentials or actual Desktop source. Unsupported contracts must be

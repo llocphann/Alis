@@ -35,6 +35,33 @@ export function activeBranch(conversation) {
   return branch.reverse();
 }
 
+function checkedProjectId(projectId) {
+  if (projectId == null) return null; // Explicitly non-Project profiles.
+  if (typeof projectId !== "string" || !/^[A-Za-z0-9_-]{1,200}$/.test(projectId))
+    throw new Error("invalid Project identity");
+  return projectId;
+}
+
+function requireProjectMembership(conversation,projectId) {
+  projectId=checkedProjectId(projectId);
+  if (projectId === null) return;
+  // A request parameter, selected UI badge or conversation index is not
+  // membership proof. Require the authenticated conversation's own field.
+  const mode=conversation?.conversation_mode;
+  if (conversation?.gizmo_id !== projectId || (mode != null &&
+      (typeof mode !== "object" || Array.isArray(mode) ||
+       mode.kind !== "gizmo_interaction" || mode.gizmo_id !== projectId)))
+    throw new Error("Project identity mismatch or unavailable");
+}
+
+async function verifyExistingProject(page,pending) {
+  if (checkedProjectId(pending.project_id) === null) return;
+  const conversation=await nativeRead(page,`/conversation/${pending.conversation_id}`);
+  if (conversation?.conversation_id !== pending.conversation_id)
+    throw new Error("conversation identity mismatch");
+  requireProjectMembership(conversation,pending.project_id);
+}
+
 export function projectTurn(conversation,pending){
   // A UI name, absent ID, node key, stale active branch or ambiguous turn
   // is NOT an authenticated delivery receipt.
@@ -44,6 +71,7 @@ export function projectTurn(conversation,pending){
     throw new Error("conversation identity mismatch");
   if(typeof pending?.user_message_id!=="string" || !pending.user_message_id)
     throw new Error("user message identity unavailable");
+  requireProjectMembership(conversation,pending.project_id);
   const branch=activeBranch(conversation);
   const positions=branch.flatMap((node,i)=>node.message?.id===pending.user_message_id &&
     node.message?.author?.role==="user" ? [i] : []);
@@ -316,8 +344,10 @@ export async function resolveProject(page, name) {
 }
 
 export async function nativeSubmit(page, input) {
+  checkedProjectId(input.project_id);
   if (!UUID.test(input.user_message_id) || !UUID.test(input.parent_message_id)) throw new Error("invalid submission identity");
   if (input.conversation_id && !UUID.test(input.conversation_id)) throw new Error("invalid conversation identity");
+  if (input.conversation_id) await verifyExistingProject(page,input);
   return page.evaluate(async input => {
     const {api, transport} = window.__hadalisNative, receipts = window.__hadalisReceipts;
     if (receipts.has(input.user_message_id)) return receipts.get(input.user_message_id);
@@ -398,7 +428,8 @@ export function reconcileSubmissionCandidates(pending,candidates){
       throw new Error("ambiguous candidate conversation identity");
     ids.add(id);
     const observation=projectTurn(conversation,{
-      conversation_id:id,user_message_id:pending.user_message_id
+      conversation_id:id,user_message_id:pending.user_message_id,
+      project_id:pending.project_id
     });
     if(observation.submitted===true)hits.push(id);
   }
@@ -407,6 +438,7 @@ export function reconcileSubmissionCandidates(pending,candidates){
 }
 
 export async function discoverSubmission(page,pending){
+  checkedProjectId(pending?.project_id);
   if(!UUID.test(pending?.user_message_id))
     throw new Error("invalid pending user message identity");
   const receipt=await page.evaluate(id=>{
@@ -441,6 +473,7 @@ export async function discoverSubmission(page,pending){
 
 export async function nativeResume(page, pending) {
   if (!UUID.test(pending.conversation_id)) throw new Error("invalid resume identity");
+  await verifyExistingProject(page,pending);
   // Read-only reattachment to the server stream. No new user message, variant
   // generation, prompt replay or credential persistence is permitted here.
   return page.evaluate(async pending => {
