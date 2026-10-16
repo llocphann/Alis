@@ -11,14 +11,14 @@ Canonical scope: [Issue #106](https://github.com/llocphann/Alis/issues/106). Thi
 - Existing ScreenCorners are not deleted. For an output with an enabled replacement, its *matching* legacy corner trigger is suppressed; disabling or removing the replacement restores that legacy entry. Other outputs and the `stable` branch remain unchanged.
 - Notification toasts and older unrelated Bar timer indicator are left untouched. The new components do **not** create duplicate providers, timers or notification stores.
 
-## Opt-in migration; do not silently rewrite owner data
+## Automatic placement with reversible per-output migration
 
-1. Start Edit Abyss Layout on the target output.
-2. Add `QuickNotes & Timers` and/or `Notifications & Activities` to the selected edge. Position and scale each in the usual editor; optionally hide its icon.
-3. Commit via **Done**, never by modifying the notes/notifications stores. The existing legacy corner remains the fallback if that launcher is removed or disabled.
-4. To roll back, disable or remove the new module, then save. This does not discard QuickNotes/Todo/Timers/history or earlier configuration values.
+1. The first startup with the converted code automatically **adds both launchers in memory** at the bottom left/right of every applicable output, even if the user already has a custom Edge layout. No original serialized placement entry is deleted.
+2. Open Edit Abyss Layout to adjust either module to any Edge, change its size, hide its circular icon or remove it. **Done** persists the new layout and a per-output migration marker. Cancel retains the original profile and safe derived defaults.
+3. If a module is removed or disabled and **Done** is pressed, the saved per-output/global migration marker ensures that the same module will **not** be automatically recreated after restarting. Its original corner hover fallback returns for that output.
+4. To roll back to the old behavior, explicitly disable or remove both unified modules and save; no Notes/Todo/Timer/Notification/Activity stores are rewritten. Do not delete the user profile.
 
-This is a **manual opt-in migration candidate**, not a fully automatic legacy-anchor migration. In particular existing configured module layouts are never overwritten on opening the editor. Automatic import of old corner geometry is **not yet implemented**.
+This is an **automatic default placement**, not a destructive rewriting of historical corner coordinates. New modules are initially seeded at the respective bottom corner; the owner can reposition them in the editor. Original corner size, style and history settings remain intact for fallback. Exact previous physical anchor geometry is **not imported**; output profiles and rollback remain explicitly controlled by the user.
 
 ## Checks and review gates
 
@@ -36,7 +36,7 @@ A source contract cannot prove native Quickshell/Niri behavior. **No PASS claim 
 
 - 4 edges, icon visible/hidden, 0px/nonzero widths, width-affects-modules, scaled and rotated modules
 - compact/fractional scaling, multiple outputs and disconnected/reconnected screens; no doubled corner or phantom input masks
-- default and manually added layouts; Editor Undo/Done, disable/remove rollback
+- automatic defaults on legacy configured/unconfigured and multiple output layouts; Editor Undo/Done, disable/remove rollback
 - Notes Markdown reading/editing, Todo, pin/focus/Escape, timers while switching tabs
 - Notification unread/history, Activity tab, explicit hotkeys and uninterrupted transient toasts; no extra marking-read on layout preview
 - hover transfer and popup continuity without pop-in, premature close, stutter or duplicate processes
