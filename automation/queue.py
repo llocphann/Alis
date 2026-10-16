@@ -119,41 +119,62 @@ def prepare(raw: str, mode: str = "ordered",
             if same:
                 return {**view(current), "duplicate": True}
             raise tf.TaskError("An unfinished queue exists; reconcile before replacing")
+        ready, deferred = [], []
         for task in tasks:
+            # Intake is idempotent. Never reset an existing Cloudbot/Localbot
+            # file to make a task look new, especially awaiting_cloud_ack.
             previous = tf.intake(task)
-            if previous["state"] not in {"prepared", "handoff_ready"}:
-                # The old message ("active elsewhere") falsely implied that
-                # a worker is running. It can equally mean awaiting_owner or
-                # a previously finished task; NEVER reset its durable record.
-                status = previous["state"]
-                label = (status if isinstance(status, str) and
-                         re.fullmatch(r"[a-z][a-z0-9_]{0,39}", status)
-                         else "unrecognized")
+            record = tf.load_task(task["code"], task["repository"])
+            saved_task = record.get("task")
+            if (not isinstance(saved_task, dict) or
+                    record.get("issue_number") != task["issue_number"]):
                 raise tf.TaskError(
-                    f'{task["code"]} has saved task state '
-                    f'{label}; queue not started. '
-                    'Review task status and prior receipts first')
-            recorded = tf.load_task(task["code"], task["repository"])
-            saved_task = recorded.get("task")
-            if (recorded.get("unresolved") or
-                    recorded.get("scheduler_dispatched") is not False or
-                    recorded.get("issue_number") != task["issue_number"] or
-                    not isinstance(saved_task, dict) or
-                    saved_task.get("base_sha") != task["base_sha"]):
-                raise tf.TaskError(
-                    f'{task["code"]} has prior work or a different source pin; '
-                    'queue not started. Review the saved task before retrying')
+                    f'{task["code"]} has inconsistent Issue identity; '
+                    'no queue was created')
+            item = {
+                "code": task["code"], "repository": task["repository"],
+                "issue_number": task["issue_number"],
+                "source_sha": task["base_sha"],
+            }
+            state = previous["state"]
+            # Defer, rather than replay, previously delivered local work.
+            # The original signed handoff, worker receipt, checkpoint and
+            # pending ChatGPT acknowledgement remain immutable.
+            reason = None
+            if saved_task.get("base_sha") != task["base_sha"]:
+                reason = "source_pin_changed"
+            elif record.get("unresolved"):
+                reason = "unresolved_work"
+            elif state not in {"prepared", "handoff_ready"}:
+                reason = {
+                    "awaiting_cloud_ack": "cloud_ack_pending",
+                    "awaiting_owner": "owner_review_pending",
+                    "cloud_continuing": "cloud_continuation_pending",
+                    "completed": "already_completed",
+                    "needs_review": "local_receipt_needs_review",
+                }.get(state, "saved_work_requires_review")
+            elif record.get("scheduler_dispatched") is not False:
+                reason = "previous_dispatch_unsettled"
+            elif state == "handoff_ready" and (
+                    record.get("handoff") is not None or
+                    record.get("latest_receipt") is not None):
+                reason = "previous_handoff_pending"
+            elif record.get("latest_receipt") is not None:
+                reason = "previous_receipt_exists"
+            if reason is None:
+                ready.append({**item, "state": "queued"})
+            else:
+                deferred.append({**item, "state": "deferred", "reason": reason})
         now = int(time.time())
         manifest = {
-            "schema": QUEUE_SCHEMA, "mode": mode, "state": "prepared",
+            "schema": QUEUE_SCHEMA, "mode": mode,
+            "state": "prepared" if ready else "review_required",
             "created_unix": now, "updated_unix": now,
             "approved_start": False,
             "active": None, "selection": None,
-            "items": [
-                {"code": task["code"], "repository": task["repository"],
-                 "issue_number": task["issue_number"], "source_sha": task["base_sha"],
-                 "state": "queued"} for task in tasks
-            ],
+            # Never silently drop the original request. Deferred tasks are
+            # visible, cannot be scheduled, and do not block safe siblings.
+            "items": ready + deferred,
         }
         _save(manifest)
         return {**view(manifest), "duplicate": False}
@@ -167,10 +188,13 @@ def view(manifest: dict | None = None) -> dict:
         return {"ok": True, "mode": "ordered", "state": "empty",
                 "active": None, "items": [], "next": None}
     items = [{key: item[key] for key in ("code", "repository", "state")}
+             | ({"reason": item["reason"]} if item.get("state") == "deferred"
+                and isinstance(item.get("reason"), str) else {})
              for item in manifest["items"]]
     next_item = next((x for x in items if x["state"] == "queued"), None)
     return {"ok": True, "mode": manifest["mode"], "state": manifest["state"],
             "active": manifest["active"], "items": items,
+            "deferred_count": sum(x["state"] == "deferred" for x in items),
             "next": next_item if manifest["mode"] == "ordered" else None,
             "cloud_selection_required": manifest["mode"] == "cloud"
                  and manifest["active"] is None and next_item is not None}
@@ -250,8 +274,11 @@ def advance(verify_completion: Callable[[dict], bool] | None = None) -> dict:
         manifest["active"] = None
         manifest["selection"] = None
         manifest["updated_unix"] = int(time.time())
-        manifest["state"] = ("waiting" if any(x["state"] == "queued" for x in manifest["items"])
-                             else "finished")
+        manifest["state"] = (
+            "waiting" if any(x["state"] == "queued" for x in manifest["items"])
+            else "review_required" if any(x["state"] == "deferred"
+                                          for x in manifest["items"])
+            else "finished")
         _save(manifest)
         return view(manifest)
 
