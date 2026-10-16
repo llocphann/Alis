@@ -91,21 +91,22 @@ Item {
             // stale after dynamic placement/scale changes. Round outwards so
             // fractional DPI never clips the first/last hover pixel.
             // Edit Mode uses its own dedicated handle regions instead.
-            readonly property bool hiddenEdgeLauncher:
+            readonly property bool unifiedEdgeLauncher:
                 (module.kind === "notesTimers" || module.kind === "notificationActivity")
-                && module.placement?.showIcon === false
+            readonly property bool hiddenEdgeLauncher:
+                module.unifiedEdgeLauncher && module.placement?.showIcon === false
             // Iconless mode still has one strictly bounded source hitbox at the
             // literal physical edge, rather than an invisible full-width layer.
             readonly property Region inputRegion: Region {
-                x: module.hiddenEdgeLauncher && module.attachedEdge === "left"
+                x: module.unifiedEdgeLauncher && module.attachedEdge === "left"
                     ? 0 : Math.floor(module.x)
-                y: module.hiddenEdgeLauncher && module.attachedEdge === "top"
+                y: module.unifiedEdgeLauncher && module.attachedEdge === "top"
                     ? 0 : Math.floor(module.y)
                 width: module.visible && module.enabled
-                    ? Math.max(0, (module.hiddenEdgeLauncher && module.attachedEdge === "right"
+                    ? Math.max(0, (module.unifiedEdgeLauncher && module.attachedEdge === "right"
                         ? root.width : Math.ceil(module.x + module.width)) - x) : 0
                 height: module.visible && module.enabled
-                    ? Math.max(0, (module.hiddenEdgeLauncher && module.attachedEdge === "bottom"
+                    ? Math.max(0, (module.unifiedEdgeLauncher && module.attachedEdge === "bottom"
                         ? root.height : Math.ceil(module.y + module.height)) - y) : 0
             }
             // Quickshell Region documents cases where geometry does not
@@ -122,6 +123,7 @@ Item {
             onVisibleChanged: invalidateInputRegion()
             onEnabledChanged: invalidateInputRegion()
             onHiddenEdgeLauncherChanged: invalidateInputRegion()
+            onUnifiedEdgeLauncherChanged: invalidateInputRegion()
             readonly property var geometry: root.layoutRecords.find(rec => rec.id === modelData)
             liquidController: root.liquidController
             attachedEdge: placement?.edge ?? "top"
