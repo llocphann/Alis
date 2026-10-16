@@ -255,6 +255,15 @@ same('no notification is emitted before the first capture attempt',
     !recordingCmd.includes('notify-send "Starting recording"'),true);
 same('recorder notification warmup does not block the recorder wait',
     startup.indexOf(') >/dev/null 2>&1 &') < startup.indexOf('wait "$recorder_pid"'),true);
+const saveBranch=recordScript.slice(recordScript.indexOf('if start_recording_command "$recording_geometry"'),
+    recordScript.indexOf('maybe_compress_recording "$output_file"',recordScript.indexOf('if start_recording_command "$recording_geometry"')));
+same('saved-file toast retains real file existence guard',
+    saveBranch.includes('[[ -s "$output_file" ]] && is_truthy "$SHOW_NOTIFICATIONS"'),true);
+same('saved-file toast waits for OSD retract before notification ingress',
+    saveBranch.indexOf('sleep 0.55') < saveBranch.indexOf('notify-send "Recording saved"')
+    && saveBranch.indexOf('sleep 0.55') > saveBranch.indexOf('[[ -s "$output_file" ]]'),true);
+same('saved notification still reports canonical path',
+    saveBranch.includes('"${SAVE_PATH%/}/$output_name"'),true);
 same('recording host retains content only for its normal hidden warm tail',
     recHost.includes('warmContent: true') && recHost.includes('residentContent: root.recording'),true);
 same('cooldown only affects the embedded Recording OSD, not ii or Waffle',

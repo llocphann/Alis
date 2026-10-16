@@ -951,6 +951,12 @@ if start_recording_command "$recording_geometry" "$output_name"; then
     cleanup_audio_mix
     cleanup_recorder_status
     if [[ -s "$output_file" ]] && is_truthy "$SHOW_NOTIFICATIONS"; then
+        # NOTIF-I01: the encoder has exited but RecorderStatus may still be
+        # polling; give its connected OSD one short retract interval before
+        # the saved-file toast opens. This script runs outside Quickshell's UI
+        # thread, so the wait does not block controls or notification ingress.
+        # Keep the verified output path and notify only for a real saved file.
+        sleep 0.55
         notify-send "Recording saved" "${SAVE_PATH%/}/$output_name" -a 'Recorder' & disown
     fi
     maybe_compress_recording "$output_file"
