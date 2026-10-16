@@ -1,0 +1,507 @@
+{
+  "sha": "54f98dc593a72fd39ce2b0575d1332d13ec21fa7",
+  "scope": "local offline focused workflow plus CLI guards; not CI or whole installed desktop acceptance",
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "scripts/test-automation-taskflow.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "ed26c26ac60a25abbe7d93ce322d082a94f669b3308e0b51d6f2f0441a27f265"
+    },
+    {
+      "argv": [
+        "node",
+        "--check",
+        "automation/chat_bridge/desktop_driver.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "node",
+        "--check",
+        "automation/chat_bridge/desktop_cli.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "node",
+        "--check",
+        "automation/chat_bridge/ui_response_gate.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-AUTO-F01-ui-response-gate.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "8b99b148c380d56be65f8a695ca97cbdc15bfdd6daf41011bceed9af1db45f16"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-AUTO-F01-ui-target-preflight.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "ad439a39069981e9389e144413f831a0841f98442234016b63b9a20eff1f7e94"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-AUTO-F01-github-picker.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "c68392ddf4336d14558b8161f6ff66f9aff858adba31d0147a70ba6e17ff3d1d"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-AUTO-F01-ui-surface.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "38c13afcd9604da4761214610f6b1af8bb00513ef61b86f7cad490cb6d2f3bc3"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-AUTO-F01-ui-turn-anchor.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "8cdf159d9ef087aa612b21d4b5d5e39817fb15bfe1d6a2e6851e9573ffb61c63"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-AUTO-F01-archived-observation.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "0cbbd38cd804ede4a1c1da69ed2e87a6f5a59716d4aa1041a58ec5fefb043c03"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-AUTO-F01-before-send.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "4e4156effb11769be4c856c3556c7c09b79e765c7d30773661ecd1d5a4fbfc7b"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-AUTO-F01-submitted-wait.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "e432a4d34a08fa0bb1b02b8b0f115003f8b0e7579807f804761671bfe1ba4dc9"
+    },
+    {
+      "argv": [
+        "node",
+        "--check",
+        "automation/chat_bridge/alis_ui_smoke.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "node",
+        "--check",
+        "automation/chat_bridge/alis_ui_smoke_cli.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-AUTO-F01-one-shot-smoke.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "8985731f95b2e21b1c3ca381b09bf806aef6c27bcd04bac4110e217eb1398989"
+    },
+    {
+      "argv": [
+        "node",
+        "--check",
+        "automation/chat_bridge/ui_session_diagnostics.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-AUTO-F01-ui-session-inspect.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "ea54e810ecf250c734e23a62a9fbe1d2a16ace243de5866b2e0f5f17c5e86794"
+    },
+    {
+      "argv": [
+        "node",
+        "--check",
+        "automation/chat_bridge/ui_chat_key_witness.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-AUTO-F01-ui-chat-key-witness.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "22fa03ea86991188ae1d2e41b1abb9b926c9a97ec8316b633a09be5396cfa7b0"
+    },
+    {
+      "argv": [
+        "node",
+        "--check",
+        "automation/chat_bridge/native_adapter.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "node",
+        "--check",
+        "automation/chat_bridge/native_cli.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-hadalis-native-session.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "d6040ce5c07f3be7755e7dd1bc194384f45cbf194bd6fbdcb4d81e144e76da9a"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-hadalis-static-helper-analysis.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "56b1232fe6e15dc284f2f418a79e107d48aa5d5b67432d37fe37d792954b8b58"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-hadalis-transport-evidence.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "9264d02c69847635881047ecab52fd05293c642c871973ba8317b85981245dfb"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-hadalis-reconciliation-evidence.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "9957bae1572e49f400f742690502d3f290fdb0d7d36b25cafbf8fb14a84168fb"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-hadalis-receipt-evidence.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "6930dd933c7f045229158792688bc98a64ebd66c3e6afa72680e832350c4be4b"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-hadalis-legacy-ui-probe.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "8ee9f3c670006848fc5d16fc21b4d7d014b4f364146ad0ff64a685c3821c8b24"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-hadalis-legacy-ui-response-probe.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "4efd0dbabf16ba57fcd5ec5f1b151c8046ae566a7ef02555dfccea442af3e85a"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-hadalis-legacy-ui-acceptance.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "103a19d359208d4dff9b217442def429a6ebfa1c706fe165283358d65d34def8"
+    },
+    {
+      "argv": [
+        "node",
+        "scripts/test-hadalis-native-scope-probe.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "8ae8a3f4f3b21c4022922fdbd60ea902f17037f17dc7a21cb7b68e7fcdac5f1a"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-hadalis-automation-model.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "a0322ac349317dd19ec4b73dae897883b35570a1988086fb763f1c40c9e81d55"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-hadalis-automation-storage.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "ee5021f636d14b2f9bb761a2cea1f7f266900f13c24f8827adf5663e0cb8e940"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-hadalis-automation-recovery.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "6d5fffef50e18eec64d11c3626061240e23c2baaffd5d7a132138cadc7f60a2a"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-hadalis-automation-scheduler.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "a0c772bf01944ad46ccde872b41d9062c3005fae4b075ea5f6625a6428a8dfe6"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-hadalis-automation-startup.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "6ad3baffe84037d505a86e15d5d1fb7b0ff780d8e6260d87a268a57f909917fc"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/AUTO-F01-service-probe.py",
+        "self-test"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "9ccf7e1968ae37cbb3941c19c45e6a1d1ddd7b264818f348bc34b83f8d8c707d"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-AUTO-F01-github-handoff.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "6129439b7072309fa701cf46f9dc2d6633a33b8dc56047e910fc01f9942d6507"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-hadalis-chat-bridge.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "667ac2a4a7ddce3bfa07ecc68ac268697897856e6c255a6929aa203bbdf20de1"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-AUTO-F01-ui-scheduler.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "47697731974a986a980fa1adfe83e21e3089e4329d4c421b84a576fd4438a24f"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-AUTO-F01-ui-pre-send.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "df3fed384cac67d52cee63c88989bfbd434c1c8298f05e0cbf12e192bb4074a1"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-AUTO-F01-interrupted-delivery.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "1eaba3423ea9e541257f8617a96f6bf0983ba853701b72cba72d56831fc8f7bf"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-AUTO-F01-ui-result-commit.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "0175319c9cce06887c6ae39b1cdfb29ce571a027e75dd82a13a0a5dc0e8017a0"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-AUTO-F01-failed-receipt.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "800aaf06a243b9ae5f60115c1c4d2909e9d9646ca10e390a6225c8af46f16b00"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-AUTO-F01-ui-preflight.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "0e15fdc1a1fdb1e052f791ead624222ef0cd3d0cd17e3bd7749525f6b9a8c2e4"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-AUTO-F01-queue-controls.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "869c0b5c332e4e1c303238b463c52d2bb03b477d986e4ddad9d0a374e9c59ca5"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-AUTO-F01-sudo-input.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "b6a161abed43b9a0dba9259cd451b39b20b10425ac13cc14786554c0e6fac7f1"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-AUTO-F01-queue-stop.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "c7898f18dd249b374a1833944d38eeddf70146cd940bf3f3e855c78d64db67d1"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-AUTO-F01-chat-reset.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "a10fceef079a255b981b7c5c4e352ae257d983e178e61b963b698b436295a1b6"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-AUTO-F01-sudo-keyring.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "65378dcad145da2497120819bebfc3c46534dce9714ce064b3d809a56654aca2"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-hadalis-automation-credentials.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "0f08134df3ee8ab6ee901a3322d486bcf393b1afaf675ee86fa24ce0d6cd9170"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-hadalis-automation-install.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "367f574279f4864c7cba2a1b5d3eec5b162b618500d54ec42ca2fc0dcac1585e"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-brand-cli-instance-selection.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "afd1dabd9055032902c1935f038f3be5ef47a509d8b0e95cd7397fffd0772ce1"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-brand-cli-session-guard.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "7bd25fd496b19a251f7e7a1c938e9ac306f27f01bb491cb80b3fca08b88b0653"
+    },
+    {
+      "argv": [
+        "bash",
+        "-n",
+        "scripts/alis"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "summary": {
+    "PASS": 54,
+    "FAIL": 0
+  }
+}

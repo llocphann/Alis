@@ -1,0 +1,25 @@
+{
+  "schema": "alis.ui-repair-review-evidence.v1",
+  "source_sha": "3a0471383",
+  "current_functional_sha": "54f98dc593a72fd39ce2b0575d1332d13ec21fa7",
+  "scope": "local UI recovery and reviewed fixture handoff only; not CI/native transport/Owner acceptance",
+  "task": "NOTES-F01",
+  "retained_failed_job": "JOB-d757547d40968c9fa6198f5a",
+  "new_repair_job": "JOB-3e1871b0cbf8280a611b8b7c",
+  "new_job_state": "failed",
+  "review_admission": {
+    "ok": true,
+    "duplicate": false,
+    "job_id": "JOB-3e1871b0cbf8280a611b8b7c",
+    "state": "handoff_ready"
+  },
+  "full_private_review_sha256": "7413d09b45481eebefefd4d4fcc4e8f358c0c8ea370a0993834d0d2c68344ff7",
+  "manager_completed_iterations": 5,
+  "next_original_turn_pending": true,
+  "next_original_prompt_sha256": "ff745cb70eb9398e2a847e02164b26d12bff700ad68c514a97277c5fe3285d13",
+  "source_effects_observed": "36e8879fe audited full graceful-retract contract; merged but formal new job UNRUN",
+  "blocking_observation": "Long UI chat virtualizes user turns. Exact original first-turn anchor is restored at oldest history, while the latest frozen prompt is visible at newest history. Current observer requires both in one mounted sample, so its target mismatch remains unresolved. No resend or synthetic terminal receipt.",
+  "native_transport_gate": "closed",
+  "owner_verification": "pending",
+  "latest_remote_merge_sha": "ab83e90464a6d66f5e632864c8fe6bcf492172da"
+}

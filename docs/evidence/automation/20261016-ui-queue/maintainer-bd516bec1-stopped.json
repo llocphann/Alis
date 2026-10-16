@@ -1,0 +1,32 @@
+{
+  "schema": "alis.canonical-supervised.v1",
+  "sha": "bd516bec1aabf5086f5167c644095f87a2839fb6",
+  "argv": [
+    "bash",
+    "scripts/validate-maintainer-local.sh",
+    "--current-repo"
+  ],
+  "scope": "local exact committed clone; not CI or installed desktop/Owner acceptance",
+  "state": "STOPPED",
+  "stop_reason": "source_superseded",
+  "actual_exit": -15,
+  "started_unix": 1792147322,
+  "finished_unix": 1792147450,
+  "logged_numbered_counts": {
+    "PASS": 17,
+    "FAIL": 0,
+    "SKIP": 0
+  },
+  "reported_summary": {},
+  "started_checks": 18,
+  "unsettled_checks": 1,
+  "terminated_owned_pids": [
+    581869,
+    586999,
+    587006,
+    587007,
+    587008
+  ],
+  "owned_remaining_after_exit": [],
+  "raw_log_sha256": "b0910f21d5bce9df5ff28f24159358e7d45adcc8acf2a770f6f09463013b4127"
+}
