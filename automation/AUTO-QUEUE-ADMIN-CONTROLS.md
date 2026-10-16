@@ -172,6 +172,34 @@ Review journal output for secrets or conversation details before
 sharing it. A recent `journalctl` cause can differ from an old exit 75,
 so do not infer the original failure solely from a saved unit status.
 
+## Stopped original UI turn: redacted recovery preview
+
+`python3 scripts/alis-automation-task.py backend-status` now includes
+`ui_queue_pending_recovery_preview` for an ordered queue **stopping/stopped**
+with its original active Issue still retained. It reports only the
+public task code and bounded categorical readiness flags. It never
+prints the original prompt, UUID attempts, conversation identifiers,
+journal text, worker receipt body or digest.
+
+A positive `read_only_observation_candidate` means only that the
+**original saved** unique Alis request token, SHA-256 prompt integrity,
+paused/stopped owner profile, pinned local UI first-turn key and original
+send-journal command match without following symlinks. A live ChatGPT
+observation still must prove the unique same-chat first/last continuity
+and the full final assistant; afterward the original manager must
+commit and archive that receipt under its existing no-replay locks.
+**This preview is not an attestation, completed turn, pending clear, Start
+button or authorization to send or run Localbot.** Installed Settings
+will show the categorical reason during a stopped active queue.
+
+If the journal is missing or mismatched, the pending is not eligible
+for automatic observation-based acceptance. Inspect the original
+private evidence and prior job receipts without altering them. An
+empty/new installation should report `phase=not_eligible` without
+initializing the manager or creating a scheduler profile. This check
+is safe to repeat and does not reschedule the previously stopped
+NOTES-F01 diagnostic turn.
+
 ## Queue controls: Stop, Clear queued, Clear stopped queue
 
 Settings → Automation → GitHub tasks shows separate owner-confirmed controls:
