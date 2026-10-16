@@ -227,13 +227,16 @@ async function newChatFootprint(page) {
   };
 }
 
-export async function openHadalisNewChat(page, { unownedPreviousChat = false } = {}) {
+export async function openHadalisNewChat(page, {
+  unownedPreviousChat = false, ownerChatReset = false
+} = {}) {
   // A new owner may arrive while an unrelated chat is generating. Opening a
   // project chat must not depend on that chat's composer or Stop control.
   // Rotations of an owned chat still require the idle guard below.
-  if (!unownedPreviousChat) await requireIdleComposer(page, false);
+  if (!unownedPreviousChat && !ownerChatReset)
+    await requireIdleComposer(page, false);
   const before = await newChatFootprint(page);
-  if (before.sameProject && before.responseActions === 0 &&
+  if (!ownerChatReset && before.sameProject && before.responseActions === 0 &&
       before.markers === 0 && before.selectedChat === null) {
     // Reuse a verified empty project chat, including after another process
     // navigated there first. A busy target-project chat may belong to an
@@ -241,7 +244,10 @@ export async function openHadalisNewChat(page, { unownedPreviousChat = false } =
     await requireIdleComposer(page);
     return page;
   }
-  if (unownedPreviousChat && before.sameProject)
+  // Only a separately owner-approved manual reset may abandon an old
+  // same-Project editor that has become stuck. The manager verified that
+  // the preceding attempt is settled and has no active worker job.
+  if (unownedPreviousChat && before.sameProject && !ownerChatReset)
     await requireIdleComposer(page);
   let button = null;
   for (const name of [`Start new chat in ${PROJECT_NAME}`, `New chat in ${PROJECT_NAME}`]) {
