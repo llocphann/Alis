@@ -34,7 +34,12 @@ Item {
         // Disarm the shader synchronously; a hidden/offscreen Canvas may not
         // produce another paint after its last animation clock has stopped.
         crestPeak = 0
-        Wave.setMassCached(simulation,records,massKernels)
+        // A disabled wave solver never consumes mass. The output field still
+        // animates while Waves is off, so recalculating up to 256 mass samples
+        // on every Recording/Notification geometry frame was wasted CPU work.
+        // Resynchronize before the first enabled impulse/spectrum frame.
+        if (integrationAllowed)
+            Wave.setMassCached(simulation,records,massKernels)
         mode = "SLEEPING"
         revision++
         configurationChanged()
@@ -69,7 +74,12 @@ Item {
     }
     onAudioAllowedChanged: if(!audioAllowed) clearSpectrum()
     onMotionAllowedChanged: if(!motionAllowed && simulation) Wave.clearTravel(simulation)
-    onIntegrationAllowedChanged: if (!integrationAllowed) reset()
+    onIntegrationAllowedChanged: {
+        if (!integrationAllowed)
+            reset()
+        else if (simulation)
+            Wave.setMassCached(simulation,records,massKernels)
+    }
     onOutputWidthChanged: reset()
     onOutputHeightChanged: reset()
     onSampleCountChanged: reset()
@@ -80,7 +90,8 @@ Item {
         }
         configurationChanged()
     }
-    onRecordsChanged: if (simulation) Wave.setMassCached(simulation,records,massKernels)
+    onRecordsChanged: if (simulation && integrationAllowed)
+        Wave.setMassCached(simulation,records,massKernels)
     onRevisionChanged: samples.requestPaint()
     Component.onCompleted: reset()
     Timer {

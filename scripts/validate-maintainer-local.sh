@@ -311,6 +311,7 @@ run_check 'tracked Fish syntax' tracked_fish_syntax
 run_check 'Niri selected-fullscreen workspace regression' node scripts/test-niri-fullscreen-selection.mjs
 run_check 'NotificationCenter anchor hover lease regression' node scripts/test-notification-center-hover-lease.mjs
 run_check 'Abyss notification popup geometry transition regression' node scripts/test-abyss-notification-transition.mjs
+run_check 'Abyss disabled Waves mass-update regression' node scripts/test-abyss-wave-idle-policy.mjs
 run_check 'Abyss hover scene geometry diagnostic regression' node scripts/test-abyss-hover-geometry-probe.mjs
 run_check 'Abyss frame activity diagnostic regression' node scripts/test-abyss-frame-activity-probe.mjs
 run_check 'Shared tooltip hover/click lifecycle contract' python3 scripts/test-popup-tooltip-hover-contract.py
