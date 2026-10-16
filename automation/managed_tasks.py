@@ -72,6 +72,7 @@ def prompt(profile: dict, kind: str) -> str:
                 f"Task: {pair[1]} repo={pair[0]}\n"
                 f"Issue: {record['task']['issue_url']}\n"
                 f"Pinned SHA: {record['task']['base_sha']}\n"
+                + tf.local_handoff_instructions(record["task"])
             )
     else:
         raise tf.TaskError("Unsupported managed prompt phase")

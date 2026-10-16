@@ -24,7 +24,7 @@ def _verified_local_receipt(record: dict) -> dict:
     for key, expected in {
         "id": checked["id"],
         "sha256": checked["sha256"],
-        "source_sha": checked["payload"]["task"]["base_sha"],
+        "source_sha": tf.execution_sha(checked["payload"]),
         "state": "passed",
     }.items():
         if summary.get(key) != expected:

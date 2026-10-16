@@ -780,6 +780,44 @@ class TaskflowTests(unittest.TestCase):
         with self.assertRaisesRegex(taskflow.TaskError, "Unapproved"):
             taskflow.package(payload)
 
+    def test_execution_pin_keeps_intake_identity_and_authentic_receipt(self):
+        from automation import lifecycle
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp + "/state"}):
+            checkout = Path(tmp) / "checkout"
+            subprocess.run(["git", "init", "-q", str(checkout)], check=True)
+            def commit(message):
+                subprocess.run(["git", "-C", str(checkout), "-c", "user.name=Fixture",
+                                "-c", "user.email=fixture@example.invalid", "commit",
+                                "--allow-empty", "-qm", message], check=True)
+                return subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True).strip()
+            base = commit("intake")
+            implementation = commit("implementation")
+            task = {**TASK, "base_sha": base}
+            taskflow.intake(task)
+            payload = {"schema": "alis.local-handoff.v1", "task": task,
+                       "execution_sha": implementation, "commands": [["git", "diff", "--check"]],
+                       "checkpoint": "fixture", "next_prompt": "Continue after this exact implementation was tested."}
+            bundle = taskflow.package(payload)
+            legacy = taskflow.package({k: v for k, v in payload.items() if k != "execution_sha"})
+            self.assertNotEqual(bundle["sha256"], legacy["sha256"])
+            taskflow.save_handoff(task["code"], bundle)
+            receipt = taskflow.run_task(task["code"], checkout, approved=True)
+            self.assertEqual(receipt["source_sha"], implementation)
+            record = taskflow.load_task(task["code"])
+            self.assertEqual(record["task"]["base_sha"], base)
+            self.assertEqual(lifecycle._verified_local_receipt(record), bundle)
+            record["latest_receipt"]["source_sha"] = base
+            with self.assertRaises(taskflow.TaskError):
+                lifecycle._verified_local_receipt(record)
+            bad = taskflow.package({**payload, "task": {**task, "base_sha": "0" * 40}})
+            with patch.object(taskflow, "_bounded_test") as child:
+                with self.assertRaisesRegex(taskflow.TaskError, "descended"):
+                    taskflow.run_local(bad, checkout, approved=True)
+                child.assert_not_called()
+            for invalid in [None, {}, "main", "0" * 40 + "\n"]:
+                with self.assertRaises(taskflow.TaskError):
+                    taskflow.package({**payload, "execution_sha": invalid})
+
     def test_previous_partial_intake_is_quarantined(self):
         with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"XDG_STATE_HOME": tmp}):
             task = taskflow.resolve("AUTO-R01", api)
