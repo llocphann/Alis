@@ -15,10 +15,11 @@ Item {
     required property string edge
     property var draftPlacements: null
     property var draftOptions: null
-    property string draftLauncherMode: ""
     property bool editing: false
-    readonly property string launcherMode: editing && draftLauncherMode.length
-        ? draftLauncherMode : Layout.unifiedLauncherMode(Config.options?.abyss?.modules)
+    // Selection is owned by Alis Settings, not the layout editor. The editor
+    // can still display and reposition dormant modules in Edgebar Hover mode.
+    readonly property string launcherMode:
+        Layout.unifiedLauncherMode(Config.options?.abyss?.modules)
     property var draggedIds: []
     property var liquidController: null
     property var measuredExtents: ({})

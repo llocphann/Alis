@@ -839,7 +839,6 @@ Scope {
                 draggedIds: editor._dragging ? editor.targetIds : []
                 draftPlacements: editor.visible ? editor.draft : null
                 draftOptions: editor.visible ? editor.draftOptions : null
-                draftLauncherMode: editor.visible ? editor.launcherMode : ""
                 visible: window.presented && field.ready && (window.editorOpen || root.barOnOutput(window.outputName))
                 anchors.fill: parent
                 HoverHandler { id: barHover; onHoveredChanged: { if (hovered) { barClose.stop(); root.setBarRevealed(window.outputName,true) } else barClose.restart() } }
