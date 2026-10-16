@@ -198,6 +198,8 @@ Item {
             }
             QuickNotesPopup {
                 id: notesPopup
+                // Reuse the existing popup policy/vacancy placement identity.
+                liquidPresentationKind: "quickNotes"
                 anchorItem: notesFace.trigger
                 cornerAttachmentEdge: root.attachedEdge
                 cornerAttachmentThickness: -1
@@ -223,6 +225,7 @@ Item {
             }
             NotificationCenterPopup {
                 id: notificationPopup
+                liquidPresentationKind: "notificationCenter"
                 anchorItem: notificationFace.trigger
                 outputName: root.outputName
                 moduleAnchorMode: true
