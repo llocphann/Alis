@@ -732,11 +732,19 @@ def discover_backend_candidates(api=None, *, limit: int = 8) -> list[dict]:
         if existing_path.exists():
             prior = tf.load_task(code, repo)
             recorded_task = prior.get("task")
-            if (not isinstance(recorded_task, dict) or
-                    recorded_task.get("base_sha") != task["base_sha"]):
-                # New HEAD must not silently repin a saved local task.
+            if not isinstance(recorded_task, dict):
                 skipped_saved.append(code)
                 continue
+            saved_sha = recorded_task.get("base_sha")
+            if saved_sha != task["base_sha"]:
+                # Preserve original immutable pin; safely reuse it only if
+                # GitHub confirms it is still an ancestor of current HEAD
+                # and the task itself has never been dispatched/edited.
+                if (not _pristine_task(prior, task)
+                        or not _verified_ancestor_pin(
+                            repo, saved_sha, task["base_sha"], api)):
+                    skipped_saved.append(code)
+                    continue
         selected.append(task)
         if len(selected) == limit:
             break
