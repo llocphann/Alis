@@ -42,8 +42,12 @@ assert.equal(policy.canJoin('utilities'),false,'Utilities is an input utility su
 assert.equal(policy.canJoin('media'),false,'media popup is distinct from media OSD');
 assert.equal(policy.canJoin('unknown'),false);
 JS
-grep -Fq 'visible:Presentation.canJoin(root.kind)' "$positions" \
-    || { printf 'FAIL: popup position editor does not expose Join nearby corner for corner/network kinds\n' >&2; exit 1; }
+# The Join control now has compact IPC and regular position-editor
+# variants; never require the retired unconditional visibility expression.
+grep -Fq 'visible:root.visible && root.compactIpcEditor && Presentation.canJoin(root.kind)' "$positions" \
+    || { printf 'FAIL: compact IPC Join nearby corner control is missing\n' >&2; exit 1; }
+grep -Fq 'visible:!root.compactIpcEditor && Presentation.canJoin(root.kind)' "$positions" \
+    || { printf 'FAIL: standard position editor Join nearby corner control is missing\n' >&2; exit 1; }
 # Popup corner ownership lives in the shared perimeter; the Edit Abyss
 # Layout control only independently positions IPC/OSD surfaces.
 for token in 'buttonText:"IPC"' 'allowedKinds:["osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch"]' 'joinedEdge:Presentation.joinedEdge(root.previewKind,'; do
