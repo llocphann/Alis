@@ -179,6 +179,47 @@ class RecoveryPreview(unittest.TestCase):
         old.rename(archive / "different-id.json")
         self.assertEqual(self.inspect()["original_journal"], "archive_review_required")
 
+    def test_retired_response_explicit_intent_must_match_original_journal(self):
+        pid = next(iter(self.state["profiles"]))
+        self.state["profiles"][pid]["pending"]["prepared_at_unix"] = 12
+        self.path.unlink()
+        archive = self.path.parent / "observed"
+        archive.mkdir()
+        (archive / (JID + ".json")).write_text(json.dumps({
+            **self.journal, "at_unix": 13}))
+        destination = self.path.parent.parent / "ui-responses" / pid
+        destination.mkdir(parents=True)
+        receipt = destination / (ATTEMPT + ".json")
+        original = {"transport": "alis-ui-once", "attempt_id": ATTEMPT,
+                    "response": "An exact original response", "at_unix": 14}
+        proper = {"id": JID, "command": "send", "prompt_sha256": DIGEST}
+        receipt.write_text(json.dumps({**original, "ui_send_intent": proper}))
+        first = self.inspect()
+        self.assertEqual(first["original_journal"], "unique_retired_attempt_bound")
+        self.assertTrue(first["read_only_observation_candidate"])
+        self.assertFalse(first["send_or_queue_start_authorized"])
+        for invalid in (
+            {"id": "66666666-7777-8888-9999-aaaaaaaaaaaa",
+             "command": "send", "prompt_sha256": DIGEST},
+            {"id": JID, "command": "rotate-send", "prompt_sha256": DIGEST},
+            {"id": JID, "command": "send", "prompt_sha256": "a" * 64},
+            {**proper, "extra": "untrusted"},
+            None, [],
+        ):
+            receipt.write_text(json.dumps({**original, "ui_send_intent": invalid}))
+            rejected = self.inspect()
+            self.assertEqual(rejected["original_journal"],
+                             "retired_response_intent_mismatch")
+            self.assertFalse(rejected["read_only_observation_candidate"])
+            self.assertFalse(rejected["send_or_queue_start_authorized"])
+            self.assertNotIn("An exact original response", json.dumps(rejected))
+        # Backwards compatibility is scoped to read-only candidacy; legacy
+        # absence of provenance never proves completion without live UI.
+        receipt.write_text(json.dumps(original))
+        legacy = self.inspect()
+        self.assertEqual(legacy["original_journal"], "unique_retired_attempt")
+        self.assertFalse(legacy["send_or_queue_start_authorized"])
+
     def test_interrupted_and_not_sent_journals_do_not_authorize_retry(self):
         pid = next(iter(self.state["profiles"]))
         self.state["profiles"][pid]["pending"]["prepared_at_unix"] = 12
