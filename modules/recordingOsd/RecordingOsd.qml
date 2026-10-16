@@ -27,6 +27,11 @@ Scope {
     property bool controlsHovered: false
     readonly property bool osdTargetHovered: controlsHovered || connectionHovered
     property bool draggingControls: false
+    // In embedded Abyss mode a "Recording saved" notification can arrive at
+    // the same instant the recorder disappears. Retain *hidden* controls for
+    // a bounded cool-down rather than destroying the Qt item tree on the
+    // first frame of the toast. Native ii/Waffle teardown is unchanged.
+    property bool controlsCooling: false
     // Minimized is a persistent choice; hovering only peeks at the controls.
     readonly property bool controlsExpanded: !collapsed || osdTargetHovered || draggingControls
     readonly property Item controls: controlsLoader.item
@@ -95,7 +100,17 @@ Scope {
     Connections {
         target: root.recordingStatus
         function onIsRecordingChanged(): void {
-            if (!root.recordingStatus.isRecording) { hideTimer.stop(); root.draggingControls = false; return }
+            if (!root.recordingStatus.isRecording) {
+                hideTimer.stop()
+                root.draggingControls = false
+                if (root.embeddedMode && root.controls) {
+                    root.controlsCooling = true
+                    controlsCoolDown.restart()
+                }
+                return
+            }
+            controlsCoolDown.stop()
+            root.controlsCooling = false
             root.collapsed = false
             if (!root.embeddedMode) root.isVertical = false
             root.revealed = true
@@ -104,6 +119,12 @@ Scope {
     }
     Component.onCompleted: root.startHideTimer()
     Timer {
+        id: controlsCoolDown
+        interval: 700
+        repeat: false
+        onTriggered: root.controlsCooling = false
+    }
+    Timer {
         id: hideTimer
         interval: 2000
         onTriggered: if (root.autoHide && !root.collapsed && !root.osdTargetHovered && !root.draggingControls) root.revealed = false
@@ -111,6 +132,7 @@ Scope {
     Loader {
         id: controlsLoader
         active: root.recordingStatus.isRecording
+            || (root.embeddedMode && root.controlsCooling)
         onLoaded: root.hostControls()
         sourceComponent: RecordingControls {
             owner: root

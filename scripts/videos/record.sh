@@ -642,6 +642,23 @@ run_recorder_process() {
     printf '%s\n' "$recorder_pid" > "$RECORDER_PID_FILE"
     write_recorder_status "$recorder_pid"
 
+    # NOTIF-I02: Starting wf-recorder and constructing its OSD at the exact
+    # notification reveal frame competes with the same Qt/Niri presentation.
+    # Announce only an *actual, still-running* recorder after a bounded warm-up;
+    # this does not delay capture, alter the recording command or block wait.
+    # The PID file and /proc comm also reject an early failed/fallback attempt.
+    if is_truthy "$SHOW_NOTIFICATIONS"; then
+        (
+            sleep 0.65
+            if [[ "$(cat "$RECORDER_PID_FILE" 2>/dev/null || true)" == "$recorder_pid" ]] &&
+               [[ "$(cat "/proc/$recorder_pid/comm" 2>/dev/null || true)" == "wf-recorder" ]] &&
+               kill -0 "$recorder_pid" 2>/dev/null; then
+                notify-send "Starting recording" "$output_name — $(audio_mode_description "$AUDIO_MODE")" -a 'Recorder'
+            fi
+        ) >/dev/null 2>&1 &
+        disown
+    fi
+
     set +e
     wait "$recorder_pid"
     status=$?
@@ -707,9 +724,6 @@ start_recording_command() {
         fallback_cmd+=(-R "$AUDIO_SAMPLE_RATE")
     fi
 
-    if is_truthy "$SHOW_NOTIFICATIONS"; then
-        notify-send "Starting recording" "$output_name — $(audio_mode_description "$AUDIO_MODE")" -a 'Recorder' & disown
-    fi
     if ! run_recorder_process "${preferred_cmd[@]}"; then
         if is_truthy "$ENABLE_FALLBACK"; then
             if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Recording fallback" "Preferred encoder failed, retrying with safe mode" -a 'Recorder' & disown; fi

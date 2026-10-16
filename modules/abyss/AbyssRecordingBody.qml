@@ -28,6 +28,10 @@ AbyssBodyHost {
     padding: 10
     placementCanResize: false
     stableContentSize: true
+    // Preserve the already-rendered Recording UI during its retract and let
+    // the one-shot warm expiry release it after notification reveal settles.
+    // It remains non-interactive immediately after recording ends.
+    warmContent: true
     residentContent: root.recording
     includeEdgeConnection: true
     animatePlacementChanges: !root.dragging

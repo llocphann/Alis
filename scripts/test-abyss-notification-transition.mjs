@@ -235,4 +235,37 @@ same('content-not-ready still masks externally driven reveal',
 same('nonexternal toast keeps its own host animation',
     progressFn(-1,.37),.37);
 
-console.log('PASS: '+tests+' source-executed Abyss Notification Center transition assertions');
+// NOTIF-I01/I02: avoid simultaneous recorder startup/teardown and toast
+// reveal without changing captured media, UI hit testing or Waffle teardown.
+const recordScript=read('scripts/videos/record.sh');
+const recHost=read('modules/abyss/AbyssRecordingBody.qml');
+const recordOsd=read('modules/recordingOsd/RecordingOsd.qml');
+const startup=recordScript.slice(recordScript.indexOf('run_recorder_process() {'),
+    recordScript.indexOf('stop_running_recorder() {'));
+const recordingCmd=recordScript.slice(recordScript.indexOf('start_recording_command() {'),
+    recordScript.indexOf('# Try to get save path from config',recordScript.indexOf('start_recording_command() {')));
+same('recorder startup announcement is emitted after process launch',
+    startup.indexOf('"${recorder_cmd[@]}" &') < startup.indexOf('sleep 0.65')
+    && startup.includes('notify-send "Starting recording"'),true);
+same('startup announcement is bound to exact live PID and command',
+    startup.includes('== "$recorder_pid"')
+    && startup.includes('== "wf-recorder"')
+    && startup.includes('kill -0 "$recorder_pid"'),true);
+same('no notification is emitted before the first capture attempt',
+    !recordingCmd.includes('notify-send "Starting recording"'),true);
+same('recorder notification warmup does not block the recorder wait',
+    startup.indexOf(') >/dev/null 2>&1 &') < startup.indexOf('wait "$recorder_pid"'),true);
+same('recording host retains content only for its normal hidden warm tail',
+    recHost.includes('warmContent: true') && recHost.includes('residentContent: root.recording'),true);
+same('cooldown only affects the embedded Recording OSD, not ii or Waffle',
+    recordOsd.includes('root.embeddedMode && root.controlsCooling'),true);
+same('cooldown releases embedded controls after bounded 700ms',
+    recordOsd.includes('id: controlsCoolDown')
+    && recordOsd.includes('interval: 700')
+    && recordOsd.includes('onTriggered: root.controlsCooling = false'),true);
+same('recording restart cancels pending teardown',
+    recordOsd.includes('controlsCoolDown.stop()')
+    && recordOsd.includes('root.controlsCooling = false'),true);
+same('legacy/native OSD remains tied to live recorder state',
+    recordOsd.includes('active: root.recordingStatus.isRecording && !root.embeddedMode'),true);
+console.log('PASS: '+tests+' source-executed Abyss Notification/Recording transition assertions');
