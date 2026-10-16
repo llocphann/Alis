@@ -1,0 +1,95 @@
+name: Bake theme-aware Abyss Liquid QSB
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "modules/common/widgets/wallpaperTransitions/alisMelt.frag"
+      - ".github/workflows/alis-liquid-qsb-bake.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: alis-liquid-qsb-dev
+  cancel-in-progress: false
+
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    container: debian:sid
+    steps:
+      - name: Install deterministic Qt Shader Baker
+        run: |
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git ca-certificates python3 qt6-shader-baker
+
+      - name: Checkout source revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compile and inspect real Liquid QSB
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$PWD"
+          QSB="$(command -v qsb || true)"
+          if [ -z "$QSB" ]; then QSB=/usr/lib/qt6/bin/qsb; fi
+          SOURCE="modules/common/widgets/wallpaperTransitions/alisMelt.frag"
+          "$QSB" --version
+          "$QSB" --qt6 -o /tmp/alis-liquid.frag.qsb "$SOURCE"
+          "$QSB" --qt6 -o /tmp/alis-liquid-verify.frag.qsb "$SOURCE"
+          cmp /tmp/alis-liquid.frag.qsb /tmp/alis-liquid-verify.frag.qsb
+          "$QSB" --dump /tmp/alis-liquid.frag.qsb > /tmp/alis-liquid-dump.txt
+          python3 scripts/test-wallpaper-abyss-liquid.py
+          python3 scripts/test-wallpaper-liquid-contract.py
+
+      - name: Publish shader only if dev source remains identical
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64
+          import json
+          import os
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+
+          repo = os.environ["GH_REPO"]
+          source = "modules/common/widgets/wallpaperTransitions/alisMelt.frag"
+          binary = source + ".qsb"
+          url = "https://api.github.com/repos/" + repo
+          headers = {
+              "Authorization": "Bearer " + os.environ["GH_TOKEN"],
+              "Accept": "application/vnd.github+json",
+              "X-GitHub-Api-Version": "2022-11-28",
+              "User-Agent": "alis-liquid-shader-baker",
+          }
+
+          def api(method, path, payload=None):
+              data = None if payload is None else json.dumps(payload).encode()
+              with urlopen(Request(url + path, data=data, headers=headers, method=method)) as response:
+                  return json.load(response)
+
+          local_source = Path(source).read_bytes()
+          current_source = api("GET", "/contents/" + source + "?ref=dev")
+          if base64.b64decode(current_source["content"]) != local_source:
+              raise SystemExit("Liquid GLSL changed since checkout; refuse to publish stale QSB")
+
+          baked = Path("/tmp/alis-liquid.frag.qsb").read_bytes()
+          current_binary = api("GET", "/contents/" + binary + "?ref=dev")
+          if base64.b64decode(current_binary["content"]) == baked:
+              print("Liquid QSB on dev already matches the shader")
+          else:
+              commit = api("PUT", "/contents/" + binary, {
+                  "message": "build(wall): bake theme-aware Abyss Liquid QSB",
+                  "content": base64.b64encode(baked).decode(),
+                  "sha": current_binary["sha"],
+                  "branch": "dev",
+              })
+              print("liquid_qsb_commit=" + commit["commit"]["sha"])
+          PY
