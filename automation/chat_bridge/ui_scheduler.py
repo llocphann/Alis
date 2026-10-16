@@ -546,6 +546,17 @@ def reconcile_pending(profile_id: str, *, chat_label: str | None = None,
                 or journal.get("schema") != "alis.chat-ui-send.v1"
                 or journal.get("phase") != "attempted" or journal.get("command") != command):
             raise RuntimeError("ALIS_UI_ORIGINAL_PROMPT_CHANGED")
+        if retired and legacy_response is not None and "ui_send_intent" in legacy_response:
+            # Modern retired receipts explicitly bind the journal attempt.
+            # Never substitute a different archived journal with an identical
+            # input hash/time. Old receipts without this field still require
+            # unique archive and fresh exact live response verification.
+            expected = {"id": journal.get("id"), "command": command,
+                        "prompt_sha256": digest}
+            intent = legacy_response["ui_send_intent"]
+            if (not isinstance(intent, dict) or set(intent) != set(expected)
+                    or intent != expected):
+                raise RuntimeError("ALIS_UI_LEGACY_RESPONSE_MISMATCH")
         target = (item.get("session") or {}).get("ui_target_key") if command == "send" else None
         observe = runtime.desktop if observer is None else observer
         legacy = {}
