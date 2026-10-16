@@ -630,12 +630,15 @@ def clear(*, approved: bool = False,
                         or record.get("latest_receipt") is not None):
                     raise tf.TaskError("Queue task has durable work; cannot clear")
         elif state == "review_required":
-            # No task can be dispatched. Archive this queue manifest ONLY,
-            # retaining every saved task record/receipt for future evidence
-            # reconciliation. Explicit owner Clear remains mandatory.
+            # A review queue can contain earlier completed/awaiting-owner
+            # tasks after advance() parks the remaining deferred items.
+            # These terminal queue entries are history, not live dispatches.
+            # Archive the manifest only; task files, evidence and receipts
+            # must remain untouched for later Owner review.
             if (active is not None or manifest.get("selection")
                     or manifest.get("approved_start") or queued
-                    or any(item.get("state") != "deferred"
+                    or any(item.get("state") not in
+                           {"deferred", "completed", "awaiting_owner"}
                            for item in manifest["items"])):
                 raise tf.TaskError("Unsettled queue cannot be cleared")
         elif state == "stopped":
