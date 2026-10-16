@@ -126,6 +126,21 @@ def desktop(command: str, prompt: str | None = None,
     # pending tombstone: never silently send a duplicate after a restart.
     if new_chat_unowned and command != "rotate-send":
         raise ValueError("Unowned navigation applies only to an initial new chat")
+    extra_env = {}
+    surface = state_root() / "ui-window.json"
+    if surface.exists() or surface.is_symlink():
+        try:
+            if surface.is_symlink() or surface.stat().st_size > 2048:
+                raise ValueError("Unsafe window pin")
+            data = json.loads(surface.read_text())
+            target = data.get("target_id") if isinstance(data, dict) else None
+            if (not isinstance(data, dict) or data.get("schema") != "alis.ui-window.v1"
+                    or not isinstance(target, str) or len(target) != 32
+                    or any(c not in "0123456789abcdefABCDEF" for c in target)):
+                raise ValueError("Invalid window pin")
+        except (OSError, ValueError):
+            raise UiNotSent("ALIS_UI_WINDOW_TARGET_INVALID", hashlib.sha256((prompt or "").encode()).hexdigest())
+        extra_env["ALIS_CHATGPT_UI_TARGET_ID"] = target
     intent = (prepare_send(state_root(), command, prompt)
               if command in {"send", "rotate-send"} else None)
     if target_key is not None and (command != "send" or len(target_key) != 64
@@ -140,7 +155,7 @@ def desktop(command: str, prompt: str | None = None,
         argv,
         input_text=prompt,
         timeout=DESKTOP_TIMEOUT_SECONDS,
-        extra_env={"ALIS_UI_ATTEMPT_ID": intent[1]} if intent else None,
+        extra_env={**extra_env, **({"ALIS_UI_ATTEMPT_ID": intent[1]} if intent else {})},
     )
     if result.returncode != 0:
         if intent and result.returncode == 1 and len(result.stdout) <= 4096:

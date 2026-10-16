@@ -52,6 +52,28 @@ class PreSendTests(TestCase):
         self.assertNotIn("private owner task", records[0].read_text())
         self.assertFalse((journal / "observed").exists())
 
+    def test_invalid_window_pin_cannot_prepare_or_invoke_ui(self):
+        surface = runtime.state_root() / "ui-window.json"
+        for value in ["not json", "[]", "null", '{}', json.dumps({
+                "schema": "alis.ui-window.v1", "target_id": "a" * 32 + "\n"})]:
+            surface.write_text(value)
+            with patch.object(runtime, "run") as child:
+                with self.assertRaises(runtime.UiNotSent):
+                    runtime.desktop("send", "private owner task")
+                child.assert_not_called()
+                self.assertFalse((runtime.state_root() / "ui-send-journal/pending.json").exists())
+
+    def test_window_pin_is_passed_to_child_with_attempt_identity(self):
+        (runtime.state_root() / "ui-window.json").write_text(json.dumps({
+            "schema": "alis.ui-window.v1", "target_id": "b" * 32}))
+        def child(_argv, **kwargs):
+            self.assertEqual(kwargs["extra_env"]["ALIS_CHATGPT_UI_TARGET_ID"], "b" * 32)
+            return SimpleNamespace(returncode=1, stderr="", stdout=json.dumps(
+                self.response(kwargs["input_text"], kwargs)))
+        with patch.object(runtime, "run", side_effect=child):
+            with self.assertRaises(runtime.UiNotSent):
+                runtime.desktop("send", "owner task")
+
     def test_wrong_or_uncertain_receipt_keeps_no_replay_intent(self):
         cases = [{"attempt_id": "other"}, {"prompt_sha256": "0" * 64},
                  {"send_attempted": True}, {"send_attempted": "false"},

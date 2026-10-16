@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import {requireFreshAssistantTurn} from "./ui_response_gate.mjs";
+import {pinnedUiWindow} from "./ui_surface.mjs";
 
 const PLAYWRIGHT = process.env.ALIS_PLAYWRIGHT_MODULE ?? process.env.HADALIS_PLAYWRIGHT_MODULE ?? "file:///usr/lib/chatgpt/resources/cua_node/lib/node_modules/playwright-core/index.mjs";
 const { chromium } = await import(PLAYWRIGHT);
@@ -66,6 +67,9 @@ async function semanticClick(locator, label) {
 }
 
 async function findMainPage(browser) {
+  if(process.env.ALIS_CHATGPT_UI_TARGET_ID)
+    return pinnedUiWindow(browser,process.env.ALIS_CHATGPT_UI_TARGET_ID);
+  const matches=[];
   for (const context of browser.contexts()) {
     for (const page of context.pages()) {
       if (page.url() !== MAIN_URL) continue;
@@ -74,10 +78,11 @@ async function findMainPage(browser) {
         name: new RegExp(`^(Start new chat in|New chat in) ${escapedProject}$`)
       });
       if ((await visibleCount(composer)) === 1 || (await visibleCount(newChat)) > 0)
-        return page;
+        matches.push(page);
     }
   }
-  throw new Error("main ChatGPT renderer not found");
+  if(matches.length===1)return matches[0];
+  throw new Error(matches.length ? "ALIS_UI_MULTIPLE_WINDOWS_REQUIRE_TARGET" : "main ChatGPT renderer not found");
 }
 
 async function projectGuardCount(page) {
@@ -723,6 +728,16 @@ export async function waitForCompletion(
         : (markerAdvanced2 || responseActionAdvanced2);
 
       if (completionAdvanced2 && stopCount2 === 0) {
+        if (hasSubmitBaseline) {
+          // User Copy controls can appear before generation begins. A new
+          // toolbar is only a hint; wait for a settled assistant-only final.
+          const response=await extractNearResponseAction(page,baselineResponseActionCount);
+          try {
+            requireFreshAssistantTurn({response,
+              baselineActionCount:baselineResponseActionCount,
+              currentActionCount:responseActionCount2,generationActive:false});
+          } catch {await sleep(250);continue;}
+        }
         return {
           completed: true,
           baselineMarkerCount,
@@ -893,7 +908,9 @@ export async function observeDesktop(page) {
 }
 
 export async function connectDesktop() {
-  const browser = await chromium.connectOverCDP(CDP);
-  const page = await findMainPage(browser);
-  return { browser, page };
+  const browser = await chromium.connectOverCDP(CDP,{timeout:6500});
+  try {
+    const page = await findMainPage(browser);
+    return { browser, page };
+  } catch (error) {await browser.close();throw error;}
 }
