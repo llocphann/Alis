@@ -8,6 +8,20 @@ Pick a wallpaper and the entire desktop follows. Colors propagate to the shell, 
 
 **From Settings**: Appearance section lets you configure wallpaper behavior, blur, and auto-cycling.
 
+## Liquid transition (Alis)
+
+Choose **Liquid** under Settings → Appearance → Background → Motion.
+The `alisMelt` preference uses the bundled GLSL/QSB shader. Saved
+`inirMelt` preferences still use the same shader. Alis keeps the old
+wallpaper visible until a shader frame has been presented.
+
+If the graphics renderer is software-only, shader compilation fails, or
+the compositor stalls, the Ready-slot fade fallback applies the new
+wallpaper. Such a fallback **does not count as a Liquid render**.
+You can disable only the shader with `ALIS_DISABLE_LIQUID_SHADER=1`.
+Owner testing still needs live Niri/Quickshell, rapid changes, multiple
+outputs and desktop/Overview parity.
+
 ## What happens when you set a wallpaper
 
 ```

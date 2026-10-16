@@ -52,7 +52,8 @@ Item {
     // Liquid is a real shader transition by default, not a disguised fade.
     // A local opt-out is retained for driver recovery; unsupported renderers,
     // compile errors and stalled frames fall back to the Ready-slot crossfade.
-    readonly property var shaderTransitionTypes: ["alisMelt", "inirMelt"]
+    // Aliases resolve to one compiled QSB, including shaderRandom.
+    readonly property var shaderTransitionTypes: ["alisMelt"]
     readonly property bool shaderTransitionRequested: Quickshell.env("ALIS_DISABLE_LIQUID_SHADER") !== "1"
         && (isShaderTransitionType(transitionType)
             || String(transitionType ?? "") === "shaderRandom")
@@ -135,7 +136,8 @@ Item {
     }
 
     function isShaderTransitionType(rawType): bool {
-        return shaderTransitionTypes.indexOf(String(rawType ?? "")) >= 0
+        const value = String(rawType ?? "")
+        return value === "inirMelt" || shaderTransitionTypes.indexOf(value) >= 0
     }
 
     function _resolvedShaderName(): string {

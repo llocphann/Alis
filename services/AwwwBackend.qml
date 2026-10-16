@@ -190,6 +190,10 @@ Singleton {
         if (isAwwwNativeTransitionType(rawType))
             return rawType
         switch (rawType) {
+        // Both Liquid aliases use the internal renderer; this mapping only
+        // informs duration controls and fallback handling.
+        case "alisMelt":
+        case "inirMelt":
         case "crossfade":
         case "fadeThrough":
         case "blurFade":
