@@ -1016,6 +1016,18 @@ ContentPage {
                     autoToggle: false
                     onToggledByUser: checked => root.cloudSelectTasks = checked
                 }
+                DialogButton {
+                    objectName: "automationResetChat"
+                    buttonText: root.resetChatConfirmation
+                        ? Translation.tr("Confirm reset") : Translation.tr("Reset chat")
+                    visible: !!root.queueSnapshot
+                        && root.queueSnapshot.mode === "ordered"
+                        && root.queueSnapshot.state === "active"
+                    enabled: !root.busy && root.queueStatusConfirmed
+                        && !!root.queueSnapshot && !!root.queueSnapshot.active
+                        && root.queueSnapshot.state === "active"
+                    onClicked: root.resetActiveChat()
+                }
                 Rectangle {
                     id: automationJobStatusPill
                     objectName: "automationJobStatus"
@@ -1142,7 +1154,8 @@ ContentPage {
                 visible: root.statusText.length > 0
                     && (root.clearQueueConfirmation
                         || root.stopQueueConfirmation
-                        || root.uiQueueStartConfirmation)
+                        || root.uiQueueStartConfirmation
+                        || root.resetChatConfirmation)
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colPrimary
