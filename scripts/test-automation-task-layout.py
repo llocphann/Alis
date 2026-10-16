@@ -24,8 +24,23 @@ require('Layout.fillWidth: true' in card,
         "compact controls should adapt to available width")
 
 # The UI must not show the same queue twice or rely on long help labels.
-require(card.count("ConfigSelectionArray {") == 1,
-        "there must be exactly one interactive chips queue")
+require(card.count('objectName: "automationQueueGrid"') == 1
+        and card.count('objectName: "automationTaskStatusTag"') == 1,
+        "there must be exactly one aligned two-column queue")
+require("columns: 2" in card and "rows: 10" in card
+        and "flow: GridLayout.TopToBottom" in card,
+        "each column must list at most ten tasks vertically")
+require("Layout.preferredWidth: 112" in card,
+        "aligned status tags need consistent fixed width")
+require("modelData.code" in card and "root.queueTag(queueTaskRow.modelData)" in card,
+        "task code and status tag are required on each row")
+require("onClicked: root.selectQueueTask(queueTaskRow.modelData)" in card,
+        "clicking a task row must keep task status/activity selection")
+require('Translation.tr("Verified")' in qml
+        and 'Translation.tr("Done")' in qml
+        and 'Translation.tr("Working")' in qml
+        and 'Translation.tr("Queue")' in qml,
+        "primary status vocabulary must contain Verified, Done, Working, Queue")
 require('join("\\n")' not in card and '(i + 1) + ". "' not in card,
         "the numbered multiline queue was not removed")
 require('Cloudbot will select the next task' not in card
@@ -48,9 +63,7 @@ for symbol in [
     "onClicked: root.clearQueue()",
     "onClicked: root.stopQueue()",
     "onClicked: root.startQueue()",
-    "onSelected: value =>",
-    "Qt.callLater(root.refreshTaskStatus)",
-    "Qt.callLater(root.refreshActivity)",
+    "onClicked: root.selectQueueTask(queueTaskRow.modelData)",
     "root.stopQueueConfirmation",
     "root.clearQueueConfirmation",
     "root.uiQueueStartConfirmation",
@@ -82,4 +95,7 @@ require("root.stopAcknowledgementPending = true" in qml,
         "stop request must remain visibly pending until manager ack")
 require("root.stopAcknowledgementPending = false" in qml,
         "pending state must reset when the queue leaves active mode")
-print("PASS compact Automation task UI: one chips queue, live job status, action safety")
+require("Qt.callLater(root.refreshTaskStatus)" in qml
+        and "Qt.callLater(root.refreshActivity)" in qml,
+        "clicking a task must refresh detail/activity")
+print("PASS Automation vertical queue 2 columns × 10 rows, tagged statuses, controls")
