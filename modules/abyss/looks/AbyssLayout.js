@@ -101,14 +101,20 @@ function withUnifiedEdgeModules(placements, shouldAdd) {
     });
     return normalize(normalized,"top");
 }
-// Icon appearance is a Settings concern, independent of where an editor
-// places a launcher. A missing override retains historical per-placement
-// showIcon values, including existing per-output layouts.
+// Stored icon preference is independent of the physical module position.
+// JsonAdapter requires a declared property, so the "inherit" sentinel
+// preserves every pre-existing per-output showIcon choice until Settings
+// explicitly writes "show" or "hide". Read earlier boolean/string drafts.
+function iconVisibilityPreference(options,kind) {
+    var raw=options?.iconVisibility?.[kind];
+    if (raw===true || raw==="true" || raw==="show") return true;
+    if (raw===false || raw==="false" || raw==="hide") return false;
+    return null;
+}
 function withSettingsIconVisibility(placements, options) {
-    var preferences=options?.iconVisibility;
     return placements.map(function(p) {
-        var preference=preferences?.[p.kind];
-        return isUnifiedKind(p.kind) && typeof preference === "boolean"
+        var preference=iconVisibilityPreference(options,p.kind);
+        return isUnifiedKind(p.kind) && preference!==null
             ? Object.assign({},p,{showIcon:preference}) : p;
     });
 }
@@ -480,7 +486,7 @@ function localSurfaces(records, width, height, options, fontScale, minimum) {
             span=start ? p.along+p.span : length-p.along;
             along=start ? 0 : p.along;
         }
-        var record={edge:p.edge,surface:surface,content:p.content,span:span,along:along,depth:depth,progress:1,mass:1};
+        var record={kind:p.kind,edge:p.edge,surface:surface,content:p.content,span:span,along:along,depth:depth,progress:1,mass:1};
         var radius=options?.edgeModuleRadii?.[p.edge];
         if(options?.edgeWidthAffectsModules?.[p.edge]===false && Number.isFinite(Number(radius)) && Number(radius)>=0)
             record.radius=bounded(radius,0,0,64);
@@ -502,9 +508,13 @@ function localSurfaces(records, width, height, options, fontScale, minimum) {
     });
     return result;
 }
-function clearanceInsets(insets, localRecords, edge, along, span) {
+function clearanceInsets(insets, localRecords, edge, along, span, popupOwnerKind) {
     var result=Object.assign({},insets);
     localRecords.forEach(function(record) {
+        // A popup must not clear its OWN localized launcher: that creates
+        // a ~48px blank bridge beside the mature panel on either corner.
+        // Other, unrelated module surfaces remain respected.
+        if (popupOwnerKind && record.kind===popupOwnerKind) return;
         if(record.edge===edge && record.along-8<along+span && record.along+record.span+8>along)
             result[edge]=Math.max(result[edge],record.depth);
     });
