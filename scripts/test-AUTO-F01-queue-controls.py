@@ -210,6 +210,33 @@ class QueueControls(unittest.TestCase):
         self.assertTrue(queue.prepare("AUTO-R01",
              resolver=lambda _: self.fail("must not recontact GitHub"))["duplicate"])
 
+    def test_live_manager_profile_blocks_original_pin_reuse(self):
+        from automation import managed_tasks
+        from automation.manager import model, store
+        task = queue.discover_backend_candidates(self.github)[0]
+        queue.prepare("AUTO-R01", resolver=lambda _: task)
+        queue.clear(approved=True)
+        file = tf._task_path("AUTO-R01", "llocphann/Alis")
+        original = file.read_bytes()
+        pid = managed_tasks.profile_id("llocphann/Alis", "AUTO-R01")
+        def owner(config, state):
+            profile = model.new_profile("Existing Cloudbot session")
+            profile.update(id=pid, description="taskflow:llocphann/Alis:AUTO-R01",
+                           enabled=True, project_name=model.DEFAULT_PROJECT)
+            config["profiles"].append(model.validate_profile(profile))
+            item = store.profile_state()
+            item["desired"] = "run"
+            item["session"] = {"transport": "alis-ui-once",
+                               "ui_target_key": "f" * 64}
+            state["profiles"][pid] = item
+        store.change(owner)
+        newer = {**task, "base_sha": "c" * 40}
+        result = queue.prepare("AUTO-R01", resolver=lambda _: newer,
+            comparison_api=lambda _: self.fail("manager owns previous session"))
+        self.assertEqual(result["state"], "review_required")
+        self.assertEqual(result["items"][0]["reason"], "saved_work_requires_review")
+        self.assertEqual(file.read_bytes(), original)
+
     def test_saved_cloud_ack_outranks_head_drift_and_never_auto_replays(self):
         task = queue.discover_backend_candidates(self.github)[0]
         queue.prepare("AUTO-R01", resolver=lambda _: task)
