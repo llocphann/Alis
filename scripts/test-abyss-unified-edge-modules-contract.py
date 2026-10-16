@@ -34,19 +34,18 @@ assert "NotificationCenterContent {" not in module
 assert "TimerService {" not in module
 assert "Notifications {" not in module
 
-# Hiding the glyph must not disable its MouseArea, detach the mature popup,
-# or turn the entire screen into an invisible input receiver.
+# Module source exists only in Module Icon mode. "Hide icon" unmounts its
+# whole popup/source and switches to the existing legacy corner Edgebar.
 assert "showIcon:p.showIcon !== false" in layout
-assert 'showIcon:p.showIcon !== false' in layout
+assert 'showIcon: module.unifiedEdgeLauncher ? true : placement?.showIcon !== false' in bar
 assert "visible: hit.parent.moduleRoot.showIcon" in module
+assert "enabled: moduleRoot.showIcon" in module
 assert "hoverEnabled: true" in module
-assert "hiddenEdgeLauncher" in bar
-assert 'module.attachedEdge === "top"' in bar
-assert 'module.attachedEdge === "bottom"' in bar
-assert 'module.attachedEdge === "left"' in bar
-assert 'module.attachedEdge === "right"' in bar
-assert "onHiddenEdgeLauncherChanged: invalidateInputRegion()" in bar
-assert "edgeReach: 36" in module
+assert "hiddenEdgeLauncher" not in bar
+assert "edgeReach:" not in module
+assert 'onHiddenEdgeLauncherChanged:' not in bar
+assert "module.moduleIconHitOnly" in bar
+assert "(!module.unifiedEdgeLauncher || module.showIcon)" in bar
 
 # Editor keeps output placement, singletons per unified kind and undo/history.
 assert 'objectName:"abyssUnifiedModuleIconVisibility"' not in editor
@@ -84,7 +83,10 @@ assert 'readonly property var activePlacements: Layout.livePlacements(' in bar
 assert 'Layout.geometry(activePlacements,width,height' in bar
 assert 'const next=activePlacements.filter(p=>p.enabled)' in bar
 assert 'onActivePlacementsChanged: syncModuleIds()' in bar
-assert 'root.launcherModes,module.kind' in bar
+assert 'placements,launcherModes,editing' in bar
+assert 'iconVisibility: ({' in bar
+assert 'notesTimers: Config.options?.abyss?.modules?.iconVisibility?.notesTimers' in bar
+assert 'notificationActivity: Config.options?.abyss?.modules?.iconVisibility?.notificationActivity' in bar
 assert 'notesTimersMode: Config.options?.abyss?.modules?.notesTimersMode' in bar
 assert 'notificationActivityMode: Config.options?.abyss?.modules?.notificationActivityMode' in bar
 assert 'ModuleLayout.unifiedLauncherMode(' in corners and ',kind) === "module"' in corners
@@ -92,10 +94,12 @@ assert '"notificationActivity") === "module"' in perimeter
 assert 'ModuleLayout.livePlacements(placements,Config.options?.abyss?.modules,false)' in perimeter
 assert 'bar.activePlacements,bar.layoutOptions' in perimeter
 
-# Each Module Icon is its own hover source. The iconless compatibility path
-# may reach the physical edge, but no icon-mode source does. No name tooltip.
-assert 'moduleRoot.showIcon ? parent.iconDiameter : parent.width' in module
-assert 'moduleRoot.showIcon ? parent.iconDiameter' in module
+# Each live Module Icon has exactly one painted hit source; there is no
+# invisible fallback in Module mode. Edgebar mode uses separate ScreenCorners.
+assert 'x: (parent.width-parent.iconDiameter)/2' in module
+assert 'y: (parent.height-parent.iconDiameter)/2' in module
+assert 'width: parent.iconDiameter' in module
+assert 'height: parent.iconDiameter' in module
 assert 'StyledToolTip { text: hit.parent.description' not in module
 assert 'module.moduleIconHitOnly' in bar
 assert 'onModuleIconHitOnlyChanged: invalidateInputRegion()' in bar
@@ -128,15 +132,19 @@ assert 'launcherMode' not in editor
 assert 'draftLauncherMode' not in bar
 assert 'draftLauncherMode' not in perimeter
 assert 'Placement.saveProfile(' in editor
-# Persistent toggles must use declared JsonAdapter keys, not assignments to
-# an undeclared object, which silently fail in Qt's persisted configuration.
+# Settings icon toggles now change the same per-kind presentation mode as
+# Module Behavior. Older show/hide preferences remain readable for safe migration.
 assert 'property JsonObject iconVisibility: JsonObject' in config
 assert 'property string notesTimers: "inherit"' in config
 assert 'property string notificationActivity: "inherit"' in config
 assert 'function iconVisibilityPreference(options,kind)' in layout
-assert 'const override=ModuleLayout.iconVisibilityPreference(modules,kind)' in settings
+assert 'iconVisibilityPreference(options,kind)===false' in layout
+assert 'return ModuleLayout.unifiedLauncherMode(' in settings
 for kind in ("notesTimers","notificationActivity"):
-    assert f'Config.setNestedValue("abyss.modules.iconVisibility.{kind}",checked ? "show" : "hide")' in settings
+    assert f'Config.setNestedValue("abyss.modules.{kind}Mode",checked ? "module" : "edgebar")' in settings
+    assert f'Config.setNestedValue("abyss.modules.iconVisibility.{kind}"' not in settings
+assert 'These settings apply across outputs. Hiding an icon keeps' not in settings
+assert 'Off: remove this module' in settings
 
 # The containing Bar item often owns a wider mouse target than the icon.
 # Strict owner hover must exclude the Bar's ancestor hover state, while
