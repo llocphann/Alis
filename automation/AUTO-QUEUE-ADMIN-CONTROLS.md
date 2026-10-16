@@ -192,6 +192,24 @@ commit and archive that receipt under its existing no-replay locks.
 button or authorization to send or run Localbot.** Installed Settings
 will show the categorical reason during a stopped active queue.
 
+If `pending.json` is absent, the preview checks bounded, non-symlinked
+archived receipts using the distinct **journal attempt UUID**, the saved
+prompt SHA-256, command and timestamp interval. A unique
+`observed/<journal-id>.json` plus a matching original manager response
+can report `unique_retired_attempt`, which is **still only a candidate**
+for a fresh, exact same-chat UI observation and byte-for-byte legacy
+response comparison. Two matching intents are ambiguous and cannot
+be adopted.
+
+The `interrupted/` and `not-sent/` archive folders are classified
+separately. `original_interrupted_delivery` means a response's delivery
+was observed but its completion was **not** confirmed;
+`original_confirmed_not_sent` means the intent was explicitly reported
+unsent. Neither tombstone is a completed response or permission for
+Alis to send again. Contradictory tombstones, malformed records,
+symlinks, missing originals and ambiguous archives all require manual
+Owner review without replay.
+
 If the journal is missing or mismatched, the pending is not eligible
 for automatic observation-based acceptance. Inspect the original
 private evidence and prior job receipts without altering them. An
