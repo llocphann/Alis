@@ -22,6 +22,7 @@ ContentPage {
     property string resetChatTarget: ""
     property bool chatResetNotice: false
     property string stopQueueTarget: ""
+    property string stopQueueSnapshotId: ""
     property string clearQueueTarget: ""
     property string clearQueueSnapshotId: ""
     property string pendingSudoPassword: ""
@@ -352,22 +353,31 @@ ContentPage {
         if (root.busy || !root.queueSnapshot) return
         const active = root.queueSnapshot.active
         const identity = active ? active.repository + ":" + active.code : ""
+        const snapshotId = root.queueSnapshot.snapshot_id || ""
         if (!["active", "waiting", "stopping"].includes(root.queueSnapshot.state))
             return
+        if (!/^[a-f0-9]{64}$/.test(snapshotId)) {
+            root.errorText = Translation.tr("Queue identity unavailable · update Automation backend and refresh")
+            return
+        }
         if (!root.stopQueueConfirmation) {
             root.stopQueueTarget = identity
+            root.stopQueueSnapshotId = snapshotId
             root.stopQueueConfirmation = true
             root.statusText = Translation.tr("Confirm Stop: no next task will start. In-flight jobs and receipts remain for review.")
             return
         }
-        if (root.stopQueueTarget !== identity) {
+        if (root.stopQueueTarget !== identity
+                || root.stopQueueSnapshotId !== snapshotId) {
             root.stopQueueConfirmation = false
             root.stopQueueTarget = ""
-            root.errorText = Translation.tr("Active task changed · refresh before Stop")
+            root.stopQueueSnapshotId = ""
+            root.errorText = Translation.tr("Queue changed · refresh before Stop")
             return
         }
         root.stopQueueConfirmation = false
         root.stopQueueTarget = ""
+        root.stopQueueSnapshotId = ""
         root.clearQueueConfirmation = false
         root.queueStatusConfirmed = false
         root.queueOperation = "stop"
@@ -375,7 +385,8 @@ ContentPage {
         root.errorText = ""
         queueProcess.command = ["python3",
             Quickshell.shellPath("scripts/alis-automation-task.py"),
-            "queue-stop", "--approve", "--expected-active", identity]
+            "queue-stop", "--approve", "--expected-active", identity,
+            "--expected-snapshot-id", snapshotId]
         queueProcess.running = true
     }
 
@@ -672,9 +683,11 @@ ContentPage {
                         const active = result.active
                         const current = active ? active.repository + ":" + active.code : ""
                         if (current !== root.stopQueueTarget
+                                || root.stopQueueSnapshotId !== (result.snapshot_id || "")
                                 || !["active", "waiting", "stopping"].includes(result.state)) {
                             root.stopQueueConfirmation = false
                             root.stopQueueTarget = ""
+                            root.stopQueueSnapshotId = ""
                         }
                     }
                     if (root.clearQueueConfirmation
