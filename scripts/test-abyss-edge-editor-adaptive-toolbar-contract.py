@@ -182,7 +182,8 @@ assert 'Layout.preferredWidth:1*Appearance.fontSizeScale' in editor
 assert 'color:Qt.alpha(AbyssStyle.textColorMuted,.18)' in editor
 assert 'visible:editFineControls.useTwoColumns' in editor
 assert editor.count('AbyssSlider {') == 6
-assert editor.count('Layout.maximumWidth:root.editorActionSize') == 18
+# The icon-visibility action now belongs exclusively to Settings.
+assert editor.count('Layout.maximumWidth:root.editorActionSize') == 17
 assert editor.count('EditorIconHint {') == 3
 assert 'id:edgeGapAndSizeRow' in right and 'id:edgeWidthRow' in right
 assert right.index('objectName:"abyssJoinNearbyModules"') < right.index('id:edgeGapAndSizeRow')
