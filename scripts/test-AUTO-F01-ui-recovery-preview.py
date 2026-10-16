@@ -239,6 +239,62 @@ class RecoveryPreview(unittest.TestCase):
         self.assertEqual(self.inspect()["original_journal"],
                          "tombstone_review_required")
 
+    def test_observed_archive_and_interrupted_tombstone_conflict(self):
+        pid = next(iter(self.state["profiles"]))
+        self.state["profiles"][pid]["pending"]["prepared_at_unix"] = 12
+        self.path.unlink()
+        observed = self.path.parent / "observed"
+        observed.mkdir()
+        observed_file = observed / (JID + ".json")
+        observed_file.write_text(json.dumps({**self.journal, "at_unix": 13}))
+        response_dir = self.path.parent.parent / "ui-responses" / pid
+        response_dir.mkdir(parents=True)
+        (response_dir / (ATTEMPT + ".json")).write_text(json.dumps({
+            "transport": "alis-ui-once", "attempt_id": ATTEMPT,
+            "response": "Original response", "at_unix": 14}))
+        self.assertEqual(self.inspect()["original_journal"],
+                         "unique_retired_attempt")
+        interrupted = self.path.parent / "interrupted"
+        interrupted.mkdir()
+        second_id = "66666666-7777-8888-9999-aaaaaaaaaaaa"
+        (interrupted / (second_id + ".json")).write_text(json.dumps({
+            **self.journal, "id": second_id, "at_unix": 13,
+            "outcome": "interrupted_delivered",
+            "proof_sha256": "a" * 64,
+            "delivery_acknowledged": True,
+            "completion_acknowledged": False}))
+        report = self.inspect()
+        self.assertEqual(report["original_journal"], "tombstone_conflict")
+        self.assertFalse(report["read_only_observation_candidate"])
+        self.assertFalse(report["send_or_queue_start_authorized"])
+        self.assertEqual(report["reason"], "ORIGINAL_JOURNAL_UNVERIFIED")
+        self.assertTrue(observed_file.is_file())
+        self.assertFalse(self.path.exists())
+        # Even a DIFFERENT journal ID with a matching SHA is conflicting.
+        self.assertNotIn("Original response", json.dumps(report))
+
+    def test_corrupt_private_state_is_redacted_and_fails_closed(self):
+        self.manifest["state"] = "SECRET_PRIVATE_DATA_IN_STATE"
+        result = self.inspect()
+        self.assertEqual(result["queue_state"], "invalid")
+        self.assertNotIn("SECRET_PRIVATE_DATA", json.dumps(result))
+        self.manifest["state"] = "stopping"
+        pid = next(iter(self.state["profiles"]))
+        record = self.state["profiles"][pid]
+        old_session = record["session"]
+        record["session"] = "SECRET_PRIVATE_CHAT_SESSION"
+        result = self.inspect()
+        self.assertEqual(result["reason"], "FIRST_TURN_ANCHOR_MISSING")
+        self.assertFalse(result["read_only_observation_candidate"])
+        self.assertNotIn("SECRET_PRIVATE_CHAT", json.dumps(result))
+        record["session"] = old_session
+        previous = self.config["profiles"]
+        self.config["profiles"] = [None, {"id": pid}]
+        result = self.inspect()
+        self.assertEqual(result["reason"], "ORIGINAL_PROFILE_MISSING")
+        self.assertFalse(result["read_only_observation_candidate"])
+        self.config["profiles"] = previous
+
     def test_missing_retired_evidence_and_symlink_fail_closed(self):
         self.state["profiles"][next(iter(self.state["profiles"]))]["pending"][
             "prepared_at_unix"] = 12
