@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import {requireFreshAssistantTurn} from "./ui_response_gate.mjs";
 import {pinnedUiWindow} from "./ui_surface.mjs";
 import {createHash} from "node:crypto";
-import {uiAnchorSource,matchingSubmittedUnit} from "./ui_turn_anchor.mjs";
+import {uiAnchorSource,matchingSubmittedUnit,submittedPromptMatches} from "./ui_turn_anchor.mjs";
 
 const PLAYWRIGHT = process.env.ALIS_PLAYWRIGHT_MODULE ?? process.env.HADALIS_PLAYWRIGHT_MODULE ?? "file:///usr/lib/chatgpt/resources/cua_node/lib/node_modules/playwright-core/index.mjs";
 const { chromium } = await import(PLAYWRIGHT);
@@ -161,11 +161,16 @@ export async function resumeUiChat(page,label,{targetKey=null,initialPrompt=null
   if(!await matches())throw Error('ALIS_UI_RESUME_TARGET_MISMATCH');
 }
 
-export async function observeSubmittedPrompt(page,prompt,{targetKey=null,archivedReadOnly=false}={}) {
+export async function observeSubmittedPrompt(page,prompt,{
+  targetKey=null,archivedReadOnly=false,expectedUserCount=null
+}={}) {
   // An archived chat has no selected Project row. Observation alone may use
   // a previously bound first-turn hash; this never grants composer access.
   if(archivedReadOnly&&(typeof targetKey!=='string'||!/^[0-9a-f]{64}$/.test(targetKey)))
     throw Error('ALIS_UI_ARCHIVE_REQUIRES_ORIGINAL_TARGET');
+  if(expectedUserCount!==null&&(!Number.isInteger(expectedUserCount)||expectedUserCount<1||expectedUserCount>200||
+      typeof targetKey!=='string'||!/^[0-9a-f]{64}$/.test(targetKey)))
+    throw Error('ALIS_UI_LEGACY_COUNT_BINDING_REQUIRED');
   async function sample() {
     if(!archivedReadOnly)await verifyProject(page);
     const items=await visibleItems(page.locator('[data-chatgpt-search-unit-key$=":user"]'));
@@ -173,7 +178,20 @@ export async function observeSubmittedPrompt(page,prompt,{targetKey=null,archive
     const source=uiAnchorSource(PROJECT_NAME,units);
     const key=createHash('sha256').update(source).digest('hex');
     if(targetKey!==null&&targetKey!==key)throw Error('ALIS_UI_TARGET_CHANGED_NO_SEND');
-    const {index}=matchingSubmittedUnit(units,prompt);
+    if(expectedUserCount!==null&&(units.length!==expectedUserCount||
+        new Set(units.map(u=>u.turn_key)).size!==units.length||
+        new Set(units.map(u=>u.message_id)).size!==units.length))
+      throw Error('ALIS_UI_UNEXPECTED_USER_TURN_COUNT');
+    let index;
+    try {({index}=matchingSubmittedUnit(units,prompt));}
+    catch(error) {
+      // Old schedulers submitted identical continuation text. A known
+      // first-turn key plus the exact prior accepted count can bind the
+      // newest original unit; normal observation remains strictly unique.
+      if(expectedUserCount===null||error.message!=='ALIS_UI_SUBMITTED_PROMPT_NOT_UNIQUE'||
+          !submittedPromptMatches(units.at(-1),prompt))throw error;
+      index=units.length-1;
+    }
     if(index!==units.length-1)throw Error('ALIS_UI_LATER_USER_TURN_REQUIRES_REVIEW');
     const unit=items[index];
     const result=await unit.evaluate(node=>{

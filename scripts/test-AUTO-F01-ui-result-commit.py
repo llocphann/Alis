@@ -72,6 +72,20 @@ class ResultCommitTests(TestCase):
         self.assertEqual(row["prompts_sent"], 1)
         self.assertFalse(row["run_active"])
 
+    def test_distinct_continuations_have_unique_durable_full_input(self):
+        prompts = []
+        def ui(command, prompt, **kwargs):
+            pending = self.item()["pending"]
+            self.assertIn("Alis UI request token: " + pending["attempt_id"], prompt)
+            self.assertEqual(hashlib.sha256(prompt.encode()).hexdigest(), pending["prompt_sha256"])
+            prompts.append(prompt)
+            return self.payload(prompt)
+        for now in [200, 202, 204]:
+            self.assertEqual(ui_scheduler.ui_tick(ID, now=now, desktop=ui), "CONTINUE")
+        self.assertEqual(len(set(prompts)), 3)
+        self.assertEqual(prompts[1].rsplit("\nAlis UI request token: ", 1)[0],
+                         prompts[2].rsplit("\nAlis UI request token: ", 1)[0])
+
     def test_response_commit_precedes_retirement_and_cleanup_recovers_without_ui(self):
         self.action = "pause"
         def fail_after_commit(*args):

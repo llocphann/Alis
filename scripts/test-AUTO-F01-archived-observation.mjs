@@ -48,6 +48,18 @@ try {
   rows.push({...b,visible:true});
   await assert.rejects(()=>observeSubmittedPrompt(page,'Pending input',options),/NOT_UNIQUE/);
   rows.pop();
+  const repeated={...b,turn_key:'55555555-5555-5555-5555-555555555555',
+    message_id:'66666666-6666-6666-6666-666666666666'};
+  rows.push(repeated);
+  await assert.rejects(()=>observeSubmittedPrompt(page,'Pending input',options),/NOT_UNIQUE/);
+  assert.equal((await observeSubmittedPrompt(page,'Pending input',{
+    ...options,expectedUserCount:3})).delivery_observed,true);
+  await assert.rejects(()=>observeSubmittedPrompt(page,'Pending input',{
+    ...options,expectedUserCount:2}),/UNEXPECTED_USER_TURN_COUNT/);
+  repeated.message_id=b.message_id;
+  await assert.rejects(()=>observeSubmittedPrompt(page,'Pending input',{
+    ...options,expectedUserCount:3}),/UNEXPECTED_USER_TURN_COUNT/);
+  rows.pop();
   await assert.rejects(()=>observeSubmittedPrompt(page,'Pending input',{targetKey:key}),/PROJECT_GUARD_REQUIRED/);
   b.assistant='Verified source report.\nALIS_LOOP:DONE';b.actions=1;
   assert.equal((await observeSubmittedPrompt(page,'Pending input',options)).completed,true);

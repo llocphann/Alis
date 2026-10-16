@@ -123,7 +123,8 @@ def desktop(command: str, prompt: str | None = None,
             new_chat_unowned: bool = False,
             owner_chat_reset: bool = False,
             chat_label: str | None = None,
-            defer_acknowledgement: bool = False) -> dict[str, Any]:
+            defer_acknowledgement: bool = False,
+            expected_user_count: int | None = None) -> dict[str, Any]:
     # A one-shot intent is fsynced before ANY Desktop UI mutation.
     # A crash, ambiguous click, timeout or incomplete response keeps the
     # pending tombstone: never silently send a duplicate after a restart.
@@ -163,6 +164,11 @@ def desktop(command: str, prompt: str | None = None,
                     else "--unowned-previous-chat")
     if target_key is not None:
         argv.append(target_key)
+    if expected_user_count is not None:
+        if (command != "observe-submitted" or target_key is None
+                or type(expected_user_count) is not int or not 1 <= expected_user_count <= 200):
+            raise ValueError("ALIS_UI_LEGACY_COUNT_BINDING_REQUIRED")
+        argv.append("--expected-user-count=" + str(expected_user_count))
     result = run(
         argv,
         input_text=prompt,

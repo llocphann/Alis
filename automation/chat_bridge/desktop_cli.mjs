@@ -355,11 +355,15 @@ async function main() {
     if(!prompt.trim())throw Error('ALIS_UI_PENDING_PROMPT_REQUIRED');
     const targetKey=process.argv[3]??null;
     if(targetKey!==null&&!/^[0-9a-f]{64}$/.test(targetKey))throw Error('ALIS_UI_TARGET_ARGUMENT_INVALID');
+    const countOption=process.argv[4]??null;
+    if(countOption!==null&&!/^--expected-user-count=[1-9][0-9]{0,2}$/.test(countOption))
+      throw Error('ALIS_UI_LEGACY_COUNT_BINDING_REQUIRED');
+    const expectedUserCount=countOption===null?null:Number(countOption.split('=')[1]);
     if(process.env.ALIS_UI_RESUME_CHAT_LABEL)
       await resumeUiChat(page,process.env.ALIS_UI_RESUME_CHAT_LABEL,
         {targetKey,initialPrompt:targetKey===null?prompt:null});
     if(targetKey===null)await uiOnlyTurnIdentity(page,{initialPrompt:prompt});
-    writeJson(await observeSubmittedPrompt(page,prompt,{targetKey}));
+    writeJson(await observeSubmittedPrompt(page,prompt,{targetKey,expectedUserCount}));
     return;
   }
 

@@ -299,6 +299,10 @@ def ui_tick(profile_id: str, *, now: int | None = None,
     prompt = pending_prompt(profile, item, kind if kind == "manual_reset" else prompt_kind)
     command = "rotate-send" if new_chat else "send"
     attempt = str(uuid.uuid4())
+    # Distinct continuation steps can have the same Cloudbot-authored body.
+    # Bind each submitted full input to this durable manager attempt, while
+    # retaining the exact old input unchanged for restart reconciliation.
+    prompt += "\nAlis UI request token: " + attempt + "\n"
     pending = {
         "transport": UI_TRANSPORT, "attempt_id": attempt,
         "phase": "dispatching", "kind": prompt_kind,
@@ -531,8 +535,15 @@ def reconcile_pending(profile_id: str, *, chat_label: str | None = None,
             raise RuntimeError("ALIS_UI_ORIGINAL_PROMPT_CHANGED")
         target = (item.get("session") or {}).get("ui_target_key") if command == "send" else None
         observe = runtime.desktop if observer is None else observer
+        legacy = {}
+        if target is not None and "\nAlis UI request token: " not in prompt:
+            prior_count = item.get("chat_iterations")
+            if type(prior_count) is not int or not 0 <= prior_count < 200:
+                raise RuntimeError("ALIS_UI_LEGACY_COUNT_BINDING_REQUIRED")
+            legacy["expected_user_count"] = prior_count + 1
         payload = observe("observe-submitted", prompt, target_key=target,
-                          chat_label=chat_label or (item.get("session") or {}).get("ui_chat_label"))
+                          chat_label=chat_label or (item.get("session") or {}).get("ui_chat_label"),
+                          **legacy)
         if payload.get("completed") is not True:
             return "original_turn_in_progress"
         observed_target = payload.get("ui_target_key")
