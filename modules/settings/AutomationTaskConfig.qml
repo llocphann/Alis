@@ -487,7 +487,7 @@ ContentPage {
         if (reason === "owner_review_pending") return Translation.tr("Owner review")
         if (reason === "already_completed") return Translation.tr("Completed")
         if (reason === "cloud_continuation_pending") return Translation.tr("Cloud pending")
-        if (reason === "source_pin_changed") return Translation.tr("Legacy pin · recheck")
+        if (reason === "source_pin_changed") return Translation.tr("Legacy pin")
         if (reason === "source_pin_unverified") return Translation.tr("Pin unverified")
         if (reason === "saved_work_requires_review") return Translation.tr("Review record")
         if (reason === "previous_dispatch_unsettled") return Translation.tr("Job pending")
