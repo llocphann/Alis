@@ -92,6 +92,34 @@ ContentPage {
     property string backendTransportBlocker: ""
     property var backendServices: ({})
     property string backendStatusText: ""
+    readonly property string queueStartGuidance: {
+        const q = root.queueSnapshot
+        if (!q || !root.queueStatusConfirmed) return ""
+        if (q.state === "review_required")
+            return Translation.tr("All tasks are parked. Leave the code field blank and use Recheck; Start must not replay an unresolved task.")
+        if (q.state !== "prepared") return ""
+        if (!(q.items || []).some(t => t.state === "queued"))
+            return Translation.tr("No eligible task is queued; review saved receipts before Start.")
+        if (root.uiQueueStartAvailable || root.backendTransportReady) return ""
+        if (root.uiQueueStageAvailable)
+            return Translation.tr("Prepare UI creates an idle task profile; after readiness refresh, confirm Start UI separately. No message is sent by Prepare.")
+        const blockers = root.uiQueuePreflightBlockers || []
+        if (blockers.includes("FOREIGN_PROFILE_UNSETTLED")
+                || blockers.includes("NATIVE_SESSION_REQUIRES_REVIEW"))
+            return Translation.tr("Start blocked: a previous profile/session or job requires evidence reconciliation. Do not reset or replay it.")
+        if (root.uiQueueServiceState === "active"
+                && root.uiQueueServiceMode === "native_mode")
+            return Translation.tr("Start blocked: bridge is running in native mode. Native server receipts are not attested; switch to queue-only UI mode only after checking and stopping existing work.")
+        if (root.uiQueueServiceState === "active"
+                && root.uiQueueServiceMode === "ui_mode")
+            return Translation.tr("Start blocked: bridge is running in single-profile UI mode, not queue-only UI mode. Preserve the current chat before changing mode.")
+        if (root.uiQueueServiceState !== "active"
+                || root.uiQueueServiceMode !== "ui_queue_mode")
+            return Translation.tr("Start blocked: queue-only UI manager is not active. Configure/start that service explicitly after safe cutover.")
+        if (blockers.includes("TASKFLOW_PROFILE_NOT_MATERIALIZED"))
+            return Translation.tr("Start blocked: task profile staging is unavailable. Check other manager profiles and Refresh.")
+        return Translation.tr("Start blocked by UI Queue preflight. Check the saved queue and backend status before retrying.")
+    }
     property var activitySnapshot: null
     property string historyError: ""
     readonly property string activityText: {
@@ -1217,6 +1245,8 @@ ContentPage {
                         ? Translation.tr("Backend installed · managed transport ready")
                         : root.uiQueueStartAvailable
                         ? Translation.tr("Backend installed · UI Queue mode ready for owner confirmation")
+                        : root.uiQueueStageAvailable
+                        ? Translation.tr("Backend installed · Prepare UI profile before Start")
                         : Translation.tr("Backend installed · automatic ChatGPT submission not authorized"))
                     : Translation.tr("Backend not installed")
             }
@@ -1228,6 +1258,8 @@ ContentPage {
                 color: Appearance.colors.colSubtext
                 text: root.uiQueueStartAvailable
                     ? Translation.tr("UI Queue mode uses local UI-only response evidence, not server-attested ChatGPT receipts. Starting requires a separate confirmation.")
+                    : root.uiQueueStageAvailable
+                    ? Translation.tr("An eligible task needs its idle UI profile staged first. Use Prepare UI in GitHub tasks; this never dispatches a job.")
                     : root.backendTransportBlocker === "CHATGPT_PROJECT_SERVER_RECEIPT_UNATTESTED"
                     ? Translation.tr("Native ChatGPT transport lacks verified message receipts. UI Loop requires separate owner-approved validation before queue Start.")
                     : Translation.tr("Queue Start is blocked until the managed ChatGPT transport is accepted.")
@@ -1413,6 +1445,14 @@ ContentPage {
                                     item.state === "queued" && item.code === root.uiQueueFirstTask)))
                     onClicked: root.startQueue()
                 }
+            }
+
+            StyledText {
+                visible: root.queueStartGuidance.length > 0
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: Appearance.colors.colSubtext
+                text: root.queueStartGuidance
             }
 
             // Safety-critical second-click explanations stay visible ONLY
