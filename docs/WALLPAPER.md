@@ -14,9 +14,12 @@ Choose **Liquid** under Settings → Appearance → Background → Motion.
 The `alisMelt` preference uses the bundled GLSL/QSB shader. Saved
 `inirMelt` preferences still use the same shader. Abyss Liquid now reveals
 wallpapers with an organic, softly refracting fluid front instead of discrete
-vertical columns. Its ink, depth and highlight colors follow the live Material 3
-theme (`m3primary`, `m3primaryContainer`, `m3secondary`); switching themes
-also changes the next Liquid transition without editing saved preferences.
+vertical columns. Its moving membrane deliberately shares the actual
+Abyss Panel material: `AbyssStyle.surface`, `surfaceRaised`, `specular`,
+`shadow` and `glow`, with the same surface opacity, highlight and motion
+settings. Panel and Liquid therefore inherit the same live theme and effects
+policy instead of independently tinting the wallpaper with a strong accent.
+The soft contact refraction is limited to the front, not the entire image.
 
 The effect's shader binary is built from `alisMelt.frag` by the
 `alis-liquid-qsb-bake.yml` dev workflow. Updating only the GLSL source is
