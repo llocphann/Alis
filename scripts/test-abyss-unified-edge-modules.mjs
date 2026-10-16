@@ -347,4 +347,29 @@ for (const settings of [
 }
 check(layout.moduleOwnsCornerHover({launcherMode:"module"},"ii","notesTimers")===false,
     "classic ii stays fully backward-compatible");
+// Regression: Panels > Tools Quick Notes enable control was removed, but
+// configs with its old value false still exist. The explicit Abyss Edgebar
+// selection is now the authoritative way to restore the live hover surface.
+for (const kind of ["notesTimers","notificationActivity"]) {
+    for (const mode of ["module","edgebar"]) {
+        const cfg={
+            notesTimersMode:kind==="notesTimers" ? mode : "module",
+            notificationActivityMode:kind==="notificationActivity" ? mode : "module",
+            quickNotes:{enable:false,monitorMode:"primary"},
+            notificationCenter:{enable:false,hoverEnable:false,screenList:["old-output"]}
+        };
+        const legacyAllowed=layout.edgebarOwnsCornerHover(cfg,"abyss",kind);
+        const iconAllowed=layout.moduleOwnsCornerHover(cfg,"abyss",kind);
+        check(legacyAllowed===(mode==="edgebar"),
+            `Abyss Edgebar restores ${kind} despite disabled legacy settings`);
+        check(iconAllowed===(mode==="module"),
+            `Abyss Module Icon takes exclusive ownership for ${kind}`);
+        check(iconAllowed!==legacyAllowed,
+            `Abyss modes must never leave both sources active or both disabled ${kind}`);
+        check(!layout.edgebarOwnsCornerHover(cfg,"ii",kind),
+            "ii family not controlled by Abyss access mode");
+        check(!layout.edgebarOwnsCornerHover(cfg,"waffle",kind),
+            "waffle family not controlled by Abyss access mode");
+    }
+}
 console.log("ABYSS_R15_LAYOUT_POLICY_PASS",checks);
