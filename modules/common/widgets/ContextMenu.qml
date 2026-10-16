@@ -32,6 +32,15 @@ Loader {
     property bool fadeOnly: false
     property int fadeInDuration: 130
     property int fadeOutDuration: 90
+
+    // A mapped xdg-popup cannot always be re-anchored on Niri. Queue the
+    // latest click and recreate exactly one native popup after fading out.
+    property bool relocationQueued: false
+    property bool relocationCommitting: false
+    property real relocationX: 0
+    property real relocationY: 0
+    property var relocationModel: null
+    property bool relocationModelProvided: false
     signal focusCleared()
 
     property real visualMargin: 8
@@ -56,6 +65,8 @@ Loader {
     }
 
     function close(): void {
+        root.relocationQueued = false
+        root.relocationModelProvided = false
         if (item) item.close();
         else root.active = false;
     }
@@ -66,24 +77,32 @@ Loader {
         root.active = true
     }
 
-    // The caller supplies coordinates in anchorItem.parent space. A new click
-    // while this menu is open fades it out before moving the anchor, so the old
-    // popup never jumps or slides to the new location at full opacity.
+    // Coordinates belong to anchorItem.parent, not the pointer handler.
+    // Relocation unmaps the old xdg-popup, then maps a single new surface.
     function requestOpenAt(x: real, y: real, newModel: var): void {
         const nextX = Number(x)
         const nextY = Number(y)
-        if (!isFinite(nextX) || !isFinite(nextY) || !root.anchorItem)
+        if (!Number.isFinite(nextX) || !Number.isFinite(nextY) || !root.anchorItem)
             return
-        if (root.active && root.item && root.fadeOnly) {
-            if (Appearance.animationsEnabled) {
-                root.item.retargetAnchor(nextX, nextY, newModel)
-            } else {
-                if (newModel !== undefined)
-                    root.model = newModel
-                root.anchorItem.x = nextX
-                root.anchorItem.y = nextY
-                root.item.anchor.updateAnchor()
+        if (root.relocationQueued) {
+            root.relocationX = nextX
+            root.relocationY = nextY
+            if (newModel !== undefined) {
+                root.relocationModel = newModel
+                root.relocationModelProvided = true
             }
+            return
+        }
+        if (root.active && root.item && root.fadeOnly) {
+            root.relocationQueued = true
+            root.relocationX = nextX
+            root.relocationY = nextY
+            root.relocationModel = newModel
+            root.relocationModelProvided = newModel !== undefined
+            if (Appearance.animationsEnabled)
+                root.item.fadeForRelocation()
+            else
+                root.commitRelocation()
             return
         }
         if (newModel !== undefined)
@@ -93,6 +112,31 @@ Loader {
         if (root.active && root.item)
             root.item.anchor.updateAnchor()
         root.requestOpen()
+    }
+
+    function commitRelocation(): void {
+        if (!root.relocationQueued) return
+        // Loader.active=false releases the native PopupWindow before we set
+        // the new position. Defer remapping into the following event loop.
+        root.relocationCommitting = true
+        root.active = false
+        root.relocationCommitting = false
+        Qt.callLater(() => {
+            if (!root.relocationQueued || root.active || !root.anchorItem)
+                return
+            if (GlobalStates.activeContextMenu && GlobalStates.activeContextMenu !== root) {
+                root.relocationQueued = false
+                root.relocationModelProvided = false
+                return
+            }
+            root.anchorItem.x = root.relocationX
+            root.anchorItem.y = root.relocationY
+            if (root.relocationModelProvided)
+                root.model = root.relocationModel
+            root.relocationQueued = false
+            root.relocationModelProvided = false
+            root.requestOpen()
+        })
     }
 
     function updateAnchor(): void {
@@ -107,6 +151,10 @@ Loader {
             GlobalStates.activeContextMenu = root
             GlobalStates.activeContextMenuCount++
         } else {
+            if (!root.relocationCommitting) {
+                root.relocationQueued = false
+                root.relocationModelProvided = false
+            }
             if (GlobalStates.activeContextMenu === root)
                 GlobalStates.activeContextMenu = null
             GlobalStates.activeContextMenuCount--
@@ -119,10 +167,6 @@ Loader {
         grabFocus: root.keyboardGrab && CompositorService.isNiri
         property bool closing: false
         property real relocationOpacity: 1
-        property real pendingAnchorX: 0
-        property real pendingAnchorY: 0
-        property var pendingMenuModel: null
-        property bool pendingMenuModelUpdate: false
         // Popup animations can sweep the content under a stationary pointer,
         // especially when the desktop menu opens near a retracted Abyss Edge.
         // A transient hover during this entrance is not a user visit: only
@@ -232,15 +276,7 @@ Loader {
             }
         }
 
-        function retargetAnchor(x: real, y: real, newModel: var): void {
-            popupWindow.pendingAnchorX = x;
-            popupWindow.pendingAnchorY = y;
-            if (newModel !== undefined) {
-                popupWindow.pendingMenuModel = newModel;
-                popupWindow.pendingMenuModelUpdate = true;
-            }
-            // Repeated clicks replace the pending location and cancel any
-            // unfinished exit/entrance animation; latest click always wins.
+        function fadeForRelocation(): void {
             fadeOnlyOpenAnim.stop();
             fadeOnlyCloseAnim.stop();
             relocationAnim.stop();
@@ -323,29 +359,7 @@ Loader {
                 duration: root.fadeOutDuration
                 easing.type: Easing.OutQuad
             }
-            ScriptAction {
-                script: {
-                    // Defer model changes until the menu is invisible.
-                    if (popupWindow.pendingMenuModelUpdate) {
-                        root.model = popupWindow.pendingMenuModel;
-                        popupWindow.pendingMenuModelUpdate = false;
-                    }
-                    if (root.anchorItem) {
-                        root.anchorItem.x = popupWindow.pendingAnchorX;
-                        root.anchorItem.y = popupWindow.pendingAnchorY;
-                        popupWindow.anchor.updateAnchor();
-                    }
-                }
-            }
-            // Give the Wayland compositor one frame to apply the new anchor.
-            PauseAnimation { duration: 16 }
-            NumberAnimation {
-                target: popupWindow
-                property: "relocationOpacity"
-                to: 1
-                duration: root.fadeInDuration
-                easing.type: Easing.OutCubic
-            }
+            ScriptAction { script: root.commitRelocation() }
         }
 
         color: "transparent"
