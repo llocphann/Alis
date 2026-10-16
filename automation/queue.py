@@ -103,7 +103,10 @@ def _pristine_task(record: dict, live: dict) -> bool:
         and not record.get("job_id")
         and isinstance(saved.get("base_sha"), str)
         and bool(tf.SHA.fullmatch(saved["base_sha"]))
-        and record.get("cloud_prompt") == tf.internal_prompt(saved)
+        # The text template can legitimately change between releases;
+        # a historic saved prompt is NOT evidence that execution started.
+        and isinstance(record.get("cloud_prompt"), str)
+        and bool(record["cloud_prompt"].strip())
     )
 
 
