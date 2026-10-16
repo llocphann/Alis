@@ -152,22 +152,26 @@ Item {
         readonly property real edgeReach: 36
         implicitWidth: 36*Appearance.fontSizeScale
         implicitHeight: 32*Appearance.fontSizeScale
+        readonly property real iconDiameter: 30*Appearance.fontSizeScale
         MouseArea {
             id: hit
-            x: 0
-            y: moduleRoot.attachedEdge === "bottom" ? 0 : -parent.edgeReach
-            width: parent.width
-            height: parent.height+parent.edgeReach
+            // The drawn icon, not the invisible physical-edge extension, is
+            // the sole hover source in icon mode. Iconless mode preserves the
+            // prior edge reach for owners who deliberately hide the glyph.
+            x: moduleRoot.showIcon ? (parent.width-parent.iconDiameter)/2 : 0
+            y: moduleRoot.showIcon ? (parent.height-parent.iconDiameter)/2
+                : moduleRoot.attachedEdge === "bottom" ? 0 : -parent.edgeReach
+            width: moduleRoot.showIcon ? parent.iconDiameter : parent.width
+            height: moduleRoot.showIcon ? parent.iconDiameter
+                : parent.height+parent.edgeReach
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton
             Accessible.role: Accessible.Button
             Accessible.name: parent.description
             Rectangle {
+                anchors.centerIn: parent
                 width: 30*Appearance.fontSizeScale
                 height: width
-                x: (parent.width-width)/2
-                y: (hit.parent.moduleRoot.attachedEdge === "bottom" ? 0 : hit.parent.edgeReach)
-                    + (hit.parent.height-height)/2
                 radius: width/2
                 color: Appearance.colors.colLayer1
                 border.width: 1
@@ -181,7 +185,7 @@ Item {
                     color: Appearance.colors.colPrimary
                 }
             }
-            StyledToolTip { text: hit.parent.description; visible: hit.parent.moduleRoot.showIcon && hit.containsMouse }
+            // The popup itself is the hover feedback. No second text tooltip.
         }
     }
     Component {
