@@ -92,6 +92,7 @@ jobs:
           python3 scripts/test-AUTO-F01-queue-controls.py
           python3 scripts/test-AUTO-F01-sudo-input.py
           python3 scripts/test-AUTO-F01-queue-stop.py
+          python3 scripts/test-AUTO-F01-chat-reset.py
           python3 scripts/test-AUTO-F01-sudo-keyring.py
           python3 scripts/test-hadalis-automation-credentials.py
           python3 scripts/test-hadalis-automation-install.py
