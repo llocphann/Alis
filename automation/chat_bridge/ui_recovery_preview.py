@@ -49,32 +49,56 @@ def _retired_attempt_evidence(journal_path: Path, profile_id: str,
     """Archived journal classification only; never a completion signal."""
     if type(prepared_at) is not int or prepared_at < 0:
         return "retired_evidence_unverified"
-    # Archive outcomes have different meaning. An interrupted delivery
-    # is explicitly NOT terminal; not-sent is not a license to send again.
+    # Journal attempt UUID and manager UI attempt UUID are deliberately
+    # different. Find exact SHA-bound archived attempts, not a filename
+    # constructed from the manager's pending attempt ID.
     tombstones = []
-    for directory, expected in (
+    for directory, outcome in (
             ("interrupted", "interrupted_delivered"),
             ("not-sent", "not_sent")):
-        location = journal_path.parent / directory / (attempt + ".json")
-        if location.is_symlink() or location.parent.is_symlink():
+        archive_dir = journal_path.parent / directory
+        if archive_dir.is_symlink():
             return "tombstone_review_required"
-        if location.exists():
-            record = _private_record(location)
-            if (record is None or record.get("schema") != "alis.chat-ui-send.v1"
-                    or record.get("outcome") != expected
-                    or record.get("prompt_sha256") != digest):
-                return "tombstone_review_required"
-            if expected == "interrupted_delivered":
-                if (record.get("delivery_acknowledged") is not True
-                        or record.get("completion_acknowledged") is not False
-                        or not isinstance(record.get("proof_sha256"), str)
-                        or not _SHA.fullmatch(record["proof_sha256"])):
+        if not archive_dir.exists():
+            continue
+        if not archive_dir.is_dir():
+            return "tombstone_review_required"
+        count = 0
+        try:
+            for location in archive_dir.glob("*.json"):
+                count += 1
+                if count > _MAX_ARCHIVE_ENTRIES:
                     return "tombstone_review_required"
-            elif (record.get("delivery_acknowledged") is not False
-                  or record.get("evidence") not in {
-                      "desktop-pre-send-receipt", "owner-confirmed-not-sent"}):
-                return "tombstone_review_required"
-            tombstones.append(expected)
+                record = _private_record(location)
+                if record is None:
+                    return "tombstone_review_required"
+                if (record.get("prompt_sha256") != digest
+                        or record.get("command") != command
+                        or record.get("outcome") != outcome):
+                    continue
+                rid = record.get("id")
+                try:
+                    valid_id = isinstance(rid, str) and str(uuid.UUID(rid)) == rid
+                except (ValueError, AttributeError):
+                    valid_id = False
+                if (not valid_id or location.name != rid + ".json"
+                        or record.get("schema") != "alis.chat-ui-send.v1"
+                        or type(record.get("at_unix")) is not int
+                        or record["at_unix"] < prepared_at):
+                    return "tombstone_review_required"
+                if outcome == "interrupted_delivered":
+                    if (record.get("delivery_acknowledged") is not True
+                            or record.get("completion_acknowledged") is not False
+                            or not isinstance(record.get("proof_sha256"), str)
+                            or not _SHA.fullmatch(record["proof_sha256"])):
+                        return "tombstone_review_required"
+                elif (record.get("delivery_acknowledged") is not False
+                      or record.get("evidence") not in {
+                          "desktop-pre-send-receipt", "owner-confirmed-not-sent"}):
+                    return "tombstone_review_required"
+                tombstones.append(outcome)
+        except (OSError, ValueError):
+            return "tombstone_review_required"
     if len(tombstones) > 1:
         return "tombstone_conflict"
     if tombstones:
