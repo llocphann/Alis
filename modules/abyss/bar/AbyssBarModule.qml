@@ -9,6 +9,8 @@ import qs.modules.bar as Shared
 import qs.modules.bar.weather
 import qs.modules.abyss.looks
 import qs.modules.abyss.content
+import qs.modules.screenCorners
+import qs.modules.notificationCenter
 
 // Mature feature controls, with popup ownership discovered from this ancestor.
 Item {
@@ -20,6 +22,9 @@ Item {
     property string popupJoinedEdge: ""
     property bool vertical: false
     property bool compact: false
+    // Presentation-only: false retains the hover target and user data.
+    property bool showIcon: true
+    signal notesEditorFocusChanged(string outputName, bool focused)
     property real contentScale: 1
     // Physical orientation never chooses another feature implementation.
     // Keep the horizontal design/controls resident and rotate that one item.
@@ -74,7 +79,9 @@ Item {
             : root.kind === "activeWindow" ? activeWindow : root.kind === "tray" ? tray
             : root.kind === "utilButtons" ? utilities
             : root.kind === "timer" ? timer
-            : root.kind === "shellUpdate" ? update : root.kind === "weather" ? weather : taskbar
+            : root.kind === "shellUpdate" ? update : root.kind === "weather" ? weather
+            : root.kind === "notesTimers" ? notesTimers
+            : root.kind === "notificationActivity" ? notificationActivity : taskbar
     }
     Component { id: resources; Shared.Resources {} }
     Component { id: clock; Shared.ClockWidget { sharedTypography:true; showDate: Config.options?.bar?.verbose ?? true } }
@@ -129,6 +136,103 @@ Item {
                 root.hoverState("utilities", hovered)
                 if (hovered)
                     root.hoverRequest("utilities")
+            }
+        }
+    }
+    // ABYSS-R15: these are launchers, not new feature backends. Both mature
+    // StyledPopups reuse their existing stores and are rehosted by liquid.
+    // The small cross-axis extension reaches the literal physical screen edge.
+    // Its compositor mask is correspondingly bounded in AbyssBar.
+    component UnifiedEdgeFace: Item {
+        required property var moduleRoot
+        property string glyph: ""
+        property string description: ""
+        property Item trigger: hit
+        // Covers the geometry margin even at the smallest legal module scale.
+        readonly property real edgeReach: 36
+        implicitWidth: 36*Appearance.fontSizeScale
+        implicitHeight: 32*Appearance.fontSizeScale
+        MouseArea {
+            id: hit
+            x: 0
+            y: moduleRoot.attachedEdge === "bottom" ? 0 : -parent.edgeReach
+            width: parent.width
+            height: parent.height+parent.edgeReach
+            hoverEnabled: true
+            acceptedButtons: Qt.LeftButton
+            Accessible.role: Accessible.Button
+            Accessible.name: parent.description
+            Rectangle {
+                width: 30*Appearance.fontSizeScale
+                height: width
+                x: (parent.width-width)/2
+                y: (hit.parent.moduleRoot.attachedEdge === "bottom" ? 0 : hit.parent.edgeReach)
+                    + (hit.parent.height-height)/2
+                radius: width/2
+                color: Appearance.colors.colLayer1
+                border.width: 1
+                border.color: Appearance.colors.colLayer2
+                visible: hit.parent.moduleRoot.showIcon
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: hit.parent.glyph
+                    iconSize: 18*Appearance.fontSizeScale
+                    rotation: -hit.parent.moduleRoot.contentRotation
+                    color: Appearance.colors.colPrimary
+                }
+            }
+            StyledToolTip { text: hit.parent.description; visible: hit.parent.moduleRoot.showIcon && hit.containsMouse }
+        }
+    }
+    Component {
+        id: notesTimers
+        UnifiedEdgeFace {
+            id: notesFace
+            moduleRoot: root
+            glyph: "sticky_note_2"
+            description: "QuickNotes & Timers"
+            // Hover is intentionally still active with no painted icon.
+            // Click toggles the mature popup's own independent pin state.
+            Connections {
+                target: notesFace.trigger
+                function onClicked() { notesPopup.popupPinned = !notesPopup.popupPinned }
+            }
+            QuickNotesPopup {
+                id: notesPopup
+                // Use the module kind for placement; legacy corner IPC
+                // offsets must never override the draggable module anchor.
+                liquidPresentationKind: "notesTimers"
+                anchorItem: notesFace.trigger
+                cornerAttachmentEdge: root.attachedEdge
+                cornerAttachmentThickness: -1
+                onEditorFocusedChanged: root.notesEditorFocusChanged(root.outputName, editorFocused)
+            }
+        }
+    }
+    Component {
+        id: notificationActivity
+        UnifiedEdgeFace {
+            id: notificationFace
+            moduleRoot: root
+            glyph: "notifications"
+            description: "Notifications & Activities"
+            Connections {
+                target: notificationFace.trigger
+                function onClicked() {
+                    if (notificationPopup.presentationActive)
+                        notificationPopup.enterKeyboardMode()
+                    else
+                        GlobalStates.openNotificationCenter(root.outputName)
+                }
+            }
+            NotificationCenterPopup {
+                id: notificationPopup
+                liquidPresentationKind: "notificationActivity"
+                anchorItem: notificationFace.trigger
+                outputName: root.outputName
+                moduleAnchorMode: true
+                cornerAttachmentEdge: root.attachedEdge
+                cornerAttachmentThickness: -1
             }
         }
     }
