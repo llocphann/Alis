@@ -1,0 +1,503 @@
+diff --git a/modules/abyss/AbyssEdgeEditor.qml b/modules/abyss/AbyssEdgeEditor.qml
+index 992f64cf4..c1248d18f 100644
+--- a/modules/abyss/AbyssEdgeEditor.qml
++++ b/modules/abyss/AbyssEdgeEditor.qml
+@@ -107,9 +107,13 @@ Item {
+     // side keeps room for two readable sliders and their value gutters.
+     // Both widths are independent of the body's resulting span, avoiding a
+     // layout-size feedback loop when the toolbar relocates.
++    // Picker, Add, Lock/Enable/Remove, Join and five gaps. Keep this preferred
++    // width independent of the header grid's wrapping and implicit width.
++    readonly property real moduleHeaderNaturalSpan:
++        (104 + 2*30 + 3*28 + 5*2)*Appearance.fontSizeScale
+     readonly property real moduleToolbarSpan: Math.max(
+         520*Appearance.fontSizeScale,
+-        moduleHeaderActions.implicitWidth + (270 + 2*10 + 1)*Appearance.fontSizeScale)
++        moduleHeaderNaturalSpan + (270 + 2*10 + 1)*Appearance.fontSizeScale)
+         + 2*editorBody.padding
+     // The compact IPC labels fit side by side without the previous
+     // minimum 520px content track, which only produced an empty tail.
+@@ -990,23 +994,38 @@ Item {
+                         // guide. Never stretch the lower controls into empty
+                         // space beyond the Module picker/action toolbar.
+                         readonly property real controlsSpan:Math.max(0,
+-                            Math.min(width,moduleHeaderActions.implicitWidth))
++                            Math.min(width,root.moduleHeaderNaturalSpan))
+                         // On wide Edges, stop this column at the final
+                         // module action instead of allocating half the toolbar.
+                         Layout.fillWidth:!editFineControls.useTwoColumns
+                         Layout.minimumWidth:0
+                         Layout.preferredWidth:editFineControls.useTwoColumns
+-                            ? moduleHeaderActions.implicitWidth
++                            ? root.moduleHeaderNaturalSpan
+                             : Math.max(0,toolbarScroll.width)
+                         spacing:4*Appearance.fontSizeScale
+-                            RowLayout {
++                            GridLayout {
+                             id:moduleHeaderActions
+                             objectName:"abyssModuleHeaderActions"
+-                            Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
++                            Layout.fillWidth:true;Layout.minimumWidth:0
++                            Layout.preferredWidth:root.moduleHeaderNaturalSpan
++                            // A one-column startup grid otherwise inherits a
++                            // 30px maximum from its fixed-size action buttons.
++                            Layout.maximumWidth:Infinity
++                            readonly property bool singleRow:
++                                width>=root.moduleHeaderNaturalSpan-.1
++                            // Below the natural width, give the picker its own
++                            // row and wrap the same actions into bounded cells.
++                            columns:singleRow ? 6 : Math.max(1,Math.min(5,
++                                Math.floor((width+2*Appearance.fontSizeScale)
++                                    /(root.editorActionSize+2*Appearance.fontSizeScale))))
++                            columnSpacing:2*Appearance.fontSizeScale
++                            rowSpacing:4*Appearance.fontSizeScale
+                             StyledComboBox {
+                             baseHeight:28*Appearance.fontSizeScale
++                            Layout.columnSpan:moduleHeaderActions.singleRow
++                                ? 1 : moduleHeaderActions.columns
+                             Layout.preferredWidth:104*Appearance.fontSizeScale
+-                            Layout.maximumWidth:104*Appearance.fontSizeScale
++                            Layout.maximumWidth:Math.min(104*Appearance.fontSizeScale,moduleHeaderActions.width)
+                             Layout.fillWidth:false;Layout.minimumWidth:0;
+                             
+                             id: palette
+diff --git a/scripts/test-abyss-compact-editor-runtime.py b/scripts/test-abyss-compact-editor-runtime.py
+index cd1391132..923d8ccad 100644
+--- a/scripts/test-abyss-compact-editor-runtime.py
++++ b/scripts/test-abyss-compact-editor-runtime.py
+@@ -44,7 +44,7 @@ ShellRoot {
+  }
+  TestCase {
+   id:test;when:false;optional:true
+-  function check(value,label){root.checks++;if(!value)throw new Error(label)}
++  function check(value,label){root.checks++;if(!value)throw new Error(label+" "+JSON.stringify({viewport:[scene.width,scene.height],scale:Appearance.fontSizeScale,edge:editor.toolbarEdge,editingPopups:editor.editingPopups}))}
+   function item(name){const result=findChild(editor,name);check(!!result,"missing "+name);return result}
+   function frame(label){let done=false;check(scene.grabToImage(result=>{root.frames++;if(label&&Quickshell.env("ALIS_COMPACT_EDITOR_EVIDENCE"))check(result.saveToFile(Quickshell.env("ALIS_COMPACT_EDITOR_EVIDENCE")+"/"+label+".png"),"capture write");done=true}),"capture refused");tryVerify(()=>done,4000)}
+   function settle(edge){wait(130);editor.toolbarEdge=edge;wait(100);check(waitForPolish(editor.Window.window,3000),"layout polish did not settle")}
+@@ -58,6 +58,12 @@ ShellRoot {
+    return target
+   }
+   function click(name){const target=control(name);mouseClick(target);wait(40)}
++  function samePhysicalRow(a,b,space,tolerance){
++   const pa=a.mapToItem(space,0,0),pb=b.mapToItem(space,0,0)
++   // Layouts center differently sized controls within one occupied row.
++   return Math.abs(pa.y+a.height/2-pb.y-b.height/2)<tolerance
++       && Math.max(pa.y,pb.y)<Math.min(pa.y+a.height,pb.y+b.height)
++  }
+   function run(){try{
+    tryCompare(Config,"ready",true,6000)
+    Config.setNestedValues({"panelFamily":"abyss","performance.reduceAnimations":true,"abyss.modules.configured":true,
+@@ -107,7 +113,7 @@ ShellRoot {
+      const actions=control("abyssEditorHeaderActions")
+      const headerOrigin=(item)=>item.mapToItem(scroll.contentItem,0,0)
+      if(!editor.toolbarOnHorizontalEdge && scroll.width>=205*scale) {
+-      check(Math.abs(headerOrigin(title).y-headerOrigin(actions).y)<1.5,
++      check(samePhysicalRow(title,actions,scroll.contentItem,1.5),
+         "side title and Undo/Reset/Cancel/Done must share the first line")
+       check(headerOrigin(title).x+title.width<=headerOrigin(actions).x+1,
+         "side editor title overlaps header actions")
+@@ -118,7 +124,7 @@ ShellRoot {
+      const outputCheckbox=control("abyssEditorOutputOnly")
+      const origin=(item)=>item.mapToItem(scroll.contentItem,0,0)
+      if(header.columns===2) {
+-      check(Math.abs(origin(tabs).y-origin(scope).y)<1,
++      check(samePhysicalRow(tabs,scope,scroll.contentItem,1),
+           "tabs and output scope do not share the first row")
+       check(origin(tabs).x<origin(sharedOutput).x
+           && origin(sharedOutput).x<origin(outputCheckbox).x,
+@@ -147,7 +153,7 @@ ShellRoot {
+          "horizontal toolbar has enough viewport width but collapsed to one column")
+      if(expectedTwo) {
+       const left=inScroll(modulePicker),right=inScroll(edgePicker)
+-      check(left.x<right.x && Math.abs(left.y-right.y)<1.5,
++      check(left.x<right.x && samePhysicalRow(modulePicker,edgePicker,scroll.contentItem,1.5),
+           "Module and Editing Edge dropdowns are not aligned as column headers")
+       const middle=inScroll(divider)
+       check(divider.visible && divider.width<=2*scale
+@@ -168,10 +174,31 @@ ShellRoot {
+      }
+      // Related Module/Edge controls must share the same physical toolbar row.
+      const sameRow=(a,b,label)=>check(
+-       Math.abs(inScroll(control(a)).y-inScroll(control(b)).y)<1.5,
++       samePhysicalRow(control(a),control(b),scroll.contentItem,1.5),
+        label+" controls should occupy one row")
+-     sameRow("abyssModuleDropdown","abyssModulePositionLock","Module header")
+-     sameRow("abyssModuleDropdown","abyssModuleJoinCorner","Module corner")
++     const moduleHeader=item("abyssModuleHeaderActions")
++     const expectedSingle=moduleHeader.width>=editor.moduleHeaderNaturalSpan-.1
++     check(moduleHeader.singleRow===expectedSingle,"Module header wrapping differs from available width")
++     const expectedColumns=expectedSingle ? 6 : Math.max(1,Math.min(5,
++       Math.floor((moduleHeader.width+2*scale)/(editor.editorActionSize+2*scale))))
++     check(moduleHeader.columns===expectedColumns,"Module header uses an unbounded action grid")
++     const moduleActions=["abyssEditorConfirmAdd","abyssModulePositionLock","abyssSelectionEnabled",
++       "abyssSelectionRemove","abyssModuleJoinCorner"].map(control)
++     for(let i=0;i<moduleActions.length;i++) {
++      const action=moduleActions[i],point=inScroll(action)
++      if(expectedSingle) check(samePhysicalRow(modulePicker,action,scroll.contentItem,1.5),
++        "wide Module picker and actions must remain on one row")
++      else {
++       check(point.y>=inScroll(modulePicker).y+modulePicker.height-1,
++         "wrapped Module actions overlap the picker row")
++       if(i>0) {
++        const previous=moduleActions[i-1],before=inScroll(previous)
++        if(i%expectedColumns) check(samePhysicalRow(previous,action,scroll.contentItem,1.5)
++          && point.x>=before.x+previous.width-1,"wrapped Module action row overlaps or changes order")
++        else check(point.y>=before.y+previous.height-1,"Module action grid did not wrap the next row")
++       }
++      }
++     }
+      sameRow("abyssEditingEdgeDropdown","abyssJoinNearbyModules","Edge header")
+      sameRow("abyssModuleRoundingAction","abyssModuleRounding","Rounding")
+      const round0=control("abyssRoundZeroCorners")
+@@ -227,10 +254,13 @@ ShellRoot {
+      if(edgeColumn.width>=170*scale)
+        check(edgePicker.width>=100*scale-.5 && edgePicker.width<=108*scale+.5,
+            "Edge selector should be slightly wider than its former 88px width")
+-     const header=item("abyssModuleHeaderActions")
+-     if(grouped.columns===3 && moduleColumn.width>=header.implicitWidth-1) {
++     if(grouped.columns===3 && moduleHeader.singleRow) {
+        const finalAction=control("abyssModuleJoinCorner")
+-       check(Math.abs(rightIn(finalAction,moduleColumn)-moduleRight)<2*scale,
++       // control() yields while scrolling; relocation may have reflowed the
++       // toolbar since moduleRight was sampled above. Compare one live layout.
++       const currentRight=moduleColumn.controlsSpan
++       check([alignPicker,moduleRound,moduleSize,finalAction].every(
++           target=>Math.abs(rightIn(target,moduleColumn)-currentRight)<2*scale),
+            "Module fields do not end at the last Module action icon")
+      }
+      const point=(item)=>item.mapToItem(scroll.contentItem,0,0)
+@@ -274,7 +304,7 @@ ShellRoot {
+       const outputPoint=outputPicker.mapToItem(scroll.contentItem,0,0)
+       const checkPoint=outputCheckbox.mapToItem(scroll.contentItem,0,0)
+       if(scroll.width>=200*scale)
+-       check(Math.abs(outputPoint.y-checkPoint.y)<1.5,
++       check(samePhysicalRow(outputPicker,outputCheckbox,scroll.contentItem,1.5),
+          "side output dropdown and checkbox must share a line")
+       for(const [item,limit] of [[chooser,placement.compactKindWidth],
+           [edgeCombo,placement.compactEdgeWidth],
+@@ -306,7 +336,7 @@ ShellRoot {
+       if(scene.width>720*scale)
+        check(item("abyssEdgeEditorBody").span<600*scale,
+          "IPC toolbar retains avoidable empty horizontal width")
+-      check(Math.abs(coords(ipcJoin).y-ys[0])<1.5,"IPC corner toggle not aligned")
++      check(samePhysicalRow(ipcJoin,chooser,scroll.contentItem,1.5),"IPC corner toggle not aligned")
+       if(scene.width-48>=editor.ipcToolbarSpan)
+        check(Math.abs(item("abyssEdgeEditorBody").span-editor.ipcToolbarSpan)<1.5,
+          "IPC toolbar span includes avoidable blank width")
+diff --git a/scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py b/scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py
+index 05c1cb40a..e51b3fd4b 100644
+--- a/scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py
++++ b/scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py
+@@ -27,7 +27,11 @@ assert 'columns:root.compactIpcEditor' in positions
+ assert '? (root.compactVertical ? 1 : 4)' in positions
+ assert 'id:compactKindChoice' in positions
+ assert 'property alias compactKindCombo: compactKindChoice' in positions
+-assert positions.count('Layout.preferredWidth:root.compactIpcEditor') == 3
++# Scope the three selector widths to their controls; the independent Reset
++# button also has a compact width and must not change this selector contract.
++for selector in ('compactKindChoice', 'edgeChoice', 'alignmentChoice'):
++    block = positions.split('id:'+selector, 1)[1].split('\n        }', 1)[0]
++    assert block.count('Layout.preferredWidth:root.compactIpcEditor') == 1, selector
+ assert 'property bool compactSideToolbar: false' in positions
+ assert 'property Item compactCornerHost: null' in positions
+ assert 'root.compactCornerHost : ipcPositionSelectorRow' in positions
+@@ -83,7 +87,7 @@ for dimension in ['compactKindTriggerWidth', 'compactEdgeTriggerWidth', 'compact
+ assert 'Math.min(root.width-48,root.editingPopups' in editor
+ assert 'root.ipcToolbarSpan : root.moduleToolbarSpan' in editor
+ assert 'readonly property real moduleToolbarSpan:' in editor
+-assert 'moduleHeaderActions.implicitWidth + (270 + 2*10 + 1)*Appearance.fontSizeScale' in editor
++assert 'moduleHeaderNaturalSpan + (270 + 2*10 + 1)*Appearance.fontSizeScale' in editor
+ assert 'readonly property real ipcSelectorSpan:' in editor
+ assert 'Math.max(450*Appearance.fontSizeScale,ipcSelectorSpan)' in editor
+ assert 'toolbarScroll.width >= (editingPopups' in editor
+@@ -138,7 +142,7 @@ assert 'columns:useTwoColumns ? 3 : 1' in fine
+ assert fine.count('Layout.preferredWidth:editFineControls.useTwoColumns') == 2
+ assert fine.count('Math.max(0,(toolbarScroll.width-24*Appearance.fontSizeScale)/2)') == 0
+ assert 'Layout.fillWidth:!editFineControls.useTwoColumns' in fine
+-assert '? moduleHeaderActions.implicitWidth' in fine
++assert '? root.moduleHeaderNaturalSpan' in fine
+ assert '? 270*Appearance.fontSizeScale' in fine
+ assert 'editFineControls.width-24' not in fine
+ assert '&& width>=570*Appearance.fontSizeScale ? 3 : 1' not in fine
+@@ -170,7 +174,10 @@ assert left.count('objectName:"abyssModuleCustomSizeToggle"') == 1
+ assert left.count('objectName:"abyssModuleJoinCorner"') == 1
+ assert 'AbyssCheckBox {' not in selected
+ assert 'onToggled:root.change("customSize",checked)' in selected
+-assert 'onToggled:root.change("joinCorner",checked)' in selected
++join_corner=left.split('objectName:"abyssModuleJoinCorner"',1)[1].split('\n                            }',1)[0]
++assert 'compact:true;editorSquare:true;checkable:true' in join_corner
++assert 'checked:' in join_corner and 'enabled:' in join_corner
++assert 'onToggled:root.change("joinCorner",checked)' in join_corner
+ assert right.count('id:scaleModulesRow') == 1
+ assert right.count('objectName:"abyssJoinNearbyModules"') == 1
+ assert right.count('objectName:"abyssRoundZeroCorners"') == 1
+@@ -194,7 +201,7 @@ assert right.count('Layout.preferredWidth:110*Appearance.fontSizeScale') == 2
+ assert right.count('Layout.preferredWidth:190*Appearance.fontSizeScale') == 2
+ assert 'columns:root.toolbarOnHorizontalEdge' in right
+ assert 'edgeEditorColumn.width>=260*Appearance.fontSizeScale ? 2 : 1' in right
+-assert 'Math.min(width,moduleHeaderActions.implicitWidth)' in left
++assert 'Math.min(width,root.moduleHeaderNaturalSpan)' in left
+ assert 'Layout.preferredWidth:moduleEditorColumn.controlsSpan' in left
+ assert 'Layout.maximumWidth:moduleEditorColumn.controlsSpan' in left
+ assert left.count('id:moduleRoundingRow') + left.count('id:moduleCustomSizeRow') == 2
+@@ -202,6 +209,38 @@ assert right.count('id:edgeGapAndSizeRow') + right.count('id:edgeWidthRow') + ri
+ 
+ selected_columns=re.search(r"\bcolumns:\s*([^\n]+)",selected)
+ assert 'columns:1;rowSpacing:' in selected, "module appearance rows stack vertically"
++# The natural span must not follow a grid implicit width that changes when
++# wrapping. Evaluate the real bindings at narrow and wide width boundaries.
++assert 'moduleHeaderActions.implicitWidth' not in editor
++natural=re.search(r'readonly property real moduleHeaderNaturalSpan:\s*([^\n]+)',editor)
++module_header=left.split('id:moduleHeaderActions',1)[1].split('StyledComboBox {',1)[0]
++assert 'Layout.preferredWidth:root.moduleHeaderNaturalSpan' in module_header
++assert 'Layout.maximumWidth:Infinity' in module_header
++single=re.search(r'readonly property bool singleRow:\s*([^\n]+)',module_header)
++header_columns=re.search(r'columns:([\s\S]*?)\n\s*columnSpacing:',module_header)
++assert natural and single and header_columns
++assert 'Layout.columnSpan:moduleHeaderActions.singleRow' in left
++assert '? 1 : moduleHeaderActions.columns' in left
++subprocess.run(['node','-e',r'''
++const assert=require('node:assert/strict'),vm=require('node:vm');
++for(const fontSizeScale of [.75,1,1.5,2]) {
++ const Appearance={fontSizeScale};
++ const span=vm.runInNewContext(process.argv[1],{Appearance});
++ assert.equal(span,258*fontSizeScale);
++ for(const width of [80,120,180,212,220,span-.2,span,span+.2,520]) {
++  const root={moduleHeaderNaturalSpan:span,editorActionSize:30*fontSizeScale};
++  const singleRow=vm.runInNewContext(process.argv[2],{width,root});
++  const columns=vm.runInNewContext(process.argv[3],{singleRow,width,root,Appearance});
++  assert.equal(singleRow,width>=span-.1);
++  if(singleRow) assert.equal(columns,6);
++  else {
++   assert.ok(columns>=1 && columns<=5);
++   assert.ok(columns*root.editorActionSize+(columns-1)*2*fontSizeScale<=width+.1,
++     'wrapped action cells exceed the viewport');
++  }
++ }
++}
++''',natural[1],single[1],header_columns[1]],check=True)
+ subprocess.run(["node","-e",r'''
+ const assert=require('node:assert/strict'),vm=require('node:vm');
+ for(const toolbarOnHorizontalEdge of [false,true])for(const fontSizeScale of [.7,1,1.5,2]) {
+diff --git a/scripts/test-abyss-edge-editor-compact-actions-contract.py b/scripts/test-abyss-edge-editor-compact-actions-contract.py
+index f8719f4d5..08161bb95 100644
+--- a/scripts/test-abyss-edge-editor-compact-actions-contract.py
++++ b/scripts/test-abyss-edge-editor-compact-actions-contract.py
+@@ -118,10 +118,11 @@ assert 'objectName:"abyssEditorTitle"' in editor
+ assert 'Layout.preferredWidth:58*Appearance.fontSizeScale' in editor
+ assert 'readonly property real editorActionSize: 30 * Appearance.fontSizeScale' in editor
+ assert 'readonly property real controlsSpan:Math.max(0,' in editor
+-assert 'Math.min(width,moduleHeaderActions.implicitWidth)' in editor
++assert 'Math.min(width,root.moduleHeaderNaturalSpan)' in editor
+ assert editor.count('editorCompact:true') == 6
+ assert editor.count('Layout.preferredWidth:20*Appearance.fontSizeScale') == 3
+-assert editor.count('spacing:2') >= 8, 'merging rows should not add fake spacing'
++assert editor.count('spacing:2') >= 7, 'merging rows should not add fake spacing'
++assert 'columnSpacing:2*Appearance.fontSizeScale' in editor.split('id:moduleHeaderActions',1)[1].split('StyledComboBox {',1)[0]
+ assert 'root.editorSquare ? 17 * Appearance.fontSizeScale' in button
+ assert 'objectName:"abyssButtonCenteredGlyph"' in button
+ assert 'rightPadding:editorCompact ? 46*Appearance.fontSizeScale : 52' in (root / "modules/abyss/looks/AbyssSlider.qml").read_text()
+@@ -177,7 +178,16 @@ assert 'id:edgeGapAndSizeRow' in editor
+ assert 'id:edgeWidthRow' in editor
+ assert 'root.ipcToolbarSpan : root.moduleToolbarSpan' in editor
+ assert 'columns:1;rowSpacing:4*Appearance.fontSizeScale' in editor
+-assert editor.count('AbyssCheckBox {') == 1
++assert editor.count('AbyssCheckBox {') == 0
++round_zero=editor.split('objectName:"abyssRoundZeroCorners"',1)[1].split('\n                            }',1)[0]
++for needle in [
++    'text:"Round inner corners at 0 px";glyph:"rounded_corner"',
++    'compact:true;editorSquare:true;checkable:true',
++    'enabled:Placement.edgeThickness(root.draftOptions,root.editingEdge)===0',
++    'checked:root.edgeRoundZeroCorners[root.editingEdge]===true',
++    'onToggled:root.edgeRoundZeroCorners=Object.assign({},root.edgeRoundZeroCorners,{[root.editingEdge]:checked})',
++]:
++    assert needle in round_zero, needle
+ assert 'visible:root.edgeWidthAffectsModules[root.editingEdge]===false' not in editor
+ assert 'enabled:root.edgeWidthAffectsModules[root.editingEdge]===false' in editor
+ assert 'root.expandedControls ? 860 : 720' not in editor
+diff --git a/scripts/test-abyss-edge-editor-compact-side-contract.py b/scripts/test-abyss-edge-editor-compact-side-contract.py
+index 81bfc8a66..714134235 100644
+--- a/scripts/test-abyss-edge-editor-compact-side-contract.py
++++ b/scripts/test-abyss-edge-editor-compact-side-contract.py
+@@ -1,5 +1,6 @@
+ #!/usr/bin/env python3
+ from pathlib import Path
++import json, re, subprocess
+ r=Path(__file__).resolve().parents[1]
+ e=(r/"modules/abyss/AbyssEdgeEditor.qml").read_text()
+ p=(r/"modules/abyss/settings/AbyssPositionSettings.qml").read_text()
+@@ -9,7 +10,20 @@ assert "editorSurface.x+editorSurface.width+12" in e
+ assert '"Drag IPC · Enter save · Esc cancel"' not in e
+ assert 'buttonText:"IPC"' in e
+ assert 'allowedKinds:["osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch"]' in e
+-assert "visible: root.outputSelectionEnabled || !root.compactVertical" in p
++visibility=re.search(r'id:outputChoice\b[\s\S]*?visible:([\s\S]*?)\n\s*Layout.fillWidth:',p)
++assert visibility, 'output selector visibility binding exists'
++# Evaluate the actual binding for every flag combination, including the
++# explicit selector visibility gate used by the compact editor.
++subprocess.run(['node','-e','''
++const assert=require('node:assert/strict');
++const visible=new Function('root','return ('+JSON.parse(process.argv[1])+');');
++for(const showOutputSelector of [false,true])
++ for(const outputSelectionEnabled of [false,true])
++  for(const compactVertical of [false,true]) {
++   const root={showOutputSelector,outputSelectionEnabled,compactVertical};
++   assert.equal(visible(root),showOutputSelector && (outputSelectionEnabled || !compactVertical),JSON.stringify(root));
++  }
++''',json.dumps(visibility[1])],check=True)
+ assert "Override Edge and position for this output." in p
+ assert 'id:editFineControls' in e and 'id:selectedModuleControls' in e
+ print("abyss edge editor grouped toolbar + compact IPC contract: ok")
+diff --git a/scripts/test-abyss-launcher-live-editor-contract.py b/scripts/test-abyss-launcher-live-editor-contract.py
+index 58f99a6d8..72c124b7c 100755
+--- a/scripts/test-abyss-launcher-live-editor-contract.py
++++ b/scripts/test-abyss-launcher-live-editor-contract.py
+@@ -1,5 +1,6 @@
+ #!/usr/bin/env python3
+ from pathlib import Path
++import json, re, subprocess
+ 
+ r=Path(__file__).resolve().parents[1]
+ editor=(r/"modules/abyss/AbyssEdgeEditor.qml").read_text()
+@@ -8,7 +9,11 @@ bar_module=(r/"modules/abyss/bar/AbyssBarModule.qml").read_text()
+ perimeter=(r/"modules/abyss/AbyssPerimeter.qml").read_text()
+ presentation=(r/"modules/abyss/looks/AbyssPresentation.js").read_text()
+ 
+-assert '"utilities","launcher"' in editor
++# Independent IPC editing is restricted to indicators. Launcher editing remains
++# on the source-owned module/popup path asserted below.
++allowed=re.search(r'allowedKinds:(\[[^\]]+\])',editor)
++assert allowed
++assert json.loads(allowed[1]) == ['osd','volume','brightness','mic','mediaOsd','keyboardLayout','voiceSearch']
+ assert 'onToggled:root.change("joinCorner",checked)' in editor
+ assert "popupJoinedEdge: placement?.joinCorner" in bar
+ assert "Shared.StyledPopup {" in bar_module
+@@ -20,5 +25,16 @@ assert '"launcher"' in presentation
+ assert "function canJoin(kind)" in presentation
+ assert "function nearbyEdge(" in presentation
+ assert "function joinedEdge(" in presentation
++subprocess.run(['node','-e','''
++const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
++const p=vm.runInNewContext(fs.readFileSync(process.argv[1],'utf8')+';({canJoin,joinedEdge})');
++assert.equal(p.canJoin('launcher'),true);
++for(const [edge,along,expected] of [['top',0,'left'],['bottom',700,'right'],['left',0,'top'],['right',500,'bottom']]) {
++ assert.equal(p.joinedEdge('launcher',{joinCorner:true},edge,along,100,800,600),expected);
++ assert.equal(p.joinedEdge('launcher',{joinCorner:false},edge,along,100,800,600),'');
++ assert.equal(p.joinedEdge('launcher',{},edge,along,100,800,600),'');
++ assert.equal(p.joinedEdge('launcher',{joinCorner:true},edge,250,100,800,600),'');
++}
++''',str(r/'modules/abyss/looks/AbyssPresentation.js')],check=True)
+ 
+ print("launcher live-editor Join Edge follows mature source-owned popup path: ok")
+diff --git a/scripts/test-abyss-module-locks-runtime.py b/scripts/test-abyss-module-locks-runtime.py
+index 4a026b27b..96e73fc01 100644
+--- a/scripts/test-abyss-module-locks-runtime.py
++++ b/scripts/test-abyss-module-locks-runtime.py
+@@ -133,7 +133,7 @@ with tempfile.TemporaryDirectory(prefix="alis-edge-locks-") as name:
+     dest=Path(os.environ.get("ALIS_LOCK_EVIDENCE",folder/"evidence")).resolve();dest.mkdir(parents=True,exist_ok=True)
+     with private_wayland(folder) as env:
+         if not env:print("SKIP: lock native test requires private Niri");raise SystemExit(0)
+-        cfg=folder/"config/illogical-impulse";cfg.mkdir(parents=True,exist_ok=True)
++        cfg=folder/"config/alis";cfg.mkdir(parents=True,exist_ok=True)
+         data=json.loads((ROOT/"defaults/config.json").read_text());data["panelFamily"]="abyss"
+         data["abyss"]["modules"]["configured"]=True
+         data["abyss"]["modules"]["placements"]=[{"id":id,"kind":"clock","edge":"top","position":position} for id,position in [("a",.2),("b",.55),("c",.82)]]
+diff --git a/scripts/test-abyss-multi-selection-runtime.py b/scripts/test-abyss-multi-selection-runtime.py
+index f0750af83..881df7f89 100644
+--- a/scripts/test-abyss-multi-selection-runtime.py
++++ b/scripts/test-abyss-multi-selection-runtime.py
+@@ -170,7 +170,7 @@ with tempfile.TemporaryDirectory(prefix="alis-edge-multi-") as name:
+     dest=Path(os.environ.get("ALIS_MULTI_EVIDENCE",folder/"evidence")).resolve();dest.mkdir(parents=True,exist_ok=True)
+     with private_wayland(folder) as env:
+         if not env:print("SKIP: multi-selection native test requires private Niri");raise SystemExit(0)
+-        cfg=folder/"config/illogical-impulse";cfg.mkdir(parents=True,exist_ok=True)
++        cfg=folder/"config/alis";cfg.mkdir(parents=True,exist_ok=True)
+         data=json.loads((ROOT/"defaults/config.json").read_text());data["panelFamily"]="abyss"
+         data["abyss"]["modules"]["configured"]=True
+         data["abyss"]["modules"]["placements"]=[{"id":id,"kind":"clock","edge":"top","position":pos} for id,pos in [("a",.2),("b",.38),("c",.84)]]
+diff --git a/scripts/test-abyss-panel-material-settings-runtime.py b/scripts/test-abyss-panel-material-settings-runtime.py
+index 89f51626f..308932e75 100644
+--- a/scripts/test-abyss-panel-material-settings-runtime.py
++++ b/scripts/test-abyss-panel-material-settings-runtime.py
+@@ -125,7 +125,7 @@ ShellRoot {
+     with private_wayland(folder) as env:
+         if env is None:
+             print("SKIP: material Settings require private Niri"); raise SystemExit(0)
+-        config = folder / "config/illogical-impulse/config.json"
++        config = folder / "config/alis/config.json"
+         config.parent.mkdir(parents=True, exist_ok=True)
+         value = json.loads((ROOT / "defaults/config.json").read_text())
+         value["panelFamily"] = "abyss"; value["abyss"]["companion"]["enabled"] = False
+diff --git a/scripts/test-agenda-todo-independence.mjs b/scripts/test-agenda-todo-independence.mjs
+index e0456e602..be45e4797 100644
+--- a/scripts/test-agenda-todo-independence.mjs
++++ b/scripts/test-agenda-todo-independence.mjs
+@@ -15,8 +15,8 @@ assert.doesNotMatch(service,/AgendaTodoPolicy|newLink\(|_notifyAgendaLinks|_queu
+ assert.doesNotMatch(todo,/_reconcileAgenda|_startExternalAgenda|_deferAgendaDeletion|ensureAgenda\(|retryAgendaLinks|agendaStatus\(|agendaError|_scheduleAgenda/);
+ assert.doesNotMatch(service,/todoLink\s*:\s*AgendaTodoPolicy|_queueTodoUnlink|setTodoLink\(/);
+ assert.doesNotMatch(todo,/onAgendaMutationFinished|agendaMutationFinished/);
+-assert.doesNotMatch(internal,/AgendaTodoPolicy|function ensureAgenda\\(|function unlinkAgenda\\(/);
+-assert.doesNotMatch(dashboardTodo,/modelData\\.agenda|text:"link"/);
++assert.doesNotMatch(internal,/AgendaTodoPolicy|function ensureAgenda\(|function unlinkAgenda\(/);
++assert.doesNotMatch(dashboardTodo,/modelData\.agenda|text:"link"/);
+ // Historical task metadata is retained as inert data, never translated into a new link.
+ const normalizeStart=internal.indexOf("    function _normalizeList(value) {");
+ const normalizeEnd=internal.indexOf("    function addItem(item) {",normalizeStart);
+diff --git a/scripts/test-weekly-planner-multidate.mjs b/scripts/test-weekly-planner-multidate.mjs
+index fb1e3a4d1..87a54477e 100644
+--- a/scripts/test-weekly-planner-multidate.mjs
++++ b/scripts/test-weekly-planner-multidate.mjs
+@@ -79,14 +79,40 @@ assert.match(dialog,/const multi=root\.plannerPresentation/);
+ assert.match(dialog,/Events\.updateEventGroup\(root\.editingEvent\.id/);
+ assert.match(dialog,/root\.plannerSelectedDateKeys=selectedKeys\.length/);
+ assert.doesNotMatch(dialog,/objectName:"plannerRepeatConflictHint"/);
+-assert.match(dialog,/selectedDays\.length>1 && root\.recurrence!=="none"/);
+-assert.match(dialog,/DateSelection\.ranges\(selectedDays/);
+-assert.match(dialog,/root\.plannerSelectedDateKeys : \[\]\]/);
++// Execute the actual save-time selection/batch binding: non-repeating multi-day
++// events need the same explicit slots as recurring groups, and disallowed repeat
++// modes must return before constructing any slots.
++const batchStart=dialog.indexOf("        const selectedDays=root.plannerPresentation");
++const batchEnd=dialog.indexOf("        if (root.isEditing && root.plannerPresentation)",batchStart);
++assert.ok(batchStart>=0 && batchEnd>batchStart,"save-time Planner batch binding exists");
++const saveBatches=new Function("root","RepeatPolicy","DateSelection",
++  dialog.slice(batchStart,batchEnd)+"\nreturn batches;");
++for(const recurrence of ["none","weekly","monthly"]) {
++  const selectedDays=["2026-10-13","2026-10-15"];
++  const root={plannerPresentation:true,plannerSelectedDateKeys:selectedDays,
++    recurrence,eventTime:"09:00",eventEndTime:"10:00",allDay:false};
++  const calls=[],sentinel=[{startDate:"start",endDate:"end"}];
++  const selection={ranges:(...args)=>{calls.push(args);return sentinel;}};
++  assert.equal(saveBatches(root,R,selection),sentinel,recurrence+" must retain multi-day slots");
++  assert.deepEqual(calls,[[selectedDays,"09:00","10:00",false]]);
++  for(const single of [[],[selectedDays[0]]]) {
++    calls.length=0;
++    assert.equal(saveBatches({...root,plannerSelectedDateKeys:single},R,selection),null);
++    assert.equal(calls.length,0,"single-day save must keep its ordinary date range");
++  }
++  calls.length=0;
++  assert.equal(saveBatches({...root,plannerPresentation:false},R,selection),null);
++  assert.equal(calls.length,0,"non-Planner saves must not inherit selected days");
++  assert.equal(saveBatches(root,R,{ranges:()=>null}),false,"invalid date batches must reject save");
++}
++assert.equal(saveBatches({plannerPresentation:true,
++  plannerSelectedDateKeys:["2026-10-13","2026-10-15"],recurrence:"daily"},R,
++  {ranges:()=>{throw new Error("disallowed repeat generated slots");}}),false);
+ assert.match(service,/RepeatPolicy\.templateAllowed\(explicitSlots,recurrence \|\| "none"\)/);
+ assert.match(service,/event\.repeatTemplate=explicitSlots\.map/);
+ assert.match(service,/RepeatPolicy\.nextCycle\(event\.repeatTemplate/);
+ assert.match(service,/const groupIndex = bulk \? -1/);
+-assert.match(service,/if \(bulk\) event=Occurrences\.store\(event,explicitSlots\)/);
++assert.match(service,/if \(bulk\)\s*\{\s*event=Occurrences\.store\(event,explicitSlots\)/);
+ assert.match(service,/root\.eventAdded\(event\)[\s\S]*root\.saveToFile\(\)/);
+ assert.match(occurrences,/occurrences:ordered/);
+ assert.match(occurrences,/startDate:first\.startDate,dateTime:first\.startDate/);
+@@ -110,7 +136,7 @@ function slot(y,m,d,h=9) {
+  const start=new Date(y,m-1,d,h,0,0),end=new Date(y,m-1,d,h+1,0,0);
+  return {startDate:start.toISOString(),endDate:end.toISOString()};
+ }
+-function groupDates(group) {return group.map(s=>new Date(s.startDate).getDate());}
++function groupDates(group) {return Array.from(group,s=>new Date(s.startDate).getDate());}
+ const weekly=R.nextCycle([slot(2026,10,13),slot(2026,10,15)],
+  "weekly",new Date(2026,9,15,11));
+ assert.deepEqual(groupDates(weekly),[20,22],"weekly group did not repeat every selected weekday");

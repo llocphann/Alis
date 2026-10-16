@@ -1,0 +1,29 @@
+{
+  "parked_by_owner_priority": "Automation and Alis Companion supersede Abyss work",
+  "base_sha": "535b231971db588dd58dbba576764b99e8195dec",
+  "wip_patch_sha256": "1740b054dcc04738c6d0af01bcfd3696d4ec550fc4c8986278dff26018494679",
+  "editor_native": "FAIL: side IPC trigger is not content-sized; preserve all failure receipts",
+  "fixture_repairs": "Seven focused pure guards PASS, three persistence fixtures PASS; broad suite NOT PASS",
+  "r11_private_candidate": "DO NOT APPLY: incomplete backing coverage; native UNRUN",
+  "r11_baseline": "Genuine motion RED at28c146d4a, native0/test1",
+  "r13": "40-scene static and8-scene actual controls focused PASS, Owner acceptance separate",
+  "restored_worktree_paths": [
+    "modules/abyss/AbyssEdgeEditor.qml",
+    "scripts/test-abyss-compact-editor-runtime.py",
+    "scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py",
+    "scripts/test-abyss-edge-editor-compact-actions-contract.py",
+    "scripts/test-abyss-edge-editor-compact-side-contract.py",
+    "scripts/test-abyss-launcher-live-editor-contract.py",
+    "scripts/test-abyss-module-locks-runtime.py",
+    "scripts/test-abyss-multi-selection-runtime.py",
+    "scripts/test-abyss-panel-material-settings-runtime.py",
+    "scripts/test-agenda-todo-independence.mjs",
+    "scripts/test-weekly-planner-multidate.mjs"
+  ],
+  "automation_fixture": "Kept separately for newly prioritized Automation work",
+  "unrelated_files_preserved": [
+    "json",
+    "subprocess",
+    "time"
+  ]
+}
