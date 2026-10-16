@@ -1,0 +1,298 @@
+{
+  "schema": "alis.canonical-reconciled.v1",
+  "sha": "448d486213f031367295b457d084c447fe1813a8",
+  "state": "FINISHED",
+  "actual_exit": 1,
+  "argv": [
+    "bash",
+    "scripts/validate-maintainer-local.sh",
+    "--current-repo"
+  ],
+  "scope": "local exact committed clone; not CI, installed desktop or Owner acceptance",
+  "numbered_checks": 500,
+  "numbered_counts": {
+    "PASS": 455,
+    "FAIL": 44,
+    "SKIP": 1
+  },
+  "unsettled_checks": 0,
+  "reported_summary": {
+    "Checks run": 500,
+    "Passed": 455,
+    "Failed": 44,
+    "Skipped": 2
+  },
+  "skip_accounting": "One numbered QML-parser SKIP; the separate deferred Nix entry is also listed in the reported Skipped count.",
+  "supervisor_parser_correction": "The raw generic FAIL regex also counted the final summary Result: FAIL; numbered-check parsing excludes that summary.",
+  "failed_checks": [
+    {
+      "number": 25,
+      "name": "Weekly Planner Ctrl/Shift multi-date and compatible Repeat cycles",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 33,
+      "name": "Independent Agenda and Todo stores with stable Event ID edits",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 60,
+      "name": "Python regression: scripts/test-abyss-compact-editor-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 72,
+      "name": "Python regression: scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 73,
+      "name": "Python regression: scripts/test-abyss-edge-editor-compact-actions-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 74,
+      "name": "Python regression: scripts/test-abyss-edge-editor-compact-side-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 89,
+      "name": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 96,
+      "name": "Python regression: scripts/test-abyss-module-locks-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 97,
+      "name": "Python regression: scripts/test-abyss-multi-selection-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 104,
+      "name": "Python regression: scripts/test-abyss-panel-material-settings-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 128,
+      "name": "Python regression: scripts/test-abyss-width-affects-modules-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 141,
+      "name": "Python regression: scripts/test-bar-cava-profile-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 156,
+      "name": "Python regression: scripts/test-calendar-weather-composition-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 166,
+      "name": "Python regression: scripts/test-clipboard-watcher-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 181,
+      "name": "Python regression: scripts/test-dashboard-freeform-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 185,
+      "name": "Python regression: scripts/test-dashboard-music-browser-navigation-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 189,
+      "name": "Python regression: scripts/test-dashboard-notes-markdown-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 190,
+      "name": "Python regression: scripts/test-dashboard-notes-markdown-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 204,
+      "name": "Python regression: scripts/test-desktop-widget-editor-coordinates.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 207,
+      "name": "Python regression: scripts/test-dock-abyss-hover-orientation-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 215,
+      "name": "Python regression: scripts/test-hadalird-gateway-bootstrap.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 223,
+      "name": "Python regression: scripts/test-hadalird-system-provision.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 248,
+      "name": "Python regression: scripts/test-local-ai-gguf-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 249,
+      "name": "Python regression: scripts/test-local-model-folder.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 259,
+      "name": "Python regression: scripts/test-material-only-global-style-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 288,
+      "name": "Python regression: scripts/test-quick-notes-corner-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 290,
+      "name": "Python regression: scripts/test-quick-notes-markdown-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 293,
+      "name": "Python regression: scripts/test-recording-abyss-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 306,
+      "name": "Python regression: scripts/test-settings-concise-copy-surface.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 309,
+      "name": "Python regression: scripts/test-settings-information-architecture.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 317,
+      "name": "Python regression: scripts/test-shell-surface-contracts.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 338,
+      "name": "Python regression: scripts/test-wallpaper-background-apply-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 339,
+      "name": "Python regression: scripts/test-wallpaper-carousel-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 340,
+      "name": "Python regression: scripts/test-wallpaper-color-preview-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 342,
+      "name": "Python regression: scripts/test-wallpaper-liquid-theme-deferral.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 344,
+      "name": "Python regression: scripts/test-wallpaper-preview-palette-cache.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 354,
+      "name": "Python regression: scripts/test-weekly-planner-expanded-event-editor-contract.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 358,
+      "name": "Python regression: scripts/test-weekly-planner-runtime.py",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 369,
+      "name": "shell regression: scripts/test-abyss-corner-content.sh",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 377,
+      "name": "shell regression: scripts/test-abyss-network-popups.sh",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 401,
+      "name": "shell regression: scripts/test-brand-canonical-contracts.sh",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 459,
+      "name": "shell regression: scripts/test-panel-style-adapter.sh",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 496,
+      "name": "shell regression: scripts/test-window-preview-lifecycle.sh",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 497,
+      "name": "Make contract: prefix/path relocation",
+      "status": "FAIL",
+      "actual_exit": 2
+    }
+  ],
+  "owned_remaining_after_exit": [],
+  "raw_log_sha256": "881c05f306b7ebf18a29d92ed58af31ac94c6b19b18636c5fe289fe7f0daade1",
+  "stdout_sha256": "37bb7a5b40befab2520927414ea5f59b326168d6545f812b158df397dfc7407b",
+  "full_pass": false,
+  "baseline_attribution": "None; do not call failures pre-existing without matched baseline."
+}
