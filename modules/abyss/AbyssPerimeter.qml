@@ -1180,6 +1180,13 @@ Scope {
                             || ((hostedPopup?.hoverActivates ?? false)
                                 && (hostedPopup?._lingerVisible ?? false)))
                     animatePresentation: true
+                    // The notification/history surface already animates
+                    // StyledPopup.revealProgress on open, close and reversal.
+                    // Do not multiply it by a second host availability tween:
+                    // that creates an uneven double-eased slide. Other popup
+                    // kinds continue to use their established host motion.
+                    singleExternalReveal: presentationKind === "notificationCenter"
+                        || presentationKind === "notificationActivity"
                     externalProgress: hostedPopup?.revealProgress ?? 0
                     embeddedItem: hostedPopup?.contentItem ?? null
                     // Unified popups originate from local mini-launchers.

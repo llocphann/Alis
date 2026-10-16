@@ -29,6 +29,10 @@ Item {
     property Item embeddedItem: null
     property bool includeEdgeConnection: false
     property bool animatePresentation: true
+    // Notification Center already supplies a monotonic revealProgress from
+    // StyledPopup. Suppress this host's second availability tween for that
+    // explicitly opted-in surface, without changing loading/readiness gates.
+    property bool singleExternalReveal: false
     property bool stableContentSize: false
     // Some owners need content-owned hold-open state even while visually closed.
     // Keep those contents resident so open never depends on a Loader whose
@@ -518,6 +522,7 @@ Item {
     Behavior on availabilityProgress {
         id: availabilityMotion
         enabled: root.animatePresentation && AbyssStyle.motionEnabled
+            && !root.singleExternalReveal
         SequentialAnimation {
             NumberAnimation {
                 to: availabilityMotion.targetValue > 0

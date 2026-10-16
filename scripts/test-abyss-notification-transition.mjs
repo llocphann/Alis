@@ -186,4 +186,42 @@ same('actual adapter gates view until measured',
         && adapter.includes('readonly property real desiredHeight: root.settledPopupHeight')
         && adapter.includes('target: popupLoader.item')
         && adapter.includes('interval: 75'),true);
+
+// Notification Center IPC/Edgebar: StyledPopup owns the entire reveal curve.
+// The shared Abyss host must not double-ease the same opening/closing slide.
+const host=read('modules/abyss/AbyssBodyHost.qml');
+const hostedSlotStart=source.indexOf('id: styledPopupHost');
+const hostedSlotEnd=source.indexOf('onPopupEntryChanged:',hostedSlotStart);
+assert.ok(hostedSlotStart >= 0 && hostedSlotEnd > hostedSlotStart,
+    'hosted popup slot must remain present');
+const hostedSlot=source.slice(hostedSlotStart,hostedSlotEnd);
+same('Center-only external motion flag enabled',
+    hostedSlot.includes('singleExternalReveal: presentationKind === "notificationCenter"')
+    && hostedSlot.includes('|| presentationKind === "notificationActivity"'),true);
+same('mature popup still owns reveal',
+    hostedSlot.includes('externalProgress: hostedPopup?.revealProgress ?? 0'),true);
+same('reveal suppression only disables host availability Behavior',
+    host.includes('enabled: root.animatePresentation && AbyssStyle.motionEnabled\n            && !root.singleExternalReveal'),true);
+same('single external reveal defaults OFF for unrelated popup and toast hosts',
+    host.includes('property bool singleExternalReveal: false')
+    && !banner.includes('singleExternalReveal:'),true);
+same('existing availability/readiness guard stays active',
+    host.includes('property real availabilityProgress: presented && ready ? 1 : 0'),true);
+same('pyramid close and reversal still track normalized external progress',
+    host.includes('root.externalProgress') && host.includes('root.pyramidClosing')
+    && host.includes('root.pyramidReopening'),true);
+const progressMatch=host.match(/property real progress: ([^\n]+\n\s*\?[^\n]+\n\s*:[^\n]+)/);
+assert.ok(progressMatch,'missing actual QML combined progress');
+const progressFn=new Function('externalProgress','availabilityProgress',
+    'return ('+progressMatch[1].trim()+');');
+const states=[0,.12,.25,.5,.75,.99,1,.75,.5,.25,.01,0];
+for(const p of states) {
+    same('single Center reveal follows one driver at '+p,
+         progressFn(p,1),p);
+}
+same('content-not-ready still masks externally driven reveal',
+    progressFn(.75,0),0);
+same('nonexternal toast keeps its own host animation',
+    progressFn(-1,.37),.37);
+
 console.log('PASS: '+tests+' source-executed Abyss Notification Center transition assertions');
