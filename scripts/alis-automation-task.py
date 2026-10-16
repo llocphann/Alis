@@ -256,6 +256,8 @@ def main():
                 "native_unsettled": ui_check.get("native_unsettled_count", 0),
                 "historical_sessions": ui_check.get("historical_native_session_count", 0),
             },
+            "ui_queue_unsettled_profiles": ui_check.get(
+                "foreign_unsettled_summary", []),
             "ui_queue_legacy_native_pending_retained": bool(
                 ui_check.get("legacy_native_pending_retained")),
             **transport_gate.readiness()}
