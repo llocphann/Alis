@@ -224,6 +224,38 @@ sampled: the already-spent immutable smoke ID MUST NOT be reused or reset.
 Any future live test message requires separate owner consent. The existing
 six-item queue and service configuration are unaffected by this work.
 
+### Automatic safe handling of saved task conflicts
+
+When the owner queues several task codes, Alis **never overwrites** an
+existing Cloudbot/Localbot receipt, checkpoint or sent-message journal merely
+to mark a task `prepared`. Previously this rejected the entire request
+with `Task already active elsewhere` even when only one entry was saved as
+`awaiting_cloud_ack`.
+
+The queue now classifies each requested Issue under the queue lock:
+
+- **queued**: saved task/source pin is undispatched and eligible for a
+  new job; eligible tasks remain in the owner's relative order.
+- **deferred**: saved state is `awaiting_cloud_ack`, awaiting owner review,
+  already dispatched, unresolved or otherwise requires evidence reconciliation.
+  The persisted `reason` is a bounded code (e.g. `cloud_ack_pending`)
+  and the original task/receipt is untouched.
+
+The compact Job Status displays `N ready · M parked`; queue chips keep
+both sets visible. Only `queued` items may be claimed. Queue preparation
+still does **not** authorize Start; all original service, owner approval,
+Project identity and UI-only receipt guards remain required. When the last
+eligible Issue completes and deferred work remains, the manifest enters
+`review_required` and automatically revokes further Start authorization
+instead of falsely reporting Finished. Explicit Clear may archive the
+queue manifest **without deleting the deferred task files or receipts**.
+
+This is automatic *conflict handling*, not invented delivery verification:
+an `awaiting_cloud_ack` task cannot be marked Done or re-sent until
+independent evidence of its prior Cloudbot delivery exists. Do not delete
+the original receipt or reset a consumed one-shot journal to bypass this
+boundary.
+
 ### Owner-approved Reset Chat for a stuck active Automation task
 
 In **Automation → GitHub tasks**, press **Reset chat** then **Confirm reset**
