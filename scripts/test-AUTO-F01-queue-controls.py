@@ -365,6 +365,50 @@ class QueueControls(unittest.TestCase):
         self.assertEqual(location.read_bytes(), before)
         self.assertTrue(list((tf.state_dir() / "queue-history").glob("cleared-*.json")))
 
+    def test_review_queue_with_awaiting_owner_history_can_be_archived(self):
+        # A deferred old task plus a newly completed Cloudbot task legitimately
+        # yields review_required, not a runnable queue. Owner Clear archives
+        # only the queue manifest; the original receipts and task files remain.
+        candidates = queue.discover_backend_candidates(self.github)
+        mapping = {item["code"]: item for item in candidates}
+        queue.prepare("AUTO-R01", resolver=lambda _code: mapping["AUTO-R01"])
+        queue.clear(approved=True)
+        old = tf.load_task("AUTO-R01")
+        old["status"] = "awaiting_cloud_ack"
+        old["latest_receipt"] = {"id": "JOB-OLD-NO-REPLAY"}
+        old["scheduler_dispatched"] = True
+        tf._save_task(old)
+        result = queue.prepare("AUTO-R01;AUTO-I02",
+                               resolver=lambda code: mapping[code])
+        self.assertEqual([x["state"] for x in result["items"]],
+                         ["deferred", "queued"])
+        queue.claim(verified_start=lambda *_args: True)
+        current = tf.load_task("AUTO-I02")
+        current["status"] = "awaiting_owner"
+        current["delivery_acknowledged_unix"] = 123
+        current["latest_receipt"] = {"id": "JOB-CURRENT"}
+        tf._save_task(current)
+        reviewed = queue.advance(verify_completion=lambda _record: True)
+        self.assertEqual(reviewed["state"], "review_required")
+        self.assertEqual([x["state"] for x in reviewed["items"]],
+                         ["deferred", "awaiting_owner"])
+        task_paths = [
+            tf._task_path(code, "llocphann/Alis")
+            for code in ("AUTO-R01", "AUTO-I02")
+        ]
+        task_bytes = [path.read_bytes() for path in task_paths]
+        before_queue = (tf.state_dir() / "queue.json").read_bytes()
+        with self.assertRaises(tf.TaskError):
+            queue.clear(expected_queued="")
+        cleared = queue.clear(approved=True, expected_queued="")
+        self.assertTrue(cleared["cleared"])
+        self.assertEqual(cleared["state"], "empty")
+        self.assertEqual([path.read_bytes() for path in task_paths], task_bytes)
+        self.assertFalse((tf.state_dir() / "queue.json").exists())
+        history = list((tf.state_dir() / "queue-history").glob("cleared-*.json"))
+        self.assertTrue(any(path.read_bytes() == before_queue
+                            for path in history))
+
     def test_clear_requires_confirmation_preserves_original_task_records(self):
         queue.prepare_auto(api=self.github)
         first = tf._task_path("AUTO-R01", "llocphann/Alis")
