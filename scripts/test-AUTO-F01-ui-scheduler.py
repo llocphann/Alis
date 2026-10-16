@@ -10,7 +10,7 @@ from unittest import TestCase, main
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from automation.chat_bridge import ui_scheduler
+from automation.chat_bridge import ui_scheduler, runtime
 from automation.manager import daemon, model, store
 from automation import queue, managed_tasks, taskflow as tf
 import json
@@ -52,6 +52,71 @@ class UiSchedulerTests(TestCase):
 
     def item(self):
         return store.read_snapshot()[1]["profiles"][ID]
+
+    def uncertain_original(self):
+        def sent(_command, prompt, **_kwargs):
+            from automation.chat_bridge.send_journal import prepare_send
+            prepare_send(store.state_dir(), "rotate-send", prompt)
+            raise RuntimeError("crashed after single Send")
+        self.assertEqual(ui_scheduler.ui_tick(ID, desktop=sent), "ui_reconciliation_required")
+
+    def observed_original(self, _command, prompt, **_kwargs):
+        import hashlib
+        self.assertEqual(_command, "observe-submitted")
+        return {"completed": True, "attestation": "local-ui-user-turn-v1",
+                "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
+                "ui_target_key": KEY, "ui_chat_label": "Observed test chat",
+                "response": {"text": "Source milestone only.\nALIS_LOOP:CONTINUE",
+                             "extractionSignal": "submitted-user-turn-assistant"}}
+
+    def test_reconcile_original_never_resends_or_resumes_and_counts_once(self):
+        self.uncertain_original()
+        self.assertEqual(ui_scheduler.reconcile_pending(ID, observer=self.observed_original),
+                         "ui_reconciled_CONTINUE")
+        item = self.item()
+        self.assertEqual(item["desired"], "paused")
+        self.assertIsNone(item["pending"])
+        self.assertEqual(item["prompts_sent"], 1)
+        self.assertEqual(item["session"]["ui_target_key"], KEY)
+        self.assertFalse((store.state_dir() / "ui-send-journal/pending.json").exists())
+        with self.assertRaises(RuntimeError):
+            ui_scheduler.reconcile_pending(ID, observer=self.observed_original)
+        self.assertEqual(self.item()["prompts_sent"], 1)
+
+    def test_reconcile_changed_prompt_preserves_original_journal(self):
+        self.uncertain_original()
+        store.change(lambda c, s: c["profiles"][0].update(prompt="changed owner prompt"))
+        with self.assertRaises(RuntimeError), patch.object(runtime, "desktop") as observed:
+            ui_scheduler.reconcile_pending(ID)
+        observed.assert_not_called()
+        self.assertTrue((store.state_dir() / "ui-send-journal/pending.json").exists())
+
+    def test_reconcile_wrong_receipt_preserves_original_pending(self):
+        self.uncertain_original()
+        original = self.item()["pending"]
+        for field, value in [("attestation", "native"), ("prompt_sha256", "0" * 64),
+                             ("ui_target_key", "title")]:
+            def wrong(*args, **kwargs):
+                return {**self.observed_original(*args, **kwargs), field: value}
+            with self.assertRaises(RuntimeError):
+                ui_scheduler.reconcile_pending(ID, observer=wrong)
+            self.assertEqual(self.item()["pending"], original)
+            self.assertEqual(self.item()["prompts_sent"], 0)
+
+    def test_reconcile_in_progress_retains_intent(self):
+        self.uncertain_original()
+        self.assertEqual(ui_scheduler.reconcile_pending(ID, observer=lambda *_a, **_kw:
+                         {"completed": False}), "original_turn_in_progress")
+        self.assertIsNotNone(self.item()["pending"])
+        self.assertTrue((store.state_dir() / "ui-send-journal/pending.json").exists())
+
+    def test_reconcile_excludes_another_live_manager(self):
+        import fcntl
+        self.uncertain_original()
+        with runtime.lock_path().open("a+") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            self.assertEqual(ui_scheduler.reconcile_pending(ID), "manager_busy")
+        self.assertIsNotNone(self.item()["pending"])
 
     def test_initial_continuation_uses_same_chat_pin_and_done_stops(self):
         sent = []

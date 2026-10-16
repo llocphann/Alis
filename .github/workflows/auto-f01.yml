@@ -57,6 +57,7 @@ jobs:
           node scripts/test-AUTO-F01-ui-target-preflight.mjs
           node scripts/test-AUTO-F01-github-picker.mjs
           node scripts/test-AUTO-F01-ui-surface.mjs
+          node scripts/test-AUTO-F01-ui-turn-anchor.mjs
           node --check automation/chat_bridge/alis_ui_smoke.mjs
           node --check automation/chat_bridge/alis_ui_smoke_cli.mjs
           node scripts/test-AUTO-F01-one-shot-smoke.mjs

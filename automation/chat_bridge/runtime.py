@@ -120,7 +120,8 @@ class UiNotSent(RuntimeError):
 
 def desktop(command: str, prompt: str | None = None,
             target_key: str | None = None,
-            new_chat_unowned: bool = False) -> dict[str, Any]:
+            new_chat_unowned: bool = False,
+            chat_label: str | None = None) -> dict[str, Any]:
     # A one-shot intent is fsynced before ANY Desktop UI mutation.
     # A crash, ambiguous click, timeout or incomplete response keeps the
     # pending tombstone: never silently send a duplicate after a restart.
@@ -141,9 +142,15 @@ def desktop(command: str, prompt: str | None = None,
         except (OSError, ValueError):
             raise UiNotSent("ALIS_UI_WINDOW_TARGET_INVALID", hashlib.sha256((prompt or "").encode()).hexdigest())
         extra_env["ALIS_CHATGPT_UI_TARGET_ID"] = target
+    if chat_label is not None:
+        if ("ALIS_CHATGPT_UI_TARGET_ID" not in extra_env
+                or not isinstance(chat_label, str) or not chat_label.strip()
+                or len(chat_label) > 250 or any(ord(c) < 32 for c in chat_label)):
+            raise ValueError("ALIS_UI_RESUME_BINDING_REQUIRED")
+        extra_env["ALIS_UI_RESUME_CHAT_LABEL"] = chat_label
     intent = (prepare_send(state_root(), command, prompt)
               if command in {"send", "rotate-send"} else None)
-    if target_key is not None and (command != "send" or len(target_key) != 64
+    if target_key is not None and (command not in {"send", "observe-submitted"} or len(target_key) != 64
             or any(c not in "0123456789abcdef" for c in target_key)):
         raise ValueError("ALIS_UI_TARGET_ARGUMENT_INVALID")
     argv = ["node", str(DESKTOP_CLI), command]

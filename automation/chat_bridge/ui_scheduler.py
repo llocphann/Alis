@@ -8,6 +8,7 @@ after crash/uncertain completion the profile is quarantined, NEVER resent.
 """
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
@@ -23,7 +24,7 @@ UI_TRANSPORT = "alis-ui-once"
 PRIVATE_RESPONSE_LIMIT = 120000
 
 
-def _owner(config: dict, state: dict, profile_id: str) -> tuple[dict, dict]:
+def _owner(config: dict, state: dict, profile_id: str, *, allow_journal=False) -> tuple[dict, dict]:
     profile = next((p for p in config["profiles"] if p["id"] == profile_id), None)
     item = state["profiles"].get(profile_id)
     if profile is None or item is None:
@@ -48,7 +49,7 @@ def _owner(config: dict, state: dict, profile_id: str) -> tuple[dict, dict]:
         if (other.get("desired") == "run" or other.get("pending")
                 or other.get("job_id") or other.get("run_active")):
             raise RuntimeError("ALIS_UI_ANOTHER_PROFILE_UNSETTLED")
-    if (store.state_dir() / "ui-send-journal" / "pending.json").exists():
+    if not allow_journal and (store.state_dir() / "ui-send-journal" / "pending.json").exists():
         raise RuntimeError("ALIS_UI_SEND_UNCERTAIN_RECONCILIATION_REQUIRED")
     return profile, item
 
@@ -64,6 +65,72 @@ def _mark_unresolved(profile_id: str, detail: str) -> None:
         store.event(state, profile_id, "ui_reconciliation_required",
                     "Preserved original pending intent; no resend")
     store.change_state(pause)
+
+
+def _complete_observed(profile_id, profile, pending, directive, observed_target,
+                       checkpoint, now, new_chat, chat_label=None):
+    def complete(_config, state):
+        current = state["profiles"].get(profile_id)
+        if not current or current.get("pending") != pending:
+            return False
+        current["pending"] = None
+        current["last_success"] = directive.kind.value
+        current["last_ui_response_attempt"] = pending["attempt_id"]
+        current["loop_state"] = directive.kind.value.lower()
+        current["iterations"] += 1
+        current["chat_iterations"] += 1
+        current["prompts_sent"] += 1
+        current["last_activity_at_unix"] = now
+        current["last_error"] = ""
+        if current.get("session") is None or new_chat:
+            current["session"] = {
+                "transport": UI_TRANSPORT,
+                "project_name": profile["project_name"],
+                "local_run_id": str(uuid.uuid4()),
+                "ui_target_key": observed_target,
+            }
+        if chat_label is not None:
+            current["session"]["ui_chat_label"] = chat_label
+        if checkpoint is not None:
+            current["checkpoint"] = checkpoint
+        store.event(state, profile_id, "ui_response", directive.kind.value)
+        if directive.kind is DirectiveKind.WAIT_RESULT:
+            current.update(job_id=directive.argument,
+                           next_job_poll_at_unix=now, request="continuation",
+                           status="waiting_result")
+        elif directive.kind is DirectiveKind.CONNECTOR_BLOCKED:
+            current.update(desired="paused", status="connector_blocked")
+        elif directive.kind is DirectiveKind.DONE:
+            current.update(desired="stopped", status="completed", run_active=False)
+        elif directive.kind is DirectiveKind.ROTATE:
+            if checkpoint is None:
+                current.update(desired="paused",
+                               status="checkpoint_required", run_active=False)
+            else:
+                current.update(request="rotation", status="rotating")
+        else:
+            current.update(request="continuation", status="continuing")
+        if current["desired"] != "run":
+            current["run_active"] = False
+        return True
+    if not store.change_state(complete):
+        return "owner_changed_after_response"
+    return directive.kind.value
+
+
+def pending_prompt(profile, item, kind):
+    prompt = model.effective_prompt(profile, kind)
+    prompt += "\nManaged Alis profile ID: " + profile["id"] + "\n"
+    if item.get("checkpoint"):
+        prompt += "\nSaved checkpoint:\n" + json.dumps(
+            item["checkpoint"], ensure_ascii=False)
+    if item.get("last_job_id"):
+        prompt += ("\nCheck exact GitHub result in automation/results/"
+                   + item["last_job_id"] + ".json\n")
+    if item.get("job_summary"):
+        prompt += "\nWorker summary:\n" + json.dumps(
+            item["job_summary"], ensure_ascii=False)
+    return prompt
 
 
 def ui_tick(profile_id: str, *, now: int | None = None,
@@ -155,17 +222,7 @@ def ui_tick(profile_id: str, *, now: int | None = None,
         return "ALIS_UI_ROTATION_CHECKPOINT_REQUIRED"
     prompt_kind = ("rotation" if kind == "rotation" else
                    "initial" if new_chat else "continuation")
-    prompt = model.effective_prompt(profile, prompt_kind)
-    prompt += "\nManaged Alis profile ID: " + profile_id + "\n"
-    if item.get("checkpoint"):
-        prompt += "\nSaved checkpoint:\n" + json.dumps(
-            item["checkpoint"], ensure_ascii=False)
-    if item.get("last_job_id"):
-        prompt += ("\nCheck exact GitHub result in automation/results/"
-                   + item["last_job_id"] + ".json\n")
-    if item.get("job_summary"):
-        prompt += "\nWorker summary:\n" + json.dumps(
-            item["job_summary"], ensure_ascii=False)
+    prompt = pending_prompt(profile, item, prompt_kind)
     command = "rotate-send" if new_chat else "send"
     attempt = str(uuid.uuid4())
     pending = {
@@ -218,7 +275,11 @@ def ui_tick(profile_id: str, *, now: int | None = None,
         # UI journal fsync occurs in runtime.desktop BEFORE composer change.
         # Runtime must not retry an ambiguous/failed click.
         if pinned_target is not None:
-            payload = desktop(command, prompt, target_key=pinned_target)
+            label = (item.get("session") or {}).get("ui_chat_label")
+            kwargs = {"target_key": pinned_target}
+            if label is not None:
+                kwargs["chat_label"] = label
+            payload = desktop(command, prompt, **kwargs)
         elif new_chat and item.get("session") is None:
             # An initial task owns no earlier UI chat. Navigate to its Project
             # without touching a foreign composer or stopping its generation.
@@ -262,52 +323,78 @@ def ui_tick(profile_id: str, *, now: int | None = None,
         _mark_unresolved(profile_id, "UI send or observation is uncertain")
         return "ui_reconciliation_required"
 
-    def complete(_config, state):
-        current = state["profiles"].get(profile_id)
-        if not current or current.get("pending") != pending:
-            return False
-        current["pending"] = None
-        current["last_success"] = directive.kind.value
-        current["last_ui_response_attempt"] = attempt
-        current["loop_state"] = directive.kind.value.lower()
-        current["iterations"] += 1
-        current["chat_iterations"] += 1
-        current["prompts_sent"] += 1
-        current["last_activity_at_unix"] = now
-        current["last_error"] = ""
-        if current.get("session") is None or new_chat:
-            current["session"] = {
-                "transport": UI_TRANSPORT,
-                "project_name": profile["project_name"],
-                "local_run_id": str(uuid.uuid4()),
-                "ui_target_key": observed_target,
-            }
-        if checkpoint is not None:
-            current["checkpoint"] = checkpoint
-        store.event(state, profile_id, "ui_response", directive.kind.value)
-        if directive.kind is DirectiveKind.WAIT_RESULT:
-            current.update(job_id=directive.argument,
-                           next_job_poll_at_unix=now, request="continuation",
-                           status="waiting_result")
-        elif directive.kind is DirectiveKind.CONNECTOR_BLOCKED:
-            current.update(desired="paused", status="connector_blocked")
-        elif directive.kind is DirectiveKind.DONE:
-            current.update(desired="stopped", status="completed", run_active=False)
-        elif directive.kind is DirectiveKind.ROTATE:
-            if checkpoint is None:
-                current.update(desired="paused",
-                               status="checkpoint_required", run_active=False)
-            else:
-                current.update(request="rotation", status="rotating")
-        else:
-            current.update(request="continuation", status="continuing")
-        if current["desired"] != "run":
-            current["run_active"] = False
-        return True
-    if not store.change_state(complete):
-        return "owner_changed_after_response"
-    return directive.kind.value
+    return _complete_observed(profile_id, profile, pending, directive,
+                              observed_target, checkpoint, now, new_chat,
+                              payload.get("ui_chat_label"))
 
+
+
+def reconcile_pending(profile_id: str, *, chat_label: str | None = None,
+                      observer=None) -> str:
+    """Observe the exact original submitted turn. Never sends or resumes.
+
+    An explicit supervised recovery holds the existing manager lock. A crash
+    before journal retirement remains blocked, preserving the original intent.
+    """
+    with runtime.lock_path().open("a+") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return "manager_busy"
+        config, state, issues = store.read_snapshot()
+        if issues:
+            raise RuntimeError("ALIS_UI_INVALID_CONFIGURATION")
+        profile, item = _owner(config, state, profile_id, allow_journal=True)
+        pending = item.get("pending")
+        if (not isinstance(pending, dict) or pending.get("transport") != UI_TRANSPORT
+                or pending.get("kind") not in {"initial", "continuation", "rotation"}
+                or item.get("desired") == "run"):
+            raise RuntimeError("ALIS_UI_RECONCILE_PAUSED_ORIGINAL_REQUIRED")
+        prompt = pending_prompt(profile, item, pending["kind"])
+        digest = hashlib.sha256(prompt.encode()).hexdigest()
+        path = store.state_dir() / "ui-send-journal/pending.json"
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > 4096:
+            raise RuntimeError("ALIS_UI_ORIGINAL_JOURNAL_REQUIRED")
+        journal = json.loads(path.read_text())
+        command = "send" if pending["kind"] == "continuation" else "rotate-send"
+        if (pending.get("prompt_sha256") != digest or journal.get("prompt_sha256") != digest
+                or journal.get("schema") != "alis.chat-ui-send.v1"
+                or journal.get("phase") != "attempted" or journal.get("command") != command):
+            raise RuntimeError("ALIS_UI_ORIGINAL_PROMPT_CHANGED")
+        target = (item.get("session") or {}).get("ui_target_key") if command == "send" else None
+        observe = runtime.desktop if observer is None else observer
+        payload = observe("observe-submitted", prompt, target_key=target,
+                          chat_label=chat_label or (item.get("session") or {}).get("ui_chat_label"))
+        if payload.get("completed") is not True:
+            return "original_turn_in_progress"
+        observed_target = payload.get("ui_target_key")
+        if (payload.get("attestation") != "local-ui-user-turn-v1"
+                or payload.get("prompt_sha256") != digest
+                or not isinstance(observed_target, str) or len(observed_target) != 64
+                or any(c not in "0123456789abcdef" for c in observed_target)
+                or (target is not None and target != observed_target)
+                or payload.get("response", {}).get("extractionSignal") != "submitted-user-turn-assistant"):
+            raise RuntimeError("ALIS_UI_ORIGINAL_RESPONSE_MISMATCH")
+        text = runtime.extract_response_text(payload)
+        if len(text) > PRIVATE_RESPONSE_LIMIT:
+            raise RuntimeError("ALIS_UI_RESPONSE_EXCEEDS_BOUND")
+        directive = parse_loop_directive(text)
+        from automation.manager import daemon
+        checkpoint = daemon._checkpoint(text)
+        store._write(store.state_dir() / "ui-responses" / profile_id /
+                     (pending["attempt_id"] + ".json"), {
+            "transport": UI_TRANSPORT, "attempt_id": pending["attempt_id"],
+            "directive": directive.kind.value, "response": text,
+            "attestation": "local-ui-user-turn-v1", "at_unix": int(time.time())})
+        status = _complete_observed(profile_id, profile, pending, directive,
+                                    observed_target, checkpoint, int(time.time()),
+                                    command != "send", payload.get("ui_chat_label"))
+        if status == "owner_changed_after_response":
+            return status
+        # Commit the bound manager receipt first. No subsequent send can pass
+        # the retained journal if this final archival step is interrupted.
+        runtime.acknowledge_completed(path, journal["id"])
+        return "ui_reconciled_" + status
 
 
 def queue_tick(*, now: int | None = None, desktop=None) -> str:

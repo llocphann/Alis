@@ -14,6 +14,9 @@ import {
   retryFailedStream,
   submitPrompt,
   uiTargetIdentity,
+  uiOnlyTurnIdentity,
+  observeSubmittedPrompt,
+  resumeUiChat,
   waitForCompletion
 } from "./desktop_driver.mjs";
 import {inspectLegacyUiReadOnly, assessLegacyUiReadiness} from "./legacy_ui_probe.mjs";
@@ -346,6 +349,19 @@ async function main() {
     return;
   }
 
+  if(command === "observe-submitted") {
+    const prompt=await readStdin();
+    if(!prompt.trim())throw Error('ALIS_UI_PENDING_PROMPT_REQUIRED');
+    const targetKey=process.argv[3]??null;
+    if(targetKey!==null&&!/^[0-9a-f]{64}$/.test(targetKey))throw Error('ALIS_UI_TARGET_ARGUMENT_INVALID');
+    if(process.env.ALIS_UI_RESUME_CHAT_LABEL)
+      await resumeUiChat(page,process.env.ALIS_UI_RESUME_CHAT_LABEL,
+        {targetKey,initialPrompt:targetKey===null?prompt:null});
+    if(targetKey===null)await uiOnlyTurnIdentity(page,{initialPrompt:prompt});
+    writeJson(await observeSubmittedPrompt(page,prompt,{targetKey}));
+    return;
+  }
+
   if (command === "send" || command === "rotate-send") {
     const prompt = await readStdin();
     if (!prompt.trim()) throw new Error("stdin prompt is empty");
@@ -365,8 +381,10 @@ async function main() {
     if (expectedTarget) {
       if (command !== "send" || !/^[0-9a-f]{64}$/.test(expectedTarget))
         throw new Error("ALIS_UI_TARGET_ARGUMENT_INVALID");
+      if(process.env.ALIS_UI_RESUME_CHAT_LABEL)
+        await resumeUiChat(page,process.env.ALIS_UI_RESUME_CHAT_LABEL,{targetKey:expectedTarget});
       const current = createHash("sha256")
-        .update(await uiTargetIdentity(page)).digest("hex");
+        .update(await uiOnlyTurnIdentity(page)).digest("hex");
       if (current !== expectedTarget)
         throw new Error("ALIS_UI_TARGET_CHANGED_NO_SEND");
     }
@@ -383,15 +401,17 @@ async function main() {
       600000,
       completionBaseline
     );
-    const response = await extractLoopResponse(page, {
+    await extractLoopResponse(page, {
       baselineResponseActionCount: completionBaseline.responseActionCount
     });
 
     // After an initial send, the UI may not yet have exposed a persistent
     // chat ID. That is an uncertain mapping: never advance to the next send.
-    const uiTarget = createHash("sha256")
-      .update(await uiTargetIdentity(page)).digest("hex");
-    writeJson({ generation, response, ui_target_key: uiTarget });
+    if(command==='rotate-send')await uiOnlyTurnIdentity(page,{initialPrompt:prompt});
+    const observed=await observeSubmittedPrompt(page,prompt,{
+      targetKey:command==='send'?(process.argv[3]??null):null});
+    if(!observed.completed)throw Error('ALIS_UI_ORIGINAL_ASSISTANT_FINAL_UNVERIFIED');
+    writeJson({generation,...observed});
     return;
   }
 

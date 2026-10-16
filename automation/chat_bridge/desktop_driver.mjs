@@ -1,6 +1,8 @@
 import { spawnSync } from "node:child_process";
 import {requireFreshAssistantTurn} from "./ui_response_gate.mjs";
 import {pinnedUiWindow} from "./ui_surface.mjs";
+import {createHash} from "node:crypto";
+import {uiAnchorSource,matchingSubmittedUnit} from "./ui_turn_anchor.mjs";
 
 const PLAYWRIGHT = process.env.ALIS_PLAYWRIGHT_MODULE ?? process.env.HADALIS_PLAYWRIGHT_MODULE ?? "file:///usr/lib/chatgpt/resources/cua_node/lib/node_modules/playwright-core/index.mjs";
 const { chromium } = await import(PLAYWRIGHT);
@@ -123,6 +125,79 @@ export async function uiTargetIdentity(page) {
   });
   if (!source) throw new Error("ALIS_UI_CHAT_IDENTITY_UNAVAILABLE");
   return source;
+}
+
+async function submittedUnits(page) {
+  return page.locator('[data-chatgpt-search-unit-key$=":user"]').evaluateAll(nodes=>
+    nodes.map(node=>({text:node.innerText,
+      turn_key:node.closest('[data-turn-key]')?.getAttribute('data-turn-key'),
+      message_id:node.getAttribute('data-chatgpt-search-message-ids'),
+      expand_control:[...node.querySelectorAll('button')].some(b=>
+        /^Show (more|less)$/.test(b.innerText.trim()))})));
+}
+
+export async function uiOnlyTurnIdentity(page,{initialPrompt=null}={}) {
+  await verifyProject(page);
+  return uiAnchorSource(PROJECT_NAME,await submittedUnits(page),initialPrompt);
+}
+
+export async function resumeUiChat(page,label,{targetKey=null,initialPrompt=null}={}) {
+  if(!process.env.ALIS_CHATGPT_UI_TARGET_ID||typeof label!=='string'||
+     !label.trim()||label.length>250||/[\x00-\x1f]/.test(label)||
+     (targetKey===null&&initialPrompt===null))throw Error('ALIS_UI_RESUME_BINDING_REQUIRED');
+  const matches=async()=>{
+    const source=await uiOnlyTurnIdentity(page,{initialPrompt});
+    return targetKey===null||createHash('sha256').update(source).digest('hex')===targetKey;
+  };
+  try {if(await matches())return;}catch{}
+  const row=page.getByRole('list',{name:`Chats in ${PROJECT_NAME}`,exact:true})
+    .getByRole('button',{name:label,exact:true});
+  await requireOne(row,'owned chat navigation candidate');
+  await row.click({timeout:3000});
+  await sleep(400);
+  // A title only locates a candidate. The original full prompt/turn anchor
+  // must still match before observing a response or touching its composer.
+  if(!await matches())throw Error('ALIS_UI_RESUME_TARGET_MISMATCH');
+}
+
+export async function observeSubmittedPrompt(page,prompt,{targetKey=null}={}) {
+  async function sample() {
+    await verifyProject(page);
+    const units=await submittedUnits(page);
+    const source=uiAnchorSource(PROJECT_NAME,units);
+    const key=createHash('sha256').update(source).digest('hex');
+    if(targetKey!==null&&targetKey!==key)throw Error('ALIS_UI_TARGET_CHANGED_NO_SEND');
+    const {index}=matchingSubmittedUnit(units,prompt);
+    if(index!==units.length-1)throw Error('ALIS_UI_LATER_USER_TURN_REQUIRES_REVIEW');
+    const unit=page.locator('[data-chatgpt-search-unit-key$=":user"]').nth(index);
+    const result=await unit.evaluate(node=>{
+      const turn=node.closest('[data-turn-key]');
+      const assistants=[...turn.querySelectorAll('[data-chatgpt-search-unit-key$=":assistant"]')];
+      const text=assistants.map(n=>n.innerText).join('\n');
+      const actions=[...turn.querySelectorAll('button')].filter(b=>
+        !b.closest('[data-chatgpt-search-unit-key$=":user"]')&&
+        /copy|regenerate/i.test(b.getAttribute('aria-label')??''));
+      return {text,assistant_count:assistants.length,action_count:actions.length};
+    });
+    const stops=await visibleCount(page.getByRole('button',{name:/stop/i}));
+    return {key,...result,stops};
+  }
+  const first=await sample();
+  if(first.stops||!first.assistant_count||!first.action_count)return {completed:false};
+  await sleep(450);
+  const second=await sample();
+  if(JSON.stringify(first)!==JSON.stringify(second)||second.stops)return {completed:false};
+  const markers=scanLoopMarkerTokens(second.text);
+  if(markers.length!==1||/error in message stream|there was an error generating a response/i.test(second.text))
+    throw Error('ALIS_UI_ORIGINAL_ASSISTANT_FINAL_UNVERIFIED');
+  if(second.text.length>120000)throw Error('ALIS_UI_RESPONSE_EXCEEDS_BOUND');
+  return {completed:true,attestation:'local-ui-user-turn-v1',
+    prompt_sha256:createHash('sha256').update(prompt).digest('hex'),
+    ui_target_key:second.key,
+    ui_chat_label:await page.getByRole('list',{name:`Chats in ${PROJECT_NAME}`,exact:true})
+      .locator('[role="button"][aria-current="page"]').getAttribute('aria-label'),
+    response:{text:second.text,markerCount:1,
+      extractionSignal:'submitted-user-turn-assistant'}};
 }
 
 async function verifyProject(page) {
