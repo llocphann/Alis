@@ -615,8 +615,9 @@ ContentPage {
                     Qt.callLater(root.refreshActivity)
                 }
                 if (root.queueOperation === "reset-chat") {
-                    root.statusText = Translation.tr(
-                        "New chat requested · awaiting manager acknowledgment")
+                    root.chatResetNotice = true
+                    resetNoticeTimer.restart()
+                    root.statusText = ""
                     Qt.callLater(root.refreshQueue)
                 } else if (root.queueOperation === "stop") {
                     root.statusText = result.stop_confirmed
