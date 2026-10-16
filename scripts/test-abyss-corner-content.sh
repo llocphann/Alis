@@ -107,6 +107,11 @@ ShellRoot {
                 Config.setNestedValue("performance.reduceAnimations",true)
                 Config.setNestedValue("quickNotes.enable",true)
                 Config.setNestedValue("notificationCenter.enable",true)
+                // The actual Abyss native corner is mode-owned. A fixture
+                // that expects hover popups must select Edgebar Hover,
+                // rather than relying on deprecated global enable flags.
+                Config.setNestedValue("abyss.modules.notesTimersMode","edgebar")
+                Config.setNestedValue("abyss.modules.notificationActivityMode","edgebar")
                 GlobalStates.deferredPanelsReady=true
                 corners.notesAnchor.containsMouse=true
             } else if(root.step===3) {
@@ -134,6 +139,23 @@ ShellRoot {
                 Config.setNestedValue("notificationCenter.popupHeight",260)
                 if(!root.check(corners.centerPopup.visibleAppLimit===2,"short custom Activity footprint limits rows to readable space")) return
                 corners.centerPopup.dismissPresentation()
+                // Verify the real (non-ii) Abyss corners switch off in
+                // Module Icon mode and revive for Edgebar, even when legacy
+                // Panels switches were disabled long before migration.
+                Config.setNestedValue("abyss.modules.notesTimersMode","module")
+                if(!root.check(!corners.notesAvailable,"Notes icon mode must revoke native Abyss corner input")) return
+                Config.setNestedValue("abyss.modules.notesTimersMode","edgebar")
+                Config.setNestedValue("quickNotes.enable",false)
+                Config.setNestedValue("quickNotes.monitorMode","primary")
+                if(!root.check(corners.notesAvailable,"Notes Edgebar must revive despite retired Panels enable and primary-only flags")) return
+                Config.setNestedValue("quickNotes.enable",true)
+                Config.setNestedValue("quickNotes.monitorMode","all")
+                Config.setNestedValue("abyss.modules.notificationActivityMode","module")
+                if(!root.check(!corners.centerAvailable,"Notifications icon mode must revoke native Abyss corner input")) return
+                Config.setNestedValue("abyss.modules.notificationActivityMode","edgebar")
+                Config.setNestedValue("notificationCenter.hoverEnable",false)
+                if(!root.check(corners.centerAvailable,"Notifications Edgebar must ignore obsolete hover preference")) return
+                Config.setNestedValue("notificationCenter.hoverEnable",true)
                 Config.setNestedValue("sidebar.cornerOpen.enable",true)
                 Config.setNestedValue("sidebar.cornerOpen.cornerRegionWidth",180)
                 Config.setNestedValue("sidebar.cornerOpen.cornerRegionHeight",12)
