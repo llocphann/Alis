@@ -46,9 +46,40 @@ def _private_record(path: Path) -> dict | None:
 def _retired_attempt_evidence(journal_path: Path, profile_id: str,
                               attempt: str, digest: str, command: str,
                               prepared_at: object) -> str:
-    """Legacy retired journal classification, never a completion signal."""
+    """Archived journal classification only; never a completion signal."""
     if type(prepared_at) is not int or prepared_at < 0:
         return "retired_evidence_unverified"
+    # Archive outcomes have different meaning. An interrupted delivery
+    # is explicitly NOT terminal; not-sent is not a license to send again.
+    tombstones = []
+    for directory, expected in (
+            ("interrupted", "interrupted_delivered"),
+            ("not-sent", "not_sent")):
+        location = journal_path.parent / directory / (attempt + ".json")
+        if location.is_symlink() or location.parent.is_symlink():
+            return "tombstone_review_required"
+        if location.exists():
+            record = _private_record(location)
+            if (record is None or record.get("schema") != "alis.chat-ui-send.v1"
+                    or record.get("outcome") != expected
+                    or record.get("prompt_sha256") != digest):
+                return "tombstone_review_required"
+            if expected == "interrupted_delivered":
+                if (record.get("delivery_acknowledged") is not True
+                        or record.get("completion_acknowledged") is not False
+                        or not isinstance(record.get("proof_sha256"), str)
+                        or not _SHA.fullmatch(record["proof_sha256"])):
+                    return "tombstone_review_required"
+            elif (record.get("delivery_acknowledged") is not False
+                  or record.get("evidence") not in {
+                      "desktop-pre-send-receipt", "owner-confirmed-not-sent"}):
+                return "tombstone_review_required"
+            tombstones.append(expected)
+    if len(tombstones) > 1:
+        return "tombstone_conflict"
+    if tombstones:
+        return ("original_interrupted_delivery" if tombstones[0] == "interrupted_delivered"
+                else "original_confirmed_not_sent")
     root = journal_path.parent.parent
     if (journal_path.parent.is_symlink()
             or root.is_symlink()):
