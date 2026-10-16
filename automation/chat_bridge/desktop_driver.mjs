@@ -161,11 +161,27 @@ export async function resumeUiChat(page,label,{
   await sleep(400);
   // A title only locates a candidate. The original full prompt/turn anchor
   // must still match before observing a response or touching its composer.
-  // The read-only observer may restore the first-turn anchor by scrolling
-  // an already-selected, uniquely named Project thread. No sender/composer
-  // may use this exception: a full anchor must be verified before receipts.
-  if(!readOnlyHistory && !await matches())
-    throw Error('ALIS_UI_RESUME_TARGET_MISMATCH');
+  // Restore hidden history before composer admission, then require the same
+  // full first-turn key. The sender still runs its independent strict key
+  // checks before editing and dispatch. DOM continuity alone cannot admit it.
+  if(!readOnlyHistory) {
+    let verified=false;
+    try {verified=await matches();}catch{}
+    if(!verified&&typeof targetKey==='string'&&/^[0-9a-f]{64}$/.test(targetKey)) {
+      const scope=await captureHistoryScope(page);
+      try {
+        for(let attempt=0;attempt<6;attempt++) {
+          if(!(await scope.scroll('oldest')).ok)
+            throw Error('ALIS_UI_HISTORY_SCROLL_UNVERIFIED');
+          await sleep(300);
+          await scope.check();
+          try {verified=await matches();}catch{}
+          if(verified)break;
+        }
+      } finally {await scope.dispose();}
+    }
+    if(!verified)throw Error('ALIS_UI_RESUME_TARGET_MISMATCH');
+  }
   if(readOnlyHistory)await verifyProject(page);
 }
 

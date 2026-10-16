@@ -13,7 +13,7 @@ try {
   fs.writeFileSync(mock,'export const chromium={connectOverCDP:()=>{throw Error("NO_CDP");}};');
   process.env.ALIS_PLAYWRIGHT_MODULE=pathToFileURL(mock).href;
   process.env.ALIS_CHATGPT_UI_TARGET_ID='a'.repeat(32);
-  const {observeSubmittedPrompt,resumeUiChat}=await import('../automation/chat_bridge/desktop_driver.mjs');
+  const {observeSubmittedPrompt,resumeUiChat,uiOnlyTurnIdentity}=await import('../automation/chat_bridge/desktop_driver.mjs');
   const first={turn_key:'11111111-1111-1111-1111-111111111111',
     message_id:'22222222-2222-2222-2222-222222222222',
     text:'Original submitted task',inline_code:[]};
@@ -126,12 +126,17 @@ try {
   assert.equal((await observeSubmittedPrompt(page,prompt,{targetKey:key})).completed,true);
   metadata=false;
   mode='newest';
+  await resumeUiChat(page,'Cloudbot original chat',{targetKey:key});
+  assert.equal(mode,'oldest');
+  assert.equal(createHash('sha256').update(await uiOnlyTurnIdentity(page)).digest('hex'),key);
+  mode='newest';alterFirst=true;
   await assert.rejects(()=>resumeUiChat(page,'Cloudbot original chat',{targetKey:key}),
                        /RESUME_TARGET_MISMATCH/);
+  alterFirst=false;
   mode='newest';
   await resumeUiChat(page,'Cloudbot original chat',
                      {targetKey:key,readOnlyHistory:true});
-  assert.equal(navigation,2);
+  assert.equal(navigation,3);
   mode='newest';changedChatOnOldest=true;
   await assert.rejects(()=>observeSubmittedPrompt(page,prompt,{targetKey:key}),
                        /HISTORY_CHAT_CHANGED/);
