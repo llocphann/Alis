@@ -310,4 +310,41 @@ for(const selectedKind of ["notesTimers","notificationActivity"]) {
         .some(p=>p.kind===selectedKind),
         "explicit Show icon on remounts saved module at prior position");
 }
+// The actual ScreenCorners popup host must be exclusive with the chosen
+// module owner, including when the Bar is closed, auto-hidden or has no
+// currently mounted icon. The mode (not barOpen) owns the entire decision.
+for (const kind of ["notesTimers","notificationActivity"]) {
+    for (const mode of ["module","edgebar"]) {
+        const options={
+            launcherMode:"edgebar",
+            notesTimersMode:kind==="notesTimers" ? mode : "edgebar",
+            notificationActivityMode:kind==="notificationActivity" ? mode : "edgebar"
+        };
+        const expected=mode==="module";
+        for (const family of ["abyss","ii","waffle"]) {
+            check(layout.moduleOwnsCornerHover(options,family,kind)
+                ===(family==="abyss" && expected),
+                `ScreenCorners exclusive owner ${kind} mode=${mode} family=${family}`);
+        }
+        // Neither an empty output profile nor a disabled placement may
+        // resurrect legacy ScreenCorners while Module Icon was selected.
+        const missingOutput={...options,configured:true,placements:[],
+            unifiedLaunchersConfigured:true};
+        check(layout.moduleOwnsCornerHover(missingOutput,"abyss",kind)===expected,
+            "missing/disabled module cannot change Settings hover ownership");
+    }
+}
+for (const settings of [
+    {notesTimersMode:"module",notificationActivityMode:"edgebar"},
+    {notesTimersMode:"edgebar",notificationActivityMode:"module"},
+    {notesTimersMode:"module",notificationActivityMode:"module"},
+    {notesTimersMode:"edgebar",notificationActivityMode:"edgebar"}
+]) {
+    const n=layout.moduleOwnsCornerHover(settings,"abyss","notesTimers");
+    const a=layout.moduleOwnsCornerHover(settings,"abyss","notificationActivity");
+    check(n===(settings.notesTimersMode==="module"),"Quick Notes corner owner independent");
+    check(a===(settings.notificationActivityMode==="module"),"Notification corner owner independent");
+}
+check(layout.moduleOwnsCornerHover({launcherMode:"module"},"ii","notesTimers")===false,
+    "classic ii stays fully backward-compatible");
 console.log("ABYSS_R15_LAYOUT_POLICY_PASS",checks);
