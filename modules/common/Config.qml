@@ -701,6 +701,13 @@ Singleton {
                     property string launcherMode: "module"
                     property string notesTimersMode: ""
                     property string notificationActivityMode: ""
+                    // Declarative JsonAdapter schema is required: assigning a
+                    // previously undeclared nested key silently fails to
+                    // persist. "inherit" preserves legacy per-output values.
+                    property JsonObject iconVisibility: JsonObject {
+                        property string notesTimers: "inherit"
+                        property string notificationActivity: "inherit"
+                    }
                     property bool unifiedLaunchersConfigured: false
                     property list<var> placements: []
                     property list<var> outputLayouts: []
