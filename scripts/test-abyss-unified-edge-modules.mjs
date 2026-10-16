@@ -267,4 +267,47 @@ for(const edge of edges) {
         }
     }
 }
+// ABYSS-R15 final UX: Show icon is NOT a graphics-only preference.
+// Settings sends module/edgebar into exactly the same per-feature mode key
+// as Module Behavior. Live module source counts must be 1 or 0 (never an
+// invisible hover region) while each legacy corner owns the inverse mode.
+const twoModules=layout.normalize([
+    {id:"n",kind:"notesTimers",edge:"left",position:.18,showIcon:false},
+    {id:"a",kind:"notificationActivity",edge:"right",position:.87,showIcon:false},
+    {id:"clock",kind:"clock",edge:"top",position:.5}
+],"top");
+for(const notesChecked of [false,true])for(const notificationsChecked of [false,true]) {
+    const profile={
+        notesTimersMode:notesChecked?"module":"edgebar",
+        notificationActivityMode:notificationsChecked?"module":"edgebar",
+        iconVisibility:{notesTimers:"hide",notificationActivity:"hide"}
+    };
+    const active=layout.livePlacements(twoModules,profile,false);
+    check(active.some(p=>p.kind==="notesTimers")===notesChecked,
+        "Quick Notes Show icon drives actual active module lifecycle");
+    check(active.some(p=>p.kind==="notificationActivity")===notificationsChecked,
+        "Notifications Show icon drives actual active module lifecycle");
+    check(layout.unifiedLauncherMode(profile,"notesTimers")===(notesChecked?"module":"edgebar"),
+        "Notes Module Behavior reflects same toggle");
+    check(layout.unifiedLauncherMode(profile,"notificationActivity")===(notificationsChecked?"module":"edgebar"),
+        "Notifications Module Behavior reflects same toggle");
+    check(active.some(p=>p.kind==="clock"),
+        "switching individual hover owner never affects unrelated modules");
+    check(layout.livePlacements(twoModules,profile,true).length===3,
+        "switching to Edgebar does not delete stored output placements");
+}
+for(const selectedKind of ["notesTimers","notificationActivity"]) {
+    const hiddenLegacy={launcherMode:"module",iconVisibility:{[selectedKind]:"hide"}};
+    check(layout.unifiedLauncherMode(hiddenLegacy,selectedKind)==="edgebar",
+        "pre-existing Settings hide preference migrates to true Edgebar mode");
+    check(layout.livePlacements(twoModules,hiddenLegacy,false)
+        .every(p=>p.kind!==selectedKind),
+        "migrated legacy hide preference unmounts invisible module");
+    const selected={...hiddenLegacy,[selectedKind+"Mode"]:"module"};
+    check(layout.unifiedLauncherMode(selected,selectedKind)==="module",
+        "explicit Show icon on overrides obsolete hide preference");
+    check(layout.livePlacements(twoModules,selected,false)
+        .some(p=>p.kind===selectedKind),
+        "explicit Show icon on remounts saved module at prior position");
+}
 console.log("ABYSS_R15_LAYOUT_POLICY_PASS",checks);
