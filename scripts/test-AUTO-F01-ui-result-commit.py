@@ -163,7 +163,8 @@ class ResultCommitTests(TestCase):
         for invalid in (
             {"id": "66666666-7777-8888-9999-aaaaaaaaaaaa",
              "command": proper["command"], "prompt_sha256": proper["prompt_sha256"]},
-            {**proper, "command": "rotate-send"},
+            {**proper, "command": ("send" if proper["command"] == "rotate-send"
+                                    else "rotate-send")},
             {**proper, "prompt_sha256": "f" * 64},
             {**proper, "untrusted_field": True},
             None,
