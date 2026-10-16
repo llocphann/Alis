@@ -248,6 +248,48 @@ class Preflight(unittest.TestCase):
             self.assertEqual(again["profile_id"], staged["profile_id"])
             self.assertEqual(path.read_bytes(), original)
 
+    def test_ui_queue_active_daemon_allows_idle_staging_but_not_start(self):
+        original_queue = self._write_queue_fixture()
+        config_path = store.config_path()
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps(self.config))
+        store.state_path().write_text(json.dumps(self.state))
+        saved_queue = original_queue.read_bytes()
+        task = {"status": "prepared", "task": {"base_sha": "a" * 40},
+                "unresolved": False, "scheduler_dispatched": False,
+                "handoff": None, "latest_receipt": None}
+        first = "llocphann/Alis:AI-I01"
+        original_snapshot = queue.view()["snapshot_id"]
+        with patch.object(ui_preflight, "_unit_state",
+                          return_value=("active", "ui_queue_mode")), \\
+             patch.object(managed_tasks.tf, "load_task", return_value=task):
+            with self.assertRaisesRegex(tf.TaskError, "changed"):
+                managed_tasks.stage_ui_queue(
+                    approved=True, expected_first=first,
+                    expected_snapshot_id="f" * 64)
+            self.assertEqual(len(store.read_snapshot()[0]["profiles"]), 1)
+            staged = managed_tasks.stage_ui_queue(
+                approved=True, expected_first=first,
+                expected_snapshot_id=original_snapshot)
+            self.assertEqual(staged["state"], "profile_staged")
+            self.assertFalse(staged["start_approved"])
+            self.assertFalse(staged["submission_authorized"])
+            self.assertTrue(staged["queue_unchanged"])
+            # A running UI Queue service is not permission to schedule.
+            after = ui_preflight.check_prepared_queue()
+            self.assertTrue(after["taskflow_profile_present"])
+            self.assertFalse(after["submission_authorized"])
+            self.assertEqual(set(after["preflight_blockers"]), {
+                "SCHEDULER_CUTOVER_NOT_READY",
+                "UI_QUEUE_OWNER_ACCEPTANCE_REQUIRED",
+            })
+        self.assertEqual(original_queue.read_bytes(), saved_queue)
+        config, runtime, _ = store.read_snapshot()
+        self.assertEqual(runtime["profiles"][staged["profile_id"]]["desired"],
+                         "stopped")
+        self.assertIsNone(runtime["profiles"][staged["profile_id"]]["pending"])
+        self.assertFalse(queue._load()["approved_start"])
+
     def test_ui_queue_staging_preserves_old_pending_and_active_native_service(self):
         path = self._write_queue_fixture()
         config_path = store.config_path()
