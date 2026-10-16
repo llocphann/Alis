@@ -130,9 +130,66 @@ class RecoveryPreview(unittest.TestCase):
             self.journal[field] = original
         self.write_journal()
         self.path.unlink()
-        self.assertEqual(self.inspect()["original_journal"], "missing")
+        self.assertEqual(self.inspect()["original_journal"], "retired_evidence_unverified")
         self.path.symlink_to(Path(self.home.name) / "private.json")
         self.assertEqual(self.inspect()["original_journal"], "unsafe_path")
+
+    def test_uniquely_archived_legacy_send_is_read_only_candidate(self):
+        pid = next(iter(self.state["profiles"]))
+        self.state["profiles"][pid]["pending"]["prepared_at_unix"] = 12
+        self.path.unlink()
+        archive = self.path.parent / "observed"
+        archive.mkdir()
+        old = archive / (JID + ".json")
+        old.write_text(json.dumps({**self.journal, "at_unix": 13}))
+        private_response = self.path.parent.parent / "ui-responses" / pid
+        private_response.mkdir(parents=True)
+        response_path = private_response / (ATTEMPT + ".json")
+        response_path.write_text(json.dumps({
+            "transport": "alis-ui-once", "attempt_id": ATTEMPT,
+            "response": "Complete original assistant text", "at_unix": 14}))
+        original_record = old.read_bytes()
+        original_response = response_path.read_bytes()
+        report = self.inspect()
+        self.assertEqual(report["original_journal"], "unique_retired_attempt")
+        self.assertEqual(report["phase"], "retired_original_observation_candidate")
+        self.assertTrue(report["read_only_observation_candidate"])
+        self.assertEqual(report["reason"],
+                         "LIVE_UI_AND_RETIRED_RESPONSE_COMPARISON_REQUIRED")
+        self.assertFalse(report["send_or_queue_start_authorized"])
+        self.assertEqual(old.read_bytes(), original_record)
+        self.assertEqual(response_path.read_bytes(), original_response)
+        self.assertFalse(self.path.exists())
+        self.assertNotIn("Complete original assistant text", json.dumps(report))
+
+        second_id = "66666666-7777-8888-9999-aaaaaaaaaaaa"
+        (archive / (second_id + ".json")).write_text(json.dumps({
+            **self.journal, "id": second_id, "at_unix": 13}))
+        self.assertEqual(self.inspect()["original_journal"], "archive_ambiguous")
+        self.assertFalse(self.inspect()["read_only_observation_candidate"])
+        (archive / (second_id + ".json")).unlink()
+        response_path.write_text(json.dumps({
+            "transport": "alis-ui-once", "attempt_id": ATTEMPT,
+            "response": "Complete original assistant text", "at_unix": 11}))
+        self.assertEqual(self.inspect()["original_journal"],
+                         "retired_evidence_unverified")
+        response_path.write_text(json.dumps({
+            "transport": "alis-ui-once", "attempt_id": ATTEMPT,
+            "response": "Complete original assistant text", "at_unix": 14}))
+        old.rename(archive / "different-id.json")
+        self.assertEqual(self.inspect()["original_journal"], "archive_review_required")
+
+    def test_missing_retired_evidence_and_symlink_fail_closed(self):
+        self.state["profiles"][next(iter(self.state["profiles"]))]["pending"][
+            "prepared_at_unix"] = 12
+        self.path.unlink()
+        self.assertEqual(self.inspect()["original_journal"],
+                         "retired_evidence_unverified")
+        folder = self.path.parent / "observed"
+        folder.mkdir()
+        (folder / (JID + ".json")).symlink_to(self.path.parent / "outside.json")
+        self.assertEqual(self.inspect()["original_journal"], "archive_review_required")
+        self.assertFalse(self.inspect()["read_only_observation_candidate"])
 
     def test_fresh_queue_is_not_recovery_candidate(self):
         self.assertFalse(ui_recovery_preview.preview(
