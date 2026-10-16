@@ -56,8 +56,8 @@ const bottomHit = mod('bottom',{x:580,y:885,width:100,height:45});
 const bottomLeft = mod('bottom',{x:20,y:885,width:120,height:45});
 const bottomRight = mod('bottom',{x:1190,y:885,width:120,height:45});
 const topHit = mod('top',{x:580,y:40,width:100,height:45});
-const rightHit = mod('right',{x:1280,y:450,width:40,height:100});
-const leftHit = mod('left',{x:75,y:450,width:40,height:100});
+const rightHit = mod('right',{x:1255,y:450,width:110,height:100});
+const leftHit = mod('left',{x:30,y:450,width:110,height:100});
 
 assert.equal(select('bottom',[]),'bottom');
 assert.equal(select('bottom',[bottomLeft,bottomRight]),'bottom',
