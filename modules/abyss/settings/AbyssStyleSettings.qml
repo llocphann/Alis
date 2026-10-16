@@ -334,6 +334,23 @@ ColumnLayout {
         title:"Modules";icon:"widgets";settingsTaskSection:"modules"
         visible:root.activeSection==="modules"
         SettingsGroup {
+            SettingsNote {
+                text:"Quick Notes & Notifications · Access mode"
+            }
+            ConfigSelectionArray {
+                objectName:"abyssUnifiedLauncherSettingsMode"
+                currentValue:Config.options?.abyss?.modules?.launcherMode === "edgebar"
+                    ? "edgebar" : "module"
+                options:[
+                    {displayName:"Module",value:"module"},
+                    {displayName:"Edgebar Hover",value:"edgebar"}
+                ]
+                onSelected:value=>Config.setNestedValue("abyss.modules.launcherMode",value)
+            }
+            SettingsNote {
+                text:"Module: use movable Quick Notes / Timers and Notifications / Activities Screen Edge launchers. Edgebar Hover: hide both module launchers and restore their corner hover areas. Switching modes keeps your positions and icon preferences."
+            }
+            SettingsDivider {}
             GridLayout {
                 id: moduleToggleGrid
                 Layout.fillWidth: true
