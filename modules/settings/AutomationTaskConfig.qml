@@ -37,6 +37,8 @@ ContentPage {
         if (queueProcess.running && root.queueOperation === "status")
             return Translation.tr("Checking")
         if (!queue) return Translation.tr("Idle")
+        if (root.chatResetNotice)
+            return Translation.tr("Reset requested · awaiting manager")
         if (!root.queueStatusConfirmed)
             return Translation.tr("Unverified")
         const tasks = queue.items ?? []
