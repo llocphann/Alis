@@ -24,6 +24,12 @@ AbyssBodyHost {
     readonly property bool recoverable: root.available && root.recording && !GlobalStates.screenLocked
         && (root.recorder?.autoHide ?? false) && !(root.recorder?.revealed ?? true)
     identity: "recording"
+    // The recorder pill is already on-screen before a "Starting recording"
+    // notification is published. Give its fixed-size controls first choice
+    // of the shared Edge slot, so the notification moves into the free tier
+    // instead of moving the pill during both popup entry and exit.
+    // Dialogs retain their higher (2) priority; general notifications keep 0.
+    placementPriority: 1
     edge: "top"
     padding: 10
     placementCanResize: false
