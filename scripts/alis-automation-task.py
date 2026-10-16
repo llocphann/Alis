@@ -156,14 +156,40 @@ def main():
             from automation.chat_bridge.ui_preflight import check_prepared_queue
             states = manager_control.service_states()
             ui_check = check_prepared_queue()
-            ui_start_ready = (
-                states["bridge"]["state"] == "active"
+            blockers = set(ui_check.get("preflight_blockers", []))
+            service = (ui_check.get("service_state"),
+                       ui_check.get("installed_service_mode"))
+            ready_conditions = (
+                ui_check.get("queue_state") == "prepared"
+                and isinstance(ui_check.get("first_task_code"), str)
+                and bool(ui_check.get("first_task_code"))
                 and states["worker"]["state"] == "active"
-                and ui_check.get("queue_state") == "prepared"
+            )
+            ui_stage_ready = (
+                ready_conditions
+                and ui_check.get("taskflow_profile_present") is False
+                and ((
+                    service == ("active", "ui_queue_mode")
+                    and blockers == {
+                        "TASKFLOW_PROFILE_NOT_MATERIALIZED",
+                        "SCHEDULER_CUTOVER_NOT_READY",
+                        "UI_QUEUE_OWNER_ACCEPTANCE_REQUIRED",
+                    }
+                ) or (
+                    service[0] == "inactive"
+                    and service[1] in {"native_mode", "ui_mode", "ui_queue_mode"}
+                    and blockers == {
+                        "TASKFLOW_PROFILE_NOT_MATERIALIZED",
+                        "UI_TASK_QUEUE_INTEGRATION_NOT_ACCEPTED",
+                    }
+                ))
+            )
+            ui_start_ready = (
+                ready_conditions
+                and states["bridge"]["state"] == "active"
                 and ui_check.get("taskflow_profile_present") is True
-                and ui_check.get("installed_service_mode") == "ui_queue_mode"
-                and ui_check.get("service_state") == "active"
-                and set(ui_check.get("preflight_blockers", [])) == {
+                and service == ("active", "ui_queue_mode")
+                and blockers == {
                     "SCHEDULER_CUTOVER_NOT_READY",
                     "UI_QUEUE_OWNER_ACCEPTANCE_REQUIRED",
                 }
@@ -175,8 +201,16 @@ def main():
             }, "installed": all(states[name]["state"] != "unavailable"
                                for name in ("bridge", "worker")),
             "ui_queue_start_available": ui_start_ready,
+            "ui_queue_stage_available": ui_stage_ready,
             "ui_queue_first_task": (
-                ui_check.get("first_task_code") if ui_start_ready else None),
+                ui_check.get("first_task_code")
+                if ui_start_ready or ui_stage_ready else None),
+            # Bounded enums only. Explain why Start is disabled without
+            # exposing saved ChatGPT IDs, prompt text or private receipts.
+            "ui_queue_state": ui_check.get("queue_state"),
+            "ui_queue_service_mode": ui_check.get("installed_service_mode"),
+            "ui_queue_service_state": ui_check.get("service_state"),
+            "ui_queue_preflight_blockers": ui_check.get("preflight_blockers", []),
             "ui_queue_legacy_native_pending_retained": bool(
                 ui_check.get("legacy_native_pending_retained")),
             **transport_gate.readiness()}
