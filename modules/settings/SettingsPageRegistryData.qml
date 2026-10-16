@@ -268,6 +268,15 @@ Singleton {
             return _staticSearchIndex
 
         _staticSearchIndex = [
+        {
+            pageIndex: 34, pageName: root.pages[34].name,
+            section: Translation.tr("Modules"),
+            label: Translation.tr("Quick Notes & Notifications access mode"),
+            description: Translation.tr("Choose movable modules or legacy Edgebar corner hover for Notes, Timers, Notifications and Activities"),
+            keywords: ["abyss", "module", "screen edge", "edgebar", "hover",
+                "quick notes", "quicknotes", "timers", "notifications", "activities",
+                "launcher", "icon", "show", "hide", "mode"]
+        },
         {pageIndex:35,pageName:root.pages[35].name,section:"Tasks",label:"Automation task code",description:"Prepare a Cloudbot/Localbot handoff from a GitHub Issue",keywords:["automation","cloudbot","localbot","task","issue","workflow","handoff"]},
         {pageIndex:38,pageName:root.pages[38].name,section:"Calendar Sync",label:"External calendars",description:"ICS/iCal sources",keywords:["calendar","ics","ical","integrations"]},
         {pageIndex:38,pageName:root.pages[38].name,section:"Obsidian",label:"Obsidian theming",description:"Active theme and vault paths",keywords:["obsidian","theme","vault","config","integration"]},
