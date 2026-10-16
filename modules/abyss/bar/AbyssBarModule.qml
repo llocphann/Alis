@@ -144,6 +144,7 @@ Item {
     // The small cross-axis extension reaches the literal physical screen edge.
     // Its compositor mask is correspondingly bounded in AbyssBar.
     component UnifiedEdgeFace: Item {
+        required property var moduleRoot
         property string glyph: ""
         property string description: ""
         property Item trigger: hit
@@ -152,7 +153,7 @@ Item {
         MouseArea {
             id: hit
             x: 0
-            y: (root.attachedEdge === "top" || root.attachedEdge === "right") ? -8 : 0
+            y: (moduleRoot.attachedEdge === "top" || moduleRoot.attachedEdge === "right") ? -8 : 0
             width: parent.width
             height: parent.height+8
             hoverEnabled: true
@@ -168,7 +169,7 @@ Item {
                 color: Appearance.colors.colLayer1
                 border.width: 1
                 border.color: Appearance.colors.colLayer2
-                visible: root.showIcon
+                visible: hit.parent.moduleRoot.showIcon
                 MaterialSymbol {
                     anchors.centerIn: parent
                     text: hit.parent.glyph
@@ -176,13 +177,14 @@ Item {
                     color: Appearance.colors.colPrimary
                 }
             }
-            StyledToolTip { text: hit.parent.description; visible: root.showIcon && hit.containsMouse }
+            StyledToolTip { text: hit.parent.description; visible: hit.parent.moduleRoot.showIcon && hit.containsMouse }
         }
     }
     Component {
         id: notesTimers
         UnifiedEdgeFace {
             id: notesFace
+            moduleRoot: root
             glyph: "sticky_note_2"
             description: "QuickNotes & Timers"
             // Hover is intentionally still active with no painted icon.
@@ -204,6 +206,7 @@ Item {
         id: notificationActivity
         UnifiedEdgeFace {
             id: notificationFace
+            moduleRoot: root
             glyph: "notifications"
             description: "Notifications & Activities"
             Connections {
