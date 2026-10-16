@@ -64,6 +64,21 @@ class FailedReceiptTests(TestCase):
         self.assertIn('receipt FAILED',prompt);self.assertIn('Cloudbot-authored instruction',prompt)
         self.assertEqual(self.record()['status'],'needs_review')
 
+    def test_repair_prompt_drops_summary_from_a_different_job(self):
+        config, state, _ = store.read_snapshot()
+        profile=next(p for p in config['profiles'] if p['id']==self.pid)
+        item=state['profiles'][self.pid]
+        current={'job_id':self.bundle['id'],'digest':self.bundle['sha256'],
+                 'source_sha':self.sha,'state':'failed'}
+        item['job_summary']=current
+        self.assertIn('Worker summary:',ui_scheduler.pending_prompt(profile,item,'continuation'))
+        for field in ('job_id','digest','source_sha'):
+            item['job_summary']={**current,field:'OLD_RESULT_MUST_NOT_BE_SENT'}
+            prompt=ui_scheduler.pending_prompt(profile,item,'continuation')
+            self.assertNotIn('Worker summary:',prompt)
+            self.assertNotIn('OLD_RESULT_MUST_NOT_BE_SENT',prompt)
+            self.assertIn(self.bundle['id'],prompt)
+
     def test_ui_diagnostic_receives_failure_without_replay_or_queue_advance(self):
         def observed(command,prompt,**kwargs):
             self.assertIn('receipt FAILED',prompt)

@@ -378,6 +378,20 @@ class UiSchedulerTests(TestCase):
         self.assertEqual(result, "queue_idle")
         self.assertEqual(queue.view(), before)
 
+    def test_paused_queue_keeps_service_available_without_send(self):
+        pid, task = self._queue_fixture(state="active", approved=True)
+        store.change_state(lambda c, s: s["profiles"][pid].update(
+            desired="paused", status="paused", run_active=False))
+        before = queue.view()
+        with patch.object(runtime, "desktop", side_effect=AssertionError("No Send")), \
+                patch.object(ui_scheduler.time, "sleep", side_effect=InterruptedError("idle wait")):
+            with self.assertRaisesRegex(InterruptedError, "idle wait"):
+                ui_scheduler.queue_loop()
+        self.assertEqual(queue.view(), before)
+        store.change_state(lambda c, s: s["profiles"][pid].update(
+            pending={"transport": "alis-ui-once"}))
+        self.assertEqual(ui_scheduler.queue_tick(), "ALIS_UI_QUEUE_PROFILE_NOT_RUNNING")
+
     def test_ui_followup_requires_authentic_local_receipt(self):
         from automation import lifecycle
         _, task = self._queue_fixture(state="active", approved=True)

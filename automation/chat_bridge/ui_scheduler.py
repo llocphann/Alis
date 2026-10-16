@@ -188,9 +188,22 @@ def pending_prompt(profile, item, kind):
     if item.get("last_job_id"):
         prompt += ("\nCheck exact GitHub result in automation/results/"
                    + item["last_job_id"] + ".json\n")
-    if item.get("job_summary"):
+    summary = item.get("job_summary")
+    if summary:
+        from automation import managed_tasks, taskflow
+        pair = managed_tasks.reference(profile)
+        if pair is not None:
+            latest = taskflow.load_task(pair[1], pair[0]).get("latest_receipt") or {}
+            if (not isinstance(summary, dict)
+                    or summary.get("job_id") != latest.get("id")
+                    or summary.get("digest") != latest.get("sha256")
+                    or summary.get("source_sha") != latest.get("source_sha")):
+                # A reviewed repair replaces the active handoff. Its prompt
+                # must not inherit an older worker's result as current evidence.
+                summary = None
+    if summary:
         prompt += "\nWorker summary:\n" + json.dumps(
-            item["job_summary"], ensure_ascii=False)
+            summary, ensure_ascii=False)
     return prompt
 
 
@@ -743,6 +756,12 @@ def queue_tick(*, now: int | None = None, desktop=None) -> str:
             # Queue claim and profile Start have separate durable records.
             # The single manager waits for explicit profile scheduling.
             return "queue_claim_waiting_profile_start"
+        if (runtime.get("desired") == "paused"
+                and not runtime.get("pending") and not runtime.get("job_id")
+                and not runtime.get("run_active")):
+            # Pause is an expected command, not a failed service. Preserve the
+            # queue and stay available for Resume without admitting another send.
+            return "queue_idle"
         if runtime.get("desired") != "run":
             return "ALIS_UI_QUEUE_PROFILE_NOT_RUNNING"
         record = tf.load_task(active["code"], active["repository"])
