@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import re
 import time
+import uuid
 from typing import Callable
 
 from . import taskflow as tf
@@ -321,6 +322,9 @@ def prepare(raw: str, mode: str = "ordered",
         now = int(time.time())
         manifest = {
             "schema": QUEUE_SCHEMA, "mode": mode,
+            # Unique even when identical codes are cleared/reprepared in the
+            # same second; never reuse a prior approval's comparison token.
+            "generation": uuid.uuid4().hex,
             "state": ("prepared" if any(x["state"] == "queued"
                                          for x in classified)
                       else "review_required"),
