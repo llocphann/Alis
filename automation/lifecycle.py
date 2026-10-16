@@ -13,7 +13,7 @@ from typing import Callable
 from . import taskflow as tf
 
 
-def _verified_local_receipt(record: dict) -> dict:
+def _verified_local_receipt(record: dict, *, allow_failed: bool = False) -> dict:
     bundle = record.get("handoff")
     if not bundle:
         raise tf.TaskError("Missing Cloudbot handoff")
@@ -21,11 +21,14 @@ def _verified_local_receipt(record: dict) -> dict:
     summary = record.get("latest_receipt")
     if not isinstance(summary, dict):
         raise tf.TaskError("Missing Localbot receipt")
+    state = summary.get("state")
+    if state != "passed" and not (allow_failed is True and state == "failed"):
+        raise tf.TaskError("Unacknowledged or mismatched Localbot receipt")
     for key, expected in {
         "id": checked["id"],
         "sha256": checked["sha256"],
         "source_sha": tf.execution_sha(checked["payload"]),
-        "state": "passed",
+        "state": state,
     }.items():
         if summary.get(key) != expected:
             raise tf.TaskError("Unacknowledged or mismatched Localbot receipt")
@@ -40,6 +43,21 @@ def _verified_local_receipt(record: dict) -> dict:
     if any(persisted.get(key) != summary.get(key)
            for key in ("id", "sha256", "source_sha", "state")):
         raise tf.TaskError("Local receipt identity mismatch")
+    if state == "failed":
+        steps = persisted.get("steps")
+        commands = checked["payload"]["commands"]
+        if (not isinstance(steps, list) or not 1 <= len(steps) <= len(commands)
+                or persisted.get("continuation_ready") is not False
+                or type(persisted.get("finished_unix")) is not int
+                or any(not isinstance(s, dict) or s.get("argv") != commands[i]
+                       for i, s in enumerate(steps))
+                or any(type(s.get("exit_code")) is not int or s["exit_code"] != 0
+                       or s.get("error") for s in steps[:-1])
+                or type(steps[-1].get("exit_code")) is not int
+                or steps[-1]["exit_code"] == 0 or steps[-1].get("error")):
+            # A timeout/unknown cleanup is not a settled failure. Keep it
+            # blocked, just as started, foreign and conflicting receipts are.
+            raise tf.TaskError("Failed Localbot receipt needs reconciliation")
     return checked
 
 

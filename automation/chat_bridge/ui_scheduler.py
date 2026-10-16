@@ -749,12 +749,15 @@ def queue_tick(*, now: int | None = None, desktop=None) -> str:
         if (record.get("unresolved")
                 or record.get("task", {}).get("base_sha") != source_sha
                 or record.get("status") not in
-                {"prepared", "handoff_ready", "awaiting_owner", "awaiting_cloud_ack"}):
+                {"prepared", "handoff_ready", "awaiting_owner", "awaiting_cloud_ack", "needs_review"}):
             return "ALIS_UI_QUEUE_TASK_CHANGED"
-        if record.get("status") == "awaiting_cloud_ack":
+        if record.get("status") in {"awaiting_cloud_ack", "needs_review"}:
             from automation.lifecycle import _verified_local_receipt
             try:
-                _verified_local_receipt(record)
+                failed = record["status"] == "needs_review"
+                if failed and (record.get("latest_receipt") or {}).get("state") != "failed":
+                    raise tf.TaskError("Missing settled failed receipt")
+                _verified_local_receipt(record, **({"allow_failed": True} if failed else {}))
             except tf.TaskError:
                 return "ALIS_UI_QUEUE_LOCAL_RECEIPT_REQUIRES_REVIEW"
     # Do not hold queue.lock while observing the Desktop response; Stop can

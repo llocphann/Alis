@@ -61,10 +61,26 @@ def prompt(profile: dict, kind: str) -> str:
             tf.verify(bundle)
         receipt = record.get("latest_receipt")
         # Only promote Cloudbot-authored continuation after a durable receipt.
-        if bundle and receipt and receipt.get("state") == "passed":
+        if bundle and receipt and receipt.get("state") in {"passed", "failed"}:
             from .lifecycle import _verified_local_receipt
-            checked = _verified_local_receipt(record)
+            failed = receipt["state"] == "failed"
+            if failed and record.get("status") != "needs_review":
+                raise tf.TaskError("Failed job lifecycle needs reconciliation")
+            checked = _verified_local_receipt(record, **({"allow_failed": True} if failed else {}))
             body = checked["payload"]["next_prompt"]
+            if failed:
+                body = (
+                    "CONTROLLER: The authenticated local fixture receipt FAILED. "
+                    "This is diagnostic continuation for the SAME Issue, never completion. "
+                    f"Job: {checked['id']}\nDigest: {checked['sha256']}\n"
+                    f"Execution SHA: {tf.execution_sha(checked['payload'])}\n"
+                    "Inspect the durable receipt, diagnose and repair the demonstrated failure, "
+                    "then publish a revised SHA-pinned handoff. Do not replay the old job, "
+                    "advance the queue, claim PASS or emit DONE/ROTATE while repair is pending. "
+                    "Include the exact failed job ID, digest and execution SHA in your review "
+                    "so the controller can bind acknowledgement before accepting a new job.\n\n"
+                    + body
+                )
         else:
             body = (
                 "Continue the canonical GitHub task and inspect new evidence. "
