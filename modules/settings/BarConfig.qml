@@ -44,7 +44,7 @@ ContentPage {
     }
 
     // A launcher icon is a presentation MODE, not a paint-only toggle.
-    // Both this switch and Module Behavior edit the same per-feature key.
+    // The Modules tab is the only UI for choosing either feature's access mode.
     // Turning it off unmounts the module and restores the legacy Edgebar.
     function unifiedLauncherIconShown(kind): bool {
         return ModuleLayout.unifiedLauncherMode(
@@ -418,42 +418,6 @@ ContentPage {
 
         SettingsGroup {
             ContentSubsection {
-                title: Translation.tr("Quick Notes & Timers")
-                visible: root.abyssContent
-                SettingsNote {
-                    text: Translation.tr("Choose one opening behavior for Quick Notes and timers.")
-                }
-                ConfigSelectionArray {
-                    objectName: "abyssNotesTimersAccessMode"
-                    currentValue: ModuleLayout.unifiedLauncherMode(
-                        Config.options?.abyss?.modules,"notesTimers")
-                    options: [
-                        {displayName: "Module Icon",value: "module"},
-                        {displayName: "Edgebar Hover",value: "edgebar"}
-                    ]
-                    onSelected: value =>
-                        Config.setNestedValue("abyss.modules.notesTimersMode",value)
-                }
-            }
-            ContentSubsection {
-                title: Translation.tr("Notifications & Activities")
-                visible: root.abyssContent
-                SettingsNote {
-                    text: Translation.tr("Choose one opening behavior for notifications and activity history.")
-                }
-                ConfigSelectionArray {
-                    objectName: "abyssNotificationActivityAccessMode"
-                    currentValue: ModuleLayout.unifiedLauncherMode(
-                        Config.options?.abyss?.modules,"notificationActivity")
-                    options: [
-                        {displayName: "Module Icon",value: "module"},
-                        {displayName: "Edgebar Hover",value: "edgebar"}
-                    ]
-                    onSelected: value =>
-                        Config.setNestedValue("abyss.modules.notificationActivityMode",value)
-                }
-            }
-            ContentSubsection {
                 title: Translation.tr("Auto hide")
 
                 SettingsSwitch {
@@ -712,7 +676,7 @@ ContentPage {
                     }
                 }
                 SettingsNote {
-                    text: Translation.tr("On: use the visible module icon only. Off: remove this module's live hover area and restore its original Screen Corner Edgebar hover. This is synchronized with Module Behavior; saved placement remains available.")
+                    text: Translation.tr("On: use the visible module icon only. Off: remove this module's live hover area and restore its original Screen Corner Edgebar hover. Saved module placement remains available.")
                 }
             }
 
