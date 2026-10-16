@@ -1,0 +1,57 @@
+{
+  "schema": "alis.ui-recovery-evidence.v1",
+  "source_sha": "448d486213f031367295b457d084c447fe1813a8",
+  "focused_summary": {
+    "PASS": 49,
+    "FAIL": 0
+  },
+  "transport": "local-ui-user-turn-v1, not server attestation",
+  "old_AI_I01": {
+    "archived_original_full_prompt_matched": true,
+    "first_turn_anchor_matched": true,
+    "delivery_observed": true,
+    "completed": false,
+    "idle_observed": true,
+    "loop_markers": 0,
+    "prompts_delivered": 3,
+    "completed_iterations": 2,
+    "outcome": "interrupted_delivered",
+    "send_replayed": false,
+    "old_local_job_replayed": false
+  },
+  "owner_selected_queue": [
+    "TODO-I01",
+    "NOTES-F01",
+    "UTIL-F01",
+    "SYS-F01",
+    "SET-R03",
+    "NOTES-R01",
+    "CAL-R03",
+    "DASH-R03"
+  ],
+  "TODO_I01": {
+    "initial_send_observed": true,
+    "full_input_and_final_response_matched": true,
+    "original_response_reconciled": true,
+    "prompts_delivered": 1,
+    "completed_iterations": 1,
+    "loop_directive": "CONTINUE",
+    "desired": "paused",
+    "duplicate_send": false,
+    "local_receipt_id": "JOB-a41d859ceb0814410c76dace",
+    "local_execution_sha": "2aedd45ec237b881ccafb13ca189000ca5f3593a"
+  },
+  "live_discovered_fault": "Pause changes pending polling metadata; the returning completed UI response was rejected by full-dictionary comparison after the journal had already retired.",
+  "fixes": [
+    "Compare immutable pending identity while allowing only polling metadata changes.",
+    "Commit manager result before retiring the durable send journal.",
+    "Recover legacy retired intents only with a uniquely matched archived journal, same saved response and fresh full original-turn UI proof.",
+    "Complete post-manager-commit journal cleanup without another UI operation or duplicate counters."
+  ],
+  "boundaries": {
+    "native_managed_gate": "closed",
+    "all_eight_tasks_complete": false,
+    "Owner_verification": "UNRUN",
+    "canonical_maintainer_at_source_sha": "RUNNING, no final result yet"
+  }
+}

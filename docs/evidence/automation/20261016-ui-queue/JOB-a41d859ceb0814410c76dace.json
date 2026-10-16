@@ -1,0 +1,97 @@
+{
+  "id": "JOB-a41d859ceb0814410c76dace",
+  "sha256": "a41d859ceb0814410c76dace46ad0bb1f843e4dd18d059a709e09c70236dbe7d",
+  "source_sha": "2aedd45ec237b881ccafb13ca189000ca5f3593a",
+  "state": "passed",
+  "started_unix": 1792143681,
+  "finished_unix": 1792143692,
+  "continuation_ready": true,
+  "schema": "alis.local-test-evidence.v1",
+  "task": "TODO-I01",
+  "repository": "llocphann/Alis",
+  "branch": "dev",
+  "intake_base_sha": "b3b66d4a22f220e3cf328ff5f549a8e5a8a0f72b",
+  "owner_approved_exact_job": true,
+  "scope": "private offscreen Quickshell Todo fixtures and source contracts; real Todo files, installed desktop and Owner acceptance UNRUN",
+  "steps": [
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "redacted_bounded_excerpt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "truncated": false
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-internal-todo-persistence-runtime.py"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "redacted_bounded_excerpt_sha256": "773b6274d770b530290fbc274b60b16291b13bf57e077eadfd0a9eece09a6325",
+      "truncated": false
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-todo-backend-contract.py"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "redacted_bounded_excerpt_sha256": "a54080ea6cea48c75f25a1abf9a35ffc1699c3ec1a8155d901bfaa3a3277db05",
+      "truncated": false
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-todo-widget-backend-feedback.py"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "redacted_bounded_excerpt_sha256": "aa47e3f2fd121c47b622dba847b89bdfcd900da5a81a0aeaf3712f4096a50820",
+      "truncated": false
+    }
+  ],
+  "private_fixture_readbacks": [
+    {
+      "action": "normal",
+      "store": "missing",
+      "exit_code": 0,
+      "json_readback": true
+    },
+    {
+      "action": "restart",
+      "store": "missing",
+      "exit_code": 0,
+      "json_readback": true
+    },
+    {
+      "action": "normal",
+      "store": "existing",
+      "exit_code": 0,
+      "json_readback": true
+    },
+    {
+      "action": "restart",
+      "store": "existing",
+      "exit_code": 0,
+      "json_readback": true
+    },
+    {
+      "action": "failure",
+      "store": "existing",
+      "exit_code": 0,
+      "json_readback": true
+    },
+    {
+      "action": "restart",
+      "store": "existing",
+      "exit_code": 0,
+      "json_readback": true
+    }
+  ]
+}
