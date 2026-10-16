@@ -1,6 +1,6 @@
-# ABYSS-R15 — Unified Screen Edge launchers (candidate)
+# ABYSS-R15 — Unified Screen Edge launchers (dev)
 
-Canonical scope: [Issue #106](https://github.com/llocphann/Alis/issues/106). This candidate deliberately remains on the feature branch until reviewed on the installed native desktop. Do not merge to `stable` as a side effect.
+Canonical scope: [Issue #106](https://github.com/llocphann/Alis/issues/106). Feature code was merged into `dev` by [PR #109](https://github.com/llocphann/Alis/pull/109), commit `900f972c`. The installed owner desktop still requires `alis update` to fetch/sync `dev`, and native UX acceptance remains open. Do not merge to `stable` as a side effect.
 
 ## Available in this candidate
 
@@ -42,4 +42,4 @@ A source contract cannot prove native Quickshell/Niri behavior. **No PASS claim 
 - hover transfer and popup continuity without pop-in, premature close, stutter or duplicate processes
 - before/after owner screenshots, native input events and installed source SHA
 
-**Status:** Source candidate / awaiting tests and installed-disk owner acceptance. Keep Issue #106 open; do not mark verified.
+**Status:** Implemented in `dev` (focused ABYSS-R15 GitHub Actions check passed). Broad validator remains red on other environment/legacy checks. Native desktop/Owner acceptance is pending. Keep Issue #106 open; do not mark verified.
