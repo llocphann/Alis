@@ -84,6 +84,25 @@ assert 'cornerPanelWindow.shouldShowNotificationCenterCorner' in corners
 assert 'property bool hoverAllowed: true' in notes
 assert 'hoverActivates: root.hoverAllowed' in notes
 
+# Once Panels Quick Notes controls were retired, their saved enable=false
+# remains legal user config. Edgebar mode must revive the old input host
+# independent of that flag; likewise for Notification legacy hover and output
+# masks. Explicit Module Icon still disables both old popup loaders.
+assert 'function edgebarOwnsCornerHover(options,panelFamily,kind)' in layout
+assert 'function abyssEdgebarSelected(kind): bool' in corners
+assert 'return ModuleLayout.edgebarOwnsCornerHover(' in corners
+quick_gate = corners.split('readonly property bool shouldShowQuickNotesCorner:',1)[1].split('function notificationCenterTargetsOutput',1)[0]
+assert 'cornerPanelWindow.abyssEdgebarSelected("notesTimers")' in quick_gate
+assert 'Config.options?.quickNotes?.enable ?? true' in quick_gate
+assert 'cornerPanelWindow.quickNotesMonitorAllowed' in quick_gate
+notification_gate = corners.split('readonly property bool shouldShowNotificationCenterCorner:',1)[1].split('function reconcileNotificationCenterFullscreenPolicy',1)[0]
+assert notification_gate.count('cornerPanelWindow.abyssEdgebarSelected("notificationActivity")') >= 5
+assert 'Config.options?.notificationCenter?.hoverEnable ?? true' in notification_gate
+assert 'Config.options?.notificationCenter?.enable ?? true' in notification_gate
+assert 'cornerPanelWindow.notificationCenterTargetsOutput()' in notification_gate
+assert 'active: cornerPanelWindow.shouldShowQuickNotesCorner' in corners
+assert 'active: cornerPanelWindow.notificationCenterHostNeeded' in corners
+
 # Editor focus/popup contents are retained, not rewritten as new services.
 assert "onNotesEditorFocusChanged:" in perimeter
 assert "onEditorFocusedChanged:" in module
