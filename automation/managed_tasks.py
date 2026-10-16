@@ -380,7 +380,8 @@ def start_ordered_queue(*, approved: bool = False) -> dict:
 
 def start_ui_queue(*, approved: bool = False,
                    accept_ui_only_receipts: bool = False,
-                   expected_first: str = "") -> dict:
+                   expected_first: str = "",
+                   expected_snapshot_id: str | None = None) -> dict:
     """Explicit queue-only UI Start; NEVER authorize the native transport.
 
     Only an already-staged, idle taskflow profile is admitted after the
@@ -408,6 +409,10 @@ def start_ui_queue(*, approved: bool = False,
                 or manifest.get("active") is not None
                 or manifest.get("selection") is not None):
             raise tf.TaskError("UI Queue Start requires an unclaimed prepared queue")
+        if (expected_snapshot_id is not None
+                and queue._snapshot_id(manifest) != expected_snapshot_id):
+            raise tf.TaskError("UI Queue Start snapshot changed; refresh")
+        validated_snapshot_id = queue._snapshot_id(manifest)
         queued = manifest.get("items", [])
         first = next((it for it in queued if it.get("state") == "queued"), None)
         if (first is None or first.get("repository") not in tf.REPOSITORIES
@@ -447,7 +452,10 @@ def start_ui_queue(*, approved: bool = False,
                 and record.get("status") in {"prepared", "handoff_ready"}
                 and not record.get("unresolved")
                 and record["task"]["base_sha"] == first["source_sha"])
-    queue.approve_ordered_start()
+    # Compare the same full manifest once more under queue.lock *before*
+    # granting durable Start approval. Identical first codes are insufficient:
+    # later queue siblings, selection and Issue pins may have changed.
+    queue.approve_ordered_start(expected_snapshot_id=validated_snapshot_id)
     selected = queue.claim(verified_start=verified)["selected"]
 
     def schedule(config, state):
