@@ -49,8 +49,10 @@ Item {
 
     // ── Internal state ─────────────────────────────────────────────────
     property bool _transitioning: false
-    // Liquid uses the bundled shader. Keep a driver opt-out and a Ready-slot
-    // fallback; short-lived shader preparation must never block switching.
+    // Liquid is a real shader transition by default, not a disguised fade.
+    // A local opt-out is retained for driver recovery; unsupported renderers,
+    // compile errors and stalled frames fall back to the Ready-slot crossfade.
+    // Aliases resolve to one compiled QSB, including shaderRandom.
     readonly property var shaderTransitionTypes: ["alisMelt"]
     readonly property bool shaderTransitionRequested: Quickshell.env("ALIS_DISABLE_LIQUID_SHADER") !== "1"
         && (isShaderTransitionType(transitionType)
@@ -162,6 +164,12 @@ Item {
             root._activeShader = ""
     }
 
+    function _requestShaderPrimeFrame(): void {
+        const window = root.Window.window
+        if (root._shaderTexturePrimePending && root.visible && window?.visible)
+            window.update()
+    }
+
     function _requestShaderPresentationFrame(): void {
         const window = root.Window.window
         if (root._shaderRequestedActive && shaderTransition.shaderReady
@@ -193,10 +201,16 @@ Item {
 
         const pending = String(internal.pendingSource ?? "")
         const inactive = internal.inactiveImage()
+        // `Image.source` is a QML url object while pendingSource is a JS string.
+        // Their printed paths can be identical and still fail strict equality.
+        // Normalize the url before comparing or the Ready frame is discarded and
+        // shader priming never starts, which can reintroduce the wallpaper flash.
         if (pending === "" || String(inactive.source) !== pending || inactive.status !== Image.Ready)
             return
 
-        // Unsupported renderers and unshown windows still commit the Ready slot.
+        // ShaderEffect is unsupported by the software renderer and an unshown
+        // window cannot present texture frames. Applying the image must still
+        // finish; the existing image-slot crossfade works in both cases.
         if (root.GraphicsInfo.api === GraphicsInfo.Software || !root.visible
                 || !root.Window.window?.visible) {
             root._cancelShaderTexturePrime()
@@ -204,15 +218,16 @@ Item {
             return
         }
 
-        // ShaderEffectSource's one-shot scheduleUpdate() is rendered in the
-        // source dependency pass of the next scene-graph frame. Do not block
-        // the transition on two separate frameSwapped events: those can stall
-        // on a static Wayland surface and produce a visible pre-transition pause.
-        // Keep the outgoing Ready image painted until the shader frame arrives.
-        root._cancelShaderTexturePrime()
-        shaderSlot0Texture.scheduleUpdate()
-        shaderSlot1Texture.scheduleUpdate()
-        internal.performSwitch()
+        root._activeShader = root._resolvedShaderName()
+        if (root._activeShader === "") {
+            root._cancelShaderTexturePrime()
+            internal.performSwitch()
+            return
+        }
+        root._shaderTexturePrimeSource = pending
+        root._shaderTexturePrimeSwaps = 0
+        root._shaderTexturePrimePending = true
+        Qt.callLater(root._requestShaderPrimeFrame)
     }
 
     function _normalizedTransitionType(rawType: string): string {
@@ -360,7 +375,13 @@ Item {
 
             pendingSource = newSource
 
-                    // Always decode into the spare slot, including reduced motion.
+            // A newer selection can arrive during a frame lease, before
+            // _transitioning becomes true. Cancel the old lease so the latest
+            // Ready image is loaded rather than leaving the queue stranded.
+            if (root._shaderTexturePrimePending && newSource !== root._shaderTexturePrimeSource)
+                root._cancelShaderTexturePrime()
+
+            // Always decode into the spare slot, including reduced motion.
             // A failed selection must not replace the last successfully shown
             // image or publish a source which has never reached Image.Ready.
             if (!root._canTransition && root._transitioning) {
@@ -540,12 +561,12 @@ Item {
         }
     }
 
-    // A shader that cannot present promptly must not freeze the wallpaper.
-    // This only watches the short startup handoff; the animation has its own
-    // bounded transitionDeadline and Ready-slot fallback.
+    // No idle polling. A failed render/compile handoff must not pin the old
+    // wallpaper forever, even if the backend never emits ShaderEffect.Error.
     Timer {
-        interval: 240
-        running: root._shaderRequestedActive && !transitionAnim.running
+        interval: 1500
+        running: root._shaderTexturePrimePending
+            || (root._shaderRequestedActive && !transitionAnim.running)
         onTriggered: root._finishShaderWaitWithoutShader()
     }
 
@@ -561,15 +582,44 @@ Item {
         }
 
         function onFrameSwapped(): void {
-            // The sampler textures are scheduled in the same scene-graph frame.
-            // Present the real Liquid shader only after a compositor frame,
-            // retaining the outgoing Ready image during the handoff.
+            // First render with the shader at near-zero opacity; only then
+            // reveal it and start progress. A compiler callback alone can
+            // precede a usable texture on Qt/Wayland.
             if (root._shaderRequestedActive && shaderTransition.shaderReady
                     && !shaderTransition.shaderPresented
                     && shaderTransition.status === ShaderEffect.Compiled) {
                 shaderTransition.shaderPresented = true
                 Qt.callLater(root._startShaderTransitionIfReady)
             }
+            if (!root._shaderTexturePrimePending)
+                return
+
+            const pending = String(internal.pendingSource ?? "")
+            const inactive = internal.inactiveImage()
+            if (pending === "" || pending !== root._shaderTexturePrimeSource
+                    || String(inactive.source) !== pending || inactive.status !== Image.Ready
+                    || root._transitioning) {
+                root._cancelShaderTexturePrime()
+                return
+            }
+
+            if (shaderTransition.status !== ShaderEffect.Compiled) {
+                Qt.callLater(root._requestShaderPrimeFrame)
+                return
+            }
+
+            root._shaderTexturePrimeSwaps++
+            if (root._shaderTexturePrimeSwaps < 2) {
+                // A static background has no animation to request another
+                // frame. Explicitly present the second texture snapshot.
+                Qt.callLater(root._requestShaderPrimeFrame)
+                return
+            }
+
+            root._shaderTexturePrimePending = false
+            root._shaderTexturePrimeSource = ""
+            root._shaderTexturePrimeSwaps = 0
+            internal.performSwitch()
         }
     }
 
@@ -890,13 +940,14 @@ Item {
         }
     }
 
-    // One-shot framebuffer captures preserve Image.fillMode and avoid
-    // continually re-rendering full-resolution wallpapers into extra FBOs.
+    // ShaderEffect samples Image texture providers without applying Image.fillMode.
+    // Render each slot first so shader transitions receive the exact same
+    // aspect-correct crop/fit pixels that the user sees before and after them.
     ShaderEffectSource {
         id: shaderSlot0Texture
         anchors.fill: parent
         visible: false
-        live: false
+        live: root._shaderTexturePrimePending
         sourceItem: img0
     }
 
@@ -904,7 +955,7 @@ Item {
         id: shaderSlot1Texture
         anchors.fill: parent
         visible: false
-        live: false
+        live: root._shaderTexturePrimePending
         sourceItem: img1
     }
 
@@ -939,10 +990,8 @@ Item {
         property vector2d aspectRatio: Qt.vector2d(aspectX, aspectY)
         property vector2d origin: Qt.vector2d(0.5, 0.5)
 
-        // Keep the QSB URL stable across wallpaper changes. Switching it on
-        // every animation invalidates Qt's shader state and adds startup work.
-        fragmentShader: root.shaderTransitionRequested
-            ? Qt.resolvedUrl("wallpaperTransitions/alisMelt.frag.qsb")
+        fragmentShader: root._activeShader !== ""
+            ? Qt.resolvedUrl("wallpaperTransitions/" + root._activeShader + ".frag.qsb")
             : ""
 
         onFragmentShaderChanged: {
