@@ -80,11 +80,16 @@ ContentPage {
     property bool uiQueueStartAvailable: false
     property bool uiQueueStageAvailable: false
     property bool uiQueueIdleLegacyStopAvailable: false
+    property bool uiQueueBridgeRecoverAvailable: false
+    property bool uiQueueBridgeRecoverConfirmation: false
+    property string uiQueueBridgeRecoverSnapshotId: ""
     property bool uiQueueIdleLegacyStopConfirmation: false
     property string uiQueueIdleLegacyStopSnapshotId: ""
     property string uiQueueFirstTask: ""
     property var uiQueuePreflightBlockers: []
     property var uiQueueProfileCounts: ({})
+    property var uiQueueUnsettledProfiles: []
+    property string uiQueueBridgeExitStatus: ""
     property string uiQueueServiceMode: ""
     property string uiQueueServiceState: ""
     property bool uiQueueStageConfirmation: false
@@ -104,6 +109,8 @@ ContentPage {
         if (q.state !== "prepared") return ""
         if (!(q.items || []).some(t => t.state === "queued"))
             return Translation.tr("No eligible task is queued; review saved receipts before Start.")
+        if (root.uiQueueBridgeRecoverAvailable)
+            return Translation.tr("Bridge stopped after a safety exit (code %1). Confirm Recover Bridge to start the queue-only watcher while the queue is still idle. Pending sends remain blocked and untouched.").arg(root.uiQueueBridgeExitStatus || "75")
         if (root.uiQueueStartAvailable || root.backendTransportReady) return ""
         if (root.uiQueueStageAvailable)
             return Translation.tr("Prepare UI creates an idle task profile; after readiness refresh, confirm Start UI separately. No message is sent by Prepare.")
@@ -288,6 +295,41 @@ ContentPage {
             Quickshell.shellPath("scripts/alis-automation-task.py"),
             "status", root.selectedTask.code, "--repo", root.selectedTask.repository]
         taskStatusProcess.running = true
+    }
+
+    function recoverFailedBridge(): void {
+        if (root.busy || !root.queueStatusConfirmed
+                || !root.uiQueueBridgeRecoverAvailable || !root.queueSnapshot
+                || root.queueSnapshot.state !== "prepared"
+                || root.queueSnapshot.mode !== "ordered")
+            return
+        const snapshotId = root.queueSnapshot.snapshot_id || ""
+        if (!/^[a-f0-9]{64}$/.test(snapshotId)) {
+            root.errorText = Translation.tr("Queue identity unavailable · Refresh")
+            return
+        }
+        if (!root.uiQueueBridgeRecoverConfirmation) {
+            root.uiQueueBridgeRecoverConfirmation = true
+            root.uiQueueBridgeRecoverSnapshotId = snapshotId
+            root.statusText = Translation.tr("Confirm Recover Bridge: start only the failed queue-only user service while this queue is unapproved. Pending receipts remain intact. No task or ChatGPT message will start.")
+            return
+        }
+        if (root.uiQueueBridgeRecoverSnapshotId !== snapshotId) {
+            root.uiQueueBridgeRecoverConfirmation = false
+            root.uiQueueBridgeRecoverSnapshotId = ""
+            root.errorText = Translation.tr("Queue changed · Refresh before Bridge recovery")
+            return
+        }
+        root.uiQueueBridgeRecoverConfirmation = false
+        root.uiQueueBridgeRecoverSnapshotId = ""
+        root.uiQueueBridgeRecoverAvailable = false
+        root.queueOperation = "recover-bridge"
+        root.errorText = ""
+        queueProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "queue-recover-bridge", "--approve",
+            "--expected-snapshot-id", snapshotId]
+        queueProcess.running = true
     }
 
     function stopIdleLegacyForUiQueue(): void {
@@ -825,6 +867,13 @@ ContentPage {
                     ? report.transport_blocker : ""
                 root.uiQueueStartAvailable = report.ui_queue_start_available === true
                 root.uiQueueStageAvailable = report.ui_queue_stage_available === true
+                root.uiQueueBridgeRecoverAvailable =
+                    report.ui_queue_bridge_recover_available === true
+                const services = report.services || ({})
+                root.uiQueueBridgeExitStatus = typeof services.bridge?.exit_status === "string"
+                    ? services.bridge.exit_status : ""
+                root.uiQueueUnsettledProfiles = Array.isArray(report.ui_queue_unsettled_profiles)
+                    ? report.ui_queue_unsettled_profiles : []
                 root.uiQueueIdleLegacyStopAvailable =
                     report.ui_queue_idle_legacy_stop_available === true
                 root.uiQueueFirstTask = (root.uiQueueStartAvailable || root.uiQueueStageAvailable)
@@ -847,6 +896,10 @@ ContentPage {
                 root.backendTransportReady = false
                 root.uiQueueStartAvailable = false
                 root.uiQueueStageAvailable = false
+                root.uiQueueBridgeRecoverAvailable = false
+                root.uiQueueBridgeRecoverConfirmation = false
+                root.uiQueueUnsettledProfiles = []
+                root.uiQueueBridgeExitStatus = ""
                 root.uiQueueIdleLegacyStopAvailable = false
                 root.uiQueueIdleLegacyStopConfirmation = false
                 root.uiQueueFirstTask = ""
@@ -876,6 +929,12 @@ ContentPage {
                             root.resetChatConfirmation = false
                             root.resetChatTarget = ""
                         }
+                    }
+                    if (root.uiQueueBridgeRecoverConfirmation
+                            && (root.uiQueueBridgeRecoverSnapshotId !== (result.snapshot_id || "")
+                                || result.state !== "prepared")) {
+                        root.uiQueueBridgeRecoverConfirmation = false
+                        root.uiQueueBridgeRecoverSnapshotId = ""
                     }
                     if (root.uiQueueIdleLegacyStopConfirmation
                             && (root.uiQueueIdleLegacyStopSnapshotId !== (result.snapshot_id || "")
@@ -957,6 +1016,10 @@ ContentPage {
                 } else if (root.queueOperation === "stop-idle-legacy") {
                     root.statusText = Translation.tr("Idle legacy schedule stopped · previous chats and receipts preserved")
                     Qt.callLater(root.refreshBackendStatus)
+                } else if (root.queueOperation === "recover-bridge") {
+                    root.statusText = Translation.tr("Queue-only Bridge start requested · verify actual service state. Original pending message remains untouched.")
+                    Qt.callLater(root.refreshBackendStatus)
+                    Qt.callLater(root.refreshQueue)
                 } else if (root.queueOperation === "clear")
                     root.statusText = result.cleared
                         ? result.state === "empty"
@@ -1479,6 +1542,16 @@ ContentPage {
                     onClicked: root.stopQueue()
                 }
                 DialogButton {
+                    objectName: "automationRecoverUiBridge"
+                    buttonText: root.uiQueueBridgeRecoverConfirmation
+                        ? Translation.tr("Confirm recovery") : Translation.tr("Recover Bridge")
+                    visible: root.uiQueueBridgeRecoverAvailable
+                        && !!root.queueSnapshot && root.queueSnapshot.state === "prepared"
+                    enabled: !root.busy && root.queueStatusConfirmed
+                        && root.uiQueueBridgeRecoverAvailable
+                    onClicked: root.recoverFailedBridge()
+                }
+                DialogButton {
                     objectName: "automationStopIdleLegacy"
                     buttonText: root.uiQueueIdleLegacyStopConfirmation
                         ? Translation.tr("Confirm legacy Stop")
@@ -1550,6 +1623,7 @@ ContentPage {
                         || root.uiQueueStartConfirmation
                         || root.uiQueueStageConfirmation
                         || root.uiQueueIdleLegacyStopConfirmation
+                        || root.uiQueueBridgeRecoverConfirmation
                         || root.resetChatConfirmation)
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
