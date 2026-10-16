@@ -1,0 +1,29 @@
+{
+  "schema": "alis.quota-stop-evidence.v1",
+  "primary_used_percent": 97,
+  "weekly_used_percent": 93,
+  "resets_at": 1792159667,
+  "resume_after_reset_unix": 1792159727,
+  "source_head_before_evidence": "b24fa9cfd9e7680647f45ebda63788555a6bca85",
+  "focused_sha": "54f98dc593a72fd39ce2b0575d1332d13ec21fa7",
+  "focused_counts": {
+    "PASS": 54,
+    "FAIL": 0
+  },
+  "canonical_receipt": "maintainer-54f98dc59-quota-stopped.json",
+  "whole_qualification": "STOPPED; not full PASS; latest merged Notes source36e8879fe formal new job UNRUN",
+  "owned_remaining_after_exit": [],
+  "owned_ui_idle": true,
+  "bridge_main_pid": 0,
+  "bridge_actual_exit": {
+    "ExecMainCode": 1,
+    "ExecMainStatus": 75
+  },
+  "queue_state": "stopping",
+  "active_task": "NOTES-F01",
+  "original_ui_turn_pending": true,
+  "ui_completed_iterations": 5,
+  "original_pending_not_replayed": true,
+  "owner_verification": "pending",
+  "next_blocker": "Integrate and qualify read-only history continuity witness, then reconcile original sixth turn before a distinct reviewed repair handoff. Private diagnostic observed a stable terminal candidate but manager accepted no receipt."
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "alis.private-history-diagnostic.v1",
+  "original_anchor_restored": true,
+  "same_project_row_and_thread_region": true,
+  "frozen_latest_prompt_unique": true,
+  "stable_response": true,
+  "marker_count": 1,
+  "manager_accepted": false,
+  "send_attempted": false,
+  "scope": "read-only diagnostic candidate, no manager receipt or completion accepted",
+  "response_sha256": "cee6761cfa0390e0d8f52509437cb83b2c1533693d9ca5a16a6eb1f3b79b2ef4",
+  "source_sha": "54f98dc593a72fd39ce2b0575d1332d13ec21fa7",
+  "actual_exit": 0,
+  "history_scroll": "column-reverse: negative scrollHeight for oldest, zero for newest",
+  "remaining_gate": "Production observer must retain a checked ephemeral UI row/thread witness across history scrolling, reject foreign/detached/reordered turns, and pass scoped regressions before reconciliation of the original pending turn. This diagnostic alone does not authorize replacement handoff or next job."
+}
