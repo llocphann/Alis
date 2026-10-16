@@ -461,6 +461,108 @@ def reconcile_pending(profile_id: str, *, chat_label: str | None = None,
         return "ui_reconciled_" + status
 
 
+def reconcile_interrupted_pending(profile_id: str, *, approved=False, observer=None) -> str:
+    """Owner-stopped delivery is a terminal interruption, never task success.
+
+    Observe the full original input and previously bound local UI anchor.
+    No Send, queue admission, worker replay or native attestation is granted.
+    A durable witness permits finishing journal archival after a crash without
+    observing/sending again or counting delivery twice.
+    """
+    if approved is not True:
+        raise RuntimeError("ALIS_UI_INTERRUPTION_APPROVAL_REQUIRED")
+    from automation.chat_bridge.send_journal import acknowledge_interrupted
+    def digest(value):
+        return hashlib.sha256(json.dumps(value, sort_keys=True,
+            separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
+    def witness_path(attempt):
+        if not isinstance(attempt, str) or str(uuid.UUID(attempt)) != attempt:
+            raise RuntimeError("ALIS_UI_INTERRUPTION_IDENTITY_INVALID")
+        return store.state_dir() / "ui-interrupted" / profile_id / (attempt + ".json")
+    with runtime.lock_path().open("a+") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return "manager_busy"
+        config, state, issues = store.read_snapshot()
+        if issues:
+            raise RuntimeError("ALIS_UI_INVALID_CONFIGURATION")
+        _, item = _owner(config, state, profile_id, allow_journal=True)
+        if item.get("desired") != "stopped" or item.get("run_active") or item.get("job_id"):
+            raise RuntimeError("ALIS_UI_STOPPED_OWNER_REQUIRED")
+        path = store.state_dir() / "ui-send-journal/pending.json"
+        pending = item.get("pending")
+        if pending is None:
+            failed = item.get("failed_turn") or {}
+            if (failed.get("transport") != UI_TRANSPORT
+                    or failed.get("outcome") != "interrupted_delivered"):
+                raise RuntimeError("ALIS_UI_ORIGINAL_INTERRUPTION_REQUIRED")
+            evidence_path = witness_path(failed.get("ui_attempt_id"))
+            if evidence_path.is_symlink() or evidence_path.stat().st_size > 500000:
+                raise RuntimeError("ALIS_UI_INTERRUPTION_WITNESS_INVALID")
+            evidence = json.loads(evidence_path.read_text())
+            if digest(evidence) != failed.get("receipt_sha256"):
+                raise RuntimeError("ALIS_UI_INTERRUPTION_WITNESS_INVALID")
+            acknowledge_interrupted(path, failed["journal_attempt_id"],
+                                    failed["prompt_sha256"], proof_sha256=failed["receipt_sha256"])
+            return "ui_interrupted_already_recorded"
+        if (not isinstance(pending, dict) or pending.get("transport") != UI_TRANSPORT
+                or pending.get("kind") not in {"initial", "continuation", "rotation"}
+                or not isinstance(pending.get("prompt"), str) or not callable(observer)):
+            raise RuntimeError("ALIS_UI_ORIGINAL_OBSERVATION_REQUIRED")
+        prompt = pending["prompt"]
+        prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()
+        target = (item.get("session") or {}).get("ui_target_key")
+        if (pending.get("prompt_sha256") != prompt_hash or len(prompt) > PRIVATE_RESPONSE_LIMIT
+                or not isinstance(target, str) or len(target) != 64):
+            raise RuntimeError("ALIS_UI_ORIGINAL_PROMPT_CHANGED")
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > 4096:
+            raise RuntimeError("ALIS_UI_ORIGINAL_JOURNAL_REQUIRED")
+        journal = json.loads(path.read_text())
+        witness_path(journal.get("id"))  # Validate before changing manager state.
+        command = "send" if pending.get("kind") == "continuation" else "rotate-send"
+        if (journal.get("schema") != "alis.chat-ui-send.v1" or journal.get("phase") != "attempted"
+                or journal.get("command") != command or journal.get("prompt_sha256") != prompt_hash):
+            raise RuntimeError("ALIS_UI_ORIGINAL_JOURNAL_MISMATCH")
+        payload = observer("observe-submitted", prompt, target_key=target)
+        text = runtime.extract_response_text(payload)
+        if (payload.get("completed") is not False or payload.get("delivery_observed") is not True
+                or payload.get("idle_observed") is not True
+                or payload.get("attestation") != "local-ui-user-turn-v1"
+                or payload.get("prompt_sha256") != prompt_hash or payload.get("ui_target_key") != target
+                or payload.get("response", {}).get("extractionSignal") != "submitted-user-turn-assistant"
+                or payload.get("response", {}).get("markerCount") != 0
+                or "ALIS_LOOP:" in text or "HADALIS_LOOP:" in text or len(text) > PRIVATE_RESPONSE_LIMIT):
+            raise RuntimeError("ALIS_UI_INTERRUPTED_DELIVERY_UNVERIFIED")
+        evidence = {"schema": "alis.ui-interrupted-delivery.v1", "pending": pending,
+                    "journal": journal, "observation": payload,
+                    "reason": "Owner-requested stop; completion unverified"}
+        proof = digest(evidence)
+        store._write(witness_path(pending["attempt_id"]), evidence)
+        def retire(_config, current_state):
+            current = current_state["profiles"].get(profile_id)
+            if (not current or current.get("pending") != pending
+                    or current.get("desired") != "stopped" or current.get("run_active")):
+                return False
+            current.update(pending=None, status="ui_interrupted_delivered", run_active=False,
+                prompts_sent=current["prompts_sent"] + 1,
+                last_error="Original delivery observed; interrupted, not completed",
+                failed_turn={"transport": UI_TRANSPORT, "outcome": "interrupted_delivered",
+                    "ui_attempt_id": pending["attempt_id"], "journal_attempt_id": journal["id"],
+                    "prompt_sha256": prompt_hash, "receipt_sha256": proof},
+                checkpoint={"phase": "interrupted-delivered", "summary":
+                    "Prior turn was delivered and intentionally stopped. No completion accepted.",
+                    "next": "Inspect canonical GitHub HEAD and earlier source effects before any distinct continuation; never replay the stopped prompt or approved job.",
+                    "evidence_ids": []})
+            store.event(current_state, profile_id, "ui_interrupted_delivery",
+                        "Original intent archived; no success or queue advance")
+            return True
+        if not store.change_state(retire):
+            return "owner_changed_after_observation"
+        acknowledge_interrupted(path, journal["id"], prompt_hash, proof_sha256=proof)
+        return "ui_interrupted_delivered"
+
+
 def queue_tick(*, now: int | None = None, desktop=None) -> str:
     """Admit only the owner-approved, exact active ordered queue member.
 

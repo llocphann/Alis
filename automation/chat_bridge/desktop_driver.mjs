@@ -127,14 +127,14 @@ export async function uiTargetIdentity(page) {
   return source;
 }
 
-async function submittedUnits(page) {
-  return page.locator('[data-chatgpt-search-unit-key$=":user"]').evaluateAll(nodes=>
-    nodes.map(node=>({text:node.innerText,
+async function submittedUnits(page,items=null) {
+  items??=await visibleItems(page.locator('[data-chatgpt-search-unit-key$=":user"]'));
+  return Promise.all(items.map(item=>item.evaluate(node=>({text:node.innerText,
       turn_key:node.closest('[data-turn-key]')?.getAttribute('data-turn-key'),
       message_id:node.getAttribute('data-chatgpt-search-message-ids'),
       inline_code:[...node.querySelectorAll('code')].map(n=>n.textContent),
       expand_control:[...node.querySelectorAll('button')].some(b=>
-        /^Show (more|less)$/.test(b.innerText.trim()))})));
+        /^Show (more|less)$/.test(b.innerText.trim()))}))));
 }
 
 export async function uiOnlyTurnIdentity(page,{initialPrompt=null}={}) {
@@ -161,16 +161,21 @@ export async function resumeUiChat(page,label,{targetKey=null,initialPrompt=null
   if(!await matches())throw Error('ALIS_UI_RESUME_TARGET_MISMATCH');
 }
 
-export async function observeSubmittedPrompt(page,prompt,{targetKey=null}={}) {
+export async function observeSubmittedPrompt(page,prompt,{targetKey=null,archivedReadOnly=false}={}) {
+  // An archived chat has no selected Project row. Observation alone may use
+  // a previously bound first-turn hash; this never grants composer access.
+  if(archivedReadOnly&&(typeof targetKey!=='string'||!/^[0-9a-f]{64}$/.test(targetKey)))
+    throw Error('ALIS_UI_ARCHIVE_REQUIRES_ORIGINAL_TARGET');
   async function sample() {
-    await verifyProject(page);
-    const units=await submittedUnits(page);
+    if(!archivedReadOnly)await verifyProject(page);
+    const items=await visibleItems(page.locator('[data-chatgpt-search-unit-key$=":user"]'));
+    const units=await submittedUnits(page,items);
     const source=uiAnchorSource(PROJECT_NAME,units);
     const key=createHash('sha256').update(source).digest('hex');
     if(targetKey!==null&&targetKey!==key)throw Error('ALIS_UI_TARGET_CHANGED_NO_SEND');
     const {index}=matchingSubmittedUnit(units,prompt);
     if(index!==units.length-1)throw Error('ALIS_UI_LATER_USER_TURN_REQUIRES_REVIEW');
-    const unit=page.locator('[data-chatgpt-search-unit-key$=":user"]').nth(index);
+    const unit=items[index];
     const result=await unit.evaluate(node=>{
       const turn=node.closest('[data-turn-key]');
       const assistants=[...turn.querySelectorAll('[data-chatgpt-search-unit-key$=":assistant"]')];
@@ -184,20 +189,22 @@ export async function observeSubmittedPrompt(page,prompt,{targetKey=null}={}) {
     return {key,...result,stops};
   }
   const first=await sample();
-  if(first.stops||!first.assistant_count||!first.action_count)return {completed:false};
+  if(first.stops||!first.assistant_count||(!archivedReadOnly&&!first.action_count))return {completed:false};
   await sleep(450);
   const second=await sample();
   if(JSON.stringify(first)!==JSON.stringify(second)||second.stops)return {completed:false};
   const markers=scanLoopMarkerTokens(second.text);
-  if(markers.length!==1||/error in message stream|there was an error generating a response/i.test(second.text))
+  const complete=second.action_count>0&&markers.length===1&&!/error in message stream|there was an error generating a response/i.test(second.text);
+  if(!complete&&!(archivedReadOnly&&markers.length===0))
     throw Error('ALIS_UI_ORIGINAL_ASSISTANT_FINAL_UNVERIFIED');
   if(second.text.length>120000)throw Error('ALIS_UI_RESPONSE_EXCEEDS_BOUND');
-  return {completed:true,attestation:'local-ui-user-turn-v1',
+  return {completed:complete,delivery_observed:true,idle_observed:true,
+    attestation:'local-ui-user-turn-v1',
     prompt_sha256:createHash('sha256').update(prompt).digest('hex'),
     ui_target_key:second.key,
-    ui_chat_label:await page.getByRole('list',{name:`Chats in ${PROJECT_NAME}`,exact:true})
+    ui_chat_label:archivedReadOnly?null:await page.getByRole('list',{name:`Chats in ${PROJECT_NAME}`,exact:true})
       .locator('[role="button"][aria-current="page"]').getAttribute('aria-label'),
-    response:{text:second.text,markerCount:1,
+    response:{text:second.text,markerCount:markers.length,
       extractionSignal:'submitted-user-turn-assistant'}};
 }
 

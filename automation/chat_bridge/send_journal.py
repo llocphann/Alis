@@ -127,3 +127,45 @@ def acknowledge_not_sent(pending: Path, attempt: str, digest: str,
     from automation.manager.store import _write
     _write(destination, {**record, "outcome": "not_sent", "evidence": evidence,
                          "delivery_acknowledged": False})
+
+
+def acknowledge_interrupted(pending: Path, attempt: str, digest: str,
+                            *, proof_sha256: str) -> None:
+    """Archive observed delivery interrupted by Owner, never a completed turn.
+
+    A manager receipt must already bind the original full input/target. Write
+    the durable tombstone before removing pending so interrupted cleanup can
+    finish without replaying a Send or incrementing counters twice.
+    """
+    if (not isinstance(attempt, str) or str(uuid.UUID(attempt)) != attempt
+            or any(not isinstance(v, str) or len(v) != 64
+                   or any(c not in "0123456789abcdef" for c in v)
+                   for v in (digest, proof_sha256))):
+        raise ValueError("Invalid interrupted identity")
+    folder = _private_directory(pending.parent)
+    if pending.name != "pending.json" or pending.is_symlink():
+        raise RuntimeError("ALIS_UI_SEND_JOURNAL_MISMATCH")
+    archive = _private_directory(folder / "interrupted")
+    destination = archive / (attempt + ".json")
+    expected = {"outcome": "interrupted_delivered", "proof_sha256": proof_sha256,
+                "delivery_acknowledged": True, "completion_acknowledged": False}
+    if destination.is_symlink():
+        raise RuntimeError("ALIS_UI_INTERRUPTED_TOMBSTONE_CONFLICT")
+    old = json.loads(destination.read_text()) if destination.exists() else None
+    if old is not None and (not isinstance(old, dict) or old.get("id") != attempt
+            or old.get("schema") != SCHEMA or old.get("prompt_sha256") != digest
+            or any(old.get(k) != v for k, v in expected.items())):
+        raise RuntimeError("ALIS_UI_INTERRUPTED_TOMBSTONE_CONFLICT")
+    if not pending.exists():
+        if old is not None:
+            return
+        raise RuntimeError("ALIS_UI_ORIGINAL_JOURNAL_REQUIRED")
+    record = json.loads(pending.read_text())
+    if (not isinstance(record, dict) or record.get("schema") != SCHEMA
+            or record.get("id") != attempt or record.get("phase") != "attempted"
+            or record.get("prompt_sha256") != digest):
+        raise RuntimeError("ALIS_UI_SEND_JOURNAL_MISMATCH")
+    from automation.manager.store import _write
+    _write(destination, {**record, **expected})
+    pending.unlink()
+    _sync_directory(folder)
