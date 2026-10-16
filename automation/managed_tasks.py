@@ -177,11 +177,29 @@ def stage_ui_queue(*, approved: bool = False,
         if expected_first != identity:
             raise tf.TaskError("Queue first task changed; refresh before UI staging")
         report = ui_preflight.check_prepared_queue()
-        allowed = {"TASKFLOW_PROFILE_NOT_MATERIALIZED",
-                   "UI_TASK_QUEUE_INTEGRATION_NOT_ACCEPTED"}
+        # An already-running *queue-only UI* daemon cannot send from a
+        # prepared queue. Staging an idle task profile is safe and does not
+        # restart that daemon, grant Start consent or touch any pending job.
+        # Never allow the same step against an active native/profile daemon.
+        service = (report.get("service_state"),
+                   report.get("installed_service_mode"))
+        if service == ("active", "ui_queue_mode"):
+            allowed = {"TASKFLOW_PROFILE_NOT_MATERIALIZED",
+                       "SCHEDULER_CUTOVER_NOT_READY",
+                       "UI_QUEUE_OWNER_ACCEPTANCE_REQUIRED"}
+        elif (service[0] == "inactive"
+              and service[1] in {"native_mode", "ui_mode", "ui_queue_mode"}):
+            allowed = {"TASKFLOW_PROFILE_NOT_MATERIALIZED",
+                       "UI_TASK_QUEUE_INTEGRATION_NOT_ACCEPTED"}
+        else:
+            raise tf.TaskError(
+                "UI Queue profile staging requires an inactive manager "
+                "or a running queue-only UI manager")
         if (report.get("queue_state") != "prepared"
                 or report.get("first_task_code") != first["code"]
                 or report.get("queue_item_count") != len(items)
+                or "TASKFLOW_PROFILE_NOT_MATERIALIZED"
+                    not in report.get("preflight_blockers", [])
                 or any(blocker not in allowed for blocker in
                        report.get("preflight_blockers", []))):
             raise tf.TaskError("UI Queue staging blocked by unsettled manager or service")
