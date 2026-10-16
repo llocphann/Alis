@@ -239,9 +239,9 @@ class UiSchedulerTests(TestCase):
         current = self.item()
         self.assertEqual(current["job_id"], "JOB-UNCHANGED")
         self.assertEqual(current["status"], "waiting_result_stalled")
-        self.assertEqual(current["next_job_poll_at_unix"], 1245)
+        self.assertEqual(current["next_job_poll_at_unix"], 1225)
         with patch.object(daemon, "job_result", return_value=None):
-            self.assertEqual(ui_scheduler.ui_tick(ID, now=1244,
+            self.assertEqual(ui_scheduler.ui_tick(ID, now=1224,
                     desktop=lambda *_a, **_k: self.fail("no send")),
                     "waiting_result")
         self.assertEqual(self.item()["job_id"], "JOB-UNCHANGED")
@@ -249,7 +249,7 @@ class UiSchedulerTests(TestCase):
                  "status": "passed", "input_sha256": "a" * 64,
                  "actions": []}
         with patch.object(daemon, "job_result", return_value=owned):
-            self.assertEqual(ui_scheduler.ui_tick(ID, now=1245,
+            self.assertEqual(ui_scheduler.ui_tick(ID, now=1225,
                     desktop=lambda *_a, **_k: self.fail("no send")),
                     "waiting_result")
         self.assertIsNone(self.item()["job_id"])
