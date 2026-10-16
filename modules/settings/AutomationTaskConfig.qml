@@ -104,6 +104,8 @@ ContentPage {
         if (root.uiQueueStageAvailable)
             return Translation.tr("Prepare UI creates an idle task profile; after readiness refresh, confirm Start UI separately. No message is sent by Prepare.")
         const blockers = root.uiQueuePreflightBlockers || []
+        if (blockers.includes("TASKFLOW_PROFILE_NOT_IDLE"))
+            return Translation.tr("Start blocked: the task profile retains a running state, UI session, original pending send or job. Reconcile the original evidence; do not create a duplicate task.")
         if (blockers.includes("FOREIGN_PROFILE_UNSETTLED")
                 || blockers.includes("NATIVE_SESSION_REQUIRES_REVIEW"))
             return Translation.tr("Start blocked: a previous profile/session or job requires evidence reconciliation. Do not reset or replay it.")
