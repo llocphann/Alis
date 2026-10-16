@@ -531,12 +531,21 @@ def approve_cloud_start() -> dict:
 
 
 def request_stop(*, approved: bool = False,
-                 expected_active: str = "") -> dict:
+                 expected_active: str = "",
+                 expected_snapshot_id: str | None = None) -> dict:
     """Stop scheduling first; no running action is killed or forgotten."""
     if approved is not True:
         raise tf.TaskError("Explicit Stop Queue confirmation required")
+    if expected_snapshot_id is not None and (
+            not isinstance(expected_snapshot_id, str)
+            or re.fullmatch(r"[a-f0-9]{64}", expected_snapshot_id) is None):
+        raise tf.TaskError("Invalid Stop Queue snapshot identity")
     with _lock():
         manifest = _load()
+        if (expected_snapshot_id is not None
+                and (manifest is None
+                     or _snapshot_id(manifest) != expected_snapshot_id)):
+            raise tf.TaskError("Queue changed since Stop confirmation; refresh")
         if not manifest or manifest.get("state") not in {"active", "stopping", "waiting"}:
             raise tf.TaskError("Queue is not active or selecting")
         active = manifest.get("active")
