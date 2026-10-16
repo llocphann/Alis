@@ -89,6 +89,7 @@ ContentPage {
     property var uiQueuePreflightBlockers: []
     property var uiQueueProfileCounts: ({})
     property var uiQueueUnsettledProfiles: []
+    property var uiQueuePendingRecoveryPreview: ({})
     property string uiQueueBridgeExitStatus: ""
     property string uiQueueServiceMode: ""
     property string uiQueueServiceState: ""
@@ -138,6 +139,17 @@ ContentPage {
         if (blockers.includes("TASKFLOW_PROFILE_NOT_MATERIALIZED"))
             return Translation.tr("Start blocked: task profile staging is unavailable. Check other manager profiles and Refresh.")
         return Translation.tr("Start blocked by UI Queue preflight. Check the saved queue and backend status before retrying.")
+    }
+    readonly property string pendingRecoveryGuidance: {
+        const q = root.queueSnapshot
+        const preview = root.uiQueuePendingRecoveryPreview || ({})
+        if (!root.queueStatusConfirmed || !q || !q.active
+                || !["stopping", "stopped"].includes(q.state)
+                || preview.active_code !== q.active.code)
+            return ""
+        if (preview.read_only_observation_candidate === true)
+            return Translation.tr("Original UI turn preserved for %1. Read-only observation prerequisites are present, but live chat history continuity, terminal receipt and Owner verification are still REQUIRED. Do not resend, resume or advance the queue.").arg(q.active.code)
+        return Translation.tr("Original UI recovery for %1 remains blocked: %2. Preserve its journal, pending message and worker receipts; inspect backend-status without replay.").arg(q.active.code).arg(preview.reason || "PREVIEW_NOT_READY")
     }
     property var activitySnapshot: null
     property string historyError: ""
@@ -874,6 +886,9 @@ ContentPage {
                     ? services.bridge.exit_status : ""
                 root.uiQueueUnsettledProfiles = Array.isArray(report.ui_queue_unsettled_profiles)
                     ? report.ui_queue_unsettled_profiles : []
+                root.uiQueuePendingRecoveryPreview = report.ui_queue_pending_recovery_preview
+                    && typeof report.ui_queue_pending_recovery_preview === "object"
+                    ? report.ui_queue_pending_recovery_preview : ({})
                 root.uiQueueIdleLegacyStopAvailable =
                     report.ui_queue_idle_legacy_stop_available === true
                 root.uiQueueFirstTask = (root.uiQueueStartAvailable || root.uiQueueStageAvailable)
@@ -899,6 +914,7 @@ ContentPage {
                 root.uiQueueBridgeRecoverAvailable = false
                 root.uiQueueBridgeRecoverConfirmation = false
                 root.uiQueueUnsettledProfiles = []
+                root.uiQueuePendingRecoveryPreview = ({})
                 root.uiQueueBridgeExitStatus = ""
                 root.uiQueueIdleLegacyStopAvailable = false
                 root.uiQueueIdleLegacyStopConfirmation = false
@@ -1596,6 +1612,14 @@ ContentPage {
                                     item.state === "queued" && item.code === root.uiQueueFirstTask)))
                     onClicked: root.startQueue()
                 }
+            }
+
+            StyledText {
+                visible: root.pendingRecoveryGuidance.length > 0
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: Appearance.colors.colSubtext
+                text: root.pendingRecoveryGuidance
             }
 
             StyledText {
