@@ -29,6 +29,10 @@ CHOICE_ID = re.compile(r"^[A-Za-z0-9_.:-]{8,160}$")
 # scheduler authorization. Every unknown state requires reconciliation.
 RECOVERY_HINTS = {
     "source_pin_unverified": ("recheck_original_git_ancestry", False),
+    # Old queue manifests used this unverified reason for every advancing
+    # dev HEAD, including tasks whose actual saved work requires ACK/review.
+    # Reclassify ONLY after explicit owner Recheck; a status poll is read-only.
+    "source_pin_changed": ("recheck_legacy_queue_reason", False),
     "cloud_ack_pending": ("reconcile_original_cloud_delivery", True),
     "owner_review_pending": ("await_owner_verification", True),
     "previous_dispatch_unsettled": ("reconcile_original_job", True),
@@ -198,7 +202,8 @@ def _verified_ancestor_pin(repo: str, original: str, current: str,
 
 def prepare(raw: str, mode: str = "ordered",
             resolver: Callable[[str], dict] = tf.resolve,
-            comparison_api: Callable[[str], object] | None = None) -> dict:
+            comparison_api: Callable[[str], object] | None = None,
+            expected_snapshot_id: str | None = None) -> dict:
     """Resolve ALL canonical Issues before writing any queue state.
 
     The queue is single-active and serial, never silently replaced while work
@@ -206,6 +211,10 @@ def prepare(raw: str, mode: str = "ordered",
     """
     if mode not in MODES:
         raise tf.TaskError("Unsupported scheduling mode")
+    if expected_snapshot_id is not None and (
+            not isinstance(expected_snapshot_id, str)
+            or re.fullmatch(r"[a-f0-9]{64}", expected_snapshot_id) is None):
+        raise tf.TaskError("Invalid queue Recheck identity")
     inputs = parse_codes(raw)
     # A durable queue may already be running while the Settings page refreshes.
     # Check it before contacting GitHub: retrying the same UI input must not
@@ -213,6 +222,10 @@ def prepare(raw: str, mode: str = "ordered",
     # under the lock below after resolving a genuinely new queue.
     with _lock():
         existing = _load()
+        if (expected_snapshot_id is not None
+                and (existing is None
+                     or _snapshot_id(existing) != expected_snapshot_id)):
+            raise tf.TaskError("Queue changed since Recheck; refresh")
         if existing and existing.get("state") not in {"finished", "cancelled"}:
             same = (existing["mode"] == mode and
                     (existing.get("requested") == inputs or (
@@ -246,6 +259,10 @@ def prepare(raw: str, mode: str = "ordered",
         raise tf.TaskError("Issue is not pinned to an authorized repository")
     with _lock():
         current = _load()
+        if (expected_snapshot_id is not None
+                and (current is None
+                     or _snapshot_id(current) != expected_snapshot_id)):
+            raise tf.TaskError("Queue changed during Recheck; refresh")
         if current and current.get("state") not in {"finished", "cancelled"}:
             same = (current["mode"] == mode and
                     (current.get("requested") == inputs or
@@ -341,6 +358,58 @@ def prepare(raw: str, mode: str = "ordered",
         }
         _save(manifest)
         return {**view(manifest), "duplicate": False}
+
+
+def recheck_review_queue(*, expected_snapshot_id: str,
+                         resolver: Callable[[str], dict] = tf.resolve,
+                         comparison_api: Callable[[str], object] | None = None) -> dict:
+    """Explicitly reclassify a fully parked OLD queue, without a replay.
+
+    Never reset, re-pin, clear, verify, publish or claim an existing task.
+    Every original saved Issue is required to exist so rechecking cannot
+    generate fresh intakes in place of an old original worker receipt.
+    """
+    if (not isinstance(expected_snapshot_id, str)
+            or re.fullmatch(r"[a-f0-9]{64}", expected_snapshot_id) is None):
+        raise tf.TaskError("Invalid queue Recheck identity")
+    with _lock():
+        saved = _load()
+        if saved is None or _snapshot_id(saved) != expected_snapshot_id:
+            raise tf.TaskError("Queue changed since Recheck; refresh")
+        if (saved.get("state") != "review_required"
+                or saved.get("active") is not None
+                or saved.get("selection") is not None
+                or saved.get("approved_start")
+                or not saved.get("items")
+                or any(not isinstance(item, dict)
+                       or item.get("state") != "deferred"
+                       for item in saved["items"])):
+            raise tf.TaskError("Only a fully parked, inactive queue can be rechecked")
+        requested = saved.get("requested")
+        if (not isinstance(requested, list)
+                or len(requested) != len(saved["items"])
+                or any(not isinstance(x, str) for x in requested)
+                or parse_codes(";".join(requested)) != requested):
+            raise tf.TaskError("Original queue request unavailable; inspect history")
+        for item in saved["items"]:
+            code, repository = item.get("code"), item.get("repository")
+            if (repository not in tf.REPOSITORIES
+                    or not isinstance(code, str)
+                    or tf.CODE.fullmatch(code) is None):
+                raise tf.TaskError("Saved queue task identity requires review")
+            # A source-only recheck must never accidentally create a new
+            # task record where an earlier receipt file went missing.
+            location = tf._task_path(code, repository)
+            if location.is_symlink() or not location.is_file():
+                raise tf.TaskError("Original task record missing; no Recheck")
+            tf.load_task(code, repository)
+        raw, mode = ";".join(requested), saved["mode"]
+    result = prepare(raw, mode=mode, resolver=resolver,
+                     comparison_api=comparison_api,
+                     expected_snapshot_id=expected_snapshot_id)
+    if result.get("duplicate"):
+        raise tf.TaskError("Queue changed during Recheck; refresh")
+    return {**result, "rechecked": True, "auto_discovered": False}
 
 
 def view(manifest: dict | None = None) -> dict:
