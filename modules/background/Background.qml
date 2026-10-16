@@ -1590,7 +1590,6 @@ Scope {
                 id: desktopContextMenu
                 z: 27
                 anchorItem: desktopMenuAnchor
-                popupAbove: false
                 // Left as false: ContextMenu's own closeOnFocusLost backdrop
                 // (see the desktop MouseArea above) blocks clicks on the menu's
                 // own items on Niri. Left-click-to-close is handled by that
@@ -1675,7 +1674,6 @@ Scope {
                 id: desktopItemContextMenu
                 z: 27
                 anchorItem: desktopMenuAnchor
-                popupAbove: false
                 closeOnFocusLost: false
                 // Same click-initiated lifecycle as the bare-desktop menu.
                 // Do not let pointer transitions across edge gaps cancel it.
