@@ -260,7 +260,10 @@ QtObject {
         outputWidth: root.outputWidth
         outputHeight: root.outputHeight
         presented: root.presented
-        records: root.records
+        // Disabled Waves do not consume geometry. Keep the reactive
+        // subscription to per-frame panel records *off* until the simulation
+        // becomes active; enabling it restores the current full record list.
+        records: integrationAllowed ? root.records : []
     }
     readonly property int capacity: 40
     readonly property var records: moduleRecords.concat((() => {

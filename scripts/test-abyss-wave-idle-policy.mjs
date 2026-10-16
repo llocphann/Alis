@@ -8,6 +8,9 @@ import {fileURLToPath} from 'node:url';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const source=readFileSync(resolve(root,'modules/abyss/AbyssWaveController.qml'),'utf8');
+const controller=readFileSync(resolve(root,'modules/abyss/AbyssSurfaceController.qml'),'utf8');
+assert.ok(controller.includes('records: integrationAllowed ? root.records : []'),
+    'dormant solver must not observe 60 FPS presentation geometry');
 function method(name) {
     const signature='function '+name+'(): void {';
     const start=source.indexOf(signature);
