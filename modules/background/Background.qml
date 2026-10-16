@@ -1571,9 +1571,7 @@ Scope {
                         return
                     }
                     if (desktopItemContextMenu.active) desktopItemContextMenu.close()
-                    desktopMenuAnchor.x = mouse.x
-                    desktopMenuAnchor.y = mouse.y
-                    desktopContextMenu.requestOpen()
+                    desktopContextMenu.requestOpenAt(mouse.x, mouse.y)
                 }
             }
 
@@ -1600,6 +1598,11 @@ Scope {
                 // dismiss that menu even though the user never left it.
                 // Close on desktop left-click, action selection or Escape.
                 closeOnHoverLost: false
+                // Cursor-positioned desktop menus use only a quick fade, not slide/scale.
+                fadeOnly: true
+                scaleContent: false
+                fadeOutDuration: 90
+                fadeInDuration: 130
                 model: GlobalStates.widgetEditMode ? [
                     { text: Translation.tr("Manage widgets"), iconName: "tune", monochromeIcon: true,
                         action: () => { widgetManagerPanel.shown = true } },
@@ -1668,6 +1671,11 @@ Scope {
                 // Same click-initiated lifecycle as the bare-desktop menu.
                 // Do not let pointer transitions across edge gaps cancel it.
                 closeOnHoverLost: false
+                // Cursor-positioned desktop menus use only a quick fade, not slide/scale.
+                fadeOnly: true
+                scaleContent: false
+                fadeOutDuration: 90
+                fadeInDuration: 130
             }
 
             WidgetCanvas {
@@ -1756,10 +1764,8 @@ Scope {
                             const position = desktopItemDelegate.mapToItem(
                                 desktopMenuAnchor.parent, anchorX, anchorY)
                             if (desktopContextMenu.active) desktopContextMenu.close()
-                            desktopMenuAnchor.x = position.x
-                            desktopMenuAnchor.y = position.y
                             desktopItemContextMenu.model = menuModel
-                            desktopItemContextMenu.requestOpen()
+                            desktopItemContextMenu.requestOpenAt(position.x, position.y)
                         }
                         onContextMenuCloseRequested: {
                             if (desktopItemContextMenu.active)
