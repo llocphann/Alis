@@ -58,6 +58,10 @@ assert "if(action===\"showIcon\"" in layout
 # Existing corner fallback and explicit notification hotkey remain supported.
 assert "ModuleLayout.hasEnabledModule(" in corners
 assert "moduleAnchorMode: true" in module
+assert 'liquidPresentationKind: "notesTimers"' in module
+assert 'liquidPresentationKind: "notificationActivity"' in module
+assert 'presentationKind === "notesTimers"' in perimeter
+assert 'presentationKind === "notificationActivity"' in perimeter
 assert 'tangentEdgeOverride: root.moduleAnchorMode ? "" : "end"' in center
 assert "GlobalStates.notificationCenterExplicitOpen" in perimeter
 assert "NotificationCenterPopup {" in corners
