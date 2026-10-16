@@ -916,8 +916,11 @@ ContentPage {
                         : Translation.tr("Queue prepared")
                     Qt.callLater(root.refreshBackendStatus)
                 } else if (root.queueOperation === "start") {
-                    root.statusText = Translation.tr("Cloudbot launch requested")
+                    root.statusText = result.mode === "alis-ui-once"
+                        ? Translation.tr("UI Queue profile scheduled · awaiting manager; ChatGPT delivery not yet verified")
+                        : Translation.tr("Cloudbot queue launch requested · check manager status")
                     Qt.callLater(root.refreshQueue)
+                    Qt.callLater(root.refreshBackendStatus)
                 } else if (root.queueOperation === "status") {
                     Qt.callLater(root.refreshBackendStatus)
                     root.statusText = result.state === "active"
