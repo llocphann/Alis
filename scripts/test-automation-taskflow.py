@@ -213,6 +213,27 @@ class TaskflowTests(unittest.TestCase):
             self.assertEqual([x["code"] for x in prepared["items"]],
                              ["AUTO-R01", "ABYSS-R09"])
             self.assertEqual(prepared["mode"], "ordered")
+            if prepared["next"] is None:
+                rec = taskflow.load_task("AUTO-R01")
+                print("SAFE_PIN_DIAGNOSTIC", {
+                    "state": rec.get("status"),
+                    "cloud_prompt_matches": rec.get("cloud_prompt") ==
+                        taskflow.internal_prompt(rec["task"]),
+                    "saved_metadata_matches": all(rec["task"].get(k) == TASK.get(k)
+                        for k in ("code", "repository", "issue_number",
+                                  "branch", "issue_updated_at", "title", "body", "comments")),
+                    "undispatched": rec.get("scheduler_dispatched") is False,
+                    "unresolved_false": rec.get("unresolved") is False,
+                    "reports_empty": rec.get("reports") == [],
+                    "handoff_absent": rec.get("handoff") is None,
+                    "latest_receipt_absent": rec.get("latest_receipt") is None,
+                    "delivery_absent": rec.get("delivery_acknowledged_unix") is None,
+                    "retired_handoff_absent": rec.get("retired_handoff") is None,
+                    "rotation_absent": not rec.get("rotation"),
+                    "checkpoint_absent": not rec.get("checkpoint"),
+                    "job_absent": not rec.get("job_id"),
+                    "source_hex": bool(taskflow.SHA.fullmatch(rec["task"].get("base_sha", ""))),
+                })
             self.assertIsNotNone(prepared["next"], prepared)
             self.assertEqual(prepared["next"]["code"], "AUTO-R01")
             self.assertTrue(queue.prepare("AUTO-R01; ABYSS-R09", resolver=resolver)["duplicate"])
