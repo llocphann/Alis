@@ -103,19 +103,20 @@ Item {
             readonly property bool unifiedEdgeLauncher:
                 (module.kind === "notesTimers" || module.kind === "notificationActivity")
             readonly property bool hiddenEdgeLauncher:
-                module.unifiedEdgeLauncher && module.placement?.showIcon === false
+                module.unifiedEdgeLauncher && !module.showIcon
             readonly property bool moduleIconHitOnly:
                 module.unifiedEdgeLauncher && module.showIcon
             readonly property real moduleIconHitSize: Math.max(1,
                 Math.min(module.width,module.height,
                     30*Appearance.fontSizeScale*module.contentScale))
-            // Iconless mode still has one strictly bounded source hitbox at the
-            // literal physical edge, rather than an invisible full-width layer.
+            // Unified launchers always paint their icons while the module
+            // owns the source. Edgebar mode removes these live instances;
+            // there must never be an invisible module edge hover trigger.
             readonly property Region inputRegion: Region {
                 // Icon mode never captures a strip between the icon and
                 // physical edge. Only the actual circular launcher hits.
-                // An intentionally hidden icon retains the older edge-hover
-                // affordance and its bounded input bridge.
+                // The old iconless module fallback is no longer user-selectable:
+                // Settings "Show icon" off switches to a real legacy Edgebar.
                 x: module.moduleIconHitOnly
                     ? Math.floor(module.x+(module.width-module.moduleIconHitSize)/2)
                     : module.unifiedEdgeLauncher && module.attachedEdge === "left"
@@ -161,9 +162,10 @@ Item {
             outputName: root.outputName
             vertical: placement?.edge === "left" || placement?.edge === "right"
             compact: placement?.compact ?? false
-            showIcon: (!module.unifiedEdgeLauncher
-                || Layout.unifiedLauncherMode(root.launcherModes,module.kind) === "module")
-                && placement?.showIcon !== false
+            // No invisible module source: a unified launcher that survives
+            // livePlacements is in Module Icon mode and always paints its icon.
+            // Stale per-output showIcon=false remains stored for rollback only.
+            showIcon: module.unifiedEdgeLauncher ? true : placement?.showIcon !== false
             onNotesEditorFocusChanged: (outputName, focused) => root.notesEditorFocusChanged(outputName, focused)
             visible: geometry !== undefined && !geometry.capacityConflict
             enabled: !root.editing && visible
