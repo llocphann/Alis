@@ -71,6 +71,13 @@ require('root.resetChatConfirmation' in card,
         "Reset Chat must require an additional owner confirmation")
 require('root.chatResetNotice' in qml,
         "Reset request must appear in the compact Job Status")
+require("property string queuePrepareError" in qml,
+        "prepare errors must remain visible while queue status is refreshed")
+require("prepareFailureRefresh.restart()" in qml
+        and "root.refreshQueue()" in qml,
+        "after rejected task intake, refresh queue status read-only")
+require('root.errorText = root.queuePrepareError' in qml,
+        "status refresh must not erase task-conflict reason")
 require("root.stopAcknowledgementPending = true" in qml,
         "stop request must remain visibly pending until manager ack")
 require("root.stopAcknowledgementPending = false" in qml,
