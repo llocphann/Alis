@@ -693,6 +693,10 @@ Singleton {
                 }
                 property JsonObject modules: JsonObject {
                     property bool configured: false
+                    // Launch both converted Screen Edge affordances immediately;
+                    // saving an edited profile marks the corresponding migration.
+                    property bool autoUnifiedEdgeLaunchers: true
+                    property bool unifiedLaunchersConfigured: false
                     property list<var> placements: []
                     property list<var> outputLayouts: []
                     property real gap: 8
