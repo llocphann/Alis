@@ -427,6 +427,11 @@ ContentPage {
         if (reason === "already_completed") return Translation.tr("Completed")
         if (reason === "cloud_continuation_pending") return Translation.tr("Cloud pending")
         if (reason === "source_pin_changed") return Translation.tr("Pin changed")
+        if (reason === "source_pin_unverified") return Translation.tr("Pin unverified")
+        if (reason === "saved_work_requires_review") return Translation.tr("Review record")
+        if (reason === "previous_dispatch_unsettled") return Translation.tr("Job pending")
+        if (reason === "previous_receipt_exists") return Translation.tr("Receipt pending")
+        if (reason === "unresolved_work") return Translation.tr("Reconcile send")
         if (reason === "previous_handoff_pending") return Translation.tr("Handoff pending")
         return Translation.tr("Needs review")
     }
