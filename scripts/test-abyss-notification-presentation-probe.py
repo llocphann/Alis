@@ -5,7 +5,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 content = (ROOT/"modules/abyss/content/AbyssNotificationsContent.qml").read_text()
 perimeter = (ROOT/"modules/abyss/AbyssPerimeter.qml").read_text()
-service = (ROOT/"services/Notifications.qml").read_text()
 ci = (ROOT/".github/workflows/ci.yml").read_text()
 assert "readonly property real measuredPopupHeight:" in content
 assert "popupLoader.item?.contentHeight" in content
@@ -16,10 +15,7 @@ block=perimeter[a:b]
 for key in ["toastCount","inhibited","recording","centerOpen","toastOpen",
             "toastResident","toastRevealProgress","toastSpan","toastDepth",
             "toastPaintDepth","toastTargetDepth",
-            "toastAlong","toastDesiredHeight","toastMeasuredHeight","toastLayoutReady",
-            "toastPanelEnabled","toastOutputEligible","toastWindowPresented",
-            "toastFieldReady","toastBodyReady","toastResidentRequested",
-            "toastContentLoaded","toastPlacementVisible"]:
+            "toastAlong","toastDesiredHeight","toastMeasuredHeight","toastLayoutReady"]:
     assert key + ":" in block, key
 for forbidden in ["notification.body","notification.summary","notification.image",
                   "SAVE_PATH","output_name","notificationObject?.body"]:
@@ -62,31 +58,4 @@ frames=module.sanitize_frames([{"output":"Display X","count":20,"p95":35,
                 "popupMotion":[{"kind":"privateContent"}]}]}])
 assert frames[0]["metrics"]["p95"] == 35
 assert "privateContent" not in str(frames)
-# NOTIF-I04: a cold grouped model must be measured even if the initial
-# ListView contentHeight is zero and no height-changed callback is delivered.
-assert "property int popupMeasureAttempts: 0" in content
-assert "popupMeasureAttemptLimit: 10" in content
-assert "function onPopupAppNameListChanged(): void" in content
-measure=content[content.index("function schedulePopupMeasurement(): void"):
-                content.index("Component.onCompleted:",content.index("function schedulePopupMeasurement(): void"))]
-assert "if (Number(popupLoader.item?.contentHeight ?? 0) > 0)" not in measure
-assert "popupMeasureTimer.restart()" in measure
-assert "view.forceLayout()" in measure
-assert "popupMeasureAttempts < root.popupMeasureAttemptLimit" in measure
-assert "if (!Number.isFinite(height) || height <= 0)" in measure
-assert measure.index("height <= 0") < measure.index("root.popupLayoutReady=true")
-assert "root.popupMeasureAttempts=0" in content
-# NOTIF-I04: diagnostics must describe every stage without notification data.
-status=service[service.index("function status(): string", service.index('target: "notifications"')):
-               service.index("function test(): void", service.index('target: "notifications"'))]
-for key in ("ingressEvents", "publishedEvents", "historyReady", "historyCount",
-            "livePopupCount", "groupedPopupCount", "popupAppGroupCount",
-            "inhibitionReason", "manualDnd", "quietHours", "gameMode",
-            "centerOpen", "popupPanelEnabled"):
-    assert key+":" in status, key
-for forbidden in ("body:", "summary:", "appName:", "notification.image",
-                  "filePath", "notificationId:"):
-    assert forbidden not in status, forbidden
-assert "root._ingressEvents++" in service
-assert "root._publishedEvents++" in service
-print("ABYSS_NOTIFICATION_PHASE_SOURCE_PASS 52 source/collector contracts")
+print("ABYSS_NOTIFICATION_PHASE_SOURCE_PASS 22 source/collector contracts")

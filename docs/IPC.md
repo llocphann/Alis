@@ -712,7 +712,6 @@ Notification management.
 | Function | Description |
 |----------|-------------|
 | `test` | Send test notifications |
-| `status` | Read content-free ingress, popup grouping, DND/Quiet Hours and panel-gate diagnostic JSON (no notification text) |
 | `clearAll` | Dismiss all notifications |
 | `toggleSilent` | Toggle Do Not Disturb mode |
 

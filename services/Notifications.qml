@@ -27,12 +27,6 @@ Singleton {
     property bool _initialized: false
     property bool _historyReady: false
     property var _pendingIngress: []
-    // On-demand, content-free counters distinguish a D-Bus ingress failure
-    // from a policy or render suppression. Never persist or log payloads.
-    property int _ingressEvents: 0
-    property int _publishedEvents: 0
-    property double _lastIngressMs: 0
-    property double _lastPublishedMs: 0
     // Guard against re-entrant discardNotification calls (server dismiss → onNotificationChanged → discard again)
     property var _discardingIds: new Set()
 
@@ -447,8 +441,6 @@ Singleton {
         persistenceSupported: true
 
         onNotification: (notification) => {
-            root._ingressEvents++
-            root._lastIngressMs = Date.now()
             // Filter out niri screenshot notifications (TaskView preview captures)
             if (notification.appName === "niri" &&
                 (notification.summary?.toLowerCase().includes("screenshot") ||
@@ -495,8 +487,6 @@ Singleton {
             return
         }
         root.list = [...root.list, newNotifObject];
-        root._publishedEvents++
-        root._lastPublishedMs = Date.now()
 
         // Optional notification sound
         if ((Config.options?.sounds?.notifications ?? true) && !root.silent
@@ -770,36 +760,6 @@ Singleton {
 
     IpcHandler {
         target: "notifications"
-
-        // On-demand status without app names, notification text or payloads.
-        // Counts are per Quickshell session and reset on service recreation.
-        function status(): string {
-            return JSON.stringify({
-                historyReady: root._historyReady,
-                ingressEvents: root._ingressEvents,
-                publishedEvents: root._publishedEvents,
-                lastIngressAgeMs: root._lastIngressMs > 0
-                    ? Math.max(0, Date.now() - root._lastIngressMs) : -1,
-                lastPublishedAgeMs: root._lastPublishedMs > 0
-                    ? Math.max(0, Date.now() - root._lastPublishedMs) : -1,
-                pendingIngressCount: root._pendingIngress.length,
-                historyCount: root.list.length,
-                livePopupCount: root.list.filter(notif => notif?.popup).length,
-                groupedPopupCount: root.popupList.length,
-                popupAppGroupCount: root.popupAppNameList.length,
-                inhibited: root.popupInhibited,
-                inhibitionReason: root.notificationSurfaceOpen ? "notificationCenter"
-                    : root.notificationPolicyReason,
-                manualDnd: root.manualDndActive,
-                quietHours: root.quietHoursActive,
-                gameMode: root.gameModeSuppressionActive,
-                centerOpen: root.notificationSurfaceOpen,
-                family: String(Config.options?.panelFamily ?? ""),
-                popupPanelEnabled: (Config.options?.enabledPanels ?? []).includes(
-                    (Config.options?.panelFamily === "waffle")
-                        ? "wNotificationPopup" : "abyssNotificationPopup"),
-            })
-        }
 
         function test(): void {
             root.sendTestNotifications()
