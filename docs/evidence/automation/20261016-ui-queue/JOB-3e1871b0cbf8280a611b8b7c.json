@@ -1,0 +1,54 @@
+{
+  "id": "JOB-3e1871b0cbf8280a611b8b7c",
+  "sha256": "3e1871b0cbf8280a611b8b7c916141ff7adb9bf2ed44f610a27656654f58f6d1",
+  "source_sha": "86e90304dbf4af43293867c4daa624eb35f9b317",
+  "state": "failed",
+  "started_unix": 1792147251,
+  "finished_unix": 1792147251,
+  "continuation_ready": false,
+  "schema": "alis.local-test-evidence.v1",
+  "task": "NOTES-F01",
+  "repository": "llocphann/Alis",
+  "branch": "dev",
+  "intake_base_sha": "b3b66d4a22f220e3cf328ff5f549a8e5a8a0f72b",
+  "approval_mode": "Owner-authorized reviewed fixture auto-approval",
+  "scope": "isolated private-fixture job; stopped at first failing argv; later native tests UNRUN; no installed desktop/notes/vault mutation",
+  "steps": [
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "status": "PASS",
+      "redacted_bounded_excerpt_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-quick-notes-corner-contract.py"
+      ],
+      "exit_code": 1,
+      "status": "FAIL",
+      "redacted_bounded_excerpt_sha256": "960bd7a3a9ce733f412464f0fb0f6f9a18665df879bd582a5fedaeaa8f77565a"
+    }
+  ],
+  "failure": "Graceful slide-under popup close contract missing (root._gracefulDismissal = true)",
+  "unrun_steps": [
+    {
+      "argv": [
+        "python3",
+        "scripts/test-quick-notes-markdown-runtime.py"
+      ],
+      "status": "UNRUN"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-quick-notes-image-runtime.py"
+      ],
+      "status": "UNRUN"
+    }
+  ]
+}
