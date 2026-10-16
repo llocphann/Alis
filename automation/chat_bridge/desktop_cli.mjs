@@ -347,12 +347,21 @@ async function main() {
   }
 
   if (command === "send" || command === "rotate-send") {
-    if (command === "rotate-send")
-      page = await openHadalisNewChat(page);
+    const prompt = await readStdin();
+    if (!prompt.trim()) throw new Error("stdin prompt is empty");
+    const attempt=process.env.ALIS_UI_ATTEMPT_ID;
+    if (/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(attempt ?? ""))
+      dispatchIdentity={attempt_id:attempt,
+        prompt_sha256:createHash("sha256").update(prompt).digest("hex")};
+    const unowned=command === "rotate-send" &&
+      process.argv[3] === "--unowned-previous-chat";
+    try {
+      if (command === "rotate-send")
+        page = await openHadalisNewChat(page, {unownedPreviousChat:unowned});
 
     // For managed Alis UI mode, require same uniquely selected conversation
     // between turns. A missing/changed chat must block BEFORE composer.fill.
-    const expectedTarget = process.argv[3] || null;
+    const expectedTarget = unowned ? null : process.argv[3] || null;
     if (expectedTarget) {
       if (command !== "send" || !/^[0-9a-f]{64}$/.test(expectedTarget))
         throw new Error("ALIS_UI_TARGET_ARGUMENT_INVALID");
@@ -362,13 +371,11 @@ async function main() {
         throw new Error("ALIS_UI_TARGET_CHANGED_NO_SEND");
     }
 
-    const prompt = await readStdin();
-    if (!prompt.trim())
-      throw new Error("stdin prompt is empty");
-    const attempt=process.env.ALIS_UI_ATTEMPT_ID;
-    if (/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(attempt ?? ""))
-      dispatchIdentity={attempt_id:attempt,
-        prompt_sha256:createHash("sha256").update(prompt).digest("hex")};
+    } catch (error) {
+      error.uiSendAttempted=false;
+      error.uiFailureCode="ALIS_UI_PRE_SEND_FAILED";
+      throw error;
+    }
 
     const completionBaseline = await submitPrompt(page, prompt);
     const generation = await waitForCompletion(

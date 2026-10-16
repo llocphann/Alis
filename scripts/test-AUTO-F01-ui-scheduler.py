@@ -57,6 +57,10 @@ class UiSchedulerTests(TestCase):
         sent = []
         def ui(command, prompt, **kwargs):
             sent.append((command, kwargs.get("target_key")))
+            if len(sent) == 1:
+                self.assertIs(kwargs.get("new_chat_unowned"), True)
+            else:
+                self.assertFalse(kwargs.get("new_chat_unowned", False))
             self.assertIn("llocphann/Alis", prompt)
             return reply("ALIS_LOOP:CONTINUE" if len(sent) == 1
                          else "ALIS_LOOP:DONE")

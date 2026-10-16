@@ -219,6 +219,10 @@ def ui_tick(profile_id: str, *, now: int | None = None,
         # Runtime must not retry an ambiguous/failed click.
         if pinned_target is not None:
             payload = desktop(command, prompt, target_key=pinned_target)
+        elif new_chat and item.get("session") is None:
+            # An initial task owns no earlier UI chat. Navigate to its Project
+            # without touching a foreign composer or stopping its generation.
+            payload = desktop(command, prompt, new_chat_unowned=True)
         else:
             payload = desktop(command, prompt)
         text = runtime.extract_response_text(payload)
