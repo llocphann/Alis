@@ -93,10 +93,11 @@ def prepare(raw: str, mode: str = "ordered",
         existing = _load()
         if existing and existing.get("state") not in {"finished", "cancelled"}:
             same = (existing["mode"] == mode and
+                    (existing.get("requested") == inputs or (
                     len(existing["items"]) == len(inputs) and
                     all(raw_code in {entry["code"],
                                      f'{entry["repository"]}#{entry["issue_number"]}'}
-                        for raw_code, entry in zip(inputs, existing["items"])))
+                        for raw_code, entry in zip(inputs, existing["items"])))))
             if same:
                 return {**view(existing), "duplicate": True}
             raise tf.TaskError("An unfinished queue exists; reconcile before replacing")
@@ -115,7 +116,8 @@ def prepare(raw: str, mode: str = "ordered",
         current = _load()
         if current and current.get("state") not in {"finished", "cancelled"}:
             same = (current["mode"] == mode and
-                    [(x["repository"], x["code"]) for x in current["items"]] == keys)
+                    (current.get("requested") == inputs or
+                    [(x["repository"], x["code"]) for x in current["items"]] == keys))
             if same:
                 return {**view(current), "duplicate": True}
             raise tf.TaskError("An unfinished queue exists; reconcile before replacing")
@@ -170,6 +172,7 @@ def prepare(raw: str, mode: str = "ordered",
             "schema": QUEUE_SCHEMA, "mode": mode,
             "state": "prepared" if ready else "review_required",
             "created_unix": now, "updated_unix": now,
+            "requested": inputs,
             "approved_start": False,
             "active": None, "selection": None,
             # Never silently drop the original request. Deferred tasks are
