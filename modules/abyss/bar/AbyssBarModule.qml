@@ -155,7 +155,7 @@ Item {
         MouseArea {
             id: hit
             x: 0
-            y: (moduleRoot.attachedEdge === "top" || moduleRoot.attachedEdge === "right") ? -parent.edgeReach : 0
+            y: moduleRoot.attachedEdge === "bottom" ? 0 : -parent.edgeReach
             width: parent.width
             height: parent.height+parent.edgeReach
             hoverEnabled: true
@@ -166,8 +166,8 @@ Item {
                 width: 30*Appearance.fontSizeScale
                 height: width
                 x: (parent.width-width)/2
-                y: ((hit.parent.moduleRoot.attachedEdge === "top" || hit.parent.moduleRoot.attachedEdge === "right")
-                    ? hit.parent.edgeReach : 0) + (hit.parent.height-height)/2
+                y: (hit.parent.moduleRoot.attachedEdge === "bottom" ? 0 : hit.parent.edgeReach)
+                    + (hit.parent.height-height)/2
                 radius: width/2
                 color: Appearance.colors.colLayer1
                 border.width: 1
@@ -177,6 +177,7 @@ Item {
                     anchors.centerIn: parent
                     text: hit.parent.glyph
                     iconSize: 18*Appearance.fontSizeScale
+                    rotation: -hit.parent.moduleRoot.contentRotation
                     color: Appearance.colors.colPrimary
                 }
             }
