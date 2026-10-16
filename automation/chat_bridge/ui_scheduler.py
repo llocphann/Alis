@@ -82,6 +82,7 @@ def _complete_observed(profile_id, profile, pending, directive, observed_target,
         current["prompts_sent"] += 1
         current["last_activity_at_unix"] = now
         current["last_error"] = ""
+        current["ui_pre_send_failures"] = 0
         if current.get("session") is None or new_chat:
             current["session"] = {
                 "transport": UI_TRANSPORT,
@@ -324,18 +325,48 @@ def ui_tick(profile_id: str, *, now: int | None = None,
             "directive": directive.kind.value, "response": text,
             "at_unix": int(time.time())})
     except runtime.UiNotSent as error:
+        # Auto-recover only a cryptographically matched, explicit NO-SEND
+        # receipt. Unknown send/click outcomes are intentionally NOT here.
+        # The journal must also be gone after acknowledge_not_sent.
+        journal = store.state_dir() / "ui-send-journal" / "pending.json"
+        safely_not_sent = not journal.exists() and not journal.is_symlink()
         def unsent(_config, state):
             current = state["profiles"].get(profile_id)
-            if (current and current.get("pending") == pending
-                    and pending["prompt_sha256"] == error.prompt_sha256):
-                current.update(pending=None,
-                               desired="paused" if current["desired"] == "run" else current["desired"], run_active=False,
-                               status="ui_composition_failed", last_error=str(error))
-                store.event(state, profile_id, "ui_not_sent", str(error))
+            if (not current or current.get("pending") != pending
+                    or pending["prompt_sha256"] != error.prompt_sha256):
+                return False
+            count = current.get("ui_pre_send_failures", 0)
+            if type(count) is not int or count < 0 or count > 3:
+                # A corrupt recovery counter is not a restart invitation.
+                current.update(desired="paused", run_active=False,
+                               status="ui_recovery_requires_review",
+                               last_error="Invalid pre-send retry evidence")
                 return True
-            return False
+            count += 1
+            if safely_not_sent and current.get("desired") == "run" and count < 3:
+                # 5s then 15s; third proven failure pauses. The task
+                # checkpoint, original prompt, SHA pin and queue approval
+                # are unchanged; no worker job can be resubmitted here.
+                current.update(pending=None, run_active=False,
+                               ui_pre_send_failures=count,
+                               next_run_at_unix=now + (5 if count == 1 else 15),
+                               status="ui_retry_wait", last_error=str(error))
+                store.event(state, profile_id, "ui_pre_send_retry_scheduled",
+                            "Exact no-send receipt; bounded delayed retry")
+                return True
+            current.update(pending=None, run_active=False,
+                           ui_pre_send_failures=count,
+                           desired="paused" if current["desired"] == "run"
+                               else current["desired"],
+                           status="ui_composition_failed",
+                           last_error=str(error))
+            store.event(state, profile_id, "ui_not_sent",
+                        "Max attempts or journal uncertainty; no automatic retry")
+            return True
         if store.change_state(unsent):
-            return "ui_composition_failed"
+            return "ui_retry_wait" if (safely_not_sent and
+                store.read_snapshot()[1]["profiles"][profile_id].get("status")
+                == "ui_retry_wait") else "ui_composition_failed"
         _mark_unresolved(profile_id, "Pre-Send failure identity mismatch")
         return "ui_reconciliation_required"
     except Exception:
