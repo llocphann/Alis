@@ -73,43 +73,60 @@ assert "onEditorFocusedChanged:" in module
 assert "selectedMainTab" in notes and "popupPinned" in notes
 assert "selectedTab" in center and "Notifications" in center
 
-# ABYSS-R15: mode switch must have a single active hover owner. Edgebar
-# mode unmounts module popups and their compositor regions, not just the icon.
+# Two independent saved modes, falling back to old combined setting.
 config = read("modules/common/Config.qml")
 assert 'property string launcherMode: "module"' in config
-assert 'function unifiedLauncherMode(options)' in layout
+assert 'property string notesTimersMode: ""' in config
+assert 'property string notificationActivityMode: ""' in config
+assert 'function unifiedLauncherMode(options,kind)' in layout
 assert 'function livePlacements(placements, options, editing)' in layout
-assert 'root.activePlacements' not in bar or 'const next=activePlacements.filter(' in bar
 assert 'readonly property var activePlacements: Layout.livePlacements(' in bar
 assert 'Layout.geometry(activePlacements,width,height' in bar
 assert 'const next=activePlacements.filter(p=>p.enabled)' in bar
 assert 'onActivePlacementsChanged: syncModuleIds()' in bar
-assert 'root.launcherMode === "module"' in bar
-assert 'ModuleLayout.unifiedLauncherMode(Config.options?.abyss?.modules) === "module"' in corners
+assert 'root.launcherModes,module.kind' in bar
+assert 'notesTimersMode: Config.options?.abyss?.modules?.notesTimersMode' in bar
+assert 'notificationActivityMode: Config.options?.abyss?.modules?.notificationActivityMode' in bar
+assert 'ModuleLayout.unifiedLauncherMode(' in corners and ',kind) === "module"' in corners
+assert '"notificationActivity") === "module"' in perimeter
 assert 'ModuleLayout.livePlacements(placements,Config.options?.abyss?.modules,false)' in perimeter
 assert 'bar.activePlacements,bar.layoutOptions' in perimeter
-# The mode belongs solely to permanent Alis Settings → Abyss → Bar modules,
-# not to the transient live layout editor. The same stored config drives live
-# Screen Corners, Bar and Perimeter without changing placement or icon values.
-settings = read("modules/abyss/settings/AbyssStyleSettings.qml")
-settings_page = read("modules/settings/AbyssModulesConfig.qml")
-settings_index = read("modules/settings/SettingsPageRegistryData.qml")
-assert 'sections: ["modules", "bar"]' in settings_page
-assert 'title:"Modules";icon:"widgets";settingsTaskSection:"modules"' in settings
-assert 'objectName:"abyssUnifiedLauncherSettingsMode"' in settings
-assert 'currentValue:Config.options?.abyss?.modules?.launcherMode === "edgebar"' in settings
-assert '{displayName:"Module",value:"module"}' in settings
-assert '{displayName:"Edgebar Hover",value:"edgebar"}' in settings
-assert 'onSelected:value=>Config.setNestedValue("abyss.modules.launcherMode",value)' in settings
-assert 'pageIndex: 34, pageName: root.pages[34].name' in settings_index
-assert 'Quick Notes & Notifications access mode' in settings_index
-assert 'readonly property string launcherMode:' in bar
-assert 'Layout.unifiedLauncherMode(Config.options?.abyss?.modules)' in bar
+
+# Each Module Icon is its own hover source. The iconless compatibility path
+# may reach the physical edge, but no icon-mode source does. No name tooltip.
+assert 'moduleRoot.showIcon ? parent.iconDiameter : parent.width' in module
+assert 'moduleRoot.showIcon ? parent.iconDiameter' in module
+assert 'StyledToolTip { text: hit.parent.description' not in module
+assert 'module.moduleIconHitOnly' in bar
+assert 'onModuleIconHitOnlyChanged: invalidateInputRegion()' in bar
+assert 'onModuleIconHitSizeChanged: invalidateInputRegion()' in bar
+
+# Window/work-area padding is not affected by isolated mini launchers;
+# the associated painting remains a local Surface on any of the 4 edges.
+assert '!isUnifiedKind(p.kind)' in layout
+assert 'stripDepth(enabled,edge,options,fontScale)' in layout
+assert 'return isUnifiedKind(p.kind) || edgeThickness' in layout
+assert 'root.outputInsets(modelData?.name ?? "",true)[edge]' in perimeter
+
+# Live editor owns position/icon/size, not the source presentation modes.
+settings = read("modules/settings/BarConfig.qml")
+style = read("modules/abyss/settings/AbyssStyleSettings.qml")
+index = read("modules/settings/SettingsPageRegistryData.qml")
+abyss_page = read("modules/settings/AbyssConfig.qml")
+assert 'objectName: "abyssNotesTimersAccessMode"' in settings
+assert 'objectName: "abyssNotificationActivityAccessMode"' in settings
+assert 'Config.setNestedValue("abyss.modules.notesTimersMode",value)' in settings
+assert 'Config.setNestedValue("abyss.modules.notificationActivityMode",value)' in settings
+assert 'ModuleLayout.unifiedLauncherMode(' in settings
+assert '{displayName: "Module Icon",value: "module"}' in settings
+assert '{displayName: "Edgebar Hover",value: "edgebar"}' in settings
+assert 'objectName:"abyssUnifiedLauncherSettingsMode"' not in style
+assert '"module behavior"' in abyss_page
+assert 'section: Translation.tr("Module behavior")' in index
+assert 'Quick Notes & Notifications access modes' in index
+assert 'launcherMode' not in editor
 assert 'draftLauncherMode' not in bar
 assert 'draftLauncherMode' not in perimeter
-assert 'launcherMode' not in editor
-assert 'abyssUnifiedLauncherMode' not in editor
-assert 'abyss.modules.launcherMode' not in editor
 assert 'Placement.saveProfile(' in editor
 assert 'root.batch("showIcon",checked)' in editor
 print("ABYSS-R15 unified edge module source contract: ok")

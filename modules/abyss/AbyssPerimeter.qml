@@ -67,7 +67,8 @@ Scope {
                 // The explicit notification hotkey must still mount its
                 // existing mature popup when the unified launcher replaces
                 // the legacy corner and Abyss Bar is normally auto-hidden.
-                || (ModuleLayout.unifiedLauncherMode(Config.options?.abyss?.modules) === "module"
+                || (ModuleLayout.unifiedLauncherMode(Config.options?.abyss?.modules,
+                        "notificationActivity") === "module"
                     && GlobalStates.notificationCenterExplicitOpen
                     && GlobalStates.notificationCenterPresentationOutput === name
                     && ModuleLayout.hasEnabledModule(

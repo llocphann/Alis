@@ -153,4 +153,54 @@ check(layout.livePlacements(oldEntries,preservedProfile,false).length===0,
 check(layout.livePlacements(oldEntries,
     {...preservedProfile,launcherMode:"module"},false).length===2,
     "re-entering module mode uses original output positions");
+// Each feature independently switches module ownership, even on a single
+// output, and legacy saved one-switch profiles retain their old intent.
+const modes=layout.normalize([
+    {id:"nt",kind:"notesTimers",edge:"top",position:.15,showIcon:true},
+    {id:"na",kind:"notificationActivity",edge:"right",position:.2,showIcon:true},
+    {id:"clock",kind:"clock",edge:"bottom",position:.5}
+],"top");
+for(const notesMode of ["module","edgebar"])for(const activityMode of ["module","edgebar"]) {
+    const settings={launcherMode:"edgebar",notesTimersMode:notesMode,
+        notificationActivityMode:activityMode};
+    const live=layout.livePlacements(modes,settings,false);
+    check(live.some(p=>p.kind==="notesTimers")===(notesMode==="module"),
+        "QuickNotes launcher follows its own mode");
+    check(live.some(p=>p.kind==="notificationActivity")===(activityMode==="module"),
+        "Notifications launcher follows its own mode");
+    check(live.some(p=>p.kind==="clock"),"unrelated bar module preserved");
+    check(layout.livePlacements(modes,settings,true).length===3,
+        "layout editor still sees both saved source locations");
+}
+check(layout.livePlacements(modes,{launcherMode:"edgebar"},false).length===1,
+    "old one-switch edgebar profile remains supported");
+check(layout.livePlacements(modes,{launcherMode:"module"},false).length===3,
+    "old one-switch icon profile remains supported");
+check(layout.unifiedLauncherMode({launcherMode:"edgebar",notesTimersMode:"module"},
+    "notesTimers")==="module","new Notes override wins legacy global choice");
+check(layout.unifiedLauncherMode({launcherMode:"module",notificationActivityMode:"edgebar"},
+    "notificationActivity")==="edgebar","new Notifications override wins legacy choice");
+
+// Tiny local launcher bumps must not distort window padding on *any* side.
+// Real module geometry must still generate a bounded local paint Surface.
+for(const edge of edges) {
+    const local=layout.normalize([
+        {id:"nt",kind:"notesTimers",edge,position:.22,showIcon:true},
+        {id:"na",kind:"notificationActivity",edge,position:.78,showIcon:true}
+    ],edge);
+    const opts={edgeThickness:16,edgeThicknesses:{top:16,right:16,bottom:16,left:16},
+        edgeWidthAffectsModules:{top:true,right:true,bottom:true,left:true},
+        singleModuleExpansion:{top:"edge",right:"edge",bottom:"edge",left:"edge"}};
+    const width=1920,height=1080;
+    const values=layout.edgeInsetsForModules(local,opts,1,16,48,false);
+    const reserved=layout.edgeInsetsForModules(local,opts,1,16,48,true);
+    for(const side of edges) {
+        check(values[side]===16,`local ${edge} icon cannot change ${side} paint padding`);
+        check(reserved[side]===16,`local ${edge} icon cannot change ${side} window padding`);
+    }
+    const records=layout.geometry(local,width,height,opts,1);
+    const surfaces=layout.localSurfaces(records,width,height,opts,1,48);
+    check(surfaces.filter(p=>p.edge===edge).length>=1,
+        `icon bodies still have localized screen-edge paint on ${edge}`);
+}
 console.log("ABYSS_R15_LAYOUT_POLICY_PASS",checks);

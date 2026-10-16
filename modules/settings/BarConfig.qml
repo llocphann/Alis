@@ -4,6 +4,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import "../abyss/looks/AbyssLayout.js" as ModuleLayout
 
 ContentPage {
     id: root
@@ -25,6 +26,7 @@ ContentPage {
             "sizing & surface": "appearance",
             "audio spectrum": "spectrum",
             "behavior & clock": "behavior",
+            "module behavior": "behavior",
             "modules": "modules",
             "bar module layout": "modules",
             "resources": "modules",
@@ -407,6 +409,42 @@ ContentPage {
         title: Translation.tr("Behavior & clock")
 
         SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("Quick Notes & Timers")
+                visible: root.abyssContent
+                SettingsNote {
+                    text: Translation.tr("Choose one opening behavior for Quick Notes and timers.")
+                }
+                ConfigSelectionArray {
+                    objectName: "abyssNotesTimersAccessMode"
+                    currentValue: ModuleLayout.unifiedLauncherMode(
+                        Config.options?.abyss?.modules,"notesTimers")
+                    options: [
+                        {displayName: "Module Icon",value: "module"},
+                        {displayName: "Edgebar Hover",value: "edgebar"}
+                    ]
+                    onSelected: value =>
+                        Config.setNestedValue("abyss.modules.notesTimersMode",value)
+                }
+            }
+            ContentSubsection {
+                title: Translation.tr("Notifications & Activities")
+                visible: root.abyssContent
+                SettingsNote {
+                    text: Translation.tr("Choose one opening behavior for notifications and activity history.")
+                }
+                ConfigSelectionArray {
+                    objectName: "abyssNotificationActivityAccessMode"
+                    currentValue: ModuleLayout.unifiedLauncherMode(
+                        Config.options?.abyss?.modules,"notificationActivity")
+                    options: [
+                        {displayName: "Module Icon",value: "module"},
+                        {displayName: "Edgebar Hover",value: "edgebar"}
+                    ]
+                    onSelected: value =>
+                        Config.setNestedValue("abyss.modules.notificationActivityMode",value)
+                }
+            }
             ContentSubsection {
                 title: Translation.tr("Auto hide")
 

@@ -18,8 +18,11 @@ Item {
     property bool editing: false
     // Selection is owned by Alis Settings, not the layout editor. The editor
     // can still display and reposition dormant modules in Edgebar Hover mode.
-    readonly property string launcherMode:
-        Layout.unifiedLauncherMode(Config.options?.abyss?.modules)
+    readonly property var launcherModes: ({
+        launcherMode: Config.options?.abyss?.modules?.launcherMode,
+        notesTimersMode: Config.options?.abyss?.modules?.notesTimersMode,
+        notificationActivityMode: Config.options?.abyss?.modules?.notificationActivityMode
+    })
     property var draggedIds: []
     property var liquidController: null
     property var measuredExtents: ({})
@@ -50,7 +53,7 @@ Item {
     readonly property var placements: draftPlacements ?? Layout.resolve(Config.options?.abyss?.modules,outputName,
         Layout.seed(zones,edge,width,height))
     readonly property var activePlacements: Layout.livePlacements(
-        placements,{launcherMode: launcherMode},editing)
+        placements,launcherModes,editing)
     readonly property var layoutRecords: Layout.geometry(activePlacements,width,height,layoutOptions,Appearance.fontSizeScale)
     readonly property var renderedRecords: {
         const revision=root.revision
@@ -101,19 +104,34 @@ Item {
                 (module.kind === "notesTimers" || module.kind === "notificationActivity")
             readonly property bool hiddenEdgeLauncher:
                 module.unifiedEdgeLauncher && module.placement?.showIcon === false
+            readonly property bool moduleIconHitOnly:
+                module.unifiedEdgeLauncher && module.showIcon
+            readonly property real moduleIconHitSize: Math.max(1,
+                Math.min(module.width,module.height,
+                    30*Appearance.fontSizeScale*module.contentScale))
             // Iconless mode still has one strictly bounded source hitbox at the
             // literal physical edge, rather than an invisible full-width layer.
             readonly property Region inputRegion: Region {
-                x: module.unifiedEdgeLauncher && module.attachedEdge === "left"
-                    ? 0 : Math.floor(module.x)
-                y: module.unifiedEdgeLauncher && module.attachedEdge === "top"
-                    ? 0 : Math.floor(module.y)
-                width: module.visible && module.enabled
-                    ? Math.max(0, (module.unifiedEdgeLauncher && module.attachedEdge === "right"
-                        ? root.width : Math.ceil(module.x + module.width)) - x) : 0
-                height: module.visible && module.enabled
-                    ? Math.max(0, (module.unifiedEdgeLauncher && module.attachedEdge === "bottom"
-                        ? root.height : Math.ceil(module.y + module.height)) - y) : 0
+                // Icon mode never captures a strip between the icon and
+                // physical edge. Only the actual circular launcher hits.
+                // An intentionally hidden icon retains the older edge-hover
+                // affordance and its bounded input bridge.
+                x: module.moduleIconHitOnly
+                    ? Math.floor(module.x+(module.width-module.moduleIconHitSize)/2)
+                    : module.unifiedEdgeLauncher && module.attachedEdge === "left"
+                        ? 0 : Math.floor(module.x)
+                y: module.moduleIconHitOnly
+                    ? Math.floor(module.y+(module.height-module.moduleIconHitSize)/2)
+                    : module.unifiedEdgeLauncher && module.attachedEdge === "top"
+                        ? 0 : Math.floor(module.y)
+                width: !module.visible || !module.enabled ? 0 : module.moduleIconHitOnly
+                    ? Math.ceil(module.x+(module.width+module.moduleIconHitSize)/2)-x
+                    : Math.max(0,(module.unifiedEdgeLauncher && module.attachedEdge === "right"
+                        ? root.width : Math.ceil(module.x+module.width))-x)
+                height: !module.visible || !module.enabled ? 0 : module.moduleIconHitOnly
+                    ? Math.ceil(module.y+(module.height+module.moduleIconHitSize)/2)-y
+                    : Math.max(0,(module.unifiedEdgeLauncher && module.attachedEdge === "bottom"
+                        ? root.height : Math.ceil(module.y+module.height))-y)
             }
             // Quickshell Region documents cases where geometry does not
             // invalidate its compositor mask automatically. Explicitly
@@ -130,6 +148,8 @@ Item {
             onEnabledChanged: invalidateInputRegion()
             onHiddenEdgeLauncherChanged: invalidateInputRegion()
             onUnifiedEdgeLauncherChanged: invalidateInputRegion()
+            onModuleIconHitOnlyChanged: invalidateInputRegion()
+            onModuleIconHitSizeChanged: invalidateInputRegion()
             readonly property var geometry: root.layoutRecords.find(rec => rec.id === modelData)
             liquidController: root.liquidController
             attachedEdge: placement?.edge ?? "top"
@@ -141,7 +161,8 @@ Item {
             outputName: root.outputName
             vertical: placement?.edge === "left" || placement?.edge === "right"
             compact: placement?.compact ?? false
-            showIcon: (!module.unifiedEdgeLauncher || root.launcherMode === "module")
+            showIcon: (!module.unifiedEdgeLauncher
+                || Layout.unifiedLauncherMode(root.launcherModes,module.kind) === "module")
                 && placement?.showIcon !== false
             onNotesEditorFocusChanged: (outputName, focused) => root.notesEditorFocusChanged(outputName, focused)
             visible: geometry !== undefined && !geometry.capacityConflict

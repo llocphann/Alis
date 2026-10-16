@@ -11,15 +11,41 @@ Canonical scope: [Issue #106](https://github.com/llocphann/Alis/issues/106). Fea
 - Existing ScreenCorners are not deleted. For an output with an enabled replacement, its *matching* legacy corner trigger is suppressed; disabling or removing the replacement restores that legacy entry. Other outputs and the `stable` branch remain unchanged.
 - Notification toasts and older unrelated Bar timer indicator are left untouched. The new components do **not** create duplicate providers, timers or notification stores.
 
-## Exclusive QuickNotes / Notifications access modes
+## Independent access modes in Module Behavior
 
-In **Alis Settings → Abyss → Bar modules → Modules**, choose the joint **Quick Notes & Notifications · Access mode** selector. The option is also discoverable through Settings search for **Edgebar Hover** or **Quick Notes**. There is no mode switch in the Edit Abyss Layout control bar.
+Go to **Alis Settings → Abyss → Bar modules → Module behavior**, or search
+Settings for **Quick Notes & Notifications access modes**. Configure both
+features separately:
 
-- **Module** (default): The placed QuickNotes & Timers and Notifications & Activities launchers are the only hover sources on the corresponding outputs; each matching legacy ScreenCorners/Edgebar hover trigger is suppressed when its unified module is enabled. Show/hide icon remains configurable independently in the module toolbar.
-- **Edgebar Hover**: Both unified launcher instances are excluded from the live module geometry and hover/input masks, so their icons and popup sources are absent. The legacy QuickNotes bottom-left and Notifications bottom-right dwell-triggered corners are restored, respecting existing feature enable/hover/monitor/fullscreen conditions. The module placement and per-icon `showIcon` choices remain stored unchanged, not deleted.
-- Switching back to **Module** restores the existing module positions and each user's earlier icon preference, without duplicate launchers, note/timer/notification providers, or activity stores.
+- **Quick Notes & Timers** → **Module Icon** or **Edgebar Hover**.
+- **Notifications & Activities** → **Module Icon** or **Edgebar Hover**.
 
-The mode is **one global choice for the two features across outputs**, while physical module placements remain per-output. Settings writes the mode directly and takes effect immediately; switching back in Settings restores the previous presentation. **Edit Abyss Layout** remains responsible only for per-output module placement, size, icon visibility and Done/Cancel/Undo for those layout edits. When Edgebar Hover is selected, keyboard-open Notifications continue through the legacy corner host and do not unnecessarily start an auto-hidden Abyss bar.
+The independent modes persist immediately. Each feature suppresses only its own
+legacy corner trigger when its module launcher is enabled. An Edgebar Hover
+selection unmounts *only that feature's* module popup/source and activates its
+historical corner hover (subject to the original feature/monitor/fullscreen
+settings). Mixed configurations are supported.
+
+In **Module Icon** mode, hovering anywhere on the physical Screen Edge outside
+the painted icon no longer opens that feature. Only the module's circular icon
+opens the mature popup. No duplicate name tooltip is shown. The separate
+**Hide icon** control in Edit Abyss Layout intentionally retains its bounded
+iconless hover fallback for users who want to hide a painted icon.
+
+All module positions and per-icon preferences survive mode changes. The
+**Edit Abyss Layout** toolbar controls placement, size and icon visibility only;
+there are no presentation-mode controls there.
+
+## Window padding and local Edge paint
+
+Quick Notes and Notification launcher icons are small localized Edge sources,
+not full-width/full-height window reservations. Their presence must **not**
+inflate the base inset/padding of any Edge, even in the default
+`edgeWidthAffectsModules` and `singleModuleExpansion=edge` settings. Each
+icon still has a bounded local liquid-surface bump, independent of corner
+padding or other Bar modules. Actual large modules retain their previous
+full-Edge reservation policy; an intentionally different configured thickness
+for an Edge is preserved rather than forcibly equalized.
 
 ## Automatic placement with reversible per-output migration
 
@@ -44,12 +70,12 @@ node scripts/test-abyss-multi-selection.mjs
 
 A source contract cannot prove native Quickshell/Niri behavior. **No PASS claim is made here for unrun tests.** Owner validation is still required for:
 
-- 4 edges, icon visible/hidden, 0px/nonzero widths, width-affects-modules, scaled and rotated modules
+- 4 edges and all four mixed Quick Notes/Notifications access mode combinations; icon-only hover, no name tooltip, iconless fallback, 0px/nonzero widths, width-affects-modules, scaled and rotated modules
 - compact/fractional scaling, multiple outputs and disconnected/reconnected screens; no doubled corner or phantom input masks
 - automatic defaults on legacy configured/unconfigured and multiple output layouts; mode change in Alis Settings independently of Editor Undo/Done; layout Editor Undo/Done, disable/remove rollback
 - Notes Markdown reading/editing, Todo, pin/focus/Escape, timers while switching tabs
 - Notification unread/history, Activity tab, explicit hotkeys and uninterrupted transient toasts; no extra marking-read on layout preview
-- hover transfer and popup continuity without pop-in, premature close, stutter or duplicate processes
+- unchanged Window Padding on all four Edges when launcher icons are added/removed, changed to Edgebar Hover, or moved, plus hover transfer and popup continuity without pop-in, premature close, stutter or duplicate processes
 - before/after owner screenshots, native input events and installed source SHA
 
 **Status:** Implemented in `dev` (focused ABYSS-R15 GitHub Actions check passed). Broad validator remains red on other environment/legacy checks. Native desktop/Owner acceptance is pending. Keep Issue #106 open; do not mark verified.
