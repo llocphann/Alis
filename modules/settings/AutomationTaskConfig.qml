@@ -28,6 +28,38 @@ ContentPage {
     property bool sudoStatusKnown: false
     property var queueSnapshot: null
     property bool queueStatusConfirmed: false
+    property bool stopAcknowledgementPending: false
+    readonly property string queueJobSummary: {
+        const queue = root.queueSnapshot
+        if (queueProcess.running && root.queueOperation === "status")
+            return Translation.tr("Checking")
+        if (!queue) return Translation.tr("Idle")
+        if (!root.queueStatusConfirmed)
+            return Translation.tr("Unverified")
+        const tasks = queue.items ?? []
+        const current = queue.active || tasks.find(t =>
+            t.state === "active" || t.state === "waiting") || null
+        const currentIndex = current ? tasks.findIndex(t =>
+            t.repository === current.repository && t.code === current.code) : -1
+        let phase
+        if (root.stopAcknowledgementPending || queue.state === "stopping")
+            phase = Translation.tr("Stopping · awaiting ack")
+        else if (queue.state === "active") phase = Translation.tr("Running")
+        else if (queue.state === "waiting") phase = Translation.tr("Waiting")
+        else if (queue.state === "prepared") phase = Translation.tr("Ready")
+        else if (queue.state === "finished") phase = Translation.tr("Finished")
+        else if (["stopped", "cancelled"].includes(queue.state))
+            phase = Translation.tr("Stopped")
+        else if (queue.state === "empty") phase = Translation.tr("Idle")
+        else phase = Translation.tr("Idle")
+        const details = [phase]
+        if (current?.code) details.push(current.code)
+        if (currentIndex >= 0 && tasks.length)
+            details.push((currentIndex + 1) + "/" + tasks.length)
+        else if (tasks.length)
+            details.push(Translation.tr("%1 tasks").arg(tasks.length))
+        return details.join(" · ")
+    }
     property bool backendInstalled: false
     property bool backendStatusKnown: false
     property bool backendTransportReady: false
@@ -290,6 +322,7 @@ ContentPage {
         root.clearQueueConfirmation = false
         root.queueStatusConfirmed = false
         root.queueOperation = "stop"
+        root.stopAcknowledgementPending = true
         root.errorText = ""
         queueProcess.command = ["python3",
             Quickshell.shellPath("scripts/alis-automation-task.py"),
@@ -506,6 +539,15 @@ ContentPage {
                         root.clearQueueTarget = ""
                     }
                     root.queueSnapshot = result
+                    // Stop can be acknowledged asynchronously by the manager.
+                    // Preserve that distinct state until the queue leaves
+                    // active/waiting/stopping; never label pending as stopped.
+                    if (result.state === "stopping"
+                            || (root.queueOperation === "stop"
+                                && result.stop_confirmed !== true))
+                        root.stopAcknowledgementPending = true
+                    else if (!["active", "waiting"].includes(result.state))
+                        root.stopAcknowledgementPending = false
                     root.queueStatusConfirmed = true
                     if (root.queueOperation === "status")
                         root.cloudSelectTasks = result.mode === "cloud"
@@ -565,6 +607,7 @@ ContentPage {
                 // the last queue for inspection but block Start until an
                 // authenticated status check confirms its current state.
                 root.queueStatusConfirmed = false
+                root.stopAcknowledgementPending = false
                 root.statusText = ""
                 root.errorText = String(error)
             }
@@ -909,51 +952,92 @@ ContentPage {
         visible: root.activeSection === "tasks"
 
         SettingsGroup {
-            StyledText {
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                color: Appearance.colors.colSubtext
-                text: Translation.tr("Task codes separated by ; · blank discovers Backend-first tasks")
-            }
-            SettingsSwitch {
-                objectName: "automationCloudSelectToggle"
-                text: Translation.tr("Cloudbot chooses task order")
-                buttonIcon: "smart_toy"
-                checked: root.cloudSelectTasks
-                autoToggle: false
-                onToggledByUser: checked => root.cloudSelectTasks = checked
-            }
+            // Compact control row: order mode on the left, one live job
+            // status on the right. Queue state is NEVER inferred from
+            // locally guessed timings or stale items.
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 8
+                SettingsSwitch {
+                    objectName: "automationCloudSelectToggle"
+                    text: Translation.tr("Auto task order")
+                    buttonIcon: "smart_toy"
+                    checked: root.cloudSelectTasks
+                    autoToggle: false
+                    onToggledByUser: checked => root.cloudSelectTasks = checked
+                }
+                Rectangle {
+                    id: automationJobStatusPill
+                    objectName: "automationJobStatus"
+                    Layout.preferredHeight: 30
+                    Layout.preferredWidth: Math.min(330,
+                        Math.max(110, jobStatusLabel.implicitWidth + 24))
+                    radius: height / 2
+                    color: Appearance.colors.colLayer2
+                    border.width: 1
+                    border.color: Appearance.colors.colOutlineVariant
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 6
+                        Rectangle {
+                            Layout.preferredWidth: 6
+                            Layout.preferredHeight: 6
+                            radius: 3
+                            color: root.stopAcknowledgementPending
+                                || root.queueSnapshot?.state === "stopping"
+                                ? Appearance.colors.colError
+                                : root.queueSnapshot?.state === "active"
+                                    && root.queueStatusConfirmed
+                                ? Appearance.colors.colPrimary
+                                : Appearance.colors.colSubtext
+                        }
+                        StyledText {
+                            id: jobStatusLabel
+                            Layout.fillWidth: true
+                            text: Translation.tr("Job") + " · " + root.queueJobSummary
+                            color: Appearance.colors.colOnSurface
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                        }
+                    }
+                }
+            }
+
+            // One input and one short action toolbar: all original safety
+            // confirmations and backend commands remain unchanged.
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
                 MaterialTextField {
                     id: taskCodeField
                     objectName: "automationTaskCode"
                     Layout.fillWidth: true
-                    placeholderText: Translation.tr("Codes or blank for Backend-first discovery")
+                    Layout.minimumWidth: 130
+                    placeholderText: Translation.tr("Task codes (;) or auto-discover")
                     onAccepted: root.prepareTask()
                 }
                 DialogButton {
                     objectName: "automationPrepareTask"
-                    buttonText: root.busy ? Translation.tr("Preparing…")
+                    buttonText: root.busy ? Translation.tr("Wait")
                         : taskCodeField.text.trim().length === 0
-                        ? Translation.tr("Find tasks") : Translation.tr("Queue tasks")
+                        ? Translation.tr("Find") : Translation.tr("Queue")
                     enabled: !root.busy
                     onClicked: root.prepareTask()
                 }
                 DialogButton {
                     objectName: "automationRefreshQueue"
-                    buttonText: Translation.tr("Refresh queue")
+                    buttonText: Translation.tr("Refresh")
                     enabled: !root.busy
                     onClicked: root.refreshQueue()
                 }
                 DialogButton {
                     objectName: "automationClearQueue"
                     buttonText: root.clearQueueConfirmation
-                        ? Translation.tr("Confirm clear")
-                        : root.queueSnapshot?.state === "stopped"
-                        ? Translation.tr("Clear stopped queue")
-                        : Translation.tr("Clear queued")
+                        ? Translation.tr("Confirm clear") : Translation.tr("Clear")
                     enabled: !root.busy && !!root.queueSnapshot
                         && (root.queueSnapshot.items.some(task => task.state === "queued")
                             || (["finished", "cancelled", "stopped"].includes(root.queueSnapshot.state)
@@ -963,7 +1047,9 @@ ContentPage {
                 DialogButton {
                     objectName: "automationStopQueue"
                     buttonText: root.stopQueueConfirmation
-                        ? Translation.tr("Confirm stop") : Translation.tr("Stop queue")
+                        ? Translation.tr("Confirm stop") : Translation.tr("Stop")
+                    visible: !!root.queueSnapshot
+                        && ["active", "waiting", "stopping"].includes(root.queueSnapshot.state)
                     enabled: !root.busy && !!root.queueSnapshot
                         && ["active", "waiting", "stopping"].includes(root.queueSnapshot.state)
                     onClicked: root.stopQueue()
@@ -974,6 +1060,8 @@ ContentPage {
                         ? Translation.tr("Confirm UI Start")
                         : root.uiQueueStartAvailable && !root.backendTransportReady
                         ? Translation.tr("Start UI") : Translation.tr("Start")
+                    visible: !root.queueSnapshot
+                        || !["active", "waiting", "stopping"].includes(root.queueSnapshot.state)
                     enabled: !root.busy && root.backendInstalled
                         && root.queueStatusConfirmed && !!root.queueSnapshot
                         && ((root.backendTransportReady
@@ -987,6 +1075,10 @@ ContentPage {
                     onClicked: root.startQueue()
                 }
             }
+
+            // Safety-critical second-click explanations stay visible ONLY
+            // when the user is actively confirming a destructive action
+            // or acceptance of UI-only receipts.
             StyledText {
                 visible: root.errorText.length > 0
                 Layout.fillWidth: true
@@ -996,36 +1088,18 @@ ContentPage {
             }
             StyledText {
                 visible: root.statusText.length > 0
+                    && (root.clearQueueConfirmation
+                        || root.stopQueueConfirmation
+                        || root.uiQueueStartConfirmation)
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colPrimary
                 text: root.statusText
             }
-            StyledText {
-                visible: !root.queueStatusConfirmed && !!root.queueSnapshot
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                color: Appearance.colors.colSubtext
-                text: Translation.tr("Last known queue only · refresh to verify live state")
-            }
-            StyledText {
-                visible: !!root.queueSnapshot && root.queueSnapshot.items.length > 0
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                color: Appearance.colors.colOnSurface
-                text: root.queueSnapshot
-                    ? root.queueSnapshot.items.map((task, i) =>
-                        (i + 1) + ". " + task.code + " · " + task.state).join("\n")
-                    : ""
-            }
-            StyledText {
-                visible: !!root.queueSnapshot && !!root.queueSnapshot.cloud_selection_required
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                color: Appearance.colors.colSubtext
-                text: Translation.tr("Cloudbot will select the next task")
-            }
+            // The task chips are the ONLY queue list. Keep their existing
+            // task-selection callback for status/activity/owner review.
             ConfigSelectionArray {
+                wrapFullLabels: true
                 visible: !!root.queueSnapshot && root.queueSnapshot.items.length > 0
                 currentValue: root.selectedTask
                     ? root.selectedTask.repository + ":" + root.selectedTask.code : ""
