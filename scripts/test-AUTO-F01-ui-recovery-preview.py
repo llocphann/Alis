@@ -185,9 +185,18 @@ class RecoveryPreview(unittest.TestCase):
         self.path.unlink()
         self.assertEqual(self.inspect()["original_journal"],
                          "retired_evidence_unverified")
+        # Missing original response must fail before archive traversal.
         folder = self.path.parent / "observed"
         folder.mkdir()
         (folder / (JID + ".json")).symlink_to(self.path.parent / "outside.json")
+        self.assertEqual(self.inspect()["original_journal"],
+                         "retired_evidence_unverified")
+        pid = next(iter(self.state["profiles"]))
+        receipt = self.path.parent.parent / "ui-responses" / pid
+        receipt.mkdir(parents=True)
+        (receipt / (ATTEMPT + ".json")).write_text(json.dumps({
+            "transport": "alis-ui-once", "attempt_id": ATTEMPT,
+            "response": "Original final", "at_unix": 14}))
         self.assertEqual(self.inspect()["original_journal"], "archive_review_required")
         self.assertFalse(self.inspect()["read_only_observation_candidate"])
 
