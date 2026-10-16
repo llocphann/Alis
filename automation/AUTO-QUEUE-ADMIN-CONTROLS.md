@@ -47,6 +47,51 @@ For old installed Settings builds that do not offer **Recheck**,
 update Alis `dev` and reload the installed UI/backend first; do not
 assume a GitHub source-only update immediately changes running QML.
 
+## Start UI is disabled: safe operator flow
+
+**Start** stays disabled when a queue is `review_required` with no runnable
+tasks. First use the blank-field **Recheck** action on the exact fully
+parked manifest. An earlier `awaiting_cloud_ack` task must remain
+**Ack pending**, and previously dispatched worker effects cannot be
+replayed just to make the button active. At least one `queued` task and
+a `prepared` ordered queue are required.
+
+For a prepared queue, Alis checks the installed manager mode and its
+first task's deterministic profile. The normal native ChatGPT transport
+remains **server-receipt-gated**; an installed backend is not send
+authorization. The alternate UI path is:
+
+1. If Settings shows **Prepare UI**, click and confirm. This takes the
+   exact full queue snapshot as a compare-and-swap token and creates
+   only the first eligible task's **idle** profile. It does not send
+   ChatGPT messages, Start/Stop a queue, start/restart the service,
+   or rewrite previous task receipts. Profile staging is now permitted
+   under an already-running `--ui-loop-queue` service (which cannot
+   send a merely prepared queue), as well as an inactive manager.
+2. Alis refreshes backend readiness after staging. When the installed
+   `hadalis-chat-bridge.service` is **active** in
+   `--ui-loop-queue` mode, the worker service is active, prior
+   sessions are reconciled and the staged profile is idle, Settings
+   offers **Start UI**. Clicking once shows the acceptance that
+   ChatGPT response receipts are **local UI-only**, not authenticated
+   server receipts. A second explicit confirmation grants ordered
+   queue Start on that exact snapshot; it cannot bypass original
+   pending/handoff checks.
+3. If the bridge is **active in native or single-profile UI mode**,
+   there is no safe one-click conversion. Settings now explains the
+   actual blocker. Separately verify all existing sessions/jobs are
+   settled and explicitly reconfigure the installer with
+   `--ui-loop-queue` during a safe service cutover. Do not restart
+   live services, reset unresolved sends or reuse historical receipts
+   merely to unlock a button. Installing the unit alone does not
+   change an already-running process mode.
+
+The new `backend-status` response exposes bounded
+`ui_queue_stage_available`, `ui_queue_service_mode`,
+`ui_queue_service_state`, and `ui_queue_preflight_blockers` fields
+for diagnosis. No private chat IDs, secrets or prompt contents are
+included; no readiness check authorizes any delivery.
+
 ## Queue controls: Stop, Clear queued, Clear stopped queue
 
 Settings → Automation → GitHub tasks shows separate owner-confirmed controls:
