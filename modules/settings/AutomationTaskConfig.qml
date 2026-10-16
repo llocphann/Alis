@@ -31,6 +31,7 @@ ContentPage {
     property bool sudoStatusKnown: false
     property var queueSnapshot: null
     property bool queueStatusConfirmed: false
+    property string queuePrepareError: ""
     property bool stopAcknowledgementPending: false
     readonly property string queueJobSummary: {
         const queue = root.queueSnapshot
@@ -285,6 +286,7 @@ ContentPage {
             return
         }
         root.errorText = ""
+        root.queuePrepareError = ""
         root.statusText = ""
         root.queueStatusConfirmed = false
         root.selectedTask = null
@@ -486,6 +488,16 @@ ContentPage {
     }
 
     Timer {
+        id: prepareFailureRefresh
+        interval: 180
+        repeat: false
+        onTriggered: {
+            if (!queueProcess.running)
+                root.refreshQueue()
+        }
+    }
+
+    Timer {
         id: resetNoticeTimer
         interval: 7000
         repeat: false
@@ -662,15 +674,26 @@ ContentPage {
                         ? Translation.tr("Queue stopped · no next task will start. In-flight work remains intact.")
                         : ""
                 }
-                root.errorText = ""
+                // A failed preparation is not a failed queue-status read.
+                // Preserve the actionable task conflict while recovering a
+                // VERIFIED read-only queue snapshot. Never enable Start from
+                // a stale UI, and never retry intake automatically.
+                if (root.queueOperation === "status")
+                    root.errorText = root.queuePrepareError
+                else {
+                    root.queuePrepareError = ""
+                    root.errorText = ""
+                }
             } catch (error) {
-                // A failed read must not leave a visible stale success. Keep
-                // the last queue for inspection but block Start until an
-                // authenticated status check confirms its current state.
+                const failedOperation = root.queueOperation
                 root.queueStatusConfirmed = false
                 root.stopAcknowledgementPending = false
                 root.statusText = ""
                 root.errorText = String(error)
+                if (failedOperation === "prepare") {
+                    root.queuePrepareError = root.errorText
+                    prepareFailureRefresh.restart()
+                }
             }
             root.queueOperation = ""
         
