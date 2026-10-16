@@ -219,6 +219,92 @@ class Preflight(unittest.TestCase):
         self.assertIn('"ui_queue_stage_available": ui_stage_ready', cli)
         self.assertIn('"ui_queue_service_mode": ui_check.get("installed_service_mode")', cli)
 
+    def test_failed_queue_only_bridge_can_be_recovered_without_dispatch(self):
+        original_queue = self._write_queue_fixture()
+        config_path = store.config_path()
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps(self.config))
+        old = self.state["profiles"][self.id]
+        old.update(desired="stopped", status="parked_unresolved",
+                   pending={"transport": "alis-ui-once", "attempt_id": "SAVED"},
+                   session={"transport": "alis-ui-once", "local_run_id": "SAVED"})
+        store.state_path().write_text(json.dumps(self.state))
+        before_queue = original_queue.read_bytes()
+        before_manager = store.state_path().read_bytes()
+        snapshot = queue.view()["snapshot_id"]
+        fake = {"bridge": {
+            "state": "blocked",
+            "unit": managed_tasks.control.UNITS["bridge"],
+            "exec_main_status": "75"}}
+        import subprocess
+        from types import SimpleNamespace
+        with patch.object(managed_tasks.control, "service_states",
+                          return_value=fake), \
+             patch.object(ui_preflight, "_unit_state",
+                          return_value=("failed", "ui_queue_mode")), \
+             patch.object(subprocess, "run",
+                          return_value=SimpleNamespace(returncode=0)) as start:
+            with self.assertRaisesRegex(tf.TaskError, "approval"):
+                managed_tasks.recover_failed_ui_bridge(
+                    expected_snapshot_id=snapshot)
+            with self.assertRaisesRegex(tf.TaskError, "Queue changed"):
+                managed_tasks.recover_failed_ui_bridge(
+                    approved=True, expected_snapshot_id="0" * 64)
+            self.assertEqual(start.call_count, 0)
+            result = managed_tasks.recover_failed_ui_bridge(
+                approved=True, expected_snapshot_id=snapshot)
+        self.assertTrue(result["service_start_requested"])
+        self.assertFalse(result["start_approved"])
+        self.assertFalse(result["chatgpt_message_sent"])
+        self.assertTrue(result["pending_preserved"])
+        self.assertEqual(start.call_count, 1)
+        self.assertEqual(start.call_args.args[0], [
+            "systemctl", "--user", "start",
+            managed_tasks.control.UNITS["bridge"]])
+        self.assertEqual(original_queue.read_bytes(), before_queue)
+        self.assertEqual(store.state_path().read_bytes(), before_manager)
+        self.assertFalse(queue._load()["approved_start"])
+
+    def test_bridge_recovery_rejects_non_queue_mode_and_active_work(self):
+        self._write_queue_fixture()
+        snapshot = queue.view()["snapshot_id"]
+        fake = {"bridge": {
+            "state": "blocked",
+            "unit": managed_tasks.control.UNITS["bridge"],
+            "exec_main_status": "75"}}
+        import subprocess
+        with patch.object(managed_tasks.control, "service_states",
+                          return_value=fake), \
+             patch.object(ui_preflight, "_unit_state",
+                          return_value=("failed", "native_mode")), \
+             patch.object(subprocess, "run",
+                          side_effect=AssertionError("must not start service")):
+            with self.assertRaisesRegex(tf.TaskError, "Bridge changed"):
+                managed_tasks.recover_failed_ui_bridge(
+                    approved=True, expected_snapshot_id=snapshot)
+        with queue._lock():
+            m = queue._load()
+            m["approved_start"] = True
+            queue._save(m)
+        with patch.object(managed_tasks.control, "service_states",
+                          side_effect=AssertionError("must not check service")):
+            with self.assertRaisesRegex(tf.TaskError, "idle, unapproved"):
+                managed_tasks.recover_failed_ui_bridge(
+                    approved=True, expected_snapshot_id=queue.view()["snapshot_id"])
+
+    def test_queue_bridge_recovery_ui_and_cli_require_approval(self):
+        qml = (Path(__file__).resolve().parents[1] /
+               "modules/settings/AutomationTaskConfig.qml").read_text()
+        cli = (Path(__file__).resolve().parents[1] /
+               "scripts/alis-automation-task.py").read_text()
+        self.assertIn('objectName: "automationRecoverUiBridge"', qml)
+        self.assertIn("function recoverFailedBridge()", qml)
+        self.assertIn('"queue-recover-bridge", "--approve"', qml)
+        self.assertIn('"--expected-snapshot-id", snapshotId', qml)
+        self.assertIn("ui_queue_bridge_recover_available", cli)
+        self.assertIn("recover_failed_ui_bridge(", cli)
+        self.assertIn("ui_queue_unsettled_profiles", cli)
+
     def test_owner_stops_only_unsent_legacy_default_without_touching_queue(self):
         original = self._write_queue_fixture()
         item = self.state["profiles"][self.id]
