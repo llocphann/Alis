@@ -409,6 +409,108 @@ class QueueControls(unittest.TestCase):
         self.assertTrue(any(path.read_bytes() == before_queue
                             for path in history))
 
+    def test_legacy_six_parked_recheck_preserves_existing_receipt_and_prepared_pin(self):
+        candidates = queue.discover_backend_candidates(self.github)
+        mapping = {task["code"]: task for task in candidates}
+        queue.prepare("AUTO-R01;AUTO-I02", resolver=lambda code: mapping[code])
+        saved = tf.load_task("AUTO-R01")
+        saved["status"] = "awaiting_cloud_ack"
+        saved["latest_receipt"] = {"id": "JOB-EXISTING"}
+        tf._save_task(saved)
+        files = [tf._task_path(code, "llocphann/Alis")
+                 for code in ("AUTO-R01", "AUTO-I02")]
+        originals = [path.read_bytes() for path in files]
+        with queue._lock():
+            manifest = queue._load()
+            manifest["state"] = "review_required"
+            for item in manifest["items"]:
+                item["state"] = "deferred"
+                item["reason"] = "source_pin_changed"
+            # This is a real legacy manifest, with no nonce field.
+            manifest.pop("generation", None)
+            queue._save(manifest)
+        old = queue.view()
+        self.assertEqual(old["deferred_count"], 2)
+        self.assertEqual(old["items"][0]["recovery_action"],
+                         "recheck_legacy_queue_reason")
+        with patch.object(tf, "_save_task",
+                          side_effect=AssertionError("recheck cannot rewrite task")):
+            result = queue.recheck_review_queue(
+                expected_snapshot_id=old["snapshot_id"],
+                resolver=lambda code: mapping[code])
+        self.assertEqual(result["state"], "prepared")
+        self.assertEqual(result["items"][0]["reason"], "cloud_ack_pending")
+        self.assertEqual(result["items"][1]["state"], "queued")
+        self.assertEqual(result["next"]["code"], "AUTO-I02")
+        self.assertFalse(queue._load()["approved_start"])
+        self.assertTrue(result["rechecked"])
+        self.assertEqual([path.read_bytes() for path in files], originals)
+        with self.assertRaisesRegex(tf.TaskError, "Queue changed"):
+            queue.recheck_review_queue(
+                expected_snapshot_id=old["snapshot_id"],
+                resolver=lambda _code: self.fail("stale recheck contacted GitHub"))
+
+    def test_recheck_fails_closed_when_queue_changes_during_github_resolution(self):
+        candidate = queue.discover_backend_candidates(self.github)[0]
+        queue.prepare("AUTO-R01", resolver=lambda _: candidate)
+        with queue._lock():
+            manifest = queue._load()
+            manifest["state"] = "review_required"
+            manifest["items"][0].update(state="deferred", reason="source_pin_changed")
+            queue._save(manifest)
+        snapshot = queue.view()["snapshot_id"]
+        original_task = tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes()
+        def race(_code):
+            with queue._lock():
+                manifest = queue._load()
+                manifest["updated_unix"] += 1
+                queue._save(manifest)
+            return candidate
+        with self.assertRaisesRegex(tf.TaskError, "Queue changed"):
+            queue.recheck_review_queue(
+                expected_snapshot_id=snapshot, resolver=race)
+        self.assertEqual(queue.view()["state"], "review_required")
+        self.assertEqual(queue.view()["items"][0]["reason"], "source_pin_changed")
+        self.assertEqual(tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes(),
+                         original_task)
+
+    def test_recheck_rejects_active_review_and_missing_saved_task(self):
+        candidate = queue.discover_backend_candidates(self.github)[0]
+        queue.prepare("AUTO-R01", resolver=lambda _: candidate)
+        with queue._lock():
+            manifest = queue._load()
+            manifest["state"] = "review_required"
+            manifest["items"][0].update(state="deferred", reason="source_pin_changed")
+            manifest["active"] = {"code": "AUTO-R01", "repository": "llocphann/Alis"}
+            queue._save(manifest)
+        with self.assertRaisesRegex(tf.TaskError, "Only a fully parked"):
+            queue.recheck_review_queue(
+                expected_snapshot_id=queue.view()["snapshot_id"],
+                resolver=lambda _code: self.fail("not safe"))
+        with queue._lock():
+            manifest = queue._load()
+            manifest["active"] = None
+            queue._save(manifest)
+        tf._task_path("AUTO-R01", "llocphann/Alis").unlink()
+        current = queue.view()
+        with self.assertRaisesRegex(tf.TaskError, "Original task record missing"):
+            queue.recheck_review_queue(
+                expected_snapshot_id=current["snapshot_id"],
+                resolver=lambda _code: self.fail("must not create record"))
+        self.assertEqual(queue.view(), current)
+
+    def test_recheck_ui_wires_legacy_reason_and_snapshot(self):
+        qml = (Path(__file__).resolve().parents[1] /
+               "modules/settings/AutomationTaskConfig.qml").read_text()
+        cli = (Path(__file__).resolve().parents[1] /
+               "scripts/alis-automation-task.py").read_text()
+        self.assertIn('reason === "source_pin_changed"', qml)
+        self.assertIn('Legacy pin · recheck', qml)
+        self.assertIn('reviewRecheckAvailable', qml)
+        self.assertIn('"queue-recheck", "--expected-snapshot-id", snapshotId', qml)
+        self.assertIn('root.recheckQueue()', qml)
+        self.assertIn('queue.recheck_review_queue(', cli)
+
     def test_clear_requires_confirmation_preserves_original_task_records(self):
         queue.prepare_auto(api=self.github)
         first = tf._task_path("AUTO-R01", "llocphann/Alis")
