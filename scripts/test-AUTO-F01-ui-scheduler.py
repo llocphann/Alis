@@ -478,6 +478,84 @@ class UiSchedulerTests(TestCase):
                     approved=True, accept_ui_only_receipts=True,
                     expected_first="llocphann/Alis:AI-I01")
 
+    def test_ui_start_rejects_stale_confirmation_with_identical_first_task(self):
+        pid, task = self._queue_fixture()
+        store.change_state(lambda _c, state:
+            state["profiles"][pid].update(desired="stopped", request=None))
+        from automation.chat_bridge import ui_preflight
+        report = {
+            "queue_state": "prepared",
+            "taskflow_profile_present": True,
+            "installed_service_mode": "ui_queue_mode",
+            "service_state": "active",
+            "preflight_blockers": [
+                "SCHEDULER_CUTOVER_NOT_READY",
+                "UI_QUEUE_OWNER_ACCEPTANCE_REQUIRED",
+            ],
+        }
+        old_id = queue.view()["snapshot_id"]
+        with queue._lock():
+            newer = queue._load()
+            newer["created_unix"] = 98765
+            queue._save(newer)
+        new_id = queue.view()["snapshot_id"]
+        self.assertNotEqual(old_id, new_id)
+        with patch.object(tf, "load_task", return_value=task), \\
+             patch.object(ui_preflight, "check_prepared_queue", return_value=report):
+            with self.assertRaisesRegex(tf.TaskError, "snapshot changed"):
+                managed_tasks.start_ui_queue(
+                    approved=True, accept_ui_only_receipts=True,
+                    expected_first="llocphann/Alis:AI-I01",
+                    expected_snapshot_id=old_id)
+            self.assertEqual(queue.view()["state"], "prepared")
+            self.assertFalse(queue._load()["approved_start"])
+            self.assertEqual(store.read_snapshot()[1]["profiles"][pid]["desired"],
+                             "stopped")
+            result = managed_tasks.start_ui_queue(
+                approved=True, accept_ui_only_receipts=True,
+                expected_first="llocphann/Alis:AI-I01",
+                expected_snapshot_id=new_id)
+        self.assertEqual(result["state"], "scheduled")
+        qml = (Path(__file__).resolve().parents[1] /
+               "modules/settings/AutomationTaskConfig.qml").read_text()
+        self.assertIn('"--expected-snapshot-id", snapshotId', qml)
+        self.assertIn("uiQueueStartSnapshotId", qml)
+
+    def test_ui_start_rechecks_manifest_before_persisting_approval(self):
+        pid, task = self._queue_fixture()
+        store.change_state(lambda _c, state:
+            state["profiles"][pid].update(desired="stopped", request=None))
+        from automation.chat_bridge import ui_preflight
+        report = {
+            "queue_state": "prepared",
+            "taskflow_profile_present": True,
+            "installed_service_mode": "ui_queue_mode",
+            "service_state": "active",
+            "preflight_blockers": [
+                "SCHEDULER_CUTOVER_NOT_READY",
+                "UI_QUEUE_OWNER_ACCEPTANCE_REQUIRED",
+            ],
+        }
+        original = queue.approve_ordered_start
+        def change_between_validation_and_approval(**kwargs):
+            with queue._lock():
+                changed = queue._load()
+                changed["created_unix"] = 12345
+                queue._save(changed)
+            return original(**kwargs)
+        with patch.object(tf, "load_task", return_value=task), \\
+             patch.object(ui_preflight, "check_prepared_queue", return_value=report), \\
+             patch.object(queue, "approve_ordered_start",
+                          side_effect=change_between_validation_and_approval):
+            with self.assertRaisesRegex(tf.TaskError, "Queue changed"):
+                managed_tasks.start_ui_queue(
+                    approved=True, accept_ui_only_receipts=True,
+                    expected_first="llocphann/Alis:AI-I01")
+        self.assertEqual(queue.view()["state"], "prepared")
+        self.assertFalse(queue._load()["approved_start"])
+        self.assertEqual(store.read_snapshot()[1]["profiles"][pid]["desired"],
+                         "stopped")
+
     def test_ui_done_receipt_advances_only_exact_local_evidence(self):
         pid, task = self._queue_fixture(state="active", approved=True)
         def save(updated):
