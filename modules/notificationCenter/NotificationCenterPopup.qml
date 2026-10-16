@@ -27,6 +27,9 @@ Bar.StyledPopup {
     property bool hoverSessionArmed: true
     property int selectedTab: 0
     property int _screenTimeRevision: 0
+    // Legacy corner popup uses a tiny 0,0-local anchor. A proper Abyss module
+    // has real output-relative geometry and must not snap to the far corner.
+    property bool moduleAnchorMode: false
     property string cornerAttachmentEdge: "bottom"
     property real cornerAttachmentThickness: Math.max(1, Math.min(32,
         Math.round(Config.options?.appearance?.screenEdge?.width ?? 10)))
@@ -83,7 +86,7 @@ Bar.StyledPopup {
     // Its local x/y are therefore near zero; pin the popup to the trailing
     // tangent edge of the full output instead of interpreting those locals as
     // output coordinates (which incorrectly placed the body bottom-left).
-    tangentEdgeOverride: "end"
+    tangentEdgeOverride: root.moduleAnchorMode ? "" : "end"
     attachmentEdgeOverride: root.cornerAttachmentEdge
     attachmentThicknessOverride: root.cornerAttachmentThickness
     hoverActivates: root.hoverAllowed && root.hoverSessionArmed
