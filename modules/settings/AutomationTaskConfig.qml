@@ -301,6 +301,41 @@ ContentPage {
             .map(task => task.repository + ":" + task.code).join(";")
     }
 
+    function resetActiveChat(): void {
+        if (root.busy || !root.queueStatusConfirmed || !root.queueSnapshot
+                || root.queueSnapshot.mode !== "ordered"
+                || root.queueSnapshot.state !== "active"
+                || !root.queueSnapshot.active)
+            return
+        const active = root.queueSnapshot.active
+        const identity = active.repository + ":" + active.code
+        if (!root.resetChatConfirmation) {
+            root.stopQueueConfirmation = false
+            root.clearQueueConfirmation = false
+            root.resetChatTarget = identity
+            root.resetChatConfirmation = true
+            root.statusText = Translation.tr(
+                "Confirm fresh chat for %1. Unsettled submissions and jobs cannot be reset."
+            ).arg(active.code)
+            return
+        }
+        if (root.resetChatTarget !== identity) {
+            root.resetChatConfirmation = false
+            root.resetChatTarget = ""
+            root.errorText = Translation.tr("Active task changed · refresh before reset")
+            return
+        }
+        root.resetChatConfirmation = false
+        root.resetChatTarget = ""
+        root.errorText = ""
+        root.queueStatusConfirmed = false
+        root.queueOperation = "reset-chat"
+        queueProcess.command = ["python3",
+            Quickshell.shellPath("scripts/alis-automation-task.py"),
+            "queue-reset-chat", "--approve", "--expected-active", identity]
+        queueProcess.running = true
+    }
+
     function stopQueue(): void {
         if (root.busy || !root.queueSnapshot) return
         const active = root.queueSnapshot.active
