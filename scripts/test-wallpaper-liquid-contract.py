@@ -27,8 +27,19 @@ require('Translation.tr("Liquid")' in ui and '["alisMelt", "inirMelt"].includes(
 require('_requestShaderPresentationFrame' in cross
         and 'shaderTransition.shaderPresented = true' in cross.split('function onFrameSwapped(): void {', 1)[1].split('if (!root._shaderTexturePrimePending)', 1)[0],
         "shader must only be promoted after a window frame, not on compilation")
-require('root._shaderTexturePrimePending && newSource !== root._shaderTexturePrimeSource' in cross,
-        "new wallpaper must supersede an obsolete pre-transition texture lease")
+require('shaderSlot0Texture.scheduleUpdate()' in cross
+        and 'shaderSlot1Texture.scheduleUpdate()' in cross,
+        "Ready textures must receive one-shot scene-graph captures before starting Liquid")
+require('if (root._shaderTexturePrimeSwaps < 2)' not in cross
+        and '_requestShaderPrimeFrame' not in cross,
+        "do not gate the new wallpaper on two pre-animation compositor frames")
+require('fragmentShader: root.shaderTransitionRequested' in cross,
+        "keep the Liquid QSB selected across transitions instead of replacing it on each switch")
+require('interval: 240' in cross
+        and 'running: root._shaderRequestedActive && !transitionAnim.running' in cross,
+        "the unpresented shader needs a short, bounded fallback instead of a 1.5s freeze")
+require(cross.count('live: false') >= 2,
+        "shader snapshots should not re-render full-screen framebuffers on every frame")
 require('onTriggered: root._finishShaderWaitWithoutShader()' in cross,
         "stalled shader must settle by the Ready-slot fallback")
 require((root / "modules/common/widgets/wallpaperTransitions/alisMelt.frag.qsb").is_file(),
