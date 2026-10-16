@@ -88,14 +88,28 @@ assert 'root.launcherMode === "module"' in bar
 assert 'ModuleLayout.unifiedLauncherMode(Config.options?.abyss?.modules) === "module"' in corners
 assert 'ModuleLayout.livePlacements(placements,Config.options?.abyss?.modules,false)' in perimeter
 assert 'bar.activePlacements,bar.layoutOptions' in perimeter
-assert 'draftLauncherMode: editor.visible ? editor.launcherMode : ""' in perimeter
-assert 'property string launcherMode: "module"' in editor
-assert 'objectName: "abyssUnifiedLauncherModuleMode"' in editor
-assert 'objectName: "abyssUnifiedLauncherEdgebarMode"' in editor
-assert 'onClicked: root.launcherMode = "edgebar"' in editor
-assert 'onClicked: root.launcherMode = "module"' in editor
-assert 'writes["abyss.modules.launcherMode"]=launcherMode' in editor
-assert 'launcherMode:launcherMode' in editor
-assert 'launcherMode:Placement.unifiedLauncherMode(options)' in editor
-assert 'onLauncherModeChanged: root.queueHistory()' in editor
+# The mode belongs solely to permanent Alis Settings → Abyss → Bar modules,
+# not to the transient live layout editor. The same stored config drives live
+# Screen Corners, Bar and Perimeter without changing placement or icon values.
+settings = read("modules/abyss/settings/AbyssStyleSettings.qml")
+settings_page = read("modules/settings/AbyssModulesConfig.qml")
+settings_index = read("modules/settings/SettingsPageRegistryData.qml")
+assert 'sections: ["modules", "bar"]' in settings_page
+assert 'title:"Modules";icon:"widgets";settingsTaskSection:"modules"' in settings
+assert 'objectName:"abyssUnifiedLauncherSettingsMode"' in settings
+assert 'currentValue:Config.options?.abyss?.modules?.launcherMode === "edgebar"' in settings
+assert '{displayName:"Module",value:"module"}' in settings
+assert '{displayName:"Edgebar Hover",value:"edgebar"}' in settings
+assert 'onSelected:value=>Config.setNestedValue("abyss.modules.launcherMode",value)' in settings
+assert 'pageIndex: 34, pageName: root.pages[34].name' in settings_index
+assert 'Quick Notes & Notifications access mode' in settings_index
+assert 'readonly property string launcherMode:' in bar
+assert 'Layout.unifiedLauncherMode(Config.options?.abyss?.modules)' in bar
+assert 'draftLauncherMode' not in bar
+assert 'draftLauncherMode' not in perimeter
+assert 'launcherMode' not in editor
+assert 'abyssUnifiedLauncherMode' not in editor
+assert 'abyss.modules.launcherMode' not in editor
+assert 'Placement.saveProfile(' in editor
+assert 'root.batch("showIcon",checked)' in editor
 print("ABYSS-R15 unified edge module source contract: ok")
