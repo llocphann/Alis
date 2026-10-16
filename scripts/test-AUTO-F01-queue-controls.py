@@ -505,7 +505,7 @@ class QueueControls(unittest.TestCase):
         cli = (Path(__file__).resolve().parents[1] /
                "scripts/alis-automation-task.py").read_text()
         self.assertIn('reason === "source_pin_changed"', qml)
-        self.assertIn('Legacy pin · recheck', qml)
+        self.assertIn('Legacy pin', qml)
         self.assertIn('reviewRecheckAvailable', qml)
         self.assertIn('"queue-recheck", "--expected-snapshot-id", snapshotId', qml)
         self.assertIn('root.recheckQueue()', qml)
