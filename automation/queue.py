@@ -450,7 +450,7 @@ def clear(*, approved: bool = False,
                     or ("repository" in selection and
                         selection["repository"] != active.get("repository"))
                     or any(item.get("state") not in
-                           {"queued", "active", "completed", "awaiting_owner"}
+                           {"queued", "deferred", "active", "completed", "awaiting_owner"}
                            for item in manifest["items"])):
                 raise tf.TaskError("Active task identity uncertain; cannot clear queued items")
             if not queued:
@@ -459,7 +459,8 @@ def clear(*, approved: bool = False,
         elif state == "prepared":
             if active is not None or manifest.get("selection") or manifest.get("approved_start"):
                 raise tf.TaskError("An approved selector or task is unresolved; cannot clear")
-            if any(item.get("state") != "queued" for item in manifest["items"]):
+            if any(item.get("state") not in {"queued", "deferred"}
+                   for item in manifest["items"]):
                 raise tf.TaskError("Queue has claimed task state; cannot clear")
             for item in queued:
                 record = tf.load_task(item["code"], item["repository"])
@@ -469,6 +470,15 @@ def clear(*, approved: bool = False,
                         or record.get("handoff") is not None
                         or record.get("latest_receipt") is not None):
                     raise tf.TaskError("Queue task has durable work; cannot clear")
+        elif state == "review_required":
+            # No task can be dispatched. Archive this queue manifest ONLY,
+            # retaining every saved task record/receipt for future evidence
+            # reconciliation. Explicit owner Clear remains mandatory.
+            if (active is not None or manifest.get("selection")
+                    or manifest.get("approved_start") or queued
+                    or any(item.get("state") != "deferred"
+                           for item in manifest["items"])):
+                raise tf.TaskError("Unsettled queue cannot be cleared")
         elif state == "stopped":
             # A previously claimed task is retained in the archived queue,
             # not erased as if it never ran. Removing the queue view requires
