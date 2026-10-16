@@ -100,6 +100,15 @@ Scope {
                 Config.options?.abyss?.modules,
                 Config.options?.panelFamily ?? "ii",kind)
         }
+        // Switching to Edgebar Hover must restore the actual hover window,
+        // regardless of legacy feature-enable or monitor flags left behind
+        // by older Panels controls. Module Icon continues to suppress it via
+        // hasUnifiedEdgeReplacement. Do not change classic ii behavior.
+        function abyssEdgebarSelected(kind): bool {
+            return ModuleLayout.edgebarOwnsCornerHover(
+                Config.options?.abyss?.modules,
+                Config.options?.panelFamily ?? "ii",kind)
+        }
         // Orbit was retired from the live graph. Only the compositor's real
         // overview hot corner keeps priority over shell corner interactions.
         readonly property bool niriOverviewOwnsCorner: CompositorService.isNiri
@@ -183,9 +192,11 @@ Scope {
 
         readonly property bool shouldShowQuickNotesCorner:
             (Config.options?.panelFamily ?? "ii") !== "waffle"
-            && (Config.options?.quickNotes?.enable ?? true)
+            && ((Config.options?.quickNotes?.enable ?? true)
+                || cornerPanelWindow.abyssEdgebarSelected("notesTimers"))
             && !cornerPanelWindow.hasUnifiedEdgeReplacement("notesTimers")
-            && cornerPanelWindow.quickNotesMonitorAllowed
+            && (cornerPanelWindow.quickNotesMonitorAllowed
+                || cornerPanelWindow.abyssEdgebarSelected("notesTimers"))
             && (screenCorners.quickNotesEditorOutput.length === 0
                 || screenCorners.quickNotesEditorOutput === outputName)
             && cornerPanelWindow.isBottomLeft
@@ -254,10 +265,13 @@ Scope {
                 Math.round(Config.options?.appearance?.screenEdge?.width ?? 10)))
         readonly property bool shouldShowNotificationCenterCorner:
             (Config.options?.panelFamily ?? "ii") !== "waffle"
-            && (Config.options?.notificationCenter?.enable ?? true)
-            && (Config.options?.notificationCenter?.hoverEnable ?? true)
+            && ((Config.options?.notificationCenter?.enable ?? true)
+                || cornerPanelWindow.abyssEdgebarSelected("notificationActivity"))
+            && ((Config.options?.notificationCenter?.hoverEnable ?? true)
+                || cornerPanelWindow.abyssEdgebarSelected("notificationActivity"))
             && !cornerPanelWindow.hasUnifiedEdgeReplacement("notificationActivity")
-            && cornerPanelWindow.notificationCenterTargetsOutput()
+            && (cornerPanelWindow.notificationCenterTargetsOutput()
+                || cornerPanelWindow.abyssEdgebarSelected("notificationActivity"))
             && cornerPanelWindow.isBottomRight
             && !cornerPanelWindow.niriOverviewOwnsCorner
             && !cornerPanelWindow.notificationCenterInteractionBlocked
@@ -266,9 +280,11 @@ Scope {
             && (!fullscreen || notificationCenterAllowedInFullscreen)
         readonly property bool notificationCenterHostNeeded:
             (Config.options?.panelFamily ?? "ii") !== "waffle"
-            && (Config.options?.notificationCenter?.enable ?? true)
+            && ((Config.options?.notificationCenter?.enable ?? true)
+                || cornerPanelWindow.abyssEdgebarSelected("notificationActivity"))
             && !cornerPanelWindow.hasUnifiedEdgeReplacement("notificationActivity")
-            && cornerPanelWindow.notificationCenterTargetsOutput()
+            && (cornerPanelWindow.notificationCenterTargetsOutput()
+                || cornerPanelWindow.abyssEdgebarSelected("notificationActivity"))
             && cornerPanelWindow.isBottomRight
             && (!fullscreen || notificationCenterAllowedInFullscreen)
             && (cornerPanelWindow.shouldShowNotificationCenterCorner
