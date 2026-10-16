@@ -53,6 +53,8 @@ ContentPage {
         else if (queue.state === "active") phase = Translation.tr("Running")
         else if (queue.state === "waiting") phase = Translation.tr("Waiting")
         else if (queue.state === "prepared") phase = Translation.tr("Ready")
+        else if (queue.state === "review_required")
+            phase = Translation.tr("Needs review")
         else if (queue.state === "finished") phase = Translation.tr("Finished")
         else if (["stopped", "cancelled"].includes(queue.state))
             phase = Translation.tr("Stopped")
@@ -62,8 +64,12 @@ ContentPage {
         if (current?.code) details.push(current.code)
         if (currentIndex >= 0 && tasks.length)
             details.push((currentIndex + 1) + "/" + tasks.length)
-        else if (tasks.length)
-            details.push(Translation.tr("%1 tasks").arg(tasks.length))
+        else if (tasks.length) {
+            const ready = tasks.filter(t => t.state === "queued").length
+            const deferred = tasks.filter(t => t.state === "deferred").length
+            if (ready) details.push(Translation.tr("%1 ready").arg(ready))
+            if (deferred) details.push(Translation.tr("%1 parked").arg(deferred))
+        }
         return details.join(" · ")
     }
     property bool backendInstalled: false
@@ -372,6 +378,16 @@ ContentPage {
         queueProcess.running = true
     }
 
+    function parkedReason(reason): string {
+        if (reason === "cloud_ack_pending") return Translation.tr("Ack pending")
+        if (reason === "owner_review_pending") return Translation.tr("Owner review")
+        if (reason === "already_completed") return Translation.tr("Completed")
+        if (reason === "cloud_continuation_pending") return Translation.tr("Cloud pending")
+        if (reason === "source_pin_changed") return Translation.tr("Pin changed")
+        if (reason === "previous_handoff_pending") return Translation.tr("Handoff pending")
+        return Translation.tr("Needs review")
+    }
+
     function clearQueue(): void {
         // A stale display may still offer a cleanup action. This is safe:
         // the backend must match the exact on-screen queue snapshot under
@@ -379,7 +395,8 @@ ContentPage {
         if (root.busy || !root.queueSnapshot)
             return
         const targets = root.queuedTaskIdentities(root.queueSnapshot)
-        if (!targets.length && !["finished", "cancelled", "stopped"].includes(root.queueSnapshot.state))
+        if (!targets.length && !["finished", "cancelled", "stopped",
+                "review_required"].includes(root.queueSnapshot.state))
             return
         if (!root.clearQueueConfirmation) {
             root.clearQueueTarget = targets
@@ -1136,7 +1153,7 @@ ContentPage {
                         ? Translation.tr("Confirm clear") : Translation.tr("Clear")
                     enabled: !root.busy && !!root.queueSnapshot
                         && (root.queueSnapshot.items.some(task => task.state === "queued")
-                            || (["finished", "cancelled", "stopped"].includes(root.queueSnapshot.state)
+                            || (["finished", "cancelled", "stopped", "review_required"].includes(root.queueSnapshot.state)
                                 && root.queueSnapshot.items.length > 0))
                     onClicked: root.clearQueue()
                 }
@@ -1204,7 +1221,8 @@ ContentPage {
                     ? root.selectedTask.repository + ":" + root.selectedTask.code : ""
                 options: root.queueSnapshot
                     ? root.queueSnapshot.items.map(t => ({
-                        displayName: t.code + " · " + t.state,
+                        displayName: t.code + " · " + (t.state === "deferred"
+                            ? root.parkedReason(t.reason) : t.state),
                         value: t.repository + ":" + t.code
                     })) : []
                 onSelected: value => {
