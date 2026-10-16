@@ -21,7 +21,13 @@ Item {
     readonly property var launcherModes: ({
         launcherMode: Config.options?.abyss?.modules?.launcherMode,
         notesTimersMode: Config.options?.abyss?.modules?.notesTimersMode,
-        notificationActivityMode: Config.options?.abyss?.modules?.notificationActivityMode
+        notificationActivityMode: Config.options?.abyss?.modules?.notificationActivityMode,
+        // Include and track old hide preferences so legacy users do not get
+        // a module AND corner hover source during migration.
+        iconVisibility: ({
+            notesTimers: Config.options?.abyss?.modules?.iconVisibility?.notesTimers,
+            notificationActivity: Config.options?.abyss?.modules?.iconVisibility?.notificationActivity
+        })
     })
     property var draggedIds: []
     property var liquidController: null
