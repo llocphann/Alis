@@ -23,6 +23,15 @@ function unifiedLauncherMode(options,kind) {
     }
     return value==="edgebar" ? "edgebar" : "module";
 }
+// Edgebar is a separate ScreenCorners layer. The chosen mode must gate
+// that layer even while the Abyss Bar is auto-hidden, transitioning, closed,
+// not mounted on this output, or temporarily lacking an enabled launcher.
+// Checking barOpen/available placements caused both popup hosts to coexist.
+// The classic ii Bar has no Abyss unified module and must retain its corners.
+function moduleOwnsCornerHover(options,panelFamily,kind) {
+    return panelFamily==="abyss" && isUnifiedKind(kind)
+        && unifiedLauncherMode(options,kind)==="module";
+}
 // Mode selects popup *ownership* without rewriting placement or icon state.
 function livePlacements(placements, options, editing) {
     var all=normalize(placements,"top");
