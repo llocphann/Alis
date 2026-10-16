@@ -1271,7 +1271,7 @@ ContentPage {
                         const raw = Config.options?.background?.transition?.type ?? "crossfade"
                         const t = (raw === "alisMelt" || raw === "inirMelt") ? "alisMelt" : AwwwBackend.normalizedAwwwTransitionType(raw, Config.options?.background?.transition?.direction ?? "right")
                         switch (t) {
-                        case "alisMelt": return Translation.tr("Liquid shader reveal; uses fade if unsupported.")
+                        case "alisMelt": return Translation.tr("Abyss Liquid: organic, theme-colored fluid flow. Uses fade if unsupported.")
                         case "none":   return Translation.tr("Instant switch — no visible transition.")
                         case "simple": return Translation.tr("Classic step-based dissolve. Fast, simple and lightweight.")
                         case "fade":   return Translation.tr("Smooth fade using a bezier curve for the transition progression.")
