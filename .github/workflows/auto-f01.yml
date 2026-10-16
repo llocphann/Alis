@@ -58,6 +58,7 @@ jobs:
           node scripts/test-AUTO-F01-github-picker.mjs
           node scripts/test-AUTO-F01-ui-surface.mjs
           node scripts/test-AUTO-F01-ui-turn-anchor.mjs
+          node scripts/test-AUTO-F01-virtualized-history.mjs
           node scripts/test-AUTO-F01-archived-observation.mjs
           node scripts/test-AUTO-F01-before-send.mjs
           node scripts/test-AUTO-F01-submitted-wait.mjs
