@@ -51,7 +51,10 @@ Settings → Automation → GitHub tasks shows separate owner-confirmed controls
   lock. A new queue with identical codes, an intervening Start/Stop, or a
   changed active selection rejects a stale Clear instead of mutating that
   different version. Refresh and confirm again; a hash is only a comparison
-  token, never approval or a transport receipt.
+  token, never approval or a transport receipt. Each newly prepared queue
+  also has a fresh random generation ID, preventing a deleted/reprepared
+  identical queue from reusing a previous confirmation even within one second.
+  Existing legacy queue manifests are not rewritten during read-only status.
 - **Clear stopped queue → Confirm clear:** once Stop was acknowledged,
   archive the complete stopped queue manifest and return the UI to an
   empty queue. This is **not** deleting the old worker's action/receipts
