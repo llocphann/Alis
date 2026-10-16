@@ -95,7 +95,12 @@ def prompt(profile: dict, kind: str) -> str:
         "ALIS_LOOP:WAIT_RESULT JOB-..., ALIS_LOOP:ROTATE, "
         "ALIS_LOOP:DONE or ALIS_LOOP:CONNECTOR_BLOCKED GITHUB. "
         "Report DONE only when Cloudbot work is complete and tested; "
-        "keep Owner verification separate.\n\n" + body
+        "keep Owner verification separate. DONE lets the controller move "
+        "to the next queued Issue while the current Issue stays open "
+        "Awaiting Owner verification. ROTATE means a capacity-limited "
+        "new chat for this SAME task, requires a durable checkpoint, and "
+        "must never mean next queued task. Do not emit ROTATE merely "
+        "because installed-desktop or Owner acceptance is pending.\n\n" + body
     ))
 
 
