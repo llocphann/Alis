@@ -219,6 +219,43 @@ function conflicts(records) {
     });
     return result;
 }
+// The editor relocates for a real geometric obstruction, not for a change in
+// selected/edited Edge or the number of modules elsewhere on that Edge.
+// A 3px intersection on each axis is ignored to avoid one-pixel drag jitter.
+function toolbarOverlapArea(a,b) {
+    if (!a || !b || !(a.width>0 && a.height>0 && b.width>0 && b.height>0)) return 0;
+    var width=Math.max(0,Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x));
+    var height=Math.max(0,Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y));
+    return width>3 && height>3 ? width*height : 0;
+}
+function toolbarObstruction(footprint,records,previewRects) {
+    if (!footprint) return 0;
+    var area=0;
+    (records || []).forEach(function(record) {
+        if (record && record.enabled!==false && !record.capacityConflict && record.content)
+            area+=toolbarOverlapArea(footprint,record.content);
+    });
+    (previewRects || []).forEach(function(rect) {
+        area+=toolbarOverlapArea(footprint,rect);
+    });
+    return area;
+}
+function toolbarEdgeForRects(currentEdge,footprints,records,previewRects) {
+    var edges=["bottom","top","right","left"];
+    if (edges.indexOf(currentEdge)<0 || !footprints?.[currentEdge]) return "bottom";
+    var currentArea=toolbarObstruction(footprints[currentEdge],records,previewRects);
+    // Empty (or merely adjacent) stays put, even if other Edges are emptier.
+    if (currentArea<=0) return currentEdge;
+    var best=currentEdge,bestArea=currentArea;
+    edges.forEach(function(edge) {
+        if (edge===currentEdge || !footprints[edge]) return;
+        var area=toolbarObstruction(footprints[edge],records,previewRects);
+        // A small improvement alone must not cause an edge-to-edge oscillation.
+        if (area+4<bestArea) {best=edge;bestArea=area;}
+    });
+    return best;
+}
+
 function checkedMove(placements,id,x,y,width,height,options,fontScale,snap) {
     var p=placements.find(function(p) {return p.id===id;});
     if(!p)return {placements:placements,guides:[],rejected:"This module is no longer available"};
