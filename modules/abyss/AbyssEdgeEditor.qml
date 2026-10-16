@@ -8,6 +8,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.abyss.looks
 import qs.modules.abyss.settings
+import "looks/AbyssGeometry.js" as Geometry
 import "looks/AbyssLayout.js" as Placement
 import "looks/AbyssSelection.js" as ModuleSelection
 import "looks/AbyssPresentation.js" as Presentation
@@ -96,9 +97,8 @@ Item {
     property string launcherMode: "module"
     property var singleModuleExpansion: ({top:"edge",right:"edge",bottom:"edge",left:"edge"})
     property string editingEdge: "top"
-    // Keep the editor controls on the least-contended Screen Edge. The selected
-    // module's Edge receives a large penalty, while a small hysteresis bonus
-    // keeps the toolbar from oscillating between equal candidates mid-drag.
+    // The editor stays on its current Screen Edge until a module/IPC preview
+    // physically overlaps its control surface; selection alone never moves it.
     property string toolbarEdge: "bottom"
     readonly property bool toolbarOnHorizontalEdge:
         toolbarEdge === "top" || toolbarEdge === "bottom"
@@ -144,57 +144,42 @@ Item {
     readonly property var draftOptions: Object.assign({},Config.options?.abyss?.modules,{gap:gap,edgeSizes:edgeSizes,size:moduleScale,
         singleModuleExpansion:singleModuleExpansion,edgeThicknesses:edgeThicknesses,edgeWidthAffectsModules:edgeWidthAffectsModules,edgeJoinModules:edgeJoinModules,edgeModuleRadii:edgeModuleRadii,edgeRoundZeroCorners:edgeRoundZeroCorners,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius})
 
-    function toolbarEdgeScore(edge): real {
-        let score = (edge === toolbarEdge ? -4 : 0)
-        // Side placement remains available, but top/bottom wins close ties
-        // because the existing control rows are naturally horizontal.
-        if (edge === "left" || edge === "right")
-            score += 6
-        if (edge === editingEdge)
-            score += selected ? 54 : 12
-
-        if (root.editingPopups) {
-            // Popup/IPC previews are first-class edit targets too. Keep the
-            // controls off the preview's physical Edge (and its joined Edge)
-            // so dragging a persistent example never happens under the toolbar.
-            if (edge === previewBody.edge) {
-                const edgeLength = ["top","bottom"].includes(edge)
-                    ? root.width : root.height
-                const occupancy = Math.min(1,
-                    previewBody.span / Math.max(1, edgeLength))
-                score += 260 + occupancy * 120
-            }
-            if (previewBody.joinedEdge.length > 0
-                    && edge === previewBody.joinedEdge)
-                score += 180
-        }
-
-        for (let i = 0; i < draft.length; ++i) {
-            const placement = draft[i]
-            if (placement?.enabled === false || placement?.edge !== edge)
-                continue
-            const scale = placement?.customSize
-                ? Number(placement?.size ?? 1)
-                : Placement.edgeSize(draftOptions,edge)
-            score += 18 + Math.max(.5,scale) * 8
-            if (targetIds.includes(placement?.id))
-                score += 220
-        }
-        return score
+    // Resolve the actual footprint on the current Edge and conservatively
+    // predict the same centered control surface on alternate Edges. Merely
+    // editing Bottom Edge or selecting its modules cannot relocate the toolbar.
+    function toolbarFootprint(edge): var {
+        if (edge === toolbarEdge && editorBody.targetRecord?.content)
+            return editorBody.targetRecord.content
+        const horizontal = edge === "top" || edge === "bottom"
+        const length = horizontal ? width : height
+        if (length <= 48) return null
+        const span = horizontal
+            ? Math.min(width-48,editingPopups ? ipcToolbarSpan : moduleToolbarSpan)
+            : Math.min(height-48,Math.max(toolbar.implicitHeight
+                + editorBody.padding*2,height*.72))
+        const depth = horizontal
+            ? Math.min(Math.max(80,height*.65),toolbar.implicitHeight
+                + editorBody.padding*2)
+            : Math.min(width-48,260*Appearance.fontSizeScale)
+        // Use the same inset/padding/clamping rules as the real BodyHost.
+        return Geometry.panel(width,height,edgeInsets,edge,
+            (length-span)/2,span,depth,1,editorBody.padding,[],true).content
     }
 
     function bestToolbarEdge(): string {
-        const candidates = ["bottom","top","right","left"]
-        let best = candidates[0]
-        let bestScore = toolbarEdgeScore(best)
-        for (let i = 1; i < candidates.length; ++i) {
-            const score = toolbarEdgeScore(candidates[i])
-            if (score < bestScore) {
-                best = candidates[i]
-                bestScore = score
-            }
+        if (width<=48 || height<=48) return toolbarEdge
+        const footprints = {}
+        for (const edge of ["bottom","top","right","left"])
+            footprints[edge] = toolbarFootprint(edge)
+        let previewRects = []
+        if (root.editingPopups) {
+            // IPC previews are treated like modules: only their *actual*
+            // intersection with the controls can force a relocation.
+            if (previewBody.targetRecord?.content)
+                previewRects = [previewBody.targetRecord.content]
         }
-        return best
+        return Placement.toolbarEdgeForRects(toolbarEdge,footprints,
+            moduleLayer.layoutRecords,previewRects)
     }
 
     function scheduleToolbarRelocation(): void {
@@ -476,6 +461,8 @@ Item {
     Connections {
         target:root.moduleLayer
         function onMeasuredExtentsChanged(){root.reflowGroup()}
+        // A module can grow into the controls after its first live measurement.
+        function onLayoutRecordsChanged(){root.scheduleToolbarRelocation()}
     }
 
     Timer {
