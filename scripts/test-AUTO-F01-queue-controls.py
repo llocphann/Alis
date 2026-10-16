@@ -70,6 +70,37 @@ class QueueControls(unittest.TestCase):
         self.assertEqual(doc["selection_policy"], "backend-first-nonvisual")
         self.assertIsNone(doc["active"])
 
+    def test_backend_first_discovery_accepts_safe_original_pin_after_head_moves(self):
+        original = queue.prepare_auto(api=self.github)
+        self.assertEqual(original["state"], "prepared")
+        queue.clear(approved=True)
+        files = {
+            code: tf._task_path(code, "llocphann/Alis")
+            for code in ("AUTO-R01", "AUTO-I02")
+        }
+        initial = {code: path.read_bytes() for code, path in files.items()}
+        comparisons = []
+        def current_github(endpoint):
+            if endpoint.endswith("/branches/dev"):
+                return {"commit": {"sha": "c" * 40}}
+            if "/compare/" in endpoint:
+                comparisons.append(endpoint)
+                return {"status": "ahead", "ahead_by": 9, "behind_by": 0,
+                        "base_commit": {"sha": "a" * 40},
+                        "merge_base_commit": {"sha": "a" * 40}}
+            return self.github(endpoint)
+        selected = queue.prepare_auto(api=current_github)
+        self.assertEqual(selected["state"], "prepared", selected)
+        self.assertEqual([x["code"] for x in selected["items"]],
+                         ["AUTO-R01", "AUTO-I02"])
+        self.assertEqual([x["state"] for x in selected["items"]],
+                         ["queued", "queued"])
+        self.assertTrue(comparisons)
+        for code, path in files.items():
+            self.assertEqual(path.read_bytes(), initial[code])
+            self.assertEqual(tf.load_task(code)["task"]["base_sha"], "a" * 40)
+        self.assertFalse(queue._load()["approved_start"])
+
     def test_auto_discovery_skips_saved_active_task_and_keeps_record_bytes(self):
         prepared = queue.prepare_auto(api=self.github)
         self.assertEqual(len(prepared["items"]), 2)
