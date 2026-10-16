@@ -3,6 +3,7 @@ import {requireFreshAssistantTurn} from "./ui_response_gate.mjs";
 import {pinnedUiWindow} from "./ui_surface.mjs";
 import {createHash} from "node:crypto";
 import {uiAnchorSource,matchingSubmittedUnit,submittedPromptMatches} from "./ui_turn_anchor.mjs";
+import {virtualizedRecoveryEligible,validateVirtualizedHistory} from "./ui_history_witness.mjs";
 
 const PLAYWRIGHT = process.env.ALIS_PLAYWRIGHT_MODULE ?? process.env.HADALIS_PLAYWRIGHT_MODULE ?? "file:///usr/lib/chatgpt/resources/cua_node/lib/node_modules/playwright-core/index.mjs";
 const { chromium } = await import(PLAYWRIGHT);
@@ -142,7 +143,9 @@ export async function uiOnlyTurnIdentity(page,{initialPrompt=null}={}) {
   return uiAnchorSource(PROJECT_NAME,await submittedUnits(page),initialPrompt);
 }
 
-export async function resumeUiChat(page,label,{targetKey=null,initialPrompt=null}={}) {
+export async function resumeUiChat(page,label,{
+  targetKey=null,initialPrompt=null,readOnlyHistory=false
+}={}) {
   if(!process.env.ALIS_CHATGPT_UI_TARGET_ID||typeof label!=='string'||
      !label.trim()||label.length>250||/[\x00-\x1f]/.test(label)||
      (targetKey===null&&initialPrompt===null))throw Error('ALIS_UI_RESUME_BINDING_REQUIRED');
@@ -158,7 +161,114 @@ export async function resumeUiChat(page,label,{targetKey=null,initialPrompt=null
   await sleep(400);
   // A title only locates a candidate. The original full prompt/turn anchor
   // must still match before observing a response or touching its composer.
-  if(!await matches())throw Error('ALIS_UI_RESUME_TARGET_MISMATCH');
+  // The read-only observer may restore the first-turn anchor by scrolling
+  // an already-selected, uniquely named Project thread. No sender/composer
+  // may use this exception: a full anchor must be verified before receipts.
+  if(!readOnlyHistory && !await matches())
+    throw Error('ALIS_UI_RESUME_TARGET_MISMATCH');
+  if(readOnlyHistory)await verifyProject(page);
+}
+
+async function historyScrollBoundary(page,boundary) {
+  return page.evaluate(which=>{
+    const unit=document.querySelector('[data-chatgpt-search-unit-key$=":user"]');
+    if(!unit)return {ok:false};
+    let owner=unit.parentElement,scrollable=[];
+    while(owner&&owner!==document.body) {
+      const style=getComputedStyle(owner);
+      if (/(auto|scroll)/.test(style.overflowY)
+          && owner.scrollHeight>owner.clientHeight+80)
+        scrollable.push(owner);
+      owner=owner.parentElement;
+    }
+    if(scrollable.length!==1)return {ok:false};
+    const host=scrollable[0],extent=host.scrollHeight-host.clientHeight;
+    const reverse=getComputedStyle(host).flexDirection==='column-reverse'
+       || getComputedStyle(host.firstElementChild).flexDirection==='column-reverse';
+    host.scrollTop=which==='oldest'?-host.scrollHeight:host.scrollHeight;
+    const top=host.scrollTop;
+    const reached=which==='oldest'
+      ?(reverse?top<=-extent+3:Math.abs(top)<=3)
+      :(reverse?Math.abs(top)<=3:top>=extent-3);
+    return {ok:reached,extent:Math.round(extent)};
+  },boundary);
+}
+
+async function observeVirtualizedSubmittedPrompt(page,prompt,targetKey) {
+  // Recovery observation ONLY, never used as a composer admission signal.
+  // Keep one selected-chat UI identity across scrolling to both endpoints;
+  // no title-only match, chat switch, Send, draft edit or journal mutation.
+  const selectedBefore=await uiTargetIdentity(page);
+  if(await visibleCount(page.getByRole('button',{name:/stop/i})))
+    return {completed:false};
+  let firstUnits=null,oldestReached=false;
+  for(let attempt=0;attempt<6;attempt++) {
+    const step=await historyScrollBoundary(page,'oldest');
+    if(!step.ok)throw Error('ALIS_UI_HISTORY_SCROLL_UNVERIFIED');
+    oldestReached=true;
+    await sleep(300);
+    if(await uiTargetIdentity(page)!==selectedBefore)
+      throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
+    const units=await submittedUnits(page);
+    try {
+      const key=createHash('sha256').update(uiAnchorSource(PROJECT_NAME,units)).digest('hex');
+      if(key===targetKey){firstUnits=units;break;}
+    } catch {}
+  }
+  if(!firstUnits)throw Error('ALIS_UI_HISTORY_ANCHOR_MISMATCH');
+  const lastStep=await historyScrollBoundary(page,'newest');
+  if(!lastStep.ok)throw Error('ALIS_UI_HISTORY_SCROLL_UNVERIFIED');
+  await sleep(350);
+  async function lastSample() {
+    if(await uiTargetIdentity(page)!==selectedBefore)
+      throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
+    const items=await visibleItems(page.locator('[data-chatgpt-search-unit-key$=":user"]'));
+    const units=await submittedUnits(page,items);
+    const bound=validateVirtualizedHistory({
+      project:PROJECT_NAME,targetKey,prompt,
+      selectedBefore,selectedAfter:await uiTargetIdentity(page),
+      firstUnits,latestUnits:units,
+      oldestReached,newestReached:true
+    });
+    const i=units.findIndex(u=>u.turn_key===bound.turn_key
+                            && u.message_id===bound.message_id);
+    const result=await items[i].evaluate(node=>{
+      const turn=node.closest('[data-turn-key]');
+      if(!turn)return {text:'',assistant_count:0,action_count:0};
+      const assistants=[...turn.querySelectorAll('[data-chatgpt-search-unit-key$=":assistant"]')];
+      const actions=[...turn.querySelectorAll('button')].filter(b=>
+        !b.closest('[data-chatgpt-search-unit-key$=":user"]')
+        &&/copy|regenerate/i.test(b.getAttribute('aria-label')??''));
+      return {text:assistants.map(n=>n.innerText).join('\n'),
+              assistant_count:assistants.length,action_count:actions.length};
+    });
+    return {...result,turn_key:bound.turn_key,message_id:bound.message_id,
+      stops:await visibleCount(page.getByRole('button',{name:/stop/i}))};
+  }
+  const first=await lastSample();
+  if(first.stops||!first.assistant_count||!first.action_count)
+    return {completed:false};
+  await sleep(450);
+  const next=await historyScrollBoundary(page,'newest');
+  if(!next.ok)throw Error('ALIS_UI_HISTORY_SCROLL_UNVERIFIED');
+  const second=await lastSample();
+  if(JSON.stringify(first)!==JSON.stringify(second)||second.stops)
+    return {completed:false};
+  const markers=scanLoopMarkerTokens(second.text);
+  if(second.text.length>120000
+     ||markers.length!==1
+     ||/error in message stream|there was an error generating a response/i.test(second.text))
+    throw Error('ALIS_UI_HISTORY_ORIGINAL_FINAL_UNVERIFIED');
+  if(await uiTargetIdentity(page)!==selectedBefore)
+    throw Error('ALIS_UI_HISTORY_CHAT_CHANGED');
+  return {completed:true,delivery_observed:true,idle_observed:true,
+    attestation:'local-ui-user-turn-v1',
+    prompt_sha256:createHash('sha256').update(prompt).digest('hex'),
+    ui_target_key:targetKey,
+    ui_chat_label:await page.getByRole('list',{name:`Chats in ${PROJECT_NAME}`,exact:true})
+      .locator('[role="button"][aria-current="page"]').getAttribute('aria-label'),
+    response:{text:second.text,markerCount:markers.length,
+      extractionSignal:'submitted-user-turn-assistant'}};
 }
 
 export async function observeSubmittedPrompt(page,prompt,{
@@ -206,7 +316,20 @@ export async function observeSubmittedPrompt(page,prompt,{
     const stops=await visibleCount(page.getByRole('button',{name:/stop/i}));
     return {key,...result,stops};
   }
-  const first=await sample();
+  let first;
+  try {first=await sample();}
+  catch(error) {
+    // A long thread may unmount its original first-turn DOM node. The only
+    // fallback is a read-only full history continuity walk bound to the
+    // already pinned target and unique saved Alis request token.
+    if(!archivedReadOnly
+       &&virtualizedRecoveryEligible(prompt,targetKey,expectedUserCount)
+       &&['ALIS_UI_TARGET_CHANGED_NO_SEND',
+           'ALIS_UI_TURN_ANCHOR_UNAVAILABLE',
+           'ALIS_UI_SUBMITTED_PROMPT_NOT_UNIQUE'].includes(error?.message))
+      return observeVirtualizedSubmittedPrompt(page,prompt,targetKey);
+    throw error;
+  }
   if(first.stops||!first.assistant_count||(!archivedReadOnly&&!first.action_count))return {completed:false};
   await sleep(450);
   const second=await sample();
