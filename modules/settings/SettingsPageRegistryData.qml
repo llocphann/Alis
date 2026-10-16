@@ -270,9 +270,9 @@ Singleton {
         _staticSearchIndex = [
         {
             pageIndex: 34, pageName: root.pages[34].name,
-            section: Translation.tr("Module behavior"),
+            section: Translation.tr("Modules"),
             label: Translation.tr("Quick Notes & Notifications access modes"),
-            description: Translation.tr("Set Module Icon or Edgebar Hover separately for Quick Notes/Timers and Notifications/Activities"),
+            description: Translation.tr("Switch each Quick Notes/Timers or Notifications/Activities icon on for Module Icon, off for Edgebar Hover"),
             keywords: ["abyss", "module", "screen edge", "edgebar", "hover",
                 "quick notes", "quicknotes", "timers", "notifications", "activities",
                 "launcher", "icon", "show", "hide", "mode"]
