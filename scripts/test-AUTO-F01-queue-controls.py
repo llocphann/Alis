@@ -131,7 +131,7 @@ class QueueControls(unittest.TestCase):
         shifted = {**task, "base_sha": "b" * 40}
         parked = queue.prepare("AUTO-R01", resolver=lambda _code: shifted)
         self.assertEqual(parked["state"], "review_required")
-        self.assertEqual(parked["items"][0]["reason"], "source_pin_changed")
+        self.assertEqual(parked["items"][0]["reason"], "source_pin_unverified")
         self.assertIsNone(parked["next"])
         self.assertEqual(tf._task_path("AUTO-R01", "llocphann/Alis").read_bytes(),
                          prior)
@@ -155,9 +155,9 @@ class QueueControls(unittest.TestCase):
         self.assertEqual(prepared["state"], "prepared")
         self.assertEqual(prepared["deferred_count"], 1)
         self.assertEqual([item["code"] for item in prepared["items"]],
-                         ["AUTO-I02", "AUTO-R01"])
-        self.assertEqual(prepared["items"][0]["state"], "queued")
-        self.assertEqual(prepared["items"][1]["reason"], "cloud_ack_pending")
+                         ["AUTO-R01", "AUTO-I02"])
+        self.assertEqual(prepared["items"][0]["reason"], "cloud_ack_pending")
+        self.assertEqual(prepared["items"][1]["state"], "queued")
         self.assertEqual(prepared["next"]["code"], "AUTO-I02")
         self.assertFalse(queue._load()["approved_start"])
         self.assertEqual(saved_path.read_bytes(), before)
@@ -169,7 +169,7 @@ class QueueControls(unittest.TestCase):
         self.assertEqual(claimed["selected"]["code"], "AUTO-I02")
         first = queue.view()
         self.assertEqual(first["active"]["code"], "AUTO-I02")
-        self.assertEqual(first["items"][1]["reason"], "cloud_ack_pending")
+        self.assertEqual(first["items"][0]["reason"], "cloud_ack_pending")
 
     def test_all_deferred_tasks_can_only_be_archived_by_explicit_owner(self):
         task = queue.discover_backend_candidates(self.github)[0]
