@@ -16,6 +16,8 @@ for label, block in (("desktop", bare), ("desktop item", managed)):
     assert "closeOnHoverLost: false" in block, label
     assert "popupAdjustment: PopupAdjustment.SlideX | PopupAdjustment.SlideY" in block, label
     assert "popupAbove: desktopMenuAnchor.y > bgRoot.height - 230" in block, label
+    # Duplicate QML property assignments make both ContextMenu instances invalid.
+    assert block.count("popupAbove:") == 1, f"{label}: duplicate popupAbove assignment"
 
 # The click source and the anchor are siblings; never assume event-local coords
 # are the anchor's coordinate space.
