@@ -256,6 +256,42 @@ restarted: without proof, re-running risks duplicate real changes.
 The queue still requires the original owner Start consent and exclusive
 service mode; neither a UI change nor a CI pass starts a host queue.
 
+### P0 recovery supervisor: original Git pin vs current dev HEAD
+
+A GitHub branch moving forward is **not by itself** evidence that a
+prepared task was changed, executed or invalidated. Alis must not
+silently replace the original `task.base_sha`, prompt, checkpoint,
+handoff, source receipt or owner approval.
+
+On **Queue** with an existing, never-started `review_required`
+manifest containing the same requested codes, Alis can **re-evaluate**
+the original Issue and source evidence. An existing task may return to
+`queued` using its **unchanged original pin** only when all of the
+following are true:
+
+- status `prepared`; no dispatch, unresolved work, receipt, handoff,
+  checkpoint, prior owner delivery or enabled/active manager session
+- the saved Issue number, title, body, comments and updated timestamp
+  match the newly retrieved canonical open GitHub Issue
+- the live branch commit is identical to the old SHA **or GitHub Compare
+  proves the old SHA is the exact merge base/ancestor** of the new HEAD
+
+The manager stays stopped/not authorized unless the original Owner
+Start and transport gates are independently satisfied. An `awaiting_cloud_ack`
+task is instead labeled `Ack pending`, even when the branch moved;
+its old job and ChatGPT receipts are retained, never automatically
+replayed. A proven completed task remains completed.
+
+The Phase-1 recovery supervisor emits **read-only categorical**
+`recovery_action` and `needs_evidence_review` fields for parked
+items (e.g. recheck Git lineage vs reconcile the original Cloudbot
+message). They are recommendations, **not** an action, automatic
+message receipt or Owner approval. A missing API/compare response,
+diverged history, changed Issue, foreign live manager session or
+unsettled worker fails closed. No automatic repin, queue Start,
+service restart, credential changes or bypass of UI-only acceptance
+is performed.
+
 ### Automatic safe handling of saved task conflicts
 
 When the owner queues several task codes, Alis **never overwrites** an
