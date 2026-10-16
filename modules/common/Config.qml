@@ -696,9 +696,11 @@ Singleton {
                     // Launch both converted Screen Edge affordances immediately;
                     // saving an edited profile marks the corresponding migration.
                     property bool autoUnifiedEdgeLaunchers: true
-                    // Single owner for both unified feature launchers: the
-                    // movable Screen Edge modules or legacy corner Edgebar hover.
+                    // Legacy combined selection retained only as a migration
+                    // fallback; each feature now owns an independent mode.
                     property string launcherMode: "module"
+                    property string notesTimersMode: ""
+                    property string notificationActivityMode: ""
                     property bool unifiedLaunchersConfigured: false
                     property list<var> placements: []
                     property list<var> outputLayouts: []
