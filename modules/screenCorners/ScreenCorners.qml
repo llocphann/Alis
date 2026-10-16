@@ -92,7 +92,10 @@ Scope {
         // where its unified Abyss replacement is absent or disabled. The
         // module owns only the matching feature, never unrelated hot corners.
         function hasUnifiedEdgeReplacement(kind): bool {
-            return GlobalStates.barOpen
+            // The selectable Edgebar mode restores the mature physical
+            // corner dwell target; module-hosted popups do not compete for it.
+            return ModuleLayout.unifiedLauncherMode(Config.options?.abyss?.modules) === "module"
+                && GlobalStates.barOpen
                 && (Config.options?.enabledPanels ?? []).includes("abyssBar")
                 && Geometry.targets(outputName,Config.options?.bar?.screenList ?? [],
                     Quickshell.screens.map(screen => screen.name))
