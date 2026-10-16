@@ -407,12 +407,11 @@ def start_ui_queue(*, approved: bool = False,
                 or manifest.get("selection") is not None):
             raise tf.TaskError("UI Queue Start requires an unclaimed prepared queue")
         queued = manifest.get("items", [])
-        if (not queued or queued[0].get("state") != "queued"
-                or queued[0].get("repository") not in tf.REPOSITORIES
-                or not isinstance(queued[0].get("code"), str)
-                or not tf.CODE.fullmatch(queued[0]["code"])):
-            raise tf.TaskError("UI Queue Start first task invalid")
-        first = queued[0]
+        first = next((it for it in queued if it.get("state") == "queued"), None)
+        if (first is None or first.get("repository") not in tf.REPOSITORIES
+                or not isinstance(first.get("code"), str)
+                or not tf.CODE.fullmatch(first["code"])):
+            raise tf.TaskError("UI Queue Start first eligible task invalid")
         if expected_first != first["repository"] + ":" + first["code"]:
             raise tf.TaskError("UI Queue Start expected first task changed")
         task = tf.load_task(first["code"], first["repository"])
