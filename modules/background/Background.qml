@@ -1553,6 +1553,7 @@ Scope {
 
             // Desktop right-click context menu
             MouseArea {
+                id: desktopContextHitArea
                 anchors.fill: parent
                 z: 15  // Below WidgetCanvas (z: 20) so widgets can receive input
                 // Left button too, so a click on the bare desktop closes an
@@ -1571,7 +1572,11 @@ Scope {
                         return
                     }
                     if (desktopItemContextMenu.active) desktopItemContextMenu.close()
-                    desktopContextMenu.requestOpenAt(mouse.x, mouse.y)
+                    // Map the click into the anchor parent's coordinate space
+                    // (important during wallpaper pan and scaled outputs).
+                    const point = desktopContextHitArea.mapToItem(
+                        desktopMenuAnchor.parent, mouse.x, mouse.y)
+                    desktopContextMenu.requestOpenAt(point.x, point.y)
                 }
             }
 
@@ -1598,7 +1603,11 @@ Scope {
                 // dismiss that menu even though the user never left it.
                 // Close on desktop left-click, action selection or Escape.
                 closeOnHoverLost: false
-                // Cursor-positioned desktop menus use only a quick fade, not slide/scale.
+                // Return available Screen Edge gaps to the desktop. A menu
+                // opened near a physical output corner must keep all rows:
+                // slide within bounds, never resize them into nothing.
+                popupAdjustment: PopupAdjustment.SlideX | PopupAdjustment.SlideY
+                popupAbove: desktopMenuAnchor.y > bgRoot.height - 230
                 fadeOnly: true
                 scaleContent: false
                 fadeOutDuration: 90
@@ -1671,7 +1680,11 @@ Scope {
                 // Same click-initiated lifecycle as the bare-desktop menu.
                 // Do not let pointer transitions across edge gaps cancel it.
                 closeOnHoverLost: false
-                // Cursor-positioned desktop menus use only a quick fade, not slide/scale.
+                // Return available Screen Edge gaps to the desktop. A menu
+                // opened near a physical output corner must keep all rows:
+                // slide within bounds, never resize them into nothing.
+                popupAdjustment: PopupAdjustment.SlideX | PopupAdjustment.SlideY
+                popupAbove: desktopMenuAnchor.y > bgRoot.height - 230
                 fadeOnly: true
                 scaleContent: false
                 fadeOutDuration: 90
