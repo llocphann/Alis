@@ -219,6 +219,81 @@ class Preflight(unittest.TestCase):
         self.assertIn('"ui_queue_stage_available": ui_stage_ready', cli)
         self.assertIn('"ui_queue_service_mode": ui_check.get("installed_service_mode")', cli)
 
+    def test_owner_stops_only_unsent_legacy_default_without_touching_queue(self):
+        original = self._write_queue_fixture()
+        item = self.state["profiles"][self.id]
+        item.update(desired="run", status="scheduled",
+                    session={"conversation_id": "PRESERVE_PRIVATE_NATIVE"},
+                    checkpoint={"original": "DO_NOT_ERASE"},
+                    pending=None, job_id=None, run_active=False)
+        config_path = store.config_path()
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps(self.config))
+        store.state_path().write_text(json.dumps(self.state))
+        snapshot = queue.view()["snapshot_id"]
+        queue_bytes = original.read_bytes()
+        with patch.object(ui_preflight, "_unit_state",
+                          return_value=("active", "ui_queue_mode")):
+            before = ui_preflight.check_prepared_queue()
+            self.assertTrue(before["idle_default_stop_available"])
+            self.assertIn("FOREIGN_PROFILE_UNSETTLED",
+                          before["preflight_blockers"])
+            with self.assertRaisesRegex(tf.TaskError, "approval"):
+                managed_tasks.stop_idle_legacy_default_for_ui_queue(
+                    expected_snapshot_id=snapshot)
+            with self.assertRaisesRegex(tf.TaskError, "Queue changed"):
+                managed_tasks.stop_idle_legacy_default_for_ui_queue(
+                    approved=True, expected_snapshot_id="f" * 64)
+            result = managed_tasks.stop_idle_legacy_default_for_ui_queue(
+                approved=True, expected_snapshot_id=snapshot)
+            after = ui_preflight.check_prepared_queue()
+        self.assertEqual(result["state"], "legacy_idle_stopped")
+        self.assertFalse(result["new_message_sent"])
+        self.assertFalse(result["service_modified"])
+        self.assertEqual(original.read_bytes(), queue_bytes)
+        self.assertFalse(queue._load()["approved_start"])
+        self.assertFalse(after["idle_default_stop_available"])
+        self.assertNotIn("FOREIGN_PROFILE_UNSETTLED", after["preflight_blockers"])
+        self.assertNotIn("NATIVE_SESSION_REQUIRES_REVIEW", after["preflight_blockers"])
+        saved = store.read_snapshot()[1]["profiles"][self.id]
+        self.assertEqual(saved["desired"], "stopped")
+        self.assertEqual(saved["checkpoint"], {"original": "DO_NOT_ERASE"})
+        self.assertEqual(saved["session"]["conversation_id"], "PRESERVE_PRIVATE_NATIVE")
+
+    def test_pending_or_running_legacy_default_cannot_be_stopped_by_ui_queue(self):
+        self._write_queue_fixture()
+        item = self.state["profiles"][self.id]
+        item.update(desired="run", status="scheduled",
+                    pending={"phase": "dispatching", "id": "DO_NOT_RESEND"},
+                    session={"conversation_id": "HISTORICAL"})
+        config_path = store.config_path()
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps(self.config))
+        store.state_path().write_text(json.dumps(self.state))
+        snapshot = queue.view()["snapshot_id"]
+        previous = store.state_path().read_bytes()
+        with patch.object(ui_preflight, "_unit_state",
+                          return_value=("active", "ui_queue_mode")):
+            self.assertFalse(
+                ui_preflight.check_prepared_queue()["idle_default_stop_available"])
+            with self.assertRaisesRegex(tf.TaskError, "blocked"):
+                managed_tasks.stop_idle_legacy_default_for_ui_queue(
+                    approved=True, expected_snapshot_id=snapshot)
+        self.assertEqual(store.state_path().read_bytes(), previous)
+        self.assertEqual(queue.view()["snapshot_id"], snapshot)
+
+    def test_idle_legacy_stop_button_requires_owner_and_readiness(self):
+        qml = (Path(__file__).resolve().parents[1] /
+               "modules/settings/AutomationTaskConfig.qml").read_text()
+        cli = (Path(__file__).resolve().parents[1] /
+               "scripts/alis-automation-task.py").read_text()
+        self.assertIn('objectName: "automationStopIdleLegacy"', qml)
+        self.assertIn("function stopIdleLegacyForUiQueue()", qml)
+        self.assertIn('"queue-stop-idle-legacy", "--approve"', qml)
+        self.assertIn("uiQueueIdleLegacyStopConfirmation", qml)
+        self.assertIn("queue-stop-idle-legacy", cli)
+        self.assertIn("stop_idle_legacy_default_for_ui_queue(", cli)
+
     def test_ui_queue_staging_requires_idle_native_and_exact_owner(self):
         path = self._write_queue_fixture()
         self.config["profiles"][0]["enabled"] = True
