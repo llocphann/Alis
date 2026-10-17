@@ -774,7 +774,8 @@ Item {
                         contentHeight: Math.max(height, markdownBody.implicitHeight + 12)
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
-                        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                        // Hide the Markdown scrollbar chrome; keep Flickable wheel/flick scrolling.
+                        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }
 
                         MouseArea {
                             anchors.fill: parent
@@ -815,7 +816,8 @@ Item {
                         anchors.margins: root.compactPresentation ? 6 : 8
                         anchors.bottomMargin: (root.compactPresentation ? 6 : 8)
                             + (imagePreview.active ? imagePreview.height + 4 : 0)
-                        ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                        // Hide the editor scrollbar without removing its cursor-follow helper.
+                        ScrollBar.vertical.policy: ScrollBar.AlwaysOff
                         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
                         // Wrapped notes occupy the viewport, with no horizontal
                         // extent inferred from the text or placeholder.
