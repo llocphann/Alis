@@ -7,7 +7,13 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 RETIRED = ("fc" + "itx", "uni" + "key")
-HISTORICAL_PREFIXES = ("docs/archive/", "docs/evidence/", "docs/abyss/validation/")
+# Provenance and frozen optimization research record previous code paths; they
+# are not executed or shipped as active Alis-owned integration.
+HISTORICAL_PREFIXES = (
+    "docs/archive/", "docs/evidence/", "docs/abyss/validation/",
+    "docs/wull-visual/",
+    "docs/optimization/STRICT_LOSSLESS_GPU_RAM_CPU_AUDIT.md",
+)
 TEXT_EXT = {".qml", ".js", ".mjs", ".cjs", ".py", ".sh", ".fish", ".kdl",
             ".json", ".md", ".nix", ".yaml", ".yml", ".txt", ".service"}
 TEXT_NAMES = {"PKGBUILD", "Makefile", "qmldir", "setup", "alis"}

@@ -13,7 +13,7 @@ RESTART_POLL_DELAY RESTART_MAX_POLLS MAX_RAPID_RESTARTS RESTART_WINDOW
 DISABLE_HOT_RELOAD GPU_FORCE_DEFAULT QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE
 LAUNCHER_PATH VENV NATIVE_BACKEND NATIVE_BIN_DIR NATIVE_STRICT MPD_SOCKET
 SHELL_ROOT THEME_SKIP_SDDM_SYNC INSTALL_MODE UPDATE_STRATEGY REPO_PATH
-PACKAGE_MANAGER PACKAGE_NAME PACKAGE_UPDATE_HINT FCITX5_DATA_DIR'''.split()
+PACKAGE_MANAGER PACKAGE_NAME PACKAGE_UPDATE_HINT'''.split()
 base = {k: v for k, v in os.environ.items() if not k.startswith(('ALIS_', 'INIR_'))}
 for suffix in SUFFIXES:
     key = 'ALIS_' + suffix
@@ -54,4 +54,4 @@ with tempfile.TemporaryDirectory() as tmp:
     run = subprocess.run(['bash', str(ROOT / 'scripts/alis'), 'help'],
                          env=dict(env, INIR_RUNTIME_DIR=str(ROOT)), capture_output=True, text=True, check=True)
     assert 'Alis' in run.stdout
-print('PASS: 29 legacy overrides, canonical/empty precedence, exported child values, native dispatch and three config resolvers')
+print(f'PASS: {len(SUFFIXES)} legacy overrides, canonical/empty precedence, exported child values, native dispatch and three config resolvers')

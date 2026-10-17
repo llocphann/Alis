@@ -9,7 +9,7 @@ alis_import_legacy_environment() {
         DISABLE_HOT_RELOAD GPU_FORCE_DEFAULT QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE \
         LAUNCHER_PATH VENV NATIVE_BACKEND NATIVE_BIN_DIR NATIVE_STRICT MPD_SOCKET \
         SHELL_ROOT THEME_SKIP_SDDM_SYNC INSTALL_MODE UPDATE_STRATEGY REPO_PATH \
-        PACKAGE_MANAGER PACKAGE_NAME PACKAGE_UPDATE_HINT FCITX5_DATA_DIR; do
+        PACKAGE_MANAGER PACKAGE_NAME PACKAGE_UPDATE_HINT; do
         canonical="ALIS_$suffix"; legacy="$legacy_prefix$suffix"
         if [[ ! -v "$canonical" && -v "$legacy" ]]; then
             printf -v "$canonical" '%s' "${!legacy}"

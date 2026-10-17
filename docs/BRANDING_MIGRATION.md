@@ -96,7 +96,7 @@ Regression: `bash scripts/test-brand-legacy-cli.sh`. Existing R9/R10 cold-login 
 
 ### Update, Niri and desktop entry compatibility
 
-- Repo-copy update now uses `alis` for its verified post-update shell restart. Fresh Niri keybinds and the optional Fcitx5 autostart use the Alis command, not the newly disabled public `inir` launcher.
+- Repo-copy update now uses `alis` for its verified post-update shell restart. Fresh Niri keybinds use the Alis command, not the newly disabled public `inir` launcher. The optional input-method autostart from this historical milestone was retired by SET-R04.
 - When updating existing Niri keybind/startup commands that still point at `/bin/inir` or `spawn-at-startup "inir"`, the updater makes a one-time `*.brand-cli.bak` copy of relevant *ordinary* Niri config files before changing those command positions. It does not follow symlinks when creating this backup; audit and restore owner-customized keybinds manually as needed.
 - Old hidden desktop IDs (`inir.desktop` and `inir-settings.desktop`) stay installed for pinned-shortcut compatibility, but their `Exec` entries now route through `alis` in repository, Make, Nix and installer/repo-copy outputs. New desktop IDs remain `alis.desktop` and `alis-settings.desktop`.
 - The unit `inir.service` and its private launcher path stay unchanged as the only session/tray owner, until a separately verified atomic runtime cutover. Never install a second `alis.service` alongside it.
