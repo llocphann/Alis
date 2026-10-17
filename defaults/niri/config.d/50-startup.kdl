@@ -11,10 +11,6 @@
 // sycoca database so KDE/Qt apps see the correct .desktop entries.
 spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX QT_IM_MODULE XMODIFIERS && kbuildsycoca6"
 
-// Use the launcher so repo-sync and packaged installs share the same helper.
-// It creates an EN/VI profile only on first use and leaves existing IMEs intact.
-spawn-at-startup "alis" "input-method" "start"
-
 // Clipboard history: wl-paste watches the clipboard and cliphist stores it.
 // Text goes through clipboard-store.py, which strips browser markup: `--type
 // text` is a generic name, so when a page offers only text/html (an image, or
