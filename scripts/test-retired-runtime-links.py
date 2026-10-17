@@ -37,6 +37,9 @@ OWNED_SOURCE_PREFIXES = (
     "scripts/test-hadalis-reconciliation-",
     "scripts/test-hadalis-static-helper-",
     "scripts/test-hadalis-transport-",
+    # The dedicated retirement-route contract intentionally mentions old
+    # identifiers as negative assertions; it is not a runtime consumer.
+    "scripts/test-retired-settings-routes.py",
 )
 SKIP_SELF = "scripts/test-retired-runtime-links.py"
 
