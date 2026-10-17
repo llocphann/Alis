@@ -35,8 +35,11 @@ Item {
     // notifications continue to use live service wrappers while open.
     property var closingAppNames: []
     property var closingGroups: ({})
+    // Select the last complete card as soon as the live model clears.
+    // Avoid a single empty delegate frame before host.open recomputes.
     readonly property bool closingVisualTail: !root.center && root.participant !== null
-        && !root.participant.open && root.participant.visualResident
+        && root.participant.visualResident
+        && (!root.participant.open || Notifications.popupList.length === 0)
         && root.closingAppNames.length > 0
     function captureClosingSnapshot(): void {
         if (root.center || Notifications.popupList.length === 0)

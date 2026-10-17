@@ -57,7 +57,10 @@ QtObject {
     function _candidate(identity, participant) {
         if (!participant) return null
         const request=participant.placementRequest
-        if (request?.stackPolicy !== "pyramid"
+        // A visual-only anchor can supply a lower contour without joining
+        // the allocator's area-ordered Pyramid placement neighborhood.
+        if ((request?.stackPolicy !== "pyramid"
+                && request?.pyramidAnchor !== true)
                 || !(request?.open ?? false))
             return null
         const placement=participant.visualPlacement

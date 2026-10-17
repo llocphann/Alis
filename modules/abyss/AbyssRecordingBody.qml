@@ -30,6 +30,9 @@ AbyssBodyHost {
     // instead of moving the pill during both popup entry and exit.
     // Dialogs retain their higher (2) priority; general notifications keep 0.
     placementPriority: 1
+    // Stable higher-priority Recording pill may anchor a nearby Pyramid
+    // notification without being reordered by the Pyramid area comparator.
+    pyramidAnchor: true
     edge: "top"
     padding: 10
     placementCanResize: false

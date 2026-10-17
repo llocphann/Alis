@@ -100,6 +100,9 @@ Item {
     // Presentation policy only. The allocator remains a deterministic resting
     // layout producer; animation state is owned outside AbyssBodyPlacement.
     property string stackPolicy: ""
+    // A visual origin for nearby Pyramid popups, without entering their
+    // area-sorted allocator group. Recording controls keep their Edge slot.
+    property bool pyramidAnchor: false
     // Pyramid grouping follows the allocator's normal content-clearance scale.
     // Same-Edge popup intervals that overlap or come within this many logical
     // pixels participate in one visual neighborhood.
@@ -303,6 +306,7 @@ Item {
             allowInward:root.placementCanStackInward,
             minimumInward:root.minimumInward,
             stackPolicy:root.stackPolicy,
+            pyramidAnchor:root.pyramidAnchor,
             stackProximity:root.stackProximity,
             record:root.requestedRecord})
         inputBounds: root.inputBounds

@@ -47,8 +47,9 @@ live.popupGroupsByAppName={};
 capture();
 assert.equal(state.closingGroups,captured,'empty popup must preserve last rendered card');
 assert.equal(state.closingGroups.Recorder.notifications[0].body,'file.mp4 — No audio');
-assert.ok(source.includes('!root.participant.open && root.participant.visualResident'),
-    'retract snapshot must be scoped to visual tail, not to history');
+assert.ok(source.includes('root.participant.visualResident')
+    && source.includes('!root.participant.open || Notifications.popupList.length === 0'),
+    'pre-captured card must bridge an empty-live-model binding turn');
 assert.ok(source.includes('transientAppNamesOverride: root.closingVisualTail')
     && source.includes('transientGroupsOverride: root.closingVisualTail'),
     'Abyss banner alone must select snapshot while retracting');

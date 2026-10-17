@@ -1478,6 +1478,11 @@ Scope {
                 // generic popup's second overshoot/settle animation pass.
                 // Keep the existing content-size settle and timeout gates.
                 monotonicNotificationReveal: true
+                // Pyramid reveal/close uses the Recording pill as a visual
+                // origin when nearby, while preserving the existing allocator.
+                // The constant external factor reuses availabilityProgress.
+                stackPolicy: "pyramid"
+                externalProgress: 1
                 // Recording has priority over this banner when their Edge
                 // anchors overlap. Snap the banner to the allocator's chosen
                 // inward tier BEFORE its first reveal pixel. Animating that

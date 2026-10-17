@@ -314,6 +314,7 @@ run_check 'Abyss notification popup geometry transition regression' node scripts
 run_check 'Abyss Notification closing content snapshot regression' node scripts/test-abyss-notification-closing-snapshot.mjs
 run_check 'Notification closing frame/model fast path regression' node scripts/test-notification-close-fastpath.mjs
 run_check 'Recording/Notification stable allocator priority' node scripts/test-abyss-recording-notification-placement.mjs
+run_check 'Recording-fixed Notification Pyramid visual origin' node scripts/test-abyss-recording-pyramid-anchor.mjs
 run_check 'Abyss disabled Waves mass-update regression' node scripts/test-abyss-wave-idle-policy.mjs
 run_check 'Abyss hover scene geometry diagnostic regression' node scripts/test-abyss-hover-geometry-probe.mjs
 run_check 'Abyss frame activity diagnostic regression' node scripts/test-abyss-frame-activity-probe.mjs
