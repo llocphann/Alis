@@ -44,14 +44,14 @@ def main():
 
         environment = config / "config.d/40-environment.kdl"
         environment.write_text(
-            'environment {\n    XMODIFIERS "@im=fcitx"\n'
-            '    QT_IM_MODULE "fcitx"\n    XMODIFIERS "@im=fcitx"\n}\n'
+            'environment {\n    XMODIFIERS "@im=custom"\n'
+            '    QT_IM_MODULE "custom"\n    XMODIFIERS "@im=custom"\n}\n'
         )
         (config / "config.d/15-outputs.kdl").write_text('output "TEST" { scale 1 }\n')
         (config / "config.d/90-user-extra.kdl").write_text("window-rule {\n    opacity 0.9\n}\n")
         compare("reordered, repeated and extra lines", home)
 
-        environment.write_text("environment {\n" + "    XMODIFIERS \"@im=fcitx\"\n" * 220 + "}\n")
+        environment.write_text("environment {\n" + "    XMODIFIERS \"@im=custom\"\n" * 220 + "}\n")
         compare("long repeated override", home)
 
 
