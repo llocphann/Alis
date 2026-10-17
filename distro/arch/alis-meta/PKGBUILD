@@ -1,6 +1,6 @@
 pkgname=alis-meta
 pkgver=2.29.3
-pkgrel=6
+pkgrel=7
 pkgdesc='Full Alis desktop experience meta-package'
 arch=(any)
 url='https://github.com/llocphann/Alis'
@@ -22,11 +22,6 @@ depends=(
   ffmpeg
   fontconfig
   fprintd
-  fcitx5
-  fcitx5-qt
-  fcitx5-gtk
-  fcitx5-unikey
-  fcitx5-configtool
   frameworkintegration
   fuzzel
   geoclue
