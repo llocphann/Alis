@@ -647,4 +647,27 @@ for token in (
     require(notepad_service, token,
             "Default note titles must renumber on load and mutations")
 
+# NOTES-R01: scrollbar visibility is presentation-only. The shared editor must
+# retain its Flickable/ScrollView and caret/rail wheel routing.
+reader_part = notepad.split("id: markdownReader", 1)[1].split(
+    "id: markdownBody", 1)[0]
+editor_part = notepad.split("id: scrollView", 1)[1].split(
+    "id: textArea", 1)[0]
+require(reader_part, "ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }",
+        "Markdown Reading scrollbar should be hidden")
+require(editor_part, "ScrollBar.vertical.policy: ScrollBar.AlwaysOff",
+        "Quick Notes editor scrollbar should be hidden")
+for token in ("contentHeight: Math.max(height, markdownBody.implicitHeight + 12)",
+              "boundsBehavior: Flickable.StopAtBounds"):
+    require(reader_part, token, "Markdown Reader scrolling must remain intact")
+for token in ("contentWidth: availableWidth",):
+    require(editor_part, token, "Editor scrolling geometry must remain intact")
+for token in ("id: noteRailFlick", "NoteRailWheel.advance(",
+              "onCursorRectangleChanged:",
+              "scrollView.ScrollBar.vertical.position = Math.max("):
+    require(notepad, token, "Quick Notes wheel/rail/caret scrolling must remain intact")
+for part in (reader_part, editor_part):
+    if "interactive: false" in part or "enabled: false" in part:
+        fail("Hiding Quick Notes scrollbars must not disable scrolling")
+
 print("ok - bottom-left Quick Notes corner contract")
