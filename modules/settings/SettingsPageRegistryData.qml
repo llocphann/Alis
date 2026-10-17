@@ -1444,8 +1444,8 @@ Singleton {
             pageIndex: 12, pageName: root.pages[12].name,
             section: Translation.tr("Keyboard"),
             label: Translation.tr("Keyboard"),
-            description: Translation.tr("Keyboard layout, Fcitx5, Telex and repeat settings"),
-            keywords: ["keyboard", "layout", "repeat", "delay", "rate", "xkb", "input", "fcitx5", "unikey", "telex", "vni", "vietnamese", "unicode", "ime", "typing"]
+            description: Translation.tr("Keyboard layout and key repeat settings"),
+            keywords: ["keyboard", "layout", "repeat", "delay", "rate", "xkb", "input", "typing"]
         },
         {
             pageIndex: 12, pageName: root.pages[12].name,

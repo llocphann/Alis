@@ -308,6 +308,8 @@ run_check 'tracked Python syntax' tracked_python_syntax
 run_check 'tracked JSON syntax' tracked_json_syntax
 run_check 'tracked JavaScript syntax' tracked_js_syntax
 run_check 'tracked Fish syntax' tracked_fish_syntax
+run_check 'Fcitx5 Settings retirement source guard' python3 scripts/test-fcitx5-settings-removal.py
+run_check 'Fcitx5 session and native tray integration' python3 scripts/test-fcitx5-session-integration.py
 run_check 'Niri selected-fullscreen workspace regression' node scripts/test-niri-fullscreen-selection.mjs
 run_check 'NotificationCenter anchor hover lease regression' node scripts/test-notification-center-hover-lease.mjs
 run_check 'Abyss notification popup geometry transition regression' node scripts/test-abyss-notification-transition.mjs

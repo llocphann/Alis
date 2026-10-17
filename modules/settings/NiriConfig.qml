@@ -2194,16 +2194,6 @@ ContentPage {
                     }
                 }
             }
-            SettingsDivider {}
-
-            ContentSubsection {
-                title: Translation.tr("Vietnamese input · Fcitx5")
-                tooltip: Translation.tr("Desktop-wide input method for Quickshell, Niri and supported applications.")
-
-                FcitxInputSettings {
-                    Layout.fillWidth: true
-                }
-            }
         }
     }
 

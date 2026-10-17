@@ -1,45 +1,28 @@
 # Desktop-wide Vietnamese Telex (Fcitx5)
 
-Hadalis integrates the native Fcitx5 + Unikey input method at the Niri/Wayland session level, rather than implementing a Telex algorithm separately in QML. The same engine is available to QuickShell and supported Qt, GTK, browser, terminal, and XWayland applications.
+Alis integrates the native Fcitx5 + Unikey input method at the Niri/Wayland session level, rather than implementing a Telex algorithm separately in QML. The same engine is available to QuickShell and supported Qt, GTK, browser, terminal, and XWayland applications.
 
 ## Setup
 
-On Arch, run the normal Hadalis setup/update to install fcitx5, fcitx5-qt, fcitx5-gtk, fcitx5-unikey and fcitx5-configtool. The default Niri session exports QT_IM_MODULE=fcitx and XMODIFIERS=@im=fcitx, imports these into the systemd user manager, and starts the helper through the launcher command: inir input-method start. Native GTK on Wayland retains its text-input-v3 path; GTK_IM_MODULE is not forced globally.
+On Arch, run the normal Alis setup/update to install fcitx5, fcitx5-qt, fcitx5-gtk, fcitx5-unikey and fcitx5-configtool. The default Niri session exports QT_IM_MODULE=fcitx and XMODIFIERS=@im=fcitx, imports these into the systemd user manager, and starts the helper through the launcher command: inir input-method start. Native GTK on Wayland retains its text-input-v3 path; GTK_IM_MODULE is not forced globally.
 
 The helper creates an initial English-US + Unikey profile and Unicode Telex settings only if the respective files are absent. It preserves existing Fcitx profiles, Unikey preferences, and other IME frameworks; it does not restart an already running daemon. Existing users with a custom Fcitx profile must add Unikey using fcitx5-configtool if it is not already configured.
 
 The updater patches preserved Niri configurations only when their relevant values/commands are missing. Existing IME values remain authoritative. For currently running sessions, setup invokes the helper immediately if possible. Log out/in and restart already-running applications to adopt new desktop environment variables.
 
-## Hadalis Keyboard Settings
+## Configuring Fcitx5
 
-Open Hadalis Settings → Compositor → Input → Keyboard, then expand
-**Vietnamese input · Fcitx5**. This is an embedded settings section, not a
-second Fcitx tray app.
-
-- Read the live Fcitx5 status and start it if necessary.
-- Add Unikey to an existing default group on explicit request, preserving other
-  input methods and the rest of the profile. Custom profiles that cannot be
-  edited safely direct you to Advanced Settings.
-- Switch the current input context between English and Unikey, choose Telex
-  or VNI, and restore Unicode (UTF-8) output.
-- Type directly into the test field, refresh status, or open the upstream
-  Fcitx5 configuration UI for global shortcuts and advanced engine options.
-
-Changes are written to the user's Fcitx configuration under
-~/.config/fcitx5/ only; Niri's physical XKB layout stays independent.
-The backend updates only the targeted option and requests a D-Bus reload
-without killing the daemon or replacing the rest of the Unikey preferences.
-If the reload is unavailable, Settings reports that the saved change needs
-a later reload. A missing package is displayed in place rather than
-silently presenting an inactive toggle.
-
-Focused regression: python3 scripts/test-fcitx5-settings-integration.py
+Alis Settings no longer includes Fcitx5/Unikey controls. The input method remains
+a desktop session service, separate from Niri's physical XKB keyboard layout.
+Use the native `fcitx5-configtool` to manage input methods, Telex/VNI preferences,
+and shortcuts. Configuration is stored in your own `~/.config/fcitx5/` files;
+removing the Alis Settings page neither resets nor migrates those files.
 
 ## Bar icon and operation
 
-The icon is the single native Fcitx5 StatusNotifierItem in Hadalis's existing System Tray, pinned inline with neighboring status indicators. The ii Bar tints it monochrome; Waffle pins the same native item in its own tray. Click/right-click uses Fcitx's real actions and menu, not a separate simulated icon. The normal Ctrl+Space shortcut switches between English and Unikey; customize it and the engine in fcitx5-configtool.
+The icon is the single native Fcitx5 StatusNotifierItem in Alis's existing System Tray, pinned inline with neighboring status indicators. The ii Bar tints it monochrome; Waffle pins the same native item in its own tray. Click/right-click uses Fcitx's real actions and menu, not a separate simulated icon. The normal Ctrl+Space shortcut switches between English and Unikey; customize it and the engine in fcitx5-configtool.
 
-The Hadalis on-screen keyboard still sends keycodes via ydotool; the focused application's native input context handles composition. AI Chat prevents Enter/Tab submit actions during a pending preedit.
+The Alis on-screen keyboard still sends keycodes via ydotool; the focused application's native input context handles composition. AI Chat prevents Enter/Tab submit actions during a pending preedit.
 
 ## Acceptance
 
