@@ -17,6 +17,16 @@ Automation-only CLI, credential, native inspection and installer scripts from
 new Alis packages and fresh installs. Core `scripts/alis`, `alis.service`,
 Settings, Companion, Integrations and the normal shell stay installed.
 
+**Versioned Arch release caveat:** `distro/arch/alis-shell/PKGBUILD`
+still defaults to a historical pinned source SHA
+`c74d8a2336a311699ced1a00898bc4b2527a3a45`. That old source
+does **not** inherit the new runtime exclusion, so this versioned package
+must **not** be described or promoted as Automation-free until its source pin
+is intentionally updated to a tested retirement commit. By contrast,
+`alis-shell-git` follows `dev` and Nix builds its current checkout.
+Do not change the reviewed versioned release pin automatically while the
+canonical validator is red or the installed-host retirement gate is open.
+
 **Important:** Existing installed Automation modules/scripts are explicitly
 protected from generic `filter-installed` orphan deletion and
 `rsync --delete` until the worker/manager/bridge on the actual desktop have
