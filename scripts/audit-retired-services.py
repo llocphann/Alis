@@ -154,6 +154,43 @@ def manager_snapshot(state: Path, blockers: list[str]) -> dict:
     }
 
 
+def desktop_launcher_snapshot(blockers: list[str]) -> dict:
+    data_home = Path(os.environ.get(
+        "XDG_DATA_HOME", str(Path.home() / ".local/share")
+    ))
+    local = data_home / "applications" / "chatgpt.desktop"
+    upstream = [Path(root) / "applications" / "chatgpt.desktop"
+                for root in os.environ.get(
+                    "XDG_DATA_DIRS", "/usr/local/share:/usr/share"
+                ).split(":") if root]
+    marker = False
+    if local.exists():
+        try:
+            # Never print contents or overwrite this potentially customized file.
+            if local.stat().st_size > 1024 * 1024:
+                raise ValueError("unexpected Desktop entry size")
+            lines = local.read_text(encoding="utf-8").splitlines()
+            marker = any(
+                line.startswith("Exec=")
+                and "--remote-debugging-address=127.0.0.1" in line
+                and "--remote-debugging-port=9222" in line
+                for line in lines
+            )
+        except (OSError, ValueError, UnicodeDecodeError):
+            blockers.append("Cannot safely inspect the user ChatGPT Desktop entry")
+    if marker:
+        blockers.append(
+            "Possible Automation-generated ChatGPT desktop override: review"
+            " the original launcher and user customizations before restoring"
+        )
+    return {
+        "user_local_override_present": local.exists(),
+        "suspected_automation_generated_exec": marker,
+        "system_desktop_entry_present": any(p.is_file() for p in upstream),
+        "restore_requires_separate_owner_review": True,
+    }
+
+
 def main() -> int:
     blockers: list[str] = []
     state = Path(os.environ.get(
@@ -167,6 +204,7 @@ def main() -> int:
     processes = process_snapshot(blockers)
     worker = worker_snapshot(state, blockers)
     manager = manager_snapshot(state, blockers)
+    desktop_launcher = desktop_launcher_snapshot(blockers)
     if active_units:
         blockers.append("Automation-owned services still running; require independent idle review")
     if processes:
@@ -183,6 +221,7 @@ def main() -> int:
         "automation_processes": processes,
         "worker": worker,
         "manager": manager,
+        "chatgpt_desktop_launcher": desktop_launcher,
         "historical_config_present": config.exists(),
         "historical_state_present": state.exists(),
         "blockers": sorted(set(blockers)),
