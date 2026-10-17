@@ -157,28 +157,18 @@ Singleton {
         return item && item.id;
     }
 
-    // Fcitx5 publishes its own StatusNotifierItem. Keep that ONE native item
-    // visible with other tray indicators regardless of the inverted pin list.
-    function isFcitxItem(item): bool {
-        if (!root.isValidItem(item)) return false;
-        const id = String(item.id || "").toLowerCase();
-        const title = String(item.title || "").toLowerCase();
-        return id.includes("fcitx") || title.includes("fcitx");
-    }
-
     property var _pinnedItems: {
         const value = Config.options?.tray?.pinnedItems
         return Array.isArray(value) ? value : []
     }
-    property list<var> fcitxItems: SystemTray.items.values.filter(i => root.isFcitxItem(i))
     property list<var> itemsInUserList: SystemTray.items.values.filter(i =>
-        isValidItem(i) && !root.isFcitxItem(i) && _pinnedItems.includes(i.id))
+        isValidItem(i) && _pinnedItems.includes(i.id))
     property list<var> itemsNotInUserList: SystemTray.items.values.filter(i =>
-        isValidItem(i) && !root.isFcitxItem(i) && !_pinnedItems.includes(i.id)
+        isValidItem(i) && !_pinnedItems.includes(i.id)
         && (!smartTray || i.status !== Status.Passive))
 
     property bool invertPins: Config.options?.tray?.invertPinnedItems ?? true
-    property list<var> pinnedItems: root.fcitxItems.concat(invertPins ? itemsNotInUserList : itemsInUserList)
+    property list<var> pinnedItems: invertPins ? itemsNotInUserList : itemsInUserList
     property list<var> unpinnedItems: invertPins ? itemsInUserList : itemsNotInUserList
 
     function getSafeIcon(item): string {
