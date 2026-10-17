@@ -12,7 +12,11 @@ Owner decision **2026-10-18**; canonical tracking: [Alis #118](https://github.co
 
 ## Installed-host read-only gate (not yet performed)
 
-Run from a normal owner terminal:
+Run from a normal owner terminal. A read-only summary is also available:
+`python3 scripts/audit-retired-services.py` (exit 2 means human investigation
+is required). This utility does not read or print credentials, stop units,
+send messages, approve jobs or delete files. It cannot replace a human
+assessment of in-flight GitHub publication or the user's Desktop launcher.
 
 ```bash
 units=(hadalis-worker.service hadalis-chat-bridge.service hadalis-privilege.service hadalis-chatgpt.service)

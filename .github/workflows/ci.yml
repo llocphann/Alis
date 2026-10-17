@@ -53,6 +53,10 @@ jobs:
         shell: bash
         run: python3 scripts/test-retired-runtime-links.py
 
+      - name: Syntax check read-only installed-host retirement audit
+        shell: bash
+        run: python3 -m py_compile scripts/audit-retired-services.py
+
       - name: Verify desktop context-menu pointer anchor and slide relocation
         shell: bash
         run: |
