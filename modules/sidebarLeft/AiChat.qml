@@ -860,7 +860,7 @@ Inline w/ backslash and round brackets \\(e^{i\\pi} + 1 = 0\\)
                     }
 
                     Keys.onPressed: event => {
-                        // A composition key is owned by Fcitx, not chat shortcuts.
+                        // Active input-method composition belongs to the text field, not chat shortcuts.
                         if (messageInputField.inputMethodComposing) {
                             event.accepted = false;
                             return;
