@@ -44,6 +44,10 @@ OWNED_SOURCE_PREFIXES = (
     # Read-only migration inspector names the retired units solely to report
     # their status; it never depends on or starts the retired backend.
     "scripts/audit-retired-services.py",
+    # Retirement-only packaging policy and negative contract are not live
+    # consumers. Fresh installs must explicitly record these excluded paths.
+    "sdata/runtime-exclusions.json",
+    "scripts/test-retired-runtime-payload.py",
 )
 SKIP_SELF = "scripts/test-retired-runtime-links.py"
 
