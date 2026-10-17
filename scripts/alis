@@ -133,7 +133,6 @@ Quick start:
   alis logs              View runtime logs (--full: all categories, --debug: foreground debug, -f: follow)
   alis status            Shell status info
   alis doctor            Health checks (--perf: runtime graphics/media snapshot)
-  alis input-method start Initialize Fcitx5/Unikey for the desktop session
 
 EOF
 
@@ -168,7 +167,7 @@ Other:
   theme <list-targets|inspect|doctor|apply|scaffold> [args...]
   completions <bash|zsh|fish>
   service <install|uninstall|enable|disable|start|stop|restart|status|logs>
-  repair, path, test-local, input-method start, settings-window, waffle-settings-window
+  repair, path, test-local, settings-window, waffle-settings-window
 EOF
 }
 
@@ -2142,17 +2141,6 @@ ensure_systemd_graphical_env() {
         vars_to_import+=("ELECTRON_OZONE_PLATFORM_HINT=auto")
     fi
 
-    # Qt on Niri uses the Fcitx input context; XWayland clients use XIM.
-    # Do not replace an input method explicitly selected in the user manager.
-    if command -v fcitx5 >/dev/null 2>&1; then
-        if ! grep -q '^QT_IM_MODULE=' <<< "$sys_env" 2>/dev/null && [[ -z "${QT_IM_MODULE+x}" ]]; then
-            vars_to_import+=("QT_IM_MODULE=fcitx")
-        fi
-        if ! grep -q '^XMODIFIERS=' <<< "$sys_env" 2>/dev/null && [[ -z "${XMODIFIERS+x}" ]]; then
-            vars_to_import+=("XMODIFIERS=@im=fcitx")
-        fi
-    fi
-
     # QT_QPA_PLATFORM — tells Qt apps to use the Wayland backend.  Qt usually
     # auto-detects this from WAYLAND_DISPLAY, but some apps (especially those using
     # older Qt builds or custom platform plugin paths) need it explicit.  Portal
@@ -4074,17 +4062,6 @@ case "$command_name" in
         done
         resolve_config_dir
         run_repair "$config_dir"
-        ;;
-    input-method)
-        case "${1:-start}" in
-            start)
-                resolve_config_dir
-                if [[ -f "$config_dir/scripts/input-method/fcitx5-session.sh" ]]; then
-                    bash "$config_dir/scripts/input-method/fcitx5-session.sh"
-                fi
-                ;;
-            *) echo "Usage: alis input-method start" >&2; exit 2 ;;
-        esac
         ;;
     path)
         while [[ $# -gt 0 ]]; do
