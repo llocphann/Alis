@@ -29,6 +29,7 @@ OWNED_SOURCE_PREFIXES = (
     "scripts/automation_test_helpers.py",
     "scripts/AUTO-F01-",
     "scripts/test-AUTO-F01-",
+    "scripts/test-automation-",
     "scripts/test-hadalis-automation-",
     "scripts/test-hadalis-chat-bridge",
     "scripts/test-hadalis-legacy-ui-",
