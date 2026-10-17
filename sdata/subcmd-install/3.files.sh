@@ -414,41 +414,7 @@ case "${SKIP_NIRI}" in
         log_warning "Qt theme: qt6ct (plasma-integration not found — install it for proper Qt theming)"
       fi
 
-      # A pre-existing non-Fcitx IME is user-owned; do not inject Fcitx
-      # variables or startup into its preserved Niri configuration.
-      _session_ime="$(printenv QT_IM_MODULE 2>/dev/null || true)"
-      if [[ -z "$_session_ime" ]] && command -v systemctl >/dev/null 2>&1; then
-        _session_ime="$(systemctl --user show-environment 2>/dev/null | sed -n 's/^QT_IM_MODULE=//p' | head -n 1)"
-      fi
-      if [[ -n "$_session_ime" && "$_session_ime" != "fcitx" ]] || {
-          grep -Eq '^[[:space:]]*QT_IM_MODULE[[:space:]]+' "$NIRI_ENV_TARGET" &&
-          ! grep -Eq '^[[:space:]]*QT_IM_MODULE[[:space:]]+"fcitx"' "$NIRI_ENV_TARGET";
-        }; then
-        log_info "Preserving existing input method configuration"
-      else
-        # Preserve users' existing input-method selections while enabling Telex
-        # on sessions that do not already define an IME. Re-running setup is safe.
-        if command -v fcitx5 >/dev/null 2>&1 && [[ -f "$NIRI_ENV_TARGET" ]]; then
-          if grep -Eq '^[[:space:]]*environment[[:space:]]*[{]' "$NIRI_ENV_TARGET"; then
-            if ! grep -Eq '^[[:space:]]*QT_IM_MODULE[[:space:]]+' "$NIRI_ENV_TARGET"; then
-              sed -i '/^[[:space:]]*environment[[:space:]]*{/a\\    QT_IM_MODULE "fcitx"' "$NIRI_ENV_TARGET"
-            fi
-            if ! grep -Eq '^[[:space:]]*XMODIFIERS[[:space:]]+' "$NIRI_ENV_TARGET"; then
-              sed -i '/^[[:space:]]*environment[[:space:]]*{/a\\    XMODIFIERS "@im=fcitx"' "$NIRI_ENV_TARGET"
-            fi
-          fi
-        fi
-        if command -v fcitx5 >/dev/null 2>&1 && [[ -f "$NIRI_STARTUP_TARGET" ]] && ! grep -Fq '"input-method" "start"' "$NIRI_STARTUP_TARGET"; then
-          printf '%s\n' '' 'spawn-at-startup "alis" "input-method" "start"' >> "$NIRI_STARTUP_TARGET"
-        fi
-
-      fi
-
       _launcher_path_escaped="${ALIS_LAUNCHER_PATH//&/\\&}"
-      # The startup helper needs the same PATH-safe absolute launcher as binds.
-      sed -i \
-        -e 's|spawn-at-startup "alis" "input-method" "start"|spawn-at-startup "'"${_launcher_path_escaped}"'" "input-method" "start"|' \
-        "$NIRI_STARTUP_TARGET"
       sed -i \
         -e 's|spawn "bash" "-lc" "exec \"\$(alis path)/scripts/launch-terminal.sh\""|spawn "'"${_launcher_path_escaped}"'" "terminal"|' \
         -e 's|spawn "bash" "-lc" "exec \"\$(alis path)/scripts/close-window.sh\""|spawn "'"${_launcher_path_escaped}"'" "close-window"|' \
@@ -467,12 +433,6 @@ if [[ -f "${XDG_CONFIG_HOME}/niri/config.kdl" ]]; then
     log_error "Niri hotkey launcher repair failed; original files are backed up"
     return 1
   fi
-fi
-
-# A running Niri session can start Telex immediately after setup/update; apps
-# already running still need to be relaunched to inherit the new IME environment.
-if command -v fcitx5 >/dev/null 2>&1 && [[ -n "${NIRI_SOCKET:-}" ]] && [[ -x "$ALIS_LAUNCHER_PATH" ]]; then
-  "$ALIS_LAUNCHER_PATH" input-method start || log_warning "Fcitx5 will be started on next login"
 fi
 
 # Theming templates — defaults/ is the primary source (kept in sync with dots/)
