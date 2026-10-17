@@ -249,6 +249,16 @@ Singleton {
         groupUpdateTimer.restart()
     }
 
+    // Timeout/marking one popup as read changes only transient membership.
+    // Reuse the already synchronized popup cache rather than rebuilding all
+    // history groups on the same QML event-loop turn as Abyss retraction.
+    // Callers with a pending list mutation fall back to _updateGroups().
+    function _updatePopupGroups() {
+        root.popupList = root.popupList.filter(notif => notif && notif.popup)
+        root._cachedPopupGroupsByAppName = _groupsForListOptimized(root.popupList)
+        root._cachedPopupAppNameList = _appNameListForGroups(root._cachedPopupGroupsByAppName)
+    }
+
     function _updateGroups() {
         if (!_groupsDirty) return
         _groupsDirty = false
@@ -609,7 +619,7 @@ Singleton {
         root.cancelTimeout(id);
         if (root.list[index] != null)
             root.list[index].popup = false;
-        triggerListChange();
+        triggerPopupListChange();
         root.timeout(id);
     }
 
@@ -712,6 +722,15 @@ Singleton {
     function triggerListChange() {
         root._groupsDirty = true
         root._updateGroups()
+    }
+
+    function triggerPopupListChange() {
+        // The list may still be dirty when a notification expires during the
+        // initial 100ms grouping window. Full rebuild is required in that case.
+        if (root._groupsDirty)
+            root._updateGroups()
+        else
+            root._updatePopupGroups()
     }
 
     function refresh() {

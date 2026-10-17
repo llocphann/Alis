@@ -537,7 +537,13 @@ Item {
                     ? AbyssStyle.motionNormal
                     : Math.round(AbyssStyle.motionNormal
                         *(1+Math.min(0.5,Math.sqrt(root.mass)*0.1)))
-                easing.type: root.presented ? Easing.OutCubic : Easing.InCubic
+                // An accelerating InCubic retract has maximum velocity at its
+                // last pixel and then stops abruptly. Only short notification
+                // banners get a zero-velocity exit; every other body keeps
+                // its existing easing and duration.
+                easing.type: root.monotonicNotificationReveal && !root.presented
+                    ? Easing.InOutSine
+                    : (root.presented ? Easing.OutCubic : Easing.InCubic)
             }
             NumberAnimation {
                 to: availabilityMotion.targetValue
@@ -591,7 +597,9 @@ Item {
             : (root.placementVisible || root.progress > 0.001))
         // Pyramid uses the same pure slide-under principle as StyledPopup:
         // content remains full-size behind a moving clip; it never fades/shrinks.
-        opacity: root.pyramidPresentationActive
+        // Transient notifications slide under the Edge clip without the
+        // separate end-loaded fade (previously ~70ms at default settings).
+        opacity: root.pyramidPresentationActive || root.monotonicNotificationReveal
             ? 1 : Math.min(1,root.progress*1.5)
         enabled: root.acceptsInput
 

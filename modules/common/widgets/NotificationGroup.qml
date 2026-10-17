@@ -347,6 +347,11 @@ MouseArea { // Notification group area
                     }
 
                     model: ScriptModel {
+                        // Preserve delegate identity when the transient host
+                        // swaps live Qt wrappers for closing value snapshots.
+                        // IDs are unique within a notification group; the card
+                        // updates its data instead of being recreated mid-slide.
+                        objectProp: "notificationId"
                         values: root.expanded ? root.notifications.slice().reverse() :
                             root.notifications.slice().reverse().slice(0, 2)
                     }
