@@ -27,6 +27,16 @@ const window = {
     _frameProbePreviousMs: 0,
     _frameProbeIntervals: [],
     _frameProbeSlowEvents: [],
+    _frameProbeNotificationFrames: [],
+    _frameProbeNotificationFrameLimit: 160,
+    _frameProbeNotificationDropped: 0,
+    _frameProbePreviousNotificationProgress: 0,
+    _frameProbeNotificationRecordChanges: 0,
+    _frameProbeFieldRecordChanges: 0,
+    _frameProbeAllocatorChanges: 0,
+    _frameProbePrevNotificationRecordChanges: 0,
+    _frameProbePrevFieldRecordChanges: 0,
+    _frameProbePrevAllocatorChanges: 0,
     _frameProbePreviousPanelProgress: null,
     _frameProbePanelNonzeroFrames: 0,
     _frameProbePanelChangedFrames: 0,
@@ -44,7 +54,13 @@ const window = {
 const leftPanel={progress:0}, rightPanel={progress:0};
 const dashboardBody={progress:0}, controls={progress:0}, settings={progress:0};
 const bar={visible:true};
-const liquid={popupsOpen:false,popupSlots:[]};
+const liquid={popupsOpen:false,popupSlots:[],records:[{}]};
+assert.ok(source.includes('AbyssRecordingBody {\n                id: recording'),
+    'frame samples must reference the real Recording body, not an undefined ID');
+const notification={progress:0,visualResident:false,
+    record:{depth:0},targetRecord:{depth:170},visualPlacementInward:0,
+    pyramidPresentationActive:false,pyramidClosing:false,pyramidReopening:false};
+const recording={visualResident:false};
 const fakeDate={value:0, now() { return this.value; }};
 const qml = new Function('window','leftPanel','rightPanel','dashboardBody',
     'controls','settings','liquid','bar','Date',
@@ -52,6 +68,10 @@ const qml = new Function('window','leftPanel','rightPanel','dashboardBody',
     + '\n' + namedFunction('recordProbeHeartbeat')
     + '\nreturn {tick:onFrameSwapped, stop:stopFrameProbe, heartbeat:recordProbeHeartbeat};')(
     window,leftPanel,rightPanel,dashboardBody,controls,settings,liquid,bar,fakeDate);
+// Inject the new production opt-in sampler into the legacy frame callback.
+window.recordProbeNotificationFrame=new Function('window','notification',
+    'recording','liquid',namedFunction('recordProbeNotificationFrame')
+    + '\nreturn recordProbeNotificationFrame;')(window,notification,recording,liquid);
 let checks=0;
 function check(label,actual,expected) {
     assert.deepEqual(actual,expected,label);
@@ -98,6 +118,47 @@ check('returned history contains all ticks',result.heartbeatHistory.length,5);
 check('history not exhausted under normal capture',result.heartbeatHistoryExhausted,false);
 check('result contains bar change count',result.barProgressChangedFrames,0);
 check('measurement is disabled after stop',window._frameProbeEnabled,false);
+check('idle frame capture has no Notification samples',result.notificationFrames.length,0);
+check('idle frame capture has no dropped samples',result.notificationFramesDropped,0);
+// Two animated notification swaps; updates are emitted only by opt-in signals.
+window._frameProbeEnabled=true;
+window._frameProbePreviousMs=2000;
+notification.progress=.35;
+notification.visualResident=true;
+notification.pyramidPresentationActive=true;
+recording.visualResident=true;
+window._frameProbeNotificationRecordChanges=2;
+window._frameProbeFieldRecordChanges=3;
+window._frameProbeAllocatorChanges=1;
+fakeDate.value=2017;
+qml.tick();
+notification.progress=.1;
+notification.pyramidClosing=true;
+window._frameProbeNotificationRecordChanges=4;
+window._frameProbeFieldRecordChanges=5;
+fakeDate.value=2051;
+qml.tick();
+check('two per-frame Notification trace samples',window._frameProbeNotificationFrames.length,2);
+check('trace retains 34ms swap gap',window._frameProbeNotificationFrames[1].intervalMs,34);
+check('trace contains Pyramid and Recording state',
+    window._frameProbeNotificationFrames[1].pyramidClosing
+    && window._frameProbeNotificationFrames[1].recordingVisible,true);
+check('trace includes per-interval geometry signals',
+    window._frameProbeNotificationFrames[1].notificationRecordChanges,2);
+check('trace includes per-interval field record signals',
+    window._frameProbeNotificationFrames[1].fieldRecordChanges,2);
+check('trace distinguishes allocator churn',
+    window._frameProbeNotificationFrames[1].allocatorChanges,0);
+const traceStop=qml.stop();
+check('stopFrames retains bounded Notification trace',traceStop.notificationFrames.length,2);
+check('stopFrames reports field signal totals',traceStop.fieldRecordUpdates,5);
+// Keep the hot-path buffer bounded after capacity is reached.
+window._frameProbeNotificationFrameLimit=2;
+window._frameProbeEnabled=true;
+window.recordProbeNotificationFrame(2067,16);
+check('Notification trace cap is respected',window._frameProbeNotificationFrames.length,2);
+check('dropped Notification trace entries are counted',window._frameProbeNotificationDropped,1);
+window._frameProbeEnabled=false;
 check('frame pacing caveat retains idle gaps',result.caveat.includes('idle gaps'),true);
 // Verify the guard on an abnormally long diagnostic run without touching
 // any live surfaces or changing the earlier stopFrameProbe receipt.

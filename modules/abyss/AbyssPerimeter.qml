@@ -233,6 +233,18 @@ Scope {
             // reads existing clock/array state only; surface-state snapshots
             // are taken ONLY if an interval actually exceeds 33.3ms.
             property var _frameProbeSlowEvents: []
+            // Bounded frameSwapped-correlated Notification geometry samples.
+            // Never sample text, icons, filenames, processes or pixels.
+            property var _frameProbeNotificationFrames: []
+            property int _frameProbeNotificationFrameLimit: 160
+            property int _frameProbeNotificationDropped: 0
+            property real _frameProbePreviousNotificationProgress: 0
+            property int _frameProbeNotificationRecordChanges: 0
+            property int _frameProbeFieldRecordChanges: 0
+            property int _frameProbeAllocatorChanges: 0
+            property int _frameProbePrevNotificationRecordChanges: 0
+            property int _frameProbePrevFieldRecordChanges: 0
+            property int _frameProbePrevAllocatorChanges: 0
             // Cheap, opt-in presence/motion counters: if every Panel is zero
             // through the entire six-second window, slow frames cannot be
             // attributed to an observed Panel animation. Never run at idle.
@@ -277,6 +289,15 @@ Scope {
             function startFrameProbe(): var {
                 window._frameProbeIntervals = []
                 window._frameProbeSlowEvents = []
+                window._frameProbeNotificationFrames = []
+                window._frameProbeNotificationDropped = 0
+                window._frameProbePreviousNotificationProgress = 0
+                window._frameProbeNotificationRecordChanges = 0
+                window._frameProbeFieldRecordChanges = 0
+                window._frameProbeAllocatorChanges = 0
+                window._frameProbePrevNotificationRecordChanges = 0
+                window._frameProbePrevFieldRecordChanges = 0
+                window._frameProbePrevAllocatorChanges = 0
                 window._frameProbePreviousPanelProgress = null
                 window._frameProbePanelNonzeroFrames = 0
                 window._frameProbePanelChangedFrames = 0
@@ -291,7 +312,8 @@ Scope {
                 window._frameProbeBarChangedFrames = 0
                 window._frameProbePreviousMs = 0
                 window._frameProbeEnabled = true
-                return {output:window.outputName,started:true,maxIntervals:600}
+                return {output:window.outputName,started:true,maxIntervals:600,
+                    notificationFrameLimit:window._frameProbeNotificationFrameLimit}
             }
             function stopFrameProbe(): var {
                 window._frameProbeEnabled = false
@@ -313,6 +335,12 @@ Scope {
                     over33ms:intervals.filter(ms=>ms>33.3).length,
                     idleGapsOver100ms:intervals.filter(ms=>ms>100).length,
                     slowEvents:window._frameProbeSlowEvents.slice(),
+                    notificationFrames:window._frameProbeNotificationFrames.slice(),
+                    notificationFramesDropped:window._frameProbeNotificationDropped,
+                    notificationFrameLimit:window._frameProbeNotificationFrameLimit,
+                    notificationRecordUpdates:window._frameProbeNotificationRecordChanges,
+                    fieldRecordUpdates:window._frameProbeFieldRecordChanges,
+                    allocatorUpdates:window._frameProbeAllocatorChanges,
                     panelNonzeroFrames:window._frameProbePanelNonzeroFrames,
                     panelProgressChangedFrames:window._frameProbePanelChangedFrames,
                     popupOpenFrames:window._frameProbePopupOpenFrames,
@@ -325,6 +353,65 @@ Scope {
                     heartbeatHistoryExhausted:window._frameProbeHeartbeatHistory.length>=160,
                     caveat:"swap wall-clock gaps include idle gaps; 50ms Qt timer lateness is only event-loop correlation, not GPU/compositor proof"
                 }
+            }
+            // Signal counts are enabled only during explicit IPC capture.
+            // No Date.now() calls are placed inside geometry bindings.
+            Connections {
+                target: notification
+                enabled: window._frameProbeEnabled
+                function onRecordChanged(): void {
+                    window._frameProbeNotificationRecordChanges++
+                }
+            }
+            Connections {
+                target: liquid
+                enabled: window._frameProbeEnabled
+                function onRecordsChanged(): void {
+                    window._frameProbeFieldRecordChanges++
+                }
+                function onBodyPlacementsChanged(): void {
+                    window._frameProbeAllocatorChanges++
+                }
+            }
+            function recordProbeNotificationFrame(now, intervalMs): void {
+                const progress=Number(notification.progress ?? 0)
+                const active=Boolean(notification.visualResident)
+                    || progress > .001
+                    || window._frameProbePreviousNotificationProgress > .001
+                const geometryDelta=window._frameProbeNotificationRecordChanges
+                    -window._frameProbePrevNotificationRecordChanges
+                const fieldDelta=window._frameProbeFieldRecordChanges
+                    -window._frameProbePrevFieldRecordChanges
+                const allocatorDelta=window._frameProbeAllocatorChanges
+                    -window._frameProbePrevAllocatorChanges
+                if (active) {
+                    const trace=window._frameProbeNotificationFrames
+                    if (trace.length < window._frameProbeNotificationFrameLimit) {
+                        trace.push({
+                            timestampMs:now, intervalMs:intervalMs,
+                            progress:progress,
+                            progressDelta:progress-window._frameProbePreviousNotificationProgress,
+                            paintDepth:Number(notification.record?.depth ?? 0),
+                            targetDepth:Number(notification.targetRecord?.depth ?? 0),
+                            visualInward:Number(notification.visualPlacementInward ?? 0),
+                            pyramidActive:Boolean(notification.pyramidPresentationActive),
+                            pyramidClosing:Boolean(notification.pyramidClosing),
+                            pyramidReopening:Boolean(notification.pyramidReopening),
+                            recordingVisible:Boolean(recording.visualResident),
+                            notificationRecordChanges:geometryDelta,
+                            fieldRecordChanges:fieldDelta,
+                            allocatorChanges:allocatorDelta,
+                            fieldRecordCount:Number(liquid.records?.length ?? 0)
+                        })
+                    } else window._frameProbeNotificationDropped++
+                }
+                window._frameProbePreviousNotificationProgress=progress
+                window._frameProbePrevNotificationRecordChanges
+                    =window._frameProbeNotificationRecordChanges
+                window._frameProbePrevFieldRecordChanges
+                    =window._frameProbeFieldRecordChanges
+                window._frameProbePrevAllocatorChanges
+                    =window._frameProbeAllocatorChanges
             }
             Timer {
                 id: frameHeartbeat
@@ -387,6 +474,10 @@ Scope {
                             })
                         }
                     }
+                    window.recordProbeNotificationFrame(now,
+                        window._frameProbePreviousMs > 0
+                            ? Math.max(0,now-window._frameProbePreviousMs)
+                            : null)
                     window._frameProbePreviousMs=now
                     if (window._frameProbeIntervals.length >= 600)
                         window._frameProbeEnabled=false
@@ -1597,6 +1688,7 @@ Scope {
                 }
             }
             AbyssRecordingBody {
+                id: recording
                 anchors.fill: parent
                 controller: liquid
                 outputName: window.outputName

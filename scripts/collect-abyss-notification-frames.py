@@ -20,7 +20,7 @@ FILES = (
     "modules/abyss/content/AbyssNotificationsContent.qml",
     "services/Notifications.qml",
 )
-PHASES = {"record-start", "record-stop", "edge-hover"}
+PHASES = {"record-start", "record-stop", "edge-hover", "toast-open", "toast-close"}
 
 def parse_ipc(raw):
     """Accept plain or JSON-string-encoded Quickshell IPC JSON, no eval."""
@@ -93,13 +93,40 @@ def sanitize_frames(receipt):
               "panelNonzeroFrames", "panelProgressChangedFrames",
               "popupOpenFrames", "barProgressChangedFrames",
               "heartbeatSampleCount", "heartbeatOver100Ms",
-              "heartbeatMaxIntervalMs")
+              "heartbeatMaxIntervalMs", "notificationFramesDropped",
+              "notificationFrameLimit", "notificationRecordUpdates",
+              "fieldRecordUpdates", "allocatorUpdates")
     frames = []
     for item in receipt:
         if not isinstance(item, dict):
             continue
+        # The production probe is a bounded, opt-in frameSwapped trace.
+        # Copy only known primitive fields: no icon, title, user file path
+        # or arbitrary extra field can pass through this sanitizer.
+        trace = []
+        for sample in (item.get("notificationFrames") or [])[:160]:
+            if not isinstance(sample, dict):
+                continue
+            trace.append({
+                "timestampMs": number(sample.get("timestampMs")),
+                "intervalMs": number(sample.get("intervalMs")),
+                "progress": number(sample.get("progress")),
+                "progressDelta": number(sample.get("progressDelta")),
+                "paintDepth": number(sample.get("paintDepth")),
+                "targetDepth": number(sample.get("targetDepth")),
+                "visualInward": number(sample.get("visualInward")),
+                "pyramidActive": bool(sample.get("pyramidActive")),
+                "pyramidClosing": bool(sample.get("pyramidClosing")),
+                "pyramidReopening": bool(sample.get("pyramidReopening")),
+                "recordingVisible": bool(sample.get("recordingVisible")),
+                "notificationRecordChanges": number(sample.get("notificationRecordChanges")),
+                "fieldRecordChanges": number(sample.get("fieldRecordChanges")),
+                "allocatorChanges": number(sample.get("allocatorChanges")),
+                "fieldRecordCount": number(sample.get("fieldRecordCount")),
+            })
         frames.append({
             "outputId": output_token(item.get("output")),
+            "notificationFrames": trace,
             "metrics": {key: number(item.get(key)) for key in fields},
             "slow": [
                 {"timestampMs": number(e.get("timestampMs")),
@@ -186,6 +213,25 @@ def sample_phase(config, seconds, interval, label):
 
 def phase_observed(phase, baseline, event):
     """Check a *transition on one output*, never an unrelated static popup."""
+    if phase in ("toast-open", "toast-close"):
+        # The old 150-250ms snapshot cadence misses a ~228ms banner.
+        # Here only the frameSwapped timeline is authoritative for observing
+        # motion. An explicit progress direction, not idle frame gaps alone,
+        # is required before reporting CAPTURED.
+        direction = 1 if phase == "toast-open" else -1
+        for output in event.get("frames", []):
+            samples = output.get("notificationFrames") or []
+            delta = 0.0
+            for first, second in zip(samples, samples[1:]):
+                a, b = first.get("progress"), second.get("progress")
+                if a is None or b is None:
+                    continue
+                step = (b - a) * direction
+                if step > 0:
+                    delta += step
+            if delta > 0.06:
+                return True
+        return False
     last = baseline.get("snapshots", [])[-1:]  # Resting state near event start.
     if not last or not event.get("snapshots"):
         return False

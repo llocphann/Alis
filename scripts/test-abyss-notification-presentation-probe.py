@@ -21,6 +21,17 @@ for forbidden in ["notification.body","notification.summary","notification.image
                   "SAVE_PATH","output_name","notificationObject?.body"]:
     assert forbidden not in block
 assert "test-abyss-notification-presentation-probe.py" in ci
+assert "function recordProbeNotificationFrame(now, intervalMs): void" in perimeter
+assert "notificationFrames:window._frameProbeNotificationFrames.slice()" in perimeter
+assert "window._frameProbeNotificationFrames = []" in perimeter
+assert "enabled: window._frameProbeEnabled" in perimeter
+assert "AbyssRecordingBody {\n                id: recording" in perimeter
+assert "function onRecordsChanged(): void" in perimeter
+trace_src=perimeter[perimeter.index("function recordProbeNotificationFrame(now, intervalMs)"):]
+trace_src=trace_src[:trace_src.index("id: frameHeartbeat")]
+for forbidden in ("notification.summary", "notification.body", "notification.image",
+                  "notification.appIcon", "process.command", "filePath"):
+    assert forbidden not in trace_src, forbidden
 spec=importlib.util.spec_from_file_location("probe",
         ROOT/"scripts/collect-abyss-notification-frames.py")
 module=importlib.util.module_from_spec(spec)
@@ -58,4 +69,40 @@ frames=module.sanitize_frames([{"output":"Display X","count":20,"p95":35,
                 "popupMotion":[{"kind":"privateContent"}]}]}])
 assert frames[0]["metrics"]["p95"] == 35
 assert "privateContent" not in str(frames)
+# Multiple private keys may appear in the raw probe; allowlist only geometry
+# and numeric timing in the saved JSON receipt.
+trace=module.sanitize_frames([{
+ "output":"Display X",
+ "notificationRecordUpdates":5,"fieldRecordUpdates":6,"allocatorUpdates":1,
+ "notificationFramesDropped":2,"notificationFrameLimit":160,
+ "notificationFrames":[
+  {"timestampMs":100,"intervalMs":16,"progress":.95,"progressDelta":.2,
+   "paintDepth":140,"targetDepth":180,"visualInward":52,
+   "pyramidActive":True,"pyramidClosing":False,"pyramidReopening":False,
+   "recordingVisible":True,"notificationRecordChanges":2,
+   "fieldRecordChanges":3,"allocatorChanges":1,"fieldRecordCount":15,
+   "summary":"PRIVATE TEST TITLE","body":"PRIVATE TEST PATH"},
+  {"timestampMs":134,"intervalMs":34,"progress":.45,"progressDelta":-.5,
+   "paintDepth":68,"targetDepth":180,"visualInward":52,
+   "pyramidActive":True,"pyramidClosing":True,"pyramidReopening":False,
+   "recordingVisible":True,"notificationRecordChanges":2,
+   "fieldRecordChanges":2,"allocatorChanges":0,"fieldRecordCount":15}
+ ]}])[0]
+assert trace["metrics"]["fieldRecordUpdates"] == 6
+assert trace["metrics"]["notificationFramesDropped"] == 2
+assert trace["notificationFrames"][1]["intervalMs"] == 34
+assert trace["notificationFrames"][1]["pyramidClosing"]
+assert trace["notificationFrames"][0]["recordingVisible"]
+assert "PRIVATE TEST" not in str(trace)
+baseline={"snapshots":[]}
+moving={"frames":[{"notificationFrames":trace["notificationFrames"]}]}
+assert module.phase_observed("toast-close",baseline,moving)
+assert not module.phase_observed("toast-open",baseline,moving)
+up={"frames":[{"notificationFrames":[{"progress":.1},{"progress":.7}]}]}
+assert module.phase_observed("toast-open",baseline,up)
+assert not module.phase_observed("toast-close",baseline,up)
+idle={"frames":[{"notificationFrames":[{"progress":1},{"progress":1}]}]}
+assert not module.phase_observed("toast-close",baseline,idle)
+assert not module.phase_observed("toast-open",baseline,idle)
+
 print("ABYSS_NOTIFICATION_PHASE_SOURCE_PASS 22 source/collector contracts")
