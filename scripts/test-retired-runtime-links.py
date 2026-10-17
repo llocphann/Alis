@@ -40,6 +40,9 @@ OWNED_SOURCE_PREFIXES = (
     # The dedicated retirement-route contract intentionally mentions old
     # identifiers as negative assertions; it is not a runtime consumer.
     "scripts/test-retired-settings-routes.py",
+    # Read-only migration inspector names the retired units solely to report
+    # their status; it never depends on or starts the retired backend.
+    "scripts/audit-retired-services.py",
 )
 SKIP_SELF = "scripts/test-retired-runtime-links.py"
 
