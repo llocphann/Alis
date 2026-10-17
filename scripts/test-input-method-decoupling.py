@@ -43,11 +43,29 @@ class InputMethodDecouplingTest(unittest.TestCase):
         self.assertIn("property list<var> unpinnedItems:", tray)
 
     def test_no_automatic_ime_session_start(self):
-        cli = (ROOT / "scripts/alis").read_text(encoding="utf-8")
-        installer = (ROOT / "sdata/subcmd-install/3.files.sh").read_text(encoding="utf-8")
-        startup = (ROOT / "defaults/niri/config.d/50-startup.kdl").read_text(encoding="utf-8")
-        for source in (cli, installer, startup):
-            self.assertNotIn("input-method start", source)
+        # Both the modular defaults and compatibility config are shipped sources.
+        sources = (
+            "scripts/alis",
+            "sdata/subcmd-install/3.files.sh",
+            "defaults/niri/config.d/50-startup.kdl",
+            "dots/.config/niri/config.kdl",
+        )
+        for relative in sources:
+            source = (ROOT / relative).read_text(encoding="utf-8")
+            with self.subTest(path=relative):
+                self.assertNotIn("input-method start", source)
+                self.assertNotIn('"input-method" "start"', source)
+
+    def test_niri_configs_do_not_force_retired_ime(self):
+        for relative in (
+            "defaults/niri/config.d/40-environment.kdl",
+            "defaults/niri/config.d/50-startup.kdl",
+            "dots/.config/niri/config.kdl",
+        ):
+            source = (ROOT / relative).read_text(encoding="utf-8").lower()
+            for retired in RETIRED:
+                with self.subTest(path=relative, backend=retired):
+                    self.assertNotIn(retired, source)
 
 
 if __name__ == "__main__":

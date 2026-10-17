@@ -193,8 +193,6 @@ environment {
     XDG_MENU_PREFIX "plasma-"  // Required for Dolphin/KDE app file associations
     QT_QPA_PLATFORM "wayland"
     ELECTRON_OZONE_PLATFORM_HINT "auto"
-    QT_IM_MODULE "fcitx"
-    XMODIFIERS "@im=fcitx"
     QT_LOGGING_RULES "quickshell.dbus.properties=false"
 
     // Qt theming: kde platform reads colors from kdeglobals (requires plasma-integration pkg)
@@ -213,7 +211,6 @@ environment {
 
 // Import XDG_MENU_PREFIX to systemd for Dolphin/KDE app file associations
 spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX QT_IM_MODULE XMODIFIERS && kbuildsycoca6"
-spawn-at-startup "alis" "input-method" "start"
 
 spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store"
 spawn-at-startup "bash" "-c" "exec wl-paste --type image --watch cliphist store"
