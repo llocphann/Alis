@@ -301,13 +301,6 @@ OFFICIAL_PACKAGES=(
   # Quickshell (CRITICAL) - NOW IN EXTRA REPO!
   quickshell
 
-  # Desktop-wide Vietnamese Telex input (Qt/GTK, Niri and XWayland)
-  fcitx5
-  fcitx5-qt
-  fcitx5-gtk
-  fcitx5-unikey
-  fcitx5-configtool
-
   # Critical QML/KDE runtime modules (required for shell startup)
   syntax-highlighting
   kirigami
