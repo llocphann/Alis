@@ -223,8 +223,13 @@ same('transient notification omits the overshoot amplitude',
 same('transient notification skips the entire settle pass',
     host.includes('duration: !root.monotonicNotificationReveal')
     && host.includes('&& root.presented && AbyssStyle.motionOvershoot > 0'),true);
-same('transient opening and closing retain opposite cubic easing',
-    host.includes('easing.type: root.presented ? Easing.OutCubic : Easing.InCubic'),true);
+same('notification close eases to rest while other hosts retain their cubic policy',
+    host.includes('easing.type: root.monotonicNotificationReveal && !root.presented')
+    && host.includes('? Easing.InOutSine')
+    && host.includes('(root.presented ? Easing.OutCubic : Easing.InCubic)'),true);
+same('notification slide-under clip does not also fade out its contents',
+    host.includes('root.pyramidPresentationActive || root.monotonicNotificationReveal')
+    && host.includes('Math.min(1,root.progress*1.5)'),true);
 same('existing availability/readiness guard stays active',
     host.includes('property real availabilityProgress: presented && ready ? 1 : 0'),true);
 same('pyramid close and reversal still track normalized external progress',
