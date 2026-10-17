@@ -7,7 +7,7 @@
 
 pkgname=alis-deps
 pkgver=2.29.3
-pkgrel=8
+pkgrel=9
 pkgdesc='Alis desktop shell - dependency tracker (meta-package)'
 url='https://github.com/llocphann/Alis'
 arch=(any)
@@ -134,12 +134,6 @@ depends=(
   #--- Power management ---
   ethtool
 
-  #--- Desktop input method ---
-  fcitx5
-  fcitx5-qt
-  fcitx5-gtk
-  fcitx5-unikey
-  fcitx5-configtool
 
   #--- Input / HW ---
   upower
