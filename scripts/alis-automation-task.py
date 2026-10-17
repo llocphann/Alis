@@ -21,6 +21,10 @@ except Exception as error:
 
 
 def main():
+    # AUTO-R02: block historical task-code intake even if called directly.
+    print(json.dumps({"ok": False, "error": "Automation has been retired (AUTO-R02)."}))
+    return 1
+
     parser = argparse.ArgumentParser(description="Prepare task-code Automation handoff")
     commands = parser.add_subparsers(dest="action", required=True)
     for action in ("resolve", "prepare"):

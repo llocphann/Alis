@@ -272,5 +272,5 @@ def serve():
 
 
 if __name__=="__main__":
-    state_dir().mkdir(parents=True,exist_ok=True,mode=0o700)
-    serve()
+    # AUTO-R02: do not create the privileged broker socket or accept requests.
+    print("Automation privilege broker retired; no listener was started.")

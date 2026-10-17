@@ -667,4 +667,7 @@ def main() -> int:
                 time.sleep(1)
 
 
-if __name__=="__main__":raise SystemExit(main())
+if __name__=="__main__":
+    # AUTO-R02: do not poll, fetch, dispatch or publish new jobs after retirement.
+    print("Automation worker retired; no job was dispatched.")
+    raise SystemExit(0)

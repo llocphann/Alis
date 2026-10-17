@@ -652,4 +652,6 @@ def main() -> int:
 
 
 if __name__=="__main__":
-    raise SystemExit(main())
+    # AUTO-R02: fail closed before opening a scheduler/chat session.
+    print("Automation manager retired; no scheduler or UI loop was started.")
+    raise SystemExit(0)

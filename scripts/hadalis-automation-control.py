@@ -56,6 +56,10 @@ def main(argv: list[str]) -> dict:
 
 
 if __name__ == "__main__":
+    # AUTO-R02: retired UI/control interface cannot reactivate services or profiles.
+    print(json.dumps({"ok": False, "error": "Automation has been retired (AUTO-R02)."}))
+    raise SystemExit(1)
+
     try:
         result = main(sys.argv[1:])
         print(json.dumps(result, ensure_ascii=False))
