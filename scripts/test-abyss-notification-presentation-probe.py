@@ -22,6 +22,7 @@ for forbidden in ["notification.body","notification.summary","notification.image
     assert forbidden not in block
 assert "test-abyss-notification-presentation-probe.py" in ci
 assert "function recordProbeNotificationFrame(now, intervalMs): void" in perimeter
+assert "property int _frameProbeNotificationFrameLimit: 160" in perimeter
 assert "notificationFrames:window._frameProbeNotificationFrames.slice()" in perimeter
 assert "window._frameProbeNotificationFrames = []" in perimeter
 assert "enabled: window._frameProbeEnabled" in perimeter
@@ -45,6 +46,51 @@ assert safe["outputs"][0]["measurements"]["toastCount"] == 2
 assert safe["outputs"][0]["measurements"]["toastDesiredHeight"] == 140
 assert len(safe["outputs"][0]["center"]) == 1
 assert "Display X" not in str(safe) and "private" not in str(safe)
+assert module.EXPECTED_NOTIFICATION_FRAME_LIMIT == 160
+valid_ack = [{"output":"Display X","started":True,"maxIntervals":600,
+              "notificationFrameLimit":160}]
+module.validate_frame_probe_start(valid_ack)
+try:
+    module.validate_frame_probe_start([{"started":True,"maxIntervals":600}])
+except module.StaleRuntimeError as exc:
+    assert "STALE_RUNTIME" in str(exc)
+else:
+    raise AssertionError("old runtime must be rejected before capture")
+try:
+    module.validate_frame_probe_start([{"started":False,
+                                        "notificationFrameLimit":160}])
+except RuntimeError:
+    pass
+else:
+    raise AssertionError("inactive runtime must not be accepted")
+valid_stop = [{"output":"Display X","count":0,"exhausted":False,
+               "notificationFrames":[],"notificationFramesDropped":0,
+               "notificationFrameLimit":160,"heartbeatHistoryExhausted":False}]
+module.validate_frame_probe_stop(valid_stop)
+try:
+    module.validate_frame_probe_stop([{"count":0,"exhausted":False}])
+except module.StaleRuntimeError:
+    pass
+else:
+    raise AssertionError("old stopFrames schema must be rejected")
+# No live qs required: handshake must release a stale, already-armed probe.
+original_call = module.checked_call
+calls = []
+def stale_call(config, name, timeout=5):
+    calls.append(name)
+    return ([{"started":True,"maxIntervals":600}] if name == "startFrames"
+            else [{"count":0,"exhausted":False}])
+module.checked_call = stale_call
+try:
+    try:
+        module.sample_phase(None, 0, .15, "baseline")
+    except module.StaleRuntimeError:
+        pass
+    else:
+        raise AssertionError("stale runtime was not blocked")
+    assert calls == ["startFrames", "stopFrames"], calls
+finally:
+    module.checked_call = original_call
 def state(record=False, count=0, center=False):
     return {"outputId":"screen-hash",
             "toast":{"recording":record},
@@ -68,6 +114,8 @@ frames=module.sanitize_frames([{"output":"Display X","count":20,"p95":35,
  "slowEvents":[{"timestampMs":1,"intervalMs":41,
                 "popupMotion":[{"kind":"privateContent"}]}]}])
 assert frames[0]["metrics"]["p95"] == 35
+assert frames[0]["metrics"]["exhausted"] is False
+assert frames[0]["metrics"]["heartbeatHistoryExhausted"] is False
 assert "privateContent" not in str(frames)
 # Multiple private keys may appear in the raw probe; allowlist only geometry
 # and numeric timing in the saved JSON receipt.
@@ -94,6 +142,19 @@ assert trace["notificationFrames"][1]["intervalMs"] == 34
 assert trace["notificationFrames"][1]["pyramidClosing"]
 assert trace["notificationFrames"][0]["recordingVisible"]
 assert "PRIVATE TEST" not in str(trace)
+assert module.trace_incomplete({"frames":[trace]})
+complete = module.sanitize_frames([{
+    "output":"Display X","count":2,"exhausted":False,
+    "heartbeatHistoryExhausted":False,"notificationFrameLimit":160,
+    "notificationFramesDropped":0
+}])[0]
+assert not module.trace_incomplete({"frames":[complete]})
+for key in ("exhausted", "heartbeatHistoryExhausted"):
+    raw = {"output":"Display X","count":600,"exhausted":False,
+           "heartbeatHistoryExhausted":False,
+           "notificationFrameLimit":160,"notificationFramesDropped":0}
+    raw[key] = True
+    assert module.trace_incomplete({"frames":module.sanitize_frames([raw])}), key
 baseline={"snapshots":[]}
 moving={"frames":[{"notificationFrames":trace["notificationFrames"]}]}
 assert module.phase_observed("toast-close",baseline,moving)
@@ -105,4 +166,4 @@ idle={"frames":[{"notificationFrames":[{"progress":1},{"progress":1}]}]}
 assert not module.phase_observed("toast-close",baseline,idle)
 assert not module.phase_observed("toast-open",baseline,idle)
 
-print("ABYSS_NOTIFICATION_PHASE_SOURCE_PASS 22 source/collector contracts")
+print("ABYSS_NOTIFICATION_PHASE_SOURCE_PASS runtime handshake, cleanup, bounded trace and phase contracts")

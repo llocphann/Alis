@@ -21,6 +21,12 @@ FILES = (
     "services/Notifications.qml",
 )
 PHASES = {"record-start", "record-stop", "edge-hover", "toast-open", "toast-close"}
+# Exact opt-in runtime instrumentation from AbyssPerimeter.qml at this source SHA.
+EXPECTED_NOTIFICATION_FRAME_LIMIT = 160
+
+class StaleRuntimeError(RuntimeError):
+    """Installed QML bytes match, but the running Quickshell engine is older."""
+
 
 def parse_ipc(raw):
     """Accept plain or JSON-string-encoded Quickshell IPC JSON, no eval."""
@@ -127,7 +133,12 @@ def sanitize_frames(receipt):
         frames.append({
             "outputId": output_token(item.get("output")),
             "notificationFrames": trace,
-            "metrics": {key: number(item.get(key)) for key in fields},
+            "metrics": {
+                **{key: number(item.get(key)) for key in fields},
+                "exhausted": item.get("exhausted") is True,
+                "heartbeatHistoryExhausted":
+                    item.get("heartbeatHistoryExhausted") is True,
+            },
             "slow": [
                 {"timestampMs": number(e.get("timestampMs")),
                  "intervalMs": number(e.get("intervalMs")),
@@ -141,6 +152,46 @@ def sanitize_frames(receipt):
             ],
         })
     return frames
+
+def validate_frame_probe_start(ack):
+    """Reject a live engine that has not loaded the notification frame probe."""
+    if not isinstance(ack, list) or not any(
+            isinstance(item, dict) and item.get("started") is True for item in ack):
+        raise RuntimeError("startFrames did not acknowledge active capture")
+    if any(not isinstance(item, dict) or item.get("started") is not True
+           or item.get("notificationFrameLimit") != EXPECTED_NOTIFICATION_FRAME_LIMIT
+           for item in ack):
+        raise StaleRuntimeError(
+            "STALE_RUNTIME: installed QML may match checkout, but running "
+            "Quickshell lacks the notification frame probe; capture refused")
+
+
+def validate_frame_probe_stop(raw):
+    """Fail closed if the engine changes while a capture is in progress."""
+    if not isinstance(raw, list) or not raw:
+        raise RuntimeError("stopFrames returned no output samples")
+    if any(not isinstance(item, dict)
+           or item.get("notificationFrameLimit") != EXPECTED_NOTIFICATION_FRAME_LIMIT
+           or not isinstance(item.get("notificationFrames"), list)
+           or not isinstance(item.get("notificationFramesDropped"), (int, float))
+           or not isinstance(item.get("exhausted"), bool)
+           or not isinstance(item.get("heartbeatHistoryExhausted"), bool)
+           for item in raw):
+        raise StaleRuntimeError(
+            "STALE_RUNTIME: stopFrames lacks the notification frame schema")
+
+
+def trace_incomplete(*phases):
+    """A bounded capture is not evidence for an entire unobserved interval."""
+    for phase in phases:
+        for output in phase.get("frames", []):
+            metrics = output.get("metrics") or {}
+            if (metrics.get("exhausted")
+                    or metrics.get("heartbeatHistoryExhausted")
+                    or (metrics.get("notificationFramesDropped") or 0) > 0):
+                return True
+    return False
+
 
 def checked_call(config, name, timeout=5):
     result = subprocess.run(["qs", "-p", str(config), "ipc", "call",
@@ -188,10 +239,11 @@ def sample_phase(config, seconds, interval, label):
     error = None
     try:
         ack = checked_call(config, "startFrames")
-        if not isinstance(ack, list) or not any(
-                isinstance(item, dict) and item.get("started") is True for item in ack):
-            raise RuntimeError("startFrames did not acknowledge active capture")
-        initiated = True
+        # startFrames can arm an *old* engine before returning its old schema.
+        # Always disarm that session in finally even when the handshake fails.
+        initiated = isinstance(ack, list) and any(
+            isinstance(item, dict) and item.get("started") is True for item in ack)
+        validate_frame_probe_start(ack)
         while time.monotonic() - start < seconds:
             try:
                 sample = sanitize_snapshot(checked_call(config, "snapshot"))
@@ -203,7 +255,9 @@ def sample_phase(config, seconds, interval, label):
     finally:
         if initiated:
             try:
-                frames = sanitize_frames(checked_call(config, "stopFrames"))
+                raw_frames = checked_call(config, "stopFrames")
+                validate_frame_probe_stop(raw_frames)
+                frames = sanitize_frames(raw_frames)
             except (ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
                 error = (error or "") + " " + type(exc).__name__ + " during stopFrames"
     if error:
@@ -290,11 +344,14 @@ def main():
                          for f in receipt["event"]["frames"])
         receipt["event"]["eventObserved"] = observed
         receipt["status"] = (
+            "INCOMPLETE_TRACE" if trace_incomplete(receipt["baseline"], receipt["event"]) else
             "CAPTURED" if observed and has_frames else
             "NO_FRAME_SAMPLES" if observed else "EVENT_NOT_OBSERVED")
     except (ValueError, RuntimeError, subprocess.SubprocessError, OSError) as exc:
         receipt["status"] = "BLOCKED"
         receipt["failureType"] = type(exc).__name__
+        if isinstance(exc, StaleRuntimeError):
+            receipt["failureCode"] = "STALE_RUNTIME"
         print("Blocked: " + str(exc), file=sys.stderr)
     path = output / "notification-presentation.json"
     path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
