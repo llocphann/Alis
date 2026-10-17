@@ -53,6 +53,10 @@ jobs:
         shell: bash
         run: python3 scripts/test-retired-runtime-links.py
 
+      - name: Verify fresh runtime excludes Automation while protecting old installations
+        shell: bash
+        run: python3 scripts/test-retired-runtime-payload.py
+
       - name: Syntax check read-only installed-host retirement audit
         shell: bash
         run: python3 -m py_compile scripts/audit-retired-services.py

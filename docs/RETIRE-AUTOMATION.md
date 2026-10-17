@@ -10,6 +10,21 @@ Owner decision **2026-10-18**; canonical tracking: [Alis #118](https://github.co
 - Automation installer now refuses to create or start any unit or launcher.
 - **Do not use the Automation worker or Chat Bridge to decommission itself.** Existing installed processes do not stop when GitHub source changes.
 
+## Packaging and update isolation
+
+The runtime manifest now **excludes** retired `automation/` and all
+Automation-only CLI, credential, native inspection and installer scripts from
+new Alis packages and fresh installs. Core `scripts/alis`, `alis.service`,
+Settings, Companion, Integrations and the normal shell stay installed.
+
+**Important:** Existing installed Automation modules/scripts are explicitly
+protected from generic `filter-installed` orphan deletion and
+`rsync --delete` until the worker/manager/bridge on the actual desktop have
+been safely stopped and receipts backed up. An ordinary Alis update must
+**never** decommission active Automation processes or erase their no-replay
+state. Existing installed units and desktop overrides need a separately
+verified host migration.
+
 ## Installed-host read-only gate (not yet performed)
 
 Run from a normal owner terminal. A read-only summary is also available:

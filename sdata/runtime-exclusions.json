@@ -86,6 +86,16 @@
     ".bak"
   ],
   "excludedPaths": [
+    "automation",
+    "scripts/AUTO-F01-github-handoff.py",
+    "scripts/AUTO-F01-service-probe.py",
+    "scripts/AUTO-F01-ui-preflight.py",
+    "scripts/alis-automation-task.py",
+    "scripts/automation_test_helpers.py",
+    "scripts/hadalis-automation-control.py",
+    "scripts/hadalis-git-credential.py",
+    "scripts/inspect-hadalis-native-scope.mjs",
+    "scripts/install-hadalis-automation.py",
     "scripts/agents",
     "scripts/release.sh",
     "scripts/wiki-sync.sh",
@@ -144,5 +154,17 @@
     "scripts/colors/zed_themegen/zed_themegen",
     "scripts/iris-corner-poc"
   ],
-  "excludedDirectorySuffixes": {}
+  "excludedDirectorySuffixes": {},
+  "protectedRetiredPaths": [
+    "automation",
+    "scripts/AUTO-F01-github-handoff.py",
+    "scripts/AUTO-F01-service-probe.py",
+    "scripts/AUTO-F01-ui-preflight.py",
+    "scripts/alis-automation-task.py",
+    "scripts/automation_test_helpers.py",
+    "scripts/hadalis-automation-control.py",
+    "scripts/hadalis-git-credential.py",
+    "scripts/inspect-hadalis-native-scope.mjs",
+    "scripts/install-hadalis-automation.py"
+  ]
 }

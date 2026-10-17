@@ -171,8 +171,13 @@ def main():
                                  if not p.startswith('assets/')]
         payload.policy['excludedPaths'] = [p for p in payload.policy['excludedPaths']
                                            if p.startswith('assets/')]
+        protected_retired = tuple(payload.policy.get('protectedRetiredPaths', []))
         for line in sys.stdin:
             relative = line.rstrip('\n')
+            # AUTO-R02: never prune installed worker/bridge before host signoff.
+            if any(relative == p or relative.startswith(p + '/')
+                   for p in protected_retired):
+                continue
             known_source_only = any(relative == p or relative.startswith(p + '/')
                                     for p in managed_cleanup_paths)
             if known_source_only or not payload.excluded(relative):
