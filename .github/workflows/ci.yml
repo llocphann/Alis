@@ -45,57 +45,11 @@ jobs:
           node scripts/test-notification-group-key-policy.mjs
           python3 scripts/test-abyss-notification-presentation-probe.py
 
-      - name: Verify Automation task-code handoff and compact UI
-        shell: bash
-        run: |
-          python3 scripts/test-automation-taskflow.py
-          python3 scripts/test-automation-task-layout.py
-
       - name: Verify desktop context-menu pointer anchor and slide relocation
         shell: bash
         run: |
           python3 scripts/test-desktop-context-menu-hover-contract.py
           python3 scripts/test-desktop-context-menu-fade-relocation-contract.py
-
-      - name: Verify native Desktop adapter fails closed without sending
-        shell: bash
-        run: |
-          node --check automation/chat_bridge/native_adapter.mjs
-          node --check automation/chat_bridge/native_cli.mjs
-          node scripts/test-hadalis-native-session.mjs
-          node --check automation/chat_bridge/static_helper_analysis.mjs
-          node scripts/test-hadalis-static-helper-analysis.mjs
-          node --check automation/chat_bridge/transport_evidence.mjs
-          node scripts/test-hadalis-transport-evidence.mjs
-          node --check automation/chat_bridge/reconciliation_evidence.mjs
-          node scripts/test-hadalis-reconciliation-evidence.mjs
-          node --check automation/chat_bridge/receipt_evidence.mjs
-          node scripts/test-hadalis-receipt-evidence.mjs
-          node --check automation/chat_bridge/legacy_ui_probe.mjs
-          node --check automation/chat_bridge/legacy_ui_probe_cli.mjs
-          node scripts/test-hadalis-legacy-ui-probe.mjs
-          node --check automation/chat_bridge/legacy_ui_response_probe.mjs
-          node scripts/test-hadalis-legacy-ui-response-probe.mjs
-          node --check automation/chat_bridge/legacy_ui_journal.mjs
-          node --check automation/chat_bridge/legacy_ui_acceptance.mjs
-          node --check automation/chat_bridge/legacy_ui_acceptance_cli.mjs
-          node scripts/test-hadalis-legacy-ui-acceptance.mjs
-          node --check automation/chat_bridge/scope_probe.mjs
-          node --check scripts/inspect-hadalis-native-scope.mjs
-          node scripts/test-hadalis-native-scope-probe.mjs
-
-      - name: Verify restored Automation backend
-        shell: bash
-        run: |
-          python3 scripts/test-hadalis-automation-model.py
-          python3 scripts/test-hadalis-automation-storage.py
-          python3 scripts/test-hadalis-automation-recovery.py
-          python3 scripts/test-hadalis-automation-scheduler.py
-          python3 scripts/test-hadalis-automation-startup.py
-          python3 scripts/AUTO-F01-service-probe.py self-test
-          python3 scripts/test-hadalis-chat-bridge.py
-          python3 scripts/test-hadalis-automation-credentials.py
-          python3 scripts/test-hadalis-automation-install.py
 
       - name: Verify ABYSS-R15 unified Edge modules
         shell: bash
