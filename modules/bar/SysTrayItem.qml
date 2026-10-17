@@ -14,10 +14,7 @@ MouseArea {
     property var trayParent: null  // Reference to SysTray for closing other menus
     // The overflow popup shares this component, but keeps its own native size.
     property real sizeScale: Appearance.sizes.barModuleScale
-    // Fcitx belongs to the compact monochrome status-icon family, even if
-    // other tray apps use their original multicolor artwork.
-    readonly property bool useMonochromeIcon: TrayService.isFcitxItem(root.item)
-        || (Config.options?.bar?.tray?.monochromeIcons ?? false)
+    readonly property bool useMonochromeIcon: Config.options?.bar?.tray?.monochromeIcons ?? false
     property bool targetMenuOpen: false
     property bool keyboardMenuMode: false
 
