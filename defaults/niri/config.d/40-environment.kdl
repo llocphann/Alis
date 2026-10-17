@@ -17,11 +17,6 @@ environment {
     // Force Qt apps to use Wayland natively (no XWayland fallback).
     QT_QPA_PLATFORM "wayland"
 
-    // Fcitx5: Qt input method on Niri/Wayland and XIM for XWayland clients.
-    // Native GTK uses Wayland text-input-v3 (do not force GTK_IM_MODULE).
-    QT_IM_MODULE "fcitx"
-    XMODIFIERS "@im=fcitx"
-
     // Let Electron apps (Chrome, VS Code, Discord) pick Wayland automatically.
     ELECTRON_OZONE_PLATFORM_HINT "auto"
 
