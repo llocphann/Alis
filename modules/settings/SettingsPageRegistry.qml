@@ -28,7 +28,7 @@ Singleton {
     function isPageApplicable(index: int): bool {
         if (index < 0 || index >= root.pages.length
                 || root.isHiddenLegacyIndex(index) || !root.pages[index]) return false
-        if (index === 35 || index === 38) return true
+        if (index === 38) return true
         if (root.abyssFamily)
             return ![11,26].includes(index)
         if (root.waffleFamily)

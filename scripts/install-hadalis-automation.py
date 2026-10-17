@@ -99,6 +99,9 @@ def install_desktop_launcher(chatgpt: str) -> Path | None:
 
 
 def main() -> int:
+    # AUTO-R02: block service installation before any effects.
+    raise SystemExit("Automation retired. See docs/RETIRE-AUTOMATION.md and GitHub Issue #118.")
+
     parser = argparse.ArgumentParser(
         description="Install Alis autonomous user services"
     )

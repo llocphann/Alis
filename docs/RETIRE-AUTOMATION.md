@@ -1,0 +1,50 @@
+# AUTO-R02 — Automation retirement runbook
+
+Owner decision **2026-10-18**; canonical tracking: [Alis #118](https://github.com/llocphann/Alis/issues/118). **Scope: `dev` only.** No automation run or service action is authorized by this document.
+
+## Source freeze
+
+- `AUTO-F01` / `AUTO-R01` closed **not planned**, not verified. All earlier automatic dispatch and eight-task queue authorizations are revoked.
+- Dedicated GitHub Actions workflow and Automation-only blocks in shared CI removed.
+- Settings page **35** remains a null legacy-index marker: no Automation route, navigation category, or search entry. Retired QML file remains temporarily on disk, without a route.
+- Automation installer now refuses to create or start any unit or launcher.
+- **Do not use the Automation worker or Chat Bridge to decommission itself.** Existing installed processes do not stop when GitHub source changes.
+
+## Installed-host read-only gate (not yet performed)
+
+Run from a normal owner terminal:
+
+```bash
+units=(hadalis-worker.service hadalis-chat-bridge.service hadalis-privilege.service hadalis-chatgpt.service)
+systemctl --user --no-pager --full status "${units[@]}" || true
+systemctl --user list-unit-files --type=service | grep -E 'hadalis-(worker|chat-bridge|privilege|chatgpt)\.service' || true
+systemctl --user list-units --all --type=service | grep -E 'hadalis-(worker|chat-bridge|privilege|chatgpt)\.service' || true
+```
+
+Inspect each installed unit `ExecStart`, path, enablement and process. Establish worker/manager **idle** and no in-flight/unacknowledged chat sends or jobs, including uncertain local receipt or failed publication. Never mistake absent GitHub pending jobs for proof of an idle live process. Preserve durable local receipts and no-replay IDs; unclear state means **stop and investigate without replay**.
+
+Back up (locally with owner-only permissions) relevant existing `$XDG_CONFIG_HOME/hadalis/automation.json`, `$XDG_STATE_HOME/hadalis-automation/`, `$XDG_DATA_HOME/hadalis-automation/`, enabled units, drop-ins and any `automation/queue` / `automation/results` evidence. Inventory keyring references without revealing secrets. Do not delete private state.
+
+## Supervised disable (only once idle/ownership gates pass)
+
+On the **installed owner machine**, not via the worker, stop/disable exclusively Automation-owned units:
+
+```bash
+systemctl --user disable --now hadalis-worker.service hadalis-chat-bridge.service hadalis-privilege.service
+systemctl --user is-active hadalis-worker.service hadalis-chat-bridge.service hadalis-privilege.service || true
+systemctl --user is-enabled hadalis-worker.service hadalis-chat-bridge.service hadalis-privilege.service || true
+```
+
+Inspect `hadalis-chatgpt.service` and the Desktop launcher **independently**: disable/remove only if exclusive to Automation. Never stop or disable `alis.service`, `niri.service`, Quickshell or another application's ChatGPT launcher.
+
+## Follow-on removal milestones
+
+1. After live-host preflight, remove retired QML component, remaining UI references, translations and icons; confirm saved-navigation fallback.
+2. Remove `automation/manager/`, `automation/worker/`, `automation/chat_bridge/`, associated lifecycle/task/queue/credential code and installer/control commands after dependency scan.
+3. Remove all dedicated Automation tests, documentation, CI/package hooks. Retain a compact retirement record and preserve historical receipts or migrate them under explicit retention.
+4. Remove unused **installed** automation-only user unit files/drop-ins/aliases/launcher, reload user systemd, verify no enabled/active automation units or residual processes.
+5. Delete private XDG state, receipts or keyring records **only** after a separate owner approval and verified backup.
+
+## Acceptance
+
+Exact-SHA source reference scan, QML/package/syntax regression, canonical validator with actual exit codes; independent local `systemctl --user` and no-replay/receipt verification; `alis.service`, Niri, other Settings pages and integrations unaffected; **Owner acceptance separate**. Keep #118 open until all stages are verified.
