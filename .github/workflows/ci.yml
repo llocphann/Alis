@@ -49,6 +49,10 @@ jobs:
         shell: bash
         run: python3 scripts/test-retired-settings-routes.py
 
+      - name: Verify no live shell or package references parked Automation
+        shell: bash
+        run: python3 scripts/test-retired-runtime-links.py
+
       - name: Verify desktop context-menu pointer anchor and slide relocation
         shell: bash
         run: |
