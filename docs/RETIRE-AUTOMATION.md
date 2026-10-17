@@ -6,7 +6,7 @@ Owner decision **2026-10-18**; canonical tracking: [Alis #118](https://github.co
 
 - `AUTO-F01` / `AUTO-R01` closed **not planned**, not verified. All earlier automatic dispatch and eight-task queue authorizations are revoked.
 - Dedicated GitHub Actions workflow and Automation-only blocks in shared CI removed.
-- Settings page **35** remains a null legacy-index marker: no Automation route, navigation category, or search entry. Retired QML file remains temporarily on disk, without a route.
+- Settings page **35** remains a null legacy-index marker: no Automation route, navigation category, or search entry. Removed the QML component and its qmldir registration. Both Settings windows and external deep links now resolve retired/missing page indices to the live Panels page; a stale spotlight is discarded.
 - Automation installer now refuses to create or start any unit or launcher.
 - **Do not use the Automation worker or Chat Bridge to decommission itself.** Existing installed processes do not stop when GitHub source changes.
 

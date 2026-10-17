@@ -36,6 +36,13 @@ Singleton {
         return index !== 11 && index < 32
     }
 
+    // Retired, missing and out-of-range persisted page IDs must not reach a
+    // Loader. Use the same live Panels page as the legacy-index migration.
+    function safePageIndex(index: int): int {
+        if (root.isPageApplicable(index)) return index
+        return root.isPageApplicable(root.panelsPageIndex) ? root.panelsPageIndex : 0
+    }
+
     // Stable route keys survive page reordering and legacy numeric slot
     // retirement. The active Settings chrome navigates inside its own window
     // instead of spawning a second instance when a related-settings link runs.

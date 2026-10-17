@@ -394,6 +394,11 @@ Scope {
             root._initialDeepLinkPage = requestedPage
         GlobalStates.settingsOverlayRequestedPage = -1
         GlobalStates.settingsOverlayRequestedSection = ""
+        if (!SettingsPageRegistry.isPageApplicable(requestedPage)) {
+            // Discard any spotlight targeting a retired page, including 35.
+            root.overlayCurrentPage = SettingsPageRegistry.safePageIndex(requestedPage)
+            return true
+        }
 
         if (requestedPage >= 0 && requestedSection.length > 0) {
             root.openOverlaySearchResult({
@@ -1503,8 +1508,7 @@ Scope {
         const initialPage = root._initialDeepLinkPage >= 0
             ? root._initialDeepLinkPage
             : pending >= 0 ? pending : persisted
-        root.overlayCurrentPage = Math.max(0, Math.min(
-            initialPage, root.overlayPages.length - 1))
+        root.overlayCurrentPage = SettingsPageRegistry.safePageIndex(initialPage)
         root._prevPage = root.overlayCurrentPage
         root._navigationInitialized = true
         root._initialDeepLinkPage = -1
@@ -1512,6 +1516,11 @@ Scope {
     }
 
     onOverlayCurrentPageChanged: {
+        const safe = SettingsPageRegistry.safePageIndex(root.overlayCurrentPage)
+        if (safe !== root.overlayCurrentPage) {
+            root.overlayCurrentPage = safe
+            return
+        }
         root._slideDir = root.overlayCurrentPage > root._prevPage ? 1 : -1
         root._prevPage = root.overlayCurrentPage
         root._persistOverlayPage()

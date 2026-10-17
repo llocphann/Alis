@@ -45,6 +45,10 @@ jobs:
           node scripts/test-notification-group-key-policy.mjs
           python3 scripts/test-abyss-notification-presentation-probe.py
 
+      - name: Verify retired Settings routes do not load deleted pages
+        shell: bash
+        run: python3 scripts/test-retired-settings-routes.py
+
       - name: Verify desktop context-menu pointer anchor and slide relocation
         shell: bash
         run: |

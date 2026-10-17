@@ -49,7 +49,11 @@ ApplicationWindow {
             return
         const persisted = Persistent.states?.settings?.iiPage ?? 0
         const requested = root._requestedStartPage >= 0 ? root._requestedStartPage : persisted
-        root.currentPage = Math.max(0, Math.min(requested, root.pages.length - 1))
+        root.currentPage = SettingsPageRegistry.safePageIndex(requested)
+        // A stale external deep link must not spotlight a control in a retired page.
+        if (root._requestedStartPage >= 0
+                && !SettingsPageRegistry.isPageApplicable(root._requestedStartPage))
+            root._requestedStartSection = ""
         root._navigationInitialized = true
         root._persistCurrentPage()
         if (root._requestedStartSection.length > 0) {
@@ -60,6 +64,11 @@ ApplicationWindow {
     }
 
     onCurrentPageChanged: {
+        const safe = SettingsPageRegistry.safePageIndex(root.currentPage)
+        if (safe !== root.currentPage) {
+            root.currentPage = safe
+            return
+        }
         root._persistCurrentPage()
         root.navGroup=Hierarchy.parentKey(root.pages[root.currentPage])
     }
