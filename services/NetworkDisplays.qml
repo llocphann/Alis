@@ -165,14 +165,21 @@ Singleton {
                 root.statusMessage = "Stream service running. Verify picture and sound on TV."
                 return
             }
-            // systemd may not have started its user transient service yet.
-            root._inactiveReads++
-            if (root._inactiveReads <= 4 && root._connectChecks < 8) return
-            if (root.phase === "connecting" && root._connectChecks <= 28) {
+            if (data?.state === "activating") {
+                root._inactiveReads = 0
                 root.statusMessage = "Waiting for TV and screen-share permission…"
                 return
             }
-            root.lastError = "TV stream service stopped or became unavailable."
+            if (data?.state === "failed" || data?.result === "exit-code") {
+                root.lastError = "TV stream failed. Check receiver, codecs and screencast portal."
+                root._reset("")
+                return
+            }
+            // A user-systemd transient service may briefly report inactive
+            // before registration; bounded grace instead of a false Connected.
+            root._inactiveReads++
+            if (root._inactiveReads <= 4) return
+            root.lastError = "TV stream is inactive; retry Connect or use Open app."
             root._reset("")
         }
     }
