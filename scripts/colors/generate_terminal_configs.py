@@ -1146,7 +1146,7 @@ def generate_yazi_config(colors, output_path):
     )
     sel_bg = selection_bg or colors.get("term8") or "#3C3836"
     hover_bg = selection_bg or primary
-    hover_fg = colors.get("app_on_selection") or bg
+    hover_fg = colors.get("app_on_selection") or (fg if selection_bg else bg)
     red = colors.get("term1", "#CC241D")
     green = colors.get("term2", "#98971A")
     yellow = colors.get("term3", "#D79921")
