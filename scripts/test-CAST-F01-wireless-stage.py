@@ -53,6 +53,34 @@ try:
 except module.CastError:
     pass
 
+# A missing daemon is distinct from a daemon that starts but cannot own D-Bus.
+with mock.patch.object(module, "name_owned", return_value=False), mock.patch.object(
+        module.shutil, "which", side_effect=lambda name: "/usr/bin/busctl" if name == "busctl" else None), mock.patch.object(
+        module, "daemon_executable", return_value=""):
+    result = module.scan()
+    assert not result["ok"] and result["code"] == "daemon_missing"
+    assert "Install version 0.98+" in result["message"]
+    assert result["displays"] == []
+
+with mock.patch.object(module, "name_owned", return_value=False), mock.patch.object(
+        module.shutil, "which", return_value="/usr/bin/busctl"), mock.patch.object(
+        module, "daemon_executable", return_value="/usr/bin/gnome-network-displays-daemon"), mock.patch.object(
+        module.subprocess, "Popen") as popen:
+    popen.return_value.poll.return_value = 1
+    result = module.ensure_daemon()
+    assert not result["ok"] and result["code"] == "daemon_exited"
+
+with mock.patch.object(module, "name_owned", return_value=True):
+    assert module.ensure_daemon()["ok"] is True
+    assert module.ensure_daemon()["code"] == "ready"
+
+with mock.patch.object(module, "name_owned", return_value=False), mock.patch.object(
+        module, "daemon_executable", return_value=""):
+    with mock.patch.object(module.shutil, "which", side_effect=lambda name: "/usr/bin/busctl" if name == "busctl" else None):
+        p = module.main(["probe"])
+    assert p is None
+
+
 def fake_scan():
     return {"ok": True, "backend": True, "streamReady": True, "displays": values}
 
