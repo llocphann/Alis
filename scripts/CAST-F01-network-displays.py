@@ -131,38 +131,55 @@ def daemon_executable():
 
 
 def ensure_daemon():
+    """Start the *user-session* upstream daemon only when Scan is requested.
+
+    Keep failure causes distinct: a missing package is not the same as a
+    crashing daemon, broken user D-Bus session or receiver discovery failure.
+    """
     if name_owned():
-        return True
+        return {"ok": True, "code": "ready", "message": ""}
+    if not shutil.which("busctl"):
+        return {"ok": False, "code": "busctl_missing",
+                "message": "systemd busctl is unavailable; check the installed systemd package."}
     binary = daemon_executable()
     if not binary:
-        return False
+        return {"ok": False, "code": "daemon_missing",
+                "message": "GNOME Network Displays daemon missing. Install version 0.98+ with the daemon enabled, then Scan again."}
     try:
-        subprocess.Popen([binary], stdin=subprocess.DEVNULL,
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                         start_new_session=True, close_fds=True)
+        proc = subprocess.Popen([binary], stdin=subprocess.DEVNULL,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                start_new_session=True, close_fds=True)
     except OSError:
-        return False
+        return {"ok": False, "code": "daemon_launch_failed",
+                "message": "Could not launch Network Displays daemon; check executable and user journal."}
     for _ in range(24):
         if name_owned():
-            return True
+            return {"ok": True, "code": "ready", "message": ""}
+        if proc.poll() is not None:
+            return {"ok": False, "code": "daemon_exited",
+                    "message": "Network Displays daemon exited before D-Bus became ready; inspect its user journal."}
         time.sleep(0.25)
-    return False
+    return {"ok": False, "code": "daemon_not_ready",
+            "message": "Network Displays daemon started but did not publish its D-Bus service; check session bus and user journal."}
 
 
 def scan():
-    if not ensure_daemon():
+    readiness = ensure_daemon()
+    if not readiness["ok"]:
         return {"ok": False, "backend": False, "streamReady": False,
-                "displays": [],
-                "message": "Network Displays daemon not available. Use Open Network Displays."}
+                "code": readiness["code"], "displays": [],
+                "message": readiness["message"]}
     try:
         p = bus("get-property", BUS, OBJ, IFACE, "Displays")
         installed = stream_binary_available()
         return {"ok": True, "backend": True, "streamReady": installed,
+                "code": "ready" if installed else "stream_helper_missing",
                 "displays": displays(p), "message": "" if installed else
-                "TV discovery works, but native streaming helper is missing. Use Open app."}
+                "TV discovery works, but /usr/libexec/gnome-network-displays-stream is missing. Rebuild the native package or use Open app."}
     except (CastError, ValueError, json.JSONDecodeError):
-        return {"ok": False, "backend": True, "streamReady": False, "displays": [],
-                "message": "TV scan unavailable; check Network Displays and session D-Bus."}
+        return {"ok": False, "backend": True, "streamReady": False,
+                "code": "dbus_property_error", "displays": [],
+                "message": "Network Displays is running, but reading Displays failed. Inspect the installed daemon version and session D-Bus."}
 
 
 def valid_unit(value):
@@ -229,8 +246,17 @@ def main(argv=None):
         if args.action == "scan":
             response = scan()
         elif args.action == "probe":
-            response = {"ok": name_owned(), "backend": name_owned(),
-                        "daemonInstalled": bool(daemon_executable())}
+            running = name_owned()
+            daemon = bool(daemon_executable())
+            response = {"ok": running, "backend": running,
+                        "daemonInstalled": daemon,
+                        "appInstalled": bool(shutil.which("gnome-network-displays")),
+                        "streamReady": stream_binary_available(),
+                        "code": "ready" if running else
+                            "daemon_not_running" if daemon else "daemon_missing",
+                        "message": "D-Bus manager running" if running else
+                            "Daemon installed, but not running" if daemon else
+                            "GNOME Network Displays daemon is not installed"}
         elif args.action == "start":
             response = start(args.argument)
         elif args.action == "status":
