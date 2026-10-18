@@ -188,7 +188,10 @@ Singleton {
                 if (_requestedMode === "primary-only") {
                     ProjectAudio.endWired()
                 } else if (_requestedMode === "second-only") {
-                    ProjectAudio.beginWired(_requestedExternalTarget)
+                    if (DisplayPlan.internalOutput([_requestedExternalTarget]))
+                        ProjectAudio.endWired()
+                    else
+                        ProjectAudio.beginWired(_requestedExternalTarget)
                 } else if (_requestedMode === "extend") {
                     // Only auto-route if there is one unambiguous external TV.
                     const externals = connectedOutputs.filter(name =>
@@ -358,7 +361,8 @@ Singleton {
             // the command was launched.
             if (root._runningMirrorPair) {
                 root.statusMessage = DisplayPlan.mirrorRunningMessage(root._runningMirrorPair)
-                ProjectAudio.beginWired(root._runningMirrorPair.target)
+                if (!DisplayPlan.internalOutput([root._runningMirrorPair.target]))
+                    ProjectAudio.beginWired(root._runningMirrorPair.target)
             }
         }
         onExited: exitCode => {
