@@ -80,16 +80,17 @@ for retired in [
 ]:
     forbid(bar, retired, "Bar Settings still instantiates a retired control")
 
-# Fan Control must remain reachable from the real System page and static search.
-require(system, '{ displayName: Translation.tr("Fan Control"), icon: "mode_fan", value: "fan" }',
-        "System task navigator lost Fan Control")
-require(system, 'settingsTaskSection: "fan"',
-        "System page lost the Fan Control section")
-require(system, "ThinkfanSettings {",
-        "Fan Control no longer hosts the optional integration settings")
-require(data, 'section: Translation.tr("Fan Control")',
-        "static Settings search lost Fan Control")
-require(data, 'keywords: ["fan", "fan control", "thinkfan", "thermal", "cooling", "rpm", "temperature", "system"]',
-        "Fan Control search keywords drifted")
+# App-specific Fan Control belongs to the installed plugin's tab. Generic
+# System power controls and old deep links remain reachable independently.
+integrations = (ROOT / "modules/settings/IntegrationsConfig.qml").read_text()
+facade = (ROOT / "modules/settings/GeneralConfig.qml").read_text()
+require(integrations, 'Hadalird.installedPlugins.map', "plugin navigation must derive from discovery")
+require(integrations, 'Hadalird.pluginEnabled(root.activePlugin)', "plugin settings lost their explicit opt-in gate")
+require(facade, 'showIntegrationSettings: false', "System must keep only generic battery controls")
+forbid(system, "ThinkfanSettings {", "System restored a duplicate plugin editor")
+require(registry, 'const optionalPower = key === "system"', "legacy System plugin links lost their redirect")
+require(facade, 'SettingsPageRegistry.navigateToKey("integrations", "Thinkfan")', "System fan links must reach Integrations")
+require(data, 'section: "Thinkfan"', "static search lost the installed plugin destination")
+require(data, 'keywords: ["fan", "fan control", "thinkfan", "thermal", "cooling", "rpm", "temperature", "system"]', "Fan Control search keywords drifted")
 
 print("PASS: P0 Settings routes, Screen Edge discoverability and Fan Control ownership")

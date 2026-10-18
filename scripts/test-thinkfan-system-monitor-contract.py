@@ -160,11 +160,14 @@ def main() -> None:
 
 
 
-    check('ThinkfanSettings {' in system_settings, "System lost its optional Fan Control host")
+    integrations = read("modules/settings/IntegrationsConfig.qml")
+    check('ThinkfanSettings {' not in system_settings, "System duplicated the plugin editor")
+    check('Hadalird.installedPlugins.map' in integrations, "Integration tabs must use verified discovery")
+    check('Hadalird.pluginEnabled(root.activePlugin)' in integrations, "Fan editor lost its opt-in gate")
     fan_wrapper=read("modules/settings/ThinkfanSettings.qml")
     check('active: Hadalird.thinkfanEnabled && root.visible' in fan_wrapper, "fan settings must be selected and visible")
     check('source: Hadalird.settingsSource("thinkfan")' in fan_wrapper, "fan settings lost the optional source")
-    check('{ displayName: Translation.tr("Fan Control"), icon: "mode_fan", value: "fan" }' in system_settings, "Fan navigation changed")
+    check('SettingsPageRegistry.navigateToKey("integrations", "Thinkfan")' in system_facade, "Legacy fan navigation lost its plugin destination")
 
     for token in (
         "function flushWrites(): void",
@@ -179,13 +182,13 @@ def main() -> None:
 
     for token in (
         'value.includes("fan")',
-        'root.activeSection = "fan"',
+        'SettingsPageRegistry.navigateToKey("integrations", "Thinkfan")',
     ):
         check(token in system_facade,
               f"System Settings search must route Fan Control correctly: {token}")
 
     for token in (
-        'section: Translation.tr("Fan Control")',
+        'section: "Thinkfan"',
         'keywords: ["fan", "fan control", "thinkfan", "thermal", "cooling", "rpm", "temperature", "system"]',
     ):
         check(token in settings_registry,

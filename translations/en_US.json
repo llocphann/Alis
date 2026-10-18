@@ -5764,5 +5764,6 @@
   "Diagnostics": "Diagnostics",
   "Not checked": "Not checked",
   "Needs attention": "Needs attention",
-  "Plugin unavailable. Refresh or update the optional package.": "Plugin unavailable. Refresh or update the optional package."
+  "Plugin unavailable. Refresh or update the optional package.": "Plugin unavailable. Refresh or update the optional package.",
+  "Use Alis tasks": "Use Alis tasks"
 }

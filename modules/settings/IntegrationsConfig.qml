@@ -118,6 +118,13 @@ ContentPage {
                     onClicked: packageSection.showDiagnostics = !packageSection.showDiagnostics
                 }
                 DialogButton {
+                    objectName: "integrationRestoreInternalTodos"
+                    visible: Todo.backend === "obsidian" && !Hadalird.obsidianEnabled
+                    enabled: !Todo.internalPersistenceBusy
+                    buttonText: Translation.tr("Use Alis tasks")
+                    onClicked: Todo.reactivateInternal()
+                }
+                DialogButton {
                     visible: Hadalird.canRollback
                     buttonText: Translation.tr("Restore Hadalird")
                     enabled: !Hadalird.managerBusy

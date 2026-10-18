@@ -6,7 +6,13 @@ page=(ROOT/'modules/settings/IntegrationsConfig.qml').read_text()
 wrapper=(ROOT/'modules/settings/ObsidianTodoSettings.qml').read_text()
 facade=(ROOT/'services/Todo.qml').read_text()
 internal=(ROOT/'services/InternalTodoBackend.qml').read_text()
-assert 'ObsidianTodoSettings {' in page and 'id: todoMarkdownNotePattern' not in page
+assert 'objectName: "integrationPluginSettings"' in page
+assert 'Hadalird.settingsSource(' in page and 'selectedCapability.settings' in page
+assert 'Hadalird.pluginEnabled(root.activePlugin)' in page
+assert 'id: todoMarkdownNotePattern' not in page
+assert 'objectName: "integrationRestoreInternalTodos"' in page
+assert 'Todo.backend === "obsidian" && !Hadalird.obsidianEnabled' in page
+assert 'onClicked: Todo.reactivateInternal()' in page
 assert 'source: Hadalird.settingsSource("obsidianTodo")' in wrapper
 assert 'active: Hadalird.obsidianEnabled && root.visible' in wrapper
 assert 'property string settingsTaskSection: "obsidian"' in wrapper
