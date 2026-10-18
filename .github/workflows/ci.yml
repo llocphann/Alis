@@ -26,6 +26,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fish jq rsync
 
+      - name: Verify CAST-F01 display safety and Utilities compatibility
+        shell: bash
+        run: |
+          python3 scripts/test-CAST-F01-display-stage.py
+          python3 scripts/test-abyss-display-mode.py
+          python3 scripts/test-UTIL-F01-source-delivery.py
+
       - name: Verify disabled-Parallax wallpaper geometry and Liquid shader contract
         shell: bash
         run: |
