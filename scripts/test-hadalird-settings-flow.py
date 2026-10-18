@@ -12,7 +12,7 @@ import re
 PAGE = Path(__file__).resolve().parents[1] / "modules/settings/IntegrationsConfig.qml"
 qml = PAGE.read_text(encoding="utf-8")
 flows = list(re.finditer(r"\bFlow\s*\{", qml))
-assert len(flows) == 3, f"expected package, helper and gateway action flows, got {len(flows)}"
+assert len(flows) == 1, f"expected one package action flow, got {len(flows)}"
 
 
 def flow_sections(begin):
@@ -61,22 +61,15 @@ for i, match in enumerate(flows):
     assert not re.search(r"\bwidth\s*:\s*parent\.width\b", outer), (
         f"Flow #{i + 1} bypasses Layout width management"
     )
-    expected = ("Install Hadalird", "Reinstall helpers", "Check gateway")[i]
+    expected = "Install Hadalird"
     assert expected in inside, f"Flow #{i + 1} changed roles or was emptied"
 
 assert '"Refresh"' in qml
 assert 'Hadalird.refreshSystemStatus()' in qml
 assert '"Check status"' not in qml
-assert '"Reinstall helpers"' in qml
-assert '"Advanced"' in qml
-assert not any(legacy in qml for legacy in (
-    "Package actions are initiated here",
-    "Installing or removing system helpers requests administrator",
-    "On Arch repo-copy installations"))
-assert 'visible:hadalirdPackageSection.advanced' in qml
-assert 'Hadalird.manage("gateway-status")' in qml
-assert 'Hadalird.manage("helpers-ensure")' not in qml  # authorization wrapper owns this
-assert 'privilegedAction("helpers-ensure")' in qml
-assert 'if(window && window.lower) window.lower()' in qml
-assert "settingsPageIndex:38" in qml
+assert 'Reinstall helpers' not in qml and 'Install gateway' not in qml
+assert './setup integrations' in qml
+assert 'Hadalird.manage("helpers-' not in qml and 'Hadalird.manage("gateway-' not in qml
+assert 'root.primaryTabs' in qml and 'integrationCapabilityTabs' in qml
+assert "settingsPageIndex: 38" in qml
 print("HADALIRD_SETTINGS_FLOW_PASS all package, helper and gateway flows use Qt-safe layouts")

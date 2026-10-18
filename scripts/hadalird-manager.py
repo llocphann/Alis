@@ -25,8 +25,8 @@ spec = spec_from_file_location("hadalird_discovery", ROOT / "scripts/hadalird-st
 discovery = module_from_spec(spec)
 spec.loader.exec_module(discovery)
 
-API = "https://api.github.com/repos/llocphann/Hadalird/commits/main"
-ARCHIVE = "https://api.github.com/repos/llocphann/Hadalird/tarball/"
+API = "https://api.github.com/repos/llocphann/Alis-Intergration/commits/main"
+ARCHIVE = "https://api.github.com/repos/llocphann/Alis-Intergration/tarball/"
 PAYLOAD = ("HadalisSession.qml", "services/", "modules/", "assets/",
            "scripts/integrations/", "scripts/todo/", "scripts/notes/", "LICENSE")
 MAX_ARCHIVE = 8 * 1024 * 1024
@@ -129,8 +129,11 @@ def assemble(files, revision, target):
     if not isinstance(manifest, dict) or manifest.get("id") != "hadalird" or (
             type(manifest.get("hostApi")) is not int or manifest["hostApi"] != 1):
         raise ValueError("Unsupported Hadalird package or host API")
-    if not isinstance(manifest.get("version"), str) or len(manifest["version"]) > 64:
+    if not isinstance(manifest.get("version"), str) or not manifest["version"] or len(manifest["version"]) > 64:
         raise ValueError("Invalid package version")
+    if not isinstance(manifest.get("settings"), dict) or not isinstance(manifest.get("backends"), dict):
+        raise ValueError("Invalid package entrypoints")
+    discovery.plugin_metadata(manifest)
     required = {
         "session": manifest.get("session"),
         "tlpSettings": (manifest.get("settings") or {}).get("tlp"),
@@ -165,20 +168,10 @@ def assemble(files, revision, target):
 
 
 def package_good(folder, revision):
-    try:
-        data = json.loads((folder / "manifest.json").read_text())
-        if data.get("sourceSha") != revision or not isinstance(data.get("files"), dict):
-            return False
-        if not all(k in data["files"] for k in discovery.ENTRYPOINTS.values()):
-            return False
-        for name, expected in data["files"].items():
-            path = folder / name
-            if (not path.resolve().is_relative_to(folder.resolve()) or
-                    not path.is_file() or sha256(path.read_bytes()) != expected):
-                return False
-        return True
-    except (OSError, ValueError, TypeError, KeyError):
+    if folder.is_symlink():
         return False
+    report = discovery.inspect_package(folder)
+    return report.get("available") is True and report.get("sourceSha") == revision
 
 
 def owned_link(home):
@@ -231,8 +224,14 @@ def call_system_helper(action, package=None):
         data = json.loads(result.stdout.strip())
     except (ValueError, TypeError) as error:
         raise ValueError("System helper did not return a valid receipt (authorization may have been cancelled)") from error
-    if result.returncode != 0 or data.get("ok") is not True:
-        raise ValueError(str(data.get("error") or "System helper operation failed"))
+    if not isinstance(data, dict) or result.returncode != 0 or data.get("ok") is not True:
+        raise ValueError(str((data.get("error") or "System helper operation failed") if isinstance(data, dict) else "Invalid system helper receipt"))
+    if not isinstance(data.get("installed"), bool) or not isinstance(data.get("managed"), bool):
+        raise ValueError("System helper returned an invalid state receipt")
+    if action == "helpers-install" and data["installed"] is not True:
+        raise ValueError("System helper installation was not verified")
+    if action == "helpers-remove" and (data["installed"] or data["managed"]):
+        raise ValueError("System helper removal was not verified")
     data["provisionerAvailable"] = True
     return data
 
@@ -279,10 +278,17 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
     lock = home / ".install.lock"
     with lock.open("a") as fd:
         fcntl.flock(fd, fcntl.LOCK_EX)
-        current = active_revision(home)
+        diagnostic = "ready"
+        try:
+            current = active_revision(home)
+        except ValueError:
+            if action not in ("status", "system-status", "helpers-status", "gateway-status", "helpers-remove", "gateway-remove", "remove"):
+                raise
+            current = ""
+            diagnostic = "invalid-package"
         previous_file = home / ".previous"
         previous = previous_file.read_text().strip() if previous_file.exists() else ""
-        result = {"ok": True, "action": action, "installedSha": current,
+        result = {"ok": True, "action": action, "diagnostic": diagnostic, "installedSha": current,
                   "available": bool(current), "version": "", "updateAvailable": False,
                   "latestSha": "", "canRollback": bool(SHA.fullmatch(previous) and
                       (home / "releases" / previous).is_dir())}
@@ -341,6 +347,8 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
             # Root gateway revalidates its audited allowlist and existing
             # ownership; never delete helpers merely to reinstall them.
             payload = system_call("helpers-install", package_dir)
+            if not isinstance(payload, dict) or payload.get("installed") is not True:
+                raise ValueError("System helper installation was not confirmed")
             result.update(
                 systemHelpersInstalled=payload.get("installed") is True,
                 systemProvisionerAvailable=payload.get("provisionerAvailable") is True,

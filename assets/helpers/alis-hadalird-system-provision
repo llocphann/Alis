@@ -13,20 +13,20 @@ import sys
 import tempfile
 
 TRUSTED = {
-    "assets/helpers/alis-battery-charge-limit": (
-        "/usr/libexec/alis-battery-charge-limit",
+    "assets/helpers/inir-battery-charge-limit": (
+        "/usr/libexec/inir-battery-charge-limit",
         "8244445450870f78507dee75ef62005acb1338e0f3fee635d9dc92fac3e93562", 0o755),
-    "assets/helpers/alis-thinkfan": (
-        "/usr/libexec/alis-thinkfan",
+    "assets/helpers/inir-thinkfan": (
+        "/usr/libexec/inir-thinkfan",
         "d0d66270170999a86a791fd0da9a6e8a8c431dcd5f39b59a53fb7ab3d48d6f16", 0o755),
-    "assets/polkit/org.alis.battery-charge-limit.policy": (
-        "/usr/share/polkit-1/actions/org.alis.battery-charge-limit.policy",
+    "assets/polkit/org.inir.battery-charge-limit.policy": (
+        "/usr/share/polkit-1/actions/org.inir.battery-charge-limit.policy",
         "f201c62a44715372c9d463f1c5cc492d48fcc54834ed6137b5103d22257921c5", 0o644),
-    "assets/polkit/org.alis.thinkfan.policy": (
-        "/usr/share/polkit-1/actions/org.alis.thinkfan.policy",
+    "assets/polkit/org.inir.thinkfan.policy": (
+        "/usr/share/polkit-1/actions/org.inir.thinkfan.policy",
         "13bfd4dc99baa4aa5b2b09db6d7e3cd45765967487ebe0b82597e6cfd13ca2ef", 0o644),
     "assets/tlp/tlp-settings-schema.json": (
-        "/usr/share/alis/tlp-settings-schema.json",
+        "/usr/share/inir/tlp-settings-schema.json",
         "b23cdaa8b3bb4fd3f8bd36e1bb1c8b61fcce0018eaa5175656353af42d309adb", 0o644),
 }
 STATE = "/usr/share/alis/hadalird-managed-helpers.json"

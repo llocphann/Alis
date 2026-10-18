@@ -2107,6 +2107,7 @@ Singleton {
                 }
                 property bool showUpcoming: true
                 property int upcomingDays: 3
+                property int maxEventDots: 3
             }
 
             property JsonObject closeConfirm: JsonObject {

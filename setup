@@ -58,6 +58,23 @@ fi
 
 cd "$REPO_ROOT"
 
+# Explicit optional-package lifecycle bypasses the core installer. A passive
+# Settings visit and an ordinary core update never provision system helpers.
+if [[ "${1:-}" == "integrations" ]]; then
+    shift
+    exec python3 "$REPO_ROOT/scripts/integration-setup.py" "$@"
+fi
+ALIS_SETUP_INTEGRATION_HELPERS=0
+_setup_core_args=()
+for _setup_arg in "$@"; do
+    if [[ "$_setup_arg" == "--integration-helpers" ]]; then
+        ALIS_SETUP_INTEGRATION_HELPERS=1
+    else
+        _setup_core_args+=("$_setup_arg")
+    fi
+done
+set -- "${_setup_core_args[@]}"
+
 # Handle Ctrl+C gracefully
 cleanup() {
     type _tui_kill_spinner &>/dev/null && _tui_kill_spinner 2>/dev/null || true
@@ -130,6 +147,13 @@ sync_integrated_companion() {
         return 1
     fi
     tui_success "Alis Companion is installed and version-aligned"
+}
+
+sync_optional_integration_helpers() {
+    [[ "$ALIS_SETUP_INTEGRATION_HELPERS" == 1 ]] || return 0
+    local action="${COMMAND:-install}"
+    [[ "$action" == update || "$action" == reinstall ]] || action=install
+    python3 "${REPO_ROOT}/scripts/integration-setup.py" "$action" --confirm
 }
 
 prevent_sudo_or_root
@@ -559,6 +583,8 @@ show_help() {
     tui_section_start "Everyday maintenance"
     tui_list_item "(none)      Interactive menu"
     tui_list_item "install     Full installation (deps + config + files)"
+    tui_list_item "integrations Optional package/helpers: status, install, reinstall, update, rollback, remove"
+    tui_list_item "            --dry-run previews; --integration-helpers opts core install/update into provisioning"
     tui_list_item "update      Check remote, pull, sync, restart shell"
     tui_list_item "doctor      Diagnose and fix common breakage"
     tui_list_item "status      Show install mode, update strategy, and health"
@@ -1863,6 +1889,7 @@ run_install() {
     # opt-in installer. Preserve the user's choice to *enable* its features.
     if [[ "${SKIP_ALLFILES}" != "true" ]]; then
         sync_integrated_companion || return 1
+        sync_optional_integration_helpers || return 1
     fi
 
     # Set version tracking
@@ -2338,6 +2365,7 @@ run_update() {
         # The system package itself stays owned by the package manager. This
         # user-scope Companion release is managed via Alis's update command.
         sync_integrated_companion || return 1
+        sync_optional_integration_helpers || return 1
 
         echo ""
         tui_success "Package-managed installation left unchanged"
@@ -2403,6 +2431,7 @@ run_update() {
             $ask || reexec_args+=("-y")
             $quiet && reexec_args+=("-q")
             reexec_args+=("update")
+            [[ "$ALIS_SETUP_INTEGRATION_HELPERS" == 1 ]] && reexec_args+=(--integration-helpers)
             export _II_POST_PULL=1
             exec "$REPO_ROOT/setup" "${reexec_args[@]}"
         elif [[ "$update_rc" -eq 3 ]]; then
@@ -2471,6 +2500,7 @@ run_update() {
             # A matching core SHA does not guarantee a matching Companion.
             # Repair/install the pinned Companion even on a core no-op update.
             sync_integrated_companion || return 1
+            sync_optional_integration_helpers || return 1
             _write_update_status "success"
             return 0
         else
@@ -2962,6 +2992,8 @@ run_update() {
         fi
         return 1
     fi
+
+    sync_optional_integration_helpers || return 1
 
     # Restart only in an explicitly supported compositor session. The launcher
     # owns the systemd/direct-process lifecycle and waits for the new shell.

@@ -9,17 +9,7 @@ GeneralConfigCore {
     id: root
 
     function selectTlpCategory(categoryId: string): bool {
-        const wanted = String(categoryId ?? "")
-        const categories = TlpSettingsService._array(tlpPowerSettings.navigationCategories)
-        for (let i = 0; i < categories.length; i++) {
-            if (String(categories[i]?.id ?? "") !== wanted)
-                continue
-            // Search navigation is presentation-only, so it is safe to switch
-            // the visible category even while an Apply transaction is busy.
-            tlpPowerSettings.selectedCategoryIndex = i
-            return true
-        }
-        return false
+        return SettingsPageRegistry.navigateToKey("integrations", "TLP " + String(categoryId ?? ""))
     }
 
     // Static search entries use human-facing section names while the System
@@ -29,7 +19,8 @@ GeneralConfigCore {
         const value = String(section ?? "").toLowerCase()
         if (value.includes("fan") || value.includes("thinkfan")
                 || value.includes("thermal") || value.includes("cooling")) {
-            root.activeSection = "fan"
+            SettingsPageRegistry.navigateToKey("integrations", "Thinkfan")
+            root.activeSection = "power"
         } else if (value.includes("power") || value.includes("battery")
                 || value.includes("charge") || value.includes("tlp")) {
             root.activeSection = "power"
@@ -63,10 +54,10 @@ GeneralConfigCore {
         }
     }
 
-    // TLP now belongs to System → Power. It is appended to the inherited
-    // ContentPage so there is one scroll surface and no nested Flickable.
+    // Core battery warnings/suspend remain independent of optional plugins.
     TlpPowerSettings {
         id: tlpPowerSettings
+        showIntegrationSettings: false
         Layout.fillWidth: true
         visible: root.activeSection === "power"
     }

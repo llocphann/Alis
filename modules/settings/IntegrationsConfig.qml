@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Window
 import Quickshell
 import qs.services
 import qs.services.deferred
@@ -9,211 +8,253 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.settings
+
 ContentPage {
- id:root
- settingsPageIndex:38
- settingsPageName:Translation.tr("Integrations")
- property string activeSection:"obsidian"
- function activateSettingsSearchSection(section:string):bool {
-  const label=String(section ?? "").toLowerCase();
-  activeSection=label.includes("calendar") ? "calendar" : label.includes("music") || label.includes("apps") ? "apps" : "obsidian";
-  return true;
- }
- SettingsCardSection {
-  id:hadalirdPackageSection
-  title:"Optional integrations";icon:"extension";expanded:true
-  property bool advanced:false
-  property bool confirmRemoval:false
-  property bool confirmSystemRemoval:false
-  property bool confirmGatewayInstall:false
-  property bool confirmGatewayRemoval:false
-
-  // For a standalone Settings window, lower the toplevel as well.
-  // Layer-shell Settings are lowered by the Hadalird authorization state.
-  function privilegedAction(action:string):void {
-   const window=root.Window.window
-   if(window && window.lower) window.lower()
-   Hadalird.manage(action)
-  }
-
-  StyledText {
-   Layout.fillWidth:true;color:Appearance.colors.colSubtext
-   text:Hadalird.managerBusy ? "Working…"
-       : Hadalird.available ? "Hadalird "+Hadalird.version+" · installed"
-       : "Hadalird · not installed"
-  }
-  Flow {
-   Layout.fillWidth:true;spacing:8
-   DialogButton {
-    visible:!Hadalird.available
-    enabled:!Hadalird.managerBusy
-    buttonText:"Install Hadalird"
-    onClicked:Hadalird.manage("install")
-   }
-   DialogButton {
-    visible:Hadalird.available
-    enabled:!Hadalird.managerBusy
-    buttonText:"Check updates"
-    onClicked:Hadalird.manage("check")
-   }
-   DialogButton {
-    visible:Hadalird.available && Hadalird.updateAvailable
-    enabled:!Hadalird.managerBusy
-    buttonText:"Update"
-    onClicked:Hadalird.manage("install")
-   }
-   DialogButton {
-    buttonText:"Refresh"
-    enabled:!Hadalird.managerBusy
-    onClicked:{
-     Hadalird.refresh()
-     Hadalird.refreshSystemStatus()
+    id: root
+    objectName: "integrationSettings"
+    settingsPageIndex: 38
+    settingsPageName: Translation.tr("Integrations")
+    property string activePlugin: "management"
+    property string activeSection: "calendar"
+    property var capabilitySelections: ({})
+    readonly property var primaryTabs: Hadalird.installedPlugins.map(plugin => ({
+        displayName: plugin.name, icon: plugin.icon, value: plugin.id
+    })).concat([{displayName: Translation.tr("Management"), icon: "extension", value: "management"}])
+    readonly property var selectedPlugin: Hadalird.installedPlugins.find(plugin => plugin.id === root.activePlugin) ?? null
+    readonly property var capabilityTabs: (selectedPlugin?.capabilities ?? []).map(capability => ({
+        displayName: capability.name, value: capability.id
+    }))
+    readonly property var selectedCapability: selectedPlugin?.capabilities.find(capability =>
+        capability.id === root.capabilitySelections[root.activePlugin]) ?? selectedPlugin?.capabilities[0] ?? null
+    readonly property var catalog: {
+        const installed = Hadalird.installedPlugins
+        return Hadalird.pluginCatalog.filter(plugin => !installed.some(item => item.id === plugin.id)).concat(installed)
     }
-   }
-  }
-  StyledText {
-   Layout.fillWidth:true;wrapMode:Text.WordWrap
-   visible:Hadalird.managerError.length>0
-   color:Appearance.colors.colError
-   text:Hadalird.managerError
-  }
-  StyledText {
-   Layout.fillWidth:true;wrapMode:Text.WordWrap
-   visible:Hadalird.managerMessage.length>0 && Hadalird.managerError.length===0
-   color:Appearance.colors.colSubtext
-   text:Hadalird.managerMessage
-  }
-  StyledText {
-   Layout.fillWidth:true;wrapMode:Text.WordWrap;color:Appearance.colors.colSubtext
-   text:"Gateway: "+(Hadalird.systemProvisionerAvailable?"Ready":"Not installed")
-       +"  ·  Helpers: "+(Hadalird.systemHelpersDiagnostic==="unchecked"?"Not checked"
-           : Hadalird.systemHelpersInstalled?"Ready":"Not installed")
-  }
-  Flow {
-   Layout.fillWidth:true;spacing:8
-   DialogButton {
-    visible:Hadalird.available
-    enabled:!Hadalird.managerBusy
-    buttonText:Hadalird.systemHelpersInstalled?"Reinstall helpers":"Install helpers"
-    onClicked:hadalirdPackageSection.privilegedAction("helpers-ensure")
-   }
-   DialogButton {
-    buttonText:hadalirdPackageSection.advanced?"Hide advanced":"Advanced"
-    enabled:!Hadalird.managerBusy
-    onClicked:hadalirdPackageSection.advanced=!hadalirdPackageSection.advanced
-   }
-  }
-  Flow {
-   visible:hadalirdPackageSection.advanced
-   Layout.fillWidth:true;spacing:8
-   DialogButton {
-    buttonText:"Check gateway"
-    enabled:!Hadalird.managerBusy
-    onClicked:Hadalird.manage("gateway-status")
-   }
-   DialogButton {
-    visible:Hadalird.available && !Hadalird.systemProvisionerAvailable
-        && !hadalirdPackageSection.confirmGatewayInstall
-    buttonText:"Install gateway"
-    enabled:!Hadalird.managerBusy
-    onClicked:hadalirdPackageSection.confirmGatewayInstall=true
-   }
-   DialogButton {
-    visible:hadalirdPackageSection.confirmGatewayInstall
-    buttonText:"Confirm gateway install"
-    enabled:!Hadalird.managerBusy
-    onClicked:{
-     hadalirdPackageSection.confirmGatewayInstall=false
-     hadalirdPackageSection.privilegedAction("gateway-install")
+    onPrimaryTabsChanged: {
+        if (!primaryTabs.some(tab => tab.value === activePlugin)) activePlugin = "management"
     }
-   }
-   DialogButton {
-    visible:hadalirdPackageSection.confirmGatewayInstall
-    buttonText:"Cancel"
-    onClicked:hadalirdPackageSection.confirmGatewayInstall=false
-   }
-   DialogButton {
-    visible:Hadalird.available && Hadalird.canRollback
-    buttonText:"Restore Hadalird"
-    enabled:!Hadalird.managerBusy
-    onClicked:Hadalird.manage("rollback")
-   }
-   DialogButton {
-    visible:Hadalird.available && !hadalirdPackageSection.confirmRemoval
-    buttonText:"Remove Hadalird"
-    enabled:!Hadalird.managerBusy
-    onClicked:hadalirdPackageSection.confirmRemoval=true
-   }
-   DialogButton {
-    visible:hadalirdPackageSection.confirmRemoval
-    buttonText:"Confirm removal"
-    enabled:!Hadalird.managerBusy
-    onClicked:{hadalirdPackageSection.confirmRemoval=false;Hadalird.manage("remove")}
-   }
-   DialogButton {
-    visible:hadalirdPackageSection.confirmRemoval
-    buttonText:"Cancel"
-    onClicked:hadalirdPackageSection.confirmRemoval=false
-   }
-   DialogButton {
-    visible:Hadalird.systemHelpersInstalled && !hadalirdPackageSection.confirmSystemRemoval
-    buttonText:"Remove helpers"
-    enabled:!Hadalird.managerBusy
-    onClicked:hadalirdPackageSection.confirmSystemRemoval=true
-   }
-   DialogButton {
-    visible:hadalirdPackageSection.confirmSystemRemoval
-    buttonText:"Confirm helper removal"
-    enabled:!Hadalird.managerBusy
-    onClicked:{
-     hadalirdPackageSection.confirmSystemRemoval=false
-     hadalirdPackageSection.privilegedAction("helpers-remove")
+    function activateSettingsSearchSection(section: string): bool {
+        const label = String(section ?? "").toLowerCase()
+        const wanted = /to-do|todo|quick note|zettelkasten/.test(label) ? "obsidian"
+            : /fan|cooling|thermal/.test(label) ? "thinkfan" : label
+        const plugin = Hadalird.installedPlugins.find(item => wanted.includes(item.id) || wanted.includes(item.name.toLowerCase()))
+        if (plugin) {
+            activePlugin = plugin.id
+            const capability = /todo|to-do/.test(label) ? "todo"
+                : /quick note|zettelkasten/.test(label) ? "quicknotes" : ""
+            if (capability) selectCapability(capability)
+            return true
+        }
+        activePlugin = "management"
+        activeSection = label.includes("music") || label.includes("apps") ? "apps" : "calendar"
+        return true
     }
-   }
-   DialogButton {
-    visible:hadalirdPackageSection.confirmSystemRemoval
-    buttonText:"Cancel"
-    onClicked:hadalirdPackageSection.confirmSystemRemoval=false
-   }
-   DialogButton {
-    visible:Hadalird.gatewayPackageInstalled && !hadalirdPackageSection.confirmGatewayRemoval
-    buttonText:"Remove gateway"
-    enabled:!Hadalird.managerBusy && !Hadalird.systemHelpersInstalled
-    onClicked:hadalirdPackageSection.confirmGatewayRemoval=true
-   }
-   DialogButton {
-    visible:hadalirdPackageSection.confirmGatewayRemoval
-    buttonText:"Confirm gateway removal"
-    enabled:!Hadalird.managerBusy && !Hadalird.systemHelpersInstalled
-    onClicked:{
-     hadalirdPackageSection.confirmGatewayRemoval=false
-     hadalirdPackageSection.privilegedAction("gateway-remove")
+    function selectCapability(value): void {
+        const next = Object.assign({}, capabilitySelections)
+        next[activePlugin] = value
+        capabilitySelections = next
     }
-   }
-   DialogButton {
-    visible:hadalirdPackageSection.confirmGatewayRemoval
-    buttonText:"Cancel"
-    onClicked:hadalirdPackageSection.confirmGatewayRemoval=false
-   }
-  }
-  SettingsSwitch {text:"TLP";enabled:!Hadalird.managerBusy;autoToggle:false;checked:Config.options?.integrations?.hadalird?.tlp ?? false;onToggledByUser:value=>Config.setNestedValue("integrations.hadalird.tlp",value)}
-  SettingsSwitch {text:"Thinkfan";enabled:!Hadalird.managerBusy;autoToggle:false;checked:Config.options?.integrations?.hadalird?.thinkfan ?? false;onToggledByUser:value=>Config.setNestedValue("integrations.hadalird.thinkfan",value)}
-  SettingsSwitch {text:"Obsidian";enabled:!Hadalird.managerBusy;autoToggle:false;checked:Config.options?.integrations?.hadalird?.obsidian ?? false;onToggledByUser:value=>Config.setNestedValue("integrations.hadalird.obsidian",value)}
- }
- SettingsTaskNavigator {
-  title:Translation.tr("Third-party integrations");icon:"extension";currentValue:root.activeSection
-  description:Translation.tr("Connect your applications and data to Hadalis.")
-  onSelected:value=>root.activeSection=value
-  options:[{displayName:"Obsidian",icon:"diamond",value:"obsidian"},{displayName:"Calendar",icon:"calendar_month",value:"calendar"},{displayName:"Applications",icon:"apps",value:"apps"}]
- }
-    ObsidianThemeSettings {settingsTaskSection:"obsidian";visible:root.activeSection === "obsidian"}
-    ObsidianTodoSettings {
-        visible: root.activeSection === "obsidian"
+    function pluginState(plugin): string {
+        if (!Hadalird.available || Hadalird.loadFailed)
+            return Hadalird.diagnostic === "not-installed" ? Translation.tr("Not installed") : Translation.tr("Unavailable")
+        if (!Hadalird.installedPlugins.some(item => item.id === plugin.id)) return Translation.tr("Unavailable")
+        if (Hadalird.updateAvailable) return Translation.tr("Update available")
+        return Hadalird.pluginEnabled(plugin.id) ? Translation.tr("Enabled") : Translation.tr("Disabled")
     }
 
+    SettingsTaskNavigator {
+        objectName: "integrationPrimaryTabs"
+        showIntro: false
+        currentValue: root.activePlugin
+        options: root.primaryTabs
+        onSelected: value => root.activePlugin = value
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: root.activePlugin === "management"
+        SettingsCardSection {
+            id: packageSection
+            title: Translation.tr("Management")
+            icon: "extension"
+            expanded: true
+            property bool confirmRemoval: false
+            property bool showDiagnostics: false
+            StyledText {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                text: Hadalird.managerBusy ? Translation.tr("Working…")
+                    : Hadalird.available ? "Hadalird " + Hadalird.version + " · " + Translation.tr("Installed")
+                    : Hadalird.diagnostic === "not-installed" ? Translation.tr("No plugins installed. Install the optional package to get started.")
+                    : Translation.tr("Integration package unavailable") + " · " + Hadalird.diagnostic
+            }
+            Flow {
+                Layout.fillWidth: true
+                spacing: 8
+                DialogButton {
+                    buttonText: Hadalird.available ? Translation.tr("Reinstall") : Translation.tr("Install Hadalird")
+                    enabled: !Hadalird.managerBusy
+                    onClicked: Hadalird.manage("install")
+                }
+                DialogButton {
+                    visible: Hadalird.available
+                    buttonText: Translation.tr("Check updates")
+                    enabled: !Hadalird.managerBusy
+                    onClicked: Hadalird.manage("check")
+                }
+                DialogButton {
+                    visible: Hadalird.updateAvailable
+                    buttonText: Translation.tr("Update")
+                    enabled: !Hadalird.managerBusy
+                    onClicked: Hadalird.manage("install")
+                }
+                DialogButton {
+                    buttonText: Translation.tr("Refresh")
+                    enabled: !Hadalird.managerBusy
+                    onClicked: { Hadalird.refresh(); Hadalird.refreshSystemStatus() }
+                }
+                DialogButton {
+                    buttonText: Translation.tr("Diagnostics")
+                    onClicked: packageSection.showDiagnostics = !packageSection.showDiagnostics
+                }
+                DialogButton {
+                    visible: Hadalird.canRollback
+                    buttonText: Translation.tr("Restore Hadalird")
+                    enabled: !Hadalird.managerBusy
+                    onClicked: Hadalird.manage("rollback")
+                }
+                DialogButton {
+                    visible: Hadalird.available && !packageSection.confirmRemoval
+                    buttonText: Translation.tr("Remove Hadalird")
+                    enabled: !Hadalird.managerBusy
+                    onClicked: packageSection.confirmRemoval = true
+                }
+                DialogButton {
+                    visible: packageSection.confirmRemoval
+                    buttonText: Translation.tr("Confirm removal")
+                    enabled: !Hadalird.managerBusy
+                    onClicked: { packageSection.confirmRemoval = false; Hadalird.manage("remove") }
+                }
+                DialogButton {
+                    visible: packageSection.confirmRemoval
+                    buttonText: Translation.tr("Cancel")
+                    onClicked: packageSection.confirmRemoval = false
+                }
+            }
+            StyledText {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                visible: Hadalird.managerError.length > 0 || Hadalird.managerMessage.length > 0
+                color: Hadalird.managerError.length > 0 ? Appearance.colors.colError : Appearance.colors.colSubtext
+                text: Hadalird.managerError || Hadalird.managerMessage
+            }
+            StyledText {
+                Layout.fillWidth: true
+                wrapMode: Text.WrapAnywhere
+                visible: packageSection.showDiagnostics
+                text: Hadalird.status()
+                font.family: Appearance.font.family.monospace
+                font.pixelSize: Appearance.font.pixelSize.small
+            }
+            StyledText {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                visible: Hadalird.available && !Hadalird.pluginMetadataAvailable
+                text: Translation.tr("Update the optional package to show plugin tabs.")
+            }
+            StyledText {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: Appearance.colors.colSubtext
+                text: "Gateway: " + (Hadalird.systemProvisionerAvailable ? Translation.tr("Ready") : Translation.tr("Not installed"))
+                    + " · Helpers: " + (Hadalird.systemHelpersInstalled ? Translation.tr("Ready")
+                        : Hadalird.systemHelpersDiagnostic === "unchecked" ? Translation.tr("Not checked")
+                        : Hadalird.systemHelpersDiagnostic.includes("not-installed") ? Translation.tr("Not installed")
+                        : Translation.tr("Needs attention"))
+                    + "\n" + Translation.tr("Manage system helpers with ./setup integrations.")
+            }
+        }
+        Repeater {
+            model: root.catalog
+            delegate: SettingsCardSection {
+                id: catalogCard
+                required property var modelData
+                Layout.fillWidth: true
+                title: modelData.name
+                icon: modelData.icon
+                expanded: true
+                SettingsSwitch {
+                    objectName: "integrationToggle_" + catalogCard.modelData.id
+                    text: Translation.tr("Enable")
+                    description: root.pluginState(catalogCard.modelData)
+                    autoToggle: false
+                    checked: Hadalird.options?.[catalogCard.modelData.id] === true
+                    enabled: Hadalird.available && !Hadalird.managerBusy
+                        && Hadalird.installedPlugins.some(plugin => plugin.id === catalogCard.modelData.id)
+                    onToggledByUser: value => Hadalird.setPluginEnabled(catalogCard.modelData.id, value)
+                }
+            }
+        }
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: root.selectedPlugin !== null
+        SettingsTaskNavigator {
+            objectName: "integrationCapabilityTabs"
+            visible: root.capabilityTabs.length > 1
+            showIntro: false
+            options: root.capabilityTabs
+            currentValue: root.selectedCapability?.id ?? ""
+            onSelected: value => root.selectCapability(value)
+        }
+        StyledText {
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+            visible: !Hadalird.pluginEnabled(root.activePlugin)
+            text: !Hadalird.available || Hadalird.loadFailed
+                ? Translation.tr("Plugin unavailable. Refresh or update the optional package.")
+                : Translation.tr("Enable this plugin in Management to configure it.")
+        }
+        Loader {
+            id: pluginSettings
+            objectName: "integrationPluginSettings"
+            Layout.fillWidth: true
+            Layout.preferredHeight: item?.implicitHeight ?? 0
+            active: root.visible && root.selectedPlugin !== null && Hadalird.pluginEnabled(root.activePlugin)
+            property string capabilitySource: root.selectedCapability
+                ? Hadalird.settingsSource(Config.options?.panelFamily === "waffle"
+                    ? root.selectedCapability.waffleSettings ?? root.selectedCapability.settings
+                    : root.selectedCapability.settings) : ""
+            property string capabilityView: root.selectedCapability?.view ?? ""
+            function reload(): void {
+                source = ""
+                if (active && capabilitySource.length > 0)
+                    setSource(capabilitySource, capabilityView.length ? {settingsView: capabilityView} : {})
+            }
+            onActiveChanged: reload()
+            onCapabilitySourceChanged: reload()
+            onCapabilityViewChanged: reload()
+        }
+        StyledText {
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+            visible: pluginSettings.status === Loader.Error
+            text: Translation.tr("Plugin settings could not be loaded. Refresh or update the optional package.")
+            color: Appearance.colors.colError
+        }
+    }
+    SettingsTaskNavigator {
+        visible: root.activePlugin === "management"
+        showIntro: false
+        currentValue: root.activeSection
+        onSelected: value => root.activeSection = value
+        options: [{displayName: "Calendar", icon: "calendar_month", value: "calendar"},
+                  {displayName: "Applications", icon: "apps", value: "apps"}]
+    }
     SettingsCardSection {
         settingsTaskSection: "calendar"
-        visible: root.activeSection === "calendar"
+        visible: root.activePlugin === "management" && root.activeSection === "calendar"
         expanded: true
         icon: "calendar_month"
         title: Translation.tr("Calendar Sync")
@@ -641,7 +682,7 @@ ContentPage {
     }
     SettingsCardSection {
         settingsTaskSection: "apps"
-        visible: root.activeSection === "apps"
+        visible: root.activePlugin === "management" && root.activeSection === "apps"
         expanded: true
         icon: "music_cast"
         title: Translation.tr("Music Recognition")

@@ -292,15 +292,15 @@ Singleton {
             keywords: ["todo", "to-do", "quick notes", "zettelkasten", "obsidian", "tasks", "markdown", "vault", "sync", "data"]
         },
         {
-            pageIndex: 1, pageName: root.pages[1].name,
-            section: Translation.tr("Power"),
+            pageIndex: 38, pageName: root.pages[38].name,
+            section: "TLP",
             label: Translation.tr("Battery & TLP"),
             description: Translation.tr("Power profiles, processor, disks, PCIe, USB, radios and battery care"),
             keywords: ["tlp", "power", "battery", "cpu", "processor", "disk", "pcie", "usb", "radio", "energy", "profile", "charge", "system", "settings"]
         },
         {
-            pageIndex: 1, pageName: root.pages[1].name,
-            section: Translation.tr("Power"),
+            pageIndex: 38, pageName: root.pages[38].name,
+            section: "TLP",
             label: Translation.tr("Battery & TLP"),
             description: Translation.tr("Hardware-aware TLP battery charge thresholds"),
             keywords: ["tlp", "battery", "charge", "limit", "threshold", "thinkpad", "conservation", "system", "settings", "power"]
@@ -404,8 +404,8 @@ Singleton {
             keywords: ["battery", "charge", "limit", "health", "threshold", "conservation", "sysfs"]
         },
         {
-            pageIndex: 1, pageName: root.pages[1].name,
-            section: Translation.tr("Fan Control"),
+            pageIndex: 38, pageName: root.pages[38].name,
+            section: "Thinkfan",
             label: Translation.tr("Fan Control"),
             description: Translation.tr("ThinkFan ownership, fan status and cooling controls"),
             keywords: ["fan", "fan control", "thinkfan", "thermal", "cooling", "rpm", "temperature", "system"]

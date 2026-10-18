@@ -54,11 +54,11 @@ done
 # spotlight navigation can both switch tabs and scroll to the requested card.
 assert_contains 'GeneralConfigCore {' "$general" \
     'System settings must retain the upstream GeneralConfig core'
-assert_contains 'TlpPowerSettings {' "$general" \
+assert_contains 'showIntegrationSettings: false' "$general" \
     'System settings must embed the TLP power controls'
 assert_contains 'visible: root.activeSection === "power"' "$general" \
     'embedded TLP controls must only be visible in the Power task'
-assert_contains 'tlpPowerSettings.navigationCategories' "$general" \
+assert_contains 'SettingsPageRegistry.navigateToKey("integrations", "TLP "' "$general" \
     'TLP deep links must use the visible category model after battery-care integration'
 if grep -Fq 'root.selectTlpCategory("battery-care")' "$general"; then
     fail 'charge-care deep links must land on the merged Power card, not a retired category tab'
@@ -105,7 +105,7 @@ assert_contains 'singleton TlpRuntimeCapabilities 1.0 TlpRuntimeCapabilities.qml
 assert_contains 'pageTitle: Translation.tr("Battery")' "$waffle_page" 'Waffle Battery page must remain registered'
 assert_contains 'source: Hadalird.settingsSource("tlpWaffle")' "$waffle_page" 'Waffle page must load the optional presentation'
 assert_contains 'active: root.visible && Hadalird.tlpEnabled' "$waffle_page" 'Waffle settings must be selected and visible'
-assert_contains 'active: Hadalird.tlpEnabled' "$power" 'core TLP card must require selected optional integration'
+assert_contains 'active: root.showIntegrationSettings && root.visible && Hadalird.tlpEnabled' "$power" 'core TLP card must require selected optional integration'
 
 printf '%s\n' '1..1'
 printf '%s\n' 'ok 1 - TLP UI guards and System Power integration are present'

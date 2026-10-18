@@ -63,7 +63,9 @@ Singleton {
             || label.includes("to-do") || label.includes("obsidian")
             || label.includes("zettelkasten") || label.includes("quick note")
             || label.includes("calendar"))
-        const index = root.pageIndexForKey(integration ? "integrations" : key)
+        const optionalPower = key === "system" && (label.includes("tlp") || label.includes("fan")
+            || label.includes("cooling") || label.includes("thermal"))
+        const index = root.pageIndexForKey(integration || optionalPower ? "integrations" : key)
         if (index < 0) return false
         const route = FamilyPolicy.settingsRoute(Config.options?.panelFamily, index,
             root.abyssFamily && !section

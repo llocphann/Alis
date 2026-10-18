@@ -114,6 +114,19 @@ with tempfile.TemporaryDirectory(prefix="hadalird-manager-test-") as location:
     install = run("install")
     assert install["installedSha"] == revision1 and install["version"] == "0.2.0"
     assert manager.discovery.inspect(shell, base / "data")["available"]
+    installed_manifest = (home / "current/manifest.json").read_bytes()
+    release = (home / "current").resolve()
+    (release / "unlisted.qml").write_text("not in verified inventory")
+    assert not manager.package_good(release, revision1)
+    assert not manager.discovery.inspect(shell, base / "data")["available"]
+    assert run("status")["diagnostic"] == "invalid-package"
+    assert run("helpers-status")["systemProvisionerAvailable"] is True
+    (release / "unlisted.qml").unlink()
+    data = json.loads(installed_manifest); data["hostApi"] = True
+    (release / "manifest.json").write_text(json.dumps(data))
+    assert not manager.package_good(release, revision1)
+    (release / "manifest.json").write_bytes(installed_manifest)
+    assert manager.package_good(release, revision1)
     files = json.loads((home / "current/manifest.json").read_text())["files"]
     assert "scripts/notes/worker.py" in files
     helper = home / "current/assets/helpers/inir-thinkfan"
@@ -312,5 +325,13 @@ for result, diagnostic in (
             raise AssertionError("Non-JSON gateway result was accepted")
         except ValueError as error:
             assert diagnostic in str(error), str(error)
+
+for raw in ("null", "[]", '{"ok":"true"}', '{"ok":true,"installed":false,"managed":false}'):
+    with patch.object(manager.os.path, "isfile", return_value=True), patch.object(manager.os, "access", return_value=True), patch.object(manager.shutil, "which", return_value="fixture"), patch.object(manager.subprocess, "run", return_value=SimpleNamespace(returncode=0, stdout=raw)):
+        try:
+            manager.call_system_helper("helpers-install", pathlib.Path("/synthetic"))
+            raise AssertionError("Malformed or unsuccessful helper state accepted")
+        except ValueError:
+            pass
 
 print("HADALIRD_MANAGER_PASS explicit install/update/rollback/remove, immutable SHA, package validation, no shell/privilege")

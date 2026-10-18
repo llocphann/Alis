@@ -35,8 +35,9 @@ assert '["install","remove","rollback","helpers-install","helpers-remove","helpe
 assert 'GlobalStates.settingsOverlayOpen = false' in service
 assert 'GlobalStates.settingsOverlayOpen = true' in service
 assert "root.authorizationPending = false" in service
-assert 'privilegedAction("helpers-ensure")' in ui
-assert 'if(window && window.lower) window.lower()' in ui
+assert 'privilegedAction(' not in ui
+assert 'Hadalird.manage("helpers-' not in ui and 'Hadalird.manage("gateway-' not in ui
+assert './setup integrations' in ui
 assert '"helpers-ensure"' in manager
 assert 'gateway_call("gateway-status")' in manager
 assert 'gateway_call("gateway-install")' in manager

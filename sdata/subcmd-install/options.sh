@@ -25,6 +25,7 @@ Options:
   --no-toolkit        Skip toolkit dependencies (ydotool, backlight)
   --no-screencapture  Skip screenshot/recording tools
   --no-fonts          Skip fonts and theming tools
+  --integration-helpers  Provision optional Integration helpers after install (explicit confirmation and Polkit)
   --set-default-shell Set Fish as the default shell (uses chsh)
   -h, --help          Show this help
 

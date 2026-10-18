@@ -14,13 +14,12 @@ ContentPage {
         icon: "browse"
         title: Translation.tr("System")
         description: Translation.tr("Power, cooling, language, input and safety settings.")
-        summary: Translation.tr("Audio · power · fan control · locale · input · safety")
+        summary: Translation.tr("Audio · power · locale · input · safety")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
             { displayName: Translation.tr("Audio"), icon: "volume_up", value: "audio" },
             { displayName: Translation.tr("Power"), icon: "battery_android_full", value: "power" },
-            { displayName: Translation.tr("Fan Control"), icon: "mode_fan", value: "fan" },
             { displayName: Translation.tr("Locale"), icon: "language", value: "locale" },
             { displayName: Translation.tr("Input"), icon: "keyboard", value: "input" },
             { displayName: Translation.tr("Safety"), icon: "lock", value: "safety" }
@@ -81,11 +80,6 @@ ContentPage {
                 }
             }
         }
-    }
-
-    ThinkfanSettings {
-        settingsTaskSection: "fan"
-        visible: root.activeSection === "fan"
     }
 
     SettingsCardSection {

@@ -7,6 +7,7 @@ import qs.modules.common.widgets
 Item {
     id: root
     property string settingsTaskSection: "power"
+    property bool showIntegrationSettings: true
     property int selectedCategoryIndex: 0
     readonly property var navigationCategories: content.item?.navigationCategories ?? ([])
 
@@ -18,7 +19,7 @@ Item {
     Loader {
         id: content
         width: parent.width
-        active: Hadalird.tlpEnabled
+        active: root.showIntegrationSettings && root.visible && Hadalird.tlpEnabled
         source: Hadalird.settingsSource("tlp")
         onLoaded: item.selectedCategoryIndex = root.selectedCategoryIndex
     }

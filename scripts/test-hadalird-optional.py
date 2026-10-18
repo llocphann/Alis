@@ -15,7 +15,8 @@ ROOT = Path(__file__).resolve().parents[1]
 # discovery. Regression for IntegrationsConfig.qml:38 (owner desktop log).
 integration_page = (ROOT / "modules/settings/IntegrationsConfig.qml").read_text()
 obsidian_wrapper = (ROOT / "modules/settings/ObsidianThemeSettings.qml").read_text()
-assert 'ObsidianThemeSettings {settingsTaskSection:"obsidian"' in integration_page
+assert 'objectName: "integrationPluginSettings"' in integration_page
+assert 'Hadalird.installedPlugins.map' in integration_page
 assert 'property string settingsTaskSection: ""' in obsidian_wrapper, (
     "Integrations page passes settingsTaskSection to the Hadalis-owned wrapper"
 )
@@ -194,6 +195,7 @@ ShellRoot {
     checkCoreBattery()
     checkCoreTodo()
     power.selectedCategoryIndex=1
+    power.visible=true
     Config.setNestedValue("integrations.hadalird.tlp",true)
     tryVerify(()=>Hadalird.session!==null,2000)
     const owned=Hadalird.session

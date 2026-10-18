@@ -22,6 +22,10 @@ Singleton {
     property string managerMessage: ""
     property string latestSha: ""
     property bool updateAvailable: false
+    property var installedPlugins: []
+    property var pluginCatalog: []
+    property var settingsEntries: ({})
+    property bool pluginMetadataAvailable: false
     property bool systemProvisionerAvailable: false
     property bool systemHelpersInstalled: false
     property bool gatewayPackageInstalled: false
@@ -32,6 +36,14 @@ Singleton {
     readonly property bool obsidianEnabled: available && !loadFailed && Config.ready && options?.obsidian === true
     readonly property bool enabled: tlpEnabled || thinkfanEnabled || obsidianEnabled
     readonly property var session: worker.status === Loader.Ready ? worker.item : null
+
+    function pluginEnabled(pluginId): bool {
+        return available && !loadFailed && Config.ready && options?.[pluginId] === true
+    }
+    function setPluginEnabled(pluginId, value): void {
+        if (!managerBusy && installedPlugins.some(plugin => plugin.id === pluginId))
+            Config.setNestedValue("integrations.hadalird." + pluginId, value === true)
+    }
 
     // Explicit user action only. Hadalis owns transport and the signed-off
     // optional-package lifecycle, not an external installer run by the user.
@@ -67,14 +79,8 @@ Singleton {
     }
     function settingsSource(integration): string {
         if (!available) return ""
-        if (integration === "thinkfan") return packageRoot + "/modules/settings/ThinkfanSettings.qml"
-        if (integration === "tlp") return packageRoot + "/modules/settings/TlpPowerSettings.qml"
-        if (integration === "obsidian") return packageRoot + "/modules/settings/ObsidianThemeSettings.qml"
-        if (integration === "obsidianTodo") return packageRoot + "/modules/settings/ObsidianTodoSettings.qml"
-        if (integration === "tlpRow") return packageRoot + "/modules/settings/TlpSettingRow.qml"
-        if (integration === "tlpWaffle") return packageRoot + "/modules/waffle/settings/WTlpPowerSettings.qml"
-        if (integration === "tlpWaffleRow") return packageRoot + "/modules/waffle/settings/WTlpSettingRow.qml"
-        return ""
+        const entry = settingsEntries?.[integration]
+        return typeof entry === "string" ? packageRoot + "/" + entry : ""
     }
     function backendSource(kind): string {
         if (!obsidianEnabled) return ""
@@ -83,7 +89,7 @@ Singleton {
         return ""
     }
     function refresh(): void {
-        if (probe.running) return
+        if (probe.running || managerBusy) return
         available = false
         loadFailed = false
         probe.running = true
@@ -126,7 +132,14 @@ Singleton {
                     root.diagnostic = String(result.diagnostic ?? "invalid-package")
                     root.available = result.available === true
                     root.canRollback = result.canRollback === true
-                } catch (_error) {root.available=false;root.diagnostic="invalid-package";root.canRollback=false}
+                    root.installedPlugins = root.available && Array.isArray(result.plugins) ? result.plugins : []
+                    root.pluginCatalog = Array.isArray(result.catalog) ? result.catalog : []
+                    root.settingsEntries = root.available ? result.settings ?? ({}) : ({})
+                    root.pluginMetadataAvailable = result.pluginMetadataAvailable === true
+                } catch (_error) {
+                    root.available=false;root.diagnostic="invalid-package";root.canRollback=false
+                    root.installedPlugins=[];root.settingsEntries=({});root.pluginMetadataAvailable=false
+                }
             }
         }
     }

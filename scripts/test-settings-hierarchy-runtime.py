@@ -70,9 +70,9 @@ Window {
    Config.setNestedValue("panelFamily","abyss");wait(100)
    check(modulePage.activeSection==="panels","family switch retained the empty Abyss module tab")
    check(SettingsPageRegistry.navigateToKey("services","To-do & Quick Notes"),"legacy Services deep link is unreachable")
-   tryVerify(()=>overlay.pageHost?.currentIndex===38 && overlay.pageHost?.currentItem?.activeSection==="obsidian",7000)
+   tryVerify(()=>overlay.pageHost?.currentIndex===38 && overlay.pageHost?.currentItem?.activePlugin==="management",7000)
    overlay.pageHost.currentItem.activateSettingsSearchSection("To-do & Quick Notes")
-   check(overlay.pageHost.currentItem.activeSection==="obsidian","legacy data search lost its destination")
+   check(overlay.pageHost.currentItem.activePlugin==="management","legacy data search lost its destination")
    Config.setNestedValues({"todo.obsidian.vaultPath":Quickshell.env("OBSIDIAN_VAULT"),"integrations.obsidian.autoTheme":true})
    // Actual theme apply/restore and vault fields belong to Hadalird's native
    // suite. Core navigation must work without activating a missing package.
@@ -110,7 +110,7 @@ Window {
 """)
  with private_wayland(folder) as env:
   if env is None:print('SKIP: Settings native navigation requires private Niri');raise SystemExit(0)
-  conf=folder/'config/illogical-impulse';conf.mkdir(parents=True,exist_ok=True)
+  conf=folder/'config/alis';conf.mkdir(parents=True,exist_ok=True)
   value=json.loads((ROOT/'defaults/config.json').read_text());value['panelFamily']='abyss';(conf/'config.json').write_text(json.dumps(value))
   env.update(QT_QUICK_BACKEND='software',OBSIDIAN_VAULT=str(vault.parent))
   result=run_qs(folder,env,timeout=40);output=result.stdout

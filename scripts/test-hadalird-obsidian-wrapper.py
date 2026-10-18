@@ -23,8 +23,9 @@ for name, source in (("Theme", theme), ("Todo", todo)):
     assert "implicitHeight:" in source, f"{name}: cannot size page height"
     assert "Hadalird.obsidianEnabled" in source, f"{name}: lost opt-in gate"
 
-assert re.search(r"ObsidianThemeSettings\s*\{[^}]*settingsTaskSection:\s*\"obsidian\"", page)
-assert "ObsidianTodoSettings {" in page
+assert 'objectName: "integrationPluginSettings"' in page
+assert 'Layout.fillWidth: true' in page and 'Layout.preferredHeight: item?.implicitHeight ?? 0' in page
+assert 'Hadalird.pluginEnabled(root.activePlugin)' in page
 assert "Hadalird.systemProvisionerAvailable" in page, (
     "Privileged helper button must report the absent Hadalis system gateway")
 print("HADALIRD_OBSIDIAN_WRAPPER_PASS both deferred cards fill page width; optional helper precondition visible")

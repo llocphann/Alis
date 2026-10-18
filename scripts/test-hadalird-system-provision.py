@@ -8,18 +8,18 @@ import types
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
-gateway = ROOT / "assets/helpers/inir-hadalird-system-provision"
-policy = ROOT / "assets/polkit/org.inir.hadalird-system-provision.policy"
+gateway = ROOT / "assets/helpers/alis-hadalird-system-provision"
+policy = ROOT / "assets/polkit/org.alis.hadalird-system-provision.policy"
 mod = types.ModuleType("system_gateway_contract")
 exec(compile(gateway.read_text(), str(gateway), "exec"), mod.__dict__)
 
 doc = ET.parse(policy).getroot()
 action = doc.find(".//action")
-assert action is not None and action.attrib["id"] == "org.inir.hadalird-system-provision"
+assert action is not None and action.attrib["id"] == "org.alis.hadalird-system-provision"
 assert action.find("./defaults/allow_any").text == "no"
 assert action.find("./defaults/allow_inactive").text == "no"
 assert action.find("./defaults/allow_active").text == "auth_admin"
-assert action.find(".//annotate[@key='org.freedesktop.policykit.exec.path']").text == "/usr/libexec/inir-hadalird-system-provision"
+assert action.find(".//annotate[@key='org.freedesktop.policykit.exec.path']").text == "/usr/libexec/alis-hadalird-system-provision"
 
 with tempfile.TemporaryDirectory(prefix="hadalird-gateway-fixture-") as tmp:
     base = Path(tmp)
@@ -100,24 +100,24 @@ with tempfile.TemporaryDirectory(prefix="hadalird-gateway-fixture-") as tmp:
     except (OSError, ValueError):
         pass
 
-for name in ("inir-shell", "inir-shell-git"):
+for name in ("alis-shell", "alis-shell-git"):
     recipe = (ROOT / "distro/arch" / name / "PKGBUILD").read_text()
-    assert "/usr/libexec/inir-hadalird-system-provision" in recipe
-    assert "org.inir.hadalird-system-provision.policy" in recipe
+    assert "/usr/libexec/alis-hadalird-system-provision" in recipe
+    assert "org.alis.hadalird-system-provision.policy" in recipe
 
 # A valid *recipe* does not guarantee that the default immutable source
 # actually contains its declared trusted root-owned files.
-stable = (ROOT / 'distro/arch/inir-shell/PKGBUILD').read_text()
+stable = (ROOT / 'distro/arch/alis-shell/PKGBUILD').read_text()
 source_line = next((line for line in stable.splitlines()
                     if line.startswith('_source_ref=')), '')
-source_prefix = '_source_ref="${INIR_SOURCE_REF:-'
+source_prefix = '_source_ref="${ALIS_SOURCE_REF:-'
 assert source_line.startswith(source_prefix) and source_line.endswith('}"'), (
     'non-VCS Arch snapshot must pin a full immutable source commit')
 source_sha = source_line[len(source_prefix):-2]
 assert len(source_sha) == 40 and all(c in '0123456789abcdef' for c in source_sha)
 assert source_sha != '8ca68efe423223bdf40059155748c53b38200de2', (
     'pre-gateway source snapshot cannot install the Polkit provisioner')
-srcinfo = (ROOT / 'distro/arch/inir-shell/.SRCINFO').read_text()
+srcinfo = (ROOT / 'distro/arch/alis-shell/.SRCINFO').read_text()
 assert f'/archive/{source_sha}.tar.gz' in srcinfo, (
     'Arch source metadata must match the updated immutable source pin')
 print('HADALIRD_SYSTEM_PROVISION_PASS root ownership, Polkit policy, byte pins, source snapshot')

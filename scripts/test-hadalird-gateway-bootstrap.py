@@ -17,11 +17,11 @@ spec.loader.exec_module(module)
 trusted = module.expected_files(ROOT)
 assert len(trusted) == 2
 assert set(trusted) == {
-    "usr/libexec/inir-hadalird-system-provision",
-    "usr/share/polkit-1/actions/org.inir.hadalird-system-provision.policy",
+    "usr/libexec/alis-hadalird-system-provision",
+    "usr/share/polkit-1/actions/org.alis.hadalird-system-provision.policy",
 }
 assert "source=()" in module.PKGBUILD
-assert "pkgname=inir-hadalird-gateway" in module.PKGBUILD
+assert "pkgname=alis-hadalird-gateway" in module.PKGBUILD
 assert ".INSTALL" not in module.PKGBUILD
 assert "$startdir/payload/" in module.PKGBUILD
 assert "pacman" not in module.PKGBUILD
@@ -80,10 +80,10 @@ with tempfile.TemporaryDirectory(prefix="hadalis-gateway-") as where:
         seen.append(command)
         if command[0] == "/usr/bin/makepkg":
             assert cwd == built
-            assert "pkgname=inir-hadalird-gateway" in (built / "PKGBUILD").read_text()
+            assert "pkgname=alis-hadalird-gateway" in (built / "PKGBUILD").read_text()
             for name, (dest, _, _) in module.FILES.items():
                 assert (built / "payload" / Path(dest).name).read_bytes() == (ROOT / name).read_bytes()
-            (built / "inir-hadalird-gateway-0.1.0-1-any.pkg.tar.zst").write_bytes(b"synthetic")
+            (built / "alis-hadalird-gateway-0.1.0-1-any.pkg.tar.zst").write_bytes(b"synthetic")
             return SimpleNamespace(returncode=0, stdout="", stderr="")
         if command[:2] == ["/usr/bin/bsdtar", "-tf"]:
             items = ".PKGINFO\n.BUILDINFO\n.MTREE\nusr/\nusr/libexec/\n"
@@ -106,7 +106,7 @@ with tempfile.TemporaryDirectory(prefix="hadalis-gateway-") as where:
         # The synthetic makepkg command writes to its current build folder.
         def fake_bad(command, *, cwd=None, timeout=0):
             if command[0] == "/usr/bin/makepkg":
-                (cwd / "inir-hadalird-gateway-0.1.0-1-any.pkg.tar.zst").write_bytes(b"synthetic")
+                (cwd / "alis-hadalird-gateway-0.1.0-1-any.pkg.tar.zst").write_bytes(b"synthetic")
             return fake_command(command, cwd=cwd, timeout=timeout) if command[0] != "/usr/bin/makepkg" else SimpleNamespace(returncode=0, stdout="", stderr="")
         try:
             module.build_package(root, path, command=fake_bad, extract=bad_extract)
