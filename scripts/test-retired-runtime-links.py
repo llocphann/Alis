@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Guard against live Alis components referencing the retired Automation backend.
 
-This checks tracked text source; historical docs, evidence and the parked
-Automation implementation are intentionally excluded until the host is safely
-quiesced and the final source-removal stage can delete them.
+Historical receipts remain data. Neither their presence nor private retained
+journals may bring back executable Automation code or a live caller.
 """
 
 from pathlib import Path
@@ -18,66 +17,68 @@ TEXT_SUFFIXES = {
 }
 TEXT_BASENAMES = {"qmldir", "setup", "Makefile", "PKGBUILD", "alis",
                   "native-backend", "native-dispatch"}
-OWNED_SOURCE_PREFIXES = (
-    "automation/", "docs/", "to-do/", "agent/", "translations/",
-    # Parked, standalone Automation entrypoints remain until host inspection.
-    "scripts/alis-automation-task.py",
-    "scripts/hadalis-automation-control.py",
-    "scripts/install-hadalis-automation.py",
-    "scripts/hadalis-git-credential.py",
-    "scripts/inspect-hadalis-native-scope.mjs",
-    "scripts/automation_test_helpers.py",
-    "scripts/AUTO-F01-",
-    "scripts/test-AUTO-F01-",
-    "scripts/test-automation-",
-    "scripts/test-hadalis-automation-",
-    "scripts/test-hadalis-chat-bridge",
-    "scripts/test-hadalis-legacy-ui-",
-    "scripts/test-hadalis-native-",
-    "scripts/test-hadalis-receipt-",
-    "scripts/test-hadalis-reconciliation-",
-    "scripts/test-hadalis-static-helper-",
-    "scripts/test-hadalis-transport-",
-    # The dedicated retirement-route contract intentionally mentions old
-    # identifiers as negative assertions; it is not a runtime consumer.
+HISTORICAL_PREFIXES = ("docs/", "to-do/", "agent/")
+RETAINED_RECEIPTS = {
+    "automation/queue/pending/JOB-AUDIO-I01-BASELINE-20261015-01.json",
+    "automation/results/JOB-AUTO-F01-SMOKE-20261015-01.json",
+    "automation/results/JOB-C2F353CC-WULLRENDER-R57-20261006.json",
+    "automation/results/JOB-C2F353CC-WULLUNIFORMS-R56-20261006.json",
+}
+RETIREMENT_FILES = {
     "scripts/test-retired-settings-routes.py",
-    # Read-only migration inspector names the retired units solely to report
-    # their status; it never depends on or starts the retired backend.
     "scripts/audit-retired-services.py",
-    # Retirement-only packaging policy and negative contract are not live
-    # consumers. Fresh installs must explicitly record these excluded paths.
     "sdata/runtime-exclusions.json",
     "scripts/test-retired-runtime-payload.py",
+    "scripts/test-retired-runtime-links.py",
+    "scripts/test-retired-service-audit.py",
+}
+RETIRED_SCRIPT = re.compile(
+    r"^scripts/(?:AUTO-F01-|alis-automation-task\.|hadalis-automation-control\.|"
+    r"install-hadalis-automation\.|hadalis-git-credential\.|"
+    r"inspect-hadalis-native-scope\.|automation_test_helpers\.|"
+    r"test-(?:AUTO-F01-|automation-|hadalis-(?:automation-|chat-bridge|"
+    r"legacy-ui-|native-|receipt-|reconciliation-|static-helper-|transport-)))"
 )
-SKIP_SELF = "scripts/test-retired-runtime-links.py"
 
 # Pin explicit imports/references, not English uses of 'automation' such as
 # autostart, music automation, system package release automation, etc.
 EXTERNAL_LINKS = re.compile(
     r"(?:from\s+automation(?:\.|\s+import)|"
     r"import\s+automation(?:\.|\s|$)|"
+    r"\bautomation\.(?:worker|manager|chat_bridge)\b|"
     r"automation/(?:worker|manager|chat_bridge)/|"
     r"modules/settings/AutomationTaskConfig\.qml|"
     r"\bAutomationTaskConfig\b|"
     r"scripts/(?:alis-automation-task|hadalis-automation-control|"
     r"install-hadalis-automation|hadalis-git-credential)\.py|"
-    r"hadalis-(?:worker|chat-bridge|privilege)\.service)"
+    r"scripts/inspect-hadalis-native-scope\.mjs|"
+    r"hadalis-(?:worker|chat-bridge|privilege|chatgpt)\.service)"
 )
 
 
+def tracked_paths():
+    result = subprocess.run(
+        ["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True
+    )
+    return [p.decode("utf-8") for p in result.stdout.split(b"\0") if p]
+
+
 class RetiredRuntimeLinkTest(unittest.TestCase):
+    def test_only_historical_receipts_remain_in_backend_directory(self):
+        paths = {p for p in tracked_paths() if p.startswith("automation/")}
+        self.assertEqual(paths, RETAINED_RECEIPTS)
+        for path in paths:
+            self.assertTrue((ROOT / path).is_file(), path)
+
+    def test_retired_entrypoints_and_dedicated_tests_cannot_return(self):
+        self.assertEqual([p for p in tracked_paths() if RETIRED_SCRIPT.match(p)], [])
+
     def test_no_live_cross_component_link(self):
-        result = subprocess.run(
-            ["git", "ls-files", "-z"], cwd=ROOT, capture_output=True,
-            check=True
-        )
         matches = []
         scanned = 0
-        for raw in result.stdout.split(b"\0"):
-            if not raw:
-                continue
-            path = raw.decode("utf-8")
-            if path == SKIP_SELF or path.startswith(OWNED_SOURCE_PREFIXES):
+        for path in tracked_paths():
+            if (path in RETIREMENT_FILES or path in RETAINED_RECEIPTS
+                    or path.startswith(HISTORICAL_PREFIXES)):
                 continue
             source = ROOT / path
             if not source.is_file():

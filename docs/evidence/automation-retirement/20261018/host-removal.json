@@ -1,0 +1,73 @@
+{
+  "issue": 118,
+  "date": "2026-10-18",
+  "source_parent_sha": "442f645b02b50e88f1d417d2fc374b45b6ec02ab",
+  "resume_schedule": {
+    "id": "alis-abyss-ti-p-t-c-sau-reset",
+    "cancelled": true,
+    "scheduled_local_date": "2026-10-22",
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "backup": {
+    "backup_verified": true,
+    "regular_files": 2152,
+    "symlinks": 109,
+    "archive_bytes": 4940503,
+    "keyring_accessed": false
+  },
+  "host_removal": {
+    "schedule_cancelled": true,
+    "units_disabled_stopped_removed": [
+      "hadalis-worker.service",
+      "hadalis-chat-bridge.service",
+      "hadalis-privilege.service",
+      "hadalis-chatgpt.service"
+    ],
+    "desktop_supervisor_only_stopped": true,
+    "desktop_launcher_main_exec_restored": true,
+    "chatgpt_session_preserved": true,
+    "alis_niri_same_pid": true,
+    "private_entries_unchanged": 2137,
+    "secrets_deleted": false,
+    "state_deleted": false,
+    "queue_or_worker_restarted": false,
+    "manager_pending_reconciled": false
+  },
+  "service_mutations": [
+    {
+      "action": "disable",
+      "exit": 0
+    },
+    {
+      "action": "stop",
+      "exit": 0
+    },
+    {
+      "action": "daemon-reload",
+      "exit": 0
+    }
+  ],
+  "post_removal_audit": {
+    "exit": 2,
+    "automation_units_and_processes_absent": true,
+    "automation_process_count": 0,
+    "worker_running_jobs": 0,
+    "worker_publishing": false,
+    "worker_receipt_phases": {
+      "published": 240
+    },
+    "retained_manager_profile_count": 6,
+    "retained_profiles_with_request_or_pending": 5,
+    "retention_review_required": true,
+    "safe_to_delete_state": false
+  },
+  "source_removal": {
+    "files": 76,
+    "historical_json_files_preserved": 4,
+    "external_companion_lazy_publication_imports": "Historical evidence tools only; not executed or given replacement credentials"
+  },
+  "owner_acceptance": "UNRUN",
+  "versioned_arch_release_pin": "Unchanged historical source; release cutover unverified",
+  "stable_changed": false,
+  "concurrent_changes": "Other local work excluded from this task"
+}

@@ -11,6 +11,7 @@ from collections import Counter
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 
 UNITS = (
@@ -18,12 +19,6 @@ UNITS = (
     "hadalis-chat-bridge.service",
     "hadalis-privilege.service",
     "hadalis-chatgpt.service",
-)
-AUTOMATION_PROCESSES = (
-    "automation/worker/daemon.py",
-    "automation.manager.daemon",
-    "automation.worker.privilege",
-    "automation.chat_bridge.desktop_host",
 )
 MAX_JSON_BYTES = 8 * 1024 * 1024
 
@@ -70,6 +65,29 @@ def unit_snapshot(unit: str, blockers: list[str]) -> dict:
     }
 
 
+def process_component(argv: list[str]) -> str | None:
+    """Match execution identity, never a search command or inline source text."""
+    if not argv:
+        return None
+    script = re.compile(r"(?:^|/)automation/(?:worker|manager|chat_bridge)/[^\s]+\.(?:py|mjs)$")
+    if script.search(argv[0]):
+        return argv[0]
+    executable = Path(argv[0]).name
+    if not (executable.startswith("python") or executable in {"node", "nodejs"}):
+        return None
+    for index, argument in enumerate(argv[1:], 1):
+        if argument in {"-c", "-e", "--eval", "-"}:
+            return None
+        if argument == "-m":
+            module = argv[index + 1] if index + 1 < len(argv) else ""
+            return module if re.fullmatch(
+                r"automation\.(?:worker|manager|chat_bridge)(?:\.[a-z_]+)*", module
+            ) else None
+        if not argument.startswith("-"):
+            return argument if script.search(argument) else None
+    return None
+
+
 def process_snapshot(blockers: list[str]) -> list[dict]:
     proc = Path("/proc")
     if not proc.is_dir():
@@ -81,12 +99,12 @@ def process_snapshot(blockers: list[str]) -> list[dict]:
             if not path.name.isdigit():
                 continue
             try:
-                argv = (path / "cmdline").read_bytes().replace(b"\0", b" ").decode(
-                    "utf-8", errors="replace"
-                )
+                argv = [part.decode("utf-8", errors="replace")
+                        for part in (path / "cmdline").read_bytes().split(b"\0")
+                        if part]
             except (OSError, PermissionError):
                 continue
-            matched = next((name for name in AUTOMATION_PROCESSES if name in argv), None)
+            matched = process_component(argv)
             if matched:
                 found.append({"pid": int(path.name), "component": matched})
     except OSError:
@@ -143,7 +161,7 @@ def manager_snapshot(state: Path, blockers: list[str]) -> dict:
                 profile.get("desired", "stopped") != "stopped"
             ):
                 active.append(str(key))
-                blockers.append("Manager profile still active/pending")
+                blockers.append("Retained manager request/pending history requires owner review")
     if (state / "transaction.json").exists():
         blockers.append("Unreconciled manager transaction journal exists")
     return {
@@ -213,9 +231,21 @@ def main() -> int:
         blockers.append("Worker pool status unavailable while service may be running")
     if state.exists() and manager["manager_file_present"] is False and active_units:
         blockers.append("Manager status unavailable while service may be running")
+    runtime_absent = (
+        all(u.get("loaded") == "not-found" and u.get("active") == "inactive"
+            and not u.get("fragment_path") and u.get("main_pid") == "0"
+            for u in units)
+        and not processes
+        and not desktop_launcher["suspected_automation_generated_exec"]
+    )
     output = {
         "read_only": True,
         "safe_to_delete_state": False,
+        "automation_units_and_processes_absent": runtime_absent,
+        "retained_manager_history_requires_owner_review": bool(
+            manager["active_or_pending_profile_count"]
+            or manager["transaction_journal_present"]
+        ),
         "candidate_for_owner_supervised_stop": not blockers,
         "systemd_units": units,
         "automation_processes": processes,

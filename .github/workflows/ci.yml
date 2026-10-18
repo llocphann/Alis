@@ -49,7 +49,7 @@ jobs:
         shell: bash
         run: python3 scripts/test-retired-settings-routes.py
 
-      - name: Verify no live shell or package references parked Automation
+      - name: Verify retired backend stays absent from shell and packages
         shell: bash
         run: python3 scripts/test-retired-runtime-links.py
 
@@ -60,6 +60,10 @@ jobs:
       - name: Syntax check read-only installed-host retirement audit
         shell: bash
         run: python3 -m py_compile scripts/audit-retired-services.py
+
+      - name: Verify retirement audit preserves unresolved private history
+        shell: bash
+        run: python3 scripts/test-retired-service-audit.py
 
       - name: Verify desktop context-menu pointer anchor and slide relocation
         shell: bash
