@@ -1,0 +1,22 @@
+{
+  "installed_roots": [
+    "quickshell/alis",
+    "quickshell/inir"
+  ],
+  "verified_backup_files": 109,
+  "removed_owned_source_and_cache_files": 105,
+  "historical_json_files_preserved": 4,
+  "installed_retired_executable_files_remaining": 0,
+  "runtime_restarted": false,
+  "shell_version_metadata_rewritten": false,
+  "worker_or_queue_used": false,
+  "private_xdg_state_deleted": false,
+  "issue": 118,
+  "date": "2026-10-18",
+  "source_removal_sha": "a1e13a6fde62114903dff813dab47f053acd27d2",
+  "installed_runtime_source_version": "442f645b0",
+  "same_application_session_preserved": true,
+  "existing_chatgpt_process_retains_debug_flags_until_exit": true,
+  "ordinary_desktop_launcher_debug_flags": false,
+  "private_backup_published": false
+}

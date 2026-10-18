@@ -1,0 +1,25 @@
+{
+  "sha": "a1e13a6fde62114903dff813dab47f053acd27d2",
+  "checks": [
+    {
+      "script": "test-retired-runtime-links.py",
+      "exit": 0
+    },
+    {
+      "script": "test-retired-service-audit.py",
+      "exit": 0
+    },
+    {
+      "script": "test-retired-settings-routes.py",
+      "exit": 0
+    },
+    {
+      "script": "test-retired-runtime-payload.py",
+      "exit": 0
+    }
+  ],
+  "status": "PASS",
+  "issue": 118,
+  "gate": "focused local retirement regression; not CI or whole-tree acceptance",
+  "unittest_cases": 14
+}
