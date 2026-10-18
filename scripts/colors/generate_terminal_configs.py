@@ -1136,8 +1136,17 @@ def generate_yazi_config(colors, output_path):
     fg = colors.get("term15", "#EBDBB2")
     fg_dim = colors.get("term7", "#A89984")
     gray = colors.get("term8", "#928374")
-    primary = colors.get("primary", "#458588")
-    sel_bg = colors.get("surfaceContainer", colors.get("term8", "#3C3836"))
+    primary = colors.get("app_accent") or colors.get("primary") or "#458588"
+    # The generated app palette uses snake_case surface tokens. Prefer its
+    # contrast-checked selection pair, then fall back to older palette shapes.
+    selection_bg = (
+        colors.get("app_selection")
+        or colors.get("surface_container")
+        or colors.get("surfaceContainer")
+    )
+    sel_bg = selection_bg or colors.get("term8") or "#3C3836"
+    hover_bg = selection_bg or primary
+    hover_fg = colors.get("app_on_selection") or bg
     red = colors.get("term1", "#CC241D")
     green = colors.get("term2", "#98971A")
     yellow = colors.get("term3", "#D79921")
@@ -1150,14 +1159,14 @@ def generate_yazi_config(colors, output_path):
 
 [mgr]
 cwd = {{ fg = "{primary}" }}
-hovered         = {{ fg = "{bg}", bg = "{primary}" }}
+hovered         = {{ fg = "{hover_fg}", bg = "{hover_bg}" }}
 preview_hovered = {{ underline = true }}
 find_keyword    = {{ fg = "{yellow}", italic = true }}
 find_position   = {{ fg = "{magenta}", bg = "reset", italic = true }}
 marker_selected = {{ fg = "{green}", bg = "{green}" }}
 marker_copied   = {{ fg = "{yellow}", bg = "{yellow}" }}
 marker_cut      = {{ fg = "{red}", bg = "{red}" }}
-tab_active      = {{ fg = "{bg}", bg = "{sel_bg}" }}
+tab_active      = {{ fg = "{hover_fg}", bg = "{sel_bg}" }}
 tab_inactive    = {{ fg = "{fg_dim}", bg = "{sel_bg}" }}
 tab_width       = 1
 border_symbol   = "\u2502"
@@ -1230,8 +1239,8 @@ rules = [
   {{ mime = "application/x-bzip2",         fg = "{red}" }},
   {{ mime = "application/x-7z-compressed", fg = "{red}" }},
   {{ mime = "application/x-rar",           fg = "{red}" }},
-  {{ name = "*",  fg = "{fg_dim}" }},
   {{ name = "*/", fg = "{primary}" }},
+  {{ name = "*",  fg = "{fg_dim}" }},
 ]
 """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
