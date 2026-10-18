@@ -36,6 +36,11 @@ assert values[1]["protocol"] == "Miracast P2P"
 assert values[1]["state"] == "p2p"
 assert module.displays({"type": "aa{sv}", "data": []}) == []
 assert module.displays({"type": "aa{sv}", "data": [receiver1, receiver1]}) == values[:1]
+# busctl 254+ encodes a single a{sv} as nested flattened key/value arrays.
+assert module.displays({"type": "aa{sv}", "data": [[receiver1]]}) == values[:1]
+assert module.displays({"type": "aa{sv}", "data": [[[receiver1]] ]}) == values[:1]
+assert module.dictionary([receiver1])["uuid"] == "00112233-abcd"
+assert module.typed({"type": "v", "data": [{"type": "s", "data": "uuid-1"}]}) == "uuid-1"
 assert module.displays({"type": "aa{sv}", "data": [[
     ["uuid", field("s", "abcdef12")],
     ["display-name", field("s", "Another TV")],
@@ -49,10 +54,11 @@ except module.CastError:
     pass
 
 def fake_scan():
-    return {"ok": True, "backend": True, "displays": values}
+    return {"ok": True, "backend": True, "streamReady": True, "displays": values}
 
 unit = "gnome-network-displays-stream-00112233-abcd.service"
-with mock.patch.object(module, "scan", fake_scan), mock.patch.object(
+with mock.patch.object(module, "stream_binary_available", return_value=True), mock.patch.object(
+        module, "scan", fake_scan), mock.patch.object(
         module, "bus", return_value={"type": "s", "data": [unit]}) as called:
     result = module.start("00112233-abcd")
     assert result["ok"] and result["unit"] == unit
@@ -68,8 +74,8 @@ with mock.patch.object(module, "scan", fake_scan), mock.patch.object(
     except module.CastError:
         pass
 
-with mock.patch.object(module, "bus",
-                       return_value={"type": "s", "data": ["malicious.service"]}):
+with mock.patch.object(module, "stream_binary_available", return_value=True), mock.patch.object(
+        module, "bus", return_value={"type": "s", "data": ["malicious.service"]}):
     try:
         module.start("00112233-abcd")
         assert False
@@ -120,6 +126,8 @@ for word in ("NetworkDisplays.displays", "NetworkDisplays.scan()",
              "NetworkDisplays.connectToSelected()", "NetworkDisplays.disconnect()",
              "Flickable {", "NetworkDisplays.selectedUuid"):
     assert word in popup, word
+assert 'root.streamReady = data.streamReady === true' in qml
+assert 'NetworkDisplays.streamReady' in popup
 assert 'function beginWireless(uuid)' in audio
 assert 'Policy.findWirelessSink(Audio.outputDevices, _wirelessUuid)' in audio
 assert "function findWirelessSink(devices, uuid)" in policy
