@@ -26,6 +26,7 @@ Singleton {
     property bool _disconnectPending: false
     property int _inactiveReads: 0
     property int _connectChecks: 0
+    property int _scanAttempt: 0
 
     readonly property bool active: activeUnit.length > 0
     readonly property bool busy: connectProcess.running || stopProcess.running
@@ -46,15 +47,24 @@ Singleton {
     }
 
     function scan(): void {
-        if (scanProcess.running) return
+        if (scanning || scanProcess.running) return
         scanning = true
+        _scanAttempt = 0
+        lastError = ""
+        statusMessage = "Discovering nearby TVs…"
+        _scanOnce()
+    }
+
+    function _scanOnce(): void {
+        if (!scanning || scanProcess.running) return
+        _scanAttempt++
         scanProcess.command = ["python3", bridge, "scan"]
         scanProcess.running = true
     }
 
     function connectToSelected(): void {
         const target = displays.find(d => d.uuid === selectedUuid)
-        if (!target || !streamReady || active || busy) return
+        if (!target || !streamReady || scanning || active || busy) return
         lastError = ""
         _disconnectPending = false
         _inactiveReads = 0
@@ -110,9 +120,10 @@ Singleton {
         id: scanProcess
         stdout: StdioCollector { id: scanOutput }
         onExited: exitCode => {
-            root.scanning = false
             const data = exitCode === 0 ? root._parse(scanOutput.text) : null
             if (!data || !data.ok) {
+                root.scanning = false
+                scanRetry.stop()
                 root.backendAvailable = !!data?.backend
                 root.streamReady = false
                 root.displays = []
@@ -124,14 +135,30 @@ Singleton {
             root.displays = Array.isArray(data.displays) ? data.displays : []
             if (!root.displays.some(d => d.uuid === root.selectedUuid))
                 root.selectedUuid = root.displays.length ? root.displays[0].uuid : ""
+
+            // The daemon can acquire D-Bus before NM/mDNS providers finish
+            // their first discovery. Retry for a bounded window, then stop.
+            if (root.displays.length === 0 && root._scanAttempt < 5) {
+                root.statusMessage = "Discovering nearby TVs… (" + root._scanAttempt + "/5)"
+                scanRetry.restart()
+                return
+            }
+            root.scanning = false
             if (!root.activeUnit)
                 root.statusMessage = !root.streamReady
                     ? (data.message || "Native TV stream helper is missing. Use Open app.")
                     : root.displays.length
                         ? root.displays.length + " wireless receiver(s) found."
-                        : "No TV found. Check the TV cast mode and Wi-Fi network."
+                        : "No TV found. Check the TV cast mode, Wi-Fi, and mDNS."
             root.lastError = ""
         }
+    }
+
+    Timer {
+        id: scanRetry
+        interval: 2000
+        repeat: false
+        onTriggered: root._scanOnce()
     }
 
     Process {
