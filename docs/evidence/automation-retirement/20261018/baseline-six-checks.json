@@ -1,0 +1,63 @@
+{
+  "issue": 118,
+  "baseline_sha": "442f645b02b50e88f1d417d2fc374b45b6ec02ab",
+  "retirement_sha": "a1e13a6fde62114903dff813dab47f053acd27d2",
+  "scope": "Six selected checks reproduce the same exit and diagnostic on both exact SHAs; other canonical failures remain unclassified",
+  "results": [
+    {
+      "script": "scripts/test-weekly-planner-multidate.mjs",
+      "baseline_exit": 1,
+      "retirement_exit": 1,
+      "same_failure_signature": true,
+      "diagnostic_signature": [
+        "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /selectedDays\\.length>1 && root\\.recurrence!==\"none\"/. Input:"
+      ]
+    },
+    {
+      "script": "scripts/test-agenda-todo-independence.mjs",
+      "baseline_exit": 1,
+      "retirement_exit": 1,
+      "same_failure_signature": true,
+      "diagnostic_signature": [
+        "SyntaxError: Invalid regular expression: /AgendaTodoPolicy|function ensureAgenda\\\\(|function unlinkAgenda\\\\(/: Unterminated group"
+      ]
+    },
+    {
+      "script": "scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py",
+      "baseline_exit": 1,
+      "retirement_exit": 1,
+      "same_failure_signature": true,
+      "diagnostic_signature": [
+        "assert positions.count('Layout.preferredWidth:root.compactIpcEditor') == 3"
+      ]
+    },
+    {
+      "script": "scripts/test-abyss-edge-editor-compact-actions-contract.py",
+      "baseline_exit": 1,
+      "retirement_exit": 1,
+      "same_failure_signature": true,
+      "diagnostic_signature": [
+        "assert editor.count('AbyssCheckBox {') == 1"
+      ]
+    },
+    {
+      "script": "scripts/test-abyss-edge-editor-compact-side-contract.py",
+      "baseline_exit": 1,
+      "retirement_exit": 1,
+      "same_failure_signature": true,
+      "diagnostic_signature": [
+        "assert \"visible: root.outputSelectionEnabled || !root.compactVertical\" in p"
+      ]
+    },
+    {
+      "script": "scripts/test-abyss-compact-editor-runtime.py",
+      "baseline_exit": 1,
+      "retirement_exit": 1,
+      "same_failure_signature": true,
+      "diagnostic_signature": [
+        "ERROR:   caused by @shell.qml[214:12]: Identifier header has already been declared"
+      ]
+    }
+  ],
+  "worker_or_queue_executed": false
+}

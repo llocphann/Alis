@@ -1,0 +1,168 @@
+{
+  "sha": "a1e13a6fde62114903dff813dab47f053acd27d2",
+  "status": "STOPPED",
+  "actual_exit": null,
+  "actual_exit_unavailable_reason": "Original supervisor was terminated by owner interruption before wait status was persisted; no exit code inferred from signals.",
+  "stop_reason": "owner_interrupt",
+  "recovery_signal_actions": [
+    "SIGTERM",
+    "SIGKILL only if needed"
+  ],
+  "owned_remaining_after_exit": [],
+  "owned_running_remaining": [],
+  "supervisor_survived_interrupt": false,
+  "cleanup_snapshots": [
+    {
+      "phase": "before_cleanup",
+      "owned_running": 10,
+      "canonical_present": true
+    }
+  ],
+  "issue": 118,
+  "gate": "canonical maintainer local validation; not full PASS",
+  "started_checks": 177,
+  "numbered_results": {
+    "PASS": 156,
+    "FAIL": 20,
+    "SKIP": 0,
+    "UNSETTLED": 1
+  },
+  "failed_checks": [
+    {
+      "number": 28,
+      "label": "Native Dashboard/Overview content-ready reveal, reversal and warm expiry",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 31,
+      "label": "Weekly Planner Ctrl/Shift multi-date and compatible Repeat cycles",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 39,
+      "label": "Independent Agenda and Todo stores with stable Event ID edits",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 56,
+      "label": "Python regression: scripts/test-abyss-body-reveal-readiness-runtime.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 57,
+      "label": "Python regression: scripts/test-abyss-compact-editor-runtime.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 69,
+      "label": "Python regression: scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 70,
+      "label": "Python regression: scripts/test-abyss-edge-editor-compact-actions-contract.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 71,
+      "label": "Python regression: scripts/test-abyss-edge-editor-compact-side-contract.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 77,
+      "label": "Python regression: scripts/test-abyss-full-size-modules-runtime.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 82,
+      "label": "Python regression: scripts/test-abyss-input-region-contract.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 86,
+      "label": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 90,
+      "label": "Python regression: scripts/test-abyss-mandatory-typography-runtime.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 93,
+      "label": "Python regression: scripts/test-abyss-module-locks-runtime.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 94,
+      "label": "Python regression: scripts/test-abyss-multi-selection-runtime.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 95,
+      "label": "Python regression: scripts/test-abyss-niri-hover-layer-contract.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 101,
+      "label": "Python regression: scripts/test-abyss-panel-material-settings-runtime.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 114,
+      "label": "Python regression: scripts/test-abyss-round0-editor-controls.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 126,
+      "label": "Python regression: scripts/test-abyss-width-affects-modules-runtime.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 153,
+      "label": "Python regression: scripts/test-calendar-weather-composition-contract.py",
+      "result": "FAIL",
+      "exit": 1
+    },
+    {
+      "number": 163,
+      "label": "Python regression: scripts/test-clipboard-watcher-contract.py",
+      "result": "FAIL",
+      "exit": 1
+    }
+  ],
+  "unsettled_checks": [
+    {
+      "number": 177,
+      "label": "Python regression: scripts/test-dashboard-editor-field-runtime.py",
+      "result": "UNSETTLED",
+      "exit": null
+    }
+  ],
+  "raw_log_sha256": "54b0c4cf6acdb482ab0b0ad1571363b3c0379617bde53c001c0474d5d6a61c04",
+  "raw_logs": "Retained privately; not uploaded",
+  "baseline_classification": "Only six failures have paired pre-retirement evidence; remaining failures unclassified",
+  "private_entries_unchanged_after_cleanup": 2137,
+  "additional_ignored_source_bytecode_files_backed_up_and_removed": 3,
+  "automation_worker_or_queue_started": false,
+  "resume_schedule_recreated": false,
+  "owner_acceptance": "UNRUN"
+}
