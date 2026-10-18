@@ -158,6 +158,7 @@ Singleton {
         _rollingBack = false
         _operationFailure = ""
         _requestedMode = mode
+        // Preserve prior sound until a real output-mode change has succeeded.
         _requestedExternalTarget = mode === "second-only" ? plan.targets[0] : ""
         _requestedInternalFallback = DisplayPlan.internalOutput(connectedOutputs)
         applying = true
@@ -180,10 +181,22 @@ Singleton {
                     + " The previous active-output set was restored."
                 return
             }
-            if (_requestedMode === "mirror" && _pendingMirror)
+            if (_requestedMode === "mirror" && _pendingMirror) {
                 _startMirror(_pendingMirror)
-            else
+            } else {
                 statusMessage = "Display mode applied for this Niri session."
+                if (_requestedMode === "primary-only") {
+                    ProjectAudio.endWired()
+                } else if (_requestedMode === "second-only") {
+                    ProjectAudio.beginWired(_requestedExternalTarget)
+                } else if (_requestedMode === "extend") {
+                    // Only auto-route if there is one unambiguous external TV.
+                    const externals = connectedOutputs.filter(name =>
+                        !DisplayPlan.internalOutput([name]))
+                    if (externals.length === 1)
+                        ProjectAudio.beginWired(externals[0])
+                }
+            }
             if (_requestedMode === "second-only") {
                 _externalOnlyTarget = _requestedExternalTarget
                 _internalFallback = _requestedInternalFallback
@@ -291,6 +304,8 @@ Singleton {
     onConnectedOutputsChanged: Qt.callLater(() => {
         root.normalizeSelections()
         root._recoverAfterExternalLoss()
+        if (ProjectAudio.active && !root.connectedOutputs.includes(ProjectAudio.activeOutput))
+            ProjectAudio.endWired()
     })
     onActiveOutputsChanged: Qt.callLater(() => root._recoverAfterExternalLoss())
 
@@ -341,8 +356,10 @@ Singleton {
         onStarted: {
             // Show the running process identity, not dropdowns changed after
             // the command was launched.
-            if (root._runningMirrorPair)
+            if (root._runningMirrorPair) {
                 root.statusMessage = DisplayPlan.mirrorRunningMessage(root._runningMirrorPair)
+                ProjectAudio.beginWired(root._runningMirrorPair.target)
+            }
         }
         onExited: exitCode => {
             const expectedStop = root._stoppingMirror
@@ -365,6 +382,8 @@ Singleton {
             }
             const stoppedMessage=DisplayPlan.mirrorStoppedMessage(expectedStop,manualStop)
             if (stoppedMessage.length) root.statusMessage = stoppedMessage
+            if (manualStop || !expectedStop)
+                ProjectAudio.endWired()
             if (!expectedStop) {
                 if (exitCode !== 0)
                     root.lastError = "wl-mirror exited with an error."
