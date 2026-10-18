@@ -404,7 +404,7 @@ Item {
                     model: Audio.outputDevices.map(device => Audio.friendlyDeviceName(device))
                     currentIndex: Audio.outputDevices.findIndex(device =>
                         device.id === Audio.sink?.id)
-                    enabled: Audio.outputDevices.length > 0
+                    enabled: Audio.outputDevices.length > 0 && !ProjectAudio.busy
                     onActivated: {
                         const device = Audio.outputDevices[currentIndex]
                         if (device) {
