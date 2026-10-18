@@ -1139,14 +1139,17 @@ def generate_yazi_config(colors, output_path):
     primary = colors.get("app_accent") or colors.get("primary") or "#458588"
     # The generated app palette uses snake_case surface tokens. Prefer its
     # contrast-checked selection pair, then fall back to older palette shapes.
-    selection_bg = (
-        colors.get("app_selection")
-        or colors.get("surface_container")
-        or colors.get("surfaceContainer")
-    )
+    app_selection = colors.get("app_selection")
+    surface_bg = colors.get("surface_container") or colors.get("surfaceContainer")
+    selection_bg = app_selection or surface_bg
     sel_bg = selection_bg or colors.get("term8") or "#3C3836"
     hover_bg = selection_bg or primary
-    hover_fg = colors.get("app_on_selection") or (fg if selection_bg else bg)
+    if app_selection:
+        hover_fg = colors.get("app_on_selection") or fg
+    elif surface_bg:
+        hover_fg = colors.get("app_foreground") or colors.get("on_surface") or fg
+    else:
+        hover_fg = colors.get("app_on_accent") or colors.get("on_primary") or fg
     red = colors.get("term1", "#CC241D")
     green = colors.get("term2", "#98971A")
     yellow = colors.get("term3", "#D79921")
@@ -1292,10 +1295,7 @@ rules = [
         new_content = content + '[flavor]\ndark = "ii-auto"\nlight = "ii-auto"\n'
         theme_path.write_text(new_content, encoding="utf-8")
         print(f"\u2713 Generated yazi flavor and added [flavor] section")
-    else:
-        theme_path.parent.mkdir(parents=True, exist_ok=True)
-        theme_path.write_text(f"[flavor]\n{flavor_line}\n")
-        print(f"\u2713 Generated yazi flavor and created theme.toml")
+
 
 
 def generate_fuzzel_config(colors, output_path):
