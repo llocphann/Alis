@@ -89,6 +89,10 @@ jobs:
           python3 scripts/test-quick-notes-corner-contract.py
           python3 scripts/test-notification-center-contract.py
 
+      - name: Verify Yazi automatic theme output
+        shell: bash
+        run: python3 scripts/test-yazi-auto-theme.py
+
       - name: Run canonical local validator
         shell: bash
         run: |
