@@ -86,10 +86,10 @@ class YaziAutoThemeTest(unittest.TestCase):
     def test_focus_and_active_tab_use_semantic_selection_colors(self):
         flavor, _ = self.render(self.colors())
         self.assertIn(
-            'hovered         = { fg = "#F9F0FF", bg = "#493650" }', flavor
+            'current = { fg = "#F9F0FF", bg = "#493650" }', flavor
         )
         self.assertIn(
-            'tab_active      = { fg = "#F9F0FF", bg = "#493650" }', flavor
+            'active   = { fg = "#F9F0FF", bg = "#493650" }', flavor
         )
 
     def test_snake_case_surface_token_fallback_keeps_focus_readable(self):
@@ -100,10 +100,10 @@ class YaziAutoThemeTest(unittest.TestCase):
 
         flavor, _ = self.render(colors)
         self.assertIn(
-            'hovered         = { fg = "#F4F0FF", bg = "#302A38" }', flavor
+            'current = { fg = "#F4F0FF", bg = "#302A38" }', flavor
         )
         self.assertIn(
-            'tab_active      = { fg = "#F4F0FF", bg = "#302A38" }', flavor
+            'active   = { fg = "#F4F0FF", bg = "#302A38" }', flavor
         )
 
     def test_current_yazi_schema_and_toml_are_valid(self):
@@ -183,6 +183,9 @@ class YaziAutoThemeTest(unittest.TestCase):
         flavor, _ = self.render(colors)
         self.assertIn(
             'current = { fg = "#101018", bg = "#D78ACF" }', flavor
+        )
+        self.assertIn(
+            'active   = { fg = "#101018", bg = "#D78ACF" }', flavor
         )
 
 
