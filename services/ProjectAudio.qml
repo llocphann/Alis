@@ -25,6 +25,8 @@ Singleton {
     property int _restoreAttempts: 0
 
     readonly property bool active: _sessionOutput.length > 0
+    readonly property string activeOutput: _sessionOutput
+    readonly property bool busy: routeProcess.running || _endRequested
     readonly property bool audioRoutedToTv: _owned
         && Policy.name(Audio.rawSink) === _selectedName
 
@@ -140,7 +142,14 @@ Singleton {
         }
         const current = Policy.name(Audio.rawSink)
         if (current && current !== _selectedName) {
-            // System or user has already selected another output.
+            // PipeWire may still be settling after wpctl returns. Wait briefly
+            // while the previous route is still selected, but never overwrite
+            // a third output chosen by the user or the system.
+            if (current === _previousName && _restoreAttempts < 8) {
+                _restoreAttempts++
+                restoreTimer.restart()
+                return
+            }
             statusMessage = "Audio output is managed by the system or user."
             _forgetRoute()
             return
