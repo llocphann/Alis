@@ -143,14 +143,14 @@ class YaziAutoThemeTest(unittest.TestCase):
     def test_theme_integration_preserves_unrelated_user_settings(self):
         existing_theme = (
             '[mgr]\n'
-            'linemode = "size"\n\n'
+            'cwd = { fg = "#123456" }\n\n'
             '[flavor]\n'
             'dark = "another-dark"\n'
             'light = "another-light"\n'
         )
         _, theme = self.render(self.colors(), existing_theme)
         parsed = tomllib.loads(theme)
-        self.assertEqual(parsed["mgr"]["linemode"], "size")
+        self.assertEqual(parsed["mgr"]["cwd"], {"fg": "#123456"})
         self.assertEqual(parsed["flavor"]["dark"], "ii-auto")
         self.assertEqual(parsed["flavor"]["light"], "ii-auto")
         self.assertNotIn('use = "ii-auto"', theme)
