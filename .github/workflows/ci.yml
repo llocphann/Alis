@@ -30,6 +30,7 @@ jobs:
         shell: bash
         run: |
           python3 scripts/test-CAST-F01-display-stage.py
+          python3 scripts/test-CAST-F01-project-ui.py
           python3 scripts/test-CAST-F01-audio-stage.py
           python3 scripts/test-CAST-F01-wireless-stage.py
           dbus-run-session -- /usr/bin/python3 scripts/test-CAST-F01-live-dbus-scan.py
