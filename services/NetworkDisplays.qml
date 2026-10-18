@@ -87,7 +87,8 @@ Singleton {
 
     function _reset(message): void {
         pollTimer.stop()
-        ProjectAudio.endWired()
+        if (ProjectAudio.activeOutput === "wireless:" + activeUuid)
+            ProjectAudio.endWired()
         activeUnit = ""
         activeUuid = ""
         activeName = ""
@@ -181,9 +182,16 @@ Singleton {
         stdout: StdioCollector { id: stopOutput }
         onExited: exitCode => {
             const data = exitCode === 0 ? root._parse(stopOutput.text) : null
-            if (!data?.ok)
-                root.lastError = data?.message || "Unable to confirm TV disconnect."
-            root._reset(data?.ok ? "TV disconnected." : "")
+            if (!data?.ok) {
+                // Keep the real unit identity for an explicit retry; never
+                // claim disconnected while the upstream backend may be alive.
+                root.lastError = data?.message || "TV disconnect not confirmed. Retry Disconnect."
+                root.statusMessage = ""
+                root.phase = "error"
+                root._disconnectPending = false
+                return
+            }
+            root._reset("TV disconnected.")
         }
     }
 
