@@ -55,7 +55,14 @@ def bus(*args):
 
 def typed(value, default=None):
     if isinstance(value, dict) and "type" in value and "data" in value:
-        return value["data"]
+        data = value["data"]
+        # busctl may return a variant as a singleton array of another
+        # typed value; unwrap only D-Bus variants, not ordinary arrays.
+        if value["type"] == "v":
+            if isinstance(data, list) and len(data) == 1:
+                data = data[0]
+            return typed(data, default)
+        return data
     return value if value is not None else default
 
 
@@ -66,6 +73,10 @@ def dictionary(obj):
         return {str(k): typed(v) for k, v in obj.items()}
     if not isinstance(obj, list):
         return {}
+    # get-property and call may wrap aa{sv} in different outer tuple
+    # layers. Unwrap singleton arrays but never substitute an invented sink.
+    while len(obj) == 1 and isinstance(obj[0], list):
+        obj = obj[0]
     if len(obj) % 2 == 0 and all(isinstance(obj[i], str) for i in range(0, len(obj), 2)):
         return {obj[i]: typed(obj[i + 1]) for i in range(0, len(obj), 2)}
     if all(isinstance(x, list) and len(x) == 2 and isinstance(x[0], str) for x in obj):
@@ -131,7 +142,7 @@ def ensure_daemon():
                          start_new_session=True, close_fds=True)
     except OSError:
         return False
-    for _ in range(12):
+    for _ in range(24):
         if name_owned():
             return True
         time.sleep(0.25)
@@ -140,13 +151,17 @@ def ensure_daemon():
 
 def scan():
     if not ensure_daemon():
-        return {"ok": False, "backend": False, "displays": [],
+        return {"ok": False, "backend": False, "streamReady": False,
+                "displays": [],
                 "message": "Network Displays daemon not available. Use Open Network Displays."}
     try:
         p = bus("get-property", BUS, OBJ, IFACE, "Displays")
-        return {"ok": True, "backend": True, "displays": displays(p), "message": ""}
+        installed = stream_binary_available()
+        return {"ok": True, "backend": True, "streamReady": installed,
+                "displays": displays(p), "message": "" if installed else
+                "TV discovery works, but native streaming helper is missing. Use Open app."}
     except (CastError, ValueError, json.JSONDecodeError):
-        return {"ok": False, "backend": True, "displays": [],
+        return {"ok": False, "backend": True, "streamReady": False, "displays": [],
                 "message": "TV scan unavailable; check Network Displays and session D-Bus."}
 
 
@@ -154,9 +169,18 @@ def valid_unit(value):
     return bool(UNIT.fullmatch(value or ""))
 
 
+def stream_binary_available():
+    # Upstream nd-systemd-helpers.c builds ExecStart with this *exact*
+    # absolute location. A package installed under /usr/lib or with
+    # build_daemon=false may support discovery but not native connect.
+    return Path("/usr/libexec/gnome-network-displays-stream").is_file()
+
+
 def start(uid):
     if not IDENTITY.fullmatch(uid or ""):
         raise CastError("Invalid TV identifier")
+    if not stream_binary_available():
+        raise CastError("Network Displays streaming helper missing at upstream libexec path")
     # A receiver must be in the actual current device list, never an
     # unchecked ID from the UI or an issue/comment.
     available = scan()
