@@ -46,8 +46,11 @@ def run(args, timeout=5):
 
 
 def bus(*args):
-    return json.loads(run(["busctl", "--user", "--auto-start=no",
-                           "--json=short", *args], timeout=6))
+    output = run(["busctl", "--user", "--auto-start=no",
+                  "--json=short", *args], timeout=6)
+    # A successful D-Bus method with no out args (StopStream) may print no
+    # JSON. An empty successful reply is still a valid completion.
+    return json.loads(output) if output.strip() else {"type": "", "data": []}
 
 
 def typed(value, default=None):
