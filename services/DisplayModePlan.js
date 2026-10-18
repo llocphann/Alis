@@ -85,3 +85,34 @@ function mirrorRestartAllowed(queuedRevision, currentRevision, applying, names, 
     return Number.isInteger(queuedRevision) && queuedRevision === currentRevision
         && !applying && mirrorPairConnected(names, pair);
 }
+
+ 
+// Human-facing output identity. Keep the actual Niri connector as the command
+// target; EDID make/model is informational and may be duplicated or missing.
+function outputLabel(name, info) {
+    const connector = String(name || "");
+    const parts = [info?.make, info?.model].map(x => String(x || "").trim())
+        .filter(x => x && !/^(unknown|none|n\/a)$/i.test(x));
+    const description = parts.join(" ");
+    return description ? description + " (" + connector + ")" : connector;
+}
+
+// Laptop panels usually expose eDP/LVDS/DSI. Do not guess that the first
+// connected output is internal: it might be the very TV that just vanished.
+function internalOutput(names) {
+    return normalizedNames(names).find(name => /^(edp|lvds|dsi)([-_0-9]|$)/i.test(name)) || "";
+}
+
+// Only re-enable the known laptop panel for a managed external-only session
+// when the external target disappeared AND no other visible output remains.
+function recoveryTarget(connected, active, expectedExternal, internal) {
+    connected = normalizedNames(connected);
+    active = normalizedNames(active);
+    expectedExternal = String(expectedExternal || "");
+    internal = String(internal || "");
+    if (!expectedExternal || connected.includes(expectedExternal) || active.length)
+        return "";
+    if (!internal || internal === expectedExternal || !connected.includes(internal))
+        return "";
+    return internal;
+}
