@@ -407,9 +407,22 @@ Item {
                     enabled: Audio.outputDevices.length > 0
                     onActivated: {
                         const device = Audio.outputDevices[currentIndex]
-                        if (device)
+                        if (device) {
+                            ProjectAudio.releaseOwnership()
                             Audio.setDefaultSink(device)
+                        }
                     }
+                }
+
+                AbyssLabel {
+                    Layout.fillWidth: true
+                    visible: ProjectAudio.statusMessage.length > 0 || ProjectAudio.lastError.length > 0
+                    text: ProjectAudio.lastError.length > 0
+                        ? ProjectAudio.lastError : ProjectAudio.statusMessage
+                    color: ProjectAudio.lastError.length > 0
+                        ? Appearance.colors.colError : root.utilityMutedInk
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    wrapMode: Text.WordWrap
                 }
 
                 Rectangle {
