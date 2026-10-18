@@ -30,7 +30,7 @@ def load_yazi_generator():
 class YaziAutoThemeTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.generate = load_yazi_generator()
+        cls.generate = staticmethod(load_yazi_generator())
 
     def render(self, colors, theme_contents=None):
         with tempfile.TemporaryDirectory() as temp:
