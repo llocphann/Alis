@@ -4,6 +4,7 @@ import ast
 import os
 import re
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -74,8 +75,8 @@ class YaziAutoThemeTest(unittest.TestCase):
     def test_directory_rule_precedes_catch_all_and_uses_current_accent(self):
         flavor, _ = self.render(self.colors())
         filetype = flavor.split("[filetype]", 1)[1]
-        directory_rule = '{ name = "*/", fg = "#D78ACF" }'
-        catch_all_rule = '{ name = "*",  fg = "#C5B8CE" }'
+        directory_rule = '{ url = "*/", fg = "#D78ACF" }'
+        catch_all_rule = '{ url = "*",  fg = "#C5B8CE" }'
 
         self.assertIn(directory_rule, filetype)
         self.assertIn(catch_all_rule, filetype)
@@ -105,16 +106,84 @@ class YaziAutoThemeTest(unittest.TestCase):
             'tab_active      = { fg = "#F4F0FF", bg = "#302A38" }', flavor
         )
 
+    def test_current_yazi_schema_and_toml_are_valid(self):
+        flavor, _ = self.render(self.colors())
+        parsed = tomllib.loads(flavor)
+        allowed = {
+            "mgr": {
+                "cwd", "find_keyword", "find_position", "marker_selected",
+                "marker_copied", "marker_cut", "border_symbol", "border_style",
+                "count_copied", "count_cut", "count_selected",
+            },
+            "indicator": {"current", "preview"},
+            "tabs": {"active", "inactive"},
+            "mode": {
+                "normal_main", "normal_alt", "select_main", "select_alt",
+                "unset_main", "unset_alt",
+            },
+            "status": {
+                "sep_left", "sep_right", "progress_label", "progress_normal",
+                "progress_error", "perm_type", "perm_read", "perm_write",
+                "perm_exec", "perm_sep",
+            },
+            "input": {"border", "title", "value", "selected"},
+            "pick": {"border", "active", "inactive"},
+            "tasks": {"border", "title", "hovered"},
+            "which": {"mask", "cand", "rest", "desc", "separator", "separator_style"},
+            "help": {"chord", "action", "hovered"},
+            "filetype": {"rules"},
+        }
+        self.assertEqual(set(parsed), set(allowed))
+        for section, values in parsed.items():
+            self.assertLessEqual(set(values), allowed[section], section)
+        rules = parsed["filetype"]["rules"]
+        self.assertTrue(all("name" not in rule for rule in rules))
+        self.assertTrue(all("url" in rule or "mime" in rule for rule in rules))
+
     def test_theme_integration_preserves_unrelated_user_settings(self):
         existing_theme = (
             '[mgr]\n'
             'linemode = "size"\n\n'
             '[flavor]\n'
+            'dark = "another-dark"\n'
+            'light = "another-light"\n'
+        )
+        _, theme = self.render(self.colors(), existing_theme)
+        parsed = tomllib.loads(theme)
+        self.assertEqual(parsed["mgr"]["linemode"], "size")
+        self.assertEqual(parsed["flavor"]["dark"], "ii-auto")
+        self.assertEqual(parsed["flavor"]["light"], "ii-auto")
+        self.assertNotIn('use = "ii-auto"', theme)
+
+    def test_theme_integration_migrates_legacy_use_only_inside_flavor(self):
+        existing_theme = (
+            '[custom]\n'
+            'use = "keep-me"\n\n'
+            '[flavor]\n'
             'use = "another-flavor"\n'
         )
         _, theme = self.render(self.colors(), existing_theme)
-        self.assertIn('linemode = "size"', theme)
-        self.assertIn('[flavor]\nuse = "ii-auto"', theme)
+        parsed = tomllib.loads(theme)
+        self.assertEqual(parsed["custom"]["use"], "keep-me")
+        self.assertEqual(parsed["flavor"]["dark"], "ii-auto")
+        self.assertEqual(parsed["flavor"]["light"], "ii-auto")
+        self.assertNotIn("use", parsed["flavor"])
+
+    def test_missing_theme_file_creates_dark_and_light_flavors(self):
+        _, theme = self.render(self.colors())
+        parsed = tomllib.loads(theme)
+        self.assertEqual(parsed["flavor"], {"dark": "ii-auto", "light": "ii-auto"})
+
+    def test_missing_selection_pair_uses_accent_foreground_fallback(self):
+        colors = self.colors()
+        colors.pop("app_selection")
+        colors.pop("surface_container")
+        colors.pop("surfaceContainer", None)
+        colors["app_on_accent"] = "#101018"
+        flavor, _ = self.render(colors)
+        self.assertIn(
+            'current = { fg = "#101018", bg = "#D78ACF" }', flavor
+        )
 
 
 if __name__ == "__main__":
