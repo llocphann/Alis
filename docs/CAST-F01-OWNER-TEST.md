@@ -11,6 +11,24 @@ This feature must **not** be merged/marked Owner verified based only on CI. No s
 3. In Utilities → Display Mode → Wireless TV, click **Scan TVs**. If scan reports a missing daemon, the installed build may only have the GTK app; **Open app** is the supported fallback. Do not silently install an AUR package, change NetworkManager from iwd to wpa_supplicant, modify firewall, or restart services.
 4. For native backend validation, GNOME Network Displays **0.98+** with daemon/stream components is required; its upstream D-Bus interface is `org.gnome.NetworkDisplays.Manager`. The GNOME service can launch the system ScreenCast permissions picker; choose the window/monitor to share. Alis must not bypass it.
 
+## Before trying the wireless UI: verify the scan path
+
+Run these only in the **Owner-approved isolated CAST-F01 test session**, not during a class:
+
+```bash
+python3 scripts/CAST-F01-network-displays.py scan
+busctl --user --json=short get-property \
+  org.gnome.NetworkDisplays.Manager \
+  /org/gnome/NetworkDisplays/Manager \
+  org.gnome.NetworkDisplays.Manager Displays
+```
+
+Expected Python JSON: `ok: true`, `backend: true`, `streamReady: true`, plus a `displays` array containing the **actual TV** when it is discoverable. `ok: true` with `displays: []` means the D-Bus call worked but **no receiver was discovered**; it is **not** a proven successful TV scan. `streamReady: false` means daemon discovery works but the upstream native stream helper required for Connect is missing at `/usr/libexec/gnome-network-displays-stream`. Verify both `gnome-network-displays-daemon` and that installed executable exist before testing Connect. Scan from Alis now performs up to five bounded discovery attempts (not endless background polling).
+
+The direct busctl command is a diagnostic cross-check, not an installation step. If the TV appears in busctl but not in the bridge output, report **parser bug**. If it appears in the bridge but not the Alis selector, report **QML UI state bug**. If both return no TVs, the issue may be **receiver mode, Wi-Fi P2P, Avahi/mDNS, NetworkManager, AP isolation or codecs**. Do not change the Wi-Fi backend or disable firewalls simply to make the test pass. In particular, GStreamer codecs affect connecting/streaming, but may not explain why a receiver is absent from discovery.
+
+**This procedure distinguishes working software enumeration from actual discovery over a real classroom network. Neither mocked CI tests nor presence of a running D-Bus manager can guarantee a TV will be found on every network.**
+
 ## Wired HDMI / video-capable USB-C
 
 - Connect TV and confirm make/model/connector displays without confusing it with another monitor or serial. Plain data-only USB-C cannot be expected to output video.
