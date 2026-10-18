@@ -43,3 +43,18 @@ function safeToRestore(current, selected, previous, devices) {
         && !!previous && previous !== selected
         && !!findByName(devices, previous);
 }
+
+function wirelessSinkName(uuid) {
+    const id = String(uuid || "");
+    // GNOME Network Displays' nd-pulseaudio.c uses %.8s of receiver UUID.
+    return /^[A-Za-z0-9_.:-]{8,128}$/.test(id)
+        ? "gnome_network_displays_" + id.slice(0, 8) : "";
+}
+function findWirelessSink(devices, uuid) {
+    const wanted = wirelessSinkName(uuid).toLowerCase();
+    if (!wanted) return null;
+    const candidates = (devices || []).filter(node =>
+        !node.isStream && node.isSink !== false && Number(node.id) > 0
+        && name(node).toLowerCase() === wanted);
+    return candidates.length === 1 ? candidates[0] : null;
+}
