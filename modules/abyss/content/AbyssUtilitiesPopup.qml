@@ -29,7 +29,7 @@ Item {
     readonly property int loadedPageCount: [monitorLoader, displayLoader, audioLoader, nightLoader]
         .filter(loader => loader.active && loader.item !== null).length
     readonly property var pageTitles: [
-        "Monitor arrangement", "Display mode", "Sound", "Eye protection"
+        "Monitor arrangement", "Project & Cast", "Sound", "Eye protection"
     ]
     // All Utilities pages share one compact fixed viewport. The 400 px height
     // still fits the monitor-arrangement canvas while avoiding empty lower space
@@ -66,6 +66,12 @@ Item {
             Layout.fillWidth: true
             spacing: 8
 
+            MaterialSymbol {
+                visible: pages.currentIndex === 1
+                text: "present_to_all"
+                iconSize: 18
+                color: AbyssStyle.accent
+            }
             AbyssLabel {
                 text: root.pageTitles[pages.currentIndex] ?? "Utilities"
                 font.pixelSize: Appearance.font.pixelSize.small
@@ -165,264 +171,429 @@ Item {
         id: displayPage
 
         Item {
+            id: displayContent
+            property bool showDisplayTargets: false
+            readonly property bool hasMultipleExternals: DisplayMode.connectedOutputs.length > 2
+
+            function activateMode(mode): void {
+                if (mode === "primary-only") {
+                    DisplayMode.apply("primary-only")
+                } else if (mode === "mirror") {
+                    if (DisplayMode.currentMode === "mirror") DisplayMode.stopMirror(true)
+                    else DisplayMode.apply("mirror")
+                } else if (mode === "extend") {
+                    DisplayMode.apply("extend")
+                } else if (mode === "second-only") {
+                    DisplayMode.apply("second-only")
+                }
+            }
+
             Flickable {
                 anchors.fill: parent
                 contentWidth: width
-                contentHeight: displayColumn.implicitHeight
-                clip: true
+                contentHeight: displayColumn.implicitHeight + 8
                 boundsBehavior: Flickable.StopAtBounds
+                clip: true
 
                 ColumnLayout {
                     id: displayColumn
                     width: parent.width
                     spacing: 12
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    AbyssButton {
+                    AbyssLabel {
                         Layout.fillWidth: true
-                        glyph: "view_week"
-                        text: "Extend"
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        checked: DisplayMode.currentMode === "extend"
-                        enabled: CompositorService.isNiri && !DisplayMode.applying
-                        onClicked: DisplayMode.apply("extend")
+                        text: "DISPLAY MODE"
+                        color: root.utilityMutedInk
+                        font.pixelSize: Appearance.font.pixelSize.smaller
                     }
-                    AbyssButton {
+
+                    GridLayout {
                         Layout.fillWidth: true
-                        glyph: "laptop"
-                        text: "Primary only"
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        checked: DisplayMode.currentMode === "primary-only"
-                        enabled: CompositorService.isNiri && !DisplayMode.applying
-                        onClicked: DisplayMode.apply("primary-only")
-                    }
-                }
+                        columns: 2
+                        columnSpacing: 8
+                        rowSpacing: 8
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
+                        Repeater {
+                            model: [
+                                { key: "primary-only", title: "PC screen only", glyph: "monitor" },
+                                { key: "mirror", title: "Duplicate", glyph: "filter_none" },
+                                { key: "extend", title: "Extend", glyph: "view_week" },
+                                { key: "second-only", title: "Second screen only", glyph: "tv" }
+                            ]
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
-                        AbyssLabel {
-                            text: "Second screen"
-                            color: root.utilityMutedInk
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                        }
-                        StyledComboBox {
-                            Layout.fillWidth: true
-                            enableSettingsSearch: false
-                            readonly property var outputIds: DisplayMode.connectedOutputs.filter(
-                                output => output !== DisplayMode.primaryOutput)
-                            model: outputIds.map(output => DisplayMode.outputLabel(output))
-                            currentIndex: Math.max(0, outputIds.indexOf(DisplayMode.selectedSecondary))
-                            enabled: outputIds.length > 0 && !DisplayMode.applying
-                            onActivated: {
-                                const selected = outputIds[currentIndex]
-                                if (selected) DisplayMode.selectedSecondary = selected
-                            }
-                        }
-                    }
-
-                    AbyssButton {
-                        Layout.alignment: Qt.AlignBottom
-                        glyph: "desktop_windows"
-                        text: "Second screen only"
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        checked: DisplayMode.currentMode === "second-only"
-                        enabled: CompositorService.isNiri && !DisplayMode.applying
-                            && DisplayMode.selectedSecondary.length > 0
-                        onClicked: DisplayMode.apply("second-only")
-                    }
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: mirrorColumn.implicitHeight + 24
-                    radius: 18
-                    color: Qt.alpha(AbyssStyle.accent, .05)
-                    border.width: 1
-                    border.color: Qt.alpha(AbyssStyle.accent, .16)
-
-                    ColumnLayout {
-                        id: mirrorColumn
-                        anchors {
-                            fill: parent
-                            margins: 12
-                        }
-                        spacing: 8
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            AbyssLabel {
-                                text: "Mirror"
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                font.weight: Font.DemiBold
+                            delegate: Rectangle {
+                                id: modeTile
+                                required property var modelData
+                                readonly property bool selected: DisplayMode.currentMode === modelData.key
+                                readonly property bool canApply: CompositorService.isNiri
+                                    && !DisplayMode.applying
+                                    && (modelData.key === "primary-only"
+                                        || (modelData.key === "extend"
+                                            && DisplayMode.connectedOutputs.length > 1)
+                                        || (modelData.key === "mirror"
+                                            && DisplayMode.connectedOutputs.length > 1
+                                            && DisplayMode.mirrorAvailable
+                                            && DisplayMode.mirrorSource.length > 0
+                                            && DisplayMode.mirrorTarget.length > 0)
+                                        || (modelData.key === "second-only"
+                                            && DisplayMode.selectedSecondary.length > 0))
                                 Layout.fillWidth: true
-                            }
-                            AbyssLabel {
-                                visible: !DisplayMode.mirrorAvailable
-                                text: "Install wl-mirror"
-                                color: Appearance.colors.colError
-                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                Layout.preferredHeight: 52
+                                radius: 12
+                                opacity: canApply ? 1 : 0.48
+                                color: selected ? Qt.alpha(AbyssStyle.accent, .13)
+                                    : modeMouse.containsMouse && canApply
+                                        ? Qt.alpha(AbyssStyle.accent, .08)
+                                        : Qt.alpha(AbyssStyle.accent, .025)
+                                border.width: 1
+                                border.color: selected ? Qt.alpha(AbyssStyle.accent, .42)
+                                    : Qt.alpha(AbyssStyle.accent, .12)
+
+                                Behavior on color {
+                                    enabled: AbyssStyle.motionEnabled
+                                    ColorAnimation { duration: AbyssStyle.motionFast }
+                                }
+
+                                RowLayout {
+                                    anchors {
+                                        fill: parent
+                                        leftMargin: 13
+                                        rightMargin: 13
+                                    }
+                                    spacing: 9
+
+                                    MaterialSymbol {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: modeTile.modelData.glyph
+                                        iconSize: 20
+                                        color: modeTile.selected ? AbyssStyle.accent : root.utilityMutedInk
+                                    }
+                                    AbyssLabel {
+                                        Layout.fillWidth: true
+                                        text: modeTile.modelData.title
+                                        font.pixelSize: Appearance.font.pixelSize.small
+                                        font.weight: modeTile.selected ? Font.DemiBold : Font.Normal
+                                        color: modeTile.selected ? root.utilityInk : root.utilityMutedInk
+                                        elide: Text.ElideRight
+                                        wrapMode: Text.NoWrap
+                                    }
+                                    MaterialSymbol {
+                                        visible: modeTile.selected
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: "check"
+                                        iconSize: 18
+                                        color: AbyssStyle.accent
+                                    }
+                                }
+
+                                Accessible.role: Accessible.Button
+                                Accessible.name: modeTile.modelData.title
+                                Accessible.description: modeTile.selected ? "Selected display mode" : ""
+                                MouseArea {
+                                    id: modeMouse
+                                    anchors.fill: parent
+                                    enabled: modeTile.canApply
+                                    hoverEnabled: true
+                                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                    onClicked: displayContent.activateMode(modeTile.modelData.key)
+                                }
                             }
                         }
+                    }
+
+                    // Two connected outputs need no extra fields: the primary
+                    // panel is the duplicate source and the external is its
+                    // target. Keep manual connector selection for 3+ displays.
+                    RowLayout {
+                        Layout.fillWidth: true
+                        visible: displayContent.hasMultipleExternals
+                        spacing: 6
+
+                        AbyssLabel {
+                            Layout.fillWidth: true
+                            text: "Select source and target displays"
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            color: root.utilityMutedInk
+                        }
+                        AbyssButton {
+                            glyph: displayContent.showDisplayTargets ? "expand_less" : "tune"
+                            text: displayContent.showDisplayTargets ? "Hide" : "Choose"
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            onClicked: displayContent.showDisplayTargets =
+                                !displayContent.showDisplayTargets
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+                        visible: displayContent.hasMultipleExternals
+                            && displayContent.showDisplayTargets
 
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 8
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 4
-                                AbyssLabel {
-                                    text: "Source"
-                                    color: root.utilityMutedInk
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                }
-                                StyledComboBox {
-                                    Layout.fillWidth: true
-                                    enableSettingsSearch: false
-                                    model: DisplayMode.connectedOutputs.map(output => DisplayMode.outputLabel(output))
-                                    currentIndex: Math.max(0, DisplayMode.connectedOutputs.indexOf(DisplayMode.mirrorSource))
-                                    enabled: DisplayMode.connectedOutputs.length > 1 && !DisplayMode.applying
-                                    onActivated: DisplayMode.setMirrorSource(DisplayMode.connectedOutputs[currentIndex])
-                                }
+                            AbyssLabel {
+                                text: "Second screen"
+                                color: root.utilityMutedInk
+                                font.pixelSize: Appearance.font.pixelSize.smallest
                             }
-
-                            ColumnLayout {
+                            StyledComboBox {
                                 Layout.fillWidth: true
-                                spacing: 4
-                                AbyssLabel {
-                                    text: "Target"
-                                    color: root.utilityMutedInk
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                }
-                                StyledComboBox {
-                                    Layout.fillWidth: true
-                                    enableSettingsSearch: false
-                                    readonly property var outputIds: DisplayMode.connectedOutputs.filter(
-                                        output => output !== DisplayMode.mirrorSource)
-                                    model: outputIds.map(output => DisplayMode.outputLabel(output))
-                                    currentIndex: Math.max(0, outputIds.indexOf(DisplayMode.mirrorTarget))
-                                    enabled: outputIds.length > 0 && !DisplayMode.applying
-                                    onActivated: DisplayMode.setMirrorTarget(outputIds[currentIndex])
+                                enableSettingsSearch: false
+                                readonly property var outputIds: DisplayMode.connectedOutputs.filter(
+                                    output => output !== DisplayMode.primaryOutput)
+                                model: outputIds.map(output => DisplayMode.outputLabel(output))
+                                currentIndex: Math.max(0, outputIds.indexOf(DisplayMode.selectedSecondary))
+                                enabled: outputIds.length > 0 && !DisplayMode.applying
+                                onActivated: {
+                                    const selected = outputIds[currentIndex]
+                                    if (selected) DisplayMode.selectedSecondary = selected
                                 }
                             }
                         }
-
                         RowLayout {
                             Layout.fillWidth: true
-                            Item { Layout.fillWidth: true }
-                            AbyssButton {
-                                glyph: DisplayMode.currentMode === "mirror" ? "stop_screen_share" : "screen_share"
-                                text: DisplayMode.currentMode === "mirror" ? "Stop mirror" : "Mirror"
-                                font.pixelSize: Appearance.font.pixelSize.small
-                                enabled: DisplayMode.mirrorAvailable && !DisplayMode.applying
-                                    && DisplayMode.mirrorSource.length > 0
-                                    && DisplayMode.mirrorTarget.length > 0
-                                onClicked: {
-                                    if (DisplayMode.currentMode === "mirror") DisplayMode.stopMirror(true)
-                                    else DisplayMode.apply("mirror")
-                                }
+                            spacing: 8
+                            AbyssLabel {
+                                text: "Duplicate"
+                                color: root.utilityMutedInk
+                                font.pixelSize: Appearance.font.pixelSize.smallest
                             }
-                        }
-                    }
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
-                        AbyssLabel {
-                            Layout.fillWidth: true
-                            text: "Wireless TV · Miracast / Chromecast"
-                            color: root.utilityMutedInk
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                        }
-                        AbyssButton {
-                            glyph: "search"
-                            text: NetworkDisplays.scanning ? "Scanning…" : "Scan TVs"
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            enabled: !NetworkDisplays.scanning
-                            onClicked: NetworkDisplays.scan()
-                        }
-                        AbyssButton {
-                            glyph: "open_in_new"
-                            text: "Open app"
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            visible: root.wirelessToolAvailable
-                            enabled: root.wirelessToolAvailable
-                            onClicked: Quickshell.execDetached(["gnome-network-displays"])
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-                        StyledComboBox {
-                            Layout.fillWidth: true
-                            enableSettingsSearch: false
-                            readonly property var receivers: NetworkDisplays.displays
-                            model: receivers.map(device => device.name + " · " + device.protocol)
-                            currentIndex: Math.max(0, receivers.findIndex(
-                                device => device.uuid === NetworkDisplays.selectedUuid))
-                            enabled: receivers.length > 0 && !NetworkDisplays.active
-                                && !NetworkDisplays.busy
-                            onActivated: {
-                                const receiver = receivers[currentIndex]
-                                if (receiver) NetworkDisplays.select(receiver.uuid)
+                            StyledComboBox {
+                                Layout.fillWidth: true
+                                enableSettingsSearch: false
+                                model: DisplayMode.connectedOutputs.map(output => DisplayMode.outputLabel(output))
+                                currentIndex: Math.max(0, DisplayMode.connectedOutputs.indexOf(DisplayMode.mirrorSource))
+                                enabled: DisplayMode.connectedOutputs.length > 1 && !DisplayMode.applying
+                                onActivated: DisplayMode.setMirrorSource(DisplayMode.connectedOutputs[currentIndex])
                             }
-                        }
-                        AbyssButton {
-                            glyph: NetworkDisplays.active || NetworkDisplays.busy
-                                ? "stop_screen_share" : "cast_connected"
-                            text: NetworkDisplays.active || NetworkDisplays.busy
-                                ? "Disconnect" : "Connect"
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            enabled: NetworkDisplays.active || NetworkDisplays.busy
-                                || (!NetworkDisplays.scanning && NetworkDisplays.streamReady
-                                    && NetworkDisplays.displays.length > 0)
-                            onClicked: {
-                                if (NetworkDisplays.active || NetworkDisplays.busy)
-                                    NetworkDisplays.disconnect()
-                                else
-                                    NetworkDisplays.connectToSelected()
+                            StyledComboBox {
+                                Layout.fillWidth: true
+                                enableSettingsSearch: false
+                                readonly property var outputIds: DisplayMode.connectedOutputs.filter(
+                                    output => output !== DisplayMode.mirrorSource)
+                                model: outputIds.map(output => DisplayMode.outputLabel(output))
+                                currentIndex: Math.max(0, outputIds.indexOf(DisplayMode.mirrorTarget))
+                                enabled: outputIds.length > 0 && !DisplayMode.applying
+                                onActivated: DisplayMode.setMirrorTarget(outputIds[currentIndex])
                             }
                         }
                     }
 
                     AbyssLabel {
                         Layout.fillWidth: true
-                        visible: NetworkDisplays.statusMessage.length > 0
-                            || NetworkDisplays.lastError.length > 0
+                        visible: DisplayMode.lastError.length > 0
+                            || (DisplayMode.currentMode === "mirror" && DisplayMode.statusMessage.length > 0)
+                            || (DisplayMode.applying && DisplayMode.statusMessage.length > 0)
+                        text: DisplayMode.lastError.length > 0
+                            ? DisplayMode.lastError : DisplayMode.statusMessage
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        color: DisplayMode.lastError.length > 0
+                            ? Appearance.colors.colError : root.utilityMutedInk
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        color: Qt.alpha(root.utilityInk, .10)
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        AbyssLabel {
+                            Layout.fillWidth: true
+                            text: "WIRELESS DISPLAY"
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: root.utilityMutedInk
+                        }
+                        AbyssButton {
+                            glyph: NetworkDisplays.scanning ? "hourglass_top" : "sync"
+                            text: NetworkDisplays.scanning ? "Scanning…" : "Scan"
+                            outlined: false
+                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            enabled: !NetworkDisplays.scanning
+                            onClicked: NetworkDisplays.scan()
+                        }
+                    }
+
+                    Rectangle {
+                        id: receiverList
+                        Layout.fillWidth: true
+                        implicitHeight: receiverColumn.implicitHeight + 2
+                        radius: 13
+                        color: Qt.alpha(AbyssStyle.accent, .025)
+                        border.width: 1
+                        border.color: Qt.alpha(AbyssStyle.accent, .10)
+
+                        ColumnLayout {
+                            id: receiverColumn
+                            width: parent.width
+                            spacing: 0
+
+                            Repeater {
+                                model: NetworkDisplays.displays
+                                delegate: Item {
+                                    id: receiverRow
+                                    required property var modelData
+                                    required property int index
+                                    readonly property string receiverId: String(modelData.uuid ?? "")
+                                    readonly property bool currentSession: NetworkDisplays.activeUuid === receiverId
+                                        && NetworkDisplays.phase !== "idle"
+                                    readonly property bool canChoose: currentSession
+                                        || (!NetworkDisplays.active && !NetworkDisplays.busy
+                                            && !NetworkDisplays.scanning && NetworkDisplays.streamReady)
+                                    readonly property string receiverState: currentSession
+                                        ? NetworkDisplays.phase === "service-active"
+                                            ? "Streaming service active"
+                                            : NetworkDisplays.phase === "disconnecting"
+                                                ? "Disconnecting…" : "Connecting…"
+                                        : modelData.state === "error" ? "Error"
+                                            : modelData.state === "streaming" ? "In use"
+                                            : "Available"
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 61
+                                    opacity: canChoose ? 1 : 0.65
+
+                                    Rectangle {
+                                        visible: receiverRow.index > 0
+                                        anchors.top: parent.top
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.leftMargin: 12
+                                        anchors.rightMargin: 12
+                                        height: 1
+                                        color: Qt.alpha(root.utilityInk, .08)
+                                    }
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        color: receiverMouse.containsMouse && receiverRow.canChoose
+                                            ? Qt.alpha(AbyssStyle.accent, .09) : "transparent"
+                                        radius: 10
+                                    }
+
+                                    RowLayout {
+                                        anchors {
+                                            fill: parent
+                                            leftMargin: 13
+                                            rightMargin: 13
+                                        }
+                                        spacing: 12
+
+                                        MaterialSymbol {
+                                            Layout.alignment: Qt.AlignVCenter
+                                            text: receiverRow.modelData.protocolId === 3 ? "cast"
+                                                : "tv"
+                                            iconSize: 21
+                                            color: receiverRow.currentSession
+                                                ? AbyssStyle.accent : root.utilityMutedInk
+                                        }
+                                        ColumnLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 2
+                                            AbyssLabel {
+                                                Layout.fillWidth: true
+                                                text: receiverRow.modelData.name
+                                                font.pixelSize: Appearance.font.pixelSize.small
+                                                color: root.utilityInk
+                                                elide: Text.ElideRight
+                                                wrapMode: Text.NoWrap
+                                            }
+                                            AbyssLabel {
+                                                Layout.fillWidth: true
+                                                text: receiverRow.modelData.protocol
+                                                    + " · " + receiverRow.receiverState
+                                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                                color: root.utilityMutedInk
+                                                elide: Text.ElideRight
+                                                wrapMode: Text.NoWrap
+                                            }
+                                        }
+                                        MaterialSymbol {
+                                            Layout.alignment: Qt.AlignVCenter
+                                            text: receiverRow.currentSession ? "stop_circle" : "chevron_right"
+                                            iconSize: 19
+                                            color: receiverRow.currentSession
+                                                ? AbyssStyle.accent : root.utilityMutedInk
+                                        }
+                                    }
+
+                                    Accessible.role: Accessible.Button
+                                    Accessible.name: receiverRow.modelData.name
+                                    Accessible.description: receiverRow.modelData.protocol
+                                        + " " + receiverRow.receiverState
+                                    MouseArea {
+                                        id: receiverMouse
+                                        anchors.fill: parent
+                                        enabled: receiverRow.canChoose
+                                        hoverEnabled: true
+                                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                        onClicked: {
+                                            if (receiverRow.currentSession) {
+                                                NetworkDisplays.disconnect()
+                                            } else {
+                                                NetworkDisplays.select(receiverRow.receiverId)
+                                                NetworkDisplays.connectToSelected()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 60
+                                visible: NetworkDisplays.displays.length === 0
+                                RowLayout {
+                                    anchors {
+                                        fill: parent
+                                        leftMargin: 13
+                                        rightMargin: 13
+                                    }
+                                    spacing: 10
+                                    MaterialSymbol {
+                                        text: NetworkDisplays.scanning ? "sync" : "cast"
+                                        iconSize: 21
+                                        color: root.utilityMutedInk
+                                    }
+                                    AbyssLabel {
+                                        Layout.fillWidth: true
+                                        text: NetworkDisplays.scanning
+                                            ? "Searching for nearby TVs…"
+                                            : "No wireless displays found. Select Scan to search."
+                                        font.pixelSize: Appearance.font.pixelSize.smallest
+                                        color: root.utilityMutedInk
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    AbyssLabel {
+                        Layout.fillWidth: true
+                        visible: NetworkDisplays.lastError.length > 0
+                            || (NetworkDisplays.active && NetworkDisplays.statusMessage.length > 0)
+                            || (!NetworkDisplays.streamReady && NetworkDisplays.backendAvailable
+                                && NetworkDisplays.displays.length > 0)
                         text: NetworkDisplays.lastError.length > 0
                             ? NetworkDisplays.lastError : NetworkDisplays.statusMessage
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         color: NetworkDisplays.lastError.length > 0
                             ? Appearance.colors.colError : root.utilityMutedInk
-                        wrapMode: Text.WordWrap
                     }
-                }
 
-                Item { Layout.fillHeight: true }
-
-                AbyssLabel {
-                    Layout.fillWidth: true
-                    visible: DisplayMode.statusMessage.length > 0 || DisplayMode.lastError.length > 0
-                    text: DisplayMode.lastError.length > 0
-                        ? DisplayMode.lastError : DisplayMode.statusMessage
-                    color: DisplayMode.lastError.length > 0
-                        ? Appearance.colors.colError : root.utilityMutedInk
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                }
+                    AbyssButton {
+                        Layout.alignment: Qt.AlignLeft
+                        visible: root.wirelessToolAvailable
+                            && !NetworkDisplays.backendAvailable
+                            && NetworkDisplays.lastError.length > 0
+                        glyph: "open_in_new"
+                        text: "Open Network Displays"
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        onClicked: Quickshell.execDetached(["gnome-network-displays"])
+                    }
                 }
             }
         }
