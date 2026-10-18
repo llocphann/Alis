@@ -562,7 +562,9 @@ Item {
                                         Layout.fillWidth: true
                                         text: NetworkDisplays.scanning
                                             ? "Searching for nearby TVs…"
-                                            : "No wireless displays found. Select Scan to search."
+                                            : NetworkDisplays.lastError.length > 0
+                                                ? "Wireless TV discovery is unavailable."
+                                                : "No wireless displays found. Select Scan to search."
                                         font.pixelSize: Appearance.font.pixelSize.smallest
                                         color: root.utilityMutedInk
                                     }
