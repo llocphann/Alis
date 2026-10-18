@@ -1178,7 +1178,7 @@ current = {{ fg = "{hover_fg}", bg = "{hover_bg}" }}
 preview = {{ underline = true }}
 
 [tabs]
-active   = {{ fg = "{hover_fg}", bg = "{sel_bg}" }}
+active   = {{ fg = "{hover_fg}", bg = "{hover_bg}" }}
 inactive = {{ fg = "{fg_dim}", bg = "{sel_bg}" }}
 
 [mode]
