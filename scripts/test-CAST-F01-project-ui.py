@@ -9,8 +9,12 @@ end = qml.index("    Component {\n        id: audioPage", start)
 panel = qml[start:end]
 
 assert '"Monitor arrangement", "Project & Cast", "Sound", "Eye protection"' in qml
-assert 'visible: pages.currentIndex === 1' in qml
-assert 'text: "present_to_all"' in qml
+assert 'readonly property var pageIcons:' in qml
+assert '"monitor", "present_to_all", "volume_up", "nightlight"' in qml
+assert 'text: root.pageIcons[pages.currentIndex] ?? "widgets"' in qml
+assert 'color: AbyssStyle.accent' in qml
+assert 'color: root.utilityInk' in qml
+assert 'Layout.alignment: Qt.AlignVCenter' in qml
 
 for mode, label in (
     ("primary-only", "PC screen only"),
