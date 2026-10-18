@@ -124,7 +124,7 @@ for word in ("function scan(): void", "function connectToSelected(): void",
     assert word in qml, word
 for word in ("NetworkDisplays.displays", "NetworkDisplays.scan()",
              "NetworkDisplays.connectToSelected()", "NetworkDisplays.disconnect()",
-             "Flickable {", "NetworkDisplays.selectedUuid"):
+             "Flickable {", "NetworkDisplays.select(receiverRow.receiverId)"): 
     assert word in popup, word
 assert 'root.streamReady = data.streamReady === true' in qml
 assert 'NetworkDisplays.streamReady' in popup
