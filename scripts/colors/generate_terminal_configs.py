@@ -1159,21 +1159,24 @@ def generate_yazi_config(colors, output_path):
 
 [mgr]
 cwd = {{ fg = "{primary}" }}
-hovered         = {{ fg = "{hover_fg}", bg = "{hover_bg}" }}
-preview_hovered = {{ underline = true }}
 find_keyword    = {{ fg = "{yellow}", italic = true }}
 find_position   = {{ fg = "{magenta}", bg = "reset", italic = true }}
 marker_selected = {{ fg = "{green}", bg = "{green}" }}
 marker_copied   = {{ fg = "{yellow}", bg = "{yellow}" }}
 marker_cut      = {{ fg = "{red}", bg = "{red}" }}
-tab_active      = {{ fg = "{hover_fg}", bg = "{sel_bg}" }}
-tab_inactive    = {{ fg = "{fg_dim}", bg = "{sel_bg}" }}
-tab_width       = 1
 border_symbol   = "\u2502"
 border_style    = {{ fg = "{gray}" }}
 count_copied    = {{ fg = "{bg}", bg = "{yellow}" }}
 count_cut       = {{ fg = "{bg}", bg = "{red}" }}
 count_selected  = {{ fg = "{bg}", bg = "{primary}" }}
+
+[indicator]
+current = {{ fg = "{hover_fg}", bg = "{hover_bg}" }}
+preview = {{ underline = true }}
+
+[tabs]
+active   = {{ fg = "{hover_fg}", bg = "{sel_bg}" }}
+inactive = {{ fg = "{fg_dim}", bg = "{sel_bg}" }}
 
 [mode]
 normal_main = {{ fg = "{bg}", bg = "{primary}", bold = true }}
@@ -1184,17 +1187,16 @@ unset_main  = {{ fg = "{bg}", bg = "{magenta}", bold = true }}
 unset_alt   = {{ fg = "{bg}", bg = "{magenta}", bold = true }}
 
 [status]
-separator_open  = ""
-separator_close = ""
-separator_style = {{ fg = "{sel_bg}", bg = "{sel_bg}" }}
+sep_left        = {{ open = "", close = "" }}
+sep_right       = {{ open = "", close = "" }}
 progress_label  = {{ fg = "{fg}", bold = true }}
 progress_normal = {{ fg = "{primary}", bg = "{sel_bg}" }}
 progress_error  = {{ fg = "{red}", bg = "{sel_bg}" }}
-permissions_t   = {{ fg = "{primary}" }}
-permissions_r   = {{ fg = "{yellow}" }}
-permissions_w   = {{ fg = "{red}" }}
-permissions_x   = {{ fg = "{green}" }}
-permissions_s   = {{ fg = "{gray}" }}
+perm_type       = {{ fg = "{primary}" }}
+perm_read       = {{ fg = "{yellow}" }}
+perm_write      = {{ fg = "{red}" }}
+perm_exec       = {{ fg = "{green}" }}
+perm_sep        = {{ fg = "{gray}" }}
 
 [input]
 border   = {{ fg = "{primary}" }}
@@ -1202,7 +1204,7 @@ title    = {{}}
 value    = {{}}
 selected = {{ reversed = true }}
 
-[select]
+[pick]
 border   = {{ fg = "{primary}" }}
 active   = {{ fg = "{magenta}", bold = true }}
 inactive = {{}}
@@ -1221,11 +1223,9 @@ separator       = "  "
 separator_style = {{ fg = "{gray}" }}
 
 [help]
-on      = {{ fg = "{magenta}" }}
-run     = {{ fg = "{cyan}" }}
-desc    = {{ fg = "{gray}" }}
+chord   = {{ fg = "{magenta}" }}
+action  = {{ fg = "{cyan}" }}
 hovered = {{ bg = "{sel_bg}", bold = true }}
-footer  = {{ fg = "{sel_bg}", bg = "{fg_dim}" }}
 
 [filetype]
 rules = [
@@ -1239,43 +1239,59 @@ rules = [
   {{ mime = "application/x-bzip2",         fg = "{red}" }},
   {{ mime = "application/x-7z-compressed", fg = "{red}" }},
   {{ mime = "application/x-rar",           fg = "{red}" }},
-  {{ name = "*/", fg = "{primary}" }},
-  {{ name = "*",  fg = "{fg_dim}" }},
+  {{ url = "*/", fg = "{primary}" }},
+  {{ url = "*",  fg = "{fg_dim}" }},
 ]
 """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
         f.write(config)
 
-    # Auto-integrate: set flavor in yazi's theme.toml
+    # Auto-integrate using Yazi's current dark/light flavor contract. Only
+    # edit the [flavor] table; leave every other user-owned table untouched.
     home = os.path.expanduser("~")
     theme_toml = f"{home}/.config/yazi/theme.toml"
     theme_path = Path(theme_toml)
+    content = theme_path.read_text(encoding="utf-8") if theme_path.exists() else ""
 
-    flavor_line = 'use = "ii-auto"'
-    if theme_path.exists():
-        content = theme_path.read_text()
-        if "[flavor]" in content:
-            if re.search(r'^use\s*=\s*"ii-auto"', content, re.MULTILINE):
-                print(f"\u2713 Generated yazi flavor (already using ii-auto)")
-            elif re.search(r"^use\s*=", content, re.MULTILINE):
-                new_content = re.sub(
-                    r"^(use\s*=).*$",
-                    f'use = "ii-auto"',
-                    content,
-                    count=1,
-                    flags=re.MULTILINE,
-                )
-                theme_path.write_text(new_content)
-                print(f"\u2713 Generated yazi flavor and updated theme.toml")
+    flavor_header = re.search(r"(?m)^\[flavor\][ \t]*(?:#.*)?$", content)
+    if flavor_header:
+        section_start = flavor_header.end()
+        next_header = re.search(
+            r"(?m)^[ \t]*\[[A-Za-z0-9_.-]+\][ \t]*(?:#.*)?$",
+            content[section_start:],
+        )
+        section_end = (
+            section_start + next_header.start() if next_header else len(content)
+        )
+        section = content[section_start:section_end]
+        # Drop the legacy single-flavor key; current Yazi expects dark/light.
+        section = re.sub(r"(?m)^[ \t]*use[ \t]*=.*(?:\r?\n|$)", "", section)
+        missing = []
+        for key in ("dark", "light"):
+            key_pattern = re.compile(rf"(?m)^[ \t]*{key}[ \t]*=.*$")
+            if key_pattern.search(section):
+                section = key_pattern.sub(f'{key} = "ii-auto"', section, count=1)
             else:
-                new_content = content.replace("[flavor]", f"[flavor]\n{flavor_line}")
-                theme_path.write_text(new_content)
-                print(f"\u2713 Generated yazi flavor and added use directive")
+                missing.append(f'{key} = "ii-auto"')
+        if missing:
+            newline = "\r\n" if section.startswith("\r\n") else "\n"
+            body = section[len(newline):] if section.startswith(newline) else section
+            section = newline + newline.join(missing) + newline + body
+        new_content = content[:section_start] + section + content[section_end:]
+        if new_content != content:
+            theme_path.write_text(new_content, encoding="utf-8")
+            print(f"\u2713 Generated yazi flavor and updated dark/light selection")
         else:
-            with open(theme_toml, "a") as f:
-                f.write(f"\n[flavor]\n{flavor_line}\n")
-            print(f"\u2713 Generated yazi flavor and added [flavor] section")
+            print(f"\u2713 Generated yazi flavor (already using ii-auto)")
+    else:
+        if content and not content.endswith("\n"):
+            content += "\n\n"
+        elif content and not content.endswith("\n\n"):
+            content += "\n"
+        new_content = content + '[flavor]\ndark = "ii-auto"\nlight = "ii-auto"\n'
+        theme_path.write_text(new_content, encoding="utf-8")
+        print(f"\u2713 Generated yazi flavor and added [flavor] section")
     else:
         theme_path.parent.mkdir(parents=True, exist_ok=True)
         theme_path.write_text(f"[flavor]\n{flavor_line}\n")
