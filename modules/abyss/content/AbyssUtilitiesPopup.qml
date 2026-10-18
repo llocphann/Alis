@@ -31,6 +31,11 @@ Item {
     readonly property var pageTitles: [
         "Monitor arrangement", "Project & Cast", "Sound", "Eye protection"
     ]
+    // Every Utilities page uses the same accent-colored header icon.
+    // Keep these arrays aligned with the SwipeView's fixed page order.
+    readonly property var pageIcons: [
+        "monitor", "present_to_all", "volume_up", "nightlight"
+    ]
     // All Utilities pages share one compact fixed viewport. The 400 px height
     // still fits the monitor-arrangement canvas while avoiding empty lower space
     // on Display, Sound and Eye protection.
@@ -67,15 +72,16 @@ Item {
             spacing: 8
 
             MaterialSymbol {
-                visible: pages.currentIndex === 1
-                text: "present_to_all"
+                text: root.pageIcons[pages.currentIndex] ?? "widgets"
                 iconSize: 18
                 color: AbyssStyle.accent
+                Layout.alignment: Qt.AlignVCenter
             }
             AbyssLabel {
                 text: root.pageTitles[pages.currentIndex] ?? "Utilities"
                 font.pixelSize: Appearance.font.pixelSize.small
                 font.weight: Font.DemiBold
+                color: root.utilityInk
                 Layout.fillWidth: true
             }
 
