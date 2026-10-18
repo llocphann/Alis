@@ -47,6 +47,7 @@ singleton Notepad 1.0 Notepad.qml
 singleton Notifications 1.0 Notifications.qml
 singleton PolkitService 1.0 PolkitService.qml
 PolkitServiceImpl 1.0 PolkitServiceImpl.qml
+singleton ProjectAudio 1.0 ProjectAudio.qml
 singleton PowerProfilePersistence 1.0 PowerProfilePersistence.qml
 singleton TlpRuntimeCapabilities 1.0 TlpRuntimeCapabilities.qml
 singleton TlpService 1.0 TlpService.qml
