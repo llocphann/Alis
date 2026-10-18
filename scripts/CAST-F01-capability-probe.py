@@ -96,10 +96,10 @@ def main():
             "networkmanager_available": nm["ok"],
             # Hints only: this does NOT establish concurrent P2P + STA support.
             "wifi_p2p_client_advertised": bool(
-                re.search(r"\\bP2P-client\\b", iw["output"])
+                re.search(r"\bP2P-client\b", iw["output"])
             ),
             "wifi_p2p_group_owner_advertised": bool(
-                re.search(r"\\bP2P-GO\\b", iw["output"])
+                re.search(r"\bP2P-GO\b", iw["output"])
             ),
             "p2p_concurrent_connectivity": "NOT_TESTED",
         },
