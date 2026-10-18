@@ -165,9 +165,17 @@ Item {
         id: displayPage
 
         Item {
-            ColumnLayout {
+            Flickable {
                 anchors.fill: parent
-                spacing: 12
+                contentWidth: width
+                contentHeight: displayColumn.implicitHeight
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                ColumnLayout {
+                    id: displayColumn
+                    width: parent.width
+                    spacing: 12
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -326,21 +334,80 @@ Item {
                     }
                 }
 
-                RowLayout {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: 6
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+                        AbyssLabel {
+                            Layout.fillWidth: true
+                            text: "Wireless TV · Miracast / Chromecast"
+                            color: root.utilityMutedInk
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                        }
+                        AbyssButton {
+                            glyph: "search"
+                            text: NetworkDisplays.scanning ? "Scanning…" : "Scan TVs"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            enabled: !NetworkDisplays.scanning
+                            onClicked: NetworkDisplays.scan()
+                        }
+                        AbyssButton {
+                            glyph: "open_in_new"
+                            text: "Open app"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            visible: root.wirelessToolAvailable
+                            enabled: root.wirelessToolAvailable
+                            onClicked: Quickshell.execDetached(["gnome-network-displays"])
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        StyledComboBox {
+                            Layout.fillWidth: true
+                            enableSettingsSearch: false
+                            readonly property var receivers: NetworkDisplays.displays
+                            model: receivers.map(device => device.name + " · " + device.protocol)
+                            currentIndex: Math.max(0, receivers.findIndex(
+                                device => device.uuid === NetworkDisplays.selectedUuid))
+                            enabled: receivers.length > 0 && !NetworkDisplays.active
+                                && !NetworkDisplays.busy
+                            onActivated: {
+                                const receiver = receivers[currentIndex]
+                                if (receiver) NetworkDisplays.select(receiver.uuid)
+                            }
+                        }
+                        AbyssButton {
+                            glyph: NetworkDisplays.active || NetworkDisplays.busy
+                                ? "stop_screen_share" : "cast_connected"
+                            text: NetworkDisplays.active || NetworkDisplays.busy
+                                ? "Disconnect" : "Connect"
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            enabled: NetworkDisplays.active || NetworkDisplays.busy
+                                || NetworkDisplays.displays.length > 0
+                            onClicked: {
+                                if (NetworkDisplays.active || NetworkDisplays.busy)
+                                    NetworkDisplays.disconnect()
+                                else
+                                    NetworkDisplays.connectToSelected()
+                            }
+                        }
+                    }
+
                     AbyssLabel {
                         Layout.fillWidth: true
-                        text: "Wireless TV · Miracast / Chromecast"
-                        color: root.utilityMutedInk
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                    }
-                    AbyssButton {
-                        glyph: "cast"
-                        text: root.wirelessToolAvailable ? "Find TV" : "Install Network Displays"
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        enabled: root.wirelessToolAvailable
-                        onClicked: Quickshell.execDetached(["gnome-network-displays"])
+                        visible: NetworkDisplays.statusMessage.length > 0
+                            || NetworkDisplays.lastError.length > 0
+                        text: NetworkDisplays.lastError.length > 0
+                            ? NetworkDisplays.lastError : NetworkDisplays.statusMessage
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        color: NetworkDisplays.lastError.length > 0
+                            ? Appearance.colors.colError : root.utilityMutedInk
+                        wrapMode: Text.WordWrap
                     }
                 }
 
@@ -354,6 +421,7 @@ Item {
                     color: DisplayMode.lastError.length > 0
                         ? Appearance.colors.colError : root.utilityMutedInk
                     font.pixelSize: Appearance.font.pixelSize.smallest
+                }
                 }
             }
         }
