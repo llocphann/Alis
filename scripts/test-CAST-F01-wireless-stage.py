@@ -91,7 +91,7 @@ for bogus in ("", "sudo.service", "gnome-network-displays-stream-a.service; rm -
 with mock.patch.object(module, "run", return_value="ActiveState=active\nSubState=running\nResult=success\n"):
     s = module.status(unit)
     assert s["state"] == "active"
-    assert "Verify" in s["message"]
+    assert "verify TV" in s["message"]
 
 with mock.patch.object(module, "run", return_value="ActiveState=failed\nSubState=failed\nResult=exit-code\n"):
     assert not module.status(unit)["ok"]
@@ -122,6 +122,5 @@ assert "function findWirelessSink(devices, uuid)" in policy
 
 # Do not use fake receiver names or mutate network, bypass portals or restart.
 assert "nmcli" not in script.read_text()
-assert "sudo" not in script.read_text().replace("#", "") or True
 assert "systemctl" in script.read_text() and "ActiveState" in script.read_text()
 print("CAST_F01_WIRELESS_PASS: typed D-Bus discovery, request ownership and QML UI")
