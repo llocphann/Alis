@@ -31,6 +31,7 @@ jobs:
         run: |
           python3 scripts/test-CAST-F01-display-stage.py
           python3 scripts/test-CAST-F01-audio-stage.py
+          python3 scripts/test-CAST-F01-capabilities.py
           python3 scripts/test-abyss-display-mode.py
           python3 scripts/test-UTIL-F01-source-delivery.py
 
