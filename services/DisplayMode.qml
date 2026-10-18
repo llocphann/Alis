@@ -38,6 +38,37 @@ Singleton {
     property bool _stoppingMirror: false
     property string _operationFailure: ""
     property string _requestedMode: ""
+    // Only a session explicitly switched to second-only by Alis owns fallback.
+    property string _requestedExternalTarget: ""
+    property string _requestedInternalFallback: ""
+    property string _externalOnlyTarget: ""
+    property string _internalFallback: ""
+
+    function outputLabel(name): string {
+        return DisplayPlan.outputLabel(name, NiriService.outputs?.[name])
+    }
+
+    function _recoverAfterExternalLoss(): void {
+        if (applying || laptopRecovery.running || !_externalOnlyTarget
+                || connectedOutputs.includes(_externalOnlyTarget)) return
+        const target = DisplayPlan.recoveryTarget(connectedOutputs, activeOutputs,
+            _externalOnlyTarget, _internalFallback)
+        if (!target) {
+            // An already active display means the desktop remains usable. Do
+            // not keep ownership after external-only's display disappeared.
+            if (activeOutputs.length || !connectedOutputs.includes(_internalFallback)) {
+                _externalOnlyTarget = ""
+                _internalFallback = ""
+            }
+            return
+        }
+        _externalOnlyTarget = "" // single attempt; no retry storm on failure
+        _internalFallback = ""
+        statusMessage = "TV disconnected; restoring laptop display…"
+        laptopRecovery.command = [nativeDispatchPath, "niri", "apply-output",
+            target, "dpms=on"]
+        laptopRecovery.running = true
+    }
 
     readonly property string currentMode: {
         if (mirrorProcess.running) return "mirror"
@@ -127,6 +158,8 @@ Singleton {
         _rollingBack = false
         _operationFailure = ""
         _requestedMode = mode
+        _requestedExternalTarget = mode === "second-only" ? plan.targets[0] : ""
+        _requestedInternalFallback = DisplayPlan.internalOutput(connectedOutputs)
         applying = true
         statusMessage = "Applying display mode…"
         stopMirror()
@@ -151,7 +184,15 @@ Singleton {
                 _startMirror(_pendingMirror)
             else
                 statusMessage = "Display mode applied for this Niri session."
+            if (_requestedMode === "second-only") {
+                _externalOnlyTarget = _requestedExternalTarget
+                _internalFallback = _requestedInternalFallback
+            } else {
+                _externalOnlyTarget = ""
+                _internalFallback = ""
+            }
             _pendingMirror = null
+            Qt.callLater(() => root._recoverAfterExternalLoss())
             return
         }
 
@@ -247,11 +288,30 @@ Singleton {
         mirrorProcess.running = true
     }
 
-    onConnectedOutputsChanged: Qt.callLater(normalizeSelections)
+    onConnectedOutputsChanged: Qt.callLater(() => {
+        root.normalizeSelections()
+        root._recoverAfterExternalLoss()
+    })
+    onActiveOutputsChanged: Qt.callLater(() => root._recoverAfterExternalLoss())
 
     Component.onCompleted: {
         normalizeSelections()
         probeMirrorHelper()
+    }
+
+    Process {
+        id: laptopRecovery
+        stderr: StdioCollector { id: recoveryError }
+        onExited: exitCode => {
+            NiriService.fetchOutputs()
+            if (exitCode !== 0) {
+                root.statusMessage = ""
+                root.lastError = "Could not restore laptop display. "
+                    + recoveryError.text.trim()
+            } else {
+                root.statusMessage = "Laptop display recovery requested after TV disconnection."
+            }
+        }
     }
 
     Process {
