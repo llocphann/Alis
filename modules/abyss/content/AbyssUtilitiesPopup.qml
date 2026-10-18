@@ -3,6 +3,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
 import qs
 import qs.services
 import qs.modules.common
@@ -15,6 +17,13 @@ Item {
     id: root
 
     property string outputName: ""
+    property bool wirelessToolAvailable: false
+    Process {
+        id: wirelessToolProbe
+        command: ["/bin/sh", "-c", "command -v gnome-network-displays >/dev/null 2>&1"]
+        onExited: exitCode => root.wirelessToolAvailable = exitCode === 0
+    }
+    Component.onCompleted: wirelessToolProbe.running = true
     property alias currentPage: pages.currentIndex
     readonly property var currentFeature: pages.currentItem?.item ?? null
     readonly property int loadedPageCount: [monitorLoader, displayLoader, audioLoader, nightLoader]
@@ -199,11 +208,15 @@ Item {
                         StyledComboBox {
                             Layout.fillWidth: true
                             enableSettingsSearch: false
-                            model: DisplayMode.connectedOutputs.filter(
+                            readonly property var outputIds: DisplayMode.connectedOutputs.filter(
                                 output => output !== DisplayMode.primaryOutput)
-                            currentIndex: Math.max(0, model.indexOf(DisplayMode.selectedSecondary))
-                            enabled: model.length > 0 && !DisplayMode.applying
-                            onActivated: DisplayMode.selectedSecondary = currentText
+                            model: outputIds.map(output => DisplayMode.outputLabel(output))
+                            currentIndex: Math.max(0, outputIds.indexOf(DisplayMode.selectedSecondary))
+                            enabled: outputIds.length > 0 && !DisplayMode.applying
+                            onActivated: {
+                                const selected = outputIds[currentIndex]
+                                if (selected) DisplayMode.selectedSecondary = selected
+                            }
                         }
                     }
 
@@ -266,10 +279,10 @@ Item {
                                 StyledComboBox {
                                     Layout.fillWidth: true
                                     enableSettingsSearch: false
-                                    model: DisplayMode.connectedOutputs
-                                    currentIndex: Math.max(0, model.indexOf(DisplayMode.mirrorSource))
-                                    enabled: model.length > 1 && !DisplayMode.applying
-                                    onActivated: DisplayMode.setMirrorSource(currentText)
+                                    model: DisplayMode.connectedOutputs.map(output => DisplayMode.outputLabel(output))
+                                    currentIndex: Math.max(0, DisplayMode.connectedOutputs.indexOf(DisplayMode.mirrorSource))
+                                    enabled: DisplayMode.connectedOutputs.length > 1 && !DisplayMode.applying
+                                    onActivated: DisplayMode.setMirrorSource(DisplayMode.connectedOutputs[currentIndex])
                                 }
                             }
 
@@ -284,11 +297,12 @@ Item {
                                 StyledComboBox {
                                     Layout.fillWidth: true
                                     enableSettingsSearch: false
-                                    model: DisplayMode.connectedOutputs.filter(
+                                    readonly property var outputIds: DisplayMode.connectedOutputs.filter(
                                         output => output !== DisplayMode.mirrorSource)
-                                    currentIndex: Math.max(0, model.indexOf(DisplayMode.mirrorTarget))
-                                    enabled: model.length > 0 && !DisplayMode.applying
-                                    onActivated: DisplayMode.setMirrorTarget(currentText)
+                                    model: outputIds.map(output => DisplayMode.outputLabel(output))
+                                    currentIndex: Math.max(0, outputIds.indexOf(DisplayMode.mirrorTarget))
+                                    enabled: outputIds.length > 0 && !DisplayMode.applying
+                                    onActivated: DisplayMode.setMirrorTarget(outputIds[currentIndex])
                                 }
                             }
                         }
@@ -309,6 +323,24 @@ Item {
                                 }
                             }
                         }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    AbyssLabel {
+                        Layout.fillWidth: true
+                        text: "Wireless TV · Miracast / Chromecast"
+                        color: root.utilityMutedInk
+                        font.pixelSize: Appearance.font.pixelSize.smaller
+                    }
+                    AbyssButton {
+                        glyph: "cast"
+                        text: root.wirelessToolAvailable ? "Find TV" : "Install Network Displays"
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        enabled: root.wirelessToolAvailable
+                        onClicked: Quickshell.execDetached(["gnome-network-displays"])
                     }
                 }
 
