@@ -11,6 +11,47 @@ This feature must **not** be merged/marked Owner verified based only on CI. No s
 3. In Utilities → Display Mode → Wireless TV, click **Scan TVs**. If scan reports a missing daemon, the installed build may only have the GTK app; **Open app** is the supported fallback. Do not silently install an AUR package, change NetworkManager from iwd to wpa_supplicant, modify firewall, or restart services.
 4. For native backend validation, GNOME Network Displays **0.98+** with daemon/stream components is required; its upstream D-Bus interface is `org.gnome.NetworkDisplays.Manager`. The GNOME service can launch the system ScreenCast permissions picker; choose the window/monitor to share. Alis must not bypass it.
 
+## When Utilities shows "Network Displays daemon unavailable"
+
+This error occurs **before** Wi-Fi discovery; an empty TV list does not prove
+that a TV or router is incompatible. On Owner Arch Linux, run these read-only
+commands **in the same desktop user session** as Alis:
+
+```bash
+python3 scripts/CAST-F01-network-displays.py probe
+command -v gnome-network-displays-daemon || true
+command -v gnome-network-displays || true
+test -x /usr/libexec/gnome-network-displays-stream && echo stream-helper-ready || echo stream-helper-missing
+pacman -Q gnome-network-displays 2>/dev/null || true
+```
+
+Interpretation:
+
+- `daemonInstalled: false`, executable absent: install the **native
+  GNOME Network Displays 0.98+ (recommended 0.99.x)** package on the Owner
+  system *after explicit Owner approval*; AUR currently offers
+  [gnome-network-displays](https://aur.archlinux.org/packages/gnome-network-displays).
+  Review the AUR PKGBUILD and dependencies before installing. Installing the
+  GNOME Network Displays **Flatpak GUI alone** does not establish that host
+  Alis has a usable native D-Bus daemon.
+- `daemonInstalled: true`, `backend: false`: click Scan again. If it still
+  fails, look at the new `daemon_exited`, `daemon_not_ready` or
+  `daemon_launch_failed` status. Review a **sanitized** user journal,
+  without forcibly restarting NetworkManager, audio or the compositor.
+- `backend: true`, `streamReady: false`: the local package exposes
+  discovery but lacks upstream's native stream helper at
+  `/usr/libexec/gnome-network-displays-stream`; rebuild/repair the
+  package only with Owner permission.
+- `backend: true`, `streamReady: true`, `displays: []`: native D-Bus
+  discovery is working but no receiver is visible. Then investigate actual
+  TV receiver mode, Wi-Fi P2P/MICE, Avahi/mDNS and AP isolation.
+
+The safe optional install workflow on an Arch machine already configured
+with an AUR helper is: **review PKGBUILD first**, then request Owner approval
+before running its package install. This repository does not automatically
+install AUR programs, request sudo, switch Wi-Fi backends or change firewall
+rules.
+
 ## Before trying the wireless UI: verify the scan path
 
 Run these only in the **Owner-approved isolated CAST-F01 test session**, not during a class:
