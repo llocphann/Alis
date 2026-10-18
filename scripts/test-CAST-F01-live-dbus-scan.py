@@ -10,6 +10,7 @@ import json
 import os
 import subprocess
 import sys
+import threading
 from pathlib import Path
 
 import dbus
@@ -55,7 +56,18 @@ def main():
     bus = dbus.SessionBus()
     service = FakeManager(bus)
 
+    loop = GLib.MainLoop()
+    failures = []
+
     def check():
+        try:
+            run_check()
+        except Exception as exc:
+            failures.append(str(exc))
+        finally:
+            GLib.idle_add(loop.quit)
+
+    def run_check():
         direct = subprocess.run([
             "busctl", "--user", "--auto-start=no", "--json=short",
             "get-property", BUS, PATH, BUS, "Displays",
@@ -78,8 +90,12 @@ def main():
         print("CAST_F01_REAL_DBUS_SCAN_PASS: busctl JSON + live bus + real bridge")
         return False
 
-    GLib.idle_add(check)
-    GLib.MainLoop().run()
+    # The D-Bus service needs its GLib main loop available while busctl waits
+    # for Get/Properties replies: do *not* block it inside an idle callback.
+    GLib.idle_add(lambda: threading.Thread(target=check, daemon=True).start() or False)
+    loop.run()
+    if failures:
+        raise AssertionError(failures[0])
 
 
 if __name__ == "__main__":
