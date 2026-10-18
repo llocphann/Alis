@@ -13,6 +13,8 @@ def requires(path, *tokens):
 popup = "modules/abyss/content/AbyssUtilitiesPopup.qml"
 requires(popup,
     'readonly property var pageTitles:', '"Monitor arrangement", "Project & Cast", "Sound", "Eye protection"',
+    'readonly property var pageIcons:', '"monitor", "present_to_all", "volume_up", "nightlight"',
+    'text: root.pageIcons[pages.currentIndex] ?? "widgets"', 'color: AbyssStyle.accent',
     'SwipeView {', 'interactive: true', 'active: Math.abs(SwipeView.index - pages.currentIndex) <= 1',
     'model: pages.count', 'TapHandler {', 'pages.currentIndex = parent.index',
     'embeddedArrangementOnly: true', 'activeSection: "outputs"',
