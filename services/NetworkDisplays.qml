@@ -22,6 +22,7 @@ Singleton {
     property string lastError: ""
     property bool scanning: false
     property bool backendAvailable: false
+    property bool streamReady: false
     property bool _disconnectPending: false
     property int _inactiveReads: 0
     property int _connectChecks: 0
@@ -53,7 +54,7 @@ Singleton {
 
     function connectToSelected(): void {
         const target = displays.find(d => d.uuid === selectedUuid)
-        if (!target || active || busy) return
+        if (!target || !streamReady || active || busy) return
         lastError = ""
         _disconnectPending = false
         _inactiveReads = 0
@@ -113,18 +114,22 @@ Singleton {
             const data = exitCode === 0 ? root._parse(scanOutput.text) : null
             if (!data || !data.ok) {
                 root.backendAvailable = !!data?.backend
+                root.streamReady = false
                 root.displays = []
                 root.lastError = data?.message || "TV discovery failed."
                 return
             }
             root.backendAvailable = true
+            root.streamReady = data.streamReady === true
             root.displays = Array.isArray(data.displays) ? data.displays : []
             if (!root.displays.some(d => d.uuid === root.selectedUuid))
                 root.selectedUuid = root.displays.length ? root.displays[0].uuid : ""
             if (!root.activeUnit)
-                root.statusMessage = root.displays.length
-                    ? root.displays.length + " wireless receiver(s) found."
-                    : "No TV found. Check the TV cast mode and Wi-Fi network."
+                root.statusMessage = !root.streamReady
+                    ? (data.message || "Native TV stream helper is missing. Use Open app.")
+                    : root.displays.length
+                        ? root.displays.length + " wireless receiver(s) found."
+                        : "No TV found. Check the TV cast mode and Wi-Fi network."
             root.lastError = ""
         }
     }
