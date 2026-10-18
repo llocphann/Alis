@@ -388,7 +388,7 @@ Item {
                                 ? "Disconnect" : "Connect"
                             font.pixelSize: Appearance.font.pixelSize.small
                             enabled: NetworkDisplays.active || NetworkDisplays.busy
-                                || (NetworkDisplays.streamReady
+                                || (!NetworkDisplays.scanning && NetworkDisplays.streamReady
                                     && NetworkDisplays.displays.length > 0)
                             onClicked: {
                                 if (NetworkDisplays.active || NetworkDisplays.busy)
