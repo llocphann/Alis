@@ -15,6 +15,7 @@ Singleton {
     property string statusMessage: ""
     property string lastError: ""
     property string _sessionOutput: ""
+    property string _wirelessUuid: ""
     property string _previousName: ""
     property string _selectedName: ""
     property bool _owned: false
@@ -63,10 +64,44 @@ Singleton {
         _probe()
     }
 
+    function beginWireless(uuid): void {
+        const id = String(uuid || "")
+        if (!Policy.wirelessSinkName(id) || routeProcess.running || _endRequested
+                || restoreTimer.running) return
+        if (_sessionOutput === "wireless:" + id) return
+        if (_sessionOutput) {
+            endWired()
+            return
+        }
+        const previous = Policy.name(Audio.rawSink)
+        if (!previous) {
+            statusMessage = "Audio is not ready; choose TV output in Sound."
+            return
+        }
+        if (Policy.isEffects(Audio.rawSink)) {
+            statusMessage = "EasyEffects is active. Choose TV audio manually to preserve DSP."
+            return
+        }
+        _sessionOutput = "wireless:" + id
+        _wirelessUuid = id
+        _previousName = previous
+        _selectedName = ""
+        _owned = false
+        _manualOverride = false
+        _endRequested = false
+        _probeAttempts = 0
+        statusMessage = "Waiting for wireless TV audio sink…"
+        lastError = ""
+        probeTimer.start()
+        _probe()
+    }
+
     function _probe(): void {
         if (!_sessionOutput || _manualOverride || _endRequested || routeProcess.running)
             return
-        const found = Policy.chooseTvSink(Audio.outputDevices)
+        const found = _wirelessUuid
+            ? Policy.findWirelessSink(Audio.outputDevices, _wirelessUuid)
+            : Policy.chooseTvSink(Audio.outputDevices)
         if (found) {
             probeTimer.stop()
             _selectedName = Policy.name(found)
@@ -83,9 +118,11 @@ Singleton {
             return
         }
         _probeAttempts++
-        if (_probeAttempts >= 10) {
+        if (_probeAttempts >= (_wirelessUuid ? 75 : 10)) {
             probeTimer.stop()
-            statusMessage = "TV audio not uniquely identified. Choose an output in Sound."
+            statusMessage = _wirelessUuid
+                ? "No matching wireless TV audio sink. Choose an output in Sound."
+                : "TV audio not uniquely identified. Choose an output in Sound."
         }
     }
 
@@ -117,6 +154,7 @@ Singleton {
         _endRequested = false
         _previousName = ""
         _selectedName = ""
+        _wirelessUuid = ""
         _restoreAttempts = 0
         restoreTimer.stop()
     }
