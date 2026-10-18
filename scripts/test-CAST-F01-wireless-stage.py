@@ -76,6 +76,10 @@ with mock.patch.object(module, "bus",
     except module.CastError:
         pass
 
+with mock.patch.object(module, "run", return_value=""):
+    assert module.bus("call", module.BUS, module.OBJ, module.IFACE,
+                      "StopStream", "s", unit) == {"type": "", "data": []}
+
 with mock.patch.object(module, "bus", return_value={"type": "", "data": []}) as called:
     assert module.stop(unit)["ok"]
     assert called.call_args.args[-2:] == ("s", unit)
