@@ -131,6 +131,7 @@ class YaziAutoThemeTest(unittest.TestCase):
             "tasks": {"border", "title", "hovered"},
             "which": {"mask", "cand", "rest", "desc", "separator", "separator_style"},
             "help": {"chord", "action", "hovered"},
+            "icon": {"dirs", "prepend_conds"},
             "filetype": {"rules"},
         }
         self.assertEqual(set(parsed), set(allowed))
@@ -144,6 +145,8 @@ class YaziAutoThemeTest(unittest.TestCase):
         existing_theme = (
             '[mgr]\n'
             'cwd = { fg = "#123456" }\n\n'
+            '[icon]\n'
+            'dirs = [{ name = "Custom", text = "C", fg = "#123456" }]\n\n'
             '[flavor]\n'
             'dark = "another-dark"\n'
             'light = "another-light"\n'
@@ -151,6 +154,7 @@ class YaziAutoThemeTest(unittest.TestCase):
         _, theme = self.render(self.colors(), existing_theme)
         parsed = tomllib.loads(theme)
         self.assertEqual(parsed["mgr"]["cwd"], {"fg": "#123456"})
+        self.assertEqual(parsed["icon"]["dirs"], [{"name": "Custom", "text": "C", "fg": "#123456"}])
         self.assertEqual(parsed["flavor"]["dark"], "ii-auto")
         self.assertEqual(parsed["flavor"]["light"], "ii-auto")
         self.assertNotIn('use = "ii-auto"', theme)
@@ -187,6 +191,40 @@ class YaziAutoThemeTest(unittest.TestCase):
         self.assertIn(
             'active   = { fg = "#101018", bg = "#D78ACF" }', flavor
         )
+
+
+    def test_special_directory_icons_keep_yazi_glyphs_and_use_accent(self):
+        flavor, _ = self.render(self.colors())
+        icon = tomllib.loads(flavor)["icon"]
+        expected = {
+            ".config": "", ".git": "", ".github": "", ".npm": "",
+            "Desktop": "", "Development": "", "Documents": "",
+            "Downloads": "", "Library": "", "Movies": "", "Music": "",
+            "Pictures": "", "Public": "", "Videos": "",
+        }
+        self.assertEqual({entry["name"]: entry["text"] for entry in icon["dirs"]}, expected)
+        self.assertTrue(all(entry["fg"] == "#D78ACF" for entry in icon["dirs"]))
+
+    def test_generic_and_hovered_directories_use_accent(self):
+        flavor, _ = self.render(self.colors())
+        rules = tomllib.loads(flavor)["icon"]["prepend_conds"]
+        self.assertEqual(rules[0], {"if": "dir & hovered", "text": "", "fg": "#D78ACF"})
+        self.assertEqual(rules[1], {"if": "dir", "text": "", "fg": "#D78ACF"})
+
+    def test_file_icon_classification_remains_separate_from_directory_icon_rules(self):
+        flavor, _ = self.render(self.colors())
+        rules = tomllib.loads(flavor)["filetype"]["rules"]
+        self.assertEqual(rules[0], {"mime": "image/*", "fg": "#C792EA"})
+        self.assertEqual(rules[1], {"mime": "video/*", "fg": "#79DCE8"})
+        self.assertEqual(rules[2], {"mime": "audio/*", "fg": "#79DCE8"})
+        self.assertEqual(rules[3], {"mime": "application/zip", "fg": "#E36F82"})
+
+    def test_unlisted_directory_uses_generic_rules_without_adding_its_name(self):
+        flavor, _ = self.render(self.colors())
+        icon = tomllib.loads(flavor)["icon"]
+        names = {entry["name"] for entry in icon["dirs"]}
+        self.assertNotIn("MyProject2026", names)
+        self.assertEqual([rule["if"] for rule in icon["prepend_conds"]], ["dir & hovered", "dir"])
 
 
 if __name__ == "__main__":

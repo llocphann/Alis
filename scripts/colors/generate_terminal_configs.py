@@ -1230,6 +1230,28 @@ chord   = {{ fg = "{magenta}" }}
 action  = {{ fg = "{cyan}" }}
 hovered = {{ bg = "{sel_bg}", bold = true }}
 
+[icon]
+dirs = [
+  {{ name = ".config",     text = "", fg = "{primary}" }},
+  {{ name = ".git",        text = "", fg = "{primary}" }},
+  {{ name = ".github",     text = "", fg = "{primary}" }},
+  {{ name = ".npm",        text = "", fg = "{primary}" }},
+  {{ name = "Desktop",     text = "", fg = "{primary}" }},
+  {{ name = "Development", text = "", fg = "{primary}" }},
+  {{ name = "Documents",   text = "", fg = "{primary}" }},
+  {{ name = "Downloads",   text = "", fg = "{primary}" }},
+  {{ name = "Library",     text = "", fg = "{primary}" }},
+  {{ name = "Movies",      text = "", fg = "{primary}" }},
+  {{ name = "Music",       text = "", fg = "{primary}" }},
+  {{ name = "Pictures",    text = "", fg = "{primary}" }},
+  {{ name = "Public",      text = "", fg = "{primary}" }},
+  {{ name = "Videos",      text = "", fg = "{primary}" }},
+]
+prepend_conds = [
+  {{ if = "dir & hovered", text = "", fg = "{primary}" }},
+  {{ if = "dir",            text = "", fg = "{primary}" }},
+]
+
 [filetype]
 rules = [
   {{ mime = "image/*", fg = "{magenta}" }},
