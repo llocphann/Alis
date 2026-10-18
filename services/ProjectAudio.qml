@@ -193,7 +193,8 @@ Singleton {
             if (op === "select") {
                 root._owned = !root._manualOverride
                 root.statusMessage = "TV sound output requested. Verify playback on TV."
-                if (root._endRequested) root._maybeRestore()
+                if (root._endRequested)
+                    Qt.callLater(() => root._maybeRestore())
             } else if (op === "restore") {
                 root.statusMessage = "Previous sound output restoration requested."
                 root._forgetRoute()
