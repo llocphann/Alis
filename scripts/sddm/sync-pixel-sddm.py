@@ -9,6 +9,7 @@ Note: install-pixel-sddm.sh transfers ownership of the theme directory to
 the current user at install time, so no sudo/polkit is required here.
 """
 
+import filecmp
 import json
 import os
 import shutil
@@ -164,7 +165,8 @@ def update_theme_conf(colors):
         return False
 
     with open(THEME_CONF) as f:
-        lines = f.read().split("\n")
+        original_content = f.read()
+    lines = original_content.split("\n")
 
     # Detect corruption: [General] or the background= directive missing.
     has_general = any("[General]" in l for l in lines)
@@ -192,6 +194,8 @@ def update_theme_conf(colors):
     for key, value in remaining.items():
         new_lines.append(f"{key}={value}")
     content = "\n".join(new_lines)
+    if content == original_content:
+        return True
 
     try:
         with open(THEME_CONF, "w") as f:
@@ -235,6 +239,9 @@ def update_avatar():
 
     dst = os.path.join(ASSETS_DIR, "user-face.png")
     try:
+        if os.path.isfile(dst) and filecmp.cmp(src, dst, shallow=True):
+            os.chmod(dst, 0o644)
+            return True
         shutil.copy2(src, dst)
         os.chmod(dst, 0o644)
         print(f"[sddm-pixel] Avatar updated: {os.path.basename(src)}")
@@ -252,7 +259,7 @@ def extract_video_frame(video_path, dest_png):
     if not shutil.which("ffmpeg"):
         print("[sddm-pixel] ffmpeg not found — cannot extract video frame")
         return None
-    tmp = os.path.join("/tmp", "sddm-pixel-frame.tmp.png")
+    tmp = os.path.join("/tmp", f"sddm-pixel-frame-{os.getpid()}.tmp.png")
     try:
         proc = subprocess.run(
             [
@@ -298,18 +305,52 @@ def update_background(wallpaper_path):
     bg_dest = os.path.join(ASSETS_DIR, "background.png")
     ext = os.path.splitext(wallpaper_path)[1].lower()
     src = wallpaper_path
+    video_stamp_path = os.path.join(ASSETS_DIR, ".alis-background-source.json")
+    video_stamp = None
 
     if ext in VIDEO_EXTENSIONS:
+        try:
+            stat = os.stat(wallpaper_path)
+            video_stamp = json.dumps(
+                {
+                    "path": os.path.realpath(wallpaper_path),
+                    "size": stat.st_size,
+                    "mtime_ns": stat.st_mtime_ns,
+                },
+                sort_keys=True,
+            )
+            if os.path.isfile(bg_dest) and os.path.isfile(video_stamp_path):
+                with open(video_stamp_path) as f:
+                    if f.read() == video_stamp:
+                        return True
+        except OSError:
+            video_stamp = None
+
         tmp_frame = extract_video_frame(wallpaper_path, bg_dest)
         if tmp_frame is None:
             print("[sddm-pixel] Keeping existing background (video, no ffmpeg)")
             return False
         src = tmp_frame
+    elif os.path.isfile(bg_dest) and filecmp.cmp(wallpaper_path, bg_dest, shallow=True):
+        # copy2 preserves size and mtime, so the shallow comparison avoids
+        # reading or rewriting a large unchanged wallpaper asset.
+        return True
 
     try:
         shutil.copy2(src, bg_dest)
         if ext in VIDEO_EXTENSIONS and os.path.isfile(src):
             os.unlink(src)
+        if video_stamp is not None:
+            stamp_tmp = f"{video_stamp_path}.tmp-{os.getpid()}"
+            try:
+                with open(stamp_tmp, "w") as f:
+                    f.write(video_stamp)
+                os.replace(stamp_tmp, video_stamp_path)
+            except OSError:
+                try:
+                    os.unlink(stamp_tmp)
+                except OSError:
+                    pass
         print(f"[sddm-pixel] Background updated: {os.path.basename(wallpaper_path)}")
         return True
     except PermissionError:

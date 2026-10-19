@@ -607,12 +607,11 @@ Singleton {
         root._applyInProgress = true
         _applySuppressTimer.restart()
         applyProc.activeRequestKey = root._applyRequestKey(normalizedPath, darkMode, noSwitch)
-        const command = [
-            Directories.wallpaperSwitchScriptPath,
+        const command = MaterialThemeLoader.wallpaperSwitchCommand([
             "--image", normalizedPath,
             "--mode", (darkMode ? "dark" : "light"),
             "--skip-config-write"
-        ]
+        ])
         if (noSwitch)
             command.splice(command.length - 1, 0, "--noswitch")
         applyProc.exec(command)
@@ -684,7 +683,7 @@ Singleton {
     }
 
     function openFallbackPicker(darkMode = Appearance.m3colors.darkmode) {
-        applyProc.exec([Directories.wallpaperSwitchScriptPath, "--mode", (darkMode ? "dark" : "light")])
+        applyProc.exec(MaterialThemeLoader.wallpaperSwitchCommand(["--mode", (darkMode ? "dark" : "light")]))
     }
 
     function applySelectionTarget(path, target = "main", darkMode = Appearance.m3colors.darkmode, monitorName = "") {
@@ -707,7 +706,7 @@ Singleton {
             if (needsThumbnail)
                 root.ensureThumbnailForPath(normalizedPath, "large")
             if (Config.options?.appearance?.wallpaperTheming?.useBackdropForColors)
-                Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
+                Quickshell.execDetached(MaterialThemeLoader.wallpaperSwitchCommand(["--noswitch"]))
             root.changed()
             return
         case "waffle":

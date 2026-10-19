@@ -204,7 +204,7 @@ Singleton {
             // Force full regeneration from wallpaper (includes terminals, GTK, etc)
             const themingPath = Wallpapers.currentThemingWallpaperPath()
             const paletteType = Config.options?.appearance?.palette?.type ?? "auto"
-            const command = [Directories.wallpaperSwitchScriptPath, "--noswitch"]
+            const command = MaterialThemeLoader.wallpaperSwitchCommand(["--noswitch"])
             if (paletteType !== "auto")
                 command.push("--type", paletteType)
             if (themingPath && themingPath.length > 0)

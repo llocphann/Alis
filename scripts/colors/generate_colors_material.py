@@ -1414,7 +1414,11 @@ if args.render_templates:
     # SDDM sync post-hook: run only if script and theme exist
     sddm_sync = os.path.expanduser("~/.local/bin/sync-pixel-sddm.py")
     sddm_theme = "/usr/share/sddm/themes/ii-pixel"
-    if os.path.isfile(sddm_sync) and os.path.isdir(sddm_theme):
+    if (
+        os.environ.get("ALIS_THEME_SKIP_SDDM_SYNC") != "1"
+        and os.path.isfile(sddm_sync)
+        and os.path.isdir(sddm_theme)
+    ):
         import subprocess
 
         subprocess.Popen(

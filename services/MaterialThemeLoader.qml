@@ -176,6 +176,18 @@ Singleton {
     // Check if auto theme is selected (reads directly from Config to avoid circular dependency with ThemeService)
     readonly property bool isAutoTheme: (Config.options?.appearance?.theme ?? "auto") === "auto"
 
+    // In the live shell, SDDM is applied by the debounced external-theme pipeline
+    // after colors.json is published. Skip the generator's synchronous SDDM hook
+    // only when that follow-up is guaranteed; standalone mode keeps the old path.
+    function wallpaperSwitchCommand(args) {
+        const command = []
+        const appsAndShellEnabled = Config.options?.appearance?.wallpaperTheming?.enableAppsAndShell ?? true
+        if (root.defaultApplyExternal && appsAndShellEnabled)
+            command.push("/usr/bin/env", "ALIS_THEME_SKIP_SDDM_SYNC=1")
+        command.push("/usr/bin/bash", Directories.wallpaperSwitchScriptPath)
+        return command.concat(args ?? [])
+    }
+
     function reapplyTheme() {
         _log("[MaterialThemeLoader] reapplyTheme called, filePath:", root.filePath)
         reloadDebounce.restart()
@@ -192,12 +204,10 @@ Singleton {
         // regenerate immediately and undo the mode the user just selected.
         if (Config.options?.appearance?.wallpaperTheming?.autoDarkLightMode ?? false)
             Config.setNestedValue("appearance.wallpaperTheming.autoDarkLightMode", false)
-        darkModeProc.command = [
-            "/usr/bin/bash",
-            Directories.wallpaperSwitchScriptPath,
+        darkModeProc.command = root.wallpaperSwitchCommand([
             "--mode", dark ? "dark" : "light",
             "--noswitch"
-        ]
+        ])
         darkModeProc.running = true
     }
 
@@ -210,15 +220,13 @@ Singleton {
         // Clear any stale force flag from a previous run
         root._forceApply = false
         Config.setNestedValue("appearance.palette.accentColor", seedColor)
-        schemeVariantProc.command = [
-            "/usr/bin/bash",
-            Directories.wallpaperSwitchScriptPath,
+        schemeVariantProc.command = root.wallpaperSwitchCommand([
             "--noswitch",
             "--skip-accent-write",
             "--color", seedColor,
             "--type", variant,
             "--mode", mode
-        ]
+        ])
         schemeVariantProc.running = true
     }
 
@@ -401,12 +409,10 @@ Singleton {
         id: colorInvertProc
         running: false
         property bool startObserved: false
-        command: [
-            "/usr/bin/bash",
-            Directories.wallpaperSwitchScriptPath,
+        command: root.wallpaperSwitchCommand([
             "--noswitch",
             "--skip-accent-write"
-        ]
+        ])
         onRunningChanged: {
             if (colorInvertProc.running) {
                 colorInvertProc.startObserved = false
