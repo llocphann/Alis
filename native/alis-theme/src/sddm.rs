@@ -144,16 +144,17 @@ fn files_equal(left: &Path, right: &Path) -> Result<bool> {
     let mut right = fs::File::open(right)?;
     let mut left_buffer = [0_u8; 16 * 1024];
     let mut right_buffer = [0_u8; 16 * 1024];
-    loop {
-        let left_read = left.read(&mut left_buffer)?;
-        let right_read = right.read(&mut right_buffer)?;
-        if left_read != right_read || left_buffer[..left_read] != right_buffer[..right_read] {
+    let mut remaining = left_metadata.len();
+    while remaining > 0 {
+        let chunk_len = remaining.min(left_buffer.len() as u64) as usize;
+        left.read_exact(&mut left_buffer[..chunk_len])?;
+        right.read_exact(&mut right_buffer[..chunk_len])?;
+        if left_buffer[..chunk_len] != right_buffer[..chunk_len] {
             return Ok(false);
         }
-        if left_read == 0 {
-            return Ok(true);
-        }
+        remaining -= chunk_len as u64;
     }
+    Ok(true)
 }
 
 fn palette_value<'a>(palette: &'a Palette, keys: &[&str], fallback: &'a str) -> &'a str {

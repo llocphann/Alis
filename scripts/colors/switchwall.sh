@@ -575,6 +575,7 @@ switch() {
     _chromium_tmp="$STATE_DIR/user/generated/chromium.theme.tmp"
     _chromium_out="$STATE_DIR/user/generated/chromium.theme"
     force_dark_terminal="$cfg_force_dark_terminal"
+    local theme_generation_succeeded=false
 
     # 1) Generate authoritative shell/UI colors.json + render app templates.
     if "$SCRIPT_DIR/../native-dispatch" theme "${generate_colors_material_args[@]}" \
@@ -586,6 +587,7 @@ switch() {
         --scss-output "$_scss_tmp" \
         --render-templates "$TEMPLATE_DIR" \
         > /dev/null 2>/dev/null && [[ -s "$_json_tmp" ]]; then
+        theme_generation_succeeded=true
         # colors.json remains the authoritative compatibility notification for
         # MaterialThemeLoader until the pipeline has a separate generation-ready
         # signal. Preserve its replacement semantics, but avoid rewriting the
@@ -620,6 +622,47 @@ switch() {
 
     if [[ "$force_dark_terminal" == "true" ]]; then
         scss_generate_args=("${generate_colors_material_args[@]}")
+
+        # Reuse the first generation's exact seed and resolved scheme when it
+        # succeeded from an image, avoiding a second image decode/quantization.
+        # Source-path validation keeps stale metadata from affecting retries.
+        if [[ "$theme_generation_succeeded" == "true" ]]; then
+            local source_image_path="" cached_seed="" cached_scheme="" meta_source=""
+            for ((i = 0; i + 1 < ${#generate_colors_material_args[@]}; i++)); do
+                if [[ "${generate_colors_material_args[$i]}" == "--path" ]]; then
+                    source_image_path="${generate_colors_material_args[$((i + 1))]}"
+                    break
+                fi
+            done
+            if [[ -n "$source_image_path" && -s "$_meta_out" ]]; then
+                meta_source="$(jq -r '.source_path // empty' "$_meta_out" 2>/dev/null || true)"
+                cached_seed="$(jq -r '.seed_color // empty' "$_meta_out" 2>/dev/null || true)"
+                cached_scheme="$(jq -r '.scheme // empty' "$_meta_out" 2>/dev/null || true)"
+                if [[ "$meta_source" == "$source_image_path" && "$cached_seed" =~ ^#?[[:xdigit:]]{6}$ && "$cached_scheme" =~ ^(scheme-content|scheme-expressive|scheme-fidelity|scheme-fruit-salad|scheme-monochrome|scheme-neutral|scheme-rainbow|scheme-tonal-spot|scheme-vibrant)$ ]]; then
+                    local -a cached_args=()
+                    local replaced_path=false replaced_scheme=false
+                    for ((i = 0; i < ${#scss_generate_args[@]}; i++)); do
+                        case "${scss_generate_args[$i]}" in
+                            --path)
+                                i=$((i + 1))
+                                cached_args+=(--color "$cached_seed")
+                                replaced_path=true
+                                ;;
+                            --scheme)
+                                i=$((i + 1))
+                                cached_args+=(--scheme "$cached_scheme")
+                                replaced_scheme=true
+                                ;;
+                            *) cached_args+=("${scss_generate_args[$i]}") ;;
+                        esac
+                    done
+                    if [[ "$replaced_path" == "true" && "$replaced_scheme" == "true" ]]; then
+                        scss_generate_args=("${cached_args[@]}")
+                    fi
+                fi
+            fi
+        fi
+
         for i in "${!scss_generate_args[@]}"; do
             if [[ "${scss_generate_args[$i]}" == "--mode" && $((i + 1)) -lt ${#scss_generate_args[@]} ]]; then
                 scss_generate_args[$((i + 1))]="dark"

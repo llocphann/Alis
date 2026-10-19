@@ -7,10 +7,10 @@ use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 
+use alis_protocol::{Envelope, InputMessage};
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
 use evdev::{Device, EventSummary, KeyCode, LedCode};
-use alis_protocol::{Envelope, InputMessage};
 
 const INPUT_DIR: &str = "/dev/input";
 const IGNORED_NAME_PARTS: &[&str] = &["ydotool", "virtual"];

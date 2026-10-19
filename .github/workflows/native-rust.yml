@@ -32,6 +32,7 @@ on:
       - 'scripts/colors/modules/90-cava.sh'
       - 'scripts/test-theme-file-publication.sh'
       - 'scripts/test-cava-cover-color-refresh-contract.py'
+      - 'scripts/test-forced-dark-seed-reuse.py'
       - 'scripts/colors/applycolor.sh'
       - 'scripts/colors/apply-gtk-theme.sh'
       - 'scripts/colors/icon-theme-for-mode.sh'
@@ -60,6 +61,7 @@ on:
       - 'scripts/colors/modules/90-cava.sh'
       - 'scripts/test-theme-file-publication.sh'
       - 'scripts/test-cava-cover-color-refresh-contract.py'
+      - 'scripts/test-forced-dark-seed-reuse.py'
       - 'scripts/colors/applycolor.sh'
       - 'scripts/colors/apply-gtk-theme.sh'
       - 'scripts/colors/icon-theme-for-mode.sh'
@@ -107,6 +109,7 @@ jobs:
           bash -n scripts/test-theme-file-publication.sh
           bash scripts/test-theme-file-publication.sh
           python3 scripts/test-cava-cover-color-refresh-contract.py
+          python3 scripts/test-forced-dark-seed-reuse.py
           bash -n scripts/colors/applycolor.sh
           bash -n scripts/colors/apply-gtk-theme.sh
           python3 scripts/test-light-mode-upstream-contract.py
