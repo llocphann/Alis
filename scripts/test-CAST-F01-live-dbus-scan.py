@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 """CAST-F01 integration smoke test with a *real* isolated session D-Bus.
 
-Only for CI: run under dbus-run-session with system Python/dbus-python + GLib.
+Always creates its own private bus, including canonical-validator invocations.
 Publishes two fake receiver properties on a private temporary bus and calls
 the real CAST-F01 bridge, which in turn executes real busctl --json=short.
 No TV/network/user services are accessed, and no system config is modified.
@@ -10,7 +10,9 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import threading
+import time
 from pathlib import Path
 
 import dbus
@@ -51,10 +53,11 @@ class FakeManager(dbus.service.Object):
         return dbus.Array(receivers, signature="a{sv}", variant_level=1)
 
 
-def main():
+def run_fixture(address):
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-    bus = dbus.SessionBus()
+    bus = dbus.bus.BusConnection(address)
     service = FakeManager(bus)
+    environment = dict(os.environ, DBUS_SESSION_BUS_ADDRESS=address)
 
     loop = GLib.MainLoop()
     failures = []
@@ -71,14 +74,14 @@ def main():
         direct = subprocess.run([
             "busctl", "--user", "--auto-start=no", "--json=short",
             "get-property", BUS, PATH, BUS, "Displays",
-        ], capture_output=True, text=True, timeout=6, check=True)
+        ], env=environment, capture_output=True, text=True, timeout=6, check=True)
         decoded = json.loads(direct.stdout)
         assert decoded["type"] == "aa{sv}", direct.stdout
 
         bridge = subprocess.run([
             sys.executable, str(ROOT / "scripts/CAST-F01-network-displays.py"),
             "scan",
-        ], capture_output=True, text=True, timeout=8, check=True)
+        ], env=environment, capture_output=True, text=True, timeout=8, check=True)
         result = json.loads(bridge.stdout)
         assert result["ok"] and result["backend"], result
         assert [r["name"] for r in result["displays"]] == [
@@ -96,6 +99,33 @@ def main():
     loop.run()
     if failures:
         raise AssertionError(failures[0])
+
+
+def main():
+    # Do not trust an inherited session address or an opt-in flag: even when
+    # invoked directly, fake receivers belong exclusively to this subprocess.
+    with tempfile.TemporaryDirectory(prefix="alis-cast-test-bus-") as directory:
+        socket = Path(directory) / "bus"
+        address = "unix:path=" + str(socket)
+        daemon = subprocess.Popen([
+            "dbus-daemon", "--session", "--nofork", "--nopidfile",
+            "--address=" + address,
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            deadline = time.monotonic() + 4
+            while not socket.is_socket():
+                if daemon.poll() is not None or time.monotonic() >= deadline:
+                    raise RuntimeError("Private fixture bus did not start")
+                time.sleep(0.02)
+            run_fixture(address)
+        finally:
+            if daemon.poll() is None:
+                daemon.terminate()
+                try:
+                    daemon.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    daemon.kill()
+                    daemon.wait(timeout=3)
 
 
 if __name__ == "__main__":
