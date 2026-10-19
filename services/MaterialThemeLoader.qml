@@ -226,7 +226,7 @@ Singleton {
         root._previewPalette = null
         if (root._previewExternalDeferred) {
             root._previewExternalDeferred = false
-            root.requestExternalApply()
+            root.requestExternalApply(false, "preview-cancel")
         }
     }
 
@@ -347,7 +347,7 @@ Singleton {
         // failures too: poll for a late/partial file update and refresh external
         // targets without asserting that generation itself succeeded.
         root.scheduleReload()
-        root.requestExternalApply()
+        root.requestExternalApply(false, "generator-exit")
     }
 
     Process {
@@ -548,9 +548,16 @@ Singleton {
     // fan-out, variant/dark-mode process exits) routes here instead, so the
     // debounce collapses them into one run and the style overlay below is
     // guaranteed to land before any module reads the palette.
-    function requestExternalApply(generationReady = false): void {
-        if (root.themeProfileEnabled)
+    function requestExternalApply(generationReady = false, reason = "other"): void {
+        if (root.themeProfileEnabled) {
             root.themeProfileExternalRequestedMs = Date.now()
+            // Fixed allowlist: expose only caller identity in sanitized traces.
+            const source = generationReady ? "ready"
+                : (["preview-cancel", "generator-exit", "global-style",
+                    "file-fallback", "loaded-fallback", "theme-service"].includes(reason)
+                    ? reason : "other")
+            root.themeProfileStage("qml_external_request_" + source, 0)
+        }
         // Fast only after a validated generation-ready token and a successful
         // QML palette apply. All other callers retain the original 600ms
         // coalescing/recovery behavior.
@@ -583,7 +590,7 @@ Singleton {
         target: Config.options?.appearance ?? null
         function onGlobalStyleChanged() {
             root._log("[MaterialThemeLoader] globalStyle changed, re-applying external theming")
-            root.requestExternalApply()
+            root.requestExternalApply(false, "global-style")
         }
     }
 
@@ -737,7 +744,7 @@ exec /usr/bin/bash ${_shq(applyColorPath)}
             // loaded and handed to the generation-ready fast path.
             if (!root._generationReadyPendingPalette
                     && themeFileView.text() !== root._lastFastPaletteContent)
-                root.requestExternalApply()
+                root.requestExternalApply(false, "file-fallback")
         }
     }
 
@@ -772,7 +779,7 @@ exec /usr/bin/bash ${_shq(applyColorPath)}
                 // file watcher notification. A bounded reloadPollTimer must
                 // never restart the external debounce on every poll.
                 root._lastFallbackPaletteContent = fileContent
-                root.requestExternalApply()
+                root.requestExternalApply(false, "loaded-fallback")
             }
             if (root.themeProfileEnabled && root.themeProfileFileEventMs > 0) {
                 root.themeProfileStage("qml_watch_to_loaded",

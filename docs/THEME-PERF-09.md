@@ -160,3 +160,40 @@ remain. On the next runtime trace, these QML event timestamps can be
 cross-referenced to the `qml-generator` process start and the leading
 `qml-external` wave. No visual, palette or regeneration behavior is changed;
 no shell restart is performed by this commit.
+
+## Owner runtime report — 2026-10-20 00:11 +07 (caller identified)
+
+`alis-auto-theme-runtime-20261020-001104.json` on `01ce87d7`:
+
+- Trigger `collector` PID 456418 completed once (320ms, PASS).
+- A **separate QML live-config regeneration** is proven by
+  `qml_auto_regen_request_live-config` and
+  `qml_auto_regen_dispatch_live-config` at epoch 1792429844904.
+  Its process PID 457932 completed after 210ms.
+- Two QML external application runs, 914ms and 574ms, were observed.
+  The first external dispatch at epoch 1792429843936 preceded
+  the collector's generator completion; do not attribute it to a
+  completed palette from that trigger.
+- `qml_generation_ready` and `qml_generation_ready_palette_loaded`
+  occurred twice, with successful fast dispatch 36ms after the latest
+  palette-loaded marker.
+- Median Rust 12.518ms, switchwall 265ms and applycolor 744ms.
+  The latest run is an observational trace, not a controlled speedup.
+
+### Safe correction and diagnostic improvement
+
+The lazy-singleton `ThemeService.Component.onCompleted` path now primes
+`_lastLiveRegenSignature` and `_lastPanelFamily` when `Config.ready` was
+already true, matching the existing `Config.onReadyChanged` path.
+Otherwise the first unrelated config change can be interpreted as a complete
+live signature change and trigger unnecessary regeneration. This is a
+real initialization guard, though this trace alone cannot confirm it was
+responsible for this particular duplicate.
+
+Profiling-only markers `qml_live_regen_changed_<field>` reveal changed
+*field names* for subsequent real signature differences, without logging
+values or wallpaper paths. `qml_external_request_<reason>` identifies the
+source of fallback/ready apply requests. Neither changes timer durations,
+manual theme behavior, or the Liquid barrier. Owner verification remains
+pending a new installed-machine trace with exactly the expected process
+count and no incorrect skipped regeneration.

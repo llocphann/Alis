@@ -148,7 +148,7 @@ Singleton {
             // MaterialThemeLoader owns the run: spawning applycolor.sh here as
             // well doubled every user action into two parallel module waves.
             if (applyExternal) {
-                MaterialThemeLoader.requestExternalApply();
+                MaterialThemeLoader.requestExternalApply(false, "theme-service");
             }
 
             if (applyExternal && vesktopEnabled) {
@@ -237,11 +237,32 @@ Singleton {
 
     function _tryLiveRegenerateFromConfig(): void {
         if (!Config.ready) return
-        if (root.liveRegenSignature === root._lastLiveRegenSignature) return
+        const nextSignature = root.liveRegenSignature
+        if (nextSignature === root._lastLiveRegenSignature) return
+        // Profile only names of signature fields, never settings values or paths.
+        // This reveals what caused a live-config regen without leaking private
+        // wallpaper paths, terminals or palette values.
+        if (MaterialThemeLoader.themeProfileEnabled) {
+            const previousSignature = root._lastLiveRegenSignature
+            if (!previousSignature) {
+                MaterialThemeLoader.themeProfileStage("qml_live_regen_signature_unprimed", 0)
+            } else {
+                try {
+                    const before = JSON.parse(previousSignature)
+                    const after = JSON.parse(nextSignature)
+                    for (const key of Object.keys(after)) {
+                        if (before[key] !== after[key])
+                            MaterialThemeLoader.themeProfileStage("qml_live_regen_changed_" + key, 0)
+                    }
+                } catch (e) {
+                    MaterialThemeLoader.themeProfileStage("qml_live_regen_signature_invalid", 0)
+                }
+            }
+        }
         // Always track the signature — even when not on auto theme.
         // Otherwise switching manual→auto sees the stale auto signature
         // and skips regeneration.
-        root._lastLiveRegenSignature = root.liveRegenSignature
+        root._lastLiveRegenSignature = nextSignature
 
         // Detect family change — switchwall.sh is family-aware so the full
         // pipeline must re-run even for manual themes (different wallpaper
@@ -279,6 +300,11 @@ Singleton {
         if (Config.ready) {
             root.normalizeGlobalStyle()
             scheduleRefreshTimer.restart()
+            // A lazily instantiated singleton may miss Config.onReadyChanged.
+            // Prime the same snapshot as that signal, otherwise any later
+            // unrelated configChanged event appears to be a full live regen.
+            root._lastLiveRegenSignature = root.liveRegenSignature
+            root._lastPanelFamily = root.panelFamily
         }
     }
 

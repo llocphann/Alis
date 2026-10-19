@@ -58,6 +58,18 @@ for marker in SERVICE_MARKERS:
     assert marker in SERVICE, f"Missing ThemeService marker: {marker}"
 for reason in ("live-config", "cooldown", "theme-selection"):
     assert 'regenerateAutoTheme("' + reason + '")' in SERVICE
+# Verify the late-singleton bootstrap initializes both signature fields.
+assert 'Component.onCompleted: {' in SERVICE
+completed_block = SERVICE.split('Component.onCompleted: {', 1)[1].split('    Timer {', 1)[0]
+assert 'root._lastLiveRegenSignature = root.liveRegenSignature' in completed_block
+assert 'root._lastPanelFamily = root.panelFamily' in completed_block
+assert 'qml_live_regen_changed_' in SERVICE
+assert 'qml_live_regen_signature_unprimed' in SERVICE
+for reason in ("preview-cancel", "generator-exit", "global-style",
+               "file-fallback", "loaded-fallback", "theme-service"):
+    assert 'qml_external_request_' in QML
+    assert reason in QML
+assert 'requestExternalApply(false, "theme-service")' in SERVICE
 assert '2>>"$_theme_perf_stderr"' in SHELL
 
 values = module.parse_stages(
