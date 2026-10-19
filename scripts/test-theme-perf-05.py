@@ -100,6 +100,8 @@ with tempfile.TemporaryDirectory(prefix="alis-theme-diag-test-") as folder:
     assert data["benchmarks"]["baseline"]["wall"]["count"] == 2
     assert data["benchmarks"]["size_matrix"]["128"]["status"] == "PASS"
     assert data["benchmarks"]["template_matrix"]["8"]["status"] == "PASS"
+    assert "production_seed_cache" in data["benchmarks"]
+    assert "seed_cache_integration" in data["tests"]
     assert all(row["status"] == "PASS" for row in
                data["benchmarks"]["seed_reuse_parity"].values())
     assert data["runtime_log"]["stages"]["qml.qml_palette_apply"]["median_ms"] == 5

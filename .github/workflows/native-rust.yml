@@ -39,6 +39,7 @@ on:
       - 'scripts/collect-auto-theme-diagnostics.py'
       - 'scripts/collect-auto-theme-diagnostics.sh'
       - 'scripts/test-theme-perf-05.py'
+      - 'scripts/test-theme-seed-cache.py'
       - 'scripts/colors/lib/theme-profile.sh'
       - 'scripts/sddm/sync-pixel-sddm.py'
       - 'scripts/colors/applycolor.sh'
@@ -76,6 +77,7 @@ on:
       - 'scripts/collect-auto-theme-diagnostics.py'
       - 'scripts/collect-auto-theme-diagnostics.sh'
       - 'scripts/test-theme-perf-05.py'
+      - 'scripts/test-theme-seed-cache.py'
       - 'scripts/colors/lib/theme-profile.sh'
       - 'scripts/sddm/sync-pixel-sddm.py'
       - 'scripts/colors/applycolor.sh'
@@ -134,6 +136,7 @@ jobs:
           bash -n scripts/collect-auto-theme-diagnostics.sh
           python3 -m py_compile scripts/collect-auto-theme-diagnostics.py scripts/test-theme-perf-05.py
           python3 scripts/test-theme-perf-05.py
+          python3 -m py_compile scripts/test-theme-seed-cache.py
           python3 -m py_compile scripts/sddm/sync-pixel-sddm.py scripts/colors/generate_colors_material.py
           bash -n scripts/colors/applycolor.sh
           bash -n scripts/colors/apply-gtk-theme.sh
@@ -186,4 +189,5 @@ jobs:
       - name: Theme image, template and consumer parity
         run: |
           cargo build --locked --manifest-path native/Cargo.toml -p alis-theme
+          python3 scripts/test-theme-seed-cache.py native/target/debug/alis-theme
           python3 native/scripts/check-theme-parity.py native/target/debug/alis-theme

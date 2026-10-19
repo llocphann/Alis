@@ -169,7 +169,9 @@ def locate_binary(explicit: str | None) -> tuple[Path | None, dict]:
 def run_generator(binary: Path, work: Path, *, image: Path | None = None,
                   color: str = "#6489ab", size: int = 128, mode: str = "dark",
                   scheme: str = "auto", flags: tuple[str, ...] = (),
-                  template_dir: Path | None = None, timeout: int = 45) -> dict:
+                  template_dir: Path | None = None, timeout: int = 45,
+                  seed_cache_home: Path | None = None,
+                  seed_cache_enabled: bool = True) -> dict:
     work.mkdir(parents=True, exist_ok=True)
     command = [
         str(binary), "--mode", mode, "--scheme", scheme,
@@ -191,7 +193,8 @@ def run_generator(binary: Path, work: Path, *, image: Path | None = None,
         "HOME": str(work / "home"),
         "XDG_CONFIG_HOME": str(work / "config"),
         "XDG_STATE_HOME": str(work / "state"),
-        "XDG_CACHE_HOME": str(work / "cache"),
+        "XDG_CACHE_HOME": str(seed_cache_home or (work / "cache")),
+        "ALIS_THEME_SEED_CACHE": "1" if seed_cache_enabled else "0",
     })
     before = resource.getrusage(resource.RUSAGE_CHILDREN)
     started = time.perf_counter_ns()
@@ -307,6 +310,10 @@ def test_runner(binary: Path | None, image: Path | None, *, parity: bool) -> dic
         sys.executable, "-c",
         "import ast,pathlib; ast.parse(pathlib.Path('scripts/collect-auto-theme-diagnostics.py').read_text())",
     ]))
+    if binary is not None:
+        checks.append(("seed_cache_integration", [
+            sys.executable, "scripts/test-theme-seed-cache.py", str(binary)
+        ]))
     if parity and binary is not None:
         checks.append(("rust_python_template_parity", [
             sys.executable, "native/scripts/check-theme-parity.py", str(binary)
@@ -412,6 +419,39 @@ def template_benchmark(binary: Path, tmp: Path, image: Path, n: int) -> dict:
             template_dir=fixture if count else None,
         )
     return matrix
+
+
+def seed_cache_benchmark(binary: Path, tmp: Path, image: Path) -> dict:
+    # Cache output stays in this private fixture; no installed cache changes.
+    shared_cache = tmp / "seed-cache"
+    cold = run_generator(binary, tmp / "cache-cold",
+                         image=image, seed_cache_home=shared_cache)
+    warm = run_generator(binary, tmp / "cache-warm",
+                         image=image, seed_cache_home=shared_cache)
+    bypass = run_generator(binary, tmp / "cache-disabled",
+                           image=image, seed_cache_home=shared_cache,
+                           seed_cache_enabled=False)
+    if not all(x["ok"] for x in (cold, warm, bypass)):
+        return {
+            "status": "FAIL",
+            "reason": "cache_generation_failed",
+        }
+    same = all(cold["data"][key] == warm["data"][key] == bypass["data"][key]
+               for key in ("json", "palette", "app-palette", "terminal",
+                           "meta", "scss"))
+    hit = "rust.seed_cache_hit" in warm["stages_ms"]
+    miss = "rust.seed_cache_miss" in cold["stages_ms"]
+    return {
+        "status": "PASS" if same and hit and miss else "FAIL",
+        "identical_outputs": same,
+        "confirmed_hit": hit,
+        "confirmed_miss": miss,
+        "cold_wall_ms": cold["wall_ms"],
+        "warm_wall_ms": warm["wall_ms"],
+        "disabled_wall_ms": bypass["wall_ms"],
+        "potential_saving_ms": round(bypass["wall_ms"] - warm["wall_ms"], 3),
+        "note": "Isolated sequential scenario; not live wallpaper-to-frame latency.",
+    }
 
 
 def image_size_matrix(binary: Path, tmp: Path, image: Path, n: int) -> dict:
@@ -523,6 +563,9 @@ def collect(args) -> dict:
             )
             report["benchmarks"]["size_matrix"] = image_size_matrix(
                 binary, tmp / "size-matrix", image, args.matrix_runs,
+            )
+            report["benchmarks"]["production_seed_cache"] = seed_cache_benchmark(
+                binary, tmp / "production-seed-cache", image,
             )
             report["benchmarks"]["seed_reuse_parity"] = test_reuse_parity(
                 binary, tmp / "seed-reuse-parity", image,

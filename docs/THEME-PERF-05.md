@@ -34,7 +34,9 @@ output files are not included.
    must not sacrifice palette fidelity).
 7. Synthetic template render comparison at 0/1/8/24 templates. All template
    manifests and destinations are explicitly inside the temporary sandbox.
-8. Optional aggregation of existing opt-in QML/shell/external timing markers.
+8. Production Rust seed cache cold/warm/disabled comparison, and the
+   isolated cache integration tests for invalidation/concurrency/corruption.
+9. Optional aggregation of existing opt-in QML/shell/external timing markers.
 
 No sudo, root, Quickshell restart, wallpaper switch, app theme apply,
 or SDDM synchronization is performed by this suite. Rust compilation updates

@@ -1,5 +1,6 @@
 mod palette;
 mod sddm;
+mod seed_cache;
 mod source;
 mod template;
 
@@ -17,6 +18,7 @@ use crate::palette::{
     palette_contract, palette_to_value, scss_output, terminal_palette,
 };
 use crate::sddm::sync_if_installed;
+use crate::seed_cache::SeedCache;
 use crate::source::{
     auto_detect_scheme, color_seed, image_seed, invert_hue, load_resized_image, low_chroma,
 };
@@ -156,19 +158,53 @@ fn terminal_source(path: Option<&Path>, dark: bool) -> Result<Option<Palette>> {
 
 fn resolve_seed(args: &Args) -> Result<(Argb, String, Option<PathBuf>, String)> {
     if let Some(path) = &args.path {
-        let image = load_resized_image(path, args.size)?;
-        let mut scheme = args.scheme.clone();
-        if scheme == "auto" {
-            let started = Instant::now();
-            scheme = auto_detect_scheme(&image).to_owned();
-            if std::env::var("ALIS_THEME_PROFILE").as_deref() == Ok("1") {
+        // Hash the actual image bytes: path + size + mtime is not sufficient
+        // when a wallpaper is replaced in-place. A failed lookup must never
+        // stop a normal decode or alter the palette.
+        let cache_started = Instant::now();
+        let cache = SeedCache::prepare(path, args.size);
+        let profile = std::env::var("ALIS_THEME_PROFILE").as_deref() == Ok("1");
+        if let Some(ref cache) = cache
+            && let Some((seed, auto_scheme)) = cache.lookup()
+            && cache.image_unchanged()
+        {
+            if profile {
                 eprintln!(
-                    "[THEME-PERF-04] scope=rust stage=scheme_auto ms={:.3}",
-                    started.elapsed().as_secs_f64() * 1000.0
+                    "[THEME-PERF-04] scope=rust stage=seed_cache_hit ms={:.3}",
+                    cache_started.elapsed().as_secs_f64() * 1000.0
                 );
             }
+            let scheme = if args.scheme == "auto" {
+                auto_scheme
+            } else {
+                args.scheme.clone()
+            };
+            return Ok((seed, scheme, Some(path.clone()), "image".into()));
+        }
+        if profile {
+            eprintln!(
+                "[THEME-PERF-04] scope=rust stage=seed_cache_miss ms={:.3}",
+                cache_started.elapsed().as_secs_f64() * 1000.0
+            );
+        }
+        let image = load_resized_image(path, args.size)?;
+        let scheme_started = Instant::now();
+        let auto_scheme = auto_detect_scheme(&image).to_owned();
+        if profile && args.scheme == "auto" {
+            eprintln!(
+                "[THEME-PERF-04] scope=rust stage=scheme_auto ms={:.3}",
+                scheme_started.elapsed().as_secs_f64() * 1000.0
+            );
         }
         let seed = image_seed(&image)?;
+        if let Some(cache) = cache {
+            cache.store(seed, &auto_scheme);
+        }
+        let scheme = if args.scheme == "auto" {
+            auto_scheme
+        } else {
+            args.scheme.clone()
+        };
         return Ok((seed, scheme, Some(path.clone()), "image".into()));
     }
     if let Some(color) = &args.color {
