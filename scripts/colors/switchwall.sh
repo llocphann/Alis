@@ -587,6 +587,9 @@ switch() {
     local _theme_perf_stderr="/dev/null"
     if [[ "${ALIS_THEME_PROFILE:-}" == "1" ]]; then
         _theme_perf_stderr="/dev/stderr"
+        if [[ -n "${ALIS_THEME_PROFILE_LOG:-}" && -f "$ALIS_THEME_PROFILE_LOG" && ! -L "$ALIS_THEME_PROFILE_LOG" ]]; then
+            _theme_perf_stderr="$ALIS_THEME_PROFILE_LOG"
+        fi
     fi
 
     # 1) Generate authoritative shell/UI colors.json + render app templates.
@@ -601,7 +604,7 @@ switch() {
         --meta-output "$_meta_tmp" \
         --scss-output "$_scss_tmp" \
         --render-templates "$TEMPLATE_DIR" \
-        > /dev/null 2>"$_theme_perf_stderr" && [[ -s "$_json_tmp" ]]; then
+        > /dev/null 2>>"$_theme_perf_stderr" && [[ -s "$_json_tmp" ]]; then
         theme_generation_succeeded=true
         theme_perf_stage switchwall native_generation "$_theme_perf_generate"
         if [[ "${ALIS_THEME_PROFILE:-}" == "1" ]]; then
@@ -698,7 +701,7 @@ switch() {
         scss_cmd=("$SCRIPT_DIR/../native-dispatch" theme "${scss_generate_args[@]}")
         scss_cmd+=(--terminal-output "$_terminal_force_tmp")
 
-        if "${scss_cmd[@]}" > "$_scss_tmp" 2>"$_theme_perf_stderr" && [[ -s "$_scss_tmp" && -s "$_terminal_force_tmp" ]]; then
+        if "${scss_cmd[@]}" > "$_scss_tmp" 2>>"$_theme_perf_stderr" && [[ -s "$_scss_tmp" && -s "$_terminal_force_tmp" ]]; then
             publish_if_changed "$_scss_tmp" "$STATE_DIR/user/generated/material_colors.scss" || rm -f "$_scss_tmp"
             # Keep terminal outputs aligned with forced-dark generation path when enabled.
             publish_if_changed "$_terminal_force_tmp" "$_terminal_out" || rm -f "$_terminal_force_tmp"

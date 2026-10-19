@@ -23,8 +23,15 @@ Singleton {
     property string filePath: Directories.generatedMaterialThemePath
     property bool ready: false
 
-    // Opt-in diagnostic. No work or output during normal wallpaper changes.
-    readonly property bool themeProfileEnabled: Quickshell.env("ALIS_THEME_PROFILE") === "1"
+    // THEME-PERF-08: owner-controlled live profiling. The runtime marker can
+    // be toggled without restarting the Quickshell process. It is never used
+    // to mutate theme settings or to trigger a wallpaper change.
+    readonly property string themeRuntimeRoot: (Quickshell.env("XDG_RUNTIME_DIR")
+        || ((Quickshell.env("HOME") || "/tmp") + "/.cache")) + "/alis-theme-perf08"
+    property bool themeRuntimeEnabled: false
+    readonly property bool themeProfileEnabled:
+        Quickshell.env("ALIS_THEME_PROFILE") === "1" || root.themeRuntimeEnabled
+    readonly property string themeProfileLogPath: root.themeRuntimeRoot + "/trace.log"
     property double themeProfileFileEventMs: 0
     property double themeProfileExternalRequestedMs: 0
     function themeProfileStage(stage, durationMs) {
@@ -32,6 +39,27 @@ Singleton {
             console.info("[THEME-PERF-04] scope=qml stage=" + stage
                 + " ms=" + Math.max(0, durationMs).toFixed(3)
                 + " epoch_ms=" + Date.now())
+    }
+
+    // FileView may be initialized before the profiler creates its marker;
+    // the low-frequency refresh also catches creation and removal safely.
+    FileView {
+        id: themeProfileControl
+        path: Qt.resolvedUrl(root.themeRuntimeRoot + "/enabled")
+        watchChanges: true
+        onFileChanged: themeProfileControl.reload()
+        onLoadedChanged: root.themeRuntimeEnabled =
+            themeProfileControl.loaded && themeProfileControl.text().trim() === "1"
+    }
+    Timer {
+        interval: 1500
+        running: true
+        repeat: true
+        onTriggered: {
+            themeProfileControl.reload()
+            root.themeRuntimeEnabled = themeProfileControl.loaded
+                && themeProfileControl.text().trim() === "1"
+        }
     }
 
     property bool previewActive: false
@@ -193,10 +221,23 @@ Singleton {
     function wallpaperSwitchCommand(args) {
         const command = []
         const appsAndShellEnabled = Config.options?.appearance?.wallpaperTheming?.enableAppsAndShell ?? true
-        if (root.defaultApplyExternal && appsAndShellEnabled)
-            command.push("/usr/bin/env", "ALIS_THEME_SKIP_SDDM_SYNC=1")
+        if (root.themeProfileEnabled)
+            command.push("/usr/bin/env", "ALIS_THEME_PROFILE=1",
+                "ALIS_THEME_PROFILE_LOG=" + root.themeProfileLogPath)
+        if (root.defaultApplyExternal && appsAndShellEnabled) {
+            if (command.length === 0)
+                command.push("/usr/bin/env")
+            command.push("ALIS_THEME_SKIP_SDDM_SYNC=1")
+        }
         command.push("/usr/bin/bash", Directories.wallpaperSwitchScriptPath)
         return command.concat(args ?? [])
+    }
+
+    function themeExternalCommand(command) {
+        if (!root.themeProfileEnabled)
+            return command
+        return ["/usr/bin/env", "ALIS_THEME_PROFILE=1",
+            "ALIS_THEME_PROFILE_LOG=" + root.themeProfileLogPath].concat(command)
     }
 
     function reapplyTheme() {
@@ -601,7 +642,7 @@ Singleton {
         const applyColorPath = Directories.scriptsPath + "/colors/applycolor.sh"
         const overlay = root._styleAppPaletteOverlay()
         if (!overlay) {
-            Quickshell.execDetached(["/usr/bin/bash", applyColorPath])
+            Quickshell.execDetached(root.themeExternalCommand(["/usr/bin/bash", applyColorPath]))
             return
         }
         // Merge and run share one shell invocation: the modules must never read
@@ -617,7 +658,7 @@ if command -v jq >/dev/null 2>&1 && [ -s "$p" ]; then
 fi
 exec /usr/bin/bash ${_shq(applyColorPath)}
 `
-        Quickshell.execDetached(["/usr/bin/bash", "-c", script])
+        Quickshell.execDetached(root.themeExternalCommand(["/usr/bin/bash", "-c", script]))
     }
 
     // Debounce file-change notifications: theme pipeline writes the JSON

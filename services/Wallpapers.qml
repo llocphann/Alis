@@ -614,6 +614,7 @@ Singleton {
         ])
         if (noSwitch)
             command.splice(command.length - 1, 0, "--noswitch")
+        MaterialThemeLoader.themeProfileStage("qml_switchwall_dispatch", 0)
         applyProc.exec(command)
     }
 
@@ -647,6 +648,7 @@ Singleton {
         property string pendingRequestKey: ""
 
         onExited: {
+            MaterialThemeLoader.themeProfileStage("qml_switchwall_exited", 0)
             const nextKey = pendingRequestKey
             const nextPath = root._queuedApplyPath
             const nextDarkMode = root._queuedApplyDarkMode
@@ -749,6 +751,8 @@ Singleton {
         const normalizedPath = FileUtils.trimFileProtocol(String(path ?? ""))
         if (!normalizedPath || normalizedPath.length === 0) return
 
+        if (monitorName === "")
+            MaterialThemeLoader.themeProfileStage("qml_wallpaper_request", 0)
         root.requestWallpaperBlurTransition(monitorName)
 
         if (monitorName !== "") {
@@ -791,6 +795,7 @@ Singleton {
         const normalizedPath = FileUtils.trimFileProtocol(String(imagePath ?? ""))
         if (!normalizedPath || normalizedPath.length === 0) return
 
+        MaterialThemeLoader.themeProfileStage("qml_color_only_request", 0)
         Config.setNestedValue("appearance.wallpaperTheming.previewSourcePath", normalizedPath)
 
         root._applyInProgress = true

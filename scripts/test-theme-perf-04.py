@@ -26,7 +26,8 @@ for name in ("seed_extract", "palette_build", "output_write",
              "template_render", "sddm_sync", "total"):
     require(f"stage={name} ms=" in RUST, f"Missing Rust stage: {name}")
 require('var("ALIS_THEME_PROFILE")' in RUST, "Rust timing must be opt-in")
-require('themeProfileEnabled: Quickshell.env("ALIS_THEME_PROFILE") === "1"' in QML,
+require('Quickshell.env("ALIS_THEME_PROFILE") === "1"' in QML
+        and 'themeRuntimeEnabled: false' in QML,
         "QML timing must be opt-in")
 for name in ("qml_palette_apply", "qml_watch_to_loaded",
              "qml_external_debounce", "qml_external_dispatch"):
@@ -38,7 +39,7 @@ require("theme_perf_stage applycolor total " in EXTERNAL,
         "Missing external total marker")
 require('local _theme_perf_stderr="/dev/null"' in SWITCH
         and '_theme_perf_stderr="/dev/stderr"' in SWITCH
-        and '2>"$_theme_perf_stderr"' in SWITCH,
+        and '2>>"$_theme_perf_stderr"' in SWITCH,
         "Rust stderr must remain silent by default but visible when profiling")
 
 with tempfile.TemporaryDirectory(prefix="alis-perf-test-") as scratch:
