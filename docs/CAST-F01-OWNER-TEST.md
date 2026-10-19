@@ -70,6 +70,44 @@ The direct busctl command is a diagnostic cross-check, not an installation step.
 
 **This procedure distinguishes working software enumeration from actual discovery over a real classroom network. Neither mocked CI tests nor presence of a running D-Bus manager can guarantee a TV will be found on every network.**
 
+## Chromecast Connection Quality (on-demand, not RSSI)
+
+**Chromecast is a LAN service**. Its signal strength cannot be derived from
+the laptop's Wi-Fi router. Utilities → Project & Cast → Wireless Display
+therefore shows a separate **Connection Quality** icon and measured TCP
+connection latency (for example `Responsive · 17 ms`), *not* a Wi-Fi
+strength percentage or estimated distance.
+
+- On **Scan**, Alis optionally uses `avahi-browse -rtpk _googlecast._tcp`
+  from **avahi-utils** (Arch) and resolves the TXT friendly name (`fn`),
+  locally advertised IPv4 address and port. The name must be unique in
+  both GNOME's receiver list and mDNS records. No IP ranges are scanned,
+  no private identifiers, addresses or TXT records are returned to the UI.
+- An optional single read-only TCP handshake measures **approximate LAN
+  control-service response latency**, not casting bandwidth, playback FPS,
+  packet loss or Wi-Fi RSSI. Probe is limited to RFC1918 private IPv4
+  addresses, advertised Cast control ports 8008/8009/8010, <=0.65 s,
+  and max four Chromecast receivers per explicit scan. The probe sends
+  no Cast payload and never authenticates.
+- Classifications: <=30 ms **Responsive**, 31–100 ms **Moderate**,
+  >100 ms **Slow**. These are **connect-time** labels, not a guarantee
+  that screencasting will work or an ongoing performance monitor.
+- Without `avahi-browse`/Avahi service, a matching mDNS entry, unique
+  receiver name, usable private IPv4 address or a successful connection
+  probe, the Chromecast row displays **Quality unavailable**; it
+  still supports Scan/Connect/Disconnect. GNOME Network Displays may
+  discover TVs via systemd-resolved even when the optional Avahi command
+  is not installed or not running.
+- Miracast P2P Signal Strength is entirely separate and unchanged.
+  No automatic network changes, installs, firewall changes, restarts or
+  background polling are performed.
+- Owner check: for Chromecast TV `KD-49X7500F`, confirm the scan
+  still lists the receiver. If `Quality unavailable`, read-only
+  checks: `command -v avahi-browse`; `avahi-browse -rtpk
+  _googlecast._tcp`. **Do not paste IPs, MACs or other receiver secrets
+  into public Issues.** If avahi-utils is absent, ask Owner approval
+  before installing; don't auto-install it.
+
 ## Signal Strength (optional, Miracast P2P only)
 
 The Wireless Display device row may show a Wi-Fi icon with e.g. `Strong · 82%`
