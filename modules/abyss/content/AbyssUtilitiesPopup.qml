@@ -541,6 +541,37 @@ Item {
                                                 wrapMode: Text.NoWrap
                                             }
                                         }
+                                        // Chromecast uses a bounded TCP connect
+                                        // measurement to its uniquely matched
+                                        // advertised Cast service, never Wi-Fi
+                                        // router strength or inferred distance.
+                                        RowLayout {
+                                            id: castQuality
+                                            readonly property real latency: Number(
+                                                receiverRow.modelData.connectionLatencyMs ?? 0)
+                                            readonly property bool measured: latency >= 1
+                                                && latency <= 2000
+                                                && !!receiverRow.modelData.connectionQuality
+                                            visible: receiverRow.modelData.protocolId === 3
+                                            Layout.alignment: Qt.AlignVCenter
+                                            spacing: 4
+                                            MaterialSymbol {
+                                                text: castQuality.measured ? "speed" : "help_outline"
+                                                iconSize: 15
+                                                color: castQuality.measured
+                                                    && castQuality.latency <= 30
+                                                    ? AbyssStyle.accent : root.utilityMutedInk
+                                            }
+                                            AbyssLabel {
+                                                text: castQuality.measured
+                                                    ? receiverRow.modelData.connectionQuality
+                                                        + " · " + Math.round(castQuality.latency) + " ms"
+                                                    : "Quality unavailable"
+                                                color: root.utilityMutedInk
+                                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                                wrapMode: Text.NoWrap
+                                            }
+                                        }
                                         MaterialSymbol {
                                             Layout.alignment: Qt.AlignVCenter
                                             text: receiverRow.currentSession ? "stop_circle" : "chevron_right"
