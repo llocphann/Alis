@@ -279,3 +279,40 @@ The user has not yet provided a rerun of the corrected standalone
 `test-theme-gtk-palette-batch.py`, nor installed-desktop Owner verification
 of Liquid transition, manual theme and dark/light behavior. The collector
 does not measure visible frame latency. Keep those verifications distinct.
+
+### 2026-10-20 06:11 +07 — second post-batch THEME-PERF-10 sample
+
+The owner-provided sanitized file
+`alis-auto-theme-runtime-20261020-061159.json` was captured on
+`15a6f8de49e59e2ae3ca10f5eb5ce322994070dd`.
+Recolor existing JPG wallpaper, collector 20.045s window; trigger exit 0
+(PASS), QML and shell traces PASS.
+
+| Metric | Pre-batch 05:28 | Post-batch 05:55 | Post-batch 06:11 |
+| --- | ---: | ---: | ---: |
+| `rust.total` | 8.660ms | 8.468ms | 8.316ms |
+| `switchwall.total` | 157ms | 158ms | 153ms |
+| `applycolor.20-gtk-kde` | 458ms | 370ms | 369ms |
+| `applycolor.total` | 477ms | 389ms | 388ms |
+| `qml_external_debounce` | 43ms | 45ms | 45ms |
+| `switchwall` process count | 1 | 1 | 1 |
+| `applycolor` process count | 1 | 1 | 1 |
+
+In this new sample, exactly one `collector` switchwall and one QML
+external `applycolor` appear in `run_inventory`, and there is one
+validated `qml_generation_ready_palette_loaded` → `qml_external_dispatch`
+sequence (45ms). No duplicate live-config regeneration was observed.
+
+Relative to the pre-batch single sample, GTK/KDE is 89ms faster (19.4%) and
+the full external wave is 89ms faster (18.7%). Across the **two** post-batch
+samples, GTK/KDE is 369–370ms and applycolor 388–389ms; the result is
+repeatable in these reports, not a statistically controlled benchmark.
+The switchwall-start to applycolor-finished timestamp interval in this
+sample is 599ms versus approximately 690ms before batching; this is a
+process-timeline proxy, not visible frame latency.
+
+**Acceptance boundary:** The report does not prove the corrected
+`test-theme-gtk-palette-batch.py` was rerun; it also does not verify
+installed Liquid wallpaper transitions, rapid wallpaper selections,
+manual presets, or dark/light changes. Keep THEME-PERF-09 and
+THEME-PERF-10 Owner verification separate from runtime observations.
