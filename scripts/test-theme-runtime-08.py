@@ -34,11 +34,11 @@ assert 'ALIS_THEME_PROFILE_LOG' in TRACE_HELPER
 assert '2>>"$_theme_perf_stderr"' in SHELL
 
 values = module.parse_stages(
-    "[THEME-PERF-04] scope=qml stage=qml_palette_apply ms=4.25 epoch_ms=1040\n"
-    "[THEME-PERF-04] scope=applycolor stage=total ms=23 epoch_ms=1035\n"
+    "[THEME-PERF-04] scope=qml stage=qml_palette_apply ms=4.25 epoch_ms=2040\n"
+    "[THEME-PERF-04] scope=applycolor stage=total ms=23 epoch_ms=2035\n"
     "[THEME-PERF-04] scope=qml stage=stale ms=55 epoch_ms=450\n"
     "[THEME-PERF-04] scope=rust stage=seed_cache_hit ms=0.11\n",
-    1000, 1100, allow_untimed=False,
+    2000, 2100, allow_untimed=False,
 )
 assert len(values) == 2 and values[0]["duration_ms"] == 4.25
 assert module.summarize(values)["qml.qml_palette_apply"]["median_ms"] == 4.25
