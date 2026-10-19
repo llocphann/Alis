@@ -45,6 +45,13 @@ jobs:
           python3 scripts/test-wallpaper-liquid-contract.py
           python3 scripts/test-wallpaper-abyss-liquid.py
 
+      - name: Verify Weekly Planner recurring schedule recovery
+        shell: bash
+        run: |
+          node scripts/test-weekly-planner-recurring-rollover.mjs
+          node scripts/test-weekly-planner-policy.mjs
+          python3 scripts/test-weekly-planner-recurring-storage-runtime.py
+
       - name: Verify notification retention and Mark-all-read policies
         shell: bash
         run: |

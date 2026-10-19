@@ -271,14 +271,21 @@ Singleton {
             const slots = Occurrences.entries(event)
             let changed = false
             // Edited occurrence-backed schedules can predate repeatTemplate.
-            // Recover their explicit pattern, retaining the ID and history.
+            // A selectedTemplate denotes the active suffix, not old history.
+            const pattern=Array.isArray(event.selectedTemplate) && event.selectedTemplate.length
+                ? Occurrences.entries({occurrences:event.selectedTemplate}) : slots
+            const patternStart=slots.length-pattern.length
             if (Array.isArray(event.occurrences) && !event.repeatTemplate?.length
                     && event.recurrence && event.recurrence!=="none"
-                    && RepeatPolicy.templateAllowed(slots,event.recurrence)) {
-                event.repeatTemplate=slots.map(slot=>({
+                    && patternStart>=0
+                    && pattern.every((slot,index)=>
+                        slot.startDate===slots[patternStart+index].startDate
+                        && slot.endDate===slots[patternStart+index].endDate)
+                    && RepeatPolicy.templateAllowed(pattern,event.recurrence)) {
+                event.repeatTemplate=pattern.map(slot=>({
                     startDate:slot.startDate,endDate:slot.endDate
                 }))
-                event.repeatCycleStart=0
+                event.repeatCycleStart=patternStart
                 changed=true
             }
             for (let index = 0; index < slots.length; ++index) {
@@ -534,10 +541,15 @@ Singleton {
         if (!updates.title.length) return false
         let result=Object.assign({},previous,updates)
         if (!sameMode || !samePattern) {
+            const previousSlots=Occurrences.entries(previous)
+            const selectedStart=previousSlots.length-original.length
+            const selectedSuffix=Array.isArray(previous.selectedTemplate)
+                && selectedStart>=0 && original.every((slot,index)=>
+                    new Date(slot.startDate).getTime()===new Date(previousSlots[selectedStart+index].startDate).getTime()
+                    && new Date(slot.endDate).getTime()===new Date(previousSlots[selectedStart+index].endDate).getTime())
             const history=Array.isArray(previous.repeatTemplate)
-                ? Occurrences.entries(previous)
-                    .slice(0,Math.max(0,Number(previous.repeatCycleStart || 0)))
-                : []
+                ? previousSlots.slice(0,Math.max(0,Number(previous.repeatCycleStart || 0)))
+                : selectedSuffix ? previousSlots.slice(0,selectedStart) : []
             result=Occurrences.store(result,history.concat(slots))
             if (mode!=="none") {
                 result.repeatTemplate=slots.map(slot=>({

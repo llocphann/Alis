@@ -331,6 +331,7 @@ run_check 'Native generic Popup delayed-loader reveal and cancellation' python3 
 run_check 'Native Dashboard/Overview content-ready reveal, reversal and warm expiry' python3 scripts/test-abyss-body-reveal-readiness-runtime.py
 run_check 'Dashboard horizontal gesture and stable page order regression' node scripts/test-dashboard-page-policy.mjs
 run_check 'Weekly Planner civil dates, overlap, recurrence and DST regression' node scripts/test-weekly-planner-policy.mjs
+run_check 'Weekly Planner notified schedule rollover and retained history' node scripts/test-weekly-planner-recurring-rollover.mjs
 run_check 'Weekly Planner Ctrl/Shift multi-date and compatible Repeat cycles' node scripts/test-weekly-planner-multidate.mjs
 run_check 'Weekly Planner multi-date single-write storage runtime' python3 scripts/test-weekly-planner-multidate-storage-runtime.py
 run_check 'Multi-date Events grouping and Weekly Planner drag/resize policy' node scripts/test-event-occurrences-policy.mjs

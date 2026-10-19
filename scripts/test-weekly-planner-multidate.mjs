@@ -79,14 +79,34 @@ assert.match(dialog,/const multi=root\.plannerPresentation/);
 assert.match(dialog,/Events\.updateEventGroup\(root\.editingEvent\.id/);
 assert.match(dialog,/root\.plannerSelectedDateKeys=selectedKeys\.length/);
 assert.doesNotMatch(dialog,/objectName:"plannerRepeatConflictHint"/);
-assert.match(dialog,/selectedDays\.length>1 && root\.recurrence!=="none"/);
+assert.doesNotMatch(dialog,/selectedDays\.length>1 && root\.recurrence!=="none"/,
+ "compatible multi-date recurrence must not be rejected as one-time-only");
+const saveBody=dialog.split("function saveEvent(): bool {",2)[1]
+ ?.split("\n    WindowDialogTitle",1)[0];
+assert.ok(saveBody,"actual editor save implementation missing");
+const saves=[];
+const editor={plannerPresentation:true,isEditing:false,
+ plannerSelectedDateKeys:["2026-10-13","2026-10-15"],
+ eventDate:date(2026,10,13),eventTime:"09:00",eventEndTime:"10:00",
+ eventTitle:"Repeat fixture",eventDescription:"",recurrence:"weekly",allDay:false};
+const save=new Function("root","Events","DateSelection","RepeatPolicy",
+ "return function saveEvent() {"+saveBody)(editor,
+ {ready:true,addEvent(...args){saves.push(args);return {id:41};}},
+ {ranges},R);
+assert.equal(save(),true,"Weekly editor save rejected a compatible two-day pattern");
+assert.equal(saves.length,1);
+assert.equal(saves[0][6],"weekly");
+assert.equal(saves[0][9].length,2,"selected weekdays were not forwarded to storage");
+editor.recurrence="daily";
+assert.equal(save(),false,"incompatible Daily group must be rejected");
+assert.equal(saves.length,1,"rejected mode must not write storage");
 assert.match(dialog,/DateSelection\.ranges\(selectedDays/);
 assert.match(dialog,/root\.plannerSelectedDateKeys : \[\]\]/);
 assert.match(service,/RepeatPolicy\.templateAllowed\(explicitSlots,recurrence \|\| "none"\)/);
 assert.match(service,/event\.repeatTemplate=explicitSlots\.map/);
 assert.match(service,/RepeatPolicy\.nextCycle\(event\.repeatTemplate/);
 assert.match(service,/const groupIndex = bulk \? -1/);
-assert.match(service,/if \(bulk\) event=Occurrences\.store\(event,explicitSlots\)/);
+assert.match(service,/if \(bulk\)\s*\{?\s*event=Occurrences\.store\(event,explicitSlots\)/);
 assert.match(service,/root\.eventAdded\(event\)[\s\S]*root\.saveToFile\(\)/);
 assert.match(occurrences,/occurrences:ordered/);
 assert.match(occurrences,/startDate:first\.startDate,dateTime:first\.startDate/);
@@ -110,7 +130,7 @@ function slot(y,m,d,h=9) {
  const start=new Date(y,m-1,d,h,0,0),end=new Date(y,m-1,d,h+1,0,0);
  return {startDate:start.toISOString(),endDate:end.toISOString()};
 }
-function groupDates(group) {return group.map(s=>new Date(s.startDate).getDate());}
+function groupDates(group) {return Array.from(group,s=>new Date(s.startDate).getDate());}
 const weekly=R.nextCycle([slot(2026,10,13),slot(2026,10,15)],
  "weekly",new Date(2026,9,15,11));
 assert.deepEqual(groupDates(weekly),[20,22],"weekly group did not repeat every selected weekday");
