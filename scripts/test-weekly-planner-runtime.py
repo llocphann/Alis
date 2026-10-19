@@ -216,7 +216,7 @@ Window {
    inline.loadEvent({
      id:785,title:"Wake up Tuesday and Thursday",recurrence:"weekly",
      allDay:false,category:"general",priority:"normal",reminderMinutes:15,
-     occurrences:originalGroup.map(slot=>({...slot,notified:false})),
+     occurrences:originalGroup.map(slot=>Object.assign({},slot,{notified:false})),
      repeatTemplate:originalGroup,repeatCycleStart:0,_editOccurrenceIndex:1
    })
    check(inline.editingEvent.id===785 && inline.isEditing,
@@ -266,6 +266,44 @@ Window {
    planner.selectedDate=new Date(2024,10,3,12);local.list=[{id:5,title:"Repeated hour",startDate:"2024-11-03T01:30:00-04:00",endDate:"2024-11-03T01:30:00-05:00"}];wait(50)
    check(planner.maximumMinutes===1500,"native fall week lost the 25-hour civil day")
    const fall=planner.days.reduce((rows,day)=>rows.concat(day.timed),[])[0];check(fall.end-fall.start===60,"native repeated hour disappeared");capture("fall-clock-change")
+   // DASH-I13: match the reported four weekly groups without reading a
+   // personal calendar. Verify actual cards, not only the projection array.
+   planner.followToday=false;planner.selectedDate=new Date(2026,9,14,12)
+   function recurringSlot(day,hour,notified){
+     const start=new Date(2026,9,day,hour,30)
+     return {startDate:start.toISOString(),
+       endDate:new Date(start.getTime()+90*60000).toISOString(),notified:notified}
+   }
+   const patterns=[[13,15,18],[14,16,17],[15,17,15],[14,17,17]]
+   const recurring=patterns.map((dates,index)=>{
+     const slots=[recurringSlot(dates[0],dates[2],true),recurringSlot(dates[1],dates[2],true),
+       recurringSlot(dates[0]+7,dates[2],false),recurringSlot(dates[1]+7,dates[2],false)]
+     return {id:100+index,title:"Recurring fixture "+index,recurrence:"weekly",
+       occurrences:slots,repeatTemplate:slots.slice(0,2).map(value=>({
+         startDate:value.startDate,endDate:value.endDate})),repeatCycleStart:2}
+   })
+   local.list=recurring;external.events=[];wait(100)
+   function verifyRecurringWeek(label){
+     const rows=planner.days.reduce((result,day)=>result.concat(day.timed),[])
+     const cards=all(planner,"plannerTimedEvent")
+     check(rows.length===8,label+": projected recurring dates missing")
+     check(cards.length===8,label+": rendered recurring cards missing")
+     check(cards.every(card=>card.visible && card.width>0 && card.height>0),
+       label+": recurring card has no visible geometry")
+     check(cards.every(card=>card.modelData.startDate>=planner.days[0].date
+       && card.modelData.startDate<planner.days[6].end),label+": stale card date")
+   }
+   verifyRecurringWeek("history")
+   planner.changeWeek(1);wait(100);verifyRecurringWeek("next week")
+   viewport.contentY=14*planner.hourHeight;capture("recurring-next-week")
+   planner.changeWeek(1);wait(100);verifyRecurringWeek("projected week")
+   planner.changeWeek(-2);wait(100);verifyRecurringWeek("return to history")
+   local.list=[];wait(60)
+   check(all(planner,"plannerTimedEvent").length===0,"empty source retained cards")
+   planner.changeWeek(1);local.list=recurring;wait(100)
+   verifyRecurringWeek("late source load")
+   planner.presentationActive=false;wait(30);planner.presentationActive=true;wait(100)
+   verifyRecurringWeek("reopened")
    planner.showToday();check(planner.days.some(day=>Qt.formatDate(day.date,"yyyy-MM-dd")===Qt.formatDate(new Date(),"yyyy-MM-dd")),"Today navigation failed")
    console.info("WEEKLY_PLANNER_NATIVE_PASS",checks,root.frames)
   }catch(error){console.error("WEEKLY_PLANNER_NATIVE_FAIL",error.message,error.stack)}Qt.quit()}
