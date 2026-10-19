@@ -34,6 +34,7 @@ jobs:
           python3 scripts/test-CAST-F01-audio-stage.py
           python3 scripts/test-CAST-F01-wireless-stage.py
           python3 scripts/test-CAST-F01-signal-strength.py
+          python3 scripts/test-CAST-F01-chromecast-quality.py
           dbus-run-session -- /usr/bin/python3 scripts/test-CAST-F01-live-dbus-scan.py
           python3 scripts/test-CAST-F01-capabilities.py
           python3 scripts/test-abyss-display-mode.py
