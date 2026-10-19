@@ -77,12 +77,23 @@ with tempfile.TemporaryDirectory(prefix="alis-theme-diag-test-") as folder:
     ]
     result = subprocess.run(command, cwd=ROOT, env=env, text=True,
                             capture_output=True, timeout=120)
-    if result.returncode:
+    # Nonzero exit 1 is intentional when a pre-existing regression reports
+    # FAIL. The collector must preserve that status while still creating the
+    # complete report. Only missing reports or unexpected exit codes are bugs
+    # in this offline orchestration smoke test.
+    if result.returncode not in (0, 1) or not report.is_file():
         raise AssertionError(
-            f"Collector exited {result.returncode}:\n"
+            f"Collector failed to create a report (rc={result.returncode}):\n"
             f"{result.stdout[-900:]}\n{result.stderr[-900:]}"
         )
     data = json.loads(report.read_text())
+    failed_regressions = [
+        name for name, value in data["tests"].items()
+        if value.get("status") == "FAIL"
+    ]
+    assert (result.returncode == 1) == bool(failed_regressions), (
+        "Collector exit status must match the presence of failed regressions"
+    )
     assert data["schema"] == "THEME-PERF-05-v1"
     assert data["source"]["available"] is True
     assert data["benchmarks"]["baseline"]["status"] == "PASS"
