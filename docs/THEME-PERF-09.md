@@ -197,3 +197,42 @@ source of fallback/ready apply requests. Neither changes timer durations,
 manual theme behavior, or the Liquid barrier. Owner verification remains
 pending a new installed-machine trace with exactly the expected process
 count and no incorrect skipped regeneration.
+
+## THEME-PERF-10 candidate — GTK/KDE palette input batching
+
+The 2026-10-20 05:28 +07 owner report (`94c82a9a`) records one
+`switchwall` at **157ms**, one Rust generator at **8.66ms**, and one
+`applycolor` at **477ms**; within it GTK/KDE is the critical-path module
+(**458ms**). The collector trigger exits PASS; this is one sample, not a
+controlled performance benchmark. Liquid wallpaper switching, manual theme
+and dark/light visual behavior still need Owner verification.
+
+As a separate, bounded optimization, GTK/KDE now parses 29 palette
+fields in **one jq process** (`scripts/colors/lib/app-palette-fields.jq`),
+replacing 29 per-variable jq invocations while preserving field
+precedence, empty fallback semantics, existing CSS/Qt outputs, and the script's
+legacy override arguments. This change does **not** alter the Liquid barrier,
+`ThemeService`, external scheduling, or writes to the user's files beyond
+what the existing script already does.
+
+Regression fixture: `python3 scripts/test-theme-gtk-palette-batch.py` compares
+all 29 fields to the original jq expressions across four disposable
+JSON cases and runs `bash -n` on the target script. Other acceptance tests:
+
+```bash
+python3 scripts/test-theme-perf-09.py
+python3 scripts/test-theme-runtime-08.py
+python3 scripts/test-wallpaper-liquid-theme-deferral.py
+bash scripts/test-material-theme-loader-lifecycle.sh
+```
+
+Owner desktop acceptance, without claiming automated GUI verification:
+1. Use the normal Wallpaper picker to apply two distinct images in Liquid mode;
+   check smooth animation, correct final wallpaper, matched shell/app palettes.
+2. Rapidly select multiple wallpapers; verify newest selection wins and no
+   repeated switchwall/applycolor waves for a single final wallpaper.
+3. Switch auto -> manual preset -> auto and light -> dark -> light; confirm
+   visible shell, GTK apps, Qt apps and terminal colors remain consistent.
+4. Re-run the collector with the same wallpaper and compare repeat medians for
+   GTK/KDE against the **458ms** starting sample; do not call performance PASS
+   from a single run or without visible Owner checks.

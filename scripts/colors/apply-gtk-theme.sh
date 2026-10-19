@@ -75,40 +75,43 @@ if [[ -n "$CHOSEN_ICON_THEME" ]]; then
     fi
 fi
 
-BG=$(jq -r '.app_background // .background // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#1e1e2e")
-FG=$(jq -r '.app_foreground // .on_background // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#cdd6f4")
-PRIMARY=$(jq -r '.app_accent // .primary // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#cba6f7")
-ON_PRIMARY=$(jq -r '.app_on_accent // .on_primary // empty' "$COLOR_SOURCE" 2>/dev/null || echo "#1e1e2e")
-PRIMARY_CONTAINER=$(jq -r '.primary_container // empty' "$COLOR_SOURCE" 2>/dev/null)
-ON_PRIMARY_CONTAINER=$(jq -r '.on_primary_container // empty' "$COLOR_SOURCE" 2>/dev/null)
-SURFACE=$(jq -r '.app_view_bg // .surface // empty' "$COLOR_SOURCE" 2>/dev/null || echo "$BG")
-# Popovers, menus and dialogs use the window's full-strength text. The muted
-# app_on_surface token is intended for secondary content and can fall too low
-# on light popup surfaces.
-ON_SURFACE=$(jq -r '.app_foreground // .on_surface // empty' "$COLOR_SOURCE" 2>/dev/null || echo "$FG")
-SURFACE_CONTAINER=$(jq -r '.app_surface_elevated // .surface_container // empty' "$COLOR_SOURCE" 2>/dev/null)
-SURFACE_CONTAINER_HIGH=$(jq -r '.app_surface_popup // .surface_container_high // empty' "$COLOR_SOURCE" 2>/dev/null)
-SURFACE_CONTAINER_LOW=$(jq -r '.app_surface // .surface_container_low // empty' "$COLOR_SOURCE" 2>/dev/null)
-SURFACE_DIM=$(jq -r '.app_window_bg // .surface_dim // empty' "$COLOR_SOURCE" 2>/dev/null)
-OUTLINE_VARIANT=$(jq -r '.app_border_subtle // .outline_variant // empty' "$COLOR_SOURCE" 2>/dev/null)
-SURFACE_CONTAINER_HIGHEST=$(jq -r '.app_thumbnail_bg // .surface_container_highest // empty' "$COLOR_SOURCE" 2>/dev/null)
-APP_HEADERBAR_BG=$(jq -r '.app_headerbar_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
-APP_SIDEBAR_BG=$(jq -r '.app_sidebar_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
-APP_CARD_BG=$(jq -r '.app_card_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
-APP_POPOVER_BG=$(jq -r '.app_popover_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
-APP_DIALOG_BG=$(jq -r '.app_dialog_bg // empty' "$COLOR_SOURCE" 2>/dev/null)
-APP_SELECTION=$(jq -r '.app_selection // empty' "$COLOR_SOURCE" 2>/dev/null)
-APP_SELECTION_HOVER=$(jq -r '.app_selection_hover // empty' "$COLOR_SOURCE" 2>/dev/null)
-APP_ON_SELECTION=$(jq -r '.app_on_selection // empty' "$COLOR_SOURCE" 2>/dev/null)
-APP_SUCCESS=$(jq -r '.app_success // empty' "$COLOR_SOURCE" 2>/dev/null)
-APP_WARNING=$(jq -r '.app_warning // empty' "$COLOR_SOURCE" 2>/dev/null)
-APP_ERROR=$(jq -r '.app_error // empty' "$COLOR_SOURCE" 2>/dev/null)
-
-# Semantic colors from Material tokens
-ERROR_COLOR=$(jq -r '.error // empty' "$COLOR_SOURCE" 2>/dev/null)
-TERTIARY=$(jq -r '.tertiary // empty' "$COLOR_SOURCE" 2>/dev/null)
-SECONDARY=$(jq -r '.secondary // empty' "$COLOR_SOURCE" 2>/dev/null)
-SECONDARY_CONTAINER=$(jq -r '.secondary_container // empty' "$COLOR_SOURCE" 2>/dev/null)
+# Read the app palette in one jq invocation rather than starting 29 jq
+# processes during every wallpaper recolor. The ordered fields are defined in
+# lib/app-palette-fields.jq and preserve the former fallback precedence.
+if ! COLOR_VALUES_TEXT="$(jq -r -f "$SCRIPT_DIR/lib/app-palette-fields.jq" "$COLOR_SOURCE" 2>/dev/null)"; then
+    echo "[apply-gtk-theme] invalid palette JSON, skipping GTK/KDE refresh" >&2
+    exit 0
+fi
+mapfile -t COLOR_VALUES <<< "$COLOR_VALUES_TEXT"
+BG="${COLOR_VALUES[0]:-}"
+FG="${COLOR_VALUES[1]:-}"
+PRIMARY="${COLOR_VALUES[2]:-}"
+ON_PRIMARY="${COLOR_VALUES[3]:-}"
+PRIMARY_CONTAINER="${COLOR_VALUES[4]:-}"
+ON_PRIMARY_CONTAINER="${COLOR_VALUES[5]:-}"
+SURFACE="${COLOR_VALUES[6]:-}"
+ON_SURFACE="${COLOR_VALUES[7]:-}"
+SURFACE_CONTAINER="${COLOR_VALUES[8]:-}"
+SURFACE_CONTAINER_HIGH="${COLOR_VALUES[9]:-}"
+SURFACE_CONTAINER_LOW="${COLOR_VALUES[10]:-}"
+SURFACE_DIM="${COLOR_VALUES[11]:-}"
+OUTLINE_VARIANT="${COLOR_VALUES[12]:-}"
+SURFACE_CONTAINER_HIGHEST="${COLOR_VALUES[13]:-}"
+APP_HEADERBAR_BG="${COLOR_VALUES[14]:-}"
+APP_SIDEBAR_BG="${COLOR_VALUES[15]:-}"
+APP_CARD_BG="${COLOR_VALUES[16]:-}"
+APP_POPOVER_BG="${COLOR_VALUES[17]:-}"
+APP_DIALOG_BG="${COLOR_VALUES[18]:-}"
+APP_SELECTION="${COLOR_VALUES[19]:-}"
+APP_SELECTION_HOVER="${COLOR_VALUES[20]:-}"
+APP_ON_SELECTION="${COLOR_VALUES[21]:-}"
+APP_SUCCESS="${COLOR_VALUES[22]:-}"
+APP_WARNING="${COLOR_VALUES[23]:-}"
+APP_ERROR="${COLOR_VALUES[24]:-}"
+ERROR_COLOR="${COLOR_VALUES[25]:-}"
+TERTIARY="${COLOR_VALUES[26]:-}"
+SECONDARY="${COLOR_VALUES[27]:-}"
+SECONDARY_CONTAINER="${COLOR_VALUES[28]:-}"
 
 # If ThemePresets passes args (bg fg primary on_primary surface surface_dim), use them
 # This avoids the race condition between generateColorsJson() writing to disk and this script reading
