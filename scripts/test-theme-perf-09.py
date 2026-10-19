@@ -125,4 +125,10 @@ run
     require((generated / "terminal.json").read_text() == '{"terminal":1}',
             "Marker protocol changed auxiliary palette")
 
+# The Rust production-boundary check must match executable names, not
+# prefixed runtime directories such as /alis-theme-perf08.
+import re
+assert re.search(r"/alis-theme(?![A-Za-z0-9_.-])", "/alis-theme-perf08") is None
+assert re.search(r"/alis-theme(?![A-Za-z0-9_.-])", "/opt/bin/alis-theme") is not None
+
 print("THEME_PERF_09_PASS ordered atomic publication, fallback, dedup, Liquid deferral")

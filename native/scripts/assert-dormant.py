@@ -9,6 +9,7 @@ compiled binaries because they are responsible for shipping native/bin.
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -89,15 +90,12 @@ def main() -> int:
                 # example `alis-mpdd=ready`). That is not a direct runtime
                 # binding. Reject executable/path contexts instead of any
                 # harmless mention of a binary name.
-                direct_path = any(
-                    token in line
-                    for token in (
-                        f"/{marker}",
-                        f"./{marker}",
-                        f"$BIN_DIR/{marker}",
-                        "${BIN_DIR}/" + marker,
-                    )
-                )
+                # Match a complete binary basename. Profiling/state paths
+                # like "/alis-theme-perf08" are *not* an alis-theme
+                # executable and must not fail the production boundary.
+                direct_path = re.search(
+                    rf"/{re.escape(marker)}(?![A-Za-z0-9_.-])", line
+                ) is not None
                 direct_command = any(
                     token in line
                     for token in (
