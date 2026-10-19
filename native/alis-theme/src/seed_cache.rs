@@ -142,10 +142,9 @@ impl SeedCache {
         let serial = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_or(0, |duration| duration.as_nanos());
-        let staged = self.directory.join(format!(
-            ".seed-{}-{serial}.tmp",
-            std::process::id()
-        ));
+        let staged = self
+            .directory
+            .join(format!(".seed-{}-{serial}.tmp", std::process::id()));
         let stored = (|| -> std::io::Result<()> {
             let mut file = OpenOptions::new()
                 .write(true)
@@ -180,10 +179,7 @@ fn prune(directory: &Path) {
             if !metadata.is_file() {
                 return None;
             }
-            Some((
-                metadata.modified().unwrap_or(UNIX_EPOCH),
-                entry.path(),
-            ))
+            Some((metadata.modified().unwrap_or(UNIX_EPOCH), entry.path()))
         })
         .collect::<Vec<_>>();
     if entries.len() <= MAX_ENTRIES {
@@ -210,7 +206,8 @@ mod tests {
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .expect("clock").as_nanos()
+                .expect("clock")
+                .as_nanos()
         ));
         fs::create_dir_all(&dir).expect("fixture directory");
         dir
