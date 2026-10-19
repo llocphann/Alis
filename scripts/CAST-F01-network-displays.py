@@ -8,9 +8,11 @@ The system's screencast portal remains responsible for consent/source choice.
 """
 import argparse
 from collections import Counter
+import ipaddress
 import json
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -219,6 +221,128 @@ def add_receiver_signal_strength(receivers, samples):
     return receivers
 
 
+def cast_mdns_records(raw):
+    """Parse resolved Avahi _googlecast._tcp service records.
+
+    Each '=;' row contains an advertised service instance, IP, port and
+    TXT records. Never guess a receiver address from an unrelated host.
+    """
+    records = []
+    for line in str(raw or "").splitlines()[:160]:
+        fields = line.split(";", 9)
+        if len(fields) != 10 or fields[0] != "=":
+            continue
+        marker, interface, family, instance, service, domain, host, addr, port, txt = fields
+        if service != "_googlecast._tcp" or family != "IPv4":
+            continue
+        if domain.rstrip(".") != "local":
+            continue
+        try:
+            address = ipaddress.ip_address(addr)
+            # Do not connect to DNS-controlled public, loopback or multicast
+            # IPs. TV probing is allowed on RFC1918 local networks only.
+            if not isinstance(address, ipaddress.IPv4Address) or not any(
+                address in n for n in (
+                    ipaddress.IPv4Network("10.0.0.0/8"),
+                    ipaddress.IPv4Network("172.16.0.0/12"),
+                    ipaddress.IPv4Network("192.168.0.0/16"),
+                )
+            ):
+                continue
+            portnum = int(port)
+            # Limit to advertised Cast control-service ports, not arbitrary
+            # ports a compromised local mDNS advertiser might request.
+            if portnum not in (8008, 8009, 8010):
+                continue
+        except (ValueError, TypeError):
+            continue
+        # Avahi encodes TXT strings as quoted values (including escaped
+        # bytes). Only accept simple, non-escaped, unambiguous friendly names.
+        matches = re.findall(r'"fn=([^"\\]{1,140})"', txt)
+        friendly = matches[0].strip() if len(matches) == 1 else ""
+        if not friendly:
+            # GNOME uses service instance when the TXT fn is absent.
+            if '"fn=' in txt:
+                continue
+            if not re.fullmatch(r"[\w .():-]{1,140}", instance, re.UNICODE):
+                continue
+            friendly = instance.strip()
+        if friendly:
+            records.append((friendly.casefold(), str(address), portnum))
+    # Dual-interface duplicate advertisements must not inflate the count;
+    # distinct advertised endpoints with the same name remain ambiguous.
+    return list(dict.fromkeys(records))
+
+
+def cast_mdns_samples():
+    """Read only advertised Cast mDNS records; do not scan network ranges.
+
+    Optional Arch dependency: avahi-utils and running Avahi resolver. A
+    missing CLI/service returns [] and never affects existing Cast discovery.
+    """
+    if not shutil.which("avahi-browse"):
+        return []
+    try:
+        output = run(["avahi-browse", "-rtpk", "_googlecast._tcp"], timeout=4)
+    except CastError:
+        return []
+    return cast_mdns_records(output[:65536])
+
+
+def cast_tcp_probe(address, port, connect=socket.create_connection):
+    """Single bounded Cast-service TCP handshake; no application payload.
+
+    This measures only approximate endpoint reachability/response latency.
+    It is NOT RSSI, bandwidth, streaming quality or a distance estimate.
+    """
+    try:
+        started = time.monotonic()
+        sock = connect((address, port), timeout=0.65)
+        elapsed_ms = round((time.monotonic() - started) * 1000)
+        sock.close()
+        return max(1, elapsed_ms)
+    except (OSError, TimeoutError, ValueError):
+        return None
+
+
+def add_chromecast_connection_quality(receivers, mdns, probe=cast_tcp_probe):
+    """Measure only a uniquely identified Chromecast endpoint by mDNS name.
+
+    No use of GNOME UUID as an IP address or of the laptop router's RSSI.
+    """
+    receiver_names = Counter(
+        str(d.get("name") or "").strip().casefold()
+        for d in receivers if d.get("protocolId") == 3
+    )
+    endpoints = {}
+    for name, address, port in mdns:
+        endpoints.setdefault(name, set()).add((address, port))
+    # Budget: at most four distinct Cast receiver probes per explicit scan.
+    attempts = 0
+    for item in receivers:
+        if item.get("protocolId") != 3 or attempts >= 4:
+            continue
+        name = str(item.get("name") or "").strip().casefold()
+        options = endpoints.get(name, set())
+        if not name or receiver_names[name] != 1 or len(options) != 1:
+            continue
+        address, port = next(iter(options))
+        attempts += 1
+        latency = probe(address, port)
+        if isinstance(latency, bool) or not isinstance(latency, (int, float)):
+            continue
+        if not (1 <= latency <= 2000):
+            continue
+        item["connectionLatencyMs"] = round(latency)
+        # LAN TCP connect thresholds are deliberately descriptive rather
+        # than declaring TV throughput or signal strength.
+        item["connectionQuality"] = (
+            "Responsive" if latency <= 30 else
+            "Moderate" if latency <= 100 else "Slow"
+        )
+    return receivers
+
+
 def name_owned():
     try:
         out = run(["busctl", "--user", "--no-pager", "--no-legend",
@@ -281,6 +405,8 @@ def scan():
         receivers = displays(p)
         if any(device["protocolId"] == 1 for device in receivers):
             add_receiver_signal_strength(receivers, p2p_signal_samples())
+        if any(device["protocolId"] == 3 for device in receivers):
+            add_chromecast_connection_quality(receivers, cast_mdns_samples())
         return {"ok": True, "backend": True, "streamReady": installed,
                 "code": "ready" if installed else "stream_helper_missing",
                 "displays": receivers, "message": "" if installed else
