@@ -270,6 +270,17 @@ Singleton {
             const event = root.list[i]
             const slots = Occurrences.entries(event)
             let changed = false
+            // Edited occurrence-backed schedules can predate repeatTemplate.
+            // Recover their explicit pattern, retaining the ID and history.
+            if (Array.isArray(event.occurrences) && !event.repeatTemplate?.length
+                    && event.recurrence && event.recurrence!=="none"
+                    && RepeatPolicy.templateAllowed(slots,event.recurrence)) {
+                event.repeatTemplate=slots.map(slot=>({
+                    startDate:slot.startDate,endDate:slot.endDate
+                }))
+                event.repeatCycleStart=0
+                changed=true
+            }
             for (let index = 0; index < slots.length; ++index) {
                 const slot = slots[index]
                 const startMs = new Date(slot.startDate).getTime()
@@ -299,7 +310,7 @@ Singleton {
             // Event ID, original template and occurrence history.
             // Wait for every selected day to fire before creating the next
             // complete calendar cycle; preserve existing single-day behavior.
-            if (Array.isArray(event.repeatTemplate) && event.repeatTemplate.length>1
+            if (Array.isArray(event.repeatTemplate) && event.repeatTemplate.length>0
                     && event.recurrence!=="none" && slots.every(slot=>slot.notified)) {
                 const future=RepeatPolicy.nextCycle(event.repeatTemplate,
                     event.recurrence,currentTime)
@@ -501,7 +512,7 @@ Singleton {
         if (slots.length>1 && !RepeatPolicy.templateAllowed(slots,mode))
             return false
         const original=Array.isArray(previous.repeatTemplate)
-            && previous.repeatTemplate.length>1
+            && previous.repeatTemplate.length>0
             ? previous.repeatTemplate
             : Array.isArray(previous.selectedTemplate)
                 && previous.selectedTemplate.length>0
@@ -528,7 +539,7 @@ Singleton {
                     .slice(0,Math.max(0,Number(previous.repeatCycleStart || 0)))
                 : []
             result=Occurrences.store(result,history.concat(slots))
-            if (mode!=="none" && slots.length>1) {
+            if (mode!=="none") {
                 result.repeatTemplate=slots.map(slot=>({
                     startDate:slot.startDate,endDate:slot.endDate
                 }))

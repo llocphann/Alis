@@ -100,7 +100,7 @@ function project(local, external, value, firstDay) {
                 // day of its currently active cycle even when an earlier day
                 // has already fired. Archive cycles render as history only.
                 var activeGroup=Array.isArray(event.repeatTemplate)
-                    && event.repeatTemplate.length>1
+                    && event.repeatTemplate.length>0
                     && (event.recurrence || "none")!=="none"
                     && slotIndex>=Number(event.repeatCycleStart || 0);
                 var occurrenceSource=Object.assign({},event,{

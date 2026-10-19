@@ -38,33 +38,33 @@ function allowed(keys,mode) {
     return dates.every(function(d){return weekStart(d)===weekStart(first);});
 }
 function templateAllowed(slots,mode) {
-    if (!Array.isArray(slots) || slots.length<2 || slots.length>512) return false;
+    if (!Array.isArray(slots) || slots.length<1 || slots.length>512) return false;
     var keys=slots.map(function(slot){return key(slot?.startDate);});
     return new Set(keys).size===keys.length && allowed(keys,mode);
 }
 // Rebuild from immutable original template, avoiding drift on short months
 // and leap years. Skip invalid calendar dates rather than overflowing.
 function nextCycle(template,mode,afterTime) {
-    if (!templateAllowed(template,mode) || ["none","daily"].includes(mode)) return null;
+    if (!templateAllowed(template,mode) || mode==="none") return null;
     var starts=template.map(function(slot){return date(slot.startDate);});
     var ends=template.map(function(slot){return date(slot.endDate);});
     var now=date(afterTime);
     if (!now || starts.some(function(d){return !d;})
         || ends.some(function(d,i){return !d || d<=starts[i];})) return null;
     var first=starts[0],step;
-    if (mode==="weekly") {
+    if (mode==="weekly" || mode==="daily") {
         var days=Math.floor((Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())
             -Date.UTC(first.getFullYear(),first.getMonth(),first.getDate()))/86400000);
-        step=Math.max(1,Math.floor(days/7));
+        step=Math.max(1,Math.floor(days/(mode==="daily" ? 1 : 7)));
     } else if (mode==="monthly") {
         step=Math.max(1,12*(now.getFullYear()-first.getFullYear())
             +now.getMonth()-first.getMonth());
     } else step=Math.max(1,now.getFullYear()-first.getFullYear());
     function startAt(base,k) {
         var y=base.getFullYear(),m=base.getMonth(),d=base.getDate();
-        if (mode==="weekly") {
+        if (mode==="weekly" || mode==="daily") {
             var target=new Date(y,m,d,12);
-            target.setDate(target.getDate()+7*k);
+            target.setDate(target.getDate()+(mode==="daily" ? 1 : 7)*k);
             y=target.getFullYear();m=target.getMonth();d=target.getDate();
         } else if (mode==="monthly") {
             var month=new Date(y,m+k,1,12);
