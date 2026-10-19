@@ -151,6 +151,8 @@ def sanitize(state: list[dict]) -> list[dict]:
             "fallback_count": wall.get("shaderFallbackCount"),
             "success_count": wall.get("shaderSuccessCount"),
             "fallback_reason": wall.get("lastShaderFallback") or "",
+            "prime_pulse_count": wall.get("shaderPrimePulseCount"),
+            "frame_swap_count": wall.get("shaderFrameSwapCount"),
             "window_visible": wall.get("windowVisible"),
             "slot0_status": wall.get("slot0Status"),
             "slot1_status": wall.get("slot1Status"),
@@ -213,6 +215,8 @@ def summary(frames: list[dict], cfg: dict) -> dict:
     max_fallback = max((x["fallback_count"] or 0 for x in samples), default=0)
     seen_prime = any(x["prime_pending"] for x in samples)
     seen_anim = any(x["transitioning"] for x in samples)
+    max_pulses = max((x.get("prime_pulse_count") or 0 for x in samples), default=0)
+    max_swaps = max((x.get("frame_swap_count") or 0 for x in samples), default=0)
     if types and not any(x in ("alisMelt", "inirMelt") for x in types):
         interpretation = "NOT_LIQUID_SELECTED"
     elif max_fallback > 0 and max_success == 0:
@@ -235,6 +239,8 @@ def summary(frames: list[dict], cfg: dict) -> dict:
         "seen_transition": seen_anim,
         "maximum_shader_success_count": max_success,
         "maximum_shader_fallback_count": max_fallback,
+        "maximum_prime_pulse_count": max_pulses,
+        "maximum_frame_swap_count": max_swaps,
         "fallback_reasons": reasons,
         "caveat": "Counters may include earlier transitions; compare before/after "
                   "in the timeline. No screen/GPU pixel capture performed.",

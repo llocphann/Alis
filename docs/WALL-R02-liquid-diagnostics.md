@@ -30,6 +30,38 @@ the Liquid QSB binary and Crossfader QML. This detects stale deployments or
 missing shader artifacts. Raw source paths and log lines are not collected;
 only curated renderer status fields and equality booleans are exported.
 
+## WALL-R02 frame priming repair (2026-10-19)
+
+The owner's 25-second Niri report confirmed `alisMelt` was selected,
+`awww` was not the renderer, `shaderStatus=Compiled`, but
+`shaderReady=false`, `shaderPresented=false` and
+`primeSwaps=0` until the Ready-slot crossfade fallback. This is a
+**renderer handoff problem**, not a color-generation bottleneck.
+
+The QML now **reconciles an already-compiled shader** during priming,
+and forces both `ShaderEffectSource` textures to refresh and the Quick
+window to update at a bounded 32ms interval while the handoff is pending.
+The pump stops when the shader is presented or the 1500ms safe deadline
+fires; there is no extra idle polling and no changes to the original
+Liquid GLSL/QSB. Qt documents `ShaderEffectSource.scheduleUpdate()`
+and `QQuickWindow.update()` as supported APIs.
+
+The per-output IPC exposes two new non-sensitive counters:
+`shaderPrimePulseCount` and `shaderFrameSwapCount`. After updating
+and reloading **the installed Quickshell QML**, a new report can
+distinguish a frame-starved session from a shader compile/presentation
+failure.
+
+Check that the runtime QML matches the repository:
+`deployment.assets.qml.identical`. If false, updating the repo
+alone did not update the live Quickshell configuration; use Alis' normal
+deployment/update mechanism, then restart the user-owned Alis shell
+only when convenient. Do not restart a running session automatically.
+Confirm the QSB remains identical too.
+
+**Do not mark Liquid visual acceptance PASS** based on static checks
+or counters alone. An actual Niri visual check is still required.
+
 ## Why this test is necessary
 
 The THEME-PERF-08 reports collect material palette file writes. Their

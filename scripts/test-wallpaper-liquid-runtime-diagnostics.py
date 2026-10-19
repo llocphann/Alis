@@ -15,8 +15,24 @@ for expected in ("shaderFallbackCount", "shaderSuccessCount", "lastShaderFallbac
                  "configuredTransition", "_noteShaderFallback"):
     assert expected in component, "missing diagnostic signal: " + expected
 for reason in ("software_renderer", "window_not_presented",
-               "presentation_timeout", "shader_compile_error"):
+               "presentation_timeout", "shader_compile_error",
+               "prime_no_frame", "prime_incomplete"):
     assert reason in component, "missing shader fallback reason: " + reason
+
+# Static wallpapers are otherwise idle: do not rely on an unrequested
+# frameSwapped callback while priming. Drive only during handoff and stop
+# immediately on presentation or the existing bounded timeout.
+assert 'shaderSlot0Texture.scheduleUpdate()' in component
+assert 'shaderSlot1Texture.scheduleUpdate()' in component
+assert 'root._shaderPrimePulseCount++' in component
+assert 'root._shaderFrameSwapCount++' in component
+assert 'interval: 32' in component
+assert 'running: root._shaderTexturePrimePending' in component
+assert 'shaderTransition.status === ShaderEffect.Compiled' in component
+assert 'root._requestShaderPrimeFrame()' in component
+assert 'root._requestShaderPresentationFrame()' in component
+assert 'onTriggered: root._finishShaderWaitWithoutShader()' in component
+
 
 sample = [{
     "output": "eDP-1", "configuredPath": "/home/example/private-a.png",
@@ -29,6 +45,7 @@ sample = [{
         "shaderPresented": False,
         "shaderRequested": True, "configuredTransition": "alisMelt",
         "shaderFallbackCount": 0, "shaderSuccessCount": 0,
+        "shaderPrimePulseCount": 3, "shaderFrameSwapCount": 2,
         "lastShaderFallback": "",
     }
 }]
@@ -39,6 +56,8 @@ report_str = json.dumps(outputs)
 assert "private-a.png" not in report_str
 assert "private-b.png" not in report_str
 assert outputs[0]["has_pending"]
+assert outputs[0]["prime_pulse_count"] == 3
+assert outputs[0]["frame_swap_count"] == 2
 assert outputs[0]["configured_matches_displayed"] is True
 assert "deployment_state" in script.read_text()
 assert "all_runtime_assets_match" in script.read_text()

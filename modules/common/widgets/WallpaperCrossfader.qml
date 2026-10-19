@@ -49,7 +49,9 @@ Item {
             configuredTransition: root.transitionType, effectiveType: root._effectiveType,
             shaderRequested: root.shaderTransitionRequested, canTransition: root._canTransition,
             shaderFallbackCount: root._shaderFallbackCount, shaderSuccessCount: root._shaderSuccessCount,
-            lastShaderFallback: root._lastShaderFallback}
+            lastShaderFallback: root._lastShaderFallback,
+            shaderPrimePulseCount: root._shaderPrimePulseCount,
+            shaderFrameSwapCount: root._shaderFrameSwapCount}
     }
 
     // ── Internal state ─────────────────────────────────────────────────
@@ -71,6 +73,8 @@ Item {
     property int _shaderFallbackCount: 0
     property int _shaderSuccessCount: 0
     property string _lastShaderFallback: ""
+    property int _shaderPrimePulseCount: 0
+    property int _shaderFrameSwapCount: 0
     function _noteShaderFallback(reason: string): void {
         if (!root.shaderTransitionRequested)
             return
@@ -184,19 +188,39 @@ Item {
 
     function _requestShaderPrimeFrame(): void {
         const window = root.Window.window
-        if (root._shaderTexturePrimePending && root.visible && window?.visible)
-            window.update()
+        if (!root._shaderTexturePrimePending || !root.visible || !window?.visible)
+            return
+        // When the QSB is already compiled (for example from an earlier
+        // transition), its status may not emit another statusChanged after
+        // the texture-prime lease begins. Reconcile it on each bounded pulse.
+        if (shaderTransition.status === ShaderEffect.Compiled)
+            shaderTransition.shaderReady = true
+        // A static wallpaper does not itself drive frameSwapped. Explicitly
+        // invalidate both texture snapshots and request the next compositor
+        // frame; otherwise no priming frame arrives and Liquid always times
+        // out into the ordinary crossfade.
+        shaderSlot0Texture.scheduleUpdate()
+        shaderSlot1Texture.scheduleUpdate()
+        root._shaderPrimePulseCount++
+        window.update()
     }
 
     function _requestShaderPresentationFrame(): void {
         const window = root.Window.window
-        if (root._shaderRequestedActive && shaderTransition.shaderReady
-                && !shaderTransition.shaderPresented && root.visible && window?.visible)
+        if (!root._shaderRequestedActive || shaderTransition.shaderPresented
+                || !root.visible || !window?.visible)
+            return
+        if (shaderTransition.status === ShaderEffect.Compiled)
+            shaderTransition.shaderReady = true
+        if (shaderTransition.shaderReady)
             window.update()
     }
 
     function _finishShaderWaitWithoutShader(): void {
-        if (root._shaderTexturePrimePending || root._shaderRequestedActive)
+        if (root._shaderTexturePrimePending)
+            root._noteShaderFallback(root._shaderTexturePrimeSwaps === 0
+                ? "prime_no_frame" : "prime_incomplete")
+        else if (root._shaderRequestedActive)
             root._noteShaderFallback("presentation_timeout")
         root._cancelShaderTexturePrime()
         if (root._transitioning) {
@@ -592,6 +616,24 @@ Item {
         onTriggered: root._finishShaderWaitWithoutShader()
     }
 
+    // Drive the static scene only while the shader handoff is pending. This
+    // timer stops as soon as frameSwapped confirms the texture snapshots and
+    // the shader is presented; it does not poll while Liquid is animating or
+    // while the wallpaper is idle. The 1500ms deadline above bounds failures.
+    Timer {
+        interval: 32
+        repeat: true
+        running: root._shaderTexturePrimePending
+            || (root._shaderRequestedActive && !shaderTransition.shaderPresented
+                && !transitionAnim.running)
+        onTriggered: {
+            if (root._shaderTexturePrimePending)
+                root._requestShaderPrimeFrame()
+            else
+                root._requestShaderPresentationFrame()
+        }
+    }
+
     Connections {
         target: root.Window.window
         enabled: root._shaderTexturePrimePending || root._transitioning
@@ -604,6 +646,7 @@ Item {
         }
 
         function onFrameSwapped(): void {
+            root._shaderFrameSwapCount++
             // First render with the shader at near-zero opacity; only then
             // reveal it and start progress. A compiler callback alone can
             // precede a usable texture on Qt/Wayland.
