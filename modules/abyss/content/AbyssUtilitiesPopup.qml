@@ -517,6 +517,30 @@ Item {
                                                 wrapMode: Text.NoWrap
                                             }
                                         }
+                                        // Available only for a uniquely identified
+                                        // NetworkManager Miracast P2P peer; never
+                                        // substitute the router RSSI for Chromecast.
+                                        RowLayout {
+                                            readonly property real strength: Number(
+                                                receiverRow.modelData.signalStrength ?? 0)
+                                            visible: receiverRow.modelData.protocolId === 1
+                                                && strength >= 1 && strength <= 100
+                                            Layout.alignment: Qt.AlignVCenter
+                                            spacing: 4
+                                            MaterialSymbol {
+                                                text: "wifi"
+                                                iconSize: 15
+                                                color: parent.strength >= 50
+                                                    ? AbyssStyle.accent : root.utilityMutedInk
+                                            }
+                                            AbyssLabel {
+                                                text: receiverRow.modelData.signalQuality
+                                                    + " · " + Math.round(parent.strength) + "%"
+                                                color: root.utilityMutedInk
+                                                font.pixelSize: Appearance.font.pixelSize.smallest
+                                                wrapMode: Text.NoWrap
+                                            }
+                                        }
                                         MaterialSymbol {
                                             Layout.alignment: Qt.AlignVCenter
                                             text: receiverRow.currentSession ? "stop_circle" : "chevron_right"
