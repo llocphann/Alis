@@ -31,6 +31,11 @@ assert 'root.themeExternalCommand([' in QML
 assert 'qml_wallpaper_request' in WALLPAPER
 assert 'qml_switchwall_exited' in WALLPAPER
 assert 'ALIS_THEME_PROFILE_LOG' in TRACE_HELPER
+assert 'pid=%s ppid=%s source=%s' in TRACE_HELPER
+assert 'collector|qml-generator|qml-external' in TRACE_HELPER
+assert 'ALIS_THEME_PROFILE_SOURCE=qml-generator' in QML
+assert 'ALIS_THEME_PROFILE_SOURCE=qml-external' in QML
+assert '"ALIS_THEME_PROFILE_SOURCE": "collector"' in SCRIPT.read_text()
 assert '2>>"$_theme_perf_stderr"' in SHELL
 
 values = module.parse_stages(
@@ -41,6 +46,17 @@ values = module.parse_stages(
     2000, 2100, allow_untimed=False,
 )
 assert len(values) == 2 and values[0]["duration_ms"] == 4.25
+tagged = module.parse_stages(
+    "[THEME-PERF-04] scope=switchwall stage=total ms=358 epoch_ms=2040 "
+    "pid=123 ppid=99 source=collector\n"
+    "[THEME-PERF-04] scope=applycolor stage=total ms=945 epoch_ms=2050 "
+    "pid=456 ppid=88 source=qml-external\n",
+    2000, 2100, allow_untimed=False,
+)
+assert len(tagged) == 2
+assert tagged[0]["pid"] == 123 and tagged[0]["ppid"] == 99
+assert tagged[0]["source"] == "collector"
+assert tagged[1]["source"] == "qml-external"
 assert module.summarize(values)["qml.qml_palette_apply"]["median_ms"] == 4.25
 events = [
     {"file": "colors.json", "action": "rename", "epoch_ms": 1200},
@@ -77,6 +93,7 @@ with tempfile.TemporaryDirectory(prefix="alis-runtime-perf08-test-") as folder:
     assert data["capture_mode"] == "passive"
     assert data["qml_trace_status"] in ("UNAVAILABLE", "NO_QML_PROFILE_EVENTS")
     assert data["evidence"]["file_event_count"] == 0
+    assert data["run_inventory"] == []
     active = xdg_runtime / "alis-theme-perf08"
     assert not (active / "enabled").exists()
     assert not (active / "collector.lock").exists()

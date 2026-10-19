@@ -268,7 +268,8 @@ Singleton {
         const appsAndShellEnabled = Config.options?.appearance?.wallpaperTheming?.enableAppsAndShell ?? true
         if (root.themeProfileEnabled)
             command.push("/usr/bin/env", "ALIS_THEME_PROFILE=1",
-                "ALIS_THEME_PROFILE_LOG=" + root.themeProfileLogPath)
+                "ALIS_THEME_PROFILE_LOG=" + root.themeProfileLogPath,
+                "ALIS_THEME_PROFILE_SOURCE=qml-generator")
         if (root.defaultApplyExternal && appsAndShellEnabled) {
             if (command.length === 0)
                 command.push("/usr/bin/env")
@@ -282,7 +283,8 @@ Singleton {
         if (!root.themeProfileEnabled)
             return command
         return ["/usr/bin/env", "ALIS_THEME_PROFILE=1",
-            "ALIS_THEME_PROFILE_LOG=" + root.themeProfileLogPath].concat(command)
+            "ALIS_THEME_PROFILE_LOG=" + root.themeProfileLogPath,
+            "ALIS_THEME_PROFILE_SOURCE=qml-external"].concat(command)
     }
 
     function reapplyTheme() {

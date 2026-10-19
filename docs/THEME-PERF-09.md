@@ -101,3 +101,28 @@ Some applications may update asynchronously after applycolor.sh exits.
 - No automatic Quickshell restart, wallpaper change or Owner verification.
 - Real latency improvement and visual acceptance require a fresh installed
   desktop capture, not only CI/static tests.
+
+## Owner runtime report — 2026-10-19 23:47 +07 (post signal fix)
+
+`alis-auto-theme-runtime-20261019-234710.json` on `4a014774`:
+one explicit collector trigger PASS; two Rust and switchwall generations
+(medians 51.837ms and 358ms); two external `applycolor.total` runs
+(1432ms and 945ms, median 1188.5ms). GTK/KDE median is 1023ms,
+but module stages overlap. QML emitted two `qml_generation_ready` and
+two `qml_generation_ready_palette_loaded` markers, so the repaired
+FileView handoff is active. The first `qml_external_dispatch`
+(epoch 1792428410255) preceded both generation completion signals;
+the later one (1792428411794) followed the ready palette and a
+36ms debounce. `qml_watch_to_loaded=484ms` is a watcher interval,
+not evidence of 484ms JSON parsing (palette application was 0–1ms).
+
+To diagnose the extra generation, opt-in shell profile lines now
+include safe PID, PPID and allowlisted source (`collector`,
+`qml-generator`, `qml-external`, or `other`). The sanitized
+collector includes the explicit `trigger.spawn_pid` and a
+`run_inventory` listing completed switchwall/applycolor processes.
+No wallpaper paths, palettes or command lines are recorded.
+
+**Not yet a measured speedup.** THEME-PERF-09 needs a fresh installed
+trace identifying the extra run and confirming only the required
+external updates. Fallback/manual themes and Liquid are unchanged.

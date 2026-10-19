@@ -26,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STAGE = re.compile(
     r"\[THEME-PERF-04\]\s+scope=([a-z0-9_-]+)\s+stage=([a-zA-Z0-9_-]+)"
     r"\s+ms=([0-9]+(?:\.[0-9]+)?)(?:\s+epoch_ms=([0-9]+))?"
+    r"(?:\s+pid=([0-9]+)\s+ppid=([0-9]+)\s+source=([a-z0-9_-]+))?"
 )
 WATCH_FILES = {
     "colors.json", "palette.json", "app-palette.json", "terminal.json",
@@ -49,7 +50,7 @@ def now_ms() -> int:
 def parse_stages(text: str, start_ms: int, end_ms: int, *, allow_untimed: bool) -> list[dict]:
     stages = []
     for line in text.splitlines():
-        for scope, stage, millis, stamp in STAGE.findall(line):
+        for scope, stage, millis, stamp, pid, ppid, source in STAGE.findall(line):
             if stamp:
                 when = int(stamp)
                 if when < start_ms - 1500 or when > end_ms + 1500:
@@ -63,6 +64,9 @@ def parse_stages(text: str, start_ms: int, end_ms: int, *, allow_untimed: bool) 
                 "stage": stage,
                 "duration_ms": float(millis),
                 "epoch_ms": when,
+                "pid": int(pid) if pid else None,
+                "ppid": int(ppid) if ppid else None,
+                "source": source or None,
             })
     return stages
 
@@ -252,6 +256,7 @@ def run_capture(args) -> dict:
                     "ALIS_THEME_PROFILE": "1",
                     "ALIS_THEME_PROFILE_LOG": str(trace),
                     "ALIS_THEME_SKIP_SDDM_SYNC": "1",
+                    "ALIS_THEME_PROFILE_SOURCE": "collector",
                 })
                 process = subprocess.Popen(
                     ["bash", str(ROOT / "scripts/colors/switchwall.sh"),
@@ -261,7 +266,8 @@ def run_capture(args) -> dict:
                     stderr=subprocess.DEVNULL,
                 )
                 source_kind = image.suffix.lower()
-                trigger_status = {"status": "STARTED", "recolor_existing_wallpaper": True}
+                trigger_status = {"status": "STARTED", "recolor_existing_wallpaper": True,
+                                  "spawn_pid": process.pid}
         else:
             print("THEME-PERF-08 passive mode: change wallpaper or theme once in Alis during capture.")
 
@@ -301,7 +307,8 @@ def run_capture(args) -> dict:
         qs = qml_logs(start, end)
         combined = shell_stages + qs["stages"]
         unique = {(row["scope"], row["stage"], row["duration_ms"],
-                   row["epoch_ms"]): row for row in combined}
+                   row["epoch_ms"], row.get("pid"), row.get("source")): row
+                  for row in combined}
         all_stages = list(unique.values())
         event_count = len(events)
         evidence = {
@@ -323,6 +330,17 @@ def run_capture(args) -> dict:
             "observed_events": events,
             "stages": summarize(all_stages),
             "stage_samples": all_stages,
+            "run_inventory": [
+                {
+                    "scope": row["scope"], "pid": row["pid"],
+                    "ppid": row["ppid"], "source": row["source"],
+                    "completed_epoch_ms": row["epoch_ms"],
+                    "matches_collector_trigger": row["pid"] == trigger_status.get("spawn_pid"),
+                }
+                for row in all_stages
+                if row["scope"] in ("switchwall", "applycolor")
+                and row["stage"] == "total" and row.get("pid") is not None
+            ],
             "evidence": evidence,
             "proxy_intervals_ms": {
                 "colors_to_app_palette": first_interval(
