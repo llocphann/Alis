@@ -1,5 +1,8 @@
 # THEME-PERF-09 — Fast Auto Theming external publication
 
+**Owner acceptance (2026-10-20):** **THEME-PERF-09 — OWNER VERIFIED** (fast recolor publication and absence of duplicate pipelines in measured same-wallpaper runs); **THEME-PERF-10 — OWNER VERIFIED** (29-field jq batching and measured GTK/KDE improvement in repeated same-wallpaper runs). The Owner explicitly approved verification on 2026-10-20. This approval is scoped to those outcomes; it is **not** evidence of separate installed GUI acceptance for Liquid transitions, rapid wallpaper switching, manual presets, or dark/light switching. The corrected GTK palette batch standalone test has not been separately reported PASS by the Owner.
+
+
 **Scope:** external application colors (terminal, GTK, editors, browser, etc.)
 after wallpaper generation. The existing Rust seed cache (THEME-PERF-06)
 and working Liquid animation remain unchanged.
@@ -316,3 +319,32 @@ process-timeline proxy, not visible frame latency.
 installed Liquid wallpaper transitions, rapid wallpaper selections,
 manual presets, or dark/light changes. Keep THEME-PERF-09 and
 THEME-PERF-10 Owner verification separate from runtime observations.
+
+## Owner verification record — 2026-10-20
+
+**Owner decision:** The Owner explicitly instructed `"được vậy đánh dấu verified đi"`
+after review of the collector traces and THEME-PERF-09/10 results. This is
+recorded as scoped **OWNER VERIFIED** for both technical tasks, without
+retroactively labeling unrun checks as PASS.
+
+- **THEME-PERF-09:** OWNER VERIFIED for the fast `generation-ready` →
+  QML palette apply → one external dispatch path, and removal of duplicate
+  same-wallpaper recolor pipeline in observed runs.
+- **THEME-PERF-10:** OWNER VERIFIED for the batch-read GTK/KDE change
+  (29 old `jq` calls consolidated into one), with two consistent
+  installed-machine collector observations of 370ms and 369ms GTK/KDE,
+  against a 458ms pre-change observation. These are elapsed time samples,
+  not a statistically controlled performance claim.
+- **Evidence:** Owner runtime JSONs `20261020-052800`,
+  `20261020-055558`, `20261020-061159` and four pre-fix owner-run
+  contract-test PASS results in the user-provided terminal output.
+- **Explicit limitations:** The corrected standalone GTK batch test was
+  not separately shown PASS in terminal output; its first recorded failure
+  was a malformed assertion and the fix restored executable mode.
+  No separate evidence was provided for Liquid visual animation,
+  rapid wallpaper selection, manual auto/preset switching, or
+  dark/light GUI acceptance. Those scenarios remain distinct follow-up
+  checks, not asserted PASS here.
+
+No change to runtime code, `stable`, or unrelated optimization scope is
+included in this Owner-verification documentation update.
