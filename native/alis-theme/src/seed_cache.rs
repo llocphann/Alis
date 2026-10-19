@@ -185,7 +185,7 @@ fn prune(directory: &Path) {
     if entries.len() <= MAX_ENTRIES {
         return;
     }
-    entries.sort_by(|left, right| left.cmp(right));
+    entries.sort();
     let remove_count = entries.len() - MAX_ENTRIES;
     for (_, path) in entries.into_iter().take(remove_count) {
         let _ = fs::remove_file(path);
