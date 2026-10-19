@@ -733,6 +733,25 @@ switch() {
         read max_width_desired max_height_desired <<< "$(get_max_monitor_resolution)"
         post_process "$max_width_desired" "$max_height_desired" "$imgpath"
     fi
+    # THEME-PERF-09: complete-publication signal for the running QML shell.
+    # colors.json intentionally appears earlier so Alis itself recolors at
+    # once; external modules must wait until *all* auxiliary outputs, forced
+    # dark terminals, Vesktop and post-process have finished publishing.
+    # Write a unique token atomically in the same generated directory. This is
+    # advisory: a failed marker write leaves the existing 600ms fallback intact.
+    if [[ "$theme_generation_succeeded" == "true" ]]; then
+        local _ready_dir="$STATE_DIR/user/generated" _ready_tmp=""
+        _ready_tmp="$(mktemp "$_ready_dir/.theme-generation-ready.XXXXXXXX" 2>/dev/null)" || _ready_tmp=""
+        if [[ -n "$_ready_tmp" ]]; then
+            if printf '%s-%s\n' "$(date +%s%N)" "$" > "$_ready_tmp"; then
+                mv -f -- "$_ready_tmp" "$_ready_dir/theme-generation-ready.txt" \
+                    || rm -f -- "$_ready_tmp"
+            else
+                rm -f -- "$_ready_tmp"
+            fi
+        fi
+        theme_perf_stage switchwall generation_ready "$_theme_perf_total"
+    fi
     theme_perf_stage switchwall total "$_theme_perf_total"
 }
 

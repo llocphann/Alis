@@ -34,6 +34,16 @@ Singleton {
     readonly property string themeProfileLogPath: root.themeRuntimeRoot + "/trace.log"
     property double themeProfileFileEventMs: 0
     property double themeProfileExternalRequestedMs: 0
+    // THEME-PERF-09: a complete-publication token from switchwall.sh. The
+    // ordinary colors.json watcher remains the fallback for older generators,
+    // startup/recovery and arbitrary external theme requests.
+    readonly property string generationReadyPath: root.filePath.replace(/\/colors\.json$/, "/theme-generation-ready.txt")
+    property string _lastGenerationReadyToken: ""
+    property bool _generationReadyPrimed: false
+    property bool _generationReadyFileChanged: false
+    property bool _generationReadyPendingPalette: false
+    property string _lastFastPaletteContent: ""
+    property string _lastFallbackPaletteContent: ""
     function themeProfileStage(stage, durationMs) {
         if (root.themeProfileEnabled)
             console.info("[THEME-PERF-04] scope=qml stage=" + stage
@@ -60,6 +70,38 @@ Singleton {
             root.themeRuntimeEnabled = themeProfileControl.loaded
                 && themeProfileControl.text().trim() === "1"
         }
+    }
+
+    // A new readiness token cannot launch external modules until the QML
+    // palette itself has been reloaded and applied. Do not mistake a marker
+    // from a previous shell launch for a new generation.
+    function _acceptGenerationReady(): void {
+        if (!generationReadyFileView.loaded) return
+        const token = String(generationReadyFileView.text() ?? "").trim()
+        if (!token) return
+        if (!root._generationReadyPrimed) {
+            root._generationReadyPrimed = true
+            root._lastGenerationReadyToken = token
+            if (!root._generationReadyFileChanged) return
+        } else if (token === root._lastGenerationReadyToken) {
+            return
+        }
+        root._lastGenerationReadyToken = token
+        root._generationReadyFileChanged = false
+        root._generationReadyPendingPalette = true
+        root.themeProfileStage("qml_generation_ready", 0)
+        themeFileView.reload()
+    }
+
+    FileView {
+        id: generationReadyFileView
+        path: Qt.resolvedUrl(root.generationReadyPath)
+        watchChanges: true
+        onFileChanged: {
+            root._generationReadyFileChanged = true
+            generationReadyFileView.reload()
+        }
+        onLoadedChanged: root._acceptGenerationReady()
     }
 
     property bool previewActive: false
@@ -298,7 +340,7 @@ Singleton {
         // failures too: poll for a late/partial file update and refresh external
         // targets without asserting that generation itself succeeded.
         root.scheduleReload()
-        delayedExternalApply.restart()
+        root.requestExternalApply()
     }
 
     Process {
@@ -341,17 +383,17 @@ Singleton {
         if (Quickshell.env("QS_DEBUG") === "1") console.log(...args);
     }
 
-    function applyColors(fileContent) {
+    function applyColors(fileContent): bool {
         _log("[MaterialThemeLoader] applyColors called, isAutoTheme:", root.isAutoTheme, "_forceApply:", root._forceApply)
         // Gate: only apply when auto theme is active OR we have an explicit
         // force flag from a completed variant/dark-mode generation.
         if (!root.isAutoTheme && !root._forceApply) {
             _log("[MaterialThemeLoader] BLOCKED by gate (not auto, no force)")
-            return;
+            return false;
         }
         if (!fileContent || fileContent.trim().length === 0) {
             _log("[MaterialThemeLoader] BLOCKED — empty file content (keeping _forceApply for retry)")
-            return
+            return false
         }
 
         let json
@@ -359,12 +401,12 @@ Singleton {
             json = JSON.parse(fileContent)
         } catch (e) {
             _log("[MaterialThemeLoader] BLOCKED — JSON parse error (keeping _forceApply for retry):", e)
-            return
+            return false
         }
 
         if (!json || typeof json !== "object" || !json.background) {
             _log("[MaterialThemeLoader] BLOCKED — invalid JSON structure (no background key)")
-            return
+            return false
         }
 
         // Consume _forceApply only after successful validation — failed reads
@@ -382,6 +424,7 @@ Singleton {
         }
         if (root.themeProfileEnabled)
             root.themeProfileStage("qml_palette_apply", Date.now() - paletteStarted)
+        return true
     }
 
     function _applyPalette(json): void {
@@ -497,10 +540,19 @@ Singleton {
     // fan-out, variant/dark-mode process exits) routes here instead, so the
     // debounce collapses them into one run and the style overlay below is
     // guaranteed to land before any module reads the palette.
-    function requestExternalApply(): void {
+    function requestExternalApply(generationReady = false): void {
         if (root.themeProfileEnabled)
             root.themeProfileExternalRequestedMs = Date.now()
-        delayedExternalApply.restart()
+        // Fast only after a validated generation-ready token and a successful
+        // QML palette apply. All other callers retain the original 600ms
+        // coalescing/recovery behavior.
+        if (generationReady) {
+            delayedExternalApply.interval = 45
+            delayedExternalApply.restart()
+        } else if (!(delayedExternalApply.running && delayedExternalApply.interval === 45)) {
+            delayedExternalApply.interval = 600
+            delayedExternalApply.restart()
+        }
     }
 
     Timer {
@@ -673,7 +725,11 @@ exec /usr/bin/bash ${_shq(applyColorPath)}
         onTriggered: {
             themeFileView.reload()
             delayedFileRead.start()
-            delayedExternalApply.restart()
+            // Keep legacy fallback unless this exact palette was already
+            // loaded and handed to the generation-ready fast path.
+            if (!root._generationReadyPendingPalette
+                    && themeFileView.text() !== root._lastFastPaletteContent)
+                root.requestExternalApply()
         }
     }
 
@@ -691,7 +747,22 @@ exec /usr/bin/bash ${_shq(applyColorPath)}
             root._log("[MaterialThemeLoader] onLoadedChanged fired, loaded:", themeFileView.loaded)
             const fileContent = themeFileView.text()
             root._log("[MaterialThemeLoader] file content length:", fileContent ? fileContent.length : 0)
-            root.applyColors(fileContent)
+            const applied = root.applyColors(fileContent)
+            if (root._generationReadyPendingPalette && applied) {
+                root._generationReadyPendingPalette = false
+                root._lastFastPaletteContent = fileContent
+                root._lastFallbackPaletteContent = fileContent
+                root.themeProfileStage("qml_generation_ready_palette_loaded", 0)
+                root.requestExternalApply(true)
+            } else if (fileContent && fileContent !== root._lastFastPaletteContent
+                    && fileContent !== root._lastFallbackPaletteContent
+                    && !root._generationReadyPendingPalette) {
+                // Recovery for generators without a ready marker or a missed
+                // file watcher notification. A bounded reloadPollTimer must
+                // never restart the external debounce on every poll.
+                root._lastFallbackPaletteContent = fileContent
+                root.requestExternalApply()
+            }
             if (root.themeProfileEnabled && root.themeProfileFileEventMs > 0) {
                 root.themeProfileStage("qml_watch_to_loaded",
                     Date.now() - root.themeProfileFileEventMs)

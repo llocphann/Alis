@@ -43,6 +43,7 @@ on:
       - 'scripts/collect-auto-theme-diagnostics.py'
       - 'scripts/collect-auto-theme-diagnostics.sh'
       - 'scripts/test-theme-perf-05.py'
+      - 'scripts/test-theme-perf-09.py'
       - 'scripts/test-theme-seed-cache.py'
       - 'scripts/collect-auto-theme-runtime.py'
       - 'scripts/collect-auto-theme-runtime.sh'
@@ -84,6 +85,7 @@ on:
       - 'scripts/collect-auto-theme-diagnostics.py'
       - 'scripts/collect-auto-theme-diagnostics.sh'
       - 'scripts/test-theme-perf-05.py'
+      - 'scripts/test-theme-perf-09.py'
       - 'scripts/test-theme-seed-cache.py'
       - 'scripts/collect-auto-theme-runtime.py'
       - 'scripts/collect-auto-theme-runtime.sh'
@@ -146,6 +148,8 @@ jobs:
           bash -n scripts/colors/applycolor.sh
           python3 -m py_compile scripts/benchmark-auto-theming.py
           python3 scripts/test-theme-perf-04.py
+          python3 scripts/test-theme-perf-09.py
+          bash scripts/test-material-theme-loader-lifecycle.sh
           bash -n scripts/collect-auto-theme-runtime.sh
           python3 -m py_compile scripts/collect-auto-theme-runtime.py scripts/test-theme-runtime-08.py
           python3 scripts/test-theme-runtime-08.py

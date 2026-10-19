@@ -29,6 +29,7 @@ STAGE = re.compile(
 )
 WATCH_FILES = {
     "colors.json", "palette.json", "app-palette.json", "terminal.json",
+    "theme-generation-ready.txt",
     "material_colors.scss", "theme-meta.json", "chromium-theme.json",
     "theming_modules.log", "terminal_colors.log", "code_editor_themes.log",
 }
@@ -329,6 +330,12 @@ def run_capture(args) -> dict:
                 ),
                 "colors_to_terminal_json": first_interval(
                     events, "colors.json", "terminal.json"
+                ),
+                "colors_to_generation_ready": first_interval(
+                    events, "colors.json", "theme-generation-ready.txt"
+                ),
+                "generation_ready_to_module_log": first_interval(
+                    events, "theme-generation-ready.txt", "theming_modules.log"
                 ),
                 "colors_to_module_log": first_interval(
                     events, "colors.json", "theming_modules.log"
