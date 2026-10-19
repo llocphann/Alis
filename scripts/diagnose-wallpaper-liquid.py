@@ -8,6 +8,7 @@ The JSON contains only render statuses/counters, never image paths or raw logs.
 from __future__ import annotations
 
 import argparse
+import hashlib
 from datetime import datetime, timezone
 import json
 import os
@@ -30,6 +31,45 @@ def config_path() -> Path:
 def shell_dir() -> Path:
     return Path(os.environ.get("XDG_CONFIG_HOME") or
                 (Path.home() / ".config")) / "quickshell/alis"
+
+
+def deployment_state() -> dict:
+    live = shell_dir()
+    tracked = {
+        "qml": "modules/common/widgets/WallpaperCrossfader.qml",
+        "liquid_qsb": "modules/common/widgets/wallpaperTransitions/alisMelt.frag.qsb",
+        "liquid_glsl": "modules/common/widgets/wallpaperTransitions/alisMelt.frag",
+        "desktop": "modules/background/Background.qml",
+        "wallpapers_service": "services/Wallpapers.qml",
+    }
+    results = {}
+    for name, relative in tracked.items():
+        source = ROOT / relative
+        active = live / relative
+        if not source.is_file() or not active.is_file():
+            results[name] = {
+                "repo_exists": source.is_file(), "runtime_exists": active.is_file(),
+                "identical": None,
+            }
+            continue
+        # The digest is used for a direct equality check, not emitted. No
+        # path, source code or content checksum enters the uploaded report.
+        digest = lambda path: hashlib.sha256(path.read_bytes()).digest()
+        try:
+            identical = digest(source) == digest(active)
+        except OSError:
+            identical = None
+        results[name] = {
+            "repo_exists": True, "runtime_exists": True,
+            "identical": identical,
+        }
+    return {
+        "config_present": live.is_dir(),
+        "assets": results,
+        "all_runtime_assets_match": all(
+            item.get("identical") is True for item in results.values()
+        ),
+    }
 
 
 def get_config() -> dict:
@@ -240,6 +280,7 @@ def main(argv=None) -> int:
         "captured_utc": datetime.now(timezone.utc).isoformat(),
         "duration_ms": round((time.monotonic() - start) * 1000),
         "config": cfg,
+        "deployment": deployment_state(),
         "sample_attempts": sum(status_counts.values()),
         "ipc_status_counts": status_counts,
         "timeline": states,

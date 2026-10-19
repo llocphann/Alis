@@ -24,8 +24,11 @@ The output includes the selected transition type, whether awww or the
 internal renderer owns the desktop, shader compilation/presentation status,
 texture-priming state and, on current code, shader success/fallback counters
 and the *reason* for a fallback (software renderer, hidden window, shader
-compile error, presentation timeout). Raw source paths and log lines are
-not collected; only curated renderer status fields are exported.
+compile error, presentation timeout). The report also compares the actual Quickshell runtime files
+(`~/.config/quickshell/alis`) to the checked-out `dev` repository, including
+the Liquid QSB binary and Crossfader QML. This detects stale deployments or
+missing shader artifacts. Raw source paths and log lines are not collected;
+only curated renderer status fields and equality booleans are exported.
 
 ## Why this test is necessary
 

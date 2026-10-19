@@ -39,7 +39,9 @@ report_str = json.dumps(outputs)
 assert "private-a.png" not in report_str
 assert "private-b.png" not in report_str
 assert outputs[0]["has_pending"]
-assert not outputs[0]["configured_matches_displayed"] is False
+assert outputs[0]["configured_matches_displayed"] is True
+assert "deployment_state" in script.read_text()
+assert "all_runtime_assets_match" in script.read_text()
 s = diag.summary([{"elapsed_ms": 50, "outputs": outputs}], {})
 assert s["seen_liquid_requested"] and s["seen_shader_active"]
 assert s["interpretation"] == "SHADER_NOT_CONFIRMED"
