@@ -178,7 +178,7 @@ with tempfile.TemporaryDirectory(prefix="alis-theme-palette-batch-") as td:
             expected.append(actual)
         assert batched == expected, (case, list(zip(FIELDS, batched, expected)))
         for index, (name, _) in enumerate(FIELDS):
-            mapping = f'${name}="${{COLOR_VALUES[{index}]:-}}"'
+            mapping = f'{name}="${{COLOR_VALUES[{index}]:-}}"'
             assert mapping in SOURCE, f"Missing field index {index} for {name}"
 
 print("THEME_PERF_10_PASS 29 jq fields equivalent across 4 fixtures; shell syntax valid")

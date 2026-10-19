@@ -236,3 +236,16 @@ Owner desktop acceptance, without claiming automated GUI verification:
 4. Re-run the collector with the same wallpaper and compare repeat medians for
    GTK/KDE against the **458ms** starting sample; do not call performance PASS
    from a single run or without visible Owner checks.
+
+### Owner local regression — 2026-10-20 05:xx +07 (THEME-PERF-10)
+
+Owner ran five post-pull tests: THEME-PERF-09, THEME-PERF-08,
+WALL-R01 theme deferral, and MaterialThemeLoader lifecycle all PASS.
+`test-theme-gtk-palette-batch.py` raised an assertion at index 0 because
+its expected mapping mistakenly prefixed the shell assignment with `$`
+(`$BG=...` vs `BG=...`). The repository-only fix corrects the test
+assertion. Owner `git pull` also revealed `apply-gtk-theme.sh` was
+accidentally changed from executable mode 100755 to 100644 by the earlier
+Git tree update; restore 100755 without changing script bytes. The test
+must be rerun on the user's host after pulling the fix; no GUI acceptance
+or speedup is claimed from the four passing contract tests.
