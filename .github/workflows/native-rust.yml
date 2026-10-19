@@ -20,6 +20,10 @@ on:
       - 'services/LocalMusic.qml'
       - 'services/IconThemeService.qml'
       - 'services/Wallpapers.qml'
+      - 'modules/common/widgets/WallpaperCrossfader.qml'
+      - 'scripts/diagnose-wallpaper-liquid.py'
+      - 'scripts/diagnose-wallpaper-liquid.sh'
+      - 'scripts/test-wallpaper-liquid-runtime-diagnostics.py'
       - 'services/deferred/Cliphist.qml'
       - 'services/deferred/NiriKeybinds.qml'
       - 'modules/onScreenKeyboard/PhysicalKeyboardFeedback.qml'
@@ -135,6 +139,9 @@ jobs:
           python3 scripts/test-cava-cover-color-refresh-contract.py
           python3 scripts/test-forced-dark-seed-reuse.py
           python3 scripts/test-theme-sddm-deferral.py
+          bash -n scripts/diagnose-wallpaper-liquid.sh
+          python3 -m py_compile scripts/diagnose-wallpaper-liquid.py
+          python3 scripts/test-wallpaper-liquid-runtime-diagnostics.py
           bash -n scripts/colors/lib/theme-profile.sh
           bash -n scripts/colors/applycolor.sh
           python3 -m py_compile scripts/benchmark-auto-theming.py

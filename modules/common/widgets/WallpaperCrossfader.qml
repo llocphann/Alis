@@ -45,7 +45,11 @@ Item {
             shaderReady: shaderTransition.shaderReady, shaderPresented: shaderTransition.shaderPresented,
             slot0Status: img0.status, slot1Status: img1.status, visible: root.visible,
             windowVisible: root.Window.window?.visible ?? false, graphicsApi: root.GraphicsInfo.api,
-            shaderStatus: shaderTransition.status, opacity: root.opacity}
+            shaderStatus: shaderTransition.status, opacity: root.opacity,
+            configuredTransition: root.transitionType, effectiveType: root._effectiveType,
+            shaderRequested: root.shaderTransitionRequested, canTransition: root._canTransition,
+            shaderFallbackCount: root._shaderFallbackCount, shaderSuccessCount: root._shaderSuccessCount,
+            lastShaderFallback: root._lastShaderFallback}
     }
 
     // ── Internal state ─────────────────────────────────────────────────
@@ -62,6 +66,17 @@ Item {
         || internal.pendingSource !== "" || internal.loadingSource !== ""
     readonly property bool shaderTransitionBusy: shaderTransitionRequested && transitionBusy
     property string _activeShader: ""
+    // Render-path counters for the existing read-only Background.wallpaperState
+    // IPC. They survive transition completion and never contain wallpaper paths.
+    property int _shaderFallbackCount: 0
+    property int _shaderSuccessCount: 0
+    property string _lastShaderFallback: ""
+    function _noteShaderFallback(reason: string): void {
+        if (!root.shaderTransitionRequested)
+            return
+        root._lastShaderFallback = reason
+        root._shaderFallbackCount++
+    }
     readonly property bool _shaderRequestedActive: _transitioning && _activeShader !== ""
     readonly property bool _shaderRenderActive: _shaderRequestedActive
         && shaderTransition.shaderReady && shaderTransition.shaderPresented
@@ -154,6 +169,8 @@ Item {
         if (!root._shaderRequestedActive || !shaderTransition.shaderReady
                 || !shaderTransition.shaderPresented || transitionAnim.running)
             return
+        root._shaderSuccessCount++
+        root._lastShaderFallback = ""
         transitionAnim.restart()
     }
 
@@ -179,6 +196,8 @@ Item {
     }
 
     function _finishShaderWaitWithoutShader(): void {
+        if (root._shaderTexturePrimePending || root._shaderRequestedActive)
+            root._noteShaderFallback("presentation_timeout")
         root._cancelShaderTexturePrime()
         if (root._transitioning) {
             root._activeShader = ""
@@ -214,6 +233,8 @@ Item {
         // finish; the existing image-slot crossfade works in both cases.
         if (root.GraphicsInfo.api === GraphicsInfo.Software || !root.visible
                 || !root.Window.window?.visible) {
+            root._noteShaderFallback(root.GraphicsInfo.api === GraphicsInfo.Software
+                ? "software_renderer" : "window_not_presented")
             root._cancelShaderTexturePrime()
             internal.performSwitch(true)
             return
@@ -1029,6 +1050,7 @@ Item {
                     Qt.callLater(root._requestShaderPresentationFrame)
             } else if (status === ShaderEffect.Error) {
                 console.warn("[WallpaperCrossfader] Shader failed:", log)
+                root._noteShaderFallback("shader_compile_error")
                 shaderReady = false
                 shaderPresented = false
                 root._activeShader = ""
