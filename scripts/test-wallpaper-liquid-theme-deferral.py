@@ -27,7 +27,9 @@ require('!WallpaperListener.isVideoPath(path)' in service
 require('function _deferLiquidTheme(path: string, darkMode: bool)' in service
         and 'function liquidWallpaperTransitionFinished(displayedSource: string)' in service,
         "deferred owner lifecycle must be exposed")
-require('FileUtils.trimFileProtocol(String(displayedSource ?? "")) !== pending' in service,
+require('const rendered = FileUtils.trimFileProtocol(String(displayedSource ?? ""))' in service
+        and 'const pending = root._pendingLiquidThemePath' in service
+        and 'if (!pending || rendered !== pending)' in service,
         "a stale or preview transition must not flush a newer wallpaper")
 require('liquidThemeDeadline.interval = 2600' in service
         and 'onTriggered: root._flushLiquidTheme()' in service,
