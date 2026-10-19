@@ -37,8 +37,11 @@ output files are not included.
 8. Optional aggregation of existing opt-in QML/shell/external timing markers.
 
 No sudo, root, Quickshell restart, wallpaper switch, app theme apply,
-or SDDM synchronization is performed by this suite. Rust compile affects only
-the checkout build cache and executable. Nonzero test results remain FAIL;
+or SDDM synchronization is performed by this suite. Rust compilation updates
+the checkout's native/target/release/alis-theme executable; if the installed
+Alis backend selects this same path, future normal theme requests use the newly
+built executable. The currently running Quickshell process is not restarted.
+Nonzero test results remain FAIL;
 missing optional Python libraries are marked SKIP_DEPENDENCY rather than PASS.
 
 ## Optional arguments
