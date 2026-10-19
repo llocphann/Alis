@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
+use std::time::Instant;
 
 use anyhow::{Context, Result, anyhow};
 use image::codecs::gif::GifDecoder;
@@ -39,6 +40,8 @@ fn load_gif_second_frame(path: &Path) -> Result<DynamicImage> {
 }
 
 pub fn load_resized_image(path: &Path, bitmap_size: u32) -> Result<DynamicImage> {
+    let profile = std::env::var("ALIS_THEME_PROFILE").as_deref() == Ok("1");
+    let decode_started = Instant::now();
     let mut image = if path
         .extension()
         .and_then(|value| value.to_str())
@@ -48,10 +51,23 @@ pub fn load_resized_image(path: &Path, bitmap_size: u32) -> Result<DynamicImage>
     } else {
         image::open(path).with_context(|| format!("open image {}", path.display()))?
     };
+    if profile {
+        eprintln!(
+            "[THEME-PERF-04] scope=rust stage=image_decode ms={:.3}",
+            decode_started.elapsed().as_secs_f64() * 1000.0
+        );
+    }
+    let resize_started = Instant::now();
     let (width, height) = image.dimensions();
     let (target_width, target_height) = calculate_optimal_size(width, height, bitmap_size);
     if target_width < width || target_height < height {
         image = image.resize_exact(target_width, target_height, FilterType::CatmullRom);
+    }
+    if profile {
+        eprintln!(
+            "[THEME-PERF-04] scope=rust stage=image_resize ms={:.3}",
+            resize_started.elapsed().as_secs_f64() * 1000.0
+        );
     }
     Ok(image)
 }
@@ -166,13 +182,21 @@ pub fn auto_detect_scheme(image: &DynamicImage) -> &'static str {
 }
 
 pub fn image_seed(image: &DynamicImage) -> Result<Argb> {
-    extract_image_colors(image)
+    let start = Instant::now();
+    let seed = extract_image_colors(image)
         .quantize_max_colors(128)
         .desired_colors(1)
         .call()
         .first()
         .copied()
-        .ok_or_else(|| anyhow!("image_seed_not_found"))
+        .ok_or_else(|| anyhow!("image_seed_not_found"))?;
+    if std::env::var("ALIS_THEME_PROFILE").as_deref() == Ok("1") {
+        eprintln!(
+            "[THEME-PERF-04] scope=rust stage=seed_quantize_score ms={:.3}",
+            start.elapsed().as_secs_f64() * 1000.0
+        );
+    }
+    Ok(seed)
 }
 
 pub fn color_seed(value: &str) -> Result<Argb> {

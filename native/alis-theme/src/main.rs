@@ -159,7 +159,14 @@ fn resolve_seed(args: &Args) -> Result<(Argb, String, Option<PathBuf>, String)> 
         let image = load_resized_image(path, args.size)?;
         let mut scheme = args.scheme.clone();
         if scheme == "auto" {
+            let started = Instant::now();
             scheme = auto_detect_scheme(&image).to_owned();
+            if std::env::var("ALIS_THEME_PROFILE").as_deref() == Ok("1") {
+                eprintln!(
+                    "[THEME-PERF-04] scope=rust stage=scheme_auto ms={:.3}",
+                    started.elapsed().as_secs_f64() * 1000.0
+                );
+            }
         }
         let seed = image_seed(&image)?;
         return Ok((seed, scheme, Some(path.clone()), "image".into()));

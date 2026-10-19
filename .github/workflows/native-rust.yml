@@ -36,6 +36,9 @@ on:
       - 'scripts/test-theme-sddm-deferral.py'
       - 'scripts/test-theme-perf-04.py'
       - 'scripts/benchmark-auto-theming.py'
+      - 'scripts/collect-auto-theme-diagnostics.py'
+      - 'scripts/collect-auto-theme-diagnostics.sh'
+      - 'scripts/test-theme-perf-05.py'
       - 'scripts/colors/lib/theme-profile.sh'
       - 'scripts/sddm/sync-pixel-sddm.py'
       - 'scripts/colors/applycolor.sh'
@@ -70,6 +73,9 @@ on:
       - 'scripts/test-theme-sddm-deferral.py'
       - 'scripts/test-theme-perf-04.py'
       - 'scripts/benchmark-auto-theming.py'
+      - 'scripts/collect-auto-theme-diagnostics.py'
+      - 'scripts/collect-auto-theme-diagnostics.sh'
+      - 'scripts/test-theme-perf-05.py'
       - 'scripts/colors/lib/theme-profile.sh'
       - 'scripts/sddm/sync-pixel-sddm.py'
       - 'scripts/colors/applycolor.sh'
@@ -125,6 +131,9 @@ jobs:
           bash -n scripts/colors/applycolor.sh
           python3 -m py_compile scripts/benchmark-auto-theming.py
           python3 scripts/test-theme-perf-04.py
+          bash -n scripts/collect-auto-theme-diagnostics.sh
+          python3 -m py_compile scripts/collect-auto-theme-diagnostics.py scripts/test-theme-perf-05.py
+          python3 scripts/test-theme-perf-05.py
           python3 -m py_compile scripts/sddm/sync-pixel-sddm.py scripts/colors/generate_colors_material.py
           bash -n scripts/colors/applycolor.sh
           bash -n scripts/colors/apply-gtk-theme.sh
