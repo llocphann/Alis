@@ -136,6 +136,8 @@ Singleton {
     }
 
     function applyCurrentTheme(applyExternal = defaultApplyExternal): void {
+        // Trace startup/theme-switch reapplication separately from wallpaper generation.
+        MaterialThemeLoader.themeProfileStage("qml_theme_service_apply_current", 0)
         root.normalizeGlobalStyle()
         root._log("[ThemeService] applyCurrentTheme called, currentTheme:", currentTheme, "isAutoTheme:", isAutoTheme);
         if (isAutoTheme) {
@@ -179,7 +181,12 @@ Singleton {
         root.ready = true;
     }
 
-    function regenerateAutoTheme(): void {
+    function regenerateAutoTheme(reason = "direct"): void {
+        // Every pathway keeps its own source identity for profiling. No
+        // arguments, settings values or wallpaper paths enter the report.
+        const source = ["direct", "live-config", "cooldown", "theme-selection"].includes(reason)
+            ? reason : "other"
+        MaterialThemeLoader.themeProfileStage("qml_auto_regen_request_" + source, 0)
         root._log("[ThemeService] regenerateAutoTheme called");
         const now = Date.now()
         const elapsed = now - root._lastRegenTimestamp
@@ -209,6 +216,7 @@ Singleton {
                 command.push("--type", paletteType)
             if (themingPath && themingPath.length > 0)
                 command.push("--image", themingPath)
+            MaterialThemeLoader.themeProfileStage("qml_auto_regen_dispatch_" + source, 0)
             Quickshell.execDetached(command);
         } else {
             // For manual presets, re-apply (variant-aware)
@@ -244,7 +252,7 @@ Singleton {
         if (!isAutoTheme && !familyChanged) return
         // Skip if a direct Wallpapers.apply() already launched switchwall.sh
         if (Wallpapers._applyInProgress) return
-        root.regenerateAutoTheme()
+        root.regenerateAutoTheme("live-config")
     }
 
     Connections {
@@ -289,7 +297,7 @@ Singleton {
         running: false
         onTriggered: {
             if (root._regenPending)
-                root.regenerateAutoTheme()
+                root.regenerateAutoTheme("cooldown")
         }
     }
 
@@ -301,7 +309,7 @@ Singleton {
         // Route through regenerateAutoTheme so the signature stays in sync —
         // this prevents the configChanged debounce 260ms later from firing a
         // duplicate switchwall.sh.
-        onTriggered: root.regenerateAutoTheme()
+        onTriggered: root.regenerateAutoTheme("theme-selection")
     }
 
     // Theme Scheduling

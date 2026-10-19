@@ -36,6 +36,28 @@ assert 'collector|qml-generator|qml-external' in TRACE_HELPER
 assert 'ALIS_THEME_PROFILE_SOURCE=qml-generator' in QML
 assert 'ALIS_THEME_PROFILE_SOURCE=qml-external' in QML
 assert '"ALIS_THEME_PROFILE_SOURCE": "collector"' in SCRIPT.read_text()
+SERVICE = (ROOT / "services/ThemeService.qml").read_text()
+WALLPAPER_MARKERS = [
+    "qml_switchwall_dispatch", "qml_wallpaper_request",
+    "qml_fallback_picker_generator_request", "qml_backdrop_generator_request",
+]
+LOADER_MARKERS = [
+    "qml_dark_mode_generator_request",
+    "qml_scheme_variant_generator_request",
+    "qml_color_invert_generator_request",
+]
+SERVICE_MARKERS = [
+    "qml_theme_service_apply_current",
+    "qml_auto_regen_request_", "qml_auto_regen_dispatch_",
+]
+for marker in WALLPAPER_MARKERS:
+    assert marker in WALLPAPER, f"Missing wallpaper provenance marker: {marker}"
+for marker in LOADER_MARKERS:
+    assert marker in QML, f"Missing MaterialThemeLoader marker: {marker}"
+for marker in SERVICE_MARKERS:
+    assert marker in SERVICE, f"Missing ThemeService marker: {marker}"
+for reason in ("live-config", "cooldown", "theme-selection"):
+    assert 'regenerateAutoTheme("' + reason + '")' in SERVICE
 assert '2>>"$_theme_perf_stderr"' in SHELL
 
 values = module.parse_stages(

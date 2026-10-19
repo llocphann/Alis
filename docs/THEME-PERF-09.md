@@ -126,3 +126,37 @@ No wallpaper paths, palettes or command lines are recorded.
 **Not yet a measured speedup.** THEME-PERF-09 needs a fresh installed
 trace identifying the extra run and confirming only the required
 external updates. Fallback/manual themes and Liquid are unchanged.
+
+## Owner runtime report — 2026-10-19 23:57 +07 (process provenance)
+
+`alis-auto-theme-runtime-20261019-235709.json`, commit `c14f3223`:
+
+- Controlled collector launched **exactly one** switchwall process,
+  PID 434921, source `collector`, exit PASS. A second distinct switchwall,
+  PID 436376, source `qml-generator`, parent PID 1445, also completed.
+- Two distinct external applycolor processes, PIDs 434673 and 436965,
+  both `qml-external` with parent PID 1445, completed in **748ms** and
+  **567ms**. These are independent complete module waves.
+- The first `qml_external_dispatch` (1792429009106) preceded the
+  collector's estimated generation start (~1792429009268). It cannot be
+  causally attributed to that explicit recolor operation. The second
+  dispatch (1792429010472) followed generation-ready publication.
+- The QML generator began approximately 1792429010015; the collector
+  generation finished at 1792429009521. Provenance narrows the extra
+  generator to a QML request but does **not** identify which caller.
+- Two Rust runs have median **9.236ms**, two switchwall runs **234ms**,
+  and two external applycolor runs **657.5ms**. This is not a controlled
+  speedup comparison: this report uses a JPEG source, whereas the prior
+  report used PNG.
+
+### Fine-grained caller provenance
+
+To avoid accidentally suppressing real wallpaper or manual-theme actions,
+QML now emits profiling-only markers for ThemeService current-theme
+application, direct/live-config/cooldown/theme-selection auto regen,
+MaterialThemeLoader dark-mode/scheme-variant/color-invert requests, and
+Wallpapers fallback/backdrop requests. The existing wallpaper-apply markers
+remain. On the next runtime trace, these QML event timestamps can be
+cross-referenced to the `qml-generator` process start and the leading
+`qml-external` wave. No visual, palette or regeneration behavior is changed;
+no shell restart is performed by this commit.

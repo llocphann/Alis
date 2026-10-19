@@ -307,6 +307,7 @@ Singleton {
             "--mode", dark ? "dark" : "light",
             "--noswitch"
         ])
+        root.themeProfileStage("qml_dark_mode_generator_request", 0)
         darkModeProc.running = true
     }
 
@@ -326,6 +327,7 @@ Singleton {
             "--type", variant,
             "--mode", mode
         ])
+        root.themeProfileStage("qml_scheme_variant_generator_request", 0)
         schemeVariantProc.running = true
     }
 
@@ -504,6 +506,7 @@ Singleton {
         target: Config.options?.appearance ?? null
         function onColorInvertChanged() {
             root._log("[MaterialThemeLoader] colorInvert changed, regenerating from wallpaper")
+            root.themeProfileStage("qml_color_invert_generator_request", 0)
             colorInvertProc.running = true
         }
     }

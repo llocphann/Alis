@@ -685,6 +685,7 @@ Singleton {
     }
 
     function openFallbackPicker(darkMode = Appearance.m3colors.darkmode) {
+        MaterialThemeLoader.themeProfileStage("qml_fallback_picker_generator_request", 0)
         applyProc.exec(MaterialThemeLoader.wallpaperSwitchCommand(["--mode", (darkMode ? "dark" : "light")]))
     }
 
@@ -707,8 +708,10 @@ Singleton {
             Config.setNestedValue("background.backdrop.thumbnailPath", thumbnailPath)
             if (needsThumbnail)
                 root.ensureThumbnailForPath(normalizedPath, "large")
-            if (Config.options?.appearance?.wallpaperTheming?.useBackdropForColors)
+            if (Config.options?.appearance?.wallpaperTheming?.useBackdropForColors) {
+                MaterialThemeLoader.themeProfileStage("qml_backdrop_generator_request", 0)
                 Quickshell.execDetached(MaterialThemeLoader.wallpaperSwitchCommand(["--noswitch"]))
+            }
             root.changed()
             return
         case "waffle":
