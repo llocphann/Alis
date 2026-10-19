@@ -305,11 +305,13 @@ def cast_tcp_probe(address, port, connect=socket.create_connection):
         return None
 
 
-def add_chromecast_connection_quality(receivers, mdns, probe=cast_tcp_probe):
+def add_chromecast_connection_quality(receivers, mdns, probe=None):
     """Measure only a uniquely identified Chromecast endpoint by mDNS name.
 
     No use of GNOME UUID as an IP address or of the laptop router's RSSI.
     """
+    if probe is None:
+        probe = cast_tcp_probe
     receiver_names = Counter(
         str(d.get("name") or "").strip().casefold()
         for d in receivers if d.get("protocolId") == 3
