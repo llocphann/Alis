@@ -743,7 +743,7 @@ switch() {
         local _ready_dir="$STATE_DIR/user/generated" _ready_tmp=""
         _ready_tmp="$(mktemp "$_ready_dir/.theme-generation-ready.XXXXXXXX" 2>/dev/null)" || _ready_tmp=""
         if [[ -n "$_ready_tmp" ]]; then
-            if printf '%s-%s\n' "$(date +%s%N)" "$" > "$_ready_tmp"; then
+            if printf '%s-%s\n' "$(date +%s%N)" "$BASHPID" > "$_ready_tmp"; then
                 mv -f -- "$_ready_tmp" "$_ready_dir/theme-generation-ready.txt" \
                     || rm -f -- "$_ready_tmp"
             else

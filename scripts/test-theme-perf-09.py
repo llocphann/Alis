@@ -47,6 +47,16 @@ require('liquidThemeDeadline.interval = 150' in WALL
 
 require('FileView {\n        id: generationReadyFileView' in QML,
         "QML must watch generation-complete token, not guess the publish time")
+require('onLoaded: root._acceptGenerationReady()' in QML,
+        "Ready FileView must handle each successful reload, not only boolean loaded changes")
+require('onLoadedChanged: root._acceptGenerationReady()' not in QML,
+        "Ready marker cannot depend on loaded bool transitions")
+colors_loader = QML.split('id: themeFileView', 1)[1].split('onLoadFailed:', 1)[0]
+require('onLoaded: {' in colors_loader
+        and 'onLoadedChanged: {' not in colors_loader,
+        "colors.json reload must emit per-load completion for generation-ready handoff")
+require('"$BASHPID"' in SHELL,
+        "Atomic marker should include generating bash process identity")
 require('generationReadyFileView.reload()' in QML
         and 'root._generationReadyPendingPalette = true' in QML,
         "Readiness must request an authoritative colors.json reload")

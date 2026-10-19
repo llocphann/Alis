@@ -101,7 +101,10 @@ Singleton {
             root._generationReadyFileChanged = true
             generationReadyFileView.reload()
         }
-        onLoadedChanged: root._acceptGenerationReady()
+        // onLoaded is emitted after *every* successful reload. The bool
+        // loaded may stay true across reloads; onLoadedChanged can therefore
+        // silently miss the ready marker after the initial read.
+        onLoaded: root._acceptGenerationReady()
     }
 
     property bool previewActive: false
@@ -743,8 +746,11 @@ exec /usr/bin/bash ${_shq(applyColorPath)}
                 root.themeProfileFileEventMs = Date.now()
             reloadDebounce.restart()
         }
-        onLoadedChanged: {
-            root._log("[MaterialThemeLoader] onLoadedChanged fired, loaded:", themeFileView.loaded)
+        // Act on each completed load, not only a change to the loaded flag.
+        // This also guarantees the readiness token's palette reload can arm
+        // the 45ms external apply path on an already loaded colors.json.
+        onLoaded: {
+            root._log("[MaterialThemeLoader] onLoaded fired, loaded:", themeFileView.loaded)
             const fileContent = themeFileView.text()
             root._log("[MaterialThemeLoader] file content length:", fileContent ? fileContent.length : 0)
             const applied = root.applyColors(fileContent)
