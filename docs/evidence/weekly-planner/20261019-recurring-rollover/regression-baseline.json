@@ -1,0 +1,9 @@
+{
+  "baseline_sha": "463aba5a99e06fc26b35f797545bf69041f1367e",
+  "candidate_sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+  "actual_exit": 1,
+  "test": "scripts/test-weekly-planner-recurring-rollover.mjs",
+  "harness_from_candidate": true,
+  "harness_sha256": "b98721b7322315db42b88ccba792f5529cfea02d3dbaec758659c62b4ac55263",
+  "scope": "Unmodified pre-fix app source plus candidate in-memory regression harness; no personal storage or desktop access"
+}

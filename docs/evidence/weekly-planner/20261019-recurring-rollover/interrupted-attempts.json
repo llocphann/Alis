@@ -1,0 +1,35 @@
+{
+  "issue": 123,
+  "attempts": [
+    {
+      "sha": "d4bb9343d59472752aaa536f37396b21e00a003f",
+      "label": "canonical",
+      "argv": [
+        "bash",
+        "scripts/validate-maintainer-local.sh",
+        "--current-repo"
+      ],
+      "actual_exit": -15,
+      "status": "STOPPED",
+      "stop_reason": "validation_supervisor_safety_update",
+      "elapsed_seconds": 59.6,
+      "owned_remaining_after_exit": [],
+      "scope": "Stopped superseded attempt; never full PASS"
+    },
+    {
+      "sha": "d4bb9343d59472752aaa536f37396b21e00a003f",
+      "label": "canonical",
+      "argv": [
+        "bash",
+        "scripts/validate-maintainer-local.sh",
+        "--current-repo"
+      ],
+      "actual_exit": -15,
+      "status": "STOPPED",
+      "stop_reason": "cast_fixture_bus_isolation_review",
+      "elapsed_seconds": 93.4,
+      "owned_remaining_after_exit": [],
+      "scope": "Stopped superseded attempt; never full PASS"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "sha": "f25d0f959bc07ee15585e8800bad86dd83733441",
+  "argv": [
+    "python3",
+    "scripts/test-weekly-planner-runtime.py"
+  ],
+  "actual_exit": 0,
+  "elapsed_seconds": 5.18,
+  "status": "PASS",
+  "log_sha256": "c2fdd97384d7e6179fe2fa274a15529a5f0a5552447a9175f54ffee51ef1a82c",
+  "log_retention": "private",
+  "fixture_data": "synthetic only; original personal calendar was not written",
+  "scope": "111 native checks, including 8 cards over history/next/projected weeks, late list load, and reopen; private nested Niri, not owner desktop",
+  "test_file_sha256": "4084ea7a54d30f70dce64de84a332519a680eb219183345466a0d53f278d4ddb",
+  "relationship_to_canonical_14d": "test-only addition; production recurrence source unchanged from 14d82f8cd3edd53c243f886e2691ab0f5c7d692b"
+}

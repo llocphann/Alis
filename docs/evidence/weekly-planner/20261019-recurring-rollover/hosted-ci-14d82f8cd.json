@@ -1,0 +1,29 @@
+{
+  "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+  "runs": [
+    {
+      "id": 39222802392,
+      "name": "Nix package",
+      "head_sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/llocphann/Alis/actions/runs/39222802392"
+    },
+    {
+      "id": 39222802341,
+      "name": "CI",
+      "head_sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/llocphann/Alis/actions/runs/39222802341"
+    },
+    {
+      "id": 39222802362,
+      "name": "Packaging contracts",
+      "head_sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "status": "completed",
+      "conclusion": "failure",
+      "html_url": "https://github.com/llocphann/Alis/actions/runs/39222802362"
+    }
+  ]
+}

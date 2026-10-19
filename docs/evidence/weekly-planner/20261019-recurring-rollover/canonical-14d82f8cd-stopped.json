@@ -1,0 +1,224 @@
+{
+  "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+  "label": "canonical",
+  "argv": [
+    "bash",
+    "scripts/validate-maintainer-local.sh",
+    "--current-repo"
+  ],
+  "actual_exit": -15,
+  "status": "STOPPED",
+  "stop_reason": "owner_quota_checkpoint_primary_used96",
+  "elapsed_seconds": 1603.6,
+  "owned_remaining_after_exit": [],
+  "log": "canonical-console.log",
+  "numbered_checks": {
+    "started": 380,
+    "PASS": 339,
+    "FAIL": 39,
+    "SKIP": 1,
+    "unsettled_ids": [
+      380
+    ]
+  },
+  "failed_checks": [
+    {
+      "id": 28,
+      "name": "Native Dashboard/Overview content-ready reveal, reversal and warm expiry",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 40,
+      "name": "Independent Agenda and Todo stores with stable Event ID edits",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 63,
+      "name": "Python regression: scripts/test-abyss-body-reveal-readiness-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 64,
+      "name": "Python regression: scripts/test-abyss-compact-editor-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 76,
+      "name": "Python regression: scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 77,
+      "name": "Python regression: scripts/test-abyss-edge-editor-compact-actions-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 78,
+      "name": "Python regression: scripts/test-abyss-edge-editor-compact-side-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 89,
+      "name": "Python regression: scripts/test-abyss-input-region-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 93,
+      "name": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 100,
+      "name": "Python regression: scripts/test-abyss-module-locks-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 101,
+      "name": "Python regression: scripts/test-abyss-multi-selection-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 102,
+      "name": "Python regression: scripts/test-abyss-niri-hover-layer-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 108,
+      "name": "Python regression: scripts/test-abyss-panel-material-settings-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 121,
+      "name": "Python regression: scripts/test-abyss-round0-editor-controls.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 133,
+      "name": "Python regression: scripts/test-abyss-width-affects-modules-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 144,
+      "name": "Python regression: scripts/test-bar-cava-profile-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 160,
+      "name": "Python regression: scripts/test-calendar-weather-composition-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 170,
+      "name": "Python regression: scripts/test-clipboard-watcher-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 185,
+      "name": "Python regression: scripts/test-dashboard-freeform-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 189,
+      "name": "Python regression: scripts/test-dashboard-music-browser-navigation-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 193,
+      "name": "Python regression: scripts/test-dashboard-notes-markdown-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 194,
+      "name": "Python regression: scripts/test-dashboard-notes-markdown-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 208,
+      "name": "Python regression: scripts/test-desktop-widget-editor-coordinates.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 211,
+      "name": "Python regression: scripts/test-dock-abyss-hover-orientation-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 239,
+      "name": "Python regression: scripts/test-local-ai-gguf-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 240,
+      "name": "Python regression: scripts/test-local-model-folder.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 250,
+      "name": "Python regression: scripts/test-material-only-global-style-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 259,
+      "name": "Python regression: scripts/test-notification-center-bottom-right-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 301,
+      "name": "Python regression: scripts/test-settings-concise-copy-surface.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 312,
+      "name": "Python regression: scripts/test-shell-surface-contracts.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 334,
+      "name": "Python regression: scripts/test-wallpaper-background-apply-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 335,
+      "name": "Python regression: scripts/test-wallpaper-carousel-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 336,
+      "name": "Python regression: scripts/test-wallpaper-color-preview-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 338,
+      "name": "Python regression: scripts/test-wallpaper-liquid-theme-deferral.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 341,
+      "name": "Python regression: scripts/test-wallpaper-preview-palette-cache.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 351,
+      "name": "Python regression: scripts/test-weekly-planner-expanded-event-editor-contract.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 356,
+      "name": "Python regression: scripts/test-weekly-planner-runtime.py",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 373,
+      "name": "shell regression: scripts/test-abyss-editor-runtime.sh",
+      "classification": "unclassified; no baseline attribution"
+    },
+    {
+      "id": 376,
+      "name": "shell regression: scripts/test-abyss-network-popups.sh",
+      "classification": "unclassified; no baseline attribution"
+    }
+  ],
+  "log_sha256": "e2ddc4ea0fd876e235f4da1f7514b1a627808b4cdf4695d98f8cc9ae712872da",
+  "logs_retention": "private; no raw host/session logs uploaded",
+  "acceptance": "STOPPED, not full PASS; installed desktop and Owner verification remain separate"
+}

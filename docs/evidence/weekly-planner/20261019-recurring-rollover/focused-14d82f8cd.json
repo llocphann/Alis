@@ -1,0 +1,326 @@
+{
+  "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+  "status": "PASS",
+  "results": [
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-1",
+      "argv": [
+        "node",
+        "scripts/test-weekly-planner-recurring-rollover.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.4,
+      "owned_remaining_after_exit": [],
+      "log": "focused-1-console.log",
+      "log_sha256": "b0ef8fd9e14b88c508b77a5a127c3cc2ba5185c60be67bf492abc1bf997b3292",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-2",
+      "argv": [
+        "python3",
+        "scripts/test-weekly-planner-recurring-storage-runtime.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 1.6,
+      "owned_remaining_after_exit": [],
+      "log": "focused-2-console.log",
+      "log_sha256": "b28f6cadd1bbc4fee6890a4f7fed6cd1279e1222e6875d8d0e17cf7ddc97fb43",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-3",
+      "argv": [
+        "node",
+        "scripts/test-weekly-planner-policy.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 1.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-3-console.log",
+      "log_sha256": "991688ca06a774165a326a4ce174e9a43ee2ed0030ee6ff490998f6236d1868c",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-4",
+      "argv": [
+        "node",
+        "scripts/test-weekly-planner-multidate.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-4-console.log",
+      "log_sha256": "67196dc210f5d93f89d23f3ffe2daf32f2a3b3eb6ec15be59857a820fc1d00af",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-5",
+      "argv": [
+        "python3",
+        "scripts/test-weekly-planner-multidate-storage-runtime.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 1.0,
+      "owned_remaining_after_exit": [],
+      "log": "focused-5-console.log",
+      "log_sha256": "279eeb1425f1625b23bb86b77c4c756fc44d5809b50fc7304f4806d194ef608b",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-6",
+      "argv": [
+        "node",
+        "scripts/test-event-occurrences-policy.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-6-console.log",
+      "log_sha256": "12054bd504e9bde313f95482a29ba0fa6d3ee959fc096a37177965844ac6f96e",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-7",
+      "argv": [
+        "node",
+        "scripts/test-events-no-automatic-migration.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-7-console.log",
+      "log_sha256": "9142fa2a66e5b5f65d83bcf5429b3a6eb7a707e6007516bc0e600174b1d3af09",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-8",
+      "argv": [
+        "node",
+        "scripts/test-calendar-three-day-window.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-8-console.log",
+      "log_sha256": "4537153666256d09084f1357aa0c3f76b6408780763e516b7054f001744d17c6",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-9",
+      "argv": [
+        "node",
+        "scripts/test-weekly-planner-selection.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-9-console.log",
+      "log_sha256": "b2fe758d41a85a261b86bce31c416fd0d9eeebafe80b2eee046833ea31852793",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-10",
+      "argv": [
+        "node",
+        "scripts/test-weekly-planner-batch.mjs"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-10-console.log",
+      "log_sha256": "1c36aeb4d3546d87a284f778e453951ae8f9b17f6bf6b411dbaeb2b78a8e341d",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-11",
+      "argv": [
+        "python3",
+        "scripts/test-CAST-F01-project-ui.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-11-console.log",
+      "log_sha256": "2c5d648a79b6d2a7dd5bb85323fabf5c2dd6f73cf4259428335047c46b8999dd",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-12",
+      "argv": [
+        "python3",
+        "scripts/test-CAST-F01-audio-stage.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-12-console.log",
+      "log_sha256": "af36791594fe343fcb940f9c8a5708e780c2dda022a5b15dea2f6a30a39badbc",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-13",
+      "argv": [
+        "python3",
+        "scripts/test-CAST-F01-display-stage.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-13-console.log",
+      "log_sha256": "136498479e84d0de0bf5e7c11085798256bf2202496b3fb76c38c1e55215f47f",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-14",
+      "argv": [
+        "python3",
+        "scripts/test-CAST-F01-wireless-stage.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-14-console.log",
+      "log_sha256": "58f31a1af039c545d18c8479cf7f132b9d7f8ced8d9f517b71d614a29c1cf510",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-15",
+      "argv": [
+        "/usr/bin/python3",
+        "scripts/test-CAST-F01-live-dbus-scan.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-15-console.log",
+      "log_sha256": "158ebf640fa7688bcca848b537a6455d3c987598440dc9040c1f4808dfe2788c",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-16",
+      "argv": [
+        "env",
+        "DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/alis-cast-forbidden-owner-bus",
+        "/usr/bin/python3",
+        "scripts/test-CAST-F01-live-dbus-scan.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-16-console.log",
+      "log_sha256": "158ebf640fa7688bcca848b537a6455d3c987598440dc9040c1f4808dfe2788c",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-17",
+      "argv": [
+        "python3",
+        "scripts/test-CAST-F01-capabilities.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.4,
+      "owned_remaining_after_exit": [],
+      "log": "focused-17-console.log",
+      "log_sha256": "0229e8b29c1d358fe984b021a844181a462a9ee1ddfe1fe3e219f7bfe23be7c2",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-18",
+      "argv": [
+        "python3",
+        "scripts/test-abyss-display-mode.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-18-console.log",
+      "log_sha256": "8716bf8c906e1d54c22a5d6424a864eee13465e08dfaa99e45154e459cd3c847",
+      "log_retention": "private; not uploaded"
+    },
+    {
+      "sha": "14d82f8cd3edd53c243f886e2691ab0f5c7d692b",
+      "label": "focused-19",
+      "argv": [
+        "python3",
+        "scripts/test-UTIL-F01-source-delivery.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 0.3,
+      "owned_remaining_after_exit": [],
+      "log": "focused-19-console.log",
+      "log_sha256": "05dd6a46fc4483087c5b47b2bd2e4409dd5e3085434b87505976d3c13e12bf0e",
+      "log_retention": "private; not uploaded"
+    }
+  ],
+  "issue": 123,
+  "date": "2026-10-19",
+  "scope": "19 focused local commands, including actual isolated Qt persistence/restart; not whole-tree CI or installed desktop acceptance",
+  "feature_head_merged": "463aba5a99e06fc26b35f797545bf69041f1367e",
+  "feature_pull_request": 122,
+  "installed_desktop_acceptance": "UNRUN; owner runtime observed at 463aba5a9; not redeployed",
+  "stable_changed_by_this_task": false,
+  "focused_tests_accessed_personal_calendar": false,
+  "separate_owner_metadata_read_only_review": {
+    "access": "aggregate recurrence shape only, separate from focused fixtures",
+    "personal_calendar_written": false,
+    "result": "four weekly groups with two-slot templates and four saved occurrences each; 8 projected rows in each of the three examined weeks, in both installed-file and candidate policies",
+    "acceptance": "this does not establish what the owner desktop rendered at screenshot time"
+  }
+}
