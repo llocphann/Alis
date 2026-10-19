@@ -249,3 +249,33 @@ accidentally changed from executable mode 100755 to 100644 by the earlier
 Git tree update; restore 100755 without changing script bytes. The test
 must be rerun on the user's host after pulling the fix; no GUI acceptance
 or speedup is claimed from the four passing contract tests.
+
+### 2026-10-20 05:55 +07 — THEME-PERF-10 owner runtime observation
+
+Source: `alis-auto-theme-runtime-20261020-055558.json` (owner-supplied,
+commit `344b3fe591d7c548d3daecb4085e1f19db22b74a`, 20.028s collector
+window, recolor of same JPG image; no pathname or palette captured in this
+record). Collector trigger **PASS**, shell and QML traces **PASS**.
+
+| Stage | Before (2026-10-20 05:28) | After (05:55) | Observed delta |
+| --- | ---: | ---: | ---: |
+| `rust.total` | 8.660ms | 8.468ms | -0.192ms |
+| `switchwall.total` | 157ms | 158ms | +1ms |
+| `applycolor.20-gtk-kde` | 458ms | **370ms** | **-88ms (-19.2%)** |
+| `applycolor.total` | 477ms | **389ms** | **-88ms (-18.4%)** |
+| `qml_external_debounce` | 43ms | 45ms | +2ms |
+
+**No duplicate pipeline observed:** exactly one collector-generated switchwall
+(PID 60777, source `collector`), one external applycolor (PID 60872,
+source `qml-external`), one generation-ready loaded handoff and one QML
+external dispatch. No `qml_auto_regen_dispatch_live-config` was observed.
+The 45ms fast external path remains active. The first `colors.json` watch
+ran ahead of generation ready, but did not create a duplicate apply.
+
+**Assessment:** The batch-read patch appears promising and correlates with a
+lower GTK/KDE critical-path time. Both observations are single runs,
+not controlled repeated samples, so do not claim a verified 19% speedup.
+The user has not yet provided a rerun of the corrected standalone
+`test-theme-gtk-palette-batch.py`, nor installed-desktop Owner verification
+of Liquid transition, manual theme and dark/light behavior. The collector
+does not measure visible frame latency. Keep those verifications distinct.
