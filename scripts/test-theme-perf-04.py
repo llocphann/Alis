@@ -36,6 +36,10 @@ for name in ("native_generation", "file_publication", "total"):
             f"Missing switchwall stage: {name}")
 require("theme_perf_stage applycolor total " in EXTERNAL,
         "Missing external total marker")
+require('local _theme_perf_stderr="/dev/null"' in SWITCH
+        and '_theme_perf_stderr="/dev/stderr"' in SWITCH
+        and '2>"$_theme_perf_stderr"' in SWITCH,
+        "Rust stderr must remain silent by default but visible when profiling")
 
 with tempfile.TemporaryDirectory(prefix="alis-perf-test-") as scratch:
     tmp = Path(scratch)
