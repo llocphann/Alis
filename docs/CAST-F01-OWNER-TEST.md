@@ -70,6 +70,31 @@ The direct busctl command is a diagnostic cross-check, not an installation step.
 
 **This procedure distinguishes working software enumeration from actual discovery over a real classroom network. Neither mocked CI tests nor presence of a running D-Bus manager can guarantee a TV will be found on every network.**
 
+## Signal Strength (optional, Miracast P2P only)
+
+The Wireless Display device row may show a Wi-Fi icon with e.g. `Strong · 82%`
+for Miracast **P2P** only. The number comes from NetworkManager's read-only
+`org.freedesktop.NetworkManager.WifiP2PPeer.Strength` value (0–100%), never
+from the laptop's Wi-Fi router or a guessed device-to-device distance. Alis
+matches the visible GNOME receiver name to a **unique** current P2P peer name.
+The underlying GNOME UUID is random and cannot be used as the peer MAC.
+
+- A reading is shown only for a unique exact peer-name match and a reading
+  whose NetworkManager `LastSeen` is at most 180 seconds old.
+- If no P2P interface/peer exists, the reading is missing, 0/unknown, stale,
+  names are ambiguous, or NetworkManager system D-Bus is inaccessible,
+  **no Signal Strength indication appears**. Receiver discovery/Connect must
+  remain available.
+- **Chromecast and Miracast MICE** use LAN paths rather than direct P2P:
+  they intentionally do **not** show AP RSSI as TV signal. A Samsung TV
+  discovered only as Chromecast should therefore have no strength badge.
+- The percentages indicate NetworkManager-reported radio signal quality,
+  **not** meters of distance, throughput, packet loss or streaming quality.
+  Strong signal does not guarantee video/audio compatibility.
+- Verify with a real Miracast P2P-capable TV and movement within range.
+  Compare readings only for devices with stable unambiguous names; confirm
+  duplicate named peers do not display an invented percentage.
+
 ## Wired HDMI / video-capable USB-C
 
 - Connect TV and confirm make/model/connector displays without confusing it with another monitor or serial. Plain data-only USB-C cannot be expected to output video.

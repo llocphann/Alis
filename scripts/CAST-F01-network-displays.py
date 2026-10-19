@@ -7,6 +7,7 @@ may launch the user-session GNOME Network Displays daemon if installed.
 The system's screencast portal remains responsible for consent/source choice.
 """
 import argparse
+from collections import Counter
 import json
 import re
 import shutil
@@ -18,6 +19,12 @@ from pathlib import Path
 BUS = "org.gnome.NetworkDisplays.Manager"
 OBJ = "/org/gnome/NetworkDisplays/Manager"
 IFACE = BUS
+NM_BUS = "org.freedesktop.NetworkManager"
+NM_OBJECT = "/org/freedesktop/NetworkManager"
+NM_P2P_IFACE = "org.freedesktop.NetworkManager.Device.WifiP2P"
+NM_PEER_IFACE = "org.freedesktop.NetworkManager.WifiP2PPeer"
+NM_DEVICE_PATH = re.compile(r"^/org/freedesktop/NetworkManager/Devices/[A-Za-z0-9_]+$")
+NM_PEER_PATH = re.compile(r"^/org/freedesktop/NetworkManager/[A-Za-z0-9_/-]+$")
 UNIT = re.compile(r"^gnome-network-displays-stream-[A-Za-z0-9_.:-]{1,128}\.service$")
 IDENTITY = re.compile(r"^[A-Za-z0-9_.:-]{1,128}$")
 PROTOCOLS = {0: "Unknown", 1: "Miracast P2P", 2: "Miracast MICE", 3: "Chromecast"}
@@ -113,6 +120,105 @@ def displays(payload):
     return sorted(found, key=lambda row: (row["name"].lower(), row["uuid"]))
 
 
+def system_bus(*args):
+    """Read-only NetworkManager system D-Bus; never initiate a P2P search."""
+    raw = run(["busctl", "--system", "--auto-start=no", "--json=short", *args],
+              timeout=3)
+    return json.loads(raw)
+
+
+def object_paths(reply):
+    """Extract D-Bus ao paths from the different busctl JSON tuple shapes."""
+    if reply.get("type") != "ao":
+        return []
+    items = typed(reply)
+    while isinstance(items, list) and len(items) == 1 and isinstance(items[0], list):
+        items = items[0]
+    return [p for p in items if isinstance(p, str) and p.startswith("/")] \
+        if isinstance(items, list) else []
+
+
+def p2p_signal_samples():
+    """Current NetworkManager P2P peer strengths, never access-point strength.
+
+    Fail closed on any missing/inaccessible system D-Bus API. Do not expose
+    MAC addresses, peer object paths or local network information in JSON.
+    """
+    try:
+        device_paths = object_paths(system_bus(
+            "call", NM_BUS, NM_OBJECT, NM_BUS, "GetDevices"))
+        samples = []
+        seen_paths = set()
+        for device in device_paths[:24]:
+            if not NM_DEVICE_PATH.fullmatch(device):
+                continue
+            try:
+                peers = object_paths(system_bus(
+                    "get-property", NM_BUS, device, NM_P2P_IFACE, "Peers"))
+            except (CastError, ValueError, TypeError):
+                # Other devices (Ethernet, normal Wi-Fi) have no P2P interface.
+                continue
+            for peer in peers[:32]:
+                if not NM_PEER_PATH.fullmatch(peer) or peer in seen_paths:
+                    continue
+                seen_paths.add(peer)
+                try:
+                    props = system_bus("call", NM_BUS, peer,
+                                       "org.freedesktop.DBus.Properties",
+                                       "GetAll", "s", NM_PEER_IFACE)
+                    if props.get("type") != "a{sv}":
+                        continue
+                    row = dictionary(props.get("data"))
+                    name = str(row.get("Name") or "").strip().casefold()
+                    strength = row.get("Strength")
+                    seen = row.get("LastSeen")
+                    if not name or isinstance(strength, bool):
+                        continue
+                    pct = int(strength)
+                    last_seen = int(seen)
+                    if not (1 <= pct <= 100 and last_seen >= 0):
+                        continue
+                    # LastSeen is CLOCK_BOOTTIME seconds (not wall time).
+                    now = time.clock_gettime(time.CLOCK_BOOTTIME)
+                    if not (0 <= now - last_seen <= 180):
+                        continue
+                    samples.append((name, pct))
+                except (CastError, ValueError, TypeError, AttributeError):
+                    continue
+        return samples
+    except (CastError, ValueError, TypeError, AttributeError):
+        return []
+
+
+def add_receiver_signal_strength(receivers, samples):
+    """Only annotate an exact, unique, fresh Miracast P2P peer name match.
+
+    The GNOME receiver UUID is randomly generated, NOT the P2P peer MAC.
+    Do not assign AP/router strength to Chromecast or Miracast MICE.
+    """
+    wanted = Counter(str(item.get("name") or "").strip().casefold()
+                     for item in receivers if item.get("protocolId") == 1)
+    candidates = {}
+    for peer_name, strength in samples:
+        name = str(peer_name or "").strip().casefold()
+        if name and isinstance(strength, int) and not isinstance(strength, bool) \
+                and 1 <= strength <= 100:
+            candidates.setdefault(name, []).append(strength)
+    for item in receivers:
+        if item.get("protocolId") != 1:
+            continue
+        name = str(item.get("name") or "").strip().casefold()
+        strengths = candidates.get(name, [])
+        if wanted[name] != 1 or len(strengths) != 1:
+            continue
+        value = strengths[0]
+        item["signalStrength"] = value
+        item["signalQuality"] = ("Strong" if value >= 75 else
+                                 "Good" if value >= 50 else
+                                 "Fair" if value >= 30 else "Weak")
+    return receivers
+
+
 def name_owned():
     try:
         out = run(["busctl", "--user", "--no-pager", "--no-legend",
@@ -172,9 +278,12 @@ def scan():
     try:
         p = bus("get-property", BUS, OBJ, IFACE, "Displays")
         installed = stream_binary_available()
+        receivers = displays(p)
+        if any(device["protocolId"] == 1 for device in receivers):
+            add_receiver_signal_strength(receivers, p2p_signal_samples())
         return {"ok": True, "backend": True, "streamReady": installed,
                 "code": "ready" if installed else "stream_helper_missing",
-                "displays": displays(p), "message": "" if installed else
+                "displays": receivers, "message": "" if installed else
                 "TV discovery works, but /usr/libexec/gnome-network-displays-stream is missing. Rebuild the native package or use Open app."}
     except (CastError, ValueError, json.JSONDecodeError):
         return {"ok": False, "backend": True, "streamReady": False,
