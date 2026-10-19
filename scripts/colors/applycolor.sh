@@ -3,8 +3,14 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/module-runtime.sh"
+# shellcheck source=scripts/colors/lib/theme-profile.sh
+source "$SCRIPT_DIR/lib/theme-profile.sh"
 
 main() {
+  local _perf_total=""
+  if [[ "${ALIS_THEME_PROFILE:-}" == "1" ]]; then
+    _perf_total="$(date +%s%N)"
+  fi
   ensure_generated_dirs
 
   # Every pipeline log is append-only with no cap of its own; a long-lived
@@ -104,12 +110,19 @@ main() {
   (( max_jobs > 4 )) && max_jobs=4
 
   run_one_module() {
-    local module_path="$1"
-    if command -v ionice >/dev/null 2>&1; then
-      ionice -c 3 nice -n 10 bash "$module_path"
-    else
-      nice -n 10 bash "$module_path"
+    local module_path="$1" _perf_module="" result=0
+    if [[ "${ALIS_THEME_PROFILE:-}" == "1" ]]; then
+      _perf_module="$(date +%s%N)"
     fi
+    if command -v ionice >/dev/null 2>&1; then
+      ionice -c 3 nice -n 10 bash "$module_path" || result=$?
+    else
+      nice -n 10 bash "$module_path" || result=$?
+    fi
+    if [[ -n "$_perf_module" ]]; then
+      theme_perf_stage applycolor "$(basename "$module_path" .sh)" "$_perf_module"
+    fi
+    return "$result"
   }
 
   running=0
@@ -132,6 +145,7 @@ main() {
     running=$((running - 1))
   done
 
+  theme_perf_stage applycolor total "$_perf_total"
   exit "$failed"
 }
 

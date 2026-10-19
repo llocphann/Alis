@@ -34,6 +34,9 @@ on:
       - 'scripts/test-cava-cover-color-refresh-contract.py'
       - 'scripts/test-forced-dark-seed-reuse.py'
       - 'scripts/test-theme-sddm-deferral.py'
+      - 'scripts/test-theme-perf-04.py'
+      - 'scripts/benchmark-auto-theming.py'
+      - 'scripts/colors/lib/theme-profile.sh'
       - 'scripts/sddm/sync-pixel-sddm.py'
       - 'scripts/colors/applycolor.sh'
       - 'scripts/colors/apply-gtk-theme.sh'
@@ -65,6 +68,9 @@ on:
       - 'scripts/test-cava-cover-color-refresh-contract.py'
       - 'scripts/test-forced-dark-seed-reuse.py'
       - 'scripts/test-theme-sddm-deferral.py'
+      - 'scripts/test-theme-perf-04.py'
+      - 'scripts/benchmark-auto-theming.py'
+      - 'scripts/colors/lib/theme-profile.sh'
       - 'scripts/sddm/sync-pixel-sddm.py'
       - 'scripts/colors/applycolor.sh'
       - 'scripts/colors/apply-gtk-theme.sh'
@@ -115,6 +121,10 @@ jobs:
           python3 scripts/test-cava-cover-color-refresh-contract.py
           python3 scripts/test-forced-dark-seed-reuse.py
           python3 scripts/test-theme-sddm-deferral.py
+          bash -n scripts/colors/lib/theme-profile.sh
+          bash -n scripts/colors/applycolor.sh
+          python3 -m py_compile scripts/benchmark-auto-theming.py
+          python3 scripts/test-theme-perf-04.py
           python3 -m py_compile scripts/sddm/sync-pixel-sddm.py scripts/colors/generate_colors_material.py
           bash -n scripts/colors/applycolor.sh
           bash -n scripts/colors/apply-gtk-theme.sh

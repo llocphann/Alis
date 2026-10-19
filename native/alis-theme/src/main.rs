@@ -5,6 +5,7 @@ mod template;
 
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 
 use anyhow::{Context, Result, anyhow};
 use clap::{Parser, ValueEnum};
@@ -176,6 +177,9 @@ fn resolve_seed(args: &Args) -> Result<(Argb, String, Option<PathBuf>, String)> 
 
 fn main() -> Result<()> {
     let args = Args::parse();
+    let profile = std::env::var("ALIS_THEME_PROFILE").as_deref() == Ok("1");
+    let total_started = Instant::now();
+    let seed_started = Instant::now();
     let dark = matches!(args.mode, Mode::Dark);
     let transparent = matches!(args.transparency, Transparency::Transparent);
 
@@ -183,6 +187,13 @@ fn main() -> Result<()> {
     if source_kind == "image" && args.smart && low_chroma(source_seed) {
         scheme = "neutral".into();
     }
+    if profile {
+        eprintln!(
+            "[THEME-PERF-04] scope=rust stage=seed_extract ms={:.3}",
+            seed_started.elapsed().as_secs_f64() * 1000.0
+        );
+    }
+    let palette_started = Instant::now();
     let scheme_seed = if args.invert_hue {
         invert_hue(source_seed)
     } else {
@@ -216,6 +227,13 @@ fn main() -> Result<()> {
     );
     let colors = colors_contract(&palette, &terminal);
     let scss = scss_output(&material, &terminal, dark, transparent);
+    if profile {
+        eprintln!(
+            "[THEME-PERF-04] scope=rust stage=palette_build ms={:.3}",
+            palette_started.elapsed().as_secs_f64() * 1000.0
+        );
+    }
+    let output_started = Instant::now();
 
     if let Some(path) = &args.scss_output {
         write_text(path, &scss)?;
@@ -254,6 +272,13 @@ fn main() -> Result<()> {
         write_json(path, &meta)?;
     }
 
+    if profile {
+        eprintln!(
+            "[THEME-PERF-04] scope=rust stage=output_write ms={:.3}",
+            output_started.elapsed().as_secs_f64() * 1000.0
+        );
+    }
+
     if let Some(template_dir) = args.render_templates.as_deref() {
         let managed_outputs = [
             args.json_output.clone(),
@@ -263,6 +288,7 @@ fn main() -> Result<()> {
             args.meta_output.clone(),
             args.scss_output.clone(),
         ];
+        let template_started = Instant::now();
         let rendered = render_templates(RenderRequest {
             template_dir,
             managed_outputs: &managed_outputs,
@@ -275,14 +301,32 @@ fn main() -> Result<()> {
             current_app_palette: &app_palette,
             image: source_path.as_deref(),
         })?;
-        if rendered > 0
-            && std::env::var_os("ALIS_THEME_SKIP_SDDM_SYNC").is_none()
-            && let Err(error) = sync_if_installed(&app_palette)
-        {
-            eprintln!("[sddm-pixel] Native sync failed: {error:#}");
+        if profile {
+            eprintln!(
+                "[THEME-PERF-04] scope=rust stage=template_render ms={:.3}",
+                template_started.elapsed().as_secs_f64() * 1000.0
+            );
+        }
+        if rendered > 0 && std::env::var_os("ALIS_THEME_SKIP_SDDM_SYNC").is_none() {
+            let sddm_started = Instant::now();
+            if let Err(error) = sync_if_installed(&app_palette) {
+                eprintln!("[sddm-pixel] Native sync failed: {error:#}");
+            }
+            if profile {
+                eprintln!(
+                    "[THEME-PERF-04] scope=rust stage=sddm_sync ms={:.3}",
+                    sddm_started.elapsed().as_secs_f64() * 1000.0
+                );
+            }
         }
     }
 
+    if profile {
+        eprintln!(
+            "[THEME-PERF-04] scope=rust stage=total ms={:.3}",
+            total_started.elapsed().as_secs_f64() * 1000.0
+        );
+    }
     if args.debug {
         eprintln!(
             "alis-theme: seed={} mode={} scheme={} material_roles={} terminal_roles={}",

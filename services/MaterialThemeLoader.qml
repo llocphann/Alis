@@ -23,6 +23,17 @@ Singleton {
     property string filePath: Directories.generatedMaterialThemePath
     property bool ready: false
 
+    // Opt-in diagnostic. No work or output during normal wallpaper changes.
+    readonly property bool themeProfileEnabled: Quickshell.env("ALIS_THEME_PROFILE") === "1"
+    property double themeProfileFileEventMs: 0
+    property double themeProfileExternalRequestedMs: 0
+    function themeProfileStage(stage, durationMs) {
+        if (root.themeProfileEnabled)
+            console.info("[THEME-PERF-04] scope=qml stage=" + stage
+                + " ms=" + Math.max(0, durationMs).toFixed(3)
+                + " epoch_ms=" + Date.now())
+    }
+
     property bool previewActive: false
     property string previewPath: ""
     property int _previewSerial: 0
@@ -318,6 +329,7 @@ Singleton {
         // Consume _forceApply only after successful validation — failed reads
         // must keep the flag so the poll timer can retry.
         root._forceApply = false
+        const paletteStarted = root.themeProfileEnabled ? Date.now() : 0
 
         _log("[MaterialThemeLoader] Applying", Object.keys(json).length, "color keys, bg:", json.background, "primary:", json.primary)
         root._applyPalette(json)
@@ -327,6 +339,8 @@ Singleton {
             root._previewBaseline = root._snapshotColors()
             if (root._previewPalette) root._applyPalette(root._previewPalette)
         }
+        if (root.themeProfileEnabled)
+            root.themeProfileStage("qml_palette_apply", Date.now() - paletteStarted)
     }
 
     function _applyPalette(json): void {
@@ -443,6 +457,8 @@ Singleton {
     // debounce collapses them into one run and the style overlay below is
     // guaranteed to land before any module reads the palette.
     function requestExternalApply(): void {
+        if (root.themeProfileEnabled)
+            root.themeProfileExternalRequestedMs = Date.now()
         delayedExternalApply.restart()
     }
 
@@ -451,7 +467,12 @@ Singleton {
         interval: 600
         repeat: false
         running: false
-        onTriggered: root._applyExternalTheming()
+        onTriggered: {
+            if (root.themeProfileEnabled && root.themeProfileExternalRequestedMs > 0)
+                root.themeProfileStage("qml_external_debounce",
+                    Date.now() - root.themeProfileExternalRequestedMs)
+            root._applyExternalTheming()
+        }
     }
 
     // Re-apply external theming when the global style changes. The Material
@@ -571,6 +592,8 @@ Singleton {
 
     function _applyExternalTheming(): void {
         if (!root.defaultApplyExternal) return;
+        if (root.themeProfileEnabled)
+            root.themeProfileStage("qml_external_dispatch", 0)
         if (root.previewActive) {
             root._previewExternalDeferred = true
             return
@@ -619,6 +642,8 @@ exec /usr/bin/bash ${_shq(applyColorPath)}
         watchChanges: true
         onFileChanged: {
             root._log("[MaterialThemeLoader] onFileChanged fired")
+            if (root.themeProfileEnabled)
+                root.themeProfileFileEventMs = Date.now()
             reloadDebounce.restart()
         }
         onLoadedChanged: {
@@ -626,6 +651,11 @@ exec /usr/bin/bash ${_shq(applyColorPath)}
             const fileContent = themeFileView.text()
             root._log("[MaterialThemeLoader] file content length:", fileContent ? fileContent.length : 0)
             root.applyColors(fileContent)
+            if (root.themeProfileEnabled && root.themeProfileFileEventMs > 0) {
+                root.themeProfileStage("qml_watch_to_loaded",
+                    Date.now() - root.themeProfileFileEventMs)
+                root.themeProfileFileEventMs = 0
+            }
             root.ready = true
         }
         onLoadFailed: root.resetFilePathNextTime();

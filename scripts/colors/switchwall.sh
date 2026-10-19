@@ -12,6 +12,8 @@ SHELL_ROOT="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)"
 source "$SCRIPT_DIR/../lib/config-path.sh"
 # shellcheck source=scripts/colors/lib/publish-if-changed.sh
 source "$SCRIPT_DIR/lib/publish-if-changed.sh"
+# shellcheck source=scripts/colors/lib/theme-profile.sh
+source "$SCRIPT_DIR/lib/theme-profile.sh"
 SHELL_CONFIG_FILE="$(alis_config_file)"
 TEMPLATE_DIR="$XDG_CONFIG_HOME/matugen"
 terminalscheme="$SCRIPT_DIR/terminal/scheme-base.json"
@@ -317,6 +319,10 @@ ensure_color_preview_for_media() {
  }
 
 switch() {
+    local _theme_perf_total="" _theme_perf_generate="" _theme_perf_publish="" _theme_perf_dark=""
+    if [[ "${ALIS_THEME_PROFILE:-}" == "1" ]]; then
+        _theme_perf_total="$(date +%s%N)"
+    fi
     imgpath="$1"
     mode_flag="$2"
     type_flag="$3"
@@ -578,6 +584,9 @@ switch() {
     local theme_generation_succeeded=false
 
     # 1) Generate authoritative shell/UI colors.json + render app templates.
+    if [[ "${ALIS_THEME_PROFILE:-}" == "1" ]]; then
+        _theme_perf_generate="$(date +%s%N)"
+    fi
     if "$SCRIPT_DIR/../native-dispatch" theme "${generate_colors_material_args[@]}" \
         --json-output "$_json_tmp" \
         --palette-output "$_palette_tmp" \
@@ -588,6 +597,10 @@ switch() {
         --render-templates "$TEMPLATE_DIR" \
         > /dev/null 2>/dev/null && [[ -s "$_json_tmp" ]]; then
         theme_generation_succeeded=true
+        theme_perf_stage switchwall native_generation "$_theme_perf_generate"
+        if [[ "${ALIS_THEME_PROFILE:-}" == "1" ]]; then
+            _theme_perf_publish="$(date +%s%N)"
+        fi
         # colors.json remains the authoritative compatibility notification for
         # MaterialThemeLoader until the pipeline has a separate generation-ready
         # signal. Preserve its replacement semantics, but avoid rewriting the
@@ -609,7 +622,9 @@ switch() {
         else
             rm -f "$_chromium_tmp"
         fi
+        theme_perf_stage switchwall file_publication "$_theme_perf_publish"
     else
+        theme_perf_stage switchwall native_generation_failed "$_theme_perf_generate"
         echo "[switchwall] Warning: colors.json generation failed, keeping previous JSON" >&2
         rm -f "$_json_tmp"
         rm -f "$_palette_tmp"
@@ -621,6 +636,9 @@ switch() {
     fi
 
     if [[ "$force_dark_terminal" == "true" ]]; then
+        if [[ "${ALIS_THEME_PROFILE:-}" == "1" ]]; then
+            _theme_perf_dark="$(date +%s%N)"
+        fi
         scss_generate_args=("${generate_colors_material_args[@]}")
 
         # Reuse the first generation's exact seed and resolved scheme when it
@@ -683,6 +701,7 @@ switch() {
             rm -f "$_scss_tmp"
             rm -f "$_terminal_force_tmp"
         fi
+        theme_perf_stage switchwall forced_dark_terminal "$_theme_perf_dark"
     else
         rm -f "$_scss_tmp"
     fi
@@ -705,6 +724,7 @@ switch() {
         read max_width_desired max_height_desired <<< "$(get_max_monitor_resolution)"
         post_process "$max_width_desired" "$max_height_desired" "$imgpath"
     fi
+    theme_perf_stage switchwall total "$_theme_perf_total"
 }
 
 main() {
