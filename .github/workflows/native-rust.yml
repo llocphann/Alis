@@ -28,6 +28,10 @@ on:
       - 'scripts/colors/generate_colors_material.py'
       - 'scripts/colors/generate_terminal_configs.py'
       - 'scripts/colors/switchwall.sh'
+      - 'scripts/colors/lib/publish-if-changed.sh'
+      - 'scripts/colors/modules/90-cava.sh'
+      - 'scripts/test-theme-file-publication.sh'
+      - 'scripts/test-cava-cover-color-refresh-contract.py'
       - 'scripts/colors/applycolor.sh'
       - 'scripts/colors/apply-gtk-theme.sh'
       - 'scripts/colors/icon-theme-for-mode.sh'
@@ -52,6 +56,10 @@ on:
       - 'scripts/colors/generate_colors_material.py'
       - 'scripts/colors/generate_terminal_configs.py'
       - 'scripts/colors/switchwall.sh'
+      - 'scripts/colors/lib/publish-if-changed.sh'
+      - 'scripts/colors/modules/90-cava.sh'
+      - 'scripts/test-theme-file-publication.sh'
+      - 'scripts/test-cava-cover-color-refresh-contract.py'
       - 'scripts/colors/applycolor.sh'
       - 'scripts/colors/apply-gtk-theme.sh'
       - 'scripts/colors/icon-theme-for-mode.sh'
@@ -95,6 +103,10 @@ jobs:
           bash -n scripts/native-cutover-benchmark.sh
           bash -n scripts/benchmark-python-vs-rust.sh
           bash -n scripts/colors/switchwall.sh
+          bash -n scripts/colors/lib/publish-if-changed.sh
+          bash -n scripts/test-theme-file-publication.sh
+          bash scripts/test-theme-file-publication.sh
+          python3 scripts/test-cava-cover-color-refresh-contract.py
           bash -n scripts/colors/applycolor.sh
           bash -n scripts/colors/apply-gtk-theme.sh
           python3 scripts/test-light-mode-upstream-contract.py

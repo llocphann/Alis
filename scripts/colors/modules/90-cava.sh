@@ -174,11 +174,8 @@ generate_managed_block() {
   (( gradient_count < 1 )) && gradient_count=1
   (( gradient_count > 8 )) && gradient_count=8
 
-  if [[ "$color_source" == "cover" ]]; then
-    refresh_cover_colors "$gradient_count" || true
-  fi
-
-  # Build gradient based on source
+  # Build gradient based on source. The cover branch refreshes cover colors
+  # inside build_gradient_cover(); do not extract the same cover twice here.
   local -a gradient=()
   case "$color_source" in
     vibrant) while IFS= read -r c; do gradient+=("$c"); done < <(build_gradient_vibrant "$gradient_count") ;;

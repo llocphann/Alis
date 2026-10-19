@@ -1,5 +1,6 @@
 use std::env;
 use std::fs;
+use std::io::Read;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -122,6 +123,39 @@ fn material_shape_chars(config: Option<&Value>) -> &'static str {
     }
 }
 
+/// Compare file contents without loading large wallpaper assets into memory.
+/// Missing destinations are a normal cache miss; other I/O errors remain visible.
+fn files_equal(left: &Path, right: &Path) -> Result<bool> {
+    let left_metadata = match fs::metadata(left) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(error) => return Err(error.into()),
+    };
+    let right_metadata = match fs::metadata(right) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(error) => return Err(error.into()),
+    };
+    if left_metadata.len() != right_metadata.len() {
+        return Ok(false);
+    }
+
+    let mut left = fs::File::open(left)?;
+    let mut right = fs::File::open(right)?;
+    let mut left_buffer = [0_u8; 16 * 1024];
+    let mut right_buffer = [0_u8; 16 * 1024];
+    loop {
+        let left_read = left.read(&mut left_buffer)?;
+        let right_read = right.read(&mut right_buffer)?;
+        if left_read != right_read || left_buffer[..left_read] != right_buffer[..right_read] {
+            return Ok(false);
+        }
+        if left_read == 0 {
+            return Ok(true);
+        }
+    }
+}
+
 fn palette_value<'a>(palette: &'a Palette, keys: &[&str], fallback: &'a str) -> &'a str {
     keys.iter()
         .find_map(|key| palette.get(*key).map(String::as_str))
@@ -203,11 +237,12 @@ fn update_theme_conf(theme_dir: &Path, palette: &Palette, shape_chars: &str) -> 
         new_lines.push(format!("{key}={value}"));
     }
     let updated = new_lines.join("\n");
-    if updated != content {
+    let changed = updated != content;
+    if changed {
         fs::write(&path, updated)
             .with_context(|| format!("write SDDM theme config {}", path.display()))?;
     }
-    Ok(true)
+    Ok(changed)
 }
 
 fn current_username() -> Option<String> {
@@ -229,16 +264,22 @@ fn update_avatar(theme_dir: &Path, home: &Path) -> Result<bool> {
     };
 
     let destination = assets.join("user-face.png");
-    fs::copy(&source, &destination)?;
+    let changed = !files_equal(&source, &destination)?;
+    if changed {
+        fs::copy(&source, &destination)?;
+    }
+    // Keep the expected permissions even when the content is already current.
     fs::set_permissions(&destination, fs::Permissions::from_mode(0o644))?;
-    eprintln!(
-        "[sddm-pixel] Avatar updated: {}",
-        source
-            .file_name()
-            .and_then(|value| value.to_str())
-            .unwrap_or("avatar")
-    );
-    Ok(true)
+    if changed {
+        eprintln!(
+            "[sddm-pixel] Avatar updated: {}",
+            source
+                .file_name()
+                .and_then(|value| value.to_str())
+                .unwrap_or("avatar")
+        );
+    }
+    Ok(changed)
 }
 
 fn is_video_like(path: &Path) -> bool {
@@ -289,6 +330,22 @@ fn update_background(theme_dir: &Path, wallpaper: Option<&Path>) -> Result<bool>
         return Ok(false);
     }
 
+    let unchanged = match files_equal(source, &destination) {
+        Ok(unchanged) => unchanged,
+        Err(error) => {
+            if let Some(path) = temporary.as_ref() {
+                let _ = fs::remove_file(path);
+            }
+            return Err(error);
+        }
+    };
+    if unchanged {
+        if let Some(path) = temporary {
+            let _ = fs::remove_file(path);
+        }
+        return Ok(false);
+    }
+
     let result = fs::copy(source, &destination)
         .with_context(|| format!("copy SDDM background {}", wallpaper.display()));
     if let Some(path) = temporary {
@@ -319,8 +376,6 @@ pub fn sync_if_installed(palette: &Palette) -> Result<()> {
             "[sddm-pixel] Colors synced (primary: {})",
             palette_value(palette, &["app_accent", "primary"], "#cba6f7")
         );
-    } else {
-        eprintln!("[sddm-pixel] Color sync failed");
     }
 
     let wallpaper = read_wallpaper(config.as_ref());
@@ -332,6 +387,29 @@ pub fn sync_if_installed(palette: &Palette) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn files_equal_checks_contents_and_handles_missing_destinations() {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock after epoch")
+            .as_nanos();
+        let directory = std::env::temp_dir().join(format!(
+            "alis-sddm-files-equal-{}-{nonce}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&directory).expect("create fixture directory");
+        let left = directory.join("left.bin");
+        let right = directory.join("right.bin");
+
+        fs::write(&left, b"same wallpaper bytes").expect("write left fixture");
+        assert!(!files_equal(&left, &right).expect("missing destination is a cache miss"));
+        fs::write(&right, b"same wallpaper bytes").expect("write right fixture");
+        assert!(files_equal(&left, &right).expect("compare equal files"));
+        fs::write(&right, b"different wallpaper bytes").expect("rewrite right fixture");
+        assert!(!files_equal(&left, &right).expect("compare different files"));
+        fs::remove_dir_all(&directory).expect("remove fixture directory");
+    }
 
     #[test]
     fn video_extensions_match_python_hook() {

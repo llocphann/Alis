@@ -10,6 +10,8 @@ SHELL_ROOT="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)"
 
 # shellcheck source=scripts/lib/config-path.sh
 source "$SCRIPT_DIR/../lib/config-path.sh"
+# shellcheck source=scripts/colors/lib/publish-if-changed.sh
+source "$SCRIPT_DIR/lib/publish-if-changed.sh"
 SHELL_CONFIG_FILE="$(alis_config_file)"
 TEMPLATE_DIR="$XDG_CONFIG_HOME/matugen"
 terminalscheme="$SCRIPT_DIR/terminal/scheme-base.json"
@@ -584,20 +586,24 @@ switch() {
         --scss-output "$_scss_tmp" \
         --render-templates "$TEMPLATE_DIR" \
         > /dev/null 2>/dev/null && [[ -s "$_json_tmp" ]]; then
+        # colors.json remains the authoritative compatibility notification for
+        # MaterialThemeLoader until the pipeline has a separate generation-ready
+        # signal. Preserve its replacement semantics, but avoid rewriting the
+        # auxiliary outputs when their content is identical.
         mv "$_json_tmp" "$_json_out"
-        [[ -s "$_palette_tmp" ]] && mv "$_palette_tmp" "$_palette_out" || rm -f "$_palette_tmp"
-        [[ -s "$_app_palette_tmp" ]] && mv "$_app_palette_tmp" "$_app_palette_out" || rm -f "$_app_palette_tmp"
+        [[ -s "$_palette_tmp" ]] && publish_if_changed "$_palette_tmp" "$_palette_out" || rm -f "$_palette_tmp"
+        [[ -s "$_app_palette_tmp" ]] && publish_if_changed "$_app_palette_tmp" "$_app_palette_out" || rm -f "$_app_palette_tmp"
         if [[ "$force_dark_terminal" == "true" ]]; then
             rm -f "$_terminal_tmp"
         else
-            [[ -s "$_terminal_tmp" ]] && mv "$_terminal_tmp" "$_terminal_out" || rm -f "$_terminal_tmp"
+            [[ -s "$_terminal_tmp" ]] && publish_if_changed "$_terminal_tmp" "$_terminal_out" || rm -f "$_terminal_tmp"
         fi
-        [[ -s "$_meta_tmp" ]] && mv "$_meta_tmp" "$_meta_out" || rm -f "$_meta_tmp"
+        [[ -s "$_meta_tmp" ]] && publish_if_changed "$_meta_tmp" "$_meta_out" || rm -f "$_meta_tmp"
         if [[ "$force_dark_terminal" != "true" ]]; then
-            [[ -s "$_scss_tmp" ]] && mv "$_scss_tmp" "$STATE_DIR/user/generated/material_colors.scss" || rm -f "$_scss_tmp"
+            [[ -s "$_scss_tmp" ]] && publish_if_changed "$_scss_tmp" "$STATE_DIR/user/generated/material_colors.scss" || rm -f "$_scss_tmp"
         fi
         if write_chromium_theme_contract "$_app_palette_out" "$_chromium_tmp" && [[ -s "$_chromium_tmp" ]]; then
-            mv "$_chromium_tmp" "$_chromium_out"
+            publish_if_changed "$_chromium_tmp" "$_chromium_out" || rm -f "$_chromium_tmp"
         else
             rm -f "$_chromium_tmp"
         fi
@@ -626,9 +632,9 @@ switch() {
         scss_cmd+=(--terminal-output "$_terminal_force_tmp")
 
         if "${scss_cmd[@]}" > "$_scss_tmp" 2>/dev/null && [[ -s "$_scss_tmp" && -s "$_terminal_force_tmp" ]]; then
-            mv "$_scss_tmp" "$STATE_DIR/user/generated/material_colors.scss"
+            publish_if_changed "$_scss_tmp" "$STATE_DIR/user/generated/material_colors.scss" || rm -f "$_scss_tmp"
             # Keep terminal outputs aligned with forced-dark generation path when enabled.
-            mv "$_terminal_force_tmp" "$_terminal_out"
+            publish_if_changed "$_terminal_force_tmp" "$_terminal_out" || rm -f "$_terminal_force_tmp"
         else
             echo "[switchwall] Warning: material_colors.scss generation failed, keeping previous SCSS" >&2
             rm -f "$_scss_tmp"
