@@ -1,0 +1,1590 @@
+{
+  "source_sha": "541989b6b52e23ca84fb594b379590df894c3967",
+  "classification": "focused private Niri native PASS; physical multi-output and Owner desktop UNRUN",
+  "results": [
+    {
+      "actual_exit": 0,
+      "scale": 1,
+      "rows": [
+        {
+          "id": 1,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            90,
+            90
+          ],
+          "configured": [
+            90,
+            91,
+            166,
+            122
+          ],
+          "expected": [
+            90,
+            90
+          ]
+        },
+        {
+          "id": 2,
+          "source": "item",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            970,
+            581
+          ],
+          "configured": [
+            970,
+            582,
+            166,
+            90
+          ],
+          "expected": [
+            970.0,
+            581.0
+          ]
+        },
+        {
+          "id": 3,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            200,
+            350
+          ],
+          "configured": [
+            200,
+            351,
+            166,
+            122
+          ],
+          "expected": [
+            200,
+            350
+          ]
+        },
+        {
+          "id": 4,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            1856,
+            4
+          ],
+          "configured": [
+            1691,
+            5,
+            166,
+            122
+          ],
+          "expected": [
+            1856,
+            4
+          ]
+        },
+        {
+          "id": 5,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            4,
+            4
+          ],
+          "configured": [
+            4,
+            5,
+            166,
+            122
+          ],
+          "expected": [
+            4,
+            4
+          ]
+        },
+        {
+          "id": 6,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            4,
+            1098
+          ],
+          "configured": [
+            4,
+            976,
+            166,
+            122
+          ],
+          "expected": [
+            4,
+            1098
+          ]
+        },
+        {
+          "id": 7,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            1856,
+            1098
+          ],
+          "configured": [
+            1691,
+            976,
+            166,
+            122
+          ],
+          "expected": [
+            1856,
+            1098
+          ]
+        },
+        {
+          "id": 8,
+          "source": "item",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            970,
+            581
+          ],
+          "configured": [
+            970,
+            582,
+            166,
+            90
+          ],
+          "expected": [
+            970.0,
+            581.0
+          ]
+        },
+        {
+          "id": 9,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            90,
+            90
+          ],
+          "configured": [
+            90,
+            91,
+            166,
+            122
+          ],
+          "expected": [
+            90,
+            90
+          ]
+        },
+        {
+          "id": 10,
+          "source": "item",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            970,
+            581
+          ],
+          "configured": [
+            970,
+            582,
+            166,
+            90
+          ],
+          "expected": [
+            970.0,
+            581.0
+          ]
+        },
+        {
+          "id": 11,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            200,
+            350
+          ],
+          "configured": [
+            200,
+            351,
+            166,
+            122
+          ],
+          "expected": [
+            200,
+            350
+          ]
+        },
+        {
+          "id": 12,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            1856,
+            4
+          ],
+          "configured": [
+            1691,
+            5,
+            166,
+            122
+          ],
+          "expected": [
+            1856,
+            4
+          ]
+        },
+        {
+          "id": 13,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            4,
+            4
+          ],
+          "configured": [
+            4,
+            5,
+            166,
+            122
+          ],
+          "expected": [
+            4,
+            4
+          ]
+        },
+        {
+          "id": 14,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            4,
+            1098
+          ],
+          "configured": [
+            4,
+            976,
+            166,
+            122
+          ],
+          "expected": [
+            4,
+            1098
+          ]
+        },
+        {
+          "id": 15,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            1856,
+            1098
+          ],
+          "configured": [
+            1691,
+            976,
+            166,
+            122
+          ],
+          "expected": [
+            1856,
+            1098
+          ]
+        },
+        {
+          "id": 16,
+          "source": "item",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            970,
+            581
+          ],
+          "configured": [
+            970,
+            582,
+            166,
+            90
+          ],
+          "expected": [
+            970.0,
+            581.0
+          ]
+        },
+        {
+          "id": 17,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            90,
+            90
+          ],
+          "configured": [
+            90,
+            91,
+            166,
+            122
+          ],
+          "expected": [
+            90,
+            90
+          ]
+        },
+        {
+          "id": 18,
+          "source": "item",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            970,
+            581
+          ],
+          "configured": [
+            970,
+            582,
+            166,
+            90
+          ],
+          "expected": [
+            970.0,
+            581.0
+          ]
+        },
+        {
+          "id": 19,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            200,
+            350
+          ],
+          "configured": [
+            200,
+            351,
+            166,
+            122
+          ],
+          "expected": [
+            200,
+            350
+          ]
+        },
+        {
+          "id": 20,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            1856,
+            4
+          ],
+          "configured": [
+            1691,
+            5,
+            166,
+            122
+          ],
+          "expected": [
+            1856,
+            4
+          ]
+        },
+        {
+          "id": 21,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            4,
+            4
+          ],
+          "configured": [
+            4,
+            5,
+            166,
+            122
+          ],
+          "expected": [
+            4,
+            4
+          ]
+        },
+        {
+          "id": 22,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            4,
+            1098
+          ],
+          "configured": [
+            4,
+            976,
+            166,
+            122
+          ],
+          "expected": [
+            4,
+            1098
+          ]
+        },
+        {
+          "id": 23,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            1856,
+            1098
+          ],
+          "configured": [
+            1691,
+            976,
+            166,
+            122
+          ],
+          "expected": [
+            1856,
+            1098
+          ]
+        },
+        {
+          "id": 24,
+          "source": "item",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            970,
+            581
+          ],
+          "configured": [
+            970,
+            582,
+            166,
+            90
+          ],
+          "expected": [
+            970.0,
+            581.0
+          ]
+        },
+        {
+          "id": 27,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            372,
+            771
+          ],
+          "configured": [
+            372,
+            772,
+            166,
+            122
+          ],
+          "expected": [
+            372.0,
+            771.4
+          ]
+        },
+        {
+          "id": 28,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            90,
+            90
+          ],
+          "configured": [
+            90,
+            91,
+            166,
+            122
+          ],
+          "expected": [
+            90,
+            90
+          ]
+        },
+        {
+          "id": 29,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            90,
+            90
+          ],
+          "configured": [
+            90,
+            91,
+            166,
+            122
+          ],
+          "expected": [
+            90,
+            90
+          ]
+        },
+        {
+          "id": 30,
+          "source": "desktop",
+          "actions": 1,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1860,
+            1102
+          ],
+          "scale": 1,
+          "anchor": [
+            90,
+            90
+          ],
+          "configured": [
+            90,
+            91,
+            166,
+            122
+          ],
+          "expected": [
+            90,
+            90
+          ]
+        }
+      ],
+      "log_sha256": "c65ca568fc7a4e9da05c63cdf44c921189e43d1102a56348c1a0934303d692f5",
+      "scope": "private nested Niri; actual wl_pointer and Escape; not Owner acceptance"
+    },
+    {
+      "actual_exit": 0,
+      "scale": 1.5,
+      "rows": [
+        {
+          "id": 1,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            90,
+            90
+          ],
+          "configured": [
+            90,
+            91,
+            166,
+            122
+          ],
+          "expected": [
+            90,
+            90
+          ]
+        },
+        {
+          "id": 2,
+          "source": "item",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            660,
+            397
+          ],
+          "configured": [
+            660,
+            398,
+            166,
+            90
+          ],
+          "expected": [
+            660.0,
+            397.5
+          ]
+        },
+        {
+          "id": 3,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            200,
+            350
+          ],
+          "configured": [
+            200,
+            351,
+            166,
+            122
+          ],
+          "expected": [
+            200,
+            350
+          ]
+        },
+        {
+          "id": 4,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            1236,
+            4
+          ],
+          "configured": [
+            1071,
+            5,
+            166,
+            122
+          ],
+          "expected": [
+            1236,
+            4
+          ]
+        },
+        {
+          "id": 5,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            4,
+            4
+          ],
+          "configured": [
+            4,
+            5,
+            166,
+            122
+          ],
+          "expected": [
+            4,
+            4
+          ]
+        },
+        {
+          "id": 6,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            4,
+            731
+          ],
+          "configured": [
+            4,
+            609,
+            166,
+            122
+          ],
+          "expected": [
+            4,
+            731
+          ]
+        },
+        {
+          "id": 7,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            1236,
+            731
+          ],
+          "configured": [
+            1071,
+            609,
+            166,
+            122
+          ],
+          "expected": [
+            1236,
+            731
+          ]
+        },
+        {
+          "id": 8,
+          "source": "item",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            660,
+            397
+          ],
+          "configured": [
+            660,
+            398,
+            166,
+            90
+          ],
+          "expected": [
+            660.0,
+            397.5
+          ]
+        },
+        {
+          "id": 9,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            90,
+            90
+          ],
+          "configured": [
+            90,
+            91,
+            166,
+            122
+          ],
+          "expected": [
+            90,
+            90
+          ]
+        },
+        {
+          "id": 10,
+          "source": "item",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            660,
+            397
+          ],
+          "configured": [
+            660,
+            398,
+            166,
+            90
+          ],
+          "expected": [
+            660.0,
+            397.5
+          ]
+        },
+        {
+          "id": 11,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            200,
+            350
+          ],
+          "configured": [
+            200,
+            351,
+            166,
+            122
+          ],
+          "expected": [
+            200,
+            350
+          ]
+        },
+        {
+          "id": 12,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            1236,
+            4
+          ],
+          "configured": [
+            1071,
+            5,
+            166,
+            122
+          ],
+          "expected": [
+            1236,
+            4
+          ]
+        },
+        {
+          "id": 13,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            4,
+            4
+          ],
+          "configured": [
+            4,
+            5,
+            166,
+            122
+          ],
+          "expected": [
+            4,
+            4
+          ]
+        },
+        {
+          "id": 14,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            4,
+            731
+          ],
+          "configured": [
+            4,
+            609,
+            166,
+            122
+          ],
+          "expected": [
+            4,
+            731
+          ]
+        },
+        {
+          "id": 15,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            1236,
+            731
+          ],
+          "configured": [
+            1071,
+            609,
+            166,
+            122
+          ],
+          "expected": [
+            1236,
+            731
+          ]
+        },
+        {
+          "id": 16,
+          "source": "item",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            660,
+            397
+          ],
+          "configured": [
+            660,
+            398,
+            166,
+            90
+          ],
+          "expected": [
+            660.0,
+            397.5
+          ]
+        },
+        {
+          "id": 17,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            90,
+            90
+          ],
+          "configured": [
+            90,
+            91,
+            166,
+            122
+          ],
+          "expected": [
+            90,
+            90
+          ]
+        },
+        {
+          "id": 18,
+          "source": "item",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            660,
+            397
+          ],
+          "configured": [
+            660,
+            398,
+            166,
+            90
+          ],
+          "expected": [
+            660.0,
+            397.5
+          ]
+        },
+        {
+          "id": 19,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            200,
+            350
+          ],
+          "configured": [
+            200,
+            351,
+            166,
+            122
+          ],
+          "expected": [
+            200,
+            350
+          ]
+        },
+        {
+          "id": 20,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            1236,
+            4
+          ],
+          "configured": [
+            1071,
+            5,
+            166,
+            122
+          ],
+          "expected": [
+            1236,
+            4
+          ]
+        },
+        {
+          "id": 21,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            4,
+            4
+          ],
+          "configured": [
+            4,
+            5,
+            166,
+            122
+          ],
+          "expected": [
+            4,
+            4
+          ]
+        },
+        {
+          "id": 22,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            4,
+            731
+          ],
+          "configured": [
+            4,
+            609,
+            166,
+            122
+          ],
+          "expected": [
+            4,
+            731
+          ]
+        },
+        {
+          "id": 23,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            1236,
+            731
+          ],
+          "configured": [
+            1071,
+            609,
+            166,
+            122
+          ],
+          "expected": [
+            1236,
+            731
+          ]
+        },
+        {
+          "id": 24,
+          "source": "item",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            660,
+            397
+          ],
+          "configured": [
+            660,
+            398,
+            166,
+            90
+          ],
+          "expected": [
+            660.0,
+            397.5
+          ]
+        },
+        {
+          "id": 27,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            248,
+            515
+          ],
+          "configured": [
+            248,
+            516,
+            166,
+            122
+          ],
+          "expected": [
+            248.0,
+            514.5
+          ]
+        },
+        {
+          "id": 28,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            90,
+            90
+          ],
+          "configured": [
+            90,
+            91,
+            166,
+            122
+          ],
+          "expected": [
+            90,
+            90
+          ]
+        },
+        {
+          "id": 29,
+          "source": "desktop",
+          "actions": 0,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            90,
+            90
+          ],
+          "configured": [
+            90,
+            91,
+            166,
+            122
+          ],
+          "expected": [
+            90,
+            90
+          ]
+        },
+        {
+          "id": 30,
+          "source": "desktop",
+          "actions": 1,
+          "moduleClicks": 0,
+          "count": 1,
+          "active": true,
+          "queued": false,
+          "output": [
+            1240,
+            735
+          ],
+          "scale": 1.5,
+          "anchor": [
+            90,
+            90
+          ],
+          "configured": [
+            90,
+            91,
+            166,
+            122
+          ],
+          "expected": [
+            90,
+            90
+          ]
+        }
+      ],
+      "log_sha256": "d1afb3efdd7baaab9bf9c244cddda7d4fbdd104223fd011d65520ebc951a2138",
+      "scope": "private nested Niri; actual wl_pointer and Escape; not Owner acceptance"
+    }
+  ]
+}

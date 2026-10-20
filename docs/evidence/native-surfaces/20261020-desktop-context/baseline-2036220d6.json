@@ -1,0 +1,67 @@
+{
+  "source_sha": "2036220d6b729901de3d8280630ff5066449ecbd",
+  "harness_sha": "541989b6b52e23ca84fb594b379590df894c3967",
+  "actual_harness_exit": 1,
+  "scope": "same actual wl_pointer fixture against unmodified baseline production source",
+  "classification": "reproduced; actual harness FAIL retained",
+  "console_sha256": "0453c8d1265b3bf02dba71996f644af94887fc64a8a169af7933a868b721bf52",
+  "actual_native_exit": -15,
+  "observed_rows": [
+    {
+      "id": 1,
+      "source": "desktop",
+      "actions": 0,
+      "moduleClicks": 0,
+      "count": 1,
+      "active": true,
+      "queued": false,
+      "output": [
+        1860,
+        1102
+      ],
+      "scale": 1,
+      "anchor": [
+        90,
+        90
+      ],
+      "configured": [
+        90,
+        91,
+        166,
+        122
+      ],
+      "expected": [
+        90,
+        90
+      ]
+    },
+    {
+      "id": 2,
+      "source": "item",
+      "actions": 0,
+      "moduleClicks": 0,
+      "count": 1,
+      "active": true,
+      "queued": false,
+      "output": [
+        1860,
+        1102
+      ],
+      "scale": 1,
+      "anchor": [
+        880,
+        490
+      ],
+      "configured": [
+        0,
+        0,
+        166,
+        90
+      ],
+      "expected": [
+        970.0,
+        581.0
+      ]
+    }
+  ]
+}
