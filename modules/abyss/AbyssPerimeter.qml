@@ -1394,6 +1394,7 @@ Scope {
             Timer { id: dockClose; interval: 260; repeat: false; onTriggered: if (!dockRevealHover.hovered && !dockHover.hovered) window.dockHovered = false }
             AbyssBodyHost {
                 id:keyboardBody;identity:"keyboard"
+                stableContentSize:true
                 controller:liquid;anchors.fill:parent;outputName:window.outputName
                 z:(Config.options?.osk?.keepOnTop ?? false) ? 10000 : 0
                 property string draftEdge:""
