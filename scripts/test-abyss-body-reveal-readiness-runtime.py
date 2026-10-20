@@ -35,6 +35,7 @@ ShellRoot {
  property string edge:"bottom"
  property string phase:"boot"
  property double phaseStart:0
+ property double revealReadyAt:0
  property int caseIndex:-1
  property var cases:[]
  property var results:[]
@@ -54,7 +55,7 @@ ShellRoot {
   if(trace.length<16000)trace.push({event,ms:Date.now(),caseIndex,phase,ready:body.ready,open:shown,p:body.progress,inputWidth:body.inputBounds.width})
   if(body.progress>.001&&body.progress<.999){if(event==="progress")partialSamples++;if(event==="swap")partialSwaps++}
  }
- function phaseTo(value){phase=value;phaseStart=Date.now();partialSamples=0;partialSwaps=0;sample("phase")}
+ function phaseTo(value){phase=value;phaseStart=Date.now();revealReadyAt=body.ready?phaseStart:0;partialSamples=0;partialSwaps=0;sample("phase")}
  function finish(error){console.info(error?"BODY_REVEAL_FAIL":"BODY_REVEAL_PASS",JSON.stringify({error,checks,completed:results.length,caseIndex,phase,results,trace}));Qt.quit()}
  function find(item,predicate){if(!item)return null;if(predicate(item))return item;for(const child of item.children??[]){const found=find(child,predicate);if(found)return found}return null}
  function beginCase(){
@@ -91,7 +92,10 @@ ShellRoot {
  }
  function openingDone(){
   captureContent();checkStable()
-  if(Date.now()-phaseStart<openingDuration())return false
+  // Deferred content loading is a separate gate. The reveal cannot begin
+  // until ready, so measuring its deadline from the load request can reject
+  // a normal in-flight animation after a perfectly valid cold load.
+  if(!body.ready || Date.now()-revealReadyAt<openingDuration())return false
   check(body.ready&&Math.abs(body.progress-1)<.000001,"ready reveal did not settle")
   check(body.inputBounds.width>0&&body.inputBounds.height>0,"ready open body has no input")
   if(current.reduced){check(partialSamples===0&&partialSwaps===0,"reduced motion retained intermediate reveal")}
@@ -127,7 +131,7 @@ ShellRoot {
    }
   }
  }
- Connections {target:body;function onProgressChanged(){root.sample("progress")}function onReadyChanged(){if(body.ready)root.loadCount++;root.sample("ready")}}
+ Connections {target:body;function onProgressChanged(){root.sample("progress")}function onReadyChanged(){if(body.ready){root.loadCount++;root.revealReadyAt=Date.now()}root.sample("ready")}}
  Connections {target:scene.Window.window;function onFrameSwapped(){root.sample("swap")}}
  Timer {
   interval:8;repeat:true;running:true
