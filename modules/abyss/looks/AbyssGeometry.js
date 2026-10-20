@@ -2,6 +2,31 @@
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, Number(v) || 0)); }
 function edge(vertical, bottom) { return vertical ? (bottom ? "right" : "left") : (bottom ? "bottom" : "top"); }
 function horizontal(edge) { return edge === "top" || edge === "bottom"; }
+// A source can end just before the painted perimeter's inner seam. Keep only
+// that source's overlap with its popup interactive across this narrow gap.
+// The corridor lies inside the already-painted Edge band, never the workspace.
+function popupSourceBridge(source,body,width,height,insets,edge) {
+    var empty={x:0,y:0,width:0,height:0};
+    if (!source || !body || !insets || !["top","right","bottom","left"].includes(edge)
+            || ![width,height,source.x,source.y,source.width,source.height,
+                body.x,body.y,body.width,body.height,insets[edge]].every(Number.isFinite)
+            || width<=0 || height<=0 || source.width<=0 || source.height<=0
+            || body.width<=0 || body.height<=0) return empty;
+    var h=horizontal(edge);
+    var start=Math.max(0,h ? source.x : source.y,h ? body.x : body.y);
+    var end=Math.min(h ? width : height,
+        h ? source.x+source.width : source.y+source.height,
+        h ? body.x+body.width : body.y+body.height);
+    var near,far;
+    if (edge==="top") { near=source.y+source.height;far=Math.min(insets.top,body.y); }
+    else if (edge==="left") { near=source.x+source.width;far=Math.min(insets.left,body.x); }
+    else if (edge==="bottom") { near=Math.max(height-insets.bottom,body.y+body.height);far=source.y; }
+    else { near=Math.max(width-insets.right,body.x+body.width);far=source.x; }
+    near=Math.max(0,near);far=Math.min(h ? height : width,far);
+    if (end<=start || far<=near) return empty;
+    return h ? {x:start,y:near,width:end-start,height:far-near}
+        : {x:near,y:start,width:far-near,height:end-start};
+}
 // Only the popup's tangent footprint reaches its owning inner Edge. Never
 // capture the output-wide strip or the full content canvas hidden by reveal.
 function popupInput(content,width,height,insets,edge,paintedSurface) {

@@ -28,6 +28,7 @@ Item {
     property int vacancyHoverOrder: 0
     property Item embeddedItem: null
     property bool includeEdgeConnection: false
+    property rect connectionSourceRect: Qt.rect(0,0,0,0)
     property bool animatePresentation: true
     // Notification Center already supplies a monotonic revealProgress from
     // StyledPopup. Suppress this host's second availability tween for that
@@ -236,6 +237,20 @@ Item {
             root.connectionInsets,root.edge,root.rawPresentationRecord.surface)
         return Qt.rect(region.x,region.y,region.width,region.height)
     }
+    readonly property rect sourceBridge: {
+        if (!root.includeEdgeConnection || !root.acceptsInput || !root.ready)
+            return Qt.rect(0,0,0,0)
+        const r=Geometry.popupSourceBridge(root.connectionSourceRect,root.inputBounds,
+            root.width,root.height,root.connectionInsets,root.edge)
+        return Qt.rect(r.x,r.y,r.width,r.height)
+    }
+    readonly property rect hoverBounds: {
+        const body=root.inputBounds,bridge=root.sourceBridge
+        if (bridge.width<=0 || bridge.height<=0) return body
+        const x=Math.min(body.x,bridge.x),y=Math.min(body.y,bridge.y)
+        return Qt.rect(x,y,Math.max(body.x+body.width,bridge.x+bridge.width)-x,
+            Math.max(body.y+body.height,bridge.y+bridge.height)-y)
+    }
     readonly property var connectionRects: root.includeEdgeConnection
             && root.inputBounds.width > 0 && root.inputBounds.height > 0
         ? Geometry.popupShouldersSnapshot(root.width,root.height,root.connectionInsets,root.edge,
@@ -262,6 +277,11 @@ Item {
                 ? Math.ceil(root.inputBounds.y+root.inputBounds.height)-y : 0
         }
         Region { regions: root.connectionRegions }
+        Region {
+            x: Math.floor(root.sourceBridge.x); y: Math.floor(root.sourceBridge.y)
+            width: root.sourceBridge.width>0 ? Math.ceil(root.sourceBridge.x+root.sourceBridge.width)-x : 0
+            height: root.sourceBridge.height>0 ? Math.ceil(root.sourceBridge.y+root.sourceBridge.height)-y : 0
+        }
     }
     Instantiator {
         // Reuse Region identities while the strip count is stable; unload on close.
@@ -564,10 +584,10 @@ Item {
         readonly property real shoulderReach: root.connectionRects.length > 0
             ? Math.ceil(Math.max(AbyssStyle.connectionDepth,
                 root.rawPresentationRecord.radius ?? AbyssStyle.neckRadius))+1 : 0
-        x: root.inputBounds.x-(Geometry.horizontal(root.edge) ? shoulderReach : 0)
-        y: root.inputBounds.y-(Geometry.horizontal(root.edge) ? 0 : shoulderReach)
-        width: root.inputBounds.width+(Geometry.horizontal(root.edge) ? 2*shoulderReach : 0)
-        height: root.inputBounds.height+(Geometry.horizontal(root.edge) ? 0 : 2*shoulderReach)
+        x: root.hoverBounds.x-(Geometry.horizontal(root.edge) ? shoulderReach : 0)
+        y: root.hoverBounds.y-(Geometry.horizontal(root.edge) ? 0 : shoulderReach)
+        width: root.hoverBounds.width+(Geometry.horizontal(root.edge) ? 2*shoulderReach : 0)
+        height: root.hoverBounds.height+(Geometry.horizontal(root.edge) ? 0 : 2*shoulderReach)
         enabled: root.acceptsInput && root.ready
         containmentMask: QtObject {
             function contains(point: point): bool {
@@ -575,6 +595,7 @@ Item {
                 if ((root.controller?.sourceInputRegions ?? []).some(
                         rect=>Geometry.rectContains(rect,x,y))) return false
                 return Geometry.rectContains(root.inputBounds,x,y)
+                    || Geometry.rectContains(root.sourceBridge,x,y)
                     || root.connectionRects.some(rect=>Geometry.rectContains(rect,x,y))
             }
         }

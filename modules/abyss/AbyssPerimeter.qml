@@ -551,10 +551,14 @@ Scope {
                     outputWidth:window.width,
                     outputHeight:window.height,
                     connectionInsets:host.connectionInsets ?? null,
+                    sourceBounds:rect(host.connectionSourceRect),
+                    sourceBridge:rect(host.sourceBridge),
                     rawSurface:rect(raw),
                     joinedSurface:rect(joined),
                     pointHit:scenePoint ? {
                         inInputBounds:Geometry.rectContains(bounds,
+                            scenePoint.x,scenePoint.y),
+                        inSourceBridge:Geometry.rectContains(host.sourceBridge,
                             scenePoint.x,scenePoint.y),
                         inShoulderStrip:strips.some(r=>Geometry.rectContains(r,
                             scenePoint.x,scenePoint.y)),
@@ -1301,6 +1305,16 @@ Scope {
                     readonly property rect anchorBounds:
                         hostedPopup?._anchorRect(window?.width ?? 0,window?.height ?? 0)
                             ?? Qt.rect(0,0,0,0)
+                    connectionSourceRect: {
+                        const source=hostedPopup?._liquidAnchor
+                        const region=source?.inputRegion
+                        // Visual anchors intentionally include the Bar's full
+                        // thickness. Only its real, output-owned source pixels
+                        // bound the hover corridor across the remaining gap.
+                        return source?.liquidController===liquid && region
+                            ? Qt.rect(region.x,region.y,region.width,region.height)
+                            : Qt.rect(0,0,0,0)
+                    }
                     along: window?.positionAlong(presentationKind,edge,span,
                         (Geometry.horizontal(edge)
                             ? anchorBounds.x+anchorBounds.width/2
