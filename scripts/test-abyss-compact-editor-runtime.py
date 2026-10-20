@@ -101,7 +101,7 @@ ShellRoot {
      // module picker is the add-module palette; module selection remains on
      // Screen Edge handles. Scope controls stay available in both tabs.
      check(!findChild(editor,"abyssEditorSelection"),"duplicate module dropdown returned")
-     const header=item("abyssEditorModeHeader")
+     const modeHeader=item("abyssEditorModeHeader")
      const tabs=control("abyssEditorModeTabs")
      const title=control("abyssEditorTitle")
      const actions=control("abyssEditorHeaderActions")
@@ -117,7 +117,7 @@ ShellRoot {
      const sharedOutput=control("abyssEditorIpcOutput")
      const outputCheckbox=control("abyssEditorOutputOnly")
      const origin=(item)=>item.mapToItem(scroll.contentItem,0,0)
-     if(header.columns===2) {
+     if(modeHeader.columns===2) {
       check(Math.abs(origin(tabs).y-origin(scope).y)<1,
           "tabs and output scope do not share the first row")
       check(origin(tabs).x<origin(sharedOutput).x
