@@ -1471,6 +1471,8 @@ Scope {
             }
             AbyssBodyHost {
                 id:wallpaperBody;identity:"wallpaper"
+                // Reveal clips the carousel instead of resizing its cards and search row.
+                stableContentSize:true
                 controller:liquid;anchors.fill:parent;outputName:window.outputName
                 edge:window.positionEdge(identity,"bottom")
                 open:window.presented && field.ready && GlobalStates.wallpaperLauncherOpen

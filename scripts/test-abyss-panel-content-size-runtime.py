@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Four-edge production BodyHost reveal must keep static panel contents full size."""
-import json,tempfile,os
+import json,tempfile,os,re
 from pathlib import Path
 from native_test_session import private_wayland,run_qs
-ROOT=Path(__file__).resolve().parents[1]
+ROOT=Path(os.environ.get('ALIS_PANEL_CONTENT_SIZE_SOURCE',Path(__file__).resolve().parents[1])).resolve()
 source=(ROOT/'modules/abyss/AbyssPerimeter.qml').read_text()
 flags=[]
-for identity in ['leftPanel','rightPanel','settings','controls','clipboardBody']:
- start=source.index('id: '+identity+'\n');end=source.index('\n            Abyss',start)
- flags.append('stableContentSize: true' in source[start:end])
+for identity in ['leftPanel','rightPanel','settings','controls','clipboardBody','wallpaperBody']:
+ match=re.search(r'\bid:\s*'+re.escape(identity)+r'\b',source)
+ assert match is not None,identity
+ start=match.start();end=source.index('\n            Abyss',start)
+ flags.append([identity,re.search(r'\bstableContentSize:\s*true\b',source[start:end])is not None])
 with tempfile.TemporaryDirectory(prefix='alis-sidebar-content-size-')as name:
  folder=Path(name)
  for entry in ['modules','services','GlobalStates.qml','qmldir','assets','scripts','defaults','translations']:(folder/entry).symlink_to(ROOT/entry)
@@ -50,7 +52,7 @@ ShellRoot {
   function geometry(){return JSON.stringify({record:body.record,input:body.inputBounds,target:body.targetRecord})}
   function run(){try{
    tryCompare(Config,"ready",true,5000);wait(150)
-   for(const enabled of FLAGS){
+   for(const [identity,enabled] of FLAGS){
     root.fixedSize=enabled
     for(const edge of ["left","right","top","bottom"]){
      root.side=edge;root.reveal=1;root.shown=true
@@ -62,7 +64,7 @@ ShellRoot {
       root.fixedSize=false;root.reveal=progress;wait(0);const original=geometry()
       root.fixedSize=enabled;wait(0)
       check(geometry()===original,"content-sizing option changed surface/input geometry "+edge)
-      check(item.width===full.width&&item.height===full.height,"Panel reflows during reveal "+edge+" progress="+progress+" dimensions="+item.width+"x"+item.height+" full="+full.width+"x"+full.height)
+      check(item.width===full.width&&item.height===full.height,"Panel reflows during reveal "+identity+" "+edge+" progress="+progress+" dimensions="+item.width+"x"+item.height+" full="+full.width+"x"+full.height)
       check(body.contentItem.item===item&&body.acceptsInput,"reveal replaced content or lost input")
      }
      // Resize/reflow still changes final dimensions; this is a reveal-only fix.
