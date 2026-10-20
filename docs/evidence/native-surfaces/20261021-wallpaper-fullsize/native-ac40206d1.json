@@ -1,0 +1,22 @@
+{
+  "source_sha": "ac40206d164f892bba1f87d3d9b13e1160e61792",
+  "actual_native_exit": 0,
+  "fixture_sha256": "574f8d06a534ca678264ff71f83381d74c680f351cd624957147787d7d349945",
+  "perimeter_sha256": "38213b8335c9bfe524a44b5f2cbd2269294c1fd4bf0eaab4898e5b02360ab41d",
+  "native_log_sha256": "8c4a19cd68d20a9c792407099c89b8a8db2a1b436ec29d325134cba8e4e5d43a",
+  "scope": "Source-wired BodyHost canvas checks using synthetic panel: six configured hosts, four edges, 10 reveal/reversal samples, unchanged surface/input, target resize, unload. Real WallpaperLauncherContent/carousel preview and Owner appearance acceptance are UNRUN.",
+  "actual_harness_exit": 0,
+  "status": "PASS",
+  "owned_remaining_after_exit": [],
+  "native_log_retained_privately": true,
+  "assertions": 840,
+  "configured_hosts": 6,
+  "edges": [
+    "left",
+    "right",
+    "top",
+    "bottom"
+  ],
+  "cases": 24,
+  "reproduction": "From repository root: PYTHONPATH=\"$PWD/scripts\" ALIS_PANEL_CONTENT_SIZE_SOURCE=\"$PWD\" python3 docs/evidence/native-surfaces/20261021-wallpaper-fullsize/probe.py"
+}

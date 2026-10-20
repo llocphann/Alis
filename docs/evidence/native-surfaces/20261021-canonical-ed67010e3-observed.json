@@ -1,0 +1,20 @@
+{
+  "source_sha": "ed67010e3a40163a14559c6522dcd9db2e3554fc",
+  "argv": ["bash", "scripts/validate-maintainer-local.sh", "--current-repo"],
+  "status": "STOPPED",
+  "actual_exit": -15,
+  "stop_reason": "bounded_timeout",
+  "elapsed_seconds": 3000.4,
+  "owned_remaining_after_exit": [],
+  "console_sha256_reported_by_supervisor": "79e633064faa82b983a3c94b9fb45979d1492549904a27b60f46a09ff7486602",
+  "observed_counts": {
+    "PASS": 443,
+    "FAIL": 60,
+    "SKIP": 1,
+    "settled": 504,
+    "started": null,
+    "unsettled": null
+  },
+  "provenance": "Supervisor receipt and counts were read in the tool output before host restart. Private raw logs and temporary fixture directories were lost at reboot. The reported hash cannot now be independently checked. Started and unsettled counts were not captured.",
+  "limits": "This is an observed checkpoint, not a complete canonical PASS or retained raw-log archive. No broad pre-existing-failure attribution. Native, installed and Owner acceptance remain separate. Later source ac40206d1 was not covered by this canonical run."
+}

@@ -1,0 +1,22 @@
+{
+  "source_sha": "ed67010e3a40163a14559c6522dcd9db2e3554fc",
+  "actual_native_exit": 0,
+  "fixture_sha256": "574f8d06a534ca678264ff71f83381d74c680f351cd624957147787d7d349945",
+  "perimeter_sha256": "4f2b561b87678fa250837a7313420869a0c92929fea0e391674cb7a96be209eb",
+  "native_log_sha256": "ecf6c8fe59a0ee0dbcebecb1f5123f58a19b032f7db45e468f19066eaeb561a0",
+  "scope": "Production-configured BodyHost canvas sizing with synthetic panel, four edges; no real wallpaper library, preview or Owner acceptance",
+  "actual_harness_exit": 1,
+  "status": "FAIL",
+  "owned_remaining_after_exit": [],
+  "native_log_retained_privately": true,
+  "first_failure": {
+    "host": "wallpaperBody",
+    "edge": "left",
+    "progress": 0.01,
+    "canvas_width": 0,
+    "canvas_height": 464.8,
+    "full_width": 345.8,
+    "full_height": 464.8
+  },
+  "reproduction": "From repository root: PYTHONPATH=\"$PWD/scripts\" ALIS_PANEL_CONTENT_SIZE_SOURCE=\"$PWD\" python3 docs/evidence/native-surfaces/20261021-wallpaper-fullsize/probe.py"
+}
