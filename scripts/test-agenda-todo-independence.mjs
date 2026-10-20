@@ -15,8 +15,8 @@ assert.doesNotMatch(service,/AgendaTodoPolicy|newLink\(|_notifyAgendaLinks|_queu
 assert.doesNotMatch(todo,/_reconcileAgenda|_startExternalAgenda|_deferAgendaDeletion|ensureAgenda\(|retryAgendaLinks|agendaStatus\(|agendaError|_scheduleAgenda/);
 assert.doesNotMatch(service,/todoLink\s*:\s*AgendaTodoPolicy|_queueTodoUnlink|setTodoLink\(/);
 assert.doesNotMatch(todo,/onAgendaMutationFinished|agendaMutationFinished/);
-assert.doesNotMatch(internal,/AgendaTodoPolicy|function ensureAgenda\\(|function unlinkAgenda\\(/);
-assert.doesNotMatch(dashboardTodo,/modelData\\.agenda|text:"link"/);
+assert.doesNotMatch(internal,/AgendaTodoPolicy|function ensureAgenda\(|function unlinkAgenda\(/);
+assert.doesNotMatch(dashboardTodo,/modelData\.agenda|text:"link"/);
 // Historical task metadata is retained as inert data, never translated into a new link.
 const normalizeStart=internal.indexOf("    function _normalizeList(value) {");
 const normalizeEnd=internal.indexOf("    function addItem(item) {",normalizeStart);
