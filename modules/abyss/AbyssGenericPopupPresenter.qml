@@ -29,6 +29,7 @@ Item {
     property string requestedFallbackEdge: "top"
     property real requestedAlongCenter: 0
     property string hoverKind: ""
+    property rect connectionSourceRect: Qt.rect(0,0,0,0)
     property bool companionVisitActive: false
 
     property string activeKind: ""
@@ -158,6 +159,7 @@ Item {
         anchors.fill: parent
         identity: "popup"
         includeEdgeConnection: true
+        connectionSourceRect: root.connectionSourceRect
         controller: root.controller
         outputName: root.outputName
 

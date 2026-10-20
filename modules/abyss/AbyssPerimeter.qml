@@ -712,12 +712,27 @@ Scope {
                         inputBounds:{x:popup.inputBounds.x,y:popup.inputBounds.y,
                             w:popup.inputBounds.width,h:popup.inputBounds.height},
                         triggerHover:Boolean(popup.contentItem.item?.triggerHovered),
+                        anchorScenePoint:popup.contentItem.item?.triggerHovered && barHover.hovered
+                            ? ({x:barHover.point.scenePosition.x,y:barHover.point.scenePosition.y}) : null,
+                        contentScenePoint:popup.contentItem.item?.hoverProbePoint?.() ?? null,
                         focusHeld:Boolean(popup.contentItem.item?.editorFocusHeld)
                     },
                     modules: modules
                 }
             }
             function presentation(kind) { return Presentation.resolve(Config.options?.abyss?.positions,kind,outputName) }
+            function popupSourceRect(kind,edge,along): rect {
+                const moduleKind=kind==="utilities" ? "utilButtons"
+                    : ["wifi","bluetooth"].includes(kind) ? "tray" : ""
+                if (!moduleKind || !bar.visible) return Qt.rect(0,0,0,0)
+                for (const id of bar.moduleIds) {
+                    const module=bar.itemForId(id),g=module?.geometry,r=module?.inputRegion
+                    if (module?.kind===moduleKind && module.visible && r && g?.edge===edge
+                            && Math.abs(g.along+g.span/2-along)<.5)
+                        return Qt.rect(r.x,r.y,r.width,r.height)
+                }
+                return Qt.rect(0,0,0,0)
+            }
             function positionEdge(kind,fallback) { return Presentation.edge(presentation(kind),fallback) }
             function positionAlong(kind,edge,span,fallback) { return Presentation.along(presentation(kind),edge,span,width,height,fallback,nativeInsets) }
             function bodyInsets(edge,along,span,ownLauncherKind = "") {
@@ -1211,6 +1226,8 @@ Scope {
                     GlobalStates.abyssPopupEdge || root.barEdge
                 requestedAlongCenter: GlobalStates.abyssPopupAlong
                 hoverKind: window.transientPopupHoverKind
+                connectionSourceRect: window.popupSourceRect(
+                    activeKind,activeFallbackEdge,activeAlongCenter)
                 companionVisitActive: companionExtension.utilitiesVisitActive
                 bodyInsetsResolver: (edge,along,span) =>
                     window.bodyInsets(edge,along,span)

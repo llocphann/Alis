@@ -2,7 +2,7 @@
 """Opt-in private Niri native-pointer family matrix; no clicks or device changes."""
 import argparse,ast,hashlib,json,os,signal,subprocess,sys,tempfile,time
 from pathlib import Path
-parser=argparse.ArgumentParser();parser.add_argument('--scale',type=float,default=1.0);parser.add_argument('--kinds',default='clock');parser.add_argument('--edges',default='top,right,bottom,left');args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--scale',type=float,default=1.0);parser.add_argument('--kinds',default='clock');parser.add_argument('--edges',default='top,right,bottom,left');parser.add_argument('--capture',action='store_true');args=parser.parse_args()
 root=Path.cwd();sys.path.insert(0,str(root/'scripts'))
 from native_test_session import private_wayland
 from native_wayland_input import native_input
@@ -67,7 +67,10 @@ with private_wayland(folder,capture_focus=False) as env:
      case['source_open']=True
      case['source_point']=slot.get('anchorScenePoint') or slot.get('contentScenePoint')
      (base/(kind+'-'+edge+'-source.json')).write_text(json.dumps(o,indent=2))
-     subprocess.run(['grim',str(base/(kind+'-'+edge+'-source.png'))],env=env,capture_output=True,timeout=4)
+     if args.capture:
+      try:
+       cap=subprocess.run(['grim',str(base/(kind+'-'+edge+'-source.png'))],env=env,capture_output=True,timeout=4);case['capture_exit']=cap.returncode
+      except subprocess.TimeoutExpired:case['capture_status']='TIMED_OUT_NO_IMAGE'
      c=box(slot,kind);bx,by=c['x']+c['w']/2,c['y']+c['h']/2
      # Approach the body through the physical source-side seam. For Styled
      # Popup, bounds is the visible body; generic input includes its bridge.

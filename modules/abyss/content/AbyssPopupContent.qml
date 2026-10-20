@@ -65,6 +65,11 @@ FocusScope {
                 root.closeRequested()
         }
     }
+    // Read only on explicit diagnostic IPC; no extra handler or sampling loop.
+    function hoverProbePoint(): var {
+        return popupHover.hovered
+            ? ({x:popupHover.point.scenePosition.x,y:popupHover.point.scenePosition.y}) : null
+    }
     readonly property var feature: content.item
     readonly property var featureContent: feature?.contentItem ?? feature
     readonly property real desiredWidth: featureContent?.implicitWidth || 390
