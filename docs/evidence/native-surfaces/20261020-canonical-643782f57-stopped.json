@@ -1,0 +1,44 @@
+{
+  "sha": "643782f57b80055a55d500bc8b1dd916a311e068",
+  "argv": [
+    "bash",
+    "scripts/validate-maintainer-local.sh",
+    "--current-repo"
+  ],
+  "status": "STOPPED",
+  "actual_exit": -15,
+  "stop_reason": "primary_usage_used97_owner_quota_stop",
+  "elapsed_seconds": 342.8,
+  "owned_remaining_after_exit": [],
+  "log_sha256": "8ce30ea17fc361abf1b58dc285977903e3da2932ae4ab68f72d90967363bcc05",
+  "issues": [
+    108,
+    72,
+    74,
+    59
+  ],
+  "counts": {
+    "started": 65,
+    "PASS": 63,
+    "FAIL": 1,
+    "SKIP": 0,
+    "unsettled": 1
+  },
+  "unsettled_checks": [
+    {
+      "id": 65,
+      "name": "Python regression: scripts/test-abyss-body-reveal-readiness-runtime.py"
+    }
+  ],
+  "failed_checks": [
+    {
+      "id": 40,
+      "name": "Independent Agenda and Todo stores with stable Event ID edits",
+      "status": "FAIL",
+      "detail": "JavaScript test could not parse: overescaped literal parentheses in a source-contract regular expression; not classified as pre-existing without baseline evidence."
+    }
+  ],
+  "canonical_log_sha256": "bc9f9bc04b1576216b9c0e407d2fd03634000dfafde918829ff11928b1e451f2",
+  "scope": "Exact committed tree in isolated checkout; stopped at owner quota threshold. This is not a full PASS and does not grant installed desktop, physical multi-output, or Owner acceptance.",
+  "next": "After live usage confirms reset, repair the reported test parser failure, qualify the exact new SHA, and continue the four native-surface Issues. Product Automation queues/workers remain retired."
+}
