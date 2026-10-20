@@ -1561,7 +1561,7 @@ Scope {
                         desktopContextMenu.close()
                         desktopItemContextMenu.close()
                         event.accepted = true
-                    }
+                    } else event.accepted = false
                 }
             }
 

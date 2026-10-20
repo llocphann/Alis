@@ -67,7 +67,7 @@ with private_wayland(folder,capture_focus="--focus" in sys.argv) as env:
    for edge in ['top','right','bottom','left']:
     move('outside',w*.8,h*.8)
     ipc('pointerDiagnostic','configure',json.dumps({'kind':'clock','edge':edge,'reduce':False,'autoHide':('--corners' in sys.argv),'position':(.06 if edge in ['top','right'] else .94) if '--corners' in sys.argv else .35}));time.sleep(.4)
-    
+
     if '--corners' in sys.argv:move('reveal-top',w*.5,2,.35)
     o=snapshot('configured');m=next(m for m in o['modules'] if m['id']=='subject');r=m['input'];sx=r['x']+r['w']/2;sy=r['y']+r['h']/2
     o=move('source',sx,sy,1);slots=[s for s in o['popupSlots'] if s and s['requestedVisible']];case={'edge':edge,'source_open':bool(slots),'phases':[]};cases.append(case)
