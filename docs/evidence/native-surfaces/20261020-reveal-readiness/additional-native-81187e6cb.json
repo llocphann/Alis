@@ -1,0 +1,22 @@
+[
+  {
+    "sha": "81187e6cbfad67e06336f9eef7dd4b88cc0373ab",
+    "argv": [
+      "python3",
+      "scripts/test-abyss-dynamic-content-size-runtime.py"
+    ],
+    "actual_exit": 0,
+    "status": "PASS",
+    "elapsed_seconds": 7.78
+  },
+  {
+    "sha": "81187e6cbfad67e06336f9eef7dd4b88cc0373ab",
+    "argv": [
+      "python3",
+      "scripts/test-abyss-fullscreen-osd-runtime.py"
+    ],
+    "actual_exit": 0,
+    "status": "PASS",
+    "elapsed_seconds": 8.83
+  }
+]

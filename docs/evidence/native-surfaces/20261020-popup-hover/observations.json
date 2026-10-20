@@ -1,0 +1,620 @@
+[
+  {
+    "label": "unfocused",
+    "interpretation": "one Left transfer lost ownership; root cause unclassified",
+    "source_sha": "b9ad5a5563ef7b7fece87d028f3bce15e466258a",
+    "actual_native_exit": 0,
+    "cases": [
+      {
+        "edge": "top",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "shoulder",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": {
+            "x": 329.5,
+            "y": 54.5
+          },
+          "count": 24,
+          "stripCount": 50,
+          "edge": "top",
+          "radius": 34,
+          "softness": 24
+        }
+      },
+      {
+        "edge": "right",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": null,
+          "count": 0,
+          "stripCount": 50,
+          "edge": "right",
+          "radius": 34,
+          "softness": 24
+        }
+      },
+      {
+        "edge": "bottom",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "shoulder",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": {
+            "x": 329.5,
+            "y": 1047.5
+          },
+          "count": 24,
+          "stripCount": 50,
+          "edge": "bottom",
+          "radius": 34,
+          "softness": 24
+        }
+      },
+      {
+        "edge": "left",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": null,
+          "count": 0,
+          "stripCount": 50,
+          "edge": "left",
+          "radius": 34,
+          "softness": 24
+        }
+      }
+    ],
+    "raw_log_sha256": "e8a63dd24ce7afbeb3db9a3249269ff163a34b43f826a0e936e4d25f9a027319",
+    "scope": "private production ShellAbyssCriticalPanels and compositor wl_pointer; Owner and multi-output unverified"
+  },
+  {
+    "label": "left-isolated",
+    "interpretation": "isolated Left retained ownership",
+    "source_sha": "b9ad5a5563ef7b7fece87d028f3bce15e466258a",
+    "actual_native_exit": 0,
+    "cases": [
+      {
+        "edge": "left",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": null,
+          "count": 0,
+          "stripCount": 50,
+          "edge": "left",
+          "radius": 34,
+          "softness": 24
+        }
+      }
+    ],
+    "raw_log_sha256": "54a4e5225fb70c396c381d0aff896fac2f2fb404f2b574784ade3c92166003ce",
+    "scope": "private production ShellAbyssCriticalPanels and compositor wl_pointer; Owner and multi-output unverified"
+  },
+  {
+    "label": "focused",
+    "interpretation": "all four edges retained bridge/body/reverse ownership and closed on actual leave",
+    "source_sha": "b9ad5a5563ef7b7fece87d028f3bce15e466258a",
+    "actual_native_exit": 0,
+    "cases": [
+      {
+        "edge": "top",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "shoulder",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": {
+            "x": 329.5,
+            "y": 54.5
+          },
+          "count": 24,
+          "stripCount": 50,
+          "edge": "top",
+          "radius": 34,
+          "softness": 24
+        }
+      },
+      {
+        "edge": "right",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": null,
+          "count": 0,
+          "stripCount": 50,
+          "edge": "right",
+          "radius": 34,
+          "softness": 24
+        }
+      },
+      {
+        "edge": "bottom",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "shoulder",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": {
+            "x": 329.5,
+            "y": 1047.5
+          },
+          "count": 24,
+          "stripCount": 50,
+          "edge": "bottom",
+          "radius": 34,
+          "softness": 24
+        }
+      },
+      {
+        "edge": "left",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": null,
+          "count": 0,
+          "stripCount": 50,
+          "edge": "left",
+          "radius": 34,
+          "softness": 24
+        }
+      }
+    ],
+    "raw_log_sha256": "e4b7fa0687fe94f41051c1fbf91026635d12b200fc87ce8e9421593a7c243656",
+    "scope": "private production ShellAbyssCriticalPanels and compositor wl_pointer; Owner and multi-output unverified"
+  },
+  {
+    "label": "corners-unrevealed",
+    "interpretation": "fixture admission invalid: auto-hide source not revealed; not product verification",
+    "source_sha": "b9ad5a5563ef7b7fece87d028f3bce15e466258a",
+    "actual_native_exit": 0,
+    "cases": [
+      {
+        "edge": "top",
+        "source_open": false,
+        "phases": []
+      },
+      {
+        "edge": "right",
+        "source_open": false,
+        "phases": []
+      },
+      {
+        "edge": "bottom",
+        "source_open": false,
+        "phases": []
+      },
+      {
+        "edge": "left",
+        "source_open": false,
+        "phases": []
+      }
+    ],
+    "raw_log_sha256": "7907e0f881dc91f67b15ee6706e6ffa4fc45e18a78865447782830b9fb7b8991",
+    "scope": "private production ShellAbyssCriticalPanels and compositor wl_pointer; Owner and multi-output unverified"
+  },
+  {
+    "label": "corners-focused",
+    "interpretation": "handoffs retained; bottom leave sample remained inside body, so that sample is not an idle-dismiss failure",
+    "source_sha": "b9ad5a5563ef7b7fece87d028f3bce15e466258a",
+    "actual_native_exit": 0,
+    "cases": [
+      {
+        "edge": "top",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "shoulder",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": {
+            "x": 668.5,
+            "y": 57.5
+          },
+          "count": 39,
+          "stripCount": 51,
+          "edge": "top",
+          "radius": 34,
+          "softness": 24
+        }
+      },
+      {
+        "edge": "right",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": null,
+          "count": 0,
+          "stripCount": 51,
+          "edge": "right",
+          "radius": 34,
+          "softness": 24
+        }
+      },
+      {
+        "edge": "bottom",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "shoulder",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": {
+            "x": 1842,
+            "y": 1044.5
+          },
+          "count": 39,
+          "stripCount": 51,
+          "edge": "bottom",
+          "radius": 34,
+          "softness": 24
+        }
+      },
+      {
+        "edge": "left",
+        "source_open": true,
+        "phases": [
+          {
+            "stage": "bridge",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "body",
+            "requested": true,
+            "body_owned": true,
+            "source_owned": false
+          },
+          {
+            "stage": "reverse",
+            "requested": true,
+            "body_owned": false,
+            "source_owned": true
+          },
+          {
+            "stage": "leave",
+            "requested": false,
+            "body_owned": false,
+            "source_owned": false
+          }
+        ],
+        "shoulder": {
+          "point": null,
+          "count": 0,
+          "stripCount": 51,
+          "edge": "left",
+          "radius": 34,
+          "softness": 24
+        }
+      }
+    ],
+    "raw_log_sha256": "4200adeab1533825414aee5f078201051220dfacb14fa4fa86a518a5f804ac71",
+    "scope": "private production ShellAbyssCriticalPanels and compositor wl_pointer; Owner and multi-output unverified"
+  }
+]

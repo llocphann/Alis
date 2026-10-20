@@ -1,0 +1,179 @@
+{
+  "source_sha": "81187e6cbfad67e06336f9eef7dd4b88cc0373ab",
+  "actual_native_exit": 0,
+  "actual_driver_exit": 0,
+  "scope": "focused private Niri, real Clock popup, near-corner sources, auto-hide entry, bridge/body/reverse/valid outside leave; not all families/multi-output/Owner acceptance",
+  "cases": [
+    {
+      "edge": "top",
+      "source_open": true,
+      "phases": [
+        {
+          "stage": "bridge",
+          "requested": true,
+          "body_owned": true,
+          "source_owned": false
+        },
+        {
+          "stage": "body",
+          "requested": true,
+          "body_owned": true,
+          "source_owned": false
+        },
+        {
+          "stage": "shoulder",
+          "requested": true,
+          "body_owned": true,
+          "source_owned": false
+        },
+        {
+          "stage": "reverse",
+          "requested": true,
+          "body_owned": false,
+          "source_owned": true
+        },
+        {
+          "stage": "leave",
+          "requested": false,
+          "body_owned": false,
+          "source_owned": false
+        }
+      ],
+      "shoulder": {
+        "point": {
+          "x": 668.5,
+          "y": 57.5
+        },
+        "count": 39,
+        "stripCount": 51,
+        "edge": "top",
+        "radius": 34,
+        "softness": 24
+      }
+    },
+    {
+      "edge": "right",
+      "source_open": true,
+      "phases": [
+        {
+          "stage": "bridge",
+          "requested": true,
+          "body_owned": true,
+          "source_owned": false
+        },
+        {
+          "stage": "body",
+          "requested": true,
+          "body_owned": true,
+          "source_owned": false
+        },
+        {
+          "stage": "reverse",
+          "requested": true,
+          "body_owned": false,
+          "source_owned": true
+        },
+        {
+          "stage": "leave",
+          "requested": false,
+          "body_owned": false,
+          "source_owned": false
+        }
+      ],
+      "shoulder": {
+        "point": null,
+        "count": 0,
+        "stripCount": 51,
+        "edge": "right",
+        "radius": 34,
+        "softness": 24
+      }
+    },
+    {
+      "edge": "bottom",
+      "source_open": true,
+      "phases": [
+        {
+          "stage": "bridge",
+          "requested": true,
+          "body_owned": true,
+          "source_owned": false
+        },
+        {
+          "stage": "body",
+          "requested": true,
+          "body_owned": true,
+          "source_owned": false
+        },
+        {
+          "stage": "shoulder",
+          "requested": true,
+          "body_owned": true,
+          "source_owned": false
+        },
+        {
+          "stage": "reverse",
+          "requested": true,
+          "body_owned": false,
+          "source_owned": true
+        },
+        {
+          "stage": "leave",
+          "requested": false,
+          "body_owned": false,
+          "source_owned": false
+        }
+      ],
+      "shoulder": {
+        "point": {
+          "x": 1842,
+          "y": 1044.5
+        },
+        "count": 39,
+        "stripCount": 51,
+        "edge": "bottom",
+        "radius": 34,
+        "softness": 24
+      }
+    },
+    {
+      "edge": "left",
+      "source_open": true,
+      "phases": [
+        {
+          "stage": "bridge",
+          "requested": true,
+          "body_owned": true,
+          "source_owned": false
+        },
+        {
+          "stage": "body",
+          "requested": true,
+          "body_owned": true,
+          "source_owned": false
+        },
+        {
+          "stage": "reverse",
+          "requested": true,
+          "body_owned": false,
+          "source_owned": true
+        },
+        {
+          "stage": "leave",
+          "requested": false,
+          "body_owned": false,
+          "source_owned": false
+        }
+      ],
+      "shoulder": {
+        "point": null,
+        "count": 0,
+        "stripCount": 51,
+        "edge": "left",
+        "radius": 34,
+        "softness": 24
+      }
+    }
+  ],
+  "log_sha256": "1ec8c8ae080422b148258426a3d1d27c793f4d9cc77a4c41ac3f0c9f4b992dbe"
+}

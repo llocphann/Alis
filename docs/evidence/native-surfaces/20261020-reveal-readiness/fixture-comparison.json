@@ -1,0 +1,477 @@
+[
+  {
+    "error": "Error: ready reveal did not settle",
+    "checks": 114,
+    "completed": 0,
+    "caseIndex": 0,
+    "phase": "opening",
+    "results": [],
+    "scope": "production source unchanged from 541989b6b; corrected fixture later committed as 81187e6cb",
+    "label": "original-fixture",
+    "log_sha256": "748d8df3fabe57d9b634484fbb51bb377f75c3ef772038fdfae008fcd50deda8",
+    "cold_load_ms": 439,
+    "animation_time_before_rejection_ms": 260,
+    "actual_native_exit": 0,
+    "actual_harness_exit": 1,
+    "native_receipt": {
+      "source_sha": "b9ad5a5563ef7b7fece87d028f3bce15e466258a",
+      "native_exit": 0,
+      "body_host_sha256": "a302d06d71360752d23c7596b7ea84453ea6f7b189635f752ccadb116bd887e1",
+      "fixture_sha256": "5e942b4ea8ed7d560e8b937e8b52739d9d3d9335077bd6ba1e06b4d304493dac",
+      "scope": "Private no-grab functional reveal; no performance/owner acceptance"
+    }
+  },
+  {
+    "error": null,
+    "checks": 17638,
+    "completed": 16,
+    "caseIndex": 16,
+    "phase": "case-drain",
+    "results": [
+      {
+        "route": "Dashboard",
+        "edge": "top",
+        "reduced": false,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 14,
+            "partialSwaps": 14
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 16,
+            "partialSwaps": 16
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 15,
+            "partialSwaps": 15
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 11,
+            "partialSwaps": 10
+          }
+        ]
+      },
+      {
+        "route": "Dashboard",
+        "edge": "right",
+        "reduced": false,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 14,
+            "partialSwaps": 13
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 16,
+            "partialSwaps": 16
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 15,
+            "partialSwaps": 15
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 11,
+            "partialSwaps": 10
+          }
+        ]
+      },
+      {
+        "route": "Dashboard",
+        "edge": "bottom",
+        "reduced": false,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 15,
+            "partialSwaps": 14
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 16,
+            "partialSwaps": 16
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 15,
+            "partialSwaps": 15
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 11,
+            "partialSwaps": 10
+          }
+        ]
+      },
+      {
+        "route": "Dashboard",
+        "edge": "left",
+        "reduced": false,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 15,
+            "partialSwaps": 14
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 16,
+            "partialSwaps": 16
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 15,
+            "partialSwaps": 15
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 11,
+            "partialSwaps": 10
+          }
+        ]
+      },
+      {
+        "route": "Overview",
+        "edge": "top",
+        "reduced": false,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 14,
+            "partialSwaps": 13
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 16,
+            "partialSwaps": 17
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 15,
+            "partialSwaps": 15
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 11,
+            "partialSwaps": 11
+          }
+        ]
+      },
+      {
+        "route": "Overview",
+        "edge": "right",
+        "reduced": false,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 15,
+            "partialSwaps": 15
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 16,
+            "partialSwaps": 17
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 15,
+            "partialSwaps": 15
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 11,
+            "partialSwaps": 10
+          }
+        ]
+      },
+      {
+        "route": "Overview",
+        "edge": "bottom",
+        "reduced": false,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 15,
+            "partialSwaps": 15
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 16,
+            "partialSwaps": 17
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 15,
+            "partialSwaps": 15
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 11,
+            "partialSwaps": 11
+          }
+        ]
+      },
+      {
+        "route": "Overview",
+        "edge": "left",
+        "reduced": false,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 15,
+            "partialSwaps": 15
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 16,
+            "partialSwaps": 17
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 15,
+            "partialSwaps": 15
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 11,
+            "partialSwaps": 11
+          }
+        ]
+      },
+      {
+        "route": "Dashboard",
+        "edge": "top",
+        "reduced": true,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          }
+        ]
+      },
+      {
+        "route": "Dashboard",
+        "edge": "right",
+        "reduced": true,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          }
+        ]
+      },
+      {
+        "route": "Dashboard",
+        "edge": "bottom",
+        "reduced": true,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          }
+        ]
+      },
+      {
+        "route": "Dashboard",
+        "edge": "left",
+        "reduced": true,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          }
+        ]
+      },
+      {
+        "route": "Overview",
+        "edge": "top",
+        "reduced": true,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          }
+        ]
+      },
+      {
+        "route": "Overview",
+        "edge": "right",
+        "reduced": true,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          }
+        ]
+      },
+      {
+        "route": "Overview",
+        "edge": "bottom",
+        "reduced": true,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          }
+        ]
+      },
+      {
+        "route": "Overview",
+        "edge": "left",
+        "reduced": true,
+        "openings": [
+          {
+            "phase": "opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "reversed-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "warm-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          },
+          {
+            "phase": "expired-opening",
+            "partialSamples": 0,
+            "partialSwaps": 0
+          }
+        ]
+      }
+    ],
+    "scope": "production source unchanged from 541989b6b; corrected fixture later committed as 81187e6cb",
+    "label": "corrected-fixture-worktree",
+    "log_sha256": "c6b1dae6848ae3ba32449b2331b5bcda470e6abaab712e3bfa499197d457c626",
+    "actual_native_exit": 0,
+    "actual_harness_exit": 0,
+    "native_receipt": {
+      "source_sha": "b9ad5a5563ef7b7fece87d028f3bce15e466258a",
+      "native_exit": 0,
+      "body_host_sha256": "a302d06d71360752d23c7596b7ea84453ea6f7b189635f752ccadb116bd887e1",
+      "fixture_sha256": "1b4ba26448f8e7a2598d6c0a04280252aa9f86cfcac986f4b6c5b37342c87fc2",
+      "scope": "Private no-grab functional reveal; no performance/owner acceptance"
+    }
+  }
+]
