@@ -60,9 +60,9 @@ for token in \
     'Appearance.sizes.verticalBarWidth' \
     'Appearance.sizes.barHeight' \
     'const tangentY = root.centerOnOutput' \
-    'return Qt.rect(barX, tangentY, thickness, localHeight)' \
+    'return Qt.rect(barX, tangentY, thickness, sceneHeight)' \
     'const tangentX = root.centerOnOutput' \
-    'return Qt.rect(tangentX, barY, localWidth, thickness)' \
+    'return Qt.rect(tangentX, barY, sceneWidth, thickness)' \
     'readonly property real _popupScreenMargin: root._screenEdgeThickness' \
     'screenEdge?.physicalShadow?.enabled ?? true' \
     'Qt.alpha(Appearance.m3colors.m3shadow, root._edgeShadowOpacity)'; do

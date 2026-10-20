@@ -567,13 +567,12 @@ LazyLoader {
                 || outputWidth <= 0 || outputHeight <= 0)
             return Qt.rect(0, 0, 0, 0)
 
-        // mapFromItem() is intentionally non-reactive in Quickshell. Touch both
-        // the item geometry and QsWindow.windowTransform so monitor transforms,
-        // bar moves, scale changes and hotplug force this binding to recompute.
-        target.x
-        target.y
-        target.width
-        target.height
+        // Mapping is non-reactive. Ancestor rotations/scales also change a
+        // source's scene rectangle without changing its own local dimensions.
+        for (let item = target; item; item = item.parent) {
+            item.x; item.y; item.width; item.height
+            item.rotation; item.scale; item.transformOrigin
+        }
         hostWindow.windowTransform
 
         const localX = Number(root.anchorRect?.x ?? 0)
@@ -582,7 +581,19 @@ LazyLoader {
             Number(root.anchorRect?.width ?? target.width))
         const localHeight = Math.max(1,
             Number(root.anchorRect?.height ?? target.height))
-        const mapped = host.mapFromItem(target, localX, localY)
+        // A rotated module's local width becomes its scene height. Mapping
+        // just the first corner shifts long vertical sources away from their
+        // popup, leaving the pointer outside the actual painted connection.
+        const corners = [
+            host.mapFromItem(target, localX, localY),
+            host.mapFromItem(target, localX + localWidth, localY),
+            host.mapFromItem(target, localX, localY + localHeight),
+            host.mapFromItem(target, localX + localWidth, localY + localHeight)
+        ]
+        const left = Math.min(...corners.map(point => point.x))
+        const top = Math.min(...corners.map(point => point.y))
+        const sceneWidth = Math.max(...corners.map(point => point.x)) - left
+        const sceneHeight = Math.max(...corners.map(point => point.y)) - top
         const thickness = Math.max(1, Number(root._barSurfaceThickness ?? 1))
 
         // Preserve the source/sub-rect tangent center/extent, but normalize the
@@ -594,23 +605,23 @@ LazyLoader {
             const barX = root._attachmentTrailing
                 ? Math.max(0, outputWidth - thickness) : 0
             const tangentY = root.centerOnOutput
-                ? Math.max(0, (outputHeight - localHeight) / 2)
+                ? Math.max(0, (outputHeight - sceneHeight) / 2)
                 : root.tangentEdgeOverride === "start" ? 0
                 : root.tangentEdgeOverride === "end"
-                    ? Math.max(0, outputHeight - localHeight)
-                : mapped.y
-            return Qt.rect(barX, tangentY, thickness, localHeight)
+                    ? Math.max(0, outputHeight - sceneHeight)
+                : top
+            return Qt.rect(barX, tangentY, thickness, sceneHeight)
         }
 
         const barY = root._attachmentTrailing
             ? Math.max(0, outputHeight - thickness) : 0
         const tangentX = root.centerOnOutput
-            ? Math.max(0, (outputWidth - localWidth) / 2)
+            ? Math.max(0, (outputWidth - sceneWidth) / 2)
             : root.tangentEdgeOverride === "start" ? 0
             : root.tangentEdgeOverride === "end"
-                ? Math.max(0, outputWidth - localWidth)
-            : mapped.x
-        return Qt.rect(tangentX, barY, localWidth, thickness)
+                ? Math.max(0, outputWidth - sceneWidth)
+            : left
+        return Qt.rect(tangentX, barY, sceneWidth, thickness)
     }
 
     // Fullscreen transparent backdrop for Niri to detect clicks outside
