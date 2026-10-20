@@ -1,0 +1,76 @@
+{
+  "source_sha": "e18424a42e2f1c0adaed35bc3755714391165068",
+  "runtime_changes_from_head": [],
+  "fixture_sha256": "4f9ae1beeea20f9054158c02e925bc02cc82f3a4a78285a65d3a0e9e9d279566",
+  "scope": "Same committed-byte manual fixture; exact runtime tree, native Niri wl_pointer Clock Top source/seam/body/reverse/outside. Private-window frame pulses restore prior focus before input. No installed/physical/multi-output/Owner acceptance.",
+  "actual_native_exit": 0,
+  "cases": [
+    {
+      "kind": "clock",
+      "edge": "top",
+      "scale": 1.0,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            651.0,
+            44.0
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            651.0,
+            191.0
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            651.0,
+            24.0
+          ],
+          "actual_point": {
+            "x": 651,
+            "y": 24
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            930.0,
+            1038
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 651,
+        "y": 24
+      },
+      "status": "FAIL"
+    }
+  ],
+  "errors": [],
+  "actual_harness_exit": 1,
+  "raw_receipt_sha256": "c2b4657e3ad213111c52c027ca5e86ef228de72471e3e2278b9d2e2566d561ee"
+}

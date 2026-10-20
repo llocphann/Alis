@@ -1,0 +1,1353 @@
+[
+  {
+    "label": "initial-family",
+    "interpretation": "Prototype kind/readiness targeting and IPC timeout; not acceptance",
+    "source_sha": "e18424a42e2f1c0adaed35bc3755714391165068",
+    "runtime_changes_from_head": "NOT_RECORDED",
+    "actual_native_exit": -15,
+    "actual_harness_exit": 1,
+    "cases": [
+      {
+        "kind": "distroIcon",
+        "edge": "top",
+        "scale": 1.0,
+        "phases": [],
+        "status": "FAIL",
+        "reason": "source did not open expected popup"
+      },
+      {
+        "kind": "distroIcon",
+        "edge": "right",
+        "scale": 1.0,
+        "phases": [],
+        "status": "FAIL",
+        "reason": "source did not open expected popup"
+      },
+      {
+        "kind": "distroIcon",
+        "edge": "bottom",
+        "scale": 1.0,
+        "phases": [],
+        "status": "FAIL",
+        "reason": "source did not open expected popup"
+      },
+      {
+        "kind": "distroIcon",
+        "edge": "left",
+        "scale": 1.0,
+        "phases": [],
+        "status": "FAIL",
+        "reason": "source did not open expected popup"
+      },
+      {
+        "kind": "battery",
+        "edge": "top",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              651.0,
+              44.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              651.0,
+              104.5
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              651.0,
+              24.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              930.0,
+              1038
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "status": "FAIL"
+      },
+      {
+        "kind": "battery",
+        "edge": "right",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1816.0,
+              385.5
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              1718.5,
+              386.7
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1836.0,
+              385.5
+            ],
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              64,
+              551.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "status": "FAIL"
+      },
+      {
+        "kind": "battery",
+        "edge": "bottom",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              651.0,
+              1058.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              651.0,
+              997.5
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              651.0,
+              1078.0
+            ],
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              930.0,
+              64
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "status": "FAIL"
+      },
+      {
+        "kind": "battery",
+        "edge": "left",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              44.0,
+              385.5
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              141.5,
+              416.7
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              24.0,
+              385.5
+            ],
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              1796,
+              551.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "status": "FAIL"
+      },
+      {
+        "kind": "resources",
+        "edge": "top",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              651.0,
+              44.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              651.0,
+              118.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              651.0,
+              24.0
+            ],
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              930.0,
+              1038
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "status": "FAIL"
+      },
+      {
+        "kind": "resources",
+        "edge": "right",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1816.0,
+              385.5
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              1634.5,
+              294.7
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1836.0,
+              385.5
+            ],
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              64,
+              551.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "status": "FAIL"
+      },
+      {
+        "kind": "resources",
+        "edge": "bottom",
+        "scale": 1.0,
+        "phases": [],
+        "status": "FAIL",
+        "reason": "source did not open expected popup"
+      },
+      {
+        "kind": "resources",
+        "edge": "left",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              20.0,
+              385.5
+            ],
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              48.0,
+              508.7
+            ],
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              24.0,
+              385.5
+            ],
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              1796,
+              551.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "status": "PASS"
+      },
+      {
+        "kind": "weather",
+        "edge": "top",
+        "scale": 1.0,
+        "phases": [],
+        "status": "FAIL",
+        "reason": "source did not open expected popup"
+      },
+      {
+        "kind": "weather",
+        "edge": "right",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1816.0,
+              385.5
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              1809.7430105473845,
+              639.0487855912481
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1836.0,
+              385.5
+            ],
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              64,
+              551.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "status": "FAIL"
+      },
+      {
+        "kind": "weather",
+        "edge": "bottom",
+        "scale": 1.0,
+        "phases": []
+      }
+    ],
+    "errors": [
+      "TimeoutExpired: Command '['qs', '-p', '/tmp/alis-popup-family-w_ytqn8b/fixture', 'ipc', 'call', 'abyssHoverProbe', 'snapshot']' timed out after 5 seconds"
+    ],
+    "raw_receipt_sha256": "9f1eb62ef77afca840b11308fa787ddadb214dfd901d9777bc1101a1fa01ad4d"
+  },
+  {
+    "label": "normalized-anchor",
+    "interpretation": "Worktree candidate used visual bar thickness instead of actual source pixels; rejected",
+    "source_sha": "e18424a42e2f1c0adaed35bc3755714391165068",
+    "runtime_changes_from_head": "NOT_RECORDED",
+    "actual_native_exit": 0,
+    "actual_harness_exit": 1,
+    "cases": [
+      {
+        "kind": "clock",
+        "edge": "top",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              651.0,
+              44.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              651.0,
+              191.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              651.0,
+              24.0
+            ],
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              930.0,
+              1038
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "status": "FAIL"
+      }
+    ],
+    "errors": [],
+    "raw_receipt_sha256": "1df14f5211cccd32b08f3ad25ee857be6411ec11d3d050c474c175e2bca0b2c7"
+  },
+  {
+    "label": "uncontrolled-pointer",
+    "interpretation": "Observed coordinates differed from injected targets; excluded from acceptance",
+    "source_sha": "e18424a42e2f1c0adaed35bc3755714391165068",
+    "runtime_changes_from_head": "NOT_RECORDED",
+    "actual_native_exit": 0,
+    "actual_harness_exit": 1,
+    "cases": [
+      {
+        "kind": "clock",
+        "edge": "top",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              651.0,
+              44.0
+            ],
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              651.0,
+              191.0
+            ],
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              651.0,
+              24.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              930.0,
+              1038
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "status": "FAIL"
+      },
+      {
+        "kind": "clock",
+        "edge": "right",
+        "scale": 1.0,
+        "phases": [],
+        "status": "FAIL",
+        "reason": "source did not open expected popup"
+      },
+      {
+        "kind": "clock",
+        "edge": "bottom",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              651.0,
+              1058.0
+            ],
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              651.0,
+              911.0
+            ],
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              651.0,
+              1078.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              930.0,
+              64
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "status": "FAIL"
+      },
+      {
+        "kind": "clock",
+        "edge": "left",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              44.0,
+              385.5
+            ],
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              366.5,
+              467.7
+            ],
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              24.0,
+              385.5
+            ],
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              1796,
+              551.0
+            ],
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "status": "PASS"
+      }
+    ],
+    "errors": [],
+    "raw_receipt_sha256": "395342affa30e784ee50dcaf96c4e97c42218fc65a43b9619e6a7d8617ece022"
+  },
+  {
+    "label": "worktree-cohort",
+    "interpretation": "Clock four edges and Utilities Top/Right had matching points; total harness aborted on IPC timeout, not full PASS",
+    "source_sha": "4326b9c0450f548037dd6494f25b931095b4d13e",
+    "runtime_changes_from_head": [
+      "modules/abyss/AbyssGenericPopupPresenter.qml",
+      "modules/abyss/AbyssPerimeter.qml",
+      "modules/abyss/content/AbyssPopupContent.qml"
+    ],
+    "actual_native_exit": -15,
+    "actual_harness_exit": 1,
+    "cases": [
+      {
+        "kind": "clock",
+        "edge": "top",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              651.0,
+              44.0
+            ],
+            "actual_point": {
+              "x": 651,
+              "y": 44
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              651.0,
+              191.0
+            ],
+            "actual_point": {
+              "x": 651,
+              "y": 191
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              651.0,
+              24.0
+            ],
+            "actual_point": {
+              "x": 651,
+              "y": 24
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              930.0,
+              1038
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 651,
+          "y": 24
+        },
+        "status": "PASS"
+      },
+      {
+        "kind": "clock",
+        "edge": "right",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1816.0,
+              385.5
+            ],
+            "actual_point": {
+              "x": 1816,
+              "y": 385.5
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              1493.5,
+              335.7
+            ],
+            "actual_point": {
+              "x": 1493.5,
+              "y": 335.703125
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1836.0,
+              385.5
+            ],
+            "actual_point": {
+              "x": 1836,
+              "y": 385.5
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              64,
+              551.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 1836,
+          "y": 385.5
+        },
+        "status": "PASS"
+      },
+      {
+        "kind": "clock",
+        "edge": "bottom",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              651.0,
+              1058.0
+            ],
+            "actual_point": {
+              "x": 651,
+              "y": 1058
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              651.0,
+              911.0
+            ],
+            "actual_point": {
+              "x": 651,
+              "y": 911
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              651.0,
+              1078.0
+            ],
+            "actual_point": {
+              "x": 651,
+              "y": 1078
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              930.0,
+              64
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 651,
+          "y": 1078
+        },
+        "status": "PASS"
+      },
+      {
+        "kind": "clock",
+        "edge": "left",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              44.0,
+              385.5
+            ],
+            "actual_point": {
+              "x": 44,
+              "y": 385.5
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              366.5,
+              467.7
+            ],
+            "actual_point": {
+              "x": 366.5,
+              "y": 467.703125
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              24.0,
+              385.5
+            ],
+            "actual_point": {
+              "x": 24,
+              "y": 385.5
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              1796,
+              551.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 24,
+          "y": 385.5
+        },
+        "status": "PASS"
+      },
+      {
+        "kind": "utilButtons",
+        "edge": "top",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              651.0,
+              44.0
+            ],
+            "actual_point": {
+              "x": 651,
+              "y": 44
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              651.0,
+              262.0
+            ],
+            "actual_point": {
+              "x": 651,
+              "y": 262
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              651.0,
+              24.0
+            ],
+            "actual_point": {
+              "x": 651,
+              "y": 24
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": true
+          },
+          {
+            "stage": "leave",
+            "point": [
+              930.0,
+              1038
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 651,
+          "y": 24
+        },
+        "status": "PASS"
+      },
+      {
+        "kind": "utilButtons",
+        "edge": "right",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1816.0,
+              385.5
+            ],
+            "actual_point": {
+              "x": 1816,
+              "y": 385.5
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              1488.0,
+              385.70000000000005
+            ],
+            "actual_point": {
+              "x": 1488,
+              "y": 385.703125
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1836.0,
+              385.5
+            ],
+            "actual_point": {
+              "x": 1836,
+              "y": 385.5
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": true
+          },
+          {
+            "stage": "leave",
+            "point": [
+              64,
+              551.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 1836,
+          "y": 385.5
+        },
+        "status": "PASS"
+      },
+      {
+        "kind": "utilButtons",
+        "edge": "bottom",
+        "scale": 1.0,
+        "phases": []
+      }
+    ],
+    "errors": [
+      "TimeoutExpired: Command '['qs', '-p', '/tmp/alis-popup-family-x80wj6to/fixture', 'ipc', 'call', 'abyssHoverProbe', 'snapshot']' timed out after 5 seconds"
+    ],
+    "raw_receipt_sha256": "79ec9c449b1a57fde89cc4327d6422c099cc95fd6606d9084dae51595b49a9b5"
+  },
+  {
+    "label": "generic-inconclusive",
+    "interpretation": "Unready or unobserved seam geometry; not product failure or PASS",
+    "source_sha": "c3e65b47cd05c993c470cec6c350fc4eb6f8ab6d",
+    "runtime_changes_from_head": [],
+    "actual_native_exit": 0,
+    "actual_harness_exit": 1,
+    "cases": [
+      {
+        "kind": "utilButtons",
+        "edge": "bottom",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              651.0,
+              531.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              0.0,
+              0.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              651.0,
+              1078.0
+            ],
+            "actual_point": {
+              "x": 651,
+              "y": 1078
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": true
+          },
+          {
+            "stage": "leave",
+            "point": [
+              930.0,
+              64
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 651,
+          "y": 1078
+        },
+        "status": "INCONCLUSIVE_INPUT"
+      },
+      {
+        "kind": "utilButtons",
+        "edge": "left",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              44.0,
+              385.5
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              372.0,
+              385.70000000000005
+            ],
+            "actual_point": {
+              "x": 372,
+              "y": 385.703125
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              24.0,
+              385.5
+            ],
+            "actual_point": {
+              "x": 24,
+              "y": 385.5
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": true
+          },
+          {
+            "stage": "leave",
+            "point": [
+              1796,
+              551.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 24,
+          "y": 385.5
+        },
+        "status": "INCONCLUSIVE_INPUT"
+      }
+    ],
+    "errors": [],
+    "raw_receipt_sha256": "3c1902b633bd65ab7c6866e393fb0ea197fcb06bebbc2d9d4c364959facadccf"
+  },
+  {
+    "label": "no-frame-pulse",
+    "interpretation": "Exact e92 native comparison without private-window frame pulses failed; contextual cause not classified",
+    "source_sha": "e92fd6f0ea6702d9a4a5dd6bcd710e3dddf6ed26",
+    "runtime_changes_from_head": [],
+    "actual_native_exit": 0,
+    "actual_harness_exit": 1,
+    "cases": [
+      {
+        "kind": "clock",
+        "edge": "top",
+        "scale": 1.0,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              651.0,
+              44.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              651.0,
+              191.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              651.0,
+              24.0
+            ],
+            "actual_point": {
+              "x": 651,
+              "y": 24
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              930.0,
+              1038
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 651,
+          "y": 24
+        },
+        "status": "FAIL"
+      }
+    ],
+    "errors": [],
+    "raw_receipt_sha256": "f9eb9a2d48bededa5f823a4e31618c14166a3d4e0a521f695d199d3c3262195b"
+  }
+]

@@ -1,0 +1,82 @@
+{
+  "source_sha": "e92fd6f0ea6702d9a4a5dd6bcd710e3dddf6ed26",
+  "runtime_changes_from_head": [],
+  "fixture_sha256": "4f9ae1beeea20f9054158c02e925bc02cc82f3a4a78285a65d3a0e9e9d279566",
+  "scope": "Same committed-byte manual fixture; exact runtime tree, native Niri wl_pointer Clock Top source/seam/body/reverse/outside. Private-window frame pulses restore prior focus before input. No installed/physical/multi-output/Owner acceptance.",
+  "actual_native_exit": 0,
+  "cases": [
+    {
+      "kind": "clock",
+      "edge": "top",
+      "scale": 1.0,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            651.0,
+            44.0
+          ],
+          "actual_point": {
+            "x": 651,
+            "y": 44
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            651.0,
+            191.0
+          ],
+          "actual_point": {
+            "x": 651,
+            "y": 191
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            651.0,
+            24.0
+          ],
+          "actual_point": {
+            "x": 651,
+            "y": 24
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            930.0,
+            1038
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 651,
+        "y": 24
+      },
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "actual_harness_exit": 0,
+  "raw_receipt_sha256": "977b16d139e48afc8e9d86bf7e2e9fe742fda644bebca8ba6b1af8608e691cf4"
+}

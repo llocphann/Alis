@@ -49,14 +49,22 @@ with private_wayland(folder,capture_focus=False) as env:
    child_socket=env['NIRI_SOCKET'];child_pid=int(child_socket.rsplit('.',2)[-2])
    if host_focus and parent and parent.get('pid')==child_pid:
     subprocess.run(['niri','msg','action','focus-window','--id',str(host_focus['id'])],check=True,capture_output=True,timeout=4)
+   def pulse():
+    before=json.loads(subprocess.check_output(['niri','msg','--json','focused-window'],text=True,timeout=4))
+    wins=json.loads(subprocess.check_output(['niri','msg','--json','windows'],text=True,timeout=4));owned=next(v for v in wins if v.get('pid')==child_pid)
+    subprocess.run(['niri','msg','action','focus-window','--id',str(owned['id'])],check=True,capture_output=True,timeout=4);time.sleep(.25)
+    now=json.loads(subprocess.check_output(['niri','msg','--json','focused-window'],text=True,timeout=4))
+    if before and now and now['id']==owned['id']:subprocess.run(['niri','msg','action','focus-window','--id',str(before['id'])],check=True,capture_output=True,timeout=4)
    def move(stage,x,y,delay):
-    pointer.move(max(0,min(w-1,x)),max(0,min(h-1,y)),w,h);time.sleep(delay);return snap(stage)
+    pointer.move(max(0,min(w-1,x)),max(0,min(h-1,y)),w,h);time.sleep(delay)
+    if stage.startswith('source:'):pulse();pointer.move(x,y,w,h);time.sleep(.1)
+    return snap(stage)
    for kind in args.kinds.split(','):
     for edge in args.edges.split(','):
      case={'kind':kind,'edge':edge,'scale':args.scale,'phases':[]};cases.append(case)
      outside={'top':(w*.5,h-64),'bottom':(w*.5,64),'left':(w-64,h*.5),'right':(64,h*.5)}[edge]
      move('before:'+kind+':'+edge,*outside,1.1)
-     ipc('pointerDiagnostic','configure',json.dumps({'kind':kind,'edge':edge,'reduce':False,'autoHide':False,'position':.35}));time.sleep(.6)
+     ipc('pointerDiagnostic','configure',json.dumps({'kind':kind,'edge':edge,'reduce':False,'autoHide':False,'position':.35}));time.sleep(.6);pulse()
      o=snap('configured');m=next((m for m in o['modules'] if m['id']=='subject' and m['kind']==kind),None)
      if m is None:m=next((m for m in o['modules'] if m['kind']==kind),None)
      if not m or not m.get('visible') or not m.get('input') or min(m['input']['w'],m['input']['h'])<2:
