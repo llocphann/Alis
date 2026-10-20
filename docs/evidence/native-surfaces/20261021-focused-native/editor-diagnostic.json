@@ -1,0 +1,30 @@
+{
+  "source_sha": "85fbd4b35d2a940bd04f6b0dbb9ebef7fafd1bb9",
+  "argv": [
+    "python3",
+    "editor-row.py"
+  ],
+  "actual_exit": 1,
+  "status": "FAIL",
+  "stop_reason": null,
+  "elapsed_seconds": 5.1,
+  "owned_at_normal_exit": [
+    38298,
+    38300
+  ],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "94e5b2d2a956a9f730d6b7a553ac0472deda0347268f260969ce327ef45a8aed",
+  "diagnosis": {
+    "status": "FAIL",
+    "tabs": {
+      "y": 34,
+      "height": 28
+    },
+    "scope": {
+      "y": 33,
+      "height": 30
+    },
+    "shared_center_y": 48,
+    "next": "Investigate center-alignment oracle; do not relax without retaining native coverage."
+  }
+}

@@ -1,0 +1,2619 @@
+{
+  "source_sha": "85fbd4b35d2a940bd04f6b0dbb9ebef7fafd1bb9",
+  "actual_qt_exit": 0,
+  "actual_producer_exit": 0,
+  "errors": [],
+  "fixture_sha256": "28d4bc8112b7562470fbe753eae29f199e5248ced2337d836afefae70c458ccb",
+  "record_script_sha256": "21348529839a30c3e7f70885bf5de6996946aee3ea71d9e0e03f1c2c7e673817",
+  "scope": "Private Niri and private D-Bus: actual record.sh control flow and startup toast, video-only private output. PATH guards deny pgrep/pkill/pactl in producer; real wf-recorder uses --no-dmabuf. No installed/physical/Owner acceptance or original-encoder-argv equivalence.",
+  "results": [
+    {
+      "phase": "toast-open-close-0",
+      "status": "CAPTURED",
+      "before": {
+        "timestampMs": 1792537034162,
+        "outputs": [
+          {
+            "outputId": "da57c782d070",
+            "presented": true,
+            "fieldReady": true,
+            "toast": {
+              "inhibited": false,
+              "recording": false,
+              "centerOpen": false,
+              "toastOpen": false,
+              "toastResident": false,
+              "toastLayoutReady": false
+            },
+            "measurements": {
+              "toastCount": 0,
+              "toastRevealProgress": 0,
+              "toastSpan": 450,
+              "toastDepth": 170,
+              "toastPaintDepth": 0,
+              "toastTargetDepth": 170,
+              "toastAlong": 1370,
+              "toastDesiredHeight": 0,
+              "toastMeasuredHeight": 0
+            },
+            "edge": "top",
+            "center": []
+          }
+        ]
+      },
+      "after": {
+        "timestampMs": 1792537036387,
+        "outputs": [
+          {
+            "outputId": "da57c782d070",
+            "presented": true,
+            "fieldReady": true,
+            "toast": {
+              "inhibited": false,
+              "recording": false,
+              "centerOpen": false,
+              "toastOpen": false,
+              "toastResident": false,
+              "toastLayoutReady": false
+            },
+            "measurements": {
+              "toastCount": 0,
+              "toastRevealProgress": 0,
+              "toastSpan": 450,
+              "toastDepth": 170,
+              "toastPaintDepth": 0,
+              "toastTargetDepth": 170,
+              "toastAlong": 1370,
+              "toastDesiredHeight": 0,
+              "toastMeasuredHeight": 0
+            },
+            "edge": "top",
+            "center": []
+          }
+        ]
+      },
+      "frames": [
+        {
+          "outputId": "da57c782d070",
+          "notificationFrames": [
+            {
+              "timestampMs": 1792537034441,
+              "intervalMs": 16,
+              "progress": 0,
+              "progressDelta": 0,
+              "paintDepth": 0,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 3,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 2,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034458,
+              "intervalMs": 17,
+              "progress": 0.196,
+              "progressDelta": 0.196,
+              "paintDepth": 19.61,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034475,
+              "intervalMs": 17,
+              "progress": 0.374,
+              "progressDelta": 0.178,
+              "paintDepth": 37.44,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034492,
+              "intervalMs": 17,
+              "progress": 0.524,
+              "progressDelta": 0.15,
+              "paintDepth": 52.417,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034508,
+              "intervalMs": 16,
+              "progress": 0.641,
+              "progressDelta": 0.117,
+              "paintDepth": 64.129,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034525,
+              "intervalMs": 17,
+              "progress": 0.743,
+              "progressDelta": 0.101,
+              "paintDepth": 74.278,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034542,
+              "intervalMs": 17,
+              "progress": 0.823,
+              "progressDelta": 0.08,
+              "paintDepth": 82.306,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034558,
+              "intervalMs": 16,
+              "progress": 0.881,
+              "progressDelta": 0.058,
+              "paintDepth": 88.146,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034575,
+              "intervalMs": 17,
+              "progress": 0.928,
+              "progressDelta": 0.046,
+              "paintDepth": 92.766,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034593,
+              "intervalMs": 18,
+              "progress": 0.98,
+              "progressDelta": 0.052,
+              "paintDepth": 97.989,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 2,
+              "fieldRecordChanges": 6,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034610,
+              "intervalMs": 17,
+              "progress": 0.992,
+              "progressDelta": 0.012,
+              "paintDepth": 99.231,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034625,
+              "intervalMs": 15,
+              "progress": 0.998,
+              "progressDelta": 0.006,
+              "paintDepth": 99.815,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034642,
+              "intervalMs": 17,
+              "progress": 1.0,
+              "progressDelta": 0.002,
+              "paintDepth": 99.985,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034659,
+              "intervalMs": 17,
+              "progress": 1,
+              "progressDelta": 0.0,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537034676,
+              "intervalMs": 17,
+              "progress": 1,
+              "progressDelta": 0,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 0,
+              "fieldRecordChanges": 0,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035236,
+              "intervalMs": 560,
+              "progress": 1,
+              "progressDelta": 0,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 3,
+              "fieldRecordChanges": 6,
+              "allocatorChanges": 1,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035256,
+              "intervalMs": 20,
+              "progress": 0.804,
+              "progressDelta": -0.196,
+              "paintDepth": 80.39,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035277,
+              "intervalMs": 21,
+              "progress": 0.626,
+              "progressDelta": -0.178,
+              "paintDepth": 62.56,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035294,
+              "intervalMs": 17,
+              "progress": 0.484,
+              "progressDelta": -0.142,
+              "paintDepth": 48.39,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035311,
+              "intervalMs": 17,
+              "progress": 0.359,
+              "progressDelta": -0.125,
+              "paintDepth": 35.871,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035327,
+              "intervalMs": 16,
+              "progress": 0.257,
+              "progressDelta": -0.101,
+              "paintDepth": 25.722,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035344,
+              "intervalMs": 17,
+              "progress": 0.181,
+              "progressDelta": -0.076,
+              "paintDepth": 18.112,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035361,
+              "intervalMs": 17,
+              "progress": 0.119,
+              "progressDelta": -0.063,
+              "paintDepth": 11.854,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035378,
+              "intervalMs": 17,
+              "progress": 0.072,
+              "progressDelta": -0.046,
+              "paintDepth": 7.234,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035395,
+              "intervalMs": 17,
+              "progress": 0.042,
+              "progressDelta": -0.031,
+              "paintDepth": 4.16,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035411,
+              "intervalMs": 16,
+              "progress": 0.02,
+              "progressDelta": -0.021,
+              "paintDepth": 2.011,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035428,
+              "intervalMs": 17,
+              "progress": 0.008,
+              "progressDelta": -0.012,
+              "paintDepth": 0.769,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537035447,
+              "intervalMs": 19,
+              "progress": 0.0,
+              "progressDelta": -0.008,
+              "paintDepth": 0.025,
+              "targetDepth": 170,
+              "visualInward": 0,
+              "pyramidActive": false,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 4,
+              "fieldRecordChanges": 7,
+              "allocatorChanges": 2,
+              "fieldRecordCount": 3
+            }
+          ],
+          "metrics": {
+            "count": 33,
+            "min": 15,
+            "p50": 17,
+            "p95": 21,
+            "p99": 560,
+            "max": 560,
+            "mean": 33.515,
+            "over16ms": 26,
+            "over33ms": 1,
+            "idleGapsOver100ms": 1,
+            "panelNonzeroFrames": 0,
+            "panelProgressChangedFrames": 0,
+            "popupOpenFrames": 0,
+            "barProgressChangedFrames": 0,
+            "heartbeatSampleCount": 42,
+            "heartbeatOver100Ms": 0,
+            "heartbeatMaxIntervalMs": 61,
+            "notificationFramesDropped": 0,
+            "notificationFrameLimit": 160,
+            "notificationRecordUpdates": 37,
+            "fieldRecordUpdates": 94,
+            "allocatorUpdates": 7,
+            "exhausted": false,
+            "heartbeatHistoryExhausted": false
+          },
+          "slow": [
+            {
+              "timestampMs": 1792537035236,
+              "intervalMs": 560,
+              "liquidPopupsOpen": false
+            }
+          ],
+          "heartbeat": [
+            {
+              "timestampMs": 1792537034242,
+              "intervalMs": null
+            },
+            {
+              "timestampMs": 1792537034291,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537034351,
+              "intervalMs": 60
+            },
+            {
+              "timestampMs": 1792537034400,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537034449,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537034497,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537034545,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537034593,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537034641,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537034691,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537034742,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537034792,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537034841,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537034892,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537034942,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537034992,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537035041,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537035091,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537035142,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537035192,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537035253,
+              "intervalMs": 61
+            },
+            {
+              "timestampMs": 1792537035301,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537035349,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537035396,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1792537035447,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537035492,
+              "intervalMs": 45
+            },
+            {
+              "timestampMs": 1792537035541,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537035591,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537035641,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537035692,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537035742,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537035791,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537035841,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537035892,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537035942,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537035992,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537036041,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537036091,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537036142,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537036192,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537036241,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537036291,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537036341,
+              "intervalMs": 50
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "toast-open-close-1",
+      "status": "CAPTURED",
+      "before": {
+        "timestampMs": 1792537036819,
+        "outputs": [
+          {
+            "outputId": "da57c782d070",
+            "presented": true,
+            "fieldReady": true,
+            "toast": {
+              "inhibited": false,
+              "recording": false,
+              "centerOpen": false,
+              "toastOpen": false,
+              "toastResident": false,
+              "toastLayoutReady": false
+            },
+            "measurements": {
+              "toastCount": 0,
+              "toastRevealProgress": 0,
+              "toastSpan": 450,
+              "toastDepth": 170,
+              "toastPaintDepth": 0,
+              "toastTargetDepth": 170,
+              "toastAlong": 1370,
+              "toastDesiredHeight": 0,
+              "toastMeasuredHeight": 0
+            },
+            "edge": "top",
+            "center": []
+          }
+        ]
+      },
+      "after": {
+        "timestampMs": 1792537039045,
+        "outputs": [
+          {
+            "outputId": "da57c782d070",
+            "presented": true,
+            "fieldReady": true,
+            "toast": {
+              "inhibited": false,
+              "recording": false,
+              "centerOpen": false,
+              "toastOpen": false,
+              "toastResident": false,
+              "toastLayoutReady": false
+            },
+            "measurements": {
+              "toastCount": 0,
+              "toastRevealProgress": 0,
+              "toastSpan": 450,
+              "toastDepth": 170,
+              "toastPaintDepth": 0,
+              "toastTargetDepth": 170,
+              "toastAlong": 1370,
+              "toastDesiredHeight": 0,
+              "toastMeasuredHeight": 0
+            },
+            "edge": "top",
+            "center": []
+          }
+        ]
+      },
+      "frames": [
+        {
+          "outputId": "da57c782d070",
+          "notificationFrames": [
+            {
+              "timestampMs": 1792537037100,
+              "intervalMs": 18,
+              "progress": 0.012,
+              "progressDelta": 0.012,
+              "paintDepth": 1.21,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 5,
+              "fieldRecordChanges": 7,
+              "allocatorChanges": 2,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037116,
+              "intervalMs": 16,
+              "progress": 0.051,
+              "progressDelta": 0.039,
+              "paintDepth": 5.08,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037132,
+              "intervalMs": 16,
+              "progress": 0.114,
+              "progressDelta": 0.063,
+              "paintDepth": 11.404,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037149,
+              "intervalMs": 17,
+              "progress": 0.193,
+              "progressDelta": 0.079,
+              "paintDepth": 19.289,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037165,
+              "intervalMs": 16,
+              "progress": 0.293,
+              "progressDelta": 0.1,
+              "paintDepth": 29.286,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037183,
+              "intervalMs": 18,
+              "progress": 0.404,
+              "progressDelta": 0.111,
+              "paintDepth": 40.414,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037200,
+              "intervalMs": 17,
+              "progress": 0.514,
+              "progressDelta": 0.11,
+              "paintDepth": 51.378,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037216,
+              "intervalMs": 16,
+              "progress": 0.629,
+              "progressDelta": 0.116,
+              "paintDepth": 62.941,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037233,
+              "intervalMs": 17,
+              "progress": 0.738,
+              "progressDelta": 0.109,
+              "paintDepth": 73.797,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037249,
+              "intervalMs": 16,
+              "progress": 0.828,
+              "progressDelta": 0.09,
+              "paintDepth": 82.838,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037266,
+              "intervalMs": 17,
+              "progress": 0.907,
+              "progressDelta": 0.079,
+              "paintDepth": 90.692,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037283,
+              "intervalMs": 17,
+              "progress": 0.963,
+              "progressDelta": 0.056,
+              "paintDepth": 96.325,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037299,
+              "intervalMs": 16,
+              "progress": 0.993,
+              "progressDelta": 0.03,
+              "paintDepth": 99.318,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037316,
+              "intervalMs": 17,
+              "progress": 1,
+              "progressDelta": 0.007,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037897,
+              "intervalMs": 581,
+              "progress": 1,
+              "progressDelta": 0,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 3,
+              "fieldRecordChanges": 6,
+              "allocatorChanges": 1,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037918,
+              "intervalMs": 21,
+              "progress": 0.793,
+              "progressDelta": -0.207,
+              "paintDepth": 79.258,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037934,
+              "intervalMs": 16,
+              "progress": 0.616,
+              "progressDelta": -0.177,
+              "paintDepth": 61.603,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037954,
+              "intervalMs": 20,
+              "progress": 0.476,
+              "progressDelta": -0.14,
+              "paintDepth": 47.583,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037968,
+              "intervalMs": 14,
+              "progress": 0.352,
+              "progressDelta": -0.124,
+              "paintDepth": 35.211,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537037985,
+              "intervalMs": 17,
+              "progress": 0.252,
+              "progressDelta": -0.1,
+              "paintDepth": 25.193,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537038001,
+              "intervalMs": 16,
+              "progress": 0.177,
+              "progressDelta": -0.075,
+              "paintDepth": 17.694,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537038018,
+              "intervalMs": 17,
+              "progress": 0.115,
+              "progressDelta": -0.062,
+              "paintDepth": 11.539,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537038035,
+              "intervalMs": 17,
+              "progress": 0.07,
+              "progressDelta": -0.045,
+              "paintDepth": 7.008,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537038052,
+              "intervalMs": 17,
+              "progress": 0.04,
+              "progressDelta": -0.03,
+              "paintDepth": 4.004,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537038068,
+              "intervalMs": 16,
+              "progress": 0.019,
+              "progressDelta": -0.021,
+              "paintDepth": 1.915,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537038085,
+              "intervalMs": 17,
+              "progress": 0.007,
+              "progressDelta": -0.012,
+              "paintDepth": 0.719,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537038102,
+              "intervalMs": 17,
+              "progress": 0.002,
+              "progressDelta": -0.005,
+              "paintDepth": 0.185,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537038119,
+              "intervalMs": 17,
+              "progress": 0.0,
+              "progressDelta": -0.002,
+              "paintDepth": 0.019,
+              "targetDepth": 170,
+              "visualInward": 0,
+              "pyramidActive": false,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 3,
+              "fieldRecordChanges": 4,
+              "allocatorChanges": 2,
+              "fieldRecordCount": 3
+            }
+          ],
+          "metrics": {
+            "count": 34,
+            "min": 4,
+            "p50": 17,
+            "p95": 27,
+            "p99": 581,
+            "max": 581,
+            "mean": 33.324,
+            "over16ms": 21,
+            "over33ms": 1,
+            "idleGapsOver100ms": 1,
+            "panelNonzeroFrames": 0,
+            "panelProgressChangedFrames": 0,
+            "popupOpenFrames": 0,
+            "barProgressChangedFrames": 0,
+            "heartbeatSampleCount": 42,
+            "heartbeatOver100Ms": 0,
+            "heartbeatMaxIntervalMs": 64,
+            "notificationFramesDropped": 0,
+            "notificationFrameLimit": 160,
+            "notificationRecordUpdates": 38,
+            "fieldRecordUpdates": 95,
+            "allocatorUpdates": 7,
+            "exhausted": false,
+            "heartbeatHistoryExhausted": false
+          },
+          "slow": [
+            {
+              "timestampMs": 1792537037897,
+              "intervalMs": 581,
+              "liquidPopupsOpen": false
+            }
+          ],
+          "heartbeat": [
+            {
+              "timestampMs": 1792537036901,
+              "intervalMs": null
+            },
+            {
+              "timestampMs": 1792537036951,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537037002,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537037050,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537037099,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537037148,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537037196,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537037244,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537037291,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1792537037350,
+              "intervalMs": 59
+            },
+            {
+              "timestampMs": 1792537037400,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537037451,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537037500,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537037551,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537037601,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537037651,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537037700,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537037751,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537037801,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537037850,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537037914,
+              "intervalMs": 64
+            },
+            {
+              "timestampMs": 1792537037962,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537038010,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537038058,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537038107,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537038150,
+              "intervalMs": 43
+            },
+            {
+              "timestampMs": 1792537038201,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537038250,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537038301,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537038351,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537038400,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537038451,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537038501,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537038550,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537038601,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537038650,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537038701,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537038751,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537038801,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537038851,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537038900,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537038950,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537039001,
+              "intervalMs": 51
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "toast-present-edge-hover",
+      "status": "CAPTURED",
+      "before": {
+        "timestampMs": 1792537039477,
+        "outputs": [
+          {
+            "outputId": "da57c782d070",
+            "presented": true,
+            "fieldReady": true,
+            "toast": {
+              "inhibited": false,
+              "recording": false,
+              "centerOpen": false,
+              "toastOpen": false,
+              "toastResident": false,
+              "toastLayoutReady": false
+            },
+            "measurements": {
+              "toastCount": 0,
+              "toastRevealProgress": 0,
+              "toastSpan": 450,
+              "toastDepth": 170,
+              "toastPaintDepth": 0,
+              "toastTargetDepth": 170,
+              "toastAlong": 1370,
+              "toastDesiredHeight": 0,
+              "toastMeasuredHeight": 0
+            },
+            "edge": "top",
+            "center": []
+          }
+        ]
+      },
+      "after": {
+        "timestampMs": 1792537041468,
+        "outputs": [
+          {
+            "outputId": "da57c782d070",
+            "presented": true,
+            "fieldReady": true,
+            "toast": {
+              "inhibited": true,
+              "recording": false,
+              "centerOpen": true,
+              "toastOpen": false,
+              "toastResident": false,
+              "toastLayoutReady": false
+            },
+            "measurements": {
+              "toastCount": 0,
+              "toastRevealProgress": 0,
+              "toastSpan": 450,
+              "toastDepth": 170,
+              "toastPaintDepth": 0,
+              "toastTargetDepth": 170,
+              "toastAlong": 1370,
+              "toastDesiredHeight": 0,
+              "toastMeasuredHeight": 0
+            },
+            "edge": "top",
+            "center": []
+          }
+        ]
+      },
+      "frames": [
+        {
+          "outputId": "da57c782d070",
+          "notificationFrames": [
+            {
+              "timestampMs": 1792537039856,
+              "intervalMs": null,
+              "progress": 0.738,
+              "progressDelta": 0.738,
+              "paintDepth": 73.797,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537039873,
+              "intervalMs": 17,
+              "progress": 0.828,
+              "progressDelta": 0.09,
+              "paintDepth": 82.838,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537039890,
+              "intervalMs": 17,
+              "progress": 0.907,
+              "progressDelta": 0.079,
+              "paintDepth": 90.692,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 3
+            },
+            {
+              "timestampMs": 1792537039943,
+              "intervalMs": 53,
+              "progress": 0.774,
+              "progressDelta": -0.133,
+              "paintDepth": 77.436,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 5,
+              "fieldRecordChanges": 24,
+              "allocatorChanges": 12,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537039964,
+              "intervalMs": 21,
+              "progress": 0.603,
+              "progressDelta": -0.172,
+              "paintDepth": 60.261,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 5,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537039976,
+              "intervalMs": 12,
+              "progress": 0.458,
+              "progressDelta": -0.144,
+              "paintDepth": 45.835,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 5,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537039992,
+              "intervalMs": 16,
+              "progress": 0.346,
+              "progressDelta": -0.113,
+              "paintDepth": 34.552,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 5,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537040008,
+              "intervalMs": 16,
+              "progress": 0.248,
+              "progressDelta": -0.098,
+              "paintDepth": 24.776,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 5,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537040025,
+              "intervalMs": 17,
+              "progress": 0.17,
+              "progressDelta": -0.077,
+              "paintDepth": 17.044,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 5,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537040040,
+              "intervalMs": 15,
+              "progress": 0.114,
+              "progressDelta": -0.056,
+              "paintDepth": 11.418,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 5,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537040057,
+              "intervalMs": 17,
+              "progress": 0.07,
+              "progressDelta": -0.044,
+              "paintDepth": 6.968,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 5,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537040074,
+              "intervalMs": 17,
+              "progress": 0.039,
+              "progressDelta": -0.031,
+              "paintDepth": 3.857,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 5,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537040091,
+              "intervalMs": 17,
+              "progress": 0.019,
+              "progressDelta": -0.019,
+              "paintDepth": 1.937,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 5,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537040108,
+              "intervalMs": 17,
+              "progress": 0.007,
+              "progressDelta": -0.012,
+              "paintDepth": 0.741,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 5,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537040124,
+              "intervalMs": 16,
+              "progress": 0.002,
+              "progressDelta": -0.006,
+              "paintDepth": 0.178,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": true,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 5,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537040143,
+              "intervalMs": 19,
+              "progress": 0.0,
+              "progressDelta": -0.002,
+              "paintDepth": 0.024,
+              "targetDepth": 170,
+              "visualInward": 0,
+              "pyramidActive": false,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": false,
+              "notificationRecordChanges": 3,
+              "fieldRecordChanges": 6,
+              "allocatorChanges": 2,
+              "fieldRecordCount": 4
+            }
+          ],
+          "metrics": {
+            "count": 20,
+            "min": 12,
+            "p50": 17,
+            "p95": 21,
+            "p99": 53,
+            "max": 53,
+            "mean": 18.4,
+            "over16ms": 13,
+            "over33ms": 1,
+            "idleGapsOver100ms": 0,
+            "panelNonzeroFrames": 0,
+            "panelProgressChangedFrames": 0,
+            "popupOpenFrames": 18,
+            "barProgressChangedFrames": 0,
+            "heartbeatSampleCount": 30,
+            "heartbeatOver100Ms": 0,
+            "heartbeatMaxIntervalMs": 73,
+            "notificationFramesDropped": 0,
+            "notificationFrameLimit": 160,
+            "notificationRecordUpdates": 23,
+            "fieldRecordUpdates": 102,
+            "allocatorUpdates": 14,
+            "exhausted": false,
+            "heartbeatHistoryExhausted": false
+          },
+          "slow": [
+            {
+              "timestampMs": 1792537039943,
+              "intervalMs": 53,
+              "liquidPopupsOpen": true
+            }
+          ],
+          "heartbeat": [
+            {
+              "timestampMs": 1792537039885,
+              "intervalMs": null
+            },
+            {
+              "timestampMs": 1792537039958,
+              "intervalMs": 73
+            },
+            {
+              "timestampMs": 1792537040008,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537040054,
+              "intervalMs": 46
+            },
+            {
+              "timestampMs": 1792537040101,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1792537040150,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537040197,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1792537040247,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537040293,
+              "intervalMs": 46
+            },
+            {
+              "timestampMs": 1792537040343,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537040394,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537040444,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537040493,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537040544,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537040594,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537040643,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537040693,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537040743,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537040793,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537040844,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537040894,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537040944,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537040993,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537041043,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537041094,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537041144,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537041194,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537041243,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537041294,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537041344,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537041393,
+              "intervalMs": 49
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "guarded-production-record-start",
+      "status": "CAPTURED",
+      "before": {
+        "timestampMs": 1792537043330,
+        "outputs": [
+          {
+            "outputId": "da57c782d070",
+            "presented": true,
+            "fieldReady": true,
+            "toast": {
+              "inhibited": false,
+              "recording": false,
+              "centerOpen": false,
+              "toastOpen": false,
+              "toastResident": false,
+              "toastLayoutReady": false
+            },
+            "measurements": {
+              "toastCount": 0,
+              "toastRevealProgress": 0,
+              "toastSpan": 450,
+              "toastDepth": 170,
+              "toastPaintDepth": 0,
+              "toastTargetDepth": 170,
+              "toastAlong": 1370,
+              "toastDesiredHeight": 0,
+              "toastMeasuredHeight": 0
+            },
+            "edge": "top",
+            "center": []
+          }
+        ]
+      },
+      "after": {
+        "timestampMs": 1792537044921,
+        "outputs": [
+          {
+            "outputId": "da57c782d070",
+            "presented": true,
+            "fieldReady": true,
+            "toast": {
+              "inhibited": false,
+              "recording": true,
+              "centerOpen": false,
+              "toastOpen": true,
+              "toastResident": true,
+              "toastLayoutReady": true
+            },
+            "measurements": {
+              "toastCount": 1,
+              "toastRevealProgress": 1,
+              "toastSpan": 450,
+              "toastDepth": 100,
+              "toastPaintDepth": 100,
+              "toastTargetDepth": 100,
+              "toastAlong": 1370,
+              "toastDesiredHeight": 58,
+              "toastMeasuredHeight": 58
+            },
+            "edge": "top",
+            "center": []
+          }
+        ]
+      },
+      "frames": [
+        {
+          "outputId": "da57c782d070",
+          "notificationFrames": [
+            {
+              "timestampMs": 1792537044539,
+              "intervalMs": 18,
+              "progress": 0.014,
+              "progressDelta": 0.014,
+              "paintDepth": 1.365,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 5,
+              "fieldRecordChanges": 7,
+              "allocatorChanges": 2,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044557,
+              "intervalMs": 18,
+              "progress": 0.051,
+              "progressDelta": 0.037,
+              "paintDepth": 5.08,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044573,
+              "intervalMs": 16,
+              "progress": 0.114,
+              "progressDelta": 0.063,
+              "paintDepth": 11.404,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044588,
+              "intervalMs": 15,
+              "progress": 0.198,
+              "progressDelta": 0.084,
+              "paintDepth": 19.836,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044606,
+              "intervalMs": 18,
+              "progress": 0.293,
+              "progressDelta": 0.095,
+              "paintDepth": 29.286,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044625,
+              "intervalMs": 19,
+              "progress": 0.404,
+              "progressDelta": 0.111,
+              "paintDepth": 40.414,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044640,
+              "intervalMs": 15,
+              "progress": 0.521,
+              "progressDelta": 0.117,
+              "paintDepth": 52.066,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044657,
+              "intervalMs": 17,
+              "progress": 0.629,
+              "progressDelta": 0.109,
+              "paintDepth": 62.941,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044672,
+              "intervalMs": 15,
+              "progress": 0.738,
+              "progressDelta": 0.109,
+              "paintDepth": 73.797,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044688,
+              "intervalMs": 16,
+              "progress": 0.834,
+              "progressDelta": 0.096,
+              "paintDepth": 83.354,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044705,
+              "intervalMs": 17,
+              "progress": 0.907,
+              "progressDelta": 0.073,
+              "paintDepth": 90.692,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044723,
+              "intervalMs": 18,
+              "progress": 0.963,
+              "progressDelta": 0.056,
+              "paintDepth": 96.325,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044739,
+              "intervalMs": 16,
+              "progress": 0.994,
+              "progressDelta": 0.031,
+              "paintDepth": 99.427,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044755,
+              "intervalMs": 16,
+              "progress": 1,
+              "progressDelta": 0.006,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 1,
+              "fieldRecordChanges": 3,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044772,
+              "intervalMs": 17,
+              "progress": 1,
+              "progressDelta": 0,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 0,
+              "fieldRecordChanges": 0,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044789,
+              "intervalMs": 17,
+              "progress": 1,
+              "progressDelta": 0,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 0,
+              "fieldRecordChanges": 0,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044805,
+              "intervalMs": 16,
+              "progress": 1,
+              "progressDelta": 0,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 0,
+              "fieldRecordChanges": 0,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044822,
+              "intervalMs": 17,
+              "progress": 1,
+              "progressDelta": 0,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 0,
+              "fieldRecordChanges": 0,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044839,
+              "intervalMs": 17,
+              "progress": 1,
+              "progressDelta": 0,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 0,
+              "fieldRecordChanges": 0,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044855,
+              "intervalMs": 16,
+              "progress": 1,
+              "progressDelta": 0,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 0,
+              "fieldRecordChanges": 0,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            },
+            {
+              "timestampMs": 1792537044872,
+              "intervalMs": 17,
+              "progress": 1,
+              "progressDelta": 0,
+              "paintDepth": 100,
+              "targetDepth": 100,
+              "visualInward": 0,
+              "pyramidActive": true,
+              "pyramidClosing": false,
+              "pyramidReopening": false,
+              "recordingVisible": true,
+              "notificationRecordChanges": 0,
+              "fieldRecordChanges": 0,
+              "allocatorChanges": 0,
+              "fieldRecordCount": 4
+            }
+          ],
+          "metrics": {
+            "count": 67,
+            "min": 8,
+            "p50": 17,
+            "p95": 20,
+            "p99": 28,
+            "max": 28,
+            "mean": 16.866,
+            "over16ms": 38,
+            "over33ms": 0,
+            "idleGapsOver100ms": 0,
+            "panelNonzeroFrames": 0,
+            "panelProgressChangedFrames": 0,
+            "popupOpenFrames": 0,
+            "barProgressChangedFrames": 0,
+            "heartbeatSampleCount": 30,
+            "heartbeatOver100Ms": 0,
+            "heartbeatMaxIntervalMs": 59,
+            "notificationFramesDropped": 0,
+            "notificationFrameLimit": 160,
+            "notificationRecordUpdates": 19,
+            "fieldRecordUpdates": 85,
+            "allocatorUpdates": 9,
+            "exhausted": false,
+            "heartbeatHistoryExhausted": false
+          },
+          "slow": [],
+          "heartbeat": [
+            {
+              "timestampMs": 1792537043411,
+              "intervalMs": null
+            },
+            {
+              "timestampMs": 1792537043461,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537043511,
+              "intervalMs": 50
+            },
+            {
+              "timestampMs": 1792537043562,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537043611,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537043660,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537043711,
+              "intervalMs": 51
+            },
+            {
+              "timestampMs": 1792537043770,
+              "intervalMs": 59
+            },
+            {
+              "timestampMs": 1792537043819,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537043867,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537043915,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537043963,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537044011,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537044058,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1792537044106,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537044155,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537044203,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537044251,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537044297,
+              "intervalMs": 46
+            },
+            {
+              "timestampMs": 1792537044346,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537044394,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537044442,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537044490,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537044539,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537044587,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537044635,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537044684,
+              "intervalMs": 49
+            },
+            {
+              "timestampMs": 1792537044730,
+              "intervalMs": 46
+            },
+            {
+              "timestampMs": 1792537044778,
+              "intervalMs": 48
+            },
+            {
+              "timestampMs": 1792537044825,
+              "intervalMs": 47
+            },
+            {
+              "timestampMs": 1792537044874,
+              "intervalMs": 49
+            }
+          ]
+        }
+      ],
+      "actual_start_toast_observed": true,
+      "recorder_binding_exact": true,
+      "actual_producer_exit": 0,
+      "private_media_streams": [
+        "video"
+      ]
+    }
+  ],
+  "actual_harness_exit": 0,
+  "owned_remaining_after_exit": [],
+  "private_media_retained_locally": true
+}

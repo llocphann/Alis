@@ -1,0 +1,452 @@
+{
+  "error": null,
+  "checks": 17875,
+  "completed": 16,
+  "caseIndex": 16,
+  "phase": "case-drain",
+  "results": [
+    {
+      "route": "Dashboard",
+      "edge": "top",
+      "reduced": false,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 14,
+          "partialSwaps": 14
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 16,
+          "partialSwaps": 16
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 15,
+          "partialSwaps": 15
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 11,
+          "partialSwaps": 10
+        }
+      ]
+    },
+    {
+      "route": "Dashboard",
+      "edge": "right",
+      "reduced": false,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 14,
+          "partialSwaps": 13
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 16,
+          "partialSwaps": 16
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 15,
+          "partialSwaps": 15
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 11,
+          "partialSwaps": 10
+        }
+      ]
+    },
+    {
+      "route": "Dashboard",
+      "edge": "bottom",
+      "reduced": false,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 15,
+          "partialSwaps": 14
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 16,
+          "partialSwaps": 16
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 15,
+          "partialSwaps": 15
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 11,
+          "partialSwaps": 10
+        }
+      ]
+    },
+    {
+      "route": "Dashboard",
+      "edge": "left",
+      "reduced": false,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 14,
+          "partialSwaps": 13
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 16,
+          "partialSwaps": 16
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 15,
+          "partialSwaps": 15
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 11,
+          "partialSwaps": 10
+        }
+      ]
+    },
+    {
+      "route": "Overview",
+      "edge": "top",
+      "reduced": false,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 14,
+          "partialSwaps": 14
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 16,
+          "partialSwaps": 17
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 15,
+          "partialSwaps": 15
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 11,
+          "partialSwaps": 11
+        }
+      ]
+    },
+    {
+      "route": "Overview",
+      "edge": "right",
+      "reduced": false,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 15,
+          "partialSwaps": 15
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 16,
+          "partialSwaps": 17
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 15,
+          "partialSwaps": 15
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 11,
+          "partialSwaps": 11
+        }
+      ]
+    },
+    {
+      "route": "Overview",
+      "edge": "bottom",
+      "reduced": false,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 15,
+          "partialSwaps": 15
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 16,
+          "partialSwaps": 17
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 15,
+          "partialSwaps": 15
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 11,
+          "partialSwaps": 11
+        }
+      ]
+    },
+    {
+      "route": "Overview",
+      "edge": "left",
+      "reduced": false,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 15,
+          "partialSwaps": 15
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 16,
+          "partialSwaps": 17
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 15,
+          "partialSwaps": 15
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 11,
+          "partialSwaps": 10
+        }
+      ]
+    },
+    {
+      "route": "Dashboard",
+      "edge": "top",
+      "reduced": true,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        }
+      ]
+    },
+    {
+      "route": "Dashboard",
+      "edge": "right",
+      "reduced": true,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        }
+      ]
+    },
+    {
+      "route": "Dashboard",
+      "edge": "bottom",
+      "reduced": true,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        }
+      ]
+    },
+    {
+      "route": "Dashboard",
+      "edge": "left",
+      "reduced": true,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        }
+      ]
+    },
+    {
+      "route": "Overview",
+      "edge": "top",
+      "reduced": true,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        }
+      ]
+    },
+    {
+      "route": "Overview",
+      "edge": "right",
+      "reduced": true,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        }
+      ]
+    },
+    {
+      "route": "Overview",
+      "edge": "bottom",
+      "reduced": true,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        }
+      ]
+    },
+    {
+      "route": "Overview",
+      "edge": "left",
+      "reduced": true,
+      "openings": [
+        {
+          "phase": "opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "reversed-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "warm-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        },
+        {
+          "phase": "expired-opening",
+          "partialSamples": 0,
+          "partialSwaps": 0
+        }
+      ]
+    }
+  ],
+  "source_sha": "85fbd4b35d2a940bd04f6b0dbb9ebef7fafd1bb9",
+  "actual_harness_exit": 0,
+  "native_receipt": {
+    "source_sha": "85fbd4b35d2a940bd04f6b0dbb9ebef7fafd1bb9",
+    "native_exit": 0,
+    "body_host_sha256": "fe7540c0627cc266d3045c72da74f5b5a8eab5856aaee9c0987a46496cd167bd",
+    "fixture_sha256": "7719a82830f72ba7f5b547cfb22eecf1fe8c108b24c70cd8646f1cc3d4545c08",
+    "scope": "Private no-grab functional reveal; no performance/owner acceptance"
+  },
+  "owned_remaining_after_exit": [],
+  "scope": "Opt-in focused private Niri, original assertions/deadlines unchanged; no default-unfocused/canonical/Owner PASS. Raw trace retained privately."
+}
