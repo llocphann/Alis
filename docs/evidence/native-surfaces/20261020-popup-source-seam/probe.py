@@ -64,6 +64,13 @@ with private_wayland(folder,capture_focus=False) as env:
      r=m['input'];sx,sy=r['x']+r['w']/2,r['y']+r['h']/2
      o=move('source:'+kind+':'+edge,sx,sy,1.4);slot=current(o,kind)
      if not slot:case.update(status='FAIL',reason='source did not open expected popup');print(json.dumps(case),flush=True);continue
+     deadline=time.monotonic()+8
+     while slot and (min(box(slot,kind)['w'],box(slot,kind)['h'])<=0
+            or (slot.get('progress',1)<.999 if kind=='utilButtons' else not slot.get('bodyReady',False))):
+      if time.monotonic()>=deadline:break
+      time.sleep(.15);o=snap('waiting-ready:'+kind+':'+edge);slot=current(o,kind)
+     if not slot or min(box(slot,kind)['w'],box(slot,kind)['h'])<=0 or (kind=='utilButtons' and slot.get('progress',0)<.999):
+      case.update(status='UNREADY_PRESENTATION',reason='no qualified resting geometry; handoff not tested');print(json.dumps(case),flush=True);continue
      case['source_open']=True
      case['source_point']=slot.get('anchorScenePoint') or slot.get('contentScenePoint')
      (base/(kind+'-'+edge+'-source.json')).write_text(json.dumps(o,indent=2))
