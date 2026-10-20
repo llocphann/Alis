@@ -53,6 +53,10 @@ assert "rect.width: root.cursorSlide ? 1" in menu
 assert "rect.height: root.cursorSlide ? 1" in menu
 assert 'Quickshell.env("ALIS_CONTEXT_MENU_DEBUG")' in menu
 assert "onAnchoring:" in menu
+assert "grabFocus: root.keyboardGrab && CompositorService.isNiri && !root.cursorSlide" in menu
+assert "|| desktopContextHitArea.enabled" in desktop
+assert "Keys.onEscapePressed: event =>" in desktop
+assert desktop.count("desktopFocusSink.forceActiveFocus()") >= 3
 
 # Correct left-edge horizontal gravity; flip/slide near four output corners.
 assert re.search(r"gravity:\s*root\.cursorSlide\s*\?\s*\(\(root\.popupAbove\s*\?\s*Edges\.Top\s*:\s*Edges\.Bottom\)\s*\|\s*Edges\.Right\)", menu)

@@ -91,6 +91,7 @@ jobs:
         run: |
           python3 scripts/test-desktop-context-menu-hover-contract.py
           python3 scripts/test-desktop-context-menu-fade-relocation-contract.py
+          python3 scripts/test-desktop-context-menu-native.py
 
       - name: Verify ABYSS-R15 unified Edge modules
         shell: bash

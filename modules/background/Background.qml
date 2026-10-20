@@ -492,15 +492,11 @@ Scope {
             }
         }
 
-        // True if any widget on this background needs keyboard input (sticky notes
-        // today, future text-entry widgets later). Used to flip the layer-shell
-        // surface to focusable=true so TextEdits actually receive key events.
-        // Without this the Bottom layer is keyboard-inert and clicks reach the
-        // TextEdit but typing does nothing.
-        // Desktop items remain pointer-driven until their focus contract is
-        // owned by the background surface; do not make a stale global selection
-        // turn the Bottom layer keyboard-focusable during reload.
+        // Notes need text input; click-driven desktop menus need Escape.
+        // Both use the desktop's on-demand focus, never a global selection
+        // flag or the grabbed xdg-popup pointer path.
         readonly property bool _needsKeyboardFocus: bgRoot._widgetEnabled("notes", false)
+            || desktopContextHitArea.enabled
 
         // Zone occupancy: map zone name → array of widget names
         readonly property var _builtinWidgets: [
@@ -879,11 +875,9 @@ Scope {
         // Keep background behind the lock surface. Moving this to Overlay can capture input.
         WlrLayershell.layer: WlrLayer.Bottom
         WlrLayershell.namespace: "quickshell:background"
-        // Make the desktop layer focusable only when an interactive widget needs it
-        // (sticky notes today). With OnDemand the compositor only routes keyboard
-        // input to us when the user clicks on the surface, so it doesn't steal
-        // focus from real apps. When no interactive widget is enabled we stay
-        // None to keep things lean.
+        // Desktop cursor menus do not use Qt's pointer/keyboard popup grab.
+        // OnDemand routes Escape to this owner after a desktop click, without
+        // taking focus from apps merely because the background is visible.
         WlrLayershell.keyboardFocus: bgRoot._needsKeyboardFocus
             ? WlrKeyboardFocus.OnDemand
             : WlrKeyboardFocus.None
@@ -1562,6 +1556,13 @@ Scope {
                 width: 0
                 height: 0
                 focus: false
+                Keys.onEscapePressed: event => {
+                    if (desktopContextMenu.active || desktopItemContextMenu.active) {
+                        desktopContextMenu.close()
+                        desktopItemContextMenu.close()
+                        event.accepted = true
+                    }
+                }
             }
 
             // Desktop right-click context menu
@@ -1585,6 +1586,7 @@ Scope {
                         return
                     }
                     if (desktopItemContextMenu.active) desktopItemContextMenu.close()
+                    desktopFocusSink.forceActiveFocus()
                     // Map to window-local scene coordinates. Unlike an Item
                     // anchor, these are stable across PopupWindow remapping.
                     const point = desktopContextHitArea.mapToItem(
@@ -1787,6 +1789,7 @@ Scope {
                         gridSnap: Boolean(Config.getNestedValue("background.widgets.editGrid.snap", true))
                         dragEnabled: !GlobalStates.screenLocked && !GlobalStates.shellLayoutEditMode
                         onContextMenuRequested: (menuModel, anchorX, anchorY) => {
+                            desktopFocusSink.forceActiveFocus()
                             const position = desktopItemDelegate.mapToItem(
                                 null, anchorX, anchorY)
                             if (desktopContextMenu.active) desktopContextMenu.close()

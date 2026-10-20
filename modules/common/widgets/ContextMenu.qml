@@ -177,7 +177,12 @@ Loader {
         // Otherwise Niri can put remapped popups at the output origin (0,0).
         property bool cursorAnchorReady: false
         visible: !root.cursorSlide || popupWindow.cursorAnchorReady
-        grabFocus: root.keyboardGrab && CompositorService.isNiri
+        // Qt's grabbed xdg-popup forwards outside pointer events to the
+        // desktop with popup-local coordinates on Niri. A second right-click
+        // then subtracts the previous popup origin from the desktop point.
+        // Cursor menus use their desktop owner's on-demand keyboard focus;
+        // avoid the pointer grab rather than compensating with an offset.
+        grabFocus: root.keyboardGrab && CompositorService.isNiri && !root.cursorSlide
         property bool closing: false
         // Popup animations can sweep the content under a stationary pointer,
         // especially when the desktop menu opens near a retracted Abyss Edge.
