@@ -1,0 +1,163 @@
+{
+  "source_sha": "926695d452ea73c0078c6ab47a4e0bd99a8acd34",
+  "status": "FAIL",
+  "runtime_changes_from_head": [],
+  "perimeter_sha256": "8fe9807df28acac8482dfbc62b5ff573526c4e4d05b81e5639c7c01f59ff3480",
+  "actual_native_exit": 0,
+  "scale": 1,
+  "fixture_sha256": "3fbeb06fc00137a139bf16c4f608534c05c02604edad36b1914082cc92a48e3d",
+  "native_log_sha256": "9c2e4024620d6dd3bd14498a9dce04d2f6773318f3193ecb4267e26c5afa7a01",
+  "result": {
+    "error": "Error: keyboard canvas reflows during reveal",
+    "failedFrames": 14,
+    "sampleCount": 14,
+    "partialFrames": {
+      "top-open": 14
+    },
+    "samples": [
+      {
+        "phase": "top-open",
+        "p": 0.18169525600306563,
+        "width": 805,
+        "height": 18.505872432987132,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.18169525600306563,
+        "width": 805,
+        "height": 18.505872432987132,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.18169525600306563,
+        "width": 805,
+        "height": 18.505872432987132,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.33164787484248387,
+        "width": 805,
+        "height": 66.79061569927981,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.4700853953112583,
+        "width": 805,
+        "height": 111.36749729022517,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.5885312500000001,
+        "width": 805,
+        "height": 149.50706250000002,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.5885312500000001,
+        "width": 805,
+        "height": 149.50706250000002,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.68314361754521,
+        "width": 805,
+        "height": 179.97224484955763,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.7672325053281155,
+        "width": 805,
+        "height": 207.0488667156532,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.8359149717759499,
+        "width": 805,
+        "height": 229.16462091185588,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.8878798062136964,
+        "width": 805,
+        "height": 245.89729760081025,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.9311060743841496,
+        "width": 805,
+        "height": 259.81615595169615,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.9635111656644934,
+        "width": 805,
+        "height": 270.25059534396684,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      },
+      {
+        "phase": "top-open",
+        "p": 0.9855211851815218,
+        "width": 805,
+        "height": 277.33782162845,
+        "targetWidth": 805,
+        "targetHeight": 282,
+        "input": 805,
+        "open": true
+      }
+    ]
+  },
+  "owner_input": "fake ydotool only; no owner keys sent",
+  "actual_harness_exit": 1,
+  "scope": "Production AbyssPerimeter keyboard; focused private Niri and fake ydotool; top/bottom opening, reversal, final close, unload. No installed desktop or Owner acceptance."
+}

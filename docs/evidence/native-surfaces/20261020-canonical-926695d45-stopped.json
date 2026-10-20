@@ -1,0 +1,41 @@
+{
+  "sha": "926695d452ea73c0078c6ab47a4e0bd99a8acd34",
+  "argv": [
+    "bash",
+    "scripts/validate-maintainer-local.sh",
+    "--current-repo"
+  ],
+  "status": "STOPPED",
+  "actual_exit": -15,
+  "stop_reason": "r12_osk_fullsize_followup",
+  "elapsed_seconds": 390.5,
+  "owned_remaining_after_exit": [],
+  "log_sha256": "2d1ddfcbb44a7081ca8648c962d66296f837a08efbd2dd1d62dc727b28c9a9a8",
+  "counts": {
+    "started": 76,
+    "PASS": 73,
+    "FAIL": 2,
+    "SKIP": 0,
+    "unsettled": 1
+  },
+  "unsettled_checks": [
+    {
+      "id": 76,
+      "name": "Python regression: scripts/test-abyss-drag-corners-runtime.py"
+    }
+  ],
+  "failed_checks": [
+    {
+      "id": 65,
+      "name": "Python regression: scripts/test-abyss-body-reveal-readiness-runtime.py",
+      "status": "FAIL"
+    },
+    {
+      "id": 66,
+      "name": "Python regression: scripts/test-abyss-compact-editor-runtime.py",
+      "status": "FAIL"
+    }
+  ],
+  "canonical_log_sha256": "41d592571ca54fcc8b9569846ea33233af2ec572bab3948993ce9c2aefee22cc",
+  "scope": "Exact committed source; bounded stop for newly reproduced ABYSS-R12 keyboard follow-up. Not a full PASS. Duplicate body-readiness run failed on closing timing after its first full PASS; cause remains unclassified. Compact-editor fixture could not parse a duplicate const header binding, subsequently repaired."
+}
