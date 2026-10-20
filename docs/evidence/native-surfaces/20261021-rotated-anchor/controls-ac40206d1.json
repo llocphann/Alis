@@ -1,0 +1,897 @@
+{
+  "scope": "Individual native-control runs, source ac40206d1; manual frame readiness only, no performance/installed/physical/Owner acceptance",
+  "runs": [
+    {
+      "source_sha": "ac40206d164f892bba1f87d3d9b13e1160e61792",
+      "runtime_changes_from_head": [],
+      "fixture_sha256": "c3588b55893f39ca785029bb84c6f1c415ebbe43648ec4ee31dcd518a367a42a",
+      "scope": "Production popup presentations on private Niri with original host focus restored before pointer driving, actual wl_pointer; no owner desktop/physical multi-output acceptance, no device actions",
+      "actual_native_exit": 0,
+      "cases": [
+        {
+          "kind": "utilButtons",
+          "edge": "bottom",
+          "scale": 1.0,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                651.0,
+                1058.0
+              ],
+              "actual_point": {
+                "x": 651,
+                "y": 1058
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                651.0,
+                840.0
+              ],
+              "actual_point": {
+                "x": 651,
+                "y": 840
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                651.0,
+                1078.0
+              ],
+              "actual_point": {
+                "x": 651,
+                "y": 1078
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": true
+            },
+            {
+              "stage": "leave",
+              "point": [
+                930.0,
+                64
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 651,
+            "y": 1078
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "utilButtons",
+          "edge": "left",
+          "scale": 1.0,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                44.0,
+                385.5
+              ],
+              "actual_point": {
+                "x": 44,
+                "y": 385.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                372.0,
+                385.70000000000005
+              ],
+              "actual_point": {
+                "x": 372,
+                "y": 385.703125
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                24.0,
+                385.5
+              ],
+              "actual_point": {
+                "x": 24,
+                "y": 385.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": true
+            },
+            {
+              "stage": "leave",
+              "point": [
+                1796,
+                551.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 24,
+            "y": 385.5
+          },
+          "status": "PASS"
+        }
+      ],
+      "errors": [],
+      "actual_harness_exit": 0,
+      "status": "PASS",
+      "owned_remaining_after_exit": []
+    },
+    {
+      "source_sha": "ac40206d164f892bba1f87d3d9b13e1160e61792",
+      "runtime_changes_from_head": [],
+      "fixture_sha256": "c3588b55893f39ca785029bb84c6f1c415ebbe43648ec4ee31dcd518a367a42a",
+      "scope": "Production popup presentations on private Niri with original host focus restored before pointer driving, actual wl_pointer; no owner desktop/physical multi-output acceptance, no device actions",
+      "actual_native_exit": 0,
+      "cases": [
+        {
+          "kind": "utilButtons",
+          "edge": "top",
+          "scale": 1.0,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                651.0,
+                44.0
+              ],
+              "actual_point": {
+                "x": 651,
+                "y": 44
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                651.0,
+                262.0
+              ],
+              "actual_point": {
+                "x": 651,
+                "y": 262
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                651.0,
+                24.0
+              ],
+              "actual_point": {
+                "x": 651,
+                "y": 24
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": true
+            },
+            {
+              "stage": "leave",
+              "point": [
+                930.0,
+                1038
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 651,
+            "y": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "utilButtons",
+          "edge": "right",
+          "scale": 1.0,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1816.0,
+                385.5
+              ],
+              "actual_point": {
+                "x": 1816,
+                "y": 385.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                1488.0,
+                385.70000000000005
+              ],
+              "actual_point": {
+                "x": 1488,
+                "y": 385.703125
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1836.0,
+                385.5
+              ],
+              "actual_point": {
+                "x": 1836,
+                "y": 385.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": true
+            },
+            {
+              "stage": "leave",
+              "point": [
+                64,
+                551.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1836,
+            "y": 385.5
+          },
+          "status": "PASS"
+        }
+      ],
+      "errors": [],
+      "actual_harness_exit": 0,
+      "status": "PASS",
+      "owned_remaining_after_exit": []
+    },
+    {
+      "source_sha": "ac40206d164f892bba1f87d3d9b13e1160e61792",
+      "runtime_changes_from_head": [],
+      "fixture_sha256": "c3588b55893f39ca785029bb84c6f1c415ebbe43648ec4ee31dcd518a367a42a",
+      "scope": "Production popup presentations on private Niri with original host focus restored before pointer driving, actual wl_pointer; no owner desktop/physical multi-output acceptance, no device actions",
+      "actual_native_exit": 0,
+      "cases": [
+        {
+          "kind": "utilButtons",
+          "edge": "top",
+          "scale": 1.5,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                434.0,
+                44.0
+              ],
+              "actual_point": {
+                "x": 434,
+                "y": 44
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                434.0,
+                262.0
+              ],
+              "actual_point": {
+                "x": 434,
+                "y": 262
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                434.0,
+                24.0
+              ],
+              "actual_point": {
+                "x": 434,
+                "y": 24
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": true
+            },
+            {
+              "stage": "leave",
+              "point": [
+                620.0,
+                671
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 434,
+            "y": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "utilButtons",
+          "edge": "right",
+          "scale": 1.5,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1196.0,
+                257.5
+              ],
+              "actual_point": {
+                "x": 1196,
+                "y": 257.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                868.0,
+                257.25
+              ],
+              "actual_point": {
+                "x": 868,
+                "y": 257.25
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1216.0,
+                257.5
+              ],
+              "actual_point": {
+                "x": 1216,
+                "y": 257.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": true
+            },
+            {
+              "stage": "leave",
+              "point": [
+                64,
+                367.5
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1216,
+            "y": 257.5
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "utilButtons",
+          "edge": "bottom",
+          "scale": 1.5,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                434.0,
+                691.0
+              ],
+              "actual_point": {
+                "x": 434,
+                "y": 691
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                434.0,
+                473.0
+              ],
+              "actual_point": {
+                "x": 434,
+                "y": 473
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                434.0,
+                711.0
+              ],
+              "actual_point": {
+                "x": 434,
+                "y": 711
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": true
+            },
+            {
+              "stage": "leave",
+              "point": [
+                620.0,
+                64
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 434,
+            "y": 711
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "utilButtons",
+          "edge": "left",
+          "scale": 1.5,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                44.0,
+                257.5
+              ],
+              "actual_point": {
+                "x": 44,
+                "y": 257.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                372.0,
+                257.25
+              ],
+              "actual_point": {
+                "x": 372,
+                "y": 257.25
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                24.0,
+                257.5
+              ],
+              "actual_point": {
+                "x": 24,
+                "y": 257.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": true
+            },
+            {
+              "stage": "leave",
+              "point": [
+                1176,
+                367.5
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 24,
+            "y": 257.5
+          },
+          "status": "PASS"
+        }
+      ],
+      "errors": [],
+      "actual_harness_exit": 0,
+      "status": "PASS",
+      "owned_remaining_after_exit": []
+    },
+    {
+      "source_sha": "ac40206d164f892bba1f87d3d9b13e1160e61792",
+      "runtime_changes_from_head": [],
+      "fixture_sha256": "c3588b55893f39ca785029bb84c6f1c415ebbe43648ec4ee31dcd518a367a42a",
+      "scope": "Production popup presentations on private Niri with original host focus restored before pointer driving, actual wl_pointer; no owner desktop/physical multi-output acceptance, no device actions",
+      "actual_native_exit": 0,
+      "cases": [
+        {
+          "kind": "clock",
+          "edge": "top",
+          "scale": 1.5,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                434.0,
+                44.0
+              ],
+              "actual_point": {
+                "x": 434,
+                "y": 44
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                434.0,
+                188.91
+              ],
+              "actual_point": {
+                "x": 434,
+                "y": 188.90625
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                434.0,
+                24.0
+              ],
+              "actual_point": {
+                "x": 434,
+                "y": 24
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                620.0,
+                671
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 434,
+            "y": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "right",
+          "scale": 1.5,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1196.0,
+                257.5
+              ],
+              "actual_point": {
+                "x": 1196,
+                "y": 257.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                873.5,
+                204.25
+              ],
+              "actual_point": {
+                "x": 873.5,
+                "y": 204.25
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1216.0,
+                257.5
+              ],
+              "actual_point": {
+                "x": 1216,
+                "y": 257.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                64,
+                367.5
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1216,
+            "y": 257.5
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "bottom",
+          "scale": 1.5,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                434.0,
+                691.0
+              ],
+              "actual_point": {
+                "x": 434,
+                "y": 691
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                434.0,
+                546.09
+              ],
+              "actual_point": {
+                "x": 434,
+                "y": 546.09375
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                434.0,
+                711.0
+              ],
+              "actual_point": {
+                "x": 434,
+                "y": 711
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                620.0,
+                64
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 434,
+            "y": 711
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "left",
+          "scale": 1.5,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                44.0,
+                257.5
+              ],
+              "actual_point": {
+                "x": 44,
+                "y": 257.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                366.5,
+                342.25
+              ],
+              "actual_point": {
+                "x": 366.5,
+                "y": 342.25
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                24.0,
+                257.5
+              ],
+              "actual_point": {
+                "x": 24,
+                "y": 257.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                1176,
+                367.5
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 24,
+            "y": 257.5
+          },
+          "status": "PASS"
+        }
+      ],
+      "errors": [],
+      "actual_harness_exit": 0,
+      "status": "PASS",
+      "owned_remaining_after_exit": []
+    }
+  ]
+}

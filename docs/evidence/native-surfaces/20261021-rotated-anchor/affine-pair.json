@@ -1,0 +1,23 @@
+{
+  "fixture": "scripts/test-popup-transformed-anchor.py",
+  "fixture_sha256": "e4b935ce8a78f25292e5b9bfda6d69c36e251909b4b5c9a637cf9a3d7f65d853",
+  "runs": [
+    {
+      "source_sha": "ac40206d164f892bba1f87d3d9b13e1160e61792",
+      "actual_exit": 1,
+      "stdout": "",
+      "first_assertion": "AssertionError [ERR_ASSERTION]: projected tangent extent: 214 != 160.5"
+    },
+    {
+      "source_sha": "85fbd4b35d2a940bd04f6b0dbb9ebef7fafd1bb9",
+      "actual_exit": 0,
+      "stdout": "TRANSFORMED_POPUP_ANCHOR_PASS 1536 checks: rotation, scale, sub-rect, four Edges and overrides",
+      "first_assertion": null
+    }
+  ],
+  "source_contracts_at_85fbd4b35": {
+    "scripts/test-perimeter-contracts.sh": 0,
+    "scripts/test-quick-notes-corner-contract.py": 0
+  },
+  "canonical_at_85fbd4b35": "NOT_RUN"
+}
