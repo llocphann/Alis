@@ -1,0 +1,23 @@
+{
+  "recorded_at_utc": "2026-10-21T02:57:33.292401+00:00",
+  "human_reply": "Đã thử: cả hai đều ổn",
+  "question_scope": {
+    "issue_108": "about 20 varying-position right-clicks including four corners",
+    "issue_72": "Clock/Resources source-to-popup hover transfer"
+  },
+  "installed_metadata_commit": "81fd726a0",
+  "current_physical_outputs": [
+    {
+      "logical_size": [
+        1920,
+        1200
+      ],
+      "scale": 1.0
+    }
+  ],
+  "limits": [
+    "No physical multi-output was available.",
+    "This acceptance does not install or verify the new editor milestone.",
+    "The remaining Popup families and exact canonical validation are separate."
+  ]
+}

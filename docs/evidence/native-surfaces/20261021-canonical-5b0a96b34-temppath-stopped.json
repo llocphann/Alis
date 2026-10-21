@@ -1,0 +1,69 @@
+{
+  "source_sha": "5b0a96b34e3df73d01677b59f7a206c94a7256cf",
+  "receipt": {
+    "source_sha": "5b0a96b34e3df73d01677b59f7a206c94a7256cf",
+    "argv": [
+      "bash",
+      "scripts/validate-maintainer-local.sh",
+      "--current-repo"
+    ],
+    "actual_exit": -15,
+    "status": "STOPPED",
+    "stop_reason": "fixture_tmp_path_unix_socket_bound",
+    "elapsed_seconds": 440.7,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "f9d971551aced35e571843c879b6497779d238970c0c253cf5be8d3ba6541c84"
+  },
+  "started": 68,
+  "settled": 67,
+  "unsettled": 1,
+  "pass": 65,
+  "fail": 2,
+  "skip": 0,
+  "failed": [
+    [
+      "57",
+      "Python regression: scripts/test-CAST-F01-live-dbus-scan.py",
+      "FAIL"
+    ],
+    [
+      "66",
+      "Python regression: scripts/test-abyss-compact-editor-runtime.py",
+      "FAIL"
+    ]
+  ],
+  "last_started": [
+    [
+      "68",
+      "Python regression: scripts/test-abyss-connection-region-runtime.py"
+    ]
+  ],
+  "scope": "Partial canonical STOPPED for excessive fixture TMPDIR Unix socket path; not a complete PASS. Only CAST failure has matched path-length diagnosis; editor FAIL remains retained without causal attribution.",
+  "temp_path_diagnostic": {
+    "source_sha": "5b0a96b34e3df73d01677b59f7a206c94a7256cf",
+    "socket_probe": [
+      {
+        "kind": "long",
+        "socket_path_bytes": 155,
+        "socket_created": false,
+        "exit_before_cleanup": 1,
+        "actual_exit": 1,
+        "stderr": "dbus-daemon[92076]: Failed to start message bus: Socket name too long\n\n"
+      },
+      {
+        "kind": "short",
+        "socket_path_bytes": 52,
+        "socket_created": true,
+        "exit_before_cleanup": null,
+        "actual_exit": 0,
+        "stderr": ""
+      }
+    ],
+    "same_source_cast_short_tmp": {
+      "actual_exit": 0,
+      "stdout": "CAST_F01_REAL_DBUS_SCAN_PASS: busctl JSON + live bus + real bridge\n",
+      "stderr": ""
+    }
+  }
+}

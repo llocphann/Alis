@@ -45,11 +45,21 @@
     "left"
   ],
   "static_contracts": "contracts.json",
-  "fixture_reproduction": "Run probe.py explicitly from a pinned checkout with PYTHONPATH=<checkout>/scripts, ALIS_COMPACT_EDITOR_SOURCE=<checkout>, and ALIS_COMPACT_EDITOR_EVIDENCE=<private-output-dir>. Probes temporarily focus only their owned private Niri and restore the prior target.",
+  "fixture_reproduction": "Explicitly run clip-probe.py or scope-probe.py from a pinned checkout with PYTHONPATH=<checkout>/scripts, ALIS_COMPACT_EDITOR_SOURCE=<checkout>, ALIS_COMPACT_EDITOR_EVIDENCE=<private-output-dir>. The owned private Niri is focused and the prior target restored; no installed data is modified.",
   "gates": {
     "full_canonical": "NOT_RUN at this source",
     "installed_desktop": "UNRUN",
     "physical_multi_output": "UNRUN",
     "owner_acceptance": "UNRUN"
+  },
+  "image_provenance": {
+    "side-before.png": {
+      "source_sha": "6f42115bf8d7d723f3fad97e2f9048e5333ce218",
+      "probe": "editor clip diagnostic, failure capture"
+    },
+    "side-after.png": {
+      "source_sha": "2099aff75fc69d96800503859788f0cd1295a33a",
+      "probe": "full focused native editor, layout-0-right"
+    }
   }
 }
