@@ -45,6 +45,7 @@ ShellRoot {
  TestCase {
   id:test;when:false;optional:true
   function check(value,label){root.checks++;if(!value)throw new Error(label)}
+  function centerY(target,ancestor){return target.mapToItem(ancestor,0,target.height/2).y}
   function item(name){const result=findChild(editor,name);check(!!result,"missing "+name);return result}
   function frame(label){let done=false;check(scene.grabToImage(result=>{root.frames++;if(label&&Quickshell.env("ALIS_COMPACT_EDITOR_EVIDENCE"))check(result.saveToFile(Quickshell.env("ALIS_COMPACT_EDITOR_EVIDENCE")+"/"+label+".png"),"capture write");done=true}),"capture refused");tryVerify(()=>done,4000)}
   function settle(edge){wait(130);editor.toolbarEdge=edge;wait(100);check(waitForPolish(editor.Window.window,3000),"layout polish did not settle")}
@@ -120,8 +121,7 @@ ShellRoot {
      if(modeHeader.columns===2) {
       // GridLayout centers controls of different heights within the row.
       // Comparing their top edges rejects the intended 28px/30px pairing.
-      const rowCenter=(item)=>item.mapToItem(scroll.contentItem,0,item.height/2).y
-      check(Math.abs(rowCenter(tabs)-rowCenter(scope))<1,
+      check(Math.abs(centerY(tabs,scroll.contentItem)-centerY(scope,scroll.contentItem))<1,
           "tabs and output scope are not centered on the same row")
       check(origin(tabs).x+tabs.width<=origin(scope).x+.5,
           "tabs overlap the output scope")
@@ -274,12 +274,12 @@ ShellRoot {
      if(!editor.toolbarOnHorizontalEdge) {
       const joinPoint=ipcJoin.mapToItem(scroll.contentItem,0,0)
       const tabsPoint=tabs.mapToItem(scroll.contentItem,0,0)
-      check(Math.abs(joinPoint.y-tabsPoint.y)<1.5,
+      check(Math.abs(centerY(ipcJoin,scroll.contentItem)-centerY(tabs,scroll.contentItem))<1.5,
         "side IPC Join icon must move next to the IPC tab")
       const outputPoint=outputPicker.mapToItem(scroll.contentItem,0,0)
       const checkPoint=outputCheckbox.mapToItem(scroll.contentItem,0,0)
       if(scroll.width>=200*scale)
-       check(Math.abs(outputPoint.y-checkPoint.y)<1.5,
+       check(Math.abs(centerY(outputPicker,scroll.contentItem)-centerY(outputCheckbox,scroll.contentItem))<1.5,
          "side output dropdown and checkbox must share a line")
       for(const [item,limit] of [[chooser,placement.compactKindWidth],
           [edgeCombo,placement.compactEdgeWidth],
@@ -311,7 +311,10 @@ ShellRoot {
       if(scene.width>720*scale)
        check(item("abyssEdgeEditorBody").span<600*scale,
          "IPC toolbar retains avoidable empty horizontal width")
-      check(Math.abs(coords(ipcJoin).y-ys[0])<1.5,"IPC corner toggle not aligned")
+      check(Math.abs(centerY(ipcJoin,scroll.contentItem)-centerY(chooser,scroll.contentItem))<1.5,
+        "IPC corner toggle not centered with the dropdown row")
+      check(coords(alignCombo).x+alignCombo.width<=coords(ipcJoin).x+.5,
+        "IPC corner toggle overlaps the dropdown row")
       if(scene.width-48>=editor.ipcToolbarSpan)
        check(Math.abs(item("abyssEdgeEditorBody").span-editor.ipcToolbarSpan)<1.5,
          "IPC toolbar span includes avoidable blank width")
