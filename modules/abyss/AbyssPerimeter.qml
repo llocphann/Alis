@@ -1182,6 +1182,10 @@ Scope {
                 // Its painted padding/shoulders also retain the hover lease.
                 includeEdgeConnection: true
                 identity: "leftPanel"
+                // Only the actual reveal strip bridges a thicker painted Edge.
+                connectionSourceRect: leftReveal.available
+                    ? Qt.rect(leftReveal.x,leftReveal.y,leftReveal.width,leftReveal.height)
+                    : Qt.rect(0,0,0,0)
                 controller: liquid
                 anchors.fill: parent
                 edge: window.positionEdge(identity,ShellLayoutController.sidebarAssignments().featureSidebar)
@@ -1207,6 +1211,9 @@ Scope {
                 stableContentSize: true
                 includeEdgeConnection: true
                 identity: "rightPanel"
+                connectionSourceRect: rightReveal.available
+                    ? Qt.rect(rightReveal.x,rightReveal.y,rightReveal.width,rightReveal.height)
+                    : Qt.rect(0,0,0,0)
                 controller: liquid
                 anchors.fill: parent
                 edge: window.positionEdge(identity,ShellLayoutController.sidebarAssignments().systemSidebar)
