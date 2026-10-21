@@ -1,0 +1,8 @@
+  INFO: Launching config: "/tmp/alis-clip-history-pwm114hf/shell.qml"
+  INFO: Shell ID: "8415e00e80f611619027be75b8248316" Path ID "8415e00e80f611619027be75b8248316"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/ktsqbd9nt/log.qslog"
+  WARN: --- WARNING ---
+  WARN: WAYLAND_DISPLAY is present but QT_QPA_PLATFORM is "offscreen"
+  WARN: If you are actually running wayland, set QT_QPA_PLATFORM to "wayland" or most functionality will be broken.
+  INFO: Configuration Loaded
+ ERROR qml: CLIP_HISTORY_FAIL rows 20 expected 13

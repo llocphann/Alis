@@ -1,0 +1,3 @@
+PASS: 9 history policies, exact bytes, preview collisions, image retention and bounded failure
+  INFO qml: CLIP_HISTORY_PASS 13 unique rows, 14 refresh requests, pins retained
+PASS: 20 raw entries and all payloads unchanged; 7 exact repeats hidden, 2 colliding long previews and distinct trailing newline retained
