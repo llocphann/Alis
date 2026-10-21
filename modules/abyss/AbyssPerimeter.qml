@@ -1101,7 +1101,7 @@ Scope {
                 available: window.sidebarRevealAvailable && (Config.options?.enabledPanels ?? []).includes("abyssSidebarLeft")
                 open: leftPanel.open
                 transientOpen: GlobalStates.sidebarLeftTransient
-                bodyItem: leftPanel.contentParent
+                bodyItem: leftPanel.hoverParent
                 onRevealRequested: GlobalStates.openSidebarLeft(window.outputName, true)
                 onHideRequested: if (GlobalStates.sidebarLeftPresentationOutput===window.outputName) GlobalStates.closeSidebarLeft()
             }
@@ -1111,7 +1111,7 @@ Scope {
                 available: window.sidebarRevealAvailable && (Config.options?.enabledPanels ?? []).includes("abyssSidebarRight")
                 open: rightPanel.open
                 transientOpen: GlobalStates.sidebarRightTransient
-                bodyItem: rightPanel.contentParent
+                bodyItem: rightPanel.hoverParent
                 onRevealRequested: GlobalStates.openSidebarRight(window.outputName, true)
                 onHideRequested: if (GlobalStates.sidebarRightPresentationOutput===window.outputName) GlobalStates.closeSidebarRight()
             }
@@ -1161,6 +1161,8 @@ Scope {
                 id: leftPanel
                 // Reveal clips a final-size Sidebar; controls never reflow per frame.
                 stableContentSize: true
+                // Its painted padding/shoulders also retain the hover lease.
+                includeEdgeConnection: true
                 identity: "leftPanel"
                 controller: liquid
                 anchors.fill: parent
@@ -1185,6 +1187,7 @@ Scope {
                 id: rightPanel
                 // Reveal clips a final-size Sidebar; controls never reflow per frame.
                 stableContentSize: true
+                includeEdgeConnection: true
                 identity: "rightPanel"
                 controller: liquid
                 anchors.fill: parent
