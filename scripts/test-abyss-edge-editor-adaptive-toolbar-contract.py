@@ -241,19 +241,24 @@ for(const toolbarOnHorizontalEdge of [false,true]) {
 
 # Both side positions start at the same origin. The three IPC selectors
 # terminate at the same right-hand coordinate as output selector + scope icon.
+# Evaluate the actual bindings: a copied width formula misses narrow regressions.
+output_width=re.search(r'readonly property real sideIpcDropdownWidth:\s*([\s\S]+?)\n\s*readonly property real sideIpcSelectorWidth:',editor).group(1)
+selector_width=re.search(r'readonly property real sideIpcSelectorWidth:\s*([\s\S]+?)\n\s*required property string outputName',editor).group(1)
 subprocess.run(["node","-e",r'''
-const assert=require("node:assert/strict");
-for(const scale of [.75,1,1.25,1.75,2]) {
- for(const viewport of [175,200,220,260,400]) {
-  const action=24*scale;
-  const output=Math.min(136*scale,Math.max(86*scale,
-    viewport-(action+10*scale)));
-  const ipc=output+6*scale+action;
+const assert=require("node:assert/strict"),vm=require("node:vm");
+for(const scale of [.75,1,1.25,1.5,1.75,2])for(const actionScale of [24,30]) {
+ for(const viewport of [150,168,175,200,220,260,400]) {
+  const action=actionScale*scale;
+  const context={Appearance:{fontSizeScale:scale},toolbarScroll:{width:viewport},headerActionSize:action};
+  const output=vm.runInNewContext(process.argv[1],context,{timeout:100});
+  const ipc=vm.runInNewContext(process.argv[2],{...context,sideIpcDropdownWidth:output},{timeout:100});
   const left=12*scale;
+  assert.ok(output>=0 && output<=136*scale);
+  assert.ok(ipc<=viewport+1e-9,'scope exceeds its viewport');
   assert.ok(ipc>output);
   assert.equal(left+ipc,left+output+6*scale+action);
  }
 }
-'''],check=True)
+''',output_width,selector_width],check=True)
 
 print("abyss editor adaptive side-toolbar contract: ok")
