@@ -1,0 +1,201 @@
+{
+  "started": 463,
+  "settled": 462,
+  "pass": 424,
+  "fail": 37,
+  "skip": 1,
+  "unsettled": 1,
+  "last_started": [
+    [
+      "463",
+      "shell regression: scripts/test-make-install-lifecycle.sh"
+    ]
+  ],
+  "receipt": {
+    "source_sha": "11c3d91737b0ce7074507abf40f56e987fa3629d",
+    "argv": [
+      "bash",
+      "scripts/validate-maintainer-local.sh",
+      "--current-repo"
+    ],
+    "actual_exit": -15,
+    "status": "STOPPED",
+    "stop_reason": "quota_stop",
+    "elapsed_seconds": 2099.2,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "161b605b34699a02fa7b3be5d3e3451e4e427df0f6952e2cd7f65ad552733cdb"
+  },
+  "failed": [
+    {
+      "check": "96",
+      "label": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py"
+    },
+    {
+      "check": "103",
+      "label": "Python regression: scripts/test-abyss-module-locks-runtime.py"
+    },
+    {
+      "check": "104",
+      "label": "Python regression: scripts/test-abyss-multi-selection-runtime.py"
+    },
+    {
+      "check": "111",
+      "label": "Python regression: scripts/test-abyss-panel-material-settings-runtime.py"
+    },
+    {
+      "check": "125",
+      "label": "Python regression: scripts/test-abyss-round0-editor-controls.py"
+    },
+    {
+      "check": "138",
+      "label": "Python regression: scripts/test-abyss-width-affects-modules-runtime.py"
+    },
+    {
+      "check": "149",
+      "label": "Python regression: scripts/test-bar-cava-profile-runtime.py"
+    },
+    {
+      "check": "165",
+      "label": "Python regression: scripts/test-calendar-weather-composition-contract.py"
+    },
+    {
+      "check": "176",
+      "label": "Python regression: scripts/test-clipboard-watcher-contract.py"
+    },
+    {
+      "check": "191",
+      "label": "Python regression: scripts/test-dashboard-freeform-contract.py"
+    },
+    {
+      "check": "195",
+      "label": "Python regression: scripts/test-dashboard-music-browser-navigation-contract.py"
+    },
+    {
+      "check": "199",
+      "label": "Python regression: scripts/test-dashboard-notes-markdown-contract.py"
+    },
+    {
+      "check": "200",
+      "label": "Python regression: scripts/test-dashboard-notes-markdown-runtime.py"
+    },
+    {
+      "check": "214",
+      "label": "Python regression: scripts/test-desktop-context-menu-native.py"
+    },
+    {
+      "check": "215",
+      "label": "Python regression: scripts/test-desktop-widget-editor-coordinates.py"
+    },
+    {
+      "check": "218",
+      "label": "Python regression: scripts/test-dock-abyss-hover-orientation-contract.py"
+    },
+    {
+      "check": "245",
+      "label": "Python regression: scripts/test-light-mode-upstream-contract.py"
+    },
+    {
+      "check": "247",
+      "label": "Python regression: scripts/test-local-ai-gguf-runtime.py"
+    },
+    {
+      "check": "248",
+      "label": "Python regression: scripts/test-local-model-folder.py"
+    },
+    {
+      "check": "258",
+      "label": "Python regression: scripts/test-material-only-global-style-contract.py"
+    },
+    {
+      "check": "267",
+      "label": "Python regression: scripts/test-notification-center-bottom-right-contract.py"
+    },
+    {
+      "check": "309",
+      "label": "Python regression: scripts/test-screenshot-pointer-runtime.py"
+    },
+    {
+      "check": "310",
+      "label": "Python regression: scripts/test-settings-concise-copy-surface.py"
+    },
+    {
+      "check": "321",
+      "label": "Python regression: scripts/test-shell-surface-contracts.py"
+    },
+    {
+      "check": "335",
+      "label": "Python regression: scripts/test-theme-seed-cache.py"
+    },
+    {
+      "check": "350",
+      "label": "Python regression: scripts/test-wallpaper-background-apply-runtime.py"
+    },
+    {
+      "check": "351",
+      "label": "Python regression: scripts/test-wallpaper-carousel-runtime.py"
+    },
+    {
+      "check": "352",
+      "label": "Python regression: scripts/test-wallpaper-color-preview-runtime.py"
+    },
+    {
+      "check": "358",
+      "label": "Python regression: scripts/test-wallpaper-preview-palette-cache.py"
+    },
+    {
+      "check": "368",
+      "label": "Python regression: scripts/test-weekly-planner-expanded-event-editor-contract.py"
+    },
+    {
+      "check": "390",
+      "label": "shell regression: scripts/test-abyss-editor-runtime.sh"
+    },
+    {
+      "check": "393",
+      "label": "shell regression: scripts/test-abyss-network-popups.sh"
+    },
+    {
+      "check": "399",
+      "label": "shell regression: scripts/test-abyss-shared-content.sh"
+    },
+    {
+      "check": "402",
+      "label": "shell regression: scripts/test-abyss-utilities-popup.sh"
+    },
+    {
+      "check": "417",
+      "label": "shell regression: scripts/test-brand-canonical-contracts.sh"
+    },
+    {
+      "check": "457",
+      "label": "shell regression: scripts/test-local-distribution.sh"
+    },
+    {
+      "check": "460",
+      "label": "shell regression: scripts/test-local-required-contracts.sh"
+    }
+  ],
+  "schema": 1,
+  "status": "STOPPED",
+  "reason": "quota_stop",
+  "observed_primary_used_percent": 98,
+  "source_sha": "11c3d91737b0ce7074507abf40f56e987fa3629d",
+  "canonical_log_sha256": "f26e7eaf1d9084ff520d93584a78ccd7d292ea452c16fcb4024cdf68ade5c2aa",
+  "claim": "Incomplete exact-SHA maintainer run; no whole-suite PASS or failure attribution.",
+  "scoped_pass_checks": [
+    {
+      "check": 91,
+      "label": "scripts/test-abyss-input-region-contract.py"
+    },
+    {
+      "check": 105,
+      "label": "scripts/test-abyss-niri-hover-layer-contract.py"
+    },
+    {
+      "check": 129,
+      "label": "scripts/test-abyss-sidebar-connection-runtime.py"
+    }
+  ],
+  "raw_evidence": "Private durable native-checks state; source and actual exit retained."
+}
