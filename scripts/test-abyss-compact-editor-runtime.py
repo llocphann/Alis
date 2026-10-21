@@ -291,8 +291,9 @@ ShellRoot {
       for(const [item,limit] of [[chooser,placement.compactKindWidth],
           [edgeCombo,placement.compactEdgeWidth],
           [alignCombo,placement.compactAlignmentWidth]]) {
-       check(item.width<=limit+1 && item.width<scroll.width-10*scale,
-         "side IPC trigger is not content-sized")
+       check(Math.abs(item.width-editor.sideIpcSelectorWidth)<1.5
+           && item.width<scroll.width-10*scale,
+         "side IPC triggers do not share the bounded scope width")
        check(item.popup.width>=limit-1,
          "side IPC popup should reveal full choice labels")
       }
