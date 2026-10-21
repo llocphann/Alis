@@ -259,6 +259,7 @@ ShellRoot {
            "Module fields do not end at the last Module action icon")
      }
      const point=(item)=>item.mapToItem(scroll.contentItem,0,0)
+     const viewportBeforeToggle=scroll.width
      const before=[point(scaleSlider),point(join),point(rounding)]
      const wasScaling=editor.edgeWidthAffectsModules[editor.editingEdge]!==false
      check(join.enabled===!wasScaling && rounding.enabled===!wasScaling,
@@ -269,8 +270,14 @@ ShellRoot {
      check(join.enabled===wasScaling && rounding.enabled===wasScaling,
          "Join/rounding state failed to follow width mode")
      const after=[point(scaleSlider),point(join),point(rounding)]
+     const viewportDelta=scroll.width-viewportBeforeToggle
+     layout.widthModeViewport=[viewportBeforeToggle,scroll.width]
+     // A fitted canvas can resize when Edge clearance changes. The Join
+     // action follows its right boundary; left-aligned controls and all row
+     // heights stay fixed. With an unchanged viewport, no x movement is allowed.
      for(let i=0;i<before.length;i++)
-      check(Math.abs(before[i].x-after[i].x)<.6 && Math.abs(before[i].y-after[i].y)<.6,
+      check(Math.abs(after[i].x-before[i].x-(i===1?viewportDelta:0))<.6
+          && Math.abs(before[i].y-after[i].y)<.6,
           "fine control jumped position at index "+i)
      click("abyssScaleModulesToggle");wait(100)
      check((editor.edgeWidthAffectsModules[editor.editingEdge]!==false)===wasScaling,
