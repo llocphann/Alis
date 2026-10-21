@@ -27,12 +27,15 @@ assert 'columns:root.compactIpcEditor' in positions
 assert '? (root.compactVertical ? 1 : 4)' in positions
 assert 'id:compactKindChoice' in positions
 assert 'property alias compactKindCombo: compactKindChoice' in positions
-assert positions.count('Layout.preferredWidth:root.compactIpcEditor') == 3
+for selector in ['compactKindChoice', 'edgeChoice', 'alignmentChoice']:
+    block=positions.split('id:'+selector,1)[1].split('onActivated:',1)[0]
+    assert 'Layout.preferredWidth:root.compactIpcEditor' in block, selector
+    assert 'root.compactSideSelectorWidth' in block, selector
 assert 'property bool compactSideToolbar: false' in positions
 assert 'property Item compactCornerHost: null' in positions
 assert 'root.compactCornerHost : ipcPositionSelectorRow' in positions
 assert 'compactCornerHost:root.toolbarOnHorizontalEdge ? null : editorModeTabs' in editor
-assert 'font.pixelSize:root.toolbarOnHorizontalEdge' in editor
+assert 'font.pixelSize:root.compactHeaderActions' in editor
 assert 'root.headerActionSize' in editor
 assert 'columns: root.toolbarOnHorizontalEdge' in editor
 assert 'objectName: "abyssEditorHeader"' in editor
@@ -170,7 +173,9 @@ assert left.count('objectName:"abyssModuleCustomSizeToggle"') == 1
 assert left.count('objectName:"abyssModuleJoinCorner"') == 1
 assert 'AbyssCheckBox {' not in selected
 assert 'onToggled:root.change("customSize",checked)' in selected
-assert 'onToggled:root.change("joinCorner",checked)' in selected
+join=left.split('objectName:"abyssModuleJoinCorner"',1)[1].split('id:moduleAlignmentRow',1)[0]
+assert 'checked:root.targets.length>0 && root.targets.every(p=>p.joinCorner)' in join
+assert 'onToggled:root.change("joinCorner",checked)' in join
 assert right.count('id:scaleModulesRow') == 1
 assert right.count('objectName:"abyssJoinNearbyModules"') == 1
 assert right.count('objectName:"abyssRoundZeroCorners"') == 1

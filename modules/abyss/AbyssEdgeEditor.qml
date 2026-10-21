@@ -50,7 +50,7 @@ Item {
     readonly property real sideIpcDropdownWidth: Math.min(
         136 * Appearance.fontSizeScale,
         Math.max(0,
-            toolbarScroll.width - (headerActionSize + 10 * Appearance.fontSizeScale)))
+            toolbarScroll.width - (headerActionSize + Math.max(16,10 * Appearance.fontSizeScale))))
     readonly property real sideIpcSelectorWidth: sideIpcDropdownWidth
         + 6 * Appearance.fontSizeScale + headerActionSize
     required property string outputName
@@ -907,12 +907,11 @@ Item {
                             // IPC selectors extend through the toggle's right edge;
                             // output selection stops just before the toggle.
                             Layout.preferredWidth:root.toolbarOnHorizontalEdge
-                                ? 116*Appearance.fontSizeScale : root.sideIpcDropdownWidth
+                                ? Math.min(116*Appearance.fontSizeScale,root.sideIpcDropdownWidth) : root.sideIpcDropdownWidth
                             Layout.maximumWidth:root.toolbarOnHorizontalEdge
-                                ? 116*Appearance.fontSizeScale : root.sideIpcDropdownWidth
-                            popupMinimumWidth:root.toolbarOnHorizontalEdge
-                                ? 0 : Math.max(116*Appearance.fontSizeScale,
-                                    root.sideIpcDropdownWidth)
+                                ? Math.min(116*Appearance.fontSizeScale,root.sideIpcDropdownWidth) : root.sideIpcDropdownWidth
+                            popupMinimumWidth:Math.max(116*Appearance.fontSizeScale,
+                                root.sideIpcDropdownWidth)
                             textRole:"label";valueRole:"value"
                             model:[{label:"All outputs",value:""},
                                 {label:root.outputName,value:root.outputName}]

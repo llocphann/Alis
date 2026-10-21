@@ -96,7 +96,7 @@ ShellRoot {
          "editor button exceeds compact square size")
      tryVerify(()=>body.presented&&body.ready,3000)
      check(!editor.layoutConflicts.length,"fixture exceeds actual available module capacity")
-     for(const name of ["abyssLayoutUndo","abyssLayoutCancel","abyssLayoutDone","abyssEditorConfirmAdd","abyssModulePositionLock","abyssSelectionEnabled","abyssSelectionRemove"])
+     for(const name of ["abyssLayoutUndo","abyssLayoutCancel","abyssLayoutDone","abyssEditorModulesMode","abyssEditorIpcMode","abyssEditorConfirmAdd","abyssModulePositionLock","abyssSelectionEnabled","abyssSelectionRemove"])
       control(name)
      // The selected-module dropdown was intentionally removed. The only
      // module picker is the add-module palette; module selection remains on

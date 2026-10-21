@@ -121,7 +121,9 @@ assert 'readonly property real controlsSpan:Math.max(0,' in editor
 assert 'Math.min(width,moduleHeaderActions.implicitWidth)' in editor
 assert editor.count('editorCompact:true') == 6
 assert editor.count('Layout.preferredWidth:20*Appearance.fontSizeScale') == 3
-assert editor.count('spacing:2') >= 8, 'merging rows should not add fake spacing'
+module_actions=editor.split('id:moduleHeaderActions',1)[1].split('id:moduleAlignmentRow',1)[0]
+assert module_actions.count('columnSpacing:2') == 3
+assert 'objectName:"abyssModuleSelectionActions"' in module_actions
 assert 'root.editorSquare ? 17 * Appearance.fontSizeScale' in button
 assert 'objectName:"abyssButtonCenteredGlyph"' in button
 assert 'rightPadding:editorCompact ? 46*Appearance.fontSizeScale : 52' in (root / "modules/abyss/looks/AbyssSlider.qml").read_text()
@@ -177,7 +179,7 @@ assert 'id:edgeGapAndSizeRow' in editor
 assert 'id:edgeWidthRow' in editor
 assert 'root.ipcToolbarSpan : root.moduleToolbarSpan' in editor
 assert 'columns:1;rowSpacing:4*Appearance.fontSizeScale' in editor
-assert editor.count('AbyssCheckBox {') == 1
+assert editor.count('objectName:"abyssEditorOutputOnly"') == 1
 assert 'visible:root.edgeWidthAffectsModules[root.editingEdge]===false' not in editor
 assert 'enabled:root.edgeWidthAffectsModules[root.editingEdge]===false' in editor
 assert 'root.expandedControls ? 860 : 720' not in editor
