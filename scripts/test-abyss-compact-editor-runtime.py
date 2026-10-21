@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from native_test_session import private_wayland, run_qs
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("ALIS_COMPACT_EDITOR_SOURCE", Path(__file__).resolve().parents[1])).resolve()
 OUTPUT = Path(os.environ["ALIS_COMPACT_EDITOR_EVIDENCE"]).resolve() if os.environ.get("ALIS_COMPACT_EDITOR_EVIDENCE") else None
 if OUTPUT:
     OUTPUT.mkdir(parents=True, exist_ok=True)
@@ -118,8 +118,13 @@ ShellRoot {
      const outputCheckbox=control("abyssEditorOutputOnly")
      const origin=(item)=>item.mapToItem(scroll.contentItem,0,0)
      if(modeHeader.columns===2) {
-      check(Math.abs(origin(tabs).y-origin(scope).y)<1,
-          "tabs and output scope do not share the first row")
+      // GridLayout centers controls of different heights within the row.
+      // Comparing their top edges rejects the intended 28px/30px pairing.
+      const rowCenter=(item)=>item.mapToItem(scroll.contentItem,0,item.height/2).y
+      check(Math.abs(rowCenter(tabs)-rowCenter(scope))<1,
+          "tabs and output scope are not centered on the same row")
+      check(origin(tabs).x+tabs.width<=origin(scope).x+.5,
+          "tabs overlap the output scope")
       check(origin(tabs).x<origin(sharedOutput).x
           && origin(sharedOutput).x<origin(outputCheckbox).x,
           "first row is not tabs-left / dropdown-checkbox-right")
