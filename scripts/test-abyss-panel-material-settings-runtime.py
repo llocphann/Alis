@@ -139,7 +139,9 @@ ShellRoot {
                 print(result.stdout); raise SystemExit(1)
             for line in result.stdout.splitlines():
                 if marker in line: print(line)
-            saved = json.loads(config.read_text())
+            # Config.filePath writes Alis; keep the legacy fixture seed untouched.
+            assert config.read_text() == json.dumps(value)
+            saved = json.loads((folder / "config/alis/config.json").read_text())
             assert saved["abyss"]["content"]["opacity"] == .75
             assert saved["abyss"]["content"]["blurRadius"] == 12
     print("PASS: actual Settings callbacks and Config disk readback/restart; owner config untouched")

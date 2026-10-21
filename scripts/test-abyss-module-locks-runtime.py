@@ -144,7 +144,10 @@ with tempfile.TemporaryDirectory(prefix="alis-edge-locks-") as name:
             (dest/(action+".log")).write_text(result.stdout)
             if result.returncode or "ABYSS_LOCK_NATIVE_PASS" not in result.stdout or any(token in result.stdout for token in ["ABYSS_LOCK_NATIVE_FAIL","ReferenceError:","TypeError:","Binding loop","Unable to assign","is not a type","Failed to load configuration"]):
                 print(result.stdout);raise SystemExit(1)
-            receipt=json.loads((cfg/"config.json").read_text())
+            # QML saves through Config.filePath in the canonical Alis namespace.
+            # The historical seed must remain intact rather than be read as output.
+            assert (cfg/"config.json").read_text() == json.dumps(data)
+            receipt=json.loads((folder/"config/alis/config.json").read_text())
             assert receipt["abyss"]["modules"]["placements"][0]["locked"]
             (dest/(action+"-config.json")).write_text(json.dumps(receipt["abyss"]["modules"],indent=2)+"\n")
             for line in result.stdout.splitlines():
