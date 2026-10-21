@@ -1,0 +1,445 @@
+[
+  {
+    "run": "editor-centered-bdab42197",
+    "source_sha": "bdab421977c21c453ceb5ff8d135e900e8f8b8ea",
+    "argv": [
+      "python3",
+      "-B",
+      "test-abyss-compact-editor-runtime.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 7.9,
+    "owned_at_normal_exit": [
+      59378,
+      59379
+    ],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "9c7d20000a3e6824c1e1ab266fbb00281746498bab9b5f286026242ad5db63eb",
+    "actual_native_exit": 0,
+    "fixture_sha256": "0c083dca1afaa35413f5e0696c87ad30aee87a1f0d8e1a5aa0bf760a85e62efd",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL IPC corner toggle not aligned"
+    ]
+  },
+  {
+    "run": "editor-centers-6f42115bf",
+    "source_sha": "6f42115bf8d7d723f3fad97e2f9048e5333ce218",
+    "argv": [
+      "python3",
+      "-B",
+      "test-abyss-compact-editor-runtime.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 9.0,
+    "owned_at_normal_exit": [
+      60594,
+      60596
+    ],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "98c05cac37a6af5bf60ae28721d049a10e8ddb1695f254bbb1e9451d1160bc59",
+    "actual_native_exit": 0,
+    "fixture_sha256": "bcae7818513017346ac299c8739b79b924a618addae2ec152f4ed4390e81189b",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL control outside its real clip {\"name\":\"abyssSelectionRemove\",\"x\":198,\"y\":90,\"w\":28,\"h\":30,\"clipW\":220,\"clipH\":390}"
+    ]
+  },
+  {
+    "run": "editor-clip-diagnostic-6f42115bf",
+    "source_sha": "6f42115bf8d7d723f3fad97e2f9048e5333ce218",
+    "argv": [
+      "python3",
+      "-B",
+      "editor-clip-diagnostic.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 9.1,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "edf984512b3b0efa05c9255b34632dc816d25a884147455154bd652db4608c18",
+    "actual_native_exit": 0,
+    "fixture_sha256": "b73de641aee695a9db2d2ab6920964452b216aa309b9a32ae208415676896470",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL control outside its real clip {\"edge\":\"right\",\"viewport\":[800,800],\"fontScale\":1,\"name\":\"abyssSelectionRemove\",\"x\":198,\"y\":90,\"w\":28,\"h\":30,\"clipW\":220,\"clipH\":390}"
+    ]
+  },
+  {
+    "run": "editor-clipping-baseline-6f42115bf",
+    "source_sha": "6f42115bf8d7d723f3fad97e2f9048e5333ce218",
+    "argv": [
+      "python3",
+      "-B",
+      "editor-control-clip.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 6.0,
+    "owned_at_normal_exit": [
+      69362,
+      69364
+    ],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "a619a3632e0da534ea967416a862b83bcfbb11cdffb4ffb55a2c1ded2972d21c",
+    "actual_native_exit": 0,
+    "fixture_sha256": "371745567872f1650adf0809ff4a4c990e37c6a7b5b61868ccefbbd93adcd070",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL control outside its real clip {\"edge\":\"right\",\"viewport\":[800,800],\"fontScale\":1,\"name\":\"abyssSelectionRemove\",\"x\":198,\"y\":90,\"w\":28,\"h\":30,\"clipW\":220,\"clipH\":390}"
+    ]
+  },
+  {
+    "run": "editor-corner-diagnostic-bdab42197",
+    "source_sha": "bdab421977c21c453ceb5ff8d135e900e8f8b8ea",
+    "argv": [
+      "python3",
+      "-B",
+      "editor-centered-diagnostic.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 7.7,
+    "owned_at_normal_exit": [
+      59892,
+      59894
+    ],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "df8a59e5fca76fdbbff734346e2fa7f2e5de21b2032bf7709d40f916c9a82c2c",
+    "actual_native_exit": 0,
+    "fixture_sha256": "75abb7e3f2962c8e735b1bde8a1aec0f404a053cd1a766495a47ddc755469a47",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL IPC corner toggle not aligned {\"viewport\":[800,800],\"edge\":\"top\",\"scale\":1,\"join\":{\"x\":418,\"y\":70,\"w\":30,\"h\":30},\"controls\":[{\"x\":0,\"y\":66,\"w\":124,\"h\":38},{\"x\":130,\"y\":66,\"w\":128,\"h\":38},{\"x\":264,\"y\":66,\"w\":148,\"h\":38}]}"
+    ]
+  },
+  {
+    "run": "editor-row-85fbd4b35",
+    "source_sha": "85fbd4b35d2a940bd04f6b0dbb9ebef7fafd1bb9",
+    "argv": [
+      "python3",
+      "editor-row.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 5.1,
+    "owned_at_normal_exit": [
+      38298,
+      38300
+    ],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "94e5b2d2a956a9f730d6b7a553ac0472deda0347268f260969ce327ef45a8aed",
+    "actual_native_exit": 0,
+    "fixture_sha256": "f2a4d0ec8545750599c5624265d48b3bd5cf0d725522e0fa0301bdd8191867b4",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL tabs and output scope do not share the first row: {\"edge\":\"top\",\"scale\":1,\"viewport\":[800,800],\"tabs\":{\"x\":0,\"y\":34,\"w\":154,\"h\":28},\"scope\":{\"x\":162,\"y\":33,\"w\":387,\"h\":30}}"
+    ]
+  },
+  {
+    "run": "editor-scope-diagnostic-ab918957f",
+    "source_sha": "ab918957f40284b13e4663f880416ea59a64c1e9",
+    "argv": [
+      "python3",
+      "-B",
+      "editor-scope-diagnostic.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 39.6,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "19f34b47986d2d93f7c7129cd689f296e9b0fa76a4002ce33e4aa01c0134642f",
+    "actual_native_exit": 0,
+    "fixture_sha256": "ed4bf01c894bd644d9fab4327da27d5eb4025f324f1d225fdd412e24bb75f5ca",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL IPC scope picker not synced with checkbox {\"edge\":\"top\",\"viewport\":[320,240],\"fontScale\":1.5,\"outputOnly\":true,\"checked\":true,\"index\":0,\"value\":\"\",\"model\":[{\"label\":\"All outputs\",\"value\":\"\"},{\"label\":\"Display With A Very Long Name For Layout Editing\",\"value\":\"Display With A Very Long Name For Layout Editing\"}],\"measurements\":[{\"viewport\":[800,800],\"fontScale\":1,\"dark\":true,\"edge\":\"top\",\"layout\":{\"span\":589,\"depth\":238,\"area\":140182,\"height\":198}},{\"viewport\":[800,800],\"fontScale\":1,\"dark\":true,\"edge\":\"right\",\"layout\":{\"span\":464,\"depth\":260,\"area\":120640,\"height\":424}},{\"viewport\":[800,800],\"fontScale\":1,\"dark\":true,\"edge\":\"bottom\",\"layout\":{\"span\":589,\"depth\":238,\"area\":140182,\"height\":198}},{\"viewport\":[800,800],\"fontScale\":1,\"dark\":true,\"edge\":\"left\",\"layout\":{\"span\":464,\"depth\":260,\"area\":120640,\"height\":424}},{\"viewport\":[420,440],\"fontScale\":1,\"dark\":true,\"edge\":\"top\",\"layout\":{\"span\":372,\"depth\":286,\"area\":106392,\"height\":366}},{\"viewport\":[420,440],\"fontScale\":1,\"dark\":true,\"edge\":\"right\",\"layout\":{\"span\":392,\"depth\":260,\"area\":101920,\"height\":424}},{\"viewport\":[420,440],\"fontScale\":1,\"dark\":true,\"edge\":\"bottom\",\"layout\":{\"span\":372,\"depth\":286,\"area\":106392,\"height\":366}},{\"viewport\":[420,440],\"fontScale\":1,\"dark\":true,\"edge\":\"left\",\"layout\":{\"span\":392,\"depth\":260,\"area\":101920,\"height\":424}}]}"
+    ]
+  },
+  {
+    "run": "editor-toggle-diagnostic-4f9230adb",
+    "source_sha": "4f9230adb33fdda597bcf3a0f6edaf80a236cb32",
+    "argv": [
+      "python3",
+      "-B",
+      "editor-toggle-diagnostic.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 42.6,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "c1afaebed894115068d5d4afd9a8fa1b2b382399e4cedf840b7c3a4520cfe4fa",
+    "actual_native_exit": 0,
+    "fixture_sha256": "bf658a8bc352584124b20c7a224744a143a2ea93689e3b72f63a841e863e1bfc",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL fine control jumped position at index 1 {\"edge\":\"right\",\"toolbarEdge\":\"right\",\"viewport\":[320,240],\"fontScale\":1.5,\"wasScaling\":false,\"before\":[{\"x\":94,\"y\":637},{\"x\":168,\"y\":385},{\"x\":48,\"y\":280}],\"after\":[{\"x\":94,\"y\":637},{\"x\":179,\"y\":385},{\"x\":48,\"y\":280}],\"edgeWidth\":224,\"headerWidth\":203,\"conflicts\":[]}"
+    ]
+  },
+  {
+    "run": "editor-toggle-frame-4f9230adb",
+    "source_sha": "4f9230adb33fdda597bcf3a0f6edaf80a236cb32",
+    "argv": [
+      "python3",
+      "-B",
+      "editor-toggle-frame.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 7.1,
+    "owned_at_normal_exit": [
+      75489,
+      75491
+    ],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "4cb9bf617e22c651b0dc301b6f91f415e1c8475aa93efd58e61812b6622f10a0",
+    "actual_native_exit": 0,
+    "fixture_sha256": "9edf9889041f039c966cf924d9f1778d70bf92b0d45c8769add17acc5dcf11b8",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL fine control jumped position at index 1"
+    ]
+  },
+  {
+    "run": "editor-toggle-mini-4f9230adb",
+    "source_sha": "4f9230adb33fdda597bcf3a0f6edaf80a236cb32",
+    "argv": [
+      "python3",
+      "-B",
+      "editor-toggle-mini.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 7.1,
+    "owned_at_normal_exit": [
+      74505,
+      74507
+    ],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "6f96ca4996f6cdee177fb746a5a4330aa7ff6159e5211037f8d4ecd96349a08e",
+    "actual_native_exit": 0,
+    "fixture_sha256": "eb9672d97b078e2742d53273e132d3d4f76cc117feb00b11b02fd0bc6fe1bcc6",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL fine control jumped position at index 1"
+    ]
+  },
+  {
+    "run": "editor-wrap-4f9230adb",
+    "source_sha": "4f9230adb33fdda597bcf3a0f6edaf80a236cb32",
+    "argv": [
+      "python3",
+      "-B",
+      "test-abyss-compact-editor-runtime.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 42.6,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "74995d18dac96acf30ca44996406c7e3dfa4dcc69baabe72e016e10b717eac71",
+    "actual_native_exit": 0,
+    "fixture_sha256": "5ee61bb7a90e25de3d07289cd22f081636b95e01f6dc5f415f8a39540ca8c46e",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL fine control jumped position at index 1"
+    ]
+  },
+  {
+    "run": "editor-wrap-5e044c9a2",
+    "source_sha": "5e044c9a2cd73966891949dcc62b492f213c61e6",
+    "argv": [
+      "python3",
+      "-B",
+      "test-abyss-compact-editor-runtime.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 38.2,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "8b3c9556f34ba818c82d0dfafcbcdd0274e2dd684225a524b13c8144d963a4d4",
+    "actual_native_exit": 0,
+    "fixture_sha256": "5ee61bb7a90e25de3d07289cd22f081636b95e01f6dc5f415f8a39540ca8c46e",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL control outside its real clip {\"name\":\"abyssScaleModulesSlider\",\"x\":94,\"y\":51,\"w\":113,\"h\":45,\"clipW\":168,\"clipH\":96}"
+    ]
+  },
+  {
+    "run": "editor-wrap-89ad5abf8",
+    "source_sha": "89ad5abf833ae2af0de541ff0e2b9ee1b26dc540",
+    "argv": [
+      "python3",
+      "-B",
+      "test-abyss-compact-editor-runtime.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 35.6,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "88abd22d822075ca23043e578321817d7f473dc352c7fe908ca48eaff3fc657f",
+    "actual_native_exit": 0,
+    "fixture_sha256": "a2369425b3da5f75e81d0a40d06b3eccc7be2750978e0d715a9f39b1afd48043",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL control outside its real clip {\"name\":\"abyssLayoutDone\",\"x\":160,\"y\":0,\"w\":45,\"h\":45,\"clipW\":168,\"clipH\":96}"
+    ]
+  },
+  {
+    "run": "editor-wrap-9361b9b5d",
+    "source_sha": "9361b9b5d908227cf696113890230ddf1245f131",
+    "argv": [
+      "python3",
+      "-B",
+      "test-abyss-compact-editor-runtime.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 11.7,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "18098c682f1ed67ebfc78b56c68fbddbb48520c1ba5fe48f5d368b6daa558dcd",
+    "actual_native_exit": 0,
+    "fixture_sha256": "5df365a11f9b0950cf0647bb5526143b4472e6c084f537da0d92071205a764e9",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL side IPC trigger is not content-sized"
+    ]
+  },
+  {
+    "run": "editor-wrap-9bcba887e",
+    "source_sha": "9bcba887e0e986fbc24cdb8b4e35ec7bdd01534c",
+    "argv": [
+      "python3",
+      "-B",
+      "test-abyss-compact-editor-runtime.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 37.2,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "6a1f64140a7879e9929870a0a86d2b2b854a902fe11feefa6218ed6f8763ffc4",
+    "actual_native_exit": 0,
+    "fixture_sha256": "d1dae1342c58f5574907567ddec5727b79b0989d8dff941a30e1270e1d223f97",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL Edge header controls should occupy one row"
+    ]
+  },
+  {
+    "run": "editor-wrap-ab918957f",
+    "source_sha": "ab918957f40284b13e4663f880416ea59a64c1e9",
+    "argv": [
+      "python3",
+      "-B",
+      "test-abyss-compact-editor-runtime.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 39.5,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "3083469deb24b128cbacbea7fcfcd51a30d3f4395db11a9bdec894b96a0b7211",
+    "actual_native_exit": 0,
+    "fixture_sha256": "5ee61bb7a90e25de3d07289cd22f081636b95e01f6dc5f415f8a39540ca8c46e",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL IPC scope picker not synced with checkbox"
+    ]
+  },
+  {
+    "run": "editor-wrap-b1d65da77",
+    "source_sha": "b1d65da77ed6d0723d74c9ddaa143409b9c63404",
+    "argv": [
+      "python3",
+      "-B",
+      "test-abyss-compact-editor-runtime.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 36.4,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "ed64db3a9e8f9ee8d3fcb7663d4f69570db747490c5e4a6f63beba407871d7b2",
+    "actual_native_exit": 0,
+    "fixture_sha256": "e6101cce941a81ac2bf2893200e9ab1de2d4f6519816195410baf2207aadd102",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL control outside its real clip {\"name\":\"abyssEditorIpcMode\",\"x\":142,\"y\":8,\"w\":87,\"h\":42,\"clipW\":168,\"clipH\":96}"
+    ]
+  },
+  {
+    "run": "editor-wrap-be17a97e5",
+    "source_sha": "be17a97e56f0a9ae0c37fb1dbf25c73074f06eea",
+    "argv": [
+      "python3",
+      "-B",
+      "test-abyss-compact-editor-runtime.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 9.0,
+    "owned_at_normal_exit": [
+      62053,
+      62055
+    ],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "7d7cc130f3d52f15c5502b5a346e8a9aeae9973809bd3e7a11c0bd399484abae",
+    "actual_native_exit": 0,
+    "fixture_sha256": "9c194e71faea6a02dc2110b25db86d98cb0666300d55ecaba0d50a1d080eee37",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL side title and Undo/Reset/Cancel/Done must share the first line"
+    ]
+  },
+  {
+    "run": "editor-wrap-c734c3fa3",
+    "source_sha": "c734c3fa3e1489f1bec7c6e9365aa8daf02b1bd0",
+    "argv": [
+      "python3",
+      "-B",
+      "test-abyss-compact-editor-runtime.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 35.9,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "443d440d660ed94dfd7d4760a28a3084701ae05af990fcf097e905853655d56c",
+    "actual_native_exit": 0,
+    "fixture_sha256": "96725407e5b27ade46f42ac67c1c3262dd9b8c73dd6c4d0eb2ec8e4faa800b24",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL control outside its real clip {\"name\":\"abyssEditorIpcOutput\",\"x\":8,\"y\":8,\"w\":174,\"h\":42,\"clipW\":168,\"clipH\":96}"
+    ]
+  },
+  {
+    "run": "editor-wrap-d09963808",
+    "source_sha": "d0996380851027727b84c6e1a6b50a8b54b57c79",
+    "argv": [
+      "python3",
+      "-B",
+      "test-abyss-compact-editor-runtime.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 36.9,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "e5fd2b0e36e64637f8a49de9604be8efc44370ae950497888b57eaffeb75a785",
+    "actual_native_exit": 0,
+    "fixture_sha256": "e6101cce941a81ac2bf2893200e9ab1de2d4f6519816195410baf2207aadd102",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL control outside its real clip {\"name\":\"abyssModuleSelectionActions\",\"x\":0,\"y\":8,\"w\":89,\"h\":96,\"clipW\":168,\"clipH\":96}"
+    ]
+  }
+]

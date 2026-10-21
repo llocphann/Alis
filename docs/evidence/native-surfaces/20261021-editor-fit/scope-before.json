@@ -1,0 +1,20 @@
+{
+  "source_sha": "ab918957f40284b13e4663f880416ea59a64c1e9",
+  "argv": [
+    "python3",
+    "-B",
+    "editor-scope-model.py"
+  ],
+  "actual_exit": 1,
+  "status": "FAIL",
+  "stop_reason": null,
+  "elapsed_seconds": 4.6,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "1636f822a33aa472984e5fdf4ca2ec3829c64fc04ef3c8041390030b0df36738",
+  "actual_native_exit": 0,
+  "fixture_sha256": "7299ae53fa2c3bb775f7bd7faadf9367c64d8d96ff34d310ee64d6eacedb2712",
+  "terminal_markers": [
+    "ABYSS_COMPACT_EDITOR_FAIL scope index changed after model rebuild {\"local\":true,\"name\":\"B\",\"index\":0,\"value\":\"\",\"checked\":true}"
+  ]
+}

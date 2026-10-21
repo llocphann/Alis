@@ -1,0 +1,23 @@
+{
+  "source_sha": "6f42115bf8d7d723f3fad97e2f9048e5333ce218",
+  "argv": [
+    "python3",
+    "-B",
+    "editor-control-clip.py"
+  ],
+  "actual_exit": 1,
+  "status": "FAIL",
+  "stop_reason": null,
+  "elapsed_seconds": 6.0,
+  "owned_at_normal_exit": [
+    69362,
+    69364
+  ],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "a619a3632e0da534ea967416a862b83bcfbb11cdffb4ffb55a2c1ded2972d21c",
+  "actual_native_exit": 0,
+  "fixture_sha256": "371745567872f1650adf0809ff4a4c990e37c6a7b5b61868ccefbbd93adcd070",
+  "terminal_markers": [
+    "ABYSS_COMPACT_EDITOR_FAIL control outside its real clip {\"edge\":\"right\",\"viewport\":[800,800],\"fontScale\":1,\"name\":\"abyssSelectionRemove\",\"x\":198,\"y\":90,\"w\":28,\"h\":30,\"clipW\":220,\"clipH\":390}"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "source_sha": "2099aff75fc69d96800503859788f0cd1295a33a",
+  "results": [
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "scripts/test-abyss-edge-editor-adaptive-toolbar-contract.py"
+      ],
+      "actual_exit": 0,
+      "stdout": "abyss editor adaptive side-toolbar contract: ok\n",
+      "stderr": "",
+      "fixture_sha256": "6e1814585b4e8a1d970fa65b97e115bedf82c88252e4226e1853f709d49addf0"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "scripts/test-abyss-edge-editor-compact-actions-contract.py"
+      ],
+      "actual_exit": 0,
+      "stdout": "abyss editor compact action density contract: ok\n",
+      "stderr": "",
+      "fixture_sha256": "907101e90ec83b334a827686fc5cabfb68de91a87bf7da5bcbdcbb8dca0b2599"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "scripts/test-abyss-edge-editor-compact-side-contract.py"
+      ],
+      "actual_exit": 0,
+      "stdout": "abyss edge editor grouped toolbar + compact IPC contract: ok\n",
+      "stderr": "",
+      "fixture_sha256": "b57bbea43ec704410ecda49c6508d7ab64db0754ddc5104a153f59782b4bf3c4"
+    }
+  ]
+}

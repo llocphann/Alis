@@ -1,0 +1,108 @@
+{
+  "source_sha": "2099aff75fc69d96800503859788f0cd1295a33a",
+  "argv": [
+    "python3",
+    "-B",
+    "editor-scope-model.py"
+  ],
+  "actual_exit": 0,
+  "status": "PASS",
+  "stop_reason": null,
+  "elapsed_seconds": 5.2,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "722a3dc6a4fffaa73d1cc2fcfae36513b195dad401a98c955d9fb5a3e2db4f2b",
+  "actual_native_exit": 0,
+  "fixture_sha256": "7299ae53fa2c3bb775f7bd7faadf9367c64d8d96ff34d310ee64d6eacedb2712",
+  "terminal_markers": [
+    "ABYSS_COMPACT_EDITOR_PASS 41 checks 1 frames [{\"local\":true,\"name\":\"A\",\"index\":1,\"value\":\"A\",\"checked\":true},{\"local\":true,\"name\":\"B\",\"index\":1,\"value\":\"B\",\"checked\":true},{\"local\":true,\"name\":\"Display With A Very Long Name For Layout Editing\",\"index\":1,\"value\":\"Display With A Very Long Name For Layout Editing\",\"checked\":true},{\"local\":true,\"name\":\"A\",\"index\":1,\"value\":\"A\",\"checked\":true},{\"local\":false,\"name\":\"A\",\"index\":0,\"value\":\"\",\"checked\":false},{\"local\":false,\"name\":\"B\",\"index\":0,\"value\":\"\",\"checked\":false},{\"local\":false,\"name\":\"Display With A Very Long Name For Layout Editing\",\"index\":0,\"value\":\"\",\"checked\":false},{\"local\":false,\"name\":\"A\",\"index\":0,\"value\":\"\",\"checked\":false},{\"local\":true,\"name\":\"A\",\"index\":1,\"value\":\"A\",\"checked\":true},{\"local\":true,\"name\":\"B\",\"index\":1,\"value\":\"B\",\"checked\":true},{\"local\":true,\"name\":\"Display With A Very Long Name For Layout Editing\",\"index\":1,\"value\":\"Display With A Very Long Name For Layout Editing\",\"checked\":true},{\"local\":true,\"name\":\"A\",\"index\":1,\"value\":\"A\",\"checked\":true}]"
+  ],
+  "assertions": 41,
+  "captures": 1,
+  "measurements": [
+    {
+      "local": true,
+      "name": "A",
+      "index": 1,
+      "value": "A",
+      "checked": true
+    },
+    {
+      "local": true,
+      "name": "B",
+      "index": 1,
+      "value": "B",
+      "checked": true
+    },
+    {
+      "local": true,
+      "name": "Display With A Very Long Name For Layout Editing",
+      "index": 1,
+      "value": "Display With A Very Long Name For Layout Editing",
+      "checked": true
+    },
+    {
+      "local": true,
+      "name": "A",
+      "index": 1,
+      "value": "A",
+      "checked": true
+    },
+    {
+      "local": false,
+      "name": "A",
+      "index": 0,
+      "value": "",
+      "checked": false
+    },
+    {
+      "local": false,
+      "name": "B",
+      "index": 0,
+      "value": "",
+      "checked": false
+    },
+    {
+      "local": false,
+      "name": "Display With A Very Long Name For Layout Editing",
+      "index": 0,
+      "value": "",
+      "checked": false
+    },
+    {
+      "local": false,
+      "name": "A",
+      "index": 0,
+      "value": "",
+      "checked": false
+    },
+    {
+      "local": true,
+      "name": "A",
+      "index": 1,
+      "value": "A",
+      "checked": true
+    },
+    {
+      "local": true,
+      "name": "B",
+      "index": 1,
+      "value": "B",
+      "checked": true
+    },
+    {
+      "local": true,
+      "name": "Display With A Very Long Name For Layout Editing",
+      "index": 1,
+      "value": "Display With A Very Long Name For Layout Editing",
+      "checked": true
+    },
+    {
+      "local": true,
+      "name": "A",
+      "index": 1,
+      "value": "A",
+      "checked": true
+    }
+  ]
+}

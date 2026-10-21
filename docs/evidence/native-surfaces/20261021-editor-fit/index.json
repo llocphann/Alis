@@ -1,0 +1,55 @@
+{
+  "source_sha": "2099aff75fc69d96800503859788f0cd1295a33a",
+  "issues": [
+    59,
+    73
+  ],
+  "scope": "Real editor on focused private Niri, isolated config/state; no installed desktop or Owner acceptance.",
+  "changes": [
+    "Wrap intact picker/Add and selection groups before side clipping.",
+    "Fit Save/Cancel and Modules/IPC tabs on narrow scaled toolbars; retain slider minimum input width and wrap Edge action/slider rows.",
+    "Bound shared output scope and preserve full dropdown menus.",
+    "Resolve scope from the current model after output identity changes."
+  ],
+  "paired_clipping": [
+    "clipping-before.json",
+    "clipping-after.json"
+  ],
+  "paired_scope": [
+    "scope-before.json",
+    "scope-after.json"
+  ],
+  "full_focused_native": "native-editor.json",
+  "full_focused_assertions": 3639,
+  "viewport_cases": [
+    [
+      800,
+      800,
+      1
+    ],
+    [
+      420,
+      440,
+      1
+    ],
+    [
+      320,
+      240,
+      1.5
+    ]
+  ],
+  "edges": [
+    "top",
+    "right",
+    "bottom",
+    "left"
+  ],
+  "static_contracts": "contracts.json",
+  "fixture_reproduction": "Run probe.py explicitly from a pinned checkout with PYTHONPATH=<checkout>/scripts, ALIS_COMPACT_EDITOR_SOURCE=<checkout>, and ALIS_COMPACT_EDITOR_EVIDENCE=<private-output-dir>. Probes temporarily focus only their owned private Niri and restore the prior target.",
+  "gates": {
+    "full_canonical": "NOT_RUN at this source",
+    "installed_desktop": "UNRUN",
+    "physical_multi_output": "UNRUN",
+    "owner_acceptance": "UNRUN"
+  }
+}

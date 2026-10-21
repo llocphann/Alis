@@ -1,0 +1,103 @@
+{
+  "initial_row_diagnostic": "../20261021-focused-native/editor-diagnostic.json",
+  "fitted_canvas_diagnostic": {
+    "source_sha": "4f9230adb33fdda597bcf3a0f6edaf80a236cb32",
+    "argv": [
+      "python3",
+      "-B",
+      "editor-toggle-frame.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 7.1,
+    "owned_at_normal_exit": [
+      75489,
+      75491
+    ],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "4cb9bf617e22c651b0dc301b6f91f415e1c8475aa93efd58e61812b6622f10a0",
+    "actual_native_exit": 0,
+    "fixture_sha256": "9edf9889041f039c966cf924d9f1778d70bf92b0d45c8769add17acc5dcf11b8",
+    "terminal_markers": [
+      "ABYSS_COMPACT_EDITOR_FAIL fine control jumped position at index 1"
+    ]
+  },
+  "fitted_canvas_geometry": {
+    "before": [
+      {
+        "name": "abyssJoinNearbyModules",
+        "x": 168,
+        "y": 385,
+        "width": 45,
+        "implicitWidth": 45,
+        "height": 45,
+        "enabled": true
+      },
+      {
+        "name": "abyssEditingEdgeDropdown",
+        "x": 0,
+        "y": 387,
+        "width": 119,
+        "implicitWidth": 86,
+        "height": 42,
+        "enabled": true
+      },
+      {
+        "name": "abyssEdgeHeaderActions",
+        "x": 0,
+        "y": 385,
+        "width": 213,
+        "implicitWidth": 250,
+        "height": 45,
+        "enabled": true
+      }
+    ],
+    "after": [
+      {
+        "name": "abyssJoinNearbyModules",
+        "x": 179,
+        "y": 385,
+        "width": 45,
+        "implicitWidth": 45,
+        "height": 45,
+        "enabled": false
+      },
+      {
+        "name": "abyssEditingEdgeDropdown",
+        "x": 0,
+        "y": 387,
+        "width": 130,
+        "implicitWidth": 86,
+        "height": 42,
+        "enabled": true
+      },
+      {
+        "name": "abyssEdgeHeaderActions",
+        "x": 0,
+        "y": 385,
+        "width": 224,
+        "implicitWidth": 250,
+        "height": 45,
+        "enabled": true
+      }
+    ],
+    "frameBefore": {
+      "scrollWidth": 212.96000000000004,
+      "edgeWidth": 213,
+      "bodyDepth": 272
+    },
+    "frameAfter": {
+      "scrollWidth": 223.96000000000004,
+      "edgeWidth": 224,
+      "bodyDepth": 272
+    }
+  },
+  "oracle_changes": [
+    "Use vertical centers for different-height Qt controls; retain horizontal separation and stacking checks.",
+    "Scroll a viewport-height group fully into view rather than reserving an impossible 8px margin. Strict clip assertions remain.",
+    "With a fixed fitted viewport require unchanged x/y. With a measured viewport width change, only the right-aligned Join action may follow that exact delta; left-aligned controls and all y positions remain fixed."
+  ],
+  "scope_model_failure": "scope-before.json",
+  "product_failures_retained": "retained-failures.json"
+}

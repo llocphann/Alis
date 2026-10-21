@@ -1,0 +1,984 @@
+{
+  "source_sha": "2099aff75fc69d96800503859788f0cd1295a33a",
+  "argv": [
+    "python3",
+    "-B",
+    "editor-control-clip.py"
+  ],
+  "actual_exit": 0,
+  "status": "PASS",
+  "stop_reason": null,
+  "elapsed_seconds": 13.6,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "4f4b7803ae3b5eec2fd3b4d98fbc0973e83686975861000b2de2541ffc0da365",
+  "actual_native_exit": 0,
+  "fixture_sha256": "371745567872f1650adf0809ff4a4c990e37c6a7b5b61868ccefbbd93adcd070",
+  "terminal_markers": [
+    "ABYSS_COMPACT_EDITOR_PASS 731 checks 5 frames [{\"viewport\":[800,800],\"fontScale\":1,\"edge\":\"top\",\"controls\":[{\"name\":\"abyssLayoutUndo\",\"width\":30,\"height\":30},{\"name\":\"abyssLayoutReset\",\"width\":30,\"height\":30},{\"name\":\"abyssLayoutCancel\",\"width\":30,\"height\":30},{\"name\":\"abyssLayoutDone\",\"width\":30,\"height\":30},{\"name\":\"abyssEditorModulesMode\",\"width\":92,\"height\":28},{\"name\":\"abyssEditorIpcMode\",\"width\":58,\"height\":28},{\"name\":\"abyssEditorConfirmAdd\",\"width\":30,\"height\":30},{\"name\":\"abyssModuleDropdown\",\"width\":104,\"height\":28},{\"name\":\"abyssModulePositionLock\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionEnabled\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionRemove\",\"width\":28,\"height\":30},{\"name\":\"abyssModuleJoinCorner\",\"width\":30,\"height\":30},{\"name\":\"abyssEditorIpcOutput\",\"width\":116,\"height\":28},{\"name\":\"abyssEditorOutputOnly\",\"width\":30,\"height\":30}]},{\"viewport\":[800,800],\"fontScale\":1,\"edge\":\"right\",\"controls\":[{\"name\":\"abyssLayoutUndo\",\"width\":24,\"height\":24},{\"name\":\"abyssLayoutReset\",\"width\":24,\"height\":24},{\"name\":\"abyssLayoutCancel\",\"width\":24,\"height\":24},{\"name\":\"abyssLayoutDone\",\"width\":24,\"height\":24},{\"name\":\"abyssEditorModulesMode\",\"width\":92,\"height\":28},{\"name\":\"abyssEditorIpcMode\",\"width\":58,\"height\":28},{\"name\":\"abyssEditorConfirmAdd\",\"width\":30,\"height\":30},{\"name\":\"abyssModuleDropdown\",\"width\":104,\"height\":28},{\"name\":\"abyssModulePositionLock\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionEnabled\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionRemove\",\"width\":28,\"height\":30},{\"name\":\"abyssModuleJoinCorner\",\"width\":30,\"height\":30},{\"name\":\"abyssEditorIpcOutput\",\"width\":136,\"height\":28},{\"name\":\"abyssEditorOutputOnly\",\"width\":24,\"height\":24}]},{\"viewport\":[800,800],\"fontScale\":1,\"edge\":\"bottom\",\"controls\":[{\"name\":\"abyssLayoutUndo\",\"width\":30,\"height\":30},{\"name\":\"abyssLayoutReset\",\"width\":30,\"height\":30},{\"name\":\"abyssLayoutCancel\",\"width\":30,\"height\":30},{\"name\":\"abyssLayoutDone\",\"width\":30,\"height\":30},{\"name\":\"abyssEditorModulesMode\",\"width\":92,\"height\":28},{\"name\":\"abyssEditorIpcMode\",\"width\":58,\"height\":28},{\"name\":\"abyssEditorConfirmAdd\",\"width\":30,\"height\":30},{\"name\":\"abyssModuleDropdown\",\"width\":104,\"height\":28},{\"name\":\"abyssModulePositionLock\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionEnabled\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionRemove\",\"width\":28,\"height\":30},{\"name\":\"abyssModuleJoinCorner\",\"width\":30,\"height\":30},{\"name\":\"abyssEditorIpcOutput\",\"width\":116,\"height\":28},{\"name\":\"abyssEditorOutputOnly\",\"width\":30,\"height\":30}]},{\"viewport\":[800,800],\"fontScale\":1,\"edge\":\"left\",\"controls\":[{\"name\":\"abyssLayoutUndo\",\"width\":24,\"height\":24},{\"name\":\"abyssLayoutReset\",\"width\":24,\"height\":24},{\"name\":\"abyssLayoutCancel\",\"width\":24,\"height\":24},{\"name\":\"abyssLayoutDone\",\"width\":24,\"height\":24},{\"name\":\"abyssEditorModulesMode\",\"width\":92,\"height\":28},{\"name\":\"abyssEditorIpcMode\",\"width\":58,\"height\":28},{\"name\":\"abyssEditorConfirmAdd\",\"width\":30,\"height\":30},{\"name\":\"abyssModuleDropdown\",\"width\":104,\"height\":28},{\"name\":\"abyssModulePositionLock\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionEnabled\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionRemove\",\"width\":28,\"height\":30},{\"name\":\"abyssModuleJoinCorner\",\"width\":30,\"height\":30},{\"name\":\"abyssEditorIpcOutput\",\"width\":136,\"height\":28},{\"name\":\"abyssEditorOutputOnly\",\"width\":24,\"height\":24}]},{\"viewport\":[420,440],\"fontScale\":1,\"edge\":\"top\",\"controls\":[{\"name\":\"abyssLayoutUndo\",\"width\":30,\"height\":30},{\"name\":\"abyssLayoutReset\",\"width\":30,\"height\":30},{\"name\":\"abyssLayoutCancel\",\"width\":30,\"height\":30},{\"name\":\"abyssLayoutDone\",\"width\":30,\"height\":30},{\"name\":\"abyssEditorModulesMode\",\"width\":92,\"height\":28},{\"name\":\"abyssEditorIpcMode\",\"width\":58,\"height\":28},{\"name\":\"abyssEditorConfirmAdd\",\"width\":30,\"height\":30},{\"name\":\"abyssModuleDropdown\",\"width\":104,\"height\":28},{\"name\":\"abyssModulePositionLock\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionEnabled\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionRemove\",\"width\":28,\"height\":30},{\"name\":\"abyssModuleJoinCorner\",\"width\":30,\"height\":30},{\"name\":\"abyssEditorIpcOutput\",\"width\":116,\"height\":28},{\"name\":\"abyssEditorOutputOnly\",\"width\":30,\"height\":30}]},{\"viewport\":[420,440],\"fontScale\":1,\"edge\":\"right\",\"controls\":[{\"name\":\"abyssLayoutUndo\",\"width\":24,\"height\":24},{\"name\":\"abyssLayoutReset\",\"width\":24,\"height\":24},{\"name\":\"abyssLayoutCancel\",\"width\":24,\"height\":24},{\"name\":\"abyssLayoutDone\",\"width\":24,\"height\":24},{\"name\":\"abyssEditorModulesMode\",\"width\":92,\"height\":28},{\"name\":\"abyssEditorIpcMode\",\"width\":58,\"height\":28},{\"name\":\"abyssEditorConfirmAdd\",\"width\":30,\"height\":30},{\"name\":\"abyssModuleDropdown\",\"width\":104,\"height\":28},{\"name\":\"abyssModulePositionLock\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionEnabled\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionRemove\",\"width\":28,\"height\":30},{\"name\":\"abyssModuleJoinCorner\",\"width\":30,\"height\":30},{\"name\":\"abyssEditorIpcOutput\",\"width\":136,\"height\":28},{\"name\":\"abyssEditorOutputOnly\",\"width\":24,\"height\":24}]},{\"viewport\":[420,440],\"fontScale\":1,\"edge\":\"bottom\",\"controls\":[{\"name\":\"abyssLayoutUndo\",\"width\":30,\"height\":30},{\"name\":\"abyssLayoutReset\",\"width\":30,\"height\":30},{\"name\":\"abyssLayoutCancel\",\"width\":30,\"height\":30},{\"name\":\"abyssLayoutDone\",\"width\":30,\"height\":30},{\"name\":\"abyssEditorModulesMode\",\"width\":92,\"height\":28},{\"name\":\"abyssEditorIpcMode\",\"width\":58,\"height\":28},{\"name\":\"abyssEditorConfirmAdd\",\"width\":30,\"height\":30},{\"name\":\"abyssModuleDropdown\",\"width\":104,\"height\":28},{\"name\":\"abyssModulePositionLock\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionEnabled\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionRemove\",\"width\":28,\"height\":30},{\"name\":\"abyssModuleJoinCorner\",\"width\":30,\"height\":30},{\"name\":\"abyssEditorIpcOutput\",\"width\":116,\"height\":28},{\"name\":\"abyssEditorOutputOnly\",\"width\":30,\"height\":30}]},{\"viewport\":[420,440],\"fontScale\":1,\"edge\":\"left\",\"controls\":[{\"name\":\"abyssLayoutUndo\",\"width\":24,\"height\":24},{\"name\":\"abyssLayoutReset\",\"width\":24,\"height\":24},{\"name\":\"abyssLayoutCancel\",\"width\":24,\"height\":24},{\"name\":\"abyssLayoutDone\",\"width\":24,\"height\":24},{\"name\":\"abyssEditorModulesMode\",\"width\":92,\"height\":28},{\"name\":\"abyssEditorIpcMode\",\"width\":58,\"height\":28},{\"name\":\"abyssEditorConfirmAdd\",\"width\":30,\"height\":30},{\"name\":\"abyssModuleDropdown\",\"width\":104,\"height\":28},{\"name\":\"abyssModulePositionLock\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionEnabled\",\"width\":28,\"height\":30},{\"name\":\"abyssSelectionRemove\",\"width\":28,\"height\":30},{\"name\":\"abyssModuleJoinCorner\",\"width\":30,\"height\":30},{\"name\":\"abyssEditorIpcOutput\",\"width\":136,\"height\":28},{\"name\":\"abyssEditorOutputOnly\",\"width\":24,\"height\":24}]},{\"viewport\":[320,240],\"fontScale\":1.5,\"edge\":\"top\",\"controls\":[{\"name\":\"abyssLayoutUndo\",\"width\":36,\"height\":36},{\"name\":\"abyssLayoutReset\",\"width\":36,\"height\":36},{\"name\":\"abyssLayoutCancel\",\"width\":36,\"height\":36},{\"name\":\"abyssLayoutDone\",\"width\":36,\"height\":36},{\"name\":\"abyssEditorModulesMode\",\"width\":98,\"height\":42},{\"name\":\"abyssEditorIpcMode\",\"width\":66,\"height\":42},{\"name\":\"abyssEditorConfirmAdd\",\"width\":45,\"height\":45},{\"name\":\"abyssModuleDropdown\",\"width\":156,\"height\":42},{\"name\":\"abyssModulePositionLock\",\"width\":42,\"height\":45},{\"name\":\"abyssSelectionEnabled\",\"width\":42,\"height\":45},{\"name\":\"abyssSelectionRemove\",\"width\":42,\"height\":45},{\"name\":\"abyssModuleJoinCorner\",\"width\":45,\"height\":45},{\"name\":\"abyssEditorIpcOutput\",\"width\":116,\"height\":42},{\"name\":\"abyssEditorOutputOnly\",\"width\":36,\"height\":36}]},{\"viewport\":[320,240],\"fontScale\":1.5,\"edge\":\"right\",\"controls\":[{\"name\":\"abyssLayoutUndo\",\"width\":36,\"height\":36},{\"name\":\"abyssLayoutReset\",\"width\":36,\"height\":36},{\"name\":\"abyssLayoutCancel\",\"width\":36,\"height\":36},{\"name\":\"abyssLayoutDone\",\"width\":36,\"height\":36},{\"name\":\"abyssEditorModulesMode\",\"width\":127,\"height\":42},{\"name\":\"abyssEditorIpcMode\",\"width\":82,\"height\":42},{\"name\":\"abyssEditorConfirmAdd\",\"width\":45,\"height\":45},{\"name\":\"abyssModuleDropdown\",\"width\":156,\"height\":42},{\"name\":\"abyssModulePositionLock\",\"width\":42,\"height\":45},{\"name\":\"abyssSelectionEnabled\",\"width\":42,\"height\":45},{\"name\":\"abyssSelectionRemove\",\"width\":42,\"height\":45},{\"name\":\"abyssModuleJoinCorner\",\"width\":45,\"height\":45},{\"name\":\"abyssEditorIpcOutput\",\"width\":160.96000000000004,\"height\":42},{\"name\":\"abyssEditorOutputOnly\",\"width\":36,\"height\":36}]},{\"viewport\":[320,240],\"fontScale\":1.5,\"edge\":\"bottom\",\"controls\":[{\"name\":\"abyssLayoutUndo\",\"width\":36,\"height\":36},{\"name\":\"abyssLayoutReset\",\"width\":36,\"height\":36},{\"name\":\"abyssLayoutCancel\",\"width\":36,\"height\":36},{\"name\":\"abyssLayoutDone\",\"width\":36,\"height\":36},{\"name\":\"abyssEditorModulesMode\",\"width\":98,\"height\":42},{\"name\":\"abyssEditorIpcMode\",\"width\":66,\"height\":42},{\"name\":\"abyssEditorConfirmAdd\",\"width\":45,\"height\":45},{\"name\":\"abyssModuleDropdown\",\"width\":156,\"height\":42},{\"name\":\"abyssModulePositionLock\",\"width\":42,\"height\":45},{\"name\":\"abyssSelectionEnabled\",\"width\":42,\"height\":45},{\"name\":\"abyssSelectionRemove\",\"width\":42,\"height\":45},{\"name\":\"abyssModuleJoinCorner\",\"width\":45,\"height\":45},{\"name\":\"abyssEditorIpcOutput\",\"width\":116,\"height\":42},{\"name\":\"abyssEditorOutputOnly\",\"width\":36,\"height\":36}]},{\"viewport\":[320,240],\"fontScale\":1.5,\"edge\":\"left\",\"controls\":[{\"name\":\"abyssLayoutUndo\",\"width\":36,\"height\":36},{\"name\":\"abyssLayoutReset\",\"width\":36,\"height\":36},{\"name\":\"abyssLayoutCancel\",\"width\":36,\"height\":36},{\"name\":\"abyssLayoutDone\",\"width\":36,\"height\":36},{\"name\":\"abyssEditorModulesMode\",\"width\":127,\"height\":42},{\"name\":\"abyssEditorIpcMode\",\"width\":82,\"height\":42},{\"name\":\"abyssEditorConfirmAdd\",\"width\":45,\"height\":45},{\"name\":\"abyssModuleDropdown\",\"width\":156,\"height\":42},{\"name\":\"abyssModulePositionLock\",\"width\":42,\"height\":45},{\"name\":\"abyssSelectionEnabled\",\"width\":42,\"height\":45},{\"name\":\"abyssSelectionRemove\",\"width\":42,\"height\":45},{\"name\":\"abyssModuleJoinCorner\",\"width\":45,\"height\":45},{\"name\":\"abyssEditorIpcOutput\",\"width\":160.96000000000004,\"height\":42},{\"name\":\"abyssEditorOutputOnly\",\"width\":36,\"height\":36}]}]"
+  ],
+  "assertions": 731,
+  "captures": 5,
+  "measurements": [
+    {
+      "viewport": [
+        800,
+        800
+      ],
+      "fontScale": 1,
+      "edge": "top",
+      "controls": [
+        {
+          "name": "abyssLayoutUndo",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssLayoutReset",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssLayoutCancel",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssLayoutDone",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssEditorModulesMode",
+          "width": 92,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorIpcMode",
+          "width": 58,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorConfirmAdd",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleDropdown",
+          "width": 104,
+          "height": 28
+        },
+        {
+          "name": "abyssModulePositionLock",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionEnabled",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionRemove",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleJoinCorner",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssEditorIpcOutput",
+          "width": 116,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorOutputOnly",
+          "width": 30,
+          "height": 30
+        }
+      ]
+    },
+    {
+      "viewport": [
+        800,
+        800
+      ],
+      "fontScale": 1,
+      "edge": "right",
+      "controls": [
+        {
+          "name": "abyssLayoutUndo",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssLayoutReset",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssLayoutCancel",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssLayoutDone",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssEditorModulesMode",
+          "width": 92,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorIpcMode",
+          "width": 58,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorConfirmAdd",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleDropdown",
+          "width": 104,
+          "height": 28
+        },
+        {
+          "name": "abyssModulePositionLock",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionEnabled",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionRemove",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleJoinCorner",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssEditorIpcOutput",
+          "width": 136,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorOutputOnly",
+          "width": 24,
+          "height": 24
+        }
+      ]
+    },
+    {
+      "viewport": [
+        800,
+        800
+      ],
+      "fontScale": 1,
+      "edge": "bottom",
+      "controls": [
+        {
+          "name": "abyssLayoutUndo",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssLayoutReset",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssLayoutCancel",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssLayoutDone",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssEditorModulesMode",
+          "width": 92,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorIpcMode",
+          "width": 58,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorConfirmAdd",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleDropdown",
+          "width": 104,
+          "height": 28
+        },
+        {
+          "name": "abyssModulePositionLock",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionEnabled",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionRemove",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleJoinCorner",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssEditorIpcOutput",
+          "width": 116,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorOutputOnly",
+          "width": 30,
+          "height": 30
+        }
+      ]
+    },
+    {
+      "viewport": [
+        800,
+        800
+      ],
+      "fontScale": 1,
+      "edge": "left",
+      "controls": [
+        {
+          "name": "abyssLayoutUndo",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssLayoutReset",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssLayoutCancel",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssLayoutDone",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssEditorModulesMode",
+          "width": 92,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorIpcMode",
+          "width": 58,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorConfirmAdd",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleDropdown",
+          "width": 104,
+          "height": 28
+        },
+        {
+          "name": "abyssModulePositionLock",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionEnabled",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionRemove",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleJoinCorner",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssEditorIpcOutput",
+          "width": 136,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorOutputOnly",
+          "width": 24,
+          "height": 24
+        }
+      ]
+    },
+    {
+      "viewport": [
+        420,
+        440
+      ],
+      "fontScale": 1,
+      "edge": "top",
+      "controls": [
+        {
+          "name": "abyssLayoutUndo",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssLayoutReset",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssLayoutCancel",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssLayoutDone",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssEditorModulesMode",
+          "width": 92,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorIpcMode",
+          "width": 58,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorConfirmAdd",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleDropdown",
+          "width": 104,
+          "height": 28
+        },
+        {
+          "name": "abyssModulePositionLock",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionEnabled",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionRemove",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleJoinCorner",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssEditorIpcOutput",
+          "width": 116,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorOutputOnly",
+          "width": 30,
+          "height": 30
+        }
+      ]
+    },
+    {
+      "viewport": [
+        420,
+        440
+      ],
+      "fontScale": 1,
+      "edge": "right",
+      "controls": [
+        {
+          "name": "abyssLayoutUndo",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssLayoutReset",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssLayoutCancel",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssLayoutDone",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssEditorModulesMode",
+          "width": 92,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorIpcMode",
+          "width": 58,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorConfirmAdd",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleDropdown",
+          "width": 104,
+          "height": 28
+        },
+        {
+          "name": "abyssModulePositionLock",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionEnabled",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionRemove",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleJoinCorner",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssEditorIpcOutput",
+          "width": 136,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorOutputOnly",
+          "width": 24,
+          "height": 24
+        }
+      ]
+    },
+    {
+      "viewport": [
+        420,
+        440
+      ],
+      "fontScale": 1,
+      "edge": "bottom",
+      "controls": [
+        {
+          "name": "abyssLayoutUndo",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssLayoutReset",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssLayoutCancel",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssLayoutDone",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssEditorModulesMode",
+          "width": 92,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorIpcMode",
+          "width": 58,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorConfirmAdd",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleDropdown",
+          "width": 104,
+          "height": 28
+        },
+        {
+          "name": "abyssModulePositionLock",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionEnabled",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionRemove",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleJoinCorner",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssEditorIpcOutput",
+          "width": 116,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorOutputOnly",
+          "width": 30,
+          "height": 30
+        }
+      ]
+    },
+    {
+      "viewport": [
+        420,
+        440
+      ],
+      "fontScale": 1,
+      "edge": "left",
+      "controls": [
+        {
+          "name": "abyssLayoutUndo",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssLayoutReset",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssLayoutCancel",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssLayoutDone",
+          "width": 24,
+          "height": 24
+        },
+        {
+          "name": "abyssEditorModulesMode",
+          "width": 92,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorIpcMode",
+          "width": 58,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorConfirmAdd",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleDropdown",
+          "width": 104,
+          "height": 28
+        },
+        {
+          "name": "abyssModulePositionLock",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionEnabled",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssSelectionRemove",
+          "width": 28,
+          "height": 30
+        },
+        {
+          "name": "abyssModuleJoinCorner",
+          "width": 30,
+          "height": 30
+        },
+        {
+          "name": "abyssEditorIpcOutput",
+          "width": 136,
+          "height": 28
+        },
+        {
+          "name": "abyssEditorOutputOnly",
+          "width": 24,
+          "height": 24
+        }
+      ]
+    },
+    {
+      "viewport": [
+        320,
+        240
+      ],
+      "fontScale": 1.5,
+      "edge": "top",
+      "controls": [
+        {
+          "name": "abyssLayoutUndo",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssLayoutReset",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssLayoutCancel",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssLayoutDone",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssEditorModulesMode",
+          "width": 98,
+          "height": 42
+        },
+        {
+          "name": "abyssEditorIpcMode",
+          "width": 66,
+          "height": 42
+        },
+        {
+          "name": "abyssEditorConfirmAdd",
+          "width": 45,
+          "height": 45
+        },
+        {
+          "name": "abyssModuleDropdown",
+          "width": 156,
+          "height": 42
+        },
+        {
+          "name": "abyssModulePositionLock",
+          "width": 42,
+          "height": 45
+        },
+        {
+          "name": "abyssSelectionEnabled",
+          "width": 42,
+          "height": 45
+        },
+        {
+          "name": "abyssSelectionRemove",
+          "width": 42,
+          "height": 45
+        },
+        {
+          "name": "abyssModuleJoinCorner",
+          "width": 45,
+          "height": 45
+        },
+        {
+          "name": "abyssEditorIpcOutput",
+          "width": 116,
+          "height": 42
+        },
+        {
+          "name": "abyssEditorOutputOnly",
+          "width": 36,
+          "height": 36
+        }
+      ]
+    },
+    {
+      "viewport": [
+        320,
+        240
+      ],
+      "fontScale": 1.5,
+      "edge": "right",
+      "controls": [
+        {
+          "name": "abyssLayoutUndo",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssLayoutReset",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssLayoutCancel",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssLayoutDone",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssEditorModulesMode",
+          "width": 127,
+          "height": 42
+        },
+        {
+          "name": "abyssEditorIpcMode",
+          "width": 82,
+          "height": 42
+        },
+        {
+          "name": "abyssEditorConfirmAdd",
+          "width": 45,
+          "height": 45
+        },
+        {
+          "name": "abyssModuleDropdown",
+          "width": 156,
+          "height": 42
+        },
+        {
+          "name": "abyssModulePositionLock",
+          "width": 42,
+          "height": 45
+        },
+        {
+          "name": "abyssSelectionEnabled",
+          "width": 42,
+          "height": 45
+        },
+        {
+          "name": "abyssSelectionRemove",
+          "width": 42,
+          "height": 45
+        },
+        {
+          "name": "abyssModuleJoinCorner",
+          "width": 45,
+          "height": 45
+        },
+        {
+          "name": "abyssEditorIpcOutput",
+          "width": 160.96000000000004,
+          "height": 42
+        },
+        {
+          "name": "abyssEditorOutputOnly",
+          "width": 36,
+          "height": 36
+        }
+      ]
+    },
+    {
+      "viewport": [
+        320,
+        240
+      ],
+      "fontScale": 1.5,
+      "edge": "bottom",
+      "controls": [
+        {
+          "name": "abyssLayoutUndo",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssLayoutReset",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssLayoutCancel",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssLayoutDone",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssEditorModulesMode",
+          "width": 98,
+          "height": 42
+        },
+        {
+          "name": "abyssEditorIpcMode",
+          "width": 66,
+          "height": 42
+        },
+        {
+          "name": "abyssEditorConfirmAdd",
+          "width": 45,
+          "height": 45
+        },
+        {
+          "name": "abyssModuleDropdown",
+          "width": 156,
+          "height": 42
+        },
+        {
+          "name": "abyssModulePositionLock",
+          "width": 42,
+          "height": 45
+        },
+        {
+          "name": "abyssSelectionEnabled",
+          "width": 42,
+          "height": 45
+        },
+        {
+          "name": "abyssSelectionRemove",
+          "width": 42,
+          "height": 45
+        },
+        {
+          "name": "abyssModuleJoinCorner",
+          "width": 45,
+          "height": 45
+        },
+        {
+          "name": "abyssEditorIpcOutput",
+          "width": 116,
+          "height": 42
+        },
+        {
+          "name": "abyssEditorOutputOnly",
+          "width": 36,
+          "height": 36
+        }
+      ]
+    },
+    {
+      "viewport": [
+        320,
+        240
+      ],
+      "fontScale": 1.5,
+      "edge": "left",
+      "controls": [
+        {
+          "name": "abyssLayoutUndo",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssLayoutReset",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssLayoutCancel",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssLayoutDone",
+          "width": 36,
+          "height": 36
+        },
+        {
+          "name": "abyssEditorModulesMode",
+          "width": 127,
+          "height": 42
+        },
+        {
+          "name": "abyssEditorIpcMode",
+          "width": 82,
+          "height": 42
+        },
+        {
+          "name": "abyssEditorConfirmAdd",
+          "width": 45,
+          "height": 45
+        },
+        {
+          "name": "abyssModuleDropdown",
+          "width": 156,
+          "height": 42
+        },
+        {
+          "name": "abyssModulePositionLock",
+          "width": 42,
+          "height": 45
+        },
+        {
+          "name": "abyssSelectionEnabled",
+          "width": 42,
+          "height": 45
+        },
+        {
+          "name": "abyssSelectionRemove",
+          "width": 42,
+          "height": 45
+        },
+        {
+          "name": "abyssModuleJoinCorner",
+          "width": 45,
+          "height": 45
+        },
+        {
+          "name": "abyssEditorIpcOutput",
+          "width": 160.96000000000004,
+          "height": 42
+        },
+        {
+          "name": "abyssEditorOutputOnly",
+          "width": 36,
+          "height": 36
+        }
+      ]
+    }
+  ]
+}
