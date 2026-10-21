@@ -108,7 +108,7 @@ ShellRoot {
      const actions=control("abyssEditorHeaderActions")
      const headerOrigin=(item)=>item.mapToItem(scroll.contentItem,0,0)
      if(!editor.toolbarOnHorizontalEdge && scroll.width>=205*scale) {
-      check(Math.abs(headerOrigin(title).y-headerOrigin(actions).y)<1.5,
+      check(Math.abs(centerY(title,scroll.contentItem)-centerY(actions,scroll.contentItem))<1.5,
         "side title and Undo/Reset/Cancel/Done must share the first line")
       check(headerOrigin(title).x+title.width<=headerOrigin(actions).x+1,
         "side editor title overlaps header actions")
