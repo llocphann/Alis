@@ -1,0 +1,167 @@
+{
+  "schema": 1,
+  "issue": "https://github.com/llocphann/Alis/issues/127",
+  "source_sha": "d0013c61f9639c5b8a59dfaae6011300e07aba40",
+  "implementation": "Read-only presentation of byte-identical text: newest original ID retained; candidate preview collisions compared by length and streaming SHA256 of full decoded payload. No store/delete/wipe in the helper. Decode failures/time/output limits retain affected rows.",
+  "focused": {
+    "status": "PASS",
+    "actual_exit": 0,
+    "checks": [
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-history-runtime.py"
+        ],
+        "actual_exit": 0,
+        "seconds": 3.77,
+        "log": "0.log",
+        "log_sha256": "38ed618fab4126f7ceedf896bdeabc6e1a3746147a0cfb447fbaae47ec3b6f23"
+      },
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-watcher-contract.py"
+        ],
+        "actual_exit": 0,
+        "seconds": 0.336,
+        "log": "1.log",
+        "log_sha256": "c54dbf4b1688937391ee9dbd5781f80d0c0ff7718a65054cacbdfc6f339dd030"
+      },
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-image-classification-contract.py"
+        ],
+        "actual_exit": 0,
+        "seconds": 0.025,
+        "log": "2.log",
+        "log_sha256": "06a426da776a5a14e88b6f9b98788f7abd9e86a8de2458b971a956aac96bf733"
+      },
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-image-mime-contract.py"
+        ],
+        "actual_exit": 0,
+        "seconds": 0.027,
+        "log": "3.log",
+        "log_sha256": "6b6ef9bc8fbefbb0af178c78efda00db88ffd7ac3e6dea6ec62d441133b33c71"
+      },
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-image-thumbnail-contract.py"
+        ],
+        "actual_exit": 0,
+        "seconds": 0.026,
+        "log": "4.log",
+        "log_sha256": "27800ac470c4bcf8570e11c34818f0d0a66750f8c027d0e92bd243c6523ec66a"
+      },
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-owner-image-metadata-contract.py"
+        ],
+        "actual_exit": 0,
+        "seconds": 0.024,
+        "log": "5.log",
+        "log_sha256": "90c73038533ca96bda5afd47671f438ea6b3db316f447ae7b55d4e505710677b"
+      },
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-image-runtime.py"
+        ],
+        "actual_exit": 0,
+        "seconds": 2.7,
+        "log": "6.log",
+        "log_sha256": "3259c00a5af23215794a894d0a6a6417b74801875a6ff6932f1bc31cbf129584"
+      },
+      {
+        "argv": [
+          "bash",
+          "scripts/test-abyss-clipboard-lifecycle.sh"
+        ],
+        "actual_exit": 0,
+        "seconds": 11.36,
+        "log": "7.log",
+        "log_sha256": "9d709d36b4bed72eb7cccf7ffaae2b34101caabd602cf002681b581db22f7f91"
+      },
+      {
+        "argv": [
+          "bash",
+          "scripts/test-waffle-clipboard-lifecycle.sh"
+        ],
+        "actual_exit": 0,
+        "seconds": 1.226,
+        "log": "8.log",
+        "log_sha256": "a4587108854cb0c86d553b5394924b7d480d66ba435e053487cd9a9a380bf0be"
+      },
+      {
+        "argv": [
+          "bash",
+          "scripts/test-brand-post-cutover-migration-guards.sh"
+        ],
+        "actual_exit": 0,
+        "seconds": 0.163,
+        "log": "9.log",
+        "log_sha256": "d75424a4918c92b723b98c079a26cd5b2f56db7af4df322324b6ffbd6dd08c98"
+      },
+      {
+        "argv": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "actual_exit": 0,
+        "seconds": 0.202,
+        "log": "10.log",
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": []
+  },
+  "paired_fixture": {
+    "fixture_sha256": "925c85decfdf3e9571da29426ef363dd1736821c76c28415d67c551bfb800a26",
+    "before_source_sha": "73edf185d80e2fc3a0360eb9bccb73bb95b90f11",
+    "before_harness_exit": 1,
+    "before_native_exit": null,
+    "before_marker": "CLIP_HISTORY_FAIL rows 20 expected 13",
+    "after_source_sha": "d0013c61f9639c5b8a59dfaae6011300e07aba40",
+    "after_harness_exit": 0,
+    "after_marker": "CLIP_HISTORY_PASS 13 unique rows, 14 refresh requests, pins retained",
+    "raw_entries": 20,
+    "visible_entries": 13,
+    "hidden_identical_text_copies": 7,
+    "distinct_long_prefix_collisions_retained": 2,
+    "different_trailing_newline_retained": true,
+    "all_original_ids_order_and_payloads_unchanged": true,
+    "pinned_entries_unchanged": 2,
+    "native_scope": "Real Quickshell QML singleton on offscreen/software backend, isolated XDG and synthetic history. Not physical desktop or GPU acceptance."
+  },
+  "pre_fix_diagnostics": {
+    "refresh_storm": {
+      "source_sha": "73edf185d80e2fc3a0360eb9bccb73bb95b90f11",
+      "actual_exit": 0,
+      "refresh_requests": 699,
+      "max_and_final_entries": 1,
+      "false_updates": 0,
+      "scope": "No growing model reproduced with one synthetic row."
+    },
+    "wayland_storage": {
+      "source_sha": "73edf185d80e2fc3a0360eb9bccb73bb95b90f11",
+      "actual_exit": 0,
+      "assertions": 18,
+      "scope": "Two private native text watchers; 12 copies keep one item, byte-distinct trailing newline and long-prefix payloads retained. No actual writer defect attributed."
+    }
+  },
+  "watcher_oracle_repair": "Current Alis defaults checked separately from retired inir migration output; migration guards and all original canonical/legacy normalization assertions retained.",
+  "remaining_gates": {
+    "canonical_exact_source": "RUNNING separately; no whole-suite PASS claim",
+    "installed_desktop": "UNRUN; no automatic update/restart/cutover",
+    "owner_actual_report": "UNVERIFIED; existing live duplicates were not captured or causally attributed",
+    "physical_multi_output": "UNRUN"
+  },
+  "privacy": "Synthetic fixture logs only. Owner clipboard payloads, database bytes, pins and process metadata are not uploaded."
+}
