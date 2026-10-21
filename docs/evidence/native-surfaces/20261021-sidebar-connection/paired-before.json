@@ -1,0 +1,95 @@
+{
+  "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+  "before": [
+    {
+      "label": "before-gap",
+      "source_sha": "221e030cf47febe41d4ee93b059f57591a1e0e5f",
+      "args": [
+        "--alignment",
+        "source"
+      ],
+      "native_exit": 0,
+      "harness_exit": 1,
+      "expected_failure": "PAINTED_SIDEBAR_SEAM_LOST_HOVER",
+      "matches_expected_outcome": true,
+      "error": "PAINTED_SIDEBAR_SEAM_LOST_HOVER leftPanel x=26 content=36 edge=16 check@qs:@/qs/shell.qml:34\nrun@qs:@/qs/shell.qml:82\nexpression for onTriggered@qs:@/qs/shell.qml:113",
+      "checks": 11,
+      "swaps": 49,
+      "full_size_frame_checks": null,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 6.3
+    },
+    {
+      "label": "before-trigger",
+      "source_sha": "e76194db5379dc0218416d1e608bb8d4b07f2d5f",
+      "args": [
+        "--edge-pair",
+        "right,left",
+        "--alignment",
+        "source"
+      ],
+      "native_exit": 0,
+      "harness_exit": 1,
+      "expected_failure": "SIDEBAR_TRIGGER_EDGE_MISMATCH",
+      "matches_expected_outcome": true,
+      "error": "SIDEBAR_TRIGGER_EDGE_MISMATCH leftPanel edge=right trigger=0,461 check@qs:@/qs/shell.qml:34\nrun@qs:@/qs/shell.qml:69\nexpression for onTriggered@qs:@/qs/shell.qml:113",
+      "checks": 5,
+      "swaps": 0,
+      "full_size_frame_checks": null,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 4.8
+    },
+    {
+      "label": "before-center",
+      "source_sha": "720b7e25ad0583c5bf0b628ac33be837b9e44087",
+      "args": [],
+      "native_exit": 0,
+      "harness_exit": 1,
+      "expected_failure": "physical Sidebar not centered",
+      "matches_expected_outcome": true,
+      "error": "physical Sidebar not centered check@qs:@/qs/shell.qml:34\nrun@qs:@/qs/shell.qml:73\nexpression for onTriggered@qs:@/qs/shell.qml:113",
+      "checks": 7,
+      "swaps": 33,
+      "full_size_frame_checks": null,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 5.7
+    },
+    {
+      "label": "after-top-bottom-scale1",
+      "source_sha": "84c294b3411763aa870045c0f6fb6d61a3740999",
+      "args": [
+        "--edge-pair",
+        "top,bottom",
+        "--scale",
+        "1"
+      ],
+      "native_exit": 0,
+      "harness_exit": 1,
+      "expected_failure": null,
+      "matches_expected_outcome": false,
+      "error": "PAINTED_SIDEBAR_SEAM_LOST_HOVER leftPanel x=930 content=770 edge=180 check@qs:@/qs/shell.qml:34\nrun@qs:@/qs/shell.qml:82\nexpression for onTriggered@qs:@/qs/shell.qml:113",
+      "checks": 11,
+      "swaps": 48,
+      "full_size_frame_checks": null,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 6.2
+    }
+  ],
+  "after_source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+  "after_case_labels": [
+    "after-source",
+    "after-left-right-scale1",
+    "after-right-left-scale1",
+    "after-top-bottom-scale1",
+    "after-bottom-top-scale1",
+    "after-left-right-scale1.5",
+    "after-right-left-scale1.5",
+    "after-top-bottom-scale1.5",
+    "after-bottom-top-scale1.5"
+  ],
+  "scope": "Identical frozen Sidebar probe at each stated source; every retained before native exit 0/harness exit 1 remains FAIL."
+}

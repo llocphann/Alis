@@ -1,0 +1,12 @@
+{
+  "source_sha": "410d1a12e8788daec7b9975254f86d9c684a77c5",
+  "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+  "actual_native_exit": 0,
+  "actual_harness_exit": 0,
+  "supervisor_status": "PASS",
+  "owned_remaining_after_exit": [],
+  "native_checks": 41,
+  "full_size_frame_checks": 92,
+  "error": null,
+  "scope": "Same production 410d1a12e which failed its fractional Right shoulder diagnostic; final integer-within-strip probe passes without a product change at this source."
+}

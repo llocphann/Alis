@@ -1,0 +1,151 @@
+{
+  "attempts": [
+    {
+      "label": "sidebar-221e030cf-before",
+      "source_sha": "221e030cf47febe41d4ee93b059f57591a1e0e5f",
+      "status": "FAIL",
+      "actual_harness_exit": 1,
+      "actual_native_exit": 0,
+      "error": "capture refused check@qs:@/qs/shell.qml:33\ncapture@qs:@/qs/shell.qml:42\nrun@qs:@/qs/shell.qml:65\nexpression for onTriggered@qs:@/qs/shell.qml:85",
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "4b76888cb63476ff32c5af195f84f70b59644ac9e5164ee604ff8b3892cc285f",
+      "worktree_candidate": false
+    },
+    {
+      "label": "sidebar-221e030cf-before-v2",
+      "source_sha": "221e030cf47febe41d4ee93b059f57591a1e0e5f",
+      "status": "FAIL",
+      "actual_harness_exit": 1,
+      "actual_native_exit": 0,
+      "error": "PAINTED_SIDEBAR_SEAM_LOST_HOVER leftPanel x=26 content=36 edge=16 check@qs:@/qs/shell.qml:34\nrun@qs:@/qs/shell.qml:75\nexpression for onTriggered@qs:@/qs/shell.qml:88",
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "7181d9ca2fe50a218169405414a68d9e726d0273830b9118198f36e28c1afb77",
+      "worktree_candidate": false
+    },
+    {
+      "label": "sidebar-worktree-after",
+      "source_sha": "4c11b009ceffeb5e8a88382b7069198d7e79157c",
+      "status": "FAIL",
+      "actual_harness_exit": 0,
+      "actual_native_exit": 0,
+      "error": null,
+      "owned_at_normal_exit": [
+        297144,
+        297146
+      ],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "017b71ac6825b37fb0e3332bfc015eea5aaf62ed65db25c57e13aeaeff2eb40f",
+      "worktree_candidate": true
+    },
+    {
+      "label": "sidebar-e76194db5-v3",
+      "source_sha": "e76194db5379dc0218416d1e608bb8d4b07f2d5f",
+      "status": "FAIL",
+      "actual_harness_exit": 0,
+      "actual_native_exit": 0,
+      "error": null,
+      "owned_at_normal_exit": [
+        300404,
+        300405
+      ],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "bbbf2722551c4b44737475c113ef9e289bc8c80db9d82960ec106597e6d01011",
+      "worktree_candidate": false
+    },
+    {
+      "label": "sidebar-e76194db5-child-diagnostic",
+      "source_sha": "e76194db5379dc0218416d1e608bb8d4b07f2d5f",
+      "status": "FAIL",
+      "actual_harness_exit": 0,
+      "actual_native_exit": 0,
+      "error": null,
+      "owned_at_normal_exit": [
+        301651,
+        301653
+      ],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "846b9ea73e1a9cca575d24661a49b800f2d4d68de377ddbc845a139aab556ca8",
+      "worktree_candidate": false
+    },
+    {
+      "label": "sidebar-e76194db5-swap-before",
+      "source_sha": "e76194db5379dc0218416d1e608bb8d4b07f2d5f",
+      "status": "FAIL",
+      "actual_harness_exit": 1,
+      "actual_native_exit": 0,
+      "error": "SIDEBAR_TRIGGER_EDGE_MISMATCH leftPanel edge=right trigger=0,461 check@qs:@/qs/shell.qml:34\nrun@qs:@/qs/shell.qml:69\nexpression for onTriggered@qs:@/qs/shell.qml:95",
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "7c70023702a457ad0ad3fa99254969856be222419417a45231049e6cf2c5014e",
+      "worktree_candidate": false
+    },
+    {
+      "label": "sidebar-baseline221-frozen",
+      "source_sha": "221e030cf47febe41d4ee93b059f57591a1e0e5f",
+      "status": "FAIL",
+      "actual_harness_exit": 1,
+      "actual_native_exit": 0,
+      "error": "physical Sidebar not centered check@qs:@/qs/shell.qml:34\nrun@qs:@/qs/shell.qml:73\nexpression for onTriggered@qs:@/qs/shell.qml:109",
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "fb8a2f56869ac47ecef394d8979bc64b5abb6c1392a28ad41531643a3e987c80",
+      "worktree_candidate": false
+    },
+    {
+      "label": "sidebar-720b7e25a-left-right-scale1",
+      "source_sha": "720b7e25ad0583c5bf0b628ac33be837b9e44087",
+      "status": "FAIL",
+      "actual_harness_exit": 1,
+      "actual_native_exit": 0,
+      "error": "physical Sidebar not centered check@qs:@/qs/shell.qml:34\nrun@qs:@/qs/shell.qml:73\nexpression for onTriggered@qs:@/qs/shell.qml:109",
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "cde93438251052c36764d7e4e93399eb695efdc39f77c5e76aeaf1073be272ea",
+      "worktree_candidate": false
+    },
+    {
+      "label": "sidebar-df9a75eb6-left-right-scale1",
+      "source_sha": "df9a75eb68c03e15b1ef1d842281b81984c35e12",
+      "status": "FAIL",
+      "actual_harness_exit": 1,
+      "actual_native_exit": 0,
+      "error": "missing actual painted shoulder check@qs:@/qs/shell.qml:34\nrun@qs:@/qs/shell.qml:88\nexpression for onTriggered@qs:@/qs/shell.qml:109",
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "928f3a82d1dd4e8b6ce914fc9fdcc492f15a6d603bd2dec254d538f96d1742fa",
+      "worktree_candidate": false
+    },
+    {
+      "label": "sidebar-410d1a12e-left-right-scale1",
+      "source_sha": "410d1a12e8788daec7b9975254f86d9c684a77c5",
+      "status": "FAIL",
+      "actual_harness_exit": 1,
+      "actual_native_exit": 0,
+      "error": "painted shoulder lost Sidebar check@qs:@/qs/shell.qml:34\nrun@qs:@/qs/shell.qml:90\nexpression for onTriggered@qs:@/qs/shell.qml:109",
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "bfda3e23d413a051ace81b6abfff5852127d87926e134e9544c45cbbf203fe79",
+      "worktree_candidate": false
+    },
+    {
+      "label": "sidebar-84c294b34-matrix",
+      "source_sha": "84c294b3411763aa870045c0f6fb6d61a3740999",
+      "status": "FAIL",
+      "actual_harness_exit": 1,
+      "actual_native_exit": null,
+      "error": null,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "6f42e447981c5cfda8b2ea2a7fc6dcdb538ac0ee183489bc837c070949e34123",
+      "worktree_candidate": false
+    }
+  ],
+  "notes": [
+    "Initial capture-refused and empty-runner-path attempts did not qualify product behavior.",
+    "The v3/worktree Qt assertions passed, but their supervisor receipts remain FAIL because owned nmcli/awk children needed cleanup. The final fixture whitelists read-only nmcli, disables rescan, bounds waits to one second, and rejects mutation.",
+    "The first shoulder oracle omitted one-pixel vertical strips; the next used fractional QtTest points which round up at Right/Bottom. Final probes use integers explicitly inside the same painted strip; separate coordinate and exact-source controls are retained.",
+    "No superseded FAIL was rewritten to PASS."
+  ]
+}

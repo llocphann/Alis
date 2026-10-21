@@ -1,0 +1,10 @@
+{
+  "source_sha": "221e030cf47febe41d4ee93b059f57591a1e0e5f",
+  "command": [
+    "python3",
+    "scripts/test-abyss-input-region-contract.py"
+  ],
+  "actual_exit": 1,
+  "output_tail": "Traceback (most recent call last):\n  File \"/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261021/candidate-221e030cf/scripts/test-abyss-input-region-contract.py\", line 26, in <module>\n    assert token in bar, f\"missing explicit module pointer mask contract: {token}\"\n           ^^^^^^^^^^^^\nAssertionError: missing explicit module pointer mask contract: x: Math.floor(module.x)\n",
+  "scope": "Old literal oracle fails on the already-shipped icon-only input binding; not a new product mask failure."
+}

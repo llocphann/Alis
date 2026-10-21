@@ -1,0 +1,50 @@
+{
+  "source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+  "production_files": {
+    "modules/abyss/AbyssPerimeter.qml": "38aaab514b013c98cab70e7ba08415fe38bf4955"
+  },
+  "frozen_probe": "scripts/test-abyss-sidebar-connection-runtime.py",
+  "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+  "changes": [
+    "Sidebar hover owns its already-painted body padding and shoulders, with matching bounded native input.",
+    "Reveal strips follow the actual configured Edge, including role/Edge swaps.",
+    "Center aligns to physical output independently of unequal Edge thickness; start/end/custom and saved dimensions remain untouched.",
+    "Only the real reveal-strip/body overlap bridges a thicker painted Edge, using the existing source corridor."
+  ],
+  "native_summary": {
+    "runs": 9,
+    "sidebar_scenes": 18,
+    "assertions": 369,
+    "full_size_swap_frames": 718,
+    "scales": [
+      1,
+      1.5
+    ],
+    "edges": [
+      "left",
+      "right",
+      "top",
+      "bottom"
+    ],
+    "native_and_harness_exits": 0,
+    "owned_remaining": []
+  },
+  "reproduction": {
+    "commands": [
+      "ALIS_SIDEBAR_CONNECTION_EVIDENCE=<new-private-directory> python3 scripts/test-abyss-sidebar-connection-runtime.py --edge-pair left,right --scale 1",
+      "Repeat pairs right,left; top,bottom; bottom,top at scales 1 and 1.5",
+      "node sidebar-along-preservation.cjs <exact-source>"
+    ],
+    "safety": "Private Niri/D-Bus/config/state; temporarily focuses only its owned compositor and restores previous focus. Real sidebar contents; read-only bounded nmcli guard, no radio/profile/audio/desktop mutations."
+  },
+  "gates": {
+    "focused_native": "PASS as scoped",
+    "fresh_full_canonical": "NOT_RUN at receipt creation",
+    "physical_wl_pointer_sidebar": "UNRUN",
+    "installed_new_sidebar": "UNRUN",
+    "multi_output": "UNRUN",
+    "owner_sidebar_acceptance": "UNRUN"
+  },
+  "unchanged_prior_owner_acceptance": "#108 closed completed by Owner; Clock/Resources physical acceptance under #72 retained.",
+  "raw_logs": "Durable private state; public receipt hashes refer to retained raw logs."
+}

@@ -1,0 +1,201 @@
+{
+  "source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+  "status": "PASS",
+  "actual_outer_exit": 0,
+  "elapsed_seconds": 133.9,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "eb913da220bd635d86e31e77ee9ba54eb6153d5f9b1ca37f7f8cc501860c8a65",
+  "cases": [
+    {
+      "label": "after-source",
+      "source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+      "args": [
+        "--alignment",
+        "source"
+      ],
+      "native_exit": 0,
+      "harness_exit": 0,
+      "expected_failure": null,
+      "matches_expected_outcome": true,
+      "error": null,
+      "checks": 41,
+      "swaps": 349,
+      "full_size_frame_checks": 93,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 14.1
+    },
+    {
+      "label": "after-left-right-scale1",
+      "source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+      "args": [
+        "--edge-pair",
+        "left,right",
+        "--scale",
+        "1"
+      ],
+      "native_exit": 0,
+      "harness_exit": 0,
+      "expected_failure": null,
+      "matches_expected_outcome": true,
+      "error": null,
+      "checks": 41,
+      "swaps": 351,
+      "full_size_frame_checks": 93,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 14.0
+    },
+    {
+      "label": "after-right-left-scale1",
+      "source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+      "args": [
+        "--edge-pair",
+        "right,left",
+        "--scale",
+        "1"
+      ],
+      "native_exit": 0,
+      "harness_exit": 0,
+      "expected_failure": null,
+      "matches_expected_outcome": true,
+      "error": null,
+      "checks": 41,
+      "swaps": 83,
+      "full_size_frame_checks": 34,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 17.3
+    },
+    {
+      "label": "after-top-bottom-scale1",
+      "source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+      "args": [
+        "--edge-pair",
+        "top,bottom",
+        "--scale",
+        "1"
+      ],
+      "native_exit": 0,
+      "harness_exit": 0,
+      "expected_failure": null,
+      "matches_expected_outcome": true,
+      "error": null,
+      "checks": 41,
+      "swaps": 125,
+      "full_size_frame_checks": 42,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 16.3
+    },
+    {
+      "label": "after-bottom-top-scale1",
+      "source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+      "args": [
+        "--edge-pair",
+        "bottom,top",
+        "--scale",
+        "1"
+      ],
+      "native_exit": 0,
+      "harness_exit": 0,
+      "expected_failure": null,
+      "matches_expected_outcome": true,
+      "error": null,
+      "checks": 41,
+      "swaps": 341,
+      "full_size_frame_checks": 94,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 14.8
+    },
+    {
+      "label": "after-left-right-scale1.5",
+      "source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+      "args": [
+        "--edge-pair",
+        "left,right",
+        "--scale",
+        "1.5"
+      ],
+      "native_exit": 0,
+      "harness_exit": 0,
+      "expected_failure": null,
+      "matches_expected_outcome": true,
+      "error": null,
+      "checks": 41,
+      "swaps": 347,
+      "full_size_frame_checks": 93,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 14.1
+    },
+    {
+      "label": "after-right-left-scale1.5",
+      "source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+      "args": [
+        "--edge-pair",
+        "right,left",
+        "--scale",
+        "1.5"
+      ],
+      "native_exit": 0,
+      "harness_exit": 0,
+      "expected_failure": null,
+      "matches_expected_outcome": true,
+      "error": null,
+      "checks": 41,
+      "swaps": 349,
+      "full_size_frame_checks": 95,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 14.1
+    },
+    {
+      "label": "after-top-bottom-scale1.5",
+      "source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+      "args": [
+        "--edge-pair",
+        "top,bottom",
+        "--scale",
+        "1.5"
+      ],
+      "native_exit": 0,
+      "harness_exit": 0,
+      "expected_failure": null,
+      "matches_expected_outcome": true,
+      "error": null,
+      "checks": 41,
+      "swaps": 320,
+      "full_size_frame_checks": 77,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 15.1
+    },
+    {
+      "label": "after-bottom-top-scale1.5",
+      "source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+      "args": [
+        "--edge-pair",
+        "bottom,top",
+        "--scale",
+        "1.5"
+      ],
+      "native_exit": 0,
+      "harness_exit": 0,
+      "expected_failure": null,
+      "matches_expected_outcome": true,
+      "error": null,
+      "checks": 41,
+      "swaps": 339,
+      "full_size_frame_checks": 97,
+      "fixture_sha256": "0911c0af9aa0465aa7687fafeeebc2b1d0ccb6725a50a788583b6db5ac4f2a4a",
+      "runtime_changes_from_head": [],
+      "elapsed_seconds": 14.1
+    }
+  ],
+  "assertions": 369,
+  "full_size_frame_checks": 718,
+  "scope": "Two real Sidebar contents, production Perimeter/BodyHost/hover lease; native QtTest events, no physical wl_pointer or installed/Owner claim"
+}

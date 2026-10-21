@@ -1,0 +1,26 @@
+{
+  "source_sha": "9e977bbc477112e15f5ebf59b37746a59675c2d0",
+  "checks": [
+    {
+      "command": "python3 scripts/test-abyss-input-region-contract.py",
+      "exit": 0,
+      "output": "ABYSS_MODULE_POINTER_REGION_BINDINGS_PASS 3456 ordinary/icon-only, fractional, visibility and disabled cases\nABYSS_MODULE_POINTER_REGION_SOURCE_PASS dynamic geometry/edit mask boundaries\n"
+    },
+    {
+      "command": "python3 scripts/test-abyss-niri-hover-layer-contract.py",
+      "exit": 0,
+      "output": "ABYSS_MODULE_POINTER_REGION_BINDINGS_PASS 3456 ordinary/icon-only, fractional, visibility and disabled cases\nABYSS_MODULE_POINTER_REGION_SOURCE_PASS dynamic geometry/edit mask boundaries\nPASS: 14 Niri/non-Niri exact-QML layer policy cases\nPASS: Abyss popup mask/anchor ownership preserved\n"
+    },
+    {
+      "command": "bash scripts/test-abyss-sidebar-reveal.sh",
+      "exit": 0,
+      "output": "PASS: sidebar hover lease handles content handoff, menus, explicit IPC and presentation gates\n"
+    }
+  ],
+  "independent_along_preservation": {
+    "exit": 0,
+    "cases": 432,
+    "command": "node sidebar-along-preservation.cjs <exact-source>"
+  },
+  "scope": "Focused static/JS and offscreen lease checks; native matrix is recorded separately."
+}

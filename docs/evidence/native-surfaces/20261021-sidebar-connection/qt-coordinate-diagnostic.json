@@ -1,0 +1,11 @@
+{
+  "backend": "Qt offscreen",
+  "actual_exit": 0,
+  "observations": [
+    "INFO qml: MOUSE_COORDINATE 16.5 17 42",
+    "INFO qml: MOUSE_COORDINATE 183.5 184 42",
+    "INFO qml: MOUSE_COORDINATE 183 183 42",
+    "INFO qml: MOUSE_COORDINATE 16 16 42"
+  ],
+  "scope": "QtTest mouseMove integer conversion; not product or compositor acceptance"
+}
