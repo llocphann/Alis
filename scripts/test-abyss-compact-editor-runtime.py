@@ -175,8 +175,19 @@ ShellRoot {
      const sameRow=(a,b,label)=>check(
        Math.abs(inScroll(control(a)).y-inScroll(control(b)).y)<1.5,
        label+" controls should occupy one row")
-     sameRow("abyssModuleDropdown","abyssModulePositionLock","Module header")
-     sameRow("abyssModuleDropdown","abyssModuleJoinCorner","Module corner")
+     const moduleHeader=item("abyssModuleHeaderActions")
+     const selectionActions=control("abyssModuleSelectionActions")
+     const pickerPoint=inScroll(modulePicker),selectionPoint=inScroll(selectionActions)
+     if(moduleHeader.columns===2) {
+      check(Math.abs(centerY(modulePicker,scroll.contentItem)-centerY(selectionActions,scroll.contentItem))<1.5,
+        "Module picker and selection actions do not share the wide header row")
+      check(pickerPoint.x+modulePicker.width<=selectionPoint.x+.5,
+        "Module picker overlaps the selection actions")
+     } else {
+      check(selectionPoint.y>=pickerPoint.y+modulePicker.height-1,
+        "narrow Module selection actions should stack below the picker")
+     }
+     sameRow("abyssModulePositionLock","abyssModuleJoinCorner","Module selection")
      sameRow("abyssEditingEdgeDropdown","abyssJoinNearbyModules","Edge header")
      sameRow("abyssModuleRoundingAction","abyssModuleRounding","Rounding")
      const round0=control("abyssRoundZeroCorners")
@@ -272,12 +283,8 @@ ShellRoot {
      const ipcJoin=control("abyssIpcJoinCornerToggle")
      check(ipcJoin.checkable,"IPC join nearby corner must be a toggle")
      if(!editor.toolbarOnHorizontalEdge) {
-      const joinPoint=ipcJoin.mapToItem(scroll.contentItem,0,0)
-      const tabsPoint=tabs.mapToItem(scroll.contentItem,0,0)
       check(Math.abs(centerY(ipcJoin,scroll.contentItem)-centerY(tabs,scroll.contentItem))<1.5,
         "side IPC Join icon must move next to the IPC tab")
-      const outputPoint=outputPicker.mapToItem(scroll.contentItem,0,0)
-      const checkPoint=outputCheckbox.mapToItem(scroll.contentItem,0,0)
       if(scroll.width>=200*scale)
        check(Math.abs(centerY(outputPicker,scroll.contentItem)-centerY(outputCheckbox,scroll.contentItem))<1.5,
          "side output dropdown and checkbox must share a line")

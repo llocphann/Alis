@@ -998,10 +998,20 @@ Item {
                             ? moduleHeaderActions.implicitWidth
                             : Math.max(0,toolbarScroll.width)
                         spacing:4*Appearance.fontSizeScale
-                            RowLayout {
+                            GridLayout {
                             id:moduleHeaderActions
                             objectName:"abyssModuleHeaderActions"
-                            Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
+                            Layout.fillWidth:true;Layout.minimumWidth:0
+                            // Keep the picker/Add pair and selection actions
+                            // intact when a side or narrow toolbar cannot fit
+                            // their combined width. Use the outer viewport so
+                            // the implicit width cannot latch the breakpoint.
+                            columns:editFineControls.useTwoColumns
+                                || toolbarScroll.width >= 248*Appearance.fontSizeScale+10 ? 2 : 1
+                            columnSpacing:2;rowSpacing:4*Appearance.fontSizeScale
+                            RowLayout {
+                            Layout.alignment:Qt.AlignLeft
+                            Layout.minimumWidth:0;spacing:2
                             StyledComboBox {
                             baseHeight:28*Appearance.fontSizeScale
                             Layout.preferredWidth:104*Appearance.fontSizeScale
@@ -1030,6 +1040,11 @@ Item {
                             
                             onClicked:root.add(palette.currentValue)
                             }
+                            }
+                            RowLayout {
+                            objectName:"abyssModuleSelectionActions"
+                            Layout.alignment:Qt.AlignLeft
+                            Layout.minimumWidth:0;spacing:2
                             AbyssButton {
                             Layout.maximumHeight:root.editorActionSize
                             Layout.maximumWidth:root.editorActionSize
@@ -1097,6 +1112,7 @@ Item {
                             enabled:root.targets.length>0 && (root.targets.every(p=>!!Placement.cornerForModule(
                             root.moduleLayer.layoutRecords,p.id,root.width,root.height)) || checked)
                             onToggled:root.change("joinCorner",checked)
+                            }
                             }
                             }
                             RowLayout {
