@@ -96,7 +96,7 @@ ShellRoot {
     check(host.contentItem.width===root.canvasSize[0]&&host.contentItem.height===root.canvasSize[1],"handoff resized real content")
     root.phase=identity+":body";move(content.x+content.width/2,content.y+content.height/2);wait(reveal.closeDelay+100);check(host.open&&reveal.bodyHovered,"body did not own hover")
     // Painted curved shoulders outside the main body also own the lease.
-    const shoulder=host.connectionRects.find(r=>r.width>1&&r.height>0&&!Geometry.rectContains(host.inputBounds,r.x+r.width/2,r.y+r.height/2))
+    const shoulder=host.connectionRects.find(r=>r.width>0&&r.height>0&&Math.max(r.width,r.height)>1&&!Geometry.rectContains(host.inputBounds,r.x+r.width/2,r.y+r.height/2))
     check(!!shoulder,"missing actual painted shoulder")
     root.phase=identity+":shoulder";move(shoulder.x+shoulder.width/2,shoulder.y+shoulder.height/2);wait(reveal.closeDelay+100)
     check(host.open&&reveal.bodyHovered,"painted shoulder lost Sidebar")
