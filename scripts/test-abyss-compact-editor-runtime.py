@@ -187,7 +187,15 @@ ShellRoot {
       check(selectionPoint.y>=pickerPoint.y+modulePicker.height-1,
         "narrow Module selection actions should stack below the picker")
      }
-     sameRow("abyssModulePositionLock","abyssModuleJoinCorner","Module selection")
+     if(selectionActions.columns===4)
+      sameRow("abyssModulePositionLock","abyssModuleJoinCorner","Module selection")
+     else {
+      sameRow("abyssModulePositionLock","abyssSelectionEnabled","Module selection upper")
+      sameRow("abyssSelectionRemove","abyssModuleJoinCorner","Module selection lower")
+      check(inScroll(control("abyssSelectionRemove")).y
+          >=inScroll(control("abyssModulePositionLock")).y+control("abyssModulePositionLock").height-1,
+        "narrow Module action rows overlap")
+     }
      sameRow("abyssEditingEdgeDropdown","abyssJoinNearbyModules","Edge header")
      sameRow("abyssModuleRoundingAction","abyssModuleRounding","Rounding")
      const round0=control("abyssRoundZeroCorners")
@@ -292,7 +300,7 @@ ShellRoot {
           [edgeCombo,placement.compactEdgeWidth],
           [alignCombo,placement.compactAlignmentWidth]]) {
        check(Math.abs(item.width-editor.sideIpcSelectorWidth)<1.5
-           && item.width<scroll.width-10*scale,
+           && item.width<=scroll.width+.5,
          "side IPC triggers do not share the bounded scope width")
        check(item.popup.width>=limit-1,
          "side IPC popup should reveal full choice labels")

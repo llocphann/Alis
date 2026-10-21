@@ -39,14 +39,17 @@ Item {
         }
     }
     readonly property real editorActionSize: 30 * Appearance.fontSizeScale
-    // Only the side toolbar's top action row gets smaller square buttons.
-    readonly property real headerActionSize: toolbarOnHorizontalEdge
-        ? editorActionSize : 24 * Appearance.fontSizeScale
+    // Compact actions also keep Save/Cancel reachable on narrow horizontal
+    // toolbars, where four normal squares alone exceed the viewport.
+    readonly property bool compactHeaderActions: !toolbarOnHorizontalEdge
+        || toolbarScroll.width < 4*editorActionSize+72*Appearance.fontSizeScale
+    readonly property real headerActionSize: compactHeaderActions
+        ? 24 * Appearance.fontSizeScale : editorActionSize
     // On side Edges the narrower output picker shares its left edge with
     // IPC selectors, whose right edge matches the output-only toggle.
     readonly property real sideIpcDropdownWidth: Math.min(
         136 * Appearance.fontSizeScale,
-        Math.max(86 * Appearance.fontSizeScale,
+        Math.max(0,
             toolbarScroll.width - (headerActionSize + 10 * Appearance.fontSizeScale)))
     readonly property real sideIpcSelectorWidth: sideIpcDropdownWidth
         + 6 * Appearance.fontSizeScale + headerActionSize
@@ -757,13 +760,13 @@ Item {
                     objectName: "abyssEditorHeader"
                     Layout.fillWidth: true;Layout.minimumWidth:0
                     // Never wrap the actions below the title.
-                    spacing:root.toolbarOnHorizontalEdge ? 8 : 4
+                    spacing:root.compactHeaderActions ? 4 : 8
                     AbyssLabel {
                         objectName:"abyssEditorTitle"
                         text: "Edit layout · "+root.outputName
                         font.bold: true
-                        font.pixelSize:root.toolbarOnHorizontalEdge
-                            ? AbyssStyle.fontSize : 10*Appearance.fontSizeScale
+                        font.pixelSize:root.compactHeaderActions
+                            ? 10*Appearance.fontSizeScale : AbyssStyle.fontSize
                         wrapMode:Text.NoWrap
                         Layout.fillWidth:true;Layout.minimumWidth:0
                         Layout.alignment:Qt.AlignVCenter
@@ -774,8 +777,8 @@ Item {
                         Layout.alignment:Qt.AlignRight | Qt.AlignVCenter
                         Layout.fillWidth:false
                         Layout.minimumWidth:root.headerActionSize*4
-                            + (root.toolbarOnHorizontalEdge ? 12 : 6)*Appearance.fontSizeScale
-                        spacing:root.toolbarOnHorizontalEdge ? 4 : 2
+                            + (root.compactHeaderActions ? 6 : 12)*Appearance.fontSizeScale
+                        spacing:root.compactHeaderActions ? 2 : 4
                         AbyssButton {
                         Layout.maximumHeight:root.editorActionSize
                         Layout.maximumWidth:root.editorActionSize
@@ -1009,9 +1012,11 @@ Item {
                             columns:editFineControls.useTwoColumns
                                 || toolbarScroll.width >= 248*Appearance.fontSizeScale+10 ? 2 : 1
                             columnSpacing:2;rowSpacing:4*Appearance.fontSizeScale
-                            RowLayout {
+                            GridLayout {
                             Layout.alignment:Qt.AlignLeft
-                            Layout.minimumWidth:0;spacing:2
+                            Layout.minimumWidth:0
+                            columns:toolbarScroll.width>=134*Appearance.fontSizeScale+2 ? 2 : 1
+                            columnSpacing:2;rowSpacing:4*Appearance.fontSizeScale
                             StyledComboBox {
                             baseHeight:28*Appearance.fontSizeScale
                             Layout.preferredWidth:104*Appearance.fontSizeScale
@@ -1041,10 +1046,12 @@ Item {
                             onClicked:root.add(palette.currentValue)
                             }
                             }
-                            RowLayout {
+                            GridLayout {
                             objectName:"abyssModuleSelectionActions"
                             Layout.alignment:Qt.AlignLeft
-                            Layout.minimumWidth:0;spacing:2
+                            Layout.minimumWidth:0
+                            columns:toolbarScroll.width>=114*Appearance.fontSizeScale+6 ? 4 : 2
+                            columnSpacing:2;rowSpacing:4*Appearance.fontSizeScale
                             AbyssButton {
                             Layout.maximumHeight:root.editorActionSize
                             Layout.maximumWidth:root.editorActionSize
