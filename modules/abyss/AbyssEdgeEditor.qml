@@ -995,7 +995,8 @@ Item {
                         // guide. Never stretch the lower controls into empty
                         // space beyond the Module picker/action toolbar.
                         readonly property real controlsSpan:Math.max(0,
-                            Math.min(width,moduleHeaderActions.implicitWidth))
+                            Math.min(width,Math.max(moduleHeaderActions.implicitWidth,
+                                107*Appearance.fontSizeScale)))
                         // On wide Edges, stop this column at the final
                         // module action instead of allocating half the toolbar.
                         Layout.fillWidth:!editFineControls.useTwoColumns
@@ -1395,9 +1396,15 @@ Item {
                             }
                             }
                             }
-                            RowLayout {
+                            GridLayout {
                             id:edgeWidthRow
-                            Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
+                            Layout.fillWidth:true;Layout.minimumWidth:0
+                            readonly property bool inlineControls: edgeEditorColumn.width>=155*Appearance.fontSizeScale+6
+                            columns:inlineControls ? 2 : 1
+                            columnSpacing:2;rowSpacing:4*Appearance.fontSizeScale
+                            RowLayout {
+                            Layout.alignment:Qt.AlignLeft
+                            spacing:2
                             EditorIconHint {
                             Layout.preferredWidth:20*Appearance.fontSizeScale
                             glyph:"line_weight";description:"Physical Edge width" }
@@ -1430,6 +1437,7 @@ Item {
                             checked:root.edgeRoundZeroCorners[root.editingEdge]===true
                             onToggled:root.edgeRoundZeroCorners=Object.assign({},root.edgeRoundZeroCorners,{[root.editingEdge]:checked})
                             }
+                            }
                             AbyssSlider {
                             editorCompact:true
                             objectName:"abyssEdgeWidthSlider"
@@ -1446,9 +1454,15 @@ Item {
                             {[root.editingEdge]:value})
                             }
                             }
-                            RowLayout {
+                            GridLayout {
                             id:scaleModulesRow
-                            Layout.fillWidth:true;Layout.minimumWidth:0;spacing:2
+                            Layout.fillWidth:true;Layout.minimumWidth:0
+                            readonly property bool inlineControls: edgeEditorColumn.width>=135*Appearance.fontSizeScale+4
+                            columns:inlineControls ? 2 : 1
+                            columnSpacing:2;rowSpacing:4*Appearance.fontSizeScale
+                            RowLayout {
+                            Layout.alignment:Qt.AlignLeft
+                            spacing:2
                             AbyssButton {
                             objectName:"abyssScaleModulesToggle"
                             Layout.maximumHeight:root.editorActionSize
@@ -1480,6 +1494,7 @@ Item {
                             onToggled:root.singleModuleExpansion=Object.assign(
                             {},root.singleModuleExpansion,
                             {[root.editingEdge]:checked ? "edge" : "local"})
+                            }
                             }
                             AbyssSlider {
                             editorCompact:true

@@ -200,7 +200,8 @@ assert right.count('Layout.preferredWidth:110*Appearance.fontSizeScale') == 2
 assert right.count('Layout.preferredWidth:190*Appearance.fontSizeScale') == 2
 assert 'columns:root.toolbarOnHorizontalEdge' in right
 assert 'edgeEditorColumn.width>=260*Appearance.fontSizeScale ? 2 : 1' in right
-assert 'Math.min(width,moduleHeaderActions.implicitWidth)' in left
+assert 'Math.min(width,Math.max(moduleHeaderActions.implicitWidth,' in left
+assert '107*Appearance.fontSizeScale' in left
 assert 'Layout.preferredWidth:moduleEditorColumn.controlsSpan' in left
 assert 'Layout.maximumWidth:moduleEditorColumn.controlsSpan' in left
 assert left.count('id:moduleRoundingRow') + left.count('id:moduleCustomSizeRow') == 2

@@ -118,7 +118,8 @@ assert 'objectName:"abyssEditorTitle"' in editor
 assert 'Layout.preferredWidth:58*Appearance.fontSizeScale' in editor
 assert 'readonly property real editorActionSize: 30 * Appearance.fontSizeScale' in editor
 assert 'readonly property real controlsSpan:Math.max(0,' in editor
-assert 'Math.min(width,moduleHeaderActions.implicitWidth)' in editor
+assert 'Math.min(width,Math.max(moduleHeaderActions.implicitWidth,' in editor
+assert '107*Appearance.fontSizeScale' in editor
 assert editor.count('editorCompact:true') == 6
 assert editor.count('Layout.preferredWidth:20*Appearance.fontSizeScale') == 3
 module_actions=editor.split('id:moduleHeaderActions',1)[1].split('id:moduleAlignmentRow',1)[0]
