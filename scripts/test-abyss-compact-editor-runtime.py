@@ -174,7 +174,7 @@ ShellRoot {
      }
      // Related Module/Edge controls must share the same physical toolbar row.
      const sameRow=(a,b,label)=>check(
-       Math.abs(inScroll(control(a)).y-inScroll(control(b)).y)<1.5,
+       Math.abs(centerY(control(a),scroll.contentItem)-centerY(control(b),scroll.contentItem))<1.5,
        label+" controls should occupy one row")
      const moduleHeader=item("abyssModuleHeaderActions")
      const selectionActions=control("abyssModuleSelectionActions")
