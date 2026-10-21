@@ -53,7 +53,8 @@ ShellRoot {
    const target=item(name),scroll=item("abyssEdgeEditorScroll")
    check(target.visible,"hidden control "+name)
    const point=target.mapToItem(scroll.contentItem,0,0)
-   scroll.contentY=Math.max(0,Math.min(scroll.contentHeight-scroll.height,point.y-8));wait(35)
+   scroll.contentY=Math.max(0,Math.min(scroll.contentHeight-scroll.height,
+     Math.max(point.y-8,point.y+target.height-scroll.height)));wait(35)
    const bounds=target.mapToItem(scroll,0,0)
    check(bounds.x>=-.1&&bounds.y>=-.1&&bounds.x+target.width<=scroll.width+.1&&bounds.y+target.height<=scroll.height+.1,"control outside its real clip "+JSON.stringify({name:name,x:bounds.x,y:bounds.y,w:target.width,h:target.height,clipW:scroll.width,clipH:scroll.height}))
    return target
