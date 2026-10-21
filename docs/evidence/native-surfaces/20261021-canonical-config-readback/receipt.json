@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "issue": "https://github.com/llocphann/Alis/issues/73",
+  "before_source_sha": "d0013c61f9639c5b8a59dfaae6011300e07aba40",
+  "after_source_sha": "d6e1f9e7c0943805cb772e1ab6a6758ea58b61fa",
+  "change": "Only Python readback selects Config canonical config/alis/config.json; all QML callbacks, geometry/input/save/restart assertions remain identical. Legacy seeded files are now explicitly checked unchanged. No product/runtime changes.",
+  "before_observations": [
+    {
+      "test": "test-abyss-module-locks-runtime.py",
+      "actual_exit": 1,
+      "diagnostic": "KeyError: locked reading the untouched legacy seed"
+    },
+    {
+      "test": "test-abyss-panel-material-settings-runtime.py",
+      "actual_exit": 1,
+      "diagnostic": "PANEL_MATERIAL_SETTINGS_PASS 539, then Python AssertionError reading unchanged legacy opacity"
+    }
+  ],
+  "after_checks": [
+    {
+      "argv": [
+        "python3",
+        "scripts/test-abyss-module-locks-runtime.py"
+      ],
+      "actual_exit": 0
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-abyss-panel-material-settings-runtime.py"
+      ],
+      "actual_exit": 0
+    }
+  ],
+  "QML_literals": [
+    {
+      "test": "test-abyss-module-locks-runtime.py",
+      "unchanged_QML_sha256": "2e93b198b100b0530cbc61c4892cd67b2abc44c7ab150790700dedd4101b75ba"
+    },
+    {
+      "test": "test-abyss-panel-material-settings-runtime.py",
+      "unchanged_QML_sha256": "991220a74af4a24253704a26b7474091c8297eeb42024b895dfa3e32c7efc29c"
+    }
+  ],
+  "QML_reported_checks": {
+    "module_locks": 59,
+    "module_locks_restart": 3,
+    "panel_material_settings": 539,
+    "panel_material_restart": 4
+  },
+  "supervisor": {
+    "status": "PASS",
+    "actual_exit": 0,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": []
+  },
+  "preliminary_prototype": {
+    "v1": "FAIL actual exit1, missing native_test_session import in private relocated probes; not a product failure.",
+    "v2": "Same readback-only probes exit0 after correcting their import/root paths; retained separately."
+  },
+  "remaining_gates": "Full exact d001 maintainer run still in progress; full d6e maintainer UNRUN. No whole-suite, installed or Owner acceptance claim."
+}

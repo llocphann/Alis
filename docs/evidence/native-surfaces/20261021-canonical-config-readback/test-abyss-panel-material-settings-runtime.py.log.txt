@@ -1,0 +1,3 @@
+  INFO qml: PANEL_MATERIAL_SETTINGS_PASS 539 independent axes, inheritance, zero, policy and disk
+  INFO qml: PANEL_MATERIAL_RESTART_PASS 4
+PASS: actual Settings callbacks and Config disk readback/restart; owner config untouched
