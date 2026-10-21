@@ -14,7 +14,8 @@ DOTS_NIRI = ROOT / "dots/.config/niri/config.kdl"
 MIGRATION_SINGLE = ROOT / "sdata/migrations/051-cliphist-single-watchers.sh"
 MIGRATION_NEWLINE = ROOT / "sdata/migrations/054-cliphist-no-synthetic-newline.sh"
 
-TEXT_LINE = 'spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store"'
+TEXT_LINE = 'spawn-at-startup "bash" "-c" "exec wl-paste --no-newline --type text --watch ~/.config/quickshell/alis/scripts/native-dispatch clipboard-store"'
+LEGACY_CANONICAL_TEXT_LINE = TEXT_LINE.replace("/quickshell/alis/", "/quickshell/inir/")
 LEGACY_TEXT_LINE = 'spawn-at-startup "bash" "-c" "exec wl-paste --type text --watch ~/.config/quickshell/inir/scripts/native-dispatch clipboard-store"'
 IMAGE_LINE = 'spawn-at-startup "bash" "-c" "exec wl-paste --type image --watch cliphist store"'
 WATCHER_RE = re.compile(
@@ -91,7 +92,7 @@ def check_duplicate_repair() -> None:
         repaired = run_migration(home, MIGRATION_SINGLE, "migration_apply")
         assert repaired.returncode == 0, repaired.stderr
 
-        assert active_watchers(startup.read_text(encoding="utf-8")) == [TEXT_LINE, IMAGE_LINE]
+        assert active_watchers(startup.read_text(encoding="utf-8")) == [LEGACY_CANONICAL_TEXT_LINE, IMAGE_LINE]
         assert active_watchers(root_cfg.read_text(encoding="utf-8")) == []
 
         after = run_migration(home, MIGRATION_SINGLE, "migration_check")
@@ -127,7 +128,7 @@ def check_no_newline_upgrade() -> None:
 
         repaired = run_migration(home, MIGRATION_NEWLINE, "migration_apply")
         assert repaired.returncode == 0, repaired.stderr
-        assert active_watchers(startup.read_text(encoding="utf-8")) == [TEXT_LINE, IMAGE_LINE]
+        assert active_watchers(startup.read_text(encoding="utf-8")) == [LEGACY_CANONICAL_TEXT_LINE, IMAGE_LINE]
 
         after = run_migration(home, MIGRATION_NEWLINE, "migration_check")
         assert after.returncode == 1, after.stderr
@@ -140,7 +141,7 @@ def check_no_newline_upgrade() -> None:
 
         repaired = run_migration(home, MIGRATION_NEWLINE, "migration_apply")
         assert repaired.returncode == 0, repaired.stderr
-        assert active_watchers(root_cfg.read_text(encoding="utf-8")) == [TEXT_LINE]
+        assert active_watchers(root_cfg.read_text(encoding="utf-8")) == [LEGACY_CANONICAL_TEXT_LINE]
 
 
 def check_no_newline_disabled_history_is_respected() -> None:

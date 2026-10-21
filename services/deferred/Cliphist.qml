@@ -461,7 +461,10 @@ Singleton {
         id: readProc
         property list<string> buffer: []
 
-        command: [root.cliphistBinary, "list"]
+        // Hide byte-identical text copies in every presentation while retaining
+        // all original IDs/payloads on disk. Preview collisions remain distinct.
+        command: ["/usr/bin/python3", `${Directories.scriptsPath}/clipboard-history.py`,
+            "--binary", root.cliphistBinary, "--limit", String(root.maxEntries)]
 
         stdout: SplitParser {
             onRead: (line) => {
