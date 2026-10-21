@@ -2,7 +2,7 @@
 """Opt-in native production Sidebar connection, full-size reveal and hover lease."""
 from pathlib import Path
 import os,json,sys,subprocess,hashlib,argparse,tempfile
-parser=argparse.ArgumentParser();parser.add_argument('--scale',type=float,default=1.0);parser.add_argument('--edge-pair',default='left,right');args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--scale',type=float,default=1.0);parser.add_argument('--edge-pair',default='left,right');parser.add_argument('--alignment',choices=['source','center'],default='center');args=parser.parse_args()
 assert args.edge_pair in ['left,right','right,left','top,bottom','bottom,top']
 root=Path(os.environ.get('ALIS_SIDEBAR_CONNECTION_TEST_ROOT',Path(__file__).resolve().parents[1])).resolve();sys.path.insert(0,str(root/'scripts'))
 from native_test_session import private_wayland,run_qs
@@ -98,7 +98,11 @@ ShellRoot {
     // Painted curved shoulders outside the main body also own the lease.
     const shoulder=host.connectionRects.find(r=>r.width>0&&r.height>0&&Math.max(r.width,r.height)>1&&!Geometry.rectContains(host.inputBounds,r.x+r.width/2,r.y+r.height/2))
     check(!!shoulder,"missing actual painted shoulder")
-    root.phase=identity+":shoulder";move(shoulder.x+shoulder.width/2,shoulder.y+shoulder.height/2);wait(reveal.closeDelay+100)
+    // QtTest rounds half-pixel coordinates to integers. Keep the dispatched
+    // point inside a one-pixel strip on Right/Bottom as well as Left/Top.
+    const shoulderX=Math.floor(shoulder.x+shoulder.width/2),shoulderY=Math.floor(shoulder.y+shoulder.height/2)
+    check(Geometry.rectContains(shoulder,shoulderX,shoulderY),"integer shoulder probe escaped its actual strip")
+    root.phase=identity+":shoulder";move(shoulderX,shoulderY);wait(reveal.closeDelay+100)
     check(host.open&&reveal.bodyHovered,"painted shoulder lost Sidebar")
     root.phase=identity+":reverse";move(seamX,seamY);wait(reveal.closeDelay+100);check(host.open,"reverse seam lost Sidebar")
     root.phase=identity+":leave";move(horizontal?win.width-50:win.width/2,horizontal?win.height/2:win.height-30);tryVerify(()=>!host.open&&host.progress===0,5000)
@@ -142,11 +146,16 @@ with private_wayland(folder,capture_focus=True) as env:
  data['panelFamily']='abyss';data['enabledPanels']=['abyssPerimeter','abyssBar','abyssPopup','abyssSidebarLeft','abyssSidebarRight'];data['abyss']['companion']['enabled']=False
  data['abyss']['modules'].update(configured=True,outputLayouts=[],placements=[{'id':'subject','kind':'clock','edge':'top','position':.15}]);data['bar']['autoHide']['enable']=False;data['bar'].setdefault('visualizer',{})['enable']=False;data['sounds']['notifications']=False
  data['sidebar']['news']['enable']=False;data['bar']['weather']['enable']=False
- data['abyss']['positions']=[{'kind':kind,'edge':edge,'alignment':'center'} for kind,edge in zip(['leftPanel','rightPanel'],args.edge_pair.split(','))]
+ data['abyss']['positions']=[{'kind':kind,'edge':edge,'alignment':args.alignment} for kind,edge in zip(['leftPanel','rightPanel'],args.edge_pair.split(','))]
  for key in ['feature','system']:data['sidebar']['shellLayout'][key].update(sizeMode='custom',customHeight=400,width=360)
  (cfg/'config.json').write_text(json.dumps(data));env.update(PATH=str(guard)+os.pathsep+os.environ['PATH'],SIDEBAR_CONNECTION_REPORT=str(out/'trace.json'),SIDEBAR_CONNECTION_IMAGES=str(out),QSG_RHI_BACKEND='opengl')
  r=run_qs(folder,env,timeout=50);(out/'native.log').write_text(r.stdout)
- report={'source_sha':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'scale':args.scale,'edge_pair':args.edge_pair,'runtime_changes_from_head':subprocess.check_output(['git','diff','--name-only','HEAD','--','modules','services'],text=True).splitlines(),'fixture_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'actual_native_exit':r.returncode,'trace':json.loads((out/'trace.json').read_text()) if(out/'trace.json').exists() else None,'scope':'Production Perimeter/Sidebar content; QtTest mouse events on native QQuickWindow, not physical wl_pointer or Owner acceptance'}
+ report={'source_sha':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'scale':args.scale,'edge_pair':args.edge_pair,'alignment':args.alignment,'runtime_changes_from_head':subprocess.check_output(['git','diff','--name-only','HEAD','--','modules','services'],text=True).splitlines(),'fixture_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'actual_native_exit':r.returncode,'trace':json.loads((out/'trace.json').read_text()) if(out/'trace.json').exists() else None,'scope':'Production Perimeter/Sidebar content; QtTest mouse events on native QQuickWindow, not physical wl_pointer or Owner acceptance'}
+ if report['trace'] and report['trace']['error'] is None:
+  frames=[s for s in report['trace']['samples'] if s['event']=='swap' and .001<s['p']<.999]
+  report['full_size_frame_checks']=len(frames)
+  if not frames or any(abs(s['canvas'][i]-s['target'][key])>.001 for s in frames for i,key in enumerate(['width','height'])):
+   report['trace']['error']='Rendered reveal/retract did not retain the full-size target canvas'
  (out/'result.json').write_text(json.dumps(report,indent=2)+'\n')
  print('\n'.join(line for line in r.stdout.splitlines() if 'SIDEBAR_CONNECTION_' in line));print('EVIDENCE',out,'NATIVE_EXIT',r.returncode)
  raise SystemExit(0 if r.returncode==0 and report['trace'] and report['trace']['error'] is None and 'SIDEBAR_CONNECTION_PASS' in r.stdout else 1)
