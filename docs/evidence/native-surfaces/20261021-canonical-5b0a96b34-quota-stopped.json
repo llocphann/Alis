@@ -1,0 +1,172 @@
+{
+  "source_sha": "5b0a96b34e3df73d01677b59f7a206c94a7256cf",
+  "receipt": {
+    "source_sha": "5b0a96b34e3df73d01677b59f7a206c94a7256cf",
+    "argv": [
+      "bash",
+      "scripts/validate-maintainer-local.sh",
+      "--current-repo"
+    ],
+    "actual_exit": -15,
+    "status": "STOPPED",
+    "stop_reason": "quota_stop",
+    "elapsed_seconds": 1797.9,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "db81ae6185db33a2b2c5232017a0a369282c4183c31176d8debe7f30c15e90ae"
+  },
+  "started": 400,
+  "settled": 399,
+  "unsettled": 1,
+  "pass": 365,
+  "fail": 33,
+  "skip": 1,
+  "failed": [
+    {
+      "check": 91,
+      "label": "Python regression: scripts/test-abyss-input-region-contract.py"
+    },
+    {
+      "check": 96,
+      "label": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py"
+    },
+    {
+      "check": 103,
+      "label": "Python regression: scripts/test-abyss-module-locks-runtime.py"
+    },
+    {
+      "check": 104,
+      "label": "Python regression: scripts/test-abyss-multi-selection-runtime.py"
+    },
+    {
+      "check": 105,
+      "label": "Python regression: scripts/test-abyss-niri-hover-layer-contract.py"
+    },
+    {
+      "check": 111,
+      "label": "Python regression: scripts/test-abyss-panel-material-settings-runtime.py"
+    },
+    {
+      "check": 125,
+      "label": "Python regression: scripts/test-abyss-round0-editor-controls.py"
+    },
+    {
+      "check": 137,
+      "label": "Python regression: scripts/test-abyss-width-affects-modules-runtime.py"
+    },
+    {
+      "check": 164,
+      "label": "Python regression: scripts/test-calendar-weather-composition-contract.py"
+    },
+    {
+      "check": 175,
+      "label": "Python regression: scripts/test-clipboard-watcher-contract.py"
+    },
+    {
+      "check": 190,
+      "label": "Python regression: scripts/test-dashboard-freeform-contract.py"
+    },
+    {
+      "check": 194,
+      "label": "Python regression: scripts/test-dashboard-music-browser-navigation-contract.py"
+    },
+    {
+      "check": 198,
+      "label": "Python regression: scripts/test-dashboard-notes-markdown-contract.py"
+    },
+    {
+      "check": 199,
+      "label": "Python regression: scripts/test-dashboard-notes-markdown-runtime.py"
+    },
+    {
+      "check": 213,
+      "label": "Python regression: scripts/test-desktop-context-menu-native.py"
+    },
+    {
+      "check": 214,
+      "label": "Python regression: scripts/test-desktop-widget-editor-coordinates.py"
+    },
+    {
+      "check": 217,
+      "label": "Python regression: scripts/test-dock-abyss-hover-orientation-contract.py"
+    },
+    {
+      "check": 244,
+      "label": "Python regression: scripts/test-light-mode-upstream-contract.py"
+    },
+    {
+      "check": 246,
+      "label": "Python regression: scripts/test-local-ai-gguf-runtime.py"
+    },
+    {
+      "check": 247,
+      "label": "Python regression: scripts/test-local-model-folder.py"
+    },
+    {
+      "check": 257,
+      "label": "Python regression: scripts/test-material-only-global-style-contract.py"
+    },
+    {
+      "check": 266,
+      "label": "Python regression: scripts/test-notification-center-bottom-right-contract.py"
+    },
+    {
+      "check": 309,
+      "label": "Python regression: scripts/test-settings-concise-copy-surface.py"
+    },
+    {
+      "check": 320,
+      "label": "Python regression: scripts/test-shell-surface-contracts.py"
+    },
+    {
+      "check": 334,
+      "label": "Python regression: scripts/test-theme-seed-cache.py"
+    },
+    {
+      "check": 349,
+      "label": "Python regression: scripts/test-wallpaper-background-apply-runtime.py"
+    },
+    {
+      "check": 350,
+      "label": "Python regression: scripts/test-wallpaper-carousel-runtime.py"
+    },
+    {
+      "check": 351,
+      "label": "Python regression: scripts/test-wallpaper-color-preview-runtime.py"
+    },
+    {
+      "check": 357,
+      "label": "Python regression: scripts/test-wallpaper-preview-palette-cache.py"
+    },
+    {
+      "check": 367,
+      "label": "Python regression: scripts/test-weekly-planner-expanded-event-editor-contract.py"
+    },
+    {
+      "check": 389,
+      "label": "shell regression: scripts/test-abyss-editor-runtime.sh"
+    },
+    {
+      "check": 392,
+      "label": "shell regression: scripts/test-abyss-network-popups.sh"
+    },
+    {
+      "check": 398,
+      "label": "shell regression: scripts/test-abyss-shared-content.sh"
+    }
+  ],
+  "last_started": [
+    [
+      "400",
+      "shell regression: scripts/test-abyss-styled-popup.sh"
+    ]
+  ],
+  "canonical_log_sha256": "cb5d701fcc2c6d67896589076ef84571533c2c57678fefb66ca1636738a25f3a",
+  "full_canonical_pass": false,
+  "notes": [
+    "Quota stop at primary used 97; this partial run is not full PASS.",
+    "All raw logs remain durable and private.",
+    "Do not classify any FAIL as pre-existing without paired baseline evidence.",
+    "The earlier long TMPDIR run is a separate STOPPED receipt; only its CAST socket failure was diagnosed."
+  ]
+}
