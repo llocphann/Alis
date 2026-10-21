@@ -42,7 +42,7 @@ assert 'compact:root.compactActions' in positions
 assert 'editorSquare:root.compactIpcEditor' in positions
 assert 'objectName:"abyssEditorIpcOutput"' in editor
 assert 'objectName:"abyssEditorIpcPlacement"' in editor
-assert 'currentIndex:root.outputOnly ? 1 : 0' in editor
+assert 'currentIndex:model.findIndex(option => option.value === (root.outputOnly ? root.outputName : ""))' in editor
 assert 'onActivated:root.outputOnly=currentValue!==""' in editor
 assert 'outputName:root.outputOnly ? root.outputName : ""' in editor
 assert 'description:root.ipcOnly ? "Reset IPC position"' in positions

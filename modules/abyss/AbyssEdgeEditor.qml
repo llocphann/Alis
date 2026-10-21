@@ -919,7 +919,10 @@ Item {
                             textRole:"label";valueRole:"value"
                             model:[{label:"All outputs",value:""},
                                 {label:root.outputName,value:root.outputName}]
-                            currentIndex:root.outputOnly ? 1 : 0
+                            // A model rebuild (output rename/hotplug) can
+                            // reset ComboBox's index while outputOnly stays
+                            // unchanged. Resolve the selection from this model.
+                            currentIndex:model.findIndex(option => option.value === (root.outputOnly ? root.outputName : ""))
                             onActivated:root.outputOnly=currentValue!==""
                             StyledToolTip {text:"Edit this output or all outputs"}
                         }
