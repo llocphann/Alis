@@ -859,6 +859,8 @@ Item {
                             verticalPadding:2*Appearance.fontSizeScale
                             baseHeight:28*Appearance.fontSizeScale
                             Layout.preferredWidth:92*Appearance.fontSizeScale
+                            Layout.maximumWidth:92*Appearance.fontSizeScale
+                            Layout.minimumWidth:0;Layout.fillWidth:true
                             onClicked:root.editingPopups=false
                         }
                         SelectionGroupButton {
@@ -868,6 +870,8 @@ Item {
                             verticalPadding:2*Appearance.fontSizeScale
                             baseHeight:28*Appearance.fontSizeScale
                             Layout.preferredWidth:58*Appearance.fontSizeScale
+                            Layout.maximumWidth:58*Appearance.fontSizeScale
+                            Layout.minimumWidth:0;Layout.fillWidth:true
                             onClicked:root.editingPopups=true
                         }
                     }
