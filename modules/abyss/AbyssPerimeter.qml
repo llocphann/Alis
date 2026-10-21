@@ -1088,16 +1088,27 @@ Scope {
                 && !controls.open && !aux.open && !clipboardBody.open && !dialogBody.open && !GlobalStates.settingsNativeDialogOpen
                 && !PolkitService.active && !GlobalStates.regionSelectorOpen
             component SidebarReveal: AbyssSidebarReveal {
-                y: (window.height-height)/2
-                width: Math.max(AbyssStyle.perimeterThickness,Config.options?.sidebar?.edgeOpen?.regionWidth ?? 2)
-                height: Math.min(180,window.height*.25)
+                required property string attachedEdge
+                readonly property bool horizontal: Geometry.horizontal(attachedEdge)
+                readonly property real triggerThickness: Math.max(AbyssStyle.perimeterThickness,
+                    Config.options?.sidebar?.edgeOpen?.regionWidth ?? 2)
+                readonly property real triggerSpan: Math.min(180,
+                    (horizontal ? window.width : window.height)*.25)
+                // Follow the rendered panel, including role swaps and saved
+                // Edge overrides. The reveal strip stays bounded and centered.
+                x: attachedEdge === "right" ? window.width-width
+                    : horizontal ? (window.width-width)/2 : 0
+                y: attachedEdge === "bottom" ? window.height-height
+                    : horizontal ? 0 : (window.height-height)/2
+                width: horizontal ? triggerSpan : triggerThickness
+                height: horizontal ? triggerThickness : triggerSpan
                 openingAllowed: window.sidebarOpeningAllowed
                 closeBlocked: GlobalStates.activeContextMenuCount>0 || dialogBody.open || GlobalStates.settingsNativeDialogOpen
                 z: 220
             }
             SidebarReveal {
                 id: leftReveal
-                x: 0
+                attachedEdge: leftPanel.edge
                 available: window.sidebarRevealAvailable && (Config.options?.enabledPanels ?? []).includes("abyssSidebarLeft")
                 open: leftPanel.open
                 transientOpen: GlobalStates.sidebarLeftTransient
@@ -1107,7 +1118,7 @@ Scope {
             }
             SidebarReveal {
                 id: rightReveal
-                x: window.width-width
+                attachedEdge: rightPanel.edge
                 available: window.sidebarRevealAvailable && (Config.options?.enabledPanels ?? []).includes("abyssSidebarRight")
                 open: rightPanel.open
                 transientOpen: GlobalStates.sidebarRightTransient
