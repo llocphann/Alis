@@ -735,6 +735,13 @@ Scope {
             }
             function positionEdge(kind,fallback) { return Presentation.edge(presentation(kind),fallback) }
             function positionAlong(kind,edge,span,fallback) { return Presentation.along(presentation(kind),edge,span,width,height,fallback,nativeInsets) }
+            function sidebarAlong(kind,edge,span) {
+                const center=((Geometry.horizontal(edge) ? width : height)-span)/2
+                // Center is physical-output centering. Unequal Edge thickness
+                // must not shift a Sidebar; explicit start/end/custom stay saved.
+                return presentation(kind)?.alignment === "center"
+                    ? center : positionAlong(kind,edge,span,center)
+            }
             function bodyInsets(edge,along,span,ownLauncherKind = "") {
                 return ModuleLayout.clearanceInsets(nativeInsets,
                     bar.visible ? bar.deformations : [],edge,along,span,ownLauncherKind)
@@ -1184,7 +1191,7 @@ Scope {
                     && GlobalStates.sidebarLeftOpen && GlobalStates.sidebarLeftPresentationOutput === window.outputName
 
                 edgeInsets: window.bodyInsets(edge,along,span)
-                along: window.positionAlong(identity,edge,span,Geometry.horizontal(edge) ? (window.width-span)/2 : (window.height-span)/2)
+                along: window.sidebarAlong(identity,edge,span)
                 readonly property var sizeState:ShellLayoutController.currentState("featureSidebar",window.outputName)
                 readonly property real bodyWidth:Math.min(window.width*.8,(sizeState.width ?? 460)+(GlobalStates.sidebarLeftExpanded ? 190 : 0))
                 readonly property real bodyHeight:Math.min(window.height-window.nativeInsets.top-window.nativeInsets.bottom-72,
@@ -1209,7 +1216,7 @@ Scope {
                     && GlobalStates.sidebarRightOpen && GlobalStates.sidebarRightPresentationOutput === window.outputName
 
                 edgeInsets: window.bodyInsets(edge,along,span)
-                along: window.positionAlong(identity,edge,span,Geometry.horizontal(edge) ? (window.width-span)/2 : (window.height-span)/2)
+                along: window.sidebarAlong(identity,edge,span)
                 readonly property var sizeState:ShellLayoutController.currentState("systemSidebar",window.outputName)
                 readonly property real bodyWidth:Math.min(window.width*.8,sizeState.width ?? 460)
                 readonly property real bodyHeight:Math.min(window.height-window.nativeInsets.top-window.nativeInsets.bottom-72,

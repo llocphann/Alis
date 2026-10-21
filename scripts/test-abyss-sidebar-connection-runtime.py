@@ -79,7 +79,7 @@ ShellRoot {
       ? (edge==="top"?reveal.y===0:Math.abs(reveal.y+reveal.height-win.height)<1)
       : (edge==="left"?reveal.x===0:Math.abs(reveal.x+reveal.width-win.width)<1)
     check(expectedSource,"SIDEBAR_TRIGGER_EDGE_MISMATCH "+identity+" edge="+edge+" trigger="+reveal.x+","+reveal.y)
-    move(x,y);tryVerify(()=>host.open,2000);tryVerify(()=>host.ready&&host.progress>.999,6000)
+    move(x,y);tryVerify(()=>host.open,2000);tryVerify(()=>host.ready&&Math.abs(host.progress-1)<.000001,6000)
     root.canvasSize=[host.contentItem.width,host.contentItem.height]
     check(root.canvasSize[0]>0&&root.canvasSize[1]>0,"empty production content")
     check(Math.abs(horizontal?host.record.content.x+host.record.content.width/2-win.width/2:host.record.content.y+host.record.content.height/2-win.height/2)<1,"physical Sidebar not centered")
@@ -107,7 +107,7 @@ ShellRoot {
     root.phase=identity+":explicit-open"
     if(identity==="leftPanel")GlobalStates.openSidebarLeft(win.outputName,false)
     else GlobalStates.openSidebarRight(win.outputName,false)
-    tryVerify(()=>host.open&&host.ready&&host.progress>.999,5000);wait(reveal.closeDelay+100)
+    tryVerify(()=>host.open&&host.ready&&Math.abs(host.progress-1)<.000001,5000);wait(reveal.closeDelay+100)
     check(host.open,"explicit Sidebar open became hover-owned")
     if(identity==="leftPanel")GlobalStates.closeSidebarLeft()
     else GlobalStates.closeSidebarRight()
