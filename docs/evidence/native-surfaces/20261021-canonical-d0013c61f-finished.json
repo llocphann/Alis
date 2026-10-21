@@ -1,0 +1,237 @@
+{
+  "source_sha": "d0013c61f9639c5b8a59dfaae6011300e07aba40",
+  "started": 518,
+  "settled": 518,
+  "pass": 470,
+  "fail": 47,
+  "skip": 1,
+  "unsettled": 0,
+  "last_started": [
+    [
+      "518",
+      "source tree remains clean after validation"
+    ]
+  ],
+  "receipt": {
+    "source_sha": "d0013c61f9639c5b8a59dfaae6011300e07aba40",
+    "argv": [
+      "bash",
+      "scripts/validate-maintainer-local.sh",
+      "--current-repo"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 2164.5,
+    "owned_at_normal_exit": [
+      48859
+    ],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "f0644f893533faddf74191e82d0883bcc0eefbea5d0266fe1cfea8ae58e76f15"
+  },
+  "failed": [
+    {
+      "check": "26",
+      "label": "Native shared-field fractional light/mask exact GPU parity"
+    },
+    {
+      "check": "28",
+      "label": "Native Dashboard/Overview content-ready reveal, reversal and warm expiry"
+    },
+    {
+      "check": "65",
+      "label": "Python regression: scripts/test-abyss-body-reveal-readiness-runtime.py"
+    },
+    {
+      "check": "66",
+      "label": "Python regression: scripts/test-abyss-compact-editor-runtime.py"
+    },
+    {
+      "check": "76",
+      "label": "Python regression: scripts/test-abyss-drag-corners-runtime.py"
+    },
+    {
+      "check": "83",
+      "label": "Python regression: scripts/test-abyss-editor-popup-source-runtime.py"
+    },
+    {
+      "check": "86",
+      "label": "Python regression: scripts/test-abyss-full-size-modules-runtime.py"
+    },
+    {
+      "check": "96",
+      "label": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py"
+    },
+    {
+      "check": "103",
+      "label": "Python regression: scripts/test-abyss-module-locks-runtime.py"
+    },
+    {
+      "check": "104",
+      "label": "Python regression: scripts/test-abyss-multi-selection-runtime.py"
+    },
+    {
+      "check": "111",
+      "label": "Python regression: scripts/test-abyss-panel-material-settings-runtime.py"
+    },
+    {
+      "check": "125",
+      "label": "Python regression: scripts/test-abyss-round0-editor-controls.py"
+    },
+    {
+      "check": "138",
+      "label": "Python regression: scripts/test-abyss-width-affects-modules-runtime.py"
+    },
+    {
+      "check": "165",
+      "label": "Python regression: scripts/test-calendar-weather-composition-contract.py"
+    },
+    {
+      "check": "192",
+      "label": "Python regression: scripts/test-dashboard-freeform-contract.py"
+    },
+    {
+      "check": "196",
+      "label": "Python regression: scripts/test-dashboard-music-browser-navigation-contract.py"
+    },
+    {
+      "check": "200",
+      "label": "Python regression: scripts/test-dashboard-notes-markdown-contract.py"
+    },
+    {
+      "check": "201",
+      "label": "Python regression: scripts/test-dashboard-notes-markdown-runtime.py"
+    },
+    {
+      "check": "216",
+      "label": "Python regression: scripts/test-desktop-widget-editor-coordinates.py"
+    },
+    {
+      "check": "219",
+      "label": "Python regression: scripts/test-dock-abyss-hover-orientation-contract.py"
+    },
+    {
+      "check": "246",
+      "label": "Python regression: scripts/test-light-mode-upstream-contract.py"
+    },
+    {
+      "check": "248",
+      "label": "Python regression: scripts/test-local-ai-gguf-runtime.py"
+    },
+    {
+      "check": "249",
+      "label": "Python regression: scripts/test-local-model-folder.py"
+    },
+    {
+      "check": "259",
+      "label": "Python regression: scripts/test-material-only-global-style-contract.py"
+    },
+    {
+      "check": "268",
+      "label": "Python regression: scripts/test-notification-center-bottom-right-contract.py"
+    },
+    {
+      "check": "311",
+      "label": "Python regression: scripts/test-settings-concise-copy-surface.py"
+    },
+    {
+      "check": "322",
+      "label": "Python regression: scripts/test-shell-surface-contracts.py"
+    },
+    {
+      "check": "336",
+      "label": "Python regression: scripts/test-theme-seed-cache.py"
+    },
+    {
+      "check": "351",
+      "label": "Python regression: scripts/test-wallpaper-background-apply-runtime.py"
+    },
+    {
+      "check": "352",
+      "label": "Python regression: scripts/test-wallpaper-carousel-runtime.py"
+    },
+    {
+      "check": "353",
+      "label": "Python regression: scripts/test-wallpaper-color-preview-runtime.py"
+    },
+    {
+      "check": "359",
+      "label": "Python regression: scripts/test-wallpaper-preview-palette-cache.py"
+    },
+    {
+      "check": "369",
+      "label": "Python regression: scripts/test-weekly-planner-expanded-event-editor-contract.py"
+    },
+    {
+      "check": "391",
+      "label": "shell regression: scripts/test-abyss-editor-runtime.sh"
+    },
+    {
+      "check": "394",
+      "label": "shell regression: scripts/test-abyss-network-popups.sh"
+    },
+    {
+      "check": "400",
+      "label": "shell regression: scripts/test-abyss-shared-content.sh"
+    },
+    {
+      "check": "403",
+      "label": "shell regression: scripts/test-abyss-utilities-popup.sh"
+    },
+    {
+      "check": "418",
+      "label": "shell regression: scripts/test-brand-canonical-contracts.sh"
+    },
+    {
+      "check": "458",
+      "label": "shell regression: scripts/test-local-distribution.sh"
+    },
+    {
+      "check": "461",
+      "label": "shell regression: scripts/test-local-required-contracts.sh"
+    },
+    {
+      "check": "464",
+      "label": "shell regression: scripts/test-make-install-lifecycle.sh"
+    },
+    {
+      "check": "475",
+      "label": "shell regression: scripts/test-packaging-contract.sh"
+    },
+    {
+      "check": "476",
+      "label": "shell regression: scripts/test-panel-style-adapter.sh"
+    },
+    {
+      "check": "503",
+      "label": "shell regression: scripts/test-update-lifecycle.sh"
+    },
+    {
+      "check": "514",
+      "label": "shell regression: scripts/test-window-preview-lifecycle.sh"
+    },
+    {
+      "check": "515",
+      "label": "Make contract: prefix/path relocation"
+    },
+    {
+      "check": "518",
+      "label": "source tree remains clean after validation"
+    }
+  ],
+  "status": "FAIL",
+  "reported_summary": {
+    "passed": 470,
+    "failed": 47,
+    "skipped": 2
+  },
+  "numbered_skip_count": 1,
+  "additional_unnumbered_skips": 1,
+  "canonical_log_sha256": "21fe02ecb1ca3dd348f922b8a9f805db9fb231bd3e88f38ade896ed746fca935",
+  "scope": "Complete numbered run, not PASS. One owned descendant remained at normal exit and was bounded-cleaned; final remaining empty. Inner validation clone source-clean check failed on untracked json,os,sys; cause unclassified. Two readback fixture failures separately repaired at d6e1f9e7c, whose full validator is UNRUN.",
+  "clipboard_checks": "Numbered 171 through177 all PASS; scoped11 commands also passed at exact d001.",
+  "quota": {
+    "observed_primary_used_percent": 100,
+    "weekly_used_percent": 94
+  }
+}
