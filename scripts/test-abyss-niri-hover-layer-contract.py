@@ -7,6 +7,7 @@ evaluated by Node, so a refactor of its QML condition changes the test result.
 """
 from pathlib import Path
 import subprocess
+import runpy
 
 ROOT = Path(__file__).resolve().parents[1]
 perimeter = (ROOT / "modules/abyss/AbyssPerimeter.qml").read_text()
@@ -37,10 +38,7 @@ assert ('mask: window.overviewDragging ? dragPassThrough : liquid.activeDialog ?
 assert 'readonly property Region probeProxyInputMask: Region {' in perimeter
 assert 'regions: [nativeInputMask]' in perimeter
 assert 'readonly property Region inputRegion: Region {' in bar
-assert 'x: Math.floor(module.x)' in bar
-assert 'y: Math.floor(module.y)' in bar
-assert 'Math.ceil(module.x + module.width) - Math.floor(module.x)' in bar
-assert 'Math.ceil(module.y + module.height) - Math.floor(module.y)' in bar
+runpy.run_path(str(ROOT / 'scripts/test-abyss-input-region-contract.py'))
 assert 'module.visible && module.enabled' in bar
 assert 'Region { item: module }' not in bar
 assert 'enabled: !root.editing' in bar
