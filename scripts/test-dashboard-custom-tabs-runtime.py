@@ -143,6 +143,29 @@ Window {
    check(JSON.stringify(Array.from(Config.options.dashboard.canvas.widgets))===primary,
     "deleting custom tab erased other Dashboard layout")
    check(GlobalStates.dashboardOpen===false,"tab policy opened global Dashboard")
+   dashboard.canvasController.beginEditMode()
+   dashboard.openCustomTabDialog("create","")
+   dashboard.setCustomTabName("Keep tab without pending edit")
+   dashboard.acceptCustomTabDialog()
+   const hiddenTab=dashboard.currentPageId
+   dashboard.presentationActive=false
+   wait(30)
+   check(dashboard._pendingNewEditId==="","hidden Dashboard retained pending auto-edit")
+   check(dashboard.customTabs.some(t=>t.id===hiddenTab),"cancelled auto-edit removed saved tab")
+   dashboard.presentationActive=true
+   tryVerify(()=>dashboard.canvasController!==null,2500)
+   check(!dashboard.canvasController.editMode,"reopen replayed cancelled auto-edit")
+   dashboard.canvasController.beginEditMode()
+   dashboard.openCustomTabDialog("create","")
+   dashboard.setCustomTabName("Keep explicit selection")
+   dashboard.acceptCustomTabDialog()
+   dashboard.selectPage("dashboard")
+   wait(30)
+   check(dashboard._pendingNewEditId==="","page switch retained pending auto-edit")
+   check(dashboard.currentPageId==="dashboard"&&!dashboard.canvasController.editMode,
+    "pending auto-edit overrode explicit selection")
+   check(JSON.stringify(Array.from(Config.options.dashboard.canvas.widgets))===primary,
+    "cancelled auto-edit changed built-in layout")
    console.info("DASH_F01_NATIVE_PASS",checks)
   }catch(e){console.error("DASH_F01_NATIVE_FAIL",e.message,e.stack)}Qt.quit()}
  }

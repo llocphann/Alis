@@ -42,6 +42,20 @@ Item {
     property bool musicVisited: currentPageId === "music"
     property bool plannerVisited: currentPageId === "weeklyPlanner"
     property string _pendingNewEditId: ""
+    // Loader completion can run inside slideProgress evaluation. Enter edit
+    // on the next event turn, after that binding has finished, without holding
+    // a callback to a delegate that may already have been removed.
+    Timer {
+        interval: 0
+        running: root._pendingNewEditId.length > 0 && root.presentationActive
+            && root.currentPageId === root._pendingNewEditId
+            && root.canvasController !== null
+        onTriggered: {
+            const editor = root.canvasController
+            root._pendingNewEditId = ""
+            editor.beginEditMode()
+        }
+    }
     property bool _sessionWasVisible: false
     property bool _customDialogShown: false
     property string _customDialogMode: ""
@@ -57,6 +71,8 @@ Item {
         root._customDialogShown = false
     }
     onCurrentPageIdChanged: {
+        if (_pendingNewEditId.length && currentPageId !== _pendingNewEditId)
+            _pendingNewEditId = ""
         if (currentPageId === "music") musicVisited = true
         if (currentPageId === "weeklyPlanner") plannerVisited = true
     }
@@ -149,7 +165,10 @@ Item {
     }
     onPresentationActiveChanged: {
         if (root.presentationActive) root.sessionShown()
-        else root.sessionHidden()
+        else {
+            root._pendingNewEditId = ""
+            root.sessionHidden()
+        }
     }
     onPageIdsChanged: {
         if (!root.pageIds.includes(GlobalStates.dashboardPageId))
@@ -442,12 +461,7 @@ Item {
                         Loader {
                             id: customCanvasLoader
                             anchors.fill: parent
-                            // The selected editor owns editMode, which also
-                            // selects slideProgress. Load it before consulting
-                            // animated visibility to avoid that binding cycle.
-                            active: (root.presentationActive
-                                && (root.currentPageId === customTabHost.modelData.id
-                                    || customTabHost.visible))
+                            active: (customTabHost.visible && root.presentationActive)
                                 || (root.warmContent && root.currentPageId === customTabHost.modelData.id)
                             sourceComponent: DashboardCanvas {
                                 customTabId: customTabHost.modelData.id
@@ -455,12 +469,6 @@ Item {
                                 presentationActive: root.presentationActive
                                     && root.currentPageId === customTabHost.modelData.id
                                 onRequestEventsDialog: event => root.openAgendaDialog(event)
-                            }
-                            onLoaded: {
-                                if (root._pendingNewEditId === customTabHost.modelData.id) {
-                                    root._pendingNewEditId = ""
-                                    item.beginEditMode()
-                                }
                             }
                         }
                         ColumnLayout {
