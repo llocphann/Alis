@@ -301,15 +301,19 @@ Item {
                 pageIds: root.pageIds
                 navigationAllowed: root.navigationAllowed
                 reorderAllowed: root.editMode && !root._agendaDialogShown
-                onPageMoveRequested: (id,target) => dashboardCanvas.movePage(id,target,root.pageIds)
+                customTabs: root.customTabs
+                onCreateTabRequested: root.openCustomTabDialog("create", "")
+                onRenameTabRequested: id => root.openCustomTabDialog("rename", id)
+                onDeleteTabRequested: id => root.openCustomTabDialog("delete", id)
+                onPageMoveRequested: (id,target) => root.moveTab(id,target)
                 onHorizontalWheel: event => root.handlePageWheel(event, false)
                 onPageRequested: index => {root.resetPageWheel();root.selectPage(root.pageIds[index])}
-                editMode: dashboardCanvas.editMode
+                editMode: root.editMode
                 onEditModeRequested: {
-                    if (dashboardCanvas.editMode)
-                        dashboardCanvas.commitEditMode();
+                    if (root.canvasController?.editMode)
+                        root.canvasController.commitEditMode();
                     else
-                        dashboardCanvas.beginEditMode();
+                        root.canvasController?.beginEditMode();
                 }
             }
 
@@ -367,6 +371,70 @@ Item {
                         onRequestEventsDialog:event=>root.openPlannerEventEditor(event)
                     }
                 }
+                // Custom canvases have isolated geometry but share the exact
+                // same Dashboard widget component implementations and services.
+                Repeater {
+                    id: customPagesRepeater
+                    model: root.customTabs
+                    delegate: Item {
+                        id: customTabHost
+                        required property var modelData
+                        readonly property int slot: root.pageIds.indexOf(modelData.id)
+                        property var canvasController: customCanvasLoader.item
+                        width: pages.width
+                        height: pages.height
+                        x: (slot - pages.slideProgress) * pages.width
+                        visible: slot >= 0 && Math.abs(pages.slideProgress - slot) < 1
+                        enabled: root.currentPageId === modelData.id
+
+                        Loader {
+                            id: customCanvasLoader
+                            anchors.fill: parent
+                            active: (customTabHost.visible && root.presentationActive)
+                                || (root.warmContent && root.currentPageId === customTabHost.modelData.id)
+                            sourceComponent: DashboardCanvas {
+                                customTabId: customTabHost.modelData.id
+                                warmContent: root.warmContent
+                                presentationActive: root.presentationActive
+                                    && root.currentPageId === customTabHost.modelData.id
+                                onRequestEventsDialog: event => root.openAgendaDialog(event)
+                            }
+                            onLoaded: {
+                                if (root._pendingNewEditId === customTabHost.modelData.id) {
+                                    root._pendingNewEditId = ""
+                                    item.beginEditMode()
+                                }
+                            }
+                        }
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            width: Math.min(320, parent.width - 40)
+                            spacing: 12
+                            visible: customCanvasLoader.item !== null
+                                && !customCanvasLoader.item.editMode
+                                && (customCanvasLoader.item.visibleIds?.length ?? 0) === 0
+                            StyledText {
+                                Layout.fillWidth: true
+                                horizontalAlignment: Text.AlignHCenter
+                                text: Translation.tr("This tab is empty")
+                                font.pixelSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnLayer0
+                            }
+                            RippleButton {
+                                Layout.alignment: Qt.AlignHCenter
+                                implicitWidth: 120
+                                implicitHeight: 34
+                                buttonText: Translation.tr("Add widgets")
+                                onClicked: customCanvasLoader.item?.beginEditMode()
+                                contentItem: StyledText {
+                                    anchors.centerIn: parent
+                                    text: Translation.tr("Add widgets")
+                                    color: Appearance.colors.colPrimary
+                                }
+                            }
+                        }
+                    }
+                }
                 // Pointer handlers leave clicks and vertical scrolling to those widgets.
                 Item {
                     anchors.fill: parent
@@ -381,6 +449,21 @@ Item {
                     }
                 }
             }
+        }
+
+        DashboardCustomTabDialog {
+            anchors.fill: parent
+            z: 220
+            visible: root._customDialogShown
+            mode: root._customDialogMode
+            tabName: root._customDialogName
+            errorText: root._customDialogError
+            onTabNameChanged: if (visible) root._customDialogName = tabName
+            onAcceptRequested: name => {
+                root._customDialogName = name
+                root.acceptCustomTabDialog()
+            }
+            onDismissRequested: root._customDialogShown = false
         }
 
         Loader {
