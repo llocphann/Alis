@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Opt-in native production Sidebar connection, full-size reveal and hover lease."""
 from pathlib import Path
-import os,json,sys,subprocess,hashlib,argparse,tempfile
-parser=argparse.ArgumentParser();parser.add_argument('--scale',type=float,default=1.0);parser.add_argument('--edge-pair',default='left,right');parser.add_argument('--alignment',choices=['source','center','start','end','custom'],default='center');parser.add_argument('--custom-height',type=int,default=400);args=parser.parse_args()
+import os,json,sys,subprocess,hashlib,argparse,tempfile,time
+parser=argparse.ArgumentParser();parser.add_argument('--scale',type=float,default=1.0);parser.add_argument('--edge-pair',default='left,right');parser.add_argument('--alignment',choices=['source','center','start','end','custom'],default='center');parser.add_argument('--custom-height',type=int,default=400);parser.add_argument('--native-width',type=int);parser.add_argument('--native-height',type=int);args=parser.parse_args()
 assert args.edge_pair in ['left,right','right,left','top,bottom','bottom,top']
+if args.native_width is not None or args.native_height is not None:
+ assert args.native_width is not None and args.native_height is not None
+ assert 320<=args.native_width<=3840 and 240<=args.native_height<=2160
 root=Path(os.environ.get('ALIS_SIDEBAR_CONNECTION_TEST_ROOT',Path(__file__).resolve().parents[1])).resolve();sys.path.insert(0,str(root/'scripts'))
 from native_test_session import private_wayland,run_qs
 temporary=None if os.environ.get('ALIS_SIDEBAR_CONNECTION_EVIDENCE') else tempfile.TemporaryDirectory(prefix='alis-sidebar-connection-')
@@ -151,6 +154,18 @@ os.execv('/usr/bin/nmcli',['/usr/bin/nmcli','--wait','1',*args])
 (guard/'nmcli').chmod(0o700)
 with private_wayland(folder,capture_focus=True) as env:
  if not env:print('SKIP: Sidebar connection requires private Niri');raise SystemExit(0)
+ if args.native_width is not None:
+  # Resize only the child owned by this fixture, never a foreign window.
+  identity=json.loads((folder/'native-test-capture-focus.json').read_text())
+  windows=json.loads(subprocess.check_output(['niri','msg','--json','windows'],text=True,timeout=4))
+  owned=[w for w in windows if w.get('pid')==identity['private_pid'] and w.get('id')==identity['owned']]
+  assert len(owned)==1,'Private Niri window identity changed'
+  target=owned[0]['id']
+  if not owned[0]['is_floating']:
+   subprocess.run(['niri','msg','action','toggle-window-floating','--id',str(target)],check=True,capture_output=True,timeout=4)
+  for action,size in [('set-window-width',args.native_width),('set-window-height',args.native_height)]:
+   subprocess.run(['niri','msg','action',action,'--id',str(target),str(size)],check=True,capture_output=True,timeout=4)
+  time.sleep(.5)
  outputs=json.loads(subprocess.check_output(['niri','msg','--json','outputs'],env=env,text=True,timeout=4));name=next(iter(outputs.values()))['name']
  subprocess.run(['niri','msg','output',name,'scale',str(args.scale)],env=env,check=True,capture_output=True,timeout=4)
  cfg=folder/'config/alis';cfg.mkdir(parents=True);data=json.loads((root/'defaults/config.json').read_text())
@@ -162,6 +177,8 @@ with private_wayland(folder,capture_focus=True) as env:
  (cfg/'config.json').write_text(json.dumps(data));env.update(PATH=str(guard)+os.pathsep+os.environ['PATH'],SIDEBAR_CONNECTION_ALIGNMENT=args.alignment,SIDEBAR_CONNECTION_REPORT=str(out/'trace.json'),SIDEBAR_CONNECTION_IMAGES=str(out),QSG_RHI_BACKEND='opengl')
  r=run_qs(folder,env,timeout=50);(out/'native.log').write_text(r.stdout)
  report={'source_sha':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'scale':args.scale,'edge_pair':args.edge_pair,'alignment':args.alignment,'runtime_changes_from_head':subprocess.check_output(['git','diff','--name-only','HEAD','--','modules','services'],text=True).splitlines(),'fixture_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'actual_native_exit':r.returncode,'trace':json.loads((out/'trace.json').read_text()) if(out/'trace.json').exists() else None,'scope':'Production Perimeter/Sidebar content; QtTest mouse events on native QQuickWindow, not physical wl_pointer or Owner acceptance'}
+ report['requested_parent_size']=[args.native_width,args.native_height]
+ report['qml_errors']=sorted(set(line for line in r.stdout.splitlines() if any(message in line for message in ['Binding loop','ReferenceError:','TypeError:','Failed to load configuration'])))
  if report['trace'] and report['trace']['error'] is None:
   frames=[s for s in report['trace']['samples'] if s['event']=='swap' and .001<s['p']<.999]
   report['full_size_frame_checks']=len(frames)
@@ -169,4 +186,4 @@ with private_wayland(folder,capture_focus=True) as env:
    report['trace']['error']='Rendered reveal/retract did not retain the full-size target canvas'
  (out/'result.json').write_text(json.dumps(report,indent=2)+'\n')
  print('\n'.join(line for line in r.stdout.splitlines() if 'SIDEBAR_CONNECTION_' in line));print('EVIDENCE',out,'NATIVE_EXIT',r.returncode)
- raise SystemExit(0 if r.returncode==0 and report['trace'] and report['trace']['error'] is None and 'SIDEBAR_CONNECTION_PASS' in r.stdout else 1)
+ raise SystemExit(0 if r.returncode==0 and not report['qml_errors'] and report['trace'] and report['trace']['error'] is None and 'SIDEBAR_CONNECTION_PASS' in r.stdout else 1)
