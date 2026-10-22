@@ -1187,7 +1187,7 @@
             "username": ""
         },
         "customTabs": [],
-        "customTabLayouts": {},
+        "customTabLayouts": [],
         "defaultTabId": "",
         "inactiveMinutes": 0,
         "lastHiddenAtMs": 0,

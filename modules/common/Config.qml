@@ -2173,6 +2173,15 @@ Singleton {
             property JsonObject dashboard: JsonObject {
                 property int pageOrderVersion: 1
                 property list<string> pageOrder: ["dashboard", "music", "weeklyPlanner"]
+                // DASH-F01: explicit JsonAdapter fields are mandatory for
+                // round-trip persistence. Keep per-tab layouts in a list of
+                // JSON records (not dynamically named Qt object properties).
+                property list<var> customTabs: []
+                property list<var> customTabLayouts: []
+                property string defaultTabId: ""
+                property int inactiveMinutes: 0
+                property real lastHiddenAtMs: 0
+                property string lastPageId: "dashboard"
                 property JsonObject music: JsonObject {
                     property bool enable: true
                     property bool showScrollbars: true
