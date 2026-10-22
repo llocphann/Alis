@@ -73,7 +73,7 @@ for part in [
 ]:
     check(part in header, "header custom-tab integration missing: " + part)
 check('root.dismissRequested()' in dialog and
-      'root.acceptRequested(root.tabName)' in dialog, "tab modal signals missing")
+      'root.acceptRequested(tabNameInput.text)' in dialog, "tab modal signals missing")
 check('Config.setNestedValue("dashboard.defaultTabId",id)' in settings,
       "default-tab selector not saved")
 check('Config.setNestedValue("dashboard.inactiveMinutes",value)' in settings,
@@ -104,7 +104,7 @@ check('onClicked: root.createTabRequested()' in header,
       "Create button must invoke naming toolbar")
 toolbar = (src / "DashboardEditToolbar.qml").read_text()
 check('visible: root.editing || root.naming' in toolbar,
-      "naming toolbar must replace layout controls while editing")
+      "naming toolbar must temporarily replace layout controls")
 check('objectName: "dashboardToolbarTabName"' in toolbar
       and 'objectName: "dashboardToolbarCreate"' in toolbar
       and 'objectName: "dashboardToolbarCancelCreate"' in toolbar,

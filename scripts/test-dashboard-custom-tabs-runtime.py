@@ -46,7 +46,7 @@ Window {
   tabController:dashboard
   canvasController:dashboard.canvasController
   width:520
-  anchors.top:parent.top
+  y:52
   anchors.horizontalCenter:parent.horizontalCenter
   z:300
  }
