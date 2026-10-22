@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import "../dashboard/DashboardCustomTabPolicy.js" as TabPolicy
 
 ContentPage {
     id: root
@@ -11,6 +12,17 @@ ContentPage {
 
     property bool isIiActive: Config.options?.panelFamily !== "waffle"
     property string activeSection: "general"
+    readonly property var tabChoices: {
+        const choices = [
+            {displayName:Translation.tr("Dashboard"),icon:"dashboard",value:"dashboard"},
+            {displayName:Translation.tr("Weekly Planner"),icon:"calendar_month",value:"weeklyPlanner"}
+        ]
+        if (Config.options?.dashboard?.music?.enable ?? true)
+            choices.splice(1,0,{displayName:Translation.tr("Music"),icon:"library_music",value:"music"})
+        for (const tab of TabPolicy.tabs(Config.options?.dashboard?.customTabs))
+            choices.push({displayName:tab.name,icon:"tab",value:tab.id})
+        return choices
+    }
 
     SettingsTaskNavigator {
         visible: root.isIiActive
@@ -80,6 +92,25 @@ ContentPage {
                 description: Translation.tr("Load before first open; stays warm after use")
                 checked: Config.options?.dashboard?.keepLoaded ?? false
                 onCheckedChanged: Config.setNestedValue("dashboard.keepLoaded", checked)
+            }
+            ContentSubsection {
+                title: Translation.tr("Default tab after inactivity")
+                ConfigSelectionArray {
+                    currentValue: root.tabChoices.some(item =>
+                        item.value === (Config.options?.dashboard?.defaultTabId ?? "dashboard"))
+                        ? (Config.options?.dashboard?.defaultTabId || "dashboard") : "dashboard"
+                    options: root.tabChoices
+                    onSelected: id => Config.setNestedValue("dashboard.defaultTabId",id)
+                }
+            }
+            ConfigSpinBox {
+                text: Translation.tr("Return to default tab after (minutes)")
+                description: Translation.tr("Only on the next Dashboard open. Zero disables automatic tab return.")
+                value: Config.options?.dashboard?.inactiveMinutes ?? 0
+                from: 0
+                to: 240
+                stepSize: 1
+                onValueChanged: Config.setNestedValue("dashboard.inactiveMinutes",value)
             }
             ConfigSpinBox {
                 text: Translation.tr("Panel width (% of screen)")
