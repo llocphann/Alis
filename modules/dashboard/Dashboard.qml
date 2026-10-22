@@ -260,7 +260,7 @@ Scope {
 
             width: root.panelWidth
             readonly property real editToolbarReserve:
-                (item?.editMode ?? false)
+                ((item?.editMode ?? false) || (item?.tabNamingActive ?? false))
                     ? Math.max(0, Number(item?.editToolbarHeight ?? 0) - 1)
                     : 0
             height: Math.min(root.availablePanelHeight,
@@ -283,6 +283,7 @@ Scope {
                 id: standaloneDashboardHost
 
                 property alias editMode: standaloneContent.editMode
+                readonly property bool tabNamingActive: standaloneContent.tabNamingActive
                 function handleEscape(): bool {
                     return standaloneContent.handleEscape()
                 }
@@ -309,6 +310,7 @@ Scope {
                     id: standaloneEditToolbar
                     z: 8
                     canvasController: standaloneContent.canvasController
+                    tabController: standaloneContent
                     width: Math.min(
                         standaloneEditToolbar.implicitWidth,
                         Math.max(1, standaloneContent.width - 32))
