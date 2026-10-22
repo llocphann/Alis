@@ -21,6 +21,9 @@ Item {
     property string viewState: "month"
     property var selectedDate: null
     property bool dashboardAdaptive: false
+    // Keep Dashboard counted indicators aligned with the Edge calendar popup.
+    readonly property int maxEventDots: Math.max(0, Math.min(3,
+        Number(Config.options?.calendar?.maxEventDots ?? 3)))
 
     // Trigger to force recomputation when events change
     property int _eventsTrigger: 0
@@ -29,6 +32,7 @@ Item {
         function onEventAdded(event) { root._eventsTrigger++ }
         function onEventRemoved(id) { root._eventsTrigger++ }
         function onEventUpdated(event) { root._eventsTrigger++ }
+        function onReadyChanged() { root._eventsTrigger++ }
     }
     property int _externalTrigger: 0
     Connections {
@@ -53,20 +57,27 @@ Item {
         root._eventsTrigger
         root._externalTrigger
         const cells = []
-
         for (let weekRow = 0; weekRow < 6; ++weekRow) {
             for (let dayIndex = 0; dayIndex < 7; ++dayIndex) {
                 const cell = root.calendarLayout[weekRow]?.[dayIndex]
                 if (!cell)
                     continue
                 const date = root._getDateForCell(cell.day, weekRow, dayIndex)
+                // Month history includes every persisted occurrence, even if
+                // its notification has already fired or its date has passed.
+                const local = Events.getAllEventOccurrencesForDate(date)
+                const external = CalendarSync.getEventsForDate(date) || []
+                const colors = root.dashboardAdaptive
+                    ? local.map(() => root.colPrimary).concat(
+                        external.map(event => event.sourceColor || root.colPrimary))
+                    : root.distinctSourceColors(local, external)
                 cells.push({
                     date: date,
                     day: cell.day,
                     currentMonth: cell.today !== -1,
                     today: cell.today === 1,
-                    eventCount: root.getEventCountForDay(cell.day, weekRow, dayIndex),
-                    eventColors: root.getSourceColorsForDay(cell.day, weekRow, dayIndex),
+                    eventCount: local.length + external.length,
+                    eventColors: colors,
                 })
             }
         }
@@ -75,34 +86,16 @@ Item {
     implicitHeight: contentStack.implicitHeight
     implicitWidth: contentStack.implicitWidth
 
-    // Merged event count for a specific day (local + external)
-    function getEventCountForDay(day: int, weekRow: int, dayIndex: int): int {
-        const _t = root._eventsTrigger
-        const _t2 = root._externalTrigger
-        const targetDate = _getDateForCell(day, weekRow, dayIndex)
-        if (!targetDate) return 0
-        const localCount = Events.getEventsForDate(targetDate).length
-        const externalCount = (CalendarSync.getEventsForDate(targetDate) || []).length
-        return localCount + externalCount
-    }
-
-    // Get source colors for multi-colored dots on a day cell
-    function getSourceColorsForDay(day: int, weekRow: int, dayIndex: int): var {
-        const _t = root._eventsTrigger
-        const _t2 = root._externalTrigger
-        const targetDate = _getDateForCell(day, weekRow, dayIndex)
-        if (!targetDate) return []
-
+    // Sidebar retains one dot per distinct calendar source; the Dashboard
+    // instead counts every saved event to match the popup.
+    function distinctSourceColors(local, external): var {
         const colors = []
-        // Local events get primary color
-        const localEvents = Events.getEventsForDate(targetDate)
-        if (localEvents.length > 0) {
+        if (local.length > 0)
             colors.push(root.colPrimary)
-        }
-        // External events get their source colors
-        const externalColors = CalendarSync.getSourceColorsForDate(targetDate) || []
-        for (const c of externalColors) {
-            if (colors.indexOf(c) === -1) colors.push(c)
+        for (const event of external) {
+            const color = event.sourceColor || root.colPrimary
+            if (colors.indexOf(color) === -1)
+                colors.push(color)
         }
         return colors
     }
@@ -218,7 +211,9 @@ Item {
                         ? Math.max(0, root.height - 8) : 0
                     autoWeekNumbers: root.dashboardAdaptive
                     interactiveDays: true
-                    showEventDots: true
+                    showEventDots: !root.dashboardAdaptive || root.maxEventDots > 0
+                    countedEventDots: root.dashboardAdaptive
+                    maxEventDots: root.maxEventDots
 
                     onPreviousMonthRequested: root.monthShift--
                     onNextMonthRequested: root.monthShift++

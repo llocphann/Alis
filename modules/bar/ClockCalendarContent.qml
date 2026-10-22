@@ -34,6 +34,7 @@ Item {
         function onEventAdded(event) { root._localEventRevision++ }
         function onEventUpdated(event) { root._localEventRevision++ }
         function onEventRemoved(id) { root._localEventRevision++ }
+        function onReadyChanged() { root._localEventRevision++ }
     }
     Connections {
         target: CalendarSync
@@ -59,7 +60,8 @@ Item {
         for (let i = 0; i < 42; ++i) {
             const d = new Date(start)
             d.setDate(start.getDate() + i)
-            const local = Events.getEventsForDate(d)
+            // Include fired/historic Agenda slots in month indicators.
+            const local = Events.getAllEventOccurrencesForDate(d)
             const external = CalendarSync.getEventsForDate(d) || []
             // One color per EVENT, not per distinct event source.
             const colors = local.map(() => Appearance.colors.colPrimary)
