@@ -22,11 +22,12 @@ Item {
     property bool warmContent: false
     // One rendering/editing implementation per tab; only layout state differs.
     property string customTabId: ""
-    readonly property string layoutPath: customTabId.length
-        ? "dashboard.customTabLayouts." + customTabId : "dashboard.canvas"
-    readonly property var layoutOptions: customTabId.length
-        ? (Config.options?.dashboard?.customTabLayouts?.[customTabId] ?? ({}))
-        : (Config.options?.dashboard?.canvas ?? ({}))
+    readonly property var layoutOptions: {
+        if (!root.customTabId.length)
+            return Config.options?.dashboard?.canvas ?? ({})
+        const layouts = Config.options?.dashboard?.customTabLayouts ?? []
+        return Array.from(layouts).find(layout => layout?.id === root.customTabId) ?? ({})
+    }
     readonly property bool responsiveWorkspace: (Config.options?.panelFamily ?? "abyss") === "abyss"
     readonly property var workspace: {
         if (!responsiveWorkspace) return {width:Math.max(1,width),height:Math.max(1,height),rects:({}),overflow:[]}
@@ -241,6 +242,29 @@ Item {
         return true
     }
 
+    function _layoutUpdates(entries, workspaceWidth, workspaceHeight): var {
+        const updates = ({})
+        if (!root.customTabId.length) {
+            updates["dashboard.canvas.widgets"] = root._cloneEntries(entries)
+            if (workspaceWidth !== null)
+                updates["dashboard.canvas.workspaceWidth"] = workspaceWidth
+            if (workspaceHeight !== null)
+                updates["dashboard.canvas.workspaceHeight"] = workspaceHeight
+            return updates
+        }
+        // JsonAdapter persists declared list<var> properties, not arbitrary
+        // nested QObject names such as customTabLayouts.custom-1.widgets.
+        const stored = Array.from(Config.options?.dashboard?.customTabLayouts ?? [])
+        const previous = stored.find(layout => layout?.id === root.customTabId)
+        const value = Object.assign({}, previous && typeof previous === "object"
+            ? previous : ({}), {id:root.customTabId, widgets:root._cloneEntries(entries)})
+        if (workspaceWidth !== null) value.workspaceWidth = workspaceWidth
+        if (workspaceHeight !== null) value.workspaceHeight = workspaceHeight
+        updates["dashboard.customTabLayouts"] = stored.filter(layout =>
+            layout?.id !== root.customTabId).concat([value])
+        return updates
+    }
+
     function commitEditMode() {
         if (!root.editMode)
             return
@@ -249,15 +273,10 @@ Item {
             return
         }
         root.finishInteraction(true)
-        const updates = ({})
-        updates[root.layoutPath + ".widgets"] =
-            root._cloneEntries(root._draftEntries ?? root._entriesForWrite())
-        if (root.responsiveWorkspace) {
-            updates[root.layoutPath + ".workspaceWidth"] =
-                root._draftWorkspaceWidth
-            updates[root.layoutPath + ".workspaceHeight"] =
-                root._draftWorkspaceHeight
-        }
+        const updates = root._layoutUpdates(
+            root._draftEntries ?? root._entriesForWrite(),
+            root.responsiveWorkspace ? root._draftWorkspaceWidth : null,
+            root.responsiveWorkspace ? root._draftWorkspaceHeight : null)
         updates["dashboard.canvas.gridSize"] = root._draftGridSize
         updates["dashboard.canvas.snap"] = root._draftSnap
         updates["dashboard.canvas.autoAdjustSize"] =
@@ -343,13 +362,9 @@ Item {
             }
             return
         }
-        const updates=({})
-        updates[root.layoutPath + ".widgets"]=entries
-        if(root.responsiveWorkspace) {
-            updates[root.layoutPath + ".workspaceWidth"]=canvas.width
-            updates[root.layoutPath + ".workspaceHeight"]=canvas.height
-        }
-        Config.setNestedValues(updates)
+        Config.setNestedValues(root._layoutUpdates(entries,
+            root.responsiveWorkspace ? canvas.width : null,
+            root.responsiveWorkspace ? canvas.height : null))
     }
 
     function _persistPatch(id, patch) {
@@ -437,11 +452,7 @@ Item {
             root._draftWorkspaceHeight = Number(
                 root.layoutOptions?.workspaceHeight ?? 0)
         } else {
-            const updates=({})
-            updates[root.layoutPath + ".widgets"]=root.defaultEntries()
-            updates[root.layoutPath + ".workspaceWidth"]=0
-            updates[root.layoutPath + ".workspaceHeight"]=0
-            Config.setNestedValues(updates)
+            Config.setNestedValues(root._layoutUpdates(root.defaultEntries(),0,0))
         }
     }
 
