@@ -98,9 +98,32 @@ Item {
             const id = PagePolicy.defaultOrder[GlobalStates.dashboardPage] ?? "dashboard"
             GlobalStates.dashboardPageId = root.pageIds.includes(id) ? id : root.pageIds[0]
         }
+        function onDashboardPageIdChanged(): void {
+            if (!Config.ready || !GlobalStates.dashboardSelectionRestored) return
+            const id = GlobalStates.dashboardPageId
+            if (root.pageIds.includes(id)
+                    && Config.options?.dashboard?.lastPageId !== id)
+                Config.setNestedValue("dashboard.lastPageId",id)
+        }
+    }
+    Connections {
+        target: Config
+        function onReadyChanged() {
+            if (!Config.ready) return
+            root.restoreLastPage()
+            if (root.presentationActive) root.sessionShown()
+        }
+    }
+    function restoreLastPage(): void {
+        if (!Config.ready || GlobalStates.dashboardSelectionRestored) return
+        GlobalStates.dashboardSelectionRestored = true
+        const saved = String(Config.options?.dashboard?.lastPageId ?? "dashboard")
+        if (root.pageIds.includes(saved))
+            GlobalStates.dashboardPageId = saved
     }
     function sessionShown(): void {
-        if (root._sessionWasVisible) return
+        if (!Config.ready || root._sessionWasVisible) return
+        root.restoreLastPage()
         root._sessionWasVisible = true
         const configured = String(Config.options?.dashboard?.defaultTabId ?? "")
         if (configured.length && !root.pageIds.includes(configured))
@@ -125,6 +148,7 @@ Item {
             GlobalStates.dashboardPageId = root.pageIds[0]
     }
     Component.onCompleted: {
+        if (Config.ready) root.restoreLastPage()
         if (!root.pageIds.includes(GlobalStates.dashboardPageId)) {
             const legacy = PagePolicy.defaultOrder[GlobalStates.dashboardPage]
             root.selectPage(root.pageIds.includes(legacy) ? legacy : root.pageIds[0])
