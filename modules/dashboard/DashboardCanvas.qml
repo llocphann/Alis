@@ -146,11 +146,15 @@ Item {
     readonly property real _workspaceReferenceWidth:
         root.editMode && root._draftEntries !== null
             ? root._draftWorkspaceWidth
-            : Number(root.layoutOptions?.workspaceWidth ?? 0)
+            : Number(root.customTabId.length
+                ? (root.layoutOptions?.workspaceWidth ?? 0)
+                : (Config.options?.dashboard?.canvas?.workspaceWidth ?? 0))
     readonly property real _workspaceReferenceHeight:
         root.editMode && root._draftEntries !== null
             ? root._draftWorkspaceHeight
-            : Number(root.layoutOptions?.workspaceHeight ?? 0)
+            : Number(root.customTabId.length
+                ? (root.layoutOptions?.workspaceHeight ?? 0)
+                : (Config.options?.dashboard?.canvas?.workspaceHeight ?? 0))
 
     function _icon(id) {
         return root._catalog[id]?.icon ?? "widgets"
