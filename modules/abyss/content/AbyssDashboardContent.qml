@@ -6,6 +6,7 @@ Item {
     id: root
     property var participant: null
     readonly property bool editMode: content.editMode
+    readonly property bool tabNamingActive: content.tabNamingActive
     function handleEscape(): bool {
         return content.handleEscape()
     }
@@ -23,5 +24,6 @@ Item {
         id: editor
         body: root.participant
         canvasController: content.canvasController
+        tabController: content
     }
 }
