@@ -40,6 +40,16 @@ Window {
   presentationActive:true
   musicBackend:fakeMusic
  }
+ DashboardEditToolbar {
+  id:tabToolbar
+  objectName:"dashboardTestTabToolbar"
+  tabController:dashboard
+  canvasController:dashboard.canvasController
+  width:520
+  anchors.top:parent.top
+  anchors.horizontalCenter:parent.horizontalCenter
+  z:300
+ }
  TestCase {
   id:test;when:false;optional:true
   property int checks:0
@@ -55,9 +65,12 @@ Window {
    const dialog=findChild(dashboard,"dashboardCustomTabDialog")
    check(!!dialog,"dialog not mounted")
    dashboard.openCustomTabDialog("create","")
-   check(dialog.visible && dashboard._customDialogShown,"create control did not show modal")
-   dialog.nameEdited("Research")
-   dialog.acceptRequested("Research")
+   check(tabToolbar.visible && dashboard.tabNamingActive && !dialog.visible,
+    "create action did not replace edit toolbar")
+   const name=findChild(tabToolbar,"dashboardToolbarTabName")
+   check(!!name,"toolbar text input missing")
+   dashboard.setCustomTabName("Research")
+   dashboard.acceptCustomTabDialog()
    tryVerify(()=>dashboard.currentPageId==="custom-1",3500)
    tryVerify(()=>dashboard.canvasController && dashboard.canvasController.editMode,3500)
    const canvas=dashboard.canvasController
@@ -71,15 +84,16 @@ Window {
    check(JSON.stringify(Array.from(Config.options.dashboard.canvas.widgets))===primary,
     "main Dashboard widget geometry changed")
    dashboard.openCustomTabDialog("rename","custom-1")
-   dialog.nameEdited("Research II")
-   dialog.acceptRequested("Research II")
+   check(tabToolbar.visible,"rename did not open edit toolbar")
+   dashboard.setCustomTabName("Research II")
+   dashboard.acceptCustomTabDialog()
    tryVerify(()=>Array.from(Config.options.dashboard.customTabs)[0].name==="Research II",2000)
    dashboard.openCustomTabDialog("create","")
-   dialog.nameEdited("research ii")
-   dialog.acceptRequested("research ii")
+   dashboard.setCustomTabName("research ii")
+   dashboard.acceptCustomTabDialog()
    check(dashboard._customDialogShown && dashboard._customDialogError.length>0,
     "duplicate name not rejected")
-   dashboard._customDialogShown=false
+   dashboard.cancelCustomTabDialog()
    Config.setNestedValues({
      "dashboard.defaultTabId":"dashboard",
      "dashboard.inactiveMinutes":5
