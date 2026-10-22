@@ -706,16 +706,13 @@ Item {
     }
 
     function _minimumSize(id) {
-        switch (id) {
-        case "media": return { width: 320, height: 390 }
-        case "weather": return { width: 280, height: 180 }
-        case "calendar": return { width: 300, height: 210 }
-        case "todo": return { width: 260, height: 140 }
-        case "notifications": return { width: 260, height: 130 }
-        case "notes": return { width: 240, height: 160 }
-        case "agenda": return { width: 240, height: 75 }
-        case "system": return { width: 260, height: 180 }
-        default: return { width: 200, height: 80 }
+        // A module's *content* is allowed to choose its comfortable size; the
+        // editor must not force old per-widget pixel minima on the canvas.
+        // This small hit-target floor prevents a resize handle collapsing to
+        // zero, while all other sizes are determined by the saved proportions.
+        return {
+            width: Math.max(1, Math.min(canvas.width, 36)),
+            height: Math.max(1, Math.min(canvas.height, 32))
         }
     }
 

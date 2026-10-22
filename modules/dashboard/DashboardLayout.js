@@ -76,13 +76,70 @@ function project(entries, viewportWidth, viewportHeight, minimums, gap, referenc
     var rects={}, obstacles=[], overflow=[];
     entries.filter(function(entry) { return entry.visible !== false; }).forEach(function(entry) {
         var min=minimums[entry.id] || {width:200,height:80};
-        var w=Math.min(width,Math.max(min.width,bounded(entry.w,.3,.05,1)*width));
-        var h=Math.min(height,Math.max(min.height,bounded(entry.h,.2,.05,1)*height));
+        var w=Math.min(width,Math.max(min.width,bounded(entry.w,.3,.001,1)*width));
+        var h=Math.min(height,Math.max(min.height,bounded(entry.h,.2,.001,1)*height));
         var desired={x:Math.min(width-w,bounded(entry.x,0,0,1)*width),
             y:Math.min(height-h,bounded(entry.y,0,0,1)*height),width:w,height:h};
         var best=freeRect(desired,min,width,height,obstacles,gap,true,true);
         if(!best) { overflow.push(entry.id);return; }
         rects[entry.id]=best;obstacles.push(best);
     });
+    // The greedy solver preserves user positions whenever possible. On a
+    // genuinely crowded/small viewport, never drop widgets: compute an
+    // *in-memory* responsive grid instead of silently hiding overflow items.
+    // Saved x/y/w/h remain untouched so the original arrangement comes back
+    // automatically when the Dashboard has more space.
+    if (overflow.length && entries.some(function(e) { return e.visible !== false; }))
+        return responsiveGrid(entries,width,height,minimums,gap);
     return {width:width,height:height,rects:rects,overflow:overflow};
+}
+function responsiveGrid(entries, width, height, minimums, gap) {
+    var shown=entries.filter(function(entry) { return entry.visible !== false; });
+    var n=shown.length, rects={}, best=null;
+    if (!n) return {width:width,height:height,rects:rects,overflow:[]};
+    var requestedGap=Math.max(0,Number(gap)||0);
+    for (var cols=1;cols<=n;cols++) {
+        var rows=Math.ceil(n/cols), gapX=Math.min(requestedGap,width/Math.max(2,cols*3));
+        var gapY=Math.min(requestedGap,height/Math.max(2,rows*3));
+        var cellW=(width-(cols-1)*gapX)/cols;
+        var cellH=(height-(rows-1)*gapY)/rows;
+        if (cellW <= 0 || cellH <= 0) continue;
+        var allowsMin=shown.every(function(e) {
+            var min=minimums[e.id] || {width:1,height:1};
+            return cellW+0.001 >= Math.min(width,Math.max(1,min.width))
+                && cellH+0.001 >= Math.min(height,Math.max(1,min.height));
+        });
+        if (!allowsMin) continue;
+        var ratio=cellW/cellH;
+        // Prefer useful card aspect ratios without bias toward columns based
+        // on widget identities. Responsive packing is deterministic.
+        var score=Math.abs(Math.log(ratio/1.45)) + Math.abs(cols-rows)*0.025;
+        if (!best || score<best.score) best={cols:cols,rows:rows,
+            width:cellW,height:cellH,gapX:gapX,gapY:gapY,score:score};
+    }
+    if (!best) {
+        // Extremely small windows still show the available modules; at this
+        // point the safety hit-target can only be relaxed visually.
+        var cols=Math.max(1,Math.min(n,Math.round(Math.sqrt(n*width/Math.max(1,height)))));
+        var rows=Math.ceil(n/cols), gapX=Math.min(requestedGap,width/Math.max(2,cols*3));
+        var gapY=Math.min(requestedGap,height/Math.max(2,rows*3));
+        best={cols:cols,rows:rows,
+            width:Math.max(1,(width-(cols-1)*gapX)/cols),
+            height:Math.max(1,(height-(rows-1)*gapY)/rows),
+            gapX:gapX,gapY:gapY};
+    }
+    // Keep approximate reading order rather than arbitrarily rearranging
+    // cards by service type. All sorting happens only in the fallback view.
+    shown=shown.slice().sort(function(a,b) {
+        var ay=bounded(a.y,0,0,1),by=bounded(b.y,0,0,1);
+        return Math.abs(ay-by) > .06 ? ay-by
+            : bounded(a.x,0,0,1)-bounded(b.x,0,0,1);
+    });
+    shown.forEach(function(entry,i) {
+        var col=i%best.cols, row=Math.floor(i/best.cols);
+        rects[entry.id]={x:col*(best.width+best.gapX),
+            y:row*(best.height+best.gapY),
+            width:best.width,height:best.height};
+    });
+    return {width:width,height:height,rects:rects,overflow:[]};
 }
