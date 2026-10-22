@@ -63,10 +63,14 @@ Window {
    })
    const primary=JSON.stringify(Array.from(Config.options.dashboard.canvas.widgets))
    const dialog=findChild(dashboard,"dashboardCustomTabDialog")
-   check(!!dialog,"dialog not mounted")
-   dashboard.openCustomTabDialog("create","")
-   check(tabToolbar.visible && dashboard.tabNamingActive && !dialog.visible,
-    "create action did not replace edit toolbar")
+   check(!!dialog,"delete confirmation dialog not mounted")
+   const createButton=findChild(dashboard,"dashboardCreateCustomTab")
+   check(!!createButton && createButton.visible && createButton.enabled,
+    "create button must be visible and enabled outside Edit Dashboard Layout")
+   mouseClick(createButton)
+   tryVerify(()=>tabToolbar.visible && dashboard.tabNamingActive,2000)
+   check(!dialog.visible && !dashboard.editMode,
+    "create click must show naming toolbar, not a canvas modal or Edit mode")
    const name=findChild(tabToolbar,"dashboardToolbarTabName")
    check(!!name,"toolbar text input missing")
    dashboard.setCustomTabName("Research")
