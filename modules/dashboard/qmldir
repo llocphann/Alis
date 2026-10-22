@@ -16,6 +16,7 @@ Dashboard 1.0 Dashboard.qml
 DashboardAlignmentGuides 1.0 DashboardAlignmentGuides.qml
 DashboardCanvas 1.0 DashboardCanvas.qml
 DashboardContent 1.0 DashboardContent.qml
+DashboardCustomTabDialog 1.0 DashboardCustomTabDialog.qml
 DashboardEditGrid 1.0 DashboardEditGrid.qml
 DashboardEditToolbar 1.0 DashboardEditToolbar.qml
 DashboardHeader 1.0 DashboardHeader.qml
