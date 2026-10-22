@@ -164,6 +164,10 @@ Item {
         if (root.presentationActive) root.sessionShown()
     }
 
+    function setDefaultTab(id): void {
+        if (!root.pageIds.includes(id) || !root.editMode) return
+        Config.setNestedValue("dashboard.defaultTabId", id)
+    }
     function openCustomTabDialog(mode, id): void {
         if (root.editMode) return
         root._customDialogMode = mode
@@ -335,6 +339,8 @@ Item {
                 navigationAllowed: root.navigationAllowed
                 reorderAllowed: root.editMode && !root._agendaDialogShown
                 customTabs: root.customTabs
+                defaultTabId: Config.options?.dashboard?.defaultTabId || "dashboard"
+                onSetDefaultTabRequested: id => root.setDefaultTab(id)
                 onCreateTabRequested: root.openCustomTabDialog("create", "")
                 onRenameTabRequested: id => root.openCustomTabDialog("rename", id)
                 onDeleteTabRequested: id => root.openCustomTabDialog("delete", id)

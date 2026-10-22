@@ -23,6 +23,7 @@ Item {
     property int pageCount: 1
     property var pageIds: ["dashboard", "music"]
     property var customTabs: []
+    property string defaultTabId: "dashboard"
     property bool navigationAllowed: true
     property bool reorderAllowed: editMode
     property string dragPageId: ""
@@ -36,6 +37,7 @@ Item {
     signal pageRequested(int index)
     signal pageMoveRequested(string id, int target)
     signal createTabRequested()
+    signal setDefaultTabRequested(string id)
     signal renameTabRequested(string id)
     signal deleteTabRequested(string id)
     signal editModeRequested
@@ -262,25 +264,45 @@ Item {
                 }
             }
         }
-    }
-    // Tab controls sit outside the edit-only button area and outside the
-    // draggable page indicators. Keep an explicit hit-test layer even when
-    // the normal Dashboard action cluster is present.
-    Row {
+        // All controls are inside the centered page group, so the combined
+        // indicator/actions block stays centered in every display mode.
+        Row {
         id: customTabActions
         objectName: "dashboardCustomTabActions"
-        anchors.left: pages.right
-        anchors.leftMargin: 5
-        anchors.verticalCenter: pages.verticalCenter
+        Layout.alignment: Qt.AlignVCenter
         spacing: 2
         z: 10
-        visible: root.pageCount > 0
+        visible: root.editMode
+        RippleButton {
+            objectName: "dashboardSetDefaultTab"
+            implicitWidth: 29
+            implicitHeight: 30
+            buttonRadius: Appearance.rounding.full
+            readonly property bool isDefault:
+                root.pageIds[root.currentPage] === root.defaultTabId
+            toggled: isDefault
+            enabled: root.editMode && root.pageIds[root.currentPage] !== undefined
+            focusPolicy: Qt.StrongFocus
+            colBackground: "transparent"
+            colBackgroundHover: Qt.alpha(root.colText, .08)
+            onClicked: root.setDefaultTabRequested(root.pageIds[root.currentPage])
+            contentItem: MaterialSymbol {
+                text: "home"
+                iconSize: 19
+                color: parent.isDefault ? Appearance.colors.colPrimary : root.colText
+            }
+            StyledToolTip {
+                text: parent.isDefault
+                    ? Translation.tr("Default tab after inactivity")
+                    : Translation.tr("Set this as default tab after inactivity")
+            }
+        }
         RippleButton {
             objectName: "dashboardCreateCustomTab"
             implicitWidth: 28
             implicitHeight: 30
             buttonRadius: Appearance.rounding.full
-            enabled: !root.editMode
+            enabled: root.editMode
             focusPolicy: Qt.StrongFocus
             colBackground: "transparent"
             colBackgroundHover: Qt.alpha(root.colText, .08)
@@ -294,7 +316,7 @@ Item {
         }
         RippleButton {
             objectName: "dashboardRenameCustomTab"
-            visible: root.pageIds[root.currentPage]?.startsWith("custom-") && !root.editMode
+            visible: root.pageIds[root.currentPage]?.startsWith("custom-") && root.editMode
             implicitWidth: 27
             implicitHeight: 30
             buttonRadius: Appearance.rounding.full
@@ -310,7 +332,7 @@ Item {
         }
         RippleButton {
             objectName: "dashboardDeleteCustomTab"
-            visible: root.pageIds[root.currentPage]?.startsWith("custom-") && !root.editMode
+            visible: root.pageIds[root.currentPage]?.startsWith("custom-") && root.editMode
             implicitWidth: 27
             implicitHeight: 30
             buttonRadius: Appearance.rounding.full
@@ -324,6 +346,7 @@ Item {
             }
             StyledToolTip { text: Translation.tr("Delete custom tab") }
         }
+    }
     }
     MaterialSymbol {
         visible:root.reorderAllowed
