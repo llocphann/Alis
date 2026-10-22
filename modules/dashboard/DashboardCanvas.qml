@@ -208,9 +208,13 @@ Item {
         root._basePageOrder=Array.from(root.savedPageOrder)
         root._draftPageOrder=Array.from(root.savedPageOrder)
         root._draftWorkspaceWidth = Number(
-            root.layoutOptions?.workspaceWidth ?? 0)
+            (root.customTabId.length
+                ? root.layoutOptions?.workspaceWidth
+                : Config.options?.dashboard?.canvas?.workspaceWidth) ?? 0)
         root._draftWorkspaceHeight = Number(
-            root.layoutOptions?.workspaceHeight ?? 0)
+            (root.customTabId.length
+                ? root.layoutOptions?.workspaceHeight
+                : Config.options?.dashboard?.canvas?.workspaceHeight) ?? 0)
         root._draftGridSize = Number(
             Config.options?.dashboard?.canvas?.gridSize ?? 24)
         root._draftSnap =
@@ -454,9 +458,13 @@ Item {
             root._draftEntries = root._cloneEntries(
                 committed.length > 0 ? committed : root.defaultEntries())
             root._draftWorkspaceWidth = Number(
-                root.layoutOptions?.workspaceWidth ?? 0)
+                (root.customTabId.length
+                ? root.layoutOptions?.workspaceWidth
+                : Config.options?.dashboard?.canvas?.workspaceWidth) ?? 0)
             root._draftWorkspaceHeight = Number(
-                root.layoutOptions?.workspaceHeight ?? 0)
+                (root.customTabId.length
+                ? root.layoutOptions?.workspaceHeight
+                : Config.options?.dashboard?.canvas?.workspaceHeight) ?? 0)
         } else {
             Config.setNestedValues(root._layoutUpdates(root.defaultEntries(),0,0))
         }
