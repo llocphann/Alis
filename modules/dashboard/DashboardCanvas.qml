@@ -710,9 +710,11 @@ Item {
         // editor must not force old per-widget pixel minima on the canvas.
         // This small hit-target floor prevents a resize handle collapsing to
         // zero, while all other sizes are determined by the saved proportions.
+        // Projection sets canvas dimensions; read its independent viewport
+        // here so computing the projection cannot depend on its own result.
         return {
-            width: Math.max(1, Math.min(canvas.width, 36)),
-            height: Math.max(1, Math.min(canvas.height, 32))
+            width: Math.max(1, Math.min(root.width, 36)),
+            height: Math.max(1, Math.min(root.height, 32))
         }
     }
     function _contentComfortSize(id) {
