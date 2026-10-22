@@ -79,6 +79,41 @@ check('Config.setNestedValue("dashboard.defaultTabId",id)' in settings,
 check('Config.setNestedValue("dashboard.inactiveMinutes",value)' in settings,
       "inactivity duration not saved")
 
+# DASH-F01 regression checks: built-in widget geometry must continue using
+# the actual JsonAdapter QML sequence, not Array.isArray-based fallback.
+check('(Config.options?.dashboard?.canvas?.widgets ?? [])' in canvas,
+      "legacy widget coordinates no longer read directly")
+check('Array.isArray(root.layoutOptions?.widgets)' not in canvas,
+      "QML list<var> can silently fail JS Array.isArray and reset positions")
+check('(Config.options?.dashboard?.canvas?.workspaceWidth ?? 0)' in canvas,
+      "legacy workspace width must remain directly reactive")
+check('(Config.options?.dashboard?.canvas?.workspaceHeight ?? 0)' in canvas,
+      "legacy workspace height must remain directly reactive")
+check('objectName: "dashboardCustomTabActions"' in header
+      and 'visible: root.pageCount > 0' in header,
+      "Create tab must be exposed outside Edit Dashboard Layout")
+check('onClicked: root.createTabRequested()' in header,
+      "Create button must invoke naming toolbar")
+toolbar = (src / "DashboardEditToolbar.qml").read_text()
+check('visible: root.editing || root.naming' in toolbar,
+      "naming toolbar must be visible without editing")
+check('objectName: "dashboardToolbarTabName"' in toolbar
+      and 'objectName: "dashboardToolbarCreate"' in toolbar
+      and 'objectName: "dashboardToolbarCancelCreate"' in toolbar,
+      "name/create/cancel controls missing from the edit toolbar position")
+check('visible: !root.naming' in toolbar,
+      "name input must temporarily replace layout-edit actions")
+check('root._customDialogShown && root._customDialogMode === "delete"' in content,
+      "centered dialog must only be used for destructive confirmation")
+standalone = (src / "Dashboard.qml").read_text()
+overview = (root / "modules/overview/OverviewDashboard.qml").read_text()
+abyss = (root / "modules/abyss/AbyssDashboardEditPopup.qml").read_text()
+for name, src_text in [("standalone", standalone), ("overview", overview),
+                       ("abyss", abyss)]:
+    check('tabController:' in src_text, name + " missing naming controller")
+    check('tabNamingActive' in src_text or 'controlsVisible' in src_text,
+          name + " cannot reveal naming bar")
+
 node = shutil.which("node")
 if node:
     js = r"""
