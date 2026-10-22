@@ -20,6 +20,13 @@ Item {
     property bool editMode: false
     property bool presentationActive: true
     property bool warmContent: false
+    // One rendering/editing implementation per tab; only layout state differs.
+    property string customTabId: ""
+    readonly property string layoutPath: customTabId.length
+        ? "dashboard.customTabLayouts." + customTabId : "dashboard.canvas"
+    readonly property var layoutOptions: customTabId.length
+        ? (Config.options?.dashboard?.customTabLayouts?.[customTabId] ?? ({}))
+        : (Config.options?.dashboard?.canvas ?? ({}))
     readonly property bool responsiveWorkspace: (Config.options?.panelFamily ?? "abyss") === "abyss"
     readonly property var workspace: {
         if (!responsiveWorkspace) return {width:Math.max(1,width),height:Math.max(1,height),rects:({}),overflow:[]}
@@ -138,11 +145,11 @@ Item {
     readonly property real _workspaceReferenceWidth:
         root.editMode && root._draftEntries !== null
             ? root._draftWorkspaceWidth
-            : Number(Config.options?.dashboard?.canvas?.workspaceWidth ?? 0)
+            : Number(root.layoutOptions?.workspaceWidth ?? 0)
     readonly property real _workspaceReferenceHeight:
         root.editMode && root._draftEntries !== null
             ? root._draftWorkspaceHeight
-            : Number(Config.options?.dashboard?.canvas?.workspaceHeight ?? 0)
+            : Number(root.layoutOptions?.workspaceHeight ?? 0)
 
     function _icon(id) {
         return root._catalog[id]?.icon ?? "widgets"
@@ -162,7 +169,7 @@ Item {
             y: Number(g.y),
             w: Number(g.w),
             h: Number(g.h),
-            visible: g.visible !== false
+            visible: root.customTabId.length === 0 && g.visible !== false
         }
     }
 
@@ -176,7 +183,8 @@ Item {
     function _storedEntries() {
         if (root.editMode && root._draftEntries !== null)
             return root._draftEntries
-        return Config.options?.dashboard?.canvas?.widgets ?? []
+        return Array.isArray(root.layoutOptions?.widgets)
+            ? root.layoutOptions.widgets : []
     }
 
     function _cloneEntries(entries) {
@@ -189,13 +197,14 @@ Item {
         // Capture the literal saved entries, not the responsive projection.
         // Pressing Done without making an edit must be an identity operation.
         root._draftEntries = root._cloneEntries(
-            Config.options?.dashboard?.canvas?.widgets ?? [])
+            Array.isArray(root.layoutOptions?.widgets)
+                ? root.layoutOptions.widgets : [])
         root._basePageOrder=Array.from(root.savedPageOrder)
         root._draftPageOrder=Array.from(root.savedPageOrder)
         root._draftWorkspaceWidth = Number(
-            Config.options?.dashboard?.canvas?.workspaceWidth ?? 0)
+            root.layoutOptions?.workspaceWidth ?? 0)
         root._draftWorkspaceHeight = Number(
-            Config.options?.dashboard?.canvas?.workspaceHeight ?? 0)
+            root.layoutOptions?.workspaceHeight ?? 0)
         root._draftGridSize = Number(
             Config.options?.dashboard?.canvas?.gridSize ?? 24)
         root._draftSnap =
@@ -240,14 +249,13 @@ Item {
             return
         }
         root.finishInteraction(true)
-        const updates = {
-            "dashboard.canvas.widgets":
-                root._cloneEntries(root._draftEntries ?? root._entriesForWrite())
-        }
+        const updates = ({})
+        updates[root.layoutPath + ".widgets"] =
+            root._cloneEntries(root._draftEntries ?? root._entriesForWrite())
         if (root.responsiveWorkspace) {
-            updates["dashboard.canvas.workspaceWidth"] =
+            updates[root.layoutPath + ".workspaceWidth"] =
                 root._draftWorkspaceWidth
-            updates["dashboard.canvas.workspaceHeight"] =
+            updates[root.layoutPath + ".workspaceHeight"] =
                 root._draftWorkspaceHeight
         }
         updates["dashboard.canvas.gridSize"] = root._draftGridSize
@@ -335,10 +343,11 @@ Item {
             }
             return
         }
-        const updates={"dashboard.canvas.widgets":entries}
+        const updates=({})
+        updates[root.layoutPath + ".widgets"]=entries
         if(root.responsiveWorkspace) {
-            updates["dashboard.canvas.workspaceWidth"]=canvas.width
-            updates["dashboard.canvas.workspaceHeight"]=canvas.height
+            updates[root.layoutPath + ".workspaceWidth"]=canvas.width
+            updates[root.layoutPath + ".workspaceHeight"]=canvas.height
         }
         Config.setNestedValues(updates)
     }
@@ -416,22 +425,23 @@ Item {
             // transaction. Once Done commits a layout, that layout becomes the
             // next edit session's baseline/default rather than jumping back to
             // the factory geometry.
-            const committed = Config.options?.dashboard?.canvas?.widgets ?? []
+            const committed = Array.isArray(root.layoutOptions?.widgets)
+                ? root.layoutOptions.widgets : []
             root._rememberDraft()
             root._basePageOrder=Array.from(root.savedPageOrder)
             root._draftPageOrder=Array.from(root.savedPageOrder)
             root._draftEntries = root._cloneEntries(
                 committed.length > 0 ? committed : root.defaultEntries())
             root._draftWorkspaceWidth = Number(
-                Config.options?.dashboard?.canvas?.workspaceWidth ?? 0)
+                root.layoutOptions?.workspaceWidth ?? 0)
             root._draftWorkspaceHeight = Number(
-                Config.options?.dashboard?.canvas?.workspaceHeight ?? 0)
+                root.layoutOptions?.workspaceHeight ?? 0)
         } else {
-            Config.setNestedValues({
-                "dashboard.canvas.widgets":root.defaultEntries(),
-                "dashboard.canvas.workspaceWidth":0,
-                "dashboard.canvas.workspaceHeight":0
-            })
+            const updates=({})
+            updates[root.layoutPath + ".widgets"]=root.defaultEntries()
+            updates[root.layoutPath + ".workspaceWidth"]=0
+            updates[root.layoutPath + ".workspaceHeight"]=0
+            Config.setNestedValues(updates)
         }
     }
 
