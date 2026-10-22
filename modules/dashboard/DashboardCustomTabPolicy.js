@@ -3,9 +3,11 @@
 var builtIns = ["dashboard", "music", "weeklyPlanner"];
 var reservedNames = ["dashboard", "music", "weekly planner"];
 function tabs(raw) {
-    if (!Array.isArray(raw)) return [];
+    // QML JsonAdapter list<var> may be exposed as an array-like object.
+    if (!raw || typeof raw === "string" || typeof raw.length !== "number") return [];
+    var source = Array.from(raw);
     var seenIds = {}, seenNames = {}, result = [];
-    for (var item of raw) {
+    for (var item of source) {
         var id = String(item?.id ?? "");
         var name = String(item?.name ?? "").trim().slice(0, 40);
         var key = name.toLocaleLowerCase();

@@ -184,8 +184,11 @@ Item {
     function _storedEntries() {
         if (root.editMode && root._draftEntries !== null)
             return root._draftEntries
-        return Array.isArray(root.layoutOptions?.widgets)
-            ? root.layoutOptions.widgets : []
+        // Keep the original JsonAdapter list path for the built-in page.
+        // A QML list<var> need not satisfy JS Array.isArray().
+        return root.customTabId.length
+            ? (root.layoutOptions?.widgets ?? [])
+            : (Config.options?.dashboard?.canvas?.widgets ?? [])
     }
 
     function _cloneEntries(entries) {
@@ -197,9 +200,7 @@ Item {
             return
         // Capture the literal saved entries, not the responsive projection.
         // Pressing Done without making an edit must be an identity operation.
-        root._draftEntries = root._cloneEntries(
-            Array.isArray(root.layoutOptions?.widgets)
-                ? root.layoutOptions.widgets : [])
+        root._draftEntries = root._cloneEntries(root._storedEntries())
         root._basePageOrder=Array.from(root.savedPageOrder)
         root._draftPageOrder=Array.from(root.savedPageOrder)
         root._draftWorkspaceWidth = Number(
@@ -440,8 +441,9 @@ Item {
             // transaction. Once Done commits a layout, that layout becomes the
             // next edit session's baseline/default rather than jumping back to
             // the factory geometry.
-            const committed = Array.isArray(root.layoutOptions?.widgets)
-                ? root.layoutOptions.widgets : []
+            const committed = root.customTabId.length
+                ? (root.layoutOptions?.widgets ?? [])
+                : (Config.options?.dashboard?.canvas?.widgets ?? [])
             root._rememberDraft()
             root._basePageOrder=Array.from(root.savedPageOrder)
             root._draftPageOrder=Array.from(root.savedPageOrder)
