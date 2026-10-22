@@ -483,7 +483,10 @@ Item {
             mode: root._customDialogMode
             tabName: root._customDialogName
             errorText: root._customDialogError
-            onTabNameChanged: if (visible) root._customDialogName = tabName
+            onNameEdited: name => {
+                root._customDialogName = name
+                root._customDialogError = ""
+            }
             onAcceptRequested: name => {
                 root._customDialogName = name
                 root.acceptCustomTabDialog()
