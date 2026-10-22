@@ -27,13 +27,24 @@ def check(ok, message):
 
 dashboard = config["dashboard"]
 check(dashboard["customTabs"] == [], "custom tabs must begin empty")
-check(dashboard["customTabLayouts"] == {}, "no custom layout should be pre-populated")
+check(dashboard["customTabLayouts"] == [], "no custom layout should be pre-populated")
 check(dashboard["inactiveMinutes"] == 0, "automatic return must be disabled by default")
 check(dashboard["defaultTabId"] == "", "default selection must be opt-in")
 check(dashboard["lastHiddenAtMs"] == 0, "do not invent an inactive timestamp")
 check("DashboardCustomTabDialog 1.0 DashboardCustomTabDialog.qml" in qmldir, "dialog QML type missing")
+check(dashboard["lastPageId"] == "dashboard", "last-tab default missing")
+schema = (root / "modules/common/Config.qml").read_text()
+for field in [
+    "property list<var> customTabs: []",
+    "property list<var> customTabLayouts: []",
+    'property string defaultTabId: ""',
+    "property int inactiveMinutes: 0",
+    "property real lastHiddenAtMs: 0",
+    'property string lastPageId: "dashboard"',
+]:
+    check(field in schema, "JsonAdapter schema field missing: " + field)
 for part in [
-    'property string customTabId: ""', "root.layoutPath + \".widgets\"",
+    'property string customTabId: ""', 'updates["dashboard.customTabLayouts"]',
     "root.layoutOptions?.workspaceWidth", "root.layoutOptions?.workspaceHeight",
     "root.customTabId.length === 0 && g.visible !== false",
     'return Array.isArray(root.layoutOptions?.widgets)',
@@ -48,6 +59,7 @@ for part in [
     '"dashboard.customTabs":next', '"dashboard.customTabLayouts":layouts',
     'updates["dashboard.defaultTabId"] = "dashboard"',
     'onPageIdsChanged:', 'sessionShown()', 'sessionHidden()',
+    'GlobalStates.dashboardSelectionRestored = true',
     'root.canvasController?.cancelEditMode()',
     'slideProgress: root.editMode ? root.currentPage : pagePosition',
 ]:
