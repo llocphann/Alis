@@ -169,7 +169,9 @@ Item {
         Config.setNestedValue("dashboard.defaultTabId", id)
     }
     function openCustomTabDialog(mode, id): void {
-        if (root.editMode) return
+        // Create/rename/delete are Edit Dashboard actions. Keep the editor
+        // transaction alive while its toolbar is temporarily replaced.
+        if (!root.editMode) return
         root._customDialogMode = mode
         root._customDialogId = id ?? ""
         root._customDialogName = root.customTabs.find(tab => tab.id === id)?.name ?? ""
@@ -186,6 +188,17 @@ Item {
                 mode === "rename" ? id : "")
             if (invalid.length) {
                 root._customDialogError = Translation.tr(invalid)
+                return
+            }
+        }
+        // Save the pending layout transaction before switching tabs or
+        // deleting one; a conflict leaves both the editor and prompt intact.
+        if (root.editMode) {
+            const editor = root.canvasController
+            editor?.commitEditMode()
+            if (editor?.editMode) {
+                root._customDialogError = editor.layoutMessage
+                    || Translation.tr("Resolve the Dashboard edit conflict first")
                 return
             }
         }
