@@ -1065,7 +1065,11 @@
     },
     "dashboard": {
         "pageOrderVersion": 1,
-        "pageOrder": ["dashboard", "music", "weeklyPlanner"],
+        "pageOrder": [
+            "dashboard",
+            "music",
+            "weeklyPlanner"
+        ],
         "music": {
             "enable": true,
             "showScrollbars": true
@@ -1089,22 +1093,104 @@
             "autoAdjustSize": true,
             "gridStyle": "dots",
             "widgets": [
-                { "id": "welcome", "x": 0.0, "y": 0.0, "w": 0.30, "h": 0.18, "visible": true },
-                { "id": "clock", "x": 0.0, "y": 0.19, "w": 0.30, "h": 0.14, "visible": true },
-                { "id": "system", "x": 0.0, "y": 0.34, "w": 0.30, "h": 0.17, "visible": true },
-                { "id": "github", "x": 0.0, "y": 0.52, "w": 0.30, "h": 0.12, "visible": true },
-                { "id": "notifications", "x": 0.31, "y": 0.0, "w": 0.35, "h": 0.25, "visible": true },
-                { "id": "agenda", "x": 0.31, "y": 0.26, "w": 0.35, "h": 0.13, "visible": true },
-                { "id": "todo", "x": 0.31, "y": 0.40, "w": 0.35, "h": 0.24, "visible": true },
-                { "id": "media", "x": 0.67, "y": 0.0, "w": 0.33, "h": 0.62, "visible": true },
-                { "id": "weather", "x": 0.67, "y": 0.64, "w": 0.33, "h": 0.36, "visible": true },
-                { "id": "calendar", "x": 0.0, "y": 0.65, "w": 0.66, "h": 0.35, "visible": true },
-                { "id": "notes", "x": 0.67, "y": 0.77, "w": 0.33, "h": 0.23, "visible": false }
+                {
+                    "id": "welcome",
+                    "x": 0,
+                    "y": 0,
+                    "w": 0.3,
+                    "h": 0.18,
+                    "visible": true
+                },
+                {
+                    "id": "clock",
+                    "x": 0,
+                    "y": 0.19,
+                    "w": 0.3,
+                    "h": 0.14,
+                    "visible": true
+                },
+                {
+                    "id": "system",
+                    "x": 0,
+                    "y": 0.34,
+                    "w": 0.3,
+                    "h": 0.17,
+                    "visible": true
+                },
+                {
+                    "id": "github",
+                    "x": 0,
+                    "y": 0.52,
+                    "w": 0.3,
+                    "h": 0.12,
+                    "visible": true
+                },
+                {
+                    "id": "notifications",
+                    "x": 0.31,
+                    "y": 0,
+                    "w": 0.35,
+                    "h": 0.25,
+                    "visible": true
+                },
+                {
+                    "id": "agenda",
+                    "x": 0.31,
+                    "y": 0.26,
+                    "w": 0.35,
+                    "h": 0.13,
+                    "visible": true
+                },
+                {
+                    "id": "todo",
+                    "x": 0.31,
+                    "y": 0.4,
+                    "w": 0.35,
+                    "h": 0.24,
+                    "visible": true
+                },
+                {
+                    "id": "media",
+                    "x": 0.67,
+                    "y": 0,
+                    "w": 0.33,
+                    "h": 0.62,
+                    "visible": true
+                },
+                {
+                    "id": "weather",
+                    "x": 0.67,
+                    "y": 0.64,
+                    "w": 0.33,
+                    "h": 0.36,
+                    "visible": true
+                },
+                {
+                    "id": "calendar",
+                    "x": 0,
+                    "y": 0.65,
+                    "w": 0.66,
+                    "h": 0.35,
+                    "visible": true
+                },
+                {
+                    "id": "notes",
+                    "x": 0.67,
+                    "y": 0.77,
+                    "w": 0.33,
+                    "h": 0.23,
+                    "visible": false
+                }
             ]
         },
         "github": {
             "username": ""
-        }
+        },
+        "customTabs": [],
+        "customTabLayouts": {},
+        "defaultTabId": "",
+        "inactiveMinutes": 0,
+        "lastHiddenAtMs": 0
     },
     "settingsUi": {
         "overlayMode": true,
@@ -1143,11 +1229,11 @@
         "antiFlashbang": {
             "enable": false,
             "darkOnly": true,
-            "threshold": 0.30,
-            "strength": 0.90,
+            "threshold": 0.3,
+            "strength": 0.9,
             "minMultiplier": 0.12,
             "sampleInterval": 500,
-            "sampleScale": 0.10,
+            "sampleScale": 0.1,
             "windowDelay": 30,
             "workspaceDelay": 180,
             "responseMs": 80
@@ -2114,7 +2200,13 @@
         "quality": "balanced",
         "autoQuality": false,
         "positions": [],
-        "spectrum": {"configured": false, "enabled": false, "strength": 0.45, "edge": "bar", "multiMonitorMode": "primary"},
+        "spectrum": {
+            "configured": false,
+            "enabled": false,
+            "strength": 0.45,
+            "edge": "bar",
+            "multiMonitorMode": "primary"
+        },
         "perimeter": {
             "thickness": 16,
             "radius": 34,
@@ -2125,7 +2217,12 @@
             "tension": 0.5,
             "softness": 24
         },
-        "content": {"opacityVersion": 1, "opacity": -1, "blurRadius": -1, "cardOpacity": 0.9},
+        "content": {
+            "opacityVersion": 1,
+            "opacity": -1,
+            "blurRadius": -1,
+            "cardOpacity": 0.9
+        },
         "waves": {
             "strength": -1,
             "whitewater": 0.65,
@@ -2160,12 +2257,42 @@
             },
             "gap": 8,
             "size": 1,
-            "edgeSizes": {"top": 1, "right": 1, "bottom": 1, "left": 1},
-            "edgeThicknesses": {"top": -1, "right": -1, "bottom": -1, "left": -1},
-            "edgeWidthAffectsModules": {"top": true, "right": true, "bottom": true, "left": true},
-            "edgeJoinModules": {"top": false, "right": false, "bottom": false, "left": false},
-            "edgeModuleRadii": {"top": -1, "right": -1, "bottom": -1, "left": -1},
-            "edgeRoundZeroCorners": {"top": false, "right": false, "bottom": false, "left": false},
+            "edgeSizes": {
+                "top": 1,
+                "right": 1,
+                "bottom": 1,
+                "left": 1
+            },
+            "edgeThicknesses": {
+                "top": -1,
+                "right": -1,
+                "bottom": -1,
+                "left": -1
+            },
+            "edgeWidthAffectsModules": {
+                "top": true,
+                "right": true,
+                "bottom": true,
+                "left": true
+            },
+            "edgeJoinModules": {
+                "top": false,
+                "right": false,
+                "bottom": false,
+                "left": false
+            },
+            "edgeModuleRadii": {
+                "top": -1,
+                "right": -1,
+                "bottom": -1,
+                "left": -1
+            },
+            "edgeRoundZeroCorners": {
+                "top": false,
+                "right": false,
+                "bottom": false,
+                "left": false
+            },
             "depth": 36
         },
         "motion": {
