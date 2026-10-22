@@ -36,7 +36,7 @@ Item {
         return index < 0 ? dashboardCanvas
             : (customPagesRepeater.itemAt(index)?.canvasController ?? null)
     }
-    readonly property bool editMode: root.canvasController?.editMode ?? false
+    property bool editMode: root.canvasController?.editMode ?? false
     onEditModeChanged: if (!editMode) root._navigationDraftOrder = null
     property var musicBackend: null
     property bool musicVisited: currentPageId === "music"
@@ -211,9 +211,9 @@ Item {
         }
         // Edit Mode owns the first Escape, regardless of widget selection or
         // in-progress tab drag. This is the same discard path as Cancel.
-        if (dashboardCanvas.editMode) {
+        if (root.editMode) {
             dashboardHeader.cancelPageDrag()
-            dashboardCanvas.cancelEditMode()
+            root.canvasController?.cancelEditMode()
             return true
         }
         if (dashboardHeader.cancelPageDrag()) return true
@@ -325,7 +325,7 @@ Item {
                 clip: true
                 // Editing must see the original workspace immediately, including
                 // entry during an already running page transition.
-                readonly property real slideProgress: root.editMode ? root.pageIds.indexOf("dashboard") : pagePosition
+                readonly property real slideProgress: root.editMode ? root.currentPage : pagePosition
                 property real pagePosition: root.currentPage
                 Behavior on pagePosition {
                     enabled: root.presentationActive && Appearance.animationsEnabled && !root.editMode
@@ -379,12 +379,12 @@ Item {
                     delegate: Item {
                         id: customTabHost
                         required property var modelData
-                        readonly property int slot: root.pageIds.indexOf(modelData.id)
+                        readonly property int pageIndex: root.pageIds.indexOf(modelData.id)
                         property var canvasController: customCanvasLoader.item
                         width: pages.width
                         height: pages.height
-                        x: (slot - pages.slideProgress) * pages.width
-                        visible: slot >= 0 && Math.abs(pages.slideProgress - slot) < 1
+                        x: (pageIndex - pages.slideProgress) * pages.width
+                        visible: pageIndex >= 0 && Math.abs(pages.slideProgress - pageIndex) < 1
                         enabled: root.currentPageId === modelData.id
 
                         Loader {
