@@ -14,12 +14,17 @@ Item {
     property string tabName: ""
     property string errorText: ""
     signal acceptRequested(string name)
+    signal nameEdited(string name)
     signal dismissRequested()
 
     objectName: "dashboardCustomTabDialog"
     focus: visible
     onVisibleChanged: if (visible && mode !== "delete")
-        Qt.callLater(() => tabNameInput.forceActiveFocus())
+        Qt.callLater(() => {
+            if (!root.visible) return
+            tabNameInput.text = root.tabName
+            tabNameInput.forceActiveFocus()
+        })
     Keys.onEscapePressed: event => {
         root.dismissRequested()
         event.accepted = true
@@ -76,8 +81,8 @@ Item {
                 text: root.tabName
                 placeholderText: Translation.tr("Tab name")
                 maximumLength: 41
-                onTextEdited: root.tabName = text
-                onAccepted: root.acceptRequested(root.tabName)
+                onTextEdited: root.nameEdited(text)
+                onAccepted: root.acceptRequested(text)
             }
             StyledText {
                 visible: root.errorText.length > 0
@@ -106,7 +111,7 @@ Item {
                     implicitHeight: 34
                     buttonText: root.mode === "delete"
                         ? Translation.tr("Delete") : Translation.tr("Save")
-                    onClicked: root.acceptRequested(root.tabName)
+                    onClicked: root.acceptRequested(tabNameInput.text)
                     contentItem: StyledText {
                         anchors.centerIn: parent
                         text: root.mode === "delete"
