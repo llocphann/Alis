@@ -81,6 +81,7 @@ Window {
    tryVerify(()=>createButton.visible && createButton.enabled,1500)
    check(defaultButton.visible && defaultButton.enabled,
     "set-default button missing in Edit Dashboard Layout")
+   check(waitForPolish(root,2000),"Create control layout did not settle")
    mouseClick(createButton)
    tryVerify(()=>tabToolbar.visible && dashboard.tabNamingActive,2000)
    check(!dialog.visible && dashboard.editMode,

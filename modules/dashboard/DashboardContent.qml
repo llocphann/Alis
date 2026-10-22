@@ -442,7 +442,12 @@ Item {
                         Loader {
                             id: customCanvasLoader
                             anchors.fill: parent
-                            active: (customTabHost.visible && root.presentationActive)
+                            // The selected editor owns editMode, which also
+                            // selects slideProgress. Load it before consulting
+                            // animated visibility to avoid that binding cycle.
+                            active: (root.presentationActive
+                                && (root.currentPageId === customTabHost.modelData.id
+                                    || customTabHost.visible))
                                 || (root.warmContent && root.currentPageId === customTabHost.modelData.id)
                             sourceComponent: DashboardCanvas {
                                 customTabId: customTabHost.modelData.id
