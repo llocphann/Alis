@@ -48,7 +48,9 @@ Item {
     readonly property real dashboardWidth: Math.round(Math.max(0,
         Math.min(root.availableWidth - 24, root.availableWidth * root.widthRatio)))
     readonly property bool editing: dashboardContent.editMode
-    readonly property real editToolbarReserve: root.editing && !root.externalEditToolbar
+    readonly property bool tabNamingActive: dashboardContent.tabNamingActive
+    readonly property bool controlsVisible: root.editing || root.tabNamingActive
+    readonly property real editToolbarReserve: root.controlsVisible && !root.externalEditToolbar
         ? Math.max(0, dashboardEditToolbar.implicitHeight - 1) : 0
     readonly property real baseConfiguredHeight: Math.round(Math.min(
         Math.max(320, root.availableHeight - 24),
@@ -230,7 +232,8 @@ Item {
         parent: dashboardSurfaceLayer
         z: 8
         canvasController: dashboardContent.canvasController
-        visible: root.editing && !root.externalEditToolbar
+        tabController: dashboardContent
+        visible: root.controlsVisible && !root.externalEditToolbar
         width: Math.min(
             dashboardEditToolbar.implicitWidth,
             Math.max(1, dashContainer.width - 32))
