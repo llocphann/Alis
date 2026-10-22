@@ -71,27 +71,39 @@ function freeRect(desired, minimum, width, height, obstacles, gap, shrink, plain
     return best;
 }
 function project(entries, viewportWidth, viewportHeight, minimums, gap, reference) {
-    // Old persisted scroll-workspace references must never enlarge this body.
+    // The live viewport bounds the layout; never write projections back into
+    // the user's saved percentages. Reuse the saved positions before trying
+    // a grid, letting modules shrink together when space is constrained.
     var width=Math.max(1,viewportWidth), height=Math.max(1,viewportHeight);
-    var rects={}, obstacles=[], overflow=[];
-    entries.filter(function(entry) { return entry.visible !== false; }).forEach(function(entry) {
-        var min=minimums[entry.id] || {width:200,height:80};
-        var w=Math.min(width,Math.max(min.width,bounded(entry.w,.3,.001,1)*width));
-        var h=Math.min(height,Math.max(min.height,bounded(entry.h,.2,.001,1)*height));
-        var desired={x:Math.min(width-w,bounded(entry.x,0,0,1)*width),
-            y:Math.min(height-h,bounded(entry.y,0,0,1)*height),width:w,height:h};
-        var best=freeRect(desired,min,width,height,obstacles,gap,true,true);
-        if(!best) { overflow.push(entry.id);return; }
-        rects[entry.id]=best;obstacles.push(best);
-    });
-    // The greedy solver preserves user positions whenever possible. On a
-    // genuinely crowded/small viewport, never drop widgets: compute an
-    // *in-memory* responsive grid instead of silently hiding overflow items.
-    // Saved x/y/w/h remain untouched so the original arrangement comes back
-    // automatically when the Dashboard has more space.
-    if (overflow.length && entries.some(function(e) { return e.visible !== false; }))
-        return responsiveGrid(entries,width,height,minimums,gap);
-    return {width:width,height:height,rects:rects,overflow:overflow};
+    var shown=entries.filter(function(e) {return e.visible !== false;});
+    function pack(factor) {
+        var rects={},obstacles=[],overflow=[];
+        shown.forEach(function(entry) {
+            var min=minimums[entry.id] || {width:1,height:1};
+            var w=Math.min(width,Math.max(min.width,
+                bounded(entry.w,.3,.001,1)*width*factor));
+            var h=Math.min(height,Math.max(min.height,
+                bounded(entry.h,.2,.001,1)*height*factor));
+            var desired={x:Math.min(width-w,bounded(entry.x,0,0,1)*width),
+                y:Math.min(height-h,bounded(entry.y,0,0,1)*height),
+                width:w,height:h};
+            var best=freeRect(desired,min,width,height,obstacles,gap,true,true);
+            if(!best){overflow.push(entry.id);return;}
+            rects[entry.id]=best;obstacles.push(best);
+        });
+        return {width:width,height:height,rects:rects,overflow:overflow};
+    }
+    var projected=pack(1);
+    if (!projected.overflow.length) return projected;
+    // Proportional shrink preserves the location of all saved modules in most
+    // cramped dashboards; it never changes Config.canvas.widgets.
+    for (var factor of [.92,.82,.72,.62,.52,.42,.32]) {
+        var candidate=pack(factor);
+        if (!candidate.overflow.length) return candidate;
+    }
+    // Only the worst-case window/packing constraints trigger a full layout
+    // fallback. Every active module remains visible and non-overlapping.
+    return responsiveGrid(entries,width,height,minimums,gap);
 }
 function responsiveGrid(entries, width, height, minimums, gap) {
     var shown=entries.filter(function(entry) { return entry.visible !== false; });
