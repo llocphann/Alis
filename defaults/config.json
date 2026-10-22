@@ -1190,7 +1190,8 @@
         "customTabLayouts": {},
         "defaultTabId": "",
         "inactiveMinutes": 0,
-        "lastHiddenAtMs": 0
+        "lastHiddenAtMs": 0,
+        "lastPageId": "dashboard"
     },
     "settingsUi": {
         "overlayMode": true,
