@@ -10,13 +10,16 @@ Item {
     id: root
     required property var body
     required property var canvasController
+    property var tabController: null
     parent: body?.parent ?? null
     objectName: "abyssDashboardEditPopup"
     z: 90
     readonly property real desiredHeight: toolbar.implicitHeight
     readonly property bool editing: canvasController?.editMode ?? false
+    readonly property bool naming: tabController?.tabNamingActive ?? false
+    readonly property bool controlsVisible: root.editing || root.naming
     readonly property var contentRect: body?.targetRecord?.content
-    readonly property bool revealRequested: editing
+    readonly property bool revealRequested: controlsVisible
         && (body?.presented ?? false) && (body?.progress ?? 0)>.99
     property real revealProgress: revealRequested ? 1 : 0
     readonly property real targetWidth: Math.min(toolbar.implicitWidth,
@@ -31,7 +34,7 @@ Item {
     property var retainedRect: null
     readonly property rect presentationRect: revealRequested
         ? targetRect : (retainedRect ?? targetRect)
-    onTargetRectChanged: if (canvasController?.editMode && revealRequested)
+    onTargetRectChanged: if (root.controlsVisible && revealRequested)
         retainedRect = targetRect
     onRevealRequestedChanged: if (revealRequested) retainedRect = targetRect
     x: presentationRect.x
@@ -87,6 +90,7 @@ Item {
         y: root.slideOffset
         visible: root.visible
         canvasController: root.canvasController
+        tabController: root.tabController
         embeddedSurface: true
     }
 }
