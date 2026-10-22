@@ -132,6 +132,70 @@ Item {
         if (root.presentationActive) root.sessionShown()
     }
 
+    function openCustomTabDialog(mode, id): void {
+        if (root.editMode) return
+        root._customDialogMode = mode
+        root._customDialogId = id ?? ""
+        root._customDialogName = root.customTabs.find(tab => tab.id === id)?.name ?? ""
+        root._customDialogError = ""
+        root._customDialogShown = true
+    }
+    function acceptCustomTabDialog(): void {
+        if (!root._customDialogShown) return
+        const mode = root._customDialogMode
+        const id = root._customDialogId
+        const stored = root.customTabs.slice()
+        if (mode === "create" || mode === "rename") {
+            const invalid = TabPolicy.errorForName(stored, root._customDialogName,
+                mode === "rename" ? id : "")
+            if (invalid.length) {
+                root._customDialogError = Translation.tr(invalid)
+                return
+            }
+        }
+        if (mode === "create") {
+            if (stored.length >= 20) {
+                root._customDialogError = Translation.tr("Maximum 20 custom tabs")
+                return
+            }
+            const layouts = Config.options?.dashboard?.customTabLayouts ?? ({})
+            let createdId = TabPolicy.nextId(stored)
+            let suffix = 1
+            while (Object.prototype.hasOwnProperty.call(layouts, createdId))
+                createdId = "custom-" + (++suffix)
+            const next = stored.concat([{id:createdId, name:root._customDialogName.trim()}])
+            const order = PagePolicy.normalized(Config.options?.dashboard?.pageOrder)
+                .filter(page => page !== createdId).concat([createdId])
+            Config.setNestedValues({
+                "dashboard.customTabs":next,
+                "dashboard.pageOrder":order,
+                "dashboard.pageOrderVersion":1
+            })
+            root._pendingNewEditId = createdId
+            GlobalStates.dashboardPageId = createdId
+        } else if (mode === "rename") {
+            if (!stored.some(tab => tab.id === id)) return
+            Config.setNestedValue("dashboard.customTabs", stored.map(tab =>
+                tab.id === id ? {id:id,name:root._customDialogName.trim()} : tab))
+        } else if (mode === "delete") {
+            if (!stored.some(tab => tab.id === id)) return
+            const layouts = Object.assign({}, Config.options?.dashboard?.customTabLayouts ?? ({}))
+            delete layouts[id]
+            const updates = {
+                "dashboard.customTabs":stored.filter(tab => tab.id !== id),
+                "dashboard.customTabLayouts":layouts,
+                "dashboard.pageOrder":PagePolicy.normalized(
+                    Config.options?.dashboard?.pageOrder).filter(page => page !== id)
+            }
+            if (Config.options?.dashboard?.defaultTabId === id)
+                updates["dashboard.defaultTabId"] = "dashboard"
+            if (GlobalStates.dashboardPageId === id)
+                GlobalStates.dashboardPageId = "dashboard"
+            Config.setNestedValues(updates)
+        }
+        root._customDialogShown = false
+    }
+
     readonly property bool showHeader: Config.options?.dashboard?.showHeader ?? true
 
     property var _agendaEditEvent: null
