@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs
 import qs.services
@@ -9,6 +10,7 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.sidebarRight.events
 import "DashboardPagePolicy.js" as PagePolicy
+import "DashboardCustomTabPolicy.js" as TabPolicy
 
 Item {
     id: root
@@ -19,26 +21,41 @@ Item {
     property bool warmContent: false
     property bool presentationActive: GlobalStates.dashboardOpen || GlobalStates.overviewOpen
 
-    property alias editMode: dashboardCanvas.editMode
     readonly property bool musicEnabled: Config.options?.dashboard?.music?.enable ?? true
-    readonly property var pageIds: PagePolicy.ordered(dashboardCanvas.effectivePageOrder,
-        musicEnabled ? ["dashboard", "music", "weeklyPlanner"] : ["dashboard", "weeklyPlanner"])
+    readonly property var customTabs: TabPolicy.tabs(Config.options?.dashboard?.customTabs)
+    property var _navigationDraftOrder: null
+    readonly property var pageIds: PagePolicy.ordered(
+        root._navigationDraftOrder ?? dashboardCanvas.effectivePageOrder,
+        TabPolicy.available(root.customTabs, root.musicEnabled))
     readonly property string currentPageId: pageIds.includes(GlobalStates.dashboardPageId)
         ? GlobalStates.dashboardPageId : pageIds[0]
     readonly property int currentPage: pageIds.indexOf(currentPageId)
+    readonly property var canvasController: {
+        if (root.currentPageId === "dashboard") return dashboardCanvas
+        const index = root.customTabs.findIndex(tab => tab.id === root.currentPageId)
+        return index < 0 ? dashboardCanvas
+            : (customPagesRepeater.itemAt(index)?.canvasController ?? null)
+    }
+    readonly property bool editMode: root.canvasController?.editMode ?? false
+    onEditModeChanged: if (!editMode) root._navigationDraftOrder = null
     property var musicBackend: null
     property bool musicVisited: currentPageId === "music"
     property bool plannerVisited: currentPageId === "weeklyPlanner"
+    property string _pendingNewEditId: ""
+    property bool _sessionWasVisible: false
+    property bool _customDialogShown: false
+    property string _customDialogMode: ""
+    property string _customDialogId: ""
+    property string _customDialogName: ""
+    property string _customDialogError: ""
     onCurrentPageIdChanged: {
         if (currentPageId === "music") musicVisited = true
         if (currentPageId === "weeklyPlanner") plannerVisited = true
     }
-    onEditModeChanged: if (editMode)
-        selectPage("dashboard")
-    readonly property var canvasController: dashboardCanvas
 
     readonly property bool navigationAllowed: root.presentationActive && pageIds.length > 1
-        && !root.editMode && !root._agendaDialogShown && !(musicPage.item?.playlistDialogVisible ?? false)
+        && !root.editMode && !root._agendaDialogShown && !root._customDialogShown
+        && !(musicPage.item?.playlistDialogVisible ?? false)
         && !(plannerPage.item?.sideView === "events")
     property var _pageWheelState: PagePolicy.idle()
     function resetPageWheel(): void {
@@ -48,7 +65,15 @@ Item {
     function selectPage(id): void {
         if (!pageIds.includes(id)) return
         GlobalStates.dashboardPageId = id
-        GlobalStates.dashboardPage = PagePolicy.defaultOrder.indexOf(id)
+        const legacy = PagePolicy.defaultOrder.indexOf(id)
+        if (legacy >= 0 && GlobalStates.dashboardPage !== legacy)
+            GlobalStates.dashboardPage = legacy
+    }
+    function moveTab(id, target): void {
+        const controller = root.canvasController
+        if (!controller?.editMode) return
+        if (controller.movePage(id, target, root.pageIds))
+            root._navigationDraftOrder = Array.from(controller.effectivePageOrder)
     }
     function handlePageWheel(event, panContent): void {
         event.accepted = false
@@ -74,9 +99,37 @@ Item {
             GlobalStates.dashboardPageId = root.pageIds.includes(id) ? id : root.pageIds[0]
         }
     }
+    function sessionShown(): void {
+        if (root._sessionWasVisible) return
+        root._sessionWasVisible = true
+        const configured = String(Config.options?.dashboard?.defaultTabId ?? "")
+        if (configured.length && !root.pageIds.includes(configured))
+            Config.setNestedValue("dashboard.defaultTabId", "dashboard")
+        const target = TabPolicy.selectAfterInactivity(Date.now(),
+            Config.options?.dashboard?.lastHiddenAtMs ?? 0,
+            Config.options?.dashboard?.inactiveMinutes ?? 0,
+            configured, root.pageIds, root.currentPageId)
+        if (target !== root.currentPageId) root.selectPage(target)
+    }
+    function sessionHidden(): void {
+        if (!root._sessionWasVisible) return
+        root._sessionWasVisible = false
+        Config.setNestedValue("dashboard.lastHiddenAtMs", Date.now())
+    }
+    onPresentationActiveChanged: {
+        if (root.presentationActive) root.sessionShown()
+        else root.sessionHidden()
+    }
+    onPageIdsChanged: {
+        if (!root.pageIds.includes(GlobalStates.dashboardPageId))
+            GlobalStates.dashboardPageId = root.pageIds[0]
+    }
     Component.onCompleted: {
-        const legacy = PagePolicy.defaultOrder[GlobalStates.dashboardPage]
-        if (legacy && pageIds.includes(legacy)) GlobalStates.dashboardPageId = legacy
+        if (!root.pageIds.includes(GlobalStates.dashboardPageId)) {
+            const legacy = PagePolicy.defaultOrder[GlobalStates.dashboardPage]
+            root.selectPage(root.pageIds.includes(legacy) ? legacy : root.pageIds[0])
+        }
+        if (root.presentationActive) root.sessionShown()
     }
 
     readonly property bool showHeader: Config.options?.dashboard?.showHeader ?? true
@@ -88,6 +141,10 @@ Item {
     property bool _agendaDialogLoaded: false
 
     function handleEscape(): bool {
+        if (root._customDialogShown) {
+            root._customDialogShown = false
+            return true
+        }
         // Edit Mode owns the first Escape, regardless of widget selection or
         // in-progress tab drag. This is the same discard path as Cancel.
         if (dashboardCanvas.editMode) {
