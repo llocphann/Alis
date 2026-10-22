@@ -48,6 +48,14 @@ Item {
     property string _customDialogId: ""
     property string _customDialogName: ""
     property string _customDialogError: ""
+    readonly property bool tabNamingActive: root._customDialogShown && root._customDialogMode !== "delete"
+    function setCustomTabName(name): void {
+        root._customDialogName = String(name ?? "")
+        root._customDialogError = ""
+    }
+    function cancelCustomTabDialog(): void {
+        root._customDialogShown = false
+    }
     onCurrentPageIdChanged: {
         if (currentPageId === "music") musicVisited = true
         if (currentPageId === "weeklyPlanner") plannerVisited = true
@@ -479,7 +487,9 @@ Item {
         DashboardCustomTabDialog {
             anchors.fill: parent
             z: 220
-            visible: root._customDialogShown
+            // Name editing lives in DashboardEditToolbar at its own position;
+            // only destructive deletion uses the centered confirmation overlay.
+            visible: root._customDialogShown && root._customDialogMode === "delete"
             mode: root._customDialogMode
             tabName: root._customDialogName
             errorText: root._customDialogError
