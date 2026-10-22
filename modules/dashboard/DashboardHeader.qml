@@ -22,6 +22,7 @@ Item {
     property int currentPage: 0
     property int pageCount: 1
     property var pageIds: ["dashboard", "music"]
+    property var customTabs: []
     property bool navigationAllowed: true
     property bool reorderAllowed: editMode
     property string dragPageId: ""
@@ -34,11 +35,16 @@ Item {
     readonly property bool abyss: Config.options?.panelFamily === "abyss"
     signal pageRequested(int index)
     signal pageMoveRequested(string id, int target)
+    signal createTabRequested()
+    signal renameTabRequested(string id)
+    signal deleteTabRequested(string id)
     signal editModeRequested
     signal horizontalWheel(var event)
     function pageLabel(id): string {
-        return id==="dashboard"?Translation.tr("Dashboard")
-            :id==="music"?Translation.tr("Music"):id==="weeklyPlanner"?Translation.tr("Weekly Planner"):String(id ?? "")
+        if(id==="dashboard") return Translation.tr("Dashboard")
+        if(id==="music") return Translation.tr("Music")
+        if(id==="weeklyPlanner") return Translation.tr("Weekly Planner")
+        return root.customTabs.find(tab => tab.id === id)?.name ?? String(id ?? "")
     }
     function focusMovedPage(): void {
         const index=pageIds.indexOf(_movedPageId)
@@ -146,6 +152,7 @@ Item {
 
         HeaderButton {
             enabled: root.pageIds[root.currentPage] === "dashboard"
+                || root.pageIds[root.currentPage]?.startsWith("custom-")
             iconName: root.editMode ? "done" : "edit"
             tooltip: root.editMode ? Translation.tr("Done editing") : Translation.tr("Edit widgets")
             toggled: root.editMode
@@ -254,6 +261,57 @@ Item {
                     text:parent.Accessible.name+(root.editMode?" · "+Translation.tr("Drag to reorder; Alt+Left/Right also moves tabs") : "")
                 }
             }
+        }
+        // Creation is always discoverable alongside the page indicators.
+        RippleButton {
+            id: addCustomPage
+            objectName: "dashboardCreateCustomTab"
+            implicitWidth: 26
+            implicitHeight: 28
+            buttonRadius: Appearance.rounding.full
+            enabled: !root.editMode
+            focusPolicy: Qt.StrongFocus
+            colBackground: "transparent"
+            colBackgroundHover: Qt.alpha(root.colText, .08)
+            onClicked: root.createTabRequested()
+            contentItem: MaterialSymbol {
+                text: "add"
+                iconSize: 19
+                color: root.colText
+            }
+            StyledToolTip { text: Translation.tr("Create custom tab") }
+        }
+        RippleButton {
+            objectName: "dashboardRenameCustomTab"
+            visible: root.pageIds[root.currentPage]?.startsWith("custom-") && !root.editMode
+            implicitWidth: 24
+            implicitHeight: 28
+            buttonRadius: Appearance.rounding.full
+            colBackground: "transparent"
+            colBackgroundHover: Qt.alpha(root.colText, .08)
+            onClicked: root.renameTabRequested(root.pageIds[root.currentPage])
+            contentItem: MaterialSymbol {
+                text: "drive_file_rename_outline"
+                iconSize: 17
+                color: root.colText
+            }
+            StyledToolTip { text: Translation.tr("Rename custom tab") }
+        }
+        RippleButton {
+            objectName: "dashboardDeleteCustomTab"
+            visible: root.pageIds[root.currentPage]?.startsWith("custom-") && !root.editMode
+            implicitWidth: 24
+            implicitHeight: 28
+            buttonRadius: Appearance.rounding.full
+            colBackground: "transparent"
+            colBackgroundHover: Qt.alpha(root.colText, .08)
+            onClicked: root.deleteTabRequested(root.pageIds[root.currentPage])
+            contentItem: MaterialSymbol {
+                text: "delete_outline"
+                iconSize: 17
+                color: root.colText
+            }
+            StyledToolTip { text: Translation.tr("Delete custom tab") }
         }
     }
     MaterialSymbol {
