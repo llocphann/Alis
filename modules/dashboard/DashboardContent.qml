@@ -352,7 +352,7 @@ Item {
                 navigationAllowed: root.navigationAllowed
                 reorderAllowed: root.editMode && !root._agendaDialogShown
                 customTabs: root.customTabs
-                defaultTabId: Config.options?.dashboard?.defaultTabId || "dashboard"
+                defaultTabId: Config.options?.dashboard?.defaultTabId ?? ""
                 onSetDefaultTabRequested: id => root.setDefaultTab(id)
                 onCreateTabRequested: root.openCustomTabDialog("create", "")
                 onRenameTabRequested: id => root.openCustomTabDialog("rename", id)

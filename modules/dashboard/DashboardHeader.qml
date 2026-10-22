@@ -274,6 +274,7 @@ Item {
         z: 10
         visible: root.editMode
         RippleButton {
+            id: defaultTabButton
             objectName: "dashboardSetDefaultTab"
             implicitWidth: 29
             implicitHeight: 30
@@ -289,10 +290,10 @@ Item {
             contentItem: MaterialSymbol {
                 text: "home"
                 iconSize: 19
-                color: parent.isDefault ? Appearance.colors.colPrimary : root.colText
+                color: defaultTabButton.isDefault ? Appearance.colors.colPrimary : root.colText
             }
             StyledToolTip {
-                text: parent.isDefault
+                text: defaultTabButton.isDefault
                     ? Translation.tr("Default tab after inactivity")
                     : Translation.tr("Set this as default tab after inactivity")
             }

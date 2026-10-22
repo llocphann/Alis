@@ -65,12 +65,26 @@ Window {
    const dialog=findChild(dashboard,"dashboardCustomTabDialog")
    check(!!dialog,"delete confirmation dialog not mounted")
    const createButton=findChild(dashboard,"dashboardCreateCustomTab")
-   check(!!createButton && createButton.visible && createButton.enabled,
-    "create button must be visible and enabled outside Edit Dashboard Layout")
+   const defaultButton=findChild(dashboard,"dashboardSetDefaultTab")
+   const actions=findChild(dashboard,"dashboardCustomTabActions")
+   const pageDots=findChild(dashboard,"dashboardPageDots")
+   check(!!createButton && !!defaultButton && !!actions && !!pageDots,
+    "custom tab action controls missing")
+   check(!createButton.visible && !actions.visible,
+    "create button must be hidden outside Edit Dashboard Layout")
+   dashboard.canvasController.beginEditMode()
+   tryVerify(()=>createButton.visible && createButton.enabled,1500)
+   check(defaultButton.visible && defaultButton.enabled,
+    "set-default button missing in Edit Dashboard Layout")
+   check(Math.abs(pageDots.mapToItem(dashboard,pageDots.width/2,0).x
+    -dashboard.width/2)<4,"tab controls are not centered as one group")
+   mouseClick(defaultButton)
+   check(Config.options.dashboard.defaultTabId==="dashboard",
+    "default-tab action did not save active page")
    mouseClick(createButton)
    tryVerify(()=>tabToolbar.visible && dashboard.tabNamingActive,2000)
-   check(!dialog.visible && !dashboard.editMode,
-    "create click must show naming toolbar, not a canvas modal or Edit mode")
+   check(!dialog.visible && dashboard.editMode,
+    "create click must replace editing controls, not open a centered dialog")
    const name=findChild(tabToolbar,"dashboardToolbarTabName")
    check(!!name,"toolbar text input missing")
    dashboard.setCustomTabName("Research")
@@ -87,17 +101,20 @@ Window {
     x=>x.id==="clock" && x.visible===true),"custom layout not saved")
    check(JSON.stringify(Array.from(Config.options.dashboard.canvas.widgets))===primary,
     "main Dashboard widget geometry changed")
+   dashboard.canvasController.beginEditMode()
    dashboard.openCustomTabDialog("rename","custom-1")
    check(tabToolbar.visible,"rename did not open edit toolbar")
    dashboard.setCustomTabName("Research II")
    dashboard.acceptCustomTabDialog()
    tryVerify(()=>Array.from(Config.options.dashboard.customTabs)[0].name==="Research II",2000)
+   dashboard.canvasController.beginEditMode()
    dashboard.openCustomTabDialog("create","")
    dashboard.setCustomTabName("research ii")
    dashboard.acceptCustomTabDialog()
    check(dashboard._customDialogShown && dashboard._customDialogError.length>0,
     "duplicate name not rejected")
    dashboard.cancelCustomTabDialog()
+   dashboard.canvasController.cancelEditMode()
    Config.setNestedValues({
      "dashboard.defaultTabId":"dashboard",
      "dashboard.inactiveMinutes":5
@@ -111,6 +128,9 @@ Window {
    dashboard.presentationActive=true
    check(dashboard.currentPageId==="dashboard","inactivity did not select default tab")
    Config.setNestedValue("dashboard.defaultTabId","custom-1")
+   dashboard.selectPage("custom-1")
+   tryVerify(()=>dashboard.canvasController!==null,2500)
+   dashboard.canvasController.beginEditMode()
    dashboard.openCustomTabDialog("delete","custom-1")
    check(dialog.visible && dialog.mode==="delete","delete confirmation not shown")
    dialog.acceptRequested("")

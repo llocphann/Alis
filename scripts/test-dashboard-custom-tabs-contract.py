@@ -47,7 +47,7 @@ for part in [
     'property string customTabId: ""', 'updates["dashboard.customTabLayouts"]',
     "root.layoutOptions?.workspaceWidth", "root.layoutOptions?.workspaceHeight",
     "root.customTabId.length === 0 && g.visible !== false",
-    'return Array.isArray(root.layoutOptions?.widgets)',
+    '(Config.options?.dashboard?.canvas?.widgets ?? [])',
     'updates["dashboard.pageOrder"]',
 ]:
     check(part in canvas, "per-tab canvas regression: " + part)
@@ -90,13 +90,21 @@ check('(Config.options?.dashboard?.canvas?.workspaceWidth ?? 0)' in canvas,
 check('(Config.options?.dashboard?.canvas?.workspaceHeight ?? 0)' in canvas,
       "legacy workspace height must remain directly reactive")
 check('objectName: "dashboardCustomTabActions"' in header
-      and 'visible: root.pageCount > 0' in header,
-      "Create tab must be exposed outside Edit Dashboard Layout")
+      and 'visible: root.editMode' in header,
+      "Create tab controls must be shown only in Edit Dashboard Layout")
+check('objectName: "dashboardSetDefaultTab"' in header
+      and 'onClicked: root.setDefaultTabRequested(' in header,
+      "set default tab button absent in Edit Dashboard Layout")
+check('Config.setNestedValue("dashboard.defaultTabId", id)' in content,
+      "set default tab control is not connected to saved settings")
+check('anchors.centerIn: parent' in header
+      and 'anchors.left: pages.right' not in header,
+      "tab actions must be centered together with indicators")
 check('onClicked: root.createTabRequested()' in header,
       "Create button must invoke naming toolbar")
 toolbar = (src / "DashboardEditToolbar.qml").read_text()
 check('visible: root.editing || root.naming' in toolbar,
-      "naming toolbar must be visible without editing")
+      "naming toolbar must replace layout controls while editing")
 check('objectName: "dashboardToolbarTabName"' in toolbar
       and 'objectName: "dashboardToolbarCreate"' in toolbar
       and 'objectName: "dashboardToolbarCancelCreate"' in toolbar,
@@ -113,6 +121,18 @@ for name, src_text in [("standalone", standalone), ("overview", overview),
     check('tabController:' in src_text, name + " missing naming controller")
     check('tabNamingActive' in src_text or 'controlsVisible' in src_text,
           name + " cannot reveal naming bar")
+
+# Responsive canvas should never discard modules when saved geometry cannot
+# fit. Display packing is non-destructive; content gets an adaptive transform.
+layout = (src / "DashboardLayout.js").read_text()
+check("return responsiveGrid(entries,width,height,minimums,gap)" in layout,
+      "overflow still hides modules instead of rearranging the view")
+check("function responsiveGrid(" in layout, "adaptive grid fallback missing")
+check("function _contentComfortSize(id)" in canvas
+      and "readonly property real fittingScale" in canvas,
+      "module internals are not scaled to fit reduced cards")
+check("case \"media\": return { width: 320, height: 390 }" not in canvas,
+      "fixed module minimum sizes still clamp user resize")
 
 node = shutil.which("node")
 if node:
