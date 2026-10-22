@@ -164,6 +164,42 @@ console.log('DASH_F01_POLICY_PASS');
     result = subprocess.run([node,"-e",js,str(policy)],capture_output=True,text=True)
     check(result.returncode == 0 and "DASH_F01_POLICY_PASS" in result.stdout,
           "policy runtime failed: " + result.stdout + result.stderr)
+    layout_js = r"""
+const fs=require("fs"),vm=require("vm"),assert=require("assert");
+const ctx=vm.createContext({});
+vm.runInContext(fs.readFileSync(process.argv[1],"utf8"),ctx);
+const defaults=JSON.parse(fs.readFileSync(process.argv[2],"utf8"));
+const entries=defaults.dashboard.canvas.widgets;
+const shown=entries.filter(e=>e.visible!==false);
+const min=Object.fromEntries(entries.map(e=>[e.id,{width:36,height:32}]));
+for(const [width,height] of [[1920,1050],[1440,820],[1120,730],
+                            [980,620],[650,450],[360,220]]) {
+    const saved=JSON.stringify(entries);
+    const result=ctx.project(entries,width,height,min,10,{width:0,height:0});
+    assert.equal(result.overflow.length,0,"overflow at "+width+"x"+height);
+    assert.equal(Object.keys(result.rects).length,shown.length,"lost module");
+    assert.equal(JSON.stringify(entries),saved,"projection mutated saved layout");
+    const rects=Object.values(result.rects);
+    for(let i=0;i<rects.length;i++) {
+        const a=rects[i];
+        assert(a.x>=-0.01&&a.y>=-0.01
+          &&a.x+a.width<=width+.01&&a.y+a.height<=height+.01,
+          "out of bounds");
+        for(let j=i+1;j<rects.length;j++)
+            assert(!ctx.overlaps(a,rects[j],0),"module overlap");
+    }
+}
+const single=[{id:"notes",x:.1,y:.2,w:.55,h:.45,visible:true}];
+const projected=ctx.project(single,1280,720,{notes:{width:36,height:32}},10,{});
+assert(Math.abs(projected.rects.notes.width/1280-.55)<.001);
+assert(Math.abs(projected.rects.notes.height/720-.45)<.001);
+console.log("DASH_F01_RESPONSIVE_PASS");
+"""
+    result = subprocess.run([node,"-e",layout_js,str(src/"DashboardLayout.js"),
+                             str(root/"defaults/config.json")],
+                            capture_output=True,text=True)
+    check(result.returncode == 0 and "DASH_F01_RESPONSIVE_PASS" in result.stdout,
+          "responsive layout policy failed: " + result.stdout + result.stderr)
 else:
     print("DASH_F01_POLICY_SKIP: node unavailable")
-print("DASH_F01_CONTRACT_PASS: CRUD wiring, persistence, selection, timeout policy")
+print("DASH_F01_CONTRACT_PASS: edit-mode controls, default tab, responsive geometry and timeout")
