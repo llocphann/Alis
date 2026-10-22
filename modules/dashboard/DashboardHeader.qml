@@ -262,12 +262,23 @@ Item {
                 }
             }
         }
-        // Creation is always discoverable alongside the page indicators.
+    }
+    // Tab controls sit outside the edit-only button area and outside the
+    // draggable page indicators. Keep an explicit hit-test layer even when
+    // the normal Dashboard action cluster is present.
+    Row {
+        id: customTabActions
+        objectName: "dashboardCustomTabActions"
+        anchors.left: pages.right
+        anchors.leftMargin: 5
+        anchors.verticalCenter: pages.verticalCenter
+        spacing: 2
+        z: 10
+        visible: root.pageCount > 0
         RippleButton {
-            id: addCustomPage
             objectName: "dashboardCreateCustomTab"
-            implicitWidth: 26
-            implicitHeight: 28
+            implicitWidth: 28
+            implicitHeight: 30
             buttonRadius: Appearance.rounding.full
             enabled: !root.editMode
             focusPolicy: Qt.StrongFocus
@@ -276,7 +287,7 @@ Item {
             onClicked: root.createTabRequested()
             contentItem: MaterialSymbol {
                 text: "add"
-                iconSize: 19
+                iconSize: 20
                 color: root.colText
             }
             StyledToolTip { text: Translation.tr("Create custom tab") }
@@ -284,8 +295,8 @@ Item {
         RippleButton {
             objectName: "dashboardRenameCustomTab"
             visible: root.pageIds[root.currentPage]?.startsWith("custom-") && !root.editMode
-            implicitWidth: 24
-            implicitHeight: 28
+            implicitWidth: 27
+            implicitHeight: 30
             buttonRadius: Appearance.rounding.full
             colBackground: "transparent"
             colBackgroundHover: Qt.alpha(root.colText, .08)
@@ -300,8 +311,8 @@ Item {
         RippleButton {
             objectName: "dashboardDeleteCustomTab"
             visible: root.pageIds[root.currentPage]?.startsWith("custom-") && !root.editMode
-            implicitWidth: 24
-            implicitHeight: 28
+            implicitWidth: 27
+            implicitHeight: 30
             buttonRadius: Appearance.rounding.full
             colBackground: "transparent"
             colBackgroundHover: Qt.alpha(root.colText, .08)
