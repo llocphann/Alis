@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.services
 import qs.modules.common
@@ -10,6 +11,11 @@ Rectangle {
     id: root
 
     required property var canvasController
+    property var tabController: null
+    readonly property bool naming: tabController?.tabNamingActive ?? false
+    onNamingChanged: if (naming) Qt.callLater(() => {
+        if (root.naming) tabNameInput.forceActiveFocus()
+    })
     property bool embeddedSurface: false
     readonly property bool editing: root.canvasController?.editMode ?? false
     readonly property var hiddenIds: root.canvasController?.hiddenIds ?? []
@@ -30,10 +36,10 @@ Rectangle {
             ? root.sectionGap + root.availableModulesNaturalWidth : 0)
     implicitWidth: Math.ceil(Math.max(
         toolbarTitle.implicitWidth,
-        Math.min(760,root.toolbarRowNaturalWidth))
+        root.naming ? 390 : Math.min(760,root.toolbarRowNaturalWidth))
         + root.horizontalPadding * 2)
     implicitHeight: toolbarColumn.implicitHeight + root.horizontalPadding * 2
-    visible: root.editing
+    visible: root.editing || root.naming
     radius: Appearance.rounding.large
     topLeftRadius: radius
     topRightRadius: radius
@@ -58,7 +64,10 @@ Rectangle {
             id: toolbarTitle
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
-            text: root.canvasController?.layoutMessage
+            text: root.naming
+                ? (root.tabController?._customDialogMode === "rename"
+                    ? Translation.tr("Rename custom tab") : Translation.tr("Create custom tab"))
+                : root.canvasController?.layoutMessage
                 || ((root.canvasController?.workspace?.overflow?.length ?? 0) > 0
                     ? Translation.tr("%1 modules need more space").arg(root.canvasController.workspace.overflow.length)
                     : root.canvasController?.selectedId?.length > 0
@@ -71,8 +80,74 @@ Rectangle {
             elide: Text.ElideRight
         }
 
+        // Temporarily occupy the original Edit Dashboard Layout bar instead
+        // of opening a modal over the cards. The host reserves the same space.
+        RowLayout {
+            id: tabNamingRow
+            objectName: "dashboardTabNamingToolbar"
+            visible: root.naming
+            Layout.fillWidth: true
+            spacing: 6
+            TextField {
+                id: tabNameInput
+                objectName: "dashboardToolbarTabName"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 160
+                implicitHeight: 34
+                maximumLength: 41
+                placeholderText: Translation.tr("Custom tab name")
+                text: root.tabController?._customDialogName ?? ""
+                onTextEdited: root.tabController?.setCustomTabName(text)
+                onAccepted: root.tabController?.acceptCustomTabDialog()
+            }
+            RippleButton {
+                objectName: "dashboardToolbarCreate"
+                implicitWidth: 34
+                implicitHeight: 34
+                buttonRadius: Appearance.rounding.full
+                colBackground: Appearance.colors.colPrimaryContainer
+                onClicked: root.tabController?.acceptCustomTabDialog()
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "check"
+                    color: Appearance.colors.colOnPrimaryContainer
+                    iconSize: Appearance.font.pixelSize.normal
+                }
+                StyledToolTip {
+                    text: root.tabController?._customDialogMode === "rename"
+                        ? Translation.tr("Save name") : Translation.tr("Create tab")
+                }
+            }
+            RippleButton {
+                objectName: "dashboardToolbarCancelCreate"
+                implicitWidth: 34
+                implicitHeight: 34
+                buttonRadius: Appearance.rounding.full
+                colBackground: Appearance.colors.colLayer1
+                onClicked: root.tabController?.cancelCustomTabDialog()
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "close"
+                    color: Appearance.colors.colOnLayer1
+                    iconSize: Appearance.font.pixelSize.normal
+                }
+                StyledToolTip { text: Translation.tr("Cancel") }
+            }
+        }
+        StyledText {
+            visible: root.naming
+                && (root.tabController?._customDialogError?.length ?? 0) > 0
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            text: root.tabController?._customDialogError ?? ""
+            color: Appearance.colors.colError
+            font.pixelSize: Appearance.font.pixelSize.smallest
+            wrapMode: Text.WordWrap
+        }
+
         ColumnLayout {
             id: toolbarRow
+            visible: !root.naming
             Layout.fillWidth: true
             spacing: root.sectionGap
 
