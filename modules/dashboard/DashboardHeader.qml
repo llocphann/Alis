@@ -272,7 +272,7 @@ Item {
         Layout.alignment: Qt.AlignVCenter
         spacing: 2
         z: 10
-        visible: root.editMode
+        visible: root.pageCount > 0
         RippleButton {
             id: defaultTabButton
             objectName: "dashboardSetDefaultTab"
@@ -282,7 +282,7 @@ Item {
             readonly property bool isDefault:
                 root.pageIds[root.currentPage] === root.defaultTabId
             toggled: isDefault
-            enabled: root.editMode && root.pageIds[root.currentPage] !== undefined
+            enabled: root.pageIds[root.currentPage] !== undefined
             focusPolicy: Qt.StrongFocus
             colBackground: "transparent"
             colBackgroundHover: Qt.alpha(root.colText, .08)
@@ -300,6 +300,7 @@ Item {
         }
         RippleButton {
             objectName: "dashboardCreateCustomTab"
+            visible: root.editMode
             implicitWidth: 28
             implicitHeight: 30
             buttonRadius: Appearance.rounding.full

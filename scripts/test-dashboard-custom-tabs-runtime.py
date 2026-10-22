@@ -70,17 +70,17 @@ Window {
    const pageDots=findChild(dashboard,"dashboardPageDots")
    check(!!createButton && !!defaultButton && !!actions && !!pageDots,
     "custom tab action controls missing")
-   check(!createButton.visible && !actions.visible,
-    "create button must be hidden outside Edit Dashboard Layout")
-   dashboard.canvasController.beginEditMode()
-   tryVerify(()=>createButton.visible && createButton.enabled,1500)
-   check(defaultButton.visible && defaultButton.enabled,
-    "set-default button missing in Edit Dashboard Layout")
+   check(!createButton.visible && actions.visible && defaultButton.visible,
+    "Create must be hidden outside Edit while Set default stays accessible")
    check(Math.abs(pageDots.mapToItem(dashboard,pageDots.width/2,0).x
     -dashboard.width/2)<4,"tab controls are not centered as one group")
    mouseClick(defaultButton)
    check(Config.options.dashboard.defaultTabId==="dashboard",
     "default-tab action did not save active page")
+   dashboard.canvasController.beginEditMode()
+   tryVerify(()=>createButton.visible && createButton.enabled,1500)
+   check(defaultButton.visible && defaultButton.enabled,
+    "set-default button missing in Edit Dashboard Layout")
    mouseClick(createButton)
    tryVerify(()=>tabToolbar.visible && dashboard.tabNamingActive,2000)
    check(!dialog.visible && dashboard.editMode,

@@ -165,7 +165,7 @@ Item {
     }
 
     function setDefaultTab(id): void {
-        if (!root.pageIds.includes(id) || !root.editMode) return
+        if (!root.pageIds.includes(id)) return
         Config.setNestedValue("dashboard.defaultTabId", id)
     }
     function openCustomTabDialog(mode, id): void {

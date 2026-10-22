@@ -90,8 +90,9 @@ check('(Config.options?.dashboard?.canvas?.workspaceWidth ?? 0)' in canvas,
 check('(Config.options?.dashboard?.canvas?.workspaceHeight ?? 0)' in canvas,
       "legacy workspace height must remain directly reactive")
 check('objectName: "dashboardCustomTabActions"' in header
-      and 'visible: root.editMode' in header,
-      "Create tab controls must be shown only in Edit Dashboard Layout")
+      and 'visible: root.pageCount > 0' in header
+      and 'objectName: "dashboardCreateCustomTab"\n            visible: root.editMode' in header,
+      "Create tab must be hidden outside Edit while default selection remains accessible")
 check('objectName: "dashboardSetDefaultTab"' in header
       and 'onClicked: root.setDefaultTabRequested(' in header,
       "set default tab button absent in Edit Dashboard Layout")
