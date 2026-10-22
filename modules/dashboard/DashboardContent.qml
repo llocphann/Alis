@@ -182,10 +182,10 @@ Item {
                 root._customDialogError = Translation.tr("Maximum 20 custom tabs")
                 return
             }
-            const layouts = Config.options?.dashboard?.customTabLayouts ?? ({})
+            const layouts = Array.from(Config.options?.dashboard?.customTabLayouts ?? [])
             let createdId = TabPolicy.nextId(stored)
             let suffix = 1
-            while (Object.prototype.hasOwnProperty.call(layouts, createdId))
+            while (layouts.some(layout => layout?.id === createdId))
                 createdId = "custom-" + (++suffix)
             const next = stored.concat([{id:createdId, name:root._customDialogName.trim()}])
             const order = PagePolicy.normalized(Config.options?.dashboard?.pageOrder)
@@ -203,8 +203,8 @@ Item {
                 tab.id === id ? {id:id,name:root._customDialogName.trim()} : tab))
         } else if (mode === "delete") {
             if (!stored.some(tab => tab.id === id)) return
-            const layouts = Object.assign({}, Config.options?.dashboard?.customTabLayouts ?? ({}))
-            delete layouts[id]
+            const layouts = Array.from(Config.options?.dashboard?.customTabLayouts ?? [])
+                .filter(layout => layout?.id !== id)
             const updates = {
                 "dashboard.customTabs":stored.filter(tab => tab.id !== id),
                 "dashboard.customTabLayouts":layouts,
