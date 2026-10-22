@@ -108,8 +108,19 @@ ShellRoot {
     check(host.contentItem.width===root.canvasSize[0]&&host.contentItem.height===root.canvasSize[1],"handoff resized real content")
     root.phase=identity+":body";move(content.x+content.width/2,content.y+content.height/2);wait(reveal.closeDelay+100);check(host.open&&reveal.bodyHovered,"body did not own hover")
     // Painted curved shoulders outside the main body also own the lease.
-    const shoulder=host.connectionRects.find(r=>r.width>0&&r.height>0&&Math.max(r.width,r.height)>1&&!Geometry.rectContains(host.inputBounds,r.x+r.width/2,r.y+r.height/2))
-    check(!!shoulder,"missing actual painted shoulder")
+    const sourceRegions=host.controller.sourceInputRegions??[]
+    const shoulderRows=host.connectionRects.filter(r=>r.width>0&&r.height>0&&Math.max(r.width,r.height)>1&&!Geometry.rectContains(host.inputBounds,r.x+r.width/2,r.y+r.height/2))
+    const sourceOwns=r=>sourceRegions.some(source=>Geometry.rectContains(source,
+      Math.floor(r.x+r.width/2),Math.floor(r.y+r.height/2)))
+    const blockedShoulder=shoulderRows.find(sourceOwns)
+    if(blockedShoulder){
+     const x=Math.floor(blockedShoulder.x+blockedShoulder.width/2),y=Math.floor(blockedShoulder.y+blockedShoulder.height/2)
+     check(!host.hoverParent.containmentMask.contains(Qt.point(x-host.hoverParent.x,y-host.hoverParent.y)),"Sidebar took a module-owned shoulder pixel")
+    }
+    // On a narrow output a real module can cover a painted shoulder. Its
+    // source keeps priority; exercise body hover at an unoccluded pixel.
+    const shoulder=shoulderRows.find(r=>!sourceOwns(r))
+    check(!!shoulder,"missing unoccluded painted shoulder")
     // QtTest rounds half-pixel coordinates to integers. Keep the dispatched
     // point inside a one-pixel strip on Right/Bottom as well as Left/Top.
     const shoulderX=Math.floor(shoulder.x+shoulder.width/2),shoulderY=Math.floor(shoulder.y+shoulder.height/2)
