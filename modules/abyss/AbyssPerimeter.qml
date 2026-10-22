@@ -1096,17 +1096,26 @@ Scope {
                 && !PolkitService.active && !GlobalStates.regionSelectorOpen
             component SidebarReveal: AbyssSidebarReveal {
                 required property string attachedEdge
+                required property var sidebarBody
                 readonly property bool horizontal: Geometry.horizontal(attachedEdge)
                 readonly property real triggerThickness: Math.max(AbyssStyle.perimeterThickness,
                     Config.options?.sidebar?.edgeOpen?.regionWidth ?? 2)
+                readonly property var restingContent: sidebarBody.targetRecord.content
                 readonly property real triggerSpan: Math.min(180,
-                    (horizontal ? window.width : window.height)*.25)
+                    (horizontal ? window.width : window.height)*.25,
+                    Math.max(0,horizontal ? restingContent.width : restingContent.height))
+                readonly property real triggerCenter: horizontal
+                    ? restingContent.x+restingContent.width/2
+                    : restingContent.y+restingContent.height/2
                 // Follow the rendered panel, including role swaps and saved
-                // Edge overrides. The reveal strip stays bounded and centered.
+                // Start/End/custom placement. Use resting geometry so reveal
+                // motion cannot move the source out from under the pointer.
                 x: attachedEdge === "right" ? window.width-width
-                    : horizontal ? (window.width-width)/2 : 0
+                    : horizontal ? Math.max(0,Math.min(window.width-width,
+                        triggerCenter-width/2)) : 0
                 y: attachedEdge === "bottom" ? window.height-height
-                    : horizontal ? 0 : (window.height-height)/2
+                    : horizontal ? 0 : Math.max(0,Math.min(window.height-height,
+                        triggerCenter-height/2))
                 width: horizontal ? triggerSpan : triggerThickness
                 height: horizontal ? triggerThickness : triggerSpan
                 openingAllowed: window.sidebarOpeningAllowed
@@ -1116,6 +1125,7 @@ Scope {
             SidebarReveal {
                 id: leftReveal
                 attachedEdge: leftPanel.edge
+                sidebarBody: leftPanel
                 available: window.sidebarRevealAvailable && (Config.options?.enabledPanels ?? []).includes("abyssSidebarLeft")
                 open: leftPanel.open
                 transientOpen: GlobalStates.sidebarLeftTransient
@@ -1126,6 +1136,7 @@ Scope {
             SidebarReveal {
                 id: rightReveal
                 attachedEdge: rightPanel.edge
+                sidebarBody: rightPanel
                 available: window.sidebarRevealAvailable && (Config.options?.enabledPanels ?? []).includes("abyssSidebarRight")
                 open: rightPanel.open
                 transientOpen: GlobalStates.sidebarRightTransient
