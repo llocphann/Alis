@@ -184,8 +184,9 @@ Item {
             }
             const layouts = Array.from(Config.options?.dashboard?.customTabLayouts ?? [])
             let createdId = TabPolicy.nextId(stored)
-            let suffix = 1
-            while (layouts.some(layout => layout?.id === createdId))
+            let suffix = Number(createdId.slice(7)) || 1
+            while (stored.some(tab => tab.id === createdId)
+                    || layouts.some(layout => layout?.id === createdId))
                 createdId = "custom-" + (++suffix)
             const next = stored.concat([{id:createdId, name:root._customDialogName.trim()}])
             const order = PagePolicy.normalized(Config.options?.dashboard?.pageOrder)
