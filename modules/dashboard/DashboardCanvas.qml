@@ -715,6 +715,21 @@ Item {
             height: Math.max(1, Math.min(canvas.height, 32))
         }
     }
+    function _contentComfortSize(id) {
+        // Responsive content is laid out at a comfortable virtual size when
+        // the owner deliberately makes a card smaller. The loaded widget is
+        // scaled *inside* that card rather than clamped or cropped.
+        switch (id) {
+        case "media": return {width:220,height:185}
+        case "calendar": return {width:215,height:155}
+        case "weather": return {width:170,height:135}
+        case "todo": return {width:200,height:130}
+        case "notifications": return {width:190,height:110}
+        case "notes": return {width:185,height:120}
+        case "system": return {width:190,height:135}
+        default: return {width:150,height:75}
+        }
+    }
 
     function _rectPixelsForGeometry(id, g) {
         const min = root._minimumSize(id)
@@ -2061,7 +2076,18 @@ Item {
                     clip: true
 
                     Loader {
-                        anchors.fill: parent
+                        id: moduleContent
+                        readonly property var comfort: root._contentComfortSize(
+                            String(cardWrap.modelData))
+                        width: Math.max(cardViewport.width, comfort.width)
+                        height: Math.max(cardViewport.height, comfort.height)
+                        readonly property real fittingScale: Math.max(0.001, Math.min(1,
+                            cardViewport.width / Math.max(1, width),
+                            cardViewport.height / Math.max(1, height)))
+                        transformOrigin: Item.TopLeft
+                        scale: fittingScale
+                        x: (cardViewport.width - width * fittingScale) / 2
+                        y: (cardViewport.height - height * fittingScale) / 2
                         sourceComponent: root._widgetMap[String(cardWrap.modelData)] ?? null
                         active: cardWrap.visible || root.warmContent
                             && root.visibleIds.includes(String(cardWrap.modelData))
