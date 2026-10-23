@@ -218,7 +218,52 @@
   "data_protection": "Synthetic data only. No actual clipboard payloads read or published; no owner history, pins, volume, routing, desktop or service changed.",
   "canonical_gate": {
     "source_sha": "66d54559be71d861b1450deaafe768cdcd6991ca",
-    "status": "RUNNING",
+    "status": "FINISHED_FAIL",
+    "actual_exit": 1,
+    "started": 520,
+    "settled": 520,
+    "passed": 463,
+    "failed": 56,
+    "numbered_skipped": 1,
+    "console_summary_skipped": 2,
+    "clipboard": [
+      {
+        "number": 171,
+        "label": "Python regression: scripts/test-clipboard-history-runtime.py",
+        "status": "PASS"
+      },
+      {
+        "number": 172,
+        "label": "Python regression: scripts/test-clipboard-image-classification-contract.py",
+        "status": "PASS"
+      },
+      {
+        "number": 173,
+        "label": "Python regression: scripts/test-clipboard-image-mime-contract.py",
+        "status": "PASS"
+      },
+      {
+        "number": 174,
+        "label": "Python regression: scripts/test-clipboard-image-runtime.py",
+        "status": "PASS"
+      },
+      {
+        "number": 175,
+        "label": "Python regression: scripts/test-clipboard-image-thumbnail-contract.py",
+        "status": "PASS"
+      },
+      {
+        "number": 176,
+        "label": "Python regression: scripts/test-clipboard-owner-image-metadata-contract.py",
+        "status": "PASS"
+      },
+      {
+        "number": 177,
+        "label": "Python regression: scripts/test-clipboard-watcher-contract.py",
+        "status": "PASS"
+      }
+    ],
+    "owned_remaining_after_exit": [],
     "prior_cef": "STOPPED -15, 324 PASS / 39 FAIL / 1 unsettled; retain all results."
   },
   "separate_gates": [

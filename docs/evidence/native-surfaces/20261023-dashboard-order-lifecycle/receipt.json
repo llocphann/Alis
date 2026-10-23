@@ -1,0 +1,144 @@
+{
+  "source_sha": "807aa8def17221d53d750925b50090c3e8c37af0",
+  "issues": [
+    126,
+    59
+  ],
+  "production_repairs": [
+    "Synchronize navigation draft with canvas Undo/Reset order.",
+    "Keep selected custom canvas alive through reorder and equal configuration republish.",
+    "Keep live pointer drag through equal page-order republish; cancel when real order changes.",
+    "Freeze closing toolbar footprint from semantic editor state."
+  ],
+  "native_commands": [
+    {
+      "name": "tab-current",
+      "argv": [
+        "python3",
+        "scripts/test-dashboard-tab-reorder-runtime.py"
+      ],
+      "actual_exit": 0,
+      "log_sha256": "e39ae61dc20f71414f7bbd1fb51583e0f92dbd77ddd397570cd8052ce8a792c4",
+      "markers": [
+        "  INFO qml: DASHBOARD_TAB_REORDER_NATIVE_PASS 63 14",
+        "  INFO qml: DASHBOARD_TAB_REORDER_RESTART_PASS"
+      ]
+    },
+    {
+      "name": "custom-current",
+      "argv": [
+        "python3",
+        "scripts/test-dashboard-custom-tabs-runtime.py"
+      ],
+      "actual_exit": 0,
+      "log_sha256": "30d8caf7c076ab56c27c4a587df4251a023920e59c71220b252613eda1fe40f2",
+      "markers": [
+        "  INFO qml: DASH_F01_NATIVE_PASS 37",
+        "  INFO qml: DASH_F01_RESTART_PASS 5"
+      ]
+    },
+    {
+      "name": "tab-before-frozen",
+      "argv": [
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/tab-refresh-frozen-807.py"
+      ],
+      "actual_exit": 1,
+      "log_sha256": "c233a0e059635418ce7f5db400e05264b514b147dd67c8c43332d1cf0bd56f32",
+      "markers": [
+        "TAB_NATIVE_EXIT 0",
+        " ERROR qml: DASHBOARD_TAB_REORDER_NATIVE_FAIL equal page-order republish cancelled a live pointer drag check@qs:@/qs/shell.qml:37"
+      ]
+    },
+    {
+      "name": "tab-after-frozen",
+      "argv": [
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/tab-refresh-frozen-807.py"
+      ],
+      "actual_exit": 0,
+      "log_sha256": "f1bb8c195b468e1aea10cdb5029d727d812f1a8332a49fa737ce01941d1cb37d",
+      "markers": [
+        "TAB_NATIVE_EXIT 0",
+        "  INFO qml: DASHBOARD_TAB_REORDER_NATIVE_PASS 63 14",
+        "  INFO qml: DASHBOARD_TAB_REORDER_RESTART_PASS"
+      ]
+    }
+  ],
+  "supervisor": {
+    "source_sha": "807aa8def17221d53d750925b50090c3e8c37af0",
+    "argv": [
+      "bwrap",
+      "--bind",
+      "/",
+      "/",
+      "--dev-bind",
+      "/dev",
+      "/dev",
+      "--proc",
+      "/proc",
+      "--tmpfs",
+      "/tmp",
+      "--die-with-parent",
+      "--",
+      "python3",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/dashboard-807-driver.py"
+    ],
+    "actual_exit": 0,
+    "status": "PASS",
+    "stop_reason": null,
+    "elapsed_seconds": 16.7,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "76aee5c730502c0202cb9af6a1486ec628f2b167136671d76784cf6f23e77c58"
+  },
+  "related_editor_field": {
+    "tested_source_sha": "00be65832f60034cc953b33a7d100bafb9f370de",
+    "command": {
+      "name": "editor-field",
+      "argv": [
+        "python3",
+        "scripts/test-dashboard-editor-field-runtime.py"
+      ],
+      "actual_exit": 0,
+      "elapsed_seconds": 33.96,
+      "log_sha256": "7c09efd4b58b17ea2644d4490a637f22a14b466b46634b19467d41e26c453916",
+      "markers": [
+        "  INFO qml: DASHBOARD_FIELD_PASS 16 composed routes/edges/sizes: visible Notes source, dimensions above-field Add Undo Cancel Done input-release 1252 live motion-state samples",
+        "DASHBOARD_FIELD_PASS 16 composed route/edge/size cases; stable workspace; native Undo Cancel Done; full-size motion states/reversal/reduced motion; field paint/input; partial-frame capture requires explicit capture lane"
+      ]
+    },
+    "production_files_changed_since_test": []
+  },
+  "retained_diagnostics": [
+    {
+      "source": "66d54559b",
+      "status": "FAIL",
+      "detail": "Native Undo navigation order remains stale before repair."
+    },
+    {
+      "source": "a66230d23",
+      "status": "FAIL",
+      "detail": "Custom canvas destroyed during reorder; hidden/future tab drag also fails."
+    },
+    {
+      "source": "44ff375c8",
+      "status": "FAIL",
+      "detail": "Equal page-order republish cancels live drag. Restart test additionally used a wrong fixed ID instead of the saved reused ID."
+    },
+    {
+      "source": "00be65832",
+      "status": "FAIL",
+      "detail": "Tab command quit before FileView disk acknowledgement; native assertions passed but independent persisted-order assertion failed.807 waits acknowledgement and keeps the disk/restart assertions."
+    }
+  ],
+  "gates": {
+    "focused_native": "PASS with scopes and exact sources above",
+    "whole_maintainer_at_current_source": "NOT_RUN",
+    "latest_completed_whole_maintainer": "66d54559b FAIL:463 PASS,56 FAIL,1 numbered SKIP; exit1",
+    "related_music_navigation_and_scroll": "FAIL at66; follow-up not yet qualified",
+    "installed_current_repairs": "NOT_DEPLOYED",
+    "physical_multi_output_and_owner": "NOT_VERIFIED"
+  },
+  "privacy": "Synthetic private configuration, disposable native session and private /tmp. No owner user-data edit or desktop cutover."
+}
