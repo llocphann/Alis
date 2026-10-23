@@ -266,7 +266,11 @@ ShellRoot {
       && (Geometry.horizontal(edge) ? r.height>1 : r.width>1)
       && owned([r.x+r.width/2,r.y+r.height/2]))
     check(shoulder!==undefined,"adjacent shoulder probe is missing on "+edge)
-    for(const point of [body,weld,[shoulder.x+shoulder.width/2,shoulder.y+shoulder.height/2],body]) {
+    // QtTest mouseMove takes integer coordinates. Round before containment
+    // checks so a 1px strip's .5 center cannot be rounded out of that strip.
+    const shoulderPoint=[Math.floor(shoulder.x+shoulder.width/2),
+      Math.floor(shoulder.y+shoulder.height/2)]
+    for(const point of [body,weld,shoulderPoint,body]) {
      check(owned(point) && nativeContains(point),"joined paint is outside native/hover mask on "+edge)
      mouseMove(scene,point[0],point[1]);wait(220);render()
      check(popup.requestedVisible && popup._contentHovered,"adjacent weld/shoulder dismissed popup on "+edge)
