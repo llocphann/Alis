@@ -27,13 +27,21 @@ with tempfile.TemporaryDirectory(prefix="alis-greeter-wallpaper-") as name:
     installer = (ROOT / "scripts/sddm/install-pixel-sddm.sh").read_text()
     function = re.search(r"^ensure_greeter_permissions\(\) \{.*?^\}", installer, re.M | re.S).group()
     command = "set -e\nTHEME_DIR=" + shlex.quote(str(installed)) + "\nTHEME_SRC=" + shlex.quote(str(theme))
-    command += "\nelevate() { return 99; }\n" + function + "\nensure_greeter_permissions\n"
+    command += "\nelevate() { return 99; }\nlog_err() { printf '%s\\n' \"$*\"; }\n" + function + "\nensure_greeter_permissions\n"
     subprocess.run(["bash"], input=command, text=True, check=True, timeout=10)
     for path in [installed / "Main.qml", installed / "GreeterWallpaper.qml",
                  installed / "theme.conf", installed / "assets/default-background.svg"]:
         assert path.stat().st_mode & 0o777 == 0o644, path.name
     assert (installed / "assets").stat().st_mode & 0o777 == 0o755
     assert stamp.stat().st_mode & 0o777 == 0o600, "installer exposed private metadata"
+    private = folder / "private-sentinel"
+    private.write_text("synthetic private data")
+    private.chmod(0o600)
+    (installed / "Main.qml").unlink()
+    (installed / "Main.qml").symlink_to(private)
+    refused = subprocess.run(["bash"], input=command, text=True, capture_output=True, timeout=10)
+    assert refused.returncode != 0, "installer followed a custom symlink"
+    assert private.stat().st_mode & 0o777 == 0o600
 
     (folder / "GreeterWallpaper.qml").symlink_to(theme / "GreeterWallpaper.qml")
     (folder / "assets").symlink_to(theme / "assets", target_is_directory=True)

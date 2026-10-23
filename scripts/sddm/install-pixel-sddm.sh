@@ -25,15 +25,25 @@ log_err()  { echo -e "\033[0;31m[sddm] ✗ $*\033[0m"; }
 # walk generated wallpaper stamps or other user-owned files in the theme.
 ensure_greeter_permissions() {
     local path source_file
+    local -a shipped_files=()
+    while IFS= read -r -d '' source_file; do
+        shipped_files+=("$THEME_DIR/$(basename "$source_file")")
+    done < <(find "$THEME_SRC" -maxdepth 1 -type f \( -name '*.qml' -o -name '*.js' -o -name '*.conf' -o -name 'metadata.desktop' \) -print0)
+    shipped_files+=("$THEME_DIR/assets/default-background.svg")
+    # Check the whole cohort before changing any mode. A custom symlink must
+    # not redirect this repair onto a private file or directory.
+    for path in "$THEME_DIR" "$THEME_DIR/assets" "${shipped_files[@]}"; do
+        if [[ -L "$path" || ! -e "$path" ]]; then
+            log_err "Cannot repair permissions through a missing or symlinked theme asset"
+            return 1
+        fi
+    done
     for path in "$THEME_DIR" "$THEME_DIR/assets"; do
         if [[ -O "$path" ]]; then chmod 0755 "$path"; else elevate chmod 0755 "$path"; fi
     done
-    while IFS= read -r -d '' source_file; do
-        path="$THEME_DIR/$(basename "$source_file")"
+    for path in "${shipped_files[@]}"; do
         if [[ -O "$path" ]]; then chmod 0644 "$path"; else elevate chmod 0644 "$path"; fi
-    done < <(find "$THEME_SRC" -maxdepth 1 -type f \( -name '*.qml' -o -name '*.js' -o -name '*.conf' -o -name 'metadata.desktop' \) -print0)
-    path="$THEME_DIR/assets/default-background.svg"
-    if [[ -O "$path" ]]; then chmod 0644 "$path"; else elevate chmod 0644 "$path"; fi
+    done
 }
 
 # Intelligent privilege escalation: sudo for terminal, pkexec for graphical/IPC mode
