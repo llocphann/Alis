@@ -629,6 +629,9 @@ Singleton {
                     property bool journalRemindersEnabled: false
                     property bool reminderNotificationsEnabled: false
                     property bool memoryEnabled: false
+                    property bool bondEnabled: false
+                    property string dialogueTone: "gentle"
+                    property string familiarity: "neutral"
                     property bool obsidianEnabled: false
                     property string referenceVault: ""
                 }

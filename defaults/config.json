@@ -2186,6 +2186,9 @@
             "journalRemindersEnabled": false,
             "reminderNotificationsEnabled": false,
             "memoryEnabled": false,
+            "bondEnabled": false,
+            "dialogueTone": "gentle",
+            "familiarity": "neutral",
             "obsidianEnabled": false,
             "referenceVault": ""
         },
