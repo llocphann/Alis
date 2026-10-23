@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Real desktop/picker apply, owned color helper, and presented wallpaper pixels."""
-import json, subprocess, tempfile
+import json, os, subprocess, tempfile
 from pathlib import Path
 from PIL import Image, ImageChops
 from native_test_session import private_wayland, run_qs
@@ -16,8 +16,21 @@ with tempfile.TemporaryDirectory(prefix="hadalis-background-apply-") as name:
                         str(folder / "wallpapers" / (name + ".png"))], check=True)
     helper = folder / "scripts/colors/switchwall.sh"
     helper.parent.mkdir(parents=True)
-    helper.write_text("#!/usr/bin/env python3\nimport json,os,sys\nwith open(os.environ['APPLY_LOG'],'a') as f:f.write(json.dumps(sys.argv[1:])+'\\n')\n")
+    # Production invokes this .sh through /usr/bin/bash, not its shebang.
+    helper.write_text("""#!/usr/bin/bash
+exec /usr/bin/python3 - "$@" <<'PY'
+import json,os,sys
+with open(os.environ['APPLY_LOG'],'a') as f:f.write(json.dumps(sys.argv[1:])+'\\n')
+PY
+""")
     helper.chmod(0o700)
+    # A Python mock accidentally interpreted as shell must fail locally; its
+    # `import` statement must never become an ImageMagick screen capture.
+    guard = folder / "guard-bin"
+    guard.mkdir()
+    denied_import = folder / "denied-import.log"
+    (guard / "import").write_text("#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$FIXTURE_IMPORT_LOG\"\nexit 125\n")
+    (guard / "import").chmod(0o700)
     (folder / "shell.qml").write_text(r'''
 import QtQuick
 import QtTest
@@ -155,7 +168,8 @@ ShellRoot {
         data["background"]["widgets"] = {"clock": {"enable": False}}
         data.setdefault("wallpapers", {})["directory"] = str(folder / "wallpapers")
         env.update(WALLPAPER_FIXTURES=str(folder / "wallpapers"), APPLY_LOG=str(folder / "apply.log"),
-                   CAPTURE_DIR=str(folder), QSG_RHI_BACKEND="opengl")
+                   CAPTURE_DIR=str(folder), QSG_RHI_BACKEND="opengl",
+                   PATH=str(guard)+os.pathsep+os.environ["PATH"], FIXTURE_IMPORT_LOG=str(denied_import))
         for backend in ["opengl", "software"]:
             (config / "config.json").write_text(json.dumps(data))
             (folder / "apply.log").unlink(missing_ok=True)
@@ -165,6 +179,7 @@ ShellRoot {
                 env.pop("QT_QUICK_BACKEND", None)
             result = run_qs(folder, env, timeout=40)
             log = result.stdout
+            assert not denied_import.exists(), "fixture helper was interpreted as shell Python"
             if result.returncode or "WALLPAPER_BACKGROUND_PASS" not in log or any(word in log for word in [
                     "WALLPAPER_BACKGROUND_FAIL", "ReferenceError:", "TypeError:", "Binding loop", "Failed to load configuration"]):
                 print(backend, log); raise SystemExit(1)
