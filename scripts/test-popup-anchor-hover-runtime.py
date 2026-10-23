@@ -32,6 +32,8 @@ ShellRoot {
  property int genericCloses: 0
  property bool barRevealed: true
  property string edge: "bottom"
+ property bool joinCorner: false
+ property bool trailingCorner: false
  property var trace: []
  function snapshot(stage, point) {
   const c=host.record.content
@@ -61,8 +63,10 @@ ShellRoot {
    id: scene; anchors.fill:parent
    Item {
     id: anchor
-    x: root.edge==="left" ? 8 : root.edge==="right" ? scene.width-40 : 160
-    y: root.edge==="top" ? 8 : root.edge==="bottom" ? scene.height-40 : 160
+    x: root.edge==="left" ? 8 : root.edge==="right" ? scene.width-40
+      : root.joinCorner ? (root.trailingCorner ? scene.width-144 : 64) : 160
+    y: root.edge==="top" ? 8 : root.edge==="bottom" ? scene.height-40
+      : root.joinCorner ? (root.trailingCorner ? scene.height-144 : 64) : 160
     width: root.edge==="left" || root.edge==="right" ? 32 : 80
     height: root.edge==="left" || root.edge==="right" ? 80 : 32
     property var liquidController: controller
@@ -76,12 +80,16 @@ ShellRoot {
     readonly property var popupEntry: controller.popupSlots[0]
     readonly property var hostedPopup: popupEntry?.popup ?? null
     identity:"styledPopup0"; controller:controller; edge:root.edge
+    joinedEdge: !root.joinCorner ? "" : Geometry.horizontal(root.edge)
+      ? (root.trailingCorner ? "right" : "left") : (root.trailingCorner ? "bottom" : "top")
     includeEdgeConnection:true
     open:hostedPopup?.presentationActive ?? false
     externalProgress:hostedPopup?.revealProgress ?? 0
     embeddedItem:hostedPopup?.contentItem ?? null
     padding:14; span:root.edge==="left" || root.edge==="right" ? 128 : 208
-    depth:root.edge==="left" || root.edge==="right" ? 208 : 128; along:136
+    depth:root.edge==="left" || root.edge==="right" ? 208 : 128
+    along: !root.joinCorner ? 136 : root.trailingCorner
+      ? (Geometry.horizontal(root.edge) ? scene.width : scene.height)-host.span-32 : 32
     // Production placement clearance includes module depth; painting does not.
     edgeInsets:({left:root.edge==="left" ? 40 : 8,right:root.edge==="right" ? 40 : 8,
      top:root.edge==="top" ? 40 : 8,bottom:root.edge==="bottom" ? 40 : 8})
@@ -229,7 +237,49 @@ ShellRoot {
     check(!GlobalStates.barPopupHoverHeld(window.screen.name),"final exit retained an auto-hide Bar lease")
     check(host.connectionRects.length===0 && host.connectionRegions.length===0,"closed popup retained shoulder mask allocations")
    }
-   root.edge="bottom";render();outside()
+   // The adjacent weld is painted outside the original popup footprint.
+   // It must receive native input and retain body hover on both corner ends.
+   for(const edge of ["top","right","bottom","left"]) for(const trailing of [false,true]) {
+    root.edge=edge;root.trailingCorner=trailing;root.joinCorner=true;render()
+    mouseMove(scene,scene.width/2,scene.height/2);wait(160);render()
+    mouseMove(anchor,anchor.width/2,anchor.height/2);wait(100);render()
+    check(popup.requestedVisible,"joined source did not open on "+edge)
+    check(host.record.joinedEdge===host.joinedEdge,"configured adjacent weld was not painted")
+    const c=host.record.content,adjacent=host.joinedEdge
+    const body=[c.x+c.width/2,c.y+c.height/2]
+    const weld=adjacent==="left" ? [4,body[1]] : adjacent==="right" ? [scene.width-4,body[1]]
+      : adjacent==="top" ? [body[0],4] : [body[0],scene.height-4]
+    function owned(point) {
+     return !controller.sourceInputRegions.some(r=>Geometry.rectContains(r,point[0],point[1]))
+      && host.hoverParent.contains(Qt.point(point[0]-host.hoverParent.x,point[1]-host.hoverParent.y))
+    }
+    function nativeContains(point) {
+     return host.nativeInputRegion.regions.some(region=>region.regions.length>0
+      ? region.regions.some(r=>Geometry.rectContains(r,point[0],point[1]))
+      : Geometry.rectContains(region,point[0],point[1]))
+    }
+    check(!Geometry.rectContains(host.rawPresentationRecord.surface,weld[0],weld[1]),"weld probe already belongs to unjoined body")
+    check(Geometry.distance(weld[0],weld[1],scene.width,scene.height,controller.edgeInsets,
+      AbyssStyle.perimeterRadius,[host.record],AbyssStyle.connectionDepth,AbyssStyle.neckRadius)<0,"adjacent probe is not painted")
+    const shoulder=host.connectionRects.find(r=>r.width>0 && r.height>0
+      && !Geometry.rectContains(host.inputBounds,r.x+r.width/2,r.y+r.height/2)
+      && (Geometry.horizontal(edge) ? r.height>1 : r.width>1)
+      && owned([r.x+r.width/2,r.y+r.height/2]))
+    check(shoulder!==undefined,"adjacent shoulder probe is missing on "+edge)
+    for(const point of [body,weld,[shoulder.x+shoulder.width/2,shoulder.y+shoulder.height/2],body]) {
+     check(owned(point) && nativeContains(point),"joined paint is outside native/hover mask on "+edge)
+     mouseMove(scene,point[0],point[1]);wait(220);render()
+     check(popup.requestedVisible && popup._contentHovered,"adjacent weld/shoulder dismissed popup on "+edge)
+    }
+    const source=[anchor.x+anchor.width/2,anchor.y+anchor.height/2]
+    check(!owned(source),"joined popup stole source-module input")
+    mouseMove(scene,source[0],source[1]);wait(120);render()
+    check(popup.requestedVisible,"reverse joined handoff dismissed popup")
+    mouseMove(scene,scene.width/2,scene.height/2);wait(160);render()
+    check(!popup.presentationActive && host.connectionRects.length===0
+      && host.connectionRegions.length===0,"joined close retained input or a lease")
+   }
+   root.joinCorner=false;root.edge="bottom";render();outside()
    mouseMove(anchor,40,16);wait(80);render()
    popup.dismissPresentation();wait(40)
    check(!popup.requestedVisible,"explicit dismissal failed")
@@ -338,7 +388,7 @@ ShellRoot {
         (config / "config.json").write_text(json.dumps(data))
         # Every grab retains its 2-second deadline; sustained body/padding dwell
         # must outlast actual hide timers even when nested Niri is unfocused.
-        result = run_qs(folder, env, timeout=190)
+        result = run_qs(folder, env, timeout=230)
         if os.environ.get("ALIS_POPUP_HOVER_LOG"):
             Path(os.environ["ALIS_POPUP_HOVER_LOG"]).write_text(result.stdout)
         if result.returncode or "POPUP_ANCHOR_HOVER_PASS" not in result.stdout or any(
