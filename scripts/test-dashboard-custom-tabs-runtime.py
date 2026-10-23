@@ -64,7 +64,10 @@ Window {
   function run(){try{
    tryCompare(Config,"ready",true,6000)
    if(Quickshell.env("DASH_F01_ACTION")==="restart"){
-    tryCompare(dashboard,"currentPageId","custom-2",3000)
+    const kept=Array.from(Config.options.dashboard.customTabs).find(
+     tab=>tab.name==="Keep tab without pending edit")
+    check(!!kept,"saved tab definition missing after restart")
+    tryCompare(dashboard,"currentPageId",kept.id,3000)
     tryVerify(()=>dashboard.canvasController!==null,3000)
     check(dashboard.customTabs.length===2
      && dashboard.customTabs[0].name==="Keep tab without pending edit"

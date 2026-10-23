@@ -27,6 +27,7 @@ Item {
     property bool navigationAllowed: true
     property bool reorderAllowed: editMode
     property string dragPageId: ""
+    property string dragPageOrder: ""
     property bool draggingPage: false
     property int dragTarget: -1
     property point dragPress: Qt.point(0,0)
@@ -59,7 +60,7 @@ Item {
     }
     function cancelPageDrag(): bool {
         const active=dragPageId.length>0
-        dragPageId="";draggingPage=false;dragTarget=-1
+        dragPageId="";dragPageOrder="";draggingPage=false;dragTarget=-1
         return active
     }
     function updatePageDrag(position): void {
@@ -85,7 +86,12 @@ Item {
         if(accept)moveFocusedPage(id,target)
     }
     onReorderAllowedChanged: if(!reorderAllowed)cancelPageDrag()
-    onPageIdsChanged: cancelPageDrag()
+    onPageIdsChanged: {
+        // Config may republish an equal list during a live pointer gesture.
+        // Cancel only when its identities/order actually changed.
+        if (dragPageId.length && JSON.stringify(pageIds)!==dragPageOrder)
+            cancelPageDrag()
+    }
     Keys.onEscapePressed: event => {event.accepted=root.cancelPageDrag()}
     WheelHandler {
         target: null
@@ -252,6 +258,7 @@ Item {
                     onPressed: mouse => {
                         pageButton.forceActiveFocus()
                         const point=mapToItem(root,mouse.x,mouse.y)
+                        root.dragPageOrder=JSON.stringify(root.pageIds)
                         root.dragPageId=root.pageIds[pageButton.index]
                         root.dragPress=point;root.dragPointer=point;root.dragTarget=pageButton.index
                     }
