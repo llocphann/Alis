@@ -1,0 +1,67 @@
+{
+  "scope": "Native Quickshell/QtTest on private Niri, not physical wl_pointer or installed Owner acceptance.",
+  "test": "scripts/test-popup-anchor-hover-runtime.py",
+  "source_sha": "8cf4456ca20b2522d09f2e3cf29f0750ea81841b",
+  "status": "PASS",
+  "harness_exit": 0,
+  "native_exit": 0,
+  "native_exit_basis": "run_qs returncode must be zero for harness PASS; raw private native log retained",
+  "elapsed_seconds": 106.4,
+  "owned_remaining": [],
+  "coverage": [
+    "Original Join OFF four-edge sustained body/padding/primary shoulder tests",
+    "Join ON all four primary Edges and both near-corner ends",
+    "Native and hover containment of adjacent weld and 1px shoulder",
+    "Reverse handoff, source-module priority and closed-region cleanup",
+    "Original generic popup idle tests and editor focus contract"
+  ],
+  "earlier_diagnostics": [
+    {
+      "source_sha": "39020b8c1b47841d1e2c02cb8b9a2042dea99198",
+      "status": "FAIL",
+      "harness_exit": 1,
+      "native_exit": 0,
+      "reason": "Fractional center target in a 1px shoulder before integer QtTest movement; popup closed",
+      "owned_remaining": []
+    },
+    {
+      "source_sha": "39020b8c1b47841d1e2c02cb8b9a2042dea99198",
+      "status": "FAIL",
+      "harness_exit": 1,
+      "native_exit": 0,
+      "observed_failure": {
+        "point": [
+          897.5,
+          177
+        ],
+        "edge": "top",
+        "adjacent": "right",
+        "popup_closed": true
+      },
+      "owned_remaining": []
+    }
+  ],
+  "fixture_correction": "8cf4456ca floors the new shoulder target before both containment assertions and integer QtTest mouseMove. No popup production code changed between the failed fixture39020 and passing fixture8cf. Earlier FAIL records are retained; not whole-suite evidence.",
+  "production_popup_blobs_equal_between_fixture_runs": true,
+  "geometry_oracle": {
+    "source_sha": "42c19e958",
+    "harness_exit": 0,
+    "joined_cases": 64,
+    "added_painted_pixel_centers": 276480,
+    "scales": [
+      1,
+      1.25,
+      1.5,
+      2
+    ],
+    "reveal_fractions": [
+      0.2,
+      1
+    ]
+  },
+  "remaining_gates": [
+    "Broader production-module wl_pointer matrix",
+    "Full exact maintainer validation",
+    "Installed desktop, multi-output and Owner acceptance"
+  ]
+}
