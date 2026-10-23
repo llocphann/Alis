@@ -618,6 +618,16 @@ Singleton {
                     property string model: ""
                     property string thinkingEffort: "off"
                     property string proactive: "occasional"
+                    property bool proactiveEnabled: false
+                    property int proactiveDailyCap: 6
+                    property int proactiveEventCap: 3
+                    property bool proactiveQuietEnabled: true
+                    property int proactiveQuietStart: 1320
+                    property int proactiveQuietEnd: 480
+                    property bool todoRemindersEnabled: false
+                    property bool calendarRemindersEnabled: false
+                    property bool journalRemindersEnabled: false
+                    property bool reminderNotificationsEnabled: false
                     property bool obsidianEnabled: false
                     property string referenceVault: ""
                 }

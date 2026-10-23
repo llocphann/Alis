@@ -104,6 +104,19 @@ Singleton {
                 property string energy: ""
             }
 
+            // No task titles or note content. Updated only after a consented offer.
+            property JsonObject wullProactive: JsonObject {
+                property string day: ""
+                property int dailyCount: 0
+                property int reminder: 0
+                property int checkin: 0
+                property int playful: 0
+                property int unanswered: 0
+                property int dismissals: 0
+                property double lastNudgeMs: 0
+                property list<string> reminderKeys: []
+            }
+
             property JsonObject cheatsheet: JsonObject {
                 property int tabIndex: 0
             }
