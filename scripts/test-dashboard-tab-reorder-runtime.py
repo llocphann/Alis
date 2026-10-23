@@ -10,12 +10,18 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest
 import Quickshell
+import Quickshell.Io
 import qs
 import qs.modules.common
 import qs.modules.dashboard
 Window {
  id:root;visible:true;width:1100;height:720;color:"#111820"
  property int captures:0
+ FileView {
+  id:disk;path:Config.filePath;watchChanges:true
+  property var snapshot:null
+  onLoaded:{try{snapshot=JSON.parse(text())}catch(error){snapshot=null}}
+ }
  Component.onCompleted:Quickshell.watchFiles=false
  QtObject {
   id:fakeMusic
@@ -61,8 +67,20 @@ Window {
    mousePress(dot(0),12,16);mouseMove(dot(0),13,16,20)
    check(!header.draggingPage,"sub-threshold press began a drag")
    mouseRelease(dot(0),13,16);same(dashboard.pageIds,["dashboard","music","weeklyPlanner"],"small click changed order")
+   const beforeChangedOrder=Array.from(canvas.effectivePageOrder)
+   const changedSource=dot(0),changedTarget=dot(2)
+   const changedPoint=changedTarget.mapToItem(changedSource,12,16)
+   mousePress(changedSource,12,16);mouseMove(changedSource,changedPoint.x,changedPoint.y,20)
+   check(header.draggingPage,"changed-order control never began its drag")
+   canvas._draftPageOrder=["weeklyPlanner","music","dashboard"]
+   check(!header.draggingPage,"actual changed order retained a stale drag")
+   mouseRelease(changedSource,changedPoint.x,changedPoint.y)
+   canvas._draftPageOrder=beforeChangedOrder
    drag(2,0,()=>{
     check(header.draggingPage && header.dragTarget===0,"real pointer failed drag threshold/target")
+    canvas._draftPageOrder=Array.from(canvas.effectivePageOrder)
+    check(header.draggingPage && header.dragPageId==="weeklyPlanner",
+     "equal page-order republish cancelled a live pointer drag")
     check(findChild(dashboard,"dashboardTabDragGhost").visible && findChild(dashboard,"dashboardTabInsertion").visible,"drag feedback absent")
     same(Array.from(Config.options.dashboard.pageOrder),saved,"pointer preview wrote Config")
     same(dashboard.pageIds,["dashboard","music","weeklyPlanner"],"preview reordered before drop")
@@ -131,7 +149,12 @@ Window {
    Config.setNestedValue("dashboard.music.enable",false)
    same(Array.from(Config.options.dashboard.pageOrder),["weeklyPlanner","future","dashboard","music"],"disable Music erased persisted order")
    Config.setNestedValue("dashboard.music.enable",true)
-   tryVerify(()=>!Config._writeInFlight && Config._rawWriteView===null,4000)
+   tryVerify(()=>{
+    disk.reload()
+    const saved=disk.snapshot?.dashboard
+    return JSON.stringify(saved?.pageOrder)===JSON.stringify(["weeklyPlanner","future","dashboard","music"])
+     && saved?.pageOrderVersion===1 && saved?.music?.enable===true
+   },5000)
    console.info("DASHBOARD_TAB_REORDER_NATIVE_PASS",checks,root.captures)
   }catch(error){console.error("DASHBOARD_TAB_REORDER_NATIVE_FAIL",error.message,error.stack)}Qt.quit()}
  }
