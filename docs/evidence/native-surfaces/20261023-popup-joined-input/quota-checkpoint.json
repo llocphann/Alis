@@ -1,0 +1,63 @@
+{
+  "kind": "quota_checkpoint",
+  "primary_used_percent_at_stop": 97,
+  "weekly_used_percent": 47,
+  "resetsAt": 1792770857,
+  "resume_at": 1792770917,
+  "current_source_sha": "6bc7637ca397d0d4186fd0d0215a86cded25e753",
+  "tested_shared_host_source_sha": "8cf4456ca20b2522d09f2e3cf29f0750ea81841b",
+  "matrix_receipt": {
+    "source_sha": "8cf4456ca20b2522d09f2e3cf29f0750ea81841b",
+    "argv": [
+      "bwrap",
+      "--bind",
+      "/",
+      "/",
+      "--dev-bind",
+      "/dev",
+      "/dev",
+      "--proc",
+      "/proc",
+      "--tmpfs",
+      "/tmp",
+      "--die-with-parent",
+      "--",
+      "python3",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023-after-reset/joined-family-matrix-driver.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 612.7,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "a7446ed14808a6ca05c95109f9203c8f687ab056d6b2c7b949ee632fff87b5d3"
+  },
+  "matrix_counts": {
+    "PASS": 55,
+    "FAIL": 1
+  },
+  "remaining_owned": [],
+  "generic_source_join_candidate": {
+    "commit": "6bc7637ca",
+    "status": "NATIVE_UNRUN",
+    "static_contract_exit": 0,
+    "source_bridge_exit": 0,
+    "prepared_private_manifest": "generic-source-comparison-manifest.json",
+    "note": "Do not claim native PASS for this candidate. Frozen before8cf/after6bc comparison is prepared but has never been launched."
+  },
+  "full_maintainer_at_current_source": "NOT_RUN",
+  "next": [
+    "Diagnose scale1 Resources Top-left reverse-source failure from exact8cf, keeping full frozen point trace",
+    "Run prepared generic source join comparison before accepting6bc; no duplicate UNKNOWN/running job",
+    "Exact committed full maintainer validation with short TMPDIR and bounded supervisor",
+    "Complete Popup/Screen Edge Join ON/OFF scope72/59 then remaining ABYSS41,100,58,57,83,59,56 then strict lossless OPT42"
+  ],
+  "constraints": [
+    "74 deferred by Owner; do not resume tests",
+    "No desktop cutover or audio/vault/private clipboard changes",
+    "Retired product Automation103/104 never resume",
+    "Preserve concurrent commits and native/Cargo.lock plus root json/subprocess/time"
+  ],
+  "durable_private_base": "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023-after-reset"
+}

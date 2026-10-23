@@ -1,0 +1,516 @@
+{
+  "source_sha": "8cf4456ca20b2522d09f2e3cf29f0750ea81841b",
+  "scope": "Production module Popup actual wl_pointer on private Niri; child focus held and restored conditionally. No installed/physical/multi-output or performance acceptance.",
+  "status": "FAIL",
+  "harness_exit": 1,
+  "stop_reason": null,
+  "elapsed_seconds": 612.7,
+  "owned_remaining": [],
+  "cohorts": [
+    {
+      "cohort": "joined-families-1.5",
+      "harness_exit": 0,
+      "native_exit": 0,
+      "elapsed_seconds": 348.1,
+      "case_statuses": [
+        {
+          "kind": "clock",
+          "edge": "top",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "top",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "right",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "right",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "bottom",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "bottom",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "left",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "left",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "top",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "top",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "right",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "right",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "bottom",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "bottom",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "left",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "left",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "top",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "top",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "right",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "right",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "bottom",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "bottom",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "left",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "left",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "top",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "top",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "right",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "right",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "bottom",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "bottom",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "left",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "left",
+          "position": 0.94,
+          "status": "PASS"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "cohort": "off-control-1.5",
+      "harness_exit": 0,
+      "native_exit": 0,
+      "elapsed_seconds": 145.4,
+      "case_statuses": [
+        {
+          "kind": "clock",
+          "edge": "top",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "top",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "right",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "right",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "bottom",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "bottom",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "left",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "left",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "top",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "top",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "right",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "right",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "bottom",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "bottom",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "left",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "left",
+          "position": 0.94,
+          "status": "PASS"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "cohort": "joined-resources-1",
+      "harness_exit": 1,
+      "native_exit": 0,
+      "elapsed_seconds": 118.9,
+      "case_statuses": [
+        {
+          "kind": "resources",
+          "edge": "top",
+          "position": 0.06,
+          "status": "FAIL"
+        },
+        {
+          "kind": "resources",
+          "edge": "top",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "right",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "right",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "bottom",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "bottom",
+          "position": 0.94,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "left",
+          "position": 0.06,
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "left",
+          "position": 0.94,
+          "status": "PASS"
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "failed_cases": [
+    {
+      "kind": "resources",
+      "edge": "top",
+      "scale": 1.0,
+      "position": 0.06,
+      "joinCorner": true,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            115.0,
+            44.0
+          ],
+          "actual_point": {
+            "x": 115,
+            "y": 44
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            199.0,
+            118.0
+          ],
+          "actual_point": {
+            "x": 199,
+            "y": 118
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "adjacent-weld",
+          "point": [
+            18,
+            118
+          ],
+          "actual_point": {
+            "x": 18,
+            "y": 118
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body-return",
+          "point": [
+            199.0,
+            118.0
+          ],
+          "actual_point": {
+            "x": 199,
+            "y": 118
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            115.0,
+            24.0
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            850.0,
+            986
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 115,
+        "y": 24
+      },
+      "source_point_matches": true,
+      "weld": {
+        "point": {
+          "x": 18,
+          "y": 118
+        },
+        "expectedAdjacent": "left",
+        "joinedEdge": "left",
+        "appliedJoinedEdge": "left",
+        "distance": -68,
+        "nativeContains": true,
+        "hoverContains": true,
+        "sourceOwns": false,
+        "rawSurface": {
+          "x": 30,
+          "y": -50,
+          "width": 338,
+          "height": 238
+        },
+        "joinedSurface": {
+          "x": -50,
+          "y": -50,
+          "width": 418,
+          "height": 238
+        },
+        "inputBounds": {
+          "x": 0,
+          "y": 48,
+          "width": 368,
+          "height": 140,
+          "left": 0,
+          "right": 368,
+          "top": 48,
+          "bottom": 188
+        }
+      },
+      "status": "FAIL"
+    }
+  ],
+  "counts": {
+    "PASS": 55,
+    "FAIL": 1
+  },
+  "note": "The matrix settled FAIL with native exits0 before quota cleanup; it was not STOPPED or a whole PASS. Scale1 Top-left Resources held its weld but dismissed on reverse return to source; cause unclassified."
+}
