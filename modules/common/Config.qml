@@ -628,6 +628,7 @@ Singleton {
                     property bool calendarRemindersEnabled: false
                     property bool journalRemindersEnabled: false
                     property bool reminderNotificationsEnabled: false
+                    property bool memoryEnabled: false
                     property bool obsidianEnabled: false
                     property string referenceVault: ""
                 }

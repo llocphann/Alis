@@ -2185,6 +2185,7 @@
             "calendarRemindersEnabled": false,
             "journalRemindersEnabled": false,
             "reminderNotificationsEnabled": false,
+            "memoryEnabled": false,
             "obsidianEnabled": false,
             "referenceVault": ""
         },
