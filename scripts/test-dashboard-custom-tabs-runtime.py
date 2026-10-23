@@ -15,6 +15,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtTest
 import Quickshell
+import Quickshell.Io
 import qs
 import qs.modules.common
 import qs.modules.dashboard
@@ -50,6 +51,11 @@ Window {
   anchors.horizontalCenter:parent.horizontalCenter
   z:300
  }
+ FileView {
+  id:disk;path:Config.filePath;watchChanges:true
+  property var snapshot:null
+  onLoaded:{try{snapshot=JSON.parse(text())}catch(error){snapshot=null}}
+ }
  TestCase {
   id:test;when:false;optional:true
   property int checks:0
@@ -57,6 +63,23 @@ Window {
   function layouts(){return Array.from(Config.options.dashboard.customTabLayouts)}
   function run(){try{
    tryCompare(Config,"ready",true,6000)
+   if(Quickshell.env("DASH_F01_ACTION")==="restart"){
+    tryCompare(dashboard,"currentPageId","custom-2",3000)
+    tryVerify(()=>dashboard.canvasController!==null,3000)
+    check(dashboard.customTabs.length===2
+     && dashboard.customTabs[0].name==="Keep tab without pending edit"
+     && dashboard.customTabs[1].name==="Keep explicit selection",
+     "custom definitions/order did not survive actual restart")
+    check(dashboard.canvasController.visibleIds.includes("clock"),
+     "saved custom widget did not survive actual restart")
+    check(Config.options.dashboard.defaultTabId==="dashboard"
+     && Config.options.dashboard.inactiveMinutes===5,
+     "restart changed opt-in default or inactivity settings")
+    check(!dashboard.editMode && !GlobalStates.dashboardOpen,
+     "restart restored an unfinished editor or opened global Dashboard")
+    console.info("DASH_F01_RESTART_PASS",checks)
+    Qt.quit();return
+   }
    Config.setNestedValues({
     "performance.reduceAnimations":true,
     "dashboard.music.enable":false
@@ -182,6 +205,9 @@ Window {
    tryVerify(()=>dashboard.canvasController!==null,2500)
    check(!dashboard.canvasController.editMode,"reopen replayed cancelled auto-edit")
    dashboard.canvasController.beginEditMode()
+   dashboard.canvasController.setWidgetVisible("clock",true)
+   dashboard.canvasController.commitEditMode()
+   dashboard.canvasController.beginEditMode()
    dashboard.openCustomTabDialog("create","")
    dashboard.setCustomTabName("Keep explicit selection")
    dashboard.acceptCustomTabDialog()
@@ -192,6 +218,16 @@ Window {
     "pending auto-edit overrode explicit selection")
    check(JSON.stringify(Array.from(Config.options.dashboard.canvas.widgets))===primary,
     "cancelled auto-edit changed built-in layout")
+   dashboard.selectPage(hiddenTab)
+   tryVerify(()=>dashboard.canvasController!==null,2500)
+   tryVerify(()=>{
+    disk.reload()
+    const saved=disk.snapshot?.dashboard
+    return saved?.lastPageId===hiddenTab && saved?.customTabs?.length===2
+     && saved.customTabLayouts?.some(layout=>layout.id===hiddenTab
+      && layout.widgets.some(widget=>widget.id==="clock"&&widget.visible===true))
+   },5000)
+   check(!dashboard.canvasController.editMode,"selecting saved tab reopened an editor")
    console.info("DASH_F01_NATIVE_PASS",checks)
   }catch(e){console.error("DASH_F01_NATIVE_FAIL",e.message,e.stack)}Qt.quit()}
  }
@@ -214,13 +250,24 @@ with tempfile.TemporaryDirectory(prefix="alis-dash-f01-") as tmp:
         sample["panelFamily"] = "abyss"
         file.write_text(json.dumps(sample))
         result = run_qs(folder, env, timeout=35)
+        failures = ("DASH_F01_NATIVE_FAIL", "ReferenceError:", "TypeError:",
+                    "Binding loop", "Unable to assign",
+                    "Cannot assign to non-existent property", "Failed to load configuration")
+        if result.returncode or "DASH_F01_NATIVE_PASS" not in result.stdout \
+                or any(phrase in result.stdout for phrase in failures):
+            print(result.stdout)
+            raise SystemExit(1)
+        stored = json.loads(file.read_text())
+        assert stored["dashboard"]["canvas"]["widgets"] == sample["dashboard"]["canvas"]["widgets"], \
+            "private disk readback changed built-in widget data"
+        restarted = run_qs(folder, dict(env, DASH_F01_ACTION="restart"), timeout=20)
     failures = ("DASH_F01_NATIVE_FAIL", "ReferenceError:", "TypeError:",
                 "Binding loop", "Unable to assign",
                 "Cannot assign to non-existent property", "Failed to load configuration")
-    if result.returncode or "DASH_F01_NATIVE_PASS" not in result.stdout \
-            or any(phrase in result.stdout for phrase in failures):
-        print(result.stdout)
+    if restarted.returncode or "DASH_F01_RESTART_PASS" not in restarted.stdout \
+            or any(phrase in restarted.stdout for phrase in failures):
+        print(restarted.stdout)
         raise SystemExit(1)
-    for line in result.stdout.splitlines():
-        if "DASH_F01_NATIVE_PASS" in line:
+    for line in (result.stdout+restarted.stdout).splitlines():
+        if "DASH_F01_NATIVE_PASS" in line or "DASH_F01_RESTART_PASS" in line:
             print(line)
