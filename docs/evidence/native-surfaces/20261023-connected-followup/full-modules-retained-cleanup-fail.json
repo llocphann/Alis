@@ -1,0 +1,19 @@
+{
+  "source_sha": "82b5843441f5afc436e46207d64d24db0327aa7f",
+  "argv": [
+    "python3",
+    "scripts/test-abyss-full-size-modules-runtime.py"
+  ],
+  "actual_exit": 0,
+  "status": "FAIL",
+  "stop_reason": null,
+  "elapsed_seconds": 15.9,
+  "owned_at_normal_exit": [
+    13933,
+    13934
+  ],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "45ef9a7f51de802945602d8215b413aa90bc088e184071feae0d4fbd9e5398df",
+  "semantic_native_marker": "ABYSS_FULL_MODULE_NATIVE_PASS 712 checks 122 frames 15kinds",
+  "scope": "Command actualexit0, supervisor FAIL because2owned descendants remained at normal exit. Final cleanup empty; no overall PASS or identity attribution for these already-reaped children."
+}

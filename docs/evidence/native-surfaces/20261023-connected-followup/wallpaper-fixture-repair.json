@@ -1,0 +1,53 @@
+{
+  "scope": "Fixture repairs only; real wallpaper/color generation, owner wallpaper and old artifacts never changed or read. Production dispatch is /usr/bin/bash; old fake helper was Python. Guarded old helper denies bare import command locally, preventing ImageMagick execution. All existing pixel and exact two-helper-call oracles retained.",
+  "before": {
+    "source_sha": "51cfab26c5e7235ecc509cf8f01c60c0005986e9",
+    "cohort": {
+      "source_sha": "51cfab26c5e7235ecc509cf8f01c60c0005986e9",
+      "argv": [
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/wallpaper-helper-pair.py"
+      ],
+      "actual_exit": 1,
+      "status": "FAIL",
+      "stop_reason": null,
+      "elapsed_seconds": 20.8,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "4f0f31a65f727e9b966b160c18cfee4754e097e996d0a203f8239c2a0c57970e"
+    },
+    "subcommands": [
+      {
+        "name": "before-guarded",
+        "actual_exit": 1
+      },
+      {
+        "name": "after-committed",
+        "actual_exit": 1
+      }
+    ],
+    "guarded_old_helper_native_exit": 0,
+    "guarded_old_helper_denied_arguments": "json,os,sys",
+    "initial_fixed_helper_failure": "exact2-call assertion saw only c; fixture had advanced to a later selection before b deferred theme handoff. This FAIL is retained."
+  },
+  "after": {
+    "source_sha": "697f8f63148fe0180b9c81a4ec30044ce94cede6",
+    "argv": [
+      "python3",
+      "scripts/test-wallpaper-background-apply-runtime.py"
+    ],
+    "actual_exit": 0,
+    "status": "PASS",
+    "stop_reason": null,
+    "elapsed_seconds": 25.0,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "fc77735f5af37db8aedd3ae79bfffee9a2f1307bc9f5546638b8c9efffc1e2c4"
+  },
+  "backend_results": [
+    "opengl: PASS original pixel/apply/cancel/no-duplicate assertions",
+    "software: PASS original pixel/apply/cancel/no-duplicate assertions"
+  ],
+  "additional_barrier": "Await pendingLiquidThemePath empty for b before starting later preview/apply; this preserves sequential2calls rather than weakening the expected count.",
+  "prior_canonical_source_clean_failure": "Old d001 untracked json,os,sys remains FAIL. This safe reproduction establishes the wrong-interpreter import attempt; no old artifact contents inspected and no whole old canonical PASS inferred."
+}

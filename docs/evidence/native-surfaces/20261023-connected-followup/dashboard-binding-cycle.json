@@ -1,0 +1,67 @@
+{
+  "scope": "Frozen native Dashboard/Overview reveal fixture; semantic oracles and all16 cases retained, separate from performance, installed or Owner acceptance.",
+  "source_fix": "7355989b6aaddb527b90e3245e00a5601c933274",
+  "before": {
+    "supervisor": {
+      "source_sha": "82b5843441f5afc436e46207d64d24db0327aa7f",
+      "argv": [
+        "python3",
+        "scripts/test-abyss-body-reveal-readiness-runtime.py"
+      ],
+      "actual_exit": 1,
+      "status": "FAIL",
+      "stop_reason": null,
+      "elapsed_seconds": 74.5,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "8ee6d71acd5c2eeac68aeb3b488ec73117dc4223288916015bc4f258806e2e82"
+    },
+    "native": {
+      "source_sha": "82b5843441f5afc436e46207d64d24db0327aa7f",
+      "native_exit": 0,
+      "body_host_sha256": "fe7540c0627cc266d3045c72da74f5b5a8eab5856aaee9c0987a46496cd167bd",
+      "fixture_sha256": "1b4ba26448f8e7a2598d6c0a04280252aa9f86cfcac986f4b6c5b37342c87fc2",
+      "scope": "Private no-grab functional reveal; no performance/owner acceptance"
+    },
+    "marker": "PASS",
+    "checks": 17770,
+    "completed": 16,
+    "error": null,
+    "binding_loop_warnings": {
+      "  WARN scene: QML QQuickItem at @modules/dashboard/DashboardCanvas.qml[1955:36]: Binding loop detected for property \"height\"": 32,
+      "  WARN scene: QML QQuickItem at @modules/dashboard/DashboardCanvas.qml[1955:9]: Binding loop detected for property \"width\"": 32,
+      "  WARN scene: QML DashboardCanvas at @modules/dashboard/DashboardContent.qml[389:17]: Binding loop detected for property \"workspace\":": 96
+    },
+    "native_log_sha256": "8f62bcdb4a90713d4683baafcf65b13819b7e2f3a596e69f499ffbecbdcaa18b"
+  },
+  "after": {
+    "supervisor": {
+      "source_sha": "7355989b6aaddb527b90e3245e00a5601c933274",
+      "argv": [
+        "python3",
+        "scripts/test-abyss-body-reveal-readiness-runtime.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 74.2,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "93c35030f0d70ed9f084c11a1fe3ab9a1127c063cfbab837259636d967dcb13f"
+    },
+    "native": {
+      "source_sha": "7355989b6aaddb527b90e3245e00a5601c933274",
+      "native_exit": 0,
+      "body_host_sha256": "fe7540c0627cc266d3045c72da74f5b5a8eab5856aaee9c0987a46496cd167bd",
+      "fixture_sha256": "1b4ba26448f8e7a2598d6c0a04280252aa9f86cfcac986f4b6c5b37342c87fc2",
+      "scope": "Private no-grab functional reveal; no performance/owner acceptance"
+    },
+    "marker": "PASS",
+    "checks": 17832,
+    "completed": 16,
+    "error": null,
+    "binding_loop_warnings": {},
+    "native_log_sha256": "2c9bda7af5ddb392938acb7d2e31c55a857cf2bf34e7211c667dc6304c44c37c"
+  },
+  "unresolved": "The separate unmodified custom-tabs runtime command failed on Create click readiness at735. It remains FAIL, not assigned to this size-cycle fix without a matched control. Full latest-source validator UNRUN."
+}

@@ -1,0 +1,1170 @@
+{
+  "source_sha": "82b5843441f5afc436e46207d64d24db0327aa7f",
+  "actual_native_exit": 0,
+  "fixture_sha256": "b8b501acea8ff426227c1e2b906607092f7ae1eb577f7967a324ae1f8101bf56",
+  "runtime_changes_from_head": [],
+  "cases": [
+    {
+      "kind": "notesTimers",
+      "edge": "top",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            396.5,
+            27.5
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 27.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            396.54999999999995,
+            166.0
+          ],
+          "actual_point": {
+            "x": 396.89453125,
+            "y": 166
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            396.5,
+            24.0
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 24
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            566.5,
+            636
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 396.84765625,
+        "y": 24
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "notesTimers",
+      "edge": "right",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            1105.5,
+            244.5
+          ],
+          "actual_point": {
+            "x": 1106.47265625,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            907.0,
+            245.0
+          ],
+          "actual_point": {
+            "x": 907.796875,
+            "y": 245
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            1109.0,
+            244.5
+          ],
+          "actual_point": {
+            "x": 1109.9765625,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            64,
+            350.0
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 1109.9765625,
+        "y": 244.5
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "notesTimers",
+      "edge": "bottom",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            396.5,
+            672.5
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 672.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            396.54999999999995,
+            534.0
+          ],
+          "actual_point": {
+            "x": 396.89453125,
+            "y": 534
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            396.5,
+            676.0
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 676
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            566.5,
+            64
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 396.84765625,
+        "y": 676
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "notesTimers",
+      "edge": "left",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            27.5,
+            244.5
+          ],
+          "actual_point": {
+            "x": 27.5234375,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            226.0,
+            245.0
+          ],
+          "actual_point": {
+            "x": 226.19921875,
+            "y": 245
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            24.0,
+            244.5
+          ],
+          "actual_point": {
+            "x": 24.01953125,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            1069,
+            350.0
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 24.01953125,
+        "y": 244.5
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "notificationActivity",
+      "edge": "top",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            396.5,
+            27.5
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 27.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            396.54999999999995,
+            296.0
+          ],
+          "actual_point": {
+            "x": 396.89453125,
+            "y": 296
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            396.5,
+            24.0
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 24
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            566.5,
+            636
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 396.84765625,
+        "y": 24
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "notificationActivity",
+      "edge": "right",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            1105.5,
+            244.5
+          ],
+          "actual_point": {
+            "x": 1106.47265625,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            907.0,
+            310.0
+          ],
+          "actual_point": {
+            "x": 907.796875,
+            "y": 310
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            1109.0,
+            244.5
+          ],
+          "actual_point": {
+            "x": 1109.9765625,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            64,
+            350.0
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 1109.9765625,
+        "y": 244.5
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "notificationActivity",
+      "edge": "bottom",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            396.5,
+            672.5
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 672.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            396.54999999999995,
+            404.0
+          ],
+          "actual_point": {
+            "x": 396.89453125,
+            "y": 404
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            396.5,
+            676.0
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 676
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            566.5,
+            64
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 396.84765625,
+        "y": 676
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "notificationActivity",
+      "edge": "left",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            27.5,
+            244.5
+          ],
+          "actual_point": {
+            "x": 27.5234375,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            226.0,
+            310.0
+          ],
+          "actual_point": {
+            "x": 226.19921875,
+            "y": 310
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            24.0,
+            244.5
+          ],
+          "actual_point": {
+            "x": 24.01953125,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            1069,
+            350.0
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 24.01953125,
+        "y": 244.5
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "media",
+      "edge": "top",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            396.5,
+            44.0
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 44
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            396.54999999999995,
+            139.0
+          ],
+          "actual_point": {
+            "x": 396.89453125,
+            "y": 139
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            396.5,
+            24.0
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 24
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            566.5,
+            636
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 396.84765625,
+        "y": 24
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "media",
+      "edge": "right",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            1089.0,
+            244.5
+          ],
+          "actual_point": {
+            "x": 1089.9609375,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            881.0,
+            245.0
+          ],
+          "actual_point": {
+            "x": 881.77734375,
+            "y": 245
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            1109.0,
+            244.5
+          ],
+          "actual_point": {
+            "x": 1109.9765625,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            64,
+            350.0
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 1109.9765625,
+        "y": 244.5
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "media",
+      "edge": "bottom",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            396.5,
+            656.0
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 656
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            396.54999999999995,
+            561.0
+          ],
+          "actual_point": {
+            "x": 396.89453125,
+            "y": 561
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            396.5,
+            676.0
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 676
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            566.5,
+            64
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 396.84765625,
+        "y": 676
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "media",
+      "edge": "left",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            44.0,
+            244.5
+          ],
+          "actual_point": {
+            "x": 44.03515625,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            252.0,
+            245.0
+          ],
+          "actual_point": {
+            "x": 252.21875,
+            "y": 245
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            24.0,
+            244.5
+          ],
+          "actual_point": {
+            "x": 24.01953125,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            1069,
+            350.0
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 24.01953125,
+        "y": 244.5
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "weather",
+      "edge": "top",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            396.5,
+            44.0
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 44
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            396.54999999999995,
+            212.0
+          ],
+          "actual_point": {
+            "x": 396.89453125,
+            "y": 212
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            396.5,
+            24.0
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 24
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            566.5,
+            636
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 396.84765625,
+        "y": 24
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "weather",
+      "edge": "right",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            1089.0,
+            244.5
+          ],
+          "actual_point": {
+            "x": 1089.9609375,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            876.0,
+            245.0
+          ],
+          "actual_point": {
+            "x": 876.76953125,
+            "y": 245
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            1109.0,
+            244.5
+          ],
+          "actual_point": {
+            "x": 1109.9765625,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            64,
+            350.0
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 1109.9765625,
+        "y": 244.5
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "weather",
+      "edge": "bottom",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            396.5,
+            656.0
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 656
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            396.54999999999995,
+            488.0
+          ],
+          "actual_point": {
+            "x": 396.89453125,
+            "y": 488
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            396.5,
+            676.0
+          ],
+          "actual_point": {
+            "x": 396.84765625,
+            "y": 676
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            566.5,
+            64
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 396.84765625,
+        "y": 676
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    },
+    {
+      "kind": "weather",
+      "edge": "left",
+      "scale": 1.5,
+      "phases": [
+        {
+          "stage": "seam",
+          "point": [
+            44.0,
+            244.5
+          ],
+          "actual_point": {
+            "x": 44.03515625,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "body",
+          "point": [
+            257.0,
+            245.0
+          ],
+          "actual_point": {
+            "x": 257.2265625,
+            "y": 245
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": false,
+          "generic_trigger": false
+        },
+        {
+          "stage": "reverse",
+          "point": [
+            24.0,
+            244.5
+          ],
+          "actual_point": {
+            "x": 24.01953125,
+            "y": 244.5
+          },
+          "point_matches": true,
+          "active": true,
+          "source_hover": true,
+          "generic_trigger": false
+        },
+        {
+          "stage": "leave",
+          "point": [
+            1069,
+            350.0
+          ],
+          "actual_point": null,
+          "point_matches": false,
+          "active": false,
+          "source_hover": false,
+          "generic_trigger": false
+        }
+      ],
+      "source_open": true,
+      "source_point": {
+        "x": 24.01953125,
+        "y": 244.5
+      },
+      "source_point_matches": true,
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "input_focus_held": true,
+  "supervisor": {
+    "source_sha": "82b5843441f5afc436e46207d64d24db0327aa7f",
+    "argv": [
+      "python3",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/family-focus-witness.py",
+      "--kinds",
+      "notesTimers,notificationActivity,media,weather",
+      "--edges",
+      "top,right,bottom,left",
+      "--scale",
+      "1.5",
+      "--float-owned-window",
+      "--keep-input-focus"
+    ],
+    "actual_exit": 0,
+    "status": "PASS",
+    "stop_reason": null,
+    "elapsed_seconds": 145.3,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "553dcbbd6e5dc793adc91c6873f74258109aca1b7f095859d1c27025b7525be6"
+  },
+  "scope": "Private actual wl_pointer,4families x4edges scale1.5. Input focus held on owned nested window during each complete walk; restored between cases. The inherited original scope string in the frozen probe is superseded by this factual scope and input_focus_held flag. No physical multi-output or Owner acceptance.",
+  "retained_failure": "d001 cohort15/16 remains FAIL with unobserved source coordinate in NotesRight. New focused PASS does not relabel that result or prove a product cause."
+}

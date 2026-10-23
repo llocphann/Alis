@@ -1,0 +1,237 @@
+{
+  "source_sha": "621e71973929f381aa62f4a106e90a079358ef90",
+  "per_command_actual_exit": 0,
+  "cases": [
+    {
+      "name": "center-lr",
+      "argv": [
+        "python3",
+        "scripts/test-abyss-sidebar-connection-runtime.py",
+        "--alignment",
+        "center",
+        "--edge-pair",
+        "left,right",
+        "--custom-height",
+        "320",
+        "--scale",
+        "1"
+      ],
+      "actual_exit": 0,
+      "native_exit": 0,
+      "error": null,
+      "checks": 43,
+      "full_size_frames": 95,
+      "qml_errors": [],
+      "output": {
+        "width": 1860,
+        "height": 1102
+      }
+    },
+    {
+      "name": "end-lr",
+      "argv": [
+        "python3",
+        "scripts/test-abyss-sidebar-connection-runtime.py",
+        "--alignment",
+        "end",
+        "--edge-pair",
+        "left,right",
+        "--custom-height",
+        "320",
+        "--scale",
+        "1"
+      ],
+      "actual_exit": 0,
+      "native_exit": 0,
+      "error": null,
+      "checks": 43,
+      "full_size_frames": 98,
+      "qml_errors": [],
+      "output": {
+        "width": 1860,
+        "height": 1102
+      }
+    },
+    {
+      "name": "custom-lr",
+      "argv": [
+        "python3",
+        "scripts/test-abyss-sidebar-connection-runtime.py",
+        "--alignment",
+        "custom",
+        "--edge-pair",
+        "left,right",
+        "--custom-height",
+        "320",
+        "--scale",
+        "1"
+      ],
+      "actual_exit": 0,
+      "native_exit": 0,
+      "error": null,
+      "checks": 43,
+      "full_size_frames": 97,
+      "qml_errors": [],
+      "output": {
+        "width": 1860,
+        "height": 1102
+      }
+    },
+    {
+      "name": "start-tb",
+      "argv": [
+        "python3",
+        "scripts/test-abyss-sidebar-connection-runtime.py",
+        "--alignment",
+        "start",
+        "--edge-pair",
+        "top,bottom",
+        "--custom-height",
+        "320",
+        "--scale",
+        "1"
+      ],
+      "actual_exit": 0,
+      "native_exit": 0,
+      "error": null,
+      "checks": 43,
+      "full_size_frames": 95,
+      "qml_errors": [],
+      "output": {
+        "width": 1860,
+        "height": 1102
+      }
+    },
+    {
+      "name": "end-tb",
+      "argv": [
+        "python3",
+        "scripts/test-abyss-sidebar-connection-runtime.py",
+        "--alignment",
+        "end",
+        "--edge-pair",
+        "top,bottom",
+        "--custom-height",
+        "320",
+        "--scale",
+        "1.5"
+      ],
+      "actual_exit": 0,
+      "native_exit": 0,
+      "error": null,
+      "checks": 43,
+      "full_size_frames": 97,
+      "qml_errors": [],
+      "output": {
+        "width": 1240,
+        "height": 735
+      }
+    },
+    {
+      "name": "custom-bt",
+      "argv": [
+        "python3",
+        "scripts/test-abyss-sidebar-connection-runtime.py",
+        "--alignment",
+        "custom",
+        "--edge-pair",
+        "bottom,top",
+        "--custom-height",
+        "320",
+        "--scale",
+        "1.5"
+      ],
+      "actual_exit": 0,
+      "native_exit": 0,
+      "error": null,
+      "checks": 43,
+      "full_size_frames": 97,
+      "qml_errors": [],
+      "output": {
+        "width": 1240,
+        "height": 735
+      }
+    },
+    {
+      "name": "narrow-center-lr",
+      "argv": [
+        "python3",
+        "scripts/test-abyss-sidebar-connection-runtime.py",
+        "--alignment",
+        "center",
+        "--edge-pair",
+        "left,right",
+        "--custom-height",
+        "320",
+        "--scale",
+        "1.5",
+        "--native-width",
+        "800",
+        "--native-height",
+        "800"
+      ],
+      "actual_exit": 0,
+      "native_exit": 0,
+      "error": null,
+      "checks": 43,
+      "full_size_frames": 98,
+      "qml_errors": [],
+      "output": {
+        "width": 533,
+        "height": 533
+      }
+    },
+    {
+      "name": "narrow-custom-tb",
+      "argv": [
+        "python3",
+        "scripts/test-abyss-sidebar-connection-runtime.py",
+        "--alignment",
+        "custom",
+        "--edge-pair",
+        "top,bottom",
+        "--custom-height",
+        "320",
+        "--scale",
+        "1.5",
+        "--native-width",
+        "600",
+        "--native-height",
+        "450"
+      ],
+      "actual_exit": 0,
+      "native_exit": 0,
+      "error": null,
+      "checks": 44,
+      "full_size_frames": 99,
+      "qml_errors": [],
+      "output": {
+        "width": 400,
+        "height": 300
+      }
+    }
+  ],
+  "native_assertions": 345,
+  "full_size_frame_checks": 776,
+  "parent_cohort_receipt": {
+    "source_sha": "621e71973929f381aa62f4a106e90a079358ef90",
+    "argv": [
+      "python3",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/final-native-cohort.py"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 118.0,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "4d465173c7e16f38682672b272011880fe09625ccd4fa30f947d71d7f6e87b29"
+  },
+  "scope": "All8 Sidebar commands passed,16 production scenes, scales1/1.5 including400x300 logical. Parent cohort is FAIL because two custom-tab commands still reported slideProgress binding loop; no overall PASS claim.",
+  "retained_narrow_failure": {
+    "source_sha": "e30ffede0126355ac3a4d6f3f432447f6e87197e",
+    "actual_exit": 1,
+    "native_exit": 0,
+    "reason": "first painted shoulder point24,283 overlaps a live source module region11,261,30,30; actual body maskfalse, source priority correct. Fixture now selects an unoccluded shoulder and adds a negative check that body cannot take a module-owned pixel. Original FAIL retained."
+  }
+}

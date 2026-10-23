@@ -1,0 +1,61 @@
+{
+  "scope": "Frozen identical executable/QML/argv except source path; Start placement320px on tall output. No hover grace or input-mask widening.",
+  "before": {
+    "source_sha": "7355989b6aaddb527b90e3245e00a5601c933274",
+    "argv": [
+      "python3",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/sidebar-saved-position.py",
+      "--alignment",
+      "start",
+      "--custom-height",
+      "320",
+      "--scale",
+      "1"
+    ],
+    "actual_exit": 1,
+    "status": "FAIL",
+    "stop_reason": null,
+    "elapsed_seconds": 5.8,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "46c2857acd3e2ec6adf7b4e7585f8340b8dccf7116985d03ee9f8fb9a2680762",
+    "native_exit": 0,
+    "trace_error": "probe seam is unpainted check@qs:@/qs/shell.qml:34\nrun@qs:@/qs/shell.qml:89\nexpression for onTriggered@qs:@/qs/shell.qml:124",
+    "checks": 10,
+    "output": {
+      "width": 1860,
+      "height": 1102
+    },
+    "full_size_frame_checks": null,
+    "fixture_sha256": "cbeeeaf6a61c44803fd0e408328da077f992be9d53e55e2ba49e050a32858041"
+  },
+  "after": {
+    "source_sha": "96a42c37d0fd2f345ee3f5b56c0dfbaad55fce6f",
+    "argv": [
+      "python3",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/sidebar-saved-position.py",
+      "--alignment",
+      "start",
+      "--custom-height",
+      "320",
+      "--scale",
+      "1"
+    ],
+    "actual_exit": 0,
+    "status": "PASS",
+    "stop_reason": null,
+    "elapsed_seconds": 14.0,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "53ff5f64ba33774c124b48a6650759350b911682f95bc0498058e0c80acd96d0",
+    "native_exit": 0,
+    "trace_error": null,
+    "checks": 43,
+    "output": {
+      "width": 1860,
+      "height": 1102
+    },
+    "full_size_frame_checks": 98,
+    "fixture_sha256": "cbeeeaf6a61c44803fd0e408328da077f992be9d53e55e2ba49e050a32858041"
+  }
+}

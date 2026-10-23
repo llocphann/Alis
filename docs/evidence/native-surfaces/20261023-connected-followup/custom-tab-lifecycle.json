@@ -1,0 +1,102 @@
+{
+  "scope": "Custom-tab native functional proof at exact72bd7c247; QML layout/header click, data preservation and inactivity/cancel semantics, not installed or Owner acceptance.",
+  "source_sha": "72bd7c24724d4b67bd5a360797f084c318c46db4",
+  "before": {
+    "source_sha": "7355989b6aaddb527b90e3245e00a5601c933274",
+    "harness_exit": 1,
+    "native_exit": 0,
+    "functional_marker": "DASH_F01_NATIVE_PASS23",
+    "binding_loop_count": 1,
+    "loop_property": "slideProgress"
+  },
+  "after": {
+    "cohort": {
+      "source_sha": "72bd7c24724d4b67bd5a360797f084c318c46db4",
+      "argv": [
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/dashboard-final.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 6.1,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "c6d6383419c42b083f18c07b7d27e73e170272ee1518cf59a1dca79ddf574521"
+    },
+    "commands": [
+      {
+        "name": "frozen-polish",
+        "actual_exit": 0
+      },
+      {
+        "name": "committed-native",
+        "actual_exit": 0
+      },
+      {
+        "name": "contract",
+        "actual_exit": 0
+      }
+    ],
+    "frozen_native_exit": 0,
+    "frozen_functional_marker": "DASH_F01_NATIVE_PASS23",
+    "new_committed_native_marker": "DASH_F01_NATIVE_PASS29",
+    "binding_loop_count": 0
+  },
+  "fixture_sha256": "a66302dc6407de0626ab038e1a1119782c4d8c13c45c71cc1724c3cae4fcf835",
+  "changes": "Defer new-tab auto-edit outside slideProgress evaluation with a root-owned Timer; cancel pending edit on hide or explicit page switch. Preserve original lazy-loading/animated visibility. Test waits for layout polish before the same real Create click, retaining all existing oracles and adding6cancellation/data checks.",
+  "diagnostics_retained": {
+    "initial_controls": [
+      {
+        "name": "baseline82",
+        "actual_exit": 1,
+        "native_exit": 0
+      },
+      {
+        "name": "fixed-focus",
+        "actual_exit": 1,
+        "native_exit": 0
+      },
+      {
+        "name": "fixed-polish",
+        "actual_exit": 1,
+        "native_exit": 0
+      },
+      {
+        "name": "fixed-frame",
+        "actual_exit": 1,
+        "native_exit": 0
+      }
+    ],
+    "speculative_direct_load_at621": "FAIL; same slideProgress warning, not promoted as causal fix. Original lazy-load expression restored at72.",
+    "private_timer_candidates": [
+      {
+        "candidate": "selected",
+        "runtime_changes": [
+          "modules/dashboard/DashboardContent.qml"
+        ],
+        "diff_sha256": "4db0ddd9739e04c48a53be66097352acdaba439a2c9cb22b487e4a96a201301b",
+        "actual_exit": 0,
+        "native_exit": 0,
+        "binding_loops": 0,
+        "markers": [
+          "  INFO qml: DASH_F01_NATIVE_PASS 23"
+        ]
+      },
+      {
+        "candidate": "original",
+        "runtime_changes": [
+          "modules/dashboard/DashboardContent.qml"
+        ],
+        "diff_sha256": "43771571285cb4d4b06377958edc022a18cc9524c3317ce95947c9c1028c9f75",
+        "actual_exit": 0,
+        "native_exit": 0,
+        "binding_loops": 0,
+        "markers": [
+          "  INFO qml: DASH_F01_NATIVE_PASS 23"
+        ]
+      }
+    ]
+  },
+  "latest_full_canonical": "UNRUN"
+}
