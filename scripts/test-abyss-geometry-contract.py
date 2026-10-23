@@ -94,7 +94,7 @@ for(const owner of ['top','right','bottom','left']) {
     const original=JSON.stringify(base);
     const joined=joinCorner(base,adjacent,1920,1200,ins);
     assert.equal(JSON.stringify(base),original,'joining never mutates its original record');
-    assert.deepEqual(joined.content,base.content,'joining preserves input/content geometry');
+    assert.deepEqual(joined.content,base.content,'joining preserves content geometry');
     assert.equal(joined.joinedEdge,adjacent);
     const boundary=adjacent==='left'?joined.surface.x:adjacent==='right'?joined.surface.x+joined.surface.width
         :adjacent==='top'?joined.surface.y:joined.surface.y+joined.surface.height;
@@ -107,6 +107,37 @@ for(const owner of ['top','right','bottom','left']) {
     assert.equal(joinCorner(base,owner,1920,1200,ins),base,'only an adjacent Edge can join');
   }
 }
+// A joined native core adds only painted pixels, even at fractional output
+// sizes and during reveal. The unjoined core remains the negative control.
+let joinedPixels=0,joinedCases=0;
+for(const owner of ['top','right','bottom','left'])
+ for(const adjacent of horizontal(owner)?['left','right']:['top','bottom'])
+  for(const scale of [1,1.25,1.5,2]) for(const progress of [.2,1]) {
+   const w=1920/scale,h=1200/scale,ins=insets(16,owner,48,true);
+   const extent=horizontal(owner)?w:h;
+   const trailing=adjacent==='right'||adjacent==='bottom';
+   const raw=panel(w,h,ins,owner,trailing?extent-320:40,280,180,progress,14);
+   const joined=joinCorner(raw,adjacent,w,h,ins);
+   assert.equal(joined.joinedEdge,adjacent);
+   const before=popupInput(raw.content,w,h,ins,owner,raw.surface);
+   const after=popupInput(joined.content,w,h,ins,owner,joined.surface);
+   let added=0;
+   for(let y=Math.floor(after.y);y<after.y+after.height;y++)
+    for(let x=Math.floor(after.x);x<after.x+after.width;x++) {
+     if(!rectContains(after,x+.5,y+.5)||rectContains(before,x+.5,y+.5))continue;
+     assert(distance(x+.5,y+.5,w,h,ins,34,[joined],24,38)<0,
+       'adjacent native core must not capture blank desktop');
+     added++;joinedPixels++;
+    }
+   assert(added>0,'joined fixture did not add an adjacent weld');
+   const shoulders=popupShouldersSnapshot(w,h,ins,adjacent,joined,34,24,38);
+   for(const row of shoulders) for(let y=row.y;y<row.y+row.height;y++)
+    for(let x=row.x;x<row.x+row.width;x++)
+     assert(distance(x+.5,y+.5,w,h,ins,34,[joined],24,38)<0,
+       'adjacent shoulder must not capture blank desktop');
+   joinedCases++;
+  }
+console.log('JOINED_POPUP_PAINT_PASS',joinedCases,joinedPixels,'added painted pixel centers');
 assert.equal(edge(false,false),'top'); assert.equal(edge(false,true),'bottom');
 assert.equal(edge(true,false),'left'); assert.equal(edge(true,true),'right');
 assert(targets('DP-2',['missing'],['DP-1','DP-2']));
