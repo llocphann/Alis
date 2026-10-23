@@ -72,6 +72,23 @@ Item {
     property var musicBackend: null
     property bool musicVisited: currentPageId === "music"
     property bool plannerVisited: currentPageId === "weeklyPlanner"
+    property string _pendingPageId: ""
+    property string _synchronousPageId: ""
+    property bool _userPageNavigation: false
+    readonly property bool pendingPageReady: {
+        if (_pendingPageId === "dashboard") return true
+        if (_pendingPageId === "music") return musicPage.status === Loader.Ready
+        if (_pendingPageId === "weeklyPlanner") return plannerPage.status === Loader.Ready
+        const index = root.customTabs.findIndex(tab => tab.id === root._pendingPageId)
+        return index >= 0 && (customPagesRepeater.itemAt(index)?.pageReady ?? false)
+    }
+    // Incubate only the requested page while the current page stays usable.
+    // Commit after readiness on another event turn, before the unchanged slide.
+    Timer {
+        interval: 0
+        running: root._pendingPageId.length > 0 && root.pendingPageReady
+        onTriggered: root.commitPendingPage()
+    }
     property string _pendingNewEditId: ""
     // Loader completion can run inside slideProgress evaluation. Enter edit
     // on the next event turn, after that binding has finished, without holding
@@ -102,6 +119,8 @@ Item {
         root._customDialogShown = false
     }
     onCurrentPageIdChanged: {
+        if (_pendingPageId.length && _pendingPageId !== currentPageId)
+            _pendingPageId = ""
         if (_pendingNewEditId.length && currentPageId !== _pendingNewEditId)
             _pendingNewEditId = ""
         if (currentPageId === "music") musicVisited = true
@@ -119,10 +138,35 @@ Item {
     }
     function selectPage(id): void {
         if (!pageIds.includes(id)) return
+        // Restoration, inactivity and edit flows keep their synchronous API.
+        // Switching this flag only affects the explicitly selected Loader.
+        root._synchronousPageId = id
         GlobalStates.dashboardPageId = id
         const legacy = PagePolicy.defaultOrder.indexOf(id)
         if (legacy >= 0 && GlobalStates.dashboardPage !== legacy)
             GlobalStates.dashboardPage = legacy
+        root._pendingPageId = ""
+    }
+    function requestPage(id): void {
+        if (!root.navigationAllowed || !root.pageIds.includes(id)) return
+        if (id === root.currentPageId) { root._pendingPageId = ""; return }
+        root._synchronousPageId = ""
+        root._userPageNavigation = true
+        root._pendingPageId = id
+    }
+    function commitPendingPage(): void {
+        const id = root._pendingPageId
+        if (!id || !root.pendingPageReady) return
+        if (!root.navigationAllowed || !root.pageIds.includes(id)) {
+            root._pendingPageId = ""
+            return
+        }
+        root.selectPage(id)
+    }
+    function pageLoadFailed(id): void {
+        if (root._pendingPageId !== id) return
+        root._pendingPageId = ""
+        console.warn("[Dashboard] Requested tab could not be loaded")
     }
     function moveTab(id, target): void {
         const controller = root.canvasController
@@ -138,20 +182,24 @@ Item {
         const contentConsumed = movement.x && Math.abs(movement.x) > Math.abs(movement.y)
             && panContent && (currentPageId === "music" ? musicPage.item?.panHorizontally(movement.x)
                 : currentPageId === "weeklyPlanner" ? plannerPage.item?.panHorizontally(movement.x) : false)
-        const result = PagePolicy.advance(_pageWheelState, movement, phase, Date.now(), pageIds, currentPageId, contentConsumed)
+        const result = PagePolicy.advance(_pageWheelState, movement, phase, Date.now(), pageIds,
+            root._pendingPageId || currentPageId, contentConsumed)
         _pageWheelState = result.state
         event.accepted = result.accepted
         if (!_pageWheelState.phased && _pageWheelState.direction) pageWheelIdle.restart()
         else pageWheelIdle.stop()
-        if (result.target) selectPage(result.target)
+        if (result.target) requestPage(result.target)
     }
-    onNavigationAllowedChanged: if (!navigationAllowed) resetPageWheel()
+    onNavigationAllowedChanged: if (!navigationAllowed) {
+        resetPageWheel()
+        root._pendingPageId = ""
+    }
     Timer {id:pageWheelIdle;interval:180;repeat:false;onTriggered:root._pageWheelState=PagePolicy.idle()}
     Connections {
         target: GlobalStates
         function onDashboardPageChanged(): void {
             const id = PagePolicy.defaultOrder[GlobalStates.dashboardPage] ?? "dashboard"
-            GlobalStates.dashboardPageId = root.pageIds.includes(id) ? id : root.pageIds[0]
+            root.selectPage(root.pageIds.includes(id) ? id : root.pageIds[0])
         }
         function onDashboardPageIdChanged(): void {
             if (!Config.ready || !GlobalStates.dashboardSelectionRestored) return
@@ -197,11 +245,14 @@ Item {
     onPresentationActiveChanged: {
         if (root.presentationActive) root.sessionShown()
         else {
+            root._pendingPageId = ""
             root._pendingNewEditId = ""
             root.sessionHidden()
         }
     }
     onPageIdsChanged: {
+        if (root._pendingPageId.length && !root.pageIds.includes(root._pendingPageId))
+            root._pendingPageId = ""
         if (!root.pageIds.includes(GlobalStates.dashboardPageId))
             GlobalStates.dashboardPageId = root.pageIds[0]
     }
@@ -409,7 +460,7 @@ Item {
                 onDeleteTabRequested: id => root.openCustomTabDialog("delete", id)
                 onPageMoveRequested: (id,target) => root.moveTab(id,target)
                 onHorizontalWheel: event => root.handlePageWheel(event, false)
-                onPageRequested: index => {root.resetPageWheel();root.selectPage(root.pageIds[index])}
+                onPageRequested: index => {root.resetPageWheel();root.requestPage(root.pageIds[index])}
                 editMode: root.editMode
                 onEditModeRequested: {
                     if (root.canvasController?.editMode)
@@ -449,12 +500,16 @@ Item {
                 }
                 Loader {
                     id: musicPage
+                    objectName: "dashboardMusicPageLoader"
+                    asynchronous: root._userPageNavigation && root._synchronousPageId !== "music"
+                    onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("music")
                     width: pages.width
                     height: pages.height
                     x: (root.pageIds.indexOf("music") - pages.slideProgress) * pages.width
                     visible: root.musicEnabled && Math.abs(pages.slideProgress - root.pageIds.indexOf("music")) < 1
                     enabled: root.currentPageId === "music"
-                    active: root.musicEnabled && root.musicVisited && (root.presentationActive || root.warmContent)
+                    active: root.musicEnabled && (root.musicVisited || root._pendingPageId === "music")
+                        && (root.presentationActive || root.warmContent)
                     sourceComponent: DashboardMusic {
                         backend: root.musicBackend ?? LocalMusic
                         presentationActive: root.presentationActive && root.currentPageId === "music"
@@ -463,11 +518,15 @@ Item {
                 // Handle page gestures above the canvas and its scrollable widgets.
                 Loader {
                     id:plannerPage
+                    objectName: "dashboardPlannerPageLoader"
+                    asynchronous: root._userPageNavigation && root._synchronousPageId !== "weeklyPlanner"
+                    onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("weeklyPlanner")
                     width:pages.width;height:pages.height
                     x:(root.pageIds.indexOf("weeklyPlanner")-pages.slideProgress)*pages.width
                     visible:Math.abs(pages.slideProgress-root.pageIds.indexOf("weeklyPlanner"))<1
                     enabled:root.currentPageId==="weeklyPlanner"
-                    active:root.plannerVisited && (root.presentationActive || root.warmContent)
+                    active:(root.plannerVisited || root._pendingPageId === "weeklyPlanner")
+                        && (root.presentationActive || root.warmContent)
                     sourceComponent:DashboardWeeklyPlanner {
                         presentationActive:root.presentationActive && root.currentPageId==="weeklyPlanner"
                         onRequestEventsDialog:event=>root.openPlannerEventEditor(event)
@@ -483,6 +542,7 @@ Item {
                         required property var modelData
                         readonly property int pageIndex: root.pageIds.indexOf(modelData.id)
                         property var canvasController: customCanvasLoader.item
+                        readonly property bool pageReady: customCanvasLoader.status === Loader.Ready
                         width: pages.width
                         height: pages.height
                         x: (pageIndex - pages.slideProgress) * pages.width
@@ -491,12 +551,18 @@ Item {
 
                         Loader {
                             id: customCanvasLoader
+                            objectName: "dashboardCustomPageLoader-" + customTabHost.modelData.id
+                            asynchronous: root._userPageNavigation
+                                && root._synchronousPageId !== customTabHost.modelData.id
+                            onStatusChanged: if (status === Loader.Error)
+                                root.pageLoadFailed(customTabHost.modelData.id)
                             anchors.fill: parent
                             // Reordering changes pageIndex before slideProgress
                             // catches up. Keep the selected canvas and its draft
                             // alive through that temporary visibility change.
                             active: (root.presentationActive && (customTabHost.visible
-                                    || root.currentPageId === customTabHost.modelData.id))
+                                    || root.currentPageId === customTabHost.modelData.id
+                                    || root._pendingPageId === customTabHost.modelData.id))
                                 || (root.warmContent && root.currentPageId === customTabHost.modelData.id)
                             sourceComponent: DashboardCanvas {
                                 customTabId: customTabHost.modelData.id
