@@ -55,6 +55,9 @@ ShellRoot {
    const point=target.mapToItem(scroll.contentItem,0,0)
    scroll.contentY=Math.max(0,Math.min(scroll.contentHeight-scroll.height,
      Math.max(point.y-8,point.y+target.height-scroll.height)));wait(35)
+   // Preview changes can relocate the toolbar after a delayed binding turn.
+   // Inspect the layout actually painted before testing its clip or clicking.
+   frame(null)
    const bounds=target.mapToItem(scroll,0,0)
    check(bounds.x>=-.1&&bounds.y>=-.1&&bounds.x+target.width<=scroll.width+.1&&bounds.y+target.height<=scroll.height+.1,"control outside its real clip "+JSON.stringify({name:name,x:bounds.x,y:bounds.y,w:target.width,h:target.height,clipW:scroll.width,clipH:scroll.height}))
    return target
