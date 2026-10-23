@@ -1,0 +1,132 @@
+{
+  "source_sha": "33a58da9ea19eb0d085faed75ea87080516a6aa7",
+  "started": 110,
+  "settled": 109,
+  "passed": 94,
+  "failed": 15,
+  "skipped": 0,
+  "unsettled": 1,
+  "failed_checks": [
+    {
+      "number": 23,
+      "label": "Native shared-field optimized/unoptimized exact GPU parity",
+      "status": "FAIL"
+    },
+    {
+      "number": 24,
+      "label": "Native shared-field transparent-interior exact GPU parity",
+      "status": "FAIL"
+    },
+    {
+      "number": 25,
+      "label": "Native shared-field fractional light transparent-interior exact GPU parity",
+      "status": "FAIL"
+    },
+    {
+      "number": 26,
+      "label": "Native shared-field fractional light/mask exact GPU parity",
+      "status": "FAIL"
+    },
+    {
+      "number": 28,
+      "label": "Native Dashboard/Overview content-ready reveal, reversal and warm expiry",
+      "status": "FAIL"
+    },
+    {
+      "number": 65,
+      "label": "Python regression: scripts/test-abyss-body-reveal-readiness-runtime.py",
+      "status": "FAIL"
+    },
+    {
+      "number": 66,
+      "label": "Python regression: scripts/test-abyss-compact-editor-runtime.py",
+      "status": "FAIL"
+    },
+    {
+      "number": 76,
+      "label": "Python regression: scripts/test-abyss-drag-corners-runtime.py",
+      "status": "FAIL"
+    },
+    {
+      "number": 83,
+      "label": "Python regression: scripts/test-abyss-editor-popup-source-runtime.py",
+      "status": "FAIL"
+    },
+    {
+      "number": 85,
+      "label": "Python regression: scripts/test-abyss-field-support-runtime.py",
+      "status": "FAIL"
+    },
+    {
+      "number": 86,
+      "label": "Python regression: scripts/test-abyss-full-size-modules-runtime.py",
+      "status": "FAIL"
+    },
+    {
+      "number": 92,
+      "label": "Python regression: scripts/test-abyss-keyboard-reveal-runtime.py",
+      "status": "FAIL"
+    },
+    {
+      "number": 96,
+      "label": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py",
+      "status": "FAIL"
+    },
+    {
+      "number": 101,
+      "label": "Python regression: scripts/test-abyss-module-field-runtime.py",
+      "status": "FAIL"
+    },
+    {
+      "number": 104,
+      "label": "Python regression: scripts/test-abyss-multi-selection-runtime.py",
+      "status": "FAIL"
+    }
+  ],
+  "supervisor": {
+    "source_sha": "33a58da9ea19eb0d085faed75ea87080516a6aa7",
+    "argv": [
+      "bwrap",
+      "--bind",
+      "/",
+      "/",
+      "--dev-bind",
+      "/dev",
+      "/dev",
+      "--proc",
+      "/proc",
+      "--tmpfs",
+      "/tmp",
+      "--die-with-parent",
+      "--",
+      "bash",
+      "scripts/validate-maintainer-local.sh",
+      "--current-repo"
+    ],
+    "actual_exit": -15,
+    "status": "STOPPED",
+    "stop_reason": "quota_stop",
+    "elapsed_seconds": 645.9,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "e5cfb07c8d448bda352596ee45fbe2c35e95c46bf973f496b9ae65a669b575fd"
+  },
+  "recorded_at_utc": "2026-10-23T07:28:11.496666+00:00",
+  "status": "STOPPED",
+  "reason": "quota_stop",
+  "observed_primary_used_percent": 97,
+  "observed_primary_resets_at": 1792752570,
+  "observed_weekly_used_percent": 31,
+  "resume_after_reset_unix": 1792752630,
+  "next_diagnostics": [
+    "Check23/24/25/26/85 show failed OpenGL offscreen graphics backend initialization; no blanket product attribution.",
+    "Check66 shows Reset atx210,width30 outside clipW220. Preserve the strict clip assertion and saved layout; qualify a narrow header fix.",
+    "Unfocused native Custom Create-polish and editor field remain FAIL; focused controls pass separately.",
+    "Resources Right combined corner cohort FAIL14/16 and fresh-session control2/2PASS remain separate."
+  ],
+  "owner_deferral": {
+    "issue": 74,
+    "state": "open,status:deferred",
+    "no_automatic_retest": true
+  }
+}
