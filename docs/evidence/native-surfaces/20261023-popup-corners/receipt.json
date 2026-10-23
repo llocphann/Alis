@@ -1,0 +1,3069 @@
+{
+  "issue": 72,
+  "scope": "Actual wl_pointer in disposable Niri; scale1.5; source positions0.06/0.94; focus held only on the owned nested window and restored between cases. No owner or multi-output acceptance.",
+  "cohorts": [
+    {
+      "source_sha": "807aa8def17221d53d750925b50090c3e8c37af0",
+      "fixture_sha256": "eabfb8b49b29414bf10d7b8021b6e2c9ef24ca95cdec2ad90abc3eaa990e13e6",
+      "actual_native_exit": 0,
+      "harness_exit": 1,
+      "supervisor_status": "FAIL",
+      "owned_remaining_after_exit": [],
+      "console_sha256": "147bc66f1efeff5c315d822cf7c69a47fd3621f713a8ec9a94bc5e44d1e3de97",
+      "errors": [],
+      "cases": [
+        {
+          "kind": "clock",
+          "edge": "top",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                70.0,
+                44.0
+              ],
+              "actual_point": {
+                "x": 70.05859375,
+                "y": 44
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                348.5,
+                181.56
+              ],
+              "actual_point": {
+                "x": 348.8046875,
+                "y": 181.5625
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                668.5,
+                57.5
+              ],
+              "actual_point": {
+                "x": 669.08984375,
+                "y": 57.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                70.0,
+                24.0
+              ],
+              "actual_point": {
+                "x": 70.05859375,
+                "y": 24
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                636
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 70.05859375,
+            "y": 24
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 668.5,
+              "y": 57.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "top",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "top",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1063.0,
+                44.0
+              ],
+              "actual_point": {
+                "x": 1063.9375,
+                "y": 44
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                784.5,
+                181.56
+              ],
+              "actual_point": {
+                "x": 785.19140625,
+                "y": 181.5625
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                1115,
+                57.5
+              ],
+              "actual_point": {
+                "x": 1115.98046875,
+                "y": 57.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1063.0,
+                24.0
+              ],
+              "actual_point": {
+                "x": 1063.9375,
+                "y": 24
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                636
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1063.9375,
+            "y": 24
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 1115,
+              "y": 57.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "top",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "right",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1089.0,
+                70.0
+              ],
+              "actual_point": {
+                "x": 1089.9609375,
+                "y": 70
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                766.5,
+                173.0
+              ],
+              "actual_point": {
+                "x": 767.17578125,
+                "y": 173
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1109.0,
+                70.0
+              ],
+              "actual_point": {
+                "x": 1109.9765625,
+                "y": 70
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                64,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1109.9765625,
+            "y": 70
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 51,
+            "edge": "right",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "right",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1089.0,
+                630.0
+              ],
+              "actual_point": {
+                "x": 1089.9609375,
+                "y": 630
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                766.5,
+                527.0
+              ],
+              "actual_point": {
+                "x": 767.17578125,
+                "y": 527
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1109.0,
+                630.0
+              ],
+              "actual_point": {
+                "x": 1109.9765625,
+                "y": 630
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                64,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1109.9765625,
+            "y": 630
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 51,
+            "edge": "right",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "bottom",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                70.0,
+                656.0
+              ],
+              "actual_point": {
+                "x": 70.05859375,
+                "y": 656
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                348.5,
+                518.44
+              ],
+              "actual_point": {
+                "x": 348.8046875,
+                "y": 518.4375
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                668.5,
+                642.5
+              ],
+              "actual_point": {
+                "x": 669.08984375,
+                "y": 642.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                70.0,
+                676.0
+              ],
+              "actual_point": {
+                "x": 70.05859375,
+                "y": 676
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                64
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 70.05859375,
+            "y": 676
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 668.5,
+              "y": 642.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "bottom",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "bottom",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1019.0,
+                656.0
+              ],
+              "actual_point": {
+                "x": 1019.8984375,
+                "y": 656
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                784.5,
+                518.44
+              ],
+              "actual_point": {
+                "x": 785.19140625,
+                "y": 518.4375
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                1115,
+                642.5
+              ],
+              "actual_point": {
+                "x": 1115.98046875,
+                "y": 642.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1019.0,
+                676.0
+              ],
+              "actual_point": {
+                "x": 1019.8984375,
+                "y": 676
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                64
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1019.8984375,
+            "y": 676
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 1115,
+              "y": 642.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "bottom",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "left",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                44.0,
+                70.0
+              ],
+              "actual_point": {
+                "x": 44.03515625,
+                "y": 70
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                366.5,
+                173.0
+              ],
+              "actual_point": {
+                "x": 366.8203125,
+                "y": 173
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                24.0,
+                70.0
+              ],
+              "actual_point": {
+                "x": 24.01953125,
+                "y": 70
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                1069,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 24.01953125,
+            "y": 70
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 51,
+            "edge": "left",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "clock",
+          "edge": "left",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                44.0,
+                630.0
+              ],
+              "actual_point": {
+                "x": 44.03515625,
+                "y": 630
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                366.5,
+                527.0
+              ],
+              "actual_point": {
+                "x": 366.8203125,
+                "y": 527
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                24.0,
+                630.0
+              ],
+              "actual_point": {
+                "x": 24.01953125,
+                "y": 630
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                1069,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 24.01953125,
+            "y": 630
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 51,
+            "edge": "left",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "top",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                115.0,
+                44.0
+              ],
+              "actual_point": {
+                "x": 115.09765625,
+                "y": 44
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                199.0,
+                118.0
+              ],
+              "actual_point": {
+                "x": 199.171875,
+                "y": 118
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                369.5,
+                57.5
+              ],
+              "actual_point": {
+                "x": 369.82421875,
+                "y": 57.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                115.0,
+                24.0
+              ],
+              "actual_point": {
+                "x": 115.09765625,
+                "y": 24
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                636
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 115.09765625,
+            "y": 24
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 369.5,
+              "y": 57.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "top",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "top",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1018.0,
+                44.0
+              ],
+              "actual_point": {
+                "x": 1018.8984375,
+                "y": 44
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                925.5,
+                118.0
+              ],
+              "actual_point": {
+                "x": 926.31640625,
+                "y": 118
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                1115,
+                57.5
+              ],
+              "actual_point": {
+                "x": 1115.98046875,
+                "y": 57.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1018.0,
+                24.0
+              ],
+              "actual_point": {
+                "x": 1018.8984375,
+                "y": 24
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                636
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1018.8984375,
+            "y": 24
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 1115,
+              "y": 57.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "top",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "right",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1089.0,
+                115.0
+              ],
+              "actual_point": {
+                "x": 1089.9609375,
+                "y": 115
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                907.5,
+                115.0
+              ],
+              "actual_point": {
+                "x": 908.30078125,
+                "y": 115
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1109.0,
+                115.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                64,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1109.9765625,
+            "y": 115
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 58,
+            "edge": "right",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "FAIL"
+        },
+        {
+          "kind": "resources",
+          "edge": "right",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1089.0,
+                585.0
+              ],
+              "actual_point": {
+                "x": 1089.9609375,
+                "y": 585
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                907.5,
+                585.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1109.0,
+                585.0
+              ],
+              "actual_point": {
+                "x": 1109.9765625,
+                "y": 585
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                64,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1109.9765625,
+            "y": 585
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 58,
+            "edge": "right",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "FAIL"
+        },
+        {
+          "kind": "resources",
+          "edge": "bottom",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                115.0,
+                656.0
+              ],
+              "actual_point": {
+                "x": 115.09765625,
+                "y": 656
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                207.5,
+                582.0
+              ],
+              "actual_point": {
+                "x": 207.6796875,
+                "y": 582
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                386.5,
+                642.5
+              ],
+              "actual_point": {
+                "x": 386.83984375,
+                "y": 642.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                115.0,
+                676.0
+              ],
+              "actual_point": {
+                "x": 115.09765625,
+                "y": 676
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                64
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 115.09765625,
+            "y": 676
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 386.5,
+              "y": 642.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "bottom",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "bottom",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                974.0,
+                656.0
+              ],
+              "actual_point": {
+                "x": 974.859375,
+                "y": 656
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                925.5,
+                582.0
+              ],
+              "actual_point": {
+                "x": 926.31640625,
+                "y": 582
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                1115,
+                642.5
+              ],
+              "actual_point": {
+                "x": 1115.98046875,
+                "y": 642.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                974.0,
+                676.0
+              ],
+              "actual_point": {
+                "x": 974.859375,
+                "y": 676
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                64
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 974.859375,
+            "y": 676
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 1115,
+              "y": 642.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "bottom",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "left",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                44.0,
+                115.0
+              ],
+              "actual_point": {
+                "x": 44.03515625,
+                "y": 115
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                225.5,
+                115.0
+              ],
+              "actual_point": {
+                "x": 225.6953125,
+                "y": 115
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                24.0,
+                115.0
+              ],
+              "actual_point": {
+                "x": 24.01953125,
+                "y": 115
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                1069,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 24.01953125,
+            "y": 115
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 58,
+            "edge": "left",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "resources",
+          "edge": "left",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                44.0,
+                585.0
+              ],
+              "actual_point": {
+                "x": 44.03515625,
+                "y": 585
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                225.5,
+                585.0
+              ],
+              "actual_point": {
+                "x": 225.6953125,
+                "y": 585
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                24.0,
+                585.0
+              ],
+              "actual_point": {
+                "x": 24.01953125,
+                "y": 585
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                1069,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 24.01953125,
+            "y": 585
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 58,
+            "edge": "left",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "source_sha": "807aa8def17221d53d750925b50090c3e8c37af0",
+      "fixture_sha256": "eabfb8b49b29414bf10d7b8021b6e2c9ef24ca95cdec2ad90abc3eaa990e13e6",
+      "actual_native_exit": 0,
+      "harness_exit": 0,
+      "supervisor_status": "PASS",
+      "owned_remaining_after_exit": [],
+      "console_sha256": "2d254c9c9443e4d248ff89bce1e356f21f829f66eb685e033eeff10b583c0728",
+      "errors": [],
+      "cases": [
+        {
+          "kind": "notesTimers",
+          "edge": "top",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                67.5,
+                27.5
+              ],
+              "actual_point": {
+                "x": 67.55859375,
+                "y": 27.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                240.0,
+                166.0
+              ],
+              "actual_point": {
+                "x": 240.2109375,
+                "y": 166
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                451.5,
+                25.5
+              ],
+              "actual_point": {
+                "x": 451.8984375,
+                "y": 25.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                67.5,
+                24.0
+              ],
+              "actual_point": {
+                "x": 67.55859375,
+                "y": 24
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                636
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 67.55859375,
+            "y": 24
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 451.5,
+              "y": 25.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "top",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "top",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1065.5,
+                27.5
+              ],
+              "actual_point": {
+                "x": 1066.4375,
+                "y": 27.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                893.0,
+                166.0
+              ],
+              "actual_point": {
+                "x": 893.78515625,
+                "y": 166
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                1115,
+                25.5
+              ],
+              "actual_point": {
+                "x": 1115.98046875,
+                "y": 25.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1065.5,
+                24.0
+              ],
+              "actual_point": {
+                "x": 1066.4375,
+                "y": 24
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                636
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1066.4375,
+            "y": 24
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 1115,
+              "y": 25.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "top",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "right",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1105.5,
+                42.0
+              ],
+              "actual_point": {
+                "x": 1106.47265625,
+                "y": 42
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                907.0,
+                180.0
+              ],
+              "actual_point": {
+                "x": 907.796875,
+                "y": 180
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1109.0,
+                42.0
+              ],
+              "actual_point": {
+                "x": 1109.9765625,
+                "y": 42
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                64,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1109.9765625,
+            "y": 42
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 51,
+            "edge": "right",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "right",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1105.5,
+                658.0
+              ],
+              "actual_point": {
+                "x": 1106.47265625,
+                "y": 658
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                907.0,
+                520.0
+              ],
+              "actual_point": {
+                "x": 907.796875,
+                "y": 520
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1109.0,
+                658.0
+              ],
+              "actual_point": {
+                "x": 1109.9765625,
+                "y": 658
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                64,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1109.9765625,
+            "y": 658
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 51,
+            "edge": "right",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "bottom",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                67.5,
+                672.5
+              ],
+              "actual_point": {
+                "x": 67.55859375,
+                "y": 672.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                240.0,
+                534.0
+              ],
+              "actual_point": {
+                "x": 240.2109375,
+                "y": 534
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                451.5,
+                674.5
+              ],
+              "actual_point": {
+                "x": 451.8984375,
+                "y": 674.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                67.5,
+                676.0
+              ],
+              "actual_point": {
+                "x": 67.55859375,
+                "y": 676
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                64
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 67.55859375,
+            "y": 676
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 451.5,
+              "y": 674.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "bottom",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "bottom",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1103.5,
+                672.5
+              ],
+              "actual_point": {
+                "x": 1104.47265625,
+                "y": 672.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                893.0,
+                502.0
+              ],
+              "actual_point": {
+                "x": 893.78515625,
+                "y": 502
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                681,
+                675.5
+              ],
+              "actual_point": {
+                "x": 681.59765625,
+                "y": 675.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1103.5,
+                676.0
+              ],
+              "actual_point": {
+                "x": 1104.47265625,
+                "y": 676
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                64
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1104.47265625,
+            "y": 676
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 681,
+              "y": 675.5
+            },
+            "count": 16,
+            "stripCount": 51,
+            "edge": "bottom",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "left",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                27.5,
+                42.0
+              ],
+              "actual_point": {
+                "x": 27.5234375,
+                "y": 42
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                226.0,
+                180.0
+              ],
+              "actual_point": {
+                "x": 226.19921875,
+                "y": 180
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                24.0,
+                42.0
+              ],
+              "actual_point": {
+                "x": 24.01953125,
+                "y": 42
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                1069,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 24.01953125,
+            "y": 42
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 51,
+            "edge": "left",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "notesTimers",
+          "edge": "left",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                27.5,
+                658.0
+              ],
+              "actual_point": {
+                "x": 27.5234375,
+                "y": 658
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                226.0,
+                520.0
+              ],
+              "actual_point": {
+                "x": 226.19921875,
+                "y": 520
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                24.0,
+                658.0
+              ],
+              "actual_point": {
+                "x": 24.01953125,
+                "y": 658
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                1069,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 24.01953125,
+            "y": 658
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 51,
+            "edge": "left",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "top",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                67.5,
+                44.0
+              ],
+              "actual_point": {
+                "x": 67.55859375,
+                "y": 44
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                234.0,
+                139.0
+              ],
+              "actual_point": {
+                "x": 234.203125,
+                "y": 139
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                439.5,
+                57.5
+              ],
+              "actual_point": {
+                "x": 439.88671875,
+                "y": 57.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                67.5,
+                24.0
+              ],
+              "actual_point": {
+                "x": 67.55859375,
+                "y": 24
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                636
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 67.55859375,
+            "y": 24
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 439.5,
+              "y": 57.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "top",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "top",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1065.5,
+                44.0
+              ],
+              "actual_point": {
+                "x": 1066.4375,
+                "y": 44
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                899.0,
+                139.0
+              ],
+              "actual_point": {
+                "x": 899.79296875,
+                "y": 139
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                1115,
+                57.5
+              ],
+              "actual_point": {
+                "x": 1115.98046875,
+                "y": 57.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1065.5,
+                24.0
+              ],
+              "actual_point": {
+                "x": 1066.4375,
+                "y": 24
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                636
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1066.4375,
+            "y": 24
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 1115,
+              "y": 57.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "top",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "right",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1089.0,
+                60.0
+              ],
+              "actual_point": {
+                "x": 1089.9609375,
+                "y": 60
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                881.0,
+                121.0
+              ],
+              "actual_point": {
+                "x": 881.77734375,
+                "y": 121
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1109.0,
+                60.0
+              ],
+              "actual_point": {
+                "x": 1109.9765625,
+                "y": 60
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                64,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1109.9765625,
+            "y": 60
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 51,
+            "edge": "right",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "right",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1089.0,
+                640.0
+              ],
+              "actual_point": {
+                "x": 1089.9609375,
+                "y": 640
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                881.0,
+                579.0
+              ],
+              "actual_point": {
+                "x": 881.77734375,
+                "y": 579
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1109.0,
+                640.0
+              ],
+              "actual_point": {
+                "x": 1109.9765625,
+                "y": 640
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                64,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1109.9765625,
+            "y": 640
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 51,
+            "edge": "right",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "bottom",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                67.5,
+                656.0
+              ],
+              "actual_point": {
+                "x": 67.55859375,
+                "y": 656
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                234.0,
+                561.0
+              ],
+              "actual_point": {
+                "x": 234.203125,
+                "y": 561
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                439.5,
+                642.5
+              ],
+              "actual_point": {
+                "x": 439.88671875,
+                "y": 642.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                67.5,
+                676.0
+              ],
+              "actual_point": {
+                "x": 67.55859375,
+                "y": 676
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                64
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 67.55859375,
+            "y": 676
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 439.5,
+              "y": 642.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "bottom",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "bottom",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                1029.0,
+                656.0
+              ],
+              "actual_point": {
+                "x": 1029.90625,
+                "y": 656
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                899.0,
+                561.0
+              ],
+              "actual_point": {
+                "x": 899.79296875,
+                "y": 561
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "shoulder",
+              "point": [
+                1115,
+                642.5
+              ],
+              "actual_point": {
+                "x": 1115.98046875,
+                "y": 642.5
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                1029.0,
+                676.0
+              ],
+              "actual_point": {
+                "x": 1029.90625,
+                "y": 676
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                566.5,
+                64
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 1029.90625,
+            "y": 676
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": {
+              "x": 1115,
+              "y": 642.5
+            },
+            "count": 39,
+            "stripCount": 51,
+            "edge": "bottom",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "left",
+          "scale": 1.5,
+          "position": 0.06,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                44.0,
+                60.0
+              ],
+              "actual_point": {
+                "x": 44.03515625,
+                "y": 60
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                252.0,
+                121.0
+              ],
+              "actual_point": {
+                "x": 252.21875,
+                "y": 121
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                24.0,
+                60.0
+              ],
+              "actual_point": {
+                "x": 24.01953125,
+                "y": 60
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                1069,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 24.01953125,
+            "y": 60
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 51,
+            "edge": "left",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        },
+        {
+          "kind": "media",
+          "edge": "left",
+          "scale": 1.5,
+          "position": 0.94,
+          "phases": [
+            {
+              "stage": "seam",
+              "point": [
+                44.0,
+                640.0
+              ],
+              "actual_point": {
+                "x": 44.03515625,
+                "y": 640
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "body",
+              "point": [
+                252.0,
+                579.0
+              ],
+              "actual_point": {
+                "x": 252.21875,
+                "y": 579
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": false,
+              "generic_trigger": false
+            },
+            {
+              "stage": "reverse",
+              "point": [
+                24.0,
+                640.0
+              ],
+              "actual_point": {
+                "x": 24.01953125,
+                "y": 640
+              },
+              "point_matches": true,
+              "active": true,
+              "source_hover": true,
+              "generic_trigger": false
+            },
+            {
+              "stage": "leave",
+              "point": [
+                1069,
+                350.0
+              ],
+              "actual_point": null,
+              "point_matches": false,
+              "active": false,
+              "source_hover": false,
+              "generic_trigger": false
+            }
+          ],
+          "source_open": true,
+          "source_point": {
+            "x": 24.01953125,
+            "y": 640
+          },
+          "source_point_matches": true,
+          "shoulder": {
+            "point": null,
+            "count": 0,
+            "stripCount": 51,
+            "edge": "left",
+            "radius": 34,
+            "softness": 24
+          },
+          "status": "PASS"
+        }
+      ]
+    }
+  ],
+  "isolated_followup": {
+    "result": {
+      "name": "resources-right",
+      "source_sha": "807aa8def17221d53d750925b50090c3e8c37af0",
+      "argv": [
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/popup-corner-followup-probe.py",
+        "--scale",
+        "1.5",
+        "--kinds",
+        "resources",
+        "--edges",
+        "right",
+        "--positions",
+        ".06,.94",
+        "--shoulders",
+        "--float-owned-window",
+        "--keep-input-focus"
+      ],
+      "actual_exit": 0
+    },
+    "cases": [
+      {
+        "kind": "resources",
+        "edge": "right",
+        "scale": 1.5,
+        "position": 0.06,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1089.0,
+              115.0
+            ],
+            "actual_point": {
+              "x": 1089.9609375,
+              "y": 115
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              916.0,
+              115.0
+            ],
+            "actual_point": {
+              "x": 916.8046875,
+              "y": 115
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1109.0,
+              115.0
+            ],
+            "actual_point": {
+              "x": 1109.9765625,
+              "y": 115
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              64,
+              350.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 1109.9765625,
+          "y": 115
+        },
+        "source_point_matches": true,
+        "shoulder": {
+          "point": null,
+          "count": 0,
+          "stripCount": 58,
+          "edge": "right",
+          "radius": 34,
+          "softness": 24
+        },
+        "status": "PASS"
+      },
+      {
+        "kind": "resources",
+        "edge": "right",
+        "scale": 1.5,
+        "position": 0.94,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1089.0,
+              585.0
+            ],
+            "actual_point": {
+              "x": 1089.9609375,
+              "y": 585
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              907.5,
+              585.0
+            ],
+            "actual_point": {
+              "x": 908.30078125,
+              "y": 585
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1109.0,
+              585.0
+            ],
+            "actual_point": {
+              "x": 1109.9765625,
+              "y": 585
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              64,
+              350.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 1109.9765625,
+          "y": 585
+        },
+        "source_point_matches": true,
+        "shoulder": {
+          "point": null,
+          "count": 0,
+          "stripCount": 58,
+          "edge": "right",
+          "radius": 34,
+          "softness": 24
+        },
+        "status": "PASS"
+      }
+    ],
+    "actual_native_exit": 0
+  },
+  "interpretation": [
+    "Clock/Resources combined run is FAIL:14/16; Resources Right failed once at reverse and once at body. Keep both failures.",
+    "The identical Resources Right probe passes2/2 when started in a fresh private session; this does not override the combined FAIL or identify its cause.",
+    "Notes/Timers and Media pass16/16 at four edges and both near-corner source positions.",
+    "Only phases explicitly named shoulder exercised a shoulder. No point was returned for some vertical cases; do not claim all shoulders covered.",
+    "All passed active phases require observed native source/body coordinates within2logical pixels of requested points; outside leave must dismiss.",
+    "No production hover mask or grace change was made for these probes."
+  ],
+  "remaining": [
+    "Classify cumulative Resources Right failure and missing vertical shoulder coverage.",
+    "Remaining families, physical multi-output and Owner acceptance."
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "issue": 59,
+  "source_sha": "66d54559be71d861b1450deaafe768cdcd6991ca",
+  "argv": [
+    "python3",
+    "scripts/test-abyss-sidebar-connection-runtime.py"
+  ],
+  "before": {
+    "wrapper_extra_argv": [
+      "--unshare-pid"
+    ],
+    "canonical_check": 129,
+    "harness_exit": 1,
+    "native_exit": "NOT_STARTED: private Niri capture-focus window identification failed before Quickshell launch",
+    "reason": "Capture focus could not identify the private Niri window"
+  },
+  "after": {
+    "wrapper": "Same private/tmp bwrap command without --unshare-pid; host PID visibility retained. Source and test argv unchanged.",
+    "harness_exit": 0,
+    "actual_native_exit": 0,
+    "checks": 43,
+    "swaps": 350,
+    "full_size_frame_checks": 94,
+    "error": null,
+    "qml_errors": [],
+    "owned_remaining_after_exit": []
+  },
+  "scope": "Matched same-source fixture environment qualification for check129 only. Earlier canonical FAIL remains FAIL; no blanket explanation of other failed checks or Owner acceptance."
+}
