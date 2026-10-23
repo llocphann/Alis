@@ -34,9 +34,17 @@ Item {
     property var retainedRect: null
     readonly property rect presentationRect: revealRequested
         ? targetRect : (retainedRect ?? targetRect)
-    onTargetRectChanged: if (root.controlsVisible && revealRequested)
-        retainedRect = targetRect
-    onRevealRequestedChanged: if (revealRequested) retainedRect = targetRect
+    function rememberRequestedRect(): void {
+        // The body can release its clearance before controlsVisible and
+        // revealRequested reevaluate. Read the editor's semantic state now,
+        // so that binding order cannot overwrite the closing snapshot.
+        const requested = (root.canvasController?.editMode ?? false)
+            || (root.tabController?.tabNamingActive ?? false)
+        if (requested && root.revealRequested)
+            root.retainedRect = root.targetRect
+    }
+    onTargetRectChanged: root.rememberRequestedRect()
+    onRevealRequestedChanged: if (revealRequested) root.rememberRequestedRect()
     x: presentationRect.x
     y: presentationRect.y
     width: presentationRect.width
