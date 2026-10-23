@@ -50,7 +50,16 @@ Item {
             : (customPagesRepeater.itemAt(index)?.canvasController ?? null)
     }
     property bool editMode: root.canvasController?.editMode ?? false
-    onEditModeChanged: if (!editMode) root._navigationDraftOrder = null
+    onEditModeChanged: {
+        if (!editMode) {
+            root._navigationDraftOrder = null
+        } else if (root.currentPageId !== "dashboard"
+                && !root.customTabs.some(tab => tab.id === root.currentPageId)) {
+            // Music/Planner use the main canvas for Edit. Show that canvas;
+            // a custom tab keeps its own selected, editable canvas instead.
+            root.selectPage("dashboard")
+        }
+    }
     Connections {
         target: root.canvasController
         function onEffectivePageOrderChanged(): void {
