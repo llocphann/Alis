@@ -104,6 +104,10 @@ Window {
    tryVerify(()=>createButton.visible && createButton.enabled,1500)
    check(defaultButton.visible && defaultButton.enabled,
     "set-default button missing in Edit Dashboard Layout")
+   let defaultControlPainted=false
+   check(dashboard.grabToImage(image=>defaultControlPainted=true),"default-tab frame request refused")
+   tryVerify(()=>defaultControlPainted,2000)
+   check(defaultControlPainted,"default-tab controls did not render after entering Edit")
    const inactivity=Config.options.dashboard.inactiveMinutes
    mouseClick(defaultButton)
    check(Config.options.dashboard.defaultTabId==="dashboard",
