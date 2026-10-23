@@ -33,9 +33,9 @@ function popupInput(content,width,height,insets,edge,paintedSurface) {
     if (!content || content.width <= 0 || content.height <= 0)
         return {x:0,y:0,width:0,height:0};
     var x=content.x,y=content.y,right=x+content.width,bottom=y+content.height;
-    // Feature bounds exclude the body's visual padding. Use the unjoined
-    // painted footprint when supplied, trimming its off-output extrusion at
-    // the owner seam below. Corner welding must not enlarge this hover lease.
+    // Feature bounds exclude the body's visual padding. The caller supplies
+    // the actual painted footprint, including an applied adjacent-Edge weld.
+    // Trim its off-output extrusion at the owner seam below.
     if (paintedSurface && paintedSurface.width > 0 && paintedSurface.height > 0) {
         if (horizontal(edge)) {
             x=paintedSurface.x;right=x+paintedSurface.width;

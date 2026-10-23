@@ -220,6 +220,9 @@ Item {
                 visualPlacement)
     readonly property var record: Geometry.joinCorner(
         rawPresentationRecord,joinedEdge,width,height,edgeInsets)
+    // A requested join can be rejected when the popup is too far away.
+    // Input follows only the weld actually present in the painted record.
+    readonly property string appliedJoinedEdge: record.joinedEdge ?? ""
     readonly property var targetRecord: Geometry.placedPanel(width,height,edgeInsets,edge,requestedAlong,span,depth,1,padding,obstacles,largeSurface,layoutPlacement)
     readonly property Item contentItem: content
     readonly property bool ready: embeddedItem !== null || content.status === Loader.Ready
@@ -234,7 +237,8 @@ Item {
         const contentRect=Qt.rect(c.x,c.y,c.width,c.height)
         if (!root.includeEdgeConnection) return contentRect
         const region=Geometry.popupInput(contentRect,root.width,root.height,
-            root.connectionInsets,root.edge,root.rawPresentationRecord.surface)
+            root.connectionInsets,root.edge,root.appliedJoinedEdge.length > 0
+                ? root.record.surface : root.rawPresentationRecord.surface)
         return Qt.rect(region.x,region.y,region.width,region.height)
     }
     readonly property rect sourceBridge: {
@@ -251,12 +255,21 @@ Item {
         return Qt.rect(x,y,Math.max(body.x+body.width,bridge.x+bridge.width)-x,
             Math.max(body.y+body.height,bridge.y+bridge.height)-y)
     }
-    readonly property var connectionRects: root.includeEdgeConnection
-            && root.inputBounds.width > 0 && root.inputBounds.height > 0
-        ? Geometry.popupShouldersSnapshot(root.width,root.height,root.connectionInsets,root.edge,
-            root.rawPresentationRecord,AbyssStyle.perimeterRadius,
+    readonly property var connectionRects: {
+        if (!root.includeEdgeConnection
+                || root.inputBounds.width <= 0 || root.inputBounds.height <= 0) return []
+        const joined=root.appliedJoinedEdge.length > 0
+        const shape=joined ? root.record : root.rawPresentationRecord
+        const primary=Geometry.popupShouldersSnapshot(root.width,root.height,root.connectionInsets,root.edge,
+            shape,AbyssStyle.perimeterRadius,
             AbyssStyle.connectionDepth,AbyssStyle.neckRadius,
-            root.controller?.roundZeroCorners,root.controller?.cornerWidthInsets) : []
+            root.controller?.roundZeroCorners,root.controller?.cornerWidthInsets)
+        if (!joined) return primary
+        return primary.concat(Geometry.popupShouldersSnapshot(root.width,root.height,
+            root.connectionInsets,root.appliedJoinedEdge,shape,AbyssStyle.perimeterRadius,
+            AbyssStyle.connectionDepth,AbyssStyle.neckRadius,
+            root.controller?.roundZeroCorners,root.controller?.cornerWidthInsets))
+    }
     property var connectionRegions: []
     // Instantiator creates/removes a synchronous cohort. Publish its complete
     // native region list once, before returning to input dispatch, rather than
@@ -584,10 +597,26 @@ Item {
         readonly property real shoulderReach: root.connectionRects.length > 0
             ? Math.ceil(Math.max(AbyssStyle.connectionDepth,
                 root.rawPresentationRecord.radius ?? AbyssStyle.neckRadius))+1 : 0
-        x: root.hoverBounds.x-(Geometry.horizontal(root.edge) ? shoulderReach : 0)
-        y: root.hoverBounds.y-(Geometry.horizontal(root.edge) ? 0 : shoulderReach)
-        width: root.hoverBounds.width+(Geometry.horizontal(root.edge) ? 2*shoulderReach : 0)
-        height: root.hoverBounds.height+(Geometry.horizontal(root.edge) ? 0 : 2*shoulderReach)
+        readonly property rect bounds: {
+            const body=root.hoverBounds
+            if (root.appliedJoinedEdge.length === 0)
+                return Qt.rect(body.x-(Geometry.horizontal(root.edge) ? shoulderReach : 0),
+                    body.y-(Geometry.horizontal(root.edge) ? 0 : shoulderReach),
+                    body.width+(Geometry.horizontal(root.edge) ? 2*shoulderReach : 0),
+                    body.height+(Geometry.horizontal(root.edge) ? 0 : 2*shoulderReach))
+            let x=body.x,y=body.y,right=x+body.width,bottom=y+body.height
+            // A joined popup has shoulders on two perpendicular Edges.
+            // Bound their union here; the mask below still tests each strip.
+            for (const rect of root.connectionRects) {
+                if (rect.width <= 0 || rect.height <= 0) continue
+                x=Math.min(x,rect.x);y=Math.min(y,rect.y)
+                right=Math.max(right,rect.x+rect.width)
+                bottom=Math.max(bottom,rect.y+rect.height)
+            }
+            return Qt.rect(x,y,right-x,bottom-y)
+        }
+        x: bounds.x; y: bounds.y
+        width: bounds.width; height: bounds.height
         enabled: root.acceptsInput && root.ready
         containmentMask: QtObject {
             function contains(point: point): bool {
