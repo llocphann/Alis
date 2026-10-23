@@ -5793,5 +5793,14 @@
     "Until I forget it": "Until I forget it",
     "Until forgotten": "Until forgotten",
     "Up to 128 entries. Expiry stops use. Forgetting removes logical records; backups, chat and Obsidian copies may remain.": "Up to 128 entries. Expiry stops use. Forgetting removes logical records; backups, chat and Obsidian copies may remain.",
-    "Use saved memories with local models": "Use saved memories with local models"
+    "Use saved memories with local models": "Use saved memories with local models",
+  "Concise": "Concise",
+  "Dialogue tone": "Dialogue tone",
+  "Familiar coworker": "Familiar coworker",
+  "Familiarity": "Familiarity",
+  "Gentle": "Gentle",
+  "Personalize local dialogue": "Personalize local dialogue",
+  "Reset dialogue preferences": "Reset dialogue preferences",
+  "Use your chosen tone and today's explicit check-in for local replies. Familiarity is your choice. No relationship score, penalties for absence or pressure to return.": "Use your chosen tone and today's explicit check-in for local replies. Familiarity is your choice. No relationship score, penalties for absence or pressure to return.",
+  "Witty": "Witty"
 }
