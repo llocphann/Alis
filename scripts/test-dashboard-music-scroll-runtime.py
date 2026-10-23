@@ -78,8 +78,8 @@ ShellRoot {
    tryCompare(Config,"ready",true,6000)
    if(root.action==="restart"){
     check(Config.options.dashboard.music.showScrollbars===false,"saved OFF preference lost on actual restart")
-    check(findChild(dashboard,"dashboardMusic")===null,"Music unexpectedly allocated before first visit")
-    GlobalStates.dashboardPage=1
+    check(Config.options.dashboard.lastPageId==="music","restart fixture lost the persisted Music selection")
+    tryCompare(dashboard,"currentPageId","music",2000)
     tryVerify(()=>findChild(dashboard,"dashboardMusic")!==null,4000)
     const music=findChild(dashboard,"dashboardMusic")
     check(!music.showMusicScrollbars,"restarted Music ignored saved OFF preference")
@@ -120,9 +120,10 @@ ShellRoot {
     check(!dashboard.pageIds.includes("music"),"disabled Music page remains navigable")
     Config.setNestedValue("dashboard.music.showScrollbars",false)
     tryVerify(()=>{disk.reload();return disk.snapshot?.dashboard?.music?.showScrollbars===false&&disk.snapshot?.dashboard?.music?.enable===false},5000)
-    console.info("MUSIC_SCROLL_RESTART_PASS",root.checks,"checks",root.captures,"rendered frames saved OFF, unallocated/disabled page and short/empty lists");Qt.quit();return
+    console.info("MUSIC_SCROLL_RESTART_PASS",root.checks,"checks",root.captures,"rendered frames saved OFF, restored selection, disabled page and short/empty lists");Qt.quit();return
    }
    check(Config.options.dashboard.music.showScrollbars===true,"old config missing scrollbar flag must default ON")
+   check(findChild(dashboard,"dashboardMusic")===null,"Music unexpectedly allocated before its first visit on a fresh configuration")
    Config.setNestedValues({"performance.reduceAnimations":true,"dashboard.music.enable":true,"dashboard.music.showScrollbars":true,"dashboard.showHeader":true,"dashboard.canvas.widgets":[]})
    GlobalStates.dashboardPage=1
    tryVerify(()=>findChild(dashboard,"dashboardMusic")!==null,4000)
@@ -242,7 +243,7 @@ ShellRoot {
    page=settings.createObject(window.contentItem,{width:360,x:16,y:16,z:500})
    check(Array.from(page.contentData).find(item=>item.text===Translation.tr("Show Music scrollbars")).checked===false,"Settings close/reopen lost preference")
    page.destroy()
-   tryVerify(()=>{disk.reload();return disk.snapshot?.dashboard?.music?.showScrollbars===false},5000)
+   tryVerify(()=>{disk.reload();return disk.snapshot?.dashboard?.music?.showScrollbars===false&&disk.snapshot?.dashboard?.lastPageId==="music"},5000)
    console.info("MUSIC_SCROLL_PASS",root.checks,"checks",root.captures,"rendered frames six overflow lists, hidden/visible preference, wheel and keyboard")
   } catch(e) { console.error("MUSIC_SCROLL_FAIL",e.message,e.stack) } Qt.quit() }
  }
@@ -264,6 +265,7 @@ ShellRoot {
    print(result.stdout);raise SystemExit(1)
   saved=json.loads((config/"config.json").read_text())
   assert saved["dashboard"]["music"]["showScrollbars"] is False,"independent disk readback missing OFF preference"
+  assert saved["dashboard"]["lastPageId"]=="music","independent disk readback missing selected Music page"
   if os.environ.get("ALIS_MUSIC_SCROLL_LOG"):
    Path(os.environ["ALIS_MUSIC_SCROLL_LOG"]).with_name("config-off.json").write_text(json.dumps(saved["dashboard"],indent=2)+"\n")
   restarted=run_qs(folder,dict(env,MUSIC_SCROLL_ACTION="restart"),timeout=25)

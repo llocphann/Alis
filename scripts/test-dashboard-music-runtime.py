@@ -340,6 +340,12 @@ ShellRoot {
    check(music.selectedGenres.length===2 && music.results.length===3,
       "cold UI did not restore Genre multi selection")
    check(waitForPolish(dots,2000),"restored page navigation layout pending");renderFrame(dashboard,"restored page frame pending")
+   // Disabling the selected page repairs selection to Dashboard. Re-enabling
+   // it must not steal that selection; visit Music before checking its banner.
+   check(dashboard.currentPageId==="dashboard","re-enabling Music changed the selected page")
+   mouseClick(findChild(dashboard,"dashboardPage1"))
+   tryCompare(dashboard,"currentPageId","music",1000)
+   renderFrame(dashboard,"reselected Music frame pending")
    // Backend errors are surfaced without altering playback queue, audio or
    // browser state. A successful later status update hides the notification.
    const musicQueueBefore=fake.activeQueue
