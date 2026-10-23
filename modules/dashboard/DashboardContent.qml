@@ -38,6 +38,15 @@ Item {
     }
     property bool editMode: root.canvasController?.editMode ?? false
     onEditModeChanged: if (!editMode) root._navigationDraftOrder = null
+    Connections {
+        target: root.canvasController
+        function onEffectivePageOrderChanged(): void {
+            // Reorder creates the navigation snapshot to avoid a controller /
+            // selected-page binding cycle. Undo and Reset must update it too.
+            if (root.editMode && root._navigationDraftOrder !== null)
+                root._navigationDraftOrder = Array.from(root.canvasController.effectivePageOrder)
+        }
+    }
     property var musicBackend: null
     property bool musicVisited: currentPageId === "music"
     property bool plannerVisited: currentPageId === "weeklyPlanner"
