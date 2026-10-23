@@ -102,6 +102,32 @@ Window {
     x=>x.id==="clock" && x.visible===true),"custom layout not saved")
    check(JSON.stringify(Array.from(Config.options.dashboard.canvas.widgets))===primary,
     "main Dashboard widget geometry changed")
+   const orderBefore=Array.from(dashboard.pageIds)
+   const savedOrder=JSON.stringify(Array.from(Config.options.dashboard.pageOrder))
+   canvas.beginEditMode()
+   check(waitForPolish(root,2000),"custom-tab reorder layout did not settle")
+   const from=findChild(dashboard,"dashboardPage"+dashboard.pageIds.indexOf("custom-1"))
+   const to=findChild(dashboard,"dashboardPage0")
+   const drop=to.mapToItem(from,to.width/2,to.height/2)
+   mousePress(from,from.width/2,from.height/2)
+   mouseMove(from,drop.x,drop.y,20)
+   mouseRelease(from,drop.x,drop.y)
+   check(dashboard.pageIds[0]==="custom-1","custom canvas pointer reorder failed")
+   canvas.undoLastEdit()
+   check(JSON.stringify(dashboard.pageIds)===JSON.stringify(orderBefore),
+    "custom canvas Undo left navigation in the reordered state")
+   dashboard.moveTab("custom-1",0)
+   canvas.resetLayout()
+   check(JSON.stringify(dashboard.pageIds)===JSON.stringify(orderBefore),
+    "custom canvas Reset did not update navigation")
+   canvas.undoLastEdit()
+   check(dashboard.pageIds[0]==="custom-1","custom canvas Reset was not undoable")
+   canvas.cancelEditMode()
+   check(JSON.stringify(dashboard.pageIds)===JSON.stringify(orderBefore)
+    && JSON.stringify(Array.from(Config.options.dashboard.pageOrder))===savedOrder,
+    "custom canvas Cancel changed saved navigation")
+   check(dashboard.canvasController===canvas && canvas.visibleIds.includes("clock"),
+    "navigation edits changed the selected canvas or its saved widget")
    dashboard.canvasController.beginEditMode()
    dashboard.openCustomTabDialog("rename","custom-1")
    check(tabToolbar.visible,"rename did not open edit toolbar")
