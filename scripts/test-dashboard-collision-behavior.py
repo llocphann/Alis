@@ -13,6 +13,11 @@ for match in re.finditer(r"    function (\w+)\([^\{]*\) \{", source):
         end += 1
     functions.append("root." + match[1] + " = " + source[match.start():end].strip() + ";")
 program = "const assert=require('node:assert/strict');const root={collisionGap:8};const canvas={width:1000,height:700};\n" + "\n".join(functions) + r"""
+// The real QML root owns the viewport dimensions used by _minimumSize.
+// Follow every fixture resize rather than leaving those Item properties absent.
+Object.defineProperties(root, {
+ width: {get:()=>canvas.width}, height: {get:()=>canvas.height}
+});
 const rect=(x,y,width,height)=>({x,y,width,height});
 const clone=value=>JSON.parse(JSON.stringify(value));
 let baseline={notes:rect(30,30,240,160),system:rect(650,30,260,180),clock:rect(650,100,200,100)};
