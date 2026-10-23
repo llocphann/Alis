@@ -721,17 +721,21 @@ Scope {
                 }
             }
             function presentation(kind) { return Presentation.resolve(Config.options?.abyss?.positions,kind,outputName) }
-            function popupSourceRect(kind,edge,along): rect {
+            function popupSourceModule(kind,edge,along) {
                 const moduleKind=kind==="utilities" ? "utilButtons"
                     : ["wifi","bluetooth"].includes(kind) ? "tray" : ""
-                if (!moduleKind || !bar.visible) return Qt.rect(0,0,0,0)
+                if (!moduleKind || !bar.visible) return null
                 for (const id of bar.moduleIds) {
                     const module=bar.itemForId(id),g=module?.geometry,r=module?.inputRegion
                     if (module?.kind===moduleKind && module.visible && r && g?.edge===edge
                             && Math.abs(g.along+g.span/2-along)<.5)
-                        return Qt.rect(r.x,r.y,r.width,r.height)
+                        return module
                 }
-                return Qt.rect(0,0,0,0)
+                return null
+            }
+            function popupSourceRect(kind,edge,along): rect {
+                const r=popupSourceModule(kind,edge,along)?.inputRegion
+                return r ? Qt.rect(r.x,r.y,r.width,r.height) : Qt.rect(0,0,0,0)
             }
             function positionEdge(kind,fallback) { return Presentation.edge(presentation(kind),fallback) }
             function positionAlong(kind,edge,span,fallback) { return Presentation.along(presentation(kind),edge,span,width,height,fallback,nativeInsets) }
@@ -1267,6 +1271,8 @@ Scope {
                 hoverKind: window.transientPopupHoverKind
                 connectionSourceRect: window.popupSourceRect(
                     activeKind,activeFallbackEdge,activeAlongCenter)
+                sourceJoinedEdge: window.popupSourceModule(
+                    activeKind,activeFallbackEdge,activeAlongCenter)?.popupJoinedEdge ?? ""
                 companionVisitActive: companionExtension.utilitiesVisitActive
                 bodyInsetsResolver: (edge,along,span) =>
                     window.bodyInsets(edge,along,span)

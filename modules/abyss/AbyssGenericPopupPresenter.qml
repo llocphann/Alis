@@ -30,6 +30,8 @@ Item {
     property real requestedAlongCenter: 0
     property string hoverKind: ""
     property rect connectionSourceRect: Qt.rect(0,0,0,0)
+    // Supplied only by the exact visible module which opened this popup.
+    property string sourceJoinedEdge: ""
     property bool companionVisitActive: false
 
     property string activeKind: ""
@@ -193,9 +195,11 @@ Item {
         along: Presentation.along(root.activePosition,edge,span,
             root.outputWidth,root.outputHeight,
             root.activeAlongCenter-span/2,root.presentationInsets)
-        joinedEdge: Presentation.joinedEdge(root.activeKind,
+        readonly property string configuredJoinedEdge: Presentation.joinedEdge(root.activeKind,
             root.activePosition,edge,along,span,
             root.outputWidth,root.outputHeight)
+        joinedEdge: configuredJoinedEdge.length > 0 ? configuredJoinedEdge
+            : edge === root.activeFallbackEdge ? root.sourceJoinedEdge : ""
 
         placementPriority: root.activeKind === "dockAppMenu" ? -2 : 0
         obstacles: root.obstacles
