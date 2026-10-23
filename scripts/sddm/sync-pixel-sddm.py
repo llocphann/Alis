@@ -13,8 +13,10 @@ import filecmp
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
+import tempfile
 
 THEME_NAME = "ii-pixel"
 THEME_DIR = f"/usr/share/sddm/themes/{THEME_NAME}"
@@ -290,17 +292,53 @@ def extract_video_frame(video_path, dest_png):
         return None
 
 
+def _published_background_ready(path):
+    """The greeter cannot read a private source's inherited 0600 mode."""
+    try:
+        info = os.lstat(path)
+        return stat.S_ISREG(info.st_mode) and stat.S_IMODE(info.st_mode) == 0o644
+    except OSError:
+        return False
+
+
+def _publish_background(src, dest):
+    """Publish a complete, greeter-readable copy without changing the source."""
+    fd, staging = tempfile.mkstemp(prefix=".alis-background-", suffix=".png", dir=ASSETS_DIR)
+    os.close(fd)
+    try:
+        shutil.copy2(src, staging)
+        with open(staging, "rb") as image:
+            os.fchmod(image.fileno(), 0o644)
+            os.fsync(image.fileno())
+        # Replacing a legacy symlink publishes a new managed asset; never chmod
+        # or truncate the user's private wallpaper through that symlink.
+        os.replace(staging, dest)
+        directory = os.open(ASSETS_DIR, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        if os.path.exists(staging):
+            os.unlink(staging)
+
+
 def update_background(wallpaper_path):
     """Copy current wallpaper (or its first video frame) to theme assets/background.png."""
     if not wallpaper_path:
         return False
-    if not os.path.isdir(ASSETS_DIR):
-        try:
-            os.makedirs(ASSETS_DIR, exist_ok=True)
-        except PermissionError:
-            print(f"[sddm-pixel] Permission denied creating {ASSETS_DIR}.")
-            print(f"[sddm-pixel] Re-run install-pixel-sddm.sh to fix ownership.")
+    try:
+        if os.path.islink(ASSETS_DIR):
+            print("[sddm-pixel] Refusing a symlinked managed assets directory")
             return False
+        os.makedirs(ASSETS_DIR, exist_ok=True)
+        # A restrictive session umask must not make the managed greeter assets
+        # directory inaccessible to SDDM. No source directory is changed.
+        if stat.S_IMODE(os.stat(ASSETS_DIR).st_mode) != 0o755:
+            os.chmod(ASSETS_DIR, 0o755)
+    except OSError:
+        print(f"[sddm-pixel] Cannot prepare greeter assets in {ASSETS_DIR}.")
+        return False
 
     bg_dest = os.path.join(ASSETS_DIR, "background.png")
     ext = os.path.splitext(wallpaper_path)[1].lower()
@@ -310,18 +348,20 @@ def update_background(wallpaper_path):
 
     if ext in VIDEO_EXTENSIONS:
         try:
-            stat = os.stat(wallpaper_path)
+            source_stat = os.stat(wallpaper_path)
             video_stamp = json.dumps(
                 {
                     "path": os.path.realpath(wallpaper_path),
-                    "size": stat.st_size,
-                    "mtime_ns": stat.st_mtime_ns,
+                    "size": source_stat.st_size,
+                    "mtime_ns": source_stat.st_mtime_ns,
                 },
                 sort_keys=True,
             )
             if os.path.isfile(bg_dest) and os.path.isfile(video_stamp_path):
                 with open(video_stamp_path) as f:
                     if f.read() == video_stamp:
+                        if not _published_background_ready(bg_dest):
+                            _publish_background(bg_dest, bg_dest)
                         return True
         except OSError:
             video_stamp = None
@@ -331,13 +371,17 @@ def update_background(wallpaper_path):
             print("[sddm-pixel] Keeping existing background (video, no ffmpeg)")
             return False
         src = tmp_frame
-    elif os.path.isfile(bg_dest) and filecmp.cmp(wallpaper_path, bg_dest, shallow=True):
-        # copy2 preserves size and mtime, so the shallow comparison avoids
-        # reading or rewriting a large unchanged wallpaper asset.
-        return True
+    elif _published_background_ready(bg_dest):
+        try:
+            if filecmp.cmp(wallpaper_path, bg_dest, shallow=True):
+                # copy2 preserves size and mtime; no rewrite on unchanged sync.
+                return True
+        except OSError:
+            print("[sddm-pixel] Wallpaper unavailable; keeping the existing background")
+            return False
 
     try:
-        shutil.copy2(src, bg_dest)
+        _publish_background(src, bg_dest)
         if ext in VIDEO_EXTENSIONS and os.path.isfile(src):
             os.unlink(src)
         if video_stamp is not None:
