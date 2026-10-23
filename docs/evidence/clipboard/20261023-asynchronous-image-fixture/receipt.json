@@ -1,0 +1,229 @@
+{
+  "source_sha": "66d54559be71d861b1450deaafe768cdcd6991ca",
+  "recorded_at_utc": "2026-10-23T06:01:40.160773+00:00",
+  "issue": 127,
+  "runtime_changes": [],
+  "fixture_changes": [
+    "Use a synthetic asynchronous list backend rather than assigning entries while the initial refresh remains pending.",
+    "Activate the real Abyss content after selecting the fake backend.",
+    "Read config/alis; redirect Directories session caches and both image previews into private fixtures."
+  ],
+  "original_oracles_retained": [
+    "Unicode metadata dimensions and bounded 200x80 preview",
+    "Dimensionless intrinsic 64x128 image layout",
+    "No stale image from a reused delegate",
+    "Abyss renders the copied image"
+  ],
+  "additional_oracle": "Abyss row ID 2 must arrive through the asynchronous private backend",
+  "focused": {
+    "command_count": 9,
+    "passed": 9,
+    "failed": 0,
+    "commands": [
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-history-runtime.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 3.79,
+        "output": "PASS: 9 history policies, exact bytes, preview collisions, image retention and bounded failure\n  INFO qml: CLIP_HISTORY_PASS 13 unique rows, 14 refresh requests, pins retained\nPASS: 20 raw entries and all payloads unchanged; 7 exact repeats hidden, 2 colliding long previews and distinct trailing newline retained\n"
+      },
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-watcher-contract.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 0.33,
+        "output": "clipboard watcher contract: ok\n"
+      },
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-image-classification-contract.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 0.03,
+        "output": "clipboard image classification contract: ok\n"
+      },
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-image-mime-contract.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 0.02,
+        "output": "clipboard image MIME restore contract: ok\n"
+      },
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-image-thumbnail-contract.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 0.03,
+        "output": "ok - image clipboard rows use bounded lazy thumbnails and hide binary metadata text\n"
+      },
+      {
+        "argv": [
+          "python3",
+          "scripts/test-clipboard-owner-image-metadata-contract.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 0.02,
+        "output": "clipboard owner binary metadata contract: ok\n"
+      },
+      {
+        "argv": [
+          "env",
+          "ALIS_CLIPBOARD_IMAGE_LIST_DELAY=0",
+          "python3",
+          "scripts/test-clipboard-image-runtime.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 2.91,
+        "output": "  INFO qml: CLIPBOARD_IMAGE_PASS native-binary Unicode-metadata intrinsic-size delegate-reuse bounded-preview Abyss-history\n"
+      },
+      {
+        "argv": [
+          "env",
+          "ALIS_CLIPBOARD_IMAGE_LIST_DELAY=.35",
+          "python3",
+          "scripts/test-clipboard-image-runtime.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 3.29,
+        "output": "  INFO qml: CLIPBOARD_IMAGE_PASS native-binary Unicode-metadata intrinsic-size delegate-reuse bounded-preview Abyss-history\n"
+      },
+      {
+        "argv": [
+          "env",
+          "ALIS_CLIPBOARD_IMAGE_LIST_DELAY=1.5",
+          "python3",
+          "scripts/test-clipboard-image-runtime.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 4.44,
+        "output": "  INFO qml: CLIPBOARD_IMAGE_PASS native-binary Unicode-metadata intrinsic-size delegate-reuse bounded-preview Abyss-history\n"
+      }
+    ],
+    "supervisor": {
+      "source_sha": "66d54559be71d861b1450deaafe768cdcd6991ca",
+      "argv": [
+        "bwrap",
+        "--bind",
+        "/",
+        "/",
+        "--dev-bind",
+        "/dev",
+        "/dev",
+        "--proc",
+        "/proc",
+        "--tmpfs",
+        "/tmp",
+        "--unshare-pid",
+        "--die-with-parent",
+        "--",
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/clipboard-image-focused-driver.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 15.0,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "4a703b5e45f1090264e176be0c29dc5c0121714f639464c7030f2e4ec49184bc"
+    }
+  },
+  "frozen_source_diagnostic": {
+    "source_sha": "cef326114fd5722da5b2a1b2b50ca62bc47abbe3",
+    "probe_sha256": "499b2683bf904376ffcf69e0fa8e74692768914b79305f02a20f95b805fbf8bf",
+    "guard": "Private /tmp mount, private XDG directories and a synthetic PATH cliphist list backend; no owner history or cache access.",
+    "cases": [
+      {
+        "list_delay_seconds": 0.15,
+        "harness_exit": 0,
+        "outcome": "PASS"
+      },
+      {
+        "list_delay_seconds": 0.25,
+        "harness_exit": 0,
+        "outcome": "PASS"
+      },
+      {
+        "list_delay_seconds": 0.35,
+        "harness_exit": 1,
+        "outcome": "FAIL: step5 entries0 while standalone image was decoded"
+      },
+      {
+        "list_delay_seconds": 0.45,
+        "harness_exit": 0,
+        "outcome": "PASS"
+      },
+      {
+        "list_delay_seconds": 0.55,
+        "harness_exit": 0,
+        "outcome": "PASS"
+      },
+      {
+        "list_delay_seconds": 0.65,
+        "harness_exit": 0,
+        "outcome": "PASS"
+      },
+      {
+        "list_delay_seconds": 0.8,
+        "harness_exit": 0,
+        "outcome": "PASS"
+      },
+      {
+        "list_delay_seconds": 1.0,
+        "harness_exit": 0,
+        "outcome": "PASS"
+      }
+    ],
+    "native_exit_for_failed_diagnostic": null,
+    "native_exit_note": "Not separately persisted; do not infer from the Python harness exit.",
+    "diagnostic_supervisor": {
+      "source_sha": "cef326114fd5722da5b2a1b2b50ca62bc47abbe3",
+      "argv": [
+        "bwrap",
+        "--bind",
+        "/",
+        "/",
+        "--dev-bind",
+        "/dev",
+        "/dev",
+        "--proc",
+        "/proc",
+        "--tmpfs",
+        "/tmp",
+        "--unshare-pid",
+        "--die-with-parent",
+        "--",
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/clipboard-image-diagnostic-fixture/runner-timing.py"
+      ],
+      "actual_exit": 1,
+      "status": "FAIL",
+      "stop_reason": null,
+      "elapsed_seconds": 28.3,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "cd913b58b19b3368cc19876b795069334dc23cfa273685707c96eae5727685ec"
+    }
+  },
+  "classification": "The old fixture has a demonstrated race: its initial empty list can overwrite the row assigned directly by the test. This reproduces the timeout symptom; the original canonical failure did not record its stage, so an identical original cause is not proven. No image data corruption or production image regression has been established.",
+  "data_protection": "Synthetic data only. No actual clipboard payloads read or published; no owner history, pins, volume, routing, desktop or service changed.",
+  "canonical_gate": {
+    "source_sha": "66d54559be71d861b1450deaafe768cdcd6991ca",
+    "status": "RUNNING",
+    "prior_cef": "STOPPED -15, 324 PASS / 39 FAIL / 1 unsettled; retain all results."
+  },
+  "separate_gates": [
+    "Installed desktop",
+    "Physical and multi-output input",
+    "Owner acceptance"
+  ]
+}
