@@ -21,6 +21,21 @@ log_ok()   { echo -e "\033[0;32m[sddm] ✓ $*\033[0m"; }
 log_warn() { echo -e "\033[0;33m[sddm] ⚠ $*\033[0m"; }
 log_err()  { echo -e "\033[0;31m[sddm] ✗ $*\033[0m"; }
 
+# Only shipped theme code and the bundled fallback are public assets. Do not
+# walk generated wallpaper stamps or other user-owned files in the theme.
+ensure_greeter_permissions() {
+    local path source_file
+    for path in "$THEME_DIR" "$THEME_DIR/assets"; do
+        if [[ -O "$path" ]]; then chmod 0755 "$path"; else elevate chmod 0755 "$path"; fi
+    done
+    while IFS= read -r -d '' source_file; do
+        path="$THEME_DIR/$(basename "$source_file")"
+        if [[ -O "$path" ]]; then chmod 0644 "$path"; else elevate chmod 0644 "$path"; fi
+    done < <(find "$THEME_SRC" -maxdepth 1 -type f \( -name '*.qml' -o -name '*.js' -o -name '*.conf' -o -name 'metadata.desktop' \) -print0)
+    path="$THEME_DIR/assets/default-background.svg"
+    if [[ -O "$path" ]]; then chmod 0644 "$path"; else elevate chmod 0644 "$path"; fi
+}
+
 # Intelligent privilege escalation: sudo for terminal, pkexec for graphical/IPC mode
 elevate() {
   # If we have a TTY, use interactive sudo
@@ -121,6 +136,9 @@ if [[ -d "${THEME_DIR}" ]]; then
     if [[ -n "$src_hash" && "$src_hash" == "$tgt_hash" ]]; then
         theme_needs_update=false
     fi
+    if ! cmp -s "$THEME_SRC/assets/default-background.svg" "$THEME_DIR/assets/default-background.svg"; then
+        theme_needs_update=true
+    fi
 fi
 
 if $theme_needs_update; then
@@ -144,6 +162,8 @@ if $theme_needs_update; then
 else
     log_ok "Theme files already up to date — skipping copy"
 fi
+
+ensure_greeter_permissions
 
 # Create a placeholder background (symlinked to wallpaper later by sync script)
 if [[ ! -f "${THEME_DIR}/assets/background.png" ]]; then

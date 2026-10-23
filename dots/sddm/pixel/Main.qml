@@ -117,9 +117,11 @@ MouseArea {
     // ── BACKGROUND ─────────────────────────────────────────────────────────
     Rectangle { anchors.fill: parent; color: root.colBackground; z: -1 }
 
-    Image {
+    GreeterWallpaper {
         id: wallpaper
-        anchors.fill: parent; source: config.background || ""
+        anchors.fill: parent
+        configuredSource: config.background || ""
+        configuredFallback: config.defaultBackground || ""
         fillMode: Image.PreserveAspectCrop; asynchronous: true; cache: true
         layer.enabled: root.showLoginView
         layer.effect: FastBlur {

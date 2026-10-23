@@ -39,7 +39,7 @@ ConfigFile=theme.conf
 
 [General]
 background=assets/background.png
-defaultBackground=assets/background.png
+defaultBackground=assets/default-background.svg
 blurRadius=50
 
 # Alis Material You colors — updated automatically by sync-pixel-sddm.py on wallpaper change"""
