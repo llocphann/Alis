@@ -116,6 +116,9 @@ ShellRoot {
    tryCompare(body,"ready",false,2500)
    check(String(wall.data.find(item=>item.displayedSource!==undefined).displayedSource).endsWith('/b.png'),"desktop did not finish applying selected image")
    capture(wall,"after")
+   // This is a sequential apply/cancel contract. Let b's deferred theme
+   // handoff settle before a later committed selection is allowed to replace it.
+   tryVerify(()=>Wallpapers._pendingLiquidThemePath==="",3500)
    Wallpapers.previewWallpaper(root.prefix+"c.png")
    tryVerify(()=>!wall.transitionBusy,5000)
    Wallpapers.cancelWallpaperPreview()
