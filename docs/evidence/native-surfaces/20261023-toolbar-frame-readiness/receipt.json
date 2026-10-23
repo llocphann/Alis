@@ -1,0 +1,52 @@
+{
+  "source_sha": "31d3bbfbbacbfbf04f3ff1b4a8207d9c6234486e",
+  "change": "Test waits for a painted frame after toolbar scroll/layout relocation; no production UI change. Original strict clipping, click, draft, Cancel and Done assertions retained.",
+  "before": {
+    "source_sha": "16afbda5f212e2965e5bb014be5af4b75f0b69b1",
+    "status": "FAIL",
+    "native_exit": 0,
+    "harness_exit": 1,
+    "clip_at_check": {
+      "x": 210,
+      "width": 30,
+      "clip_width": 220,
+      "clip_height": 254
+    },
+    "after_forced_painted_frame": {
+      "x": 144,
+      "width": 24,
+      "clip_width": 220,
+      "clip_height": 214
+    },
+    "note": "Read-only diagnostic retains original failure. Separate catch-only timing diagnostic passed; focused baseline blocked before Quickshell because parent focus was null."
+  },
+  "after": {
+    "status": "PASS",
+    "harness_exit": 0,
+    "owned_remaining": [],
+    "attempts": [
+      {
+        "attempt": 0,
+        "harness_exit": 0,
+        "elapsed_seconds": 87.53,
+        "checks": 4290,
+        "frames": 687,
+        "cases": 12,
+        "log_sha256": "0752f26765265f0db56fc205eb246d7bf6d7c08eed8f90f9314fe9d14b8680f9"
+      },
+      {
+        "attempt": 1,
+        "harness_exit": 0,
+        "elapsed_seconds": 87.27,
+        "checks": 4290,
+        "frames": 687,
+        "cases": 12,
+        "log_sha256": "0752f26765265f0db56fc205eb246d7bf6d7c08eed8f90f9314fe9d14b8680f9"
+      }
+    ]
+  },
+  "limitations": [
+    "Focused fixture only; no full maintainer PASS",
+    "No new desktop installation or Owner acceptance"
+  ]
+}

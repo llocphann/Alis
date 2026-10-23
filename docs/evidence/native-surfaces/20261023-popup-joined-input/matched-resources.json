@@ -1,0 +1,1113 @@
+{
+  "scope": "Private nested Niri; real wl_pointer on production Resources Popup. Owned child focus held during each walk. No installed-package, physical or multi-output acceptance; no performance conclusion.",
+  "before": {
+    "source_sha": "e333f5455d55a0db4841e30bd33055af66e78a1c",
+    "fixture_sha256": "aa9356a4ef174ff14b51f5a049d2bfe39536a29078dc47f6fcc25410a198a56c",
+    "harness_exit": 1,
+    "native_exit": 0,
+    "status": "FAIL",
+    "elapsed_seconds": 48.3,
+    "owned_remaining": [],
+    "errors": [],
+    "cases": [
+      {
+        "kind": "resources",
+        "edge": "top",
+        "scale": 1.5,
+        "position": 0.06,
+        "joinCorner": true,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              115.0,
+              44.0
+            ],
+            "actual_point": {
+              "x": 115.09765625,
+              "y": 44
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              199.0,
+              118.0
+            ],
+            "actual_point": {
+              "x": 199.171875,
+              "y": 118
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "adjacent-weld",
+            "point": [
+              18,
+              118
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body-return",
+            "point": [
+              199.0,
+              118.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              115.0,
+              24.0
+            ],
+            "actual_point": {
+              "x": 115.09765625,
+              "y": 24
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              566.5,
+              636
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 115.09765625,
+          "y": 24
+        },
+        "source_point_matches": true,
+        "weld": {
+          "point": {
+            "x": 18,
+            "y": 118
+          },
+          "expectedAdjacent": "left",
+          "joinedEdge": "left",
+          "appliedJoinedEdge": "left",
+          "distance": -68,
+          "nativeContains": false,
+          "hoverContains": false,
+          "sourceOwns": false,
+          "rawSurface": {
+            "x": 30,
+            "y": -50,
+            "width": 338,
+            "height": 238
+          },
+          "joinedSurface": {
+            "x": -50,
+            "y": -50,
+            "width": 418,
+            "height": 238
+          },
+          "inputBounds": {
+            "x": 30,
+            "y": 48,
+            "width": 338,
+            "height": 140,
+            "left": 30,
+            "right": 368,
+            "top": 48,
+            "bottom": 188
+          }
+        },
+        "status": "FAIL"
+      },
+      {
+        "kind": "resources",
+        "edge": "top",
+        "scale": 1.5,
+        "position": 0.94,
+        "joinCorner": true,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1018.0,
+              44.0
+            ],
+            "actual_point": {
+              "x": 1018.8984375,
+              "y": 44
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              925.5,
+              118.0
+            ],
+            "actual_point": {
+              "x": 926.31640625,
+              "y": 118
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "adjacent-weld",
+            "point": [
+              1115,
+              118
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body-return",
+            "point": [
+              925.5,
+              118.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1018.0,
+              24.0
+            ],
+            "actual_point": {
+              "x": 1018.8984375,
+              "y": 24
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              566.5,
+              636
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 1018.8984375,
+          "y": 24
+        },
+        "source_point_matches": true,
+        "weld": {
+          "point": {
+            "x": 1115,
+            "y": 118
+          },
+          "expectedAdjacent": "right",
+          "joinedEdge": "right",
+          "appliedJoinedEdge": "right",
+          "distance": -68,
+          "nativeContains": false,
+          "hoverContains": false,
+          "sourceOwns": false,
+          "rawSurface": {
+            "x": 748,
+            "y": -50,
+            "width": 355,
+            "height": 238
+          },
+          "joinedSurface": {
+            "x": 748,
+            "y": -50,
+            "width": 435,
+            "height": 238
+          },
+          "inputBounds": {
+            "x": 748,
+            "y": 48,
+            "width": 355,
+            "height": 140,
+            "left": 748,
+            "right": 1103,
+            "top": 48,
+            "bottom": 188
+          }
+        },
+        "status": "FAIL"
+      },
+      {
+        "kind": "resources",
+        "edge": "right",
+        "scale": 1.5,
+        "position": 0.06,
+        "joinCorner": true,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1089.0,
+              115.0
+            ],
+            "actual_point": {
+              "x": 1089.9609375,
+              "y": 115
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              907.5,
+              115.0
+            ],
+            "actual_point": {
+              "x": 908.30078125,
+              "y": 115
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "adjacent-weld",
+            "point": [
+              907.5,
+              18
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body-return",
+            "point": [
+              907.5,
+              115.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1109.0,
+              115.0
+            ],
+            "actual_point": {
+              "x": 1109.9765625,
+              "y": 115
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              64,
+              350.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 1109.9765625,
+          "y": 115
+        },
+        "source_point_matches": true,
+        "weld": {
+          "point": {
+            "x": 907.5,
+            "y": 18
+          },
+          "expectedAdjacent": "top",
+          "joinedEdge": "top",
+          "appliedJoinedEdge": "top",
+          "distance": -68,
+          "nativeContains": false,
+          "hoverContains": false,
+          "sourceOwns": false,
+          "rawSurface": {
+            "x": 730,
+            "y": 45,
+            "width": 453,
+            "height": 140
+          },
+          "joinedSurface": {
+            "x": 730,
+            "y": -50,
+            "width": 453,
+            "height": 235
+          },
+          "inputBounds": {
+            "x": 730,
+            "y": 45,
+            "width": 355,
+            "height": 140,
+            "left": 730,
+            "right": 1085,
+            "top": 45,
+            "bottom": 185
+          }
+        },
+        "status": "FAIL"
+      },
+      {
+        "kind": "resources",
+        "edge": "right",
+        "scale": 1.5,
+        "position": 0.94,
+        "joinCorner": true,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1089.0,
+              585.0
+            ],
+            "actual_point": {
+              "x": 1089.9609375,
+              "y": 585
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              907.5,
+              585.0
+            ],
+            "actual_point": {
+              "x": 908.30078125,
+              "y": 585
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "adjacent-weld",
+            "point": [
+              907.5,
+              682
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body-return",
+            "point": [
+              907.5,
+              585.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1109.0,
+              585.0
+            ],
+            "actual_point": {
+              "x": 1109.9765625,
+              "y": 585
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              64,
+              350.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 1109.9765625,
+          "y": 585
+        },
+        "source_point_matches": true,
+        "weld": {
+          "point": {
+            "x": 907.5,
+            "y": 682
+          },
+          "expectedAdjacent": "bottom",
+          "joinedEdge": "bottom",
+          "appliedJoinedEdge": "bottom",
+          "distance": -68,
+          "nativeContains": false,
+          "hoverContains": false,
+          "sourceOwns": false,
+          "rawSurface": {
+            "x": 730,
+            "y": 515,
+            "width": 453,
+            "height": 140
+          },
+          "joinedSurface": {
+            "x": 730,
+            "y": 515,
+            "width": 453,
+            "height": 235
+          },
+          "inputBounds": {
+            "x": 730,
+            "y": 515,
+            "width": 355,
+            "height": 140,
+            "left": 730,
+            "right": 1085,
+            "top": 515,
+            "bottom": 655
+          }
+        },
+        "status": "FAIL"
+      }
+    ]
+  },
+  "after": {
+    "source_sha": "0ac12b56b2f682f8fc7f6b3b0ac698da760ff860",
+    "fixture_sha256": "aa9356a4ef174ff14b51f5a049d2bfe39536a29078dc47f6fcc25410a198a56c",
+    "harness_exit": 0,
+    "native_exit": 0,
+    "status": "PASS",
+    "elapsed_seconds": 48.8,
+    "owned_remaining": [],
+    "errors": [],
+    "cases": [
+      {
+        "kind": "resources",
+        "edge": "top",
+        "scale": 1.5,
+        "position": 0.06,
+        "joinCorner": true,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              115.0,
+              44.0
+            ],
+            "actual_point": {
+              "x": 115.09765625,
+              "y": 44
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              199.0,
+              118.0
+            ],
+            "actual_point": {
+              "x": 199.171875,
+              "y": 118
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "adjacent-weld",
+            "point": [
+              18,
+              118
+            ],
+            "actual_point": {
+              "x": 18.015625,
+              "y": 118
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body-return",
+            "point": [
+              199.0,
+              118.0
+            ],
+            "actual_point": {
+              "x": 199.171875,
+              "y": 118
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              115.0,
+              24.0
+            ],
+            "actual_point": {
+              "x": 115.09765625,
+              "y": 24
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              566.5,
+              636
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 115.09765625,
+          "y": 24
+        },
+        "source_point_matches": true,
+        "weld": {
+          "point": {
+            "x": 18,
+            "y": 118
+          },
+          "expectedAdjacent": "left",
+          "joinedEdge": "left",
+          "appliedJoinedEdge": "left",
+          "distance": -68,
+          "nativeContains": true,
+          "hoverContains": true,
+          "sourceOwns": false,
+          "rawSurface": {
+            "x": 30,
+            "y": -50,
+            "width": 338,
+            "height": 238
+          },
+          "joinedSurface": {
+            "x": -50,
+            "y": -50,
+            "width": 418,
+            "height": 238
+          },
+          "inputBounds": {
+            "x": 0,
+            "y": 48,
+            "width": 368,
+            "height": 140,
+            "left": 0,
+            "right": 368,
+            "top": 48,
+            "bottom": 188
+          }
+        },
+        "status": "PASS"
+      },
+      {
+        "kind": "resources",
+        "edge": "top",
+        "scale": 1.5,
+        "position": 0.94,
+        "joinCorner": true,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1018.0,
+              44.0
+            ],
+            "actual_point": {
+              "x": 1018.8984375,
+              "y": 44
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              925.5,
+              118.0
+            ],
+            "actual_point": {
+              "x": 926.31640625,
+              "y": 118
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "adjacent-weld",
+            "point": [
+              1115,
+              118
+            ],
+            "actual_point": {
+              "x": 1115.98046875,
+              "y": 118
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body-return",
+            "point": [
+              925.5,
+              118.0
+            ],
+            "actual_point": {
+              "x": 926.31640625,
+              "y": 118
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1018.0,
+              24.0
+            ],
+            "actual_point": {
+              "x": 1018.8984375,
+              "y": 24
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              566.5,
+              636
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 1018.8984375,
+          "y": 24
+        },
+        "source_point_matches": true,
+        "weld": {
+          "point": {
+            "x": 1115,
+            "y": 118
+          },
+          "expectedAdjacent": "right",
+          "joinedEdge": "right",
+          "appliedJoinedEdge": "right",
+          "distance": -68,
+          "nativeContains": true,
+          "hoverContains": true,
+          "sourceOwns": false,
+          "rawSurface": {
+            "x": 748,
+            "y": -50,
+            "width": 355,
+            "height": 238
+          },
+          "joinedSurface": {
+            "x": 748,
+            "y": -50,
+            "width": 435,
+            "height": 238
+          },
+          "inputBounds": {
+            "x": 748,
+            "y": 48,
+            "width": 385,
+            "height": 140,
+            "left": 748,
+            "right": 1133,
+            "top": 48,
+            "bottom": 188
+          }
+        },
+        "status": "PASS"
+      },
+      {
+        "kind": "resources",
+        "edge": "right",
+        "scale": 1.5,
+        "position": 0.06,
+        "joinCorner": true,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1089.0,
+              115.0
+            ],
+            "actual_point": {
+              "x": 1089.9609375,
+              "y": 115
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              907.5,
+              115.0
+            ],
+            "actual_point": {
+              "x": 908.30078125,
+              "y": 115
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "adjacent-weld",
+            "point": [
+              907.5,
+              18
+            ],
+            "actual_point": {
+              "x": 908.30078125,
+              "y": 18
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body-return",
+            "point": [
+              907.5,
+              115.0
+            ],
+            "actual_point": {
+              "x": 908.30078125,
+              "y": 115
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1109.0,
+              115.0
+            ],
+            "actual_point": {
+              "x": 1109.9765625,
+              "y": 115
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              64,
+              350.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 1109.9765625,
+          "y": 115
+        },
+        "source_point_matches": true,
+        "weld": {
+          "point": {
+            "x": 907.5,
+            "y": 18
+          },
+          "expectedAdjacent": "top",
+          "joinedEdge": "top",
+          "appliedJoinedEdge": "top",
+          "distance": -68,
+          "nativeContains": true,
+          "hoverContains": true,
+          "sourceOwns": false,
+          "rawSurface": {
+            "x": 730,
+            "y": 45,
+            "width": 453,
+            "height": 140
+          },
+          "joinedSurface": {
+            "x": 730,
+            "y": -50,
+            "width": 453,
+            "height": 235
+          },
+          "inputBounds": {
+            "x": 730,
+            "y": 0,
+            "width": 355,
+            "height": 185,
+            "left": 730,
+            "right": 1085,
+            "top": 0,
+            "bottom": 185
+          }
+        },
+        "status": "PASS"
+      },
+      {
+        "kind": "resources",
+        "edge": "right",
+        "scale": 1.5,
+        "position": 0.94,
+        "joinCorner": true,
+        "phases": [
+          {
+            "stage": "seam",
+            "point": [
+              1089.0,
+              585.0
+            ],
+            "actual_point": {
+              "x": 1089.9609375,
+              "y": 585
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body",
+            "point": [
+              907.5,
+              585.0
+            ],
+            "actual_point": {
+              "x": 908.30078125,
+              "y": 585
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "adjacent-weld",
+            "point": [
+              907.5,
+              682
+            ],
+            "actual_point": {
+              "x": 908.30078125,
+              "y": 682
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "body-return",
+            "point": [
+              907.5,
+              585.0
+            ],
+            "actual_point": {
+              "x": 908.30078125,
+              "y": 585
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": false,
+            "generic_trigger": false
+          },
+          {
+            "stage": "reverse",
+            "point": [
+              1109.0,
+              585.0
+            ],
+            "actual_point": {
+              "x": 1109.9765625,
+              "y": 585
+            },
+            "point_matches": true,
+            "active": true,
+            "source_hover": true,
+            "generic_trigger": false
+          },
+          {
+            "stage": "leave",
+            "point": [
+              64,
+              350.0
+            ],
+            "actual_point": null,
+            "point_matches": false,
+            "active": false,
+            "source_hover": false,
+            "generic_trigger": false
+          }
+        ],
+        "source_open": true,
+        "source_point": {
+          "x": 1109.9765625,
+          "y": 585
+        },
+        "source_point_matches": true,
+        "weld": {
+          "point": {
+            "x": 907.5,
+            "y": 682
+          },
+          "expectedAdjacent": "bottom",
+          "joinedEdge": "bottom",
+          "appliedJoinedEdge": "bottom",
+          "distance": -68,
+          "nativeContains": true,
+          "hoverContains": true,
+          "sourceOwns": false,
+          "rawSurface": {
+            "x": 730,
+            "y": 515,
+            "width": 453,
+            "height": 140
+          },
+          "joinedSurface": {
+            "x": 730,
+            "y": 515,
+            "width": 453,
+            "height": 235
+          },
+          "inputBounds": {
+            "x": 730,
+            "y": 515,
+            "width": 355,
+            "height": 185,
+            "left": 730,
+            "right": 1085,
+            "top": 515,
+            "bottom": 700
+          }
+        },
+        "status": "PASS"
+      }
+    ]
+  },
+  "remaining_gates": [
+    "Broader native joined-shoulder regression is FAIL, diagnosis pending",
+    "All module families, four primary edges, both joined ends and Join OFF controls",
+    "Installed desktop, multi-output and Owner acceptance"
+  ],
+  "unchanged": "Paint/content placement, source-module priority, outside-leave policy and hover timers unchanged by production commit 0ac12b56b."
+}
