@@ -96,17 +96,25 @@ Window {
    const pageDots=findChild(dashboard,"dashboardPageDots")
    check(!!createButton && !!defaultButton && !!actions && !!pageDots,
     "custom tab action controls missing")
-   check(!createButton.visible && actions.visible && defaultButton.visible,
-    "Create must be hidden outside Edit while Set default stays accessible")
+   check(!createButton.visible && !defaultButton.visible && !defaultButton.enabled,
+    "custom/default tab actions must be hidden outside Edit")
    check(Math.abs(pageDots.mapToItem(dashboard,pageDots.width/2,0).x
     -dashboard.width/2)<4,"tab controls are not centered as one group")
-   mouseClick(defaultButton)
-   check(Config.options.dashboard.defaultTabId==="dashboard",
-    "default-tab action did not save active page")
    dashboard.canvasController.beginEditMode()
    tryVerify(()=>createButton.visible && createButton.enabled,1500)
    check(defaultButton.visible && defaultButton.enabled,
     "set-default button missing in Edit Dashboard Layout")
+   const inactivity=Config.options.dashboard.inactiveMinutes
+   mouseClick(defaultButton)
+   check(Config.options.dashboard.defaultTabId==="dashboard",
+    "default-tab action did not save active page in Edit mode")
+   check(Config.options.dashboard.inactiveMinutes===inactivity,
+    "set-default action silently changed inactivity duration")
+   check(defaultButton.colBackground.a===1 && defaultButton.colBackgroundToggled.a===1
+    && defaultButton.colBackground.toString()!==defaultButton.colBackgroundToggled.toString(),
+    "default-tab selected/unselected states need distinct opaque backgrounds")
+   check(defaultButton.contentItem.color.toString()!==defaultButton.colBackgroundToggled.toString(),
+    "default-tab icon has no contrast against selected background")
    check(waitForPolish(root,2000),"Create control layout did not settle")
    mouseClick(createButton)
    tryVerify(()=>tabToolbar.visible && dashboard.tabNamingActive,2000)
