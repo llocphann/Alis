@@ -1,0 +1,232 @@
+{
+  "source_sha": "cef326114fd5722da5b2a1b2b50ca62bc47abbe3",
+  "started": 364,
+  "settled": 363,
+  "passed": 324,
+  "failed": 39,
+  "skipped": 0,
+  "unsettled": 1,
+  "current": [
+    "364",
+    "Python regression: scripts/test-wallpaper-transition-recovery-runtime.py"
+  ],
+  "failed_checks": [
+    {
+      "number": 23,
+      "label": "Native shared-field optimized/unoptimized exact GPU parity"
+    },
+    {
+      "number": 24,
+      "label": "Native shared-field transparent-interior exact GPU parity"
+    },
+    {
+      "number": 25,
+      "label": "Native shared-field fractional light transparent-interior exact GPU parity"
+    },
+    {
+      "number": 26,
+      "label": "Native shared-field fractional light/mask exact GPU parity"
+    },
+    {
+      "number": 85,
+      "label": "Python regression: scripts/test-abyss-field-support-runtime.py"
+    },
+    {
+      "number": 96,
+      "label": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py"
+    },
+    {
+      "number": 101,
+      "label": "Python regression: scripts/test-abyss-module-field-runtime.py"
+    },
+    {
+      "number": 104,
+      "label": "Python regression: scripts/test-abyss-multi-selection-runtime.py"
+    },
+    {
+      "number": 125,
+      "label": "Python regression: scripts/test-abyss-round0-editor-controls.py"
+    },
+    {
+      "number": 131,
+      "label": "Python regression: scripts/test-abyss-transparent-interior-runtime.py"
+    },
+    {
+      "number": 138,
+      "label": "Python regression: scripts/test-abyss-width-affects-modules-runtime.py"
+    },
+    {
+      "number": 165,
+      "label": "Python regression: scripts/test-calendar-weather-composition-contract.py"
+    },
+    {
+      "number": 174,
+      "label": "Python regression: scripts/test-clipboard-image-runtime.py"
+    },
+    {
+      "number": 187,
+      "label": "Python regression: scripts/test-dashboard-collision-behavior.py"
+    },
+    {
+      "number": 191,
+      "label": "Python regression: scripts/test-dashboard-edit-input-escape-contract.py"
+    },
+    {
+      "number": 192,
+      "label": "Python regression: scripts/test-dashboard-edit-transaction-contract.py"
+    },
+    {
+      "number": 193,
+      "label": "Python regression: scripts/test-dashboard-editor-field-runtime.py"
+    },
+    {
+      "number": 194,
+      "label": "Python regression: scripts/test-dashboard-freeform-contract.py"
+    },
+    {
+      "number": 198,
+      "label": "Python regression: scripts/test-dashboard-music-browser-navigation-contract.py"
+    },
+    {
+      "number": 200,
+      "label": "Python regression: scripts/test-dashboard-music-runtime.py"
+    },
+    {
+      "number": 201,
+      "label": "Python regression: scripts/test-dashboard-music-scroll-runtime.py"
+    },
+    {
+      "number": 202,
+      "label": "Python regression: scripts/test-dashboard-notes-markdown-contract.py"
+    },
+    {
+      "number": 203,
+      "label": "Python regression: scripts/test-dashboard-notes-markdown-runtime.py"
+    },
+    {
+      "number": 209,
+      "label": "Python regression: scripts/test-dashboard-tab-reorder-runtime.py"
+    },
+    {
+      "number": 213,
+      "label": "Python regression: scripts/test-dashboard-workspace.py"
+    },
+    {
+      "number": 218,
+      "label": "Python regression: scripts/test-desktop-widget-editor-coordinates.py"
+    },
+    {
+      "number": 221,
+      "label": "Python regression: scripts/test-dock-abyss-hover-orientation-contract.py"
+    },
+    {
+      "number": 248,
+      "label": "Python regression: scripts/test-light-mode-upstream-contract.py"
+    },
+    {
+      "number": 250,
+      "label": "Python regression: scripts/test-local-ai-gguf-runtime.py"
+    },
+    {
+      "number": 251,
+      "label": "Python regression: scripts/test-local-model-folder.py"
+    },
+    {
+      "number": 261,
+      "label": "Python regression: scripts/test-material-only-global-style-contract.py"
+    },
+    {
+      "number": 270,
+      "label": "Python regression: scripts/test-notification-center-bottom-right-contract.py"
+    },
+    {
+      "number": 278,
+      "label": "Python regression: scripts/test-owner-ui-regressions-contract.py"
+    },
+    {
+      "number": 313,
+      "label": "Python regression: scripts/test-settings-concise-copy-surface.py"
+    },
+    {
+      "number": 324,
+      "label": "Python regression: scripts/test-shell-surface-contracts.py"
+    },
+    {
+      "number": 338,
+      "label": "Python regression: scripts/test-theme-seed-cache.py"
+    },
+    {
+      "number": 354,
+      "label": "Python regression: scripts/test-wallpaper-carousel-runtime.py"
+    },
+    {
+      "number": 355,
+      "label": "Python regression: scripts/test-wallpaper-color-preview-runtime.py"
+    },
+    {
+      "number": 361,
+      "label": "Python regression: scripts/test-wallpaper-preview-palette-cache.py"
+    }
+  ],
+  "receipt": {
+    "source_sha": "cef326114fd5722da5b2a1b2b50ca62bc47abbe3",
+    "argv": [
+      "bash",
+      "scripts/validate-maintainer-local.sh",
+      "--current-repo"
+    ],
+    "actual_exit": -15,
+    "status": "STOPPED",
+    "stop_reason": "quota_stop_primary",
+    "elapsed_seconds": 1244.5,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "6e3dec4d336eb60f00dcd67a09ef860a15e6abb3c616fec6f1cb7628827ba089"
+  },
+  "checkpoint_at_utc": "2026-10-23T00:27:34.297863+00:00",
+  "quota": {
+    "observed_stop_primary_used": 97,
+    "checkpoint_primary_used": 98,
+    "weekly_used": 15,
+    "resetsAt": 1792729599
+  },
+  "scope": "STOPPED at actual primary97, not fullPASS. All task source/evidence previously pushedcef. Owned supervisor bounded-cleaned its descendants, remaining empty. Preserve all39FAIL and1unsettled; do not call pre-existing without baseline.",
+  "canonical_log_sha256": "c41c9a63764300b218586b13c604d9809bdbab5140e1b9efcf2250bb55aca4fe",
+  "selected_settled_gates": [
+    {
+      "number": 65,
+      "label": "Python regression: scripts/test-abyss-body-reveal-readiness-runtime.py",
+      "status": "PASS"
+    },
+    {
+      "number": 129,
+      "label": "Python regression: scripts/test-abyss-sidebar-connection-runtime.py",
+      "status": "PASS"
+    },
+    {
+      "number": 171,
+      "label": "Python regression: scripts/test-clipboard-history-runtime.py",
+      "status": "PASS"
+    },
+    {
+      "number": 177,
+      "label": "Python regression: scripts/test-clipboard-watcher-contract.py",
+      "status": "PASS"
+    },
+    {
+      "number": 189,
+      "label": "Python regression: scripts/test-dashboard-custom-tabs-contract.py",
+      "status": "PASS"
+    },
+    {
+      "number": 190,
+      "label": "Python regression: scripts/test-dashboard-custom-tabs-runtime.py",
+      "status": "PASS"
+    },
+    {
+      "number": 353,
+      "label": "Python regression: scripts/test-wallpaper-background-apply-runtime.py",
+      "status": "PASS"
+    }
+  ]
+}
