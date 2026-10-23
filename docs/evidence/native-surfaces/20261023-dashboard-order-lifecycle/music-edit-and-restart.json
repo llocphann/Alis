@@ -1,0 +1,282 @@
+{
+  "source_sha": "d9fad3ec260867d636501359775ea85a7c58e858",
+  "issue": 126,
+  "repair": "Starting Edit from Music/Planner now shows the main Dashboard canvas. A selected custom tab retains its own canvas.",
+  "matched_music_test": {
+    "fixture_sha256_by_source": {
+      "555dad051": "420ba0fd13fbe9a1e87fb564b29b11a9763b69788f19cf26ecf3e24bb1514ac3",
+      "d9fad3ec260867d636501359775ea85a7c58e858": "420ba0fd13fbe9a1e87fb564b29b11a9763b69788f19cf26ecf3e24bb1514ac3"
+    },
+    "before": {
+      "source_sha": "555dad051a0b641151cc7fe21843d2fb86b7dd31",
+      "name": "music",
+      "argv": [
+        "python3",
+        "scripts/test-dashboard-music-runtime.py"
+      ],
+      "actual_exit": 1,
+      "elapsed_seconds": 32.34,
+      "log_sha256": "950a291e2b00adc00d380a0a83251f5da6643b96bbde56864ca693a4a638427e",
+      "markers": [
+        "ERROR qml: DASHBOARD_MUSIC_RUNTIME_FAIL entering edit mode slid or offset the widget workspace: {\"page\":1,\"progress\":1,\"editing\":true} check@qs:@/qs/shell.qml:60"
+      ]
+    },
+    "after": {
+      "name": "music",
+      "argv": [
+        "python3",
+        "scripts/test-dashboard-music-runtime.py"
+      ],
+      "actual_exit": 0,
+      "elapsed_seconds": 34.35,
+      "log_sha256": "db261b12de1d17d0fc653dd6eee345ecab115c2d662b98270d0b84b7ab369605",
+      "markers": [
+        "DASHBOARD_MUSIC_RUNTIME_PASS native dots/wheel/panning, tabbed Library/Results/Media+Queue/optional Lyrics, genre/folder/search, single/double/Ctrl actions, queue/playlist/volume, cold restore and edit lock"
+      ]
+    }
+  },
+  "fixture_alignment": {
+    "source_sha": "555dad051a0b641151cc7fe21843d2fb86b7dd31",
+    "changes": [
+      "Keep the fresh-config lazy Music allocation assertion; actual restart now checks saved Music selection instead of treating it as a first visit.",
+      "Keep independent disk readback of scrollbar preference and selected Music tab.",
+      "After disable/re-enable, assert selection stays on Dashboard and use the Music page control before the existing visible backend-error assertion."
+    ],
+    "production_changes": [],
+    "previous_diagnostics": [
+      {
+        "source_sha": "807aa8def17221d53d750925b50090c3e8c37af0",
+        "name": "music",
+        "argv": [
+          "python3",
+          "scripts/test-dashboard-music-runtime.py"
+        ],
+        "actual_exit": 1,
+        "elapsed_seconds": 30.34,
+        "log_sha256": "db65c529317ba95880861c6f89cd9940ec4e82d07e6be93b984f423e88dedff2",
+        "markers": [
+          "ERROR qml: DASHBOARD_MUSIC_RUNTIME_FAIL QtQuickTest::fail tryVerify@qrc:/qt-project.org/imports/QtTest/TestCase.qml:603"
+        ]
+      },
+      {
+        "source_sha": "807aa8def17221d53d750925b50090c3e8c37af0",
+        "name": "music-scroll",
+        "argv": [
+          "python3",
+          "scripts/test-dashboard-music-scroll-runtime.py"
+        ],
+        "actual_exit": 1,
+        "elapsed_seconds": 57.36,
+        "log_sha256": "b2c2abcd1b17d4aa450ed32f6285cb84ff207d728b8da99b41773132c27989ca",
+        "markers": [
+          "ERROR qml: MUSIC_SCROLL_FAIL Music unexpectedly allocated before first visit check@qs:@/qs/shell.qml:61"
+        ]
+      },
+      {
+        "source_sha": "555dad051a0b641151cc7fe21843d2fb86b7dd31",
+        "name": "music",
+        "argv": [
+          "python3",
+          "scripts/test-dashboard-music-runtime.py"
+        ],
+        "actual_exit": 1,
+        "elapsed_seconds": 32.34,
+        "log_sha256": "950a291e2b00adc00d380a0a83251f5da6643b96bbde56864ca693a4a638427e",
+        "markers": [
+          "ERROR qml: DASHBOARD_MUSIC_RUNTIME_FAIL entering edit mode slid or offset the widget workspace: {\"page\":1,\"progress\":1,\"editing\":true} check@qs:@/qs/shell.qml:60"
+        ]
+      },
+      {
+        "source_sha": "555dad051a0b641151cc7fe21843d2fb86b7dd31",
+        "name": "music-scroll",
+        "argv": [
+          "python3",
+          "scripts/test-dashboard-music-scroll-runtime.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 61.38,
+        "log_sha256": "89454ec38a5c4c070dc15d41391a4d25ebabc9b9c68e426e392b31cb7498dc24",
+        "markers": []
+      }
+    ]
+  },
+  "unfocused_cohort": {
+    "commands": [
+      {
+        "name": "music",
+        "argv": [
+          "python3",
+          "scripts/test-dashboard-music-runtime.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 34.35,
+        "log_sha256": "db261b12de1d17d0fc653dd6eee345ecab115c2d662b98270d0b84b7ab369605",
+        "markers": [
+          "DASHBOARD_MUSIC_RUNTIME_PASS native dots/wheel/panning, tabbed Library/Results/Media+Queue/optional Lyrics, genre/folder/search, single/double/Ctrl actions, queue/playlist/volume, cold restore and edit lock"
+        ]
+      },
+      {
+        "name": "music-scroll",
+        "argv": [
+          "python3",
+          "scripts/test-dashboard-music-scroll-runtime.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 61.36,
+        "log_sha256": "89454ec38a5c4c070dc15d41391a4d25ebabc9b9c68e426e392b31cb7498dc24",
+        "markers": []
+      },
+      {
+        "name": "custom-tabs",
+        "argv": [
+          "python3",
+          "scripts/test-dashboard-custom-tabs-runtime.py"
+        ],
+        "actual_exit": 1,
+        "elapsed_seconds": 5.33,
+        "log_sha256": "df8203e57bc46005ff6bada3c9a0b3c5c4a18b3464a44ca2421dc6a8103c81cf",
+        "markers": [
+          "ERROR qml: DASH_F01_NATIVE_FAIL Create control layout did not settle check@qs:@/qs/shell.qml:50"
+        ]
+      },
+      {
+        "name": "tab-reorder",
+        "argv": [
+          "python3",
+          "scripts/test-dashboard-tab-reorder-runtime.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 19.31,
+        "log_sha256": "e39ae61dc20f71414f7bbd1fb51583e0f92dbd77ddd397570cd8052ce8a792c4",
+        "markers": [
+          "INFO qml: DASHBOARD_TAB_REORDER_NATIVE_PASS 63 14",
+          "INFO qml: DASHBOARD_TAB_REORDER_RESTART_PASS"
+        ]
+      },
+      {
+        "name": "editor-field",
+        "argv": [
+          "python3",
+          "scripts/test-dashboard-editor-field-runtime.py"
+        ],
+        "actual_exit": 1,
+        "elapsed_seconds": 81.28,
+        "log_sha256": "2f4daeaa587cee5c96b411ef7516c355ed42b97f2405053c7b4de2d64ca176f4",
+        "markers": []
+      },
+      {
+        "name": "custom-tabs-contract",
+        "argv": [
+          "python3",
+          "scripts/test-dashboard-custom-tabs-contract.py"
+        ],
+        "actual_exit": 0,
+        "elapsed_seconds": 0.17,
+        "log_sha256": "d6713dffb802c193e2ce94940256a7be4daeaa983cac75b96d8b933d7ed14494",
+        "markers": [
+          "DASH_F01_CONTRACT_PASS: edit-mode controls, default tab, responsive geometry and timeout"
+        ]
+      }
+    ],
+    "supervisor": {
+      "source_sha": "d9fad3ec260867d636501359775ea85a7c58e858",
+      "argv": [
+        "bwrap",
+        "--bind",
+        "/",
+        "/",
+        "--dev-bind",
+        "/dev",
+        "/dev",
+        "--proc",
+        "/proc",
+        "--tmpfs",
+        "/tmp",
+        "--die-with-parent",
+        "--",
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/dashboard-d9f-driver.py"
+      ],
+      "actual_exit": 1,
+      "status": "FAIL",
+      "stop_reason": null,
+      "elapsed_seconds": 201.9,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "8d58cee8784c10c3f9c30b8921919afdc4dd3b1c6e09e8727a977caa4f3d858e"
+    },
+    "interpretation": "FAIL:Music,Music scroll,tab reorder and contract passed; custom Create polish and unfocused editor field failed. Do not replace either failure with the focused result."
+  },
+  "focused_qualification": {
+    "commands": [
+      {
+        "name": "custom",
+        "argv": [
+          "python3",
+          "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/custom-d9f-focused.py"
+        ],
+        "actual_exit": 0,
+        "log_sha256": "30d8caf7c076ab56c27c4a587df4251a023920e59c71220b252613eda1fe40f2",
+        "markers": [
+          "INFO qml: DASH_F01_NATIVE_PASS 37",
+          "INFO qml: DASH_F01_RESTART_PASS 5"
+        ]
+      },
+      {
+        "name": "field",
+        "argv": [
+          "python3",
+          "scripts/test-dashboard-editor-field-runtime.py"
+        ],
+        "actual_exit": 0,
+        "log_sha256": "7a8eba03bdb5fa96acf40bee77acdaf9a187c995f9b80d08a15052643a009027",
+        "markers": [
+          "INFO qml: DASHBOARD_FIELD_PASS 16 composed routes/edges/sizes: visible Notes source, dimensions above-field Add Undo Cancel Done input-release 219 live motion-state samples",
+          "DASHBOARD_FIELD_PASS 16 composed route/edge/size cases; stable workspace; native Undo Cancel Done; full-size motion states/reversal/reduced motion; field paint/input; partial-frame capture requires explicit capture lane"
+        ]
+      }
+    ],
+    "supervisor": {
+      "source_sha": "d9fad3ec260867d636501359775ea85a7c58e858",
+      "argv": [
+        "bwrap",
+        "--bind",
+        "/",
+        "/",
+        "--dev-bind",
+        "/dev",
+        "/dev",
+        "--proc",
+        "/proc",
+        "--tmpfs",
+        "/tmp",
+        "--die-with-parent",
+        "--",
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023/dashboard-d9f-focused-driver.py"
+      ],
+      "actual_exit": 0,
+      "status": "PASS",
+      "stop_reason": null,
+      "elapsed_seconds": 40.3,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "0801249b5843d654c20eb56aaac18b2fd3c688872011cb9b98a434c7f09237cc"
+    },
+    "scope": "Only owned nested Niri temporarily focused; original assertions retained. Custom fixture copy changes only source ROOT and private_wayland(capture_focus=True); editor uses its existing explicit capture lane.",
+    "custom_fixture_sha256": "5b6672e173afebc1d2893b627de21c1f3bd45bc02167d8f6dc25378c9c75757b",
+    "counts": {
+      "custom": 37,
+      "custom_restart": 5,
+      "editor_cases": 16,
+      "editor_live_motion_samples": 219
+    },
+    "production_change_for_focus": false
+  },
+  "gates": {
+    "full_exact_33a58da9e": "RUNNING separately; not PASS",
+    "installed_new_repair": "NOT_DEPLOYED",
+    "physical_multi_output_and_owner": "NOT_VERIFIED",
+    "ready_label": "HOLD pending remaining related native/full qualification"
+  }
+}
