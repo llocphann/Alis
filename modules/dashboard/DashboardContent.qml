@@ -470,7 +470,11 @@ Item {
                         Loader {
                             id: customCanvasLoader
                             anchors.fill: parent
-                            active: (customTabHost.visible && root.presentationActive)
+                            // Reordering changes pageIndex before slideProgress
+                            // catches up. Keep the selected canvas and its draft
+                            // alive through that temporary visibility change.
+                            active: (root.presentationActive && (customTabHost.visible
+                                    || root.currentPageId === customTabHost.modelData.id))
                                 || (root.warmContent && root.currentPageId === customTabHost.modelData.id)
                             sourceComponent: DashboardCanvas {
                                 customTabId: customTabHost.modelData.id
