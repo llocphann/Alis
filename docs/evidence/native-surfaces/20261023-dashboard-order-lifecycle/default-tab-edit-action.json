@@ -1,0 +1,18 @@
+{
+  "issue": 126,
+  "source_sha": "f6fb09b9f15a4d49ac0c6804a1195a632e43ae79",
+  "implementation_commit": "68636d9fa",
+  "scope": "Only edit-mode Set Default Tab visibility/background/icon/focus styling; page-switch stutter is unresolved",
+  "native_exit": 0,
+  "custom_tab_checks": 42,
+  "actual_restart_checks": 5,
+  "old_failed_fixture": {
+    "source_sha": "24fb9ab8b",
+    "harness_exit": 1,
+    "native_exit": 0,
+    "failure": "default-tab action did not save active page in Edit mode",
+    "correction": "Test f6fb09b9f waits for a painted Edit control layout before mouseClick. Original assertions retained, no production change between those fixture runs."
+  },
+  "qualification": "Scoped native fixture only; no installed Owner, all-theme contrast or page-motion PASS",
+  "awaiting_owner_label": "WITHHELD \u2014 page-switch stutter remains unfinished"
+}

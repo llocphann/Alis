@@ -1,0 +1,66 @@
+{
+  "issue": 128,
+  "source_sha": "f6fb09b9f15a4d49ac0c6804a1195a632e43ae79",
+  "implementation_commits": [
+    "3cfa76e03",
+    "d9e6e8cd7",
+    "0f39f3aec"
+  ],
+  "observed_installed_metadata": {
+    "display_manager": "SDDM",
+    "selected_theme": "ii-pixel",
+    "managed_background_mode": "0600",
+    "greeter_differs_from_file_owner": true,
+    "extended_access_acl_present": false,
+    "implication": "Greeter account lacks read access through normal file mode checks; no cold-boot capture or sole-cause claim."
+  },
+  "implementation": [
+    "Atomic complete-image publication with0644 mode; original private image unchanged",
+    "Repair legacy0600 copies including cached video frames without a second decode",
+    "Managed directory traversal0755 and shipped theme files0644; private metadata and custom symlinks protected",
+    "One Image with configured/custom/bundled failover, including duplicate legacy URLs; static SVG bundled before any session sync"
+  ],
+  "baseline": {
+    "source_sha": "ab413d699dc429416ccb4d9a41749856ff3fb37a",
+    "synthetic_publication_tests": 9,
+    "passed": 1,
+    "failed": 7,
+    "errors": 1,
+    "actual_exit": 1
+  },
+  "focused": {
+    "source_sha": "f6fb09b9f15a4d49ac0c6804a1195a632e43ae79",
+    "publication_tests": 9,
+    "publication_exit": 0,
+    "native_component_exit": 0,
+    "rendered_image_states": 7,
+    "private_installer_permissions": "PASS incl restrictive modes, private stamp retention and symlink refusal",
+    "supervisor_exit": 0,
+    "owned_remaining": []
+  },
+  "real_synthetic_video": {
+    "source_sha": "f6fb09b9f15a4d49ac0c6804a1195a632e43ae79",
+    "status": "PASS",
+    "producer_exit": 0,
+    "assertions": [
+      "real FFmpeg video generated without audio",
+      "real first-frame decode published a PNG",
+      "published image0644/source0600",
+      "cached sync kept image inode/mtime without a second decode"
+    ],
+    "scope": "Synthetic64x64 two-frame FFV1; no owner wallpaper, audio input or real greeter run"
+  },
+  "full_maintainer": {
+    "source_sha": "f6fb09b9f15a4d49ac0c6804a1195a632e43ae79",
+    "status": "RUNNING",
+    "whole_pass": false,
+    "note": "Global exact-source run is separate; no whole-suite PASS claimed."
+  },
+  "owner_gates": [
+    "Apply/review candidate to installed theme; no installed assets were changed by this chat",
+    "Cold boot/reboot before first login",
+    "Logout to actual greeter, login then lock/unlock",
+    "Actual greeter account, physical/multi-output and light/dark appearance verification"
+  ],
+  "state": "OPEN \u2014 Awaiting Owner verification of the implementation candidate"
+}
