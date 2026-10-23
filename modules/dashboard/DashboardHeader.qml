@@ -283,21 +283,33 @@ Item {
         RippleButton {
             id: defaultTabButton
             objectName: "dashboardSetDefaultTab"
+            visible: root.editMode
             implicitWidth: 29
             implicitHeight: 30
             buttonRadius: Appearance.rounding.full
             readonly property bool isDefault:
                 root.pageIds[root.currentPage] === root.defaultTabId
             toggled: isDefault
-            enabled: root.pageIds[root.currentPage] !== undefined
+            enabled: root.editMode && root.pageIds[root.currentPage] !== undefined
             focusPolicy: Qt.StrongFocus
-            colBackground: "transparent"
-            colBackgroundHover: Qt.alpha(root.colText, .08)
+            colBackground: Appearance.colors.colLayer2
+            colBackgroundHover: Appearance.colors.colLayer2Hover
+            colBackgroundToggled: Appearance.colors.colPrimaryContainer
+            colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
             onClicked: root.setDefaultTabRequested(root.pageIds[root.currentPage])
             contentItem: MaterialSymbol {
                 text: "home"
                 iconSize: 19
-                color: defaultTabButton.isDefault ? Appearance.colors.colPrimary : root.colText
+                color: defaultTabButton.isDefault
+                    ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2
+            }
+            Rectangle {
+                anchors.fill: parent; anchors.margins: 1
+                radius: defaultTabButton.buttonRadius
+                color: "transparent"
+                border.width: defaultTabButton.activeFocus ? 1 : 0
+                border.color: defaultTabButton.isDefault
+                    ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2
             }
             StyledToolTip {
                 text: defaultTabButton.isDefault
