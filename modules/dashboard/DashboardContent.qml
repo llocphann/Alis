@@ -23,6 +23,19 @@ Item {
 
     readonly property bool musicEnabled: Config.options?.dashboard?.music?.enable ?? true
     readonly property var customTabs: TabPolicy.tabs(Config.options?.dashboard?.customTabs)
+    readonly property var _customPageModelMemo: ({signature:"",tabs:[]})
+    readonly property var customPageModel: {
+        // Config can republish equal tab definitions while saving a layout.
+        // Only identity/order belongs to the Repeater; current names remain
+        // in customTabs for the header and dialogs. Retain live canvas drafts.
+        const signature = JSON.stringify(root.customTabs.map(tab => tab.id))
+        const memo = root._customPageModelMemo
+        if (memo.signature !== signature) {
+            memo.signature = signature
+            memo.tabs = root.customTabs
+        }
+        return memo.tabs
+    }
     property var _navigationDraftOrder: null
     readonly property var pageIds: PagePolicy.ordered(
         root._navigationDraftOrder ?? dashboardCanvas.effectivePageOrder,
@@ -455,7 +468,7 @@ Item {
                 // same Dashboard widget component implementations and services.
                 Repeater {
                     id: customPagesRepeater
-                    model: root.customTabs
+                    model: root.customPageModel
                     delegate: Item {
                         id: customTabHost
                         required property var modelData
