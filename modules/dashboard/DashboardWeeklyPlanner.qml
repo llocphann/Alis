@@ -132,22 +132,9 @@ Item {
     readonly property real columnWidth: Math.max(102 * Appearance.fontSizeScale, (viewport.width - 44) / 7)
     readonly property color ink: Appearance.colors.colOnLayer1
     readonly property color mutedInk: Appearance.colors.colSubtext
-    // True Material palette, not a synthetic rainbow. Each card keeps the
-    // live theme's own hue/saturation, with a distinct tonal step to help
-    // differentiate Events. A grayscale theme stays grayscale.
-    readonly property var eventThemeColors: {
-        const anchors=[
-            Qt.color(Appearance.colors.colPrimary),
-            Qt.color(Appearance.colors.colSecondary),
-            Qt.color(Appearance.colors.colTertiary)
-        ]
-        const tones=EventPalette.materialTones(anchors.map(color=>({
-            hue:color.hslHue,
-            saturation:color.hslSaturation
-        })),Appearance.m3colors.darkmode)
-        return tones.map(tone=>Qt.hsla(
-            tone.hue,tone.saturation,tone.lightness,1))
-    }
+    // Always use Alis' theme-derived gradient, not album-cover or audio
+    // visualizer settings. It rebinds when the active system theme changes.
+    readonly property var eventThemeColors: CavaTheme.vibrantColors
     function eventGradientColor(row, palette): color {
         const explicit=row?.event?.color || (row?.source==="external"
             ? row?.event?.sourceColor : null)
@@ -157,17 +144,15 @@ Item {
         }
         if (!palette || !palette.length)
             return Appearance.colors.colPrimary
-        const index=EventPalette.paletteSlot(row?.event,row?.source,palette.length)
-        return Qt.color(palette[index])
-    }
-    function eventGradientTail(row, palette): color {
-        const primary=root.eventGradientColor(row,palette)
-        // Keep the gradient inside this same Material accent family;
-        // blending in the NEXT Event color brings back rainbow contamination.
-        const surface=Qt.color(Appearance.colors.colLayer0)
-        return Qt.rgba(primary.r*.88+surface.r*.12,
-            primary.g*.88+surface.g*.12,
-            primary.b*.88+surface.b*.12,1)
+        const steps=8
+        const position=EventPalette.paletteSlot(row?.event,row?.source,steps)
+            * (palette.length-1)/(steps-1)
+        const lo=Math.floor(position),hi=Math.min(palette.length-1,lo+1)
+        const first=Qt.color(palette[lo]),second=Qt.color(palette[hi])
+        const t=position-lo
+        return Qt.rgba(first.r+(second.r-first.r)*t,
+            first.g+(second.g-first.g)*t,
+            first.b+(second.b-first.b)*t,1)
     }
     // Match the date and All-day headings to the actual timeline: its day
     // cells have no opaque backing, so the pinned headings must not paint a
@@ -679,8 +664,6 @@ Item {
                                 readonly property bool canReschedule: Selection.canReschedule(modelData)
                                 readonly property color eventAccent:
                                     root.eventGradientColor(modelData,root.eventThemeColors)
-                                readonly property color eventAccentTail:
-                                    root.eventGradientTail(modelData,root.eventThemeColors)
                                 // Resize affordances belong to this card alone. Keep
                                 // the edge MouseAreas active even while the bars fade out.
                                 readonly property bool showResizeHandles: canReschedule
@@ -730,7 +713,7 @@ Item {
                                     }
                                     GradientStop {
                                         position:1
-                                        color:Qt.alpha(timedButton.eventAccentTail,
+                                        color:Qt.alpha(timedButton.eventAccent,
                                             eventMouse.containsMouse ? .23 : .16)
                                     }
                                 }
