@@ -23,6 +23,7 @@ Singleton {
     property var retainedStorageFields: ({})
     property int nextId: 1
     property bool ready: false
+    property bool _checkingDue: false
     property bool _saving: false
     property bool _saveQueued: false
     property bool _reloadAfterSaveFailure: false
@@ -260,7 +261,9 @@ Singleton {
     signal reminderTriggered(var event, int minutesBefore)
 
     function checkDueEvents() {
-        if (!root.ready) return
+        if (!root.ready || root._checkingDue) return
+        root._checkingDue=true
+        try {
         const now = new Date()
         const currentTime = now.getTime()
         const eventCount = root.list.length
@@ -330,7 +333,11 @@ Singleton {
                     // archived cycle again while keeping every selected weekday
                     // alive until the entire current cycle has elapsed.
                     event.repeatCycleStart=slots.length
-                    slots.push(...future)
+                    const materialized=Occurrences.materializeProjectedRecurring(
+                        event,future,slots.length,event.id)
+                    if (Array.isArray(event.plannerOverrides))
+                        event.plannerOverrides=materialized.overrides
+                    slots.push(...materialized.slots)
                     changed=true
                 }
             }
@@ -346,6 +353,7 @@ Singleton {
             root.list = root.list.slice()
             root.saveToFile()
         }
+        } finally {root._checkingDue=false}
     }
 
     function createNextRecurrence(event, afterTime) {
@@ -406,20 +414,39 @@ Singleton {
         const nextEnd = durationMs > 0
             ? new Date(nextDate.getTime() + durationMs).toISOString() : ""
 
-        root.addEvent(
+        let nextStart=nextDate.toISOString(),actualEnd=nextEnd,plannerState=null
+        let originalOverrides=null
+        if (Array.isArray(event.plannerOverrides) && event.plannerOverrides.length) {
+            originalOverrides=event.plannerOverrides
+            const originalEnd=nextEnd || new Date(nextDate.getTime()+3600000).toISOString()
+            const materialized=Occurrences.materializeProjectedRecurring(event,
+                [{startDate:nextStart,endDate:originalEnd}],0,root.nextId)
+            const nextSlot=materialized.slots[0]
+            nextStart=nextSlot.startDate;actualEnd=nextSlot.endDate
+            const pending=materialized.overrides.filter(item=>
+                item.materializedOccurrenceIndex===undefined && item.forwardedEventId===undefined)
+            plannerState={startDate:nextDate.toISOString(),endDate:originalEnd,overrides:pending}
+            // Retain older receipts, forwarding only their live responsibility.
+            // addEvent defers persistence inside this due-handler transaction.
+            event.plannerOverrides=materialized.overrides.map(item=>pending.includes(item)
+                ? Object.assign({},item,{forwardedEventId:root.nextId}) : item)
+        }
+        const created=root.addEvent(
             event.title,
             event.description,
-            nextDate.toISOString(),
+            nextStart,
             event.category,
             event.priority,
             event.reminderMinutes,
             event.recurrence,
-            nextEnd,
-            event.allDay === true
+            actualEnd,
+            event.allDay === true,
+            undefined,plannerState
         )
+        if (!created && originalOverrides) event.plannerOverrides=originalOverrides
     }
 
-    function addEvent(title, description, dateTime, category, priority, reminderMinutes, recurrence, endDate, allDay, occurrenceRanges) {
+    function addEvent(title, description, dateTime, category, priority, reminderMinutes, recurrence, endDate, allDay, occurrenceRanges, plannerState) {
         if (!root.ready) return null
         // A selected date group is one independent Agenda Event ID,
         // whether one-time or repeating as a calendar-cycle template.
@@ -486,6 +513,13 @@ Singleton {
             // Independent Agenda: no generated Todo link or task
         }
         
+        // Internal legacy recurrence handoff keeps its existing separate-ID
+        // behavior while carrying immutable cadence and pending exceptions.
+        if (!bulk && plannerState && Occurrences.valid(plannerState.startDate)) {
+            event.plannerSeriesStartDate=plannerState.startDate
+            event.plannerSeriesEndDate=plannerState.endDate
+            event.plannerOverrides=plannerState.overrides
+        }
         if (bulk) {
             event=Occurrences.store(event,explicitSlots)
             if ((recurrence || "none")!=="none") {
@@ -500,7 +534,7 @@ Singleton {
         root.list.push(event)
         root.list = root.list.slice(0)
         root.eventAdded(event)
-        root.saveToFile()
+        if (!root._checkingDue) root.saveToFile()
         return event
     }
 

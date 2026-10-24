@@ -184,14 +184,50 @@ function rescheduleProjectedRecurring(event,index,originalIso,start,end) {
         return item.occurrenceIndex===index && item.originalStartDate===original.toISOString();
     };
     var existing=current.find(same);
+    if (existing && (existing.materializedOccurrenceIndex!==undefined
+            || existing.forwardedEventId!==undefined)) return null;
     if (!existing && current.length>=512) return null;
     if (existing && existing.startDate===a.toISOString()
             && existing.endDate===b.toISOString()) return null;
-    var record={occurrenceIndex:index,originalStartDate:original.toISOString(),
-        startDate:a.toISOString(),endDate:b.toISOString()};
+    var record=Object.assign({},existing || {},{
+        occurrenceIndex:index,originalStartDate:original.toISOString(),
+        startDate:a.toISOString(),endDate:b.toISOString()});
     var next=existing ? current.map(function(item){return same(item) ? record : item;})
         : current.concat([record]);
     return Object.assign({},event,{plannerOverrides:next});
+}
+// When the due handler materializes a projected cycle, apply its exceptions
+// exactly once. Keep the original receipt/metadata with an additive destination
+// marker; do not draw the historical virtual copy beside the real saved slot.
+function materializeProjectedRecurring(event,future,startIndex,destinationId) {
+    var records=Array.isArray(event.plannerOverrides) ? event.plannerOverrides : [];
+    var slots=Array.isArray(event.occurrences) && event.occurrences.length
+        ? event.occurrences : [event];
+    var consumed=new Set();
+    var result=future.map(function(slot,offset) {
+        var matches=records.filter(function(item) {
+            var source=slots[item.occurrenceIndex];
+            var a=valid(item.startDate),b=valid(item.endDate);
+            return item.materializedOccurrenceIndex===undefined
+                && item.forwardedEventId===undefined
+                && Number.isInteger(item.occurrenceIndex) && !!source
+                && item.originalStartDate===slot.startDate && a && b && b-a>=15*60000
+                && recurringVirtualMatches(source.plannerSeriesStartDate
+                    || source.startDate || source.dateTime,item.originalStartDate,event.recurrence);
+        });
+        // Ambiguous/corrupt records are retained verbatim, never guessed away.
+        if (matches.length!==1) return slot;
+        var record=matches[0];consumed.add(record);
+        return Object.assign({},slot,{startDate:record.startDate,endDate:record.endDate,
+            plannerSeriesStartDate:slot.startDate,plannerSeriesEndDate:slot.endDate});
+    });
+    var next=records.map(function(item) {
+        if (!consumed.has(item)) return item;
+        var offset=future.findIndex(function(slot){return slot.startDate===item.originalStartDate;});
+        return Object.assign({},item,{materializedOccurrenceIndex:startIndex+offset,
+            materializedEventId:destinationId});
+    });
+    return {slots:result,overrides:next};
 }
 // Each saved time slot counts separately in calendar indicators, even when
 // several compatible Agenda slots share one canonical Event ID.

@@ -117,5 +117,39 @@ test('UI previews use gesture identity, not empty batch-selection identity',()=>
   assert.ok(ui.includes('targets.map(row=>Selection.gestureKey(row))'));
   assert.ok(ui.includes('includes(Selection.gestureKey(modelData))'));
 });
+test('cycle rollover materializes exceptions once, preserving legacy IDs and pending edits',()=>{
+  const source=read('services/Events.qml');
+  const functions=source.slice(source.indexOf('function checkDueEvents()'),source.indexOf('function updateEventGroup('));
+  const RepeatPolicy=load('services/EventRepeatPolicy.js');
+  class Clock extends Date {constructor(...a){super(...(a.length?a:['2032-10-25T12:00:00Z']));}}
+  for(const grouped of [true,false]) {
+    const event=grouped ? plain(legacy) : {...slot('19'),id:41,title:'Synthetic old single',recurrence:'weekly'};
+    let edited=O.rescheduleProjectedRecurring(event,0,'2032-10-26T09:00:00.000Z',
+      '2032-10-26T09:15:00.000Z','2032-10-26T10:15:00.000Z');
+    assert.ok(edited);
+    edited=O.rescheduleProjectedRecurring(edited,0,'2032-11-02T09:00:00.000Z',
+      '2032-11-02T09:30:00.000Z','2032-11-02T10:30:00.000Z');
+    assert.ok(edited);
+    const root={ready:true,list:[edited],nextId:500,saves:0,saveToFile(){this.saves++;},
+      eventTriggered(){},reminderTriggered(){},eventAdded(){}};
+    const context=vm.createContext({root,Occurrences:O,RepeatPolicy,Date:Clock,Number,Math});
+    vm.runInContext(functions,context);root.addEvent=context.addEvent;root.createNextRecurrence=context.createNextRecurrence;
+    context.checkDueEvents();
+    assert.equal(root.saves,1,'rollover must persist old receipt and new destination in one snapshot');
+    assert.equal(root._checkingDue,false);
+    assert.equal(root.list[0].id,41);
+    assert.equal(root.list.length,grouped?1:2,'legacy separate-ID behavior changed');
+    const week=P.project(root.list,[],'2032-10-26T12:00:00Z',1).flatMap(d=>d.timed);
+    const corrected=week.filter(r=>r.startDate.toISOString()==='2032-10-26T09:15:00.000Z');
+    assert.equal(corrected.length,1,'rollover lost or duplicated edited occurrence');
+    assert.ok(!week.some(r=>r.startDate.toISOString()==='2032-10-26T09:00:00.000Z'));
+    const future=P.project(root.list,[],'2032-11-02T12:00:00Z',1).flatMap(d=>d.timed);
+    assert.equal(future.filter(r=>r.startDate.toISOString()==='2032-11-02T09:30:00.000Z').length,1,
+      'pending exception lost or duplicated during legacy handoff');
+    const before=JSON.stringify(root.list);context.checkDueEvents();
+    assert.equal(JSON.stringify(root.list),before,'repeated tick duplicated materialized exceptions');
+    assert.equal(root.saves,1);
+  }
+});
 console.log(JSON.stringify({test:'multidate-gestures',passed,failed,source_root:root}));
 process.exitCode=failed ? 1 : 0;

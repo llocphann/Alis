@@ -124,7 +124,9 @@ function project(local, external, value, firstDay) {
                 if (generated.limited) days.forEach(function(day) {day.projectionLimited=true;});
                 var overrides=recurring && Array.isArray(event.plannerOverrides)
                     ? event.plannerOverrides.filter(function(item) {
-                        return item.occurrenceIndex===slotIndex;
+                        return item.occurrenceIndex===slotIndex
+                            && item.materializedOccurrenceIndex===undefined
+                            && item.forwardedEventId===undefined;
                     }) : [];
                 function overrideFor(occurrence) {
                     return overrides.find(function(item) {

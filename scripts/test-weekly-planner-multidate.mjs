@@ -149,7 +149,7 @@ assert.equal(R.templateAllowed([slot(2026,10,13),slot(2026,10,20)],"monthly"),tr
 assert.match(read("modules/dashboard/WeeklyPlannerPolicy.js"),/date!==null/,
  "week projection must omit nonexistent calendar dates");
 // Exercise the actual service's due-event implementation, not a copy.
-const E=vm.runInNewContext(read("services/EventOccurrences.js")+";({entries,store})",{});
+const E=vm.runInNewContext(read("services/EventOccurrences.js")+";({entries,store,materializeProjectedRecurring})",{});
 const checkDueSource=service.split("    function checkDueEvents() {",2)[1]
   ?.split("    function createNextRecurrence(event, afterTime) {",1)[0];
 assert.ok(checkDueSource,"Events.checkDueEvents implementation missing");

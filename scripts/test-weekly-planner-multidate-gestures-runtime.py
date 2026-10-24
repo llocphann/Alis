@@ -150,6 +150,8 @@ with tempfile.TemporaryDirectory(prefix="alis-multidate-gestures-") as temporary
         modern = {"id": 402, "title": "Synthetic modern series", "recurrence": "weekly",
                   "occurrences": [slot("20"), slot("22")],
                   "repeatTemplate": [slot("20"), slot("22")], "repeatCycleStart": 0}
+        if os.environ.get("ALIS_PLANNER_SINGLE_SERIES_CONTROL") == "1":
+            modern = dict(slot("20"), id=402, title="Synthetic single-series control", recurrence="weekly")
         fixture = {"schemaVersion": 1, "nextId": 500, "events": [old, modern,
             dict(slot("20"), id=403, title="Synthetic batch one"),
             dict(slot("19"), id=404, title="Synthetic all-day", allDay=True),
