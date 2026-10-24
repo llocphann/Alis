@@ -1,0 +1,314 @@
+{
+  "runtime_fix": "31add7fb3e1c9d0bf514a62fdf26244ede67c3c5",
+  "tested_source": "31835e60ebe682e6f6addc3461a393836ef1cb88",
+  "defect": "Cold Right then Left ignored reversal while the first page was pending. Keyboard arrows now use latest requested page intent; dots remain bound to the ready selected page.",
+  "cohort_receipt": {
+    "source_sha": "31835e60ebe682e6f6addc3461a393836ef1cb88",
+    "argv": [
+      "bwrap",
+      "--bind",
+      "/",
+      "/",
+      "--dev-bind",
+      "/dev",
+      "/dev",
+      "--proc",
+      "/proc",
+      "--tmpfs",
+      "/tmp",
+      "--die-with-parent",
+      "--",
+      "python3",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023-after-reset/dashboard-qualified-cohort-driver.py"
+    ],
+    "actual_exit": 0,
+    "status": "PASS",
+    "stop_reason": null,
+    "elapsed_seconds": 41.6,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "f30659b19578bb7095ab2b82df066451e18740c3384efadd5fbfbc0a635679cf"
+  },
+  "results": [
+    {
+      "name": "test-dashboard-music-runtime.py",
+      "source_sha": "31835e60ebe682e6f6addc3461a393836ef1cb88",
+      "actual_exit": 0,
+      "elapsed": 8.1
+    },
+    {
+      "name": "test-dashboard-custom-tabs-runtime.py",
+      "source_sha": "31835e60ebe682e6f6addc3461a393836ef1cb88",
+      "actual_exit": 0,
+      "elapsed": 5.6
+    },
+    {
+      "name": "test-dashboard-page-request-runtime.py",
+      "source_sha": "31835e60ebe682e6f6addc3461a393836ef1cb88",
+      "actual_exit": 0,
+      "elapsed": 10.4,
+      "checks": 95,
+      "observations": {
+        "calls": [
+          {
+            "target": "music",
+            "call_ms": 1,
+            "old": "dashboard",
+            "pending": "music"
+          },
+          {
+            "target": "dashboard",
+            "call_ms": 0,
+            "old": "music",
+            "pending": "dashboard"
+          },
+          {
+            "target": "weeklyPlanner",
+            "call_ms": 0,
+            "old": "dashboard",
+            "pending": "weeklyPlanner"
+          },
+          {
+            "target": "dashboard",
+            "call_ms": 0,
+            "old": "weeklyPlanner",
+            "pending": "dashboard"
+          },
+          {
+            "target": "music",
+            "call_ms": 1,
+            "old": "dashboard",
+            "pending": "music"
+          },
+          {
+            "target": "dashboard",
+            "call_ms": 1,
+            "old": "music",
+            "pending": "dashboard"
+          }
+        ],
+        "frames": 447,
+        "selections": [
+          {
+            "phase": "switch-0-music",
+            "id": "music",
+            "ready": true
+          },
+          {
+            "phase": "switch-1-dashboard",
+            "id": "dashboard",
+            "ready": true
+          },
+          {
+            "phase": "switch-2-weeklyPlanner",
+            "id": "weeklyPlanner",
+            "ready": true
+          },
+          {
+            "phase": "switch-3-dashboard",
+            "id": "dashboard",
+            "ready": true
+          },
+          {
+            "phase": "switch-4-music",
+            "id": "music",
+            "ready": true
+          },
+          {
+            "phase": "switch-5-dashboard",
+            "id": "dashboard",
+            "ready": true
+          },
+          {
+            "phase": "native-click-key-wheel",
+            "id": "music",
+            "ready": true
+          },
+          {
+            "phase": "native-click-key-wheel",
+            "id": "weeklyPlanner",
+            "ready": true
+          },
+          {
+            "phase": "native-click-key-wheel",
+            "id": "music",
+            "ready": true
+          },
+          {
+            "phase": "native-click-key-wheel",
+            "id": "dashboard",
+            "ready": true
+          },
+          {
+            "phase": "hidden-cold-custom",
+            "id": "custom-1",
+            "ready": true
+          },
+          {
+            "phase": "hidden-cold-custom",
+            "id": "dashboard",
+            "ready": true
+          },
+          {
+            "phase": "remove-pending-custom",
+            "id": "weeklyPlanner",
+            "ready": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "test-dashboard-tab-reorder-runtime.py",
+      "source_sha": "31835e60ebe682e6f6addc3461a393836ef1cb88",
+      "actual_exit": 0,
+      "elapsed": 4.3
+    },
+    {
+      "name": "frozen-request-pair",
+      "source_sha": "36cb61ad3726649f3b1f5d5cb08818c451140969",
+      "actual_exit": 1,
+      "negative_control": true,
+      "marker": "ERROR qml: DASH_PAGE_REQUEST_NATIVE_FAIL Left did not cancel an uncommitted Right request check@qs:@/qs/shell.qml:49"
+    },
+    {
+      "name": "frozen-request-pair",
+      "source_sha": "31835e60ebe682e6f6addc3461a393836ef1cb88",
+      "actual_exit": 0,
+      "negative_control": false,
+      "marker": "INFO qml: DASH_PAGE_REQUEST_NATIVE_PASS 95 {\"calls\":[{\"target\":\"music\",\"call_ms\":0,\"old\":\"dashboard\",\"pending\":\"music\"},{\"target\":\"dashboard\",\"call_ms\":1,\"old\":\"music\",\"pending\":\"dashboard\"},{\"target\":\"weeklyPlanner\",\"ca"
+    }
+  ],
+  "frozen_pair_qml_sha256": "42e2bcfd697866854521443ebed802479d403e79d2815743089294ce2805cd78",
+  "paired_request_profile": {
+    "scope": "Identical private-Niri five-signal request diagnostic; one pair, fake music, independent temporary configuration. Not physical/frame-rate or whole-stutter acceptance.",
+    "results": [
+      {
+        "source_sha": "f6fb09b9f15a4d49ac0c6804a1195a632e43ae79",
+        "actual_native_exit": 0,
+        "success": true,
+        "calls": [
+          {
+            "target": "music",
+            "call_ms": 29,
+            "selected_at_return": "music",
+            "pending": null
+          },
+          {
+            "target": "dashboard",
+            "call_ms": 6,
+            "selected_at_return": "dashboard",
+            "pending": null
+          },
+          {
+            "target": "weeklyPlanner",
+            "call_ms": 39,
+            "selected_at_return": "weeklyPlanner",
+            "pending": null
+          },
+          {
+            "target": "dashboard",
+            "call_ms": 2,
+            "selected_at_return": "dashboard",
+            "pending": null
+          },
+          {
+            "target": "music",
+            "call_ms": 8,
+            "selected_at_return": "music",
+            "pending": null
+          }
+        ],
+        "sampled_frames": 173
+      },
+      {
+        "source_sha": "31add7fb3e1c9d0bf514a62fdf26244ede67c3c5",
+        "actual_native_exit": 0,
+        "success": true,
+        "calls": [
+          {
+            "target": "music",
+            "call_ms": 1,
+            "selected_at_return": "dashboard",
+            "pending": "music"
+          },
+          {
+            "target": "dashboard",
+            "call_ms": 0,
+            "selected_at_return": "music",
+            "pending": "dashboard"
+          },
+          {
+            "target": "weeklyPlanner",
+            "call_ms": 0,
+            "selected_at_return": "dashboard",
+            "pending": "weeklyPlanner"
+          },
+          {
+            "target": "dashboard",
+            "call_ms": 0,
+            "selected_at_return": "weeklyPlanner",
+            "pending": "dashboard"
+          },
+          {
+            "target": "music",
+            "call_ms": 1,
+            "selected_at_return": "dashboard",
+            "pending": "music"
+          }
+        ],
+        "sampled_frames": 180
+      }
+    ],
+    "interpretation": "Cold Music/Planner synchronous handler costs observed29/39ms before, deferred request handlers0-1ms after. Readiness latency and physical display smoothness are separate."
+  },
+  "fixture_repairs": {
+    "rapid_keys": "Keep strict initial pending Right/Left cancellation; subsequent keys may commit between native events, so verify latest intent plus final ready selection. Frozen final QML still fails on36cb at Left cancellation, passes on318.",
+    "music": "Private witness: Config persisted false but Loader.status2(Loading), old test music reference!=Loader.item, old reference bound true. New fixture waits actual Loader.Ready and uses its item; typed persistence/value assertions retained.",
+    "custom_controls": "Focused only the owned private compositor; original waitForPolish/deadlines and42checks retained. Prior unfocused failure remains recorded.",
+    "reorder": "Wait ready selection after normal dot/key requests. Existing draft/disk/drag/Undo/Reset/Cancel oracles retained."
+  },
+  "retained_failures": [
+    {
+      "name": "test-dashboard-music-runtime.py",
+      "source_sha": "081ce4ae439015e79dc22be3dcff8a6f7142ff25",
+      "actual_exit": 1,
+      "elapsed": 32.4
+    },
+    {
+      "name": "test-dashboard-custom-tabs-runtime.py",
+      "source_sha": "081ce4ae439015e79dc22be3dcff8a6f7142ff25",
+      "actual_exit": 1,
+      "elapsed": 6.3
+    },
+    {
+      "name": "test-dashboard-page-request-runtime.py",
+      "source_sha": "081ce4ae439015e79dc22be3dcff8a6f7142ff25",
+      "actual_exit": 1,
+      "elapsed": 2.7
+    },
+    {
+      "name": "test-dashboard-tab-reorder-runtime.py",
+      "source_sha": "081ce4ae439015e79dc22be3dcff8a6f7142ff25",
+      "actual_exit": 1,
+      "elapsed": 17.3
+    },
+    {
+      "name": "paired-profile",
+      "source_sha": "f6fb09b9f15a4d49ac0c6804a1195a632e43ae79",
+      "actual_exit": 0
+    },
+    {
+      "name": "paired-profile",
+      "source_sha": "31add7fb3e1c9d0bf514a62fdf26244ede67c3c5",
+      "actual_exit": 0
+    }
+  ],
+  "scope": "All current focused harnesses0, Music functional UI, custom42/restart5, request95, tab reorder63/14drags+restart. Negative control actual1 remains FAIL. All cohort owned remaining empty.",
+  "full_current_status": "NOT_RUN at receipt creation; start exact committed source next",
+  "awaiting_owner_label": false,
+  "remaining_gates": [
+    "Full current-source maintainer run and classify affected failures",
+    "Installed Niri/physical multi-output and Owner visual smoothness; no desktop cutover",
+    "Light/dark/theme visual contrast acceptance remains Owner-dependent"
+  ]
+}
