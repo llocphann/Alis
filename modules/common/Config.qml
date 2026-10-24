@@ -158,6 +158,10 @@ Singleton {
         // in flight so onLoaded can reapply them over its older snapshot.
         fileReloadTimer.stop();
         root._pendingReload = false;
+        // Ordinary debounced edits must patch the loaded document too.
+        // JsonAdapter serialization omits fields owned by optional/future
+        // releases when no custom-widget injection follows the save.
+        root._pendingRawWrite = true;
     }
 
     function _reconcileMandatoryPanels(): void {

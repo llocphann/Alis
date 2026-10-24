@@ -71,6 +71,16 @@ ShellRoot {
                         Config.setNestedValue("abyss.surface.opacity", .73)
                         settle("edit after migration")
                         stored(.73, "edit after migration")
+                    } else if (action === "debounce") {
+                        // Ordinary settings controls debounce; they do not
+                        // call flushWrites(). Preserve foreign/optional data
+                        // on this path too, including a later scalar edit.
+                        Config.setNestedValue("abyss.surface.opacity", .41)
+                        settle("ordinary debounced edit")
+                        stored(.41, "ordinary debounced edit")
+                        Config.setNestedValues({"abyss.surface.opacity": .73})
+                        settle("later debounced edit")
+                        stored(.73, "later debounced edit")
                     } else {
                         Config.blockWrites = Quickshell.env("SYNC") === "1"
                         Config.setNestedValue("abyss.surface.opacity", .41)
@@ -120,6 +130,7 @@ logs = []
 checks = 0
 matrix = [("migration", True, False), ("flush", True, False),
           ("flush", False, False), ("flush", True, True),
+          ("debounce", False, False), ("debounce", True, False),
           ("failure", True, False), ("failure", False, False)]
 if os.environ.get("ALIS_CONFIG_TEST_CASE"):
     matrix = [entry for entry in matrix if entry[0] == os.environ["ALIS_CONFIG_TEST_CASE"]]
