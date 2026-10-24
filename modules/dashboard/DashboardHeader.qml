@@ -364,8 +364,8 @@ Item {
         id: defaultTabButton
         objectName: "dashboardSetDefaultTab"
         visible: root.editMode
-        // After the six-dot reorder handle, before the tab indicators.
-        anchors.right: pages.left
+        // Desired left-to-right order: Set Default, reorder grip, page dots.
+        anchors.right: tabReorderHandle.left
         anchors.rightMargin: 4
         anchors.verticalCenter: pages.verticalCenter
         implicitWidth: 29
@@ -402,9 +402,10 @@ Item {
         }
     }
     MaterialSymbol {
+        id: tabReorderHandle
         objectName: "dashboardTabReorderHandle"
         visible:root.reorderAllowed
-        anchors.right:defaultTabButton.left;anchors.rightMargin:2
+        anchors.right:pages.left;anchors.rightMargin:2
         anchors.verticalCenter:pages.verticalCenter
         text:"drag_indicator";iconSize:16;color:root.colSubtext
     }
