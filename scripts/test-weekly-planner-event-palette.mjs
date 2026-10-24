@@ -29,12 +29,38 @@ assert.equal(slot({title:'Legacy id-less Event'},'local',8),
   slot({title:'Legacy id-less Event'},'local',8));
 assert.equal(slot({id:1},'local',1),0);
 assert.equal(slot({id:999},'local',8),slot({id:999},'local',8));
+// Material's wallpaper harmonization often collapses all three semantic
+// accents toward the same hue. Even then eight Events must remain distinct
+// rather than turn into the same purple, teal or blue.
+const themed=context.themeHues;
+const circularDistance=(a,b)=>Math.min(Math.abs(a-b),1-Math.abs(a-b));
+for (const anchors of [[.63,.64,.61],[.70,.50,.40],
+    [.60,.60,.60],[.98,.01,.02],[-1,-1,-1]]) {
+  const swatches=Array.from(themed(...anchors,8));
+  assert.equal(swatches.length,8);
+  assert.ok(swatches.every(hue=>Number.isFinite(hue)&&hue>=0&&hue<1));
+  assert.ok(circularDistance(swatches[0],
+    anchors[0]>=0?anchors[0]:.58)<.00001,
+    'first swatch must track actual Material Primary hue');
+  for (let i=0;i<swatches.length;i++)
+    for (let j=i+1;j<swatches.length;j++)
+      assert.ok(circularDistance(swatches[i],swatches[j])>=.075,
+        'visually colliding Event hues for '+JSON.stringify(anchors));
+}
+assert.equal(Array.from(themed(.45,.51,.57,8)).length,8);
+assert.equal(JSON.stringify(event),original,'theme hues mutated stored Event data');
 const qml=file('modules/dashboard/DashboardWeeklyPlanner.qml');
 assert.match(qml,/import "PlannerEventPalette.js" as EventPalette/);
-assert.match(qml,/readonly property var eventThemeColors: CavaTheme\.vibrantColors/,
-  'palette must follow theme and must not follow music cover/CAVA source changes');
+assert.match(qml,/readonly property var eventThemeColors: \{/);
+for (const accent of ['colPrimary','colSecondary','colTertiary'])
+  assert.match(qml,new RegExp('Appearance\\.colors\\.'+accent));
+assert.match(qml,/EventPalette\.themeHues\(/);
+assert.match(qml,/Qt\.hsla\(hue,saturation,lightness,1\)/);
+assert.doesNotMatch(qml,/CavaTheme\.vibrantColors/,
+  'music spectrum is not the Material theme gradient palette');
 assert.match(qml,/function eventGradientColor\(row, palette\): color/);
-assert.match(qml,/EventPalette\.paletteSlot\(row\?\.event,row\?\.source,steps\)/);
+assert.match(qml,/function eventGradientTail\(row, palette\): color/);
+assert.match(qml,/EventPalette\.paletteSlot\(row\?\.event,row\?\.source,palette\.length\)/);
 assert.match(qml,/row\?\.event\?\.color/,
   'an intentionally set Event color must remain respected');
 assert.match(qml,/row\?\.event\?\.sourceColor/,
@@ -49,6 +75,7 @@ assert.match(timed,/root\.eventGradientColor\(modelData,root\.eventThemeColors\)
 assert.match(timed,/gradient: Gradient \{/);
 assert.match(timed,/orientation:Gradient\.Horizontal/);
 assert.match(timed,/color:Qt\.alpha\(timedButton\.eventAccent/);
+assert.match(timed,/color:Qt\.alpha\(timedButton\.eventAccentTail/);
 assert.match(timed,/color:timedButton\.eventAccent/);
 for (const token of ['plannerEventMoveArea','plannerResizeStart','plannerResizeEnd',
   'root.commitTimedGesture(modelData,mode,dx,dy)',
@@ -56,4 +83,4 @@ for (const token of ['plannerEventMoveArea','plannerResizeStart','plannerResizeE
   assert.ok(timed.includes(token),'palette change damaged Event gesture contract: '+token);
 }
 assert.doesNotMatch(policy,/Math\.random|Date\.now|saveToFile|writeFile/);
-console.log('WEEKLY_PLANNER_THEME_PALETTE_PASS: stable identity, theme palette, gradients, old data, gestures');
+console.log('WEEKLY_PLANNER_THEME_PALETTE_PASS: Material primary/secondary/tertiary, separated hues, theme-reactive gradients, stable IDs, old data, gestures');
