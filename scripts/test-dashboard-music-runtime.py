@@ -97,7 +97,7 @@ ShellRoot {
    }
    for(let tick=0;tick<3;tick++) {
     mouseWheel(dots,dots.width/2,dots.height/2,-30,0)
-    check(dashboard.currentPageId==="dashboard","small horizontal ticks skipped threshold")
+    check(dashboard.currentPageId==="dashboard" && !dashboard._pendingPageId,"small horizontal ticks skipped threshold")
    }
    mouseWheel(dots,dots.width/2,dots.height/2,-30,0)
    tryCompare(dashboard,"currentPageId","music",1000)
@@ -114,13 +114,17 @@ ShellRoot {
    }
    phaseEvent(0,0,1,false)
    phaseEvent(-16,0,2,false)
-   check(dashboard.currentPageId==="dashboard","body pixel threshold bypassed")
+   check(dashboard.currentPageId==="dashboard" && !dashboard._pendingPageId,"body pixel threshold bypassed")
    phaseEvent(-16,0,2,true)
-   check(dashboard.currentPageId==="music","header/body did not share phased threshold")
+   // A requested target can still be incubating. Check burst intent before
+   // commitment so momentum/reversal cannot hide a queued extra page.
+   check((dashboard._pendingPageId || dashboard.currentPageId)==="music","header/body did not share phased threshold")
    phaseEvent(-64,0,4,true)
-   check(dashboard.currentPageId==="music","momentum changed another page")
+   check((dashboard._pendingPageId || dashboard.currentPageId)==="music","momentum changed another page")
    phaseEvent(32,0,2,true)
-   check(dashboard.currentPageId==="dashboard","phased reversal failed")
+   check((dashboard._pendingPageId || dashboard.currentPageId)==="dashboard","phased reversal failed")
+   tryCompare(dashboard,"currentPageId","dashboard",1000)
+   check(!dashboard._pendingPageId,"reversal retained an uncommitted target")
    phaseEvent(0,0,3,false)
    check(!phaseEvent(0,40,0,true).accepted && dashboard.currentPageId==="dashboard","pixel vertical event was intercepted")
    dashboard.resetPageWheel()
@@ -379,10 +383,13 @@ ShellRoot {
    check(dashboard.currentPageId==="music" && dashboard.currentPage===0,"reorder changed selected identity")
    check(GlobalStates.dashboardPage===1,"reorder changed public Music intent")
    mouseClick(findChild(dashboard,"dashboardPage1"))
+   tryCompare(dashboard,"currentPageId","dashboard",1000)
    check(dashboard.currentPageId==="dashboard" && GlobalStates.dashboardPage===0,"reordered dot selected wrong identity")
    dots.parent.forceActiveFocus();keyClick(Qt.Key_Left)
+   tryCompare(dashboard,"currentPageId","music",1000)
    check(dashboard.currentPageId==="music","accessible Left ignored persisted order")
    keyClick(Qt.Key_Right)
+   tryCompare(dashboard,"currentPageId","dashboard",1000)
    check(dashboard.currentPageId==="dashboard","accessible Right ignored persisted order")
    Config.setNestedValue("dashboard.music.enable",false)
    check(dashboard.pageIds.length===2 && !dashboard.pageIds.includes("music") && dashboard.pageIds.includes("weeklyPlanner") && dashboard.currentPageId==="dashboard","disabling Music lost Planner or retained Music")
