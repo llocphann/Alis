@@ -345,7 +345,11 @@ Singleton {
     }
 
     function createNextRecurrence(event, afterTime) {
-        const eventDate = new Date(event.startDate || event.dateTime)
+        // A legacy repeating Event may have one edited occurrence but no
+        // stored occurrences array. Its next event must still follow the
+        // original series anchor, not the moved instance's time.
+        const eventDate = new Date(event.plannerSeriesStartDate
+            || event.startDate || event.dateTime)
         const eventTime = eventDate.getTime()
         const targetTime = Number.isFinite(Number(afterTime)) ? Number(afterTime) : Date.now()
         if (!Number.isFinite(eventTime))
@@ -391,7 +395,8 @@ Singleton {
         }
         
         // Preserve duration and all-day semantics for the next occurrence.
-        const sourceEnd = event.endDate ? new Date(event.endDate) : null
+        const scheduledEnd = event.plannerSeriesEndDate || event.endDate
+        const sourceEnd = scheduledEnd ? new Date(scheduledEnd) : null
         const durationMs = sourceEnd && Number.isFinite(sourceEnd.getTime())
             ? Math.max(0, sourceEnd.getTime() - eventTime) : 0
         const nextEnd = durationMs > 0
