@@ -335,6 +335,7 @@ run_check 'Dashboard horizontal gesture and stable page order regression' node s
 # Non-negotiable owner interaction: a page/tab refactor must not delete
 # timed-event mouse drag, top/bottom resizing, or their discoverable grips.
 run_check 'Weekly Planner event drag and both resize handles (regression guard)' python3 scripts/test-weekly-planner-pointer-contract.py
+run_check 'Native Weekly Planner pointer move, top/bottom resize and isolated calendar fixture' python3 scripts/test-weekly-planner-runtime.py
 run_check 'Weekly Planner selected/batch gestures and stored event safeguards' python3 scripts/test-weekly-planner-multi-selection-contract.py
 run_check 'Weekly Planner civil dates, overlap, recurrence and DST regression' node scripts/test-weekly-planner-policy.mjs
 run_check 'Weekly Planner notified schedule rollover and retained history' node scripts/test-weekly-planner-recurring-rollover.mjs
