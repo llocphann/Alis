@@ -103,18 +103,27 @@ function project(local, external, value, firstDay) {
                     && event.repeatTemplate.length>0
                     && (event.recurrence || "none")!=="none"
                     && slotIndex>=Number(event.repeatCycleStart || 0);
+                // When a saved recurring occurrence is independently moved,
+                // project the current instance at its edited date, but generate
+                // future virtual weeks from the immutable original schedule.
+                // Never rewrite original Agenda slots while rendering.
+                var anchor=activeGroup && validDate(slot.plannerSeriesStartDate) || base;
+                var anchorEnd=activeGroup && validDate(slot.plannerSeriesEndDate) || baseEnd;
+                var seriesDuration=anchorEnd && anchorEnd>anchor ? anchorEnd-anchor : duration;
                 var occurrenceSource=Object.assign({},event,{
-                    startDate:base.toISOString(),dateTime:base.toISOString(),
-                    endDate:baseEnd && baseEnd>base ? baseEnd.toISOString() : "",
+                    startDate:anchor.toISOString(),dateTime:anchor.toISOString(),
+                    endDate:anchorEnd && anchorEnd>anchor ? anchorEnd.toISOString() : "",
                     notified:slot.notified===true && !activeGroup
                 });
                 var generated=starts(occurrenceSource,days,pair[1],event.allDay
-                    ? allDaySpan*86400000 : duration);
+                    ? allDaySpan*86400000 : seriesDuration);
                 if (generated.limited) days.forEach(function(day) {day.projectionLimited=true;});
                 generated.dates.filter(function(date){return date!==null;}).forEach(function(occurrence) {
-                    var start=event.allDay ? midnight(occurrence) : occurrence;
+                    var saved=occurrence.getTime()===anchor.getTime();
+                    var start=event.allDay ? midnight(saved ? base : occurrence)
+                        : (saved ? base : occurrence);
                     var finish=event.allDay ? addDays(start,allDaySpan)
-                        : new Date(start.getTime()+duration);
+                        : new Date(start.getTime()+(saved ? duration : seriesDuration));
                     days.forEach(function(day,index) {
                         if (start>=day.end || finish<=day.date) return;
                         var bucket=event.allDay ? day.allDay : day.timed;
@@ -123,7 +132,7 @@ function project(local, external, value, firstDay) {
                         bucket.push({key:pair[1]+":"+String(event.id || event.uid || "")
                                 +":"+slotIndex+":"+start.getTime()+":"+index,
                             event:event,source:pair[1],occurrenceIndex:slotIndex,
-                            virtual:occurrence.getTime()!==base.getTime(),
+                            virtual:!saved,
                             start:(from-day.date)/minute,end:(to-day.date)/minute,
                             startDate:new Date(start),endDate:finish,lane:0,lanes:1});
                     });
