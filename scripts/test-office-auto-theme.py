@@ -60,8 +60,48 @@ class OfficeThemeTests(unittest.TestCase):
     def test_light_mode_and_explicit_mode(self):
         self.palette["app_background"] = "#f8faff"
         self.assertEqual(json.loads(office.generate_theme(self.palette))["type"], "light")
+        # Explicit mode metadata must not force light backgrounds to use
+        # dark ink/theme defaults: real surface luminance controls readability.
         self.palette["darkmode"] = True
-        self.assertEqual(json.loads(office.generate_theme(self.palette))["type"], "dark")
+        self.assertEqual(json.loads(office.generate_theme(self.palette))["type"], "light")
+
+    def test_desktop_home_settings_and_editor_surface_contrast(self):
+        # ONLYOFFICE Desktop login/settings uses its own CSS variables;
+        # covering only editor names painted a white panel with light text.
+        for updates in (
+            {},
+            {"app_background": "#fafafa", "app_surface_elevated": "#171717",
+             "app_foreground": "#eeeeee", "app_subtext": "#f4f4f4",
+             "app_border": "#ffffff", "app_accent": "#fafafa", "app_on_accent": "#ffffff",
+             "darkmode": True},
+            {"app_background": "#101010", "app_surface_elevated": "#f0f0f0",
+             "app_foreground": "#090909", "app_subtext": "#333333",
+             "app_border": "#101010", "app_accent": "#151515", "app_on_accent": "#000000",
+             "darkmode": False},
+        ):
+            with self.subTest(updates=updates):
+                palette = {**self.palette, **updates}
+                theme = json.loads(office.generate_theme(palette))
+                colors = theme["colors"]
+                self.assertEqual(colors["background-action-panel"], colors["background-toolbar"])
+                self.assertEqual(colors["highlight-sidebar-item-pressed"], colors["background-action-panel"])
+                self.assertEqual(colors["icon-normal"], colors["text-normal"])
+                self.assertEqual(colors["text-tertiary"], colors["text-secondary"])
+                for ink, ground in (
+                    ("text-normal", "background-normal"),
+                    ("text-normal", "background-action-panel"),
+                    ("text-normal", "highlight-sidebar-item-pressed"),
+                    ("text-secondary", "background-action-panel"),
+                    ("text-tertiary", "background-normal"),
+                    ("icon-normal", "background-normal"),
+                    ("text-link", "background-action-panel"),
+                    ("text-inverse", "background-accent-button"),
+                    ("chb-check-mark-background", "chb-background-checked"),
+                ):
+                    self.assertGreaterEqual(office.contrast_ratio(colors[ink], colors[ground]), 4.5,
+                                            (ink, ground, theme["type"]))
+                for ground in ("background-normal", "background-action-panel"):
+                    self.assertGreaterEqual(office.contrast_ratio(colors["border-regular-control"], colors[ground]), 3.0)
 
     def test_invalid_or_missing_palette_never_writes(self):
         for value in ("red", "#abc", "#ffffff;payload", 123, None):
@@ -362,6 +402,32 @@ class LibreOfficeThemeTests(unittest.TestCase):
 
     def update(self, enabled=True, version="26.8.1-2"):
         return office.update_libreoffice(self.config_home, self.state_home, enabled, self.palette, version)
+
+    def test_readable_libreoffice_application_roles(self):
+        for palette in (
+            self.palette,
+            {**self.palette, "background": "#fafafa", "surface_container": "#141414",
+             "on_surface": "#ffffff", "on_surface_variant": "#eeeeee",
+             "outline": "#fafafa", "primary": "#ededed", "on_primary": "#ffffff"},
+        ):
+            with self.subTest(background=palette["background"]):
+                values = office.libreoffice_values(palette)
+                def role(name):
+                    return f"#{int(values[office.LO_COLORS + (name, 'Color')]):06x}"
+                for ink, background in (
+                    ("WindowTextColor", "WindowColor"),
+                    ("WindowTextColor", "BaseColor"),
+                    ("ButtonTextColor", "ButtonColor"),
+                    ("MenuBarTextColor", "MenuBarColor"),
+                    ("MenuTextColor", "MenuColor"),
+                    ("ActiveTextColor", "ActiveColor"),
+                    ("MenuBarHighlightTextColor", "MenuBarHighlightColor"),
+                    ("MenuHighlightTextColor", "MenuHighlightColor"),
+                    ("DisabledTextColor", "DisabledColor"),
+                    ("InactiveTextColor", "InactiveColor"),
+                ):
+                    self.assertGreaterEqual(office.contrast_ratio(role(ink), role(background)), 4.5,
+                                            (ink, background))
 
     def registry(self):
         return office.registry.Registry(self.config.read_bytes())
