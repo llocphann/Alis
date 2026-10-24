@@ -22,14 +22,18 @@ function rangeForGesture(row, mode, dx, dy, dayWidth, hourHeight) {
     // An explicitly stored repeating occurrence can be adjusted once without
     // changing its series template. Unpersisted projected dates cannot.
     const repeating=(row.event?.recurrence || "none") !== "none";
-    if (repeating && (!["daily","weekly","monthly","yearly"].includes(row.event?.recurrence)
-            || !Array.isArray(row.event?.occurrences)
-            || !Array.isArray(row.event?.repeatTemplate)
-            || !row.event.repeatTemplate.length
-            || !Number.isInteger(row.occurrenceIndex)
-            || row.occurrenceIndex<0
-            || row.occurrenceIndex>=row.event.occurrences.length))
-        return null;
+    if (repeating) {
+        if (!["daily","weekly","monthly","yearly"].includes(row.event?.recurrence)
+                || !Number.isInteger(row.occurrenceIndex)
+                || row.occurrenceIndex<0) return null;
+        const slots=row.event?.occurrences;
+        if (Array.isArray(slots) && slots.length) {
+            if (row.occurrenceIndex>=slots.length
+                    || (!row.event.repeatTemplate?.length && slots.length!==1))
+                return null;
+        } else if (row.occurrenceIndex!==0
+                || !(row.event?.startDate || row.event?.dateTime)) return null;
+    }
     const start=new Date(row.startDate),end=new Date(row.endDate);
     if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())
         || end<=start || !(hourHeight>0) || !(dayWidth>0)) return null;
