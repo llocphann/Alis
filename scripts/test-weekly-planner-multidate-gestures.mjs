@@ -72,7 +72,7 @@ test('projected legacy exception can be edited repeatedly and reloaded',()=>{
   assert.deepEqual(plain(again.occurrences),plain(legacy.occurrences));
   assert.equal(rows(again,'2032-10-26T12:00:00Z').filter(r=>r.occurrenceIndex===0).length,1);
 });
-const gestureKey=r=>typeof S.gestureKey==='function' ? S.gestureKey(r) : S.key(r);
+function gestureKey(r) {return typeof S.gestureKey==='function' ? S.gestureKey(r) : S.key(r);}
 test('recurring gesture has a nonempty key',()=>assert.ok(gestureKey(saved)));
 test('another event never shares preview',()=>assert.notEqual(gestureKey(saved),gestureKey({...saved,event:{...legacy,id:42}})));
 test('another slot never shares preview',()=>assert.notEqual(gestureKey(saved),gestureKey({...saved,occurrenceIndex:1})));
