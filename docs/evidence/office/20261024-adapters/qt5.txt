@@ -1,0 +1,1 @@
+QSETTINGS_INTEROP_PASS {"qt_version": "5.15.19", "selector_read": true, "native_unrelated_edits_preserved": true, "selector_restored": true, "office_application_started": false, "owner_profile_accessed": false}

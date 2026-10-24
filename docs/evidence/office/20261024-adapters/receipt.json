@@ -59,7 +59,7 @@
     "other_adapters_changed": false
   },
   "logs": {
-    "focused.log": "37c1ed8222eaa968274a700d17eff9cf299d7c18306acae70026cca9b85e2113",
-    "qt5.log": "2cb32c437dcfa396ee252e6c89b392e66201a4c5f2c1288d79897275a388dc1a"
+    "focused.txt": "37c1ed8222eaa968274a700d17eff9cf299d7c18306acae70026cca9b85e2113",
+    "qt5.txt": "2cb32c437dcfa396ee252e6c89b392e66201a4c5f2c1288d79897275a388dc1a"
   }
 }
