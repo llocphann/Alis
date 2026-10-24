@@ -40,6 +40,7 @@ Item {
         id: editor
         body: root.participant
         canvasController: root.taskView ? null : overview.item?.canvasController ?? null
+        tabController: root.taskView ? null : overview.item?.tabController ?? null
     }
     Component {
         id: dashboard
