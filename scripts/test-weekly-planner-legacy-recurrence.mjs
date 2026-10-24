@@ -180,6 +180,60 @@ assert.ok(oldestUpdate && oldestUpdate.occurrences===undefined);
 assert.equal(oldestUpdate.plannerSeriesStartDate,oldest.dateTime);
 assert.equal(oldestUpdate.plannerSeriesEndDate,'2026-10-20T08:00:00.000Z');
 assert.equal(oldestUpdate.ownerNotes.preserve,true);
+// Old weekly Events are often shown as *virtual* occurrences after the
+// original stored date. These must be editable without materializing every
+// recurrence, modifying the original Event ID or shifting later weeks.
+const virtualRow=P.project([oldSeries],[],'2026-10-27T12:00:00Z',1)
+  .flatMap(day=>day.timed).find(row=>row.event.id===303 && row.virtual);
+assert.ok(virtualRow && virtualRow.plannerOriginalStartIso
+  && S.canReschedule(virtualRow),'current-week projected old Event still locked');
+assert.equal(S.canSelect(virtualRow),false,'virtual occurrence entered batch delete');
+assert.equal(S.canReschedule({...virtualRow,source:'external'}),false);
+assert.equal(S.canReschedule({...virtualRow,plannerOriginalStartIso:''}),false);
+const virtualResize=G.rangeForGesture(virtualRow,'bottom',0,13,102,52);
+assert.ok(virtualResize,'virtual resize gesture not computed');
+const originalVirtual=virtualRow.plannerOriginalStartIso;
+const exception=O.rescheduleProjectedRecurring(oldSeries,0,originalVirtual,
+  virtualResize.startIso,virtualResize.endIso);
+assert.ok(exception && exception.plannerOverrides?.length===1);
+assert.equal(exception.id,oldSeries.id);
+assert.equal(exception.occurrences,undefined);
+assert.equal(exception.startDate,oldSeries.startDate);
+assert.equal(exception.recurrence,oldSeries.recurrence);
+assert.equal(JSON.stringify(exception.todoLink),JSON.stringify(oldSeries.todoLink));
+assert.equal(JSON.stringify(oldSeries),unchangedOld,'virtual edit changed original');
+const changedVirtual=P.project([exception],[],'2026-10-27T12:00:00Z',1)
+  .flatMap(day=>day.timed).find(row=>row.plannerOriginalStartIso===originalVirtual);
+assert.ok(changedVirtual && changedVirtual.virtual && S.canReschedule(changedVirtual));
+assert.equal(changedVirtual.endDate.toISOString(),'2026-10-27T10:15:00.000Z');
+const anotherResize=G.rangeForGesture(changedVirtual,'bottom',0,13,102,52);
+const repeatedException=O.rescheduleProjectedRecurring(exception,0,originalVirtual,
+  anotherResize.startIso,anotherResize.endIso);
+assert.equal(repeatedException.plannerOverrides.length,1,
+  'editing a virtual exception twice must not duplicate it');
+assert.equal(O.rescheduleProjectedRecurring(oldSeries,0,
+  '2026-10-28T09:00:00Z',virtualResize.startIso,virtualResize.endIso),null,
+  'non-scheduled instance must be rejected by the backend');
+const movedVirtual=O.rescheduleProjectedRecurring(oldSeries,0,originalVirtual,
+  '2026-11-02T09:00:00Z','2026-11-02T10:00:00Z');
+const projectedDestination=P.project([movedVirtual],[],'2026-11-02T12:00:00Z',1)
+  .flatMap(day=>day.timed);
+assert.equal(projectedDestination.filter(row=>row.plannerOriginalStartIso===
+  originalVirtual && row.startDate.toISOString()==='2026-11-02T09:00:00.000Z').length,1,
+  'moved virtual instance not shown in destination week');
+assert.ok(projectedDestination.some(row=>row.plannerOriginalStartIso!==
+  originalVirtual && row.startDate.toISOString()==='2026-11-03T09:00:00.000Z'),
+  'independent weekly recurrence changed when virtual instance moved');
+const groupedNext=P.project([event],[],'2026-10-27T12:00:00Z',1)
+  .flatMap(day=>day.timed).find(row=>row.virtual);
+assert.ok(groupedNext && S.canReschedule(groupedNext),
+  'grouped legacy Weekly virtual future instance missing edit controls');
+const groupedOverride=O.rescheduleProjectedRecurring(event,groupedNext.occurrenceIndex,
+  groupedNext.plannerOriginalStartIso,groupedNext.startDate.toISOString(),
+  new Date(groupedNext.endDate.getTime()+15*60000).toISOString());
+assert.ok(groupedOverride && groupedOverride.plannerOverrides.length===1);
+assert.equal(JSON.stringify(groupedOverride.repeatTemplate),JSON.stringify(event.repeatTemplate),
+  'grouped virtual override changed repeatTemplate');
 const source=fs.readFileSync(file('services/Events.qml'),'utf8');
 const recurrenceFunction=source.slice(source.indexOf('function createNextRecurrence('),
   source.indexOf('function addEvent(',source.indexOf('function createNextRecurrence(')));
