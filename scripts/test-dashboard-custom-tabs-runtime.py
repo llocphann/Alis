@@ -255,7 +255,7 @@ with tempfile.TemporaryDirectory(prefix="alis-dash-f01-") as tmp:
                  "assets", "scripts", "defaults", "translations"):
         (folder / name).symlink_to(ROOT / name)
     (folder / "shell.qml").write_text(QML)
-    with private_wayland(folder) as env:
+    with private_wayland(folder, capture_focus=True) as env:
         if env is None:
             print("SKIP: DASH-F01 needs a private Niri backend")
             raise SystemExit(0)

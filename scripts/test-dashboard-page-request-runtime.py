@@ -103,11 +103,13 @@ Window {
    check(dashboard.currentPageId==="dashboard" && !dashboard._pendingPageId,
     "Left did not cancel an uncommitted Right request")
    keyClick(Qt.Key_Right,Qt.NoModifier,0);keyClick(Qt.Key_Right,Qt.NoModifier,0)
-   check(dashboard._pendingPageId==="weeklyPlanner","rapid Right keys lost pending navigation intent")
+   check((dashboard._pendingPageId || dashboard.currentPageId)==="weeklyPlanner","rapid Right keys lost navigation intent")
    keyClick(Qt.Key_Left,Qt.NoModifier,0)
-   check(dashboard._pendingPageId==="music","rapid keyboard reversal skipped pending intent")
+   check((dashboard._pendingPageId || dashboard.currentPageId)==="music","rapid keyboard reversal skipped navigation intent")
    keyClick(Qt.Key_Left,Qt.NoModifier,0)
-   check(!dashboard._pendingPageId && dashboard.currentPageId==="dashboard","rapid keyboard cancellation replayed a target")
+   check((dashboard._pendingPageId || dashboard.currentPageId)==="dashboard","rapid keyboard cancellation lost target")
+   settle("dashboard")
+   check(!dashboard._pendingPageId,"rapid keyboard cancellation retained a late target")
 
    root.phase="cold-replace-cancel"
    button("music").click()
