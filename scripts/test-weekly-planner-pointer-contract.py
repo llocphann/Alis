@@ -31,8 +31,10 @@ assert "root.commitTimedGesture(modelData,mode,dx,dy)" in event
 assert 'Gesture.rangeForGesture(modelData,gestureMode,dragX,dragY,' in event
 assert 'if (!root.localBackend.rescheduleOccurrence(' in qml
 assert "function rescheduleOccurrence(id, index, startIso, endIso, metadata)" in backend
+assert "function rescheduleRecurringOccurrence(id, index, startIso, endIso)" in backend
+assert 'const method=repeating ? "rescheduleRecurringOccurrence" : "rescheduleOccurrence"' in qml
 assert "function rangeForGesture(row, mode, dx, dy, dayWidth, hourHeight)" in policy
-assert 'row.source !== "local" || row.virtual' in policy, "read-only and recurrence limits"
+assert 'row.source !== "local" || row.virtual' in policy, "external and virtual events read-only"
 
 # Hard regression gate: these three native hit targets, release handlers,
 # viewport anti-steal and discoverable start/end grips are product behavior.
@@ -44,7 +46,7 @@ assert 'objectName:"plannerResizeEnd"' in event
 assert event.count("acceptedButtons:Qt.LeftButton") == 3
 assert event.count("cursorShape:Qt.SizeVerCursor") == 2
 assert 'cursorShape:timedButton.canReschedule' in event
-assert 'readonly property bool canReschedule: Selection.canSelect(modelData)' in event
+assert 'readonly property bool canReschedule: Selection.canReschedule(modelData)' in event
 assert 'visible:timedButton.canReschedule' in event
 assert event.count('height:Math.min(11,parent.height/3)') == 2
 assert 'timedButton.gestureMode==="top" ? .9 : .38' in event
@@ -53,6 +55,9 @@ assert 'root.commitTimedGesture(modelData,mode,dx,dy)' in event
 selection=(root / "modules/dashboard/PlannerSelection.js").read_text()
 assert 'row.source==="local" && !row.virtual' in selection
 assert '(row.event?.recurrence || "none")==="none"' in selection
+assert "function canReschedule(row)" in selection
+assert '["daily","weekly","monthly","yearly"].includes(event?.recurrence)' in selection
 assert 'function rescheduleOccurrence(id, index, startIso, endIso, metadata)' in backend
 assert 'function reschedule(event,index,start,end)' in (root / "services/EventOccurrences.js").read_text()
+assert 'function rescheduleSavedRecurring(event,index,start,end)' in (root / "services/EventOccurrences.js").read_text()
 print("WEEKLY_PLANNER_POINTER_SOURCE_PASS: guarded event move + visible top/bottom resize + safe persistence")
