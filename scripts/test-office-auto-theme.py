@@ -562,6 +562,18 @@ class LibreOfficeThemeTests(unittest.TestCase):
                 self.update()
             self.assertEqual(self.config.read_bytes(), data)
 
+    def test_ambiguous_set_member_paths_are_rejected_instead_of_losing_scheme_overrides(self):
+        for path in ["/org.openoffice.Office.UI/ColorScheme/ColorSchemes/Type['unfinished",
+                     "/org.openoffice.Office.UI/ColorScheme/ColorSchemes/Type['John's scheme']",
+                     "/org.openoffice.Office.UI/ColorScheme//ColorSchemes"]:
+            data = office.registry.EMPTY_REGISTRY.replace(b'</oor:items>',
+                self.item(path, '<node oor:name="DocColor"><prop oor:name="Color"><value>123</value></prop></node>') + b'</oor:items>')
+            self.put(data)
+            with self.assertRaises(office.registry.RegistryError):
+                self.update()
+            self.assertEqual(self.config.read_bytes(), data)
+            self.assertFalse(self.journal.exists())
+
     def test_self_closing_root_and_attribute_angle_are_supported(self):
         original = ('<x:items xmlns:x="' + office.registry.OOR + '" note="a &gt; b"/>').encode()
         self.put(original)

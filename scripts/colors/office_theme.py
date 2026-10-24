@@ -417,6 +417,8 @@ def update_libreoffice(config_home, state_home, enabled, palette, version):
                 if key[:len(previous_prefix)] == previous_prefix:
                     target = LO_COLORS + key[len(previous_prefix):]
                     if target not in values:
+                        if any("/" in part for part in target):
+                            raise UnsafeConfig("unsupported custom color property path; preserving the profile")
                         inherited[target] = tree.raw(key)
                         tree.value(key)  # Reject ambiguous/localized values.
             updates.update(inherited)

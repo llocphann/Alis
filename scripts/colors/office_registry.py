@@ -31,10 +31,14 @@ def path_parts(path):
             depth -= 1
         if char == "/" and not quoted and depth == 0:
             match = re.fullmatch(r"[^\[\]]+\['([^']*)'\]", piece)
+            if not piece or (("[" in piece or "]" in piece) and not match):
+                raise RegistryError("unsupported registry set-member path; preserving it")
             parts.append(match[1] if match else piece)
             piece = ""
         else:
             piece += char
+    if piece or quoted or depth != 0:
+        raise RegistryError("ambiguous registry set-member path; preserving it")
     return tuple(parts)
 
 
