@@ -801,6 +801,7 @@ ContentPage {
 
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
+                visible: monitorRect.width >= 64 && monitorRect.height >= 26
                 spacing: Appearance.sizes.spacingSmall / 2
 
                 MaterialSymbol {
@@ -821,6 +822,15 @@ ContentPage {
                     elide: Text.ElideMiddle
                     Layout.maximumWidth: Math.max(24, monitorRect.width - 42)
                 }
+            }
+
+            StyledText {
+                Layout.alignment: Qt.AlignHCenter
+                visible: (monitorRect.width < 64 || monitorRect.height < 26)
+                    && monitorRect.width >= 14 && monitorRect.height >= 14
+                text: String(root.niriOutputNames().indexOf(monitorRect.outputName) + 1)
+                font.pixelSize: Appearance.font.pixelSize.smallest
+                color: monitorRect.primary ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
             }
 
             StyledText {
