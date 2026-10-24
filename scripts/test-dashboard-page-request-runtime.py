@@ -49,7 +49,8 @@ Window {
   running:dashboard.presentationActive && root.phase.length>0
   onTriggered:root.samples.push({phase:root.phase,time:Date.now(),
    position:test.pages.pagePosition,id:dashboard.currentPageId,
-   ready:test.ready(dashboard.currentPageId)})
+   ready:test.ready(dashboard.currentPageId),
+   transitActive:test.transitLoader?.active ?? false})
  }
  TestCase {
   id:test;optional:true;when:false
@@ -57,6 +58,7 @@ Window {
   property var music:null
   property var planner:null
   property var pages:null
+  property var transitLoader:null
   property var rows:[]
   function check(v,m){checks++;if(!v)throw new Error(m)}
   function button(id){return findChild(dashboard,"dashboardPage"+dashboard.pageIds.indexOf(id))}
@@ -169,9 +171,32 @@ Window {
     && dashboard.currentPageId==="custom-1","Escape did not cancel the selected custom canvas")
    check(JSON.stringify(Array.from(Config.options.dashboard.customTabLayouts))===savedCustom,
     "custom Escape wrote draft layout to saved settings")
-   mouseClick(button("dashboard"));settle("dashboard")
+   mouseClick(button("dashboard"))
+   tryCompare(dashboard,"currentPageId","dashboard",2500)
+   if(Math.abs(pages.pagePosition-dashboard.currentPage)>.01)
+    check(custom.active,"outgoing custom canvas unloaded during page slide")
+   settle("dashboard")
    tryVerify(()=>!custom.active,3000)
    check(!custom.active,"offscreen custom canvas escaped existing unload policy")
+
+   // Jump across an unselected custom page without loading its widgets.
+   root.phase="skip-intermediate-custom"
+   Config.setNestedValue("dashboard.customTabs",[
+    {id:"custom-1",name:"Private request test"},
+    {id:"custom-2",name:"Private skip target"}])
+   tryVerify(()=>!!button("custom-2"),3000)
+   transitLoader=custom
+   const intermediateIndex=dashboard.pageIds.indexOf("custom-1")
+   mouseClick(button("custom-2"));settle("custom-2")
+   const passed=root.samples.filter(row=>row.phase==="skip-intermediate-custom"
+    && row.id==="custom-2"
+    && Math.abs(row.position-intermediateIndex)<.95)
+   check(passed.length>0,"long tab slide did not sample intermediate position")
+   check(passed.every(row=>!row.transitActive),
+    "unselected custom tab Loader activated while sliding past")
+   mouseClick(button("dashboard"));settle("dashboard")
+   tryVerify(()=>!custom.active,3000)
+   transitLoader=null
 
    root.phase="remove-pending-custom"
    button("custom-1").click()
