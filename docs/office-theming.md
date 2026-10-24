@@ -30,6 +30,40 @@ The adapter uses `$XDG_DATA_HOME/onlyoffice/desktopeditors/uithemes` and
 `$XDG_CONFIG_HOME/onlyoffice/DesktopEditors.conf`. It does not write `/opt`,
 inject browser JavaScript or use an undocumented command-line theme flag.
 
+### Editor workspace canvas and document safety
+
+ONLYOFFICE has **two distinct color systems**: Home/Settings CSS and the
+document editor's canvas. An earlier adapter themed `background-normal` and
+`background-action-panel` but omitted the documented `canvas-background`
+role; consequently the area around the document still used the built-in gray
+color even when the toolbar and settings followed Alis. The adapter now sets
+`canvas-background` from the current Alis app background, and gives the ruler,
+margin region, page border, scroll thumb and spreadsheet header canvas
+compatible contrast-aware colors.
+
+The adapter **intentionally does not set** `canvas-content-background` (paper,
+slide or spreadsheet cell surface) or document font/content colors. This
+preserves the editor's document-theme and printing semantics; light paper may
+appear against a dark Alis workspace and that is intentional.
+
+LibreOffice's supported `AppBackground` UI color role serves the analogous
+workspace outside the document. The adapter maps that role to the same Alis
+canvas background token, while keeping explicit `DocColor`, `FontColor` and
+document visibility preferences user-owned. LibreOffice 26.8 may render some
+toolkit/toolbar regions with platform or module-specific colors; do not claim
+full pixel-level palette parity. If the user has selected a Writer application
+background bitmap, that can obscure the plain application-background color:
+the adapter preserves the user's bitmap preference.
+
+To verify on the installed desktop, close both office apps (the adapter
+defers changes while they run), refresh Alis colors and reopen. In ONLYOFFICE
+inspect the area **outside** a Writer document, the ruler and the unchanged
+document page; repeat for spreadsheets and presentations. In LibreOffice
+inspect the application background around a Writer document and the
+Appearance > Application background color, plus menus and buttons. Repeat
+with dark and light Alis palettes and confirm restore on disabling each
+integration. These are Owner visual checks, not covered by synthetic tests.
+
 LibreOffice documents its [Appearance options](https://help.libreoffice.org/latest/en-US/text/shared/optionen/01012000.html)
 and [configuration/theme architecture](https://github.com/LibreOffice/core/blob/master/vcl/README.themes.md).
 The installed `share/registry/main.xcd` is authoritative for available properties;
