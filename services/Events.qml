@@ -616,6 +616,22 @@ Singleton {
         return true
     }
 
+    // Persist an exception to one projected recurring occurrence. Do not
+    // promote every future week into stored Events or edit the series template.
+    function rescheduleProjectedRecurring(id, index, originalIso, startIso, endIso) {
+        if (!root.ready) return false
+        const position=root.list.findIndex(event=>event.id===id)
+        if (position<0) return false
+        const updated=Occurrences.rescheduleProjectedRecurring(
+            root.list[position],index,originalIso,startIso,endIso)
+        if (!updated) return false
+        root.list[position]=updated
+        root.list=root.list.slice()
+        root.eventUpdated(updated)
+        root.saveToFile()
+        return true
+    }
+
     // Atomic Weekly Planner group edits: validate every operation before
     // changing any canonical event; emit updates and persist once.
     function applyPlannerOccurrenceBatch(operations) {
