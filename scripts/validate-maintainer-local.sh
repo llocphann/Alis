@@ -339,6 +339,7 @@ run_check 'Native Weekly Planner pointer move, top/bottom resize and isolated ca
 run_check 'Weekly Planner selected/batch gestures and stored event safeguards' python3 scripts/test-weekly-planner-multi-selection-contract.py
 run_check 'Legacy Weekly Planner saved recurring event compatibility and instance safety' node scripts/test-weekly-planner-legacy-recurrence.mjs
 run_check 'Weekly Planner legacy multi-date gestures, isolated preview identity and persistence parity' node scripts/test-weekly-planner-multidate-gestures.mjs
+run_check 'Weekly Planner deterministic theme-gradient Event palette and unaffected gestures' node scripts/test-weekly-planner-event-palette.mjs
 run_check 'Native Weekly Planner multi-date gestures, isolated preview and real storage restart' python3 scripts/test-weekly-planner-multidate-gestures-runtime.py
 run_check 'Edited legacy Weekly Planner rollover, denied save/retry and restart parity' python3 scripts/test-weekly-planner-edited-rollover-runtime.py
 run_check 'Weekly Planner civil dates, overlap, recurrence and DST regression' node scripts/test-weekly-planner-policy.mjs
