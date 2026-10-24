@@ -29,15 +29,18 @@ assert "root.activeDragDay=-1" in event
 assert "onReleased:timedButton.finishGesture(" in event
 assert "root.commitTimedGesture(modelData,mode,dx,dy)" in event
 assert 'Gesture.rangeForGesture(modelData,gestureMode,dragX,dragY,' in event
-assert 'if (!root.localBackend[method](row.event.id,' in qml
+assert 'const saved=projected' in qml
+assert 'root.localBackend[method](row.event.id,row.occurrenceIndex,' in qml
 assert "function rescheduleOccurrence(id, index, startIso, endIso, metadata)" in backend
 assert "function rescheduleRecurringOccurrence(id, index, startIso, endIso)" in backend
-assert 'const method=repeating ? "rescheduleRecurringOccurrence" : "rescheduleOccurrence"' in qml
+assert 'const method=projected ? "rescheduleProjectedRecurring"' in qml
+assert 'function rescheduleProjectedRecurring(id, index, originalIso, startIso, endIso)' in backend
 assert 'const range=repeating ? Gesture.rangeForGesture(target,mode,dx,dy,' in qml
 assert 'if (!Selection.canReschedule(row)) return []' in qml
 
 assert "function rangeForGesture(row, mode, dx, dy, dayWidth, hourHeight)" in policy
-assert 'row.source !== "local" || row.virtual' in policy, "external and virtual events read-only"
+assert 'row.source !== "local" || row.event?.allDay === true' in policy
+assert '(row.virtual && !row.plannerOriginalStartIso)' in policy, "unknown projections stay read-only"
 
 # Hard regression gate: these three native hit targets, release handlers,
 # viewport anti-steal and discoverable start/end grips are product behavior.
@@ -63,4 +66,6 @@ assert '["daily","weekly","monthly","yearly"].includes(event?.recurrence)' in se
 assert 'function rescheduleOccurrence(id, index, startIso, endIso, metadata)' in backend
 assert 'function reschedule(event,index,start,end)' in (root / "services/EventOccurrences.js").read_text()
 assert 'function rescheduleSavedRecurring(event,index,start,end)' in (root / "services/EventOccurrences.js").read_text()
+assert 'function rescheduleProjectedRecurring(event,index,originalIso,start,end)' in (root / "services/EventOccurrences.js").read_text()
+assert 'row.plannerOriginalStartIso' in qml
 print("WEEKLY_PLANNER_POINTER_SOURCE_PASS: guarded event move + visible top/bottom resize + safe persistence")
