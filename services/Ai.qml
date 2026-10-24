@@ -64,6 +64,11 @@ Singleton {
         if (model.api_format === "gguf") return {
             command:["/usr/bin/python3", Quickshell.shellPath("scripts/ai/gguf_runtime.py")],
             environment:({}), payload:root.localRequestForModel(model, data, effort)}
+        if (model.local && ["ollama", "lmstudio"].includes(model.provider_id)) return {
+            command:["/usr/bin/python3",Quickshell.shellPath("scripts/ai/local-provider-session.py")],
+            environment:({AI_ENDPOINT:String(model.endpoint),AI_LOCAL_MODEL:String(model.model),
+                AI_LOCAL_PROVIDER:String(model.provider_id),AI_LOCAL_FINGERPRINT:String(model.local_fingerprint ?? ""),
+                AI_LOCAL_KEY:model.requires_key ? root.credentialForModel(model) : ""}),payload:data}
         const endpoint = String(strategy.buildEndpoint(model))
         const queryKey = endpoint.endsWith("${API_KEY}")
         const environment = {AI_ENDPOINT:queryKey ? endpoint.slice(0,-10) : endpoint}
@@ -297,7 +302,10 @@ Singleton {
     function modelCanRun(model): bool {
         if (!model) return false
         if(model.api_format==="gguf" && !model.runtime_path)return false
-        if ((Config.options?.policies?.ai ?? 0) === 2 && !model.local) return false
+        if ((Config.options?.policies?.ai ?? 0) === 2 && (!model.local
+                || (model.api_format!=="gguf" && (model.local_verified!==true
+                    || !["ollama","lmstudio"].includes(model.provider_id)
+                    || !/^[0-9a-f]{64}$/.test(model.local_fingerprint))))) return false
         return !model.requires_key || root.credentialForModel(model).length > 0
     }
 
@@ -949,6 +957,8 @@ Singleton {
                 auth_scheme: entry.authScheme ?? provider?.authScheme ?? "strategy",
                 provider_id: entry.providerId ?? "catalog",
                 local: !!entry.local,
+                local_verified: entry.localVerified === true,
+                local_fingerprint: String(entry.localFingerprint ?? ""),
                 free: !!entry.free,
                 input_modalities: entry.inputModalities ?? ["text"],
                 output_modalities: entry.outputModalities ?? ["text"],
@@ -1454,6 +1464,15 @@ Singleton {
                 Qt.callLater(()=>{requester.running=true})
                 return
             }
+            if(model.local && ["ollama","lmstudio"].includes(model.provider_id)) {
+                const request=root.textTransport(model,requester.currentStrategy,data)
+                requester.localPayload=request.payload
+                requester.environment=request.environment
+                root.pendingFilePath=""
+                requester.command=request.command
+                Qt.callLater(()=>{requester.running=true})
+                return
+            }
             requester.localPayload=null
 
             /* Build header string for curl */
@@ -1490,7 +1509,7 @@ Singleton {
             let scriptRequestContent = ""
             const curlStatusToken = String.fromCharCode(37) + "{http_code}"
             scriptRequestContent += `printf '%s' '${CF.StringUtils.shellSingleQuoteEscape(JSON.stringify(data))}'`
-                + ` | curl -sS --no-buffer "${endpoint}"`
+                + ` | curl -q -sS --no-buffer "${endpoint}"`
                 + ` ${headerString}`
                 + (authHeader ? ` ${authHeader}` : "")
                 + ` --data @-`

@@ -22,7 +22,7 @@ Singleton {
     property bool initialized: false
     property bool refreshing: false
     property int lastRefreshEpoch: 0
-    readonly property int cacheVersion: 2
+    readonly property int cacheVersion: 3
 
     readonly property int availableModelCount: models.length
     readonly property int freeModelCount: models.filter(model => model.free === true).length

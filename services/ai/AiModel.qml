@@ -33,6 +33,8 @@ QtObject {
     property string auth_scheme: "strategy"
     property string provider_id: "custom"
     property bool local: endpoint.includes("localhost") || endpoint.includes("127.0.0.1")
+    property bool local_verified: false
+    property string local_fingerprint: ""
     property bool free: local
     property list<string> input_modalities: ["text"]
     property list<string> output_modalities: ["text"]

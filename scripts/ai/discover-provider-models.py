@@ -12,6 +12,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Any
+from local_provider import LocalProviderError, origin as local_origin, request_json as local_json, verify as verify_local
 
 UNKNOWN = "unknown"
 SUPPORTED = "supported"
@@ -430,7 +431,7 @@ def main() -> int:
         url = f"{url}{delimiter}key={urllib.parse.quote(key)}"
 
     try:
-        payload = _request_json(url, _headers(args.kind, key), args.timeout)
+        payload = local_json(url, key, args.timeout) if args.local else _request_json(url, _headers(args.kind, key), args.timeout)
         normalizer = {
             "openrouter": _normalize_openrouter,
             "ollama": _normalize_ollama,
@@ -447,11 +448,31 @@ def main() -> int:
             args.key_id,
             args.local,
         )
-        for model in models:
+        metadata = None
+        if args.local and args.provider_id == "lmstudio":
+            try:
+                metadata = local_json(local_origin(args.chat_endpoint)+"/api/v0/models", key, args.timeout)
+            except LocalProviderError:
+                metadata = {}
+        verification_deadline = time.monotonic() + min(args.timeout, 8)
+        for index, model in enumerate(models):
+            if args.local:
+                model.update(local=False, free=False, localVerified=False, localFingerprint="")
+                try:
+                    if index >= 128 or time.monotonic() >= verification_deadline:
+                        raise LocalProviderError("verification_budget")
+                    verified = verify_local(args.provider_id, args.chat_endpoint, model["remoteId"], key,
+                        timeout=max(.1, min(2, verification_deadline-time.monotonic())), payload=metadata)
+                    model.update(local=True, free=True, localVerified=True, localFingerprint=verified["fingerprint"])
+                    model["quantization"] = verified["quantization"]
+                except LocalProviderError:
+                    pass
             if model.get("authScheme") in (None, "", "strategy"):
                 model["authScheme"] = args.auth_scheme
         result["ok"] = True
         result["models"] = models
+    except LocalProviderError:
+        result["error"] = "local-verification-unavailable"
     except urllib.error.HTTPError as error:
         result["error"] = f"http-{error.code}"
     except urllib.error.URLError as error:

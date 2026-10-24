@@ -36,7 +36,7 @@ QtObject {
         const snapshot = {}
         for (const key of ["name", "model", "endpoint", "api_format", "auth_scheme", "provider_id",
                 "requires_key", "key_id", "gguf_path", "runtime_path", "local", "free",
-                "max_output_tokens", "capabilities", "extraParams"])
+                "max_output_tokens", "capabilities", "extraParams", "local_verified", "local_fingerprint"])
             snapshot[key] = model[key]
         snapshot.extraParams = JSON.parse(JSON.stringify(model.extraParams ?? {}))
         snapshot.capabilities = JSON.parse(JSON.stringify(model.capabilities ?? {}))
