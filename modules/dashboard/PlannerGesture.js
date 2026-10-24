@@ -17,7 +17,8 @@ function rangeForSelection(row,mode,dx,dy,dayWidth,hourHeight) {
     return {startIso:start.toISOString(),endIso:end.toISOString()};
 }
 function rangeForGesture(row, mode, dx, dy, dayWidth, hourHeight) {
-    if (!row || row.source !== "local" || row.virtual || row.event?.allDay === true)
+    if (!row || row.source !== "local" || row.event?.allDay === true
+            || (row.virtual && !row.plannerOriginalStartIso))
         return null;
     // An explicitly stored repeating occurrence can be adjusted once without
     // changing its series template. Unpersisted projected dates cannot.
