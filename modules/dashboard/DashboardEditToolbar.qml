@@ -34,11 +34,17 @@ Rectangle {
         root.visibleActionCount*34 + (root.visibleActionCount-1)*6
         + (root.hiddenIds.length > 0
             ? root.sectionGap + root.availableModulesNaturalWidth : 0)
-    implicitWidth: Math.ceil(Math.max(
-        toolbarTitle.implicitWidth,
-        root.naming ? 390 : Math.min(760,root.toolbarRowNaturalWidth))
+    // Preserve the *Edit Dashboard Layout* footprint while Create/Rename
+    // temporarily replaces the actions. Never size the popup from the
+    // naming row or its validation message; the host uses these dimensions
+    // for its reserved space and native input region.
+    implicitWidth: Math.ceil(Math.max(toolbarTitle.implicitWidth,
+        Math.min(760, root.toolbarRowNaturalWidth))
         + root.horizontalPadding * 2)
-    implicitHeight: toolbarColumn.implicitHeight + root.horizontalPadding * 2
+    readonly property real editToolbarHeight: Math.ceil(
+        toolbarTitle.implicitHeight + toolbarColumn.spacing
+        + toolbarRow.implicitHeight + root.horizontalPadding * 2)
+    implicitHeight: root.editToolbarHeight
     visible: root.editing || root.naming
     radius: Appearance.rounding.large
     topLeftRadius: radius
@@ -87,12 +93,21 @@ Rectangle {
             objectName: "dashboardTabNamingToolbar"
             visible: root.naming
             Layout.fillWidth: true
+            // Match the height of the original Edit actions, even if some
+            // hidden-module controls make that layout occupy multiple rows.
+            Layout.preferredHeight: toolbarRow.implicitHeight
+            Layout.minimumHeight: 0
             spacing: 6
             TextField {
                 id: tabNameInput
                 objectName: "dashboardToolbarTabName"
                 Layout.fillWidth: true
                 Layout.minimumWidth: 160
+                // Retain the 40px natural control while fitting the original
+                // Edit toolbar row's allocated height when it is smaller.
+                Layout.preferredHeight: Math.min(40, toolbarRow.implicitHeight)
+                Layout.minimumHeight: 0
+                Layout.alignment: Qt.AlignVCenter
                 implicitHeight: 40
                 maximumLength: 41
                 hoverEnabled: true
@@ -157,6 +172,16 @@ Rectangle {
                         visible: tabNameInput.activeFocus
                     }
                 }
+                StyledToolTip {
+                    // A name validation error must not grow or clip the
+                    // shared Edit/Create toolbar. Show it adjacent to the
+                    // focused field in the normal themed tooltip layer.
+                    text: root.tabController?._customDialogError ?? ""
+                    position: "bottom"
+                    useParentHover: false
+                    extraVisibleCondition: tabNameInput.invalidName
+                    alternativeVisibleCondition: tabNameInput.invalidName
+                }
             }
             RippleButton {
                 objectName: "dashboardToolbarCreate"
@@ -192,17 +217,6 @@ Rectangle {
                 StyledToolTip { text: Translation.tr("Cancel") }
             }
         }
-        StyledText {
-            visible: root.naming
-                && (root.tabController?._customDialogError?.length ?? 0) > 0
-            Layout.fillWidth: true
-            horizontalAlignment: Text.AlignHCenter
-            text: root.tabController?._customDialogError ?? ""
-            color: Appearance.colors.colError
-            font.pixelSize: Appearance.font.pixelSize.smallest
-            wrapMode: Text.WordWrap
-        }
-
         ColumnLayout {
             id: toolbarRow
             visible: !root.naming
