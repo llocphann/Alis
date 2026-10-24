@@ -486,8 +486,12 @@ def libreoffice_values(palette):
     # AccentColor is a filled UI role; text-link is independently contrast-
     # corrected for a surface and may not have a legible on-accent partner.
     accent, on_accent, muted, border = (colors[k] for k in ("background-accent-button", "text-accent-button", "text-secondary", "border-regular-control"))
+    # LibreOffice's AppBackground is the Writer/Calc workspace outside the
+    # document; keep it in sync with ONLYOFFICE canvas-background. Document
+    # paper, font, print and visibility entries remain user-owned.
+    workspace = colors["canvas-background"]
     role_colors = {
-        "AppBackground": bg, "WindowColor": surface, "WindowTextColor": fg,
+        "AppBackground": workspace, "WindowColor": surface, "WindowTextColor": fg,
         "BaseColor": bg, "ButtonColor": surface, "ButtonTextColor": fg,
         "AccentColor": accent, "DisabledColor": surface, "DisabledTextColor": muted,
         "ShadowColor": border, "SeparatorColor": border, "FaceColor": surface,
