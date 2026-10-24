@@ -68,6 +68,14 @@ ShellRoot {
  TestCase {
   id:test; when:false; optional:true
   function check(v,m) { if(!v) throw new Error(m) }
+  function liveMusic() {
+   const loader=findChild(dashboard,"dashboardMusicPageLoader")
+   check(loader!==null,"Music Loader unavailable")
+   tryCompare(loader,"status",Loader.Ready,4000)
+   check(loader.item!==null && loader.item===findChild(dashboard,"dashboardMusic"),
+    "Music fixture found an old or partially incubated item")
+   return loader.item
+  }
   function renderFrame(item,message) {
    const before=root.captures
    check(item.grabToImage(image=>root.captures++),message+": render request refused")
@@ -141,7 +149,7 @@ ShellRoot {
    mouseClick(findChild(dashboard,"dashboardPage1"))
    tryCompare(dashboard,"currentPage",1,1000)
    tryVerify(()=>findChild(dashboard,"dashboardMusic")!==null,3000)
-   let music=findChild(dashboard,"dashboardMusic")
+   let music=liveMusic()
    check(music.backend===fake,"music created another playback owner")
    check(music.results.length===0,"results must start empty")
    check(waitForPolish(window.contentItem,2000),"music column layout pending")
@@ -331,7 +339,7 @@ ShellRoot {
    check(GlobalStates.dashboardMusicBrowser.mode==="queue","unload lost lightweight browsing state")
    Config.setNestedValue("dashboard.music.enable",true)
    tryVerify(()=>findChild(dashboard,"dashboardMusic")!==null,2000)
-   music=findChild(dashboard,"dashboardMusic")
+   music=liveMusic()
    check(music!==beforeUnload && music.sourceMode==="queue","cold UI did not restore browsing identity")
    music.chooseGenre("Jazz");music.chooseGenre("Rock",Qt.ControlModifier)
    Config.setNestedValue("dashboard.music.enable",false)
@@ -340,7 +348,7 @@ ShellRoot {
       "unload lost Genre multi selection")
    Config.setNestedValue("dashboard.music.enable",true)
    tryVerify(()=>findChild(dashboard,"dashboardMusic")!==null,2000)
-   music=findChild(dashboard,"dashboardMusic")
+   music=liveMusic()
    check(music.selectedGenres.length===2 && music.results.length===3,
       "cold UI did not restore Genre multi selection")
    check(waitForPolish(dots,2000),"restored page navigation layout pending");renderFrame(dashboard,"restored page frame pending")
@@ -396,7 +404,7 @@ ShellRoot {
    check(Config.options.dashboard.pageOrder[0]==="music","disabled page rewrote stored order")
    Config.setNestedValues({"dashboard.music.enable":true,"dashboard.pageOrder":["dashboard","music","weeklyPlanner"]})
    tryVerify(()=>findChild(dashboard,"dashboardMusic")!==null,2000)
-   music=findChild(dashboard,"dashboardMusic")
+   music=liveMusic()
    const settings=Qt.createComponent(Qt.resolvedUrl("modules/settings/DashboardMusicSettings.qml"))
    check(settings.status===Component.Ready,"Music settings failed to compile: "+settings.errorString())
    const settingsItem=settings.createObject(window.contentItem,{visible:false})
