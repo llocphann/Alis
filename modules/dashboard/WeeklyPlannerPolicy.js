@@ -107,8 +107,12 @@ function project(local, external, value, firstDay) {
                 // project the current instance at its edited date, but generate
                 // future virtual weeks from the immutable original schedule.
                 // Never rewrite original Agenda slots while rendering.
-                var anchor=activeGroup && validDate(slot.plannerSeriesStartDate) || base;
-                var anchorEnd=activeGroup && validDate(slot.plannerSeriesEndDate) || baseEnd;
+                // Legacy single-date Events do not have an occurrences array or
+                // repeatTemplate. The original top-level schedule anchor must
+                // still govern virtual future instances after a manual edit.
+                var recurring=pair[1]==="local" && (event.recurrence || "none")!=="none";
+                var anchor=recurring && validDate(slot.plannerSeriesStartDate) || base;
+                var anchorEnd=recurring && validDate(slot.plannerSeriesEndDate) || baseEnd;
                 var seriesDuration=anchorEnd && anchorEnd>anchor ? anchorEnd-anchor : duration;
                 var occurrenceSource=Object.assign({},event,{
                     startDate:anchor.toISOString(),dateTime:anchor.toISOString(),
@@ -118,8 +122,7 @@ function project(local, external, value, firstDay) {
                 var generated=starts(occurrenceSource,days,pair[1],event.allDay
                     ? allDaySpan*86400000 : seriesDuration);
                 if (generated.limited) days.forEach(function(day) {day.projectionLimited=true;});
-                generated.dates.filter(function(date){return date!==null;}).forEach(function(occurrence) {
-                    var saved=occurrence.getTime()===anchor.getTime();
+                function drawOccurrence(occurrence,saved) {
                     var start=event.allDay ? midnight(saved ? base : occurrence)
                         : (saved ? base : occurrence);
                     var finish=event.allDay ? addDays(start,allDaySpan)
@@ -136,7 +139,23 @@ function project(local, external, value, firstDay) {
                             start:(from-day.date)/minute,end:(to-day.date)/minute,
                             startDate:new Date(start),endDate:finish,lane:0,lanes:1});
                     });
+                }
+                var sawAnchor=false;
+                generated.dates.filter(function(date){return date!==null;}).forEach(function(occurrence) {
+                    var saved=occurrence.getTime()===anchor.getTime();
+                    if (saved) sawAnchor=true;
+                    // If a stored instance moves onto a later projected
+                    // occurrence, do not draw that same instance twice.
+                    if (!saved && occurrence.getTime()===base.getTime()
+                            && base.getTime()!==anchor.getTime()) return;
+                    drawOccurrence(occurrence,saved);
                 });
+                // The stored instance may have moved into another week while
+                // its immutable series anchor remains in the original week.
+                // Do not hide that saved event just because projection starts
+                // from its historical anchor.
+                if (!sawAnchor && anchor.getTime()!==base.getTime())
+                    drawOccurrence(base,true);
             });
         });
     });
