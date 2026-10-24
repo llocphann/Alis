@@ -644,6 +644,7 @@ Singleton {
                     property bool ambientFocusEnabled: false
                     property bool ambientBatteryEnabled: false
                     property bool ambientMediaEnabled: false
+                    property bool pocketEnabled: false
                     property string character: "aqua"
                     property bool alternateCompanions: false
                     property string output: ""

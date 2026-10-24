@@ -2203,6 +2203,7 @@
             "ambientFocusEnabled": false,
             "ambientBatteryEnabled": false,
             "ambientMediaEnabled": false,
+            "pocketEnabled": false,
             "character": "aqua",
             "alternateCompanions": false,
             "output": "",
