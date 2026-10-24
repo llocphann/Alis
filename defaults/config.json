@@ -2194,6 +2194,9 @@
         },
         "companion": {
             "enabled": false,
+            "contextEnabled": false,
+            "contextFocusEnabled": false,
+            "contextAiEnabled": false,
             "character": "aqua",
             "alternateCompanions": false,
             "output": "",

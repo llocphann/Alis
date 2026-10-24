@@ -637,6 +637,9 @@ Singleton {
                 }
                 property JsonObject companion: JsonObject {
                     property bool enabled: false
+                    property bool contextEnabled: false
+                    property bool contextFocusEnabled: false
+                    property bool contextAiEnabled: false
                     property string character: "aqua"
                     property bool alternateCompanions: false
                     property string output: ""

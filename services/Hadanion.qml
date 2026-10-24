@@ -2,7 +2,10 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
+import qs
 import qs.modules.common
+import "CompanionContextPolicy.js" as ContextPolicy
 
 // Host API v1. The external package is never imported by the core shell.
 Singleton {
@@ -18,6 +21,15 @@ Singleton {
         && Config.options?.panelFamily === "abyss"
         && Config.options?.abyss?.companion?.enabled === true
     readonly property var session: sessionLoader.status === Loader.Ready ? sessionLoader.item : null
+    readonly property int contextApiVersion:1
+    readonly property bool contextAvailable: root.enabled && root.session?.companionSessionVisible===true
+        && Config.options?.abyss?.companion?.contextEnabled===true
+        && (Config.options?.abyss?.companion?.contextFocusEnabled===true
+            || Config.options?.abyss?.companion?.contextAiEnabled===true)
+        && !GlobalStates.screenLocked && !Appearance.gameModeMinimal
+        && !GameMode.hasFullscreenOnOutput(root.session?.companionTargetOutput ?? "")
+        && !Notifications.notificationPolicyActive
+    readonly property var contextSource: contextAvailable ? contextFeed : null
     readonly property string sessionSource: packageRoot + "/HadalisSession.qml"
     readonly property string outputSource: packageRoot + "/HadalisOutput.qml"
     readonly property string settingsSource: available ? packageRoot + "/modules/settings/CompanionConfig.qml" : ""
@@ -33,6 +45,20 @@ Singleton {
         probe.running=true
     }
     function failLoad(): void {loadFailed=true;diagnostic="load-failed"}
+    CompanionContext {
+        id:contextFeed
+        owner:root.session
+        permitted:root.contextAvailable
+        shareFocus:permitted && Config.options?.abyss?.companion?.contextFocusEnabled===true
+        shareAi:permitted && Config.options?.abyss?.companion?.contextAiEnabled===true
+        category:shareFocus ? ContextPolicy.category(ToplevelManager.activeToplevel?.appId ?? "") : "none"
+        aiBusy:shareAi && Ai.busy
+        aiWaiting:shareAi && Ai.waitingForApproval
+    }
+    Connections {
+        target:contextFeed.shareAi ? Ai : null
+        function onResponseFinished(): void {if(!Ai.waitingForApproval)contextFeed.finished()}
+    }
     function chat(): void { if (session) session.chat() }
     function status(): string {
         if (session) return JSON.stringify(Object.assign(

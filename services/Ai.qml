@@ -1648,6 +1648,7 @@ Singleton {
     // Whether a response is currently being generated (UI: stop button)
     Timer {id:localRequestDeadline;interval:80000;onTriggered:if(requester.running)requester.signal(15)}
     readonly property bool busy: requester.running
+    readonly property bool waitingForApproval: requester.message?.functionPending===true
 
     function stopRequest() {
         if (!requester.running) return;

@@ -5802,5 +5802,11 @@
   "Personalize local dialogue": "Personalize local dialogue",
   "Reset dialogue preferences": "Reset dialogue preferences",
   "Use your chosen tone and today's explicit check-in for local replies. Familiarity is your choice. No relationship score, penalties for absence or pressure to return.": "Use your chosen tone and today's explicit check-in for local replies. Familiarity is your choice. No relationship score, penalties for absence or pressure to return.",
-  "Witty": "Witty"
+  "Witty": "Witty",
+  "Share coarse activity with Companion": "Share coarse activity with Companion",
+  "Off by default. Shares only the categories and states you choose below. Stops while locked, fullscreen or Do Not Disturb.": "Off by default. Shares only the categories and states you choose below. Stops while locked, fullscreen or Do Not Disturb.",
+  "Share the focused app category": "Share the focused app category",
+  "Only terminal, editor or other. Window titles, files and app content stay private.": "Only terminal, editor or other. Window titles, files and app content stay private.",
+  "Share Alis AI activity": "Share Alis AI activity",
+  "Only working, waiting for approval and finished. No prompts, replies, tools or permission grants.": "Only working, waiting for approval and finished. No prompts, replies, tools or permission grants."
 }
