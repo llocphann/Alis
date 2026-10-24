@@ -26,11 +26,21 @@ Item {
     property var _pendingInlineEvent: null
     property bool _initialized: false
     readonly property string todayKey: Qt.formatDate(DateTime.clock.date,"yyyy-MM-dd")
-    onTodayKeyChanged: if (_initialized && followToday) selectedDate=DateTime.clock.date
+    // A tab reactivation should not replace today's date object just because
+    // the wall clock advanced by a few seconds. That unnecessarily invalidates
+    // Planner.project(), the seven-day grid, and event delegates mid-slide.
+    function refreshFollowingToday(): void {
+        if (!root._initialized || !root.followToday) return
+        const today = DateTime.clock.date
+        if (Qt.formatDate(root.selectedDate, "yyyy-MM-dd")
+                !== Qt.formatDate(today, "yyyy-MM-dd"))
+            root.selectedDate = today
+    }
+    onTodayKeyChanged: root.refreshFollowingToday()
     onSelectedDateChanged: {clearEventSelection();storeBrowser()}
     onFollowTodayChanged: storeBrowser()
     onSideViewChanged: storeBrowser()
-    onPresentationActiveChanged: if (_initialized && presentationActive && followToday) selectedDate=DateTime.clock.date
+    onPresentationActiveChanged: if (presentationActive) root.refreshFollowingToday()
     property bool expandAllDay: false
     property int activeDragDay: -1
     property var selectedEventKeys: []
@@ -884,7 +894,7 @@ Item {
         followToday=saved.followToday ?? true
         sideView=["todo","notes"].includes(saved.sideView)?saved.sideView:""
         _initialized=true
-        if(followToday)selectedDate=DateTime.clock.date
+        refreshFollowingToday()
         storeBrowser()
         Qt.callLater(root.scrollWorkingHours)
     }
