@@ -332,6 +332,10 @@ run_check 'Native shared-field fractional light/mask exact GPU parity' python3 s
 run_check 'Native generic Popup delayed-loader reveal and cancellation' python3 scripts/test-abyss-generic-reveal-readiness-runtime.py
 run_check 'Native Dashboard/Overview content-ready reveal, reversal and warm expiry' python3 scripts/test-abyss-body-reveal-readiness-runtime.py
 run_check 'Dashboard horizontal gesture and stable page order regression' node scripts/test-dashboard-page-policy.mjs
+# Non-negotiable owner interaction: a page/tab refactor must not delete
+# timed-event mouse drag, top/bottom resizing, or their discoverable grips.
+run_check 'Weekly Planner event drag and both resize handles (regression guard)' python3 scripts/test-weekly-planner-pointer-contract.py
+run_check 'Weekly Planner selected/batch gestures and stored event safeguards' python3 scripts/test-weekly-planner-multi-selection-contract.py
 run_check 'Weekly Planner civil dates, overlap, recurrence and DST regression' node scripts/test-weekly-planner-policy.mjs
 run_check 'Weekly Planner notified schedule rollover and retained history' node scripts/test-weekly-planner-recurring-rollover.mjs
 run_check 'Weekly Planner Ctrl/Shift multi-date and compatible Repeat cycles' node scripts/test-weekly-planner-multidate.mjs
