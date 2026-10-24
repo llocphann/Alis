@@ -281,8 +281,8 @@ Item {
                 }
             }
         }
-        // All controls are inside the centered page group, so the combined
-        // indicator/actions block stays centered in every display mode.
+        // Page dots and Create/Rename/Delete remain in the centered group.
+        // Set Default now sits to the left, after the reorder handle.
         Row {
         id: customTabActions
         objectName: "dashboardCustomTabActions"
@@ -290,43 +290,6 @@ Item {
         spacing: 2
         z: 10
         visible: root.pageCount > 0
-        RippleButton {
-            id: defaultTabButton
-            objectName: "dashboardSetDefaultTab"
-            visible: root.editMode
-            implicitWidth: 29
-            implicitHeight: 30
-            buttonRadius: Appearance.rounding.full
-            readonly property bool isDefault:
-                root.pageIds[root.currentPage] === root.defaultTabId
-            toggled: isDefault
-            enabled: root.editMode && root.pageIds[root.currentPage] !== undefined
-            focusPolicy: Qt.StrongFocus
-            colBackground: Appearance.colors.colLayer2
-            colBackgroundHover: Appearance.colors.colLayer2Hover
-            colBackgroundToggled: Appearance.colors.colPrimaryContainer
-            colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
-            onClicked: root.setDefaultTabRequested(root.pageIds[root.currentPage])
-            contentItem: MaterialSymbol {
-                text: "home"
-                iconSize: 19
-                color: defaultTabButton.isDefault
-                    ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2
-            }
-            Rectangle {
-                anchors.fill: parent; anchors.margins: 1
-                radius: defaultTabButton.buttonRadius
-                color: "transparent"
-                border.width: defaultTabButton.activeFocus ? 1 : 0
-                border.color: defaultTabButton.isDefault
-                    ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2
-            }
-            StyledToolTip {
-                text: defaultTabButton.isDefault
-                    ? Translation.tr("Default tab after inactivity")
-                    : Translation.tr("Set this as default tab after inactivity")
-            }
-        }
         RippleButton {
             objectName: "dashboardCreateCustomTab"
             visible: root.editMode
@@ -397,9 +360,51 @@ Item {
             + Math.max(0, Math.min(root.pageCount - 1, root.indicatorProgress))
                 * (root.pageDotButtonWidth + pages.spacing)
     }
+    RippleButton {
+        id: defaultTabButton
+        objectName: "dashboardSetDefaultTab"
+        visible: root.editMode
+        // After the six-dot reorder handle, before the tab indicators.
+        anchors.right: pages.left
+        anchors.rightMargin: 4
+        anchors.verticalCenter: pages.verticalCenter
+        implicitWidth: 29
+        implicitHeight: 30
+        buttonRadius: Appearance.rounding.full
+        readonly property bool isDefault:
+            root.pageIds[root.currentPage] === root.defaultTabId
+        toggled: isDefault
+        enabled: root.editMode && root.pageIds[root.currentPage] !== undefined
+        focusPolicy: Qt.StrongFocus
+        colBackground: Appearance.colors.colLayer2
+        colBackgroundHover: Appearance.colors.colLayer2Hover
+        colBackgroundToggled: Appearance.colors.colPrimaryContainer
+        colBackgroundToggledHover: Appearance.colors.colPrimaryContainerHover
+        onClicked: root.setDefaultTabRequested(root.pageIds[root.currentPage])
+        contentItem: MaterialSymbol {
+            text: "home"
+            iconSize: 19
+            color: defaultTabButton.isDefault
+                ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2
+        }
+        Rectangle {
+            anchors.fill: parent; anchors.margins: 1
+            radius: defaultTabButton.buttonRadius
+            color: "transparent"
+            border.width: defaultTabButton.activeFocus ? 1 : 0
+            border.color: defaultTabButton.isDefault
+                ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnLayer2
+        }
+        StyledToolTip {
+            text: defaultTabButton.isDefault
+                ? Translation.tr("Default tab after inactivity")
+                : Translation.tr("Set this as default tab after inactivity")
+        }
+    }
     MaterialSymbol {
         visible:root.reorderAllowed
-        anchors.right:pages.left;anchors.rightMargin:2;anchors.verticalCenter:pages.verticalCenter
+        anchors.right:defaultTabButton.left;anchors.rightMargin:2
+        anchors.verticalCenter:pages.verticalCenter
         text:"drag_indicator";iconSize:16;color:root.colSubtext
     }
     Rectangle {
