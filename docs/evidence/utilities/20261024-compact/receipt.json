@@ -1,0 +1,142 @@
+{
+  "issue": 29,
+  "implementation_source_sha": "d5a4d4423e0edacf976f705c27209a6a1fc18947",
+  "preceding_source_checks": {
+    "source_sha": "821414feba310d4ee2babaf4bcf8b67f4afeb4a9",
+    "checks": [
+      {
+        "name": "viewport",
+        "argv": [
+          "node",
+          "scripts/test-monitor-arrangement-viewport.mjs"
+        ],
+        "actual_exit": 0,
+        "tail": "MONITOR_VIEWPORT_PASS 1140 fitted tiles; 2280 inverse mappings; 360 cursor-pivot zoom cases; clipped-origin drag regressions PASS\n"
+      },
+      {
+        "name": "delivery",
+        "argv": [
+          "python3",
+          "scripts/test-UTIL-F01-source-delivery.py"
+        ],
+        "actual_exit": 0,
+        "tail": "UTIL_F01_SOURCE_DELIVERY_PASS: display, audio, eye-protection, navigation\n"
+      },
+      {
+        "name": "mirror",
+        "argv": [
+          "python3",
+          "scripts/test-UTIL-F01-mirror-intent.py"
+        ],
+        "actual_exit": 0,
+        "tail": "UTIL_F01_MIRROR_INTENT_PASS\nUTIL_F01_SOURCE_INTENT_PASS\n"
+      },
+      {
+        "name": "display-mode",
+        "argv": [
+          "python3",
+          "scripts/test-abyss-display-mode.py"
+        ],
+        "actual_exit": 0,
+        "tail": "PASS: display-mode planning, safe rollback and running-mirror hotplug identity\n"
+      },
+      {
+        "name": "hotplug-source",
+        "argv": [
+          "python3",
+          "scripts/test-abyss-display-mode-hotplug-source.py"
+        ],
+        "actual_exit": 0,
+        "tail": "DISPLAY_MODE_HOTPLUG_SOURCE_PASS\n"
+      },
+      {
+        "name": "anti-flashbang",
+        "argv": [
+          "python3",
+          "scripts/test-anti-flashbang-policy.py"
+        ],
+        "actual_exit": 0,
+        "tail": "PASS: finite dim-only response, threshold, strength, readable floor and malformed settings\n"
+      },
+      {
+        "name": "office",
+        "argv": [
+          "python3",
+          "scripts/test-office-auto-theme.py"
+        ],
+        "actual_exit": 0,
+        "tail": "ain__.OfficeThemeTests.test_update_idempotency_and_palette_refresh) ... ok\ntest_user_selector_edit_is_not_overwritten_on_update_or_disable (__main__.OfficeThemeTests.test_user_selector_edit_is_not_overwritten_on_update_or_disable) ... ok\ntest_user_theme_file_edit_is_preserved (__main__.OfficeThemeTests.test_user_theme_file_edit_is_preserved) ... ok\n\n----------------------------------------------------------------------\nRan 47 tests in 1.031s\n\nOK\n"
+      },
+      {
+        "name": "qt5",
+        "argv": [
+          "python3",
+          "scripts/test-office-qsettings.py"
+        ],
+        "actual_exit": 0,
+        "tail": "QSETTINGS_INTEROP_PASS {\"qt_version\": \"5.15.19\", \"selector_read\": true, \"native_unrelated_edits_preserved\": true, \"selector_restored\": true, \"office_application_started\": false, \"owner_profile_accessed\": false}\n"
+      }
+    ]
+  },
+  "latest_source_checks": [
+    {
+      "argv": [
+        "node",
+        "scripts/test-monitor-arrangement-viewport.mjs"
+      ],
+      "actual_exit": 0,
+      "diagnostic": "",
+      "summary": "MONITOR_VIEWPORT_PASS 1140 fitted tiles; 2280 inverse mappings; 360 cursor-pivot zoom cases; clipped-origin drag regressions PASS\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-UTIL-F01-source-delivery.py"
+      ],
+      "actual_exit": 0,
+      "diagnostic": "",
+      "summary": "UTIL_F01_SOURCE_DELIVERY_PASS: display, audio, eye-protection, navigation\n"
+    },
+    {
+      "argv": [
+        "/usr/lib/qt6/bin/qmlformat",
+        "modules/settings/MonitorVisibilityConfig.qml"
+      ],
+      "actual_exit": 0,
+      "diagnostic": "",
+      "summary": "Parser output discarded"
+    },
+    {
+      "argv": [
+        "/usr/lib/qt6/bin/qmlformat",
+        "modules/abyss/content/AbyssUtilitiesPopup.qml"
+      ],
+      "actual_exit": 0,
+      "diagnostic": "",
+      "summary": "Parser output discarded"
+    }
+  ],
+  "native_compact_fixture": {
+    "status": "UNRUN",
+    "reason": "Prepared; waiting for the separate canonical native cohort to settle; no concurrent native cohort"
+  },
+  "baseline_static_guard": {
+    "source_sha": "a6de7fd015a5a256a9ee808c4cddd604daf51e7a",
+    "actual_exit": 1,
+    "first_failure": "Missing unavailable-wl-mirror diagnostic; source diagnostic restored in821414feb"
+  },
+  "current_static_guard": {
+    "source_sha": "821414feba310d4ee2babaf4bcf8b67f4afeb4a9",
+    "actual_exit": 0,
+    "runtime": "SKIP; Wayland intentionally unset; do not count native PASS"
+  },
+  "gates": {
+    "physical_hotplug": "UNRUN",
+    "display_apply_cancel_rollback": "UNRUN",
+    "real_wl_mirror": "UNRUN",
+    "hardware_audio": "UNRUN",
+    "installed_desktop": "UNRUN",
+    "owner_verification": "PENDING"
+  },
+  "scope_complete": false
+}

@@ -1,12 +1,12 @@
 {
-  "source_sha": "a6de7fd015a5a256a9ee808c4cddd604daf51e7a",
+  "source_sha": "de601cbb9ab12c4b876782513522bd7425299cca",
   "repository": "llocphann/Alis",
   "ref": "dev",
   "issue": 125,
   "focused": {
     "status": "PASS",
     "actual_exit": 0,
-    "tests": 46,
+    "tests": 48,
     "fixture_profiles_only": true
   },
   "qsettings_interoperability": {
@@ -43,7 +43,8 @@
   "canonical": {
     "status": "RUNNING",
     "source_sha": "a6de7fd015a5a256a9ee808c4cddd604daf51e7a",
-    "do_not_claim_whole_pass": true
+    "do_not_claim_whole_pass": true,
+    "covers_current_source": false
   },
   "gates": {
     "installed_office_theme_visual": "UNRUN",
@@ -59,7 +60,12 @@
     "other_adapters_changed": false
   },
   "logs": {
-    "focused.txt": "37c1ed8222eaa968274a700d17eff9cf299d7c18306acae70026cca9b85e2113",
-    "qt5.txt": "2cb32c437dcfa396ee252e6c89b392e66201a4c5f2c1288d79897275a388dc1a"
-  }
+    "focused-de601cbb9.txt": "9f06491005b8bbd410f93dd5c7dbe9a3278566af2150099bb6d42cfe19a446dc",
+    "qt5-de601cbb9.txt": "2cb32c437dcfa396ee252e6c89b392e66201a4c5f2c1288d79897275a388dc1a"
+  },
+  "previous_qualified_source_sha": "a6de7fd015a5a256a9ee808c4cddd604daf51e7a",
+  "followups": [
+    "Read-only config/palette input aliases preserved; target symlinks remain rejected",
+    "Ambiguous registry set paths reject before writing"
+  ]
 }
