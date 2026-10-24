@@ -1302,11 +1302,16 @@ ContentPage {
                     panOffset = Qt.point(0, 0)
                 }
 
+                // In the embedded Utilities tab, plain touchpad/wheel gestures
+                // belong to SwipeView: sideways gestures switch tabs instead of
+                // panning the miniature monitor canvas. Ctrl+wheel still zooms
+                // and Shift+wheel remains an optional precision pan shortcut.
                 MouseArea {
                     anchors.fill: parent
                     acceptedButtons: Qt.NoButton
                     onWheel: wheel => {
-                        if (!monitorLayoutCanvas.viewportEditable) {
+                        if (!monitorLayoutCanvas.viewportEditable
+                                || (root.embeddedArrangementOnly && wheel.modifiers === Qt.NoModifier)) {
                             wheel.accepted = false
                             return
                         }
@@ -1321,20 +1326,33 @@ ContentPage {
                     }
                 }
 
-                DragHandler {
-                    id: viewportPan
-                    target: null
-                    acceptedButtons: Qt.MiddleButton
-                    enabled: monitorLayoutCanvas.viewportEditable
-                    property point origin: Qt.point(0, 0)
-                    onActiveChanged: if (active) origin = monitorLayoutCanvas.panOffset
-                    onTranslationChanged: if (active) monitorLayoutCanvas.panTo(origin.x + translation.x, origin.y + translation.y)
-                }
-
                 Rectangle {
                     anchors.fill: parent
                     color: "transparent"
                     border.width: 0
+
+                    // Background-only mouse drag pans the viewport. Keep this
+                    // behind monitor tiles and the zoom buttons so their own
+                    // drag/click handlers retain priority. Touch gestures remain
+                    // available to the containing SwipeView for tab navigation.
+                    HoverHandler {
+                        enabled: root.embeddedArrangementOnly && monitorLayoutCanvas.viewportEditable
+                        acceptedDevices: PointerDevice.Mouse
+                        cursorShape: viewportPan.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                    }
+                    DragHandler {
+                        id: viewportPan
+                        target: null
+                        acceptedDevices: PointerDevice.Mouse
+                        acceptedButtons: root.embeddedArrangementOnly
+                            ? (Qt.LeftButton | Qt.MiddleButton) : Qt.MiddleButton
+                        enabled: monitorLayoutCanvas.viewportEditable
+                        grabPermissions: PointerHandler.CanTakeOverFromAnything
+                        property point origin: Qt.point(0, 0)
+                        onActiveChanged: if (active) origin = monitorLayoutCanvas.panOffset
+                        onTranslationChanged: if (active)
+                            monitorLayoutCanvas.panTo(origin.x + translation.x, origin.y + translation.y)
+                    }
                     Repeater {
                         model: 5
                         Rectangle {
