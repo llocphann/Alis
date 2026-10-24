@@ -1,0 +1,287 @@
+{
+  "receipt": {
+    "source_sha": "a6de7fd015a5a256a9ee808c4cddd604daf51e7a",
+    "argv": [
+      "bwrap",
+      "--bind",
+      "/",
+      "/",
+      "--dev-bind",
+      "/dev",
+      "/dev",
+      "--proc",
+      "/proc",
+      "--tmpfs",
+      "/tmp",
+      "--die-with-parent",
+      "--",
+      "bash",
+      "scripts/validate-maintainer-local.sh",
+      "--current-repo"
+    ],
+    "actual_exit": -15,
+    "status": "STOPPED",
+    "stop_reason": "quota_stop",
+    "elapsed_seconds": 2024.5,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "757c0379a941a76d3e09148bfd902e47828fe6748b2691449e9409284cc4ad97"
+  },
+  "progress": {
+    "source_sha": "a6de7fd015a5a256a9ee808c4cddd604daf51e7a",
+    "started": 519,
+    "settled": 518,
+    "passed": 468,
+    "failed": 49,
+    "skipped": 1,
+    "unsettled": 1,
+    "failed_checks": [
+      {
+        "number": 24,
+        "label": "Native shared-field optimized/unoptimized exact GPU parity",
+        "status": "FAIL"
+      },
+      {
+        "number": 25,
+        "label": "Native shared-field transparent-interior exact GPU parity",
+        "status": "FAIL"
+      },
+      {
+        "number": 26,
+        "label": "Native shared-field fractional light transparent-interior exact GPU parity",
+        "status": "FAIL"
+      },
+      {
+        "number": 27,
+        "label": "Native shared-field fractional light/mask exact GPU parity",
+        "status": "FAIL"
+      },
+      {
+        "number": 29,
+        "label": "Native Dashboard/Overview content-ready reveal, reversal and warm expiry",
+        "status": "FAIL"
+      },
+      {
+        "number": 66,
+        "label": "Python regression: scripts/test-abyss-body-reveal-readiness-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 67,
+        "label": "Python regression: scripts/test-abyss-compact-editor-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 86,
+        "label": "Python regression: scripts/test-abyss-field-support-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 97,
+        "label": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 102,
+        "label": "Python regression: scripts/test-abyss-module-field-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 105,
+        "label": "Python regression: scripts/test-abyss-multi-selection-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 126,
+        "label": "Python regression: scripts/test-abyss-round0-editor-controls.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 132,
+        "label": "Python regression: scripts/test-abyss-transparent-interior-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 139,
+        "label": "Python regression: scripts/test-abyss-width-affects-modules-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 151,
+        "label": "Python regression: scripts/test-bar-cava-profile-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 167,
+        "label": "Python regression: scripts/test-calendar-weather-composition-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 197,
+        "label": "Python regression: scripts/test-dashboard-freeform-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 205,
+        "label": "Python regression: scripts/test-dashboard-notes-markdown-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 206,
+        "label": "Python regression: scripts/test-dashboard-notes-markdown-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 218,
+        "label": "Python regression: scripts/test-dashboard-workspace.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 223,
+        "label": "Python regression: scripts/test-desktop-widget-editor-coordinates.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 226,
+        "label": "Python regression: scripts/test-dock-abyss-hover-orientation-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 253,
+        "label": "Python regression: scripts/test-light-mode-upstream-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 255,
+        "label": "Python regression: scripts/test-local-ai-gguf-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 256,
+        "label": "Python regression: scripts/test-local-model-folder.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 266,
+        "label": "Python regression: scripts/test-material-only-global-style-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 275,
+        "label": "Python regression: scripts/test-notification-center-bottom-right-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 285,
+        "label": "Python regression: scripts/test-owner-ui-regressions-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 319,
+        "label": "Python regression: scripts/test-screenshot-pointer-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 322,
+        "label": "Python regression: scripts/test-settings-concise-copy-surface.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 330,
+        "label": "Python regression: scripts/test-settings-task-tabs-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 333,
+        "label": "Python regression: scripts/test-shell-surface-contracts.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 347,
+        "label": "Python regression: scripts/test-theme-seed-cache.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 363,
+        "label": "Python regression: scripts/test-wallpaper-carousel-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 364,
+        "label": "Python regression: scripts/test-wallpaper-color-preview-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 370,
+        "label": "Python regression: scripts/test-wallpaper-preview-palette-cache.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 380,
+        "label": "Python regression: scripts/test-weekly-planner-expanded-event-editor-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 402,
+        "label": "shell regression: scripts/test-abyss-editor-runtime.sh",
+        "status": "FAIL"
+      },
+      {
+        "number": 405,
+        "label": "shell regression: scripts/test-abyss-network-popups.sh",
+        "status": "FAIL"
+      },
+      {
+        "number": 410,
+        "label": "shell regression: scripts/test-abyss-shader-lifecycle.sh",
+        "status": "FAIL"
+      },
+      {
+        "number": 411,
+        "label": "shell regression: scripts/test-abyss-shared-content.sh",
+        "status": "FAIL"
+      },
+      {
+        "number": 414,
+        "label": "shell regression: scripts/test-abyss-utilities-popup.sh",
+        "status": "FAIL"
+      },
+      {
+        "number": 416,
+        "label": "shell regression: scripts/test-abyss-wave-runtime.sh",
+        "status": "FAIL"
+      },
+      {
+        "number": 429,
+        "label": "shell regression: scripts/test-brand-canonical-contracts.sh",
+        "status": "FAIL"
+      },
+      {
+        "number": 469,
+        "label": "shell regression: scripts/test-local-distribution.sh",
+        "status": "FAIL"
+      },
+      {
+        "number": 472,
+        "label": "shell regression: scripts/test-local-required-contracts.sh",
+        "status": "FAIL"
+      },
+      {
+        "number": 486,
+        "label": "shell regression: scripts/test-packaging-contract.sh",
+        "status": "FAIL"
+      },
+      {
+        "number": 487,
+        "label": "shell regression: scripts/test-panel-style-adapter.sh",
+        "status": "FAIL"
+      },
+      {
+        "number": 514,
+        "label": "shell regression: scripts/test-update-lifecycle.sh",
+        "status": "FAIL"
+      }
+    ]
+  },
+  "qualification": "STOPPED at live primary used97; not a whole PASS. Failures remain unclassified unless separately supported by a matched baseline."
+}

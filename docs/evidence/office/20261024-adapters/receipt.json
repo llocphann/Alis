@@ -41,10 +41,20 @@
     "qualification": "Wrong parser generation; retained as diagnostic, followed by explicit Qt6 parser checks. Not an application runtime gate."
   },
   "canonical": {
-    "status": "RUNNING",
+    "status": "STOPPED",
     "source_sha": "a6de7fd015a5a256a9ee808c4cddd604daf51e7a",
-    "do_not_claim_whole_pass": true,
-    "covers_current_source": false
+    "actual_exit": -15,
+    "stop_reason": "quota_stop",
+    "covers_current_source": false,
+    "counts": {
+      "started": 519,
+      "settled": 518,
+      "passed": 468,
+      "failed": 49,
+      "skipped": 1,
+      "unsettled": 1
+    },
+    "owned_remaining_after_exit": []
   },
   "gates": {
     "installed_office_theme_visual": "UNRUN",

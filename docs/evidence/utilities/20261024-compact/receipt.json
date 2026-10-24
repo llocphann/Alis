@@ -118,7 +118,7 @@
   ],
   "native_compact_fixture": {
     "status": "UNRUN",
-    "reason": "Prepared; waiting for the separate canonical native cohort to settle; no concurrent native cohort"
+    "reason": "Prepared but NOT STARTED before quota admission closed; canonical stopped at live used97. Resume native fixture first after reset, never claim a native PASS."
   },
   "baseline_static_guard": {
     "source_sha": "a6de7fd015a5a256a9ee808c4cddd604daf51e7a",
@@ -138,5 +138,13 @@
     "installed_desktop": "UNRUN",
     "owner_verification": "PENDING"
   },
-  "scope_complete": false
+  "scope_complete": false,
+  "quota_checkpoint": {
+    "primary_used": 97,
+    "resetsAt": 1792840328,
+    "resume_at": 1792840388,
+    "prepared_native_manifest": "private 20261024-office/utilities-launch-d5.json",
+    "native_source_sha": "d5a4d4423e0edacf976f705c27209a6a1fc18947",
+    "native_output_directory_absent": true
+  }
 }
