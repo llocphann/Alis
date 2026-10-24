@@ -117,6 +117,18 @@ check("index === root.currentPage ? root.colText" not in header,
       "active page still swaps dot colors instead of moving continuously")
 check('onClicked: root.createTabRequested()' in header,
       "Create button must invoke naming toolbar")
+# Default Tab is now the left-side control between the six-dot drag handle
+# and the page indicator group; Create/Rename/Delete remain on the right.
+check('objectName: "dashboardTabReorderHandle"' in header
+      and 'anchors.right:defaultTabButton.left' in header,
+      "six-dot drag handle not positioned before Set Default")
+check('anchors.right: pages.left' in header
+      and 'anchors.verticalCenter: pages.verticalCenter' in header,
+      "Set Default must be immediately left of page indicators")
+check('dashboardSetDefaultTab' not in header.split("id: customTabActions",1)[1]
+      .split("id: activePageIndicator",1)[0],
+      "Set Default must not remain in right-side custom actions")
+
 toolbar = (src / "DashboardEditToolbar.qml").read_text()
 check('visible: root.editing || root.naming' in toolbar,
       "naming toolbar must temporarily replace layout controls")
@@ -136,6 +148,18 @@ for name, src_text in [("standalone", standalone), ("overview", overview),
     check('tabController:' in src_text, name + " missing naming controller")
     check('tabNamingActive' in src_text or 'controlsVisible' in src_text,
           name + " cannot reveal naming bar")
+# The Abyss Dashboard is hosted through an external popup, not via the inline
+# Overview toolbar. Without this explicit bridge, clicking Create opens an
+# invisible naming state and appears to do nothing on the installed shell.
+abyss_host = (root / "modules/abyss/content/AbyssOverviewContent.qml").read_text()
+check('readonly property var tabController: dashboardContent' in overview,
+      "Overview must expose DashboardContent as its naming controller")
+check('tabController: root.taskView ? null : overview.item?.tabController ?? null'
+      in abyss_host,
+      "Abyss external edit popup does not receive the tab naming controller")
+check('tabController: root.tabController' in abyss,
+      "Abyss external edit toolbar lacks the forwarded naming controller")
+
 
 # Responsive canvas should never discard modules when saved geometry cannot
 # fit. Display packing is non-destructive; content gets an adaptive transform.
