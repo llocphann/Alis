@@ -210,8 +210,14 @@ Item {
         if (!targets.length) return
         const changes=[]
         for (const target of targets) {
-            const range=Gesture.rangeForSelection(target,mode,dx,dy,
-                root.columnWidth,root.hourHeight)
+            // A saved repeat slot is a single-instance override, not a
+            // batch edit of the repeating series. Only non-repeating selection
+            // uses the group policy (including all-day civil moves).
+            const repeating=(target.event?.recurrence || "none")!=="none"
+            const range=repeating ? Gesture.rangeForGesture(target,mode,dx,dy,
+                    root.columnWidth,root.hourHeight)
+                : Gesture.rangeForSelection(target,mode,dx,dy,
+                    root.columnWidth,root.hourHeight)
             if (!range) {
                 console.warn("[WeeklyPlanner] Unsupported group gesture; selection unchanged")
                 return
