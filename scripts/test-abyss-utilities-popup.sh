@@ -145,6 +145,20 @@ for obsolete in \
         exit 1
     fi
 done
+# The embedded arrangement must not consume unmodified sideways
+# touchpad/wheel swipes that the Utilities pager owns. Mouse dragging
+# on the background is the alternative viewport-pan interaction.
+for token in \
+    'root.embeddedArrangementOnly && wheel.modifiers === Qt.NoModifier' \
+    'acceptedDevices: PointerDevice.Mouse' \
+    '? (Qt.LeftButton | Qt.MiddleButton) : Qt.MiddleButton' \
+    'grabPermissions: PointerHandler.CanTakeOverFromAnything'; do
+    grep -Fq "$token" "$monitor_config" \
+        || { printf 'FAIL: embedded monitor gesture arbitration missing: %s\n' "$token" >&2; exit 1; }
+done
+grep -Fq 'id: pageWheel' "$utility_popup" \
+    || { printf 'FAIL: sideways swipe is not routed to Utilities tabs\n' >&2; exit 1; }
+
 grep -Fq 'readonly property bool arrangementChromeVisible: !embeddedArrangementOnly' "$monitor_config" \
     || { printf 'FAIL: embedded Monitor Arrangement chrome gate missing\n' >&2; exit 1; }
 grep -Fq 'showHeader: root.arrangementChromeVisible' "$monitor_config" \
