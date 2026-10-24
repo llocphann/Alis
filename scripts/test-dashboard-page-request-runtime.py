@@ -50,7 +50,9 @@ Window {
   onTriggered:root.samples.push({phase:root.phase,time:Date.now(),
    position:test.pages.pagePosition,id:dashboard.currentPageId,
    ready:test.ready(dashboard.currentPageId),
-   transitActive:test.transitLoader?.active ?? false})
+   transitActive:test.transitLoader?.active ?? false,
+   indicatorX:test.indicator?.x ?? -1,
+   indicatorVisible:test.indicator?.visible ?? false})
  }
  TestCase {
   id:test;optional:true;when:false
@@ -59,6 +61,7 @@ Window {
   property var planner:null
   property var pages:null
   property var transitLoader:null
+  property var indicator:null
   property var rows:[]
   function check(v,m){checks++;if(!v)throw new Error(m)}
   function button(id){return findChild(dashboard,"dashboardPage"+dashboard.pageIds.indexOf(id))}
@@ -89,7 +92,9 @@ Window {
    music=findChild(dashboard,"dashboardMusicPageLoader")
    planner=findChild(dashboard,"dashboardPlannerPageLoader")
    pages=findChild(dashboard,"dashboardPages")
+   indicator=findChild(dashboard,"dashboardActivePageIndicator")
    check(!!music && !!planner && !!pages,"production Loaders/pages unavailable")
+   check(!!indicator && indicator.visible,"Dashboard active tab indicator missing")
    check(dashboard.currentPageId==="dashboard","unexpected starting selection")
    painted()
    check(!music.active && !planner.active,"unvisited heavy pages eagerly loaded")
@@ -139,6 +144,17 @@ Window {
     settle(target)
    }
    check(root.samples.some(row=>row.position>0 && row.position<1),"no intermediate native page-animation frame")
+   // A single highlight must follow intermediate page-strip positions rather
+   // than extinguishing and immediately lighting the newly selected dot.
+   const track=root.samples.filter(row=>row.phase==="switch-0-music"
+     && row.id==="music" && row.position>.08 && row.position<.92)
+   check(track.length>0,"no rendered indicator animation frames")
+   const stride=button("music").x-button("dashboard").x
+   const start=button("dashboard").mapToItem(header,button("dashboard").width/2,16).x
+     -indicator.width/2
+   check(track.every(row=>row.indicatorVisible
+     && Math.abs(row.indicatorX-(start+row.position*stride))<3),
+     "active dot hidden or out of sync with the page slide")
 
    root.phase="native-click-key-wheel"
    mouseClick(button("music"));settle("music")
