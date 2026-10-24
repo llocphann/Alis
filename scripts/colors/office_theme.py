@@ -363,7 +363,7 @@ def generate_theme(palette):
         # document/night-page rendering and must retain suite/user semantics.
         "canvas-background": workspace,
         "canvas-page-border": border,
-        "canvas-ruler-background": bg,
+        "canvas-ruler-background": workspace,
         "canvas-ruler-border": border,
         "canvas-ruler-margins-background": surface,
         "canvas-ruler-mark": fg,
