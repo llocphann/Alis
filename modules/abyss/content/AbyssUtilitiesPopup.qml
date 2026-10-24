@@ -64,18 +64,17 @@ Item {
     // Handle sideways scroll before nested monitor/vertical scrollers take
     // it. Native SwipeView still owns mouse/touch dragging; modified scroll
     // stays with controls such as monitor zoom and viewport pan.
-    WheelHandler {
+    MouseArea {
         id: pageWheel
-        target: null
-        orientation: Qt.Horizontal
-        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-        acceptedModifiers: Qt.NoModifier
+        anchors.fill: parent
+        z: 1
+        acceptedButtons: Qt.NoButton
         property real distance: 0
         property bool latched: false
         onWheel: event => {
             const pixels = event.pixelDelta.x !== 0 || event.pixelDelta.y !== 0
             const delta = pixels ? event.pixelDelta : event.angleDelta
-            if (event.buttons !== Qt.NoButton || delta.x === 0
+            if (event.modifiers !== Qt.NoModifier || event.buttons !== Qt.NoButton || delta.x === 0
                     || Math.abs(delta.x) <= Math.abs(delta.y)) {
                 event.accepted = false
                 return
