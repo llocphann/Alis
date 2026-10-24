@@ -9,7 +9,7 @@ function canSelect(row) {
 // imported calendar rows stay read-only. Batch selection remains limited to
 // non-recurring events because batch delete semantics differ for a series.
 function canReschedule(row) {
-    if (!row || row.source!=="local" || row.virtual || row.event?.allDay===true
+    if (!row || row.source!=="local" || row.event?.allDay===true
             || row.event?.id===undefined || row.event?.id===null)
         return false;
     if (canSelect(row)) return true;
@@ -18,14 +18,16 @@ function canReschedule(row) {
         return false;
     var index=row.occurrenceIndex;
     if (!Number.isInteger(index) || index<0) return false;
+    // Virtual future occurrences can be edited individually, but only with
+    // an explicit immutable series timestamp from the Planner projection.
+    // Without it, a drag could accidentally edit the whole recurring series.
+    if (row.virtual && (!row.plannerOriginalStartIso
+            || !Number.isFinite(new Date(row.plannerOriginalStartIso).getTime())))
+        return false;
     if (Array.isArray(event.occurrences) && event.occurrences.length) {
-        // A multi-slot series needs a stable template; a single saved slot
-        // has an unambiguous original anchor even in legacy storage.
-        return index<event.occurrences.length &&
-            (!!event.repeatTemplate?.length || event.occurrences.length===1);
+        return index<event.occurrences.length
+            && (!!event.repeatTemplate?.length || event.occurrences.length===1);
     }
-    // Pre-occurrences Agenda JSON stores one real instance directly on the
-    // Event; editing it must not require a migration or a new Event ID.
     return index===0 && !!(event.startDate || event.dateTime);
 }
 function key(row) {
