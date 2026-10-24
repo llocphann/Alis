@@ -50,6 +50,12 @@ def read_file(path):
     return path.read_bytes()
 
 
+def read_input(path):
+    # Palette and Alis config are read-only inputs, including the legacy
+    # config-directory aliases. No target/journal write follows a symlink.
+    return read_file(path.resolve())
+
+
 def write_file(path, content, expected):
     """Bounded, durable replace with a last comparison against concurrent edits."""
     if read_file(path) != expected:
@@ -452,7 +458,7 @@ def load_palette(state_home):
     palette = {}
     base = state_home / "quickshell/user/generated"
     for name in ("app-palette.json", "palette.json", "colors.json"):
-        raw = read_file(base / name)
+        raw = read_input(base / name)
         if raw is not None:
             palette = json.loads(raw)
             break
@@ -483,7 +489,7 @@ def run_locked(app, config_home, data_home, state_home, enabled):
 
 
 def run(config_path, config_home, data_home, state_home):
-    config = json.loads(read_file(config_path) or b"{}")
+    config = json.loads(read_input(config_path) or b"{}")
     flags = config.get("appearance", {}).get("wallpaperTheming", {})
     statuses, failed = [], False
     for app, flag, label in (("onlyoffice", "enableOnlyOffice", "ONLYOFFICE"),

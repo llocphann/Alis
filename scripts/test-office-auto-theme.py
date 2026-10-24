@@ -302,6 +302,25 @@ class OfficeThemeTests(unittest.TestCase):
         self.assertIn("disabled", result.stdout)
         self.assertFalse(self.config.exists())
 
+    def test_legacy_config_and_palette_input_symlinks_are_read_only(self):
+        alis = self.base / 'actual-alis'
+        alis.mkdir()
+        config = alis / 'config.json'
+        config.write_text('{}')
+        self.config_home.mkdir()
+        (self.config_home / 'illogical-impulse').symlink_to(alis)
+        output, status = office.run(self.config_home / 'illogical-impulse/config.json',
+                                   self.config_home, self.data_home, self.state_home)
+        self.assertEqual(status, 0)
+        self.assertEqual(config.read_text(), '{}')
+        generated = self.state_home / 'quickshell/user/generated'
+        generated.mkdir(parents=True, exist_ok=True)
+        palette = self.base / 'palette.json'
+        palette.write_text(json.dumps(self.palette))
+        (generated / 'app-palette.json').symlink_to(palette)
+        self.assertEqual(office.load_palette(self.state_home), self.palette)
+        self.assertEqual(json.loads(palette.read_text()), self.palette)
+
     def test_pipeline_runs_disabled_adapter_for_restore_and_settings_are_opt_in(self):
         manifest = json.loads((ROOT / "scripts/colors/targets/office.json").read_text())
         self.assertNotIn("configKey", manifest)
