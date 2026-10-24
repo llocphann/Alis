@@ -39,7 +39,9 @@ Window {
    wait(40);return {x:p.x+dx,y:p.y+dy}
   }
   function drag(id,index,areaName,mode,dx,dy,cancel=false) {
-   const target=card(id,index);check(!!target && target.canReschedule,"missing eligible multi-date card "+id)
+   const target=card(id,index);check(!!target && target.canReschedule,"missing eligible multi-date card "+id
+     +" date="+planner.selectedDate.toISOString()+" cards="+JSON.stringify(cards().map(c=>({
+       id:c.modelData.event.id,index:c.modelData.occurrenceIndex,eligible:c.canReschedule}))))
    const before=JSON.stringify(Events.list),durable=JSON.stringify(Events.getDurableEvents())
    const p=held(first(target,areaName),dx,dy)
    check(target.gestureMoved && target.effectiveMode===mode,"pointer did not start "+mode)
@@ -135,7 +137,7 @@ with tempfile.TemporaryDirectory(prefix="alis-multidate-gestures-") as temporary
         if not env:
             print("SKIP: multi-date gestures require private Niri")
             raise SystemExit(0)
-        config = folder / "config/illogical-impulse"
+        config = folder / "config/alis"
         config.mkdir(parents=True, exist_ok=True)
         (config / "config.json").write_bytes((ROOT / "defaults/config.json").read_bytes())
         storage = folder / "state/quickshell/user/events.json"
