@@ -27,41 +27,27 @@ function paletteSlot(event, source, count) {
     return basis;
 }
 
-// Use the actual Material theme accents as hue anchors, not CAVA's
-// deliberately hue-shifted audio spectrum. Material wallpaper palettes can
-// have nearly identical Primary/Secondary/Tertiary hues; in that case choose
-// the closest separated hue so compact Event cards remain distinguishable.
-// This function is pure and computes only presentation colors.
-function themeHues(primary,secondary,tertiary,count) {
-    const length=Math.max(1,Math.min(8,Math.floor(Number(count) || 8)));
-    const normalize=value=>{
-        const hue=Number(value);
-        return Number.isFinite(hue) && hue>=0 ? ((hue%1)+1)%1 : 0.58;
-    };
-    const anchors=[normalize(primary),normalize(secondary),normalize(tertiary)];
-    const offsets=[0,0,0,.13,-.13,.26,-.26,.39];
-    const shifts=[0,.10,-.10,.20,-.20,.30,-.30,.40,-.40,.50];
-    const circularDistance=(a,b)=>{
-        const difference=Math.abs(a-b);
-        return Math.min(difference,1-difference);
-    };
-    const result=[];
-    for (let i=0;i<length;i++) {
-        const base=(anchors[i%3]+offsets[i])%1;
-        let chosen=base,bestDistance=-1;
-        for (const shift of shifts) {
-            const hue=(base+shift+1)%1;
-            const nearest=result.length
-                ? Math.min(...result.map(previous=>circularDistance(previous,hue)))
-                : 1;
-            if (nearest>bestDistance) {
-                bestDistance=nearest;chosen=hue;
-            }
-            if (nearest>=.09) {
-                chosen=hue;break;
-            }
-        }
-        result.push(chosen);
-    }
-    return result;
+// Theme-faithful Material tones, NOT artificially separated rainbow hues.
+// Use only the real Primary/Secondary/Tertiary hue and saturation of the
+// active theme. When that theme is grayscale, Event colors stay grayscale.
+// Eight luminance stops distinguish individual Events within the same family;
+// do not introduce an unrelated hue or force saturation on neutral themes.
+function materialTones(anchors, darkMode) {
+    if (!Array.isArray(anchors) || anchors.length<3) return [];
+    const lightnessOffsets=[-.14,-.10,-.06,-.02,.02,.06,.10,.14];
+    const anchorOrder=[0,1,2,0,1,2,0,1];
+    const center=darkMode ? .59 : .46;
+    const limit=value=>Math.min(1,Math.max(0,value));
+    return lightnessOffsets.map((offset,index)=>{
+        const source=anchors[anchorOrder[index]] || {};
+        const hue=Number(source.hue);
+        const sat=Number(source.saturation);
+        return {
+            // HSL's -1 for achromatic theme colors is not an invitation to
+            // invent a hue: with saturation 0, hue 0 remains neutral.
+            hue:Number.isFinite(hue)&&hue>=0 ? limit(hue) : 0,
+            saturation:Number.isFinite(sat) ? limit(sat) : 0,
+            lightness:limit(center+offset)
+        };
+    });
 }
