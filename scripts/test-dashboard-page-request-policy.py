@@ -42,6 +42,20 @@ assert "root._slideHeldCustomIds.includes(customTabHost.modelData.id)" in custom
 assert "root._slideHeldCustomIds = root._slideHeldCustomIds.concat([previousId])" in source
 assert "Math.abs(pages.pagePosition - root.currentPage) < 0.001" in source
 assert "onTriggered: root._slideHeldCustomIds = []" in source
+assert 'property string _pageSavePendingId: ""' in source
+persist = source.split("function onDashboardPageIdChanged(): void {", 1)[1]
+persist = persist.split("function onDashboardPageIdChanged", 1)[0].split("    }", 1)[0]
+assert "root._pageSavePendingId = id" in persist
+assert 'Config.setNestedValue("dashboard.lastPageId",id)' not in persist
+assert 'Config.setNestedValue("dashboard.lastPageId", id)' in source
+assert "interval: 200" in source and "onTriggered: root.flushPageSelection()" in source
+assert "Math.abs(pages.pagePosition - root.currentPage) < 0.001" in source
+assert "root.flushPageSelection()" in source.split("onPresentationActiveChanged: {", 1)[1].split("onPageIdsChanged", 1)[0]
+planner = (root / "modules/dashboard/DashboardWeeklyPlanner.qml").read_text()
+assert 'function refreshFollowingToday(): void {' in planner
+assert 'Qt.formatDate(root.selectedDate, "yyyy-MM-dd")' in planner
+assert 'onPresentationActiveChanged: if (presentationActive) root.refreshFollowingToday()' in planner
+assert 'onTodayKeyChanged: root.refreshFollowingToday()' in planner
 methods = []
 for name in ["selectPage", "requestPage", "commitPendingPage", "pageLoadFailed"]:
     match = re.search(r"    function " + name + r"\(([^)]*)\): void \{(.*?)\n    \}", source, re.S)
