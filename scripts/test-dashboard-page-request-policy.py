@@ -7,22 +7,24 @@ import subprocess
 
 root = Path(__file__).resolve().parents[1]
 source = (root / "modules/dashboard/DashboardContent.qml").read_text()
-# DASH-F01: use the same configurable spatial easing as Weather Popup and
-# move one shared strip, not each expensive Dashboard page on every frame.
-weather = (root / "modules/bar/weather/WeatherPopupContent.qml").read_text()
-weather_slide = weather.split("Behavior on tabPosition {", 1)[1].split("property date now", 1)[0]
+# DASH-F01: keep full-size motion monotone (no perceptible overshoot) and
+# prevent transient custom page Loader creation/destruction during a slide.
 slide = source.split("Behavior on pagePosition {", 1)
 assert len(slide) == 2, "Dashboard tab motion behavior missing"
 slide = slide[1].split("DashboardCanvas {", 1)[0]
 for token in (
     "duration: Appearance.animation.elementMove.duration",
-    "easing.type: Appearance.animation.elementMove.type",
-    "easing.bezierCurve: Appearance.animation.elementMove.bezierCurve",
+    "easing.type: Easing.BezierSpline",
+    "easing.bezierCurve: Appearance.animationCurves.standard",
+    "root.presentationActive && Appearance.animationsEnabled && !root.editMode",
 ):
-    assert token in slide, f"Dashboard motion missing Weather-style {token}"
-    assert token in weather_slide or "duration:" in token, f"Weather motion changed: {token}"
-assert "easing.type: Easing.Linear" not in slide
-assert "root.presentationActive && Appearance.animationsEnabled && !root.editMode" in slide
+    assert token in slide, f"Dashboard page transition lost {token}"
+appearance = (root / "modules/common/Appearance.qml").read_text()
+match = re.search(r"readonly property list<real> standard:\s*\[([^]]+)\]", appearance)
+assert match, "standard curve missing"
+curve = [float(v.strip()) for v in match.group(1).split(",")]
+assert len(curve) == 6 and curve[4:] == [1, 1]
+assert 0 <= curve[1] <= curve[3] <= 1, "Dashboard spline can overshoot"
 assert "id: pageStrip" in source
 assert "x: -pages.slideProgress * pages.width" in source
 for token in (
@@ -33,6 +35,13 @@ for token in (
 ):
     assert token in source, f"Dashboard page not anchored in shared strip: {token}"
 assert source.count("pages.slideProgress * pages.width") == 1, "Per-page slide update regression"
+custom_loader = source.split("id: customCanvasLoader", 1)[1].split("sourceComponent: DashboardCanvas", 1)[0]
+assert "customTabHost.visible" not in custom_loader, "Mid-slide passing custom page starts its Loader"
+assert "root._pendingPageId === customTabHost.modelData.id" in custom_loader
+assert "root._slideHeldCustomIds.includes(customTabHost.modelData.id)" in custom_loader
+assert "root._slideHeldCustomIds = root._slideHeldCustomIds.concat([previousId])" in source
+assert "Math.abs(pages.pagePosition - root.currentPage) < 0.001" in source
+assert "onTriggered: root._slideHeldCustomIds = []" in source
 methods = []
 for name in ["selectPage", "requestPage", "commitPendingPage", "pageLoadFailed"]:
     match = re.search(r"    function " + name + r"\(([^)]*)\): void \{(.*?)\n    \}", source, re.S)
@@ -41,7 +50,8 @@ for name in ["selectPage", "requestPage", "commitPendingPage", "pageLoadFailed"]
 program = r'''
 const vm=require('node:vm'),assert=require('node:assert/strict');
 const root={pageIds:['dashboard','music','weeklyPlanner','custom-1'],navigationAllowed:true,
- _pendingPageId:'',_synchronousPageId:'',_userPageNavigation:false,pendingPageReady:false};
+ _pendingPageId:'',_synchronousPageId:'',_userPageNavigation:false,pendingPageReady:false,
+ _slideHeldCustomIds:[]};
 const GlobalStates={dashboardPageId:'dashboard',dashboardPage:0};
 Object.defineProperty(root,'currentPageId',{get(){return GlobalStates.dashboardPageId}});
 const context=vm.createContext({root,GlobalStates,pageIds:root.pageIds,
@@ -79,6 +89,8 @@ for(const target of root.pageIds){
  root.pendingPageReady=true;root.commitPendingPage();assert.equal(old(),target);
  assert.equal(root._pendingPageId,'');
 }
-console.log('DASH_PAGE_REQUEST_POLICY_PASS readiness, replacement/cancel, failure, hidden/edit and synchronous restore');
+root.selectPage('dashboard');
+assert.ok(root._slideHeldCustomIds.includes('custom-1'),'outgoing custom page was dropped before slide');
+console.log('DASH_PAGE_REQUEST_POLICY_PASS request policy, monotone easing and safe custom Loader lease');
 '''
 subprocess.run(["node"], input=program, text=True, check=True, timeout=10)
