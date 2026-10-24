@@ -18,8 +18,16 @@ function entries(event) {
     var source = Array.isArray(event?.occurrences) && event.occurrences.length
         ? event.occurrences : [event];
     return source.map(function(slot) {
-        return entry(slot.startDate || slot.dateTime, slot.endDate,
-            slot.notified, slot.reminderNotified);
+        var normalized=entry(slot.startDate || slot.dateTime,slot.endDate,
+            slot.notified,slot.reminderNotified);
+        if (!normalized) return null;
+        // Preserve the immutable scheduled time of an edited recurring
+        // instance through due processing and its subsequent store() pass.
+        if (slot.plannerSeriesStartDate && slot.plannerSeriesEndDate) {
+            normalized.plannerSeriesStartDate=slot.plannerSeriesStartDate;
+            normalized.plannerSeriesEndDate=slot.plannerSeriesEndDate;
+        }
+        return normalized;
     }).filter(function(slot) {return slot !== null;});
 }
 function store(event, slots) {
@@ -90,7 +98,9 @@ function rescheduleSavedRecurring(event,index,start,end) {
         return null;
     var updated=slots.slice();
     updated[index]=Object.assign({},previous,{
-        startDate:a.toISOString(),endDate:b.toISOString()
+        startDate:a.toISOString(),endDate:b.toISOString(),
+        plannerSeriesStartDate:previous.plannerSeriesStartDate || previous.startDate,
+        plannerSeriesEndDate:previous.plannerSeriesEndDate || previous.endDate
     });
     var result=Object.assign({},event,{occurrences:updated});
     if (index===0) {
