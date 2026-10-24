@@ -41,8 +41,10 @@ assert.equal(S.canReschedule({...saved,event:{...event,repeatTemplate:null}}),fa
 assert.equal(S.canReschedule({...saved,event:{...event,occurrences:null}}),false);
 const noSaved={...event,occurrences:undefined,repeatTemplate:undefined,
   startDate:'2026-10-20T09:00:00Z'};
-assert.equal(S.canReschedule({...saved,event:noSaved}),true,
+assert.equal(S.canReschedule({...saved,event:noSaved,occurrenceIndex:0}),true,
   'a real legacy single-date Event should not need an occurrences migration');
+assert.equal(S.canReschedule({...saved,event:noSaved}),false,
+  'do not reinterpret occurrence #2 of a multi-slot series as a legacy single slot');
 const move=G.rangeForGesture(saved,'move',0,13,102,52);
 const top=G.rangeForGesture(saved,'top',0,13,102,52);
 const bottom=G.rangeForGesture(saved,'bottom',0,13,102,52);
