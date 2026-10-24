@@ -32,6 +32,20 @@ Window {
    eventUpdated(changed)
    return true
   }
+  property int recurringEditCalls:0
+  function rescheduleRecurringOccurrence(id,index,startIso,endIso) {
+   const next=Array.from(list),at=next.findIndex(row=>row.id===id)
+   if(at<0 || index!==0 || next[at].recurrence!=="weekly") return false
+   const original=next[at]
+   const changed=Object.assign({},original,{
+    startDate:startIso,dateTime:startIso,endDate:endIso,
+    plannerSeriesStartDate:original.plannerSeriesStartDate || original.startDate,
+    plannerSeriesEndDate:original.plannerSeriesEndDate || original.endDate
+   })
+   next[at]=changed;list=next;recurringEditCalls++
+   eventUpdated(changed)
+   return true
+  }
  }
  QtObject {id:external;property var events:[];signal eventsUpdated()}
  Item {
@@ -153,6 +167,32 @@ Window {
       && timeOf(1,"endDate")===originalEnd+30*60000,
       "bottom grip must resize only event end")
    check(root.calls===count+2,"drag/resize opened the Event editor")
+   // Legacy saved weekly Events have no occurrences/repeatTemplate array.
+   // Qt must route their actual pointer gestures to a single-instance
+   // update, without opening the event editor or changing recurrence type.
+   const legacy={id:88,title:"Old weekly event",
+    startDate:instant(12),dateTime:instant(12),endDate:instant(13),
+    recurrence:"weekly",notified:false}
+   local.list=local.list.concat([legacy]);local.eventAdded(legacy);wait(80)
+   function legacyCard() {
+    return all(planner,"plannerTimedEvent").find(item=>item.modelData.event.id===88
+      && !item.modelData.virtual)
+   }
+   let oldCard=legacyCard()
+   check(!!oldCard && oldCard.canReschedule && !!find(oldCard,"plannerResizeStart")?.visible,
+     "legacy persisted Weekly Event must expose move and resize")
+   const oldStart=new Date(legacy.startDate).getTime()
+   dragPointer(find(oldCard,"plannerEventMoveArea"),slotStep)
+   check(local.recurringEditCalls===1 && new Date(local.list.find(e=>e.id===88).startDate).getTime()
+     ===oldStart+15*60000,"legacy body dragging did not reach recurring controller")
+   oldCard=legacyCard()
+   dragPointer(find(oldCard,"plannerResizeEnd"),slotStep)
+   check(local.recurringEditCalls===2 && new Date(local.list.find(e=>e.id===88).endDate).getTime()
+     ===new Date(legacy.endDate).getTime()+15*60000,
+     "legacy weekly bottom resize was lost")
+   check(local.list.find(e=>e.id===88).plannerSeriesStartDate===legacy.startDate
+     && local.list.find(e=>e.id===88).recurrence==="weekly",
+     "legacy drag must not rewrite the repeating schedule")
    const weekDate=planner.days[0].date.getTime();planner.changeWeek(1);check(planner.days[0].date.getTime()>weekDate,"Next week failed");planner.changeWeek(-1);check(planner.days[0].date.getTime()===weekDate,"Previous week failed")
    planner.forceActiveFocus();keyClick(Qt.Key_PageDown);check(planner.days[0].date.getTime()>weekDate,"keyboard week navigation failed");keyClick(Qt.Key_PageUp)
    root.allocatedWidth=320;root.allocatedHeight=410;wait(100)
