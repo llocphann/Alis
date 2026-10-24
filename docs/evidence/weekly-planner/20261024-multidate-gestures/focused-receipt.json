@@ -1,0 +1,16 @@
+{
+  "source_sha": "6445fc985e6ee894c917f0376b18567392e4acd1",
+  "argv": [
+    "python3",
+    "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/run-focused.py",
+    "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner",
+    "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/focused-6445fc985/cases"
+  ],
+  "actual_exit": 0,
+  "status": "PASS",
+  "stop_reason": null,
+  "elapsed_seconds": 65.7,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "b87267dd389c3f4b45c37a3873af6a3355b341c3f158abcd13891f20ab4f5b87"
+}

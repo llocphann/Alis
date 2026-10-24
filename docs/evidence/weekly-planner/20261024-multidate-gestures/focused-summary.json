@@ -1,0 +1,27 @@
+{
+  "cases": 29,
+  "after_pass": 25,
+  "after_fail": 0,
+  "baseline_outcomes": [
+    {
+      "name": "baseline-native-eligibility",
+      "actual_exit": 1,
+      "status": "FAIL"
+    },
+    {
+      "name": "baseline-native-visual-leak",
+      "actual_exit": 1,
+      "status": "FAIL"
+    },
+    {
+      "name": "baseline-pure",
+      "actual_exit": 1,
+      "status": "FAIL"
+    },
+    {
+      "name": "baseline-original-native-fixture",
+      "actual_exit": 1,
+      "status": "FAIL"
+    }
+  ]
+}

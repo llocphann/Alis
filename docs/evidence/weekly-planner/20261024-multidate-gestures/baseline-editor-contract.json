@@ -1,0 +1,5 @@
+{
+  "source_sha": "9afbf1c04fafc3ba30b843cd41f5157f3b402675",
+  "actual_exit": 1,
+  "log": "Traceback (most recent call last):\n  File \"/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/baseline-full-9afbf/scripts/test-weekly-planner-expanded-event-editor-contract.py\", line 47, in <module>\n    assert 'horizontalPadding: root.activeLabelOnly' in choices\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+}

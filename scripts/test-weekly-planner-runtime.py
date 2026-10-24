@@ -198,6 +198,8 @@ Window {
    check(local.recurringEditCalls===1 && new Date(local.list.find(e=>e.id===88).startDate).getTime()
      ===oldStart+15*60000,"legacy body dragging did not reach recurring controller")
    oldCard=legacyCard()
+   // The preceding body move added 15 minutes to both endpoints; bottom
+   // resize adds another 15 to the end, for 30 total against the original.
    dragPointer(find(oldCard,"plannerResizeEnd"),slotStep)
    check(local.recurringEditCalls===2 && new Date(local.list.find(e=>e.id===88).endDate).getTime()
      ===new Date(legacy.endDate).getTime()+30*60000,
