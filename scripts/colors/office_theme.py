@@ -192,6 +192,47 @@ def replace_selector(data, replacement, remove_section=False):
     return text.encode()
 
 
+def _rgb(hex_color):
+    return tuple(int(hex_color[i:i + 2], 16) for i in (1, 3, 5))
+
+
+def _mix(first, second, amount):
+    a, b = _rgb(first), _rgb(second)
+    return "#" + "".join(f"{round(x * (1 - amount) + y * amount):02x}" for x, y in zip(a, b))
+
+
+def _luminance(color):
+    channels = [c / 255 for c in _rgb(color)]
+    linear = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+              for c in channels]
+    return sum(c * w for c, w in zip(linear, (0.2126, 0.7152, 0.0722)))
+
+
+def contrast_ratio(first, second):
+    """WCAG contrast for opaque sRGB colors used by both Office adapters."""
+    hi, lo = sorted((_luminance(first), _luminance(second)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def _readable(preferred, backgrounds, minimum=4.5):
+    """Keep the Alis hue where possible, otherwise correct toward legible ink."""
+    if all(contrast_ratio(preferred, bg) >= minimum for bg in backgrounds):
+        return preferred
+    # Each Office role has one text color, so both covered surfaces must
+    # share a light/dark family; never choose a hue that fails either surface.
+    for endpoint in ("#ffffff", "#000000"):
+        if all(contrast_ratio(endpoint, bg) >= minimum for bg in backgrounds):
+            choices = []
+            for step in range(1, 101):
+                candidate = _mix(preferred, endpoint, step / 100)
+                if all(contrast_ratio(candidate, bg) >= minimum for bg in backgrounds):
+                    choices.append((step, candidate))
+                    break
+            if choices:
+                return choices[0][1]
+    raise UnsafeConfig("Office text/background colors have incompatible luminance")
+
+
 def generate_theme(palette):
     def color(*keys):
         for key in keys:
@@ -201,38 +242,105 @@ def generate_theme(palette):
                     raise UnsafeConfig("invalid palette color: " + key)
                 return value.lower()
         raise UnsafeConfig("missing palette color: " + keys[0])
+
     bg = color("app_background", "background", "surface")
-    fg = color("app_foreground", "on_surface", "on_background")
-    surface = color("app_surface_elevated", "surface_container", "surface")
-    border = color("app_border", "outline")
-    accent = color("app_accent", "primary")
-    on_accent = color("app_on_accent", "on_primary")
-    muted = color("app_subtext", "on_surface_variant", "on_surface")
-    mode = palette.get("darkmode", palette.get("dark_mode"))
-    if isinstance(mode, bool):
-        dark = mode
-    else:
-        # Existing app palettes do not all carry mode. Their background is
-        # the source of truth; this fallback never invents a separate palette.
-        rgb = [int(bg[i:i + 2], 16) / 255 for i in (1, 3, 5)]
-        dark = sum(c * w for c, w in zip(rgb, (0.2126, 0.7152, 0.0722))) < 0.5
+    proposed_surface = color("app_surface_elevated", "surface_container", "surface")
+    # NEVER mix a light panel with dark ink (or vice versa). The desktop
+    # login/settings screen uses background-action-panel, not background-normal.
+    dark = contrast_ratio("#ffffff", bg) > contrast_ratio("#000000", bg)
+    surface_dark = contrast_ratio("#ffffff", proposed_surface) > contrast_ratio("#000000", proposed_surface)
+    surface = proposed_surface if surface_dark == dark else _mix(
+        bg, "#ffffff" if dark else "#000000", 0.08)
+    backgrounds = (bg, surface)
+    fg = _readable(color("app_foreground", "on_surface", "on_background"), backgrounds)
+    muted = _readable(color("app_subtext", "on_surface_variant", "on_surface"), backgrounds)
+    border = _readable(color("app_border", "outline"), backgrounds, 3.0)
+    accent = _readable(color("app_accent", "primary"), backgrounds, 3.0)
+    on_accent = _readable(color("app_on_accent", "on_primary"), (accent,))
+    link = _readable(accent, backgrounds)
+    def interactive(base, amount):
+        candidate = _mix(base, fg, amount)
+        return candidate if contrast_ratio(candidate, fg) >= 4.5 else base
+    def accent_state(amount):
+        candidate = _mix(accent, on_accent, amount)
+        return candidate if contrast_ratio(candidate, on_accent) >= 4.5 else accent
+    hover, pressed = interactive(surface, 0.05), interactive(surface, 0.10)
+    accent_hover, accent_pressed = accent_state(0.05), accent_state(0.10)
+
+    # The desktop home/settings shell has its OWN CSS variable names.
+    # Source: ONLYOFFICE/desktop-apps 9.4 loginpage/src/css/colors*.less.
+    # Editor-only tokens cannot paint the home screen's action panel, sidebar,
+    # buttons or checkboxes; omitting them caused white-on-white/near-white.
     colors = {
-        "background-normal": bg, "background-toolbar": surface,
-        "background-toolbar-tab": surface, "background-primary-dialog": surface,
-        "background-notification-popover": surface, "background-normal-input": bg,
-        "background-normal-button": surface, "background-accent-button": accent,
-        "highlight-button-hover": border, "highlight-button-pressed": border,
-        "highlight-button-pressed-hover": border, "border-divider": border,
-        "highlight-toolbar-tab-underline": accent, "border-regular-control": border,
-        "border-toolbar": border, "border-preview-hover": accent,
-        "text-normal": fg, "text-secondary": muted, "text-link": accent,
-        "text-normal-pressed": fg, "text-inverse": on_accent,
-        "text-accent-button": on_accent,
-        "toolbar-header-document": accent, "toolbar-header-presentation": accent,
-        "toolbar-header-spreadsheet": accent, "toolbar-header-pdf": accent,
-        "toolbar-header-draw": accent, "text-toolbar-header": on_accent,
-        "canvas-scroll-thumb-hover": border, "window-border": border,
+        "background-normal": bg,
+        "background-action-panel": surface,
+        "background-normal-element": surface,
+        "background-normal-element-light": surface,
+        "background-tabbar": bg,
+        "background-button": surface,
+        "background-primary-button": accent,
+        "background-primary-dialog-button": accent,
+        "background-scroll-thumb": border,
+        "background-icon-normal": bg,
+        "background-toolbar": surface,
+        "background-toolbar-additional": surface,
+        "background-toolbar-tab": surface,
+        "background-primary-dialog": surface,
+        "background-notification-popover": surface,
+        "background-normal-input": bg,
+        "background-normal-button": surface,
+        "background-accent-button": accent,
+        "highlight-button-hover": hover,
+        "highlight-button-pressed": pressed,
+        "highlight-button-pressed-hover": pressed,
+        "highlight-sidebar-item-pressed": surface,
+        "highlight-scroll-thumb-hover": border,
+        "highlight-primary-button-hover": accent_hover,
+        "highlight-primary-button-pressed": accent_pressed,
+        "highlight-primary-dialog-button-hover": accent_hover,
+        "highlight-accent-button-hover": accent_hover,
+        "highlight-accent-button-pressed": accent_pressed,
+        "highlight-toolbar-tab-underline": accent,
+        "border-divider": border,
+        "border-tabbar": border,
+        "border-sidebar": border,
+        "border-sidebar-item": border,
+        "border-sidebar-icon": border,
+        "border-regular-control": border,
+        "border-toolbar": border,
+        "border-preview-hover": accent,
         "border-control-focus": accent,
+        "text-normal": fg,
+        "text-normal-pressed": fg,
+        "text-secondary": muted,
+        "text-tertiary": muted,
+        "text-link": link,
+        "text-link-hover": link,
+        "text-link-active": link,
+        "text-link-visited": link,
+        "text-alt-key-hint": fg,
+        "text-inverse": on_accent,
+        "text-accent-button": on_accent,
+        "text-toolbar-header": on_accent,
+        "text-negative": _readable("#ff7777" if dark else "#ba1a1a", backgrounds),
+        "icon-normal": fg,
+        "icon-normal-pressed": fg,
+        "icon-inverse": on_accent,
+        "icon-toolbar-header": on_accent,
+        "chb-check-mark-background": on_accent,
+        "chb-background-normal": bg,
+        "chb-background-checked": accent,
+        "chb-border-normal": border,
+        "chb-border-checked": accent,
+        # Disabled elements remain visibly differentiated but not washed out.
+        "disabled-element-opacity": 0.85,
+        "toolbar-header-document": accent,
+        "toolbar-header-presentation": accent,
+        "toolbar-header-spreadsheet": accent,
+        "toolbar-header-pdf": accent,
+        "toolbar-header-draw": accent,
+        "canvas-scroll-thumb-hover": border,
+        "window-border": border,
     }
     return json_bytes({"id": "theme-alis-auto", "name": "Alis Auto",
                        "type": "dark" if dark else "light", "colors": colors})
