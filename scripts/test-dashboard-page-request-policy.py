@@ -7,6 +7,15 @@ import subprocess
 
 root = Path(__file__).resolve().parents[1]
 source = (root / "modules/dashboard/DashboardContent.qml").read_text()
+# DASH-F01: tab sliding uses constant-speed travel. This does not measure
+# frame pacing on the Owner's display; that needs separate native verification.
+slide = source.split("Behavior on pagePosition {", 1)
+assert len(slide) == 2, "Dashboard tab motion behavior missing"
+slide = slide[1].split("DashboardCanvas {", 1)[0]
+assert "duration: Appearance.animation.elementMove.duration" in slide
+assert "easing.type: Easing.Linear" in slide, "Dashboard tab travel is not linear"
+assert "Easing.OutCubic" not in slide, "Dashboard tab deceleration regression"
+assert "root.presentationActive && Appearance.animationsEnabled && !root.editMode" in slide
 methods = []
 for name in ["selectPage", "requestPage", "commitPendingPage", "pageLoadFailed"]:
     match = re.search(r"    function " + name + r"\(([^)]*)\): void \{(.*?)\n    \}", source, re.S)
