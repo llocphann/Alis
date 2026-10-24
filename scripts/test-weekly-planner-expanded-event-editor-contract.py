@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Dashboard planner has a full form; Calendar Popup retains compact controls."""
 from pathlib import Path
+import re
+import subprocess
 r=Path(__file__).resolve().parents[1]
 planner=(r/"modules/dashboard/DashboardWeeklyPlanner.qml").read_text()
 editor=(r/"modules/sidebarRight/events/EventsDialog.qml").read_text()
@@ -44,7 +46,10 @@ assert 'revealNextSelection.restart()' in choices
 assert 'onTriggered: root.revealedSelection=root.currentValue' in choices
 assert 'interval: 190' in choices
 assert 'selectedLabelExpanded: root.activeLabelOnly' in choices
-assert 'horizontalPadding: root.activeLabelOnly' in choices
+assert re.search(r'horizontalPadding: root\.wrapFullLabels\s*'
+    r'\? Math\.max\(4,5 \* Appearance\.fontSizeScale\)\s*'
+    r': root\.activeLabelOnly\s*\? Math\.max\(5,6 \* Appearance\.fontSizeScale\)',choices), \
+    'preserve both wrapped-label and selected-label padding branches'
 assert 'maxTextWidth: root.taskNavigation' in choices
 assert 'clip: root.activeLabelOnly' in choices
 assert 'root.activeLabelOnly && !paletteButton.toggled' not in choices
@@ -202,7 +207,8 @@ print("WEEKLY_PLANNER_EXPANDED_EDITOR_AND_RESIZE_HOVER_PASS")
 
 # Multi-date is opt-in only for Planner Add Event; Recurrence is exclusive.
 assert 'multiSelectedDates: root.plannerSelectedDateKeys' in editor
-assert 'selectedDays.length>1 && root.recurrence!=="none"' in editor
+assert 'multi && !RepeatPolicy.allowed(chosen.keys,root.recurrence)' in editor, \
+    'reject incompatible cycles while retaining supported multi-date Weekly patterns'
 assert 'root.resetPlannerDateSelection()' in editor
 assert 'root.plannerSelectedCount>1' in editor
 assert 'root._plannerPickingDate' in editor

@@ -200,7 +200,7 @@ Window {
    oldCard=legacyCard()
    dragPointer(find(oldCard,"plannerResizeEnd"),slotStep)
    check(local.recurringEditCalls===2 && new Date(local.list.find(e=>e.id===88).endDate).getTime()
-     ===new Date(legacy.endDate).getTime()+15*60000,
+     ===new Date(legacy.endDate).getTime()+30*60000,
      "legacy weekly bottom resize was lost")
    check(local.list.find(e=>e.id===88).plannerSeriesStartDate===legacy.startDate
      && local.list.find(e=>e.id===88).recurrence==="weekly",
