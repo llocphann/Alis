@@ -305,6 +305,14 @@ Window {
    planner.presentationActive=false;wait(30);planner.presentationActive=true;wait(100)
    verifyRecurringWeek("reopened")
    planner.showToday();check(planner.days.some(day=>Qt.formatDate(day.date,"yyyy-MM-dd")===Qt.formatDate(new Date(),"yyyy-MM-dd")),"Today navigation failed")
+   // Reactivation on the same calendar day must not rebuild the week.
+   let redundantDates=0
+   const countDateChanges=()=>redundantDates++
+   planner.selectedDateChanged.connect(countDateChanges)
+   planner.presentationActive=false;wait(30)
+   planner.presentationActive=true;wait(100)
+   planner.selectedDateChanged.disconnect(countDateChanges)
+   check(redundantDates===0,"same-day Planner reactivation rebuilt the week")
    console.info("WEEKLY_PLANNER_NATIVE_PASS",checks,root.frames)
   }catch(error){console.error("WEEKLY_PLANNER_NATIVE_FAIL",error.message,error.stack)}Qt.quit()}
  }
