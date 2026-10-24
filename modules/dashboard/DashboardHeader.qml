@@ -20,6 +20,9 @@ Item {
     property bool editMode: false
     property bool showActions: true
     property int currentPage: 0
+    // Arrows follow the latest request while a cold target is incubating.
+    // Dots continue to show the selected, ready page.
+    property int navigationPage: currentPage
     property int pageCount: 1
     property var pageIds: ["dashboard", "music"]
     property var customTabs: []
@@ -102,14 +105,14 @@ Item {
         onWheel: event => root.horizontalWheel(event)
     }
     Keys.onLeftPressed: event => {
-        if (root.navigationAllowed && !root.editMode && root.currentPage > 0) {
-            root.pageRequested(root.currentPage - 1)
+        if (root.navigationAllowed && !root.editMode && root.navigationPage > 0) {
+            root.pageRequested(root.navigationPage - 1)
             event.accepted = true
         } else event.accepted = false
     }
     Keys.onRightPressed: event => {
-        if (root.navigationAllowed && !root.editMode && root.currentPage < root.pageCount - 1) {
-            root.pageRequested(root.currentPage + 1)
+        if (root.navigationAllowed && !root.editMode && root.navigationPage < root.pageCount - 1) {
+            root.pageRequested(root.navigationPage + 1)
             event.accepted = true
         } else event.accepted = false
     }

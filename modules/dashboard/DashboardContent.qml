@@ -448,6 +448,7 @@ Item {
                 visible: root.showHeader || root.pageIds.length > 1
                 showActions: root.showHeader
                 currentPage: root.currentPage
+                navigationPage: root.pageIds.indexOf(root._pendingPageId || root.currentPageId)
                 pageCount: root.pageIds.length
                 pageIds: root.pageIds
                 navigationAllowed: root.navigationAllowed
