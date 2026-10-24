@@ -1,0 +1,65 @@
+{
+  "source_sha": "a6de7fd015a5a256a9ee808c4cddd604daf51e7a",
+  "repository": "llocphann/Alis",
+  "ref": "dev",
+  "issue": 125,
+  "focused": {
+    "status": "PASS",
+    "actual_exit": 0,
+    "tests": 46,
+    "fixture_profiles_only": true
+  },
+  "qsettings_interoperability": {
+    "status": "PASS",
+    "actual_exit": 0,
+    "qt_version": "5.15.19",
+    "native_unrelated_edits_preserved": true,
+    "office_started": false
+  },
+  "installed_metadata": {
+    "onlyoffice": "9.4.0-1",
+    "libreoffice": "26.8.1-2",
+    "metadata_only": true,
+    "libreoffice_required_schema_properties": 31,
+    "schema_check_exit": 0
+  },
+  "qml6_parser": {
+    "version": "6.12.0",
+    "actual_exits": {
+      "Config.qml": 0,
+      "AdvancedConfig.qml": 0,
+      "ThemeService.qml": 0
+    }
+  },
+  "qml5_parser_attempt": {
+    "actual_exits": [
+      1,
+      1,
+      1
+    ],
+    "stderr_empty": true,
+    "qualification": "Wrong parser generation; retained as diagnostic, followed by explicit Qt6 parser checks. Not an application runtime gate."
+  },
+  "canonical": {
+    "status": "RUNNING",
+    "source_sha": "a6de7fd015a5a256a9ee808c4cddd604daf51e7a",
+    "do_not_claim_whole_pass": true
+  },
+  "gates": {
+    "installed_office_theme_visual": "UNRUN",
+    "light_dark_in_actual_apps": "UNRUN",
+    "owner_acceptance": "PENDING"
+  },
+  "safeguards": {
+    "opt_in_defaults": false,
+    "app_auto_launch": false,
+    "desktop_cutover": false,
+    "owner_profile_touched": false,
+    "system_writes": false,
+    "other_adapters_changed": false
+  },
+  "logs": {
+    "focused.log": "37c1ed8222eaa968274a700d17eff9cf299d7c18306acae70026cca9b85e2113",
+    "qt5.log": "2cb32c437dcfa396ee252e6c89b392e66201a4c5f2c1288d79897275a388dc1a"
+  }
+}
