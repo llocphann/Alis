@@ -259,7 +259,10 @@ def generate_theme(palette):
     if not any(all(contrast_ratio(ink, ground) >= 4.5 for ground in (bg, surface))
                for ink in ("#ffffff", "#000000")):
         surface = bg
-    backgrounds = (bg, surface)
+    # Ink, ruler marks and page borders must also be readable against the
+    # editor surround, not only the Home/Settings surfaces.
+    workspace = OFFICE_DARK_WORKSPACE if dark else bg
+    backgrounds = (bg, surface, workspace)
     primary_minimum = 7.0 if any(
         all(contrast_ratio(ink, ground) >= 7.0 for ground in backgrounds)
         for ink in ("#ffffff", "#000000")) else 4.5
@@ -285,7 +288,6 @@ def generate_theme(palette):
     # buttons or checkboxes; omitting them caused white-on-white/near-white.
     # Keep a light editor canvas with light palettes; in dark mode, match the
     # requested LibreOffice notebookbar blue instead of default gray.
-    workspace = OFFICE_DARK_WORKSPACE if dark else bg
     colors = {
         "background-normal": bg,
         "background-action-panel": surface,
