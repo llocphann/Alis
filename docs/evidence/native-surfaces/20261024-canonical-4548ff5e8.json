@@ -1,0 +1,217 @@
+{
+  "quota_used_at_stop": 98,
+  "resetsAt": 1792822226,
+  "resume_at": 1792822286,
+  "canonical_receipt": {
+    "source_sha": "4548ff5e86a819f42d0f069227333318bcd68331",
+    "argv": [
+      "bwrap",
+      "--bind",
+      "/",
+      "/",
+      "--dev-bind",
+      "/dev",
+      "/dev",
+      "--proc",
+      "/proc",
+      "--tmpfs",
+      "/tmp",
+      "--die-with-parent",
+      "--",
+      "bash",
+      "scripts/validate-maintainer-local.sh",
+      "--current-repo"
+    ],
+    "actual_exit": -15,
+    "status": "STOPPED",
+    "stop_reason": "quota_stop",
+    "elapsed_seconds": 1029.1,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "121c89c7f74f454714202b0558e6cc9a0de7c96178e3e5e0a49deec3b51cc986"
+  },
+  "progress": {
+    "source_sha": "4548ff5e86a819f42d0f069227333318bcd68331",
+    "started": 285,
+    "settled": 284,
+    "passed": 258,
+    "failed": 26,
+    "skipped": 0,
+    "unsettled": 1,
+    "failed_checks": [
+      {
+        "number": 23,
+        "label": "Native shared-field optimized/unoptimized exact GPU parity",
+        "status": "FAIL"
+      },
+      {
+        "number": 24,
+        "label": "Native shared-field transparent-interior exact GPU parity",
+        "status": "FAIL"
+      },
+      {
+        "number": 25,
+        "label": "Native shared-field fractional light transparent-interior exact GPU parity",
+        "status": "FAIL"
+      },
+      {
+        "number": 26,
+        "label": "Native shared-field fractional light/mask exact GPU parity",
+        "status": "FAIL"
+      },
+      {
+        "number": 66,
+        "label": "Python regression: scripts/test-abyss-compact-editor-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 85,
+        "label": "Python regression: scripts/test-abyss-field-support-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 96,
+        "label": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 101,
+        "label": "Python regression: scripts/test-abyss-module-field-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 104,
+        "label": "Python regression: scripts/test-abyss-multi-selection-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 125,
+        "label": "Python regression: scripts/test-abyss-round0-editor-controls.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 131,
+        "label": "Python regression: scripts/test-abyss-transparent-interior-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 138,
+        "label": "Python regression: scripts/test-abyss-width-affects-modules-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 166,
+        "label": "Python regression: scripts/test-calendar-weather-composition-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 196,
+        "label": "Python regression: scripts/test-dashboard-freeform-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 204,
+        "label": "Python regression: scripts/test-dashboard-notes-markdown-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 205,
+        "label": "Python regression: scripts/test-dashboard-notes-markdown-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 217,
+        "label": "Python regression: scripts/test-dashboard-workspace.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 221,
+        "label": "Python regression: scripts/test-desktop-context-menu-native.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 222,
+        "label": "Python regression: scripts/test-desktop-widget-editor-coordinates.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 225,
+        "label": "Python regression: scripts/test-dock-abyss-hover-orientation-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 252,
+        "label": "Python regression: scripts/test-light-mode-upstream-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 254,
+        "label": "Python regression: scripts/test-local-ai-gguf-runtime.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 255,
+        "label": "Python regression: scripts/test-local-model-folder.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 265,
+        "label": "Python regression: scripts/test-material-only-global-style-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 274,
+        "label": "Python regression: scripts/test-notification-center-bottom-right-contract.py",
+        "status": "FAIL"
+      },
+      {
+        "number": 282,
+        "label": "Python regression: scripts/test-owner-ui-regressions-contract.py",
+        "status": "FAIL"
+      }
+    ]
+  },
+  "whole_pass": false,
+  "scope": "Exact committed4548ff5e8 maintainer run stopped by quota. Numbered counts only; unsettled check285 remains STOPPED/UNSETTLED, not PASS. No remaining owned worker/test. No owner desktop/data/audio changes.",
+  "latest_runtime_fix": "31add7fb3e1c9d0bf514a62fdf26244ede67c3c5",
+  "focused_receipts": [
+    "docs/evidence/native-surfaces/20261024-dashboard-page-requests/qualification.json",
+    "docs/evidence/native-surfaces/20261024-popup-family-extension/receipt.json"
+  ],
+  "focused": "31835e60e Music functional PASS; custom42/restart5 PASS; request95 PASS; reorder63/14native drags/restart PASS. Frozen36cb FAIL first Left reversal, final318 PASS. Source31 follows pending arrow intent.",
+  "full_dashboard_gate": "Canonical passed current custom tab/native requested-page/music/reorder tests and3updated controller contracts; still failed freeform, Notes/Markdown and workspace. Keep whole DASH awaiting-owner label withheld.",
+  "labels": {
+    "128": "status:awaiting-owner; real greeter/coldboot/installed/physical UNRUN",
+    "126": "withheld",
+    "72": "withheld; historical Resources scale1 intermittent failure unclassified",
+    "59": "withheld; wider scope incomplete"
+  },
+  "next_order": [
+    72,
+    59,
+    128,
+    126,
+    125,
+    29,
+    41,
+    57,
+    56,
+    58,
+    59,
+    100,
+    83,
+    42
+  ],
+  "constraints": [
+    "No agents/new product Automation queue/worker/handoff;103/104 retired;118 safe decommission only",
+    "74 stutter Owner-deferred;108/55 already Owner-verified",
+    "Keep stable/native/Cargo.lock/root json-subprocess-time/concurrent changes",
+    "No desktop install/cutover/restart/vault/audio/preset/routing/volume or real clipboard/history/pins mutations"
+  ],
+  "diagnostics": [
+    "GPU parity checks23-26 lack offscreen OpenGL context; pixel oracles unrun, no software fallback/threshold loosening",
+    "66compact editor no terminal marker; default unfocused cause not established",
+    "Older8cf Resources1PASS2FAIL retained; current native32PASS does not establish historical root cause"
+  ],
+  "durable_private_base": "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261023-after-reset"
+}
