@@ -93,12 +93,70 @@ Rectangle {
                 objectName: "dashboardToolbarTabName"
                 Layout.fillWidth: true
                 Layout.minimumWidth: 160
-                implicitHeight: 34
+                implicitHeight: 40
                 maximumLength: 41
+                hoverEnabled: true
+                font.pixelSize: Appearance.font.pixelSize.normal
+                verticalAlignment: TextInput.AlignVCenter
+                leftPadding: 14
+                rightPadding: 14
+                topPadding: 6
+                bottomPadding: 6
+                color: root.abyssMode
+                    ? AbyssStyle.textColor : Appearance.colors.colOnLayer1
+                placeholderTextColor: root.abyssMode
+                    ? AbyssStyle.textColorMuted : Appearance.colors.colSubtext
+                selectionColor: Appearance.colors.colPrimaryContainer
+                selectedTextColor: Appearance.colors.colOnPrimaryContainer
                 placeholderText: Translation.tr("Custom tab name")
                 text: root.tabController?._customDialogName ?? ""
                 onTextEdited: root.tabController?.setCustomTabName(text)
                 onAccepted: root.tabController?.acceptCustomTabDialog()
+                readonly property bool invalidName:
+                    (root.tabController?._customDialogError?.length ?? 0) > 0
+
+                // Qt's default rectangular focus border doesn't follow our
+                // dashboard palette. Provide a rounded, theme-aware surface
+                // for Abyss and the other Alis panel families.
+                background: Rectangle {
+                    id: tabNameBackground
+                    objectName: "dashboardTabNameBackground"
+                    radius: 12
+                    color: root.abyssMode
+                        ? AbyssStyle.contentLayer : Appearance.colors.colLayer1
+                    border.width: tabNameInput.activeFocus ? 1.5 : 1
+                    border.color: tabNameInput.invalidName
+                        ? Appearance.colors.colError
+                        : tabNameInput.activeFocus
+                            ? (root.abyssMode
+                                ? Qt.alpha(AbyssStyle.accent, 0.85)
+                                : Appearance.colors.colPrimary)
+                            : Qt.alpha(root.abyssMode
+                                ? AbyssStyle.accent : Appearance.colors.colOutline,
+                                tabNameInput.hovered ? 0.52 : 0.30)
+                    Behavior on color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: AbyssStyle.motionFast }
+                    }
+                    Behavior on border.color {
+                        enabled: Appearance.animationsEnabled
+                        ColorAnimation { duration: AbyssStyle.motionFast }
+                    }
+                    // A subtle inner focus ring gives the field depth without
+                    // the hard blue rectangular outline from the default style.
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 3
+                        radius: Math.max(0, tabNameBackground.radius - 3)
+                        color: "transparent"
+                        border.width: 1
+                        border.color: Qt.alpha(tabNameInput.invalidName
+                            ? Appearance.colors.colError
+                            : (root.abyssMode
+                                ? AbyssStyle.accent : Appearance.colors.colPrimary), 0.16)
+                        visible: tabNameInput.activeFocus
+                    }
+                }
             }
             RippleButton {
                 objectName: "dashboardToolbarCreate"
