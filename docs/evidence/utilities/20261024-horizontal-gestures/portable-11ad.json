@@ -1,0 +1,24 @@
+{
+  "source_sha": "11ad9a4dde37a08a7b97618c32a30f1333f5e0a7",
+  "actual_harness_exit": 0,
+  "actual_native_exit": 0,
+  "checks": 139,
+  "frames": 50,
+  "owned_remaining_after_exit": [],
+  "probe": "pixel-probe.py",
+  "scope": "Committed portable reproduction rebuilt disposable Qt6 TouchPad adapter and exercised current source. Physical devices/installed desktop/Owner remain separate.",
+  "supervisor_receipt": {
+    "source_sha": "11ad9a4dde37a08a7b97618c32a30f1333f5e0a7",
+    "argv": [
+      "python3",
+      "docs/evidence/utilities/20261024-horizontal-gestures/pixel-probe.py"
+    ],
+    "actual_exit": 0,
+    "status": "PASS",
+    "stop_reason": null,
+    "elapsed_seconds": 45.9,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "7c7a1d8a241a456734e1cfacb808ac72cdcb4e5d49682f7ee4f9d679c2cdd9a3"
+  }
+}

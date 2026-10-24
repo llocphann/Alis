@@ -1,0 +1,133 @@
+{
+  "checks": 139,
+  "frames": 50,
+  "measurements": [
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 0,
+      "to": 1,
+      "width": 560,
+      "height": 360
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 1,
+      "to": 2,
+      "width": 560,
+      "height": 360
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 2,
+      "to": 3,
+      "width": 560,
+      "height": 360
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 3,
+      "to": 2,
+      "width": 560,
+      "height": 360
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 2,
+      "to": 1,
+      "width": 560,
+      "height": 360
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 1,
+      "to": 0,
+      "width": 560,
+      "height": 360
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 0,
+      "to": 1,
+      "width": 420,
+      "height": 300
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 1,
+      "to": 2,
+      "width": 420,
+      "height": 300
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 2,
+      "to": 3,
+      "width": 420,
+      "height": 300
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 3,
+      "to": 2,
+      "width": 420,
+      "height": 300
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 2,
+      "to": 1,
+      "width": 420,
+      "height": 300
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 1,
+      "to": 0,
+      "width": 420,
+      "height": 300
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 0,
+      "to": 1,
+      "width": 320,
+      "height": 240
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 1,
+      "to": 2,
+      "width": 320,
+      "height": 240
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 2,
+      "to": 3,
+      "width": 320,
+      "height": 240
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 3,
+      "to": 2,
+      "width": 320,
+      "height": 240
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 2,
+      "to": 1,
+      "width": 320,
+      "height": 240
+    },
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 1,
+      "to": 0,
+      "width": 320,
+      "height": 240
+    }
+  ],
+  "error": null
+}

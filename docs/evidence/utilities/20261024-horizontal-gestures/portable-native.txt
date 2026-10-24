@@ -1,0 +1,18 @@
+  INFO: Launching config: "/tmp/alis-utilities-native-a1c02nhr/shell.qml"
+  INFO: Shell ID: "fb3aa6fc35311bb48c1a772db868cc14" Path ID "fb3aa6fc35311bb48c1a772db868cc14"
+  INFO: Saving logs to "/run/user/1000/quickshell/by-id/6ucx32uent/log.qslog"
+  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.
+  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.1556263.sock
+  INFO: Configuration Loaded
+  WARN scene: QML FileView at @modules/common/Config.qml[521:5]: Read of /tmp/alis-utilities-native-a1c02nhr/config/alis/config.json failed: File does not exist.
+ DEBUG qml: [Config] File not found, creating new file.
+  WARN scene: QML FileView at @modules/common/Config.qml[516:5]: Read of /tmp/alis-utilities-native-a1c02nhr/config/alis/config.json failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-utilities-native-a1c02nhr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /tmp/alis-utilities-native-a1c02nhr/state/quickshell/user/gamemode_active failed: File does not exist.
+  WARN scene: QML FileView at @shell.qml[17:2]: Read of /tmp/alis-utilities-native-a1c02nhr/report.json failed: File does not exist.
+  WARN quickshell.io.fileview: got operation finished from dropped operation qs::io::FileViewOperation(0x7f7642f2f460)
+  WARN qml: Wallpapers: failed to sync Niri backdrop overview shadow
+  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /tmp/alis-utilities-native-a1c02nhr/state/quickshell/user/gamemode_active failed: File does not exist.
+  INFO qml: NiriService: Loaded 1 outputs
+ ERROR quickshell.service.pipewire.loop: Failed to connect pipewire context. Errno: 112
+  INFO qml: UTILITIES_COMPACT_PASS 139 50
