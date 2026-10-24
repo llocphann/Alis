@@ -6,7 +6,7 @@ import re
 import sys
 import urllib.error
 import urllib.request
-from local_provider import LocalProviderError, client, headers, origin, verify
+from local_provider import LocalProviderError, client, headers, origin, verify, verify_reasoning_off
 
 
 def main():
@@ -25,6 +25,8 @@ def main():
         expected = os.environ.get('AI_LOCAL_FINGERPRINT', '')
         if expected and (not re.fullmatch('[0-9a-f]{64}', expected) or expected != metadata['fingerprint']):
             raise LocalProviderError('metadata_changed')
+        if isinstance(body.get('reasoning'), dict) and body['reasoning'].get('effort') == 'none':
+            verify_reasoning_off(os.environ.get('AI_LOCAL_PROVIDER', ''), endpoint, model, metadata, key)
         # The prompt is held in this process until the fresh metadata check.
         request = urllib.request.Request(endpoint, data=json.dumps(body).encode(), headers=headers(key))
         with client().open(request, timeout=75) as response:

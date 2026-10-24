@@ -110,6 +110,50 @@ def fingerprint(metadata):
     return hashlib.sha256(json.dumps(metadata, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 
+def lmstudio_reasoning_off(payload, model, metadata):
+    """Match native v1 reasoning options to the positively verified weights.
+
+    General reasoning support does not imply an off switch. Missing/older v1
+    metadata leaves Instant unavailable without blocking ordinary local chat.
+    """
+    rows = payload.get('models') if isinstance(payload, dict) else None
+    if not isinstance(rows, list) or len(rows) > 2048:
+        return False
+    matches = []
+    for row in rows:
+        if not isinstance(row, dict): continue
+        instances = row.get('loaded_instances', [])
+        alias = isinstance(instances, list) and any(isinstance(item, dict) and item.get('id') == model for item in instances)
+        if row.get('key') == model or alias: matches.append(row)
+    if len(matches) != 1:
+        return False
+    row = matches[0]
+    quantization = row.get('quantization')
+    capabilities = row.get('capabilities')
+    if (remote(row) or row.get('type') != 'llm' or not isinstance(quantization, dict)
+            or row.get('format') != metadata.get('format')
+            or row.get('architecture') != metadata.get('architecture')
+            or quantization.get('name') != metadata.get('quantization')
+            or type(row.get('max_context_length')) is not int
+            or row['max_context_length'] != metadata.get('contextTokens')
+            or not isinstance(capabilities, dict)):
+        return False
+    reasoning = capabilities.get('reasoning')
+    if not isinstance(reasoning, dict):
+        return False
+    options = reasoning.get('allowed_options')
+    return (isinstance(options, list) and 0 < len(options) <= 5
+        and all(isinstance(option, str) and option in ('off', 'on', 'low', 'medium', 'high') for option in options)
+        and len(set(options)) == len(options) and 'off' in options
+        and isinstance(reasoning.get('default'), str) and reasoning['default'] in options)
+
+
+def verify_reasoning_off(provider, endpoint, model, metadata, key=''):
+    if (provider != 'lmstudio' or not lmstudio_reasoning_off(
+            request_json(origin(endpoint)+'/api/v1/models', key), model, metadata)):
+        raise LocalProviderError('reasoning_off_unverified')
+
+
 def verify(provider, endpoint, model, key='', timeout=8, payload=None):
     base = origin(endpoint)
     if not text(model):

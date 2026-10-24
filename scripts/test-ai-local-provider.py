@@ -35,7 +35,25 @@ for patch in ({'remote_model':'cloud'},{'remote_host':'remote.test'},{'details':
 assert len(local.fingerprint(local.lmstudio_metadata({'data':[row]},'fixture')))==64
 assert local.ollama_metadata(ollama,'fixture')['provider']=='ollama'
 
-state={'row':copy.deepcopy(row),'show':copy.deepcopy(ollama),'requests':[],'mode':'ok'}
+native={'key':'fixture','type':'llm','format':'gguf','architecture':'qwen35',
+        'quantization':{'name':'Q5_K_XL'},'max_context_length':4096,'loaded_instances':[],
+        'capabilities':{'reasoning':{'allowed_options':['off','on'],'default':'on'}}}
+verified=local.lmstudio_metadata({'data':[row]},'fixture')
+assert local.lmstudio_reasoning_off({'models':[native]},'fixture',verified)
+alias={**native,'key':'file-key','loaded_instances':[{'id':'fixture'}]}
+assert local.lmstudio_reasoning_off({'models':[alias]},'fixture',verified)
+for patch in ({'capabilities':{}},{'capabilities':{'reasoning':True}},
+              {'capabilities':{'reasoning':{'allowed_options':['on'],'default':'on'}}},
+              {'capabilities':{'reasoning':{'allowed_options':['off','off'],'default':'off'}}},
+              {'capabilities':{'reasoning':{'allowed_options':['off',True],'default':'off'}}},
+              {'capabilities':{'reasoning':{'allowed_options':['off'],'default':'on'}}},
+              {'architecture':'different'},{'format':'relay'},{'quantization':{'name':'Q8_0'}},
+              {'max_context_length':True},{'remote_host':'remote.test'},{'type':'embedding'}):
+    assert not local.lmstudio_reasoning_off({'models':[{**native,**patch}]},'fixture',verified),patch
+for payload in ({},{'models':[]},{'models':[native,alias]},{'models':[None]}):
+    assert not local.lmstudio_reasoning_off(payload,'fixture',verified)
+
+state={'row':copy.deepcopy(row),'native':copy.deepcopy(native),'show':copy.deepcopy(ollama),'requests':[],'mode':'ok'}
 class Handler(BaseHTTPRequestHandler):
     def log_message(self,*args):pass
     def send_json(self,value):
@@ -44,6 +62,7 @@ class Handler(BaseHTTPRequestHandler):
         if state['mode']=='redirect':
             self.send_response(302);self.send_header('Location','http://127.0.0.1:1/never');self.end_headers();return
         if self.path=='/api/v0/models':return self.send_json({'data':[state['row']]})
+        if self.path=='/api/v1/models' and state['native'] is not None:return self.send_json({'models':[state['native']]})
         if self.path=='/v1/models':return self.send_json({'data':[{'id':'fixture'}]})
         self.send_error(404)
     def do_POST(self):
@@ -86,6 +105,7 @@ try:
         '--chat-endpoint',base+'/v1/chat/completions','--local'],capture_output=True,text=True,timeout=8)
     item=json.loads(result.stdout)['models'][0]
     assert item['local'] and item['localVerified'] and item['localFingerprint']==expected
+    assert item['capabilities']['reasoningOff']=='supported' and item['capabilities']['reasoning']=='unknown'
     state['row']={**row,'type':'cloud'}
     result=subprocess.run(result.args,capture_output=True,text=True,timeout=8)
     item=json.loads(result.stdout)['models'][0]
@@ -95,6 +115,26 @@ try:
     limited=call()
     assert limited.returncode==1 and '__ALIS_HTTP_STATUS__:429' in limited.stdout
     assert 'private provider prose' not in limited.stdout+limited.stderr
+    state['mode']='ok'
+    instant={**body,'reasoning':{'effort':'none'},'store':False,'max_output_tokens':256}
+    instant_env={**env,'AI_ENDPOINT':base+'/v1/responses'}
+    before=len(state['requests'])
+    assert call(instant,instant_env).returncode==0 and len(state['requests'])==before+1
+    before=len(state['requests'])
+    for replacement in (None,{**native,'capabilities':{}},
+                        {**native,'capabilities':{'reasoning':{'allowed_options':['on'],'default':'on'}}},
+                        {**native,'architecture':'changed'}):
+        state['native']=replacement
+        rejected=call(instant,instant_env)
+        assert rejected.returncode==1 and len(state['requests'])==before,'stale capability released the prompt'
+        assert 'fixture private prompt' not in rejected.stdout+rejected.stderr
+        assert 'fixture-key' not in rejected.stdout+rejected.stderr
+    # Old servers still support ordinary local chat, but cannot advertise Instant.
+    state['native']=None
+    assert call().returncode==0 and len(state['requests'])==before+1
+    catalog=subprocess.run(result.args,capture_output=True,text=True,timeout=8)
+    item=json.loads(catalog.stdout)['models'][0]
+    assert item['localVerified'] and item['capabilities']['reasoningOff']=='unknown'
 finally:
     server.shutdown();server.server_close()
-print('AI_LOCAL_PROVIDER_PASS positiveWeights unknownRelayDeny freshBeforePrompt staleFingerprint modelOverride redirect proxy credentialPrivacy catalog noInference')
+print('AI_LOCAL_PROVIDER_PASS positiveWeights unknownRelayDeny freshBeforePrompt staleFingerprint modelOverride redirect proxy credentialPrivacy catalog nativeOffBinding freshOffBeforePrompt oldServerFallback noInference')

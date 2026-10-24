@@ -12,7 +12,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Any
-from local_provider import LocalProviderError, origin as local_origin, request_json as local_json, verify as verify_local
+from local_provider import LocalProviderError, origin as local_origin, request_json as local_json, verify as verify_local, lmstudio_reasoning_off
 
 UNKNOWN = "unknown"
 SUPPORTED = "supported"
@@ -34,6 +34,7 @@ def _capabilities(**overrides: str) -> dict[str, str]:
         "webSearch": UNKNOWN,
         "structuredOutput": UNKNOWN,
         "reasoning": UNKNOWN,
+        "reasoningOff": UNKNOWN,
     }
     result.update(overrides)
     return result
@@ -449,11 +450,16 @@ def main() -> int:
             args.local,
         )
         metadata = None
+        reasoning_metadata = {}
         if args.local and args.provider_id == "lmstudio":
             try:
                 metadata = local_json(local_origin(args.chat_endpoint)+"/api/v0/models", key, args.timeout)
             except LocalProviderError:
                 metadata = {}
+            try:
+                reasoning_metadata = local_json(local_origin(args.chat_endpoint)+"/api/v1/models", key, min(args.timeout, 2))
+            except LocalProviderError:
+                pass
         verification_deadline = time.monotonic() + min(args.timeout, 8)
         for index, model in enumerate(models):
             if args.local:
@@ -465,6 +471,8 @@ def main() -> int:
                         timeout=max(.1, min(2, verification_deadline-time.monotonic())), payload=metadata)
                     model.update(local=True, free=True, localVerified=True, localFingerprint=verified["fingerprint"])
                     model["quantization"] = verified["quantization"]
+                    if args.provider_id == "lmstudio" and lmstudio_reasoning_off(reasoning_metadata, model["remoteId"], verified):
+                        model["capabilities"]["reasoningOff"] = SUPPORTED
                 except LocalProviderError:
                     pass
             if model.get("authScheme") in (None, "", "strategy"):

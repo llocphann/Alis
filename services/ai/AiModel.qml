@@ -46,6 +46,7 @@ QtObject {
         webSearch: "unknown",
         structuredOutput: "unknown",
         reasoning: "unknown",
+        reasoningOff: "unknown",
     })
     property int context_tokens: 0
     property int max_output_tokens: 0

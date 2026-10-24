@@ -10,10 +10,11 @@ function supported(model) {
 
 // An explicit text-session option. Preserve the user's model and provider;
 // only canonical, positively verified local LM Studio URLs can opt into its
-// stateless Responses transport. The Python transport re-verifies weights.
+// stateless Responses transport. The Python transport re-verifies weights
+// and the provider's explicit off switch before releasing each prompt.
 function instantEndpoint(model) {
     if(model?.local!==true || model.local_verified!==true || model.provider_id!=="lmstudio"
-            || model.capabilities?.reasoning!=="supported"
+            || model.capabilities?.reasoningOff!=="supported"
             || !["openai","openai-response"].includes(model.api_format)
             || !/^[0-9a-f]{64}$/.test(String(model.local_fingerprint ?? "")))return ""
     const endpoint=String(model.endpoint ?? "")

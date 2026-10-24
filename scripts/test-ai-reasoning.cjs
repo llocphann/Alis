@@ -34,11 +34,13 @@ assert(api.supported(model('gguf')));
 assert.equal(api.apply({...model('openai'),extraParams:{temperature:1}},base,'high').temperature,.6);
 assert.equal(base.temperature,.6, 'request overrides never mutate the input');
 const local={...model('openai'),provider_id:'lmstudio',local:true,local_verified:true,
+    capabilities:{reasoning:'unknown',reasoningOff:'supported'},
     local_fingerprint:'a'.repeat(64),endpoint:'http://127.0.0.1:1234/v1/chat/completions'};
 assert.equal(api.instantEndpoint(local),'http://127.0.0.1:1234/v1/responses');
 assert.equal(api.instantEndpoint({...local,endpoint:'http://[::1]:1234/v1/responses'}),'http://[::1]:1234/v1/responses');
 for(const patch of [{local:false},{local_verified:false},{provider_id:'custom'},{local_fingerprint:''},
-        {capabilities:{reasoning:'unsupported'}},{capabilities:{reasoning:'unknown'}},
+        {capabilities:{reasoning:'supported'}},{capabilities:{reasoning:'supported',reasoningOff:'unknown'}},
+        {capabilities:{reasoning:'supported',reasoningOff:'unsupported'}},
         {api_format:'gemini'},{endpoint:'https://remote.test/v1/chat/completions'},
         {endpoint:'http://127.0.0.1:0/v1/chat/completions'},
         {endpoint:'http://127.0.0.1:65536/v1/chat/completions'},
