@@ -4,6 +4,23 @@ function canSelect(row) {
         && row.event?.id!==undefined && row.event?.id!==null
         && (row.event?.recurrence || "none")==="none";
 }
+// Local saved recurring slots are individually movable/resizable without
+// rewriting the immutable series template. Virtual future projections and
+// imported calendar rows stay read-only. Batch selection remains limited to
+// non-recurring events because batch delete semantics differ for a series.
+function canReschedule(row) {
+    if (!row || row.source!=="local" || row.virtual || row.event?.allDay===true)
+        return false;
+    if (canSelect(row)) return true;
+    var event=row.event;
+    if (!["daily","weekly","monthly","yearly"].includes(event?.recurrence)
+            || !Array.isArray(event.occurrences)
+            || !Array.isArray(event.repeatTemplate) || !event.repeatTemplate.length)
+        return false;
+    var index=row.occurrenceIndex;
+    return Number.isInteger(index) && index>=0 && index<event.occurrences.length
+        && !!event.occurrences[index];
+}
 function key(row) {
     return canSelect(row) ? String(row.event.id)+":"+String(row.occurrenceIndex) : "";
 }
