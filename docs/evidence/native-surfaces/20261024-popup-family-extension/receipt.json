@@ -1,0 +1,1323 @@
+{
+  "scope": "Actual wl_pointer in private Niri, production source modules and hosted popup bodies. Temporary configuration/data; no owner desktop cutover, input or hardware actions.",
+  "source_sha": "96e5c0c9de8f623804efc173f589c7b68a1bcae7",
+  "results": [
+    {
+      "source_sha": "96e5c0c9de8f623804efc173f589c7b68a1bcae7",
+      "harness_exit": 0,
+      "actual_native_exit": 0,
+      "owned_remaining_after_exit": [],
+      "fixture_sha256": "aa9356a4ef174ff14b51f5a049d2bfe39536a29078dc47f6fcc25410a198a56c",
+      "input_focus_held": true,
+      "cases": [
+        {
+          "kind": "resources",
+          "edge": "top",
+          "position": 0.06,
+          "scale": 1.0,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "resources",
+          "edge": "top",
+          "position": 0.94,
+          "scale": 1.0,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "resources",
+          "edge": "right",
+          "position": 0.06,
+          "scale": 1.0,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "resources",
+          "edge": "right",
+          "position": 0.94,
+          "scale": 1.0,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "resources",
+          "edge": "bottom",
+          "position": 0.06,
+          "scale": 1.0,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "resources",
+          "edge": "bottom",
+          "position": 0.94,
+          "scale": 1.0,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "resources",
+          "edge": "left",
+          "position": 0.06,
+          "scale": 1.0,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "resources",
+          "edge": "left",
+          "position": 0.94,
+          "scale": 1.0,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source_sha": "96e5c0c9de8f623804efc173f589c7b68a1bcae7",
+      "harness_exit": 0,
+      "actual_native_exit": 0,
+      "owned_remaining_after_exit": [],
+      "fixture_sha256": "b634cc2ec47d6ef2275c269abbdd54684ecfcdb5031275b8af6b3d112aa56ae2",
+      "input_focus_held": true,
+      "cases": [
+        {
+          "kind": "distroIcon",
+          "edge": "top",
+          "position": 0.06,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "distroIcon",
+          "edge": "top",
+          "position": 0.94,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "distroIcon",
+          "edge": "right",
+          "position": 0.06,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "distroIcon",
+          "edge": "right",
+          "position": 0.94,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "distroIcon",
+          "edge": "bottom",
+          "position": 0.06,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "distroIcon",
+          "edge": "bottom",
+          "position": 0.94,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "distroIcon",
+          "edge": "left",
+          "position": 0.06,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "distroIcon",
+          "edge": "left",
+          "position": 0.94,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "battery",
+          "edge": "top",
+          "position": 0.06,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "battery",
+          "edge": "top",
+          "position": 0.94,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "battery",
+          "edge": "right",
+          "position": 0.06,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "battery",
+          "edge": "right",
+          "position": 0.94,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "battery",
+          "edge": "bottom",
+          "position": 0.06,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "battery",
+          "edge": "bottom",
+          "position": 0.94,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "battery",
+          "edge": "left",
+          "position": 0.06,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "battery",
+          "edge": "left",
+          "position": 0.94,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "weather",
+          "edge": "top",
+          "position": 0.06,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "weather",
+          "edge": "top",
+          "position": 0.94,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "weather",
+          "edge": "right",
+          "position": 0.06,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "weather",
+          "edge": "right",
+          "position": 0.94,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "weather",
+          "edge": "bottom",
+          "position": 0.06,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "weather",
+          "edge": "bottom",
+          "position": 0.94,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "weather",
+          "edge": "left",
+          "position": 0.06,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        },
+        {
+          "kind": "weather",
+          "edge": "left",
+          "position": 0.94,
+          "scale": 1.5,
+          "status": "PASS",
+          "source_point_matches": true,
+          "phases": [
+            {
+              "stage": "seam",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "adjacent-weld",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "body-return",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "reverse",
+              "active": true,
+              "point_matches": true
+            },
+            {
+              "stage": "leave",
+              "active": false,
+              "point_matches": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": "32/32 PASS: Resources scale1 eight cases; Launcher/Battery/Weather scale1.5 twenty-four cases, four edges and both corner ends, source/seam/body/adjacent weld/reverse/outside. Both harnesses0, native0, owned remaining empty.",
+  "fixture_identity_diagnostic": {
+    "first_remaining_attempt": {
+      "harness_exit": 1,
+      "native_exit": -15,
+      "error": "Readiness lookup incorrectly changed snapshot distroIcon to launcher. Snapshot kind is source kind; host presentationKind is launcher. Actual snapshot bodyReady=true. No handoff qualified by this failed attempt."
+    },
+    "correction": "Keep snapshot lookup as distroIcon; map only observer.host(distroIcon) to explicit launcher presentation. Same production source. No readiness deadline/assertion was relaxed."
+  },
+  "retained_unresolved_history": "Frozen 8cf4456ca scale1 Resources Top-left: one PASS/two FAIL in three old replays. Three protocol-debug and three event-witness variants PASS, and current unchanged frozen probe eight-case run PASS. The historical intermittent failure remains unclassified; these newer passes do not erase it or establish a root cause.",
+  "whole_issue_complete": false,
+  "awaiting_owner_label": false,
+  "remaining_gates": [
+    "Resolve/qualify historical intermittent failure and remaining requested families/settings",
+    "Installed/physical multi-output/Owner acceptance",
+    "Whole #59 visual/editor scope remains separate; #74 stutter remains deferred"
+  ]
+}
