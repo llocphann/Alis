@@ -132,27 +132,21 @@ Item {
     readonly property real columnWidth: Math.max(102 * Appearance.fontSizeScale, (viewport.width - 44) / 7)
     readonly property color ink: Appearance.colors.colOnLayer1
     readonly property color mutedInk: Appearance.colors.colSubtext
-    // Read the actual Material theme anchors. The old CAVA vibrant palette
-    // intentionally rotates hue for a music visualizer, which made unrelated
-    // Events cluster into purple/blue bands rather than match the desktop.
-    // Generate eight separated swatches from the live Primary/Secondary/
-    // Tertiary palette; none is stored on the owner Event data.
+    // True Material palette, not a synthetic rainbow. Each card keeps the
+    // live theme's own hue/saturation, with a distinct tonal step to help
+    // differentiate Events. A grayscale theme stays grayscale.
     readonly property var eventThemeColors: {
-        const accents=[Appearance.colors.colPrimary,
-            Appearance.colors.colSecondary,Appearance.colors.colTertiary]
-        const hues=EventPalette.themeHues(
-            Qt.color(accents[0]).hslHue,
-            Qt.color(accents[1]).hslHue,
-            Qt.color(accents[2]).hslHue,8)
-        const dark=Appearance.m3colors.darkmode
-        return hues.map((hue,index)=>{
-            const anchor=Qt.color(accents[index%accents.length])
-            const saturation=Math.max(.56,Math.min(.82,anchor.hslSaturation))
-            const lightness=dark
-                ? Math.max(.54,Math.min(.70,anchor.hslLightness))
-                : Math.max(.34,Math.min(.52,anchor.hslLightness))
-            return Qt.hsla(hue,saturation,lightness,1)
-        })
+        const anchors=[
+            Qt.color(Appearance.colors.colPrimary),
+            Qt.color(Appearance.colors.colSecondary),
+            Qt.color(Appearance.colors.colTertiary)
+        ]
+        const tones=EventPalette.materialTones(anchors.map(color=>({
+            hue:color.hslHue,
+            saturation:color.hslSaturation
+        })),Appearance.m3colors.darkmode)
+        return tones.map(tone=>Qt.hsla(
+            tone.hue,tone.saturation,tone.lightness,1))
     }
     function eventGradientColor(row, palette): color {
         const explicit=row?.event?.color || (row?.source==="external"
@@ -168,17 +162,12 @@ Item {
     }
     function eventGradientTail(row, palette): color {
         const primary=root.eventGradientColor(row,palette)
-        // Respect explicit existing user/source colors without recoloring.
-        if (row?.event?.color || (row?.source==="external"
-                && row?.event?.sourceColor) || !palette || palette.length<2)
-            return primary
-        const index=EventPalette.paletteSlot(row?.event,row?.source,palette.length)
-        const following=Qt.color(palette[(index+1)%palette.length])
-        // A small secondary tint makes this an actual two-tone gradient,
-        // without turning the whole card into the neighboring Event color.
-        return Qt.rgba(primary.r*.84+following.r*.16,
-            primary.g*.84+following.g*.16,
-            primary.b*.84+following.b*.16,1)
+        // Keep the gradient inside this same Material accent family;
+        // blending in the NEXT Event color brings back rainbow contamination.
+        const surface=Qt.color(Appearance.colors.colLayer0)
+        return Qt.rgba(primary.r*.88+surface.r*.12,
+            primary.g*.88+surface.g*.12,
+            primary.b*.88+surface.b*.12,1)
     }
     // Match the date and All-day headings to the actual timeline: its day
     // cells have no opaque backing, so the pinned headings must not paint a
