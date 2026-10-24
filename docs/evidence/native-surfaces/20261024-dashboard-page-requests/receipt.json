@@ -1,0 +1,153 @@
+{
+  "candidate_runtime": "c24b6033de75d5749ff496006be82286426b771d",
+  "native_test_source": "96e5c0c9de8f623804efc173f589c7b68a1bcae7",
+  "scope": "Production DashboardContent and real Loaders in private Niri; temporary data and fake music backend. Focus temporarily belongs only to the owned test compositor and is restored. Frame observations do not establish physical smoothness.",
+  "checks": {
+    "dashboard-custom-tabs-c24-native": {
+      "source_sha": "c24b6033de75d5749ff496006be82286426b771d",
+      "actual_exit": 0,
+      "status": "PASS",
+      "elapsed_seconds": 5.5,
+      "owned_remaining_after_exit": [],
+      "console_sha256": "6e5b856475b520bdb69b05515987d2cc1f2df14711ce551cc3fa7cf69adae80a",
+      "checks": 42,
+      "actual_restart_checks": 5
+    },
+    "dashboard-request-native-96e5c0c9d": {
+      "source_sha": "96e5c0c9de8f623804efc173f589c7b68a1bcae7",
+      "actual_exit": 0,
+      "status": "PASS",
+      "elapsed_seconds": 10.1,
+      "owned_remaining_after_exit": [],
+      "console_sha256": "cd4fd061b7c7275fd897046f78cf1d38ac7d1bbfdf1913476fe4b205e8cc049c",
+      "checks": 80,
+      "observations": {
+        "calls": [
+          {
+            "target": "music",
+            "call_ms": 0,
+            "old": "dashboard",
+            "pending": "music"
+          },
+          {
+            "target": "dashboard",
+            "call_ms": 0,
+            "old": "music",
+            "pending": "dashboard"
+          },
+          {
+            "target": "weeklyPlanner",
+            "call_ms": 1,
+            "old": "dashboard",
+            "pending": "weeklyPlanner"
+          },
+          {
+            "target": "dashboard",
+            "call_ms": 0,
+            "old": "weeklyPlanner",
+            "pending": "dashboard"
+          },
+          {
+            "target": "music",
+            "call_ms": 0,
+            "old": "dashboard",
+            "pending": "music"
+          },
+          {
+            "target": "dashboard",
+            "call_ms": 0,
+            "old": "music",
+            "pending": "dashboard"
+          }
+        ],
+        "frames": 442,
+        "selections": [
+          {
+            "phase": "switch-0-music",
+            "id": "music",
+            "ready": true
+          },
+          {
+            "phase": "switch-1-dashboard",
+            "id": "dashboard",
+            "ready": true
+          },
+          {
+            "phase": "switch-2-weeklyPlanner",
+            "id": "weeklyPlanner",
+            "ready": true
+          },
+          {
+            "phase": "switch-3-dashboard",
+            "id": "dashboard",
+            "ready": true
+          },
+          {
+            "phase": "switch-4-music",
+            "id": "music",
+            "ready": true
+          },
+          {
+            "phase": "switch-5-dashboard",
+            "id": "dashboard",
+            "ready": true
+          },
+          {
+            "phase": "native-click-key-wheel",
+            "id": "music",
+            "ready": true
+          },
+          {
+            "phase": "native-click-key-wheel",
+            "id": "weeklyPlanner",
+            "ready": true
+          },
+          {
+            "phase": "native-click-key-wheel",
+            "id": "music",
+            "ready": true
+          },
+          {
+            "phase": "native-click-key-wheel",
+            "id": "dashboard",
+            "ready": true
+          },
+          {
+            "phase": "hidden-cold-custom",
+            "id": "custom-1",
+            "ready": true
+          },
+          {
+            "phase": "hidden-cold-custom",
+            "id": "dashboard",
+            "ready": true
+          },
+          {
+            "phase": "remove-pending-custom",
+            "id": "weeklyPlanner",
+            "ready": true
+          }
+        ]
+      }
+    }
+  },
+  "coverage": [
+    "Only the requested cold page incubates, with old selection and slide position retained until commitment",
+    "Replacement, cancellation, hide and removed-target prevent late commitment",
+    "Native mouse click, arrow keys and horizontal wheel; vertical wheel does not navigate",
+    "Custom-page readiness and existing unload policy",
+    "Existing create/rename/reorder/default/inactivity/persistence and actual restart retained"
+  ],
+  "unchanged": [
+    "Panel open/close contract and page slide duration/easing",
+    "Owner desktop and app data/audio state"
+  ],
+  "retained_limits": [
+    "No installed, physical output, multi-output or Owner smoothness acceptance",
+    "Identical before/after timing trace still pending; call timings are diagnostic, not a performance claim",
+    "Offscreen baseline failed: no PanelWindow backend; qmlformat 1.0 exited1 on both old and candidate source, neither is qualified syntax proof",
+    "Full f6fb09b9f validation STOPPED quota, actual-15,268PASS27FAIL1unsettled; not whole PASS",
+    "Full c24/96e5 source suite NOT_RUN at publication"
+  ],
+  "awaiting_owner_label": false
+}
