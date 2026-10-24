@@ -28,7 +28,9 @@ function rangeForGesture(row, mode, dx, dy, dayWidth, hourHeight) {
                 || !Number.isInteger(row.occurrenceIndex)
                 || row.occurrenceIndex<0) return null;
         const slots=row.event?.occurrences;
-        if (Array.isArray(slots) && slots.length) {
+        // A delegate's nested QVariant sequence is not a JS Array. Reading
+        // its stable indexed slots must work for both old and new records.
+        if (slots && Number.isInteger(slots.length) && slots.length>0) {
             if (row.occurrenceIndex>=slots.length
                     || !(slots[row.occurrenceIndex]?.startDate || slots[row.occurrenceIndex]?.dateTime))
                 return null;

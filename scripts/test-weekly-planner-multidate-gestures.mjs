@@ -24,6 +24,14 @@ const saved=rows(legacy).find(r=>r.occurrenceIndex===0 && !r.virtual);
 const virtual=rows(legacy,'2032-10-26T12:00:00Z').find(r=>r.occurrenceIndex===0 && r.virtual);
 test('legacy multi-slot saved eligibility',()=>assert.ok(S.canReschedule(saved)));
 test('legacy multi-slot projected eligibility',()=>assert.ok(S.canReschedule(virtual)));
+test('Qt delegate sequence view is editable without converting canonical storage',()=>{
+  const slots=Object.assign({length:legacy.occurrences.length},legacy.occurrences);
+  assert.equal(Array.isArray(slots),false);
+  const row={...saved,event:{...legacy,occurrences:slots}};
+  assert.ok(S.canReschedule(row));
+  assert.ok(G.rangeForGesture(row,'bottom',0,13,102,52));
+  assert.equal(JSON.stringify(legacy),snapshot);
+});
 for(const mode of ['move','top','bottom']) {
   test('legacy '+mode,()=>{
     const range=G.rangeForGesture(saved,mode,0,13,102,52);assert.ok(range);

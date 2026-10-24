@@ -24,11 +24,15 @@ function canReschedule(row) {
     if (row.virtual && (!row.plannerOriginalStartIso
             || !Number.isFinite(new Date(row.plannerOriginalStartIso).getTime())))
         return false;
-    if (Array.isArray(event.occurrences) && event.occurrences.length) {
+    // Delegate modelData crosses QVariant: its nested sequence has indexed
+    // slots/length but Array.isArray() is false. This is a read-only view;
+    // the Events writer independently validates the canonical JSON array.
+    var slots=event.occurrences;
+    if (slots && Number.isInteger(slots.length) && slots.length>0) {
         // Old multi-date records have stable slots even without a template.
         // Editing one slot does not require inferring the whole series.
-        return index<event.occurrences.length
-            && !!(event.occurrences[index]?.startDate || event.occurrences[index]?.dateTime);
+        return index<slots.length
+            && !!(slots[index]?.startDate || slots[index]?.dateTime);
     }
     return index===0 && !!(event.startDate || event.dateTime);
 }

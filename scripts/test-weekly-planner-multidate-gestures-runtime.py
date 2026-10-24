@@ -41,7 +41,9 @@ Window {
   function drag(id,index,areaName,mode,dx,dy,cancel=false) {
    const target=card(id,index);check(!!target && target.canReschedule,"missing eligible multi-date card "+id
      +" date="+planner.selectedDate.toISOString()+" cards="+JSON.stringify(cards().map(c=>({
-       id:c.modelData.event.id,index:c.modelData.occurrenceIndex,eligible:c.canReschedule}))))
+       id:c.modelData.event.id,index:c.modelData.occurrenceIndex,eligible:c.canReschedule,
+       integer:Number.isInteger(c.modelData.occurrenceIndex),source:c.modelData.source,
+       virtual:c.modelData.virtual,event:c.modelData.event}))))
    const before=JSON.stringify(Events.list),durable=JSON.stringify(Events.getDurableEvents())
    const p=held(first(target,areaName),dx,dy)
    check(target.gestureMoved && target.effectiveMode===mode,"pointer did not start "+mode)
