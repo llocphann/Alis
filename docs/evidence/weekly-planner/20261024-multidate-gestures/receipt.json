@@ -110,10 +110,26 @@
       "exit": 0
     },
     "canonical": {
-      "status": "RUNNING",
+      "status": "STOPPED",
       "source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
-      "not_whole_pass": true,
-      "known_affected_gate": "Native original Planner fixture times out waiting for a capture in nested canonical context; independent private native130/11 PASS. Matched exposure diagnostics prepared but UNRUN."
+      "actual_wrapper_exit": -15,
+      "actual_validator_exit": {
+        "actual_validator_exit": -15,
+        "stop_signals_received": [
+          15
+        ]
+      },
+      "counts": {
+        "started": 247,
+        "settled": 246,
+        "passed": 216,
+        "failed": 30,
+        "skipped": 0,
+        "unsettled": 1
+      },
+      "reason": "quota_stop",
+      "owned_remaining_after_exit": [],
+      "not_whole_pass": true
     },
     "installed_current_patch": "UNRUN",
     "physical_owner": "UNRUN",
@@ -128,7 +144,6 @@
     "original_native": "Both pinned sources failed the same unchanged fixture: it expected +15 at the end after a +15 body move and +15 end resize. Corrected to +30, preserving the stricter independent-boundary assertion.",
     "expanded_editor": "Pinned baseline fails stale direct active-label-padding text. Replaced with ordered wrapped/active padding branch assertion; added missing subprocess import and replaced obsolete blanket multi-date-repeat prohibition with explicit compatible-cycle guard. Runtime code for label/editor was unchanged."
   },
-  "owned_remaining_after_focused": [],
   "canonical_initial_attempts": [
     {
       "source_sha": "c585efa702629ee24ff70c495e8c631bc635767c",
@@ -199,10 +214,11 @@
   "latest_validation": {
     "source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
     "focused": "PASS 25/25 commands, exit0",
-    "canonical": "RUNNING; not whole PASS",
+    "canonical": "STOPPED",
     "owner_ready": false,
     "private_workflow": "final-17041842b",
     "prepared_nested_diagnostics": "UNRUN; wait for current native cohort to settle before any diagnostic launch"
   },
-  "implementation_source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2"
+  "implementation_source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
+  "owned_remaining_after_final_exit": []
 }
