@@ -4,6 +4,16 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import {spawnSync} from 'node:child_process';
+if (!process.env.PLANNER_MULTIDATE_ZONE_CASE) {
+  for (const zone of ['UTC','Asia/Ho_Chi_Minh','America/New_York','Europe/Berlin']) {
+    const result=spawnSync(process.execPath,[new URL(import.meta.url).pathname],{
+      env:{...process.env,TZ:zone,PLANNER_MULTIDATE_ZONE_CASE:'1'},encoding:'utf8'});
+    process.stdout.write(result.stdout);process.stderr.write(result.stderr);
+    if(result.status!==0)process.exitCode=1;
+  }
+  process.exit(process.exitCode || 0);
+}
 const root=process.env.ALIS_PLANNER_SOURCE_ROOT || new URL('../',import.meta.url).pathname;
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 function load(p) { const s=vm.createContext({Date,Set,Map,Array,Object,Math,Number,String,JSON});
@@ -122,13 +132,17 @@ test('cycle rollover materializes exceptions once, preserving legacy IDs and pen
   const functions=source.slice(source.indexOf('function checkDueEvents()'),source.indexOf('function updateEventGroup('));
   const RepeatPolicy=load('services/EventRepeatPolicy.js');
   class Clock extends Date {constructor(...a){super(...(a.length?a:['2032-10-25T12:00:00Z']));}}
+  const later=new Date('2032-10-26T09:00:00.000Z');later.setDate(later.getDate()+7);
+  const laterEnd=new Date(later.getTime()+3600000);
+  const laterStart=later.toISOString();later.setMinutes(later.getMinutes()+30);
+  laterEnd.setMinutes(laterEnd.getMinutes()+30);
   for(const grouped of [true,false]) {
     const event=grouped ? plain(legacy) : {...slot('19'),id:41,title:'Synthetic old single',recurrence:'weekly'};
     let edited=O.rescheduleProjectedRecurring(event,0,'2032-10-26T09:00:00.000Z',
       '2032-10-26T09:15:00.000Z','2032-10-26T10:15:00.000Z');
     assert.ok(edited);
-    edited=O.rescheduleProjectedRecurring(edited,0,'2032-11-02T09:00:00.000Z',
-      '2032-11-02T09:30:00.000Z','2032-11-02T10:30:00.000Z');
+    edited=O.rescheduleProjectedRecurring(edited,0,laterStart,
+      later.toISOString(),laterEnd.toISOString());
     assert.ok(edited);
     const root={ready:true,list:[edited],nextId:500,saves:0,saveToFile(){this.saves++;},
       eventTriggered(){},reminderTriggered(){},eventAdded(){}};
@@ -144,12 +158,12 @@ test('cycle rollover materializes exceptions once, preserving legacy IDs and pen
     assert.equal(corrected.length,1,'rollover lost or duplicated edited occurrence');
     assert.ok(!week.some(r=>r.startDate.toISOString()==='2032-10-26T09:00:00.000Z'));
     const future=P.project(root.list,[],'2032-11-02T12:00:00Z',1).flatMap(d=>d.timed);
-    assert.equal(future.filter(r=>r.startDate.toISOString()==='2032-11-02T09:30:00.000Z').length,1,
+    assert.equal(future.filter(r=>r.startDate.toISOString()===later.toISOString()).length,1,
       'pending exception lost or duplicated during legacy handoff');
     const before=JSON.stringify(root.list);context.checkDueEvents();
     assert.equal(JSON.stringify(root.list),before,'repeated tick duplicated materialized exceptions');
     assert.equal(root.saves,1);
   }
 });
-console.log(JSON.stringify({test:'multidate-gestures',passed,failed,source_root:root}));
+console.log(JSON.stringify({test:'multidate-gestures',zone:process.env.TZ,passed,failed,source_root:root}));
 process.exitCode=failed ? 1 : 0;
