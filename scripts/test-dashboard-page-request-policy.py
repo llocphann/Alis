@@ -7,15 +7,32 @@ import subprocess
 
 root = Path(__file__).resolve().parents[1]
 source = (root / "modules/dashboard/DashboardContent.qml").read_text()
-# DASH-F01: tab sliding uses constant-speed travel. This does not measure
-# frame pacing on the Owner's display; that needs separate native verification.
+# DASH-F01: use the same configurable spatial easing as Weather Popup and
+# move one shared strip, not each expensive Dashboard page on every frame.
+weather = (root / "modules/bar/weather/WeatherPopupContent.qml").read_text()
+weather_slide = weather.split("Behavior on tabPosition {", 1)[1].split("property date now", 1)[0]
 slide = source.split("Behavior on pagePosition {", 1)
 assert len(slide) == 2, "Dashboard tab motion behavior missing"
 slide = slide[1].split("DashboardCanvas {", 1)[0]
-assert "duration: Appearance.animation.elementMove.duration" in slide
-assert "easing.type: Easing.Linear" in slide, "Dashboard tab travel is not linear"
-assert "Easing.OutCubic" not in slide, "Dashboard tab deceleration regression"
+for token in (
+    "duration: Appearance.animation.elementMove.duration",
+    "easing.type: Appearance.animation.elementMove.type",
+    "easing.bezierCurve: Appearance.animation.elementMove.bezierCurve",
+):
+    assert token in slide, f"Dashboard motion missing Weather-style {token}"
+    assert token in weather_slide or "duration:" in token, f"Weather motion changed: {token}"
+assert "easing.type: Easing.Linear" not in slide
 assert "root.presentationActive && Appearance.animationsEnabled && !root.editMode" in slide
+assert "id: pageStrip" in source
+assert "x: -pages.slideProgress * pages.width" in source
+for token in (
+    'x: root.pageIds.indexOf("dashboard") * pages.width',
+    'x: root.pageIds.indexOf("music") * pages.width',
+    'x:root.pageIds.indexOf("weeklyPlanner")*pages.width',
+    "x: pageIndex * pages.width",
+):
+    assert token in source, f"Dashboard page not anchored in shared strip: {token}"
+assert source.count("pages.slideProgress * pages.width") == 1, "Per-page slide update regression"
 methods = []
 for name in ["selectPage", "requestPage", "commitPendingPage", "pageLoadFailed"]:
     match = re.search(r"    function " + name + r"\(([^)]*)\): void \{(.*?)\n    \}", source, re.S)
