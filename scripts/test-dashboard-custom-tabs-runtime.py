@@ -139,7 +139,24 @@ Window {
     "create click must replace editing controls, not open a centered dialog")
    const name=findChild(tabToolbar,"dashboardToolbarTabName")
    check(!!name,"toolbar text input missing")
+   check(name.implicitHeight===40 && name.leftPadding===14
+     && name.background.radius===12,
+     "custom-tab name field lost rounded, padded surface")
+   check(name.background.border.width>0 && name.background.color.a>0
+     && name.placeholderTextColor.a>0,
+     "custom-tab field has invisible background/border/placeholder")
+   name.forceActiveFocus()
+   tryVerify(()=>name.activeFocus,2000)
+   check(name.background.border.width>1,
+     "focused custom-tab field has no emphasized themed border")
+   dashboard.setCustomTabName("")
+   dashboard.acceptCustomTabDialog()
+   check(name.invalidName && dashboard.tabNamingActive
+     && name.background.border.color.toString()===
+       Appearance.colors.colError.toString(),
+     "invalid tab name must keep naming editor open with themed error border")
    dashboard.setCustomTabName("Research")
+   check(!name.invalidName,"valid name kept the error border")
    dashboard.acceptCustomTabDialog()
    tryVerify(()=>dashboard.currentPageId==="custom-1",3500)
    tryVerify(()=>dashboard.canvasController && dashboard.canvasController.editMode,3500)
