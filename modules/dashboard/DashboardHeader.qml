@@ -20,6 +20,11 @@ Item {
     property bool editMode: false
     property bool showActions: true
     property int currentPage: 0
+    // DashboardContent supplies its existing slide progress; standalone Header
+    // tests can fall back to the selected page without inventing a new timer.
+    property real indicatorProgress: currentPage
+    readonly property int pageDotButtonWidth: 24
+    readonly property int pageDotDiameter: 8
     // Arrows follow the latest request while a cold target is incubating.
     // Dots continue to show the selected, ready page.
     property int navigationPage: currentPage
@@ -223,7 +228,7 @@ Item {
                 id:pageButton
                 required property int index
                 objectName: "dashboardPage" + index
-                implicitWidth: 24
+                implicitWidth: root.pageDotButtonWidth
                 implicitHeight: 32
                 buttonRadius: 16
                 enabled: root.reorderAllowed || (root.navigationAllowed && !root.editMode)
@@ -235,10 +240,12 @@ Item {
                     Rectangle {
                         objectName: "dashboardPageDot" + index
                         anchors.centerIn: parent
-                        width: 8
-                        height: 8
-                        radius: 4
-                        color: index === root.currentPage ? root.colText : Qt.alpha(root.colText, .35)
+                        width: root.pageDotDiameter
+                        height: root.pageDotDiameter
+                        radius: width / 2
+                        // Every base dot stays visible: the selected highlight
+                        // travels above them instead of swapping colors at once.
+                        color: Qt.alpha(root.colText, .35)
                     }
                 }
                 onClicked: if(!root.editMode && root.navigationAllowed)root.pageRequested(index)
@@ -371,6 +378,24 @@ Item {
             StyledToolTip { text: Translation.tr("Delete custom tab") }
         }
     }
+    }
+    Rectangle {
+        id: activePageIndicator
+        objectName: "dashboardActivePageIndicator"
+        z: 10
+        width: root.pageDotDiameter
+        height: root.pageDotDiameter
+        radius: width / 2
+        color: root.colText
+        visible: pages.visible && root.currentPage >= 0
+            && root.currentPage < root.pageCount
+        anchors.verticalCenter: pages.verticalCenter
+        // Use the *same* position animated by Dashboard's page strip: this
+        // removes the one-frame extinguish/relight effect and cannot lag,
+        // overshoot separately, or trigger any additional animation work.
+        x: pages.x + (root.pageDotButtonWidth - width) / 2
+            + Math.max(0, Math.min(root.pageCount - 1, root.indicatorProgress))
+                * (root.pageDotButtonWidth + pages.spacing)
     }
     MaterialSymbol {
         visible:root.reorderAllowed
