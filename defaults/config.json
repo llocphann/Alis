@@ -239,6 +239,8 @@
             "spicetifyTheme": "Inir",
             "enableSteam": false,
             "enablePearDesktop": true,
+            "enableOnlyOffice": false,
+            "enableLibreOffice": false,
             "enableNeovim": false,
             "colorStrength": 1,
             "useBackdropForColors": false,

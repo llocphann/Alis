@@ -156,6 +156,30 @@ ContentPage {
                 }
             }
             SettingsSwitch {
+                buttonIcon: "description"
+                text: Translation.tr("ONLYOFFICE")
+                checked: Config.options?.appearance?.wallpaperTheming?.enableOnlyOffice ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("appearance.wallpaperTheming.enableOnlyOffice", checked);
+                    colorRegenTimer.restart();
+                }
+                StyledToolTip {
+                    text: Translation.tr("Apply Alis colors to ONLYOFFICE 9.4 while closed; reopen it after refreshing colors")
+                }
+            }
+            SettingsSwitch {
+                buttonIcon: "description"
+                text: Translation.tr("LibreOffice")
+                checked: Config.options?.appearance?.wallpaperTheming?.enableLibreOffice ?? false
+                onCheckedChanged: {
+                    Config.setNestedValue("appearance.wallpaperTheming.enableLibreOffice", checked);
+                    colorRegenTimer.restart();
+                }
+                StyledToolTip {
+                    text: Translation.tr("Apply Alis colors to LibreOffice 26.8 while closed; reopen it after refreshing colors")
+                }
+            }
+            SettingsSwitch {
                 buttonIcon: "code"
                 text: Translation.tr("Zed editor")
                 checked: Config.options?.appearance?.wallpaperTheming?.enableZed ?? true
