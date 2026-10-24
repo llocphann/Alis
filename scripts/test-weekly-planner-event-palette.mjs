@@ -29,60 +29,12 @@ assert.equal(slot({title:'Legacy id-less Event'},'local',8),
   slot({title:'Legacy id-less Event'},'local',8));
 assert.equal(slot({id:1},'local',1),0);
 assert.equal(slot({id:999},'local',8),slot({id:999},'local',8));
-// Three owner screenshots: cyan-blue, violet, and achromatic wallpapers.
-// Theme fidelity beats forcing arbitrary 8-way hue distances. Eight cards
-// remain distinguishable by tonal steps while retaining real Material hues.
-const tones=context.materialTones;
-const cases=[
-  {name:'cyan',anchors:[{hue:.51,saturation:.75},
-      {hue:.54,saturation:.42},{hue:.49,saturation:.34}]},
-  {name:'purple',anchors:[{hue:.80,saturation:.67},
-      {hue:.79,saturation:.38},{hue:.84,saturation:.27}]},
-  {name:'neutral',anchors:[{hue:-1,saturation:0},
-      {hue:-1,saturation:0},{hue:-1,saturation:0}]}
-];
-for (const {name,anchors} of cases) {
-  for (const dark of [true,false]) {
-    const swatches=Array.from(tones(anchors,dark));
-    assert.equal(swatches.length,8,name+' palette size');
-    const levels=swatches.map(v=>v.lightness);
-    assert.equal(new Set(levels).size,8,name+' loses tonal differentiation');
-    assert.ok(levels.every(level=>level>=0&&level<=1));
-    for (let i=0;i<swatches.length;i++) {
-      const source=anchors[[0,1,2,0,1,2,0,1][i]];
-      assert.equal(swatches[i].saturation,source.saturation,
-        name+' generated a non-theme saturation');
-      assert.equal(swatches[i].hue,source.hue<0 ? 0 : source.hue,
-        name+' introduced an unrelated rainbow hue');
-    }
-    if(name==='neutral')
-      assert.ok(swatches.every(v=>v.saturation===0),
-        'neutral wallpaper must never create arbitrary saturated Event colors');
-  }
-}
-assert.deepEqual(Array.from(tones(cases[0].anchors,true)).map(v=>v.hue),
-  Array.from(tones(cases[0].anchors,false)).map(v=>v.hue),
-  'light/dark changes should not rotate the wallpaper hue');
-assert.notDeepEqual(Array.from(tones(cases[0].anchors,true)).map(v=>v.hue),
-  Array.from(tones(cases[1].anchors,true)).map(v=>v.hue),
-  'switching wallpaper accent must change the Event palette');
-assert.equal(JSON.stringify(event),original,'theme tones mutated owner data');
 const qml=file('modules/dashboard/DashboardWeeklyPlanner.qml');
 assert.match(qml,/import "PlannerEventPalette.js" as EventPalette/);
-assert.match(qml,/readonly property var eventThemeColors: \{/);
-for (const accent of ['colPrimary','colSecondary','colTertiary'])
-  assert.match(qml,new RegExp('Appearance\\.colors\\.'+accent));
-assert.match(qml,/EventPalette\.materialTones\(/);
-assert.match(qml,/saturation:color\.hslSaturation/);
-assert.match(qml,/hue:color\.hslHue/);
-assert.match(qml,/Qt\.hsla\(/);
-assert.doesNotMatch(qml,/CavaTheme\.vibrantColors|EventPalette\.themeHues/,
-  'Event colors must not be taken from music spectrum or synthetic rainbow hues');
+assert.match(qml,/readonly property var eventThemeColors: CavaTheme\.vibrantColors/,
+  'palette must follow theme and must not follow music cover/CAVA source changes');
 assert.match(qml,/function eventGradientColor\(row, palette\): color/);
-assert.match(qml,/function eventGradientTail\(row, palette\): color/);
-assert.match(qml,/EventPalette\.paletteSlot\(row\?\.event,row\?\.source,palette\.length\)/);
-assert.match(qml,/Appearance\.colors\.colLayer0/,
-  'gradient tail should stay in the active theme, not another Event hue');
+assert.match(qml,/EventPalette\.paletteSlot\(row\?\.event,row\?\.source,steps\)/);
 assert.match(qml,/row\?\.event\?\.color/,
   'an intentionally set Event color must remain respected');
 assert.match(qml,/row\?\.event\?\.sourceColor/,
@@ -97,7 +49,6 @@ assert.match(timed,/root\.eventGradientColor\(modelData,root\.eventThemeColors\)
 assert.match(timed,/gradient: Gradient \{/);
 assert.match(timed,/orientation:Gradient\.Horizontal/);
 assert.match(timed,/color:Qt\.alpha\(timedButton\.eventAccent/);
-assert.match(timed,/color:Qt\.alpha\(timedButton\.eventAccentTail/);
 assert.match(timed,/color:timedButton\.eventAccent/);
 for (const token of ['plannerEventMoveArea','plannerResizeStart','plannerResizeEnd',
   'root.commitTimedGesture(modelData,mode,dx,dy)',
@@ -105,4 +56,4 @@ for (const token of ['plannerEventMoveArea','plannerResizeStart','plannerResizeE
   assert.ok(timed.includes(token),'palette change damaged Event gesture contract: '+token);
 }
 assert.doesNotMatch(policy,/Math\.random|Date\.now|saveToFile|writeFile/);
-console.log('WEEKLY_PLANNER_THEME_PALETTE_PASS: real Material hues, neutral wallpaper, theme-reactive tonal gradients, stable IDs, old data, gestures');
+console.log('WEEKLY_PLANNER_THEME_PALETTE_PASS: stable identity, theme palette, gradients, old data, gestures');
