@@ -59,10 +59,18 @@ Window {
   function run() { try {
    tryCompare(Config,"ready",true,5000);tryCompare(Events,"ready",true,5000)
    check(Events.filePath===Quickshell.env("ALIS_PLANNER_TEST_EVENTS"),"escaped private store")
-   Config.setNestedValues({"panelFamily":"abyss","performance.reduceAnimations":true})
+   Config.setNestedValues({"panelFamily":Quickshell.env("PLANNER_PANEL_FAMILY") || "abyss",
+     "performance.reduceAnimations":true})
    planner.followToday=false;planner.selectedDate=new Date('2032-10-19T12:00:00Z');wait(100)
    const viewport=first(planner,"weeklyPlannerViewport");viewport.contentY=3*planner.hourHeight
    const phase=Quickshell.env("PLANNER_EDIT_PHASE")
+   if(phase==="interrupted") {
+    const durable=JSON.stringify(Events.getDurableEvents())
+    held(first(card(401),"plannerEventMoveArea"),0,planner.hourHeight/4)
+    check(JSON.stringify(Events.getDurableEvents())===durable && !Events.persistenceBusy,
+      "interrupted gesture wrote before release")
+    console.info("PLANNER_MULTIDATE_GESTURES_NATIVE_PASS",phase,checks);Qt.quit();return
+   }
    if(phase==="initial") {
     // First test the visual leak on a modern series (also reproducible before
     // the patch), then the older multi-slot schema without repeatTemplate.
@@ -160,7 +168,7 @@ with tempfile.TemporaryDirectory(prefix="alis-multidate-gestures-") as temporary
         storage.write_text(json.dumps(fixture))
         env.update(ALIS_PLANNER_TEST_EVENTS=str(storage), QT_QUICK_BACKEND="software", TZ="America/New_York")
         previous = None
-        for phase in ("initial", "restart", "repeat-restart"):
+        for phase in ("initial", "interrupted", "restart", "repeat-restart"):
             env["PLANNER_EDIT_PHASE"] = phase
             result = run_qs(folder, env, timeout=35)
             evidence = os.environ.get("ALIS_PLANNER_EVIDENCE")
