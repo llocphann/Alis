@@ -12,6 +12,7 @@ import qs.modules.abyss.looks
 import "WeeklyPlannerPolicy.js" as Planner
 import "PlannerGesture.js" as Gesture
 import "PlannerSelection.js" as Selection
+import "PlannerEventPalette.js" as EventPalette
 
 Item {
     id: root
@@ -131,6 +132,28 @@ Item {
     readonly property real columnWidth: Math.max(102 * Appearance.fontSizeScale, (viewport.width - 44) / 7)
     readonly property color ink: Appearance.colors.colOnLayer1
     readonly property color mutedInk: Appearance.colors.colSubtext
+    // Always use Alis' theme-derived gradient, not album-cover or audio
+    // visualizer settings. It rebinds when the active system theme changes.
+    readonly property var eventThemeColors: CavaTheme.vibrantColors
+    function eventGradientColor(row, palette): color {
+        const explicit=row?.event?.color || (row?.source==="external"
+            ? row?.event?.sourceColor : null)
+        if (explicit) {
+            const userColor=Qt.color(explicit)
+            if (userColor.valid) return userColor
+        }
+        if (!palette || !palette.length)
+            return Appearance.colors.colPrimary
+        const steps=8
+        const position=EventPalette.paletteSlot(row?.event,row?.source,steps)
+            * (palette.length-1)/(steps-1)
+        const lo=Math.floor(position),hi=Math.min(palette.length-1,lo+1)
+        const first=Qt.color(palette[lo]),second=Qt.color(palette[hi])
+        const t=position-lo
+        return Qt.rgba(first.r+(second.r-first.r)*t,
+            first.g+(second.g-first.g)*t,
+            first.b+(second.b-first.b)*t,1)
+    }
     // Match the date and All-day headings to the actual timeline: its day
     // cells have no opaque backing, so the pinned headings must not paint a
     // contrasting solid Weather/Material card over the transparent grid.
@@ -526,6 +549,8 @@ Item {
                                 required property var modelData
                                 required property int index
                                 objectName:"plannerAllDayEvent"
+                                readonly property color eventAccent:
+                                    root.eventGradientColor(modelData,root.eventThemeColors)
                                 x:4+(dragMoved?dragX
                                     : root.activeGroupGesture?.mode==="move"
                                         && root.activeGroupGesture?.keys?.includes(
@@ -533,8 +558,15 @@ Item {
                                         ? root.activeGroupGesture.dx : 0)
                                 y:viewport.contentY+68+index*26;width:dayColumn.width-8;height:24;z:11
                                 buttonRadius:6
-                                colBackground:Qt.alpha(modelData.event.color || Appearance.colors.colPrimary,
-                                    root.isEventSelected(modelData) ? .42 : .18)
+                                colBackground:Qt.alpha(allDayButton.eventAccent,
+                                    root.isEventSelected(modelData) ? .42 : .27)
+                                // The saturated stripe keeps colors distinguishable
+                                // even on translucent/light theme surfaces.
+                                Rectangle {
+                                    x:2;y:4;width:3;height:parent.height-8
+                                    radius:2;color:allDayButton.eventAccent
+                                    z:1
+                                }
                                 Accessible.name:modelData.event.title+(modelData.source==="external"?" · Read-only":"")
                                 contentItem:StyledText {text:allDayButton.modelData.event.title;color:root.ink;elide:Text.ElideRight;font.pixelSize:Appearance.font.pixelSize.smallest}
                                 onClicked:root.editOccurrence(modelData)
@@ -630,6 +662,8 @@ Item {
                                 required property var modelData
                                 objectName:"plannerTimedEvent"
                                 readonly property bool canReschedule: Selection.canReschedule(modelData)
+                                readonly property color eventAccent:
+                                    root.eventGradientColor(modelData,root.eventThemeColors)
                                 // Resize affordances belong to this card alone. Keep
                                 // the edge MouseAreas active even while the bars fade out.
                                 readonly property bool showResizeHandles: canReschedule
@@ -667,8 +701,22 @@ Item {
                                     +(effectiveMode==="top"?-effectiveDy
                                         :effectiveMode==="bottom"?effectiveDy:0))
                                 radius:7
-                                color:Qt.alpha(modelData.event.color || Appearance.colors.colPrimary,
-                                    eventMouse.containsMouse ? .32 : .2)
+                                // Per-Event gradient from the active theme palette.
+                                // Opaque ink and a narrow accent strip preserve
+                                // readability on both dark and light desktops.
+                                gradient: Gradient {
+                                    orientation:Gradient.Horizontal
+                                    GradientStop {
+                                        position:0
+                                        color:Qt.alpha(timedButton.eventAccent,
+                                            eventMouse.containsMouse ? .39 : .30)
+                                    }
+                                    GradientStop {
+                                        position:1
+                                        color:Qt.alpha(timedButton.eventAccent,
+                                            eventMouse.containsMouse ? .23 : .16)
+                                    }
+                                }
                                 border.width:root.isEventSelected(modelData) ? 2
                                     : activeFocus ? 1 : 0
                                 border.color:Appearance.colors.colPrimary
@@ -722,8 +770,13 @@ Item {
                                     gestureMode="";dragX=0;dragY=0;gestureMoved=false
                                     root.activeGroupGesture=null;root.activeDragDay=-1
                                 }
+                                Rectangle {
+                                    x:1;y:3;width:3;height:Math.max(0,parent.height-6)
+                                    radius:2;color:timedButton.eventAccent
+                                    z:1
+                                }
                                 Column {
-                                    anchors.fill:parent;anchors.margins:4;clip:true
+                                    anchors.fill:parent;anchors.margins:5;clip:true
                                     StyledText {
                                         width:parent.width
                                         text:timedButton.modelData.event.title
