@@ -630,6 +630,11 @@ Item {
                                 required property var modelData
                                 objectName:"plannerTimedEvent"
                                 readonly property bool canReschedule: Selection.canReschedule(modelData)
+                                // Resize affordances belong to this card alone. Keep
+                                // the edge MouseAreas active even while the bars fade out.
+                                readonly property bool showResizeHandles: canReschedule
+                                    && (eventResizeHover.hovered || gestureMode.length>0)
+                                HoverHandler {id:eventResizeHover}
                                 property string gestureMode: ""
                                 property real dragX: 0
                                 property real dragY: 0
@@ -785,10 +790,12 @@ Item {
                                         height:2
                                         radius:1
                                         color:root.headerAccent
-                                        // A nonzero idle opacity exposes the existing resize
-                                        // affordance instead of making it appear removed.
-                                        opacity:topResizeMouse.containsMouse
-                                            || timedButton.gestureMode==="top" ? .9 : .38
+                                        // Visible only while hovering this event or
+                                        // actively resizing it; never show idle bars.
+                                        opacity:timedButton.showResizeHandles
+                                            ? (topResizeMouse.containsMouse
+                                                || timedButton.gestureMode==="top" ? .9 : .65)
+                                            : 0
                                         Behavior on opacity {NumberAnimation {duration:120}}
                                     }
                                     MouseArea {
@@ -822,8 +829,10 @@ Item {
                                         height:2
                                         radius:1
                                         color:root.headerAccent
-                                        opacity:bottomResizeMouse.containsMouse
-                                            || timedButton.gestureMode==="bottom" ? .9 : .38
+                                        opacity:timedButton.showResizeHandles
+                                            ? (bottomResizeMouse.containsMouse
+                                                || timedButton.gestureMode==="bottom" ? .9 : .65)
+                                            : 0
                                         Behavior on opacity {NumberAnimation {duration:120}}
                                     }
                                     MouseArea {
