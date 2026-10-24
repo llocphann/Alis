@@ -17,8 +17,18 @@ function rangeForSelection(row,mode,dx,dy,dayWidth,hourHeight) {
     return {startIso:start.toISOString(),endIso:end.toISOString()};
 }
 function rangeForGesture(row, mode, dx, dy, dayWidth, hourHeight) {
-    if (!row || row.source !== "local" || row.virtual
-        || row.event?.allDay === true || (row.event?.recurrence || "none") !== "none")
+    if (!row || row.source !== "local" || row.virtual || row.event?.allDay === true)
+        return null;
+    // An explicitly stored repeating occurrence can be adjusted once without
+    // changing its series template. Unpersisted projected dates cannot.
+    const repeating=(row.event?.recurrence || "none") !== "none";
+    if (repeating && (!["daily","weekly","monthly","yearly"].includes(row.event?.recurrence)
+            || !Array.isArray(row.event?.occurrences)
+            || !Array.isArray(row.event?.repeatTemplate)
+            || !row.event.repeatTemplate.length
+            || !Number.isInteger(row.occurrenceIndex)
+            || row.occurrenceIndex<0
+            || row.occurrenceIndex>=row.event.occurrences.length))
         return null;
     const start=new Date(row.startDate),end=new Date(row.endDate);
     if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())
