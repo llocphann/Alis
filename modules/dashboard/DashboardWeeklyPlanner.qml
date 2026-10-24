@@ -723,6 +723,12 @@ Item {
                                         elide:Text.ElideRight
                                     }
                                 }
+                                // PROTECTED INTERACTION: Local, one-off timed events keep
+                                // click-drag move, top-edge resize, and bottom-edge resize.
+                                // Preserve these during Dashboard page/gesture refactors;
+                                // the pointer regression guard is a maintainer gate.
+                                // Repeating/virtual/imported occurrences remain read-only
+                                // until there is safe occurrence-specific persistence.
                                 // One pointer owner for body movement. In particular, do not
                                 // combine RippleButton's internal MouseArea with DragHandler.
                                 // Stop Flickable stealing a pressed event; background scrolling
@@ -754,7 +760,7 @@ Item {
                                 Rectangle {
                                     objectName:"plannerResizeStart"
                                     visible:timedButton.canReschedule
-                                    x:0;y:0;width:parent.width;height:Math.min(9,parent.height/3);z:3
+                                    x:0;y:0;width:parent.width;height:Math.min(11,parent.height/3);z:3
                                     radius:3;color:"transparent"
                                     Rectangle {
                                         anchors.centerIn:parent
@@ -762,8 +768,10 @@ Item {
                                         height:2
                                         radius:1
                                         color:root.headerAccent
+                                        // A nonzero idle opacity exposes the existing resize
+                                        // affordance instead of making it appear removed.
                                         opacity:topResizeMouse.containsMouse
-                                            || timedButton.gestureMode==="top" ? .82 : 0
+                                            || timedButton.gestureMode==="top" ? .9 : .38
                                         Behavior on opacity {NumberAnimation {duration:120}}
                                     }
                                     MouseArea {
@@ -789,7 +797,7 @@ Item {
                                     objectName:"plannerResizeEnd"
                                     visible:timedButton.canReschedule
                                     x:0;y:parent.height-height
-                                    width:parent.width;height:Math.min(9,parent.height/3);z:3
+                                    width:parent.width;height:Math.min(11,parent.height/3);z:3
                                     radius:3;color:"transparent"
                                     Rectangle {
                                         anchors.centerIn:parent
@@ -798,7 +806,7 @@ Item {
                                         radius:1
                                         color:root.headerAccent
                                         opacity:bottomResizeMouse.containsMouse
-                                            || timedButton.gestureMode==="bottom" ? .82 : 0
+                                            || timedButton.gestureMode==="bottom" ? .9 : .38
                                         Behavior on opacity {NumberAnimation {duration:120}}
                                     }
                                     MouseArea {
