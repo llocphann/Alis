@@ -150,7 +150,7 @@ grep -Fq 'readonly property bool arrangementChromeVisible: !embeddedArrangementO
 grep -Fq 'showHeader: root.arrangementChromeVisible' "$monitor_config" \
     || { printf 'FAIL: embedded Monitor Arrangement still exposes its drop-down header\n' >&2; exit 1; }
 for token in \
-    'embeddedArrangementOnly ? Math.max(160, height - 55) : 292' \
+    'embeddedArrangementOnly ? Math.max(80, height - 55) : 292' \
     'embeddedArrangementOnly ? 0.65 : 0.70' \
     '? Math.min(height, 252) : height' \
     'objectName: "monitorArrangementCanvas"' \

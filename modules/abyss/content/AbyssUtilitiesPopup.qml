@@ -687,6 +687,7 @@ Item {
         Item {
             Flickable {
                 id: audioScroll
+                objectName: "utilitiesAudioScroll"
                 anchors.fill: parent
                 contentWidth: width
                 contentHeight: audioColumn.implicitHeight

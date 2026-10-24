@@ -18,7 +18,7 @@ ContentPage {
     // leaving an unused band under the embedded arrangement card.
     // Reserve 55 px for the card/group chrome and keep monitor tiles compact.
     readonly property real arrangementCanvasHeight:
-        embeddedArrangementOnly ? Math.max(160, height - 55) : 292
+        embeddedArrangementOnly ? Math.max(80, height - 55) : 292
     readonly property real arrangementVisualScale:
         embeddedArrangementOnly ? 0.65 : 0.70
 

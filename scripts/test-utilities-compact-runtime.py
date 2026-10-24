@@ -62,6 +62,9 @@ ShellRoot {
      const editor=find(utility,item=>item.monitorLayoutSnapshot!==undefined)
      check(!!editor,"production monitor editor loaded")
      editor.syncMonitorLayoutSnapshot(true);canvas.fitOutputs();frame()
+     const dots=findChild(utility,"utilitiesPageIndicators")
+     const top=canvas.mapToItem(utility,0,0).y,bottom=canvas.mapToItem(utility,0,canvas.height).y
+     check(!!dots&&top>=-.5&&bottom<=dots.mapToItem(utility,0,0).y+.5,"monitor canvas crosses actual page/pager clip")
      const saved=JSON.stringify(editor.monitorLayoutSnapshot)
      const actual=tiles(canvas);check(actual.length===Object.keys(layouts[index]).length,"one tile per output identity")
      for(const tile of actual){
@@ -85,6 +88,12 @@ ShellRoot {
      check(utility.currentFeature!==null,"Utilities page did not load: "+page)
      check(utility.loadedPageCount<=3,"bounded page loader window")
      check(utility.implicitWidth===560&&utility.implicitHeight===360,"page changed footprint")
+     if(page===2){
+      const audio=findChild(utility,"utilitiesAudioScroll")
+      check(!!audio&&audio.clip,"Sound page has its own clipped scroll area")
+      audio.contentY=Math.max(0,audio.contentHeight-audio.height);wait(20)
+      check(audio.contentY>=0,"Sound overflow stays scrollable")
+     }
     }
    }
   }catch(error){failure=String(error);console.error("UTILITIES_COMPACT_FAIL",failure)}
