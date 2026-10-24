@@ -234,10 +234,16 @@ Item {
             }
         } else {
             const repeating=(row.event?.recurrence || "none")!=="none"
-            const method=repeating ? "rescheduleRecurringOccurrence" : "rescheduleOccurrence"
+            const projected=repeating && row.virtual && !!row.plannerOriginalStartIso
+            const method=projected ? "rescheduleProjectedRecurring"
+                : repeating ? "rescheduleRecurringOccurrence" : "rescheduleOccurrence"
             if (typeof root.localBackend[method] !== "function") return
-            if (!root.localBackend[method](row.event.id,
-                    row.occurrenceIndex,candidate.startIso,candidate.endIso)) {
+            const saved=projected
+                ? root.localBackend[method](row.event.id,row.occurrenceIndex,
+                    row.plannerOriginalStartIso,candidate.startIso,candidate.endIso)
+                : root.localBackend[method](row.event.id,row.occurrenceIndex,
+                    candidate.startIso,candidate.endIso)
+            if (!saved) {
                 console.warn("[WeeklyPlanner] Timed event gesture not saved")
                 return
             }
@@ -247,6 +253,9 @@ Item {
         const form=inlineEventsPanel.item
         if (form && form.isEditing) {
             for (const target of targets) {
+                // An overridden virtual occurrence is not a saved series
+                // member; do not rewrite its series editor calendar fields.
+                if (target.virtual) continue
                 if (form.editingEvent?.id===target.event.id
                         && form.editingOccurrenceIndex===target.occurrenceIndex) {
                     const changed=changes.find(change=>change.id===target.event.id
