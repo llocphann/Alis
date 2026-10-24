@@ -61,7 +61,7 @@ Item {
         root.activeGroupGesture=null
     }
     function gestureTargets(row) {
-        if (!Selection.canSelect(row)) return []
+        if (!Selection.canReschedule(row)) return []
         return root.isEventSelected(row) && root.selectedEventRows.length>1
             ? root.selectedEventRows : [row]
     }
@@ -227,8 +227,10 @@ Item {
                 return
             }
         } else {
-            if (typeof root.localBackend.rescheduleOccurrence !== "function") return
-            if (!root.localBackend.rescheduleOccurrence(row.event.id,
+            const repeating=(row.event?.recurrence || "none")!=="none"
+            const method=repeating ? "rescheduleRecurringOccurrence" : "rescheduleOccurrence"
+            if (typeof root.localBackend[method] !== "function") return
+            if (!root.localBackend[method](row.event.id,
                     row.occurrenceIndex,candidate.startIso,candidate.endIso)) {
                 console.warn("[WeeklyPlanner] Timed event gesture not saved")
                 return
@@ -612,8 +614,7 @@ Item {
                                 id:timedButton
                                 required property var modelData
                                 objectName:"plannerTimedEvent"
-                                readonly property bool canReschedule: Selection.canSelect(modelData)
-                                    && !modelData.event.allDay
+                                readonly property bool canReschedule: Selection.canReschedule(modelData)
                                 property string gestureMode: ""
                                 property real dragX: 0
                                 property real dragY: 0
@@ -727,8 +728,9 @@ Item {
                                 // click-drag move, top-edge resize, and bottom-edge resize.
                                 // Preserve these during Dashboard page/gesture refactors;
                                 // the pointer regression guard is a maintainer gate.
-                                // Repeating/virtual/imported occurrences remain read-only
-                                // until there is safe occurrence-specific persistence.
+                                // A saved repeating slot may be moved independently of
+                                // its immutable template; virtual and imported rows
+                                // remain read-only and may not mutate the original series.
                                 // One pointer owner for body movement. In particular, do not
                                 // combine RippleButton's internal MouseArea with DragHandler.
                                 // Stop Flickable stealing a pressed event; background scrolling
