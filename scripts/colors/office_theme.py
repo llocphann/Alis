@@ -251,8 +251,18 @@ def generate_theme(palette):
     surface_dark = contrast_ratio("#ffffff", proposed_surface) > contrast_ratio("#000000", proposed_surface)
     surface = proposed_surface if surface_dark == dark else _mix(
         bg, "#ffffff" if dark else "#000000", 0.08)
+    # Near the light/dark crossover, an elevated surface must not create a
+    # pair that neither black nor white ink can read. Keep the base surface
+    # rather than emitting an impossible or unreadable theme.
+    if not any(all(contrast_ratio(ink, ground) >= 4.5 for ground in (bg, surface))
+               for ink in ("#ffffff", "#000000")):
+        surface = bg
     backgrounds = (bg, surface)
-    fg = _readable(color("app_foreground", "on_surface", "on_background"), backgrounds)
+    primary_minimum = 7.0 if any(
+        all(contrast_ratio(ink, ground) >= 7.0 for ground in backgrounds)
+        for ink in ("#ffffff", "#000000")) else 4.5
+    fg = _readable(color("app_foreground", "on_surface", "on_background"),
+                   backgrounds, primary_minimum)
     muted = _readable(color("app_subtext", "on_surface_variant", "on_surface"), backgrounds)
     border = _readable(color("app_border", "outline"), backgrounds, 3.0)
     accent = _readable(color("app_accent", "primary"), backgrounds, 3.0)
