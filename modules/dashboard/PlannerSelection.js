@@ -9,17 +9,24 @@ function canSelect(row) {
 // imported calendar rows stay read-only. Batch selection remains limited to
 // non-recurring events because batch delete semantics differ for a series.
 function canReschedule(row) {
-    if (!row || row.source!=="local" || row.virtual || row.event?.allDay===true)
+    if (!row || row.source!=="local" || row.virtual || row.event?.allDay===true
+            || row.event?.id===undefined || row.event?.id===null)
         return false;
     if (canSelect(row)) return true;
     var event=row.event;
-    if (!["daily","weekly","monthly","yearly"].includes(event?.recurrence)
-            || !Array.isArray(event.occurrences)
-            || !Array.isArray(event.repeatTemplate) || !event.repeatTemplate.length)
+    if (!["daily","weekly","monthly","yearly"].includes(event?.recurrence))
         return false;
     var index=row.occurrenceIndex;
-    return Number.isInteger(index) && index>=0 && index<event.occurrences.length
-        && !!event.occurrences[index];
+    if (!Number.isInteger(index) || index<0) return false;
+    if (Array.isArray(event.occurrences) && event.occurrences.length) {
+        // A multi-slot series needs a stable template; a single saved slot
+        // has an unambiguous original anchor even in legacy storage.
+        return index<event.occurrences.length &&
+            (!!event.repeatTemplate?.length || event.occurrences.length===1);
+    }
+    // Pre-occurrences Agenda JSON stores one real instance directly on the
+    // Event; editing it must not require a migration or a new Event ID.
+    return index===0 && !!(event.startDate || event.dateTime);
 }
 function key(row) {
     return canSelect(row) ? String(row.event.id)+":"+String(row.occurrenceIndex) : "";
