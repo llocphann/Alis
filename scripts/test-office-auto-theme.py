@@ -475,12 +475,16 @@ class LibreOfficeThemeTests(unittest.TestCase):
         for path, (content, stamp) in before.items():
             self.assertEqual(path.read_bytes(), content)
             self.assertEqual(path.stat().st_mtime_ns, stamp)
-        self.palette['darkmode'] = False
-        self.palette['primary'] = '#eebbff'
+        # Switching the source palette to light must change the actual
+        # surfaces, not just darkmode metadata while keeping a dark canvas.
+        self.palette.update({'darkmode': False, 'background': '#fafafa',
+                             'surface': '#eeeeee', 'surface_container': '#f3f3f3',
+                             'on_surface': '#202020', 'on_surface_variant': '#565656',
+                             'primary': '#4b47a7', 'on_primary': '#ffffff'})
         self.update()
         tree = self.registry()
         self.assertEqual(tree.value(office.LO_APPEARANCE + ('ApplicationAppearance',)), '1')
-        self.assertEqual(tree.value(office.LO_COLORS + ('AccentColor', 'Color')), str(0xeebbff))
+        self.assertEqual(tree.value(office.LO_COLORS + ('AccentColor', 'Color')), str(0x4b47a7))
         self.assertEqual(len(tree.fields), len(office.libreoffice_values(self.palette)))
 
     def test_user_edit_to_managed_color_blocks_update_but_is_preserved_on_restore(self):
