@@ -1,0 +1,198 @@
+{
+  "issue": 130,
+  "baseline_sha": "9afbf1c04fafc3ba30b843cd41f5157f3b402675",
+  "focused_source_sha": "6445fc985e6ee894c917f0376b18567392e4acd1",
+  "canonical_source_sha": "c585efa702629ee24ff70c495e8c631bc635767c",
+  "runtime_files_identical_between_focused_and_canonical": {
+    "modules/dashboard/DashboardWeeklyPlanner.qml": "f542568f793c7c5ab5430f6e7cee56e08246173d6270af59ea29a397d1ffd74f",
+    "modules/dashboard/PlannerSelection.js": "3cda31d986bf08b3867c724fdda370bb24ce0743f2a281413ae6edcb77582dc8",
+    "modules/dashboard/PlannerGesture.js": "1451a0028deb49a543149ed0b8546484e7ef0d9e938c3c72f69137243634285a",
+    "modules/dashboard/WeeklyPlannerPolicy.js": "5eda43d2ea13c4f2a67917df0d11c1e98436c14db3ef6c548e862cfc4e5e65e1",
+    "services/EventOccurrences.js": "b1543a40769c9e94ba48947fdcd7f05aa6455dd5536583afab1308975f563080",
+    "services/Events.qml": "ed9c219bebe9a7e032b315c26d394a1d416580e6272f78e84c8901e59bba5352"
+  },
+  "installed_metadata": {
+    "commit": "9afbf1c04",
+    "source": "setup-update",
+    "installed_at": "2026-10-24T23:10:12+07:00",
+    "install_mode": "repo-copy",
+    "alis_service": "active",
+    "inir_service": "inactive",
+    "deployed_by_this_chat": false
+  },
+  "feature_inventory": [
+    "15-minute body move and independent top/bottom resize, release-only writes",
+    "Ctrl/Shift selection and genuine atomic group move/resize/delete",
+    "all-day civil-day movement, week navigation, hidden-scrollbar pan and keyboard/editor",
+    "multi-date single Event ID, stable occurrence index, daily/weekly/monthly/yearly cadence",
+    "legacy dateTime-only and pre-template multi-slot records, history, reminder flags, Todo links, unknown metadata",
+    "Calendar indicators, Agenda/upcoming, due processing and private persistence",
+    "Abyss/Waffle presentation, fractional Qt scale and unchanged public configuration"
+  ],
+  "compatibility": {
+    "strategy": "Read-time Qt sequential-container compatibility; no owner startup rewrite. Explicit edits use copy-on-write immutable anchors. Recurring store retains original slot indices; due recovery uses original anchors and materializes exceptions once. Retained receipts receive additive destination/forwarding markers. Legacy separate-ID recurrence remains separate-ID. A due transaction persists parent receipt and child destination in one snapshot.",
+    "schema": "Existing root schema 1/2 and legacy fields accepted; additive per-instance anchors and receipt markers; unknown root/slot/receipt metadata retained.",
+    "owner_data": "NOT_READ_OR_WRITTEN",
+    "restart_idempotence": "PASS private fixture byte-for-byte across repeated restarts",
+    "denied_write_retry": "PASS real private file permissions: no false durable receipt, retained memory, restored permissions/retry/reload",
+    "interrupted_pointer": "PASS client exits during held gesture; durable bytes unchanged after restart"
+  },
+  "validation": {
+    "focused": {
+      "cases": 29,
+      "after_pass": 25,
+      "after_fail": 0,
+      "baseline_outcomes": [
+        {
+          "name": "baseline-native-eligibility",
+          "actual_exit": 1,
+          "status": "FAIL"
+        },
+        {
+          "name": "baseline-native-visual-leak",
+          "actual_exit": 1,
+          "status": "FAIL"
+        },
+        {
+          "name": "baseline-pure",
+          "actual_exit": 1,
+          "status": "FAIL"
+        },
+        {
+          "name": "baseline-original-native-fixture",
+          "actual_exit": 1,
+          "status": "FAIL"
+        }
+      ]
+    },
+    "four_zones": {
+      "status": "PASS",
+      "cases_per_zone": 21,
+      "zones": [
+        "UTC",
+        "Asia/Ho_Chi_Minh",
+        "America/New_York",
+        "Europe/Berlin"
+      ],
+      "exit": 0
+    },
+    "original_private_native": {
+      "status": "PASS",
+      "checks": 130,
+      "captures": 11,
+      "exit": 0
+    },
+    "multidate_private_native": {
+      "status": "PASS",
+      "checks_per_run": 60,
+      "variants": [
+        "Abyss/default",
+        "Qt scale 1.5",
+        "Waffle",
+        "single-series isolation control"
+      ],
+      "exit": 0
+    },
+    "edited_rollover_storage": {
+      "status": "PASS",
+      "initial_failed_write_retry_checks": 17,
+      "restart_checks": [
+        11,
+        11
+      ],
+      "exit": 0
+    },
+    "canonical": {
+      "status": "IN_PROGRESS",
+      "source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
+      "not_whole_pass": true
+    },
+    "installed_current_patch": "UNRUN",
+    "physical_owner": "UNRUN",
+    "multi_output": "UNRUN"
+  },
+  "baseline_failures": [
+    "Actual Qt multi-date cards rejected because delegate QVariant sequences fail Array.isArray",
+    "Actual native single-series control drags unrelated recurring cards through empty batch-selection key",
+    "Pre-template slots rejected by policy/backend, including older persisted multi-date Events"
+  ],
+  "fixture_corrections": {
+    "original_native": "Both pinned sources failed the same unchanged fixture: it expected +15 at the end after a +15 body move and +15 end resize. Corrected to +30, preserving the stricter independent-boundary assertion.",
+    "expanded_editor": "Pinned baseline fails stale direct active-label-padding text. Replaced with ordered wrapped/active padding branch assertion; added missing subprocess import and replaced obsolete blanket multi-date-repeat prohibition with explicit compatible-cycle guard. Runtime code for label/editor was unchanged."
+  },
+  "owned_remaining_after_focused": [],
+  "canonical_initial_attempts": [
+    {
+      "source_sha": "c585efa702629ee24ff70c495e8c631bc635767c",
+      "argv": [
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/run-canonical-contained.py",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/source-c585efa70",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/canonical-c585efa70"
+      ],
+      "actual_exit": 143,
+      "status": "STOPPED",
+      "stop_reason": "source_superseded_compatibility_alias",
+      "elapsed_seconds": 264.5,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "7f7d4a482fd7828d68d646fb63acde902061cb22b45c95f3d37e8975398152c8",
+      "actual_validator": {
+        "actual_validator_exit": -15,
+        "stop_signals_received": [
+          15
+        ]
+      },
+      "started": 75,
+      "settled": 74,
+      "passed": 69,
+      "failed": 5,
+      "skipped": 0,
+      "unsettled": 1,
+      "not_whole_pass": true
+    },
+    {
+      "source_sha": "93bc53a45875891324bf91914cbcf602f7930c44",
+      "argv": [
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/run-canonical-contained.py",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/source-93bc53a45",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/canonical-93bc53a45"
+      ],
+      "actual_exit": 143,
+      "status": "STOPPED",
+      "stop_reason": "source_superseded_legacy_timestamp_alias",
+      "elapsed_seconds": 174.8,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "e178e717e374ef69fdf484085736eb40036023e50382a9224bad77fbc8f11992",
+      "actual_validator": {
+        "actual_validator_exit": -15,
+        "stop_signals_received": [
+          15
+        ]
+      },
+      "started": 37,
+      "settled": 36,
+      "passed": 31,
+      "failed": 5,
+      "skipped": 0,
+      "unsettled": 1,
+      "not_whole_pass": true
+    }
+  ],
+  "latest_source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
+  "followup_fixes": {
+    "57f74985b": "Chronological top-level compatibility timestamps retained independently of stable slot indices",
+    "93bc53a45": "Moving one instance to a later week cannot postpone/duplicate normal future cycles",
+    "face991b4": "Legacy dateTime slot aliases update in both single and batch paths; offset anchors normalized by instant for template recovery",
+    "17041842b": "Invalid optional anchors cannot throw during recovery"
+  },
+  "latest_validation": {
+    "source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
+    "focused_status": "RUNNING_OR_SETTLED_READ_ACTUAL_RECEIPT",
+    "canonical_status": "WAITING_FOR_FOCUSED_OR_RUNNING_READ_ACTUAL_RECEIPT",
+    "workflow_private": "final-17041842b",
+    "full_timeout_seconds": 5700
+  }
+}

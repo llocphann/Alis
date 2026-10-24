@@ -1,15 +1,16 @@
 {
   "issue": 130,
   "baseline_sha": "9afbf1c04fafc3ba30b843cd41f5157f3b402675",
-  "focused_source_sha": "6445fc985e6ee894c917f0376b18567392e4acd1",
-  "canonical_source_sha": "c585efa702629ee24ff70c495e8c631bc635767c",
+  "focused_source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
+  "canonical_source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
   "runtime_files_identical_between_focused_and_canonical": {
     "modules/dashboard/DashboardWeeklyPlanner.qml": "f542568f793c7c5ab5430f6e7cee56e08246173d6270af59ea29a397d1ffd74f",
     "modules/dashboard/PlannerSelection.js": "3cda31d986bf08b3867c724fdda370bb24ce0743f2a281413ae6edcb77582dc8",
     "modules/dashboard/PlannerGesture.js": "1451a0028deb49a543149ed0b8546484e7ef0d9e938c3c72f69137243634285a",
-    "modules/dashboard/WeeklyPlannerPolicy.js": "5eda43d2ea13c4f2a67917df0d11c1e98436c14db3ef6c548e862cfc4e5e65e1",
-    "services/EventOccurrences.js": "b1543a40769c9e94ba48947fdcd7f05aa6455dd5536583afab1308975f563080",
-    "services/Events.qml": "ed9c219bebe9a7e032b315c26d394a1d416580e6272f78e84c8901e59bba5352"
+    "modules/dashboard/WeeklyPlannerPolicy.js": "14d6134d208ecfdf8325519835eadc4174a4bd67b41f05b7f9daae924f594a50",
+    "services/EventOccurrences.js": "3a84083851b87ae01f8c5ee353cc33f668fefd3b4b5a541b3edb1f751e226a70",
+    "services/EventBatchPolicy.js": "41112be236139c9027dbe26b3463b089dcdd0845370d2873cbd185e4ad1cda47",
+    "services/Events.qml": "45ce8cb6a79e5aaaf746492feff97ad1298bc4b105a3c68f52c1f67a3ce2a5b3"
   },
   "installed_metadata": {
     "commit": "9afbf1c04",
@@ -27,7 +28,10 @@
     "multi-date single Event ID, stable occurrence index, daily/weekly/monthly/yearly cadence",
     "legacy dateTime-only and pre-template multi-slot records, history, reminder flags, Todo links, unknown metadata",
     "Calendar indicators, Agenda/upcoming, due processing and private persistence",
-    "Abyss/Waffle presentation, fractional Qt scale and unchanged public configuration"
+    "Abyss/Waffle presentation, fractional Qt scale and unchanged public configuration",
+    "Top-level chronological compatibility timestamps remain earliest while recurring occurrence indices stay stable",
+    "Legacy per-slot dateTime aliases track single and batch edits; offset anchors match selected templates by instant",
+    "One moved occurrence does not postpone ordinary future cycles; pending historical occurrences render once"
   ],
   "compatibility": {
     "strategy": "Read-time Qt sequential-container compatibility; no owner startup rewrite. Explicit edits use copy-on-write immutable anchors. Recurring store retains original slot indices; due recovery uses original anchors and materializes exceptions once. Retained receipts receive additive destination/forwarding markers. Legacy separate-ID recurrence remains separate-ID. A due transaction persists parent receipt and child destination in one snapshot.",
@@ -63,18 +67,21 @@
           "actual_exit": 1,
           "status": "FAIL"
         }
-      ]
+      ],
+      "actual_exit": 0,
+      "source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2"
     },
     "four_zones": {
       "status": "PASS",
-      "cases_per_zone": 21,
+      "cases_per_zone": 24,
       "zones": [
         "UTC",
         "Asia/Ho_Chi_Minh",
         "America/New_York",
         "Europe/Berlin"
       ],
-      "exit": 0
+      "exit": 0,
+      "source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2"
     },
     "original_private_native": {
       "status": "PASS",
@@ -103,9 +110,10 @@
       "exit": 0
     },
     "canonical": {
-      "status": "IN_PROGRESS",
+      "status": "RUNNING",
       "source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
-      "not_whole_pass": true
+      "not_whole_pass": true,
+      "known_affected_gate": "Native original Planner fixture times out waiting for a capture in nested canonical context; independent private native130/11 PASS. Matched exposure diagnostics prepared but UNRUN."
     },
     "installed_current_patch": "UNRUN",
     "physical_owner": "UNRUN",
@@ -190,9 +198,11 @@
   },
   "latest_validation": {
     "source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
-    "focused_status": "RUNNING_OR_SETTLED_READ_ACTUAL_RECEIPT",
-    "canonical_status": "WAITING_FOR_FOCUSED_OR_RUNNING_READ_ACTUAL_RECEIPT",
-    "workflow_private": "final-17041842b",
-    "full_timeout_seconds": 5700
-  }
+    "focused": "PASS 25/25 commands, exit0",
+    "canonical": "RUNNING; not whole PASS",
+    "owner_ready": false,
+    "private_workflow": "final-17041842b",
+    "prepared_nested_diagnostics": "UNRUN; wait for current native cohort to settle before any diagnostic launch"
+  },
+  "implementation_source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2"
 }
