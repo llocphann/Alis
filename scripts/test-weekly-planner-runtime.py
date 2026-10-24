@@ -32,6 +32,18 @@ Window {
    eventUpdated(changed)
    return true
   }
+  property int virtualEditCalls:0
+  function rescheduleProjectedRecurring(id,index,originalIso,startIso,endIso) {
+   const next=Array.from(list),at=next.findIndex(row=>row.id===id)
+   if(at<0 || index!==0 || next[at].recurrence!=="weekly") return false
+   const changed=Object.assign({},next[at],{plannerOverrides:[{
+    occurrenceIndex:index,originalStartDate:originalIso,
+    startDate:startIso,endDate:endIso
+   }]})
+   next[at]=changed;list=next;virtualEditCalls++
+   eventUpdated(changed)
+   return true
+  }
   property int recurringEditCalls:0
   function rescheduleRecurringOccurrence(id,index,startIso,endIso) {
    const next=Array.from(list),at=next.findIndex(row=>row.id===id)
@@ -193,7 +205,21 @@ Window {
    check(local.list.find(e=>e.id===88).plannerSeriesStartDate===legacy.startDate
      && local.list.find(e=>e.id===88).recurrence==="weekly",
      "legacy drag must not rewrite the repeating schedule")
-   const weekDate=planner.days[0].date.getTime();planner.changeWeek(1);check(planner.days[0].date.getTime()>weekDate,"Next week failed");planner.changeWeek(-1);check(planner.days[0].date.getTime()===weekDate,"Previous week failed")
+   const weekDate=planner.days[0].date.getTime()
+   planner.changeWeek(1);wait(80)
+   check(planner.days[0].date.getTime()>weekDate,"Next week failed")
+   const virtualCard=all(planner,"plannerTimedEvent").find(item=>item.modelData.event.id===88
+     && item.modelData.virtual)
+   check(!!virtualCard && virtualCard.canReschedule
+     && !!virtualCard.modelData.plannerOriginalStartIso,
+     "projected old Weekly Event still missing drag/resize")
+   const virtualOriginal=virtualCard.modelData.plannerOriginalStartIso
+   dragPointer(find(virtualCard,"plannerResizeEnd"),slotStep)
+   check(local.virtualEditCalls===1 && local.list.find(e=>e.id===88)
+     .plannerOverrides[0].originalStartDate===virtualOriginal,
+     "projected old weekly resize must persist only the specific exception")
+   planner.changeWeek(-1)
+   check(planner.days[0].date.getTime()===weekDate,"Previous week failed")
    planner.forceActiveFocus();keyClick(Qt.Key_PageDown);check(planner.days[0].date.getTime()>weekDate,"keyboard week navigation failed");keyClick(Qt.Key_PageUp)
    root.allocatedWidth=320;root.allocatedHeight=410;wait(100)
    const compactHeading=find(planner,"plannerCompactWeekHeading")
