@@ -87,7 +87,7 @@ class OfficeThemeTests(unittest.TestCase):
                 self.assertEqual(colors["highlight-sidebar-item-pressed"], colors["background-action-panel"])
                 self.assertEqual(colors["icon-normal"], colors["text-normal"])
                 self.assertEqual(colors["text-tertiary"], colors["text-secondary"])
-                self.assertEqual(colors["canvas-background"], colors["background-normal"])
+                self.assertEqual(colors["canvas-background"], "#114161" if theme["type"] == "dark" else colors["background-normal"])
                 self.assertEqual(colors["canvas-ruler-background"], colors["canvas-background"])
                 self.assertEqual(colors["canvas-ruler-margins-background"], colors["background-action-panel"])
                 self.assertEqual(colors["canvas-scroll-thumb-border"], colors["canvas-scroll-thumb"])
@@ -122,7 +122,7 @@ class OfficeThemeTests(unittest.TestCase):
         self.put(self.config, original)
         self.update()
         first = json.loads(self.theme.read_bytes())
-        self.assertEqual(first["colors"]["canvas-background"], self.palette["app_background"])
+        self.assertEqual(first["colors"]["canvas-background"], "#114161")
         self.palette.update(app_background="#fafafa", app_surface_elevated="#f0f0f0",
                             app_foreground="#171717", app_subtext="#494949",
                             app_border="#555555", app_accent="#4840a0",
@@ -437,6 +437,19 @@ class LibreOfficeThemeTests(unittest.TestCase):
     def update(self, enabled=True, version="26.8.1-2"):
         return office.update_libreoffice(self.config_home, self.state_home, enabled, self.palette, version)
 
+    def test_explicit_libreoffice_workspace_blue_is_scheme_owned_and_restores(self):
+        self.update()
+        key = office.LO_COLORS + ("AppBackground", "Color")
+        self.assertEqual(self.registry().value(key), str(0x114161))
+        self.palette.update({"background": "#fafafa", "surface_container": "#eeeeee",
+                             "on_surface": "#202020", "on_surface_variant": "#565656",
+                             "primary": "#4b47a7", "on_primary": "#ffffff"})
+        self.update()
+        self.assertEqual(self.registry().value(key), str(0x114161))
+        self.assertNotIn(office.LO_COLORS + ("DocColor", "Color"), self.registry().fields)
+        self.update(False)
+        self.assertFalse(self.config.exists())
+
     def test_readable_libreoffice_application_roles(self):
         for palette in (
             self.palette,
@@ -449,7 +462,7 @@ class LibreOfficeThemeTests(unittest.TestCase):
                 def role(name):
                     return f"#{int(values[office.LO_COLORS + (name, 'Color')]):06x}"
                 generated = json.loads(office.generate_theme(palette))
-                self.assertEqual(role("AppBackground"), generated["colors"]["canvas-background"])
+                self.assertEqual(role("AppBackground"), "#114161")
                 self.assertEqual(role("WindowColor"), generated["colors"]["background-action-panel"])
                 self.assertNotIn(office.LO_COLORS + ("DocColor", "Color"), values)
                 self.assertNotIn(office.LO_COLORS + ("FontColor", "Color"), values)
