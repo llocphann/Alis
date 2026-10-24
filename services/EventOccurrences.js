@@ -83,6 +83,8 @@ function reschedule(event,index,start,end) {
         return i!==index && s.startDate===newSlot.startDate && s.endDate===newSlot.endDate;
     })) return null;
     slots[index]=Object.assign({},slots[index],newSlot);
+    if (Object.prototype.hasOwnProperty.call(slots[index],"dateTime"))
+        slots[index].dateTime=newSlot.startDate;
     return store(event,slots);
 }
 // Adjust exactly one already-persisted repeating occurrence. Do not touch
@@ -123,6 +125,8 @@ function rescheduleSavedRecurring(event,index,start,end) {
         plannerSeriesStartDate:originalStart,
         plannerSeriesEndDate:originalEnd
     });
+    if (Object.prototype.hasOwnProperty.call(previous,"dateTime"))
+        replacement.dateTime=replacement.startDate;
     if (!grouped) {
         // No automatic migration: keep the old top-level single-event shape,
         // original stable ID, notified history and unrelated custom fields.

@@ -44,6 +44,8 @@ function apply(events,operations,occurrences) {
                 ? Object.assign({},slots[i],{startDate:op.startDate,endDate:op.endDate,
                     notified:false,reminderNotified:false})
                 : slots[i]);
+            if (op && Object.prototype.hasOwnProperty.call(slots[i],"dateTime"))
+                next[next.length-1].dateTime=op.startDate;
         }
         if (!next.length) {
             removed.push(event.id);

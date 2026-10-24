@@ -188,5 +188,35 @@ test('one occurrence moved to a later week does not postpone or duplicate the se
   assert.equal(later.length,3,'later week must contain its normal two slots and the one moved instance');
   const snapshot=JSON.stringify(root.list);context.checkDueEvents();assert.equal(JSON.stringify(root.list),snapshot);
 });
+test('legacy dateTime slot aliases track both single and explicit batch edits',()=>{
+  const event={id:80,recurrence:'weekly',occurrences:[{dateTime:slot('19').startDate,
+    endDate:slot('19').endDate,ownerField:'keep'},slot('21')]};
+  const changed=O.rescheduleSavedRecurring(event,0,'2032-10-19T09:15:00Z','2032-10-19T10:15:00Z');
+  assert.equal(changed.occurrences[0].dateTime,changed.occurrences[0].startDate);
+  const oneoff={...event,recurrence:'none'};
+  const single=O.reschedule(oneoff,0,'2032-10-19T09:15:00Z','2032-10-19T10:15:00Z');
+  assert.equal(single.occurrences[0].dateTime,single.occurrences[0].startDate);
+  const batch=load('services/EventBatchPolicy.js').apply([oneoff],[{id:80,occurrenceIndex:0,
+    startIso:'2032-10-19T09:15:00Z',endIso:'2032-10-19T10:15:00Z'}],O);
+  assert.equal(batch.list[0].occurrences[0].dateTime,batch.list[0].occurrences[0].startDate);
+  assert.equal(batch.list[0].occurrences[0].ownerField,'keep');
+  assert.equal(event.occurrences[0].startDate,undefined,'source legacy shape was rewritten');
+});
+test('offset-bearing original anchors recover selected templates by instant, without drift',()=>{
+  const template=[19,21].map(day=>({startDate:`2032-10-${day}T16:00:00+07:00`,
+    endDate:`2032-10-${day}T17:00:00+07:00`}));
+  const event={id:90,recurrence:'weekly',occurrences:plain(template),selectedTemplate:plain(template)};
+  const moved=O.rescheduleSavedRecurring(event,0,'2032-10-19T09:15:00Z','2032-10-19T10:15:00Z');
+  const source=read('services/Events.qml');
+  const code=source.slice(source.indexOf('function checkDueEvents()'),source.indexOf('function createNextRecurrence('));
+  class Clock extends Date {constructor(...a){super(...(a.length?a:['2032-10-25T12:00:00Z']));}}
+  const root={ready:true,list:[moved],saveToFile(){},eventTriggered(){},reminderTriggered(){}};
+  const context=vm.createContext({root,Occurrences:O,RepeatPolicy:load('services/EventRepeatPolicy.js'),Date:Clock,Number,Math});
+  vm.runInContext(code,context);context.checkDueEvents();
+  assert.equal(root.list[0].repeatTemplate.length,2);
+  assert.equal(root.list[0].repeatTemplate[0].startDate,'2032-10-19T09:00:00.000Z');
+  assert.deepEqual(plain(root.list[0].selectedTemplate),template);
+  assert.equal(root.list[0].occurrences[0].plannerSeriesStartDate,template[0].startDate);
+});
 console.log(JSON.stringify({test:'multidate-gestures',zone:process.env.TZ,passed,failed,source_root:root}));
 process.exitCode=failed ? 1 : 0;
