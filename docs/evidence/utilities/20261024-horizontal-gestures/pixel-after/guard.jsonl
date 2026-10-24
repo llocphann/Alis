@@ -1,0 +1,4 @@
+["niri", "get-hot-corners"]
+["niri", "get-hot-corners"]
+["niri", "sync-backdrop-overview-shadow", "off"]
+["get-volume", "@DEFAULT_AUDIO_SOURCE@"]

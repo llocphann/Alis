@@ -1,0 +1,14 @@
+{
+  "checks": 5,
+  "frames": 2,
+  "measurements": [
+    {
+      "kind": "pixel-phase-touchpad",
+      "from": 0,
+      "to": 0,
+      "width": 560,
+      "height": 360
+    }
+  ],
+  "error": "Error: pixel-phase gesture 0 to 1 got 0"
+}

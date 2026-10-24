@@ -1,0 +1,134 @@
+{
+  "runs": [
+    {
+      "lane": "utilities-supervised-d5",
+      "receipt": {
+        "source_sha": "d5a4d4423e0edacf976f705c27209a6a1fc18947",
+        "argv": [
+          "python3",
+          "scripts/test-utilities-compact-runtime.py"
+        ],
+        "actual_exit": 1,
+        "status": "FAIL",
+        "stop_reason": null,
+        "elapsed_seconds": 0.5,
+        "owned_at_normal_exit": [],
+        "owned_remaining_after_exit": [],
+        "console_sha256": "c6a0604f8cdc7bdd50dd6806f2d4c631a8be7ed59c80e72279249c1c71ad7562"
+      }
+    },
+    {
+      "lane": "utilities-supervised-d5-unfocused",
+      "receipt": {
+        "source_sha": "d5a4d4423e0edacf976f705c27209a6a1fc18947",
+        "argv": [
+          "python3",
+          "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/utilities-unfocused-d5.py"
+        ],
+        "actual_exit": 1,
+        "status": "FAIL",
+        "stop_reason": null,
+        "elapsed_seconds": 75.6,
+        "owned_at_normal_exit": [],
+        "owned_remaining_after_exit": [],
+        "console_sha256": "dd239dccb952e37981ad190629ff62786cf2758941f087a9f54c9dca72af72b0"
+      }
+    },
+    {
+      "lane": "utilities-supervised-8f-after",
+      "receipt": {
+        "source_sha": "8f8e9e6f9975a7d5e6bf5d15468a3daa68cba77a",
+        "argv": [
+          "python3",
+          "scripts/test-utilities-compact-runtime.py"
+        ],
+        "actual_exit": 1,
+        "status": "FAIL",
+        "stop_reason": null,
+        "elapsed_seconds": 7.5,
+        "owned_at_normal_exit": [],
+        "owned_remaining_after_exit": [],
+        "console_sha256": "0fca480b6aa2c3d754c36061712ff36ae850a45e3a94704b502e067921622209"
+      }
+    },
+    {
+      "lane": "utilities-supervised-wheel-handler",
+      "receipt": {
+        "source_sha": "8e5e786c424e39981452009233e488abee4024d6",
+        "argv": [
+          "python3",
+          "scripts/test-utilities-compact-runtime.py"
+        ],
+        "actual_exit": 1,
+        "status": "FAIL",
+        "stop_reason": null,
+        "elapsed_seconds": 7.6,
+        "owned_at_normal_exit": [],
+        "owned_remaining_after_exit": [],
+        "console_sha256": "276a2ec9b0721740d51047bc388f9f29842b17017c701b49d720b551c08f9103"
+      }
+    },
+    {
+      "lane": "utilities-supervised-pixel-after",
+      "receipt": {
+        "source_sha": "22201655b32ddd03d342f6bb48f9167a5f3fd319",
+        "argv": [
+          "python3",
+          "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/utilities-pixel-probe.py"
+        ],
+        "actual_exit": 1,
+        "status": "FAIL",
+        "stop_reason": null,
+        "elapsed_seconds": 5.7,
+        "owned_at_normal_exit": [],
+        "owned_remaining_after_exit": [],
+        "console_sha256": "5d0d4632bb599a52ad1078cdc1fd3f95817181d0c91320c24846704ce431babd"
+      }
+    },
+    {
+      "lane": "utilities-supervised-pixel-diagnostic-v2",
+      "receipt": {
+        "source_sha": "22201655b32ddd03d342f6bb48f9167a5f3fd319",
+        "argv": [
+          "python3",
+          "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/utilities-pixel-diagnostic-v2.py"
+        ],
+        "actual_exit": 1,
+        "status": "FAIL",
+        "stop_reason": null,
+        "elapsed_seconds": 5.7,
+        "owned_at_normal_exit": [],
+        "owned_remaining_after_exit": [],
+        "console_sha256": "f93c677dd0462721b03d91af414557e30a7372979d08f728785be50bb616211d"
+      }
+    },
+    {
+      "lane": "utilities-supervised-pixel-zero-candidate",
+      "receipt": {
+        "source_sha": "22201655b32ddd03d342f6bb48f9167a5f3fd319",
+        "argv": [
+          "python3",
+          "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/utilities-pixel-zero-candidate.py"
+        ],
+        "actual_exit": 1,
+        "status": "FAIL",
+        "stop_reason": null,
+        "elapsed_seconds": 5.6,
+        "owned_at_normal_exit": [],
+        "owned_remaining_after_exit": [],
+        "console_sha256": "79902560735d894125bf285a78f8143a19f99d12f941319ae1d364082da97566"
+      }
+    }
+  ],
+  "classification": {
+    "d5_capture": "Fixture entry failed before native test: no restorable parent focus. No product acceptance result.",
+    "d5_unfocused": "250 checks/48 actual frames completed, but obsolete Quickshell.quit caused TypeError/native timeout124; retained FAIL. Native fixture now uses Qt.quit and does not request host focus.",
+    "8f_and_8e": "Returning unhandled wheel or adding an ancestor WheelHandler did not bypass nested scrollers. Both failed native gesture0to1; superseded by topmost wheel-only MouseArea in222.",
+    "pixel_only_prototypes": "Synthetic ScrollUpdate used a null angleDelta. Qt6.12 delivery recognizes that shape as a compatibility event after an accepted wheel and returns without delivering it. Instrumentation saw Begin/Momentum but no Updates. These actual FAIL receipts remain; they are not valid proof of a product pixel-input fault. Corrected paired angle+pixel event shape tested separately, unchanged production222 passed.",
+    "zero_event_candidate": "Temporary read-only signal override also failed the invalid pixel-only shape; never applied to production."
+  },
+  "qt_reference": {
+    "url": "https://github.com/qt/qtdeclarative/blob/v6.12.0/src/quick/util/qquickdeliveryagent.cpp#L936",
+    "source_sha256": "d84b759ef5bbe05420ab28a8b19cc6495141b05b371e1a0062ee906fa379f774"
+  }
+}

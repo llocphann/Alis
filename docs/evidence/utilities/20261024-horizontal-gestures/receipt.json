@@ -1,0 +1,75 @@
+{
+  "issue": 29,
+  "implementation_source_sha": "22201655b32ddd03d342f6bb48f9167a5f3fd319",
+  "baseline_source_sha": "d5a4d4423e0edacf976f705c27209a6a1fc18947",
+  "qualified_native_lanes": [
+    {
+      "lane": "strict-baseline",
+      "fixture_source_sha": "8f8e9e6f9975a7d5e6bf5d15468a3daa68cba77a",
+      "production_source_sha": "d5a4d4423e0edacf976f705c27209a6a1fc18947",
+      "actual_harness_exit": 1,
+      "actual_native_exit": 0,
+      "status": "FAIL",
+      "checks": 87,
+      "frames": 18,
+      "failure": "Error: horizontal-wheel did not switch Utilities page 0 to 1",
+      "owned_remaining_after_exit": []
+    },
+    {
+      "lane": "strict-after",
+      "fixture_source_sha": "22201655b32ddd03d342f6bb48f9167a5f3fd319",
+      "production_source_sha": "22201655b32ddd03d342f6bb48f9167a5f3fd319",
+      "actual_harness_exit": 0,
+      "actual_native_exit": 0,
+      "status": "PASS",
+      "checks": 366,
+      "frames": 123,
+      "failure": null,
+      "owned_remaining_after_exit": []
+    },
+    {
+      "lane": "pixel-baseline",
+      "fixture_source_sha": "22201655b32ddd03d342f6bb48f9167a5f3fd319",
+      "production_source_sha": "d5a4d4423e0edacf976f705c27209a6a1fc18947",
+      "actual_harness_exit": 1,
+      "actual_native_exit": 0,
+      "status": "FAIL",
+      "checks": 5,
+      "frames": 2,
+      "failure": "Error: pixel-phase gesture 0 to 1 got 0",
+      "owned_remaining_after_exit": []
+    },
+    {
+      "lane": "pixel-after",
+      "fixture_source_sha": "22201655b32ddd03d342f6bb48f9167a5f3fd319",
+      "production_source_sha": "22201655b32ddd03d342f6bb48f9167a5f3fd319",
+      "actual_harness_exit": 0,
+      "actual_native_exit": 0,
+      "status": "PASS",
+      "checks": 139,
+      "frames": 50,
+      "failure": null,
+      "owned_remaining_after_exit": []
+    }
+  ],
+  "runtime_component_sha256": {
+    "modules/abyss/content/AbyssUtilitiesPopup.qml": "377540a853aa6bc45cb1387f042a2cd0579cbca215fcaff2bee7d57697c86f8d",
+    "modules/common/widgets/StyledFlickable.qml": "0bc002b63abe9953f1f56ac3d33efb85385dde4af2b5ef03c765d7ecd9259039",
+    "modules/settings/MonitorVisibilityConfig.qml": "e4ae314e6262edff4d494331569e948b6aee575184396eff4052bd43a6ca951a",
+    "scripts/test-utilities-compact-runtime.py": "0a32bb5f038dc531a032efb67a74065b7e622580144eea1906d48c1febe7c76a",
+    "scripts/native_test_session.py": "342582fc9d61e1ba3d42990fb1d7a7dc7043749beea836ec8f6a85e867a4aa73"
+  },
+  "remaining_gates": {
+    "canonical_current": "NOT_RUN; next exact current head, do not reuse a6 stopped result",
+    "physical_hotplug": "UNRUN",
+    "real_display_apply_rollback": "UNRUN",
+    "wl_mirror_hardware_audio": "UNRUN",
+    "installed_desktop": "UNRUN",
+    "owner_verification": "PENDING"
+  },
+  "scope": "Private Niri, real QML frames and injected mouse/TouchPad events; synthetic output metadata, guarded backend writes, private HOME/XDG and disconnected PipeWire. No claim of physical device or full task acceptance.",
+  "feature_scope_complete": false,
+  "native_focus": "No host focus request; frames captured successfully unfocused.",
+  "strict_before_after_fixture_sha256": "0a32bb5f038dc531a032efb67a74065b7e622580144eea1906d48c1febe7c76a",
+  "pixel_probe_qml_sha256": "fa9c535568391d321469b65499b87b7c738a5216f1fc73aacc2b83b0a536a5c5"
+}

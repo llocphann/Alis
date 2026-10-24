@@ -1,0 +1,14 @@
+{
+  "source_sha": "22201655b32ddd03d342f6bb48f9167a5f3fd319",
+  "argv": [
+    "python3",
+    "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/utilities-pixel-paired-probe.py"
+  ],
+  "actual_exit": 1,
+  "status": "FAIL",
+  "stop_reason": null,
+  "elapsed_seconds": 6.3,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "e821c280a69a29aa04d704fa5f82aabd28f98d3ac09f0e6b7f45b88524425497"
+}

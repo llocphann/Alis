@@ -1,0 +1,61 @@
+{
+  "source_sha": "22201655b32ddd03d342f6bb48f9167a5f3fd319",
+  "checks": [
+    {
+      "argv": [
+        "node",
+        "scripts/test-monitor-arrangement-viewport.mjs"
+      ],
+      "actual_exit": 0,
+      "summary": "MONITOR_VIEWPORT_PASS 1140 fitted tiles; 2280 inverse mappings; 360 cursor-pivot zoom cases; clipped-origin drag regressions PASS\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-UTIL-F01-source-delivery.py"
+      ],
+      "actual_exit": 0,
+      "summary": "UTIL_F01_SOURCE_DELIVERY_PASS: display, audio, eye-protection, navigation\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-UTIL-F01-mirror-intent.py"
+      ],
+      "actual_exit": 0,
+      "summary": "UTIL_F01_MIRROR_INTENT_PASS\nUTIL_F01_SOURCE_INTENT_PASS\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-abyss-display-mode.py"
+      ],
+      "actual_exit": 0,
+      "summary": "PASS: display-mode planning, safe rollback and running-mirror hotplug identity\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-abyss-display-mode-hotplug-source.py"
+      ],
+      "actual_exit": 0,
+      "summary": "DISPLAY_MODE_HOTPLUG_SOURCE_PASS\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/test-anti-flashbang-policy.py"
+      ],
+      "actual_exit": 0,
+      "summary": "PASS: finite dim-only response, threshold, strength, readable floor and malformed settings\n"
+    },
+    {
+      "argv": [
+        "bash",
+        "scripts/test-abyss-utilities-popup.sh"
+      ],
+      "actual_exit": 0,
+      "summary": "SKIP: Abyss Utilities popup runtime (Quickshell/Wayland unavailable)\n"
+    }
+  ]
+}

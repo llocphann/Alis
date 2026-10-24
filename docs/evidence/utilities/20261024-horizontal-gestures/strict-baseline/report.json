@@ -1,0 +1,48 @@
+{
+  "checks": 87,
+  "frames": 18,
+  "measurements": [
+    {
+      "width": 560,
+      "height": 360,
+      "fontScale": 1,
+      "outputs": 1,
+      "canvasWidth": 508,
+      "canvasHeight": 243
+    },
+    {
+      "width": 560,
+      "height": 360,
+      "fontScale": 1,
+      "outputs": 2,
+      "canvasWidth": 508,
+      "canvasHeight": 243
+    },
+    {
+      "width": 560,
+      "height": 360,
+      "fontScale": 1,
+      "outputs": 3,
+      "canvasWidth": 508,
+      "canvasHeight": 243
+    },
+    {
+      "width": 560,
+      "height": 360,
+      "fontScale": 1,
+      "outputs": 3,
+      "canvasWidth": 508,
+      "canvasHeight": 243
+    }
+  ],
+  "gestures": [
+    {
+      "kind": "horizontal-wheel",
+      "from": 0,
+      "to": 0,
+      "width": 560,
+      "height": 360
+    }
+  ],
+  "error": "Error: horizontal-wheel did not switch Utilities page 0 to 1"
+}
