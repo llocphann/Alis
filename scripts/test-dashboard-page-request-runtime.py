@@ -185,7 +185,9 @@ Window {
     {id:"custom-1",name:"Private request test"},
     {id:"custom-2",name:"Private skip target"}])
    tryVerify(()=>!!button("custom-2"),3000)
-   transitLoader=custom
+   // Repeater's array model may recreate the previous custom delegate.
+   transitLoader=findChild(dashboard,"dashboardCustomPageLoader-custom-1")
+   check(!!transitLoader && !transitLoader.active,"unexpected intermediate loader")
    const intermediateIndex=dashboard.pageIds.indexOf("custom-1")
    mouseClick(button("custom-2"));settle("custom-2")
    const passed=root.samples.filter(row=>row.phase==="skip-intermediate-custom"
@@ -195,7 +197,7 @@ Window {
    check(passed.every(row=>!row.transitActive),
     "unselected custom tab Loader activated while sliding past")
    mouseClick(button("dashboard"));settle("dashboard")
-   tryVerify(()=>!custom.active,3000)
+   tryVerify(()=>!transitLoader.active,3000)
    transitLoader=null
 
    root.phase="remove-pending-custom"
