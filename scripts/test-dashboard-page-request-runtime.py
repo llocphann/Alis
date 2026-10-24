@@ -94,6 +94,21 @@ Window {
    const custom=findChild(dashboard,"dashboardCustomPageLoader-custom-1")
    check(!!custom && !custom.active,"unvisited custom page eagerly loaded")
 
+   root.phase="cold-key-reversal"
+   const header=findChild(dashboard,"dashboardPageDots").parent
+   header.forceActiveFocus();keyClick(Qt.Key_Right,Qt.NoModifier,0)
+   check(dashboard.currentPageId==="dashboard" && dashboard._pendingPageId==="music",
+    "cold keyboard request must remain pending for this reversal probe")
+   keyClick(Qt.Key_Left,Qt.NoModifier,0)
+   check(dashboard.currentPageId==="dashboard" && !dashboard._pendingPageId,
+    "Left did not cancel an uncommitted Right request")
+   keyClick(Qt.Key_Right,Qt.NoModifier,0);keyClick(Qt.Key_Right,Qt.NoModifier,0)
+   check(dashboard._pendingPageId==="weeklyPlanner","rapid Right keys lost pending navigation intent")
+   keyClick(Qt.Key_Left,Qt.NoModifier,0)
+   check(dashboard._pendingPageId==="music","rapid keyboard reversal skipped pending intent")
+   keyClick(Qt.Key_Left,Qt.NoModifier,0)
+   check(!dashboard._pendingPageId && dashboard.currentPageId==="dashboard","rapid keyboard cancellation replayed a target")
+
    root.phase="cold-replace-cancel"
    button("music").click()
    check(dashboard.currentPageId==="dashboard" && dashboard._pendingPageId==="music",
@@ -123,7 +138,6 @@ Window {
 
    root.phase="native-click-key-wheel"
    mouseClick(button("music"));settle("music")
-   const header=findChild(dashboard,"dashboardPageDots").parent
    header.forceActiveFocus();keyClick(Qt.Key_Right);settle("weeklyPlanner")
    header.forceActiveFocus();keyClick(Qt.Key_Left);settle("music")
    dashboard.resetPageWheel()
