@@ -274,8 +274,10 @@ Singleton {
             const slots = Occurrences.entries(event)
             let changed = false
             const originalSlots=slots.map(slot=>Object.assign({},slot,{
-                startDate:new Date(slot.plannerSeriesStartDate || slot.startDate).toISOString(),
-                endDate:new Date(slot.plannerSeriesEndDate || slot.endDate).toISOString()
+                startDate:((slot.plannerSeriesStartDate
+                    && Occurrences.valid(slot.plannerSeriesStartDate)) || new Date(slot.startDate)).toISOString(),
+                endDate:((slot.plannerSeriesEndDate
+                    && Occurrences.valid(slot.plannerSeriesEndDate)) || new Date(slot.endDate)).toISOString()
             }))
             // Edited occurrence-backed schedules can predate repeatTemplate.
             // A selectedTemplate denotes the active suffix, not old history.
