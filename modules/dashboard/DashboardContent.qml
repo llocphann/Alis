@@ -483,122 +483,132 @@ Item {
                 property real pagePosition: root.currentPage
                 Behavior on pagePosition {
                     enabled: root.presentationActive && Appearance.animationsEnabled && !root.editMode
-                    // A page must travel at a constant rate from start to finish.
-                    // Do not change the separately verified panel reveal motion.
+                    // Match the Weather Popup's shared spatial motion profile.
+                    // Dashboard panel entrance/exit retains its separate motion.
                     NumberAnimation {
                         duration: Appearance.animation.elementMove.duration
-                        easing.type: Easing.Linear
+                        easing.type: Appearance.animation.elementMove.type
+                        easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
                     }
                 }
-                DashboardCanvas {
-                    id: dashboardCanvas
+                // Translate the page strip once per frame instead of updating
+                // each widget-heavy page's x independently. This preserves the
+                // existing horizontal viewport and all page/Loader identities.
+                Item {
+                    id: pageStrip
                     width: pages.width
                     height: pages.height
-                    x: (root.pageIds.indexOf("dashboard") - pages.slideProgress) * pages.width
-                    visible: Math.abs(pages.slideProgress - root.pageIds.indexOf("dashboard")) < 1
-                    enabled: root.currentPageId === "dashboard"
-                    presentationActive: root.presentationActive && root.currentPageId === "dashboard"
-                    warmContent: root.warmContent
-                    onRequestEventsDialog: event => root.openAgendaDialog(event)
-                }
-                Loader {
-                    id: musicPage
-                    objectName: "dashboardMusicPageLoader"
-                    asynchronous: root._userPageNavigation && root._synchronousPageId !== "music"
-                    onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("music")
-                    width: pages.width
-                    height: pages.height
-                    x: (root.pageIds.indexOf("music") - pages.slideProgress) * pages.width
-                    visible: root.musicEnabled && Math.abs(pages.slideProgress - root.pageIds.indexOf("music")) < 1
-                    enabled: root.currentPageId === "music"
-                    active: root.musicEnabled && (root.musicVisited || root._pendingPageId === "music")
-                        && (root.presentationActive || root.warmContent)
-                    sourceComponent: DashboardMusic {
-                        backend: root.musicBackend ?? LocalMusic
-                        presentationActive: root.presentationActive && root.currentPageId === "music"
-                    }
-                }
-                // Handle page gestures above the canvas and its scrollable widgets.
-                Loader {
-                    id:plannerPage
-                    objectName: "dashboardPlannerPageLoader"
-                    asynchronous: root._userPageNavigation && root._synchronousPageId !== "weeklyPlanner"
-                    onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("weeklyPlanner")
-                    width:pages.width;height:pages.height
-                    x:(root.pageIds.indexOf("weeklyPlanner")-pages.slideProgress)*pages.width
-                    visible:Math.abs(pages.slideProgress-root.pageIds.indexOf("weeklyPlanner"))<1
-                    enabled:root.currentPageId==="weeklyPlanner"
-                    active:(root.plannerVisited || root._pendingPageId === "weeklyPlanner")
-                        && (root.presentationActive || root.warmContent)
-                    sourceComponent:DashboardWeeklyPlanner {
-                        presentationActive:root.presentationActive && root.currentPageId==="weeklyPlanner"
-                        onRequestEventsDialog:event=>root.openPlannerEventEditor(event)
-                    }
-                }
-                // Custom canvases have isolated geometry but share the exact
-                // same Dashboard widget component implementations and services.
-                Repeater {
-                    id: customPagesRepeater
-                    model: root.customPageModel
-                    delegate: Item {
-                        id: customTabHost
-                        required property var modelData
-                        readonly property int pageIndex: root.pageIds.indexOf(modelData.id)
-                        property var canvasController: customCanvasLoader.item
-                        readonly property bool pageReady: customCanvasLoader.status === Loader.Ready
+                    x: -pages.slideProgress * pages.width
+                    DashboardCanvas {
+                        id: dashboardCanvas
                         width: pages.width
                         height: pages.height
-                        x: (pageIndex - pages.slideProgress) * pages.width
-                        visible: pageIndex >= 0 && Math.abs(pages.slideProgress - pageIndex) < 1
-                        enabled: root.currentPageId === modelData.id
-
-                        Loader {
-                            id: customCanvasLoader
-                            objectName: "dashboardCustomPageLoader-" + customTabHost.modelData.id
-                            asynchronous: root._userPageNavigation
-                                && root._synchronousPageId !== customTabHost.modelData.id
-                            onStatusChanged: if (status === Loader.Error)
-                                root.pageLoadFailed(customTabHost.modelData.id)
-                            anchors.fill: parent
-                            // Reordering changes pageIndex before slideProgress
-                            // catches up. Keep the selected canvas and its draft
-                            // alive through that temporary visibility change.
-                            active: (root.presentationActive && (customTabHost.visible
-                                    || root.currentPageId === customTabHost.modelData.id
-                                    || root._pendingPageId === customTabHost.modelData.id))
-                                || (root.warmContent && root.currentPageId === customTabHost.modelData.id)
-                            sourceComponent: DashboardCanvas {
-                                customTabId: customTabHost.modelData.id
-                                warmContent: root.warmContent
-                                presentationActive: root.presentationActive
-                                    && root.currentPageId === customTabHost.modelData.id
-                                onRequestEventsDialog: event => root.openAgendaDialog(event)
-                            }
+                        x: root.pageIds.indexOf("dashboard") * pages.width
+                        visible: Math.abs(pages.slideProgress - root.pageIds.indexOf("dashboard")) < 1
+                        enabled: root.currentPageId === "dashboard"
+                        presentationActive: root.presentationActive && root.currentPageId === "dashboard"
+                        warmContent: root.warmContent
+                        onRequestEventsDialog: event => root.openAgendaDialog(event)
+                    }
+                    Loader {
+                        id: musicPage
+                        objectName: "dashboardMusicPageLoader"
+                        asynchronous: root._userPageNavigation && root._synchronousPageId !== "music"
+                        onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("music")
+                        width: pages.width
+                        height: pages.height
+                        x: root.pageIds.indexOf("music") * pages.width
+                        visible: root.musicEnabled && Math.abs(pages.slideProgress - root.pageIds.indexOf("music")) < 1
+                        enabled: root.currentPageId === "music"
+                        active: root.musicEnabled && (root.musicVisited || root._pendingPageId === "music")
+                            && (root.presentationActive || root.warmContent)
+                        sourceComponent: DashboardMusic {
+                            backend: root.musicBackend ?? LocalMusic
+                            presentationActive: root.presentationActive && root.currentPageId === "music"
                         }
-                        ColumnLayout {
-                            anchors.centerIn: parent
-                            width: Math.min(320, parent.width - 40)
-                            spacing: 12
-                            visible: customCanvasLoader.item !== null
-                                && !customCanvasLoader.item.editMode
-                                && (customCanvasLoader.item.visibleIds?.length ?? 0) === 0
-                            StyledText {
-                                Layout.fillWidth: true
-                                horizontalAlignment: Text.AlignHCenter
-                                text: Translation.tr("This tab is empty")
-                                font.pixelSize: Appearance.font.pixelSize.normal
-                                color: Appearance.colors.colOnLayer0
+                    }
+                    // Handle page gestures above the canvas and its scrollable widgets.
+                    Loader {
+                        id:plannerPage
+                        objectName: "dashboardPlannerPageLoader"
+                        asynchronous: root._userPageNavigation && root._synchronousPageId !== "weeklyPlanner"
+                        onStatusChanged: if (status === Loader.Error) root.pageLoadFailed("weeklyPlanner")
+                        width:pages.width;height:pages.height
+                        x:root.pageIds.indexOf("weeklyPlanner")*pages.width
+                        visible:Math.abs(pages.slideProgress-root.pageIds.indexOf("weeklyPlanner"))<1
+                        enabled:root.currentPageId==="weeklyPlanner"
+                        active:(root.plannerVisited || root._pendingPageId === "weeklyPlanner")
+                            && (root.presentationActive || root.warmContent)
+                        sourceComponent:DashboardWeeklyPlanner {
+                            presentationActive:root.presentationActive && root.currentPageId==="weeklyPlanner"
+                            onRequestEventsDialog:event=>root.openPlannerEventEditor(event)
+                        }
+                    }
+                    // Custom canvases have isolated geometry but share the exact
+                    // same Dashboard widget component implementations and services.
+                    Repeater {
+                        id: customPagesRepeater
+                        model: root.customPageModel
+                        delegate: Item {
+                            id: customTabHost
+                            required property var modelData
+                            readonly property int pageIndex: root.pageIds.indexOf(modelData.id)
+                            property var canvasController: customCanvasLoader.item
+                            readonly property bool pageReady: customCanvasLoader.status === Loader.Ready
+                            width: pages.width
+                            height: pages.height
+                            x: pageIndex * pages.width
+                            visible: pageIndex >= 0 && Math.abs(pages.slideProgress - pageIndex) < 1
+                            enabled: root.currentPageId === modelData.id
+    
+                            Loader {
+                                id: customCanvasLoader
+                                objectName: "dashboardCustomPageLoader-" + customTabHost.modelData.id
+                                asynchronous: root._userPageNavigation
+                                    && root._synchronousPageId !== customTabHost.modelData.id
+                                onStatusChanged: if (status === Loader.Error)
+                                    root.pageLoadFailed(customTabHost.modelData.id)
+                                anchors.fill: parent
+                                // Reordering changes pageIndex before slideProgress
+                                // catches up. Keep the selected canvas and its draft
+                                // alive through that temporary visibility change.
+                                active: (root.presentationActive && (customTabHost.visible
+                                        || root.currentPageId === customTabHost.modelData.id
+                                        || root._pendingPageId === customTabHost.modelData.id))
+                                    || (root.warmContent && root.currentPageId === customTabHost.modelData.id)
+                                sourceComponent: DashboardCanvas {
+                                    customTabId: customTabHost.modelData.id
+                                    warmContent: root.warmContent
+                                    presentationActive: root.presentationActive
+                                        && root.currentPageId === customTabHost.modelData.id
+                                    onRequestEventsDialog: event => root.openAgendaDialog(event)
+                                }
                             }
-                            RippleButton {
-                                Layout.alignment: Qt.AlignHCenter
-                                implicitWidth: 120
-                                implicitHeight: 34
-                                buttonText: Translation.tr("Add widgets")
-                                onClicked: customCanvasLoader.item?.beginEditMode()
-                                contentItem: StyledText {
-                                    anchors.centerIn: parent
-                                    text: Translation.tr("Add widgets")
-                                    color: Appearance.colors.colPrimary
+                            ColumnLayout {
+                                anchors.centerIn: parent
+                                width: Math.min(320, parent.width - 40)
+                                spacing: 12
+                                visible: customCanvasLoader.item !== null
+                                    && !customCanvasLoader.item.editMode
+                                    && (customCanvasLoader.item.visibleIds?.length ?? 0) === 0
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    horizontalAlignment: Text.AlignHCenter
+                                    text: Translation.tr("This tab is empty")
+                                    font.pixelSize: Appearance.font.pixelSize.normal
+                                    color: Appearance.colors.colOnLayer0
+                                }
+                                RippleButton {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    implicitWidth: 120
+                                    implicitHeight: 34
+                                    buttonText: Translation.tr("Add widgets")
+                                    onClicked: customCanvasLoader.item?.beginEditMode()
+                                    contentItem: StyledText {
+                                        anchors.centerIn: parent
+                                        text: Translation.tr("Add widgets")
+                                        color: Appearance.colors.colPrimary
+                                    }
                                 }
                             }
                         }
