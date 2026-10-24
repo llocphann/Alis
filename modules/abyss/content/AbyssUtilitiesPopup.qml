@@ -36,11 +36,9 @@ Item {
     readonly property var pageIcons: [
         "monitor", "present_to_all", "volume_up", "nightlight"
     ]
-    // All Utilities pages share one compact fixed viewport. The 400 px height
-    // still fits the monitor-arrangement canvas while avoiding empty lower space
-    // on Display, Sound and Eye protection.
-    readonly property int panelWidth: 620
-    readonly property int panelHeight: 400
+    // Keep a stable compact footprint while each page handles its own overflow.
+    readonly property int panelWidth: 560
+    readonly property int panelHeight: 360
     readonly property color utilityInk: Appearance.m3colors.darkmode
         ? AbyssStyle.textColor : "#000000"
     readonly property color utilityMutedInk: Appearance.m3colors.darkmode
@@ -69,7 +67,7 @@ Item {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: 4
 
             MaterialSymbol {
                 text: root.pageIcons[pages.currentIndex] ?? "widgets"
@@ -119,29 +117,41 @@ Item {
         Row {
             objectName: "utilitiesPageIndicators"
             Layout.alignment: Qt.AlignHCenter
-            spacing: 8
+            spacing: 4
 
             Repeater {
                 model: pages.count
-                delegate: Rectangle {
+                delegate: Item {
+                    id: pageIndicator
                     required property int index
-                    width: index === pages.currentIndex ? 9 : 7
-                    height: width
-                    radius: width / 2
-                    color: index === pages.currentIndex
-                        ? AbyssStyle.accent : Qt.alpha(root.utilityInk, .28)
-
-                    Behavior on width {
-                        enabled: AbyssStyle.motionEnabled
-                        NumberAnimation { duration: AbyssStyle.motionFast; easing.type: Easing.OutCubic }
+                    width: 24
+                    height: 24
+                    activeFocusOnTab: true
+                    Accessible.role: Accessible.Button
+                    Accessible.name: root.pageTitles[index]
+                    Accessible.onPressAction: pages.currentIndex = index
+                    Keys.onReturnPressed: pages.currentIndex = index
+                    Keys.onSpacePressed: pages.currentIndex = index
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: pageIndicator.index === pages.currentIndex ? 9 : 7
+                        height: width
+                        radius: width / 2
+                        color: pageIndicator.index === pages.currentIndex
+                            ? AbyssStyle.accent : Qt.alpha(root.utilityInk, .28)
+                        border.width: pageIndicator.activeFocus ? 1 : 0
+                        border.color: root.utilityInk
+                        Behavior on width {
+                            enabled: AbyssStyle.motionEnabled
+                            NumberAnimation { duration: AbyssStyle.motionFast; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on color {
+                            enabled: AbyssStyle.motionEnabled
+                            ColorAnimation { duration: AbyssStyle.motionFast }
+                        }
                     }
-                    Behavior on color {
-                        enabled: AbyssStyle.motionEnabled
-                        ColorAnimation { duration: AbyssStyle.motionFast }
-                    }
-
                     TapHandler {
-                        onTapped: pages.currentIndex = parent.index
+                        onTapped: pages.currentIndex = pageIndicator.index
                     }
                 }
             }
@@ -305,6 +315,15 @@ Item {
                                 }
                             }
                         }
+                    }
+
+                    AbyssLabel {
+                        Layout.fillWidth: true
+                        visible: !DisplayMode.mirrorAvailable
+                        text: Translation.tr("Duplicate unavailable: install wl-mirror.")
+                        color: root.utilityMutedInk
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        wrapMode: Text.WordWrap
                     }
 
                     // Two connected outputs need no extra fields: the primary
@@ -666,132 +685,140 @@ Item {
         id: audioPage
 
         Item {
-            ColumnLayout {
+            Flickable {
+                id: audioScroll
                 anchors.fill: parent
-                spacing: 10
+                contentWidth: width
+                contentHeight: audioColumn.implicitHeight
+                boundsBehavior: Flickable.StopAtBounds
+                clip: true
+                ColumnLayout {
+                    id: audioColumn
+                    width: audioScroll.width
+                    spacing: 10
 
-                AbyssLabel {
-                    Layout.fillWidth: true
-                    text: Audio.sink ? "Output · " + Audio.friendlyDeviceName(Audio.sink)
-                        : "No active audio output"
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.DemiBold
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    AbyssButton {
-                        compact: true
-                        glyph: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
-                        description: Audio.sink?.audio?.muted ? "Unmute output" : "Mute output"
-                        enabled: !!Audio.sink?.audio
-                        onClicked: Audio.toggleMute()
-                    }
-
-                    AbyssSlider {
+                    AbyssLabel {
                         Layout.fillWidth: true
-                        from: 0
-                        to: Math.min(2, Audio.hardMaxValue)
-                        value: Audio.value
-                        unit: "%"
-                        enabled: !!Audio.sink?.audio
-                        onMoved: Audio.setSinkVolume(value)
+                        text: Audio.sink ? "Output · " + Audio.friendlyDeviceName(Audio.sink)
+                            : "No active audio output"
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.DemiBold
                     }
-                }
 
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    enableSettingsSearch: false
-                    model: Audio.outputDevices.map(device => Audio.friendlyDeviceName(device))
-                    currentIndex: Audio.outputDevices.findIndex(device =>
-                        device.id === Audio.sink?.id)
-                    enabled: Audio.outputDevices.length > 0 && !ProjectAudio.busy
-                    onActivated: {
-                        const device = Audio.outputDevices[currentIndex]
-                        if (device) {
-                            ProjectAudio.releaseOwnership()
-                            Audio.setDefaultSink(device)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        AbyssButton {
+                            compact: true
+                            glyph: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
+                            description: Audio.sink?.audio?.muted ? "Unmute output" : "Mute output"
+                            enabled: !!Audio.sink?.audio
+                            onClicked: Audio.toggleMute()
+                        }
+
+                        AbyssSlider {
+                            Layout.fillWidth: true
+                            from: 0
+                            to: Math.min(2, Audio.hardMaxValue)
+                            value: Audio.value
+                            unit: "%"
+                            enabled: !!Audio.sink?.audio
+                            onMoved: Audio.setSinkVolume(value)
                         }
                     }
-                }
 
-                AbyssLabel {
-                    Layout.fillWidth: true
-                    visible: ProjectAudio.statusMessage.length > 0 || ProjectAudio.lastError.length > 0
-                    text: ProjectAudio.lastError.length > 0
-                        ? ProjectAudio.lastError : ProjectAudio.statusMessage
-                    color: ProjectAudio.lastError.length > 0
-                        ? Appearance.colors.colError : root.utilityMutedInk
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    wrapMode: Text.WordWrap
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: 1
-                    color: Qt.alpha(root.utilityInk, .12)
-                }
-
-                AbyssLabel {
-                    Layout.fillWidth: true
-                    text: Audio.source ? "Input · " + Audio.friendlyDeviceName(Audio.source)
-                        : "No active audio input"
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.DemiBold
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    AbyssButton {
-                        compact: true
-                        glyph: Audio.micMuted ? "mic_off" : "mic"
-                        description: Audio.micMuted ? "Unmute input" : "Mute input"
-                        enabled: Audio.inputDevices.length > 0 || !!Audio.source?.audio
-                        onClicked: Audio.toggleMicMute()
-                    }
-
-                    AbyssSlider {
+                    StyledComboBox {
                         Layout.fillWidth: true
-                        from: 0
-                        to: Math.min(2, Audio.hardMaxValue)
-                        value: Audio.micVolume
-                        unit: "%"
-                        enabled: Audio.inputDevices.length > 0 || !!Audio.source?.audio
-                        onMoved: Audio.setSourceVolume(value)
+                        enableSettingsSearch: false
+                        model: Audio.outputDevices.map(device => Audio.friendlyDeviceName(device))
+                        currentIndex: Audio.outputDevices.findIndex(device =>
+                            device.id === Audio.sink?.id)
+                        enabled: Audio.outputDevices.length > 0 && !ProjectAudio.busy
+                        onActivated: {
+                            const device = Audio.outputDevices[currentIndex]
+                            if (device) {
+                                ProjectAudio.releaseOwnership()
+                                Audio.setDefaultSink(device)
+                            }
+                        }
                     }
-                }
 
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    enableSettingsSearch: false
-                    model: Audio.inputDevices.map(device => Audio.friendlyDeviceName(device))
-                    currentIndex: Audio.inputDevices.findIndex(device =>
-                        device.id === Audio.source?.id)
-                    enabled: Audio.inputDevices.length > 0
-                    onActivated: {
-                        const device = Audio.inputDevices[currentIndex]
-                        if (device)
-                            Audio.setDefaultSource(device)
+                    AbyssLabel {
+                        Layout.fillWidth: true
+                        visible: ProjectAudio.statusMessage.length > 0 || ProjectAudio.lastError.length > 0
+                        text: ProjectAudio.lastError.length > 0
+                            ? ProjectAudio.lastError : ProjectAudio.statusMessage
+                        color: ProjectAudio.lastError.length > 0
+                            ? Appearance.colors.colError : root.utilityMutedInk
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        wrapMode: Text.WordWrap
                     }
-                }
 
-                AbyssLabel {
-                    Layout.fillWidth: true
-                    visible: Audio.outputDevices.length === 0 || Audio.inputDevices.length === 0
-                    text: Audio.outputDevices.length === 0 && Audio.inputDevices.length === 0
-                        ? "No PipeWire input or output devices are available."
-                        : Audio.outputDevices.length === 0
-                            ? "No PipeWire output devices are available."
-                            : "No PipeWire input devices are available."
-                    color: root.utilityMutedInk
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        color: Qt.alpha(root.utilityInk, .12)
+                    }
 
-                Item { Layout.fillHeight: true }
+                    AbyssLabel {
+                        Layout.fillWidth: true
+                        text: Audio.source ? "Input · " + Audio.friendlyDeviceName(Audio.source)
+                            : "No active audio input"
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: Font.DemiBold
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        AbyssButton {
+                            compact: true
+                            glyph: Audio.micMuted ? "mic_off" : "mic"
+                            description: Audio.micMuted ? "Unmute input" : "Mute input"
+                            enabled: Audio.inputDevices.length > 0 || !!Audio.source?.audio
+                            onClicked: Audio.toggleMicMute()
+                        }
+
+                        AbyssSlider {
+                            Layout.fillWidth: true
+                            from: 0
+                            to: Math.min(2, Audio.hardMaxValue)
+                            value: Audio.micVolume
+                            unit: "%"
+                            enabled: Audio.inputDevices.length > 0 || !!Audio.source?.audio
+                            onMoved: Audio.setSourceVolume(value)
+                        }
+                    }
+
+                    StyledComboBox {
+                        Layout.fillWidth: true
+                        enableSettingsSearch: false
+                        model: Audio.inputDevices.map(device => Audio.friendlyDeviceName(device))
+                        currentIndex: Audio.inputDevices.findIndex(device =>
+                            device.id === Audio.source?.id)
+                        enabled: Audio.inputDevices.length > 0
+                        onActivated: {
+                            const device = Audio.inputDevices[currentIndex]
+                            if (device)
+                                Audio.setDefaultSource(device)
+                        }
+                    }
+
+                    AbyssLabel {
+                        Layout.fillWidth: true
+                        visible: Audio.outputDevices.length === 0 || Audio.inputDevices.length === 0
+                        text: Audio.outputDevices.length === 0 && Audio.inputDevices.length === 0
+                            ? "No PipeWire input or output devices are available."
+                            : Audio.outputDevices.length === 0
+                                ? "No PipeWire output devices are available."
+                                : "No PipeWire input devices are available."
+                        color: root.utilityMutedInk
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                    }
+
+                }
             }
         }
     }

@@ -309,6 +309,7 @@ run_check 'tracked JSON syntax' tracked_json_syntax
 run_check 'tracked JavaScript syntax' tracked_js_syntax
 run_check 'tracked Fish syntax' tracked_fish_syntax
 run_check 'Office auto-theming ownership and recovery regression' python3 scripts/test-office-auto-theme.py
+run_check 'Monitor arrangement fit, zoom and drag-coordinate regression' node scripts/test-monitor-arrangement-viewport.mjs
 run_check 'Retired IME integration source guard' python3 scripts/test-input-method-decoupling.py
 run_check 'Niri selected-fullscreen workspace regression' node scripts/test-niri-fullscreen-selection.mjs
 run_check 'NotificationCenter anchor hover lease regression' node scripts/test-notification-center-hover-lease.mjs

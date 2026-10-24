@@ -64,7 +64,7 @@ for token in \
     'font.pixelSize: Appearance.font.pixelSize.smaller' \
     'font.pixelSize: Appearance.font.pixelSize.smallest' \
     'visible: !DisplayMode.mirrorAvailable' \
-    'text: "Install wl-mirror"'; do
+    'text: Translation.tr("Duplicate unavailable: install wl-mirror.")'; do
     grep -Fq "$token" "$utility_popup" \
         || { printf 'FAIL: Utilities compact Weather-like typography missing: %s\n' "$token" >&2; exit 1; }
 done
@@ -128,8 +128,8 @@ if grep -Fq 'Behavior on implicitWidth' "$utility_popup" \
     exit 1
 fi
 for token in \
-    'readonly property int panelWidth: 620' \
-    'readonly property int panelHeight: 400' \
+    'readonly property int panelWidth: 560' \
+    'readonly property int panelHeight: 360' \
     'implicitWidth: panelWidth' \
     'implicitHeight: panelHeight'; do
     grep -Fq "$token" "$utility_popup" \
@@ -237,11 +237,11 @@ ShellRoot {
         implicitHeight: 720
         AbyssPopupContent {
             id: popup
-            // Measure the real 620x400 popup footprint, not the larger
+            // Measure the real 560x360 popup footprint, not the larger
             // outer 900x720 fixture window.
             anchors.centerIn: parent
-            width: 620
-            height: 400
+            width: 560
+            height: 360
             kind: "utilities"
             autoDismissOnIdle: false
             outputName: "utilities-test"
@@ -260,8 +260,8 @@ ShellRoot {
                 Config.setNestedValue("panelFamily","abyss")
             } else if (root.step === 1) {
                 if (!root.check(utility !== null, "Utilities feature loads through AbyssPopupContent")) return
-                if (!root.check(utility.implicitWidth === 620 && utility.implicitHeight === 400,
-                    "Utilities feature uses the shared 620x400 viewport")) return
+                if (!root.check(utility.implicitWidth === 560 && utility.implicitHeight === 360,
+                    "Utilities feature uses the shared 560x360 viewport")) return
                 root.monitorWidth = popup.desiredWidth
                 root.monitorHeight = popup.desiredHeight
                 const canvas = driver.findChild(utility, "monitorArrangementCanvas")

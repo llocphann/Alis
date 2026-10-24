@@ -5,6 +5,7 @@ import Quickshell.Io
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import "MonitorArrangementViewport.js" as ArrangementViewport
 
 ContentPage {
     id: root
@@ -824,7 +825,7 @@ ContentPage {
 
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
-                visible: monitorRect.height >= 62
+                visible: !root.embeddedArrangementOnly && monitorRect.height >= 62
                 text: Math.round(monitorRect.logicalWidth) + "×" + Math.round(monitorRect.logicalHeight)
                 font.pixelSize: Appearance.font.pixelSize.smallest
                 color: !monitorRect.validPosition
@@ -934,10 +935,10 @@ ContentPage {
                     return
 
                 const margin = Appearance.sizes.spacingSmall
-                const maxX = Math.max(margin, monitorRect.parent.width - monitorRect.width - margin)
-                const maxY = Math.max(margin, monitorRect.parent.height - monitorRect.height - margin)
-                monitorRect.heldX = Math.max(margin, Math.min(maxX, monitorRect.dragOriginCanvasX + translation.x))
-                monitorRect.heldY = Math.max(margin, Math.min(maxY, monitorRect.dragOriginCanvasY + translation.y))
+                monitorRect.heldX = ArrangementViewport.dragCoordinate(monitorRect.dragOriginCanvasX,
+                    translation.x, monitorRect.parent.width, monitorRect.width, margin)
+                monitorRect.heldY = ArrangementViewport.dragCoordinate(monitorRect.dragOriginCanvasY,
+                    translation.y, monitorRect.parent.height, monitorRect.height, margin)
 
                 const rawX = Math.round((monitorRect.heldX - monitorRect.canvasOffset.x) / monitorRect.canvasScale)
                 const rawY = Math.round((monitorRect.heldY - monitorRect.canvasOffset.y) / monitorRect.canvasScale)
@@ -1244,19 +1245,81 @@ ContentPage {
                 })
                 readonly property real innerPadding: Appearance.sizes.spacingLarge
                 readonly property real fitScale: {
-                    const usableWidth = Math.max(1, width - innerPadding * 2)
                     // Increasing the canvas height must not enlarge monitor
                     // tiles again: keep the original 252 px fit-height budget.
                     const tileFitHeight = root.embeddedArrangementOnly
                         ? Math.min(height, 252) : height
-                    const usableHeight = Math.max(1, tileFitHeight - innerPadding * 2)
-                    return Math.min(usableWidth / Math.max(1, bounds.width), usableHeight / Math.max(1, bounds.height))
+                    return ArrangementViewport.fitScale(bounds, width, tileFitHeight, innerPadding)
                 }
                 readonly property real canvasScale: Math.max(
-                    0.025, fitScale * root.arrangementVisualScale)
+                    Number.EPSILON, fitScale * root.arrangementVisualScale * zoomFactor)
+                property real zoomFactor: 1
+                property point panOffset: Qt.point(0, 0)
+                readonly property bool viewportEditable: !root.monitorLayoutBusy && root.draggingLayoutOutput.length === 0
+                readonly property var centeredOffset: ArrangementViewport.centeredOffset(
+                    bounds, width, height, canvasScale)
                 readonly property point canvasOffset: Qt.point(
-                    (width - bounds.width * canvasScale) / 2 - bounds.minX * canvasScale,
-                    (height - bounds.height * canvasScale) / 2 - bounds.minY * canvasScale)
+                    centeredOffset.x + panOffset.x, centeredOffset.y + panOffset.y)
+                onLayoutBoundsChanged: panTo(panOffset.x, panOffset.y)
+                onWidthChanged: panTo(panOffset.x, panOffset.y)
+                onHeightChanged: panTo(panOffset.x, panOffset.y)
+                onViewportEditableChanged: if (viewportEditable) panTo(panOffset.x, panOffset.y)
+
+                function panTo(x: real, y: real): void {
+                    if (!viewportEditable)
+                        return
+                    const bounded = ArrangementViewport.boundedPan(
+                        x, y, layoutBounds, width, height, canvasScale)
+                    panOffset = Qt.point(bounded.x, bounded.y)
+                }
+
+                function zoomAt(factor: real, x: real, y: real): void {
+                    if (!viewportEditable)
+                        return
+                    const nextZoom = Math.max(1, Math.min(8, zoomFactor * factor))
+                    const nextScale = canvasScale * nextZoom / zoomFactor
+                    const center = ArrangementViewport.centeredOffset(bounds, width, height, nextScale)
+                    const pan = ArrangementViewport.zoomPan(x, y, canvasScale, nextScale, canvasOffset, center)
+                    zoomFactor = nextZoom
+                    panTo(pan.x, pan.y)
+                }
+
+                function fitOutputs(): void {
+                    if (!viewportEditable)
+                        return
+                    root.monitorLayoutViewportBounds = root.boundsForLayout(root.monitorLayoutSnapshot)
+                    zoomFactor = 1
+                    panOffset = Qt.point(0, 0)
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.NoButton
+                    onWheel: wheel => {
+                        if (!monitorLayoutCanvas.viewportEditable) {
+                            wheel.accepted = false
+                            return
+                        }
+                        if (wheel.modifiers & Qt.ControlModifier) {
+                            monitorLayoutCanvas.zoomAt(wheel.angleDelta.y > 0 ? 1.2 : 1 / 1.2, wheel.x, wheel.y)
+                        } else {
+                            monitorLayoutCanvas.panTo(
+                                monitorLayoutCanvas.panOffset.x + wheel.angleDelta.x / 4,
+                                monitorLayoutCanvas.panOffset.y + wheel.angleDelta.y / 4)
+                        }
+                        wheel.accepted = true
+                    }
+                }
+
+                DragHandler {
+                    id: viewportPan
+                    target: null
+                    acceptedButtons: Qt.MiddleButton
+                    enabled: monitorLayoutCanvas.viewportEditable
+                    property point origin: Qt.point(0, 0)
+                    onActiveChanged: if (active) origin = monitorLayoutCanvas.panOffset
+                    onTranslationChanged: if (active) monitorLayoutCanvas.panTo(origin.x + translation.x, origin.y + translation.y)
+                }
 
                 Rectangle {
                     anchors.fill: parent
@@ -1298,25 +1361,44 @@ ContentPage {
                     }
                 }
 
-                RippleButton {
+                Row {
                     anchors.top: parent.top
                     anchors.right: parent.right
                     anchors.margins: Appearance.sizes.spacingSmall
-                    implicitWidth: root.embeddedArrangementOnly ? 30 : 34
-                    implicitHeight: implicitWidth
-                    buttonRadius: Appearance.rounding.full
-                    colBackground: Appearance.colors.colLayer1
-                    colBackgroundHover: Appearance.colors.colLayer1Hover
-                    colRipple: Appearance.colors.colLayer1Active
-                    onClicked: root.monitorLayoutViewportBounds = root.boundsForLayout(root.monitorLayoutSnapshot)
-
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        text: "fit_screen"
-                        iconSize: Appearance.font.pixelSize.normal
-                        color: Appearance.colors.colOnLayer1
+                    spacing: 2
+                    z: 30
+                    Repeater {
+                        model: ["zoom_out", "fit_screen", "zoom_in"]
+                        delegate: RippleButton {
+                            id: viewportAction
+                            required property int index
+                            required property string modelData
+                            objectName: "monitorViewportAction" + index
+                            implicitWidth: root.embeddedArrangementOnly ? 30 : 34
+                            implicitHeight: implicitWidth
+                            buttonRadius: Appearance.rounding.full
+                            colBackground: Appearance.colors.colLayer1
+                            colBackgroundHover: Appearance.colors.colLayer1Hover
+                            colRipple: Appearance.colors.colLayer1Active
+                            enabled: monitorLayoutCanvas.viewportEditable
+                                && (index === 1 || (index === 0 ? monitorLayoutCanvas.zoomFactor > 1 : monitorLayoutCanvas.zoomFactor < 8))
+                            onClicked: {
+                                if (index === 1) monitorLayoutCanvas.fitOutputs()
+                                else monitorLayoutCanvas.zoomAt(index === 0 ? 1 / 1.4 : 1.4,
+                                    monitorLayoutCanvas.width / 2, monitorLayoutCanvas.height / 2)
+                            }
+                            contentItem: MaterialSymbol {
+                                anchors.centerIn: parent
+                                text: viewportAction.modelData
+                                iconSize: Appearance.font.pixelSize.normal
+                                color: Appearance.colors.colOnLayer1
+                            }
+                            StyledToolTip {
+                                text: index === 0 ? Translation.tr("Zoom out")
+                                    : index === 1 ? Translation.tr("Recenter monitor layout") : Translation.tr("Zoom in")
+                            }
+                        }
                     }
-                    StyledToolTip { text: Translation.tr("Recenter monitor layout") }
                 }
 
                 Rectangle {
