@@ -142,6 +142,25 @@ check('objectName: "dashboardToolbarTabName"' in toolbar
       "name/create/cancel controls missing from the edit toolbar position")
 check('visible: !root.naming' in toolbar,
       "name input must temporarily replace layout-edit actions")
+# Edit Dashboard Layout is the canonical toolbar size. Create/Rename must
+# not impose the old 390px width or increase the host's native input mask
+# / top reserve height, even while validation text appears.
+for token in (
+    "Math.min(760, root.toolbarRowNaturalWidth)",
+    "readonly property real editToolbarHeight:",
+    "toolbarRow.implicitHeight + root.horizontalPadding * 2",
+    "implicitHeight: root.editToolbarHeight",
+    "Layout.preferredHeight: toolbarRow.implicitHeight",
+    "Layout.preferredHeight: Math.min(40, toolbarRow.implicitHeight)",
+    "alternativeVisibleCondition: tabNameInput.invalidName",
+):
+    check(token in toolbar, "Create/Rename toolbar diverges from Edit size: " + token)
+check("root.naming ? 390" not in toolbar,
+      "Create toolbar retained its old independent width")
+check("implicitHeight: toolbarColumn.implicitHeight" not in toolbar,
+      "hidden/current controls must not resize toolbar height")
+check('StyledText {\n            visible: root.naming\n                && (root.tabController?._customDialogError?.length ?? 0) > 0' not in toolbar,
+      "inline name error must not expand the canonical toolbar footprint")
 # DASH-F01: the name field must not fall back to Qt's square, bright-blue
 # platform focus rectangle. Its fill, text, placeholder, focus and error
 # borders must follow Alis/Abyss colors across light/dark themes.
