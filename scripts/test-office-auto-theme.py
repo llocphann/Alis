@@ -118,7 +118,7 @@ class OfficeThemeTests(unittest.TestCase):
                     colors["canvas-ruler-border"], colors["canvas-ruler-background"]), 3.0)
 
     def test_onlyoffice_canvas_refreshes_with_palette_and_restores_original_settings(self):
-        original = b"[General]\\nUITheme=theme-night\\nLanguage=en\\n"
+        original = b"[General]\nUITheme=theme-night\nLanguage=en\n"
         self.put(self.config, original)
         self.update()
         first = json.loads(self.theme.read_bytes())
