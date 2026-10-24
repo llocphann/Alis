@@ -337,6 +337,7 @@ run_check 'Dashboard horizontal gesture and stable page order regression' node s
 run_check 'Weekly Planner event drag and both resize handles (regression guard)' python3 scripts/test-weekly-planner-pointer-contract.py
 run_check 'Native Weekly Planner pointer move, top/bottom resize and isolated calendar fixture' python3 scripts/test-weekly-planner-runtime.py
 run_check 'Weekly Planner selected/batch gestures and stored event safeguards' python3 scripts/test-weekly-planner-multi-selection-contract.py
+run_check 'Legacy Weekly Planner saved recurring event compatibility and instance safety' node scripts/test-weekly-planner-legacy-recurrence.mjs
 run_check 'Weekly Planner civil dates, overlap, recurrence and DST regression' node scripts/test-weekly-planner-policy.mjs
 run_check 'Weekly Planner notified schedule rollover and retained history' node scripts/test-weekly-planner-recurring-rollover.mjs
 run_check 'Weekly Planner Ctrl/Shift multi-date and compatible Repeat cycles' node scripts/test-weekly-planner-multidate.mjs
