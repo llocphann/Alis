@@ -169,5 +169,24 @@ test('cycle rollover materializes exceptions once, preserving legacy IDs and pen
     assert.equal(root.saves,1);
   }
 });
+test('one occurrence moved to a later week does not postpone or duplicate the series',()=>{
+  const moved=O.rescheduleSavedRecurring(legacy,0,'2032-11-05T09:00:00Z','2032-11-05T10:00:00Z');
+  assert.ok(moved);
+  const source=read('services/Events.qml');
+  const code=source.slice(source.indexOf('function checkDueEvents()'),source.indexOf('function createNextRecurrence('));
+  class Clock extends Date {constructor(...a){super(...(a.length?a:['2032-10-25T12:00:00Z']));}}
+  const root={ready:true,list:[moved],saves:0,saveToFile(){this.saves++;},eventTriggered(){},reminderTriggered(){}};
+  const context=vm.createContext({root,Occurrences:O,RepeatPolicy:load('services/EventRepeatPolicy.js'),Date:Clock,Number,Math});
+  vm.runInContext(code,context);context.checkDueEvents();
+  const event=root.list[0];
+  assert.equal(event.occurrences.length,4,'one future exception blocked ordinary cycle generation');
+  assert.equal(event.repeatCycleStart,2);
+  assert.equal(event.occurrences[0].notified,false,'future exception falsely marked notified');
+  const next=rows(event,'2032-10-26T12:00:00Z');
+  assert.equal(next.length,2,'history with a pending exception projected another copy of the series');
+  const later=rows(event,'2032-11-02T12:00:00Z');
+  assert.equal(later.length,3,'later week must contain its normal two slots and the one moved instance');
+  const snapshot=JSON.stringify(root.list);context.checkDueEvents();assert.equal(JSON.stringify(root.list),snapshot);
+});
 console.log(JSON.stringify({test:'multidate-gestures',zone:process.env.TZ,passed,failed,source_root:root}));
 process.exitCode=failed ? 1 : 0;

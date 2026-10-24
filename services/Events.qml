@@ -322,10 +322,14 @@ Singleton {
             }
             // The explicit group repeats as a unit, retaining its single
             // Event ID, original template and occurrence history.
-            // Wait for every selected day to fire before creating the next
-            // complete calendar cycle; preserve existing single-day behavior.
+            // Advance by the original cycle, not a moved instance's new date.
+            // A pending exception retains its reminder/notification flags and
+            // is still processed above, without delaying everyone else's week.
+            const activeSlots=slots.slice(Math.max(0,Number(event.repeatCycleStart || 0)))
+            const cycleElapsed=activeSlots.length>0 && activeSlots.every(slot=>
+                new Date(slot.plannerSeriesStartDate || slot.startDate).getTime()<=currentTime)
             if (Array.isArray(event.repeatTemplate) && event.repeatTemplate.length>0
-                    && event.recurrence!=="none" && slots.every(slot=>slot.notified)) {
+                    && event.recurrence!=="none" && cycleElapsed) {
                 const future=RepeatPolicy.nextCycle(event.repeatTemplate,
                     event.recurrence,currentTime)
                 if (future && future.length) {

@@ -99,10 +99,10 @@ function project(local, external, value, firstDay) {
                 // A repeating multi-day group is one pattern. Project every
                 // day of its currently active cycle even when an earlier day
                 // has already fired. Archive cycles render as history only.
-                var activeGroup=Array.isArray(event.repeatTemplate)
+                var repeatingGroup=Array.isArray(event.repeatTemplate)
                     && event.repeatTemplate.length>0
-                    && (event.recurrence || "none")!=="none"
-                    && slotIndex>=Number(event.repeatCycleStart || 0);
+                    && (event.recurrence || "none")!=="none";
+                var activeGroup=repeatingGroup && slotIndex>=Number(event.repeatCycleStart || 0);
                 // When a saved recurring occurrence is independently moved,
                 // project the current instance at its edited date, but generate
                 // future virtual weeks from the immutable original schedule.
@@ -117,7 +117,8 @@ function project(local, external, value, firstDay) {
                 var occurrenceSource=Object.assign({},event,{
                     startDate:anchor.toISOString(),dateTime:anchor.toISOString(),
                     endDate:anchorEnd && anchorEnd>anchor ? anchorEnd.toISOString() : "",
-                    notified:slot.notified===true && !activeGroup
+                    notified:(repeatingGroup && !activeGroup)
+                        || (slot.notified===true && !activeGroup)
                 });
                 var generated=starts(occurrenceSource,days,pair[1],event.allDay
                     ? allDaySpan*86400000 : seriesDuration);
