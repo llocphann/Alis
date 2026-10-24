@@ -132,9 +132,28 @@ Item {
     readonly property real columnWidth: Math.max(102 * Appearance.fontSizeScale, (viewport.width - 44) / 7)
     readonly property color ink: Appearance.colors.colOnLayer1
     readonly property color mutedInk: Appearance.colors.colSubtext
-    // Always use Alis' theme-derived gradient, not album-cover or audio
-    // visualizer settings. It rebinds when the active system theme changes.
-    readonly property var eventThemeColors: CavaTheme.vibrantColors
+    // Read the actual Material theme anchors. The old CAVA vibrant palette
+    // intentionally rotates hue for a music visualizer, which made unrelated
+    // Events cluster into purple/blue bands rather than match the desktop.
+    // Generate eight separated swatches from the live Primary/Secondary/
+    // Tertiary palette; none is stored on the owner Event data.
+    readonly property var eventThemeColors: {
+        const accents=[Appearance.colors.colPrimary,
+            Appearance.colors.colSecondary,Appearance.colors.colTertiary]
+        const hues=EventPalette.themeHues(
+            Qt.color(accents[0]).hslHue,
+            Qt.color(accents[1]).hslHue,
+            Qt.color(accents[2]).hslHue,8)
+        const dark=Appearance.m3colors.darkmode
+        return hues.map((hue,index)=>{
+            const anchor=Qt.color(accents[index%accents.length])
+            const saturation=Math.max(.56,Math.min(.82,anchor.hslSaturation))
+            const lightness=dark
+                ? Math.max(.54,Math.min(.70,anchor.hslLightness))
+                : Math.max(.34,Math.min(.52,anchor.hslLightness))
+            return Qt.hsla(hue,saturation,lightness,1)
+        })
+    }
     function eventGradientColor(row, palette): color {
         const explicit=row?.event?.color || (row?.source==="external"
             ? row?.event?.sourceColor : null)
@@ -144,15 +163,22 @@ Item {
         }
         if (!palette || !palette.length)
             return Appearance.colors.colPrimary
-        const steps=8
-        const position=EventPalette.paletteSlot(row?.event,row?.source,steps)
-            * (palette.length-1)/(steps-1)
-        const lo=Math.floor(position),hi=Math.min(palette.length-1,lo+1)
-        const first=Qt.color(palette[lo]),second=Qt.color(palette[hi])
-        const t=position-lo
-        return Qt.rgba(first.r+(second.r-first.r)*t,
-            first.g+(second.g-first.g)*t,
-            first.b+(second.b-first.b)*t,1)
+        const index=EventPalette.paletteSlot(row?.event,row?.source,palette.length)
+        return Qt.color(palette[index])
+    }
+    function eventGradientTail(row, palette): color {
+        const primary=root.eventGradientColor(row,palette)
+        // Respect explicit existing user/source colors without recoloring.
+        if (row?.event?.color || (row?.source==="external"
+                && row?.event?.sourceColor) || !palette || palette.length<2)
+            return primary
+        const index=EventPalette.paletteSlot(row?.event,row?.source,palette.length)
+        const following=Qt.color(palette[(index+1)%palette.length])
+        // A small secondary tint makes this an actual two-tone gradient,
+        // without turning the whole card into the neighboring Event color.
+        return Qt.rgba(primary.r*.84+following.r*.16,
+            primary.g*.84+following.g*.16,
+            primary.b*.84+following.b*.16,1)
     }
     // Match the date and All-day headings to the actual timeline: its day
     // cells have no opaque backing, so the pinned headings must not paint a
@@ -664,6 +690,8 @@ Item {
                                 readonly property bool canReschedule: Selection.canReschedule(modelData)
                                 readonly property color eventAccent:
                                     root.eventGradientColor(modelData,root.eventThemeColors)
+                                readonly property color eventAccentTail:
+                                    root.eventGradientTail(modelData,root.eventThemeColors)
                                 // Resize affordances belong to this card alone. Keep
                                 // the edge MouseAreas active even while the bars fade out.
                                 readonly property bool showResizeHandles: canReschedule
@@ -713,7 +741,7 @@ Item {
                                     }
                                     GradientStop {
                                         position:1
-                                        color:Qt.alpha(timedButton.eventAccent,
+                                        color:Qt.alpha(timedButton.eventAccentTail,
                                             eventMouse.containsMouse ? .23 : .16)
                                     }
                                 }
