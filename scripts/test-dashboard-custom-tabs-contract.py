@@ -142,6 +142,32 @@ check('objectName: "dashboardToolbarTabName"' in toolbar
       "name/create/cancel controls missing from the edit toolbar position")
 check('visible: !root.naming' in toolbar,
       "name input must temporarily replace layout-edit actions")
+# DASH-F01: the name field must not fall back to Qt's square, bright-blue
+# platform focus rectangle. Its fill, text, placeholder, focus and error
+# borders must follow Alis/Abyss colors across light/dark themes.
+name_field = toolbar.split('id: tabNameInput', 1)[1].split('objectName: "dashboardToolbarCreate"', 1)[0]
+for token in (
+    'objectName: "dashboardToolbarTabName"',
+    "implicitHeight: 40",
+    "leftPadding: 14",
+    "rightPadding: 14",
+    "radius: 12",
+    'objectName: "dashboardTabNameBackground"',
+    "background: Rectangle {",
+    "AbyssStyle.contentLayer : Appearance.colors.colLayer1",
+    "AbyssStyle.textColor : Appearance.colors.colOnLayer1",
+    "AbyssStyle.textColorMuted : Appearance.colors.colSubtext",
+    "AbyssStyle.accent",
+    "Appearance.colors.colPrimary",
+    "Appearance.colors.colOutline",
+    "Appearance.colors.colError",
+    "Behavior on border.color",
+    "enabled: Appearance.animationsEnabled",
+    'onTextEdited: root.tabController?.setCustomTabName(text)',
+    'onAccepted: root.tabController?.acceptCustomTabDialog()',
+):
+    check(token in name_field, "themed rounded custom-tab name field lost " + token)
+
 check('root._customDialogShown && root._customDialogMode === "delete"' in content,
       "centered dialog must only be used for destructive confirmation")
 standalone = (src / "Dashboard.qml").read_text()
