@@ -69,23 +69,23 @@ assert.notDeepEqual(Array.from(tones(cases[0].anchors,true)).map(v=>v.hue),
 assert.equal(JSON.stringify(event),original,'theme tones mutated owner data');
 const qml=file('modules/dashboard/DashboardWeeklyPlanner.qml');
 assert.match(qml,/import "PlannerEventPalette.js" as EventPalette/);
-assert.match(qml,/readonly property var eventThemeColors: \\{/);
+assert.match(qml,/readonly property var eventThemeColors: \{/);
 for (const accent of ['colPrimary','colSecondary','colTertiary'])
-  assert.match(qml,new RegExp('Appearance\\\\.colors\\\\.'+accent));
-assert.match(qml,/EventPalette\\.materialTones\\(/);
-assert.match(qml,/saturation:color\\.hslSaturation/);
-assert.match(qml,/hue:color\\.hslHue/);
-assert.match(qml,/Qt\\.hsla\\(/);
-assert.doesNotMatch(qml,/CavaTheme\\.vibrantColors|EventPalette\\.themeHues/,
+  assert.match(qml,new RegExp('Appearance\\.colors\\.'+accent));
+assert.match(qml,/EventPalette\.materialTones\(/);
+assert.match(qml,/saturation:color\.hslSaturation/);
+assert.match(qml,/hue:color\.hslHue/);
+assert.match(qml,/Qt\.hsla\(/);
+assert.doesNotMatch(qml,/CavaTheme\.vibrantColors|EventPalette\.themeHues/,
   'Event colors must not be taken from music spectrum or synthetic rainbow hues');
-assert.match(qml,/function eventGradientColor\\(row, palette\\): color/);
-assert.match(qml,/function eventGradientTail\\(row, palette\\): color/);
-assert.match(qml,/EventPalette\\.paletteSlot\\(row\\?\\.event,row\\?\\.source,palette\\.length\\)/);
-assert.match(qml,/Appearance\\.colors\\.colLayer0/,
+assert.match(qml,/function eventGradientColor\(row, palette\): color/);
+assert.match(qml,/function eventGradientTail\(row, palette\): color/);
+assert.match(qml,/EventPalette\.paletteSlot\(row\?\.event,row\?\.source,palette\.length\)/);
+assert.match(qml,/Appearance\.colors\.colLayer0/,
   'gradient tail should stay in the active theme, not another Event hue');
-assert.match(qml,/row\\?\\.event\\?\\.color/,
+assert.match(qml,/row\?\.event\?\.color/,
   'an intentionally set Event color must remain respected');
-assert.match(qml,/row\\?\\.event\\?\\.sourceColor/,
+assert.match(qml,/row\?\.event\?\.sourceColor/,
   'external source colors must remain respected');
 const allDay=qml.slice(qml.indexOf('objectName:"plannerAllDayEvent"'),
   qml.indexOf('objectName:"plannerTimedEvent"'));
