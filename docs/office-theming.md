@@ -37,9 +37,12 @@ document editor's canvas. An earlier adapter themed `background-normal` and
 `background-action-panel` but omitted the documented `canvas-background`
 role; consequently the area around the document still used the built-in gray
 color even when the toolbar and settings followed Alis. The adapter now sets
-`canvas-background` from the current Alis app background, and gives the ruler,
-margin region, page border, scroll thumb and spreadsheet header canvas
-compatible contrast-aware colors.
+`canvas-background` and `canvas-ruler-background` to the Owner-requested
+`#114161` when the Alis app palette is dark, instead of either suite's gray.
+A light palette uses the generated Alis background as the canvas. Page borders,
+scroll thumbs and spreadsheet header colors are contrast-checked against that
+canvas. This is an explicit Office dark workspace preference, **not** a
+document page color.
 
 The adapter **intentionally does not set** `canvas-content-background` (paper,
 slide or spreadsheet cell surface) or document font/content colors. This
@@ -47,9 +50,12 @@ preserves the editor's document-theme and printing semantics; light paper may
 appear against a dark Alis workspace and that is intentional.
 
 LibreOffice's supported `AppBackground` UI color role serves the analogous
-workspace outside the document. The adapter maps that role to the same Alis
-canvas background token, while keeping explicit `DocColor`, `FontColor` and
-document visibility preferences user-owned. LibreOffice 26.8 may render some
+workspace outside the document. Per Owner request, the adapter now sets
+`AppBackground` to **exactly `#114161`** rather than deriving it from the
+generic Alis palette, while keeping explicit `DocColor`, `FontColor` and
+document visibility preferences user-owned. The override remains active even
+when other LibreOffice UI colors are generated from a light Alis palette; this
+is intentional until the Owner requests a different per-mode color. LibreOffice 26.8 may render some
 toolkit/toolbar regions with platform or module-specific colors; do not claim
 full pixel-level palette parity. If the user has selected a Writer application
 background bitmap, that can obscure the plain application-background color:
@@ -63,6 +69,18 @@ inspect the application background around a Writer document and the
 Appearance > Application background color, plus menus and buttons. Repeat
 with dark and light Alis palettes and confirm restore on disabling each
 integration. These are Owner visual checks, not covered by synthetic tests.
+
+**Important runtime limitation:** both Office suites must be *fully closed*
+before color refresh, as this adapter deliberately defers writes while either
+suite is running. If the ONLYOFFICE surround is still the default gray,
+do not infer that the editor consumed the new JSON merely because the Alis
+generated-file test passes. Inspect the selected `UITheme` in
+`DesktopEditors.conf`, the `canvas-background` inside the generated
+`alis-auto.json`, and the actual editor's selected theme after reopening.
+The Desktop Editors shell loads local themes at startup and the embedded
+editor has a separate theme consumer. A synthetic profile receipt alone
+cannot prove the running editor uses it; no hot-patching of the user's
+documents or third-party binaries is attempted.
 
 LibreOffice documents its [Appearance options](https://help.libreoffice.org/latest/en-US/text/shared/optionen/01012000.html)
 and [configuration/theme architecture](https://github.com/LibreOffice/core/blob/master/vcl/README.themes.md).
