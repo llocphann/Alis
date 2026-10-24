@@ -15,6 +15,14 @@ Describe what you actually ran and what you observed. Use the checks that match 
 - [ ] Active ii/Waffle behavior was checked if shared family/runtime code changed
 - [ ] No hard-coded perimeter placement assumption was introduced
 
+## Strict functional preservation and legacy data
+
+- [ ] Before/after inventory of affected features and dependent modules confirms no existing behavior or Owner-accepted capability was lost or altered unintentionally (including visual/motion, input, persistence, disabled/optional and multi-output behavior).
+- [ ] Affected original regressions and cross-feature interactions were rerun at exact SHAs; no tests were deleted, weakened, or reclassified to claim success.
+- [ ] If a patch affects persisted state: existing pre-patch user data, older schemas/config and historical events are handled, not only newly created entries. Migration/backfill or read-time compatibility is documented and idempotent.
+- [ ] Sanitized historical fixtures, mixed old/new records, repeat application, reload/restart, failure-retry/rollback and readback were tested where applicable; existing IDs/timestamps/user edits and unrelated data are preserved.
+- [ ] Remaining FAIL/SKIP/UNRUN, untested desktop/hardware scenarios and Owner acceptance are described explicitly. Known regressions or unsynced legacy data block DONE.
+
 ## Architecture / configuration impact
 
 - [ ] Config schema/defaults/consumers stay in sync if configuration changed
