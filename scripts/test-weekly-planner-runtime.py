@@ -21,7 +21,17 @@ Window {
  Component.onCompleted:Quickshell.watchFiles=false
  QtObject {
   id:local;property var list:[]
+  property int rescheduleCalls:0
   signal eventAdded(var event);signal eventUpdated(var event);signal eventRemoved(int id)
+  // Private in-memory backend: pointer tests must never write owner Agenda.
+  function rescheduleOccurrence(id,index,startIso,endIso,metadata) {
+   const next=Array.from(list),at=next.findIndex(row=>row.id===id)
+   if(at<0 || index!==0) return false
+   const changed=Object.assign({},next[at],{startDate:startIso,endDate:endIso})
+   next[at]=changed;list=next;rescheduleCalls++
+   eventUpdated(changed)
+   return true
+  }
  }
  QtObject {id:external;property var events:[];signal eventsUpdated()}
  Item {
@@ -106,6 +116,43 @@ Window {
    const slot=all(planner,"plannerCreateSlot")[2]
    mouseClick(slot,slot.width/2,planner.hourHeight*9.25);check(root.last.plannerDate instanceof Date && root.last.plannerDate.getHours()===9 && root.last.plannerDate.getMinutes()===15,"slot lost clicked date/time")
    capture("overlap-slots")
+   // Owner-critical interactions: simulate real Qt pointer presses/moves/releases
+   // on a private, in-memory one-off event. Never write user calendar data.
+   function timeOf(id,key) {
+    return new Date(local.list.find(row=>row.id===id)[key]).getTime()
+   }
+   function dragPointer(area,deltaY) {
+    check(!!area,"missing gesture hit area")
+    const x=area.width/2,y=area.height/2
+    mousePress(area,x,y,Qt.LeftButton)
+    mouseMove(area,x,y+deltaY,80)
+    mouseRelease(area,x,y+deltaY,Qt.LeftButton)
+    wait(50)
+   }
+   function eventOne() {
+    return all(planner,"plannerTimedEvent").find(item=>item.modelData.event.id===1)
+   }
+   let movedCard=eventOne()
+   check(!!movedCard && movedCard.canReschedule,"one-off event lost gesture eligibility")
+   check(!!find(movedCard,"plannerResizeStart")?.visible &&
+     !!find(movedCard,"plannerResizeEnd")?.visible,"resize grips no longer visible")
+   const slotStep=planner.hourHeight/4
+   const originalStart=timeOf(1,"startDate"),originalEnd=timeOf(1,"endDate")
+   dragPointer(find(movedCard,"plannerEventMoveArea"),slotStep)
+   check(local.rescheduleCalls===1 && timeOf(1,"startDate")===originalStart+15*60000
+      && timeOf(1,"endDate")===originalEnd+15*60000,
+      "body drag must move both endpoints by 15 minutes")
+   movedCard=eventOne()
+   dragPointer(find(movedCard,"plannerResizeStart"),slotStep)
+   check(local.rescheduleCalls===2 && timeOf(1,"startDate")===originalStart+30*60000
+      && timeOf(1,"endDate")===originalEnd+15*60000,
+      "top grip must resize only event start")
+   movedCard=eventOne()
+   dragPointer(find(movedCard,"plannerResizeEnd"),slotStep)
+   check(local.rescheduleCalls===3 && timeOf(1,"startDate")===originalStart+30*60000
+      && timeOf(1,"endDate")===originalEnd+30*60000,
+      "bottom grip must resize only event end")
+   check(root.calls===count+2,"drag/resize opened the Event editor")
    const weekDate=planner.days[0].date.getTime();planner.changeWeek(1);check(planner.days[0].date.getTime()>weekDate,"Next week failed");planner.changeWeek(-1);check(planner.days[0].date.getTime()===weekDate,"Previous week failed")
    planner.forceActiveFocus();keyClick(Qt.Key_PageDown);check(planner.days[0].date.getTime()>weekDate,"keyboard week navigation failed");keyClick(Qt.Key_PageUp)
    root.allocatedWidth=320;root.allocatedHeight=410;wait(100)
