@@ -165,6 +165,21 @@ assert.equal(promoted.repeatCycleStart,0);
 assert.equal(JSON.stringify(legacyOneSlot.occurrences[0]),
   JSON.stringify({startDate:oldSeries.startDate,endDate:oldSeries.endDate,notified:false}));
 assert.equal(O.rescheduleSavedRecurring(oldSeries,1,oldDragged.startIso,oldDragged.endIso),null);
+// Very old Agenda entries may only have dateTime and no endDate.
+const oldest={id:404,title:'Archived daily legacy',dateTime:'2026-10-20T07:00:00Z',
+  recurrence:'daily',notified:false,ownerNotes:{preserve:true}};
+const oldestRow=P.project([oldest],[],'2026-10-20T12:00:00Z',1)
+  .flatMap(day=>day.timed).find(row=>!row.virtual && row.event.id===404);
+assert.ok(oldestRow && S.canReschedule(oldestRow),
+  'dateTime-only repeating Event not draggable');
+const oldestRange=G.rangeForGesture(oldestRow,'bottom',0,13,102,52);
+assert.ok(oldestRange);
+const oldestUpdate=O.rescheduleSavedRecurring(oldest,0,oldestRange.startIso,
+  oldestRange.endIso);
+assert.ok(oldestUpdate && oldestUpdate.occurrences===undefined);
+assert.equal(oldestUpdate.plannerSeriesStartDate,oldest.dateTime);
+assert.equal(oldestUpdate.plannerSeriesEndDate,'2026-10-20T08:00:00.000Z');
+assert.equal(oldestUpdate.ownerNotes.preserve,true);
 const source=fs.readFileSync(file('services/Events.qml'),'utf8');
 const recurrenceFunction=source.slice(source.indexOf('function createNextRecurrence('),
   source.indexOf('function addEvent(',source.indexOf('function createNextRecurrence(')));
