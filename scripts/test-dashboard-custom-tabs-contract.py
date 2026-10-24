@@ -101,6 +101,20 @@ check('Config.setNestedValue("dashboard.defaultTabId", id)' in content,
 check('anchors.centerIn: parent' in header
       and 'anchors.left: pages.right' not in header,
       "tab actions must be centered together with indicators")
+# The active dot follows the exact page-strip progress. The previous selected
+# dot color toggled instantly and looked like the indicator disappeared/reappeared.
+for token in (
+    "property real indicatorProgress: currentPage",
+    'objectName: "dashboardActivePageIndicator"',
+    "root.indicatorProgress",
+    "root.pageDotButtonWidth + pages.spacing",
+    "color: Qt.alpha(root.colText, .35)",
+):
+    check(token in header, "sliding page indicator missing: " + token)
+check("indicatorProgress: pages.slideProgress" in content,
+      "page indicator is not synchronized to the page strip")
+check("index === root.currentPage ? root.colText" not in header,
+      "active page still swaps dot colors instead of moving continuously")
 check('onClicked: root.createTabRequested()' in header,
       "Create button must invoke naming toolbar")
 toolbar = (src / "DashboardEditToolbar.qml").read_text()
