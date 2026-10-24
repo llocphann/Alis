@@ -15,6 +15,9 @@ Item {
     property bool externalEditToolbar: false
     property bool warmContent: false
     readonly property var canvasController: dashboardContent.canvasController
+    // The external Abyss editor needs the tab naming controller as well as
+    // the canvas editor; otherwise Create/Rename opens invisible controls.
+    readonly property var tabController: dashboardContent
     property bool directBottomAttachment: false
     property bool popupPresented: true
     property string searchingText: ""
