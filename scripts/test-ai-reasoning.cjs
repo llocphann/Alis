@@ -33,4 +33,19 @@ assert(!api.supported(model('gemini','gemini-3.1-flash-lite-image')));
 assert(api.supported(model('gguf')));
 assert.equal(api.apply({...model('openai'),extraParams:{temperature:1}},base,'high').temperature,.6);
 assert.equal(base.temperature,.6, 'request overrides never mutate the input');
+const local={...model('openai'),provider_id:'lmstudio',local:true,local_verified:true,
+    local_fingerprint:'a'.repeat(64),endpoint:'http://127.0.0.1:1234/v1/chat/completions'};
+assert.equal(api.instantEndpoint(local),'http://127.0.0.1:1234/v1/responses');
+assert.equal(api.instantEndpoint({...local,endpoint:'http://[::1]:1234/v1/responses'}),'http://[::1]:1234/v1/responses');
+for(const patch of [{local:false},{local_verified:false},{provider_id:'custom'},{local_fingerprint:''},
+        {api_format:'gemini'},{endpoint:'https://remote.test/v1/chat/completions'},
+        {endpoint:'http://127.0.0.1:0/v1/chat/completions'},
+        {endpoint:'http://127.0.0.1:65536/v1/chat/completions'},
+        {endpoint:'http://user@127.0.0.1/v1/chat/completions'},
+        {endpoint:'http://127.0.0.1/v1/chat/completions?key=private'},
+        {endpoint:'http://127.0.0.1/custom-route'}])assert.equal(api.instantEndpoint({...local,...patch}),'');
+const instant=api.apply({...local,api_format:'openai-response'},base,'instant');
+assert.equal(instant.reasoning.effort,'none');assert.equal(instant.store,false);
+assert.equal(instant.max_output_tokens,256);assert.equal(base.reasoning,undefined);
+assert.equal(api.apply(local,base,'off'),base,'explicit Instant must not change the provider-default option');
 console.log('AI_REASONING_PASS defaults capabilities chat responses Gemini Claude immutability');

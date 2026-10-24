@@ -52,6 +52,7 @@ Singleton {
         return component ? component.createObject(owner) : null
     }
     function supportsThinking(model): bool { return Reasoning.supported(model) }
+    function supportsInstant(model): bool { return Reasoning.instantEndpoint(model).length>0 }
     function buildChatRequest(model, strategy, messages, prompt, temperature, tools, filePath, effort = "off"): var {
         return Reasoning.apply(model, strategy.buildRequestData(model, messages, prompt,
             temperature, tools, filePath), effort)

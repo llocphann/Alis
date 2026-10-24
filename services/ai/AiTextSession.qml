@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "AiReasoning.js" as Reasoning
 
 // A text-only conversation owned by a consumer of Ai. Catalog, credentials,
 // privacy, protocol strategies and the GGUF runner all come from that service.
@@ -30,6 +31,10 @@ QtObject {
             error = "Choose an available model in AI settings."
             return false
         }
+        if(effort==="instant" && !ai.supportsInstant(model)) {
+            error="Choose a verified local LM Studio model for Instant mode."
+            return false
+        }
         if (modelSnapshot) modelSnapshot.destroy()
         if (strategy) strategy.destroy()
         if (message) message.destroy()
@@ -40,8 +45,12 @@ QtObject {
             snapshot[key] = model[key]
         snapshot.extraParams = JSON.parse(JSON.stringify(model.extraParams ?? {}))
         snapshot.capabilities = JSON.parse(JSON.stringify(model.capabilities ?? {}))
+        if(effort==="instant") {
+            snapshot.endpoint=Reasoning.instantEndpoint(model)
+            snapshot.api_format="openai-response"
+        }
         modelSnapshot = ai.aiModelComponent.createObject(root, snapshot)
-        strategy = ai.createStrategy(root, model.api_format)
+        strategy = ai.createStrategy(root, modelSnapshot.api_format)
         if (!strategy) { error = "This AI protocol is unavailable."; return false }
         strategy.reset()
         message = ai.aiMessageComponent.createObject(root, {role:"assistant", model:String(modelId),
@@ -54,6 +63,11 @@ QtObject {
         // A companion reply cannot request shell tools, even if a provider's
         // extra parameters contain tool defaults for the main AI conversation.
         delete data.tools; delete data.tool_choice; delete data.functions; delete data.function_call
+        if(modelSnapshot.api_format==="openai-response") {
+            data.store=false
+            delete data.previous_response_id
+            data.max_output_tokens=256
+        }
         const request = ai.textTransport(modelSnapshot, strategy, data, effort)
         transport.environment = request.environment
         transport.command = request.command

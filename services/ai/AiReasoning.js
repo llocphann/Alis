@@ -8,7 +8,22 @@ function supported(model) {
         && !(model.api_format === "gemini" && /image/i.test(model.model))
 }
 
+// An explicit text-session option. Preserve the user's model and provider;
+// only canonical, positively verified local LM Studio URLs can opt into its
+// stateless Responses transport. The Python transport re-verifies weights.
+function instantEndpoint(model) {
+    if(model?.local!==true || model.local_verified!==true || model.provider_id!=="lmstudio"
+            || !["openai","openai-response"].includes(model.api_format)
+            || !/^[0-9a-f]{64}$/.test(String(model.local_fingerprint ?? "")))return ""
+    const endpoint=String(model.endpoint ?? "")
+    const match=endpoint.match(/^https?:\/\/(?:127\.0\.0\.1|\[::1\])(?::([0-9]{1,5}))?\/v1\/(?:chat\/completions|responses)$/)
+    if(!match || (match[1]!==undefined && (Number(match[1])<1 || Number(match[1])>65535)))return ""
+    return endpoint.replace(/\/chat\/completions$/,"/responses")
+}
+
 function apply(model, input, effort) {
+    if(effort==="instant" && model.api_format==="openai-response" && instantEndpoint(model))
+        return Object.assign({},input,{reasoning:{effort:"none"},store:false,max_output_tokens:256})
     if (!supported(model) || !["low", "medium", "high"].includes(effort)) return input
     const data = Object.assign({}, input)
     if (model.api_format === "openai") {
