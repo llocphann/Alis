@@ -594,6 +594,23 @@ Singleton {
         return true
     }
 
+    // A single saved instance in an existing recurring series may be moved or
+    // resized without rewriting the series template or its occurrence history.
+    // Virtual instances (not stored yet) are intentionally not accepted.
+    function rescheduleRecurringOccurrence(id, index, startIso, endIso) {
+        if (!root.ready) return false
+        const position=root.list.findIndex(event=>event.id===id)
+        if (position<0) return false
+        const updated=Occurrences.rescheduleSavedRecurring(
+            root.list[position],index,startIso,endIso)
+        if (!updated) return false
+        root.list[position]=updated
+        root.list=root.list.slice()
+        root.eventUpdated(updated)
+        root.saveToFile()
+        return true
+    }
+
     // Atomic Weekly Planner group edits: validate every operation before
     // changing any canonical event; emit updates and persist once.
     function applyPlannerOccurrenceBatch(operations) {
