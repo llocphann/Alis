@@ -35,7 +35,7 @@ expect(music, 'objectName: "musicLibrary"', 'objectName: "musicGenreTab"',
        'id: queueCollapseTimer',
        'Math.ceil(implicitHeight)', 'parent.height - parent.spacing - 108',
        'mediaColumnWidth: Math.min(380, Math.max(315, width * .29))')
-expect(pages, 'function handleEscape(): bool', 'dashboardCanvas.cancelEditMode()',
+expect(pages, 'function handleEscape(): bool', 'root.canvasController?.cancelEditMode()',
        'musicPage.item?.restoreBrowserColumns()', 'orientation: Qt.Horizontal',
        'PagePolicy.advance(', 'GlobalStates.dashboardPageId',
        'PagePolicy.ordered(', 'musicPage.item?.panHorizontally(movement.x)')
@@ -47,7 +47,7 @@ expect(header, 'id: uptime', 'anchors.left: parent.left',
        'root.horizontalWheel(event)', 'Keys.onLeftPressed:', 'Keys.onRightPressed:')
 expect(module, 'readonly property bool hovered: hoverTracker.hovered',
        'onHoveredChanged: root.interaction(hovered ? .35 : -.15)')
-expect(popup, 'readonly property bool moduleHoverActive: !!(',
+expect(popup, 'readonly property bool moduleHoverActive: root._sourceHoverReady && !!(',
        'root._liquidAnchor?.hovered', 'root._liquidAnchor?.feature?.containsMouse',
        'root.hoverTarget?.containsMouse',
        'root.moduleHoverActive || root._anchorHover.hovered || root.popupHovered')

@@ -29,8 +29,9 @@ required_canvas = [
 for needle in required_canvas:
     assert needle in canvas, needle
 
-assert "dashboardCanvas.commitEditMode()" in content
-assert "dashboardCanvas.beginEditMode()" in content
+assert "root.canvasController.commitEditMode()" in content
+assert "root.canvasController?.beginEditMode()" in content
+assert "root.canvasController?.editMode" in content
 assert "dashboardCanvas.editMode = !dashboardCanvas.editMode" not in content
 
 assert "Add all modules and fit them automatically" in toolbar

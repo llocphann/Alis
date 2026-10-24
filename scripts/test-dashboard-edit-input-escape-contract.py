@@ -32,7 +32,8 @@ assert "liquid.nativeInputRegions" in perimeter
 # The first Escape goes through Cancel (draft discarded), not Done/Save/Close.
 body = content[content.index("function handleEscape(): bool {"):
                content.index("function openPlannerEventEditor(")]
-assert body.index("dashboardCanvas.cancelEditMode()") < body.index("if (_agendaDialogShown)")
+assert body.index("root.canvasController?.cancelEditMode()") < body.index("if (_agendaDialogShown)")
+assert "dashboardCanvas.cancelEditMode()" not in body, "Escape must cancel the selected custom canvas too"
 assert "dashboardHeader.cancelPageDrag()" in body
 # The owning window, not its reparented toolbar, owns Escape.
 assert 'sequences: ["Escape"]' not in editor
