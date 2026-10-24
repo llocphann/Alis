@@ -467,6 +467,9 @@ Item {
                 visible: root.showHeader || root.pageIds.length > 1
                 showActions: root.showHeader
                 currentPage: root.currentPage
+                // Link the indicator to the page strip's single frame-by-frame
+                // motion; no separate dot timer or repaint-heavy page state.
+                indicatorProgress: pages.slideProgress
                 navigationPage: root.pageIds.indexOf(root._pendingPageId || root.currentPageId)
                 pageCount: root.pageIds.length
                 pageIds: root.pageIds
