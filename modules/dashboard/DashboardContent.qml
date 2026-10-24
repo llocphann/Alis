@@ -78,6 +78,16 @@ Item {
     // Keep only outgoing custom canvases alive until the slide finishes.
     // Crossing an unselected tab must not initialize its widgets.
     property var _slideHeldCustomIds: []
+    // Persist the last tab after the slide and a short idle interval,
+    // not during the frames which move the widget-heavy page strip.
+    property string _pageSavePendingId: ""
+    function flushPageSelection(): void {
+        const id = root._pageSavePendingId
+        root._pageSavePendingId = ""
+        if (id.length > 0 && Config.ready && root.pageIds.includes(id)
+                && Config.options?.dashboard?.lastPageId !== id)
+            Config.setNestedValue("dashboard.lastPageId", id)
+    }
     readonly property bool pendingPageReady: {
         if (_pendingPageId === "dashboard") return true
         if (_pendingPageId === "music") return musicPage.status === Loader.Ready
@@ -211,9 +221,8 @@ Item {
         function onDashboardPageIdChanged(): void {
             if (!Config.ready || !GlobalStates.dashboardSelectionRestored) return
             const id = GlobalStates.dashboardPageId
-            if (root.pageIds.includes(id)
-                    && Config.options?.dashboard?.lastPageId !== id)
-                Config.setNestedValue("dashboard.lastPageId",id)
+            if (root.pageIds.includes(id))
+                root._pageSavePendingId = id
         }
     }
     Connections {
@@ -252,6 +261,8 @@ Item {
     onPresentationActiveChanged: {
         if (root.presentationActive) root.sessionShown()
         else {
+            // A hidden Dashboard may be unloaded before a deferred Timer fires.
+            root.flushPageSelection()
             root._pendingPageId = ""
             root._pendingNewEditId = ""
             root._slideHeldCustomIds = []
@@ -509,6 +520,18 @@ Item {
                             || !Appearance.animationsEnabled
                             || Math.abs(pages.pagePosition - root.currentPage) < 0.001)
                     onTriggered: root._slideHeldCustomIds = []
+                }
+                // Config.setNestedValue() emits global configChanged and
+                // schedules a disk write at 50ms. Neither belongs inside
+                // the page animation. Coalesce rapid tab choices; persist
+                // when the slide is finished and navigation is briefly idle.
+                Timer {
+                    interval: 200
+                    running: root._pageSavePendingId.length > 0
+                        && (!root.presentationActive || root.editMode
+                            || !Appearance.animationsEnabled
+                            || Math.abs(pages.pagePosition - root.currentPage) < 0.001)
+                    onTriggered: root.flushPageSelection()
                 }
                 // Translate the page strip once per frame instead of updating
                 // each widget-heavy page's x independently. This preserves the
