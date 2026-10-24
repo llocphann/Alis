@@ -29,7 +29,7 @@ assert "root.activeDragDay=-1" in event
 assert "onReleased:timedButton.finishGesture(" in event
 assert "root.commitTimedGesture(modelData,mode,dx,dy)" in event
 assert 'Gesture.rangeForGesture(modelData,gestureMode,dragX,dragY,' in event
-assert 'if (!root.localBackend.rescheduleOccurrence(' in qml
+assert 'if (!root.localBackend[method](row.event.id,' in qml
 assert "function rescheduleOccurrence(id, index, startIso, endIso, metadata)" in backend
 assert "function rescheduleRecurringOccurrence(id, index, startIso, endIso)" in backend
 assert 'const method=repeating ? "rescheduleRecurringOccurrence" : "rescheduleOccurrence"' in qml
