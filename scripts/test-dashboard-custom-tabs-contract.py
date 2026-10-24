@@ -117,14 +117,18 @@ check("index === root.currentPage ? root.colText" not in header,
       "active page still swaps dot colors instead of moving continuously")
 check('onClicked: root.createTabRequested()' in header,
       "Create button must invoke naming toolbar")
-# Default Tab is now the left-side control between the six-dot drag handle
-# and the page indicator group; Create/Rename/Delete remain on the right.
-check('objectName: "dashboardTabReorderHandle"' in header
-      and 'anchors.right:defaultTabButton.left' in header,
-      "six-dot drag handle not positioned before Set Default")
-check('anchors.right: pages.left' in header
+# Left-to-right in Edit: Set Default, six-dot reorder handle, page
+# indicators, Create. The grip is adjacent to dots; Set Default sits left.
+check('id: tabReorderHandle' in header
+      and 'objectName: "dashboardTabReorderHandle"' in header
+      and 'anchors.right:pages.left;anchors.rightMargin:2' in header,
+      "six-dot drag handle must be immediately left of tab indicators")
+check('anchors.right: tabReorderHandle.left' in header
       and 'anchors.verticalCenter: pages.verticalCenter' in header,
-      "Set Default must be immediately left of page indicators")
+      "Set Default must be left of the six-dot drag handle")
+check('objectName: "dashboardCreateCustomTab"' in header.split("id: customTabActions",1)[1]
+      .split("id: activePageIndicator",1)[0],
+      "Create Custom Tab must remain to the right of the indicators")
 check('dashboardSetDefaultTab' not in header.split("id: customTabActions",1)[1]
       .split("id: activePageIndicator",1)[0],
       "Set Default must not remain in right-side custom actions")
