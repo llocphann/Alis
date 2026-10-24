@@ -41,7 +41,12 @@ function store(event, slots) {
         return new Date(a.startDate)-new Date(b.startDate);
     });
     if (!ordered.length) return event;
-    var first=ordered[0];
+    // Compatibility consumers still expect the chronologically first range
+    // at the top level, independently of the stable recurring slot indices.
+    var first=ordered.reduce(function(a,b) {
+        var start=valid(b.startDate);
+        return start && (!valid(a.startDate) || start<valid(a.startDate)) ? b : a;
+    },ordered[0]);
     return Object.assign({},event,{
         occurrences:ordered,
         startDate:first.startDate,dateTime:first.startDate,endDate:first.endDate,
@@ -82,8 +87,8 @@ function reschedule(event,index,start,end) {
 }
 // Adjust exactly one already-persisted repeating occurrence. Do not touch
 // the recurrence mode, immutable repeatTemplate, selectedTemplate, history,
-// notified flags or stable slot indices. In particular, never call store():
-// sorting a moved slot would silently corrupt repeatCycleStart boundaries.
+// notified flags or stable slot indices. store() retains recurring indices
+// while refreshing chronological top-level compatibility timestamps.
 function rescheduleSavedRecurring(event,index,start,end) {
     if (!event || !["daily","weekly","monthly","yearly"].includes(event.recurrence)
             || !Number.isInteger(index) || index<0)
@@ -132,12 +137,7 @@ function rescheduleSavedRecurring(event,index,start,end) {
         result.repeatTemplate=[{startDate:originalStart,endDate:originalEnd}];
         result.repeatCycleStart=0;
     }
-    if (index===0) {
-        result.startDate=replacement.startDate;
-        result.dateTime=replacement.startDate;
-        result.endDate=replacement.endDate;
-    }
-    return result;
+    return store(result,updated);
 }
 // A projected recurring occurrence has no saved slot to reschedule. Store
 // only an occurrence-keyed exception, never rewrite the template, history,

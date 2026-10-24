@@ -64,9 +64,13 @@ for(const mode of ['move','top','bottom']) {
 test('moving past another slot retains indices through persistence',()=>{
   const changed=O.rescheduleSavedRecurring(legacy,0,'2032-10-22T09:00:00Z','2032-10-22T10:00:00Z');
   assert.ok(changed);
+  assert.equal(new Date(changed.startDate).getTime(),new Date(legacy.occurrences[1].startDate).getTime(),
+    'top-level compatibility range must remain the chronological first occurrence');
   const saved=O.store(changed,O.entries(changed));
   assert.equal(saved.occurrences[0].startDate,'2032-10-22T09:00:00.000Z');
   assert.equal(saved.occurrences[1].startDate,legacy.occurrences[1].startDate);
+  assert.equal(saved.startDate,legacy.occurrences[1].startDate);
+  assert.equal(saved.dateTime,saved.startDate);
   assert.deepEqual(plain(saved.occurrences[0].retainedSlot),{value:3});
   assert.equal(O.upcoming(saved,'2032-10-18T00:00:00Z','2032-10-24T00:00:00Z').startDate,
     legacy.occurrences[1].startDate,'upcoming must remain chronological after indices stop sorting');
