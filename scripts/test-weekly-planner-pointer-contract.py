@@ -55,8 +55,17 @@ assert 'cursorShape:timedButton.canReschedule' in event
 assert 'readonly property bool canReschedule: Selection.canReschedule(modelData)' in event
 assert 'visible:timedButton.canReschedule' in event
 assert event.count('height:Math.min(11,parent.height/3)') == 2
-assert 'timedButton.gestureMode==="top" ? .9 : .38' in event
-assert 'timedButton.gestureMode==="bottom" ? .9 : .38' in event
+# Idle resize bars must be fully hidden. Hover is scoped to the individual
+# event delegate, not the week column; drag keeps the active grips visible.
+# The two edge hit targets stay available when bars are at zero opacity.
+assert 'HoverHandler {id:eventResizeHover}' in event
+assert 'readonly property bool showResizeHandles: canReschedule' in event
+assert '(eventResizeHover.hovered || gestureMode.length>0)' in event
+assert event.count('opacity:timedButton.showResizeHandles') == 2
+assert event.count('timedButton.gestureMode==="top" ? .9 : .65') == 1
+assert event.count('timedButton.gestureMode==="bottom" ? .9 : .65') == 1
+assert event.count('                                            : 0') == 2
+assert '.38' not in event, "previous always-visible resize grips returned"
 assert 'root.commitTimedGesture(modelData,mode,dx,dy)' in event
 selection=(root / "modules/dashboard/PlannerSelection.js").read_text()
 assert 'row.source==="local" && !row.virtual' in selection
