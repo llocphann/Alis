@@ -103,7 +103,8 @@
       "exit": 0
     },
     "canonical": {
-      "status": "RUNNING",
+      "status": "IN_PROGRESS",
+      "source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
       "not_whole_pass": true
     },
     "installed_current_patch": "UNRUN",
@@ -119,5 +120,79 @@
     "original_native": "Both pinned sources failed the same unchanged fixture: it expected +15 at the end after a +15 body move and +15 end resize. Corrected to +30, preserving the stricter independent-boundary assertion.",
     "expanded_editor": "Pinned baseline fails stale direct active-label-padding text. Replaced with ordered wrapped/active padding branch assertion; added missing subprocess import and replaced obsolete blanket multi-date-repeat prohibition with explicit compatible-cycle guard. Runtime code for label/editor was unchanged."
   },
-  "owned_remaining_after_focused": []
+  "owned_remaining_after_focused": [],
+  "canonical_initial_attempts": [
+    {
+      "source_sha": "c585efa702629ee24ff70c495e8c631bc635767c",
+      "argv": [
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/run-canonical-contained.py",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/source-c585efa70",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/canonical-c585efa70"
+      ],
+      "actual_exit": 143,
+      "status": "STOPPED",
+      "stop_reason": "source_superseded_compatibility_alias",
+      "elapsed_seconds": 264.5,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "7f7d4a482fd7828d68d646fb63acde902061cb22b45c95f3d37e8975398152c8",
+      "actual_validator": {
+        "actual_validator_exit": -15,
+        "stop_signals_received": [
+          15
+        ]
+      },
+      "started": 75,
+      "settled": 74,
+      "passed": 69,
+      "failed": 5,
+      "skipped": 0,
+      "unsettled": 1,
+      "not_whole_pass": true
+    },
+    {
+      "source_sha": "93bc53a45875891324bf91914cbcf602f7930c44",
+      "argv": [
+        "python3",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/run-canonical-contained.py",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/source-93bc53a45",
+        "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/canonical-93bc53a45"
+      ],
+      "actual_exit": 143,
+      "status": "STOPPED",
+      "stop_reason": "source_superseded_legacy_timestamp_alias",
+      "elapsed_seconds": 174.8,
+      "owned_at_normal_exit": [],
+      "owned_remaining_after_exit": [],
+      "console_sha256": "e178e717e374ef69fdf484085736eb40036023e50382a9224bad77fbc8f11992",
+      "actual_validator": {
+        "actual_validator_exit": -15,
+        "stop_signals_received": [
+          15
+        ]
+      },
+      "started": 37,
+      "settled": 36,
+      "passed": 31,
+      "failed": 5,
+      "skipped": 0,
+      "unsettled": 1,
+      "not_whole_pass": true
+    }
+  ],
+  "latest_source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
+  "followup_fixes": {
+    "57f74985b": "Chronological top-level compatibility timestamps retained independently of stable slot indices",
+    "93bc53a45": "Moving one instance to a later week cannot postpone/duplicate normal future cycles",
+    "face991b4": "Legacy dateTime slot aliases update in both single and batch paths; offset anchors normalized by instant for template recovery",
+    "17041842b": "Invalid optional anchors cannot throw during recovery"
+  },
+  "latest_validation": {
+    "source_sha": "17041842bbb5a8d83de03b9f7b8120eb286e31e2",
+    "focused_status": "RUNNING_OR_SETTLED_READ_ACTUAL_RECEIPT",
+    "canonical_status": "WAITING_FOR_FOCUSED_OR_RUNNING_READ_ACTUAL_RECEIPT",
+    "workflow_private": "final-17041842b",
+    "full_timeout_seconds": 5700
+  }
 }

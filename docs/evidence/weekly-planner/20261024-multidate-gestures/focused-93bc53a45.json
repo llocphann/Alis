@@ -1,0 +1,46 @@
+{
+  "source_sha": "93bc53a45875891324bf91914cbcf602f7930c44",
+  "summary": {
+    "cases": 29,
+    "after_pass": 25,
+    "after_fail": 0,
+    "baseline_outcomes": [
+      {
+        "name": "baseline-native-eligibility",
+        "actual_exit": 1,
+        "status": "FAIL"
+      },
+      {
+        "name": "baseline-native-visual-leak",
+        "actual_exit": 1,
+        "status": "FAIL"
+      },
+      {
+        "name": "baseline-pure",
+        "actual_exit": 1,
+        "status": "FAIL"
+      },
+      {
+        "name": "baseline-original-native-fixture",
+        "actual_exit": 1,
+        "status": "FAIL"
+      }
+    ]
+  },
+  "receipt": {
+    "source_sha": "93bc53a45875891324bf91914cbcf602f7930c44",
+    "argv": [
+      "python3",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/run-focused.py",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/focused-93bc53a45/cases"
+    ],
+    "actual_exit": 0,
+    "status": "PASS",
+    "stop_reason": null,
+    "elapsed_seconds": 62.3,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "7b800085d3a6e6f7d388947242ff7154af45924bd0241648c7d46c50ff59ff25"
+  }
+}

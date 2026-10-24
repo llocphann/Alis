@@ -1,0 +1,29 @@
+{
+  "source_sha": "93bc53a45875891324bf91914cbcf602f7930c44",
+  "argv": [
+    "python3",
+    "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/run-canonical-contained.py",
+    "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/source-93bc53a45",
+    "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-planner/canonical-93bc53a45"
+  ],
+  "actual_exit": 143,
+  "status": "STOPPED",
+  "stop_reason": "source_superseded_legacy_timestamp_alias",
+  "elapsed_seconds": 174.8,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "e178e717e374ef69fdf484085736eb40036023e50382a9224bad77fbc8f11992",
+  "actual_validator": {
+    "actual_validator_exit": -15,
+    "stop_signals_received": [
+      15
+    ]
+  },
+  "started": 37,
+  "settled": 36,
+  "passed": 31,
+  "failed": 5,
+  "skipped": 0,
+  "unsettled": 1,
+  "not_whole_pass": true
+}
