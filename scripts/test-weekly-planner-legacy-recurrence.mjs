@@ -36,8 +36,8 @@ assert.equal(S.canSelect(saved),false,'series must not enter batch delete');
 assert.equal(S.canReschedule(saved),true,'legacy saved series not movable');
 assert.equal(S.canReschedule({...saved,virtual:true}),false);
 assert.equal(S.canReschedule({...saved,source:'external'}),false);
-assert.equal(S.canReschedule({...saved,event:{...event,repeatTemplate:null}}),false,
-  'unanchored old series is intentionally not mutated');
+assert.equal(S.canReschedule({...saved,event:{...event,repeatTemplate:null}}),true,
+  'pre-template multi-slot records must permit an identified single-slot edit');
 assert.equal(S.canReschedule({...saved,event:{...event,occurrences:null}}),false);
 const noSaved={...event,occurrences:undefined,repeatTemplate:undefined,
   startDate:'2026-10-20T09:00:00Z'};
@@ -70,9 +70,15 @@ assert.deepEqual(JSON.parse(JSON.stringify(edited.occurrences.slice(0,2))),
   JSON.parse(JSON.stringify(archived)),'fired history changed');
 assert.equal(O.reschedule(event,2,top.startIso,top.endIso),null,
   'old whole-series reschedule path must reject repeats');
-assert.equal(O.rescheduleSavedRecurring(edited,2,
-  '2026-10-14T09:00:00Z','2026-10-14T10:00:00Z'),null,
-  'cannot reorder saved history and break repeatCycleStart');
+const crossed=O.rescheduleSavedRecurring(edited,2,
+  '2026-10-14T09:00:00Z','2026-10-14T10:00:00Z');
+assert.ok(crossed,'moving across another day must preserve slot identity');
+const crossedStored=O.store(crossed,O.entries(crossed));
+assert.equal(crossedStored.repeatCycleStart,event.repeatCycleStart);
+assert.equal(crossedStored.occurrences[2].startDate,'2026-10-14T09:00:00.000Z');
+assert.deepEqual(plainSlots(crossedStored.occurrences.slice(0,2)),plainSlots(O.entries(event).slice(0,2)),
+  'cross-day move reordered or rewrote notified history');
+function plainSlots(value) {return JSON.parse(JSON.stringify(value));}
 const persisted=O.store(edited,O.entries(edited));
 assert.equal(persisted.occurrences[2].plannerSeriesStartDate,active[0].startDate,
   'saved override original date disappeared during due-handler persist');

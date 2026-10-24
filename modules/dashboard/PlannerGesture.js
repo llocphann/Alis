@@ -20,8 +20,8 @@ function rangeForGesture(row, mode, dx, dy, dayWidth, hourHeight) {
     if (!row || row.source !== "local" || row.event?.allDay === true
             || (row.virtual && !row.plannerOriginalStartIso))
         return null;
-    // An explicitly stored repeating occurrence can be adjusted once without
-    // changing its series template. Unpersisted projected dates cannot.
+    // Edit one saved slot or identified projected exception; never infer or
+    // rewrite a legacy multi-date series template from a pointer gesture.
     const repeating=(row.event?.recurrence || "none") !== "none";
     if (repeating) {
         if (!["daily","weekly","monthly","yearly"].includes(row.event?.recurrence)
@@ -30,7 +30,7 @@ function rangeForGesture(row, mode, dx, dy, dayWidth, hourHeight) {
         const slots=row.event?.occurrences;
         if (Array.isArray(slots) && slots.length) {
             if (row.occurrenceIndex>=slots.length
-                    || (!row.event.repeatTemplate?.length && slots.length!==1))
+                    || !(slots[row.occurrenceIndex]?.startDate || slots[row.occurrenceIndex]?.dateTime))
                 return null;
         } else if (row.occurrenceIndex!==0
                 || !(row.event?.startDate || row.event?.dateTime)) return null;

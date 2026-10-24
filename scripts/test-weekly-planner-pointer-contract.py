@@ -36,7 +36,7 @@ assert "function rescheduleRecurringOccurrence(id, index, startIso, endIso)" in 
 assert 'const method=projected ? "rescheduleProjectedRecurring"' in qml
 assert 'function rescheduleProjectedRecurring(id, index, originalIso, startIso, endIso)' in backend
 assert 'const range=repeating ? Gesture.rangeForGesture(target,mode,dx,dy,' in qml
-assert 'if (!Selection.canReschedule(row)) return []' in qml
+assert 'if (!Selection.canReschedule(row) && !Selection.canSelect(row)) return []' in qml
 
 assert "function rangeForGesture(row, mode, dx, dy, dayWidth, hourHeight)" in policy
 assert 'row.source !== "local" || row.event?.allDay === true' in policy

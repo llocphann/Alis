@@ -14,7 +14,9 @@ assert "ScrollBar.AsNeeded" not in ui
 assert 'import "PlannerSelection.js" as Selection' in ui
 assert "Selection.choose(root.selectableEventRows" in ui
 assert "root.selectedEventKeys=result.keys" in ui
-assert "root.activeGroupGesture={keys:targets.map(row=>Selection.key(row))" in ui
+assert ui.count("root.activeGroupGesture={keys:targets.map(row=>Selection.gestureKey(row))") == 2
+assert 'includes(Selection.gestureKey(modelData))' in ui
+assert 'function gestureKey(row)' in policy
 assert "root.isEventSelected(modelData) ? 2" in ui
 assert "root.clickPlannerEvent(timedButton.modelData,mouse.modifiers)" in ui
 assert "root.clickPlannerEvent(allDayButton.modelData,mouse.modifiers)" in ui

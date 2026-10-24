@@ -5,8 +5,8 @@ function canSelect(row) {
         && (row.event?.recurrence || "none")==="none";
 }
 // Local saved recurring slots are individually movable/resizable without
-// rewriting the immutable series template. Virtual future projections and
-// imported calendar rows stay read-only. Batch selection remains limited to
+// rewriting the immutable series template. Identified virtual instances use
+// per-occurrence exceptions; imported calendar rows stay read-only. Batch selection remains limited to
 // non-recurring events because batch delete semantics differ for a series.
 function canReschedule(row) {
     if (!row || row.source!=="local" || row.event?.allDay===true
@@ -25,13 +25,23 @@ function canReschedule(row) {
             || !Number.isFinite(new Date(row.plannerOriginalStartIso).getTime())))
         return false;
     if (Array.isArray(event.occurrences) && event.occurrences.length) {
+        // Old multi-date records have stable slots even without a template.
+        // Editing one slot does not require inferring the whole series.
         return index<event.occurrences.length
-            && (!!event.repeatTemplate?.length || event.occurrences.length===1);
+            && !!(event.occurrences[index]?.startDate || event.occurrences[index]?.dateTime);
     }
     return index===0 && !!(event.startDate || event.dateTime);
 }
 function key(row) {
     return canSelect(row) ? String(row.event.id)+":"+String(row.occurrenceIndex) : "";
+}
+// Batch selection intentionally excludes recurring rows. Preview identity
+// must not reuse its empty sentinel, or every recurring card moves together.
+// A virtual exception retains its original key after moving across weeks.
+function gestureKey(row) {
+    if (!canSelect(row) && !canReschedule(row)) return "";
+    return JSON.stringify([row.source,String(row.event.id),row.occurrenceIndex,
+        row.virtual ? row.plannerOriginalStartIso : "saved"]);
 }
 function ordered(days) {
     const unique=new Set(),rows=[];

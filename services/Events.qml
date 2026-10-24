@@ -270,17 +270,21 @@ Singleton {
             const event = root.list[i]
             const slots = Occurrences.entries(event)
             let changed = false
+            const originalSlots=slots.map(slot=>Object.assign({},slot,{
+                startDate:slot.plannerSeriesStartDate || slot.startDate,
+                endDate:slot.plannerSeriesEndDate || slot.endDate
+            }))
             // Edited occurrence-backed schedules can predate repeatTemplate.
             // A selectedTemplate denotes the active suffix, not old history.
             const pattern=Array.isArray(event.selectedTemplate) && event.selectedTemplate.length
-                ? Occurrences.entries({occurrences:event.selectedTemplate}) : slots
+                ? Occurrences.entries({occurrences:event.selectedTemplate}) : originalSlots
             const patternStart=slots.length-pattern.length
             if (Array.isArray(event.occurrences) && !event.repeatTemplate?.length
                     && event.recurrence && event.recurrence!=="none"
                     && patternStart>=0
                     && pattern.every((slot,index)=>
-                        slot.startDate===slots[patternStart+index].startDate
-                        && slot.endDate===slots[patternStart+index].endDate)
+                        slot.startDate===originalSlots[patternStart+index].startDate
+                        && slot.endDate===originalSlots[patternStart+index].endDate)
                     && RepeatPolicy.templateAllowed(pattern,event.recurrence)) {
                 event.repeatTemplate=pattern.map(slot=>({
                     startDate:slot.startDate,endDate:slot.endDate

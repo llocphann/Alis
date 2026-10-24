@@ -15,8 +15,8 @@ function entry(start, end, notified, reminded) {
         notified:notified===true,reminderNotified:reminded===true};
 }
 function entries(event) {
-    var source = Array.isArray(event?.occurrences) && event.occurrences.length
-        ? event.occurrences : [event];
+    var grouped = Array.isArray(event?.occurrences) && event.occurrences.length;
+    var source = grouped ? event.occurrences : [event];
     return source.map(function(slot) {
         var normalized=entry(slot.startDate || slot.dateTime,slot.endDate,
             slot.notified,slot.reminderNotified);
@@ -27,11 +27,17 @@ function entries(event) {
             normalized.plannerSeriesStartDate=slot.plannerSeriesStartDate;
             normalized.plannerSeriesEndDate=slot.plannerSeriesEndDate;
         }
-        return normalized;
+        // Preserve extension fields and per-instance metadata through a
+        // save/due/reload pass, including older schemas we do not own.
+        return Object.assign({},grouped ? slot : {},normalized);
     }).filter(function(slot) {return slot !== null;});
 }
 function store(event, slots) {
-    var ordered=slots.slice().sort(function(a,b) {
+    // Recurring indices are persistent identity and repeatCycleStart is an
+    // index boundary. A moved instance may cross another slot chronologically;
+    // sorting here would silently retarget later edits/exception keys.
+    var ordered=slots.slice();
+    if ((event.recurrence || "none")==="none") ordered.sort(function(a,b) {
         return new Date(a.startDate)-new Date(b.startDate);
     });
     if (!ordered.length) return event;
@@ -71,7 +77,7 @@ function reschedule(event,index,start,end) {
     if (slots.some(function(s,i) {
         return i!==index && s.startDate===newSlot.startDate && s.endDate===newSlot.endDate;
     })) return null;
-    slots[index]=newSlot;
+    slots[index]=Object.assign({},slots[index],newSlot);
     return store(event,slots);
 }
 // Adjust exactly one already-persisted repeating occurrence. Do not touch
@@ -87,10 +93,9 @@ function rescheduleSavedRecurring(event,index,start,end) {
     var grouped=Array.isArray(event.occurrences) && event.occurrences.length>0;
     // Legacy Events used just startDate/dateTime + recurrence. A single
     // persisted occurrence is a real editable instance, not a virtual date.
-    // Multi-slot legacy schedules without a template are ambiguous: never
-    // silently infer an active cycle from historical slots.
-    if (grouped && (!event.repeatTemplate?.length && event.occurrences.length!==1
-            || index>=event.occurrences.length))
+    // Slot identity is sufficient even before repeatTemplate existed. Keep
+    // every original slot/index and do not infer a cycle from old history.
+    if (grouped && index>=event.occurrences.length)
         return null;
     if (!grouped && index!==0) return null;
     var slots=grouped ? event.occurrences : [event];
@@ -100,12 +105,9 @@ function rescheduleSavedRecurring(event,index,start,end) {
     if (!prior) return null;
     if (!priorEnd || priorEnd<=prior)
         priorEnd=new Date(prior.getTime()+3600000);
-    var before=index>0 ? valid(slots[index-1]?.startDate) : null;
-    var after=index+1<slots.length ? valid(slots[index+1]?.startDate) : null;
-    // Preserve historical indices and cycle boundaries; rejected gestures
-    // are byte-for-byte no-ops without rewriting or migrating the store.
-    if ((before && a<=before) || (after && a>=after)
-            || (a.getTime()===prior.getTime() && b.getTime()===priorEnd.getTime()))
+    // store() keeps recurring indices stable, so crossing a neighboring day
+    // no longer requires blocking an otherwise valid single-instance move.
+    if (a.getTime()===prior.getTime() && b.getTime()===priorEnd.getTime())
         return null;
     var originalStart=previous.plannerSeriesStartDate
         || previous.startDate || previous.dateTime;
@@ -165,8 +167,7 @@ function rescheduleProjectedRecurring(event,index,originalIso,start,end) {
             || event.plannerOverrides && !Array.isArray(event.plannerOverrides))
         return null;
     var grouped=Array.isArray(event.occurrences) && event.occurrences.length>0;
-    if (grouped && (index>=event.occurrences.length
-            || (!event.repeatTemplate?.length && event.occurrences.length!==1)))
+    if (grouped && index>=event.occurrences.length)
         return null;
     if (!grouped && index!==0) return null;
     var slot=grouped ? event.occurrences[index] : event;
@@ -210,11 +211,11 @@ function intersectsDay(event,date,includeNotified) {
 function upcoming(event,nowValue,throughValue) {
     var now=valid(nowValue),through=valid(throughValue);
     if (!now || !through) return null;
-    return entries(event).find(function(slot) {
+    return entries(event).filter(function(slot) {
         var a=valid(slot.startDate),b=valid(slot.endDate);
         return event.allDay===true ? b>now && a<=through
             : a>=now && a<=through && !slot.notified;
-    }) || null;
+    }).sort(function(a,b) {return valid(a.startDate)-valid(b.startDate);})[0] || null;
 }
 
 

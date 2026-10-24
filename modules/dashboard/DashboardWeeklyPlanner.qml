@@ -61,7 +61,7 @@ Item {
         root.activeGroupGesture=null
     }
     function gestureTargets(row) {
-        if (!Selection.canReschedule(row)) return []
+        if (!Selection.canReschedule(row) && !Selection.canSelect(row)) return []
         return root.isEventSelected(row) && root.selectedEventRows.length>1
             ? root.selectedEventRows : [row]
     }
@@ -529,7 +529,7 @@ Item {
                                 x:4+(dragMoved?dragX
                                     : root.activeGroupGesture?.mode==="move"
                                         && root.activeGroupGesture?.keys?.includes(
-                                            Selection.key(modelData))
+                                            Selection.gestureKey(modelData))
                                         ? root.activeGroupGesture.dx : 0)
                                 y:viewport.contentY+68+index*26;width:dayColumn.width-8;height:24;z:11
                                 buttonRadius:6
@@ -567,7 +567,7 @@ Item {
                                                 && root.selectedEventKeys.length>0)
                                             root.clearEventSelection()
                                         const targets=root.gestureTargets(allDayButton.modelData)
-                                        root.activeGroupGesture={keys:targets.map(row=>Selection.key(row)),
+                                        root.activeGroupGesture={keys:targets.map(row=>Selection.gestureKey(row)),
                                             mode:"move",dx:dx,dy:0}
                                         root.activeDragDay=dayColumn.index
                                     }
@@ -637,7 +637,7 @@ Item {
                                 property real pressY: 0
                                 property bool gestureMoved: false
                                 readonly property var groupPreview:
-                                    root.activeGroupGesture?.keys?.includes(Selection.key(modelData))
+                                    root.activeGroupGesture?.keys?.includes(Selection.gestureKey(modelData))
                                         ? root.activeGroupGesture : null
                                 readonly property string effectiveMode:gestureMode.length>0
                                     ? gestureMode : groupPreview?.mode ?? ""
@@ -702,7 +702,7 @@ Item {
                                             && root.selectedEventKeys.length>0)
                                         root.clearEventSelection()
                                     const targets=root.gestureTargets(modelData)
-                                    root.activeGroupGesture={keys:targets.map(row=>Selection.key(row)),
+                                    root.activeGroupGesture={keys:targets.map(row=>Selection.gestureKey(row)),
                                         mode:mode,dx:dragX,dy:dragY}
                                 }
                                 function finishGesture(mode) {
