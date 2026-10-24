@@ -13,6 +13,7 @@ function supported(model) {
 // stateless Responses transport. The Python transport re-verifies weights.
 function instantEndpoint(model) {
     if(model?.local!==true || model.local_verified!==true || model.provider_id!=="lmstudio"
+            || model.capabilities?.reasoning!=="supported"
             || !["openai","openai-response"].includes(model.api_format)
             || !/^[0-9a-f]{64}$/.test(String(model.local_fingerprint ?? "")))return ""
     const endpoint=String(model.endpoint ?? "")

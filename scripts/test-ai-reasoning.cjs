@@ -38,6 +38,7 @@ const local={...model('openai'),provider_id:'lmstudio',local:true,local_verified
 assert.equal(api.instantEndpoint(local),'http://127.0.0.1:1234/v1/responses');
 assert.equal(api.instantEndpoint({...local,endpoint:'http://[::1]:1234/v1/responses'}),'http://[::1]:1234/v1/responses');
 for(const patch of [{local:false},{local_verified:false},{provider_id:'custom'},{local_fingerprint:''},
+        {capabilities:{reasoning:'unsupported'}},{capabilities:{reasoning:'unknown'}},
         {api_format:'gemini'},{endpoint:'https://remote.test/v1/chat/completions'},
         {endpoint:'http://127.0.0.1:0/v1/chat/completions'},
         {endpoint:'http://127.0.0.1:65536/v1/chat/completions'},
