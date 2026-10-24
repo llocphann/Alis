@@ -87,6 +87,14 @@ class OfficeThemeTests(unittest.TestCase):
                 self.assertEqual(colors["highlight-sidebar-item-pressed"], colors["background-action-panel"])
                 self.assertEqual(colors["icon-normal"], colors["text-normal"])
                 self.assertEqual(colors["text-tertiary"], colors["text-secondary"])
+                self.assertEqual(colors["canvas-background"], colors["background-normal"])
+                self.assertEqual(colors["canvas-ruler-background"], colors["canvas-background"])
+                self.assertEqual(colors["canvas-ruler-margins-background"], colors["background-action-panel"])
+                self.assertEqual(colors["canvas-scroll-thumb-border"], colors["canvas-scroll-thumb"])
+                # The paper/cell data colors must remain under the suite's
+                # document/night-page preference, not this shell palette.
+                self.assertNotIn("canvas-content-background", colors)
+                self.assertNotIn("canvas-cell-background", colors)
                 for ink, ground in (
                     ("text-normal", "background-normal"),
                     ("text-normal", "background-action-panel"),
@@ -97,11 +105,37 @@ class OfficeThemeTests(unittest.TestCase):
                     ("text-link", "background-action-panel"),
                     ("text-inverse", "background-accent-button"),
                     ("chb-check-mark-background", "chb-background-checked"),
+                    ("canvas-ruler-mark", "canvas-ruler-background"),
+                    ("canvas-cell-title-text", "canvas-cell-title-background"),
                 ):
                     self.assertGreaterEqual(office.contrast_ratio(colors[ink], colors[ground]), 4.5,
                                             (ink, ground, theme["type"]))
                 for ground in ("background-normal", "background-action-panel"):
                     self.assertGreaterEqual(office.contrast_ratio(colors["border-regular-control"], colors[ground]), 3.0)
+                self.assertGreaterEqual(office.contrast_ratio(
+                    colors["canvas-page-border"], colors["canvas-background"]), 3.0)
+                self.assertGreaterEqual(office.contrast_ratio(
+                    colors["canvas-ruler-border"], colors["canvas-ruler-background"]), 3.0)
+
+    def test_onlyoffice_canvas_refreshes_with_palette_and_restores_original_settings(self):
+        original = b"[General]\\nUITheme=theme-night\\nLanguage=en\\n"
+        self.put(self.config, original)
+        self.update()
+        first = json.loads(self.theme.read_bytes())
+        self.assertEqual(first["colors"]["canvas-background"], self.palette["app_background"])
+        self.palette.update(app_background="#fafafa", app_surface_elevated="#f0f0f0",
+                            app_foreground="#171717", app_subtext="#494949",
+                            app_border="#555555", app_accent="#4840a0",
+                            app_on_accent="#ffffff")
+        self.update()
+        second = json.loads(self.theme.read_bytes())
+        self.assertEqual(second["type"], "light")
+        self.assertEqual(second["colors"]["canvas-background"], "#fafafa")
+        self.assertNotEqual(first["colors"]["canvas-background"], second["colors"]["canvas-background"])
+        self.assertNotIn("canvas-content-background", second["colors"])
+        self.update(False)
+        self.assertEqual(self.config.read_bytes(), original)
+        self.assertFalse(self.theme.exists())
 
     def test_invalid_or_missing_palette_never_writes(self):
         for value in ("red", "#abc", "#ffffff;payload", 123, None):
@@ -414,6 +448,11 @@ class LibreOfficeThemeTests(unittest.TestCase):
                 values = office.libreoffice_values(palette)
                 def role(name):
                     return f"#{int(values[office.LO_COLORS + (name, 'Color')]):06x}"
+                generated = json.loads(office.generate_theme(palette))
+                self.assertEqual(role("AppBackground"), generated["colors"]["canvas-background"])
+                self.assertEqual(role("WindowColor"), generated["colors"]["background-action-panel"])
+                self.assertNotIn(office.LO_COLORS + ("DocColor", "Color"), values)
+                self.assertNotIn(office.LO_COLORS + ("FontColor", "Color"), values)
                 for ink, background in (
                     ("WindowTextColor", "WindowColor"),
                     ("WindowTextColor", "BaseColor"),
