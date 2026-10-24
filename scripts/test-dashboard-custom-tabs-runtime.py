@@ -92,9 +92,10 @@ Window {
    check(!!dialog,"delete confirmation dialog not mounted")
    const createButton=findChild(dashboard,"dashboardCreateCustomTab")
    const defaultButton=findChild(dashboard,"dashboardSetDefaultTab")
+   const reorderHandle=findChild(dashboard,"dashboardTabReorderHandle")
    const actions=findChild(dashboard,"dashboardCustomTabActions")
    const pageDots=findChild(dashboard,"dashboardPageDots")
-   check(!!createButton && !!defaultButton && !!actions && !!pageDots,
+   check(!!createButton && !!defaultButton && !!reorderHandle && !!actions && !!pageDots,
     "custom tab action controls missing")
    check(!createButton.visible && !defaultButton.visible && !defaultButton.enabled,
     "custom/default tab actions must be hidden outside Edit")
@@ -104,6 +105,13 @@ Window {
    tryVerify(()=>createButton.visible && createButton.enabled,1500)
    check(defaultButton.visible && defaultButton.enabled,
     "set-default button missing in Edit Dashboard Layout")
+   // Edit mode order: six-dot reorder icon, Set Default, then page dots.
+   const handleLeft=reorderHandle.mapToItem(dashboard,0,0).x
+   const homeLeft=defaultButton.mapToItem(dashboard,0,0).x
+   const dotsLeft=pageDots.mapToItem(dashboard,0,0).x
+   check(reorderHandle.visible && handleLeft+reorderHandle.width<=homeLeft+1
+      && homeLeft+defaultButton.width<=dotsLeft+1,
+      "Set Default is not positioned after the six-dot handle at the left of the tab indicators")
    let defaultControlPainted=false
    check(dashboard.grabToImage(image=>defaultControlPainted=true),"default-tab frame request refused")
    tryVerify(()=>defaultControlPainted,2000)
