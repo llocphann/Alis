@@ -109,7 +109,8 @@ function rescheduleSavedRecurring(event,index,start,end) {
         return null;
     var originalStart=previous.plannerSeriesStartDate
         || previous.startDate || previous.dateTime;
-    var originalEnd=previous.plannerSeriesEndDate || priorEnd.toISOString();
+    var originalEnd=previous.plannerSeriesEndDate
+        || previous.endDate || priorEnd.toISOString();
     var replacement=Object.assign({},previous,{
         startDate:a.toISOString(),endDate:b.toISOString(),
         plannerSeriesStartDate:originalStart,
