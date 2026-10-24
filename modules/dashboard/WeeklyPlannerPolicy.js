@@ -122,10 +122,25 @@ function project(local, external, value, firstDay) {
                 var generated=starts(occurrenceSource,days,pair[1],event.allDay
                     ? allDaySpan*86400000 : seriesDuration);
                 if (generated.limited) days.forEach(function(day) {day.projectionLimited=true;});
-                function drawOccurrence(occurrence,saved) {
-                    var start=event.allDay ? midnight(saved ? base : occurrence)
+                var overrides=recurring && Array.isArray(event.plannerOverrides)
+                    ? event.plannerOverrides.filter(function(item) {
+                        return item.occurrenceIndex===slotIndex;
+                    }) : [];
+                function overrideFor(occurrence) {
+                    return overrides.find(function(item) {
+                        return item.originalStartDate===occurrence.toISOString();
+                    }) || null;
+                }
+                function drawOccurrence(occurrence,saved,correction) {
+                    var actualStart=correction && validDate(correction.startDate);
+                    var actualEnd=correction && validDate(correction.endDate);
+                    if (!actualStart || !actualEnd || actualEnd<=actualStart)
+                        correction=null;
+                    var start=correction ? actualStart
+                        : event.allDay ? midnight(saved ? base : occurrence)
                         : (saved ? base : occurrence);
-                    var finish=event.allDay ? addDays(start,allDaySpan)
+                    var finish=correction ? actualEnd
+                        : event.allDay ? addDays(start,allDaySpan)
                         : new Date(start.getTime()+(saved ? duration : seriesDuration));
                     days.forEach(function(day,index) {
                         if (start>=day.end || finish<=day.date) return;
@@ -136,26 +151,36 @@ function project(local, external, value, firstDay) {
                                 +":"+slotIndex+":"+start.getTime()+":"+index,
                             event:event,source:pair[1],occurrenceIndex:slotIndex,
                             virtual:!saved,
+                            // The original projected date is an immutable
+                            // exception key even after this instance moves.
+                            plannerOriginalStartIso:saved ? "" : occurrence.toISOString(),
                             start:(from-day.date)/minute,end:(to-day.date)/minute,
                             startDate:new Date(start),endDate:finish,lane:0,lanes:1});
                     });
                 }
-                var sawAnchor=false;
+                var sawAnchor=false,seenVirtual=new Set();
                 generated.dates.filter(function(date){return date!==null;}).forEach(function(occurrence) {
                     var saved=occurrence.getTime()===anchor.getTime();
                     if (saved) sawAnchor=true;
+                    if (!saved) seenVirtual.add(occurrence.toISOString());
                     // If a stored instance moves onto a later projected
                     // occurrence, do not draw that same instance twice.
                     if (!saved && occurrence.getTime()===base.getTime()
                             && base.getTime()!==anchor.getTime()) return;
-                    drawOccurrence(occurrence,saved);
+                    drawOccurrence(occurrence,saved,saved ? null : overrideFor(occurrence));
+                });
+                // A projected exception moved across weeks must be rendered
+                // in its destination, even if its original generated date
+                // lies outside this seven-day projection window.
+                overrides.forEach(function(item) {
+                    if (seenVirtual.has(item.originalStartDate)) return;
+                    var original=validDate(item.originalStartDate);
+                    if (original) drawOccurrence(original,false,item);
                 });
                 // The stored instance may have moved into another week while
                 // its immutable series anchor remains in the original week.
-                // Do not hide that saved event just because projection starts
-                // from its historical anchor.
                 if (!sawAnchor && anchor.getTime()!==base.getTime())
-                    drawOccurrence(base,true);
+                    drawOccurrence(base,true,null);
             });
         });
     });
