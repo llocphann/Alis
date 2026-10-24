@@ -75,6 +75,9 @@ Item {
     property string _pendingPageId: ""
     property string _synchronousPageId: ""
     property bool _userPageNavigation: false
+    // Keep only outgoing custom canvases alive until the slide finishes.
+    // Crossing an unselected tab must not initialize its widgets.
+    property var _slideHeldCustomIds: []
     readonly property bool pendingPageReady: {
         if (_pendingPageId === "dashboard") return true
         if (_pendingPageId === "music") return musicPage.status === Loader.Ready
@@ -141,6 +144,10 @@ Item {
         // Restoration, inactivity and edit flows keep their synchronous API.
         // Switching this flag only affects the explicitly selected Loader.
         root._synchronousPageId = id
+        const previousId = root.currentPageId
+        if (previousId !== id && previousId.startsWith("custom-")
+                && !root._slideHeldCustomIds.includes(previousId))
+            root._slideHeldCustomIds = root._slideHeldCustomIds.concat([previousId])
         GlobalStates.dashboardPageId = id
         const legacy = PagePolicy.defaultOrder.indexOf(id)
         if (legacy >= 0 && GlobalStates.dashboardPage !== legacy)
@@ -247,6 +254,7 @@ Item {
         else {
             root._pendingPageId = ""
             root._pendingNewEditId = ""
+            root._slideHeldCustomIds = []
             root.sessionHidden()
         }
     }
@@ -483,13 +491,24 @@ Item {
                 property real pagePosition: root.currentPage
                 Behavior on pagePosition {
                     enabled: root.presentationActive && Appearance.animationsEnabled && !root.editMode
-                    // Match the Weather Popup's shared spatial motion profile.
-                    // Dashboard panel entrance/exit retains its separate motion.
+                    // The Weather curve overshoots: on a full-width tab this
+                    // visibly reverses near the target. Use monotone easing
+                    // without changing configured movement duration.
                     NumberAnimation {
                         duration: Appearance.animation.elementMove.duration
-                        easing.type: Appearance.animation.elementMove.type
-                        easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Appearance.animationCurves.standard
                     }
+                }
+                // Keep the outgoing custom canvas until the slide is over.
+                // Release on a later event turn, not inside frame evaluation.
+                Timer {
+                    interval: 0
+                    running: root._slideHeldCustomIds.length > 0
+                        && (!root.presentationActive || root.editMode
+                            || !Appearance.animationsEnabled
+                            || Math.abs(pages.pagePosition - root.currentPage) < 0.001)
+                    onTriggered: root._slideHeldCustomIds = []
                 }
                 // Translate the page strip once per frame instead of updating
                 // each widget-heavy page's x independently. This preserves the
@@ -569,13 +588,14 @@ Item {
                                 onStatusChanged: if (status === Loader.Error)
                                     root.pageLoadFailed(customTabHost.modelData.id)
                                 anchors.fill: parent
-                                // Reordering changes pageIndex before slideProgress
-                                // catches up. Keep the selected canvas and its draft
-                                // alive through that temporary visibility change.
-                                active: (root.presentationActive && (customTabHost.visible
-                                        || root.currentPageId === customTabHost.modelData.id
-                                        || root._pendingPageId === customTabHost.modelData.id))
-                                    || (root.warmContent && root.currentPageId === customTabHost.modelData.id)
+                                // Load only the selected/requested page; never
+                                // allocate heavy widgets while sliding past.
+                                active: (root.presentationActive
+                                        && (root.currentPageId === customTabHost.modelData.id
+                                            || root._pendingPageId === customTabHost.modelData.id
+                                            || root._slideHeldCustomIds.includes(customTabHost.modelData.id)))
+                                    || (root.warmContent
+                                        && root.currentPageId === customTabHost.modelData.id)
                                 sourceComponent: DashboardCanvas {
                                     customTabId: customTabHost.modelData.id
                                     warmContent: root.warmContent
