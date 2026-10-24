@@ -66,6 +66,40 @@ function reschedule(event,index,start,end) {
     slots[index]=newSlot;
     return store(event,slots);
 }
+// Adjust exactly one already-persisted repeating occurrence. Do not touch
+// the recurrence mode, immutable repeatTemplate, selectedTemplate, history,
+// notified flags or stable slot indices. In particular, never call store():
+// sorting a moved slot would silently corrupt repeatCycleStart boundaries.
+function rescheduleSavedRecurring(event,index,start,end) {
+    if (!event || !["daily","weekly","monthly","yearly"].includes(event.recurrence)
+            || !Array.isArray(event.occurrences)
+            || !Array.isArray(event.repeatTemplate) || !event.repeatTemplate.length
+            || !Number.isInteger(index) || index<0 || index>=event.occurrences.length)
+        return null;
+    var a=valid(start),b=valid(end);
+    if (!a || !b || b-a<15*60000) return null;
+    var slots=event.occurrences,previous=slots[index];
+    var prior=valid(previous?.startDate || previous?.dateTime);
+    if (!prior || !valid(previous?.endDate)) return null;
+    var before=index>0 ? valid(slots[index-1]?.startDate) : null;
+    var after=index+1<slots.length ? valid(slots[index+1]?.startDate) : null;
+    // Enforce chronological ordering without reindexing fired history or the
+    // active cycle. Rejected drags leave original bytes completely untouched.
+    if ((before && a<=before) || (after && a>=after) || a.getTime()===prior.getTime()
+            && b.getTime()===valid(previous.endDate).getTime())
+        return null;
+    var updated=slots.slice();
+    updated[index]=Object.assign({},previous,{
+        startDate:a.toISOString(),endDate:b.toISOString()
+    });
+    var result=Object.assign({},event,{occurrences:updated});
+    if (index===0) {
+        result.startDate=updated[0].startDate;
+        result.dateTime=updated[0].startDate;
+        result.endDate=updated[0].endDate;
+    }
+    return result;
+}
 // Each saved time slot counts separately in calendar indicators, even when
 // several compatible Agenda slots share one canonical Event ID.
 function occurrencesForDay(event,date,includeNotified) {
