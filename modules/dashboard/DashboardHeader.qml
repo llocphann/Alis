@@ -402,6 +402,7 @@ Item {
         }
     }
     MaterialSymbol {
+        objectName: "dashboardTabReorderHandle"
         visible:root.reorderAllowed
         anchors.right:defaultTabButton.left;anchors.rightMargin:2
         anchors.verticalCenter:pages.verticalCenter
