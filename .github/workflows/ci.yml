@@ -56,6 +56,7 @@ jobs:
         run: |
           python3 scripts/test-weekly-planner-pointer-contract.py
           python3 scripts/test-weekly-planner-multi-selection-contract.py
+          node scripts/test-weekly-planner-legacy-recurrence.mjs
 
       - name: Verify Weekly Planner recurring schedule recovery
         shell: bash
