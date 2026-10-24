@@ -23,6 +23,8 @@ import office_registry as registry
 
 THEME_NAME = "alis-auto.json"
 MAX_SIZE = 4 * 1024 * 1024
+# OFFICE-I01: user-requested Office blue, for the editor workspace only.
+OFFICE_DARK_WORKSPACE = "#114161"
 
 
 class UnsafeConfig(ValueError):
@@ -281,6 +283,9 @@ def generate_theme(palette):
     # Source: ONLYOFFICE/desktop-apps 9.4 loginpage/src/css/colors*.less.
     # Editor-only tokens cannot paint the home screen's action panel, sidebar,
     # buttons or checkboxes; omitting them caused white-on-white/near-white.
+    # Keep a light editor canvas with light palettes; in dark mode, match the
+    # requested LibreOffice notebookbar blue instead of default gray.
+    workspace = OFFICE_DARK_WORKSPACE if dark else bg
     colors = {
         "background-normal": bg,
         "background-action-panel": surface,
@@ -354,7 +359,7 @@ def generate_theme(palette):
         # around the page in Writer/Calc/Impress, independently of the document
         # surface. Do not set canvas-content-background: that belongs to the
         # document/night-page rendering and must retain suite/user semantics.
-        "canvas-background": bg,
+        "canvas-background": workspace,
         "canvas-page-border": border,
         "canvas-ruler-background": bg,
         "canvas-ruler-border": border,
@@ -489,7 +494,9 @@ def libreoffice_values(palette):
     # LibreOffice's AppBackground is the Writer/Calc workspace outside the
     # document; keep it in sync with ONLYOFFICE canvas-background. Document
     # paper, font, print and visibility entries remain user-owned.
-    workspace = colors["canvas-background"]
+    # The Owner explicitly requested #114161 for LibreOffice AppBackground.
+    # Document paper and all user-owned document color roles remain independent.
+    workspace = OFFICE_DARK_WORKSPACE
     role_colors = {
         "AppBackground": workspace, "WindowColor": surface, "WindowTextColor": fg,
         "BaseColor": bg, "ButtonColor": surface, "ButtonTextColor": fg,
