@@ -29,41 +29,63 @@ assert.equal(slot({title:'Legacy id-less Event'},'local',8),
   slot({title:'Legacy id-less Event'},'local',8));
 assert.equal(slot({id:1},'local',1),0);
 assert.equal(slot({id:999},'local',8),slot({id:999},'local',8));
-// Material's wallpaper harmonization often collapses all three semantic
-// accents toward the same hue. Even then eight Events must remain distinct
-// rather than turn into the same purple, teal or blue.
-const themed=context.themeHues;
-const circularDistance=(a,b)=>Math.min(Math.abs(a-b),1-Math.abs(a-b));
-for (const anchors of [[.63,.64,.61],[.70,.50,.40],
-    [.60,.60,.60],[.98,.01,.02],[-1,-1,-1]]) {
-  const swatches=Array.from(themed(...anchors,8));
-  assert.equal(swatches.length,8);
-  assert.ok(swatches.every(hue=>Number.isFinite(hue)&&hue>=0&&hue<1));
-  assert.ok(circularDistance(swatches[0],
-    anchors[0]>=0?anchors[0]:.58)<.00001,
-    'first swatch must track actual Material Primary hue');
-  for (let i=0;i<swatches.length;i++)
-    for (let j=i+1;j<swatches.length;j++)
-      assert.ok(circularDistance(swatches[i],swatches[j])>=.075,
-        'visually colliding Event hues for '+JSON.stringify(anchors));
+// Three owner screenshots: cyan-blue, violet, and achromatic wallpapers.
+// Theme fidelity beats forcing arbitrary 8-way hue distances. Eight cards
+// remain distinguishable by tonal steps while retaining real Material hues.
+const tones=context.materialTones;
+const cases=[
+  {name:'cyan',anchors:[{hue:.51,saturation:.75},
+      {hue:.54,saturation:.42},{hue:.49,saturation:.34}]},
+  {name:'purple',anchors:[{hue:.80,saturation:.67},
+      {hue:.79,saturation:.38},{hue:.84,saturation:.27}]},
+  {name:'neutral',anchors:[{hue:-1,saturation:0},
+      {hue:-1,saturation:0},{hue:-1,saturation:0}]}
+];
+for (const {name,anchors} of cases) {
+  for (const dark of [true,false]) {
+    const swatches=Array.from(tones(anchors,dark));
+    assert.equal(swatches.length,8,name+' palette size');
+    const levels=swatches.map(v=>v.lightness);
+    assert.equal(new Set(levels).size,8,name+' loses tonal differentiation');
+    assert.ok(levels.every(level=>level>=0&&level<=1));
+    for (let i=0;i<swatches.length;i++) {
+      const source=anchors[[0,1,2,0,1,2,0,1][i]];
+      assert.equal(swatches[i].saturation,source.saturation,
+        name+' generated a non-theme saturation');
+      assert.equal(swatches[i].hue,source.hue<0 ? 0 : source.hue,
+        name+' introduced an unrelated rainbow hue');
+    }
+    if(name==='neutral')
+      assert.ok(swatches.every(v=>v.saturation===0),
+        'neutral wallpaper must never create arbitrary saturated Event colors');
+  }
 }
-assert.equal(Array.from(themed(.45,.51,.57,8)).length,8);
-assert.equal(JSON.stringify(event),original,'theme hues mutated stored Event data');
+assert.deepEqual(Array.from(tones(cases[0].anchors,true)).map(v=>v.hue),
+  Array.from(tones(cases[0].anchors,false)).map(v=>v.hue),
+  'light/dark changes should not rotate the wallpaper hue');
+assert.notDeepEqual(Array.from(tones(cases[0].anchors,true)).map(v=>v.hue),
+  Array.from(tones(cases[1].anchors,true)).map(v=>v.hue),
+  'switching wallpaper accent must change the Event palette');
+assert.equal(JSON.stringify(event),original,'theme tones mutated owner data');
 const qml=file('modules/dashboard/DashboardWeeklyPlanner.qml');
 assert.match(qml,/import "PlannerEventPalette.js" as EventPalette/);
-assert.match(qml,/readonly property var eventThemeColors: \{/);
+assert.match(qml,/readonly property var eventThemeColors: \\{/);
 for (const accent of ['colPrimary','colSecondary','colTertiary'])
-  assert.match(qml,new RegExp('Appearance\\.colors\\.'+accent));
-assert.match(qml,/EventPalette\.themeHues\(/);
-assert.match(qml,/Qt\.hsla\(hue,saturation,lightness,1\)/);
-assert.doesNotMatch(qml,/CavaTheme\.vibrantColors/,
-  'music spectrum is not the Material theme gradient palette');
-assert.match(qml,/function eventGradientColor\(row, palette\): color/);
-assert.match(qml,/function eventGradientTail\(row, palette\): color/);
-assert.match(qml,/EventPalette\.paletteSlot\(row\?\.event,row\?\.source,palette\.length\)/);
-assert.match(qml,/row\?\.event\?\.color/,
+  assert.match(qml,new RegExp('Appearance\\\\.colors\\\\.'+accent));
+assert.match(qml,/EventPalette\\.materialTones\\(/);
+assert.match(qml,/saturation:color\\.hslSaturation/);
+assert.match(qml,/hue:color\\.hslHue/);
+assert.match(qml,/Qt\\.hsla\\(/);
+assert.doesNotMatch(qml,/CavaTheme\\.vibrantColors|EventPalette\\.themeHues/,
+  'Event colors must not be taken from music spectrum or synthetic rainbow hues');
+assert.match(qml,/function eventGradientColor\\(row, palette\\): color/);
+assert.match(qml,/function eventGradientTail\\(row, palette\\): color/);
+assert.match(qml,/EventPalette\\.paletteSlot\\(row\\?\\.event,row\\?\\.source,palette\\.length\\)/);
+assert.match(qml,/Appearance\\.colors\\.colLayer0/,
+  'gradient tail should stay in the active theme, not another Event hue');
+assert.match(qml,/row\\?\\.event\\?\\.color/,
   'an intentionally set Event color must remain respected');
-assert.match(qml,/row\?\.event\?\.sourceColor/,
+assert.match(qml,/row\\?\\.event\\?\\.sourceColor/,
   'external source colors must remain respected');
 const allDay=qml.slice(qml.indexOf('objectName:"plannerAllDayEvent"'),
   qml.indexOf('objectName:"plannerTimedEvent"'));
@@ -83,4 +105,4 @@ for (const token of ['plannerEventMoveArea','plannerResizeStart','plannerResizeE
   assert.ok(timed.includes(token),'palette change damaged Event gesture contract: '+token);
 }
 assert.doesNotMatch(policy,/Math\.random|Date\.now|saveToFile|writeFile/);
-console.log('WEEKLY_PLANNER_THEME_PALETTE_PASS: Material primary/secondary/tertiary, separated hues, theme-reactive gradients, stable IDs, old data, gestures');
+console.log('WEEKLY_PLANNER_THEME_PALETTE_PASS: real Material hues, neutral wallpaper, theme-reactive tonal gradients, stable IDs, old data, gestures');
