@@ -1306,6 +1306,17 @@ ContentPage {
                     anchors.fill: parent
                     acceptedButtons: Qt.NoButton
                     onWheel: wheel => {
+                        const delta = wheel.pixelDelta.x !== 0 || wheel.pixelDelta.y !== 0
+                            ? wheel.pixelDelta : wheel.angleDelta
+                        // The embedded editor shares its horizontal gesture
+                        // with Utilities' SwipeView. Keep viewport panning on
+                        // Shift+scroll or middle drag, including when zoomed.
+                        if (root.embeddedArrangementOnly
+                                && !(wheel.modifiers & (Qt.ControlModifier | Qt.ShiftModifier))
+                                && (delta.y === 0 || Math.abs(delta.x) > Math.abs(delta.y))) {
+                            wheel.accepted = false
+                            return
+                        }
                         if (!monitorLayoutCanvas.viewportEditable) {
                             wheel.accepted = false
                             return

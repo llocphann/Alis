@@ -25,7 +25,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.abyss.content
 ShellRoot {
- id:root;property int checks:0;property int frames:0;property var measurements:[]
+ id:root;property int checks:0;property int frames:0;property var measurements:[];property var gestures:[]
  property real sceneWidth:560;property real sceneHeight:360
  Component.onCompleted:Quickshell.watchFiles=false
  FileView {id:report;path:Quickshell.env("ALIS_UTILITIES_REPORT")}
@@ -42,6 +42,17 @@ ShellRoot {
   function tiles(item){let result=[];if(item.logicalWidth!==undefined&&item.canvasScale!==undefined)result.push(item);for(const child of item.children??[])result=result.concat(tiles(child));return result}
   function frame(){let done=false;check(scene.grabToImage(image=>{done=true;root.frames++}),"native frame refused");tryVerify(()=>done,4000)}
   function output(x,y,width,height){return {logical:{x:x,y:y,width:width,height:height,scale:1,transform:"Normal"},make:"Fixture",model:"Synthetic"}}
+  function navigate(kind,from,to){
+   utility.currentPage=from;wait(350);frame()
+   const forward=to>from
+   if(kind==="mouse-drag")
+    mouseDrag(utility,utility.width*(forward ? .88 : .12),utility.height*.65,utility.width*(forward ? -.65 : .65),0,Qt.LeftButton,Qt.NoModifier,20)
+   else
+    for(let step=0;step<4;step++)mouseWheel(utility,utility.width*.65,utility.height*.75,forward?-120:120,0,Qt.NoButton,Qt.NoModifier,25)
+   wait(600);frame()
+   root.gestures.push({kind:kind,from:from,to:utility.currentPage,width:utility.width,height:utility.height})
+   check(utility.currentPage===to,kind+" did not switch Utilities page "+from+" to "+to)
+  }
   function run(){let failure=null;try{
    tryCompare(Config,"ready",true,6000)
    Config.setNestedValues({"panelFamily":"abyss","performance.reduceAnimations":true})
@@ -95,15 +106,28 @@ ShellRoot {
       check(audio.contentY>=0,"Sound overflow stays scrollable")
      }
     }
+    // Real input, rather than assigning currentPage alone: horizontal wheel
+    // input models the angle-delta path used by touchpads and tilt wheels.
+    // A single synthetic output disables monitor-position dragging entirely.
+    NiriService.outputs={A:output(0,0,1920,1080)}
+    Config.setNestedValue("interactions.scrolling.fasterTouchpadScroll",true)
+    for(const kind of ["horizontal-wheel","mouse-drag"])
+     for(const [from,to] of [[0,1],[1,2],[2,3],[3,2],[2,1],[1,0]])navigate(kind,from,to)
+    utility.currentPage=2;wait(350)
+    const audio=findChild(utility,"utilitiesAudioScroll")
+    audio.contentY=0;mouseWheel(utility,utility.width*.95,utility.height*.75,0,-120,Qt.NoButton,Qt.NoModifier,25)
+    wait(350);frame()
+    check(utility.currentPage===2,"vertical Sound scroll changed tabs")
+    if(audio.contentHeight>audio.height)check(audio.contentY>0,"Sound overflow no longer scrolls vertically")
    }
   }catch(error){failure=String(error);console.error("UTILITIES_COMPACT_FAIL",failure)}
-  report.setText(JSON.stringify({checks:root.checks,frames:root.frames,measurements:root.measurements,error:failure}))
+  report.setText(JSON.stringify({checks:root.checks,frames:root.frames,measurements:root.measurements,gestures:root.gestures,error:failure}))
   if(!failure)console.info("UTILITIES_COMPACT_PASS",root.checks,root.frames)
   finish.start()
   }
   Component.onCompleted:Qt.callLater(run)
  }
- Timer {id:finish;interval:120;onTriggered:Quickshell.quit()}
+ Timer {id:finish;interval:120;onTriggered:Qt.quit()}
 }
 '''
 
@@ -135,7 +159,7 @@ sys.exit(77)
             path.write_text(guard)
             path.chmod(0o700)
         (folder / 'shell.qml').write_text(QML)
-        with private_wayland(folder, capture_focus=True) as env:
+        with private_wayland(folder) as env:
             if env is None:
                 print('SKIP: private Niri/Wayland unavailable; native Utilities is UNRUN')
                 return 0
@@ -143,7 +167,7 @@ sys.exit(77)
             env.update(HOME=str(folder), PIPEWIRE_REMOTE='alis-utilities-no-pipewire',
                        PATH=str(binary) + ':' + env.get('PATH', ''),
                        ALIS_UTILITIES_REPORT=str(report), ALIS_UTILITIES_GUARD=str(calls))
-            result = run_qs(folder, env, timeout=75)
+            result = run_qs(folder, env, timeout=120)
             data = json.loads(report.read_text()) if report.exists() else None
             actions = [json.loads(line) for line in calls.read_text().splitlines()] if calls.exists() else []
             display_writes = [args for args in actions if args[:2] == ['niri', 'persist-layout']]
