@@ -640,6 +640,10 @@ Singleton {
                     property bool contextEnabled: false
                     property bool contextFocusEnabled: false
                     property bool contextAiEnabled: false
+                    property bool ambientEnabled: false
+                    property bool ambientFocusEnabled: false
+                    property bool ambientBatteryEnabled: false
+                    property bool ambientMediaEnabled: false
                     property string character: "aqua"
                     property bool alternateCompanions: false
                     property string output: ""

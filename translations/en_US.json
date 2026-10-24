@@ -5808,5 +5808,13 @@
   "Share the focused app category": "Share the focused app category",
   "Only terminal, editor or other. Window titles, files and app content stay private.": "Only terminal, editor or other. Window titles, files and app content stay private.",
   "Share Alis AI activity": "Share Alis AI activity",
-  "Only working, waiting for approval and finished. No prompts, replies, tools or permission grants.": "Only working, waiting for approval and finished. No prompts, replies, tools or permission grants."
+  "Only working, waiting for approval and finished. No prompts, replies, tools or permission grants.": "Only working, waiting for approval and finished. No prompts, replies, tools or permission grants.",
+  "Quiet ambient reactions": "Quiet ambient reactions",
+  "Small expressions, at most once every two minutes.": "Small expressions, at most once every two minutes.",
+  "Follow Focus sessions": "Follow Focus sessions",
+  "Uses the existing Focus timer; stays quiet during work.": "Uses the existing Focus timer; stays quiet during work.",
+  "React to battery state": "React to battery state",
+  "Only low battery or charging; no device details.": "Only low battery or charging; no device details.",
+  "React to playback state": "React to playback state",
+  "Only playing or paused; no titles, artists or media control.": "Only playing or paused; no titles, artists or media control."
 }
