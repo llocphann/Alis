@@ -462,7 +462,9 @@ def libreoffice_values(palette):
     theme = json.loads(generate_theme(palette))
     colors = theme["colors"]
     bg, fg, surface = (colors[k] for k in ("background-normal", "text-normal", "background-toolbar"))
-    accent, on_accent, muted, border = (colors[k] for k in ("text-link", "text-accent-button", "text-secondary", "border-regular-control"))
+    # AccentColor is a filled UI role; text-link is independently contrast-
+    # corrected for a surface and may not have a legible on-accent partner.
+    accent, on_accent, muted, border = (colors[k] for k in ("background-accent-button", "text-accent-button", "text-secondary", "border-regular-control"))
     role_colors = {
         "AppBackground": bg, "WindowColor": surface, "WindowTextColor": fg,
         "BaseColor": bg, "ButtonColor": surface, "ButtonTextColor": fg,
