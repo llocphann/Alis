@@ -80,33 +80,59 @@ function reschedule(event,index,start,end) {
 // sorting a moved slot would silently corrupt repeatCycleStart boundaries.
 function rescheduleSavedRecurring(event,index,start,end) {
     if (!event || !["daily","weekly","monthly","yearly"].includes(event.recurrence)
-            || !Array.isArray(event.occurrences)
-            || !Array.isArray(event.repeatTemplate) || !event.repeatTemplate.length
-            || !Number.isInteger(index) || index<0 || index>=event.occurrences.length)
+            || !Number.isInteger(index) || index<0)
         return null;
     var a=valid(start),b=valid(end);
     if (!a || !b || b-a<15*60000) return null;
-    var slots=event.occurrences,previous=slots[index];
+    var grouped=Array.isArray(event.occurrences) && event.occurrences.length>0;
+    // Legacy Events used just startDate/dateTime + recurrence. A single
+    // persisted occurrence is a real editable instance, not a virtual date.
+    // Multi-slot legacy schedules without a template are ambiguous: never
+    // silently infer an active cycle from historical slots.
+    if (grouped && (!event.repeatTemplate?.length && event.occurrences.length!==1
+            || index>=event.occurrences.length))
+        return null;
+    if (!grouped && index!==0) return null;
+    var slots=grouped ? event.occurrences : [event];
+    var previous=slots[index];
     var prior=valid(previous?.startDate || previous?.dateTime);
-    if (!prior || !valid(previous?.endDate)) return null;
+    var priorEnd=valid(previous?.endDate);
+    if (!prior) return null;
+    if (!priorEnd || priorEnd<=prior)
+        priorEnd=new Date(prior.getTime()+3600000);
     var before=index>0 ? valid(slots[index-1]?.startDate) : null;
     var after=index+1<slots.length ? valid(slots[index+1]?.startDate) : null;
-    // Enforce chronological ordering without reindexing fired history or the
-    // active cycle. Rejected drags leave original bytes completely untouched.
-    if ((before && a<=before) || (after && a>=after) || a.getTime()===prior.getTime()
-            && b.getTime()===valid(previous.endDate).getTime())
+    // Preserve historical indices and cycle boundaries; rejected gestures
+    // are byte-for-byte no-ops without rewriting or migrating the store.
+    if ((before && a<=before) || (after && a>=after)
+            || (a.getTime()===prior.getTime() && b.getTime()===priorEnd.getTime()))
         return null;
-    var updated=slots.slice();
-    updated[index]=Object.assign({},previous,{
+    var originalStart=previous.plannerSeriesStartDate
+        || previous.startDate || previous.dateTime;
+    var originalEnd=previous.plannerSeriesEndDate || priorEnd.toISOString();
+    var replacement=Object.assign({},previous,{
         startDate:a.toISOString(),endDate:b.toISOString(),
-        plannerSeriesStartDate:previous.plannerSeriesStartDate || previous.startDate,
-        plannerSeriesEndDate:previous.plannerSeriesEndDate || previous.endDate
+        plannerSeriesStartDate:originalStart,
+        plannerSeriesEndDate:originalEnd
     });
+    if (!grouped) {
+        // No automatic migration: keep the old top-level single-event shape,
+        // original stable ID, notified history and unrelated custom fields.
+        return Object.assign({},event,replacement,{dateTime:replacement.startDate});
+    }
+    var updated=slots.slice();
+    updated[index]=replacement;
     var result=Object.assign({},event,{occurrences:updated});
+    if (event.occurrences.length===1 && !event.repeatTemplate?.length) {
+        // Safe, explicit promotion only when the owner edits this one slot.
+        // The pre-edit time remains the repeat rule's immutable anchor.
+        result.repeatTemplate=[{startDate:originalStart,endDate:originalEnd}];
+        result.repeatCycleStart=0;
+    }
     if (index===0) {
-        result.startDate=updated[0].startDate;
-        result.dateTime=updated[0].startDate;
-        result.endDate=updated[0].endDate;
+        result.startDate=replacement.startDate;
+        result.dateTime=replacement.startDate;
+        result.endDate=replacement.endDate;
     }
     return result;
 }
