@@ -1,0 +1,197 @@
+{
+  "source_sha": "11ad9a4dde37a08a7b97618c32a30f1333f5e0a7",
+  "supervisor_receipt": {
+    "source_sha": "11ad9a4dde37a08a7b97618c32a30f1333f5e0a7",
+    "argv": [
+      "python3",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/run-canonical-contained.py",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/source-11ad9a4dd",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/canonical-11ad9a4dd"
+    ],
+    "actual_exit": 143,
+    "status": "STOPPED",
+    "stop_reason": "quota_stop",
+    "elapsed_seconds": 1557.8,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "23578a7e951304543b944a1c4dd415e685942bc1fe7afad9a9f682b71dbd8eb0"
+  },
+  "validator_exit": {
+    "actual_validator_exit": -15,
+    "stop_signals_received": [
+      15
+    ]
+  },
+  "progress": {
+    "started": 322,
+    "settled": 321,
+    "passed": 285,
+    "failed": 36,
+    "skipped": 0,
+    "unsettled": 1,
+    "failed_checks": [
+      {
+        "number": 25,
+        "label": "Native shared-field optimized/unoptimized exact GPU parity"
+      },
+      {
+        "number": 26,
+        "label": "Native shared-field transparent-interior exact GPU parity"
+      },
+      {
+        "number": 27,
+        "label": "Native shared-field fractional light transparent-interior exact GPU parity"
+      },
+      {
+        "number": 28,
+        "label": "Native shared-field fractional light/mask exact GPU parity"
+      },
+      {
+        "number": 78,
+        "label": "Python regression: scripts/test-abyss-drag-corners-runtime.py"
+      },
+      {
+        "number": 87,
+        "label": "Python regression: scripts/test-abyss-field-support-runtime.py"
+      },
+      {
+        "number": 95,
+        "label": "Python regression: scripts/test-abyss-keyboard-runtime.py"
+      },
+      {
+        "number": 98,
+        "label": "Python regression: scripts/test-abyss-launcher-live-editor-contract.py"
+      },
+      {
+        "number": 103,
+        "label": "Python regression: scripts/test-abyss-module-field-runtime.py"
+      },
+      {
+        "number": 105,
+        "label": "Python regression: scripts/test-abyss-module-locks-runtime.py"
+      },
+      {
+        "number": 106,
+        "label": "Python regression: scripts/test-abyss-multi-selection-runtime.py"
+      },
+      {
+        "number": 127,
+        "label": "Python regression: scripts/test-abyss-round0-editor-controls.py"
+      },
+      {
+        "number": 133,
+        "label": "Python regression: scripts/test-abyss-transparent-interior-runtime.py"
+      },
+      {
+        "number": 140,
+        "label": "Python regression: scripts/test-abyss-width-affects-modules-runtime.py"
+      },
+      {
+        "number": 141,
+        "label": "Python regression: scripts/test-abyss-zero-corners-runtime.py"
+      },
+      {
+        "number": 168,
+        "label": "Python regression: scripts/test-calendar-weather-composition-contract.py"
+      },
+      {
+        "number": 197,
+        "label": "Python regression: scripts/test-dashboard-editor-field-runtime.py"
+      },
+      {
+        "number": 198,
+        "label": "Python regression: scripts/test-dashboard-freeform-contract.py"
+      },
+      {
+        "number": 204,
+        "label": "Python regression: scripts/test-dashboard-music-runtime.py"
+      },
+      {
+        "number": 206,
+        "label": "Python regression: scripts/test-dashboard-notes-markdown-contract.py"
+      },
+      {
+        "number": 207,
+        "label": "Python regression: scripts/test-dashboard-notes-markdown-runtime.py"
+      },
+      {
+        "number": 219,
+        "label": "Python regression: scripts/test-dashboard-workspace.py"
+      },
+      {
+        "number": 223,
+        "label": "Python regression: scripts/test-desktop-context-menu-native.py"
+      },
+      {
+        "number": 224,
+        "label": "Python regression: scripts/test-desktop-widget-editor-coordinates.py"
+      },
+      {
+        "number": 227,
+        "label": "Python regression: scripts/test-dock-abyss-hover-orientation-contract.py"
+      },
+      {
+        "number": 229,
+        "label": "Python regression: scripts/test-equalizer-presentation-runtime.py"
+      },
+      {
+        "number": 254,
+        "label": "Python regression: scripts/test-light-mode-upstream-contract.py"
+      },
+      {
+        "number": 256,
+        "label": "Python regression: scripts/test-local-ai-gguf-runtime.py"
+      },
+      {
+        "number": 257,
+        "label": "Python regression: scripts/test-local-model-folder.py"
+      },
+      {
+        "number": 267,
+        "label": "Python regression: scripts/test-material-only-global-style-contract.py"
+      },
+      {
+        "number": 276,
+        "label": "Python regression: scripts/test-notification-center-bottom-right-contract.py"
+      },
+      {
+        "number": 286,
+        "label": "Python regression: scripts/test-owner-ui-regressions-contract.py"
+      },
+      {
+        "number": 289,
+        "label": "Python regression: scripts/test-popup-anchor-hover-runtime.py"
+      },
+      {
+        "number": 301,
+        "label": "Python regression: scripts/test-quick-notes-markdown-runtime.py"
+      },
+      {
+        "number": 304,
+        "label": "Python regression: scripts/test-recording-abyss-runtime.py"
+      },
+      {
+        "number": 320,
+        "label": "Python regression: scripts/test-screenshot-pointer-runtime.py"
+      }
+    ]
+  },
+  "quota": {
+    "used_percent_at_stop": 97,
+    "resetsAt": 1792858395,
+    "resume_at": 1792858455
+  },
+  "scope": "STOPPED/incomplete; not full PASS. No failure is classified pre-existing without matched baseline. Native gesture PASS remains scoped separately.",
+  "prepared_unrun": [
+    "utilities-launch-portable-fractional.json",
+    "shader-launch-support-11ad.json"
+  ],
+  "private_base": "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office",
+  "r03_replay": {
+    "source_sha": "f459d28fe219c62091c9e513c6748c69711bf9b7",
+    "classification": "REPRODUCED_BUG_NOT_NATIVE_PASS",
+    "requested_drag_px": 25,
+    "excess_px": 207.08,
+    "evidence": "private r03-current-replay"
+  }
+}
