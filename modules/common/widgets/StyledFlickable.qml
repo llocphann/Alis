@@ -20,14 +20,6 @@ Flickable {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
         onWheel: function(wheelEvent) {
-            const direction = wheelEvent.pixelDelta.x !== 0 || wheelEvent.pixelDelta.y !== 0
-                ? wheelEvent.pixelDelta : wheelEvent.angleDelta;
-            // This handler scrolls vertically. Let a surrounding horizontal
-            // view receive sideways gestures and their zero-delta end event.
-            if (direction.y === 0 || Math.abs(direction.x) > Math.abs(direction.y)) {
-                wheelEvent.accepted = false;
-                return;
-            }
             const delta = wheelEvent.angleDelta.y / root.mouseScrollDeltaThreshold;
             // The angleDelta.y of a touchpad is usually small and continuous,
             // while that of a mouse wheel is typically in multiples of ±120.
