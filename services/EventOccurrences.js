@@ -137,6 +137,61 @@ function rescheduleSavedRecurring(event,index,start,end) {
     }
     return result;
 }
+// A projected recurring occurrence has no saved slot to reschedule. Store
+// only an occurrence-keyed exception, never rewrite the template, history,
+// stable Event ID or its generated future dates.
+function recurringVirtualMatches(base,original,mode) {
+    var from=valid(base),target=valid(original);
+    if (!from || !target || target<=from
+            || from.getHours()!==target.getHours()
+            || from.getMinutes()!==target.getMinutes()
+            || from.getSeconds()!==target.getSeconds()
+            || from.getMilliseconds()!==target.getMilliseconds()) return false;
+    var days=(Date.UTC(target.getFullYear(),target.getMonth(),target.getDate())
+        -Date.UTC(from.getFullYear(),from.getMonth(),from.getDate()))/86400000;
+    if (mode==="daily") return Number.isInteger(days) && days>=1;
+    if (mode==="weekly") return Number.isInteger(days) && days>=7 && days%7===0;
+    if (mode==="monthly") return target.getDate()===from.getDate()
+        && 12*(target.getFullYear()-from.getFullYear())
+            +target.getMonth()-from.getMonth()>=1;
+    if (mode==="yearly") return target.getMonth()===from.getMonth()
+        && target.getDate()===from.getDate()
+        && target.getFullYear()>from.getFullYear();
+    return false;
+}
+function rescheduleProjectedRecurring(event,index,originalIso,start,end) {
+    if (!event || !["daily","weekly","monthly","yearly"].includes(event.recurrence)
+            || !Number.isInteger(index) || index<0
+            || event.plannerOverrides && !Array.isArray(event.plannerOverrides))
+        return null;
+    var grouped=Array.isArray(event.occurrences) && event.occurrences.length>0;
+    if (grouped && (index>=event.occurrences.length
+            || (!event.repeatTemplate?.length && event.occurrences.length!==1)))
+        return null;
+    if (!grouped && index!==0) return null;
+    var slot=grouped ? event.occurrences[index] : event;
+    var base=valid(slot?.plannerSeriesStartDate || slot?.startDate || slot?.dateTime);
+    var original=valid(originalIso),a=valid(start),b=valid(end);
+    if (!base || !original || !a || !b || b-a<15*60000
+            || !recurringVirtualMatches(base,original,event.recurrence))
+        return null;
+    // A single gesture is at most two civil weeks; do not allow arbitrary
+    // time-warp, missing keys or unbounded custom metadata from the UI.
+    if (Math.abs(a-original)>15*86400000) return null;
+    var current=Array.isArray(event.plannerOverrides) ? event.plannerOverrides : [];
+    var same=function(item) {
+        return item.occurrenceIndex===index && item.originalStartDate===original.toISOString();
+    };
+    var existing=current.find(same);
+    if (!existing && current.length>=512) return null;
+    if (existing && existing.startDate===a.toISOString()
+            && existing.endDate===b.toISOString()) return null;
+    var record={occurrenceIndex:index,originalStartDate:original.toISOString(),
+        startDate:a.toISOString(),endDate:b.toISOString()};
+    var next=existing ? current.map(function(item){return same(item) ? record : item;})
+        : current.concat([record]);
+    return Object.assign({},event,{plannerOverrides:next});
+}
 // Each saved time slot counts separately in calendar indicators, even when
 // several compatible Agenda slots share one canonical Event ID.
 function occurrencesForDay(event,date,includeNotified) {
