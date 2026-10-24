@@ -133,8 +133,18 @@ Window {
    check(defaultButton.contentItem.color.toString()!==defaultButton.colBackgroundToggled.toString(),
     "default-tab icon has no contrast against selected background")
    check(waitForPolish(root,2000),"Create control layout did not settle")
+   const editNaturalWidth=tabToolbar.implicitWidth
+   const editNaturalHeight=tabToolbar.implicitHeight
+   const editActualWidth=tabToolbar.width
+   const editActualHeight=tabToolbar.height
    mouseClick(createButton)
    tryVerify(()=>tabToolbar.visible && dashboard.tabNamingActive,2000)
+   check(waitForPolish(tabToolbar,2000),"Create toolbar did not settle")
+   check(Math.abs(tabToolbar.implicitWidth-editNaturalWidth)<1
+      && Math.abs(tabToolbar.implicitHeight-editNaturalHeight)<1
+      && Math.abs(tabToolbar.width-editActualWidth)<1
+      && Math.abs(tabToolbar.height-editActualHeight)<1,
+      "Create toolbar changed the original Edit Dashboard Layout footprint")
    check(!dialog.visible && dashboard.editMode,
     "create click must replace editing controls, not open a centered dialog")
    const name=findChild(tabToolbar,"dashboardToolbarTabName")
@@ -155,6 +165,9 @@ Window {
      && name.background.border.color.toString()===
        Appearance.colors.colError.toString(),
      "invalid tab name must keep naming editor open with themed error border")
+   check(Math.abs(tabToolbar.implicitHeight-editNaturalHeight)<1
+      && Math.abs(tabToolbar.implicitWidth-editNaturalWidth)<1,
+      "validation feedback changed the Create toolbar's Edit-sized footprint")
    dashboard.setCustomTabName("Research")
    check(!name.invalidName,"valid name kept the error border")
    dashboard.acceptCustomTabDialog()
@@ -199,6 +212,9 @@ Window {
    dashboard.canvasController.beginEditMode()
    dashboard.openCustomTabDialog("rename","custom-1")
    check(tabToolbar.visible,"rename did not open edit toolbar")
+   check(Math.abs(tabToolbar.implicitWidth-editNaturalWidth)<1
+      && Math.abs(tabToolbar.implicitHeight-editNaturalHeight)<1,
+      "Rename toolbar does not preserve the Edit toolbar dimensions")
    dashboard.setCustomTabName("Research II")
    dashboard.acceptCustomTabDialog()
    tryVerify(()=>Array.from(Config.options.dashboard.customTabs)[0].name==="Research II",2000)
