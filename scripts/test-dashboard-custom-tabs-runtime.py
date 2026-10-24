@@ -105,13 +105,18 @@ Window {
    tryVerify(()=>createButton.visible && createButton.enabled,1500)
    check(defaultButton.visible && defaultButton.enabled,
     "set-default button missing in Edit Dashboard Layout")
-   // Edit mode order: six-dot reorder icon, Set Default, then page dots.
+   // Edit mode order: Set Default, six-dot grip, page dots, Create.
    const handleLeft=reorderHandle.mapToItem(dashboard,0,0).x
    const homeLeft=defaultButton.mapToItem(dashboard,0,0).x
-   const dotsLeft=pageDots.mapToItem(dashboard,0,0).x
-   check(reorderHandle.visible && handleLeft+reorderHandle.width<=homeLeft+1
-      && homeLeft+defaultButton.width<=dotsLeft+1,
-      "Set Default is not positioned after the six-dot handle at the left of the tab indicators")
+   const firstDot=findChild(dashboard,"dashboardPage0")
+   const lastDot=findChild(dashboard,"dashboardPage"+(dashboard.pageIds.length-1))
+   const dotsLeft=firstDot.mapToItem(dashboard,0,0).x
+   const lastDotRight=lastDot.mapToItem(dashboard,lastDot.width,0).x
+   const createLeft=createButton.mapToItem(dashboard,0,0).x
+   check(reorderHandle.visible && homeLeft+defaultButton.width<=handleLeft+1
+      && handleLeft+reorderHandle.width<=dotsLeft+1
+      && lastDotRight<=createLeft+1,
+      "Edit control order must be Set Default, six-dot grip, tab indicators, Create")
    let defaultControlPainted=false
    check(dashboard.grabToImage(image=>defaultControlPainted=true),"default-tab frame request refused")
    tryVerify(()=>defaultControlPainted,2000)
