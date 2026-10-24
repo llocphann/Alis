@@ -33,6 +33,9 @@ assert 'if (!root.localBackend.rescheduleOccurrence(' in qml
 assert "function rescheduleOccurrence(id, index, startIso, endIso, metadata)" in backend
 assert "function rescheduleRecurringOccurrence(id, index, startIso, endIso)" in backend
 assert 'const method=repeating ? "rescheduleRecurringOccurrence" : "rescheduleOccurrence"' in qml
+assert 'const range=repeating ? Gesture.rangeForGesture(target,mode,dx,dy,' in qml
+assert 'if (!Selection.canReschedule(row)) return []' in qml
+
 assert "function rangeForGesture(row, mode, dx, dy, dayWidth, hourHeight)" in policy
 assert 'row.source !== "local" || row.virtual' in policy, "external and virtual events read-only"
 
