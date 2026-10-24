@@ -483,9 +483,11 @@ Item {
                 property real pagePosition: root.currentPage
                 Behavior on pagePosition {
                     enabled: root.presentationActive && Appearance.animationsEnabled && !root.editMode
+                    // A page must travel at a constant rate from start to finish.
+                    // Do not change the separately verified panel reveal motion.
                     NumberAnimation {
                         duration: Appearance.animation.elementMove.duration
-                        easing.type: Easing.OutCubic
+                        easing.type: Easing.Linear
                     }
                 }
                 DashboardCanvas {
