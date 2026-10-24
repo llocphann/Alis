@@ -349,7 +349,28 @@ def generate_theme(palette):
         "toolbar-header-spreadsheet": accent,
         "toolbar-header-pdf": accent,
         "toolbar-header-draw": accent,
-        "canvas-scroll-thumb-hover": border,
+        # The editor workspace is separate from the login/settings panel.
+        # ONLYOFFICE's documented canvas-background paints the gray region
+        # around the page in Writer/Calc/Impress, independently of the document
+        # surface. Do not set canvas-content-background: that belongs to the
+        # document/night-page rendering and must retain suite/user semantics.
+        "canvas-background": bg,
+        "canvas-page-border": border,
+        "canvas-ruler-background": bg,
+        "canvas-ruler-border": border,
+        "canvas-ruler-margins-background": surface,
+        "canvas-ruler-mark": fg,
+        "canvas-ruler-handle-border": border,
+        "canvas-ruler-handle-border-disabled": muted,
+        "canvas-high-contrast": fg,
+        "canvas-high-contrast-disabled": muted,
+        "canvas-cell-title-background": surface,
+        "canvas-cell-title-text": fg,
+        "canvas-cell-title-border": border,
+        "canvas-scroll-thumb": border,
+        "canvas-scroll-thumb-border": border,
+        "canvas-scroll-thumb-hover": accent,
+        "canvas-scroll-thumb-border-hover": accent,
         "window-border": border,
     }
     return json_bytes({"id": "theme-alis-auto", "name": "Alis Auto",
