@@ -54,6 +54,7 @@ ShellRoot {
     id:otherOutput;anchors.fill:parent;targetOutput:false;identity:"otherRecording"
     recordingStatus:status;audioService:audio
    }
+   Rectangle {id:tick;width:1;height:1;color:"#01000000";opacity:0.01}
   }
  }
  LazyLoader {
@@ -78,11 +79,12 @@ ShellRoot {
   function settle(){
    // Unfocused nested Niri throttles animation frames. Drive bounded render
    // turns before sending input to a body whose orientation/size just changed.
-   wait(300)
-   for(let i=0;i<3;i++){
+   for(let i=0;i<2;i++){
     const before=root.rendered
+    tick.opacity=(before%2)?0.01:0.02
     check(scene.grabToImage(result=>root.rendered++),"frame request refused")
-    tryVerify(()=>root.rendered>before,3000);wait(120)
+    tryVerify(()=>root.rendered>before,3000)
+    if(i===0)wait(220)
    }
   }
   function click(name){const item=find(body.recorder.controls,name);check(item,"missing "+name);check(item.enabled && item.width>0 && item.height>0,"inactive "+name);mouseClick(item,item.width/2,item.height/2);wait(80)}
