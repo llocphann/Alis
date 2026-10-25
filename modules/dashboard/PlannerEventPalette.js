@@ -87,7 +87,11 @@ function assignPositions(localEvents,externalEvents) {
 function toneIdentity(event,source) {
     const origin=String(source || "local");
     const mode=String(event?.recurrence || "none").toLowerCase();
-    const id=event?.id ?? event?.uid ?? event?.iCalUID ?? event?.externalId;
+    // An imported provider may attach an ephemeral local numeric ID; the
+    // calendar UID, when present, remains the permanent visual identity.
+    const id=origin==="external"
+        ? event?.uid ?? event?.iCalUID ?? event?.externalId ?? event?.id
+        : event?.id ?? event?.uid ?? event?.iCalUID ?? event?.externalId;
     const title=String(event?.title || "").trim().replace(/\s+/g," ").toLocaleLowerCase();
     if (origin==="local" && ["daily","weekly","monthly","yearly"].includes(mode)
             && title) {
