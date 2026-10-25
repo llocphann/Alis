@@ -48,6 +48,10 @@ Item {
     // Once a grid selection is explicitly made, do not restore the editor's
     // broader visual outline over a Ctrl-deselected individual occurrence.
     property bool explicitGridSelection: false
+    // A click opens Edit Event and selects its ID group. Later changes made
+    // inside that editor's date picker should update exactly those outlines,
+    // unless Ctrl/range/manual selection has explicitly taken ownership.
+    property bool followEditorCalendarSelection: false
     property string selectionAnchorKey: ""
     property bool deleteConfirmation: false
     property var activeGroupGesture: null
@@ -76,6 +80,7 @@ Item {
         root.selectedEventKeys=Array.from(new Set(region.before.concat(hits)))
         if (hits.length) {
             root.explicitGridSelection=true
+            root.followEditorCalendarSelection=false
             root.selectionAnchorKey=hits[0]
         }
         root.selectionRegion=null
@@ -91,6 +96,19 @@ Item {
         return root.sideView==="events" && form?.isEditing
             ? {id:form.editingEvent?.id,days:form.plannerSelectedDateKeys} : null
     }
+    onEditorEventSelectionChanged: {
+        const selection=root.editorEventSelection
+        const form=inlineEventsPanel.item
+        if (!root.followEditorCalendarSelection || !selection
+                || !form?.hasUnsavedChanges()) return
+        // A user explicitly changed selected dates inside the editor.
+        // Reconcile actual gesture membership, not only an editor outline.
+        root.selectedEventKeys=root.selectableEventRows.filter(row=>
+            row.source==="local" && row.event?.id===selection.id
+                && selection.days.includes(Qt.formatDate(
+                    new Date(row.startDate),"yyyy-MM-dd"))
+        ).map(row=>Selection.key(row))
+    }
     function isEditorEvent(row): bool {
         if (root.explicitGridSelection) return false
         const selected=root.editorEventSelection
@@ -100,6 +118,7 @@ Item {
     function clearEventSelection(): void {
         root.selectedEventKeys=[]
         root.explicitGridSelection=false
+        root.followEditorCalendarSelection=false
         root.selectionAnchorKey=""
         root.deleteConfirmation=false
         root.activeGroupGesture=null
@@ -125,6 +144,7 @@ Item {
                 root.selectedEventKeys,root.selectionAnchorKey,row,ctrl,shift)
             if (!result) return
             root.explicitGridSelection=true
+            root.followEditorCalendarSelection=false
             root.selectedEventKeys=result.keys
             root.selectionAnchorKey=result.anchor
             root.forceActiveFocus()
@@ -139,6 +159,7 @@ Item {
             if (!alreadyComplete) {
                 root.clearEventSelection()
                 root.selectEventId(row)
+                root.followEditorCalendarSelection=true
                 // Keep normal one-click editing as before.
                 root.editOccurrence(row)
             }
@@ -663,6 +684,7 @@ Item {
                                         allDayButton.dragMoved=true;allDayButton.dragX=dx
                                         if (!root.isEventSelected(allDayButton.modelData))
                                             root.selectEventId(allDayButton.modelData)
+                                        root.followEditorCalendarSelection=false
                                         const targets=root.gestureTargets(allDayButton.modelData)
                                         root.activeGroupGesture={keys:targets.map(row=>Selection.gestureKey(row)),
                                             mode:"move",dx:dx,dy:0}
@@ -840,6 +862,7 @@ Item {
                                     dragY=dy
                                     if (!root.isEventSelected(modelData))
                                         root.selectEventId(modelData)
+                                    root.followEditorCalendarSelection=false
                                     const targets=root.gestureTargets(modelData)
                                     root.activeGroupGesture={keys:targets.map(row=>Selection.gestureKey(row)),
                                         mode:mode,dx:dragX,dy:dragY}
