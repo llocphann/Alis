@@ -20,6 +20,7 @@ function load(p) { const s=vm.createContext({Date,Set,Map,Array,Object,Math,Numb
   vm.runInContext(read(p),s);return s; }
 const S=load('modules/dashboard/PlannerSelection.js'),G=load('modules/dashboard/PlannerGesture.js');
 const P=load('modules/dashboard/WeeklyPlannerPolicy.js'),O=load('services/EventOccurrences.js');
+const FutureSchedule=load('services/EventFutureSchedule.js');
 let passed=0,failed=0;
 function test(name,fn) {try {fn();passed++;}catch(e){failed++;console.error('FAIL',name,e.message);}}
 const plain=v=>JSON.parse(JSON.stringify(v));
@@ -153,7 +154,7 @@ test('cycle rollover materializes exceptions once, preserving legacy IDs and pen
     assert.ok(edited);
     const root={ready:true,list:[edited],nextId:500,saves:0,saveToFile(){this.saves++;},
       eventTriggered(){},reminderTriggered(){},eventAdded(){}};
-    const context=vm.createContext({root,Occurrences:O,RepeatPolicy,Date:Clock,Number,Math});
+    const context=vm.createContext({root,Occurrences:O,RepeatPolicy,FutureSchedule,Date:Clock,Number,Math});
     vm.runInContext(functions,context);root.addEvent=context.addEvent;root.createNextRecurrence=context.createNextRecurrence;
     context.checkDueEvents();
     assert.equal(root.saves,1,'rollover must persist old receipt and new destination in one snapshot');
@@ -179,7 +180,7 @@ test('one occurrence moved to a later week does not postpone or duplicate the se
   const code=source.slice(source.indexOf('function checkDueEvents()'),source.indexOf('function createNextRecurrence('));
   class Clock extends Date {constructor(...a){super(...(a.length?a:['2032-10-25T12:00:00Z']));}}
   const root={ready:true,list:[moved],saves:0,saveToFile(){this.saves++;},eventTriggered(){},reminderTriggered(){}};
-  const context=vm.createContext({root,Occurrences:O,RepeatPolicy:load('services/EventRepeatPolicy.js'),Date:Clock,Number,Math});
+  const context=vm.createContext({root,Occurrences:O,RepeatPolicy:load('services/EventRepeatPolicy.js'),FutureSchedule,Date:Clock,Number,Math});
   vm.runInContext(code,context);context.checkDueEvents();
   const event=root.list[0];
   assert.equal(event.occurrences.length,4,'one future exception blocked ordinary cycle generation');
@@ -214,7 +215,7 @@ test('offset-bearing original anchors recover selected templates by instant, wit
   const code=source.slice(source.indexOf('function checkDueEvents()'),source.indexOf('function createNextRecurrence('));
   class Clock extends Date {constructor(...a){super(...(a.length?a:['2032-10-25T12:00:00Z']));}}
   const root={ready:true,list:[moved],saveToFile(){},eventTriggered(){},reminderTriggered(){}};
-  const context=vm.createContext({root,Occurrences:O,RepeatPolicy:load('services/EventRepeatPolicy.js'),Date:Clock,Number,Math});
+  const context=vm.createContext({root,Occurrences:O,RepeatPolicy:load('services/EventRepeatPolicy.js'),FutureSchedule,Date:Clock,Number,Math});
   vm.runInContext(code,context);context.checkDueEvents();
   assert.equal(root.list[0].repeatTemplate.length,2);
   assert.equal(root.list[0].repeatTemplate[0].startDate,'2032-10-19T09:00:00.000Z');

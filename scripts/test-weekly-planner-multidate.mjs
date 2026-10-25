@@ -153,7 +153,7 @@ const E=vm.runInNewContext(read("services/EventOccurrences.js")+";({entries,stor
 const checkDueSource=service.split("    function checkDueEvents() {",2)[1]
   ?.split("    function createNextRecurrence(event, afterTime) {",1)[0];
 assert.ok(checkDueSource,"Events.checkDueEvents implementation missing");
-const due=new Function("root","Occurrences","RepeatPolicy",
+const due=new Function("root","Occurrences","RepeatPolicy","FutureSchedule",
   "return function checkDueEvents() {"+checkDueSource);
 const today=new Date(),monday=new Date(today.getFullYear(),today.getMonth(),today.getDate(),9);
 monday.setDate(monday.getDate()-(monday.getDay()+6)%7-14);
@@ -169,7 +169,9 @@ let writes=0,triggers=0;
 const owner={ready:true,list:[fixture],saveToFile(){writes++},
  eventTriggered(){triggers++},reminderTriggered(){},
  createNextRecurrence(){throw new Error("Legacy single-date path invoked");}};
-const processDue=due(owner,E,R);
+const futureSchedule=vm.createContext({});
+vm.runInContext(read("services/EventFutureSchedule.js"),futureSchedule);
+const processDue=due(owner,E,R,futureSchedule);
 processDue();
 assert.equal(owner.list.length,1,"recurrence must not create extra IDs");
 assert.equal(owner.list[0].id,411);
