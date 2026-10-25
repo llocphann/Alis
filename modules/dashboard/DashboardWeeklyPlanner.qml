@@ -168,9 +168,8 @@ Item {
     readonly property real columnWidth: Math.max(102 * Appearance.fontSizeScale, (viewport.width - 44) / 7)
     readonly property color ink: Appearance.colors.colOnLayer1
     readonly property color mutedInk: Appearance.colors.colSubtext
-    // Dedicated Event identity colors: not derived from theme/wallpaper.
-    // Each persisted Event ID maps to one fixed hue across weeks, dates,
-    // drag/resize and theme changes. External UID is stable across sync.
+    // Muted, curated Event swatches independent of wallpaper/theme. An
+    // Event ID has one stable signature across its saved/virtual occurrences.
     function eventIdentityColor(row): color {
         const explicit=row?.event?.color || (row?.source==="external"
             ? row?.event?.sourceColor : null)
@@ -178,8 +177,7 @@ Item {
             const saved=Qt.color(explicit)
             if (saved.valid) return saved
         }
-        return Qt.hsla(EventPalette.eventHue(row?.event,row?.source),
-            0.74,0.56,1)
+        return Qt.color(EventPalette.eventSwatch(row?.event,row?.source))
     }
     // Match the date and All-day headings to the actual timeline: its day
     // cells have no opaque backing, so the pinned headings must not paint a
@@ -598,7 +596,7 @@ Item {
                                 y:viewport.contentY+68+index*26;width:dayColumn.width-8;height:24;z:11
                                 buttonRadius:6
                                 colBackground:Qt.alpha(allDayButton.eventAccent,
-                                    root.isEventSelected(modelData) || root.isEditorEvent(modelData) ? .50 : .38)
+                                    root.isEventSelected(modelData) || root.isEditorEvent(modelData) ? .44 : .35)
                                 Rectangle {
                                     objectName:"plannerAllDaySelection"
                                     anchors.fill:parent;radius:allDayButton.buttonRadius
@@ -765,19 +763,19 @@ Item {
                                     +(effectiveMode==="top"?-effectiveDy
                                         :effectiveMode==="bottom"?effectiveDy:0))
                                 radius:7
-                                // Gradient uses one stable ID swatch: only opacity
-                                // varies across the card, never hue or recurrence.
+                                // The two gradient stops share one understated
+                                // Event swatch; only alpha changes, never hue.
                                 gradient: Gradient {
                                     orientation:Gradient.Horizontal
                                     GradientStop {
                                         position:0
                                         color:Qt.alpha(timedButton.eventAccent,
-                                            eventMouse.containsMouse ? .54 : .43)
+                                            eventMouse.containsMouse ? .47 : .36)
                                     }
                                     GradientStop {
                                         position:1
                                         color:Qt.alpha(timedButton.eventAccent,
-                                            eventMouse.containsMouse ? .39 : .29)
+                                            eventMouse.containsMouse ? .34 : .24)
                                     }
                                 }
                                 border.width:root.isEventSelected(modelData) ? 2
