@@ -46,6 +46,42 @@ Window {
    eventUpdated(changed)
    return true
   }
+  property int groupEditCalls:0
+  property var lastGroupOperations:[]
+  function applyPlannerOccurrenceBatch(operations) {
+   // The native fixture is private and in-memory: emulate one atomic
+   // persistent writer without touching the real owner's Events.
+   if(!operations || !operations.length) return false
+   const next=list.map(event=>Object.assign({},event))
+   const touched=new Set()
+   for(const op of operations) {
+    const index=next.findIndex(event=>event.id===op.id)
+    if(index<0 || op.remove===true) return false
+    const record=next[index]
+    if(op.recurring && op.originalStartIso) {
+     const current=record.plannerOverrides || []
+     record.plannerOverrides=current.concat([{
+      occurrenceIndex:op.occurrenceIndex,originalStartDate:op.originalStartIso,
+      startDate:op.startIso,endDate:op.endIso
+     }])
+    } else if(record.occurrences && op.occurrenceIndex>=0
+            && op.occurrenceIndex<record.occurrences.length) {
+     const slots=record.occurrences.slice()
+     slots[op.occurrenceIndex]=Object.assign({},slots[op.occurrenceIndex],{
+      startDate:op.startIso,endDate:op.endIso,
+      plannerSeriesStartDate:slots[op.occurrenceIndex].plannerSeriesStartDate
+       || slots[op.occurrenceIndex].startDate,
+      plannerSeriesEndDate:slots[op.occurrenceIndex].plannerSeriesEndDate
+       || slots[op.occurrenceIndex].endDate
+     })
+     record.occurrences=slots
+    } else return false
+    touched.add(op.id)
+   }
+   list=next;groupEditCalls++;lastGroupOperations=operations
+   for(const id of touched) eventUpdated(next.find(row=>row.id===id))
+   return true
+  }
   property int recurringEditCalls:0
   function rescheduleRecurringOccurrence(id,index,startIso,endIso) {
    const next=Array.from(list),at=next.findIndex(row=>row.id===id)
@@ -470,27 +506,72 @@ Window {
          startDate:value.startDate,endDate:value.endDate})),repeatCycleStart:2}
    })
    local.list=recurring;external.events=[];wait(100)
-   // A recurring Event is selectable but not deletable through the generic
-   // destructive batch policy. The selection toolbar must offer a working
-   // Edit action rather than a disabled "Delete (1)" control. Clicking it
-   // must never remove a stored or virtual recurrence automatically.
+   // Clicking a saved Event selects ALL visible occurrences under its
+   // stable Event ID. Ctrl-click deselects only one tile from that group.
+   // There is no redundant Edit-to-delete control on repeating selections.
    const recurringBefore=JSON.stringify(local.list)
    const recurringRow=planner.selectableEventRows.find(row=>row.event.id===100)
    check(!!recurringRow,"recurring row missing from Qt Planner selection")
-   planner.clickPlannerEvent(recurringRow,Qt.ControlModifier);wait(50)
-   check(planner.selectedEventRows.length===1 && !planner.canDeleteSelection,
-     "recurring selection should not be armed for destructive batch delete")
+   const groupCount=planner.selectableEventRows.filter(row=>row.event.id===100).length
+   check(groupCount>=2,"fixture needs at least two saved dates under one ID")
+   planner.clickPlannerEvent(recurringRow,Qt.NoModifier);wait(60)
+   check(planner.selectedEventRows.length===groupCount
+      && planner.selectedEventRows.every(row=>row.event.id===100),
+      "click highlighted a recurring ID group without selecting all its dates")
    const recurringAction=find(planner,"plannerDeleteSelected")
-   check(!!recurringAction && recurringAction.visible && recurringAction.enabled
-     && String(recurringAction.label).includes("Edit to delete"),
-     "selected recurring Event still shows a disabled Delete (1)")
-   const beforeEditorCalls=root.calls
-   mouseClick(recurringAction,recurringAction.width/2,recurringAction.height/2)
-   wait(50)
-   check(root.calls===beforeEditorCalls+1 && root.last.id===100,
-     "recurring deletion action did not route to owning Edit Event")
-   check(planner.selectedEventRows.length===0 && JSON.stringify(local.list)===recurringBefore,
-     "opening recurring delete editor mutated or deleted Agenda history")
+   check(!!recurringAction && !recurringAction.visible && !planner.canDeleteSelection,
+     "recurring group must not have Delete or Edit-to-delete shortcut")
+   planner.clickPlannerEvent(recurringRow,Qt.ControlModifier);wait(60)
+   check(planner.selectedEventRows.length===groupCount-1
+      && !planner.isEventSelected(recurringRow)
+      && planner.selectedEventRows.every(row=>row.event.id===100),
+     "Ctrl-click must remove only that one selected recurring tile")
+   const member=planner.selectedEventRows[0]
+   check(planner.gestureTargets(member).length===groupCount-1,
+     "group gesture includes a Ctrl-deselected recurring occurrence")
+   planner.clickPlannerEvent(recurringRow,Qt.ControlModifier);wait(60)
+   check(planner.selectedEventRows.length===groupCount,
+     "Ctrl-click failed to restore a single deselected occurrence")
+   // Move/resize a clicked group and require the real pointer path to
+   // dispatch ALL selected dates through the one atomic in-memory writer.
+   const groupCard=all(planner,"plannerTimedEvent").find(item=>
+     item.modelData.event.id===100 && item.modelData.occurrenceIndex===
+      recurringRow.occurrenceIndex && !item.modelData.virtual)
+   check(!!groupCard && !!find(groupCard,"plannerEventMoveArea"),
+     "source card lost the body pointer owner")
+   const beforeSlots=local.list.find(e=>e.id===100).occurrences.map(
+     entry=>({startDate:entry.startDate,endDate:entry.endDate}))
+   const slotStep=planner.hourHeight/4
+   dragPointer(find(groupCard,"plannerEventMoveArea"),slotStep)
+   check(local.groupEditCalls===1 && local.lastGroupOperations.length===groupCount,
+     "dragging a selected recurring ID still moved only one occurrence")
+   const afterMove=local.list.find(e=>e.id===100).occurrences
+   const movedIndexes=new Set(local.lastGroupOperations.map(op=>op.occurrenceIndex))
+   check(local.lastGroupOperations.every(op=>op.id===100 && op.recurring),
+     "group update included another Event ID or lost recurrence guard")
+   check([...movedIndexes].every(i=>new Date(afterMove[i].startDate).getTime()
+      ===new Date(beforeSlots[i].startDate).getTime()+15*60000),
+     "drag failed to move all saved dates in the ID group")
+   check(local.list.find(e=>e.id===100).repeatTemplate.length===2,
+     "group drag must not rewrite the repeat template")
+   check(planner.selectedEventKeys.length===0,
+     "successful group drag left stale selection")
+   // Re-select that same ID and resize all saved instances as one gesture.
+   const groupAgain=planner.selectableEventRows.find(row=>row.event.id===100)
+   planner.clickPlannerEvent(groupAgain,Qt.NoModifier);wait(40)
+   const resizeCard=all(planner,"plannerTimedEvent").find(item=>
+     item.modelData.event.id===100 && item.modelData.occurrenceIndex===
+       groupAgain.occurrenceIndex && !item.modelData.virtual)
+   dragPointer(find(resizeCard,"plannerResizeEnd"),slotStep)
+   check(local.groupEditCalls===2 && local.lastGroupOperations.length===groupCount,
+     "bottom resize committed only one selected ID-group occurrence")
+   const finalSlots=local.list.find(e=>e.id===100).occurrences
+   check(local.lastGroupOperations.every(op=>
+     new Date(finalSlots[op.occurrenceIndex].endDate).getTime()
+       ===new Date(afterMove[op.occurrenceIndex].endDate).getTime()+15*60000),
+     "bottom resize did not lengthen every selected occurrence")
+   check(recurringBefore!==JSON.stringify(local.list),
+     "private fixture did not exercise a real group state transition")
    function verifyRecurringWeek(label){
      const rows=planner.days.reduce((result,day)=>result.concat(day.timed),[])
      const cards=all(planner,"plannerTimedEvent")
