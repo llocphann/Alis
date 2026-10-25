@@ -11,6 +11,9 @@ import QtTest
 import Quickshell
 import qs.modules.common
 import qs.modules.dashboard
+import "services/EventBatchPolicy.js" as BatchPolicy
+import "services/EventOccurrences.js" as Occurrences
+import "services/EventFutureSchedule.js" as FutureSchedule
 Window {
  id:root;visible:true;width:1180;height:740;color:"#111820"
  property real allocatedWidth:1180
@@ -49,37 +52,14 @@ Window {
   property int groupEditCalls:0
   property var lastGroupOperations:[]
   function applyPlannerOccurrenceBatch(operations) {
-   // The native fixture is private and in-memory: emulate one atomic
-   // persistent writer without touching the real owner's Events.
-   if(!operations || !operations.length) return false
-   const next=list.map(event=>Object.assign({},event))
-   const touched=new Set()
-   for(const op of operations) {
-    const index=next.findIndex(event=>event.id===op.id)
-    if(index<0 || op.remove===true) return false
-    const record=next[index]
-    if(op.recurring && op.originalStartIso) {
-     const current=record.plannerOverrides || []
-     record.plannerOverrides=current.concat([{
-      occurrenceIndex:op.occurrenceIndex,originalStartDate:op.originalStartIso,
-      startDate:op.startIso,endDate:op.endIso
-     }])
-    } else if(record.occurrences && op.occurrenceIndex>=0
-            && op.occurrenceIndex<record.occurrences.length) {
-     const slots=record.occurrences.slice()
-     slots[op.occurrenceIndex]=Object.assign({},slots[op.occurrenceIndex],{
-      startDate:op.startIso,endDate:op.endIso,
-      plannerSeriesStartDate:slots[op.occurrenceIndex].plannerSeriesStartDate
-       || slots[op.occurrenceIndex].startDate,
-      plannerSeriesEndDate:slots[op.occurrenceIndex].plannerSeriesEndDate
-       || slots[op.occurrenceIndex].endDate
-     })
-     record.occurrences=slots
-    } else return false
-    touched.add(op.id)
-   }
-   list=next;groupEditCalls++;lastGroupOperations=operations
-   for(const id of touched) eventUpdated(next.find(row=>row.id===id))
+   // Exercise the actual pure atomic writer on private in-memory records.
+   const result=BatchPolicy.apply(list,operations,Occurrences,FutureSchedule,Date.now())
+   if(!result) return false
+   list=result.list;lastGroupOperations=operations
+   if(operations.length>1) groupEditCalls++
+   else if(operations[0].originalStartIso) virtualEditCalls++
+   else if(operations[0].recurring) recurringEditCalls++
+   for(const changed of result.updated) eventUpdated(changed)
    return true
   }
   property int recurringEditCalls:0

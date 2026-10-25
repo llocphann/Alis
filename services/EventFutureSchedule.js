@@ -178,7 +178,7 @@ function apply(event, operations, nowValue) {
     if (!now || !supported(event.recurrence) || !Array.isArray(operations)
             || !operations.length || existing !== undefined && (!Array.isArray(existing)
                 || existing.some(function(rule) { return !validRule(rule); }))) return null;
-    var grouped = new Map(), seen = new Set(), explicit = new Map();
+    var grouped = new Map(), seen = new Set(), explicit = new Map(), projected=[];
     for (var op of operations) {
         if (!op || op.remove === true || op.future !== true || op.recurring !== true
                 || !Number.isInteger(op.occurrenceIndex) || op.occurrenceIndex < 0
@@ -213,6 +213,7 @@ function apply(event, operations, nowValue) {
             grouped.set(info.key, early);
         } else grouped.set(info.key, change);
         if (!op.originalStartIso) explicit.set(op.occurrenceIndex, change);
+        else projected.push({operation:op,change:change});
     }
     var nextRules = (existing || []).slice();
     for (var change of grouped.values()) {
@@ -245,6 +246,28 @@ function apply(event, operations, nowValue) {
         });
         if (invalid) return null;
     }
+    // Keep the directly edited projected instance explicit as well. This
+    // preserves its receipt/Cancel/rollover identity even when it is historical
+    // and the forward cutover is clamped to the first still-future cycle.
+    if (projected.length) {
+        var pending=(updated.plannerOverrides || []).slice();
+        for (var selected of projected) {
+            var op=selected.operation,change=selected.change;
+            var original=rootRange(change,event.recurrence,change.cycle);
+            var stamp=original?.startDate || op.originalStartIso;
+            var position=pending.findIndex(function(item) {
+                return item.occurrenceIndex===op.occurrenceIndex && item.originalStartDate===stamp;
+            });
+            var old=position>=0 ? pending[position] : {};
+            if (old.materializedOccurrenceIndex!==undefined || old.forwardedEventId!==undefined
+                    || position<0 && pending.length>=512) return null;
+            var replacement=Object.assign({},old,{occurrenceIndex:op.occurrenceIndex,
+                originalStartDate:stamp,startDate:change.startDate,endDate:change.endDate});
+            if (position>=0) pending[position]=replacement;
+            else pending.push(replacement);
+        }
+        updated.plannerOverrides=pending;
+    }
     var replacements = slots(event).map(function(slot, index) {
         var info = branch(event, index), chosen = explicit.get(index);
         if (!info || !grouped.has(info.key)) return slot;
@@ -270,7 +293,7 @@ function apply(event, operations, nowValue) {
         var overrides=updated.plannerOverrides;
         updated=Object.assign({},replacements[0],{plannerFutureSchedule:nextRules,
             dateTime:replacements[0].startDate});
-        if (Array.isArray(event.plannerOverrides)) updated.plannerOverrides=overrides;
+        if (Array.isArray(overrides)) updated.plannerOverrides=overrides;
     }
     return updated;
 }

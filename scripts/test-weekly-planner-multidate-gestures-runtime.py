@@ -115,7 +115,7 @@ Window {
     check(planner.selectedEventKeys.length===2,"Ctrl selection lost "+JSON.stringify({
      selected:planner.selectedEventKeys,width:root.width,height:root.height,
      viewportWidth:viewport.width,viewportHeight:viewport.height,
-     cards:selected.map(c=>({id:c.modelData.event.id,point:c.mapToItem(root,0,0),width:c.width,height:c.height}))}))
+     cards:selected.map(c=>({id:c.modelData.event.id,point:c.mapToItem(planner,0,0),width:c.width,height:c.height}))}))
     let p=held(first(card(403),"plannerEventMoveArea"),0,planner.hourHeight/4)
     check(cards().filter(c=>c.effectiveMode==="move").length===2,"explicit batch preview lost")
     mouseRelease(planner,p.x,p.y,Qt.LeftButton);settle()
