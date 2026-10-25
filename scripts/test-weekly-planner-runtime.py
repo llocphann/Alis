@@ -541,7 +541,6 @@ Window {
      "source card lost the body pointer owner")
    const beforeSlots=local.list.find(e=>e.id===100).occurrences.map(
      entry=>({startDate:entry.startDate,endDate:entry.endDate}))
-   const slotStep=planner.hourHeight/4
    dragPointer(find(groupCard,"plannerEventMoveArea"),slotStep)
    check(local.groupEditCalls===1 && local.lastGroupOperations.length===groupCount,
      "dragging a selected recurring ID still moved only one occurrence")
