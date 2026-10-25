@@ -76,3 +76,41 @@ function assignPositions(localEvents,externalEvents) {
     collect(localEvents,"local");collect(externalEvents,"external");
     return positions;
 }
+
+
+// Canonical *display* identity for Weekly Planner tones. Historical Agenda
+// weekly/daily rollovers may create a new persisted Event ID for the very same
+// repeating schedule (Events.createNextRecurrence -> Events.addEvent). Group
+// those read-only by their normalized schedule name/mode/category, NEVER by
+// occurrence time, date or index. Normal one-off Events retain their stable ID.
+// This is intentionally not a data migration; no owner record is modified.
+function toneIdentity(event,source) {
+    const origin=String(source || "local");
+    const mode=String(event?.recurrence || "none").toLowerCase();
+    const id=event?.id ?? event?.uid ?? event?.iCalUID ?? event?.externalId;
+    const title=String(event?.title || "").trim().replace(/\s+/g," ").toLocaleLowerCase();
+    if (origin==="local" && ["daily","weekly","monthly","yearly"].includes(mode)
+            && title) {
+        // Optional future persisted series key wins when one is provided, but
+        // legacy separate-ID recurring records still have a safe fallback.
+        const saved=typeof event?.seriesColorKey==="string"
+            ? event.seriesColorKey.trim() : "";
+        return saved ? "local|series-key|"+saved
+            : "local|"+mode+"|"+String(event?.category || "general")
+                .toLocaleLowerCase()+"|"+title;
+    }
+    if (id!==undefined && id!==null && id!=="")
+        return origin+"|id|"+String(id);
+    return origin+"|title|"+title;
+}
+// One hue from the current Material Primary; distinct intensity/lightness
+// tiers only. Position and assignPositions remain for older read-only
+// consumers, but rendered Event color NEVER uses them as a rainbow position.
+function toneIndex(event,source,count) {
+    const steps=Math.max(1,Math.min(12,Math.floor(Number(count) || 8)));
+    const key=toneIdentity(event,source);
+    let hash=2166136261;
+    for (let i=0;i<key.length;i++)
+        hash=Math.imul(hash^key.charCodeAt(i),16777619)>>>0;
+    return hash%steps;
+}
