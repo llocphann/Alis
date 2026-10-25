@@ -1,0 +1,20 @@
+[
+  {
+    "name": "native-original",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 7.15,
+    "tail": "WEEKLY_PLANNER_PNG_PASS 11\n  INFO qml: WEEKLY_PLANNER_NATIVE_PASS 156 11\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "nested-native-original",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 7.89,
+    "tail": "WEEKLY_PLANNER_PNG_PASS 11\n  INFO qml: WEEKLY_PLANNER_NATIVE_PASS 156 11\nactual_validator_exit 0\n",
+    "status": "PASS",
+    "expectation_met": true
+  }
+]

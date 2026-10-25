@@ -1,0 +1,48 @@
+{
+  "observed_at_utc": "2026-10-25T03:58:17.045725+00:00",
+  "issues": [
+    130,
+    131
+  ],
+  "baseline_sha": "05c549a50cc4159524360e79aa0ad2510c42188c",
+  "product_sha": "9ee75bf45dfe8e349d31f94812f9b99bcb29a3e5",
+  "final_validation_sha": "9ee75bf45dfe8e349d31f94812f9b99bcb29a3e5",
+  "installed_metadata_sha": "05c549a50",
+  "inventory": [
+    "Open Edit Event identity + selected civil dates emphasize matching timed and All-day cards",
+    "Calendar toggle, Cancel, hidden/reopened pane and restart update emphasis without implicit batch authorization",
+    "Remove both interior vertical accent stripes; preserve hover resize bars, keyboard focus and explicit grid selection",
+    "Resolve stable local/imported identity collisions within the original owner-selected CavaTheme.vibrantColors gradient",
+    "Each Event position is independent of other records: add/delete/filter/reorder/reload cannot recolor survivors. All 53 safe integer ID bits retained; legacy paletteSlot API preserved",
+    "Retain explicit Event and external source colors; same-title distinct IDs stay independent",
+    "No schema migration or saved color field; persisted Event bytes remain unchanged in all visual/native phases",
+    "Window-wide polish and a presented frame before compact-toolbar width assertion; all original behavior and 11 PNG oracles retained"
+  ],
+  "focused": {
+    "source": "9ee75bf45",
+    "ordinary_commands_pass": 35,
+    "intentional_negative_or_baseline_actual_exit_1": 6,
+    "unexpected_failures": 0,
+    "supervisor_exit": 0,
+    "remaining": [],
+    "native_visual_checks_per_variant": "28 initial + 28 restart + 28 repeated restart",
+    "native_variants": [
+      "Abyss default",
+      "Qt scale 1.5",
+      "Waffle"
+    ],
+    "pure_collision_cases": "64 IDs at equal original modulo-8 positions, reorder/rename/drag/reload, mixed old/new IDs and Qt sequence views"
+  },
+  "layout": {
+    "before": "instrumented 50bf821 (runtime035): planner.width320/toolbar.width1180, compact=false; unchanged original assertion FAIL",
+    "after": "cd9712c69 window-wide polish, presented frame, exact toolbar.width320; standalone and nested source fixtures PASS156/11 each",
+    "diagnostic_is_not_final_validation": true
+  },
+  "data_parity": "Read-time display only; no color registry/cache/state file. Full-resolution ID-based position stays stable across add/delete/filter, including restarting without other Events. Real synthetic persisted fixtures retain exact bytes through calendar drafts, canceled gestures, close/reopen, two restarts and in-memory rename/list refresh. Existing IDs, recurrence/templates/history, nextId, links and unknown fields untouched. No personal calendar or Owner screenshot published.",
+  "gates": {
+    "hosted_ci": "UNVERIFIED (combined status endpoint returned no statuses)",
+    "automatic_deployment": "NOT_PERFORMED",
+    "physical_installed_multi_output_owner": "PENDING",
+    "full_validator": "read exact canonical receipt, never infer full PASS from scoped checks"
+  }
+}

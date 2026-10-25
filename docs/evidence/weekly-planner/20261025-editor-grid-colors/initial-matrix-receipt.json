@@ -1,0 +1,16 @@
+{
+  "source_sha": "8292e7f2d5a7e3eb319a91737e90d258147898ef",
+  "argv": [
+    "python3",
+    "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261025-planner-capture/run-capture-cohort.py",
+    "<private-native-evidence>/matrix-input",
+    "<private-native-evidence>/focused-8292e7f2d"
+  ],
+  "actual_exit": 0,
+  "status": "PASS",
+  "stop_reason": null,
+  "elapsed_seconds": 122.1,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "0a007875b7d9a1ba14c7257a595a5fd663d58d8030ab43f9ef578415dcd4c345"
+}

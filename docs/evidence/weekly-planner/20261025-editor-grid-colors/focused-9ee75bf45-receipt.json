@@ -1,0 +1,16 @@
+{
+  "source_sha": "9ee75bf45dfe8e349d31f94812f9b99bcb29a3e5",
+  "argv": [
+    "python3",
+    "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261025-planner-capture/run-capture-cohort.py",
+    "<private-native-evidence>/stable-color-matrix-input",
+    "<private-native-evidence>/focused-9ee75bf45"
+  ],
+  "actual_exit": 0,
+  "status": "PASS",
+  "stop_reason": null,
+  "elapsed_seconds": 113.6,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "e8713644a2716cdf176a7eb37a5facfde9664668d3dd1d558a84bf9bb902c3dd"
+}

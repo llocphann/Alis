@@ -1,0 +1,7 @@
+{
+  "runtime_sha": "03552f739f72e7888502a5b785dd45f948b979b7",
+  "diagnostic_sha": "50bf821af2e634e91277b87585e2b96631a25848",
+  "changed_fixture": "scripts/test-weekly-planner-runtime.py",
+  "fixture_sha256": "7eaaf850091fb288dba982ec47b508e723888e613b77a6ccb2b57132aed007e6",
+  "purpose": "geometry witness only; behavior oracles unchanged; not final production validation"
+}

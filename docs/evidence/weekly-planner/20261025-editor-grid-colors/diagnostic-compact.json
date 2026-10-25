@@ -1,0 +1,518 @@
+{
+  "source_sha": "50bf821af2e634e91277b87585e2b96631a25848",
+  "kind": "instrumented diagnostic; fixture geometry logging only",
+  "supervisor": {
+    "source_sha": "50bf821af2e634e91277b87585e2b96631a25848",
+    "argv": [
+      "python3",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/run-canonical-contained.py",
+      "<private-native-evidence>/diagnostic-compact-source",
+      "<private-native-evidence>/compact-diagnostic"
+    ],
+    "actual_exit": 143,
+    "status": "STOPPED",
+    "stop_reason": "diagnostic_observation_complete",
+    "elapsed_seconds": 208.3,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "91e15aa9817871b6ef2eb120245a8eaeb8d9aeda72d1bfc9f6d994b5c316c057"
+  },
+  "validator": {
+    "actual_validator_exit": -15,
+    "stop_signals_received": [
+      15
+    ]
+  },
+  "status": "STOPPED",
+  "started": 80,
+  "settled": 79,
+  "counts": {
+    "PASS": 71,
+    "FAIL": 8,
+    "SKIP": 0,
+    "UNSETTLED": 1
+  },
+  "checks": [
+    {
+      "number": 1,
+      "name": "host tool preflight",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 2,
+      "name": "build and baseline shell syntax",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 3,
+      "name": "tracked shell/package syntax",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 4,
+      "name": "tracked Python syntax",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 5,
+      "name": "tracked JSON syntax",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 6,
+      "name": "tracked JavaScript syntax",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 7,
+      "name": "tracked Fish syntax",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 8,
+      "name": "Office auto-theming ownership and recovery regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 9,
+      "name": "Monitor arrangement fit, zoom and drag-coordinate regression",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 10,
+      "name": "Retired IME integration source guard",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 11,
+      "name": "Niri selected-fullscreen workspace regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 12,
+      "name": "NotificationCenter anchor hover lease regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 13,
+      "name": "Abyss notification popup geometry transition regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 14,
+      "name": "Abyss Notification closing content snapshot regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 15,
+      "name": "Notification closing frame/model fast path regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 16,
+      "name": "Recording/Notification stable allocator priority",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 17,
+      "name": "Recording-fixed Notification Pyramid visual origin",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 18,
+      "name": "Abyss disabled Waves mass-update regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 19,
+      "name": "Abyss hover scene geometry diagnostic regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 20,
+      "name": "Abyss frame activity diagnostic regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 21,
+      "name": "Shared tooltip hover/click lifecycle contract",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 22,
+      "name": "Native default/custom/styled/Waffle tooltip content lifecycle",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 23,
+      "name": "Native static Panel reveal without content resizing",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 24,
+      "name": "Native dynamic Toast/OSD/Utility and reparented form reveal",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 25,
+      "name": "Native shared-field optimized/unoptimized exact GPU parity",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 26,
+      "name": "Native shared-field transparent-interior exact GPU parity",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 27,
+      "name": "Native shared-field fractional light transparent-interior exact GPU parity",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 28,
+      "name": "Native shared-field fractional light/mask exact GPU parity",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 29,
+      "name": "Native generic Popup delayed-loader reveal and cancellation",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 30,
+      "name": "Native Dashboard/Overview content-ready reveal, reversal and warm expiry",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 31,
+      "name": "Dashboard horizontal gesture and stable page order regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 32,
+      "name": "Weekly Planner event drag and both resize handles (regression guard)",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 33,
+      "name": "Native Weekly Planner pointer move, top/bottom resize and isolated calendar fixture",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 34,
+      "name": "Weekly Planner selected/batch gestures and stored event safeguards",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 35,
+      "name": "Legacy Weekly Planner saved recurring event compatibility and instance safety",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 36,
+      "name": "Weekly Planner legacy multi-date gestures, isolated preview identity and persistence parity",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 37,
+      "name": "Weekly Planner deterministic theme-gradient Event palette and unaffected gestures",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 38,
+      "name": "Weekly Planner collision-free view identities preserve saved Event data",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 39,
+      "name": "Native Weekly Planner multi-date gestures, isolated preview and real storage restart",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 40,
+      "name": "Edited legacy Weekly Planner rollover, denied save/retry and restart parity",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 41,
+      "name": "Weekly Planner civil dates, overlap, recurrence and DST regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 42,
+      "name": "Weekly Planner notified schedule rollover and retained history",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 43,
+      "name": "Weekly Planner Ctrl/Shift multi-date and compatible Repeat cycles",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 44,
+      "name": "Weekly Planner multi-date single-write storage runtime",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 45,
+      "name": "Multi-date Events grouping and Weekly Planner drag/resize policy",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 46,
+      "name": "Weekly Planner moved Event inline Calendar focus",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 47,
+      "name": "Weekly Planner editor cycle selection excludes saved recurrence history",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 48,
+      "name": "Weekly Planner recurring instance selection and atomic mixed groups",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 49,
+      "name": "Native Weekly Planner editor cycle highlights, draft and stored restart",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 50,
+      "name": "Native Weekly Planner editor-grid selection, clean cards and distinct colors",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 51,
+      "name": "Events persisted data preservation without automatic migration",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 52,
+      "name": "Calendar popup three-day civil range and recurrence policy",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 53,
+      "name": "Calendar counterclockwise 3-per-edge Agenda dots",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 54,
+      "name": "Calendar popup compact event cards, hover controls and dot spacing",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 55,
+      "name": "Independent Agenda and Todo stores with stable Event ID edits",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 56,
+      "name": "Agenda QML upcoming events and Dashboard startup compatibility",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 57,
+      "name": "Screen Edge lock reservations and output packing",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 58,
+      "name": "Screen Edge multi-selection transactions",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 59,
+      "name": "Screen Edge full module designs and capacity",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 60,
+      "name": "Screen Edge grab anchors and safe corners",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 61,
+      "name": "Screen Edge zero-width inner corner geometry",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 62,
+      "name": "Abyss mandatory structural panels and optional preferences",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 63,
+      "name": "Quick Notes Markdown preview, formatting and attachment safety regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 64,
+      "name": "Quick Notes rail wheel sensitivity and modifier routing regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 65,
+      "name": "Abyss unified content opacity migration regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 66,
+      "name": "translation catalog structure",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 67,
+      "name": "translation source parity",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 68,
+      "name": "Python regression: scripts/test-CAST-F01-audio-stage.py",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 69,
+      "name": "Python regression: scripts/test-CAST-F01-capabilities.py",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 70,
+      "name": "Python regression: scripts/test-CAST-F01-chromecast-quality.py",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 71,
+      "name": "Python regression: scripts/test-CAST-F01-display-stage.py",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 72,
+      "name": "Python regression: scripts/test-CAST-F01-live-dbus-scan.py",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 73,
+      "name": "Python regression: scripts/test-CAST-F01-project-ui.py",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 74,
+      "name": "Python regression: scripts/test-CAST-F01-signal-strength.py",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 75,
+      "name": "Python regression: scripts/test-CAST-F01-wireless-stage.py",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 76,
+      "name": "Python regression: scripts/test-UTIL-F01-mirror-intent.py",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 77,
+      "name": "Python regression: scripts/test-UTIL-F01-source-delivery.py",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 78,
+      "name": "Python regression: scripts/test-abyss-bar-popup-autohide-contract.py",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 79,
+      "name": "Python regression: scripts/test-abyss-body-placement.py",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 80,
+      "name": "Python regression: scripts/test-abyss-body-reveal-readiness-runtime.py",
+      "status": "UNSETTLED",
+      "actual_exit": null
+    }
+  ],
+  "whole_suite_pass": false
+}
