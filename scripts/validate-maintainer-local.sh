@@ -340,6 +340,7 @@ run_check 'Weekly Planner selected/batch gestures and stored event safeguards' p
 run_check 'Legacy Weekly Planner saved recurring event compatibility and instance safety' node scripts/test-weekly-planner-legacy-recurrence.mjs
 run_check 'Weekly Planner legacy multi-date gestures, isolated preview identity and persistence parity' node scripts/test-weekly-planner-multidate-gestures.mjs
 run_check 'Weekly Planner deterministic theme-gradient Event palette and unaffected gestures' node scripts/test-weekly-planner-event-palette.mjs
+run_check 'Weekly Planner collision-free view identities preserve saved Event data' node scripts/test-weekly-planner-visual-identity.mjs
 run_check 'Native Weekly Planner multi-date gestures, isolated preview and real storage restart' python3 scripts/test-weekly-planner-multidate-gestures-runtime.py
 run_check 'Edited legacy Weekly Planner rollover, denied save/retry and restart parity' python3 scripts/test-weekly-planner-edited-rollover-runtime.py
 run_check 'Weekly Planner civil dates, overlap, recurrence and DST regression' node scripts/test-weekly-planner-policy.mjs
@@ -351,6 +352,7 @@ run_check 'Weekly Planner moved Event inline Calendar focus' node scripts/test-w
 run_check 'Weekly Planner editor cycle selection excludes saved recurrence history' node scripts/test-weekly-planner-editor-cycle.mjs
 run_check 'Weekly Planner recurring instance selection and atomic mixed groups' node scripts/test-weekly-planner-recurring-selection.mjs
 run_check 'Native Weekly Planner editor cycle highlights, draft and stored restart' python3 scripts/test-weekly-planner-editor-cycle-runtime.py
+run_check 'Native Weekly Planner editor-grid selection, clean cards and distinct colors' python3 scripts/test-weekly-planner-editor-visuals-runtime.py
 run_check 'Events persisted data preservation without automatic migration' node scripts/test-events-no-automatic-migration.mjs
 run_check 'Calendar popup three-day civil range and recurrence policy' node scripts/test-calendar-three-day-window.mjs
 run_check 'Calendar counterclockwise 3-per-edge Agenda dots' node scripts/test-calendar-event-dot-layout.mjs

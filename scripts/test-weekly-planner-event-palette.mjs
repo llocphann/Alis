@@ -49,7 +49,10 @@ assert.match(timed,/root\.eventGradientColor\(modelData,root\.eventThemeColors\)
 assert.match(timed,/gradient: Gradient \{/);
 assert.match(timed,/orientation:Gradient\.Horizontal/);
 assert.match(timed,/color:Qt\.alpha\(timedButton\.eventAccent/);
-assert.match(timed,/color:timedButton\.eventAccent/);
+assert.doesNotMatch(timed,/x:1;y:3;width:3/,'Owner removed the interior timed accent stripe');
+assert.doesNotMatch(allDay,/x:2;y:4;width:3/,'Owner removed the interior All-day accent stripe');
+assert.match(qml,/EventPalette\.assignPositions\(root\.localBackend\.list,root\.externalBackend\.events\)/);
+assert.match(qml,/eventColorPositions\[EventPalette\.identity/);
 for (const token of ['plannerEventMoveArea','plannerResizeStart','plannerResizeEnd',
   'root.commitTimedGesture(modelData,mode,dx,dy)',
   'readonly property bool showResizeHandles: canReschedule']) {

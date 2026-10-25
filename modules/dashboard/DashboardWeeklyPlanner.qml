@@ -78,6 +78,18 @@ Item {
     function isEventSelected(row): bool {
         return root.selectedEventKeys.includes(Selection.key(row))
     }
+    // The editor's chosen dates are visual context. Only explicit grid
+    // selection authorizes a batch gesture or selected-occurrence deletion.
+    readonly property var editorEventSelection: {
+        const form=inlineEventsPanel.item
+        return root.sideView==="events" && form?.isEditing
+            ? {id:form.editingEvent?.id,days:form.plannerSelectedDateKeys} : null
+    }
+    function isEditorEvent(row): bool {
+        const selected=root.editorEventSelection
+        return !!selected && row?.source==="local" && row.event?.id===selected.id
+            && selected.days.includes(Qt.formatDate(new Date(row.startDate),"yyyy-MM-dd"))
+    }
     function clearEventSelection(): void {
         root.selectedEventKeys=[]
         root.selectionAnchorKey=""
@@ -159,6 +171,10 @@ Item {
     // Always use Alis' theme-derived gradient, not album-cover or audio
     // visualizer settings. It rebinds when the active system theme changes.
     readonly property var eventThemeColors: CavaTheme.vibrantColors
+    readonly property var eventColorPositions: {
+        const revision=root._eventsRevision
+        return EventPalette.assignPositions(root.localBackend.list,root.externalBackend.events)
+    }
     function eventGradientColor(row, palette): color {
         const explicit=row?.event?.color || (row?.source==="external"
             ? row?.event?.sourceColor : null)
@@ -169,8 +185,9 @@ Item {
         if (!palette || !palette.length)
             return Appearance.colors.colPrimary
         const steps=8
-        const position=EventPalette.paletteSlot(row?.event,row?.source,steps)
-            * (palette.length-1)/(steps-1)
+        const legacy=EventPalette.paletteSlot(row?.event,row?.source,steps)/(steps-1)
+        const fraction=root.eventColorPositions[EventPalette.identity(row?.event,row?.source)] ?? legacy
+        const position=fraction*(palette.length-1)
         const lo=Math.floor(position),hi=Math.min(palette.length-1,lo+1)
         const first=Qt.color(palette[lo]),second=Qt.color(palette[hi])
         const t=position-lo
@@ -595,12 +612,14 @@ Item {
                                 y:viewport.contentY+68+index*26;width:dayColumn.width-8;height:24;z:11
                                 buttonRadius:6
                                 colBackground:Qt.alpha(allDayButton.eventAccent,
-                                    root.isEventSelected(modelData) ? .42 : .27)
-                                // The saturated stripe keeps colors distinguishable
-                                // even on translucent/light theme surfaces.
+                                    root.isEventSelected(modelData) || root.isEditorEvent(modelData) ? .42 : .27)
                                 Rectangle {
-                                    x:2;y:4;width:3;height:parent.height-8
-                                    radius:2;color:allDayButton.eventAccent
+                                    objectName:"plannerAllDaySelection"
+                                    anchors.fill:parent;radius:allDayButton.buttonRadius
+                                    color:"transparent"
+                                    border.width:root.isEventSelected(allDayButton.modelData)
+                                        || root.isEditorEvent(allDayButton.modelData) ? 2 : 0
+                                    border.color:Appearance.colors.colPrimary
                                     z:1
                                 }
                                 Accessible.name:modelData.event.title+(modelData.source==="external"?" · Read-only":"")
@@ -777,7 +796,7 @@ Item {
                                     }
                                 }
                                 border.width:root.isEventSelected(modelData) ? 2
-                                    : activeFocus ? 1 : 0
+                                    : root.isEditorEvent(modelData) ? 2 : activeFocus ? 1 : 0
                                 border.color:Appearance.colors.colPrimary
                                 activeFocusOnTab:true
                                 Accessible.role:Accessible.Button
@@ -828,11 +847,6 @@ Item {
                                 function cancelGesture() {
                                     gestureMode="";dragX=0;dragY=0;gestureMoved=false
                                     root.activeGroupGesture=null;root.activeDragDay=-1
-                                }
-                                Rectangle {
-                                    x:1;y:3;width:3;height:Math.max(0,parent.height-6)
-                                    radius:2;color:timedButton.eventAccent
-                                    z:1
                                 }
                                 Column {
                                     anchors.fill:parent;anchors.margins:5;clip:true
