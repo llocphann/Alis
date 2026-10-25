@@ -1,0 +1,380 @@
+[
+  {
+    "name": "test-weekly-planner-policy.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 2.74,
+    "tail": "PASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: UTC\nPASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: Asia/Ho_Chi_Minh\nPASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: America/New_York\nPASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: Europe/Berlin\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-selection.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "WEEKLY_PLANNER_SELECTION_PASS: Ctrl toggle, Shift range, all-day, guards, move/resize\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-batch.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "WEEKLY_PLANNER_BATCH_PASS: atomic move, resize, delete, grouped ID, no mutation\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-event-focus.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "WEEKLY_PLANNER_EVENT_FOCUS_PASS: saved moves rebase date/time without wiping unsaved form\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.06,
+    "tail": "WEEKLY_PLANNER_MULTIDATE_PASS: modifier choice, cycle eligibility, recurring groups, DST and identity\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-legacy-recurrence.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.06,
+    "tail": "WEEKLY_PLANNER_LEGACY_RECURRENCE_PASS: pre-occurrences weekly editing, original repeat cadence, old slot and immutable history\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-recurring-rollover.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.29,
+    "tail": "PASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: UTC\nPASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: Asia/Ho_Chi_Minh\nPASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: America/New_York\nPASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: Europe/Berlin\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-event-occurrences-policy.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "PASS canonical multi-date Events, dedup identity, read-only and drag/resize policy\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-agenda-upcoming-runtime-compat.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "AGENDA_UPCOMING_COMPAT_PASS: QML array compatibility, occurrence order, startup and empty state\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-calendar-event-dot-layout.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "CALENDAR_EVENT_DOT_LAYOUT_PASS: 464 assertions\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-pointer-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.02,
+    "tail": "WEEKLY_PLANNER_POINTER_SOURCE_PASS: guarded event move + visible top/bottom resize + safe persistence\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multi-selection-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.02,
+    "tail": "WEEKLY_PLANNER_MULTISELECT_CONTRACT_PASS: scroll preserved, select + handles + atomic delete/move\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-expanded-event-editor-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "WEEKLY_PLANNER_EXPANDED_EDITOR_AND_RESIZE_HOVER_PASS\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-calendar-event-indicators-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.03,
+    "tail": "CALENDAR_EVENT_DOTS_PASS: Dashboard and Edge historical indicators, per-event colors, count bounds\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate-gestures.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.33,
+    "tail": "{\"test\":\"multidate-gestures\",\"zone\":\"UTC\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-91066274b/\"}\n{\"test\":\"multidate-gestures\",\"zone\":\"Asia/Ho_Chi_Minh\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-91066274b/\"}\n{\"test\":\"multidate-gestures\",\"zone\":\"America/New_York\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-91066274b/\"}\n{\"test\":\"multidate-gestures\",\"zone\":\"Europe/Berlin\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-91066274b/\"}\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-edited-rollover-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 2.24,
+    "tail": "  INFO qml: PLANNER_EDITED_ROLLOVER_PASS initial-failed-save-retry 17\n  INFO qml: PLANNER_EDITED_ROLLOVER_PASS restart 11\n  INFO qml: PLANNER_EDITED_ROLLOVER_PASS restart 11\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-recurring-storage-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 1.58,
+    "tail": "  INFO qml: PLANNER_RECURRING_STORAGE_PASS initial\n  INFO qml: PLANNER_RECURRING_STORAGE_PASS restart\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate-storage-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.86,
+    "tail": "  INFO qml: PLANNER_MULTIDATE_STORAGE_PASS 14\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-events-durable-snapshot-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 4.54,
+    "tail": "  INFO qml: EVENTS_DURABLE_PASS normal 10 [[\"Alpha\"],[\"Alpha updated\",\"Beta\"]]\n  INFO qml: EVENTS_DURABLE_PASS restart 2 []\n  INFO qml: EVENTS_DURABLE_PASS failure 16 [[\"Alpha\"],[\"Alpha updated\",\"Beta\"],[\"Alpha updated\",\"Beta\",\"Denied\"]]\n  INFO qml: EVENTS_DURABLE_PASS restart 2 []\n  INFO qml: EVENTS_DURABLE_PASS cached 13 [[\"Alpha\"],[\"Alpha updated\",\"Beta\"],[\"Alpha updated\",\"Beta\"]]\n  INFO qml: EVENTS_DURABLE_PASS restart 2 []\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-calendar-event-indicators-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 1.58,
+    "tail": "  INFO qml: CALENDAR_EVENT_DOTS_NATIVE_PASS 532 checks: 42 days, max 3 dots on each Bottom/Right/Top/Left; no overflow marker\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-runtime.py",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 3.39,
+    "tail": "  INFO: Launching config: \"/var/tmp/av-nhy6r7ay/alis-weekly-planner-7drcnjgy/shell.qml\"\n  INFO: Shell ID: \"b2d59ddac17e8ee6e1c67c132e381339\" Path ID \"b2d59ddac17e8ee6e1c67c132e381339\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/rieqlvggnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-4.1231851.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-7drcnjgy/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-7drcnjgy/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7f045c3a0ba0 but 0x0 is focused\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-7drcnjgy/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n  WARN qml: [WeeklyPlanner] Group gesture rejected; no events changed\n ERROR qml: WEEKLY_PLANNER_NATIVE_FAIL legacy body dragging did not reach recurring controller check@qs:@/qs/shell.qml:106\nrun@qs:@/qs/shell.qml:303\nexpression for onTriggered@qs:@/qs/shell.qml:616\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "test-weekly-planner-multidate-gestures-runtime.py",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 3.29,
+    "tail": "83gg/shell.qml\"\n  INFO: Shell ID: \"aafcaabd602aa21d579dc89e13412d2a\" Path ID \"aafcaabd602aa21d579dc89e13412d2a\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/ykeqovggnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-4.1231933.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-multidate-gestures-701283gg/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-nhy6r7ay/alis-multidate-gestures-701283gg/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7fba78fc7d80 but 0x0 is focused\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-multidate-gestures-701283gg/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7fba78fc7d80 but 0x0 is focused\n  WARN: \"Could not convert argument 0 from QQuickWindowQmlImpl(0x7fba86f1e400) to const QQuickItem*\"\n  WARN: \t \"@qs:@/qs/shell.qml:109\"\n  WARN: \t \"run@qs:@/qs/shell.qml:109\"\n  WARN: \t \"expression for onTriggered@qs:@/qs/shell.qml:162\"\n ERROR qml: PLANNER_MULTIDATE_GESTURES_NATIVE_FAIL Passing incompatible arguments to C++ functions from JavaScript is not allowed. @qs:@/qs/shell.qml:109\nrun@qs:@/qs/shell.qml:109\nexpression for onTriggered@qs:@/qs/shell.qml:162\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "native-fractional",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 3.29,
+    "tail": "5yum/shell.qml\"\n  INFO: Shell ID: \"420fa877c05f3844711f35eb1da2493b\" Path ID \"420fa877c05f3844711f35eb1da2493b\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/ineqrvggnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1232025.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-nhy6r7ay/alis-multidate-gestures-bcpa5yum/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-multidate-gestures-bcpa5yum/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7ffa011bd960 but 0x0 is focused\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-multidate-gestures-bcpa5yum/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7ffa011bd960 but 0x0 is focused\n  WARN: \"Could not convert argument 0 from QQuickWindowQmlImpl(0x7ffa0f0d9800) to const QQuickItem*\"\n  WARN: \t \"@qs:@/qs/shell.qml:109\"\n  WARN: \t \"run@qs:@/qs/shell.qml:109\"\n  WARN: \t \"expression for onTriggered@qs:@/qs/shell.qml:162\"\n ERROR qml: PLANNER_MULTIDATE_GESTURES_NATIVE_FAIL Passing incompatible arguments to C++ functions from JavaScript is not allowed. @qs:@/qs/shell.qml:109\nrun@qs:@/qs/shell.qml:109\nexpression for onTriggered@qs:@/qs/shell.qml:162\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "native-waffle",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 3.34,
+    "tail": "nxcd/shell.qml\"\n  INFO: Shell ID: \"7eab92186a3c4b0473edf2c615b0aa84\" Path ID \"7eab92186a3c4b0473edf2c615b0aa84\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/1weqvvggnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1232301.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-multidate-gestures-drc5nxcd/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-nhy6r7ay/alis-multidate-gestures-drc5nxcd/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7facc61d8d20 but 0x0 is focused\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-multidate-gestures-drc5nxcd/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7facc61d8d20 but 0x0 is focused\n  WARN: \"Could not convert argument 0 from QQuickWindowQmlImpl(0x7facd4726d00) to const QQuickItem*\"\n  WARN: \t \"@qs:@/qs/shell.qml:109\"\n  WARN: \t \"run@qs:@/qs/shell.qml:109\"\n  WARN: \t \"expression for onTriggered@qs:@/qs/shell.qml:162\"\n ERROR qml: PLANNER_MULTIDATE_GESTURES_NATIVE_FAIL Passing incompatible arguments to C++ functions from JavaScript is not allowed. @qs:@/qs/shell.qml:109\nrun@qs:@/qs/shell.qml:109\nexpression for onTriggered@qs:@/qs/shell.qml:162\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "native-single-control",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 3.29,
+    "tail": "5i0y/shell.qml\"\n  INFO: Shell ID: \"eb6078d86fb4c546dc9d0492c32537ae\" Path ID \"eb6078d86fb4c546dc9d0492c32537ae\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/i1gqyvggnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1233822.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-multidate-gestures-ydef5i0y/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-nhy6r7ay/alis-multidate-gestures-ydef5i0y/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7fbc1afc4cc0 but 0x0 is focused\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-multidate-gestures-ydef5i0y/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7fbc1afc4cc0 but 0x0 is focused\n  WARN: \"Could not convert argument 0 from QQuickWindowQmlImpl(0x7fbc29346a00) to const QQuickItem*\"\n  WARN: \t \"@qs:@/qs/shell.qml:109\"\n  WARN: \t \"run@qs:@/qs/shell.qml:109\"\n  WARN: \t \"expression for onTriggered@qs:@/qs/shell.qml:162\"\n ERROR qml: PLANNER_MULTIDATE_GESTURES_NATIVE_FAIL Passing incompatible arguments to C++ functions from JavaScript is not allowed. @qs:@/qs/shell.qml:109\nrun@qs:@/qs/shell.qml:109\nexpression for onTriggered@qs:@/qs/shell.qml:162\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "event-palette",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "WEEKLY_PLANNER_CURATED_EVENT_COLORS_PASS: muted authored palette, 48 distinct ID variants, stable imported UID, preserved data and gestures\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "native-original-fractional",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 3.49,
+    "tail": "  INFO: Launching config: \"/var/tmp/av-nhy6r7ay/alis-weekly-planner-1lrnvk8c/shell.qml\"\n  INFO: Shell ID: \"001afd6c798b5dba13029dc6e6e4eb47\" Path ID \"001afd6c798b5dba13029dc6e6e4eb47\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/4lgq1wggnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1234058.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-1lrnvk8c/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-1lrnvk8c/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7f8b8dfb8900 but 0x0 is focused\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-1lrnvk8c/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n  WARN qml: [WeeklyPlanner] Group gesture rejected; no events changed\n ERROR qml: WEEKLY_PLANNER_NATIVE_FAIL legacy body dragging did not reach recurring controller check@qs:@/qs/shell.qml:106\nrun@qs:@/qs/shell.qml:303\nexpression for onTriggered@qs:@/qs/shell.qml:616\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "nested-after",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 3.77,
+    "tail": "  INFO: Launching config: \"/var/tmp/av-nhy6r7ay/alis-weekly-planner-zq32o0gg/shell.qml\"\n  INFO: Shell ID: \"768e287fe2b0c251b5fce6fa3b742ba1\" Path ID \"768e287fe2b0c251b5fce6fa3b742ba1\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/gehq5wggnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-5.1235579.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-zq32o0gg/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-zq32o0gg/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7f0ec63cbba0 but 0x0 is focused\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-zq32o0gg/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n  WARN qml: [WeeklyPlanner] Group gesture rejected; no events changed\n ERROR qml: WEEKLY_PLANNER_NATIVE_FAIL legacy body dragging did not reach recurring controller check@qs:@/qs/shell.qml:106\nrun@qs:@/qs/shell.qml:303\nexpression for onTriggered@qs:@/qs/shell.qml:616\n\nactual_validator_exit 1\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "negative-write-after",
+    "actual_exit": 1,
+    "expected_exit": 1,
+    "elapsed_seconds": 1.78,
+    "tail": "  INFO: Launching config: \"/var/tmp/av-nhy6r7ay/alis-weekly-planner-viub_jdf/shell.qml\"\n  INFO: Shell ID: \"f9fd38daed529e8c558e4b9dffd1a1cb\" Path ID \"f9fd38daed529e8c558e4b9dffd1a1cb\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/dhhq9wggnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1235690.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-viub_jdf/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-viub_jdf/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7f1481f9bc60 but 0x0 is focused\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-viub_jdf/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n ERROR qml: WEEKLY_PLANNER_NATIVE_FAIL empty: PNG write failed check@qs:@/qs/shell.qml:106\ncapture@qs:@/qs/shell.qml:131\nrun@qs:@/qs/shell.qml:140\nexpression for onTriggered@qs:@/qs/shell.qml:616\n\nCONTROLLED_WRITE_FAILURE_EXIT 1 empty_is_directory True\n",
+    "status": "FAIL",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-editor-cycle.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "PLANNER_EDITOR_CYCLE_PASS: history/current/legacy/Qt sequence/manual draft, no writes\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-recurring-selection.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "PLANNER_RECURRING_SELECTION_PASS: ID-group selection, Ctrl exact deselection, atomic saved/virtual drag, rollback and series-delete guards\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "cycle-native",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 5.72,
+    "tail": "  INFO qml: PLANNER_EDITOR_CYCLE_NATIVE_PASS initial 11\n  INFO qml: PLANNER_EDITOR_CYCLE_NATIVE_PASS restart 3\n  INFO qml: PLANNER_EDITOR_CYCLE_NATIVE_PASS repeat-restart 3\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "visual-identities",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "PLANNER_VISUAL_IDENTITY_PASS: 64 formerly colliding IDs, add/delete/filter/reorder/rename/drag/reload, legacy API and large IDs\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "editor-visuals",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 9.72,
+    "tail": "  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS initial 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS repeat-restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "editor-visuals-fractional",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 9.63,
+    "tail": "  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS initial 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS repeat-restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "editor-visuals-waffle",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 9.57,
+    "tail": "  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS initial 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS repeat-restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-UTC",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "PLANNER_FUTURE_SCHEDULE_PASS 50 UTC\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-Asia-Ho_Chi_Minh",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.06,
+    "tail": "PLANNER_FUTURE_SCHEDULE_PASS 50 Asia/Ho_Chi_Minh\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-America-New_York",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "PLANNER_FUTURE_SCHEDULE_PASS 50 America/New_York\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-Europe-Berlin",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "PLANNER_FUTURE_SCHEDULE_PASS 50 Europe/Berlin\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-storage",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 2.55,
+    "tail": "  INFO qml: PLANNER_FUTURE_STORAGE_PASS initial 60\n  INFO qml: PLANNER_FUTURE_STORAGE_PASS restart 29\n  INFO qml: PLANNER_FUTURE_STORAGE_PASS repeat-restart 29\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "baseline-fitted-input-control",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 17.05,
+    "tail": "  INFO: Launching config: \"/var/tmp/av-nhy6r7ay/alis-weekly-planner-roggb4gk/shell.qml\"\n  INFO: Shell ID: \"1264b40204f81d4033232a0495ed85b3\" Path ID \"1264b40204f81d4033232a0495ed85b3\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/r9lqhxggnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.1240485.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-roggb4gk/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-roggb4gk/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-nhy6r7ay/alis-weekly-planner-roggb4gk/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7f544cf91a80 but 0x0 is focused\n  INFO qml: NiriService: Loaded 1 outputs\n ERROR qml: WEEKLY_PLANNER_NATIVE_FAIL QtQuickTest::fail tryVerify@qrc:/qt-project.org/imports/QtTest/TestCase.qml:603\ncapture@qs:@/qs/shell.qml:116\nrun@qs:@/qs/shell.qml:137\nexpression for onTriggered@qs:@/qs/shell.qml:613\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  }
+]

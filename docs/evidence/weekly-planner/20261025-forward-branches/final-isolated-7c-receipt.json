@@ -1,0 +1,14 @@
+{
+  "source_sha": "7c1fdac6d9e1de248b1c6e778dc2fe34e485c2b5",
+  "argv": [
+    "python3",
+    "<private-evidence>/run-isolated-7c.py"
+  ],
+  "actual_exit": 0,
+  "status": "PASS",
+  "stop_reason": null,
+  "elapsed_seconds": 76.3,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "1cacb7733b72a50ccdf0432cbe34ae0674bbe4c76233cad27578a69cd9dd6903"
+}

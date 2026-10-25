@@ -1,0 +1,16 @@
+{
+  "source_sha": "a937a60ccd1b065d33fe81d38e44b5b1ffaf485f",
+  "argv": [
+    "python3",
+    "<private-evidence>/focused-contained.py",
+    "<private-evidence>/source-a937a60cc",
+    "<private-evidence>/focused-a937-supervisor"
+  ],
+  "actual_exit": 1,
+  "status": "FAIL",
+  "stop_reason": null,
+  "elapsed_seconds": 55.8,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "68f7ca22529288344414ce7661a36f5f19a6866ef853b5569d66595398ee787b"
+}

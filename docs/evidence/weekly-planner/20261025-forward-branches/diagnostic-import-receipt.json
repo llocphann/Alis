@@ -1,0 +1,16 @@
+{
+  "source_sha": "a937a60ccd1b065d33fe81d38e44b5b1ffaf485f",
+  "argv": [
+    "python3",
+    "<private-evidence>/resize-diagnostic-contained.py",
+    "<private-evidence>/source-a937a60cc",
+    "<private-evidence>/resize-diagnostic-supervisor"
+  ],
+  "actual_exit": 1,
+  "status": "FAIL",
+  "stop_reason": null,
+  "elapsed_seconds": 0.7,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "a9f297e4acb863db1ea28d6010eb0083217e88b5704fbf783fdaef8a6a6bac02"
+}

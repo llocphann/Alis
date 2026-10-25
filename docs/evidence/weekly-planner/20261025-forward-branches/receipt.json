@@ -1,0 +1,39 @@
+{
+  "observed_at_utc": "2026-10-25T09:33:07.886208+00:00",
+  "issue": 130,
+  "baseline_sha": "a937a60ccd1b065d33fe81d38e44b5b1ffaf485f",
+  "product_sha": "15e19fa941e91ca2464a093a47f234e65b126676",
+  "validation_sha": "7c1fdac6d9e1de248b1c6e778dc2fe34e485c2b5",
+  "installed_metadata_sha": "a937a60cc",
+  "inventory": [
+    "Plain-click visible ID group and Ctrl individual membership remain distinct; Ctrl still propagates the edited recurrence branch forward",
+    "Daily/Weekly/Monthly/Yearly saved and projected moves/top/bottom resize preserve other weekdays and past untargeted occurrences",
+    "Version-1 plannerFutureSchedule segments use civil calendar cycle identity, per-branch clock, immutable original anchors and additive metadata",
+    "Already-saved future slots backfill on the explicit edit; virtual projection and grouped/legacy rollover use the same rules",
+    "Explicit projected receipt is retained; pending overrides preserve offsets/metadata, consumed and forwarded receipts remain untouched",
+    "No automatic migration or new UI. Planner edit does not create new Event IDs; legacy separate-ID due generation remains supported",
+    "Metadata-only form Save preserves individually different per-day clocks, templates, history, drafts and Cancel/reload",
+    "Cancel/side-pane ownership and manually Ctrl/region-owned selections remain independent",
+    "Native fitted hit areas, full private Niri columns and actual painted/polished presented frames retain the original capture and interaction assertions"
+  ],
+  "validation": {
+    "matched_before": "Final oracle at7c against a937 exits1 at missing forward-rule behavior",
+    "pure_after": "50 checks in each of UTC,Asia/Ho_Chi_Minh,America/New_York,Europe/Berlin: final-core receipts",
+    "real_json_after": "initial, denied-save/retry, four-mode legacy handoff and two restart/readback phases: final storage logs",
+    "native_after": "84 original native190/11PNG default+scale1.5 and native multi-date variants pass; final7c isolated editor30x3phasesx3variants and frozen15-product/current-fixture pass",
+    "product_code_15_to_7c": "git diff -- modules services is empty",
+    "earlier_failed_attempts": "Retained exactly; do not call any incomplete/failed cohort a full PASS",
+    "full_validator": "Read canonical-7c.json; no inferred whole PASS"
+  },
+  "data_parity": {
+    "load": "Old/new mixed data keep existing schema, IDs, unknown fields and historical byte-equivalent slots; no load-time rewrite",
+    "write": "One atomic Events snapshot. Failed permission test retains acknowledged bytes until retry; repeated restarts do not duplicate schedules or legacy children",
+    "rollback": "Original templates/anchors and consumed receipts retained; malformed/unsupported edit state rejected before mutation",
+    "separate_gates": "Native private-fixture evidence is not installed/physical/multi-output/Owner approval"
+  },
+  "gates": {
+    "automatic_deployment": "NOT_PERFORMED",
+    "hosted_ci": "UNVERIFIED",
+    "installed_physical_multi_output_owner": "PENDING"
+  }
+}

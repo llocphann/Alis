@@ -1,0 +1,25 @@
+{
+  "trigger_primary_used_percent": 95,
+  "trigger_weekly_used_percent": 15,
+  "primary_resets_at": 1792933346,
+  "resume_vietnam": "2026-10-25T20:03:26+07:00",
+  "source_sha": "7c1fdac6d9e1de248b1c6e778dc2fe34e485c2b5",
+  "status": "STOPPED",
+  "supervisor_exit": 143,
+  "validator": {
+    "actual_validator_exit": -15,
+    "stop_signals_received": [
+      15
+    ]
+  },
+  "started": 142,
+  "settled": 141,
+  "counts": {
+    "PASS": 125,
+    "FAIL": 16,
+    "SKIP": 0,
+    "UNSETTLED": 1
+  },
+  "remaining_owned": [],
+  "whole_suite_pass": false
+}

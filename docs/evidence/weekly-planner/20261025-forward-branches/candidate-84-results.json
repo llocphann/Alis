@@ -1,0 +1,380 @@
+[
+  {
+    "name": "test-weekly-planner-policy.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 2.82,
+    "tail": "PASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: UTC\nPASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: Asia/Ho_Chi_Minh\nPASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: America/New_York\nPASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: Europe/Berlin\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-selection.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "WEEKLY_PLANNER_SELECTION_PASS: Ctrl toggle, Shift range, all-day, guards, move/resize\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-batch.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "WEEKLY_PLANNER_BATCH_PASS: atomic move, resize, delete, grouped ID, no mutation\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-event-focus.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "WEEKLY_PLANNER_EVENT_FOCUS_PASS: saved moves rebase date/time without wiping unsaved form\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "WEEKLY_PLANNER_MULTIDATE_PASS: modifier choice, cycle eligibility, recurring groups, DST and identity\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-legacy-recurrence.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.06,
+    "tail": "WEEKLY_PLANNER_LEGACY_RECURRENCE_PASS: pre-occurrences weekly editing, original repeat cadence, old slot and immutable history\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-recurring-rollover.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.33,
+    "tail": "PASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: UTC\nPASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: Asia/Ho_Chi_Minh\nPASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: America/New_York\nPASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: Europe/Berlin\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-event-occurrences-policy.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "PASS canonical multi-date Events, dedup identity, read-only and drag/resize policy\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-agenda-upcoming-runtime-compat.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "AGENDA_UPCOMING_COMPAT_PASS: QML array compatibility, occurrence order, startup and empty state\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-calendar-event-dot-layout.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "CALENDAR_EVENT_DOT_LAYOUT_PASS: 464 assertions\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-pointer-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.03,
+    "tail": "WEEKLY_PLANNER_POINTER_SOURCE_PASS: guarded event move + visible top/bottom resize + safe persistence\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multi-selection-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.03,
+    "tail": "WEEKLY_PLANNER_MULTISELECT_CONTRACT_PASS: scroll preserved, select + handles + atomic delete/move\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-expanded-event-editor-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.09,
+    "tail": "WEEKLY_PLANNER_EXPANDED_EDITOR_AND_RESIZE_HOVER_PASS\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-calendar-event-indicators-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "CALENDAR_EVENT_DOTS_PASS: Dashboard and Edge historical indicators, per-event colors, count bounds\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate-gestures.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.36,
+    "tail": "{\"test\":\"multidate-gestures\",\"zone\":\"UTC\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-84e2c8c43/\"}\n{\"test\":\"multidate-gestures\",\"zone\":\"Asia/Ho_Chi_Minh\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-84e2c8c43/\"}\n{\"test\":\"multidate-gestures\",\"zone\":\"America/New_York\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-84e2c8c43/\"}\n{\"test\":\"multidate-gestures\",\"zone\":\"Europe/Berlin\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-84e2c8c43/\"}\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-edited-rollover-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 2.46,
+    "tail": "  INFO qml: PLANNER_EDITED_ROLLOVER_PASS initial-failed-save-retry 17\n  INFO qml: PLANNER_EDITED_ROLLOVER_PASS restart 11\n  INFO qml: PLANNER_EDITED_ROLLOVER_PASS restart 11\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-recurring-storage-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 1.68,
+    "tail": "  INFO qml: PLANNER_RECURRING_STORAGE_PASS initial\n  INFO qml: PLANNER_RECURRING_STORAGE_PASS restart\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate-storage-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.87,
+    "tail": "  INFO qml: PLANNER_MULTIDATE_STORAGE_PASS 14\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-events-durable-snapshot-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 4.75,
+    "tail": "  INFO qml: EVENTS_DURABLE_PASS normal 10 [[\"Alpha\"],[\"Alpha updated\",\"Beta\"]]\n  INFO qml: EVENTS_DURABLE_PASS restart 2 []\n  INFO qml: EVENTS_DURABLE_PASS failure 16 [[\"Alpha\"],[\"Alpha updated\",\"Beta\"],[\"Alpha updated\",\"Beta\",\"Denied\"]]\n  INFO qml: EVENTS_DURABLE_PASS restart 2 []\n  INFO qml: EVENTS_DURABLE_PASS cached 13 [[\"Alpha\"],[\"Alpha updated\",\"Beta\"],[\"Alpha updated\",\"Beta\"]]\n  INFO qml: EVENTS_DURABLE_PASS restart 2 []\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-calendar-event-indicators-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 1.64,
+    "tail": "  INFO qml: CALENDAR_EVENT_DOTS_NATIVE_PASS 532 checks: 42 days, max 3 dots on each Bottom/Right/Top/Left; no overflow marker\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 8.06,
+    "tail": "WEEKLY_PLANNER_PNG_PASS 11\n  INFO qml: WEEKLY_PLANNER_NATIVE_PASS 190 11 {\"width\":1796,\"height\":1038,\"presentedFrames\":223}\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate-gestures-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 8.64,
+    "tail": "  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS initial 61\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS interrupted 2\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS restart 5\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS repeat-restart 5\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "native-fractional",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 8.59,
+    "tail": "  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS initial 61\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS interrupted 2\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS restart 5\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS repeat-restart 5\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "native-waffle",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 8.64,
+    "tail": "  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS initial 61\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS interrupted 2\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS restart 5\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS repeat-restart 5\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "native-single-control",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 8.64,
+    "tail": "  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS initial 61\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS interrupted 2\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS restart 5\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS repeat-restart 5\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "event-palette",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "WEEKLY_PLANNER_CURATED_EVENT_COLORS_PASS: muted authored palette, 48 distinct ID variants, stable imported UID, preserved data and gestures\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "native-original-fractional",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 8.3,
+    "tail": "WEEKLY_PLANNER_PNG_PASS 11\n  INFO qml: WEEKLY_PLANNER_NATIVE_PASS 190 11 {\"width\":1197,\"height\":692,\"presentedFrames\":219}\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "nested-after",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 8.54,
+    "tail": "WEEKLY_PLANNER_PNG_PASS 11\n  INFO qml: WEEKLY_PLANNER_NATIVE_PASS 190 11 {\"width\":1764,\"height\":1006,\"presentedFrames\":234}\nactual_validator_exit 0\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "negative-write-after",
+    "actual_exit": 1,
+    "expected_exit": 1,
+    "elapsed_seconds": 1.9,
+    "tail": "  INFO: Launching config: \"/var/tmp/av-s3vcuob1/alis-weekly-planner-1f6rzr1f/shell.qml\"\n  INFO: Shell ID: \"8038adabe883975a5448ed0d074e9264\" Path ID \"8038adabe883975a5448ed0d074e9264\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/wndsimhgnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-4.1324052.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-s3vcuob1/alis-weekly-planner-1f6rzr1f/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-s3vcuob1/alis-weekly-planner-1f6rzr1f/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7ff2d17b8d20 but 0x0 is focused\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-s3vcuob1/alis-weekly-planner-1f6rzr1f/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n ERROR qml: WEEKLY_PLANNER_NATIVE_FAIL empty: PNG write failed check@qs:@/qs/shell.qml:89\ncapture@qs:@/qs/shell.qml:115\nrun@qs:@/qs/shell.qml:124\nexpression for onTriggered@qs:@/qs/shell.qml:601\n\nCONTROLLED_WRITE_FAILURE_EXIT 1 empty_is_directory True\n",
+    "status": "FAIL",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-editor-cycle.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "PLANNER_EDITOR_CYCLE_PASS: history/current/legacy/Qt sequence/manual draft, no writes\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-recurring-selection.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "PLANNER_RECURRING_SELECTION_PASS: ID-group selection, Ctrl exact deselection, atomic saved/virtual drag, rollback and series-delete guards\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "cycle-native",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 5.92,
+    "tail": "  INFO qml: PLANNER_EDITOR_CYCLE_NATIVE_PASS initial 11\n  INFO qml: PLANNER_EDITOR_CYCLE_NATIVE_PASS restart 3\n  INFO qml: PLANNER_EDITOR_CYCLE_NATIVE_PASS repeat-restart 3\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "visual-identities",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "PLANNER_VISUAL_IDENTITY_PASS: 64 formerly colliding IDs, add/delete/filter/reorder/rename/drag/reload, legacy API and large IDs\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "editor-visuals",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 18.03,
+    "tail": "  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS initial 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS repeat-restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "editor-visuals-fractional",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 29.07,
+    "tail": "  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS initial 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO: Launching config: \"/var/tmp/av-s3vcuob1/alis-editor-visuals-274uzipr/shell.qml\"\n  INFO: Shell ID: \"7ce3bfb5c439104db73b0403660be619\" Path ID \"7ce3bfb5c439104db73b0403660be619\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/e9ksqnhgnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-4.1329212.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-s3vcuob1/alis-editor-visuals-274uzipr/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-s3vcuob1/alis-editor-visuals-274uzipr/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-s3vcuob1/alis-editor-visuals-274uzipr/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n ERROR qml: PLANNER_EDITOR_VISUALS_NATIVE_FAIL editor-group: capture callback deadline {\"visible\":true,\"active\":true,\"width\":1197,\"height\":692} capture@qs:@/qs/shell.qml:44\nrun@qs:@/qs/shell.qml:70\nexpression for onTriggered@qs:@/qs/shell.qml:128\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "editor-visuals-waffle",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 7.04,
+    "tail": "textlib.py\", line 141, in __enter__\n    return next(self.gen)\n  File \"<private-evidence>/source-84e2c8c43/scripts/native_test_session.py\", line 105, in private_wayland\n    capture_targets = _focus_for_capture(niri, process.pid, host_env)\n  File \"<private-evidence>/source-84e2c8c43/scripts/native_test_session.py\", line 45, in _focus_for_capture\n    subprocess.run([niri, \"msg\", \"action\", \"focus-window\", \"--id\", str(target)],\n    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                   env=host_env, capture_output=True, text=True,\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                   timeout=3, check=True)\n                   ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/subprocess.py\", line 557, in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/subprocess.py\", line 1221, in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/subprocess.py\", line 2154, in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/subprocess.py\", line 1268, in _check_timeout\n    raise TimeoutExpired(\n    ...<2 lines>...\n            stderr=b''.join(stderr_seq) if stderr_seq else None)\nsubprocess.TimeoutExpired: Command '['/usr/bin/niri', 'msg', 'action', 'focus-window', '--id', '15']' timed out after 3 seconds\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "future-UTC",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "PLANNER_FUTURE_SCHEDULE_PASS 50 UTC\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-Asia-Ho_Chi_Minh",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "PLANNER_FUTURE_SCHEDULE_PASS 50 Asia/Ho_Chi_Minh\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-America-New_York",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "PLANNER_FUTURE_SCHEDULE_PASS 50 America/New_York\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-Europe-Berlin",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "PLANNER_FUTURE_SCHEDULE_PASS 50 Europe/Berlin\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-storage",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 2.35,
+    "tail": "  INFO qml: PLANNER_FUTURE_STORAGE_PASS initial 60\n  INFO qml: PLANNER_FUTURE_STORAGE_PASS restart 29\n  INFO qml: PLANNER_FUTURE_STORAGE_PASS repeat-restart 29\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "frozen-product-15-current-fixture",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 14.4,
+    "tail": "textlib.py\", line 141, in __enter__\n    return next(self.gen)\n  File \"<private-evidence>/source-84e2c8c43/scripts/native_test_session.py\", line 105, in private_wayland\n    capture_targets = _focus_for_capture(niri, process.pid, host_env)\n  File \"<private-evidence>/source-84e2c8c43/scripts/native_test_session.py\", line 45, in _focus_for_capture\n    subprocess.run([niri, \"msg\", \"action\", \"focus-window\", \"--id\", str(target)],\n    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                   env=host_env, capture_output=True, text=True,\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                   timeout=3, check=True)\n                   ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/subprocess.py\", line 557, in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/subprocess.py\", line 1221, in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/subprocess.py\", line 2154, in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/subprocess.py\", line 1268, in _check_timeout\n    raise TimeoutExpired(\n    ...<2 lines>...\n            stderr=b''.join(stderr_seq) if stderr_seq else None)\nsubprocess.TimeoutExpired: Command '['/usr/bin/niri', 'msg', 'action', 'focus-window', '--id', '16']' timed out after 3 seconds\n",
+    "status": "FAIL",
+    "expectation_met": false
+  }
+]

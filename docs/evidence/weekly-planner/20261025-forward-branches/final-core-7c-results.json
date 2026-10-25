@@ -1,0 +1,38 @@
+[
+  {
+    "name": "baseline-a937",
+    "actual_exit": 1,
+    "expected_exit": 1,
+    "expectation_met": true
+  },
+  {
+    "name": "future-UTC",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "expectation_met": true
+  },
+  {
+    "name": "future-Asia-Ho_Chi_Minh",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "expectation_met": true
+  },
+  {
+    "name": "future-America-New_York",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "expectation_met": true
+  },
+  {
+    "name": "future-Europe-Berlin",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "expectation_met": true
+  },
+  {
+    "name": "future-storage",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "expectation_met": true
+  }
+]

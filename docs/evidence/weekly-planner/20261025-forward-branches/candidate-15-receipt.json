@@ -1,0 +1,16 @@
+{
+  "source_sha": "15e19fa941e91ca2464a093a47f234e65b126676",
+  "argv": [
+    "python3",
+    "<private-evidence>/focused-visible-15.py",
+    "<private-evidence>/source-15e19fa94",
+    "<private-evidence>/focused-visible-15-supervisor"
+  ],
+  "actual_exit": 1,
+  "status": "FAIL",
+  "stop_reason": null,
+  "elapsed_seconds": 284.6,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "a199495ee9f59e73d6f858741dcc376ee8f4095a9dbbf5c4e5f65929d56829ac"
+}

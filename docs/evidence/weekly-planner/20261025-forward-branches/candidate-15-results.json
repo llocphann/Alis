@@ -1,0 +1,380 @@
+[
+  {
+    "name": "test-weekly-planner-policy.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 2.86,
+    "tail": "PASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: UTC\nPASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: Asia/Ho_Chi_Minh\nPASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: America/New_York\nPASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: Europe/Berlin\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-selection.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "WEEKLY_PLANNER_SELECTION_PASS: Ctrl toggle, Shift range, all-day, guards, move/resize\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-batch.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "WEEKLY_PLANNER_BATCH_PASS: atomic move, resize, delete, grouped ID, no mutation\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-event-focus.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "WEEKLY_PLANNER_EVENT_FOCUS_PASS: saved moves rebase date/time without wiping unsaved form\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "WEEKLY_PLANNER_MULTIDATE_PASS: modifier choice, cycle eligibility, recurring groups, DST and identity\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-legacy-recurrence.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.06,
+    "tail": "WEEKLY_PLANNER_LEGACY_RECURRENCE_PASS: pre-occurrences weekly editing, original repeat cadence, old slot and immutable history\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-recurring-rollover.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.31,
+    "tail": "PASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: UTC\nPASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: Asia/Ho_Chi_Minh\nPASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: America/New_York\nPASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: Europe/Berlin\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-event-occurrences-policy.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "PASS canonical multi-date Events, dedup identity, read-only and drag/resize policy\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-agenda-upcoming-runtime-compat.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "AGENDA_UPCOMING_COMPAT_PASS: QML array compatibility, occurrence order, startup and empty state\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-calendar-event-dot-layout.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "CALENDAR_EVENT_DOT_LAYOUT_PASS: 464 assertions\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-pointer-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.03,
+    "tail": "WEEKLY_PLANNER_POINTER_SOURCE_PASS: guarded event move + visible top/bottom resize + safe persistence\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multi-selection-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.03,
+    "tail": "WEEKLY_PLANNER_MULTISELECT_CONTRACT_PASS: scroll preserved, select + handles + atomic delete/move\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-expanded-event-editor-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "WEEKLY_PLANNER_EXPANDED_EDITOR_AND_RESIZE_HOVER_PASS\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-calendar-event-indicators-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "CALENDAR_EVENT_DOTS_PASS: Dashboard and Edge historical indicators, per-event colors, count bounds\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate-gestures.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.36,
+    "tail": "{\"test\":\"multidate-gestures\",\"zone\":\"UTC\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-15e19fa94/\"}\n{\"test\":\"multidate-gestures\",\"zone\":\"Asia/Ho_Chi_Minh\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-15e19fa94/\"}\n{\"test\":\"multidate-gestures\",\"zone\":\"America/New_York\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-15e19fa94/\"}\n{\"test\":\"multidate-gestures\",\"zone\":\"Europe/Berlin\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-15e19fa94/\"}\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-edited-rollover-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 2.35,
+    "tail": "  INFO qml: PLANNER_EDITED_ROLLOVER_PASS initial-failed-save-retry 17\n  INFO qml: PLANNER_EDITED_ROLLOVER_PASS restart 11\n  INFO qml: PLANNER_EDITED_ROLLOVER_PASS restart 11\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-recurring-storage-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 1.58,
+    "tail": "  INFO qml: PLANNER_RECURRING_STORAGE_PASS initial\n  INFO qml: PLANNER_RECURRING_STORAGE_PASS restart\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate-storage-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.86,
+    "tail": "  INFO qml: PLANNER_MULTIDATE_STORAGE_PASS 14\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-events-durable-snapshot-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 4.8,
+    "tail": "  INFO qml: EVENTS_DURABLE_PASS normal 10 [[\"Alpha\"],[\"Alpha updated\",\"Beta\"]]\n  INFO qml: EVENTS_DURABLE_PASS restart 2 []\n  INFO qml: EVENTS_DURABLE_PASS failure 16 [[\"Alpha\"],[\"Alpha updated\",\"Beta\"],[\"Alpha updated\",\"Beta\",\"Denied\"]]\n  INFO qml: EVENTS_DURABLE_PASS restart 2 []\n  INFO qml: EVENTS_DURABLE_PASS cached 13 [[\"Alpha\"],[\"Alpha updated\",\"Beta\"],[\"Alpha updated\",\"Beta\"]]\n  INFO qml: EVENTS_DURABLE_PASS restart 2 []\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-calendar-event-indicators-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 4.04,
+    "tail": "  INFO qml: CALENDAR_EVENT_DOTS_NATIVE_PASS 532 checks: 42 days, max 3 dots on each Bottom/Right/Top/Left; no overflow marker\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 16.02,
+    "tail": "WEEKLY_PLANNER_PNG_PASS 11\n  INFO qml: WEEKLY_PLANNER_NATIVE_PASS 190 11\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate-gestures-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 27.03,
+    "tail": "  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS initial 61\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS interrupted 2\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS restart 5\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS repeat-restart 5\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "native-fractional",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 12.01,
+    "tail": "  INFO: Launching config: \"/var/tmp/av-ngmhb5gb/alis-multidate-gestures-gdqzr7ad/shell.qml\"\n  INFO: Shell ID: \"0a470b1c437e4a65d484aa5e5ffe67d6\" Path ID \"0a470b1c437e4a65d484aa5e5ffe67d6\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/5i6rh6hgnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-4.1268108.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-ngmhb5gb/alis-multidate-gestures-gdqzr7ad/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-ngmhb5gb/alis-multidate-gestures-gdqzr7ad/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-ngmhb5gb/alis-multidate-gestures-gdqzr7ad/state/quickshell/user/gamemode_active failed: File does not exist.\n ERROR qml: PLANNER_MULTIDATE_GESTURES_NATIVE_FAIL Ctrl selection lost {\"selected\":[],\"width\":289,\"height\":729,\"viewportWidth\":289,\"viewportHeight\":663,\"cards\":[{\"id\":403,\"point\":{\"x\":303,\"y\":264},\"width\":43,\"height\":50},{\"id\":405,\"point\":{\"x\":405,\"y\":264},\"width\":43,\"height\":50}]} check@qs:@/qs/shell.qml:18\nrun@qs:@/qs/shell.qml:106\nexpression for onTriggered@qs:@/qs/shell.qml:162\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "native-waffle",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 32.99,
+    "tail": "  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS initial 61\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS interrupted 2\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS restart 5\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS repeat-restart 5\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "native-single-control",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 36.0,
+    "tail": "  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS initial 61\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS interrupted 2\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS restart 5\n  INFO qml: PLANNER_MULTIDATE_GESTURES_NATIVE_PASS repeat-restart 5\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "event-palette",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "WEEKLY_PLANNER_CURATED_EVENT_COLORS_PASS: muted authored palette, 48 distinct ID variants, stable imported UID, preserved data and gestures\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "native-original-fractional",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 25.94,
+    "tail": "  INFO: Launching config: \"/var/tmp/av-ngmhb5gb/alis-weekly-planner-_8gl0x_h/shell.qml\"\n  INFO: Shell ID: \"73269620d33ecf3774dffb424db19fcb\" Path ID \"73269620d33ecf3774dffb424db19fcb\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/h5arw8hgnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-4.1272685.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-ngmhb5gb/alis-weekly-planner-_8gl0x_h/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-ngmhb5gb/alis-weekly-planner-_8gl0x_h/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7f054037ca80 but 0x0 is focused\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-ngmhb5gb/alis-weekly-planner-_8gl0x_h/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n ERROR qml: WEEKLY_PLANNER_NATIVE_FAIL empty: presentation deadline {\"before\":4,\"after\":4,\"visible\":true,\"active\":true,\"width\":289,\"height\":729,\"sceneVisible\":true} capture@qs:@/qs/shell.qml:97\nrun@qs:@/qs/shell.qml:120\nexpression for onTriggered@qs:@/qs/shell.qml:596\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "nested-after",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 12.02,
+    "tail": "Traceback (most recent call last):\n  File \"<private-native-checks>/20261024-planner/nested-planner-unfocused.py\", line 34, in <module>\n    query=subprocess.run(['niri','msg','--json','windows'],env=env,capture_output=True,text=True,timeout=3)\n  File \"/usr/lib/python3.14/subprocess.py\", line 557, in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/subprocess.py\", line 1221, in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/subprocess.py\", line 2154, in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/subprocess.py\", line 1268, in _check_timeout\n    raise TimeoutExpired(\n    ...<2 lines>...\n            stderr=b''.join(stderr_seq) if stderr_seq else None)\nsubprocess.TimeoutExpired: Command '['niri', 'msg', '--json', 'windows']' timed out after 3 seconds\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "negative-write-after",
+    "actual_exit": 1,
+    "expected_exit": 1,
+    "elapsed_seconds": 13.3,
+    "tail": "  INFO: Launching config: \"/var/tmp/av-ngmhb5gb/alis-weekly-planner-daog82_x/shell.qml\"\n  INFO: Shell ID: \"115cd6136a72d0665df09e285e499223\" Path ID \"115cd6136a72d0665df09e285e499223\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/7tbrv9hgnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-4.1273339.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-ngmhb5gb/alis-weekly-planner-daog82_x/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of /var/tmp/av-ngmhb5gb/alis-weekly-planner-daog82_x/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7fd6adda7d20 but 0x0 is focused\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of /var/tmp/av-ngmhb5gb/alis-weekly-planner-daog82_x/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n ERROR qml: WEEKLY_PLANNER_NATIVE_FAIL empty: PNG write failed check@qs:@/qs/shell.qml:86\ncapture@qs:@/qs/shell.qml:111\nrun@qs:@/qs/shell.qml:120\nexpression for onTriggered@qs:@/qs/shell.qml:596\n\nCONTROLLED_WRITE_FAILURE_EXIT 1 empty_is_directory True\n",
+    "status": "FAIL",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-editor-cycle.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "PLANNER_EDITOR_CYCLE_PASS: history/current/legacy/Qt sequence/manual draft, no writes\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-recurring-selection.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.06,
+    "tail": "PLANNER_RECURRING_SELECTION_PASS: ID-group selection, Ctrl exact deselection, atomic saved/virtual drag, rollback and series-delete guards\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "cycle-native",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 6.13,
+    "tail": "  INFO qml: PLANNER_EDITOR_CYCLE_NATIVE_PASS initial 11\n  INFO qml: PLANNER_EDITOR_CYCLE_NATIVE_PASS restart 3\n  INFO qml: PLANNER_EDITOR_CYCLE_NATIVE_PASS repeat-restart 3\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "visual-identities",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "PLANNER_VISUAL_IDENTITY_PASS: 64 formerly colliding IDs, add/delete/filter/reorder/rename/drag/reload, legacy API and large IDs\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "editor-visuals",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 22.38,
+    "tail": "  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS initial 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS repeat-restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "editor-visuals-fractional",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 29.0,
+    "tail": "  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS initial 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS repeat-restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "editor-visuals-waffle",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 21.24,
+    "tail": "  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS initial 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS repeat-restart 28 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-UTC",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "PLANNER_FUTURE_SCHEDULE_PASS 50 UTC\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-Asia-Ho_Chi_Minh",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.06,
+    "tail": "PLANNER_FUTURE_SCHEDULE_PASS 50 Asia/Ho_Chi_Minh\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-America-New_York",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "PLANNER_FUTURE_SCHEDULE_PASS 50 America/New_York\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-Europe-Berlin",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.07,
+    "tail": "PLANNER_FUTURE_SCHEDULE_PASS 50 Europe/Berlin\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "future-storage",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 2.35,
+    "tail": "  INFO qml: PLANNER_FUTURE_STORAGE_PASS initial 60\n  INFO qml: PLANNER_FUTURE_STORAGE_PASS restart 29\n  INFO qml: PLANNER_FUTURE_STORAGE_PASS repeat-restart 29\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "baseline-fitted-input-control",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 9.32,
+    "tail": "WEEKLY_PLANNER_PNG_PASS 11\n  INFO qml: WEEKLY_PLANNER_NATIVE_PASS 190 11\n",
+    "status": "PASS",
+    "expectation_met": true
+  }
+]

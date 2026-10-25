@@ -1,0 +1,66 @@
+[
+  {
+    "name": "editor-default",
+    "actual_exit": 0,
+    "inner": [
+      {
+        "name": "editor-default",
+        "actual_exit": 0,
+        "expected_exit": 0,
+        "elapsed_seconds": 10.35,
+        "tail": "  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS initial 30 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS restart 30 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS repeat-restart 30 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n",
+        "status": "PASS",
+        "expectation_met": true
+      }
+    ],
+    "elapsed_seconds": 11.04
+  },
+  {
+    "name": "editor-fractional",
+    "actual_exit": 0,
+    "inner": [
+      {
+        "name": "editor-fractional",
+        "actual_exit": 0,
+        "expected_exit": 0,
+        "elapsed_seconds": 10.27,
+        "tail": "  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS initial 30 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS restart 30 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS repeat-restart 30 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n",
+        "status": "PASS",
+        "expectation_met": true
+      }
+    ],
+    "elapsed_seconds": 12.34
+  },
+  {
+    "name": "editor-waffle",
+    "actual_exit": 0,
+    "inner": [
+      {
+        "name": "editor-waffle",
+        "actual_exit": 0,
+        "expected_exit": 0,
+        "elapsed_seconds": 18.65,
+        "tail": "  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS initial 30 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS restart 30 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n  INFO qml: PLANNER_EDITOR_VISUALS_NATIVE_PASS repeat-restart 30 [\"#796783\",\"#85745c\",\"#6c5c75\",\"#766752\"]\n",
+        "status": "PASS",
+        "expectation_met": true
+      }
+    ],
+    "elapsed_seconds": 21.36
+  },
+  {
+    "name": "frozen-product-15-current-fixture",
+    "actual_exit": 0,
+    "inner": [
+      {
+        "name": "frozen-product-15-current-fixture",
+        "actual_exit": 0,
+        "expected_exit": 0,
+        "elapsed_seconds": 29.87,
+        "tail": "WEEKLY_PLANNER_PNG_PASS 11\n  INFO qml: WEEKLY_PLANNER_NATIVE_PASS 190 11 {\"width\":1796,\"height\":1038,\"presentedFrames\":150}\n",
+        "status": "PASS",
+        "expectation_met": true
+      }
+    ],
+    "elapsed_seconds": 31.38
+  }
+]
