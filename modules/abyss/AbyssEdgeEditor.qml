@@ -1492,7 +1492,7 @@ Item {
                             checkable:true
                             
                             enabled:root.draft.filter(
-                            p=>p.enabled && p.edge===root.editingEdge).length===1
+                            p=>p.enabled && p.edge===root.editingEdge && !Placement.isUnifiedKind(p.kind)).length===1
                             checked:root.singleModuleExpansion[root.editingEdge]!=="local"
                             onToggled:root.singleModuleExpansion=Object.assign(
                             {},root.singleModuleExpansion,

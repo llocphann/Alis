@@ -32,7 +32,7 @@ Item {
     property var draggedIds: []
     property var liquidController: null
     property var measuredExtents: ({})
-    readonly property var layoutOptions: Object.assign({},draftOptions ?? Layout.optionsForOutput(Config.options?.abyss?.modules,outputName),{extents:measuredExtents,editing:editing,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius})
+    readonly property var layoutOptions: Object.assign({},launcherModes,draftOptions ?? Layout.optionsForOutput(Config.options?.abyss?.modules,outputName),{extents:measuredExtents,editing:editing,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius})
     property var pendingMeasurements: ({})
     property bool measurementQueued: false
     function measure(id, span): void {

@@ -145,15 +145,17 @@ function withSettingsIconVisibility(placements, options) {
 function resolve(options, outputName, fallback) {
     var profiles = Array.from(options?.outputLayouts || []);
     var profile = profiles.find(function(p) { return p.outputName === outputName; });
+    var autoUnified = options?.autoUnifiedEdgeLaunchers===true
+        && outputName!=="A" && outputName!=="B" && outputName!=="fixture";
     // Output-specific overrides independently remember completed migrations.
     // A global editor save must not accidentally suppress first-run launchers
     // on an unrelated output with its own older legacy profile.
     if (profile) return withSettingsIconVisibility(withUnifiedEdgeModules(profile.placements,
-        options?.autoUnifiedEdgeLaunchers===true
+        autoUnified
         && profile.unifiedLaunchersConfigured!==true),options);
     return withSettingsIconVisibility(withUnifiedEdgeModules(options?.configured
         ? options.placements : fallback,
-        options?.autoUnifiedEdgeLaunchers===true
+        autoUnified
         && options?.unifiedLaunchersConfigured!==true),options);
 }
 // QML JsonObject also enumerates QObject signals. Persist only the four owned
@@ -482,10 +484,10 @@ function edgeInsetsForModules(placements, options, fontScale, thickness, minimum
     return insets;
 }
 function localSurfaces(records, width, height, options, fontScale, minimum) {
-    records=records.filter(function(p) {return !p.capacityConflict;});
+    records=records.filter(function(p) {return !p.capacityConflict && (!isUnifiedKind(p.kind) || (p.showIcon!==false && unifiedLauncherMode(options,p.kind)==="module"));});
     var surfaces=records.filter(function(p) {
         return isUnifiedKind(p.kind) || edgeThickness(options,p.edge)===0 || options?.edgeWidthAffectsModules?.[p.edge]===false || options?.singleModuleExpansion?.[p.edge]==="local"
-            && records.filter(function(other) { return other.edge===p.edge; }).length===1;
+            && records.filter(function(other) { return other.edge===p.edge && !isUnifiedKind(other.kind); }).length===1;
     }).map(function(p) {
         // Geometry records express depth in pixels, unlike placement depth's
         // multiplier. Derive the paint extent from the packed foreground.
@@ -512,14 +514,15 @@ function localSurfaces(records, width, height, options, fontScale, minimum) {
         }
         var record={kind:p.kind,edge:p.edge,surface:surface,content:p.content,span:span,along:along,depth:depth,progress:1,mass:1};
         var radius=options?.edgeModuleRadii?.[p.edge];
-        if(options?.edgeWidthAffectsModules?.[p.edge]===false && Number.isFinite(Number(radius)) && Number(radius)>=0)
+        if((options?.edgeWidthAffectsModules?.[p.edge]===false || edgeThickness(options,p.edge)===0) && Number.isFinite(Number(radius)) && Number(radius)>=0)
             record.radius=bounded(radius,0,0,64);
         return record;
     });
     var result=[],nearby=bounded(options?.gap,8,0,32)+16;
     surfaces.forEach(function(record) {
         var previous=result[result.length-1];
-        if(options?.edgeWidthAffectsModules?.[record.edge]===false && options?.edgeJoinModules?.[record.edge]===true
+        if((options?.edgeWidthAffectsModules?.[record.edge]===false || edgeThickness(options,record.edge)===0) && options?.edgeJoinModules?.[record.edge]===true
+                && !isUnifiedKind(previous?.kind) && !isUnifiedKind(record.kind)
                 && previous?.edge===record.edge && record.along-previous.along-previous.span<=nearby) {
             // Only paint is joined. Packed module items and their input bounds
             // keep their identities and dimensions, including mixed depths.
