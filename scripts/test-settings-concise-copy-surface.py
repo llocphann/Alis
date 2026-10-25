@@ -144,6 +144,7 @@ SHARED_SETTINGS_HELP = {
     ),
     "AdvancedConfig.qml": (
         "Color-generation controls and runtime diagnostics.",
+        "Generate Neovim/LazyVim theme at ~/.config/nvim/lua/plugins/neovim.lua.",
         "Manage ~/.config/cava/config; internal visualizers stay independent.",
         "On hybrid laptops, GPU polling can wake the dGPU; disabling pins Qt to iGPU after restart.",
         "Shared wave fill opacity; bar spectrum has its own setting.",
@@ -282,7 +283,7 @@ TOOLS_WIDGET_HELP = {
     "DesktopWidgetsConfig.qml": (
         "Keep widget in its selected screen zone as dimensions change.",
         "Adapt widget text to wallpaper; off keeps colors stable when moved.",
-        "Custom QML widgets: ~/.config/inir/widgets/ (widget.json and .qml required).",
+        "Custom QML widgets: ~/.config/alis/widgets/ (widget.json and .qml required).",
         "Use one wallpaper palette for built-in widgets; individual overrides remain.",
         "Create an editable .qml template with imports and sample layout.",
     ),
