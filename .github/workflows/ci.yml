@@ -58,6 +58,8 @@ jobs:
           python3 scripts/test-weekly-planner-multi-selection-contract.py
           node scripts/test-weekly-planner-legacy-recurrence.mjs
           node scripts/test-weekly-planner-multidate-gestures.mjs
+          node scripts/test-weekly-planner-editor-cycle.mjs
+          node scripts/test-weekly-planner-recurring-selection.mjs
           node scripts/test-weekly-planner-event-palette.mjs
 
       - name: Verify Weekly Planner recurring schedule recovery

@@ -350,6 +350,7 @@ run_check 'Multi-date Events grouping and Weekly Planner drag/resize policy' nod
 run_check 'Weekly Planner moved Event inline Calendar focus' node scripts/test-weekly-planner-event-focus.mjs
 run_check 'Weekly Planner editor cycle selection excludes saved recurrence history' node scripts/test-weekly-planner-editor-cycle.mjs
 run_check 'Weekly Planner recurring instance selection and atomic mixed groups' node scripts/test-weekly-planner-recurring-selection.mjs
+run_check 'Native Weekly Planner editor cycle highlights, draft and stored restart' python3 scripts/test-weekly-planner-editor-cycle-runtime.py
 run_check 'Events persisted data preservation without automatic migration' node scripts/test-events-no-automatic-migration.mjs
 run_check 'Calendar popup three-day civil range and recurrence policy' node scripts/test-calendar-three-day-window.mjs
 run_check 'Calendar counterclockwise 3-per-edge Agenda dots' node scripts/test-calendar-event-dot-layout.mjs
