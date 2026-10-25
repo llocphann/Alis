@@ -229,11 +229,22 @@ Window {
    let oldCard=legacyCard()
    check(!!oldCard && oldCard.canReschedule && !!find(oldCard,"plannerResizeStart")?.visible,
      "legacy persisted Weekly Event must expose move and resize")
+   const originalSwatch=String(oldCard.eventAccent)
+   check(originalSwatch===String(planner.eventIdentityColor({
+     source:"local",event:{id:88,title:"Completely renamed",recurrence:"none",
+       startDate:"2030-01-01T00:00:00Z"}})),
+     "same ID changed color when event title/time/recurrence changed")
+   check(originalSwatch!==String(planner.eventIdentityColor({
+     source:"local",event:{id:89,title:"Old weekly event",recurrence:"weekly",
+       startDate:legacy.startDate}})),
+     "different Event IDs share the same color")
    const oldStart=new Date(legacy.startDate).getTime()
    dragPointer(find(oldCard,"plannerEventMoveArea"),slotStep)
    check(local.recurringEditCalls===1 && new Date(local.list.find(e=>e.id===88).startDate).getTime()
      ===oldStart+15*60000,"legacy body dragging did not reach recurring controller")
    oldCard=legacyCard()
+   check(String(oldCard.eventAccent)===originalSwatch,
+     "dragging a saved Event changed its ID color")
    // The preceding body move added 15 minutes to both endpoints; bottom
    // resize adds another 15 to the end, for 30 total against the original.
    dragPointer(find(oldCard,"plannerResizeEnd"),slotStep)
@@ -251,6 +262,8 @@ Window {
    check(!!virtualCard && virtualCard.canReschedule
      && !!virtualCard.modelData.plannerOriginalStartIso,
      "projected old Weekly Event still missing drag/resize")
+   check(String(virtualCard.eventAccent)===originalSwatch,
+     "next week's virtual occurrence of the same Event ID changed color")
    const virtualOriginal=virtualCard.modelData.plannerOriginalStartIso
    dragPointer(find(virtualCard,"plannerResizeEnd"),slotStep)
    check(local.virtualEditCalls===1 && local.list.find(e=>e.id===88)
