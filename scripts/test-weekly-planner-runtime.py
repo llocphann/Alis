@@ -187,6 +187,18 @@ Window {
      !!find(movedCard,"plannerResizeEnd")?.visible,"resize grips no longer visible")
    const resizeBars=["plannerResizeStart","plannerResizeEnd"].map(name=>
      find(movedCard,name).children.find(child=>child.height===2))
+   const expectedGrip=String(Qt.lighter(movedCard.eventAccent,1.20))
+   check(resizeBars.every(bar=>!!bar && String(bar.color)===expectedGrip),
+     "top and bottom resize bars must match the owner Event ID swatch")
+   const anotherEvent=all(planner,"plannerTimedEvent").find(item=>
+     item.modelData.event.id===2)
+   check(!!anotherEvent && String(anotherEvent.eventAccent)!==String(movedCard.eventAccent),
+     "two independent Events unexpectedly received the same curated color")
+   const otherGrip=find(anotherEvent,"plannerResizeStart").children.find(
+     child=>child.height===2)
+   check(!!otherGrip && String(otherGrip.color)
+     ===String(Qt.lighter(anotherEvent.eventAccent,1.20)),
+     "resize handle copied a different Event's accent")
    mouseMove(scene,2,2);wait(160)
    check(!movedCard.showResizeHandles && resizeBars.every(bar=>bar && bar.opacity===0),
      "idle event must hide both bars without disabling resize hit regions")
@@ -205,6 +217,9 @@ Window {
       && timeOf(1,"endDate")===originalEnd+15*60000,
       "body drag must move both endpoints by 15 minutes")
    movedCard=eventOne()
+   check(String(find(movedCard,"plannerResizeStart").children.find(
+     child=>child.height===2).color)===expectedGrip,
+     "moving the Event changed its resize bar color")
    dragPointer(find(movedCard,"plannerResizeStart"),slotStep)
    check(local.rescheduleCalls===2 && timeOf(1,"startDate")===originalStart+30*60000
       && timeOf(1,"endDate")===originalEnd+15*60000,
