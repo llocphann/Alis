@@ -194,14 +194,18 @@ function spectrum(state, edges, points, ceiling, strength, phase) {
         else { edge="left";along=state.length-location;length=state.height; }
         var t=along/Math.max(1,length),target=0;
         if(count && edges.indexOf(edge)>=0 && maximum>0) {
-            var position=t*(count-1),low=Math.floor(position),high=Math.min(count-1,low+1);
-            var a=Number(points[low]),b=Number(points[high]);
-            var level=((Number.isFinite(a)?Math.max(0,a):0)*(1-(position-low))+(Number.isFinite(b)?Math.max(0,b):0)*(position-low))/normalizer;
-            level=Math.sqrt(Math.max(0,Math.min(1,level)));
-            // Old Alis carrier: index*.5 + phase, driven at CAVA frame cadence.
-            // Audio is a presentation shape, independent of the interaction
-            // spring string. Peaks respond in this frame rather than seconds.
-            if(level>.025) target=Math.min(limit,maximum*level)*Math.sin(position*.5+(Number(phase)||0))*Math.pow(Math.sin(t*Math.PI),2);
+            var position=t*(count-1),carrier=position*.5,lobe=Math.floor(carrier/Math.PI);
+            var low=Math.min(count-1,Math.max(0,Math.floor(lobe*2*Math.PI)));
+            var high=Math.min(count-1,Math.max(low,Math.ceil((lobe+1)*2*Math.PI)));
+            var sum=0,span=high-low+1;
+            for(var k=low;k<=high;k++) {
+                var sample=Number(points[k]);
+                if(Number.isFinite(sample) && sample>0) sum+=sample;
+            }
+            var level=Math.sqrt(Math.max(0,Math.min(1,sum/(span*normalizer))));
+            // Stationary lobe carrier: wave crests remain at fixed horizontal
+            // positions and only rise and fall vertically with audio level.
+            if(level>.025) target=Math.min(limit,maximum*level)*Math.sin(carrier)*Math.pow(Math.sin(t*Math.PI),2);
         }
         if(Math.abs(target-state.spectrumTargets[i])>.005 || (target===0 && state.spectrumTargets[i]!==0)) {
             changed=true;state.spectrumTargets[i]=target;

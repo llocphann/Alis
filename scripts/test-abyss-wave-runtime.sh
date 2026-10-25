@@ -134,22 +134,21 @@ ShellRoot {
             }
             if(root.step === 31) {
                 if(!root.check(root.captured===8 && waves.revision===root.restingRevision,"travel captures complete and reduced output stays asleep")) return
-                field.edgeInsets={left:10,top:0,right:10,bottom:10}
-                field.cornerWidthInsets={left:10,top:0,right:10,bottom:10}
-                field.roundZeroCorners={top:true}
-                field.records=[{surface:{x:110,y:-50,width:200,height:114},radius:24}]
+                field.records=[{surface:{x:70,y:-50,width:280,height:88},radius:20}]
+                Config.setNestedValue("abyss.waves.enabled",false)
                 Config.setNestedValue("performance.reduceAnimations",false)
-                root.capture("zeroContactRest")
+                root.capture("moduleRest")
             }
             if(root.step === 33) {
-                waves.impulse("left",130,90,1)
-                if(!root.check(waves.running && waves.mode==="ACTIVE","left wave wakes on mixed 0px/10px output")) return
+                audio.audioSignalActive=true;spectrum.playing=true
+                if(!root.check(waves.simulation.hasSpectrum,"spectrum wakes over module")) return
             }
             if(root.step === 34) {
-                root.capture("zeroContactWave")
+                if(!root.check(waves.crestPeak>.1,"spectrum crest painted over module")) return
+                root.capture("moduleAudio")
             }
             if(root.step === 36) {
-                if(!root.check(root.captured===10,"0px contact + rounded body wave GPU captures complete")) return
+                if(!root.check(root.captured===10,"module spectrum GPU captures complete")) return
                 console.info("WAVE_RUNTIME_PASS");Qt.quit()
             }
             root.step++
@@ -182,9 +181,8 @@ assert ImageChops.difference(rest,Image.open(root/'paused.png').convert('RGB')).
 assert ImageChops.difference(rest,Image.open(root/'audioReduced.png').convert('RGB')).getbbox() is None, 'reduced motion cancels audio deformation'
 assert ImageChops.difference(rest,Image.open(root/'traveling.png').convert('RGB')).crop((330,4,420,240)).getbbox(), 'popup waves must visibly reach a neighboring Screen Edge'
 assert ImageChops.difference(rest,Image.open(root/'travelReduced.png').convert('RGB')).getbbox() is None, 'reduced motion cancels traveling deformation exactly'
-zero_rest=Image.open(root/'zeroContactRest.png').convert('RGB')
-zero_wave=Image.open(root/'zeroContactWave.png').convert('RGB')
-assert ImageChops.difference(zero_rest,zero_wave).crop((4,40,60,220)).getbbox(), 'active 10px Left edge still deforms with wave'
-assert ImageChops.difference(zero_rest,zero_wave).crop((80,0,340,80)).getbbox() is None, '0px Top contact corners and body rounding stay undistorted during adjacent edge wave'
-print('PASS: production GPU wave texture deforms silhouette, preserves 0px contact/body rounding, restores rest and stops idle/reduced/hidden updates')
+module_rest=Image.open(root/'moduleRest.png').convert('RGB')
+module_audio=Image.open(root/'moduleAudio.png').convert('RGB')
+assert ImageChops.difference(module_rest,module_audio).crop((90,34,330,85)).getbbox(), 'audio spectrum waves must visibly ride on top of the module contour'
+print('PASS: production GPU wave texture deforms edge and module contours, restores rest and stops idle/reduced/hidden updates')
 PY

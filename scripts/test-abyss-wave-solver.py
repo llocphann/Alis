@@ -110,6 +110,12 @@ assert(Math.max(...stronger.spectrumTargets.map(Math.abs))>Math.max(...weaker.sp
 assert(s.spectrumTargets.some(v=>v>1) && s.spectrumTargets.some(v=>v<-1),'spectrum is a signed continuous wave');
 assert(s.spectrumTargets.every((v,i)=>i*s.length/s.count<=s.width || v===0),'only the selected edge is driven');
 assert.equal(JSON.stringify(raw),rawBefore,'shared analyzer frames are never mutated');
+const stationaryA=create(256,1920,1200,p),stationaryB=create(256,1920,1200,p);
+spectrum(stationaryA,['top'],Array.from({length:64},(_,i)=>i%2===0?95:15),100,1);
+spectrum(stationaryB,['top'],Array.from({length:64},(_,i)=>i%2===0?25:85),100,1);
+projectCrests(stationaryA,false);projectCrests(stationaryB,false);
+const localPeaks=arr=>arr.map((v,i)=>v>1&&v>=arr[(i+arr.length-1)%arr.length]&&v>=arr[(i+1)%arr.length]?i:-1).filter(i=>i>=0);
+assert.deepEqual(localPeaks(stationaryA.crests),localPeaks(stationaryB.crests),'audio wave crests stay at fixed horizontal positions and only rise/fall vertically');
 for(let i=0;i<1600;i++) advance(s,1/120);
 assert.equal(s.mode,'SLEEPING','stationary spectrum can settle without continuous integration');
 assert.equal(s.steps,0,'audio presentation never starts the interaction solver');

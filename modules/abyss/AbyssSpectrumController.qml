@@ -36,12 +36,8 @@ Item {
     function refreshSpectrum(frame = false): void {
         if(!waves || !source) return
         if(!wanted || !source.audioSignalActive) { lastFrameMs=0;waves.clearSpectrum();return }
-        if(frame) {
-            const now=Date.now()
-            if(lastFrameMs>0) phase=(phase+Math.min(250,now-lastFrameMs)*.003125)%(2*Math.PI)
-            lastFrameMs=now
-        }
-        waves.feedSpectrum(edges,source.points,source.normalizationCeiling,strength,phase)
+        if(frame) lastFrameMs=Date.now()
+        waves.feedSpectrum(edges,source.points,source.normalizationCeiling,strength,0)
     }
     Connections {
         target:root.source

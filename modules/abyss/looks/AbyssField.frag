@@ -71,9 +71,6 @@ vec2 waveAt(float arc) {
         +(-2.0*t3+3.0*t2)*c.x+(t3-t2)*end;
     return vec2(max(0.0,height),mix(b.y,c.y,t2*(3.0-2.0*t)));
 }
-float roundedBox(vec2 p, vec4 rect, float radius);
-vec4 workspaceRect();
-float field(vec2 p);
 vec2 waveProfile(vec2 p) {
     // Flat/disabled/settled outputs avoid all wave texture reads.
     if(waveMaterial.y<0.5 || waveMaterial.x<1.0) return vec2(0.0);
@@ -89,11 +86,7 @@ vec2 waveProfile(vec2 p) {
     if(weights.y>0.0) result+=waveAt(arcs.y)*weights.y;
     if(weights.z>0.0) result+=waveAt(arcs.z)*weights.z;
     if(weights.w>0.0) result+=waveAt(arcs.w)*weights.w;
-    result=result/max(0.000001,dot(clampedWeights,vec4(1.0)))*smoothstep(0.0,10.0,nearest);
-    if(result.x<=0.0001) return vec2(0.0);
-    float dEdge=-roundedBox(p,workspaceRect(),material.x);
-    float bodyExcess=dEdge>result.x-24.0 ? max(0.0,(dEdge-result.x)-field(p)) : 0.0;
-    return result*(1.0-smoothstep(0.0,max(8.0,material.y*0.5),bodyExcess));
+    return result/max(0.000001,dot(clampedWeights,vec4(1.0)))*smoothstep(0.0,10.0,nearest);
 }
 // Local surface tension and two traveling crests are evaluated in the same
 // distance/material pass. Zero uniforms preserve the resting field exactly.

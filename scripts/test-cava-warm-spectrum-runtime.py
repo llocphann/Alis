@@ -16,8 +16,11 @@ import os,sys,time
 count=int(open(sys.argv[-1]).read())
 with open(os.environ['CAVA_LOG'],'a') as f:f.write(str(count)+'\\n')
 try:
+ frame=0
  while True:
-  print(';'.join(['70']*count)+';',flush=True);time.sleep(.033)
+  level='85' if frame%2 else '45'
+  frame+=1
+  print(';'.join([level]*count)+';',flush=True);time.sleep(.033)
 except BrokenPipeError:pass
 ''');cava.chmod(0o700)
  (folder/"shell.qml").write_text(r'''
@@ -47,9 +50,9 @@ ShellRoot {
    for(let i=0;i<5;i++){popup.active=true;wait(360);popup.active=false;wait(360)}
    check(CavaService.effectiveBars===64,"popup changed analyzer capacity")
    spectrum.playing=true;wait(150)
-   const phase=spectrum.phase,revision=waves.revision
+   const revision=waves.revision
    wait(200)
-   check(spectrum.phase!==phase && waves.revision>revision,"static frames lost old upstream wave phase")
+   check(spectrum.phase===0 && waves.revision>revision,"stationary wave lobes must rise/fall vertically without horizontal phase drift")
    check(!waves.running && waves.simulation.steps===0 && waves.simulation.hasSpectrum,"audio started elastic solver")
    spectrum.playing=false;check(!waves.simulation.hasSpectrum,"pause retained spectrum")
    wide.active=true;tryVerify(()=>CavaService.points.length===128,3000)
