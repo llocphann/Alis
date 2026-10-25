@@ -168,25 +168,27 @@ Item {
     readonly property real columnWidth: Math.max(102 * Appearance.fontSizeScale, (viewport.width - 44) / 7)
     readonly property color ink: Appearance.colors.colOnLayer1
     readonly property color mutedInk: Appearance.colors.colSubtext
-    // Always use Alis' theme-derived gradient, not album-cover or audio
-    // visualizer settings. It rebinds when the active system theme changes.
-    readonly property var eventThemeColors: CavaTheme.vibrantColors
-    function eventGradientColor(row, palette): color {
+    // Weekly Planner palette: ONE live theme hue, eight visibly distinct
+    // lightness tiers. No CAVA hue shifts, neighboring Event interpolation or
+    // hardcoded rainbow. Rebinding the Material Primary updates every card.
+    readonly property color eventToneBase: Appearance.colors.colPrimary
+    function eventToneColor(row): color {
         const explicit=row?.event?.color || (row?.source==="external"
             ? row?.event?.sourceColor : null)
         if (explicit) {
-            const userColor=Qt.color(explicit)
-            if (userColor.valid) return userColor
+            const saved=Qt.color(explicit)
+            if (saved.valid) return saved
         }
-        if (!palette || !palette.length)
-            return Appearance.colors.colPrimary
-        const position=EventPalette.position(row?.event,row?.source)*(palette.length-1)
-        const lo=Math.floor(position),hi=Math.min(palette.length-1,lo+1)
-        const first=Qt.color(palette[lo]),second=Qt.color(palette[hi])
-        const t=position-lo
-        return Qt.rgba(first.r+(second.r-first.r)*t,
-            first.g+(second.g-first.g)*t,
-            first.b+(second.b-first.b)*t,1)
+        const base=Qt.color(root.eventToneBase)
+        const index=EventPalette.toneIndex(row?.event,row?.source,8)
+        const levels=[-.21,-.15,-.09,-.03,.03,.09,.15,.21]
+        const dark=Appearance.m3colors.darkmode
+        // Center the brightness ramp around the current theme's Primary,
+        // but keep every tier distinct even for very pale/dark themes.
+        const center=(dark ? .56 : .46)+.20*(base.hslLightness-.50)
+        const lightness=Math.max(.15,Math.min(.85,center+levels[index]))
+        return Qt.hsla(base.hslHue>=0 ? base.hslHue : 0,
+            base.hslSaturation,lightness,1)
     }
     // Match the date and All-day headings to the actual timeline: its day
     // cells have no opaque backing, so the pinned headings must not paint a
@@ -596,7 +598,7 @@ Item {
                                 required property int index
                                 objectName:"plannerAllDayEvent"
                                 readonly property color eventAccent:
-                                    root.eventGradientColor(modelData,root.eventThemeColors)
+                                    root.eventToneColor(modelData)
                                 x:4+(dragMoved?dragX
                                     : root.activeGroupGesture?.mode==="move"
                                         && root.activeGroupGesture?.keys?.includes(
@@ -605,7 +607,7 @@ Item {
                                 y:viewport.contentY+68+index*26;width:dayColumn.width-8;height:24;z:11
                                 buttonRadius:6
                                 colBackground:Qt.alpha(allDayButton.eventAccent,
-                                    root.isEventSelected(modelData) || root.isEditorEvent(modelData) ? .42 : .27)
+                                    root.isEventSelected(modelData) || root.isEditorEvent(modelData) ? .50 : .38)
                                 Rectangle {
                                     objectName:"plannerAllDaySelection"
                                     anchors.fill:parent;radius:allDayButton.buttonRadius
@@ -734,7 +736,7 @@ Item {
                                 objectName:"plannerTimedEvent"
                                 readonly property bool canReschedule: Selection.canReschedule(modelData)
                                 readonly property color eventAccent:
-                                    root.eventGradientColor(modelData,root.eventThemeColors)
+                                    root.eventToneColor(modelData)
                                 // Resize affordances belong to this card alone. Keep
                                 // the edge MouseAreas active even while the bars fade out.
                                 readonly property bool showResizeHandles: canReschedule
@@ -780,12 +782,12 @@ Item {
                                     GradientStop {
                                         position:0
                                         color:Qt.alpha(timedButton.eventAccent,
-                                            eventMouse.containsMouse ? .39 : .30)
+                                            eventMouse.containsMouse ? .54 : .43)
                                     }
                                     GradientStop {
                                         position:1
                                         color:Qt.alpha(timedButton.eventAccent,
-                                            eventMouse.containsMouse ? .23 : .16)
+                                            eventMouse.containsMouse ? .39 : .29)
                                     }
                                 }
                                 border.width:root.isEventSelected(modelData) ? 2
