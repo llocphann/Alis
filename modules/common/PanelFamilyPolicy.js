@@ -146,3 +146,18 @@ function migrateRetiredToggles(options) {
     }
     return result;
 }
+
+// Preserve legacy apps.fileExplorer values by backfilling apps.fileManager once
+// when a pre-SET-F01 config had fileExplorer without fileManager.
+function migrateDefaultApps(options) {
+    options = options || {};
+    var apps = options.apps;
+    if (!apps || typeof apps !== "object") return {};
+    var result = {};
+    if (!Object.prototype.hasOwnProperty.call(apps, "fileManager")
+            && typeof apps.fileExplorer === "string"
+            && apps.fileExplorer.trim().length > 0) {
+        result["apps.fileManager"] = apps.fileExplorer.trim();
+    }
+    return result;
+}

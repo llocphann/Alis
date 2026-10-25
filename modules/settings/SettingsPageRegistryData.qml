@@ -230,6 +230,7 @@ Singleton {
                 null,
         {key:"companion",name:Translation.tr("Companion"),icon:"water_drop",desc:Translation.tr("Aqua and Octo appearance, personality and movement"),essential:true,component:"modules/settings/CompanionConfig.qml"}
         ,{key: "integrations",name:Translation.tr("Integrations"),icon:"extension",desc:Translation.tr("Obsidian, calendar and connected applications"),essential:false,component:"modules/settings/IntegrationsConfig.qml"}
+        ,{key: "default-apps",name:Translation.tr("Default Applications"),icon:"apps",desc:Translation.tr("Preferred terminal, browser, editor, file manager and system utilities"),essential:true,component:"modules/settings/DefaultAppsConfig.qml"}
     ]
 
     // v7 information architecture: navigation reflects the user's intent,
@@ -241,7 +242,7 @@ Singleton {
         { label: Translation.tr("Appearance"), pages: [4, 3, 25, 8] },
         { label: Translation.tr("Desktop & Layout"), pages: Config.options?.panelFamily === "abyss" ? [15,5,14,29,10,11] : [15,26,2,22,23,5,16,14,29,10,11] },
         { label: Translation.tr("System"), pages: [1, 12, 17] },
-        { label: Translation.tr("Features & Services"), pages: [24, 38, 7, 6] },
+        { label: Translation.tr("Features & Services"), pages: [39, 24, 38, 7, 6] },
         { label: Translation.tr("Advanced & Help"), pages: [9, 13] }
     ]
 
@@ -1265,11 +1266,39 @@ Singleton {
             keywords: ["game", "mode", "fullscreen", "performance", "fps", "auto", "detect", "animations", "effects"]
         },
         {
-            pageIndex: 12, pageName: root.pages[12].name,
-            section: Translation.tr("Applications"),
+            pageIndex: 39, pageName: root.pages[39].name,
+            section: Translation.tr("Core Applications"),
             label: Translation.tr("Default applications"),
-            description: Translation.tr("Terminal, file manager, browser commands"),
-            keywords: ["apps", "applications", "terminal", "browser", "file", "manager", "discord", "default"]
+            description: Translation.tr("Preferred terminal, browser, editor, file manager and system utilities"),
+            keywords: ["apps", "applications", "terminal", "browser", "editor", "file", "manager", "explorer", "flatpak", "flathub", "default", "xdg", "mime"]
+        },
+        {
+            pageIndex: 39, pageName: root.pages[39].name,
+            section: Translation.tr("Core Applications"),
+            label: Translation.tr("Default Terminal"),
+            description: Translation.tr("Terminal used by shell actions, tools, keybinds, and package commands"),
+            keywords: ["terminal", "kitty", "foot", "ghostty", "alacritty", "wezterm", "konsole", "default", "apps"]
+        },
+        {
+            pageIndex: 39, pageName: root.pages[39].name,
+            section: Translation.tr("Core Applications"),
+            label: Translation.tr("Default Web Browser"),
+            description: Translation.tr("Web browser for links, search actions and web apps (Native & Flatpak)"),
+            keywords: ["browser", "web", "firefox", "zen", "chromium", "brave", "flatpak", "flathub", "xdg", "default"]
+        },
+        {
+            pageIndex: 39, pageName: root.pages[39].name,
+            section: Translation.tr("Core Applications"),
+            label: Translation.tr("Default Code / Text Editor"),
+            description: Translation.tr("Text and code editor for config files and quick edits"),
+            keywords: ["editor", "code", "text", "zed", "vscode", "codium", "kate", "neovide", "flatpak", "default"]
+        },
+        {
+            pageIndex: 39, pageName: root.pages[39].name,
+            section: Translation.tr("Core Applications"),
+            label: Translation.tr("Default File Manager"),
+            description: Translation.tr("File manager for folders, downloads and Super+E"),
+            keywords: ["file", "manager", "explorer", "folders", "nautilus", "dolphin", "thunar", "nemo", "flatpak", "default"]
         },
         {
             pageIndex: 8, pageName: root.pages[8].name,

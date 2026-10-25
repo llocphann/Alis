@@ -188,7 +188,7 @@ Item {
                     ActionTile {
                         tileIcon: "folder"
                         label: Translation.tr("Files")
-                        onClicked: ShellExec.execDetachedArgs(["/usr/bin/nautilus"], "Launch Files")
+                        onClicked: AppLauncher.launch("fileManager")
                     }
                     ActionTile {
                         tileIcon: "settings"
@@ -208,7 +208,7 @@ Item {
                     ActionTile {
                         tileIcon: "code"
                         label: Translation.tr("Editor")
-                        onClicked: ShellExec.execCmd(Config.options?.apps?.editor ?? "/usr/bin/code")
+                        onClicked: AppLauncher.launch("editor")
                     }
                 }
             }

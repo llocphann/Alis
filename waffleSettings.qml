@@ -139,6 +139,8 @@ ApplicationWindow {
         }
         ,{key: "integrations",name:Translation.tr("Integrations"),icon:"apps",
           component:Qt.resolvedUrl("modules/waffle/settings/pages/WIntegrationsPage.qml")}
+        ,{key: "default-apps",name:Translation.tr("Default Applications"),icon:"apps",
+          component:Qt.resolvedUrl("modules/waffle/settings/pages/WDefaultAppsPage.qml")}
     ]
 
     property int currentPage: 0

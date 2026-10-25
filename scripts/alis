@@ -3595,7 +3595,45 @@ EOF
     [[ "$failures" -eq 0 ]]
 }
 
+launch_configured_slot() {
+    local slot_id="$1"
+    local description="$2"
+    shift 2
+    local config_file
+    config_file="$(alis_config_file)"
+    local helper_py
+    helper_py="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/default_apps_helper.py"
+
+    if [[ -f "$helper_py" ]] && command -v python3 >/dev/null 2>&1; then
+        local resolved_json
+        resolved_json="$(python3 "$helper_py" resolve-launch "$slot_id" "$config_file" -- "$@" 2>/dev/null || true)"
+        if [[ -n "$resolved_json" ]]; then
+            local -a resolved_argv=()
+            mapfile -t resolved_argv < <(python3 -c '
+import json, sys
+data = json.loads(sys.argv[1])
+if data.get("ok") and data.get("argv"):
+    for item in data["argv"]:
+        print(item)
+' "$resolved_json" 2>/dev/null || true)
+            if [[ ${#resolved_argv[@]} -gt 0 ]]; then
+                if [[ "${ALIS_LAUNCH_DRY_RUN:-0}" == "1" ]]; then
+                    printf '%s\n' "$resolved_json"
+                    exit 0
+                fi
+                if command -v systemd-run >/dev/null 2>&1; then
+                    exec systemd-run --user --scope --quiet --collect --property="Description=${description}" -- "${resolved_argv[@]}"
+                else
+                    exec "${resolved_argv[@]}"
+                fi
+            fi
+        fi
+    fi
+    return 1
+}
+
 launch_configured_browser() {
+    launch_configured_slot "browser" "Alis Browser" "$@" || true
     local config_file
     config_file="$(alis_config_file)"
     local browser=""
@@ -3896,6 +3934,54 @@ case "$command_name" in
             esac
         done
         launch_configured_browser "$@"
+        ;;
+    files|file-manager)
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                -c|--config)
+                    parse_config_flag "$@"
+                    shift 2
+                    ;;
+                --)
+                    shift
+                    break
+                    ;;
+                -h|--help)
+                    echo "Usage: alis files [-c PATH] [path...]" >&2
+                    exit 0
+                    ;;
+                *)
+                    break
+                    ;;
+            esac
+        done
+        launch_configured_slot "fileManager" "Alis File Manager" "$@"
+        echo "No file manager found" >&2
+        exit 1
+        ;;
+    editor)
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                -c|--config)
+                    parse_config_flag "$@"
+                    shift 2
+                    ;;
+                --)
+                    shift
+                    break
+                    ;;
+                -h|--help)
+                    echo "Usage: alis editor [-c PATH] [file...]" >&2
+                    exit 0
+                    ;;
+                *)
+                    break
+                    ;;
+            esac
+        done
+        launch_configured_slot "editor" "Alis Editor" "$@"
+        echo "No editor found" >&2
+        exit 1
         ;;
     close-window)
         while [[ $# -gt 0 ]]; do

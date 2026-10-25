@@ -27,6 +27,7 @@ SettingsChromeEditFrame 1.0 SettingsChromeEditFrame.qml
 SettingsNativeDialogGuard 1.0 SettingsNativeDialogGuard.qml
 MonitorVisibilityConfig 1.0 MonitorVisibilityConfig.qml
 CompanionConfig 1.0 CompanionConfig.qml
+DefaultAppsConfig 1.0 DefaultAppsConfig.qml
 IntegrationsConfig 1.0 IntegrationsConfig.qml
 ObsidianThemeSettings 1.0 ObsidianThemeSettings.qml
 

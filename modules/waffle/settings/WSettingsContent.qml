@@ -33,7 +33,7 @@ Item {
         { label: Translation.tr("Appearance"), keys: ["themes", "wallpaper", "gowall", "effects"] },
         { label: Translation.tr("Desktop & Layout"), keys: ["monitors", "shell-layout", "bar", "workspace-strip", "panels", "waffle-style", "modules"] },
         { label: Translation.tr("System"), keys: ["system", "power", "autostart"] },
-        { label: Translation.tr("Features & Services"), keys: ["ai", "mascot", "integrations"] },
+        { label: Translation.tr("Features & Services"), keys: ["default-apps", "ai", "mascot", "integrations"] },
         { label: Translation.tr("Advanced & Help"), keys: ["shortcuts", "about"] }
     ]
     property var expandedNavGroups: ({})
@@ -108,6 +108,7 @@ Item {
     }
     // Complete search index with all individual options + targetLabel for spotlight
     property var searchIndex: [
+        {pageIndex:20,pageName:"Default Applications",section:"Core Applications",label:"Default applications",targetLabel:"Default Terminal",description:"Preferred terminal, browser, editor, file manager and system utilities",keywords:["apps","applications","terminal","browser","editor","file","manager","flatpak","flathub","default"]},
         {pageIndex:19,pageName:"Integrations",section:"Obsidian",label:"Obsidian",description:"Vault, theming, notes and tasks",keywords:["obsidian","vault","theme","integrations","tasks"]},
         {pageIndex:19,pageName:"Integrations",section:"Calendar",label:"External calendars",description:"ICS/iCal sources",keywords:["calendar","ics","ical","integrations"]},
         { pageIndex: 18, pageName: "Battery", section: "Power management", label: "Battery and TLP settings", targetLabel: "Configuration categories", keywords: ["tlp", "power", "battery", "cpu", "processor", "disk", "pcie", "usb", "radio", "energy", "profile"] },

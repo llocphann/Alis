@@ -103,23 +103,6 @@ WSettingsPage {
         }
     }
 
-    WSettingsCard {
-        title: Translation.tr("Default Terminal")
-        icon: "terminal"
-
-        WSettingsDropdown {
-            label: Translation.tr("Terminal emulator")
-            icon: "terminal"
-            description: Translation.tr("Used by shell actions, keybinds, and package commands")
-            currentValue: AppLauncher.presetIdFor("terminal")
-            options: AppLauncher.presetOptions("terminal")
-            onSelected: newValue => {
-                if (newValue !== "__custom__")
-                    AppLauncher.applyPreset("terminal", newValue)
-            }
-        }
-    }
-
     // Waffle modules
     WSettingsCard {
         title: Translation.tr("Panels")

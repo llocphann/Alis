@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const h={};vm.createContext(h);vm.runInContext(fs.readFileSync('modules/settings/SettingsHierarchy.js','utf8'),h);
-const keys=['quick','system','abyss','wallpaper','themes','panels','tools','services','advanced','shortcuts','modules','waffle-style','compositor','about','widgets','monitors','dashboard','autostart','dock','sidebars','ai','effects','abyss-waves','abyss-popups','abyss-modules','companion','integrations'];
+const keys=['quick','system','abyss','wallpaper','themes','panels','tools','services','advanced','shortcuts','modules','waffle-style','compositor','about','widgets','monitors','dashboard','autostart','dock','sidebars','ai','effects','abyss-waves','abyss-popups','abyss-modules','companion','integrations','default-apps'];
 const pages=keys.map((key,i)=>({key,name:key,component:'page'+i}));
 for(const keysOrder of [keys,keys.slice().reverse(),keys.filter(key=>key!=='widgets')]) {
  const order=keysOrder.map(key=>keys.indexOf(key)),before=JSON.stringify(order);

@@ -603,7 +603,8 @@ Singleton {
             const styleMigration = Object.assign({},
                 FamilyPolicy.migrateMaterial(root._jsonMirror),
                 FamilyPolicy.migrateContentOpacity(root._jsonMirror),
-                FamilyPolicy.migrateRetiredToggles(root._jsonMirror));
+                FamilyPolicy.migrateRetiredToggles(root._jsonMirror),
+                FamilyPolicy.migrateDefaultApps(root._jsonMirror));
             if (root._jsonMirror && Object.prototype.hasOwnProperty.call(root._jsonMirror, "musicRecognition")) {
                 delete root._jsonMirror.musicRecognition;
                 root._styleMigrationWritePending = true;
@@ -1317,10 +1318,25 @@ Singleton {
                 property string taskManager: "missioncenter"
                 property string terminal: "kitty"
                 property string browser: "firefox"
+                property string editor: "code"
+                property string fileManager: "nautilus"
+                property string fileExplorer: "nautilus"
                 property string volumeMixer: "pavucontrol"
                 property string discord: "discord"
                 property string update: "kitty -e sudo pacman -Syu"
                 property string manageUser: "kcmshell6 kcm_users"
+                property JsonObject desktopIds: JsonObject {
+                    property string terminal: ""
+                    property string browser: ""
+                    property string editor: ""
+                    property string fileManager: ""
+                    property string manageUser: ""
+                    property string network: ""
+                    property string networkEthernet: ""
+                    property string bluetooth: ""
+                    property string volumeMixer: ""
+                    property string taskManager: ""
+                }
             }
 
             property JsonObject background: JsonObject {

@@ -70,7 +70,7 @@ binds {
 
     Mod+T { spawn "alis" "terminal"; }
     Mod+Return { spawn "alis" "terminal"; }
-    Super+E { spawn "nautilus"; }
+    Super+E { spawn "alis" "files"; }
     Super+W { spawn "alis" "browser"; }
 
     // ═══════════════════════════════════════════════════════════════════════

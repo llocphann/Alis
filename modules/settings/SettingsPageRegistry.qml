@@ -28,7 +28,7 @@ Singleton {
     function isPageApplicable(index: int): bool {
         if (index < 0 || index >= root.pages.length
                 || root.isHiddenLegacyIndex(index) || !root.pages[index]) return false
-        if (index === 38) return true
+        if (index === 38 || index === 39) return true
         if (root.abyssFamily)
             return ![11,26].includes(index)
         if (root.waffleFamily)
@@ -65,12 +65,16 @@ Singleton {
             || label.includes("calendar"))
         const optionalPower = key === "system" && (label.includes("tlp") || label.includes("fan")
             || label.includes("cooling") || label.includes("thermal"))
-        const index = root.pageIndexForKey(integration || optionalPower ? "integrations" : key)
+        const defaultApps = (key === "compositor" && (label.includes("application") || label.includes("default app")))
+            || (key === "modules" && (label === "terminal" || label.includes("default terminal")))
+        const targetKey = defaultApps ? "default-apps" : (integration || optionalPower ? "integrations" : key)
+        const targetSection = defaultApps ? "" : String(section ?? "")
+        const index = root.pageIndexForKey(targetKey)
         if (index < 0) return false
         const route = FamilyPolicy.settingsRoute(Config.options?.panelFamily, index,
-            root.abyssFamily && !section
-                ? ({"shell-layout":"surface",bar:"bar"}[key] ?? "")
-                : String(section ?? ""))
+            root.abyssFamily && !targetSection
+                ? ({"shell-layout":"surface",bar:"bar"}[targetKey] ?? "")
+                : targetSection)
         root.navigateRequested(route.pageIndex, route.section)
         return true
     }

@@ -332,13 +332,28 @@
         "bluetooth": "blueman-manager",
         "browser": "firefox",
         "discord": "discord",
+        "editor": "code",
+        "fileManager": "nautilus",
+        "fileExplorer": "nautilus",
         "manageUser": "kcmshell6 kcm_users",
         "network": "nm-connection-editor",
         "networkEthernet": "nm-connection-editor",
         "taskManager": "missioncenter",
         "terminal": "kitty",
         "volumeMixer": "pavucontrol",
-        "update": "kitty -e arch-update"
+        "update": "kitty -e arch-update",
+        "desktopIds": {
+            "terminal": "",
+            "browser": "",
+            "editor": "",
+            "fileManager": "",
+            "manageUser": "",
+            "network": "",
+            "networkEthernet": "",
+            "bluetooth": "",
+            "volumeMixer": "",
+            "taskManager": ""
+        }
     },
     "audio": {
         "protection": {
