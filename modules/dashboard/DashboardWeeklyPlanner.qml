@@ -118,6 +118,16 @@ Item {
             root.editOccurrence(row)
         }
     }
+    // The explicit selection is also used for safe recurring move/resize.
+    // A recurring instance may not be deleted through the non-recurring
+    // atomic batch writer: redirect to the existing Edit Event control
+    // instead of showing a disabled, misleading "Delete (1)" button.
+    function openSelectedRecurringEditor(): void {
+        const selected=root.selectedEventRows.find(row=>!Selection.canDelete(row))
+        if (!selected || selected.source!=="local") return
+        root.clearEventSelection()
+        root.editOccurrence(selected)
+    }
     function confirmOrDeleteSelected(): void {
         if (!root.canDeleteSelection) return
         if (!root.deleteConfirmation) {root.deleteConfirmation=true;return}
@@ -437,18 +447,23 @@ Item {
                     Action {
                         objectName:"plannerDeleteSelected"
                         visible:root.selectedEventRows.length>0
-                        enabled:root.canDeleteSelection
-                        label:root.deleteConfirmation
-                            ? "Confirm delete ("+root.selectedEventRows.length+")"
-                            : "Delete ("+root.selectedEventRows.length+")"
-                        symbol:"delete"
-                        buttonInk:root.deleteConfirmation
+                        enabled:root.selectedEventRows.length>0
+                        label:!root.canDeleteSelection
+                            ? "Edit to delete ("+root.selectedEventRows.length+")"
+                            : root.deleteConfirmation
+                                ? "Confirm delete ("+root.selectedEventRows.length+")"
+                                : "Delete ("+root.selectedEventRows.length+")"
+                        symbol:root.canDeleteSelection ? "delete" : "edit"
+                        buttonInk:root.canDeleteSelection && root.deleteConfirmation
                             ? Appearance.colors.colError : root.headerInk
-                        onClicked:root.confirmOrDeleteSelected()
+                        onClicked:{
+                            if (root.canDeleteSelection) root.confirmOrDeleteSelected()
+                            else root.openSelectedRecurringEditor()
+                        }
                         StyledToolTip {
                             text:root.canDeleteSelection
                                 ? "Ctrl+Click to toggle · Shift+Click for range · Ctrl/Shift+drag background to select · Delete twice to confirm"
-                                : "Recurring selections can be moved or resized. Delete recurring Events in Edit Event."
+                                : "Open Edit Event to review recurring deletion. Deleting there may affect the full series; this button does not delete anything."
                         }
                     }
                     Action {
