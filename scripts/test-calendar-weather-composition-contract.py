@@ -97,19 +97,20 @@ def main() -> None:
         "function focusEditor(): void",
         "id: titleField",
         "id: editorFlickable",
-        "readonly property real embeddedGap: Math.max(4,",
+        "readonly property bool compactEditor: embeddedPresentation && !plannerPresentation",
+        "readonly property real embeddedGap: root.plannerPresentation ? 12 : Math.max(4,",
         "? Math.max(height, formColumn.implicitHeight)",
-        "? editorFlickable.embeddedGap : 4",
+        "? editorFlickable.embeddedGap : 8",
         "id: basicInfoColumn",
         "id: scheduleColumn",
-        "contentSpacing: root.embeddedPresentation ? 4 : 16",
+        "contentSpacing: root.plannerPresentation ? 12\n        : (root.compactEditor ? 4 : 16)",
         "embeddedBackgroundColor:",
         "component EventSectionHeader: WindowDialogSectionHeader",
         "Appearance.colors.colSurfaceContainerHigh",
-        "visible: !root.embeddedPresentation",
+        "visible: !root.compactEditor",
         'Translation.tr("Title") + " *"',
         'Translation.tr("Note (opt)")',
-        "compact: root.embeddedPresentation",
+        "compact:root.compactEditor",
         "property string eventEndTime:",
         "property bool allDay: false",
         'property string compactOptionGroup: ""',
@@ -121,15 +122,15 @@ def main() -> None:
         "placeholderTextColor: Appearance.colors.colOnSurface",
         "DatePicker {",
         "compact: false",
-        'text: Translation.tr("All day")',
+        'text:Translation.tr("All day")',
         'text: Translation.tr("Start")',
         'text: Translation.tr("End")',
         'text: Translation.tr("Repeat")',
         '{ displayName: Translation.tr("Event"), icon: "event", value: "none" }',
-        '{ displayName: Translation.tr("Daily"), icon: "today", value: "daily" }',
-        '{ displayName: Translation.tr("Weekly"), icon: "date_range", value: "weekly" }',
-        '{ displayName: Translation.tr("Monthly"), icon: "calendar_month", value: "monthly" }',
-        '{ displayName: Translation.tr("Yearly"), icon: "event_repeat", value: "yearly" }',
+        '{ displayName: Translation.tr("Daily"), icon: "today", value: "daily"',
+        '{ displayName: Translation.tr("Weekly"), icon: "date_range", value: "weekly"',
+        '{ displayName: Translation.tr("Monthly"), icon: "calendar_month", value: "monthly"',
+        '{ displayName: Translation.tr("Yearly"), icon: "event_repeat", value: "yearly"',
         "startDate: startIso",
         "endDate: endIso",
         "allDay: root.allDay",
@@ -142,13 +143,13 @@ def main() -> None:
     compact_deck_start = events_dialog.find(
         "// Embedded Add Event uses one compact icon deck")
     compact_deck_end = events_dialog.find(
-        "// Repeat is part of scheduling", compact_deck_start)
+        "// Repeat: stable, evenly sized option card", compact_deck_start)
     if compact_deck_start < 0 or compact_deck_end < 0:
         raise AssertionError("EventsDialog compact embedded option deck missing")
     compact_deck = events_dialog[compact_deck_start:compact_deck_end]
     for token in (
         "id: compactOptionDeck",
-        "visible: root.embeddedPresentation",
+        "visible: root.compactEditor",
         "height: 32",
         "anchors.centerIn: parent",
         "spacing: 8",
@@ -185,7 +186,7 @@ def main() -> None:
 
     for token in (
         'symbol: "close"',
-        'symbol: root.isEditing ? "check" : "add_task"',
+        'symbol: root.isEditing ? "check" : "event_available"',
         'tooltipText: Translation.tr("Cancel")',
         "selectedState: true",
         "visible: !root.embeddedPresentation",
@@ -196,12 +197,12 @@ def main() -> None:
     if legacy_options.count("ConfigSelectionArray {") < 4:
         raise AssertionError(
             "EventsDialog standalone option arrays were removed by compact popup refactor")
-    if legacy_options.count("visible: !root.embeddedPresentation") < 8:
+    if legacy_options.count("visible: !root.compactEditor") < 8:
         raise AssertionError(
-            "EventsDialog legacy option sections must stay standalone-only")
+            "EventsDialog legacy option sections must stay standalone/planner-only")
 
     date_picker_pos = events_dialog.find("DatePicker {")
-    category_pos = events_dialog.find("// ─── Category Section")
+    category_pos = events_dialog.find("// Category: stable, evenly sized option card")
     if date_picker_pos < 0 or category_pos < 0 or date_picker_pos > category_pos:
         raise AssertionError("EventsDialog scheduling controls must stay before category metadata")
     date_picker_block = events_dialog[date_picker_pos:category_pos]
@@ -215,11 +216,11 @@ def main() -> None:
            "EventsDialog duplicate embedded calendar")
 
     for token in (
-        "function addEvent(title, description, dateTime, category, priority, reminderMinutes, recurrence, endDate, allDay)",
+        "function addEvent(title, description, dateTime, category, priority, reminderMinutes, recurrence, endDate, allDay",
         "startDate: startIso",
-        "endDate: endDate ||",
+        'const firstEnd=bulk ? explicitSlots[0].endDate : (endDate || "")',
+        "endDate: firstEnd",
         "allDay: allDay === true",
-        "event.startDate || event.dateTime",
         "event.allDay === true",
         "durationMs",
         "nextEnd",
@@ -259,8 +260,9 @@ def main() -> None:
         "function closeEventEditor(): void",
         "selectedDate: eventsPane.inlineEditorMode",
         "? eventsPane.inlineEditorDate",
-        "interactiveDays: eventsPane.inlineEditorMode",
+        "interactiveDays: true",
         "eventsPane.setInlineEditorDate(date)",
+        "eventsPane.openInlineEditor(date)",
         "anchors.horizontalCenter: parent.horizontalCenter",
         "fabSize: 36",
         "fabMargins: 10",
@@ -285,7 +287,7 @@ def main() -> None:
         "function closeInlineEditor(): void",
         "function setInlineEditorDate(date): void",
         "visible: !root.inlineEditorMode",
-        "root.openInlineEditor(evt)",
+        "root.openInlineEditor(\n                                    modelData._canonicalEvent ?? evt)",
         "EventsDialog {",
         "id: inlineEditor",
         "show: root.inlineEditorMode",
@@ -309,7 +311,8 @@ def main() -> None:
         "id: mondayMeasure",
         "property var selectedDate: null",
         "function sameDay(a, b): bool",
-        "readonly property bool selected: root.sameDay(",
+        "readonly property bool selected: root.multiSelectedDates.length>0",
+        ": root.sameDay(dayCell.modelData?.date, root.selectedDate)",
         "Appearance.colors.colPrimaryContainer",
         "Appearance.colors.colOnPrimaryContainer",
         "property bool responsive: false",
@@ -328,7 +331,7 @@ def main() -> None:
         "color: todayButton.currentMonth ? root.colMuted : root.colAccent",
         'iconName: "chevron_left"',
         'iconName: "chevron_right"',
-        "opacity: dayCell.modelData?.currentMonth === false ? 0.25 : 1",
+        "opacity: dayCell.modelData?.currentMonth === false\n                            && !dayCell.selected ? 0.25 : 1",
     ):
         require(shared_month, token, "ObsidianMonthCalendar.qml")
 
@@ -342,7 +345,7 @@ def main() -> None:
         "responsiveMaxCellSize: root.dashboardAdaptive ? 56 : 42",
         "autoWeekNumbers: root.dashboardAdaptive",
         "interactiveDays: true",
-        "showEventDots: true",
+        "showEventDots: !root.dashboardAdaptive || root.maxEventDots > 0",
         "CalendarLayout.getCalendarLayout(viewingDate, monthShift === 0, 1)",
     ):
         require(sidebar_calendar, token, "Sidebar CalendarWidget.qml")

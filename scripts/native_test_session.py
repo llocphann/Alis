@@ -6,10 +6,19 @@ import json, os, re, shutil, signal, subprocess, time
 
 def run_qs(folder: Path, env: dict, timeout: int = 25):
     """Bound and clean up the test's whole process group, retaining diagnostics."""
+    cfg_root = Path(env.get("XDG_CONFIG_HOME", str(folder / "config")))
+    alis_cfg = cfg_root / "alis" / "config.json"
+    if not alis_cfg.exists():
+        for legacy_name in ("illogical-impulse", "inir"):
+            legacy_cfg = cfg_root / legacy_name / "config.json"
+            if legacy_cfg.exists():
+                alis_cfg.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(legacy_cfg, alis_cfg)
+                break
     command = ["dbus-run-session", "--", "qs", "-p", str(folder), "--no-color"]
     log = folder / "native-test-qs.log"
     with log.open("wb") as stream:
-        process = subprocess.Popen(command, env=dict(env,QT_NO_XDG_DESKTOP_PORTAL="1"), stdout=stream,
+        process = subprocess.Popen(command, env=dict(env, LC_ALL="C.UTF-8", QT_NO_XDG_DESKTOP_PORTAL="1"), stdout=stream,
                                    stderr=subprocess.STDOUT, start_new_session=True)
     try:
         code = process.wait(timeout=timeout)
@@ -74,7 +83,7 @@ def private_wayland(folder: Path, *, capture_focus: bool = False):
                       'layout {\n background-color "#111820"\n'
                       ' default-column-width { proportion 1.0; }\n}\n'
                       'overview {\n backdrop-color "#111820"\n}\n')
-    env = dict(os.environ, NIRI_CONFIG=str(config), RUST_LOG="niri=info")
+    env = dict(os.environ, LC_ALL="C.UTF-8", NIRI_CONFIG=str(config), RUST_LOG="niri=info")
     env.pop("NIRI_SOCKET", None)
     for kind in ["config", "state", "cache", "data"]:
         env[f"XDG_{kind.upper()}_HOME"] = str(folder / kind)

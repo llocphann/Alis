@@ -517,9 +517,75 @@ Singleton {
         onTriggered: root._injectCustomDataSync()
     }
 
+    readonly property list<string> _legacyConfigPaths: [
+        `${Directories.configPath}/illogical-impulse/${Directories.shellConfigName}`,
+        `${Directories.configPath}/inir/${Directories.shellConfigName}`
+    ]
+    property int _legacyProbeIndex: -1
+    property bool _legacyProbeDone: false
+
+    function _initializeDefaultConfigFile(): void {
+        console.log("[Config] File not found, creating new file.");
+        const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'));
+        Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir]);
+        root.customWidgetData = {};
+        root.customWidgetDataSynced = true;
+        configFileView.writeAdapter();
+        root.ready = true;
+    }
+
+    FileView {
+        id: legacyConfigReader
+        preload: false
+        printErrors: false
+        onLoaded: {
+            root._legacyProbeDone = true;
+            try {
+                const parsed = JSON.parse(legacyConfigReader.text());
+                if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                    root._jsonMirror = root._cloneObject(parsed);
+                    const keys = Object.keys(parsed);
+                    for (let i = 0; i < keys.length; ++i) {
+                        const k = keys[i];
+                        root._applyNestedKey([k], parsed[k]);
+                    }
+                    root._syncVarProperties();
+                    const styleMigration = Object.assign({},
+                        FamilyPolicy.migrateMaterial(root._jsonMirror),
+                        FamilyPolicy.migrateContentOpacity(root._jsonMirror));
+                    if (Object.keys(styleMigration).length) {
+                        root._styleMigrationWritePending = true;
+                        root.setNestedValues(styleMigration);
+                    }
+                    root._reconcileMandatoryPanels();
+                    const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'));
+                    Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir]);
+                    root._pendingRawWrite = true;
+                    root._bumpRevision();
+                    root.ready = true;
+                    fileWriteTimer.restart();
+                    return;
+                }
+            } catch (e) {}
+            root._initializeDefaultConfigFile();
+        }
+        onLoadFailed: _error => {
+            const nextIndex = root._legacyProbeIndex + 1;
+            if (nextIndex < root._legacyConfigPaths.length) {
+                root._legacyProbeIndex = nextIndex;
+                legacyConfigReader.path = root._legacyConfigPaths[nextIndex];
+                legacyConfigReader.reload();
+                return;
+            }
+            root._legacyProbeDone = true;
+            root._initializeDefaultConfigFile();
+        }
+    }
+
     FileView {
         id: rawConfigReader
         path: root.filePath
+        printErrors: false
     }
 
     FileView {
@@ -527,6 +593,7 @@ Singleton {
         path: root.filePath
         watchChanges: true
         blockWrites: root.blockWrites
+        printErrors: false
         onFileChanged: {
             // A save from the previous mutation can signal FileChanged after
             // onSaved while the next debounced local write is already queued.
@@ -580,12 +647,14 @@ Singleton {
             root._reloadInFlight = false;
             root._reloadOverlay = ({});
             if (error == FileViewError.FileNotFound) {
-                console.log("[Config] File not found, creating new file.");
-                const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'));
-                Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir]);
-                root.customWidgetData = {};
-                root.customWidgetDataSynced = true;
-                writeAdapter();
+                if (!root._legacyProbeDone && root._legacyConfigPaths.length > 0) {
+                    root._legacyProbeIndex = 0;
+                    legacyConfigReader.path = root._legacyConfigPaths[0];
+                    legacyConfigReader.reload();
+                    return;
+                }
+                root._initializeDefaultConfigFile();
+                return;
             }
             root.ready = true;
         }

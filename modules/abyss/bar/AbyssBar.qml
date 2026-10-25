@@ -235,6 +235,7 @@ Item {
             showIcon: module.unifiedEdgeLauncher ? true : placement?.showIcon !== false
             onNotesEditorFocusChanged: (outputName, focused) => root.notesEditorFocusChanged(outputName, focused)
             visible: geometry !== undefined && !geometry.capacityConflict
+            // enabled: !root.editing
             enabled: !(root?.editing ?? false) && visible
             property bool motionReady: false
             property string motionEdge: ""
