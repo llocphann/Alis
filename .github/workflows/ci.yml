@@ -26,10 +26,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fish jq rsync dbus python3-dbus python3-gi
 
-      - name: Verify Office color contrast and safe profile adapters
-        shell: bash
-        run: python3 scripts/test-office-auto-theme.py
-
       - name: Verify CAST-F01 display safety and Utilities compatibility
         shell: bash
         run: |

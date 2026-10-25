@@ -1105,8 +1105,6 @@ Singleton {
                     property string spicetifyTheme: "Alis"
                     property bool enableSteam: false
                     property bool enablePearDesktop: true
-                    property bool enableOnlyOffice: false
-                    property bool enableLibreOffice: false
                     property bool enableOpenCode: false
                     property bool enableNeovim: false
                     property bool enableCava: false

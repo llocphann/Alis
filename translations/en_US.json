@@ -1392,13 +1392,9 @@
   "Generate Discord theme from wallpaper colors": "Generate Discord theme from wallpaper colors",
   "Generate Discord theme from wallpaper colors (requires Vesktop with system24 theme)": "Generate Discord theme from wallpaper colors (requires Vesktop with system24 theme)",
   "Generate Zed editor theme from wallpaper colors": "Generate Zed editor theme from wallpaper colors",
-  "ONLYOFFICE": "ONLYOFFICE",
   "Duplicate unavailable: install wl-mirror.": "Duplicate unavailable: install wl-mirror.",
   "Zoom in": "Zoom in",
   "Zoom out": "Zoom out",
-  "LibreOffice": "LibreOffice",
-  "Apply Alis colors to LibreOffice 26.8 while closed; reopen it after refreshing colors": "Apply Alis colors to LibreOffice 26.8 while closed; reopen it after refreshing colors",
-  "Apply Alis colors to ONLYOFFICE 9.4 while closed; reopen it after refreshing colors": "Apply Alis colors to ONLYOFFICE 9.4 while closed; reopen it after refreshing colors",
   "Generate alis.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)": "Generate alis.nvim theme plugin for Neovim/LazyVim from wallpaper colors (writes to ~/.config/nvim/lua/plugins/neovim.lua)",
   "Generate and apply Spicetify theme from wallpaper colors": "Generate and apply Spicetify theme from wallpaper colors",
   "Generate and apply a Spicetify theme from wallpaper colors": "Generate and apply a Spicetify theme from wallpaper colors",
@@ -5971,5 +5967,11 @@
   "Local Music": "Local Music",
   "Panels Â· Modules Â· Interface": "Panels Â· Modules Â· Interface",
   "Current UI scale: %1%": "Current UI scale: %1%",
-  "A persistent flat tab rail beside the page you are editing.": "A persistent flat tab rail beside the page you are editing."
+  "A persistent flat tab rail beside the page you are editing.": "A persistent flat tab rail beside the page you are editing.",
+  "Scanning installed applications…": "Scanning installed applications…",
+  "%1 installed applications": "%1 installed applications",
+  "Unavailable: %1": "Unavailable: %1",
+  "Search installed applications…": "Search installed applications…",
+  "No matching applications found.": "No matching applications found.",
+  "Core Applications · System Utilities": "Core Applications · System Utilities"
 }

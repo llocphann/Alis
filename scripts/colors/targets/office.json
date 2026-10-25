@@ -1,8 +1,0 @@
-{
-  "id": "office",
-  "label": "Office applications",
-  "module": "33-office.sh",
-  "category": "app",
-  "inputs": ["app-palette.json", "palette.json", "colors.json"],
-  "description": "Opt-in ONLYOFFICE 9.4 and LibreOffice 26.8 user themes, with independent detection and safe restore when disabled."
-}

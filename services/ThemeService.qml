@@ -35,8 +35,6 @@ Singleton {
         enableChrome: wallpaperThemingCfg?.enableChrome ?? true,
         enableZed: wallpaperThemingCfg?.enableZed ?? true,
         enableVSCode: wallpaperThemingCfg?.enableVSCode ?? true,
-        enableOnlyOffice: wallpaperThemingCfg?.enableOnlyOffice ?? false,
-        enableLibreOffice: wallpaperThemingCfg?.enableLibreOffice ?? false,
         enableNeovim: wallpaperThemingCfg?.enableNeovim ?? false,
         useBackdropForColors: wallpaperThemingCfg?.useBackdropForColors ?? false,
         forceTerminalDarkMode: wallpaperThemingCfg?.terminalGenerationProps?.forceDarkMode ?? false,
