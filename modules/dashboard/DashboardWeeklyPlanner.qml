@@ -128,13 +128,20 @@ Item {
             root.selectedEventKeys=result.keys
             root.selectionAnchorKey=result.anchor
             root.forceActiveFocus()
-        } else if (!root.isEventSelected(row)
-                || root.selectedEventKeys.length===0) {
-            root.clearEventSelection()
-            root.selectEventId(row)
-            // Preserve single-click canonical editing, but selections and
-            // gesture commits now use the same per-ID occurrence membership.
-            root.editOccurrence(row)
+        } else {
+            const group=Selection.groupKeys(root.selectableEventRows,row)
+            // Clicking any member of a partly Ctrl-deselected group restores
+            // the full ID group. A complete group stays selected without
+            // repeatedly reopening an already-loaded editor.
+            const alreadyComplete=group.length>0
+                && root.selectedEventKeys.length===group.length
+                && group.every(key=>root.selectedEventKeys.includes(key))
+            if (!alreadyComplete) {
+                root.clearEventSelection()
+                root.selectEventId(row)
+                // Keep normal one-click editing as before.
+                root.editOccurrence(row)
+            }
         }
     }
     function confirmOrDeleteSelected(): void {
