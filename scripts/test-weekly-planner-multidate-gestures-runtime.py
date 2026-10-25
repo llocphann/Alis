@@ -124,9 +124,16 @@ Window {
       "mixed group movement changed an unselected recurring slot")
     // Modified background drag selects a region without stealing ordinary
     // background scrolling or the event's own move/resize pointer owners.
-    const background=all(planner,"plannerCreateSlot")[0]
-    const from=background.mapToItem(planner,background.width*.04,8*planner.hourHeight)
-    const to=background.mapToItem(planner,background.width*1.85,10.5*planner.hourHeight)
+    // Use the actual local-time card bounds: UTC fixture hours and the
+    // locale's first weekday are not native screen coordinates.
+    const boxes=[card(401),card(402),card(403)].map(c=>{
+      const point=c.mapToItem(planner,0,0)
+      return {x:point.x,y:point.y,w:c.width,h:c.height}
+    })
+    const from={x:Math.min.apply(null,boxes.map(b=>b.x))-2,
+      y:Math.min.apply(null,boxes.map(b=>b.y))-8}
+    const to={x:Math.max.apply(null,boxes.map(b=>b.x+b.w))+2,
+      y:Math.max.apply(null,boxes.map(b=>b.y+b.h))+8}
     mousePress(planner,from.x,from.y,Qt.LeftButton,Qt.ControlModifier)
     mouseMove(planner,to.x,to.y,80);wait(40)
     check(first(planner,"plannerSelectionRegion").visible,"selection rectangle never appeared")

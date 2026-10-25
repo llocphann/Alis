@@ -32,7 +32,8 @@ const rows=P.project([event],[],'2026-10-20T12:00:00Z',1)
   .flatMap(day=>day.timed);
 const saved=rows.find(row=>row.occurrenceIndex===2 && !row.virtual);
 assert.ok(saved,'saved legacy series instance missing from this week');
-assert.equal(S.canSelect(saved),false,'series must not enter batch delete');
+assert.equal(S.canSelect(saved),true,'identified recurring instances remain selectable');
+assert.equal(S.canDelete(saved),false,'series must not enter batch delete');
 assert.equal(S.canReschedule(saved),true,'legacy saved series not movable');
 assert.equal(S.canReschedule({...saved,virtual:true}),false);
 assert.equal(S.canReschedule({...saved,source:'external'}),false);
