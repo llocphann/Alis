@@ -74,6 +74,17 @@ ShellRoot {
    check(b.x+b.width<=rec("b").edgeEnd+.1,"resize animation clips full content through corner bounds")
    editor.change("edge","right");frame("edge-transfer")
    check(Math.abs(b.x-rec("b").content.x)<.1&&Math.abs(b.y-rec("b").content.y)<.1,"orientation transfer animates detached through workspace")
+   check(b.effectiveRotation===0,"cross-edge transfer must preserve module rotation instead of auto-rotating to edge")
+   const rotateButton=findChild(editor,"abyssModuleRotate")
+   check(rotateButton!==null&&rotateButton.enabled,"missing or disabled abyssModuleRotate control")
+   for(const expected of [90,180,270,0]){
+    editor.rotateSelection();wait(40);frame()
+    check(editor.selected.rotation===expected&&b.effectiveRotation===expected,"rotate button did not advance to "+expected)
+    const verticalRot=expected===90||expected===270
+    check((verticalRot?b.height>b.width:b.width>b.height),"rotated module visual bounds did not swap for "+expected)
+   }
+   editor.rotateSelection();wait(40);check(editor.selected.rotation===90,"rotate to 90 before undo failed")
+   editor.undo();wait(40);check(editor.selected.rotation===0&&b.effectiveRotation===0,"undo rotation failed")
    editor.clearSelection();editor.draft=Layout.normalize([{id:"a",kind:"clock",edge:"top",position:0,enabled:true},{id:"b",kind:"clock",edge:"left",position:0,enabled:true}],"top");editor.refreshHandles();wait(80);frame("corner")
    const x=rec("a").content,y=rec("b").content
    check(x.x+x.width+8<=y.x+.1||y.x+y.width+8<=x.x+.1||x.y+x.height+8<=y.y+.1||y.y+y.height+8<=x.y+.1,"corner controls overlap")

@@ -26,11 +26,14 @@ Item {
     property bool showIcon: true
     signal notesEditorFocusChanged(string outputName, bool focused)
     property real contentScale: 1
+    property int moduleRotation: -1
+    readonly property int effectiveRotation: moduleRotation >= 0
+        ? ((Math.round(moduleRotation / 90) * 90) % 360 + 360) % 360
+        : (attachedEdge === "left" ? 270 : attachedEdge === "right" ? 90 : 0)
     // Physical orientation never chooses another feature implementation.
     // Keep the horizontal design/controls resident and rotate that one item.
-    readonly property bool contentVertical: attachedEdge === "left" || attachedEdge === "right"
-    readonly property real contentRotation: attachedEdge === "left" ? -90
-        : attachedEdge === "right" ? 90 : 0
+    readonly property bool contentVertical: effectiveRotation === 90 || effectiveRotation === 270
+    readonly property real contentRotation: effectiveRotation === 270 ? -90 : effectiveRotation
     readonly property var feature: content.item
     property var companionPopup: null
     function registerCompanionPopup(popup): void {

@@ -250,6 +250,33 @@ for(const [w,h] of [[1920,1200],[853.5,479.25],[480,320]]) {
   }
  }
 }
+// ABYSS-R03: explicit per-module rotation (0/90/180/270), cross-edge preservation, and legacy defaults.
+assert.equal(defaultRotationForEdge('top'),0);
+assert.equal(defaultRotationForEdge('bottom'),0);
+assert.equal(defaultRotationForEdge('right'),90);
+assert.equal(defaultRotationForEdge('left'),270);
+for(const edge of ['top','right','bottom','left']) {
+ const legacy=normalize([{id:'leg',kind:'clock',edge,position:.5}],edge)[0];
+ assert.equal(effectiveRotation(legacy),defaultRotationForEdge(edge),'legacy placement defaults to edge orientation');
+ let cur=normalize([{id:'rot',kind:'clock',edge,position:.5,rotation:0}],edge);
+ for(const expected of [90,180,270,0]) {
+  const step=checkedBatch(cur,['rot'],'rotation','step',1920,1080,{extents:{rot:104}},1);
+  assert.equal(step.rejected,'');
+  cur=step.placements;
+  assert.equal(cur[0].rotation,expected,'stepwise 90-degree rotation');
+  const rec=geometry(cur,1920,1080,{extents:{rot:104}},1)[0];
+  const verticalRot=expected===90||expected===270;
+  assert.equal(rec.content.width,verticalRot?32:104,'rotated width matches module orientation');
+  assert.equal(rec.content.height,verticalRot?104:32,'rotated height matches module orientation');
+ }
+ const rotated90=checkedBatch(cur,['rot'],'rotation',90,1920,1080,{extents:{rot:104}},1).placements;
+ for(const [tx,ty,destEdge] of [[960,8,'top'],[1912,540,'right'],[960,1072,'bottom'],[8,540,'left']]) {
+  const moved=checkedMove(rotated90,'rot',tx,ty,1920,1080,{extents:{rot:104}},1,false);
+  assert(!moved.rejected);
+  assert.equal(moved.placements[0].edge,destEdge);
+  assert.equal(moved.placements[0].rotation,90,'cross-edge move preserves explicit rotation');
+ }
+}
 console.log('PASS: normalized module packing, corner-safe content endpoints/snaps, all edges/scales, output profiles, disabled state and bounded malformed input');
 """
 subprocess.run(["node", "-e", program], cwd=root, check=True)

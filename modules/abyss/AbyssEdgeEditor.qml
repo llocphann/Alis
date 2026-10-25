@@ -39,6 +39,7 @@ Item {
         }
     }
     readonly property real editorActionSize: 30 * Appearance.fontSizeScale
+    readonly property real rotateActionSize: editorActionSize
     // Compact actions also keep Save/Cancel reachable on narrow horizontal
     // toolbars, where four normal squares alone exceed the viewport.
     readonly property bool compactHeaderActions: !toolbarOnHorizontalEdge
@@ -64,15 +65,34 @@ Item {
     // A multi-selection is inferred from Ctrl/Shift-click, never a toolbar mode.
     property var selectedIds: []
     property string selectionAnchor: ""
-    readonly property var targetIds: selectedIds.length
+    readonly property var targetIds: selectedIds.length>1
         ? selectedIds.filter(id=>draft.some(p=>p.id===id))
-        : selectedId && draft.some(p=>p.id===selectedId) ? [selectedId] : []
+        : selectedId && draft.some(p=>p.id===selectedId) ? [selectedId]
+        : selectedIds.filter(id=>draft.some(p=>p.id===id))
     readonly property bool multiSelect: targetIds.length>1
     readonly property var targets: targetIds.map(id=>draft.find(p=>p.id===id)).filter(p=>p)
     readonly property bool anyTargetLocked: targets.some(p=>p.locked)
     readonly property bool allTargetsLocked: targets.length>0 && targets.every(p=>p.locked)
     readonly property bool allTargetsDisabled: targets.length>0 && targets.every(p=>!p.enabled)
     readonly property bool allTargetsCustom: targets.length>0 && targets.every(p=>p.customSize)
+    readonly property bool canRotateSelection: targets.length>0
+        && targets.every(p=>Placement.canRotateModule(p.kind))
+    readonly property int selectedRotation: selected
+        ? Placement.effectiveRotation(selected) : 0
+    readonly property bool mixedSelectionRotation: multiSelect
+        && targets.some(p=>Placement.effectiveRotation(p)!==selectedRotation)
+    readonly property string rotateActionText: !targets.length
+        ? "Rotate 90°"
+        : mixedSelectionRotation
+        ? "Rotate 90° (mixed)"
+        : "Rotate 90° ("+selectedRotation+"°)"
+    readonly property string rotateActionDescription: !targets.length
+        ? "Select a module to rotate its orientation by 90°."
+        : !canRotateSelection
+        ? "This module type does not support manual rotation."
+        : mixedSelectionRotation
+        ? "Rotate selected modules clockwise by 90° (mixed orientations)."
+        : "Orientation: "+selectedRotation+"°. Click to rotate clockwise to "+Placement.nextRotation(selectedRotation)+"°."
     property var _lastSelection: null
     property var _dragOrigin: null
     property var _dragRecords: null
@@ -277,6 +297,11 @@ Item {
         if(action==="remove")refreshHandles()
     }
     function lockSelection(): void {batch("locked",!allTargetsLocked)}
+    function rotateSelection(): void {
+        if(!targets.length){feedback="Select a module first";return}
+        if(!canRotateSelection){feedback="This module type does not support manual rotation";return}
+        batch("rotation","step")
+    }
     function startDrag(id,x=NaN,y=NaN): void {
         rememberHistory();_dragToken++;_dragRequest=null
         _dragOrigin=JSON.parse(JSON.stringify(draft))
@@ -384,13 +409,15 @@ Item {
         refreshHandles()
     }
     function change(key,value): void {
-        if(multiSelect){batch(key,value);return}
+        if(multiSelect || key==="rotation"){batch(key,value);return}
         if(selected?.locked && ["edge","position","alignment","size","customSize","depth"].includes(key)) {
             feedback="Unlock this module before changing its placement or size";return
         }
         feedback=""
         draft = draft.map(p => p.id === selectedId ? Object.assign({},p,
-            key==="customSize" && value && !p.customSize ? {size:Placement.edgeSize(draftOptions,p.edge)} : {},{[key]:value}) : p)
+            key==="customSize" && value && !p.customSize ? {size:Placement.edgeSize(draftOptions,p.edge)} : {},
+            key==="edge" && (Placement.hasExplicitRotation(p.rotation) || value!==p.edge) ? {rotation:Placement.effectiveRotation(p)} : {},
+            {[key]:value}) : p)
     }
     function editPosition(positions,kind,output,values): void {
         draftPositions=positions
@@ -488,7 +515,7 @@ Item {
             draft=result.placements;select(existing.id);return
         }
         const id = kind+"-"+Date.now()
-        const proposed=Placement.normalize(draft.concat([{id:id,kind:kind,edge:editingEdge,position:.5}]),"top")
+        const proposed=Placement.normalize(draft.concat([{id:id,kind:kind,edge:editingEdge,position:.5,rotation:0}]),"top")
         const failures=Placement.conflicts(Placement.geometry(proposed,width,height,Object.assign({},draftOptions,{extents:moduleLayer.measuredExtents,editing:true}),Appearance.fontSizeScale))
         if(failures.length){feedback=failures[0];return}
         draft=proposed;feedback=""
@@ -543,6 +570,9 @@ Item {
                 } else if(event.key===Qt.Key_L){
                     if(!root.targetIds.includes(handle.modelData))root.select(handle.modelData)
                     root.lockSelection();event.accepted=true
+                } else if(event.key===Qt.Key_R){
+                    if(!root.targetIds.includes(handle.modelData))root.select(handle.modelData)
+                    root.rotateSelection();event.accepted=true
                 }
             }
             Rectangle {
@@ -1135,11 +1165,28 @@ Item {
                         Layout.preferredWidth:moduleEditorColumn.controlsSpan
                         Layout.maximumWidth:moduleEditorColumn.controlsSpan
                         spacing:4*Appearance.fontSizeScale
+                        AbyssButton {
+                        objectName:"abyssModuleRotate"
+                        text:root.rotateActionText
+                        glyph:"rotate_right"
+                        compact:true;editorSquare:true
+                        description:root.rotateActionDescription
+                        Layout.preferredWidth:root.rotateActionSize
+                        Layout.preferredHeight:root.rotateActionSize
+                        Layout.maximumWidth:root.rotateActionSize
+                        Layout.maximumHeight:root.rotateActionSize
+                        enabled:root.canRotateSelection
+                        Keys.onPressed:event=>{if(event.key===Qt.Key_Return || event.key===Qt.Key_Enter){root.rotateSelection();event.accepted=true}}
+                        onClicked:root.rotateSelection()
+                        }
                         StyledComboBox {
                         baseHeight:28*Appearance.fontSizeScale
                         Layout.preferredWidth:root.multiSelect
-                            ? 126*Appearance.fontSizeScale : moduleEditorColumn.controlsSpan
-                        Layout.maximumWidth:moduleEditorColumn.controlsSpan
+                            ? 92*Appearance.fontSizeScale
+                            : Math.max(75*Appearance.fontSizeScale,
+                                moduleEditorColumn.controlsSpan-root.rotateActionSize-4*Appearance.fontSizeScale)
+                        Layout.maximumWidth:Math.max(75*Appearance.fontSizeScale,
+                            moduleEditorColumn.controlsSpan-root.rotateActionSize-4*Appearance.fontSizeScale)
                         Layout.fillWidth:true;Layout.minimumWidth:0;
                         
                         id:alignmentChoice

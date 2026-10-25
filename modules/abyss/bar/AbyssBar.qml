@@ -220,8 +220,9 @@ Item {
             readonly property var geometry: root.presentedLayoutRecords.find(rec => rec.id === modelData)
             liquidController: root.liquidController
             attachedEdge: placement?.edge ?? "top"
+            moduleRotation: placement?.rotation !== undefined ? Layout.normalizeRotation(placement.rotation, attachedEdge) : -1
             popupJoinedEdge: placement?.joinCorner ? Layout.adjacentEdge(geometry,root.width,root.height) : ""
-            contentScale: (geometry?.span ?? 0)/Math.max(1,naturalSpan)
+            contentScale: ((geometry?.designSpan ?? geometry?.span) ?? 0)/Math.max(1,naturalSpan)
             onNaturalSpanChanged: root.measure(modelData,naturalSpan)
             Component.onCompleted: {root.measure(modelData,naturalSpan);Qt.callLater(rearmMotion)}
             kind: placement?.kind ?? "clock"
@@ -239,15 +240,22 @@ Item {
             property string motionEdge: ""
             property real motionWidth: -1
             property real motionHeight: -1
+            readonly property string layoutEdge: geometry?.edge ?? attachedEdge
+            readonly property real layoutWidth: geometry?.content.width ?? width
+            readonly property real layoutHeight: geometry?.content.height ?? height
             function rearmMotion(): void {
-                motionEdge=attachedEdge;motionWidth=width;motionHeight=height;motionReady=true
+                motionEdge=layoutEdge;motionWidth=layoutWidth;motionHeight=layoutHeight;motionReady=true
             }
             function settleDimensionChange(): void {
                 motionReady=false
                 xMotion.complete();yMotion.complete()
                 Qt.callLater(rearmMotion)
             }
+            onLayoutEdgeChanged:settleDimensionChange()
+            onLayoutWidthChanged:settleDimensionChange()
+            onLayoutHeightChanged:settleDimensionChange()
             onAttachedEdgeChanged:settleDimensionChange()
+            onModuleRotationChanged:settleDimensionChange()
             readonly property bool animatePlacement: !root.widthMorphActive && motionReady && motionEdge===attachedEdge && motionWidth===width && motionHeight===height && Appearance.animationsEnabled
                 && !placement?.locked && !root.draggedIds.includes(modelData)
             Behavior on x { enabled:module.animatePlacement; NumberAnimation { id:xMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }

@@ -69,6 +69,34 @@ function extent(kind, vertical) {
     // remains the horizontal width. It never chooses a compact substitute.
     return sizes[kind] || 48;
 }
+function defaultRotationForEdge(edge) {
+    return edge === "left" ? 270 : edge === "right" ? 90 : 0;
+}
+function hasExplicitRotation(value) {
+    return value !== undefined && value !== null && value !== "" && Number.isFinite(Number(value));
+}
+function normalizeRotation(value, fallbackEdge) {
+    if (!hasExplicitRotation(value)) return defaultRotationForEdge(fallbackEdge);
+    return ((Math.round(Number(value) / 90) * 90) % 360 + 360) % 360;
+}
+function effectiveRotation(placement) {
+    return normalizeRotation(placement?.rotation, placement?.edge);
+}
+function nextRotation(rotation) {
+    return (normalizeRotation(rotation, "top") + 90) % 360;
+}
+function canRotateModule(kind) {
+    return catalog.indexOf(String(kind)) >= 0;
+}
+function isVerticalRotation(rotation) {
+    var r = normalizeRotation(rotation, "top");
+    return r === 90 || r === 270;
+}
+function isParallelToEdge(edge, rotation) {
+    var horizontal = edge === "top" || edge === "bottom";
+    var verticalRot = isVerticalRotation(normalizeRotation(rotation, edge));
+    return horizontal ? !verticalRot : verticalRot;
+}
 function normalize(list, fallbackEdge) {
     var seen = {};
     return Array.from(list || []).filter(function(p) {
@@ -78,8 +106,9 @@ function normalize(list, fallbackEdge) {
         seen[id] = true;
         return true;
     }).slice(0,24).map(function(p) {
-        return {id:String(p.id || p.kind),kind:String(p.kind),
-            edge:["top","right","bottom","left"].indexOf(p.edge)>=0 ? p.edge : fallbackEdge,
+        var edge = ["top","right","bottom","left"].indexOf(p.edge)>=0 ? p.edge : fallbackEdge;
+        var item = {id:String(p.id || p.kind),kind:String(p.kind),
+            edge:edge,
             position:bounded(p.position,0.5,0,1),enabled:p.enabled !== false,
             alignment:["start","center","end"].indexOf(p.alignment)>=0 ? p.alignment : "free",
             customSize:p.customSize === true || (p.customSize === undefined && Number.isFinite(Number(p.size)) && Number(p.size)!==1),
@@ -89,6 +118,8 @@ function normalize(list, fallbackEdge) {
             locked:p.locked === true,
             lockPosition:p.locked === true ? bounded(p.lockPosition,bounded(p.position,.5,0,1),0,1) : undefined,
             lockScale:p.locked === true ? bounded(p.lockScale,1,.01,1) : undefined};
+        if (hasExplicitRotation(p.rotation)) item.rotation = normalizeRotation(p.rotation, edge);
+        return item;
     });
 }
 function seed(zones, edge, width, height) {
@@ -204,7 +235,13 @@ function project(x, y, width, height, preferredEdge) {
 function move(placements, id, x, y, width, height, preferredEdge) {
     if (placements.some(function(p) { return p.id===id && p.locked; })) return normalize(placements,"top");
     var location = project(x,y,width,height,preferredEdge);
-    return normalize(placements.map(function(p) { return p.id===id ? Object.assign({},p,location,{alignment:"free"}) : p; }),"top");
+    return normalize(placements.map(function(p) {
+        if (p.id!==id) return p;
+        var next = Object.assign({},p,location,{alignment:"free"});
+        if (hasExplicitRotation(p.rotation) || location.edge!==p.edge)
+            next.rotation = effectiveRotation(p);
+        return next;
+    }),"top");
 }
 // Snap to the output center, end margins, and adjacent modules at the configured gap.
 // Guides are presentation data only; positions stay normalized for other resolutions.
@@ -256,9 +293,12 @@ function lockPlacement(p,record,locked,width,height,options,fontScale) {
     var measured=options?.extents?.[p.id];
     var natural=Number.isFinite(measured) && !(options?.editing && measured<1) ? Math.max(0,measured)
         : extent(p.kind,!horizontal)*bounded(fontScale,1,.7,2);
+    var size=moduleSize(p,options);
+    var parallel=isParallelToEdge(p.edge,p.rotation);
+    var base=(parallel ? natural : 32*bounded(fontScale,1,.7,2))*size;
     return Object.assign({},p,{locked:true,
         lockPosition:record && length>0 ? (record.along+record.span/2)/length : p.position,
-        lockScale:record && natural*moduleSize(p,options)>0 ? record.span/(natural*moduleSize(p,options)) : 1});
+        lockScale:record && base>0 ? record.span/base : 1});
 }
 function conflicts(records) {
     var result=[];
@@ -330,8 +370,10 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
     if(placementKeys.indexOf(action)>=0 && items.some(function(p) {return p.locked;}))
         return deny("Unlock every selected module before changing its placement or size");
     // Icon appearance is only adjustable in Settings > Module behavior.
-    if(["remove","locked","enabled","joinCorner"].concat(placementKeys).indexOf(action)<0)
+    if(["remove","locked","enabled","joinCorner"].concat(placementKeys).indexOf(action)<0 && action!=="rotation")
         return deny("This action cannot be applied to modules");
+    if(action==="rotation" && items.some(function(p) {return !canRotateModule(p.kind);}))
+        return deny("This module type does not support manual rotation");
     var records=(action==="locked" || action==="joinCorner") && value ? (displayedRecords || geometry(placements,width,height,options,fontScale)) : [];
     if(action==="joinCorner" && value && items.some(function(p) {
         return !cornerForModule(records,p.id,width,height);
@@ -346,6 +388,9 @@ function checkedBatch(placements,ids,action,value,width,height,options,fontScale
             }
             var update={};update[action]=value;
             if(action==="customSize" && value && !p.customSize)update.size=edgeSize(options,p.edge);
+            if(action==="edge" && (hasExplicitRotation(p.rotation) || value!==p.edge))update.rotation=effectiveRotation(p);
+            if(action==="rotation")update.rotation=(value==="step" || value===undefined || value===null)
+                ? nextRotation(effectiveRotation(p)) : normalizeRotation(value,p.edge);
             return Object.assign({},p,update);
         });
     proposed=normalize(proposed,"top");
@@ -375,8 +420,12 @@ function checkedGroupMove(placements,ids,primaryId,x,y,width,height,options,font
         return deny("Enable and show every selected module before dragging the group");
     var location=project(x,y,width,height,options?.dragEdge),horizontal=location.edge==="top" || location.edge==="bottom";
     var length=horizontal ? width : height;
-    var candidate=placements.map(function(p) {return selection.ids.indexOf(p.id)>=0
-        ? Object.assign({},p,{edge:location.edge,alignment:"free",position:(source.findIndex(function(r) {return r.id===p.id;})+1)/(items.length+1)}) : p;});
+    var candidate=placements.map(function(p) {
+        if(selection.ids.indexOf(p.id)<0)return p;
+        var next=Object.assign({},p,{edge:location.edge,alignment:"free",position:(source.findIndex(function(r) {return r.id===p.id;})+1)/(items.length+1)});
+        if(hasExplicitRotation(p.rotation) || location.edge!==p.edge)next.rotation=effectiveRotation(p);
+        return next;
+    });
     var destination=geometry(candidate,width,height,options,fontScale);
     var offsets=[],cursor=0;
     for(var i=0;i<source.length;i++) {
@@ -455,9 +504,17 @@ function saveProfile(options, outputName, placements, gap, outputOnly, edgeSizes
         "abyss.modules.edgeThicknesses":thicknesses,"abyss.modules.edgeWidthAffectsModules":affects,"abyss.modules.edgeJoinModules":joins,"abyss.modules.edgeModuleRadii":radii,"abyss.modules.edgeRoundZeroCorners":zeroCorners};
 }
 function stripDepth(placements, edge, options, fontScale) {
+    var horizontal = edge === "top" || edge === "bottom";
     return placements.filter(function(p) { return p.enabled && p.edge===edge; }).reduce(function(depth,p) {
-        return moduleSize(p,options)>0
-            ? Math.max(depth,32*bounded(fontScale,1,.7,2)*moduleSize(p,options)*p.depth+16) : depth;
+        var size = moduleSize(p,options);
+        if (size <= 0) return depth;
+        var rot = normalizeRotation(p.rotation,edge);
+        var parallel = isParallelToEdge(edge,rot);
+        var measured = options?.extents?.[p.id];
+        var natural = Number.isFinite(measured) && !(options?.editing && measured<1) ? Math.max(0,measured)
+            : extent(p.kind,!horizontal)*bounded(fontScale,1,.7,2);
+        var crossBase = parallel ? 32*bounded(fontScale,1,.7,2)*size : natural*size;
+        return Math.max(depth,crossBase*p.depth+16);
     },0);
 }
 function edgeInsetsForModules(placements, options, fontScale, thickness, minimum, reservation) {
@@ -637,12 +694,25 @@ function packGeometry(placements, width, height, options, fontScale, bounds) {
             return options?.editing || !Number.isFinite(measured) || measured > 0;
         })
             .sort(function(a,b) { return a.position-b.position || a.id.localeCompare(b.id); });
-        var sizes = list.map(function(p) {
+        var metrics = list.map(function(p) {
             var measured = options?.extents?.[p.id];
             var natural = Number.isFinite(measured) && !(options?.editing && measured<1) ? Math.max(0,measured)
                 : extent(p.kind,!horizontal)*bounded(fontScale,1,0.7,2);
-            return natural*moduleSize(p,options);
+            var size = moduleSize(p,options);
+            var designSpan = natural*size;
+            var designCross = 32*bounded(fontScale,1,0.7,2)*size;
+            var rot = normalizeRotation(p.rotation,edge);
+            var parallel = isParallelToEdge(edge,rot);
+            return {
+                designSpan: designSpan,
+                designCross: designCross,
+                rotation: rot,
+                parallel: parallel,
+                alongSize: parallel ? designSpan : designCross,
+                crossSize: parallel ? designCross : designSpan
+            };
         });
+        var sizes = metrics.map(function(m) { return m.alongSize; });
         var total = sizes.reduce(function(sum,n) { return sum+n; },0);
         if (!list.length || length < 1) return;
         // Capacity is an explicit placement constraint, never a font/icon
@@ -690,8 +760,17 @@ function packGeometry(placements, width, height, options, fontScale, bounds) {
             return Object.assign({},p,{capacityConflict:capacityError || lockedResult.error});
         });
         records.forEach(function(p) {
+            var m = metrics[list.findIndex(function(item) { return item.id === p.id; })];
+            var itemScale = p.layoutScale ?? scale;
             p.edgeStart=low;p.edgeEnd=high;
-            var inset = 8, cross = 32*bounded(fontScale,1,.7,2)*moduleSize(p,options)*(p.layoutScale ?? scale);
+            if (hasExplicitRotation(p.rotation)) p.rotation = m ? m.rotation : normalizeRotation(p.rotation,edge);
+            var defaultCross = 32*bounded(fontScale,1,.7,2)*moduleSize(p,options)*itemScale;
+            var cross = m ? m.crossSize*itemScale : defaultCross;
+            if (m && !m.parallel) {
+                p.designSpan = m.designSpan*itemScale;
+                p.designCross = m.designCross*itemScale;
+            }
+            var inset = 8;
             p.content = horizontal ? {x:p.along,y:edge==="top"?inset:height-inset-cross,width:p.span,height:cross}
                 : {x:edge==="left"?inset:width-inset-cross,y:p.along,width:cross,height:p.span};
             result.push(p);
@@ -776,11 +855,12 @@ function geometry(placements,width,height,options,fontScale) {
     }
     return packGeometry(placements,width,height,options,fontScale,bounds);
 }
-// Preserve the grab point in the full component's coordinates across rotation.
+// Preserve the grab point in the full component's coordinates across edges.
 // The active Edge has a small hysteresis band, avoiding corner tie oscillation.
 function dragContext(record,x,y) {
     var c=record.content,dx=x-c.x-c.width/2,dy=y-c.y-c.height/2;
-    return {edge:record.edge,originX:x,originY:y,along:record.vertical ? (record.edge==="left"?-dy:dy) : dx,
+    return {edge:record.edge,originX:x,originY:y,dx:dx,dy:dy,
+        along:record.vertical ? (record.edge==="left"?-dy:dy) : dx,
         cross:record.vertical ? (record.edge==="left"?dx:-dx) : dy};
 }
 function dragPoint(context,x,y,width,height,fontScale) {
@@ -788,8 +868,8 @@ function dragPoint(context,x,y,width,height,fontScale) {
     var nearest=distances.indexOf(Math.min.apply(null,distances)),current=edges.indexOf(context.edge);
     var stationary=Number.isFinite(context.originX) && Math.hypot(x-context.originX,y-context.originY)<4*bounded(fontScale,1,.7,2);
     var edge=current>=0 && (stationary || distances[current]<=distances[nearest]+14*bounded(fontScale,1,.7,2)) ? context.edge : edges[nearest];
-    var dx=edge==="left"?context.cross:edge==="right"?-context.cross:context.along;
-    var dy=edge==="left"?-context.along:edge==="right"?context.along:context.cross;
+    var dx=Number.isFinite(context.dx) ? context.dx : (edge==="left"?context.cross:edge==="right"?-context.cross:context.along);
+    var dy=Number.isFinite(context.dy) ? context.dy : (edge==="left"?-context.along:edge==="right"?context.along:context.cross);
     return {edge:edge,x:x-dx,y:y-dy};
 }
 

@@ -103,12 +103,12 @@ ShellRoot {
                     editor.edgeSizes=Object.assign({},editor.edgeSizes,{[edge]:1.4})
                     editor.singleModuleExpansion=Object.assign({},editor.singleModuleExpansion,{[edge]:"local"})
                     const record=layer.layoutRecords[0]
-                    const cross=["top","bottom"].includes(edge) ? record.content.height : record.content.width
+                    const cross=Math.min(record.content.width,record.content.height)
                     if(!root.check(Math.abs(cross-32*Appearance.fontSizeScale*1.4*1.2)<.1,"shared size and overall scale update the actual "+edge+" module")) return
                     if(!root.check(layer.deformations.length===1 && layer.deformations[0].edge===edge,"single-module local surface follows "+edge)) return
                     editor.edgeThicknesses=Object.assign({},editor.edgeThicknesses,{[edge]:32})
                     const thickRecord=layer.layoutRecords[0]
-                    const thickCross=["top","bottom"].includes(edge) ? thickRecord.content.height : thickRecord.content.width
+                    const thickCross=Math.min(thickRecord.content.width,thickRecord.content.height)
                     if(!root.check(Math.abs(thickCross-cross*2)<.1 && editor.edgeInsets[edge]===32,"physical px thickness updates the actual "+edge+" module and resting Edge")) return
                     editor.edgeWidthAffectsModules=Object.assign({},editor.edgeWidthAffectsModules,{[edge]:false})
                     editor.edgeThicknesses=Object.assign({},editor.edgeThicknesses,{[edge]:0})
