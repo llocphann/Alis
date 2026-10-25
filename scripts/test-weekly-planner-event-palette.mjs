@@ -34,7 +34,7 @@ assert.match(qml,/import "PlannerEventPalette.js" as EventPalette/);
 assert.match(qml,/readonly property var eventThemeColors: CavaTheme\.vibrantColors/,
   'palette must follow theme and must not follow music cover/CAVA source changes');
 assert.match(qml,/function eventGradientColor\(row, palette\): color/);
-assert.match(qml,/EventPalette\.paletteSlot\(row\?\.event,row\?\.source,steps\)/);
+assert.match(qml,/EventPalette\.position\(row\?\.event,row\?\.source\)/);
 assert.match(qml,/row\?\.event\?\.color/,
   'an intentionally set Event color must remain respected');
 assert.match(qml,/row\?\.event\?\.sourceColor/,
@@ -51,8 +51,7 @@ assert.match(timed,/orientation:Gradient\.Horizontal/);
 assert.match(timed,/color:Qt\.alpha\(timedButton\.eventAccent/);
 assert.doesNotMatch(timed,/x:1;y:3;width:3/,'Owner removed the interior timed accent stripe');
 assert.doesNotMatch(allDay,/x:2;y:4;width:3/,'Owner removed the interior All-day accent stripe');
-assert.match(qml,/EventPalette\.assignPositions\(root\.localBackend\.list,root\.externalBackend\.events\)/);
-assert.match(qml,/eventColorPositions\[EventPalette\.identity/);
+assert.doesNotMatch(qml,/eventColorPositions/,'other Event membership must not control a card color');
 for (const token of ['plannerEventMoveArea','plannerResizeStart','plannerResizeEnd',
   'root.commitTimedGesture(modelData,mode,dx,dy)',
   'readonly property bool showResizeHandles: canReschedule']) {

@@ -103,6 +103,13 @@ Window {
     "external source color changed")
    const distinct=[1,9,17,25].map(id=>planner.eventGradientColor({source:"local",event:{id:id}},["#22ccee","#8844dd"]))
    check(new Set(distinct.map(String)).size===4,"collision resolution did not use theme interpolation")
+   const full=Events.list
+   Events.list=full.filter(e=>e.id!==1);Events.eventRemoved(1);wait(70)
+   check([9,17,25].every(id=>String(cards().find(c=>c.modelData.event.id===id).eventAccent)
+    ===colors[[1,9,17,25].indexOf(id)]),"deleting another Event changed surviving colors")
+   Events.list=full;Events.eventAdded(full.find(e=>e.id===1));wait(70)
+   check([1,9,17,25].every((id,i)=>String(cards().find(c=>c.modelData.event.id===id).eventAccent)===colors[i]),
+    "restoring the inventory changed identity colors")
    const renamed=Events.list.map(e=>e.id===9 ? Object.assign({},e,{title:"Renamed private fixture"}) : e)
    Events.list=renamed;Events.eventUpdated(renamed.find(e=>e.id===9));wait(70)
    check([1,9,17,25].every((id,i)=>String(cards().find(c=>c.modelData.event.id===id).eventAccent)===colors[i]),

@@ -32,52 +32,47 @@ function identity(event,source) {
     return JSON.stringify([String(source || "local"),id===undefined || id===null || id===""
         ? "title:"+String(event?.title || "") : "id:"+String(id)]);
 }
-// Keep the original swatch whenever it is free. Resolve modulo/hash collisions
-// once per Event inventory, never per occurrence or visible-week ordering.
-// This is a view cache: no saved colors/IDs/history or source data change.
+function mix32(value) {
+    let bits=value>>>0;
+    bits=Math.imul(bits^(bits>>>16),0x7feb352d)>>>0;
+    bits=Math.imul(bits^(bits>>>15),0x846ca68b)>>>0;
+    return (bits^(bits>>>16))>>>0;
+}
+// A stable position across the existing theme gradient, independent of any
+// neighboring Event, visible week, ordering or cache lifetime. The old eight
+// swatches remain available via paletteSlot(), but no longer collapse every
+// eighth local ID to the same rendered color. No authored Event data changes.
+function position(event,source) {
+    const id=event?.id;
+    if ((source || "local")==="local" && Number.isSafeInteger(id) && id>=0) {
+        const low=id>>>0,high=Math.floor(id/4294967296);
+        // Reversible triangular mixing of all 53 safe integer bits. Given
+        // the output high bits, mix32's odd multipliers recover the low
+        // bits, then the original high bits. Do not truncate IDs to 32 bits.
+        const upper=(high+(mix32(low)&0x1fffff))&0x1fffff;
+        const lower=mix32(low^mix32(upper));
+        return (upper*4294967296+lower)/9007199254740992;
+    }
+    const stable=identity(event,source);
+    let first=2166136261,second=3339675911;
+    for (let i=0;i<stable.length;i++) {
+        const code=stable.charCodeAt(i);
+        first=Math.imul(first^code,16777619)>>>0;
+        second=Math.imul(second^code,2246822519)>>>0;
+    }
+    return ((mix32(first)&0x1fffff)*4294967296+mix32(second))/9007199254740992;
+}
+// Compatibility helper for read-only inventories; membership never affects
+// any returned identity's position. Rendering can call position() directly.
 function assignPositions(localEvents,externalEvents) {
-    const records=new Map(),positions={},used=new Set();
+    const positions={};
     function collect(events,source) {
         for (let i=0;i<(events?.length || 0);i++) {
             const event=events[i];
             if (!event) continue;
-            const key=identity(event,source);
-            if (!records.has(key)) records.set(key,{key:key,source:source,
-                numericId:source==="local" && Number.isSafeInteger(event.id) ? event.id : null,
-                preferred:paletteSlot(event,source,8)/7});
+            positions[identity(event,source)]=position(event,source);
         }
     }
     collect(localEvents,"local");collect(externalEvents,"external");
-    const ordered=Array.from(records.values()).sort((a,b)=>{
-        if (a.source!==b.source) return a.source==="local" ? -1 : 1;
-        if (a.numericId!==null && b.numericId!==null) return a.numericId-b.numericId;
-        if ((a.numericId===null)!==(b.numericId===null)) return a.numericId===null ? 1 : -1;
-        return a.key<b.key ? -1 : a.key>b.key ? 1 : 0;
-    });
-    let subdivision=1;
-    for (const record of ordered) {
-        if (!used.has(record.preferred)) {
-            positions[record.key]=record.preferred;used.add(record.preferred);continue;
-        }
-        let chosen=-1,distance=-1;
-        if (used.size<8) {
-            for (let stop=0;stop<8;stop++) {
-                const candidate=stop/7;
-                if (used.has(candidate)) continue;
-                const gap=Math.min.apply(null,Array.from(used).map(value=>Math.abs(value-candidate)));
-                if (gap>distance) {distance=gap;chosen=candidate;}
-            }
-        } else {
-            // Dyadic interior positions do not coincide with the original
-            // seven-interval grid. Additional identities remain distinct
-            // without repeated full-inventory scans or a hard record limit.
-            do {
-                let digits=subdivision++,fraction=0,weight=.5;
-                while (digits>0) {fraction+=(digits%2)*weight;digits=Math.floor(digits/2);weight/=2;}
-                chosen=fraction;
-            } while (used.has(chosen));
-        }
-        positions[record.key]=chosen;used.add(chosen);
-    }
     return positions;
 }

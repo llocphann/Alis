@@ -171,10 +171,6 @@ Item {
     // Always use Alis' theme-derived gradient, not album-cover or audio
     // visualizer settings. It rebinds when the active system theme changes.
     readonly property var eventThemeColors: CavaTheme.vibrantColors
-    readonly property var eventColorPositions: {
-        const revision=root._eventsRevision
-        return EventPalette.assignPositions(root.localBackend.list,root.externalBackend.events)
-    }
     function eventGradientColor(row, palette): color {
         const explicit=row?.event?.color || (row?.source==="external"
             ? row?.event?.sourceColor : null)
@@ -184,10 +180,7 @@ Item {
         }
         if (!palette || !palette.length)
             return Appearance.colors.colPrimary
-        const steps=8
-        const legacy=EventPalette.paletteSlot(row?.event,row?.source,steps)/(steps-1)
-        const fraction=root.eventColorPositions[EventPalette.identity(row?.event,row?.source)] ?? legacy
-        const position=fraction*(palette.length-1)
+        const position=EventPalette.position(row?.event,row?.source)*(palette.length-1)
         const lo=Math.floor(position),hi=Math.min(palette.length-1,lo+1)
         const first=Qt.color(palette[lo]),second=Qt.color(palette[hi])
         const t=position-lo
