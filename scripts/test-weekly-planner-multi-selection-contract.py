@@ -31,21 +31,27 @@ assert 'point.x-allDayButton.dragOriginContentX' in all_day
 assert 'objectName:"plannerDeleteSelected"' in ui
 assert "root.confirmOrDeleteSelected()" in ui
 assert "event.key===Qt.Key_Delete || event.key===Qt.Key_Backspace" in ui
-# A recurring Event is selectable for its own drag/resize, but is not
-# authorized for destructive series batch deletion. The former disabled
-# "Delete (1)" was misleading: make an explicit, clickable editor route.
-assert 'enabled:root.selectedEventRows.length>0' in ui
-assert 'label:!root.canDeleteSelection' in ui
-assert '"Edit to delete ("+root.selectedEventRows.length+")"' in ui
-assert 'function openSelectedRecurringEditor(): void {' in ui
-assert 'root.selectedEventRows.find(row=>!Selection.canDelete(row))' in ui
-assert 'root.editOccurrence(selected)' in ui
-assert 'if (root.canDeleteSelection) root.confirmOrDeleteSelected()' in ui
-assert 'else root.openSelectedRecurringEditor()' in ui
-assert 'Deleting there may affect the full series; this button does not delete anything.' in ui
-assert 'enabled:root.canDeleteSelection' not in ui
+# Only the confirmed non-recurring deletion action is displayed.
+# Never reintroduce the misleading "Edit to delete" shortcut for repeaters.
+assert 'visible:root.canDeleteSelection' in ui
+assert 'enabled:root.canDeleteSelection' in ui
+assert 'Edit to delete' not in ui
+assert 'function openSelectedRecurringEditor' not in ui
 assert '&& root.selectedEventRows.every(row=>Selection.canDelete(row))' in ui
 assert 'if (!root.canDeleteSelection) return' in ui
+# Real ID-group selection and its visual outline have the same membership.
+assert 'function groupKeys(rows,target)' in policy
+assert 'function selectEventId(row): void {' in ui
+assert 'Selection.groupKeys(root.selectableEventRows,row)' in ui
+assert 'root.selectEventId(row)' in ui
+assert 'property bool explicitGridSelection: false' in ui
+assert 'if (root.explicitGridSelection) return false' in ui
+assert 'root.selectedEventKeys=result.keys' in ui
+assert 'root.isEventSelected(row) && root.selectedEventRows.length>1' in ui
+assert 'root.localBackend.applyPlannerOccurrenceBatch(changes)' in ui
+assert 'if (!root.isEventSelected(modelData))' in ui
+assert 'root.selectEventId(modelData)' in ui
+assert 'root.selectEventId(allDayButton.modelData)' in ui
 # Keep two-step confirmation and non-recurring-only atomic batch behavior.
 assert 'root.localBackend.applyPlannerOccurrenceBatch(actions)' in ui
 assert 'id:row.event.id,occurrenceIndex:row.occurrenceIndex,remove:true' in ui
