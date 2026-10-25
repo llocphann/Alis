@@ -158,7 +158,8 @@ Item {
         }
         if ((event.key===Qt.Key_Delete || event.key===Qt.Key_Backspace)
                 && root.selectedEventRows.length>0) {
-            root.confirmOrDeleteSelected()
+            if (root.canDeleteSelection) root.confirmOrDeleteSelected()
+            else root.openSelectedRecurringEditor()
             return true
         }
         return false
