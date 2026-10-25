@@ -212,7 +212,7 @@ release_script="scripts/release.sh"
 release_doc="docs/RELEASING.md"
 echo "[release] optional package gates vs docs/RELEASING.md"
 if [ -f "$release_script" ] && [ -f "$release_doc" ]; then
-  for contract in test-hadalird-install-lifecycle.py test-hadalird-arch-package.py; do
+  for contract in test-alis-intergration-install-lifecycle.py test-alis-intergration-arch-package.py; do
     if grep -Fq "\"\$script_dir/$contract\"" "$release_script"; then
       grep -Fq "python3 scripts/$contract" "$release_doc" \
         || note "docs/RELEASING.md omits the $contract release gate"

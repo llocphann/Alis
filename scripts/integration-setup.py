@@ -14,7 +14,7 @@ import tempfile
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("integration_manager", ROOT / "scripts/hadalird-manager.py")
+spec = importlib.util.spec_from_file_location("integration_manager", ROOT / "scripts/alis-intergration-manager.py")
 manager = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(manager)
 PLANS = {
@@ -47,7 +47,7 @@ def publish(path, doc):
 
 def execute(action, shell_root, data_home, state_home, *, call=None, acknowledge=False):
     """Injected call keeps tests away from live system/package operations."""
-    call = call or (lambda stage: manager.operate(stage, data_home / "hadalird", shell_root))
+    call = call or (lambda stage: manager.operate(stage, manager.discovery.resolve_user_data_dir(data_home), shell_root))
     state = state_home / "alis/integrations"
     state.mkdir(parents=True, exist_ok=True, mode=0o700)
     receipt_path = state / "last-operation.json"

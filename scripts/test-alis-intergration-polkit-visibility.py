@@ -14,7 +14,7 @@ native = (ROOT / "modules/settings/SettingsOverlayNativeHost.qml").read_text()
 focus = (ROOT / "modules/settings/SettingsFocus.qml").read_text()
 service = (ROOT / "services/Hadalird.qml").read_text()
 ui = (ROOT / "modules/settings/IntegrationsConfig.qml").read_text()
-manager = (ROOT / "scripts/hadalird-manager.py").read_text()
+manager = (ROOT / "scripts/alis-intergration-manager.py").read_text()
 
 bindings = {}
 for name, source in (("rail", native), ("focus", focus)):

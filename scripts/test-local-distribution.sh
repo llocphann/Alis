@@ -48,8 +48,8 @@ if ! grep -Fq '[[ -z "$branch" || "$branch" == "HEAD" ]] && branch="stable"' "$t
 fi
 
 step "optional host lifecycle"
-python3 "$runtime_root/scripts/test-hadalird-optional.py"
-python3 "$runtime_root/scripts/test-hadalird-install-lifecycle.py"
+python3 "$runtime_root/scripts/test-alis-intergration-optional.py"
+python3 "$runtime_root/scripts/test-alis-intergration-install-lifecycle.py"
 
 step "TLP integration lifecycle"
 bash "$runtime_root/scripts/test-tlp-integration-lifecycle.sh"
@@ -187,7 +187,7 @@ if [[ -f "$runtime_root/Makefile" ]]; then
     make -n install PREFIX=/tmp/alis-stage-test -C "$runtime_root" >/dev/null
 
     step "optional package boundary"
-    python3 "$runtime_root/scripts/test-hadalird-arch-package.py"
+    python3 "$runtime_root/scripts/test-alis-intergration-arch-package.py"
 
 fi
 

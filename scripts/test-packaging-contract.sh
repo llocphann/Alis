@@ -214,9 +214,9 @@ grep -Fq '"$script_dir/test-equalizer-service-contract.sh"' "$release_script" \
   || fail 'release publish preflight no longer includes the Equalizer lifecycle/protocol contract'
 grep -Fq '"$script_dir/test-optional-audio-deps-contract.sh"' "$release_script" \
   || fail 'release publish preflight no longer includes the optional audio dependency contract'
-grep -Fq '"$script_dir/test-hadalird-install-lifecycle.py"' "$release_script" \
+grep -Fq '"$script_dir/test-alis-intergration-install-lifecycle.py"' "$release_script" \
   || fail 'release publish preflight no longer includes the optional lifecycle contract'
-grep -Fq '"$script_dir/test-hadalird-arch-package.py"' "$release_script" \
+grep -Fq '"$script_dir/test-alis-intergration-arch-package.py"' "$release_script" \
   || fail 'release publish preflight no longer includes the optional Arch package contract'
 grep -Fq '"$script_dir/test-make-install-lifecycle.sh"' "$release_script" \
   || fail 'release publish preflight no longer includes the make install lifecycle contract'

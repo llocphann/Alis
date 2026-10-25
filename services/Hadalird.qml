@@ -72,7 +72,7 @@ Singleton {
             loadFailed = false
         }
         managerProcess.command = ["/usr/bin/python3",
-            Quickshell.shellPath("scripts/hadalird-manager.py"), action,
+            Quickshell.shellPath("scripts/alis-intergration-manager.py"), action,
             "--shell-root", Quickshell.shellPath("")]
         managerProcess.running = true
         managerDeadline.restart()
@@ -121,7 +121,7 @@ Singleton {
     }
     Process {
         id: probe
-        command: ["/usr/bin/python3",Quickshell.shellPath("scripts/hadalird-status.py"),Quickshell.shellPath("")]
+        command: ["/usr/bin/python3",Quickshell.shellPath("scripts/alis-intergration-status.py"),Quickshell.shellPath("")]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -146,7 +146,7 @@ Singleton {
     Process {
         id: systemStatusProbe
         command: ["/usr/bin/python3",
-            Quickshell.shellPath("scripts/hadalird-manager.py"), "system-status",
+            Quickshell.shellPath("scripts/alis-intergration-manager.py"), "system-status",
             "--shell-root", Quickshell.shellPath("")]
         stdout: StdioCollector { id: systemStatusOutput }
         onExited: (exitCode) => {

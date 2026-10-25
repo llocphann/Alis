@@ -120,7 +120,7 @@ test-package-metadata:
 		test "$$srcinfo_version" = "$$git_version"
 
 test-package-hooks:
-	@python3 scripts/test-hadalird-arch-package.py
+	@python3 scripts/test-alis-intergration-arch-package.py
 
 test-battery-helper test-thinkfan-helper:
 	@printf '%s\n' 'Run helper tests in optional Alis-Intergration: https://github.com/llocphann/Alis-Intergration' >&2

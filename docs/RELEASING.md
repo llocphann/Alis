@@ -49,8 +49,8 @@ bash scripts/test-optional-audio-deps-contract.sh
 bash scripts/test-reviewed-replacement-manifests.sh
 bash scripts/test-config-namespace-migration.sh
 bash scripts/test-runtime-orphan-cleanup.sh
-python3 scripts/test-hadalird-install-lifecycle.py
-python3 scripts/test-hadalird-arch-package.py
+python3 scripts/test-alis-intergration-install-lifecycle.py
+python3 scripts/test-alis-intergration-arch-package.py
 bash scripts/test-make-install-lifecycle.sh
 bash scripts/test-uninstall-path-safety.sh
 bash scripts/verify-docs.sh

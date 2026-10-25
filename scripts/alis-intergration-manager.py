@@ -21,7 +21,7 @@ import urllib.request
 from importlib.util import module_from_spec, spec_from_file_location
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = spec_from_file_location("hadalird_discovery", ROOT / "scripts/hadalird-status.py")
+spec = spec_from_file_location("alis_intergration_discovery", ROOT / "scripts/alis-intergration-status.py")
 discovery = module_from_spec(spec)
 spec.loader.exec_module(discovery)
 
@@ -249,7 +249,7 @@ def gateway_package(action):
     # The unprivileged package builder is part of Alis' own shipped runtime.
     # It executes makepkg as the user and requests Polkit for pacman only.
     task = action.removeprefix("gateway-")
-    runner = ROOT / "scripts/hadalird-system-package.py"
+    runner = ROOT / "scripts/alis-intergration-system-package.py"
     if task not in ("status", "install", "remove") or not runner.is_file():
         raise ValueError("Alis system gateway package manager is unavailable")
     try:
@@ -281,8 +281,9 @@ def gateway_package(action):
 def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=request_bytes,
             system_call=call_system_helper, gateway_call=gateway_package):
     home.mkdir(parents=True, exist_ok=True)
+    bundled = discovery.resolve_bundled_package(shell_root)
     # Bundled distro payload takes precedence in Alis discovery.
-    if action in ("check", "install", "remove", "rollback") and (shell_root / "optional/hadalird").exists():
+    if action in ("check", "install", "remove", "rollback") and bundled.exists():
         raise ValueError("Alis has a bundled Alis-Intergration; update it through the host distribution")
     lock = home / ".install.lock"
     with lock.open("a") as fd:
@@ -339,7 +340,6 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
             # One explicit Settings action: provision the trusted standalone
             # gateway when absent, then idempotently install verified helpers.
             # Both privileged stages still require their own Polkit consent.
-            bundled = shell_root / "optional/hadalird"
             active_package = bundled if bundled.is_dir() else home / "current"
             if not active_package.is_dir():
                 raise ValueError("Install Alis-Intergration before system helpers")
@@ -374,7 +374,6 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
             if action not in ("helpers-status", "helpers-install", "helpers-remove"):
                 raise ValueError("Unsupported system helper action")
             if action == "helpers-install":
-                bundled = shell_root / "optional/hadalird"
                 active_package = bundled if bundled.is_dir() else home / "current"
                 if not active_package.is_dir():
                     raise ValueError("Install Alis-Intergration before installing its system helpers")
@@ -456,7 +455,15 @@ def main():
         os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))))
     args = parser.parse_args()
     try:
-        result = operate(args.action, args.data_home / "hadalird", args.shell_root)
+        canonical = args.data_home / "alis-intergration"
+        legacy = args.data_home / "hadalird"
+        if args.action in ("install", "remove", "rollback"):
+            if legacy.is_dir() and not legacy.is_symlink() and not canonical.exists():
+                os.replace(legacy, canonical)
+            home = canonical
+        else:
+            home = canonical if canonical.exists() or not legacy.exists() else legacy
+        result = operate(args.action, home, args.shell_root)
         print(json.dumps(result))
     except (OSError, ValueError, KeyError, json.JSONDecodeError, tarfile.TarError) as error:
         print(json.dumps({"ok": False, "action": args.action, "error": str(error)}))

@@ -138,8 +138,8 @@ require_release_contracts() {
     "$script_dir/test-reviewed-replacement-manifests.sh" \
     "$script_dir/test-config-namespace-migration.sh" \
     "$script_dir/test-runtime-orphan-cleanup.sh" \
-    "$script_dir/test-hadalird-install-lifecycle.py" \
-    "$script_dir/test-hadalird-arch-package.py" \
+    "$script_dir/test-alis-intergration-install-lifecycle.py" \
+    "$script_dir/test-alis-intergration-arch-package.py" \
     "$script_dir/test-make-install-lifecycle.sh" \
     "$script_dir/test-uninstall-path-safety.sh" \
     "$script_dir/verify-docs.sh"; do

@@ -20,7 +20,7 @@ assert 'Hadalird.installedPlugins.map' in integration_page
 assert 'property string settingsTaskSection: ""' in obsidian_wrapper, (
     "Integrations page passes settingsTaskSection to the Hadalis-owned wrapper"
 )
-spec = importlib.util.spec_from_file_location("discovery", ROOT / "scripts/hadalird-status.py")
+spec = importlib.util.spec_from_file_location("discovery", ROOT / "scripts/alis-intergration-status.py")
 discovery = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(discovery)
 
@@ -81,9 +81,9 @@ with tempfile.TemporaryDirectory(prefix="hadalird-host-") as name:
     private = Path(name)
     data_home = private / "data"
     assert not discovery.inspect(private, data_home)["available"]
-    package = data_home / "hadalird/releases/fixture"
+    package = data_home / "alis-intergration/releases/fixture"
     manifest = package_at(package)
-    (data_home / "hadalird/current").symlink_to("releases/fixture")
+    (data_home / "alis-intergration/current").symlink_to("releases/fixture")
     assert discovery.inspect(private, data_home)["available"]
     for field, value in (("hostApi",True),("hostApi",2),("id","foreign"),("sourceSha","bad"),("session","../../foreign.qml")):
         (package / "manifest.json").write_text(json.dumps({**manifest,field:value}))

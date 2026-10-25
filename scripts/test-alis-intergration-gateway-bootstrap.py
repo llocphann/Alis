@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
-    "gateway_bootstrap", ROOT / "scripts/hadalird-system-package.py")
+    "gateway_bootstrap", ROOT / "scripts/alis-intergration-system-package.py")
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 

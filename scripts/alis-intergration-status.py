@@ -136,9 +136,28 @@ def inspect_package(package):
         return {**result, "diagnostic": "invalid-package"}
 
 
+def resolve_user_data_dir(data_home=None):
+    base = Path(data_home or os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
+    canonical = base / "alis-intergration"
+    legacy = base / "hadalird"
+    if (canonical / "current").exists() or (canonical / "current").is_symlink() or (canonical.exists() and not legacy.exists()):
+        return canonical
+    if legacy.exists():
+        return legacy
+    return canonical
+
+
+def resolve_bundled_package(shell_root):
+    root = Path(shell_root)
+    canonical = root / "optional/alis-intergration"
+    if canonical.exists():
+        return canonical
+    return root / "optional/hadalird"
+
+
 def inspect(shell_root, data_home=None):
-    user_data = Path(data_home or os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "hadalird"
-    package = Path(shell_root) / "optional/hadalird"
+    user_data = resolve_user_data_dir(data_home)
+    package = resolve_bundled_package(shell_root)
     if not package.exists():
         package = user_data / "current"
     result = inspect_package(package)

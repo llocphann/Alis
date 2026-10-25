@@ -81,7 +81,7 @@ GroupButton {
         clip: root.revealActiveLabelOnly
 
         Behavior on spacing {
-            enabled: Appearance.animationsEnabled
+            enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
             NumberAnimation { duration: 160; easing.type: Easing.InOutCubic }
         }
 
@@ -95,11 +95,11 @@ GroupButton {
             clip: true
 
             Behavior on implicitWidth {
-                enabled: Appearance.animationsEnabled
+                enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
                 animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
             }
             Behavior on opacity {
-                enabled: Appearance.animationsEnabled
+                enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
                 animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
             }
 
@@ -128,7 +128,7 @@ GroupButton {
             clip: true
 
             Behavior on implicitWidth {
-                enabled: Appearance.animationsEnabled
+                enabled: Appearance.animationsEnabled && root.enableImplicitWidthAnimation
                 NumberAnimation { duration: 190; easing.type: Easing.InOutCubic }
             }
             TextMetrics {

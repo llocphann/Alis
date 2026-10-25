@@ -235,8 +235,10 @@ Flow {
                     ? Math.max(5,6 * Appearance.fontSizeScale)
                     : (root.taskNavigation ? 14 * Appearance.fontSizeScale : 11)
             maxTextWidth: root.taskNavigation
-                ? Math.max(0, root.width - horizontalPadding * 2
-                    - (buttonIcon.length > 0 ? Appearance.font.pixelSize.normal + 4 : 0))
+                ? (root.width > 0
+                    ? Math.max(0, root.width - horizontalPadding * 2
+                        - (buttonIcon.length > 0 ? Appearance.font.pixelSize.normal + 4 : 0))
+                    : 320)
                 : root.activeLabelOnly
                     ? Math.max(0,root.width - root.options.length
                         * (Appearance.font.pixelSize.normal + 2 * horizontalPadding

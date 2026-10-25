@@ -1,0 +1,61 @@
+name: Alis-Intergration offline contracts
+
+on:
+  push:
+    paths:
+      - 'scripts/alis-intergration-*.py'
+      - 'scripts/test-alis-intergration-*.py'
+      - 'assets/helpers/alis-hadalird-system-provision'
+      - 'assets/polkit/org.alis.hadalird-system-provision.policy'
+      - 'modules/settings/IntegrationsConfig.qml'
+      - 'services/Hadalird.qml'
+      - 'scripts/test-alis-intergration-polkit-visibility.py'
+      - 'modules/settings/SettingsFocus.qml'
+      - 'modules/settings/SettingsOverlayNativeHost.qml'
+      - 'distro/arch/alis-shell/PKGBUILD'
+      - 'distro/arch/alis-shell-git/PKGBUILD'
+      - '.github/workflows/alis-intergration-offline.yml'
+  pull_request:
+    paths:
+      - 'scripts/alis-intergration-*.py'
+      - 'scripts/test-alis-intergration-*.py'
+      - 'assets/helpers/alis-hadalird-system-provision'
+      - 'assets/polkit/org.alis.hadalird-system-provision.policy'
+      - 'modules/settings/IntegrationsConfig.qml'
+      - 'services/Hadalird.qml'
+      - 'distro/arch/alis-shell/PKGBUILD'
+      - 'distro/arch/alis-shell-git/PKGBUILD'
+      - '.github/workflows/alis-intergration-offline.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alis-intergration-offline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-lifecycle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Validate Alis-Intergration user-package lifecycle
+        run: python3 scripts/test-alis-intergration-manager.py
+      - name: Validate Alis-Intergration Settings Flow layout
+        run: python3 scripts/test-alis-intergration-settings-flow.py
+      - name: Validate Polkit elevation and one-click helper installer
+        run: python3 scripts/test-alis-intergration-polkit-visibility.py
+      - name: Validate Obsidian host wrapper width
+        run: python3 scripts/test-alis-intergration-obsidian-wrapper.py
+      - name: Validate root provisioning without root
+        run: python3 scripts/test-alis-intergration-system-provision.py
+      - name: Validate repo-copy Arch gateway package bootstrap
+        run: python3 scripts/test-alis-intergration-gateway-bootstrap.py
+      - name: Check existing host removal safety
+        run: python3 scripts/test-alis-intergration-install-lifecycle.py
+      - name: Verify packaging syntax
+        run: |
+          bash -n distro/arch/alis-shell/PKGBUILD
+          bash -n distro/arch/alis-shell-git/PKGBUILD

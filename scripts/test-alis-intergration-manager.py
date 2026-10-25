@@ -9,7 +9,7 @@ import tarfile
 import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("manager", ROOT / "scripts/hadalird-manager.py")
+spec = importlib.util.spec_from_file_location("manager", ROOT / "scripts/alis-intergration-manager.py")
 manager = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(manager)
 revision1 = "1" * 40
@@ -67,9 +67,9 @@ def bundle(version):
     return make_tar(files)
 
 
-with tempfile.TemporaryDirectory(prefix="hadalird-manager-test-") as location:
+with tempfile.TemporaryDirectory(prefix="alis-intergration-manager-test-") as location:
     base = pathlib.Path(location)
-    home = base / "data/hadalird"
+    home = base / "data/alis-intergration"
     shell = base / "shell"
     shell.mkdir()
     requested = []
@@ -316,7 +316,7 @@ with tempfile.TemporaryDirectory(prefix="hadalird-manager-test-") as location:
         except ValueError:
             pass
 
-    (shell / "optional/hadalird").mkdir(parents=True)
+    (shell / "optional/alis-intergration").mkdir(parents=True)
     assert run('helpers-status')['systemProvisionerAvailable']
     assert run('helpers-install')['systemHelpersInstalled']
     try:

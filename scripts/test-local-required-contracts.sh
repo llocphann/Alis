@@ -140,8 +140,8 @@ require_contains 'for doc in "$srcroot"/docs/*.md; do' distro/arch/alis-shell-gi
     'git Arch package no longer installs the documentation set'
 
 printf '== optional integration ownership ==\n'
-python3 scripts/test-hadalird-install-lifecycle.py || fail 'core lifecycle changed optional system state'
-python3 scripts/test-hadalird-arch-package.py || fail 'Arch package lost optional integration boundary'
+python3 scripts/test-alis-intergration-install-lifecycle.py || fail 'core lifecycle changed optional system state'
+python3 scripts/test-alis-intergration-arch-package.py || fail 'Arch package lost optional integration boundary'
 for pkg in distro/arch/alis-shell/PKGBUILD distro/arch/alis-shell-git/PKGBUILD; do
     for marker in 'assets/applications/alis-settings.desktop' '$pkgdir/usr/share/applications/alis-settings.desktop' 'distro/arch/alis-shell/alis-quickshell-rebuild.hook' '$pkgdir/usr/share/libalpm/hooks/alis-quickshell-rebuild.hook'; do
         require_contains "$marker" "$pkg" "$pkg lost shared shell payload: $marker"
