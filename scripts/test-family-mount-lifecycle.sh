@@ -67,7 +67,7 @@ ShellRoot {
     env = os.environ.copy()
     for key in ('QS_CONFIG_PATH', 'QS_CONFIG_NAME', 'QS_MANIFEST'):
         env.pop(key, None)
-    env.update(QT_QPA_PLATFORM='offscreen', XDG_CONFIG_HOME=str(root / 'config'),
+    env.update(QT_QPA_PLATFORM='offscreen', LC_ALL='C.UTF-8', XDG_CONFIG_HOME=str(root / 'config'),
                XDG_STATE_HOME=str(root / 'state'), XDG_CACHE_HOME=str(root / 'cache'), INIR_DISABLE_HOT_RELOAD='1')
     with (root / 'runtime.log').open('w') as log:
         proc = subprocess.Popen(['qs', '-p', str(root), '--no-color'], env=env, stdout=log, stderr=subprocess.STDOUT)

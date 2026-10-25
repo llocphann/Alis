@@ -99,6 +99,7 @@ optional_files=(
   "$stage$system_share/tlp-settings-schema.json"
   "$stage$tlp_confdir/99-inir-battery-charge-limit.conf"
   "$stage$tlp_confdir/99-inir-tlp-settings.conf"
+  "$stage$prefix/share/alis-intergration/current/manifest.json"
   "$stage$prefix/share/hadalird/current/manifest.json"
 )
 for path in "${optional_files[@]}"; do
@@ -180,7 +181,7 @@ for action in install-battery-helper install-thinkfan-helper uninstall-battery-h
     printf 'FAIL: retired core helper target succeeded: %s\n' "$action" >&2
     exit 1
   fi
-  grep -Fq 'optional Hadalird' "$stage/retired-helper.log" || { cat "$stage/retired-helper.log"; exit 1; }
+  grep -Eq 'optional (Alis-Intergration|Hadalird)' "$stage/retired-helper.log" || { cat "$stage/retired-helper.log"; exit 1; }
 done
 rm -f "$stage/retired-helper.log"
 [[ "$(sha256sum "${optional_files[@]}")" == "$optional_before" ]] || {

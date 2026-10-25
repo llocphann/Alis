@@ -64,6 +64,7 @@ ShellRoot {
     for key in ('QS_CONFIG_PATH','QS_CONFIG_NAME','QS_MANIFEST'):
         env.pop(key,None)
     env['QT_QPA_PLATFORM'] = 'offscreen'
+    env['LC_ALL'] = 'C.UTF-8'
     with (root / 'runtime.log').open('w') as log:
         proc = subprocess.Popen(['qs','-p',str(root),'--no-color'],env=env,stdout=log,stderr=subprocess.STDOUT)
         def ipc(method,*args):
@@ -75,7 +76,7 @@ ShellRoot {
                     state = json.loads(ipc('state'))
                     if state['loaded'] == loaded:
                         return state
-                except subprocess.CalledProcessError:
+                except (subprocess.CalledProcessError, json.JSONDecodeError):
                     pass
                 time.sleep(.02)
             raise AssertionError('clipboard loader did not settle')

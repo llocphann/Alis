@@ -11,7 +11,7 @@ for family in ('ii','waffle','abyss'):
         root=pathlib.Path(directory)
         for entry in ('modules','services','GlobalStates.qml','qmldir','assets','scripts','defaults','translations'):
             (root/entry).symlink_to(repo/entry)
-        config=root/'config/illogical-impulse/config.json';config.parent.mkdir(parents=True)
+        config=root/'config/alis/config.json';config.parent.mkdir(parents=True)
         old={'panelFamily':family,'enabledPanels':['iiBar','iiCheatsheet','wBar'],
              'knownPanels':['iiDock','iiBar','iiCheatsheet'],'visitedPanelFamilies':[family],
              'dock':{'iconSize':43},'customExample':{'keep':'unchanged'}}
@@ -47,7 +47,7 @@ ShellRoot {
         env=os.environ.copy()
         for key in ('QS_CONFIG_PATH','QS_CONFIG_NAME','QS_MANIFEST','WAYLAND_DISPLAY','DISPLAY'):
             env.pop(key,None)
-        env.update(QT_QPA_PLATFORM='offscreen',XDG_CONFIG_HOME=str(root/'config'),
+        env.update(QT_QPA_PLATFORM='offscreen',LC_ALL='C.UTF-8',XDG_CONFIG_HOME=str(root/'config'),
                    XDG_STATE_HOME=str(root/'state'),XDG_CACHE_HOME=str(root/'cache'))
         with (root/'runtime.log').open('w') as log:
             process=subprocess.Popen(['qs','-p',str(root),'--no-color'],env=env,stdout=log,stderr=log)
