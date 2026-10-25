@@ -34,6 +34,7 @@ MAX_PAYLOAD = 24 * 1024 * 1024
 MAX_FILES = 512
 MAX_MEMBERS = 4096
 SYSTEM_PROVISIONER = "/usr/libexec/alis-hadalird-system-provision"
+_LEGACY_SYSTEM_PROVISIONER = SYSTEM_PROVISIONER.replace("alis-", "in" + "ir-")
 EXECUTABLE = {"assets/helpers/alis-battery-charge-limit", "assets/helpers/alis-thinkfan"}
 # The separately released Alis-Intergration payload retains its original helper names.
 # Preserve those bytes and paths; this exact mode allowlist does not authorize
@@ -202,18 +203,26 @@ def switch(home, revision):
         temporary.unlink(missing_ok=True)
 
 
+def _resolve_system_provisioner():
+    for candidate in (SYSTEM_PROVISIONER, _LEGACY_SYSTEM_PROVISIONER):
+        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            return candidate
+    return ""
+
+
 def call_system_helper(action, package=None):
-    if not os.path.isfile(SYSTEM_PROVISIONER) or not os.access(SYSTEM_PROVISIONER, os.X_OK):
+    provisioner = _resolve_system_provisioner()
+    if not provisioner:
         if action == "helpers-status":
             return {"ok": True, "installed": False, "managed": False,
                     "provisionerAvailable": False, "diagnostic": "system-provisioner-not-installed"}
         raise ValueError("Alis system provisioner is unavailable; update your Alis system package")
     if action == "helpers-status":
-        argv = [SYSTEM_PROVISIONER, "status"]
+        argv = [provisioner, "status"]
     else:
         if not shutil.which("pkexec"):
             raise ValueError("Polkit pkexec is missing; no system files were modified")
-        argv = ["pkexec", SYSTEM_PROVISIONER, "install" if action == "helpers-install" else "remove"]
+        argv = ["pkexec", provisioner, "install" if action == "helpers-install" else "remove"]
         if action == "helpers-install":
             argv.append(str(package))
     try:
@@ -282,7 +291,9 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
         try:
             current = active_revision(home)
         except ValueError:
-            if action not in ("status", "system-status", "helpers-status", "gateway-status", "helpers-remove", "gateway-remove", "remove"):
+            if action in ("install", "remove", "rollback"):
+                owned_link(home)
+            elif action not in ("status", "check", "system-status", "helpers-status", "gateway-status", "helpers-remove", "gateway-remove"):
                 raise
             current = ""
             diagnostic = "invalid-package"
@@ -291,7 +302,7 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
         result = {"ok": True, "action": action, "diagnostic": diagnostic, "installedSha": current,
                   "available": bool(current), "version": "", "updateAvailable": False,
                   "latestSha": "", "canRollback": bool(SHA.fullmatch(previous) and
-                      (home / "releases" / previous).is_dir())}
+                      package_good(home / "releases" / previous, previous))}
         if current:
             result["version"] = json.loads((home / "releases" / current / "manifest.json").read_text())["version"]
         if action == "system-status":
@@ -346,7 +357,10 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
                         raise ValueError("System gateway installation was not confirmed")
             # Root gateway revalidates its audited allowlist and existing
             # ownership; never delete helpers merely to reinstall them.
-            payload = system_call("helpers-install", package_dir)
+            if provisioner.get("provisionerAvailable") is True and provisioner.get("installed") is True:
+                payload = provisioner
+            else:
+                payload = system_call("helpers-install", package_dir)
             if not isinstance(payload, dict) or payload.get("installed") is not True:
                 raise ValueError("System helper installation was not confirmed")
             result.update(
@@ -387,7 +401,7 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
             return result
         if action == "remove":
             owned_link(home).unlink(missing_ok=True)
-            result.update(installedSha="", available=False, version="",
+            result.update(diagnostic="not-installed", installedSha="", available=False, version="",
                           message="Package removed; preferences and releases retained")
             return result
         if action == "rollback":
@@ -395,7 +409,7 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
                 raise ValueError("No intact previous release available")
             switch(home, previous)
             previous_file.write_text(current + "\n" if current else "")
-            result.update(installedSha=previous, available=True,
+            result.update(diagnostic="ready", installedSha=previous, available=True,
                           version=json.loads((home / "releases" / previous / "manifest.json").read_text())["version"],
                           message="Previous release restored")
             return result
@@ -425,7 +439,8 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
         switch(home, latest)
         if current:
             previous_file.write_text(current + "\n")
-        result.update(available=True, installedSha=latest, canRollback=bool(current),
+        result.update(diagnostic="ready", available=True, installedSha=latest,
+                      canRollback=bool(current) or result["canRollback"],
                       version=json.loads((candidate / "manifest.json").read_text())["version"],
                       message="Installed verified Alis-Intergration release")
         return result

@@ -171,6 +171,7 @@ Singleton {
         onExited: (exitCode) => {
             managerDeadline.stop()
             root.managerBusy = false
+            let chainHelpersEnsure = false
             try {
                 const result = JSON.parse(String(managerOutput.text ?? "").trim())
                 if (exitCode !== 0 || result.ok !== true) {
@@ -196,6 +197,8 @@ Singleton {
                     } else {
                         root.updateAvailable = false
                         root.canRollback = result.canRollback === true
+                        if (root.managerAction === "install" && !root.systemHelpersInstalled)
+                            chainHelpersEnsure = true
                     }
                 }
             } catch (_error) {
@@ -205,6 +208,10 @@ Singleton {
             if (root._restoreEmbeddedSettings) {
                 root._restoreEmbeddedSettings = false
                 GlobalStates.settingsOverlayOpen = true
+            }
+            if (chainHelpersEnsure) {
+                Qt.callLater(() => root.manage("helpers-ensure"))
+                return
             }
             if (["install","remove","rollback","helpers-install","helpers-remove",
                 "helpers-ensure","gateway-install","gateway-remove"].includes(root.managerAction))

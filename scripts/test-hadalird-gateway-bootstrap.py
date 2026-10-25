@@ -46,6 +46,19 @@ with tempfile.TemporaryDirectory(prefix="hadalis-gateway-state-") as fixture:
     first.symlink_to(ROOT / next(iter(module.FILES)))
     assert module.system_state(base, lambda _: True)["diagnostic"] == "modified"
 
+with tempfile.TemporaryDirectory(prefix="hadalis-legacy-gateway-state-") as legacy_fixture:
+    legacy_base = Path(legacy_fixture)
+    for dest, _ in module.LEGACY_FILES:
+        src = Path("/" + dest)
+        if src.is_file():
+            target = legacy_base / dest
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(src.read_bytes())
+    if all((legacy_base / dest).is_file() for dest, _ in module.LEGACY_FILES):
+        legacy_state = module.system_state(legacy_base, lambda pkg: pkg == module.LEGACY_PACKAGE)
+        assert legacy_state["installed"] and legacy_state["packageInstalled"]
+        assert legacy_state["diagnostic"] == "ready"
+
 with tempfile.TemporaryDirectory(prefix="hadalis-gateway-") as where:
     folder = Path(where)
     root = folder / "runtime"

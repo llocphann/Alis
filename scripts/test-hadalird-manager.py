@@ -116,6 +116,13 @@ with tempfile.TemporaryDirectory(prefix="hadalird-manager-test-") as location:
     assert manager.discovery.inspect(shell, base / "data")["available"]
     installed_manifest = (home / "current/manifest.json").read_bytes()
     release = (home / "current").resolve()
+    pycache = release / "scripts/notes/__pycache__"
+    pycache.mkdir(parents=True, exist_ok=True)
+    (pycache / "worker.cpython-314.pyc").write_bytes(b"bytecode")
+    assert manager.package_good(release, revision1)
+    assert manager.discovery.inspect(shell, base / "data")["available"]
+    (pycache / "worker.cpython-314.pyc").unlink()
+    pycache.rmdir()
     (release / "unlisted.qml").write_text("not in verified inventory")
     assert not manager.package_good(release, revision1)
     assert not manager.discovery.inspect(shell, base / "data")["available"]
@@ -240,6 +247,13 @@ with tempfile.TemporaryDirectory(prefix="hadalird-manager-test-") as location:
     upgrade = run("install")
     assert upgrade["installedSha"] == revision2 and upgrade["canRollback"]
     assert (home / "releases" / revision1).is_dir()
+    # If the active release is corrupted, check/rollback/install recover cleanly.
+    (home / "releases" / revision2 / "corrupted.qml").write_text("corrupted")
+    assert run("status")["diagnostic"] == "invalid-package"
+    assert run("check")["updateAvailable"]
+    assert run("rollback")["installedSha"] == revision1
+    (home / "releases" / revision2 / "corrupted.qml").unlink()
+    assert run("install")["installedSha"] == revision2
     assert run("rollback")["installedSha"] == revision1
     assert run("status")["installedSha"] == revision1
 

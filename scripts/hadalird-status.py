@@ -107,13 +107,16 @@ def inspect_package(package):
         for path in root.rglob("*"):
             if path.is_symlink():
                 raise ValueError("linked payload")
+            rel = path.relative_to(root)
+            if "__pycache__" in rel.parts and path.is_file() and path.suffix in (".pyc", ".pyo"):
+                continue
             if path.is_file() and path != manifest.resolve():
                 if len(inventory) >= 512 or path.stat().st_size > 2 * 1024 * 1024:
                     raise ValueError("oversized payload")
                 total += path.stat().st_size
                 if total > 24 * 1024 * 1024:
                     raise ValueError("oversized package")
-                inventory[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
+                inventory[rel.as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
             elif not path.is_file() and not path.is_dir():
                 raise ValueError("nonregular payload")
         for name, digest in hashes.items():
