@@ -80,7 +80,7 @@ Window {
    // A settled layout need not produce another frame on an idle Wayland
    // window. Request one explicitly, then wait for the actual presentation;
    // windowShown belongs to QtTest's runner and stays false in Quickshell.
-   if(!waitForPolish(scene,2500))throw new Error(name+": layout polish deadline")
+   if(!waitForPolish(root,2500))throw new Error(name+": window layout polish deadline")
    const presented=root.presentedFrames
    root.update()
    tryVerify(()=>root.presentedFrames>presented,2500,name+": presentation deadline")
@@ -261,6 +261,14 @@ Window {
    planner.forceActiveFocus();keyClick(Qt.Key_PageDown);check(planner.days[0].date.getTime()>weekDate,"keyboard week navigation failed");keyClick(Qt.Key_PageUp)
    root.allocatedWidth=320;root.allocatedHeight=410;wait(100)
    const compactHeading=find(planner,"plannerCompactWeekHeading")
+   // Item-only polishing misses a queued descendant Layout. A private
+   // nested window reproduced planner.width=320 with toolbar.width=1180.
+   // Await the window's layout pass and a real frame before judging reflow.
+   if(!waitForPolish(root,2500))throw new Error("compact toolbar: window polish deadline")
+   const compactFrame=root.presentedFrames
+   root.update()
+   tryVerify(()=>root.presentedFrames>compactFrame,2500,"compact toolbar: presentation deadline")
+   tryCompare(toolbar,"width",root.allocatedWidth,2500,"compact toolbar: layout width deadline")
    check(!!compactHeading && compactHeading.visible && !weekHeading.visible,
      "compact toolbar must keep the week title visible on a second line")
    check(compactHeading.horizontalAlignment===Text.AlignHCenter
