@@ -40,7 +40,13 @@ Item {
     onTodayKeyChanged: root.refreshFollowingToday()
     onSelectedDateChanged: {clearEventSelection();storeBrowser()}
     onFollowTodayChanged: storeBrowser()
-    onSideViewChanged: storeBrowser()
+    onSideViewChanged: {
+        // Click-created ID selections belong to the inline editor session;
+        // manual Ctrl/region selections remain independent of panel changes.
+        if (sideView!=="events" && root.followEditorCalendarSelection)
+            root.clearEventSelection()
+        storeBrowser()
+    }
     onPresentationActiveChanged: if (presentationActive) root.refreshFollowingToday()
     property bool expandAllDay: false
     property int activeDragDay: -1
@@ -296,6 +302,7 @@ Item {
     }
     function closeInlineEventEditor(): void {
         _pendingInlineEvent=null
+        if (root.followEditorCalendarSelection) root.clearEventSelection()
         if (sideView==="events") sideView=""
         _inlineEventsLoaded=false
     }
