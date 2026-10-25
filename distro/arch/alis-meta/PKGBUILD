@@ -60,7 +60,6 @@ depends=(
   qt6ct
   ripgrep
   sddm
-  songrec
   starship
   swappy
   tesseract

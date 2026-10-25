@@ -2460,25 +2460,22 @@ console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');
         require(vertical_date_widget, token, "verticalBar/VerticalDateWidget.qml")
 
     # Overview cleanup is component-by-component. SearchBar is an active leaf
-    # owned by SearchWidget; lock its song-recognition chrome to the existing
-    # Material fallback without changing search/SongRec behavior.
+    # owned by SearchWidget; lock its toolbar chrome to the existing Material
+    # fallback while keeping SongRec retired (MUSIC-R01).
     for token in legacy_style_tokens:
         forbid(overview_search_bar, token, "overview/SearchBar.qml")
     forbid(overview_search_bar, "RegaliaControlFace {", "overview/SearchBar.qml")
+    forbid(overview_search_bar, "SongRec", "overview/SearchBar.qml")
     for token in (
-        ": Appearance.colors.colOnSurfaceVariant",
+        "colText: Appearance.colors.colOnSurfaceVariant",
         'colBackground: "transparent"',
         'colBackgroundHover: "transparent"',
-        'colBackgroundToggled: "transparent"',
-        'colBackgroundToggledHover: "transparent"',
         'colRipple: "transparent"',
-        'colRippleToggled: "transparent"',
         "rippleEnabled: false",
         "pressScaleEnabled: false",
         "stateTransitionsEnabled: false",
         "position: \"top\"",
-        "onClicked: SongRec.toggleRunning()",
-        'text: "music_cast"',
+        'text: "image_search"',
     ):
         require(overview_search_bar, token, "overview/SearchBar.qml")
     forbid(overview_search_bar, "background: Item {", "overview/SearchBar.qml")

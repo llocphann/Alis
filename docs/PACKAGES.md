@@ -196,7 +196,6 @@ Base font/theming dependencies declared by `sdata/dist-arch/inir-fonts/PKGBUILD`
 | `ttf-liberation` | Liberation fonts |
 | `ttf-roboto` | Roboto font family |
 | `ttf-roboto-mono` | Roboto Mono |
-| `songrec` | Music recognition integration |
 | `translate-shell` | Translation CLI |
 | `fuzzel` | Application launcher |
 | `glib2` | GLib utilities |

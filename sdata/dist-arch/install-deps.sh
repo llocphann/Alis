@@ -68,7 +68,6 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [mpv]="mpv"
     [swaylock]="swaylock"
     [swayidle]="swayidle"
-    [songrec]="songrec"
     [trans]="translate-shell"
     # Legacy/package-level checks with no direct command binary.
     [dunstify]="dunst"

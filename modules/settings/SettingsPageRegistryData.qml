@@ -1181,13 +1181,6 @@ Singleton {
             keywords: ["voice", "mic", "microphone", "dictate", "speech", "transcribe", "recording"]
         },
         {
-            pageIndex: 38, pageName: root.pages[38].name,
-            section: Translation.tr("Music Recognition"),
-            label: Translation.tr("Music Recognition"),
-            description: Translation.tr("Song recognition timeout and interval"),
-            keywords: ["music", "recognition", "song", "timeout", "shazam", "songrec"]
-        },
-        {
             pageIndex: 7, pageName: root.pages[7].name,
             section: Translation.tr("Networking"),
             label: Translation.tr("User agent"),

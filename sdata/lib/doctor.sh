@@ -107,7 +107,6 @@ check_dependencies() {
         "mpv:mpv"
         "swaylock:swaylock"
         "swayidle:swayidle"
-        "songrec:SongRec"
         "trans:translate-shell"
     )
 

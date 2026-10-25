@@ -99,7 +99,6 @@ let
     ++ optionalTop "networkmanager"
     ++ optionalTop "networkmanagerapplet"
     ++ optionalTop "pavucontrol"
-    ++ optionalTop "songrec"
     ++ optionalTop "swappy"
     ++ optionalTop "tesseract"
     ++ optionalTop "translate-shell"

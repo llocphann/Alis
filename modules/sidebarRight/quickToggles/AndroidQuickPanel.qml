@@ -29,7 +29,7 @@ AbstractQuickPanel {
     readonly property real baseCellHeight: 56
 
     // Toggles
-    readonly property list<string> availableToggleTypes: ["network", "hotspot", "bluetooth", "idleInhibitor", "easyEffects", "nightLight", "darkMode", "cloudflareWarp", "gameMode", "screenSnip", "colorPicker", "onScreenKeyboard", "mic", "audio", "notifications", "powerProfile", "musicRecognition", "voiceSearch", "antiFlashbang"]
+    readonly property list<string> availableToggleTypes: ["network", "hotspot", "bluetooth", "idleInhibitor", "easyEffects", "nightLight", "darkMode", "cloudflareWarp", "gameMode", "screenSnip", "colorPicker", "onScreenKeyboard", "mic", "audio", "notifications", "powerProfile", "voiceSearch", "antiFlashbang"]
     readonly property int columns: {
         const configured = Number(Config.options?.sidebar?.quickToggles?.android?.columns ?? 4)
         return Number.isFinite(configured) ? Math.max(1, Math.round(configured)) : 4

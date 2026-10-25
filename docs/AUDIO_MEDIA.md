@@ -103,6 +103,3 @@ The historical `YtMusic` source remains only as compatibility code and is no lon
 
 The media controls popup has multiple layout presets you can choose from in Settings. Different presets show different arrangements of album art, controls, and track info.
 
-## SongRec (music recognition)
-
-If SongRec is installed, you can trigger music recognition from the shell. It listens to your audio output, identifies the song (Shazam-style), and shows the result. Useful when you hear something playing and want to know what it is.

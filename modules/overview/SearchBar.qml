@@ -124,48 +124,23 @@ RowLayout {
     IconToolbarButton {
         Layout.topMargin: 4
         Layout.bottomMargin: 4
+        Layout.rightMargin: 4
         onClicked: {
             GlobalStates.overviewOpen = false;
             // Use IPC to trigger region search (works for both Hyprland and Niri)
             Quickshell.execDetached([Quickshell.shellPath("scripts/alis"), "region", "googleLens"]);
         }
         text: "image_search"
-        StyledToolTip {
-            position: "top"
-            text: Translation.tr("Google Lens")
-        }
-    }
-
-    IconToolbarButton {
-        id: songRecButton
-        Layout.topMargin: 4
-        Layout.bottomMargin: 4
-        Layout.rightMargin: 4
-        toggled: SongRec.running
-        onClicked: SongRec.toggleRunning()
-        text: "music_cast"
-        buttonText: Translation.tr("Recognize music")
-
-        // SongRec must remain a plain toolbar icon. The old custom rotating
-        // MaterialShape/content renderer introduced an extra transformed scene
-        // node that could survive as a crescent/face beside the icon. Running
-        // state is communicated by ink only; hover/ripple stay shared chrome.
         colBackground: "transparent"
         colBackgroundHover: "transparent"
-        colBackgroundToggled: "transparent"
-        colBackgroundToggledHover: "transparent"
         colRipple: "transparent"
-        colRippleToggled: "transparent"
         rippleEnabled: false
         pressScaleEnabled: false
         stateTransitionsEnabled: false
-        colText: toggled
-            ? Appearance.colors.colPrimary
-            : Appearance.colors.colOnSurfaceVariant
-
+        colText: Appearance.colors.colOnSurfaceVariant
         StyledToolTip {
             position: "top"
-            text: Translation.tr("Recognize music")
+            text: Translation.tr("Google Lens")
         }
     }
 }

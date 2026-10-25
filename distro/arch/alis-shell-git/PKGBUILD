@@ -84,7 +84,6 @@ optdepends=(
   'plasma-browser-integration: browser MPRIS sessions and artwork'
   'plasma-integration: Qt platform theme integration'
   'qt6ct: Qt theme configuration'
-  'songrec: music recognition support'
   'socat: optional EasyEffects control transport for equalizer'
   'swappy: screenshot annotation helpers'
   'tesseract: OCR-backed screenshot tools'

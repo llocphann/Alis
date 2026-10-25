@@ -668,52 +668,6 @@ if ! command -v cliphist &>/dev/null; then
   install_github_binary "cliphist" "sentriz/cliphist" "linux-amd64$"
 fi
 
-# songrec - music recognition (PPA for Ubuntu, Cargo for Debian)
-if ! command -v songrec &>/dev/null; then
-  log_info "Installing songrec (music recognition)..."
-
-  SONGREC_INSTALLED=false
-
-  # Try Ubuntu PPA first (only for Ubuntu)
-  if [[ "$IS_UBUNTU" == "true" ]]; then
-    log_info "Trying songrec PPA for Ubuntu..."
-    if sudo add-apt-repository -y ppa:marin-m/songrec 2>/dev/null; then
-      sudo apt update
-      if sudo apt install $installflags songrec 2>/dev/null; then
-        log_success "songrec installed from PPA"
-        SONGREC_INSTALLED=true
-      fi
-    fi
-  fi
-
-  # Fallback: compile with Cargo
-  if [[ "$SONGREC_INSTALLED" == "false" ]]; then
-    log_info "Compiling songrec from source with Cargo..."
-
-    # Install build dependencies
-    SONGREC_DEPS=(
-      build-essential
-      libasound2-dev
-      libgtk-3-dev
-      libssl-dev
-      pkg-config
-    )
-    sudo apt install $installflags "${SONGREC_DEPS[@]}" 2>/dev/null || true
-
-    # Ensure Rust is available
-    if command -v cargo &>/dev/null; then
-      if cargo install songrec 2>/dev/null; then
-        log_success "songrec installed via Cargo"
-        SONGREC_INSTALLED=true
-      else
-        log_warning "songrec build failed"
-      fi
-    else
-      log_warning "Cargo not available, skipping songrec"
-    fi
-  fi
-fi
-
 # darkly - Qt theme (download .deb from GitHub)
 if ${INSTALL_FONTS:-true}; then
   if ! dpkg -l 2>/dev/null | grep -q darkly; then
@@ -1409,7 +1363,7 @@ if [[ ${#MISSING_REPO_PKGS[@]} -gt 0 ]]; then
   echo ""
 fi
 log_info "Installed from GitHub releases (no compilation):"
-echo "  - gum, cliphist, darkly, songrec (PPA/Cargo)"
+echo "  - gum, cliphist, darkly"
 echo "  - twemoji-color-font, adw-gtk3 theme"
 echo "  - Material Symbols fonts, JetBrains Mono Nerd Font"
 echo "  - WhiteSur, MacTahoe icon themes"

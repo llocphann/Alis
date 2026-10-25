@@ -24,20 +24,16 @@ overview = read("modules/overview/OverviewDashboard.qml")
 search = read("modules/overview/SearchWidget.qml")
 system = read("modules/dashboard/DashSystem.qml")
 
-song_start = search_bar.index("id: songRecButton")
-song_end = search_bar.index("StyledToolTip {", song_start)
-song_block = search_bar[song_start:song_end]
-
-forbid(song_block, "MaterialShape {",
-       "SongRec must not restore the stray custom MaterialShape geometry.")
-forbid(song_block, "RotationAnimation on rotation",
-       "SongRec must not create a transformed custom icon scene node.")
-forbid(song_block, "contentItem:",
-       "SongRec must use the shared IconToolbarButton content renderer.")
-require(song_block, 'colBackgroundToggled: "transparent"',
-        "SongRec running state must not paint an extra persistent face.")
-require(song_block, "? Appearance.colors.colPrimary",
-        "SongRec running state must remain visible through icon ink.")
+forbid(search_bar, "id: songRecButton",
+       "SongRec toolbar button must remain retired (MUSIC-R01).")
+forbid(search_bar, "SongRec",
+       "SearchBar must not reference retired SongRec singleton (MUSIC-R01).")
+forbid(search_bar, "MaterialShape {",
+       "SearchBar must not restore the stray custom MaterialShape geometry.")
+forbid(search_bar, "RotationAnimation on rotation",
+       "SearchBar must not create a transformed custom icon scene node.")
+require(search_bar, 'colBackground: "transparent"',
+        "SearchBar toolbar buttons must keep transparent shared chrome.")
 
 require(overview, "opacity: root.dashboardOpacity",
         "Dashboard content must consume the smoothed crossfade progress.")

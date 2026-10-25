@@ -126,3 +126,23 @@ function migrateContentOpacity(options) {
     }
     return result;
 }
+
+// Strip retired toggle identifiers ("musicRecognition") from persisted user
+// quick-toggle layouts while preserving every other toggle's order and size.
+function migrateRetiredToggles(options) {
+    options = options || {};
+    var result = {};
+    var androidToggles = options?.sidebar?.quickToggles?.android?.toggles;
+    if (Array.isArray(androidToggles) && androidToggles.some(function(item) { return item && item.type === "musicRecognition"; })) {
+        result["sidebar.quickToggles.android.toggles"] = androidToggles.filter(function(item) {
+            return !item || item.type !== "musicRecognition";
+        });
+    }
+    var waffleToggles = options?.waffles?.actionCenter?.toggles;
+    if (Array.isArray(waffleToggles) && waffleToggles.indexOf("musicRecognition") >= 0) {
+        result["waffles.actionCenter.toggles"] = waffleToggles.filter(function(id) {
+            return id !== "musicRecognition";
+        });
+    }
+    return result;
+}

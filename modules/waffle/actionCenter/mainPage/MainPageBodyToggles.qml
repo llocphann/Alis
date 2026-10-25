@@ -18,8 +18,9 @@ Item {
     property int rows: 2
     property int currentPage: 0
     readonly property int itemsPerPage: columns * rows
+    readonly property list<string> availableToggleTypes: ["antiFlashbang", "audio", "bluetooth", "cloudflareWarp", "colorPicker", "darkMode", "easyEffects", "gameMode", "hotspot", "idleInhibitor", "mic", "network", "nightLight", "notifications", "onScreenKeyboard", "powerProfile", "screenSnip"]
     readonly property int pages: Math.ceil(toggles.length / itemsPerPage)
-    property list<string> toggles: Config.options?.waffles?.actionCenter?.toggles ?? []
+    property list<string> toggles: (Config.options?.waffles?.actionCenter?.toggles ?? []).filter(id => availableToggleTypes.indexOf(id) !== -1)
 
     property real padding: 22
     property real reducedBottomPadding: 12

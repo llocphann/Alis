@@ -249,7 +249,8 @@ for token in (
     "rippleEnabled: false",
     "pressScaleEnabled: false",
 ):
-    require(search_bar, token, "SongRec geometry cleanup")
+    require(search_bar, token, "SearchBar toolbar geometry cleanup")
+forbid(search_bar, "SongRec", "MUSIC-R01 SongRec retirement")
 
 require(motion, 'readonly property string mode: "slide"', "immutable motion")
 require(waffle, "ConnectedSurfaceFrame {", "Waffle compatibility")

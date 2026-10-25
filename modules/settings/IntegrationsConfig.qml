@@ -46,7 +46,7 @@ ContentPage {
             return true
         }
         activePlugin = "management"
-        activeSection = label.includes("music") || label.includes("apps") ? "apps" : "calendar"
+        activeSection = "calendar"
         return true
     }
     function selectCapability(value): void {
@@ -252,12 +252,11 @@ ContentPage {
         }
     }
     SettingsTaskNavigator {
-        visible: root.activePlugin === "management"
+        visible: root.activePlugin === "management" && options.length > 1
         showIntro: false
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
-        options: [{displayName: "Calendar", icon: "calendar_month", value: "calendar"},
-                  {displayName: "Applications", icon: "apps", value: "apps"}]
+        options: [{displayName: "Calendar", icon: "calendar_month", value: "calendar"}]
     }
     SettingsCardSection {
         settingsTaskSection: "calendar"
@@ -683,44 +682,6 @@ ContentPage {
                             }
                         }
                     }
-                }
-            }
-        }
-    }
-    SettingsCardSection {
-        settingsTaskSection: "apps"
-        visible: root.activePlugin === "management" && root.activeSection === "apps"
-        expanded: true
-        icon: "music_cast"
-        title: Translation.tr("Music Recognition")
-
-        SettingsGroup {
-            ConfigSpinBox {
-                icon: "timer_off"
-                text: Translation.tr("Total duration timeout (s)")
-                value: Config.options?.musicRecognition?.timeout ?? 16
-                from: 10
-                to: 100
-                stepSize: 2
-                onValueChanged: {
-                    Config.setNestedValue("musicRecognition.timeout", value)
-                }
-                StyledToolTip {
-                    text: Translation.tr("Maximum time to wait for music recognition result")
-                }
-            }
-            ConfigSpinBox {
-                icon: "av_timer"
-                text: Translation.tr("Polling interval (s)")
-                value: Config.options?.musicRecognition?.interval ?? 4
-                from: 2
-                to: 10
-                stepSize: 1
-                onValueChanged: {
-                    Config.setNestedValue("musicRecognition.interval", value)
-                }
-                StyledToolTip {
-                    text: Translation.tr("How often to check for recognition result")
                 }
             }
         }

@@ -602,10 +602,17 @@ Singleton {
 
             const styleMigration = Object.assign({},
                 FamilyPolicy.migrateMaterial(root._jsonMirror),
-                FamilyPolicy.migrateContentOpacity(root._jsonMirror));
+                FamilyPolicy.migrateContentOpacity(root._jsonMirror),
+                FamilyPolicy.migrateRetiredToggles(root._jsonMirror));
+            if (root._jsonMirror && Object.prototype.hasOwnProperty.call(root._jsonMirror, "musicRecognition")) {
+                delete root._jsonMirror.musicRecognition;
+                root._styleMigrationWritePending = true;
+            }
             if (Object.keys(styleMigration).length) {
                 root._styleMigrationWritePending = true;
                 root.setNestedValues(styleMigration);
+            } else if (root._styleMigrationWritePending) {
+                fileWriteTimer.restart();
             }
             root._reconcileMandatoryPanels();
             if (root._loadPath !== root.filePath) {
@@ -2583,11 +2590,6 @@ Singleton {
                 property bool monitorGpu: true
             }
 
-            property JsonObject musicRecognition: JsonObject {
-                property int timeout: 16
-                property int interval: 4
-            }
-
             property JsonObject voiceSearch: JsonObject {
                 property int duration: 5
                 property string provider: "auto"
@@ -3151,7 +3153,7 @@ Singleton {
                     property bool showUnreadCount: true
                 }
                 property JsonObject actionCenter: JsonObject {
-                    property list<string> toggles: ["network", "hotspot", "bluetooth", "easyEffects", "powerProfile", "idleInhibitor", "nightLight", "darkMode", "antiFlashbang", "cloudflareWarp", "mic", "musicRecognition", "notifications", "onScreenKeyboard", "gameMode", "screenSnip", "colorPicker"]
+                    property list<string> toggles: ["network", "hotspot", "bluetooth", "easyEffects", "powerProfile", "idleInhibitor", "nightLight", "darkMode", "antiFlashbang", "cloudflareWarp", "mic", "notifications", "onScreenKeyboard", "gameMode", "screenSnip", "colorPicker"]
                 }
                 property JsonObject calendar: JsonObject {
                     property bool force2CharDayOfWeek: true

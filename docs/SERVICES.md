@@ -29,7 +29,6 @@
 | **MprisController** | MPRIS player management. Filters real players, retains legacy YT Music deduplication compatibility, tracks the active player with a grace period for track transitions, and binds MPD Music to the matching default or legacy Hadalis-named `mpd-mpris` instance. IPC target: `mpris`. |
 | **LocalMusic** | Left Sidebar MPD frontend. Reads MPD songs/saved playlists/queue, performs MPD-only database/queue operations, and requests an endpoint-matched `mpd-mpris` player from MprisController for normal transport. |
 | **YtMusic** | Legacy YouTube Music compatibility backend retained in source while the Left Sidebar has moved to `LocalMusic`; it is no longer the user-facing sidebar music route. IPC target: `ytmusic`. |
-| **SongRec** | Music recognition via SongRec (Shazam-like audio fingerprinting). |
 
 ## System
 

@@ -83,7 +83,6 @@ pkgbase = alis-shell
 	optdepends = plasma-browser-integration: browser MPRIS sessions and artwork
 	optdepends = plasma-integration: Qt platform theme integration
 	optdepends = qt6ct: Qt theme configuration
-	optdepends = songrec: music recognition support
 	optdepends = socat: optional EasyEffects control transport for equalizer
 	optdepends = swappy: screenshot annotation helpers
 	optdepends = tesseract: OCR-backed screenshot tools

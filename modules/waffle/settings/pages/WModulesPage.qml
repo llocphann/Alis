@@ -71,7 +71,6 @@ WSettingsPage {
         { id: "onScreenKeyboard", label: Translation.tr("On-Screen Keyboard"), icon: "keyboard"       },
         { id: "cloudflareWarp",   label: Translation.tr("Cloudflare WARP"),   icon: "cloudflare"     },
         { id: "gameMode",         label: Translation.tr("Game Mode"),          icon: "games"          },
-        { id: "musicRecognition", label: Translation.tr("Music Recognition"),  icon: "music-note-2"   },
         { id: "screenSnip",       label: Translation.tr("Screen Snip"),        icon: "cut"            },
         { id: "colorPicker",      label: Translation.tr("Color Picker"),       icon: "eyedropper"     }
     ]

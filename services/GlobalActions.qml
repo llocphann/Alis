@@ -355,15 +355,6 @@ Singleton {
             }
         },
         {
-            id: "music-recognition",
-            name: Translation.tr("Recognize Music"),
-            description: Translation.tr("Identify the currently playing song"),
-            icon: "music_note",
-            category: "tools",
-            keywords: ["shazam", "recognize", "music", "song", "identify", "songrec"],
-            execute: () => { SongRec.toggleRunning() }
-        },
-        {
             id: "open-notepad",
             name: Translation.tr("Open Notepad"),
             description: Translation.tr("Open the quick notepad in the sidebar"),

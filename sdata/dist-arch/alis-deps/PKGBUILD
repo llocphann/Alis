@@ -166,7 +166,6 @@ optdepends=(
   'cava: audio visualizer for bar'
   'easyeffects: optional audio effects and equalizer backend'
   'socat: optional EasyEffects control transport for equalizer'
-  'songrec: song recognition'
   'translate-shell: translation widget'
   'hyprpicker: color picker'
   'alis-workflow-parser: native QML parser capability for Code Workflow'
