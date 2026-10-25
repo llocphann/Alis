@@ -92,7 +92,7 @@ function eventColorIdentity(event, source) {
     if (id!==undefined && id!==null && id!=="") {
         // Numeric JSON IDs and legacy numeric-string IDs describe one record.
         if ((typeof id==="number" || typeof id==="string")
-                && /^\\d+$/.test(String(id)) && Number.isSafeInteger(Number(id)))
+                && /^\d+$/.test(String(id)) && Number.isSafeInteger(Number(id)))
             return origin+":id:"+String(Number(id));
         return origin+":id:"+String(id);
     }
@@ -105,7 +105,7 @@ function eventHue(event, source) {
         ? event?.uid ?? event?.iCalUID ?? event?.externalId ?? event?.id
         : event?.id ?? event?.uid ?? event?.iCalUID ?? event?.externalId;
     const number=(typeof id==="number" || typeof id==="string")
-        && /^\\d+$/.test(String(id)) ? Number(id) : NaN;
+        && /^\d+$/.test(String(id)) ? Number(id) : NaN;
     if (Number.isSafeInteger(number) && number>=0) {
         // Golden-angle rotation spaces consecutive numeric IDs across the
         // wheel (~137.5°), not adjacent hues or repeating 8-color buckets.
