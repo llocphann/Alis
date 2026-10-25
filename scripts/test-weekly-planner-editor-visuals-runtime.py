@@ -15,6 +15,8 @@ import qs.modules.dashboard
 Window {
  id:root;visible:true;width:1260;height:820;color:"#111820"
  property int frameRequest:0
+ property int presentedFrames:0
+ onFrameSwapped:presentedFrames++
  Rectangle {width:1;height:1;z:100000;color:root.frameRequest%2?"#111821":"#111820"}
  Component.onCompleted:Quickshell.watchFiles=false
  Item {
@@ -43,6 +45,10 @@ Window {
    return find(planner,"plannerInlineEventsEditor")}
   function capture(name){
    if(!Quickshell.env("PLANNER_VISUAL_EVIDENCE"))return
+   check(waitForPolish(root,2500),name+": window layout polish deadline")
+   const presented=root.presentedFrames
+   root.frameRequest++;root.update()
+   tryVerify(()=>root.presentedFrames>presented,2500,name+": presentation deadline")
    let done=false,saved=false
    check(canvas.grabToImage(result=>{saved=result.saveToFile(
     Quickshell.env("PLANNER_VISUAL_EVIDENCE")+"/"+name+".png");done=true}),name+": capture refused")
