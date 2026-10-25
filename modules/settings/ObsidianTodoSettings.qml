@@ -27,12 +27,12 @@ Item {
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
             color: Appearance.colors.colSubtext
-            text: Translation.tr("Install Hadalird; enable Obsidian in Settings → Integrations.")
+            text: Translation.tr("Install Alis-Intergration; enable Obsidian in Settings → Integrations.")
         }
         DialogButton {
             objectName: "hadalisTodoFallbackRestore"
             visible: Todo.backend === "obsidian"
-            buttonText: Translation.tr("Use Hadalis")
+            buttonText: Translation.tr("Use Alis")
             onClicked: Todo.reactivateInternal()
         }
     }

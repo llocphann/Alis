@@ -124,7 +124,7 @@ Item {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: Appearance.colors.colSubtext
-                text: "Install Hadalird and enable this integration in Settings → Integrations."
+                text: "Install Alis-Intergration and enable this integration in Settings → Integrations."
             }
         }
     }

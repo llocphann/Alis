@@ -46,7 +46,7 @@ WSettingsPage {
     }
     WSettingsInfoBar {
         visible: !content.item
-        message: Translation.tr("Install Hadalird; enable TLP in Settings → Integrations.")
+        message: Translation.tr("Install Alis-Intergration; enable TLP in Settings → Integrations.")
     }
     WSettingsButton {
         visible: !content.item

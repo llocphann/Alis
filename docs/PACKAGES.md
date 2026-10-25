@@ -278,50 +278,34 @@ Run `inir service disable` as each affected user before removing `inir-shell` or
 
 For release-specific version/source invariants, see [RELEASING.md](RELEASING.md).
 
-## Hadalird optional system gateway on Arch
+## Alis-Intergration optional system gateway on Arch
 
-Hadalird's regular package, downloaded through **Hadalis → Settings →
-Integrations**, is user-owned. It does not need root and can be used for
-Obsidian without the optional TLP/Thinkfan system helpers.
+The regular optional package is user-owned and managed through Settings →
+Integrations → Management. It can run Obsidian integration without the
+optional TLP/Thinkfan system helpers. Workers remain disabled until selected.
 
-For TLP/Thinkfan system helper management, the trusted **Hadalis Arch system
-package** (`inir-shell` or `inir-shell-git`) additionally owns
-`/usr/libexec/inir-hadalird-system-provision` and
-`/usr/share/polkit-1/actions/org.inir.hadalird-system-provision.policy`.
-These two root-owned files must arrive through the system package manager;
-`inir update`, `./setup update`, and installing Hadalird from Settings
-update *user-mode shell files* only. They cannot safely bootstrap the
-system-side Polkit gateway from user-writable source files.
+Use `./setup integrations install --dry-run` to review the explicit package
+and system-helper stages, then `./setup integrations install` to confirm
+them. `reinstall`, `update`, `rollback`, `remove` and `status` use the same
+supported lifecycle. Default core setup and passive Settings never provision
+helpers; the core `--integration-helpers` flag is an explicit opt-in.
 
-The non-VCS Arch recipe's reviewed pre-release source snapshot has been
-advanced to include these files; both Arch recipes declare them and keep
-their `.SRCINFO` metadata synchronized. A source checkout does not imply
-either package is actually installed. After a trusted package
-install/upgrade, use **Check helper status**, then explicitly consent to
-**Install system helpers** if needed. This is separate from enabling any
-integration. No default action starts a service, changes a TLP policy, alters
-battery charge thresholds, or changes fan speed.
+Full Arch packages (`alis-shell` / `alis-shell-git`) own the trusted gateway
+at `/usr/libexec/alis-hadalird-system-provision` and its policy at
+`/usr/share/polkit-1/actions/org.alis.hadalird-system-provision.policy`.
+These installed names are security compatibility contracts. On Arch repo-copy
+installs, explicit setup can build the reviewed `alis-hadalird-gateway`
+package as the regular user and request normal administrator authorization
+for installation. A source checkout does not prove any package is installed.
 
-If a machine is running only a `repo-setup` installation, the optional
-user-package UI remains usable, but the *privileged* helper controls remain
-unavailable until the maintainer has installed a supported system package.
-Do not use an ad-hoc `sudo cp` of downloaded helpers or run the downloaded
-installer as root.
+The gateway checks fixed approved helper/policy/schema hashes. Its existing
+authorization IDs, native policy wording and permissions remain compatible;
+UI rebranding never silently replaces security payloads. Native installed
+ownership, authorization and Owner acceptance remain separate from fixture
+tests. Do not bootstrap a root gateway by copying downloaded files as root.
 
-## Repo-copy optional integrations on Arch
-
-Hadalis supports the existing repo-copy/repo-setup shell without requiring
-`inir-shell` or `inir-shell-git`. The separate user-level Hadalird package
-is managed in Settings. On Arch, the optional system gateway can also be
-packaged separately as `inir-hadalird-gateway`, preserving the shell install.
-
-The small standalone package ships the audited gateway and policy only.
-The package build and integrity checks happen as the regular user. System
-installation requires an explicit confirmation and normal administrator
-authentication through the Arch package manager. The separate hardware
-helper install remains opt-in. No fan, battery charging or TLP configuration
-is changed by installing the gateway alone.
-
-Remove the standalone gateway package before switching to a full
-`inir-shell` package to avoid overlapping file ownership. Native system
-authorization and rollback still require owner-machine acceptance.
+`./setup integrations status` reconciles package and system receipts. Inspect
+uncertain effects before explicit `status --acknowledge-uncertain` and retry;
+the lifecycle does not replay uncertain actions. No default action starts a
+service, changes TLP policy, alters charging thresholds or changes fan speed.
+User configs, existing releases, notes and vaults survive removal/rollback.

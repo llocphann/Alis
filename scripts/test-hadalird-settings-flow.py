@@ -61,7 +61,7 @@ for i, match in enumerate(flows):
     assert not re.search(r"\bwidth\s*:\s*parent\.width\b", outer), (
         f"Flow #{i + 1} bypasses Layout width management"
     )
-    expected = "Install Hadalird"
+    expected = "Install Alis-Intergration"
     assert expected in inside, f"Flow #{i + 1} changed roles or was emptied"
 
 assert '"Refresh"' in qml

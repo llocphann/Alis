@@ -256,7 +256,7 @@ def main() -> None:
 
     check("Hadalird.session?.thinkfan" in thinkfan_service, "fan facade lost its optional owner")
     check("Process {" not in thinkfan_service and "Timer {" not in thinkfan_service, "fan facade retained duplicate polling")
-    check("Hadalird" in thinkfan_docs, "fan documentation must identify the optional owner")
+    check("[Alis-Intergration](https://github.com/llocphann/Alis-Intergration)" in thinkfan_docs, "fan documentation must identify the official optional owner")
 
     if failures:
         print("ThinkFan/System Monitor contract regression(s):")

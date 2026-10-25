@@ -12,7 +12,7 @@ Use the setup-owned uninstall path:
 
 This path can identify the active user and safely stop `alis.service`, remove Alis-owned user service wiring, back up user state, and preserve shared resources according to the interactive choices. See [Setup & Updates](SETUP.md#uninstall) for the complete repo-managed behavior.
 
-Repo-managed uninstall preserves optional Hadalird ThinkFan and TLP integration helpers, profiles and running system services. Remove those separately through Hadalird or their package manager when explicitly intended. Core cleanup never removes the upstream `thinkfan` package, disables/stops `thinkfan.service`, or deletes `/etc/thinkfan.yaml` / `/etc/thinkfan.conf`.
+Repo-managed uninstall preserves optional Alis-Intergration ThinkFan and TLP integration helpers, profiles and running system services. Remove those separately through Alis-Intergration or their package manager when explicitly intended. Core cleanup never removes the upstream `thinkfan` package, disables/stops `thinkfan.service`, or deletes `/etc/thinkfan.yaml` / `/etc/thinkfan.conf`.
 
 ## Manual package-style installation (`sudo make install`)
 
@@ -28,7 +28,7 @@ sudo make uninstall
 
 If non-default Makefile variables were used for installation, pass the same values to `make uninstall` so the same system paths are removed.
 
-The ordering matters: after `make uninstall` removes the launcher, the normal `alis service ...` cleanup commands are no longer available. `make uninstall` removes the installed system payload, service template, and desktop metadata that it owns; it intentionally does not recursively alter arbitrary user home directories. The core Make install/uninstall does not manage optional privileged ThinkFan, battery, Hadalird or TLP integration files. Remove those separately through their installer or package manager.
+The ordering matters: after `make uninstall` removes the launcher, the normal `alis service ...` cleanup commands are no longer available. `make uninstall` removes the installed system payload, service template, and desktop metadata that it owns; it intentionally does not recursively alter arbitrary user home directories. The core Make install/uninstall does not manage optional privileged ThinkFan, battery, Alis-Intergration or TLP integration files. Remove those separately through their installer or package manager.
 
 If the system payload was already removed first, clean only the affected user's stale service state:
 

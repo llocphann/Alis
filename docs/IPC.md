@@ -901,16 +901,27 @@ alis ipc hadanion status
 
 ---
 
-### hadalird
+### integrations
 
-Optional TLP, Thinkfan and Obsidian package discovery. Integration selections
+Alis-Intergration: optional TLP, Thinkfan and Obsidian package discovery. Integration selections
 remain under Settings → Integrations; discovery does not install or enable a
 package.
 
 | Function | Description |
 |----------|-------------|
-| `refresh` | Recheck the installed Hadalird package identity and reload selected integrations |
+| `refresh` | Recheck the installed Alis-Intergration package identity and reload selected integrations |
 | `status` | Return package availability, enabled state, diagnostic, version, source SHA and selected integration states as JSON |
+
+---
+
+### hadalird
+
+Legacy API 1 alias for `integrations`; both targets use the same package, settings and worker owner.
+
+| Function | Description |
+|----------|-------------|
+| `refresh` | Recheck Alis-Intergration through the preserved alias |
+| `status` | Return the same Integration status JSON |
 
 ---
 

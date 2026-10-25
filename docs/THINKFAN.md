@@ -1,16 +1,16 @@
 # ThinkFan Integration
 
-Hadalis can expose ThinkFan status and switch between firmware-owned and ThinkFan-managed fan control. This integration is optional: the shell continues to run when ThinkFan, the helper, the service, or hardware telemetry is unavailable.
+Alis can expose ThinkFan status and switch between firmware-owned and ThinkFan-managed fan control. This integration is optional: the shell continues to run when ThinkFan, the helper, the service, or hardware telemetry is unavailable.
 
 ## Components
 
 The integration has three pieces:
 
-- `services/ThinkFanService.qml` is the Hadalis host facade.
-  - delegates to the enabled optional Hadalird worker;
+- `services/ThinkFanService.qml` is the Alis host facade.
+  - delegates to the enabled optional Alis-Intergration worker;
   - exposes status/control to existing Settings and System Monitor consumers;
   - returns unavailable state when the package or integration is absent. The
-    Hadalird worker owns polling, helper execution and timeout handling.
+    Alis-Intergration worker owns polling, helper execution and timeout handling.
 - `/usr/libexec/inir-thinkfan`
   - reports ThinkFan/service/hardware state as JSON with `--status`;
   - applies `managed` or `firmware` ownership when invoked as root;
@@ -19,7 +19,7 @@ The integration has three pieces:
   - authorizes the exact installed helper through Polkit;
   - allows it without a password prompt only for the active local session, while inactive/non-local subjects remain denied.
 
-[Hadalird](https://github.com/llocphann/Hadalird) owns the optional worker, helper and policy. Hadalis source/Make/Arch installation does not install, reset or remove them. Use Settings → Integrations to explicitly install Hadalird and its helpers, then enable Thinkfan. Helper provisioning uses the trusted system gateway and native authorization; it does not enable fan control. The current Nix package does not provision these privileged system-level files; see [NixOS / Home Manager](NIXOS.md#privileged-integration-limitation).
+[Alis-Intergration](https://github.com/llocphann/Alis-Intergration) owns the optional worker, helper and policy. Alis source/Make/Arch installation does not install, reset or remove them. Use Settings → Integrations to explicitly install Alis-Intergration, and `./setup integrations install` for its system helpers, then enable Thinkfan. Helper provisioning uses the trusted system gateway and native authorization; it does not enable fan control. The current Nix package does not provision these privileged system-level files; see [NixOS / Home Manager](NIXOS.md#privileged-integration-limitation).
 
 ## Prerequisites
 
@@ -28,13 +28,13 @@ To use managed fan control, the machine must provide all of the following:
 1. the `thinkfan` executable;
 2. a system `thinkfan.service` visible to `systemctl`;
 3. a valid ThinkFan configuration, normally `/etc/thinkfan.yaml` or `/etc/thinkfan.conf`;
-4. the Hadalird helper at `/usr/libexec/inir-thinkfan`;
-5. the Hadalird Polkit policy for privileged profile changes;
+4. the Alis-Intergration helper at `/usr/libexec/inir-thinkfan`;
+5. the Alis-Intergration Polkit policy for privileged profile changes;
 6. an active local desktop session recognized by Polkit. The shipped policy does not prompt that active session for these narrowly scoped helper operations.
 
-The Arch `inir-shell` packages treat `thinkfan` as an optional dependency. Installing Hadalis therefore does not by itself guarantee that `thinkfan.service` or a machine-specific ThinkFan configuration exists.
+The Arch `alis-shell` packages treat `thinkfan` as an optional dependency. Installing Alis therefore does not by itself guarantee that `thinkfan.service` or a machine-specific ThinkFan configuration exists.
 
-ThinkFan configuration is hardware-specific. Hadalis does not invent fan curves or sensor mappings automatically; configure and validate ThinkFan for the machine before enabling managed mode.
+ThinkFan configuration is hardware-specific. Alis does not invent fan curves or sensor mappings automatically; configure and validate ThinkFan for the machine before enabling managed mode.
 
 ## Status contract
 
@@ -55,7 +55,7 @@ The helper reports JSON containing:
 - fan RPM/level when the kernel exposes compatible ThinkPad ACPI telemetry;
 - a machine-readable reason when the integration is unavailable or under firmware control.
 
-Hadalis treats malformed output, an unsupported schema, helper launch failures, and status timeouts as unavailable state rather than assuming fan control succeeded.
+Alis treats malformed output, an unsupported schema, helper launch failures, and status timeouts as unavailable state rather than assuming fan control succeeded.
 
 ## Switching profiles
 
@@ -95,13 +95,13 @@ pkexec /usr/libexec/inir-thinkfan --set-level auto
 pkexec /usr/libexec/inir-thinkfan --set-level 3
 ```
 
-**Safety:** a fixed level bypasses temperature-based fan curves. Use **Auto** unless the machine's thermal behavior is understood and monitored. Hadalis deliberately does not edit `/etc/thinkfan.yaml` or `/etc/thinkfan.conf`, because sensor mappings and safe temperature thresholds are machine-specific.
+**Safety:** a fixed level bypasses temperature-based fan curves. Use **Auto** unless the machine's thermal behavior is understood and monitored. Alis deliberately does not edit `/etc/thinkfan.yaml` or `/etc/thinkfan.conf`, because sensor mappings and safe temperature thresholds are machine-specific.
 
 ## Hardware telemetry
 
 Fan RPM and fan level are read only when `/proc/acpi/ibm/fan` is readable. This interface is hardware/kernel-specific. Direct writes additionally require `/sys/module/thinkpad_acpi/parameters/fan_control` to report an enabled state. A missing RPM, level, or direct-control capability does not by itself mean ThinkFan service control is broken; the service state remains authoritative for managed ownership.
 
-On systems without that interface, Hadalis can still report whether ThinkFan is installed, active and enabled, but RPM/level may remain unavailable.
+On systems without that interface, Alis can still report whether ThinkFan is installed, active and enabled, but RPM/level may remain unavailable.
 
 ## Troubleshooting
 
@@ -117,7 +117,7 @@ command -v thinkfan
 If the helper is unavailable, check Gateway/Helpers status in Settings →
 Integrations, then explicitly select Install helpers or Reinstall helpers.
 Provisioning requires the trusted root-owned gateway; follow the current
-[Hadalird installation guide](https://github.com/llocphann/Hadalird) if it is
+[Alis-Intergration installation guide](https://github.com/llocphann/Alis-Intergration) if it is
 missing. Core `inir-shell` updates do not repair independently owned optional
 helpers. Preserve package-manager ownership when repairing system files.
 
@@ -135,16 +135,16 @@ If managed mode fails to start, inspect the system service journal:
 journalctl -u thinkfan.service -b
 ```
 
-If the shell reports an apply-start failure, verify that `/usr/bin/pkexec`, the Hadalird helper and the current Polkit policy are installed, and that the desktop session is recognized as active. A stale pre-update policy can still request administrator authentication until the packaged/system policy is refreshed.
+If the shell reports an apply-start failure, verify that `/usr/bin/pkexec`, the Alis-Intergration helper and the current Polkit policy are installed, and that the desktop session is recognized as active. A stale pre-update policy can still request administrator authentication until the packaged/system policy is refreshed.
 
 If the shell reports an apply timeout, inspect ThinkFan/systemd directly before retrying. The UI intentionally times out privileged apply operations instead of leaving its state permanently busy.
 
-For ThinkFan configuration or sensor/fan-curve errors, validate ThinkFan outside Hadalis first. Hadalis never rewrites ThinkFan's machine-specific sensors or temperature curve. Its optional per-power-profile control is a separate guarded ThinkPad ACPI level override and should remain on Auto unless the hardware's cooling behavior is understood.
+For ThinkFan configuration or sensor/fan-curve errors, validate ThinkFan outside Alis first. Alis never rewrites ThinkFan's machine-specific sensors or temperature curve. Its optional per-power-profile control is a separate guarded ThinkPad ACPI level override and should remain on Auto unless the hardware's cooling behavior is understood.
 
 ## Packaging notes
 
 - Core source/Make/Arch install and removal preserve the independently installed optional package, helpers, profiles and system services.
-- Hadalird installs user-scoped immutable releases separately; its explicit `install-helpers` target stages helper/policy/schema paths without writing hardware profiles.
+- Alis-Intergration installs user-scoped immutable releases separately; its explicit `install-helpers` target stages helper/policy/schema paths without writing hardware profiles.
 - `inir-shell`/`inir-shell-git` advertise ThinkFan as optional. Configure and enable the integration separately.
 - Nix currently packages the shell/runtime but does not install the privileged helper/policy into `/usr/libexec` and `/usr/share/polkit-1/actions`.
 

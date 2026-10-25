@@ -45,7 +45,7 @@ Singleton {
             Config.setNestedValue("integrations.hadalird." + pluginId, value === true)
     }
 
-    // Explicit user action only. Hadalis owns transport and the signed-off
+    // Explicit user action only. Alis owns transport and the signed-off
     // optional-package lifecycle, not an external installer run by the user.
     function manage(action): void {
         if (managerBusy || probe.running || !["check","install","remove","rollback",
@@ -174,7 +174,7 @@ Singleton {
             try {
                 const result = JSON.parse(String(managerOutput.text ?? "").trim())
                 if (exitCode !== 0 || result.ok !== true) {
-                    root.managerError = String(result.error ?? "Hadalird operation failed")
+                    root.managerError = String(result.error ?? "Alis-Intergration operation failed")
                 } else {
                     root.managerMessage = String(result.message ?? (
                         root.managerAction === "check"
@@ -199,7 +199,7 @@ Singleton {
                     }
                 }
             } catch (_error) {
-                root.managerError = String(managerStderr.text ?? "Could not read Hadalird manager result").slice(0, 256)
+                root.managerError = String(managerStderr.text ?? "Could not read Alis-Intergration manager result").slice(0, 256)
             }
             root.authorizationPending = false
             if (root._restoreEmbeddedSettings) {
@@ -224,7 +224,7 @@ Singleton {
         onTriggered: {
             managerProcess.running = false
             root.managerBusy = false
-            root.managerError = "Hadalird package operation timed out"
+            root.managerError = "Alis-Intergration package operation timed out"
             root.authorizationPending = false
             if (root._restoreEmbeddedSettings) {
                 root._restoreEmbeddedSettings = false
@@ -234,6 +234,12 @@ Singleton {
             Qt.callLater(root.refreshSystemStatus)
         }
     }
+    IpcHandler {
+        target: "integrations"
+        function refresh(): void {root.refresh()}
+        function status(): string {return root.status()}
+    }
+    // API 1 compatibility: both targets address this single owner.
     IpcHandler {
         target: "hadalird"
         function refresh(): void {root.refresh()}

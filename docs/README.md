@@ -10,7 +10,7 @@
 | Runtime and ownership | [Architecture](ARCHITECTURE_OVERVIEW.md), [Runtime](RUNTIME.md), [Services](SERVICES.md), [Modules](MODULES.md), [IPC](IPC.md) |
 | Presentation | [Panel families](PANEL_FAMILIES.md), [Abyss liquid mass](ABYSS_LIQUID_MASS.md), [Connected surfaces](PERIMETER.md), [Surface contracts](SHELL_SURFACE_CONTRACTS.md), [Popup geometry](abyss/PYRAMID_POPUP_V2.md) |
 | Media and themes | [Audio/media](AUDIO_MEDIA.md), [Wallpaper](WALLPAPER.md), [Theming](THEMING_ARCHITECTURE.md), [Notifications](NOTIFICATIONS.md) |
-| Optional packages | [Hadalird integrations](https://github.com/llocphann/Hadalird), [Thinkfan host guide](THINKFAN.md), [Hadanion host guide](HADANION.md) |
+| Optional packages | [Alis-Intergration integrations](https://github.com/llocphann/Alis-Intergration), [Thinkfan host guide](THINKFAN.md), [Hadanion host guide](HADANION.md) |
 | Validation and delivery | [Canonical validation](VALIDATION.md), [Release gates](RELEASING.md), [Packages](PACKAGES.md), [Limitations](LIMITATIONS.md) |
 | Optimization research | [Research index](optimization/README.md), [Canonical audit](optimization/STRICT_LOSSLESS_GPU_RAM_CPU_AUDIT.md), [Guidelines](optimization/GUIDELINES.md) |
 
