@@ -52,6 +52,18 @@ function gestureKey(row) {
     return JSON.stringify([row.source,String(row.event.id),row.occurrenceIndex,
         row.virtual ? row.plannerOriginalStartIso : "saved"]);
 }
+// An Event ID can own several saved dates and projected recurring instances.
+// A plain click/drag must select those exact *visible, selectable* rows so
+// the visual group and atomic gesture targets cannot silently disagree.
+// Explicit Ctrl toggles and Shift ranges remain per-occurrence operations.
+function groupKeys(rows,target) {
+    if (!canSelect(target)) return [];
+    const source=target.source, id=String(target.event.id);
+    return Array.from(new Set((rows || []).filter(function(row) {
+        return canSelect(row) && row.source===source
+            && String(row.event.id)===id;
+    }).map(key).filter(Boolean)));
+}
 function ordered(days) {
     const unique=new Set(),rows=[];
     for (const day of days || []) {
