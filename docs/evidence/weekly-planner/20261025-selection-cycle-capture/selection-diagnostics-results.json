@@ -1,0 +1,299 @@
+[
+  {
+    "name": "test-weekly-planner-policy.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 1.2,
+    "tail": "PASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: UTC\nPASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: Asia/Ho_Chi_Minh\nPASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: America/New_York\nPASS Weekly Planner civil dates, lanes, multi-day, recurrence, import/immutability, bounds and DST: Europe/Berlin\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-selection.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "WEEKLY_PLANNER_SELECTION_PASS: Ctrl toggle, Shift range, all-day, guards, move/resize\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-batch.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "WEEKLY_PLANNER_BATCH_PASS: atomic move, resize, delete, grouped ID, no mutation\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-event-focus.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "WEEKLY_PLANNER_EVENT_FOCUS_PASS: saved moves rebase date/time without wiping unsaved form\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "WEEKLY_PLANNER_MULTIDATE_PASS: modifier choice, cycle eligibility, recurring groups, DST and identity\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-legacy-recurrence.mjs",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: series must not enter batch delete\n\ntrue !== false\n\n    at file://<private-evidence>/source-dfcb50924/scripts/test-weekly-planner-legacy-recurrence.mjs:35:8\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: true,\n  expected: false,\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v22.23.2\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "test-weekly-planner-recurring-rollover.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.25,
+    "tail": "PASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: UTC\nPASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: Asia/Ho_Chi_Minh\nPASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: America/New_York\nPASS actual Events due-handler recovery, stable IDs/history, idempotent rollover and next-week projection: Europe/Berlin\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-event-occurrences-policy.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "PASS canonical multi-date Events, dedup identity, read-only and drag/resize policy\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-agenda-upcoming-runtime-compat.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.03,
+    "tail": "AGENDA_UPCOMING_COMPAT_PASS: QML array compatibility, occurrence order, startup and empty state\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-calendar-event-dot-layout.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.03,
+    "tail": "CALENDAR_EVENT_DOT_LAYOUT_PASS: 464 assertions\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-pointer-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.03,
+    "tail": "WEEKLY_PLANNER_POINTER_SOURCE_PASS: guarded event move + visible top/bottom resize + safe persistence\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multi-selection-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.03,
+    "tail": "WEEKLY_PLANNER_MULTISELECT_CONTRACT_PASS: scroll preserved, select + handles + atomic delete/move\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-expanded-event-editor-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.06,
+    "tail": "WEEKLY_PLANNER_EXPANDED_EDITOR_AND_RESIZE_HOVER_PASS\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-calendar-event-indicators-contract.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "CALENDAR_EVENT_DOTS_PASS: Dashboard and Edge historical indicators, per-event colors, count bounds\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate-gestures.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.3,
+    "tail": "{\"test\":\"multidate-gestures\",\"zone\":\"UTC\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-dfcb50924/\"}\n{\"test\":\"multidate-gestures\",\"zone\":\"Asia/Ho_Chi_Minh\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-dfcb50924/\"}\n{\"test\":\"multidate-gestures\",\"zone\":\"America/New_York\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-dfcb50924/\"}\n{\"test\":\"multidate-gestures\",\"zone\":\"Europe/Berlin\",\"passed\":24,\"failed\":0,\"source_root\":\"<private-evidence>/source-dfcb50924/\"}\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-edited-rollover-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 2.45,
+    "tail": "  INFO qml: PLANNER_EDITED_ROLLOVER_PASS initial-failed-save-retry 17\n  INFO qml: PLANNER_EDITED_ROLLOVER_PASS restart 11\n  INFO qml: PLANNER_EDITED_ROLLOVER_PASS restart 11\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-recurring-storage-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 1.68,
+    "tail": "  INFO qml: PLANNER_RECURRING_STORAGE_PASS initial\n  INFO qml: PLANNER_RECURRING_STORAGE_PASS restart\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate-storage-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.91,
+    "tail": "  INFO qml: PLANNER_MULTIDATE_STORAGE_PASS 14\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-events-durable-snapshot-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 4.9,
+    "tail": "  INFO qml: EVENTS_DURABLE_PASS normal 10 [[\"Alpha\"],[\"Alpha updated\",\"Beta\"]]\n  INFO qml: EVENTS_DURABLE_PASS restart 2 []\n  INFO qml: EVENTS_DURABLE_PASS failure 16 [[\"Alpha\"],[\"Alpha updated\",\"Beta\"],[\"Alpha updated\",\"Beta\",\"Denied\"]]\n  INFO qml: EVENTS_DURABLE_PASS restart 2 []\n  INFO qml: EVENTS_DURABLE_PASS cached 13 [[\"Alpha\"],[\"Alpha updated\",\"Beta\"],[\"Alpha updated\",\"Beta\"]]\n  INFO qml: EVENTS_DURABLE_PASS restart 2 []\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-calendar-event-indicators-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 1.64,
+    "tail": "  INFO qml: CALENDAR_EVENT_DOTS_NATIVE_PASS 532 checks: 42 days, max 3 dots on each Bottom/Right/Top/Left; no overflow marker\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-runtime.py",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 7.33,
+    "tail": "WEEKLY_PLANNER_PNG_PASS 11\n  INFO qml: WEEKLY_PLANNER_NATIVE_PASS 156 11\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-multidate-gestures-runtime.py",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 4.09,
+    "tail": "  INFO: Launching config: \"<private-temp>/alis-multidate-gestures-gbl5rxec/shell.qml\"\n  INFO: Shell ID: \"4f1c4d0b88155c83c8d80e2267a7e20a\" Path ID \"4f1c4d0b88155c83c8d80e2267a7e20a\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/qmv28xyfnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.133977.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of <private-temp>/alis-multidate-gestures-gbl5rxec/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of <private-temp>/alis-multidate-gestures-gbl5rxec/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of <private-temp>/alis-multidate-gestures-gbl5rxec/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n ERROR qml: PLANNER_MULTIDATE_GESTURES_NATIVE_FAIL region did not select its three intersecting cards check@qs:@/qs/shell.qml:18\nrun@qs:@/qs/shell.qml:125\nexpression for onTriggered@qs:@/qs/shell.qml:145\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "native-fractional",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 4.04,
+    "tail": "  INFO: Launching config: \"<private-temp>/alis-multidate-gestures-cv25u7wh/shell.qml\"\n  INFO: Shell ID: \"852f0ea01bb18a76f2732085d39f12e3\" Path ID \"852f0ea01bb18a76f2732085d39f12e3\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/tjx2cxyfnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.136770.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of <private-temp>/alis-multidate-gestures-cv25u7wh/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of <private-temp>/alis-multidate-gestures-cv25u7wh/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of <private-temp>/alis-multidate-gestures-cv25u7wh/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n ERROR qml: PLANNER_MULTIDATE_GESTURES_NATIVE_FAIL region did not select its three intersecting cards check@qs:@/qs/shell.qml:18\nrun@qs:@/qs/shell.qml:125\nexpression for onTriggered@qs:@/qs/shell.qml:145\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "native-waffle",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 4.04,
+    "tail": "  INFO: Launching config: \"<private-temp>/alis-multidate-gestures-titcptqq/shell.qml\"\n  INFO: Shell ID: \"4c2e8597bb277864289cbb7b888ca181\" Path ID \"4c2e8597bb277864289cbb7b888ca181\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/poy2gxyfnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.138243.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of <private-temp>/alis-multidate-gestures-titcptqq/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of <private-temp>/alis-multidate-gestures-titcptqq/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of <private-temp>/alis-multidate-gestures-titcptqq/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n ERROR qml: PLANNER_MULTIDATE_GESTURES_NATIVE_FAIL region did not select its three intersecting cards check@qs:@/qs/shell.qml:18\nrun@qs:@/qs/shell.qml:125\nexpression for onTriggered@qs:@/qs/shell.qml:145\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "native-single-control",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 4.04,
+    "tail": "  INFO: Launching config: \"<private-temp>/alis-multidate-gestures-ti6wku0v/shell.qml\"\n  INFO: Shell ID: \"777c9e2c7f0b05c9d34219f9fdbd9379\" Path ID \"777c9e2c7f0b05c9d34219f9fdbd9379\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/7tz2kxyfnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.139702.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of <private-temp>/alis-multidate-gestures-ti6wku0v/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of <private-temp>/alis-multidate-gestures-ti6wku0v/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of <private-temp>/alis-multidate-gestures-ti6wku0v/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n ERROR qml: PLANNER_MULTIDATE_GESTURES_NATIVE_FAIL region did not select its three intersecting cards check@qs:@/qs/shell.qml:18\nrun@qs:@/qs/shell.qml:125\nexpression for onTriggered@qs:@/qs/shell.qml:145\n\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "event-palette",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.03,
+    "tail": "WEEKLY_PLANNER_THEME_PALETTE_PASS: stable identity, theme palette, gradients, old data, gestures\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "native-original-fractional",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 7.37,
+    "tail": "WEEKLY_PLANNER_PNG_PASS 11\n  INFO qml: WEEKLY_PLANNER_NATIVE_PASS 156 11\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "nested-after",
+    "actual_exit": 1,
+    "expected_exit": 0,
+    "elapsed_seconds": 12.32,
+    "tail": "  INFO: Launching config: \"<private-temp>/alis-weekly-planner-3qhoqovg/shell.qml\"\n  INFO: Shell ID: \"d1b549096ec2a3675111445f2ea71663\" Path ID \"d1b549096ec2a3675111445f2ea71663\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/v823wxyfnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-3.142825.sock\n ERROR quickshell.service.pipewire.loop: Failed to connect pipewire context. Errno: 112\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of <private-temp>/alis-weekly-planner-3qhoqovg/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of <private-temp>/alis-weekly-planner-3qhoqovg/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7fb8c43694c0 but 0x0 is focused\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of <private-temp>/alis-weekly-planner-3qhoqovg/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n  WARN qt.qpa.wayland.textinput: virtual void QtWaylandClient::QWaylandTextInputv3::disableSurface(wl_surface*) Trying to disable 0x7fb8c43694c0 but 0x0 is focused\n ERROR qml: WEEKLY_PLANNER_NATIVE_FAIL compact toolbar must keep the week title visible on a second line check@qs:@/qs/shell.qml:70\nrun@qs:@/qs/shell.qml:256\nexpression for onTriggered@qs:@/qs/shell.qml:462\n\nactual_validator_exit 1\n",
+    "status": "FAIL",
+    "expectation_met": false
+  },
+  {
+    "name": "negative-write-after",
+    "actual_exit": 1,
+    "expected_exit": 1,
+    "elapsed_seconds": 1.77,
+    "tail": "  INFO: Launching config: \"<private-temp>/alis-weekly-planner-blzf6aba/shell.qml\"\n  INFO: Shell ID: \"ee3dfcb4f010dac14a40a4d19f2f91fe\" Path ID \"ee3dfcb4f010dac14a40a4d19f2f91fe\"\n  INFO: Saving logs to \"/run/user/1000/quickshell/by-id/zq438yyfnt/log.qslog\"\n  WARN: $HYPRLAND_INSTANCE_SIGNATURE is unset. Cannot connect to hyprland.\n  INFO qml: CompositorService: Detected Niri with socket: /run/user/1000/niri.wayland-2.146102.sock\n  INFO: Configuration Loaded\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of <private-temp>/alis-weekly-planner-blzf6aba/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[330:5]: Read of <private-temp>/alis-weekly-planner-blzf6aba/state/quickshell/user/gamemode_active failed: File does not exist.\n  WARN scene: QML FileView at @services/GameMode.qml[309:5]: Read of <private-temp>/alis-weekly-planner-blzf6aba/state/quickshell/user/gamemode_active failed: File does not exist.\n  INFO qml: NiriService: Loaded 1 outputs\n ERROR qml: WEEKLY_PLANNER_NATIVE_FAIL empty: PNG write failed check@qs:@/qs/shell.qml:70\ncapture@qs:@/qs/shell.qml:90\nrun@qs:@/qs/shell.qml:99\nexpression for onTriggered@qs:@/qs/shell.qml:462\n\nCONTROLLED_WRITE_FAILURE_EXIT 1 empty_is_directory True\n",
+    "status": "FAIL",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-editor-cycle.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.04,
+    "tail": "PLANNER_EDITOR_CYCLE_PASS: history/current/legacy/Qt sequence/manual draft, no writes\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "baseline-test-weekly-planner-editor-cycle.mjs",
+    "actual_exit": 1,
+    "expected_exit": 1,
+    "elapsed_seconds": 0.04,
+    "tail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: drag must highlight only its own two-day cycle, never saved historical weeks\n+ actual - expected\n\n  [\n+   '2032-10-05',\n+   '2032-10-07',\n+   '2032-10-12',\n+   '2032-10-14',\n    '2032-10-20',\n    '2032-10-21'\n  ]\n\n    at file://<private-evidence>/source-dfcb50924/scripts/test-weekly-planner-editor-cycle.mjs:24:8\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: [\n    '2032-10-05',\n    '2032-10-07',\n    '2032-10-12',\n    '2032-10-14',\n    '2032-10-20',\n    '2032-10-21'\n  ],\n  expected: [ '2032-10-20', '2032-10-21' ],\n  operator: 'deepStrictEqual',\n  diff: 'simple'\n}\n\nNode.js v22.23.2\n",
+    "status": "FAIL",
+    "expectation_met": true
+  },
+  {
+    "name": "test-weekly-planner-recurring-selection.mjs",
+    "actual_exit": 0,
+    "expected_exit": 0,
+    "elapsed_seconds": 0.05,
+    "tail": "PLANNER_RECURRING_SELECTION_PASS: Ctrl/Shift, saved/virtual/mixed atomic edits, rollback and series deletion guards\n",
+    "status": "PASS",
+    "expectation_met": true
+  },
+  {
+    "name": "baseline-test-weekly-planner-recurring-selection.mjs",
+    "actual_exit": 1,
+    "expected_exit": 1,
+    "elapsed_seconds": 0.04,
+    "tail": "node:internal/modules/run_main:123\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Owner regression: recurring cards must support Ctrl/Shift selection\n\nfalse !== true\n\n    at file://<private-evidence>/source-dfcb50924/scripts/test-weekly-planner-recurring-selection.mjs:15:8\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: false,\n  expected: true,\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v22.23.2\n",
+    "status": "FAIL",
+    "expectation_met": true
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "source_sha": "e48ad445a58d0d66654a1f3c5ecbe8b824fe8169",
+  "argv": [
+    "python3",
+    "<private-evidence>/run-capture-cohort.py",
+    "<private-evidence>",
+    "<private-evidence>/focused-e48ad445a"
+  ],
+  "actual_exit": 1,
+  "status": "FAIL",
+  "stop_reason": null,
+  "elapsed_seconds": 89.4,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "c38627f229df9a824efb1b3ff520b21f4c0ecd7bba1b5301dbb66db987d57490"
+}

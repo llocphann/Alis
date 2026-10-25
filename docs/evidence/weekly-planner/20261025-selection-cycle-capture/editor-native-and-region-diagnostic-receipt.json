@@ -1,0 +1,16 @@
+{
+  "source_sha": "36d9dfcdae864db87df4041104e39d94113cf2cb",
+  "argv": [
+    "python3",
+    "<private-evidence>/run-capture-cohort.py",
+    "<private-evidence>/diagnostic-input",
+    "<private-evidence>/diagnostic-results"
+  ],
+  "actual_exit": 1,
+  "status": "FAIL",
+  "stop_reason": null,
+  "elapsed_seconds": 10.0,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "93b16ba46fb7f6eeb6c761d9e3051ecf5683f5f48d73aaad8080c85f4ccca702"
+}

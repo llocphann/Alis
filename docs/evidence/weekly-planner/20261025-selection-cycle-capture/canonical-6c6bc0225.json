@@ -1,0 +1,271 @@
+{
+  "source_sha": "6c6bc0225b3e39b24a9b8a6f10588c98e3e77af8",
+  "supervisor": {
+    "source_sha": "6c6bc0225b3e39b24a9b8a6f10588c98e3e77af8",
+    "argv": [
+      "python3",
+      "/home/llocphann/.local/state/codex/alis-native-checks/01a13aa2-911a-7693-8296-953899dca909/20261024-office/run-canonical-contained.py",
+      "<private-evidence>/source-6c6bc0225",
+      "<private-evidence>/canonical-6c6bc0225"
+    ],
+    "actual_exit": 143,
+    "status": "STOPPED",
+    "stop_reason": "capture_failure_reproduced_source_followup",
+    "elapsed_seconds": 169.6,
+    "owned_at_normal_exit": [],
+    "owned_remaining_after_exit": [],
+    "console_sha256": "1bffb28afed2a2af8acf4cd4fcd9c3f17f2dbe832f11638c3fd67af354190bbf"
+  },
+  "validator": {
+    "actual_validator_exit": -15,
+    "stop_signals_received": [
+      15
+    ]
+  },
+  "status": "STOPPED",
+  "started": 39,
+  "settled": 38,
+  "counts": {
+    "PASS": 31,
+    "FAIL": 7,
+    "SKIP": 0,
+    "UNSETTLED": 1
+  },
+  "checks": [
+    {
+      "number": 1,
+      "name": "host tool preflight",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 2,
+      "name": "build and baseline shell syntax",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 3,
+      "name": "tracked shell/package syntax",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 4,
+      "name": "tracked Python syntax",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 5,
+      "name": "tracked JSON syntax",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 6,
+      "name": "tracked JavaScript syntax",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 7,
+      "name": "tracked Fish syntax",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 8,
+      "name": "Office auto-theming ownership and recovery regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 9,
+      "name": "Monitor arrangement fit, zoom and drag-coordinate regression",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 10,
+      "name": "Retired IME integration source guard",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 11,
+      "name": "Niri selected-fullscreen workspace regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 12,
+      "name": "NotificationCenter anchor hover lease regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 13,
+      "name": "Abyss notification popup geometry transition regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 14,
+      "name": "Abyss Notification closing content snapshot regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 15,
+      "name": "Notification closing frame/model fast path regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 16,
+      "name": "Recording/Notification stable allocator priority",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 17,
+      "name": "Recording-fixed Notification Pyramid visual origin",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 18,
+      "name": "Abyss disabled Waves mass-update regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 19,
+      "name": "Abyss hover scene geometry diagnostic regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 20,
+      "name": "Abyss frame activity diagnostic regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 21,
+      "name": "Shared tooltip hover/click lifecycle contract",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 22,
+      "name": "Native default/custom/styled/Waffle tooltip content lifecycle",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 23,
+      "name": "Native static Panel reveal without content resizing",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 24,
+      "name": "Native dynamic Toast/OSD/Utility and reparented form reveal",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 25,
+      "name": "Native shared-field optimized/unoptimized exact GPU parity",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 26,
+      "name": "Native shared-field transparent-interior exact GPU parity",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 27,
+      "name": "Native shared-field fractional light transparent-interior exact GPU parity",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 28,
+      "name": "Native shared-field fractional light/mask exact GPU parity",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 29,
+      "name": "Native generic Popup delayed-loader reveal and cancellation",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 30,
+      "name": "Native Dashboard/Overview content-ready reveal, reversal and warm expiry",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 31,
+      "name": "Dashboard horizontal gesture and stable page order regression",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 32,
+      "name": "Weekly Planner event drag and both resize handles (regression guard)",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 33,
+      "name": "Native Weekly Planner pointer move, top/bottom resize and isolated calendar fixture",
+      "status": "FAIL",
+      "actual_exit": 1
+    },
+    {
+      "number": 34,
+      "name": "Weekly Planner selected/batch gestures and stored event safeguards",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 35,
+      "name": "Legacy Weekly Planner saved recurring event compatibility and instance safety",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 36,
+      "name": "Weekly Planner legacy multi-date gestures, isolated preview identity and persistence parity",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 37,
+      "name": "Weekly Planner deterministic theme-gradient Event palette and unaffected gestures",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 38,
+      "name": "Native Weekly Planner multi-date gestures, isolated preview and real storage restart",
+      "status": "PASS",
+      "actual_exit": 0
+    },
+    {
+      "number": 39,
+      "name": "Edited legacy Weekly Planner rollover, denied save/retry and restart parity",
+      "status": "UNSETTLED",
+      "actual_exit": null
+    }
+  ],
+  "whole_suite_pass": false
+}

@@ -1,0 +1,16 @@
+{
+  "source_sha": "733dc71dece4baa1c33aa331c3280ff04259f5e3",
+  "argv": [
+    "python3",
+    "<private-evidence>/run-capture-cohort.py",
+    "<private-evidence>/owner-final-input",
+    "<private-evidence>/focused-733dc71de"
+  ],
+  "actual_exit": 0,
+  "status": "PASS",
+  "stop_reason": null,
+  "elapsed_seconds": 87.2,
+  "owned_at_normal_exit": [],
+  "owned_remaining_after_exit": [],
+  "console_sha256": "54fbaaaf5a5ff61b79a9b43e6407f5b55705722e7c3badea8ef356fc827916ff"
+}

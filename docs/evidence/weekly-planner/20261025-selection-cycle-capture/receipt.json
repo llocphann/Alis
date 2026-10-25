@@ -1,0 +1,36 @@
+{
+  "observed_at_utc": "2026-10-25T02:39:17.555427+00:00",
+  "issue": 130,
+  "product_source": "dfcb50924e8c10273a755b77fb470f01b4ef75ce",
+  "focused_source": "733dc71dece4baa1c33aa331c3280ff04259f5e3",
+  "latest_capture_source": "02fbfe05f8d6a77471735dff5cebbb4e9a0330fc",
+  "installed_metadata_sha": "c39535d6e",
+  "owner_acceptance": {
+    "single_event_drag_resize": "OWNER_CONFIRMED",
+    "multi_selection_and_editor_highlights": "OWNER_REPORTED_REGRESSIONS_ON_INSTALLED_BUILD; NEW_PATCH_UNVERIFIED"
+  },
+  "inventory": [
+    "Ctrl/Shift occurrence selection; stable saved/projected keys",
+    "Modified background region selection; ordinary scrolling preserved",
+    "Mixed recurring/one-off move and resize; pure validation before one Events write",
+    "Recurring selection does not authorize series deletion; imported calendars remain read-only",
+    "Editor highlights only the clicked saved cycle; historical slots/templates/unknown values retained",
+    "Untouched editor dates follow drag; unsaved title/manual dates and Cancel remain protected",
+    "Bounded native frame presentation, callback/write validation and 11 complete PNGs"
+  ],
+  "migration": "No bulk rewrite or schema migration. Read-time cycle selection applies to existing records; existing recurrence copy-on-write and per-instance anchors remain. Synthetic persisted fixtures verify restart, metadata/history retention and denied-write behavior.",
+  "evidence_summary": {
+    "ordinary_focused_pass": 31,
+    "intentional_negative_or_baseline_actual_exit_1": 4,
+    "unexpected_focused_fail": 0,
+    "new_native_cycle_checks": "7 initial + 3 restart + 3 repeated restart",
+    "multidate_native_checks": "55 initial + 2 interrupted + 5 restart + 5 repeated restart, each default/fractional/Waffle/single-series control",
+    "original_native_capture_checks": "156 + 11 PNGs at source 733dc71de; new focus candidate not covered by this result"
+  },
+  "limitations": [
+    "Exact 6c6bc0225 full validator reproduces capture timeout; preserved FAIL, bounded source-followup stop",
+    "02fbfe05f adds private capture focus with restoration; inspect its exact final receipt, do not reuse earlier capture PASS",
+    "No automatic installation or desktop restart; physical/multi-output and current Owner acceptance remain pending",
+    "No awaiting-owner label while affected capture validation remains unresolved"
+  ]
+}
