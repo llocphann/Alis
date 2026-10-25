@@ -1772,6 +1772,7 @@ Scope {
                     ? ModuleLayout.adjacentEdge({edge:edge,along:along,span:span},window.width,window.height) : ""
                 outputName: window.outputName
                 open: (window.presented || window.physicalOsdRequested) && field.ready && (Config.options?.enabledPanels ?? []).includes("abyssOnScreenDisplay")
+                    && !(editor.visible && editor.editingPopups)
                     && (GlobalStates.osdVolumeOpen || GlobalStates.osdBrightnessOpen || GlobalStates.osdMicOpen || GlobalStates.osdMediaOpen || GlobalStates.osdKeyboardLayoutOpen)
                     && Geometry.targets(window.outputName,Config.options?.osd?.screenList ?? [],Quickshell.screens.map(s => s.name))
                 edgeInsets: window.physicalOsdResident ? window.physicalInsets : window.bodyInsets(edge,along,span)

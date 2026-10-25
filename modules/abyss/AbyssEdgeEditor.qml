@@ -428,9 +428,10 @@ Item {
     function movePreview(x,y): void {
         const location=Placement.project(x,y,width,height), horizontal=["top","bottom"].includes(location.edge)
         const length=horizontal ? width : height, point=horizontal ? x : y
-        const inset=horizontal ? previewBody.edgeInsets.left : previewBody.edgeInsets.top
-        const endInset=horizontal ? previewBody.edgeInsets.right : previewBody.edgeInsets.bottom
-        const ratio=Math.max(0,Math.min(1,(point-previewBody.span/2-inset)/Math.max(1,length-inset-endInset-previewBody.span)))
+        const targetSpan=(horizontal ? previewBody.contentItem.item?.desiredWidth ?? 390 : previewBody.contentItem.item?.desiredHeight ?? 120)+previewBody.padding*2
+        const inset=Math.max(16,(horizontal ? root.edgeInsets?.left : root.edgeInsets?.top) ?? 0)
+        const endInset=Math.max(16,(horizontal ? root.edgeInsets?.right : root.edgeInsets?.bottom) ?? 0)
+        const ratio=Math.max(0,Math.min(1,(point-targetSpan/2-inset)/Math.max(1,length-inset-endInset-targetSpan)))
         const values=Object.assign({},previewPosition,{edge:location.edge,alignment:"custom",position:ratio})
         const output=outputOnly ? outputName : ""
         editPosition(Presentation.save(draftPositions,previewKind,output,values),previewKind,output,values)

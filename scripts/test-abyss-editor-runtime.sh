@@ -32,6 +32,7 @@ ShellRoot {
         console.error("EDITOR_FAIL",message);root.finished=true;return false
     }
     AbyssSurfaceController { id: liquid }
+    AbyssOsdController { id: osdController }
     TestCase { id:driver;when:false;optional:true }
     function settleControls(): bool {
         // Relocation is intentionally debounced for 90 ms. Let it complete,
@@ -198,6 +199,13 @@ ShellRoot {
                 if(!root.check(editor.previewHost.joinedEdge==="top" && editor.previewHost.record.joinedEdge==="top" && editor.previewHost.record.surface.y===-50,"IPC draft joins the adjacent physical Edge in the shared geometry")) return
                 editor.movePreview(8,editor.height/2)
                 if(!root.check(editor.previewHost.joinedEdge==="" && editor.previewPosition.joinCorner,"moving away suspends the connector without losing its preference")) return
+                editor.movePreview(editor.width-8,editor.height-20)
+                if(!root.check(editor.previewHost.edge==="right" && editor.previewHost.joinedEdge==="bottom","cross-edge drag reaches bottom-right corner on right Edge")) return
+                Config.setNestedValue("osd.timeout",300)
+                osdController.initialized=true
+                GlobalStates.osdRequested("volume")
+                driver.wait(380)
+                if(!root.check(!GlobalStates.osdVolumeOpen && editor.previewHost.open && editor.previewHost.ready && editor.previewHost.inputBounds.width>0,"IPC edit preview remains visible after normal OSD timeout expires")) return
                 if(!root.check(JSON.stringify(Config.options.abyss.positions)===root.beforePositions,"IPC join remains draft-only")) return
                 editor.finish(false)
             }

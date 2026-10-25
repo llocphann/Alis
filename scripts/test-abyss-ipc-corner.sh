@@ -20,7 +20,7 @@ p=base/'modules/abyss/AbyssPerimeter.qml';s=p.read_text()
 variants_id=re.search(r'\bVariants\s*\{\s*id:\s*(\w+)',s).group(1)
 s=s.replace('id: root\n',f'id: root\n    readonly property var qaWindows: {variants_id}.instances\n    readonly property bool qaIPCReady: qaOsdController.initialized\n',1)
 s=s.replace('    AbyssOsdController {}','    AbyssOsdController { id: qaOsdController }',1)
-s=s.replace('id: window\n','id: window\n            property alias qaOsd: osd\n            property alias qaField: field\n',1)
+s=s.replace('id: window\n','id: window\n            property alias qaOsd: osd\n            property alias qaEditor: editor\n            property alias qaField: field\n',1)
 p.write_text(s)
 (base/'config/illogical-impulse').mkdir(parents=True)
 shutil.copy2(repo/'defaults/config.json',base/'config/illogical-impulse/config.json')
@@ -49,7 +49,7 @@ ShellRoot {
                 Config.setNestedValue("performance.reduceAnimations",true)
                 Config.setNestedValue("enabledPanels",["abyssPerimeter","abyssOnScreenDisplay"])
                 GlobalStates.shellEntryReady=true;GlobalStates.deferredPanelsReady=true
-            } else {
+            } else if(root.step<=12) {
                 const index=Math.floor((root.step-1)/3),phase=(root.step-1)%3,edge=root.edges[index]
                 if(phase===0) {
                     Config.setNestedValue("abyss.positions",[{kind:"osd",edge:edge,alignment:"start",joinCorner:true}])
@@ -64,9 +64,17 @@ ShellRoot {
                 } else {
                     if(!root.check(osd.joinedEdge==="" && osd.record.joinedEdge===undefined && JSON.stringify(osd.record.content)===root.joinedContent,"output override disables joining without resizing IPC content on "+edge)) return
                 }
+            } else if(root.step===13) {
+                Config.setNestedValue("osd.timeout",300)
+                GlobalStates.startAbyssEditing(output.outputName)
+                output.qaEditor.editingPopups=true
+                GlobalStates.osdRequested("volume")
+            } else if(root.step===15) {
+                if(!root.check(!GlobalStates.osdVolumeOpen && !osd.open && output.qaEditor.previewHost.open && output.qaEditor.previewHost.ready && output.qaEditor.previewHost.inputBounds.width>0,"IPC edit preview stays visible after OSD timeout while suppressing duplicate live OSD")) return
+                output.qaEditor.finish(false)
             }
             root.step++
-            if(root.step===13) { console.info("IPC_CORNER_PASS");Qt.quit() }
+            if(root.step===16) { console.info("IPC_CORNER_PASS");Qt.quit() }
         }
     }
 }
