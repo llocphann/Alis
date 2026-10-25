@@ -3,7 +3,7 @@
 # Do not edit manually.
 # Regenerate: python3 scripts/lib/generate-ipc-registry.py
 # IPC.md metadata: docs/IPC.md
-# Targets: 66
+# Targets: 67
 
 declare -gA IPC_TARGET_DESC=(
   [abyss]="Edit the Abyss module layout on the focused output. The editor uses a draft: Done saves its changes; Cancel or Escape restores the saved layout. These methods apply while Abyss is active."
@@ -48,6 +48,7 @@ declare -gA IPC_TARGET_DESC=(
   [overview]="Toggle the workspace overview panel. The one with all your windows looking tiny and organized."
   [packageSearch]="Package search service. Searches pacman repos and installed packages."
   [panelFamily]="Switch between Abyss (\`abyss\`, default) and Waffle (\`waffle\`). Historical \`ii\` values migrate to Abyss, preserving enabled modules and shared configuration."
+  [perfProbe]="Opt-in, bounded QML/JS runtime performance probe (\`PERF-F01\`). Zero idle overhead when inactive; started only by explicit user or CLI request (\`alis debug perf\`)."
   [recordingOsd]="Screen recording floating pill OSD. Shows elapsed time and stop button during active recording."
   [region]="Region selection tools. Screenshots, OCR, recording. Draw a box, get stuff done."
   [search]="Waffle start menu / search."
@@ -117,6 +118,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [overview]="shared"
   [packageSearch]="shared"
   [panelFamily]="shared"
+  [perfProbe]="shared"
   [recordingOsd]="waffle"
   [region]="shared"
   [search]="waffle"
@@ -186,6 +188,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [overview]="toggle close open toggleReleaseInterrupt clipboardToggle actionOpen"
   [packageSearch]="search results"
   [panelFamily]="cycle set"
+  [perfProbe]="start status stop cancel snapshot recordSpan"
   [recordingOsd]="toggle show hide"
   [region]="screenshot search googleLens ocr record recordWithSound menu dismiss current"
   [search]="toggle close open"
@@ -363,6 +366,12 @@ declare -gA IPC_FUNCTION_DESC=(
   ["packageSearch:results"]="Print current search results"
   ["panelFamily:cycle"]="Cycle to next panel family (abyss → waffle → abyss)"
   ["panelFamily:set"]="Set specific family (\`\"abyss\"\` or \`\"waffle\"\`; \`\"ii\"\` is a compatibility alias for Abyss)"
+  ["perfProbe:start"]="Start a bounded QML/JS performance probe session with explicit duration and sample caps"
+  ["perfProbe:status"]="Return current probe session status, sample counts, and active surface snapshot as JSON"
+  ["perfProbe:stop"]="Stop the active probe session and return frame timing, event-loop heartbeat, and span records as JSON"
+  ["perfProbe:cancel"]="Abort the active probe session and discard buffered samples"
+  ["perfProbe:snapshot"]="Return a one-shot point-in-time shell architecture and active surface inventory snapshot as JSON"
+  ["perfProbe:recordSpan"]="Record a bounded instrumented lifecycle or interaction span while a probe session is active"
   ["recordingOsd:toggle"]="Stop the current recording (if active)"
   ["recordingOsd:show"]="Reveal the recording OSD pill"
   ["recordingOsd:hide"]="Collapse/hide the recording OSD pill"
@@ -505,6 +514,8 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["osdInput:touchpad"]="<state>"
   ["packageSearch:search"]="<query>"
   ["panelFamily:set"]="<family>"
+  ["perfProbe:start"]="<optionsJson>"
+  ["perfProbe:recordSpan"]="<moduleId> <spanName> <durationMs>"
   ["settingsNav:page"]="<index>"
   ["shellLayout:openOn"]="<outputName>"
   ["shellLayout:select"]="<surfaceId>"
@@ -551,8 +562,8 @@ bind "Ctrl+Alt+A" { spawn "alis" "wallpaperSelector" "openLauncher" "animated"; 
   [ytmusic]='bind "Mod+M+Space" { spawn "alis" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(abyss abyssHostProbe abyssHoverProbe ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dashboardEscProbe dev gamemode globalActions hadalird hadanion integrations keyboard lock mediaControls memory minimize mpris notificationCenter notifications osd osdInput osdVolume osk overlay overview packageSearch panelFamily recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter wull wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(abyss abyssHostProbe abyssHoverProbe ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dashboardEscProbe dev gamemode globalActions hadalird hadanion integrations keyboard lock mediaControls memory minimize mpris notificationCenter notifications osd osdInput osdVolume osk overlay overview packageSearch panelFamily region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wallpaperLauncher wallpaperSelector wull ytmusic zoom)
+IPC_ALL_TARGETS=(abyss abyssHostProbe abyssHoverProbe ai altSwitcher appCatalog audio autostart background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector customWidgets dashboard dashboardEscProbe dev gamemode globalActions hadalird hadanion integrations keyboard lock mediaControls memory minimize mpris notificationCenter notifications osd osdInput osdVolume osk overlay overview packageSearch panelFamily perfProbe recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetpower wnotificationCenter wull wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(abyss abyssHostProbe abyssHoverProbe ai altSwitcher appCatalog audio background bar brightness cheatsheet clipboard cliphistService closeConfirm controlPanel coverflowSelector dashboard dashboardEscProbe dev gamemode globalActions hadalird hadanion integrations keyboard lock mediaControls memory minimize mpris notificationCenter notifications osd osdInput osdVolume osk overlay overview packageSearch panelFamily perfProbe region session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling voiceSearch wallpaperLauncher wallpaperSelector wull ytmusic zoom)
 IPC_II_TARGETS=()
 IPC_WAFFLE_TARGETS=(autostart customWidgets recordingOsd search wactionCenter waffleAltSwitcher wbar widgetpower wnotificationCenter wwidgets)
 
@@ -574,6 +585,7 @@ declare -gA IPC_KEBAB_ALIASES=(
   [osd-volume]=osdVolume
   [package-search]=packageSearch
   [panel-family]=panelFamily
+  [perf-probe]=perfProbe
   [recording-osd]=recordingOsd
   [settings-nav]=settingsNav
   [shell-layout]=shellLayout

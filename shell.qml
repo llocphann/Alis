@@ -126,6 +126,7 @@ ShellRoot {
         ConflictKiller.load();
         // Force MemoryPressureService instantiation for IPC (#164)
         void MemoryPressureService.enabled;
+        PerfProbeService.registerShellRoot(root);
         // Same reason: GlobalActions owns the `globalActions` IPC target and is
         // otherwise only constructed when the command palette first opens, so
         // scripts and keybinds got "Target not found" until then. Tier 0 also

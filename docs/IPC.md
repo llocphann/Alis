@@ -925,6 +925,26 @@ Legacy API 1 alias for `integrations`; both targets use the same package, settin
 
 ---
 
+### perfProbe
+
+Opt-in, bounded QML/JS runtime performance probe (`PERF-F01`). Zero idle overhead when inactive; started only by explicit user or CLI request (`alis debug perf`).
+
+| Function | Description |
+|----------|-------------|
+| `start(optionsJson)` | Start a bounded QML/JS performance probe session with explicit duration and sample caps |
+| `status` | Return current probe session status, sample counts, and active surface snapshot as JSON |
+| `stop` | Stop the active probe session and return frame timing, event-loop heartbeat, and span records as JSON |
+| `cancel` | Abort the active probe session and discard buffered samples |
+| `snapshot` | Return a one-shot point-in-time shell architecture and active surface inventory snapshot as JSON |
+| `recordSpan(moduleId, spanName, durationMs)` | Record a bounded instrumented lifecycle or interaction span while a probe session is active |
+
+```bash
+alis perfProbe snapshot
+alis debug perf start --duration 10
+```
+
+---
+
 ## Waffle-Specific Targets
 
 These targets only work when using the Waffle (Windows 11) panel style.

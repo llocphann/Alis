@@ -4066,6 +4066,42 @@ case "$command_name" in
             run_ipc_target_command dev "$@"
         fi
         ;;
+    debug|perf)
+        if [[ "$command_name" == "debug" ]]; then
+            if [[ "${1:-}" == "perf" ]]; then
+                shift
+            elif [[ "${1:-}" == "-h" || "${1:-}" == "--help" || -z "${1:-}" ]]; then
+                exec python3 "$script_dir/perf_profiler.py" --help
+            else
+                echo "Unknown debug subcommand: ${1:-}. Supported: alis debug perf <start|status|stop|cancel|report|compare|architecture|scenarios>" >&2
+                exit 1
+            fi
+        fi
+        _perf_args=()
+        _has_cfg_dir=false
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                -c|--config)
+                    parse_config_flag "$@"
+                    shift 2
+                    ;;
+                --config-dir|--config-dir=*)
+                    _has_cfg_dir=true
+                    _perf_args+=("$1")
+                    shift
+                    ;;
+                *)
+                    _perf_args+=("$1")
+                    shift
+                    ;;
+            esac
+        done
+        if ! $_has_cfg_dir && [[ "${_perf_args[0]:-}" =~ ^(start|status|stop|cancel|architecture|doctor-snapshot)$ ]]; then
+            resolve_config_dir
+            _perf_args=("${_perf_args[0]}" "--config-dir" "$config_dir" "${_perf_args[@]:1}")
+        fi
+        QS_BIN="${qs_bin:-qs}" exec python3 "$script_dir/perf_profiler.py" "${_perf_args[@]}"
+        ;;
     settings|open)
         require_qs
         while [[ $# -gt 0 ]]; do
@@ -4241,6 +4277,7 @@ case "$command_name" in
         # _alis_doctor_perf above. Neither flag delegates to the setup pipeline.
         fix_abi_only=false
         perf_only=false
+        perf_json=false
         fix_abi_mode=interactive
         while [[ $# -gt 0 ]]; do
             case "$1" in
@@ -4250,6 +4287,10 @@ case "$command_name" in
                     ;;
                 --perf)
                     perf_only=true
+                    shift
+                    ;;
+                --json)
+                    perf_json=true
                     shift
                     ;;
                 -n|--noninteractive|--non-interactive|-y|--yes)
@@ -4267,6 +4308,10 @@ case "$command_name" in
         done
         if $perf_only; then
             require_qs
+            if $perf_json; then
+                resolve_config_dir
+                QS_BIN="${qs_bin:-qs}" exec python3 "$script_dir/perf_profiler.py" doctor-snapshot --config-dir "$config_dir" --json
+            fi
             _alis_doctor_perf
             exit $?
         fi

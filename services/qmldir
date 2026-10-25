@@ -38,6 +38,7 @@ singleton KeyboardIndicators 1.0 KeyboardIndicators.qml
 singleton LyricsService 1.0 LyricsService.qml
 singleton MaterialThemeLoader 1.0 MaterialThemeLoader.qml
 singleton MemoryPressureService 1.0 MemoryPressureService.qml
+singleton PerfProbeService 1.0 PerfProbeService.qml
 singleton MinimizedWindows 1.0 MinimizedWindows.qml
 singleton MprisController 1.0 MprisController.qml
 singleton LocalMusic 1.0 LocalMusic.qml
