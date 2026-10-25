@@ -105,7 +105,10 @@ Item {
     onEditorEventSelectionChanged: {
         const selection=root.editorEventSelection
         const form=inlineEventsPanel.item
+        // Loading a canonical editor record sets date keys before it
+        // captures its pristine baseline. That is NOT a user deselection.
         if (!root.followEditorCalendarSelection || !selection
+                || root._pendingInlineEvent!==null
                 || !form?.hasUnsavedChanges()) return
         // A user explicitly changed selected dates inside the editor.
         // Reconcile actual gesture membership, not only an editor outline.
