@@ -485,7 +485,7 @@ Item {
                     Action {
                         objectName:"plannerDeleteSelected"
                         // Repeating instances cannot be deleted by batch.
-                        // No disabled "Delete" or redundant "Edit to delete".
+                        // No disabled destructive action or extra editor shortcut.
                         visible:root.canDeleteSelection
                         enabled:root.canDeleteSelection
                         label:root.deleteConfirmation
