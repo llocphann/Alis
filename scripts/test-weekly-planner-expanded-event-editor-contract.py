@@ -171,7 +171,13 @@ for kind,mouse in [('Start','topResizeMouse'),('End','bottomResizeMouse')]:
     segment=planner.split(marker,1)[1].split('onCanceled:timedButton.cancelGesture()',1)[0]
     assert 'radius:3;color:"transparent"' in segment
     assert 'height:2' in segment and 'width:Math.min(28,parent.width*.3)' in segment
-    assert 'opacity:'+mouse+'.containsMouse' in segment
+    # Owner's hover-only bars wrap the original pointer/active-resize
+    # emphasis. Keep both branches and the idle-zero gate mandatory.
+    assert 'opacity:timedButton.showResizeHandles' in segment
+    assert '('+mouse+'.containsMouse' in segment
+    mode='top' if kind=='Start' else 'bottom'
+    assert 'timedButton.gestureMode==="'+mode+'" ? .9 : .65)' in segment
+    assert '                                            : 0' in segment
     assert 'hoverEnabled:true' in segment
 assert 'Qt.alpha(root.ink,.32)' not in planner.split('objectName:"plannerResizeStart"',1)[1].split('objectName:"plannerResizeEnd"',1)[0]
 
