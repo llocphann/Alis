@@ -166,6 +166,7 @@ LazyLoader {
         _bodyHovered = false
         _contentHovered = false
         hoverTransferTimer.stop()
+        if (_liquidController) _liquidController.releasePopupHover(root)
         if (_lingerVisible)
             _beginRetract()
         else
@@ -181,6 +182,7 @@ LazyLoader {
         _bodyHovered = false; _contentHovered = false
         _lingerVisible = false
         offsetScale = 1
+        if (_liquidController) _liquidController.releasePopupHover(root)
         requestClose()
     }
     property QtObject _liquidPresentationConnections: Connections {
@@ -188,7 +190,11 @@ LazyLoader {
         function onPresentationActiveChanged() { root.syncLiquidPresentation(); Qt.callLater(root._syncBarAutoHideLease) }
         function onContentItemChanged() { root.syncLiquidPresentation() }
         function on_LiquidControllerChanged() {
-            if (root._liquidController) anchorResolveRetry.stop()
+            if (root._liquidController) {
+                anchorResolveRetry.stop()
+                if (root._hoverRequested)
+                    root._liquidController.claimPopupHover(root)
+            }
             root.syncCompanionAnchor()
             root.syncLiquidPresentation()
         }
@@ -366,8 +372,20 @@ LazyLoader {
     // semantic popup state; `active` includes only the short retract tail. While
     // hover-activated, the body itself also counts as the request so the pointer
     // can travel from the bar through the connected shoulder without collapse.
+    readonly property bool _hoverRequested: root.hoverActivates
+        && (root.moduleHoverActive || root._anchorHover.hovered || root.popupHovered)
+    on_HoverRequestedChanged: {
+        if (root._hoverRequested) {
+            if (root._liquidController)
+                root._liquidController.claimPopupHover(root)
+        } else if (root._liquidController) {
+            root._liquidController.releasePopupHover(root)
+        }
+    }
     readonly property bool humanVisibleRequest: root.alternativeVisibleCondition
-        || (root.hoverActivates && (root.moduleHoverActive || root._anchorHover.hovered || root.popupHovered))
+        || (root._hoverRequested
+            && (!root._liquidController
+                || root._liquidController.hoveredPopup === root))
     onHumanVisibleRequestChanged: if (humanVisibleRequest) companionLease = null
     readonly property bool _rawVisibleRequest: root.companionLease !== null || root.humanVisibleRequest
     readonly property bool requestedVisible: !root._liquidDismissed && root._rawVisibleRequest
@@ -375,6 +393,14 @@ LazyLoader {
     // grace, never the visual retract tail.
     readonly property bool liquidSemanticVisible:
         root.requestedVisible || root._liquidSemanticHold
+    function _cancelSemanticHold(): void {
+        if (!root._liquidSemanticHold)
+            return
+        root._liquidSemanticHold = false
+        hoverTransferTimer.stop()
+        if (!root.requestedVisible)
+            root._beginRetract()
+    }
     on_RawVisibleRequestChanged: {
         if (!root._rawVisibleRequest && !root._gracefulDismissal)
             root._liquidDismissed = false
@@ -441,6 +467,7 @@ LazyLoader {
     }
     onHoverTargetChanged: {
         anchorResolveRetry.stop()
+        if (root._liquidController) root._liquidController.releasePopupHover(root)
         if (root.hoverTarget) Qt.callLater(root.startColdAnchorResolution)
         root._gracefulDismissal = false
         root._liquidDismissed = false
@@ -494,7 +521,10 @@ LazyLoader {
         // one leave before the matching enter when the pointer crosses their
         // shared seam. Give that hand-off a short grace period so a transient
         // all-false hover state cannot start a retract/reopen oscillation.
-        if (root.hoverActivates) {
+        if (root.hoverActivates
+                && !(root._liquidController?._claimingPopupHover ?? false)
+                && ((root._liquidController?.hoveredPopup ?? null) === null
+                    || root._liquidController?.hoveredPopup === root)) {
             root._liquidSemanticHold = true
             hoverTransferTimer.restart()
             return
@@ -510,6 +540,8 @@ LazyLoader {
         root.syncEmbeddedContent()
         root._barPopupHoverLeaseId = GlobalStates.allocateBarPopupHoverLease()
         Qt.callLater(root._syncBarAutoHideLease)
+        if (root._hoverRequested && root._liquidController)
+            root._liquidController.claimPopupHover(root)
         root._syncRequestedVisibility()
         root.syncLiquidPresentation()
     }
@@ -518,7 +550,11 @@ LazyLoader {
         anchorResolveRetry.stop()
         if (root._companionAnchor?.unregisterCompanionPopup)
             root._companionAnchor.unregisterCompanionPopup(root)
-        if (root._hostedController) root._hostedController.releasePopup(root, false)
+        if (root._liquidController) root._liquidController.releasePopupHover(root)
+        if (root._hostedController) {
+            root._hostedController.releasePopupHover(root)
+            root._hostedController.releasePopup(root, false)
+        }
         GlobalStates.setBarPopupHoverLease(root._barPopupHoverLeaseId, "", false)
     }
 

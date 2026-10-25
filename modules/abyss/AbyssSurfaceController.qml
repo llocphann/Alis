@@ -178,7 +178,28 @@ QtObject {
         popup.presentationWindow = presentationItem?.QsWindow?.window ?? null
         Qt.callLater(() => root._rehostPopup(slot))
     }
+    property var hoveredPopup: null
+    property bool _claimingPopupHover: false
+    function claimPopupHover(popup): void {
+        if (!popup) return
+        _claimingPopupHover = true
+        if (hoveredPopup && hoveredPopup !== popup)
+            hoveredPopup = null
+        for (let i = 0; i < popupSlots.length; ++i) {
+            const peer = popupSlots[i]?.popup
+            if (peer && peer !== popup && peer._cancelSemanticHold)
+                peer._cancelSemanticHold()
+        }
+        hoveredPopup = popup
+        _claimingPopupHover = false
+    }
+    function releasePopupHover(popup): void {
+        if (hoveredPopup === popup)
+            hoveredPopup = null
+    }
     function releasePopup(popup, restore = true): void {
+        if (hoveredPopup === popup)
+            hoveredPopup = null
         const slot = _popupSlot(popup)
         if (slot < 0) return
         const entry = popupSlots[slot]

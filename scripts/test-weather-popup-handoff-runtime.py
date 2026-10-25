@@ -103,8 +103,18 @@ ShellRoot {
    check(content.currentTab===0 && content.tabPosition===0,"hover replayed a Weather tab transition")
    check(orbit.y===0 && detail.y===viewport.height,"Weather pages overlap during host resize/reveal")
    check(viewport.clip,"Weather pages escaped the common viewport")
-   check(content.parent===controller._popupHost(controller._popupSlot(weather)).contentParent,
+   const weatherHost=controller._popupHost(controller._popupSlot(weather))
+   const clockHost=controller._popupHost(controller._popupSlot(clock))
+   check(content.parent===weatherHost.contentParent,
       "Weather was painted by another popup slot")
+   if(!clock.alternativeVisibleCondition && !weather.alternativeVisibleCondition){
+    check(!(weather.liquidSemanticVisible && clock.liquidSemanticVisible),
+     "rapid hover overlapped Clock and Weather semantic leases on "+root.edge)
+    check((weatherHost?.placement?.inward ?? 0)===0 && (weatherHost?.visualPlacementInward ?? 0)<0.5,
+     "rapid hover pushed Weather onto a Pyramid inner tier on "+root.edge)
+    check((clockHost?.placement?.inward ?? 0)===0 && (clockHost?.visualPlacementInward ?? 0)<0.5,
+     "rapid hover pushed Clock onto a Pyramid inner tier on "+root.edge)
+   }
    root.samples++
   }
   function observe(ms){
