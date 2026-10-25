@@ -15,10 +15,14 @@ import qs.modules.dashboard
 Window {
  id:root;visible:true;width:1260;height:820;color:"#111820"
  Component.onCompleted:Quickshell.watchFiles=false
- DashboardWeeklyPlanner {
-  id:planner;anchors.fill:parent;localBackend:Events
-  externalBackend:QtObject {property var events:[];signal eventsUpdated()}
-  onRequestEventsDialog:event=>planner.openInlineEventEditor(event)
+ Item {
+  id:canvas;anchors.fill:parent
+  Rectangle {anchors.fill:parent;color:Appearance.colors.colLayer0Base}
+  DashboardWeeklyPlanner {
+   id:planner;anchors.fill:parent;localBackend:Events
+   externalBackend:QtObject {property var events:[];signal eventsUpdated()}
+   onRequestEventsDialog:event=>planner.openInlineEventEditor(event)
+  }
  }
  TestCase {
   id:test;when:false;optional:true;property int checks:0
@@ -38,7 +42,7 @@ Window {
   function capture(name){
    if(!Quickshell.env("PLANNER_VISUAL_EVIDENCE"))return
    let done=false,saved=false
-   check(planner.grabToImage(result=>{saved=result.saveToFile(
+   check(canvas.grabToImage(result=>{saved=result.saveToFile(
     Quickshell.env("PLANNER_VISUAL_EVIDENCE")+"/"+name+".png");done=true}),name+": capture refused")
    root.update();tryVerify(()=>done,2500);check(saved,name+": PNG write failed")
   }

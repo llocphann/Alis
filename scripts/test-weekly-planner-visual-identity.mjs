@@ -29,6 +29,10 @@ const normal=assign(consecutive);
 for(const event of consecutive)assert.equal(normal[key(event)],policy.paletteSlot(event,'local',8)/7,
  'uncontested owner-selected original swatches must stay unchanged');
 assert.deepEqual(Object.keys(assign([])),[]);
+const old=collisions.slice(0,4),oldPositions=assign(old);
+const newMixed=assign(old.concat([{id:32,title:'New Event'},{id:33,title:'New Event'}]));
+for(const event of old)assert.equal(newMixed[key(event)],oldPositions[key(event)],
+ 'new monotonic local Event IDs must not steal an older identity color');
 const externals=[{uid:'outside-1',sourceColor:'#aabbcc'},{uid:'outside-2',sourceColor:'#aabbcc'}];
 const mixed=assign(collisions,externals);
 assert.notEqual(mixed[key(externals[0],'external')],mixed[key(externals[1],'external')]);

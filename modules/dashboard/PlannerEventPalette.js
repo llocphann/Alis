@@ -32,28 +32,33 @@ function identity(event,source) {
     return JSON.stringify([String(source || "local"),id===undefined || id===null || id===""
         ? "title:"+String(event?.title || "") : "id:"+String(id)]);
 }
-// Keep every uncontested original swatch. Resolve modulo/hash collisions
+// Keep the original swatch whenever it is free. Resolve modulo/hash collisions
 // once per Event inventory, never per occurrence or visible-week ordering.
 // This is a view cache: no saved colors/IDs/history or source data change.
 function assignPositions(localEvents,externalEvents) {
-    const records=new Map(),positions={},used=new Set(),pending=[];
+    const records=new Map(),positions={},used=new Set();
     function collect(events,source) {
         for (let i=0;i<(events?.length || 0);i++) {
             const event=events[i];
             if (!event) continue;
             const key=identity(event,source);
-            if (!records.has(key)) records.set(key,{key:key,
+            if (!records.has(key)) records.set(key,{key:key,source:source,
+                numericId:source==="local" && Number.isSafeInteger(event.id) ? event.id : null,
                 preferred:paletteSlot(event,source,8)/7});
         }
     }
     collect(localEvents,"local");collect(externalEvents,"external");
-    const ordered=Array.from(records.values()).sort((a,b)=>a.key<b.key ? -1 : a.key>b.key ? 1 : 0);
-    for (const record of ordered) {
-        if (used.has(record.preferred)) {pending.push(record);continue;}
-        positions[record.key]=record.preferred;used.add(record.preferred);
-    }
+    const ordered=Array.from(records.values()).sort((a,b)=>{
+        if (a.source!==b.source) return a.source==="local" ? -1 : 1;
+        if (a.numericId!==null && b.numericId!==null) return a.numericId-b.numericId;
+        if ((a.numericId===null)!==(b.numericId===null)) return a.numericId===null ? 1 : -1;
+        return a.key<b.key ? -1 : a.key>b.key ? 1 : 0;
+    });
     let subdivision=1;
-    for (const record of pending) {
+    for (const record of ordered) {
+        if (!used.has(record.preferred)) {
+            positions[record.key]=record.preferred;used.add(record.preferred);continue;
+        }
         let chosen=-1,distance=-1;
         if (used.size<8) {
             for (let stop=0;stop<8;stop++) {
