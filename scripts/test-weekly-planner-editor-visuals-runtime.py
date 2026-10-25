@@ -44,7 +44,10 @@ Window {
    let done=false,saved=false
    check(canvas.grabToImage(result=>{saved=result.saveToFile(
     Quickshell.env("PLANNER_VISUAL_EVIDENCE")+"/"+name+".png");done=true}),name+": capture refused")
-   root.update();tryVerify(()=>done,2500);check(saved,name+": PNG write failed")
+   root.update();try {tryVerify(()=>done,2500)}
+   catch(error){throw new Error(name+": capture callback deadline "+JSON.stringify({
+    visible:root.visible,active:root.active,width:root.width,height:root.height}))}
+   check(saved,name+": PNG write failed")
   }
   function run(){try{
    tryCompare(Config,"ready",true,5000);tryCompare(Events,"ready",true,5000)

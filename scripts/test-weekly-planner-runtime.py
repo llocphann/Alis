@@ -119,7 +119,10 @@ Window {
    if(!waitForPolish(root,2500))throw new Error(name+": window layout polish deadline")
    const presented=root.presentedFrames
    root.update()
-   tryVerify(()=>root.presentedFrames>presented,2500,name+": presentation deadline")
+   try {tryVerify(()=>root.presentedFrames>presented,2500,name+": presentation deadline")}
+   catch(error){throw new Error(name+": presentation deadline "+JSON.stringify({
+    before:presented,after:root.presentedFrames,visible:root.visible,active:root.active,
+    width:root.width,height:root.height,sceneVisible:scene.visible}))}
    const count=root.frames
    let finished=false,saved=false
    check(scene.grabToImage(image=>{
