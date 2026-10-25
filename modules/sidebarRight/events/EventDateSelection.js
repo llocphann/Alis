@@ -72,6 +72,25 @@ function choose(values,anchor,primary,clicked,ctrl,shift) {
 // for untouched fields, so unrelated unsaved title/note changes remain dirty.
 // In multi-date groups, read the stored slots after the drag: the old day
 // may still contain another occurrence and the slot index may have changed.
+function editorSlots(event,index) {
+    var saved=event?.occurrences;
+    if (!saved || !Number.isInteger(saved.length) || saved.length<1) return [event];
+    var slots=Array.from(saved);
+    var repeating=(event.recurrence || "none")!=="none";
+    var template=repeating ? event.repeatTemplate : event.selectedTemplate;
+    var width=template && Number.isInteger(template.length) ? template.length : 0;
+    if (width<1 || width>slots.length) return slots;
+    var boundary=Number(event.repeatCycleStart || 0);
+    if (!Number.isInteger(boundary) || boundary<0 || boundary>=slots.length) boundary=0;
+    if (!repeating) return slots.slice(-width);
+    var chosen=Number.isInteger(index) && index>=0 && index<slots.length ? index : boundary;
+    // Indices retain cycle identity after a drag; chronological sorting or
+    // highlighting the full saved history would select unrelated weeks.
+    var start=chosen<boundary ? Math.floor(chosen/width)*width
+        : boundary+Math.floor((chosen-boundary)/width)*width;
+    return slots.slice(start,Math.min(start+width,slots.length));
+}
+
 function rebaseDraggedEvent(draft,baseline,oldStart,newStart,newEnd,canonical) {
     var before=new Date(oldStart),after=new Date(newStart),end=new Date(newEnd);
     if (!Array.isArray(baseline) || baseline.length<11
@@ -87,7 +106,7 @@ function rebaseDraggedEvent(draft,baseline,oldStart,newStart,newEnd,canonical) {
             && Number(new Date(slot.endDate))===end.getTime();
     });
     if (occurrenceIndex<0) return null;
-    var updatedDays=normalized(slots.map(function(slot) {
+    var updatedDays=normalized(editorSlots(canonical,occurrenceIndex).map(function(slot) {
         return key(new Date(slot.startDate || slot.dateTime));
     }));
     var nextKey=key(after);

@@ -10,6 +10,9 @@ function apply(events,operations,occurrences) {
         if (!event || event.id===undefined || byId.has(event.id)) return null;
         byId.set(event.id,event);
     }
+    if (operations.some(op=>op && byId.has(op.id)
+            && (byId.get(op.id).recurrence || "none")!=="none"))
+        return applyRecurring(events,operations,occurrences,byId);
     for (const op of operations) {
         if (!op || !Number.isInteger(op.occurrenceIndex)
                 || op.occurrenceIndex<0 || !byId.has(op.id)) return null;
@@ -65,4 +68,34 @@ function apply(events,operations,occurrences) {
     if (updated.length+removed.length!==new Set(operations.map(op=>op.id)).size)
         return null;
     return {list:result.filter(event=>event!==null),updated:updated,removed:removed};
+}
+
+// Explicit instance edits only. Build every result in memory before the
+// Events service emits signals or performs its single durable write.
+function applyRecurring(events,operations,occurrences,byId) {
+    const working=new Map(byId),seen=new Set(),changed=new Set(),ordinary=[];
+    for (const op of operations) {
+        if (!op || !byId.has(op.id) || !Number.isInteger(op.occurrenceIndex)
+                || op.occurrenceIndex<0) return null;
+        const event=working.get(op.id);
+        if ((event.recurrence || "none")==="none") {ordinary.push(op);continue;}
+        // Legacy callers cannot accidentally start batch-editing series.
+        // Delete remains unavailable until an explicit series policy exists.
+        if (op.recurring!==true || op.remove===true) return null;
+        const identity=JSON.stringify([op.id,op.occurrenceIndex,op.originalStartIso || "saved"]);
+        if (seen.has(identity)) return null;
+        seen.add(identity);
+        const updated=op.originalStartIso!==undefined
+            ? occurrences.rescheduleProjectedRecurring(event,op.occurrenceIndex,
+                op.originalStartIso,op.startIso,op.endIso)
+            : occurrences.rescheduleSavedRecurring(event,op.occurrenceIndex,op.startIso,op.endIso);
+        if (!updated) return null;
+        working.set(op.id,updated);changed.add(op.id);
+    }
+    const staged=events.map(event=>working.get(event.id));
+    const result=ordinary.length ? apply(staged,ordinary,occurrences)
+        : {list:staged,updated:[],removed:[]};
+    if (!result) return null;
+    return {list:result.list,removed:result.removed,
+        updated:result.updated.concat(result.list.filter(event=>changed.has(event.id)))};
 }

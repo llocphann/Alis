@@ -48,10 +48,33 @@ Item {
     property string selectionAnchorKey: ""
     property bool deleteConfirmation: false
     property var activeGroupGesture: null
+    property var selectionRegion: null
     onSelectedEventKeysChanged: deleteConfirmation=false
     readonly property var selectableEventRows: Selection.ordered(root.days)
     readonly property var selectedEventRows: root.selectableEventRows.filter(
         row=>root.selectedEventKeys.includes(Selection.key(row)))
+    readonly property bool canDeleteSelection: root.selectedEventRows.length>0
+        && root.selectedEventRows.every(row=>Selection.canDelete(row))
+    function finishSelectionRegion(): void {
+        const region=root.selectionRegion
+        if (!region) return
+        const hits=[]
+        function visit(item) {
+            if ((item.objectName==="plannerTimedEvent" || item.objectName==="plannerAllDayEvent")
+                    && Selection.canSelect(item.modelData)) {
+                const p=item.mapToItem(viewport.contentItem,0,0)
+                if (p.x<region.right && p.x+item.width>region.left
+                        && p.y<region.bottom && p.y+item.height>region.top)
+                    hits.push(Selection.key(item.modelData))
+            }
+            for (const child of item.children || []) visit(child)
+        }
+        visit(viewport.contentItem)
+        root.selectedEventKeys=Array.from(new Set(region.before.concat(hits)))
+        if (hits.length) root.selectionAnchorKey=hits[0]
+        root.selectionRegion=null
+        root.forceActiveFocus()
+    }
     function isEventSelected(row): bool {
         return root.selectedEventKeys.includes(Selection.key(row))
     }
@@ -60,6 +83,7 @@ Item {
         root.selectionAnchorKey=""
         root.deleteConfirmation=false
         root.activeGroupGesture=null
+        root.selectionRegion=null
     }
     function gestureTargets(row) {
         if (!Selection.canReschedule(row) && !Selection.canSelect(row)) return []
@@ -83,7 +107,7 @@ Item {
         }
     }
     function confirmOrDeleteSelected(): void {
-        if (!root.selectedEventRows.length) return
+        if (!root.canDeleteSelection) return
         if (!root.deleteConfirmation) {root.deleteConfirmation=true;return}
         if (typeof root.localBackend.applyPlannerOccurrenceBatch!=="function")
             return
@@ -246,7 +270,8 @@ Item {
                 return
             }
             changes.push({id:target.event.id,occurrenceIndex:target.occurrenceIndex,
-                startIso:range.startIso,endIso:range.endIso})
+                startIso:range.startIso,endIso:range.endIso,recurring:repeating,
+                originalStartIso:target.virtual ? target.plannerOriginalStartIso : undefined})
         }
         const candidate=changes[0]
         if (targets.length>1) {
@@ -411,6 +436,7 @@ Item {
                     Action {
                         objectName:"plannerDeleteSelected"
                         visible:root.selectedEventRows.length>0
+                        enabled:root.canDeleteSelection
                         label:root.deleteConfirmation
                             ? "Confirm delete ("+root.selectedEventRows.length+")"
                             : "Delete ("+root.selectedEventRows.length+")"
@@ -419,8 +445,9 @@ Item {
                             ? Appearance.colors.colError : root.headerInk
                         onClicked:root.confirmOrDeleteSelected()
                         StyledToolTip {
-                            text:"Ctrl+Click to toggle · Shift+Click for range · "
-                                +"drag to move/resize · Delete twice to confirm"
+                            text:root.canDeleteSelection
+                                ? "Ctrl+Click to toggle · Shift+Click for range · Ctrl/Shift+drag background to select · Delete twice to confirm"
+                                : "Recurring selections can be moved or resized. Delete recurring Events in Edit Event."
                         }
                     }
                     Action {
@@ -474,6 +501,15 @@ Item {
                 flickableDirection:Flickable.HorizontalAndVerticalFlick
                 ScrollBar.vertical: ScrollBar {policy:ScrollBar.AlwaysOff}
                 ScrollBar.horizontal: ScrollBar {policy:ScrollBar.AlwaysOff}
+                Rectangle {
+                    objectName:"plannerSelectionRegion"
+                    z:100;visible:root.selectionRegion!==null
+                    x:root.selectionRegion?.left ?? 0;y:root.selectionRegion?.top ?? 0
+                    width:Math.max(0,(root.selectionRegion?.right ?? 0)-x)
+                    height:Math.max(0,(root.selectionRegion?.bottom ?? 0)-y)
+                    color:Qt.alpha(root.headerAccent,.12)
+                    border.color:root.headerAccent;border.width:1
+                }
                 Repeater {
                     model: Math.ceil(root.maximumMinutes/60)
                     delegate: StyledText {
@@ -650,7 +686,30 @@ Item {
                         MouseArea {
                             objectName:"plannerCreateSlot"
                             x:0;y:root.gridTop;width:parent.width;height:dayColumn.modelData.minutes/60*root.hourHeight
+                            property var regionOrigin: null
+                            property bool regionMoved: false
+                            preventStealing:regionOrigin!==null
+                            onPressed:mouse=>{
+                                regionMoved=false
+                                regionOrigin=(mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier))
+                                    ? mapToItem(viewport.contentItem,mouse.x,mouse.y) : null
+                            }
+                            onPositionChanged:mouse=>{
+                                if (!pressed || regionOrigin===null) return
+                                const p=mapToItem(viewport.contentItem,mouse.x,mouse.y)
+                                if (!regionMoved && Math.hypot(p.x-regionOrigin.x,p.y-regionOrigin.y)<6) return
+                                regionMoved=true
+                                root.selectionRegion={left:Math.min(regionOrigin.x,p.x),
+                                    right:Math.max(regionOrigin.x,p.x),top:Math.min(regionOrigin.y,p.y),
+                                    bottom:Math.max(regionOrigin.y,p.y),before:root.selectedEventKeys.slice()}
+                            }
+                            onReleased:{
+                                if (regionMoved) root.finishSelectionRegion()
+                                regionOrigin=null
+                            }
+                            onCanceled:{regionOrigin=null;regionMoved=false;root.selectionRegion=null}
                             onClicked:mouse=>{
+                                if (regionMoved || (mouse.modifiers & (Qt.ControlModifier | Qt.ShiftModifier))) return
                                 root.clearEventSelection()
                                 root.requestEventsDialog({plannerDate:new Date(dayColumn.modelData.date.getTime()+Math.floor(mouse.y/root.hourHeight*4)*15*60000)})
                             }

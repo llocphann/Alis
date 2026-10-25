@@ -1,18 +1,21 @@
 // Stable editable occurrence keys, deduped across multi-day projections.
 function canSelect(row) {
+    return canDelete(row) || canReschedule(row);
+}
+// Selection/movement is independent of destructive series deletion.
+function canDelete(row) {
     return !!row && row.source==="local" && !row.virtual
         && row.event?.id!==undefined && row.event?.id!==null
         && (row.event?.recurrence || "none")==="none";
 }
 // Local saved recurring slots are individually movable/resizable without
 // rewriting the immutable series template. Identified virtual instances use
-// per-occurrence exceptions; imported calendar rows stay read-only. Batch selection remains limited to
-// non-recurring events because batch delete semantics differ for a series.
+// per-occurrence exceptions; imported calendar rows stay read-only.
 function canReschedule(row) {
     if (!row || row.source!=="local" || row.event?.allDay===true
             || row.event?.id===undefined || row.event?.id===null)
         return false;
-    if (canSelect(row)) return true;
+    if (canDelete(row)) return true;
     var event=row.event;
     if (!["daily","weekly","monthly","yearly"].includes(event?.recurrence))
         return false;
@@ -37,10 +40,12 @@ function canReschedule(row) {
     return index===0 && !!(event.startDate || event.dateTime);
 }
 function key(row) {
-    return canSelect(row) ? String(row.event.id)+":"+String(row.occurrenceIndex) : "";
+    if (!canSelect(row)) return "";
+    return canDelete(row) ? String(row.event.id)+":"+String(row.occurrenceIndex)
+        : JSON.stringify([row.source,String(row.event.id),row.occurrenceIndex,
+            row.virtual ? row.plannerOriginalStartIso : "saved"]);
 }
-// Batch selection intentionally excludes recurring rows. Preview identity
-// must not reuse its empty sentinel, or every recurring card moves together.
+// Preview identity never uses the empty sentinel of an unselectable row.
 // A virtual exception retains its original key after moving across weeks.
 function gestureKey(row) {
     if (!canSelect(row) && !canReschedule(row)) return "";

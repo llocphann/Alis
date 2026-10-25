@@ -81,8 +81,11 @@ assert editor.count('enabled: root.canSelectRepeat(')==4
 assert 'objectName:"plannerRepeatChoices"' in editor
 assert 'objectName:"plannerRepeatConflictHint"' not in editor
 assert 'function loadEvent(event: var): void' in editor
-assert 'canonical.repeatTemplate' in editor
-assert 'canonical.occurrences' in editor
+assert 'DateSelection.editorSlots(canonical,root.editingOccurrenceIndex)' in editor
+date_policy=(r/'modules/sidebarRight/events/EventDateSelection.js').read_text()
+assert 'event.repeatTemplate' in date_policy and 'event.selectedTemplate' in date_policy
+assert 'event.repeatCycleStart' in date_policy
+assert 'event?.occurrences' in date_policy
 assert 'root.plannerSelectedDateKeys=selectedKeys.length' in editor
 assert 'root.editingEvent=canonical' in editor
 assert 'Events.updateEventGroup(root.editingEvent.id' in editor

@@ -104,7 +104,10 @@ test('original virtual key survives edited time',()=>assert.equal(gestureKey(vir
 test('invalid/imported rows have no gesture identity',()=>{
   assert.equal(gestureKey({...saved,source:'external'}),'');assert.equal(gestureKey(null),'');
 });
-test('recurring events still excluded from batch selection/delete',()=>assert.equal(S.canSelect(saved),false));
+test('recurring instances can be selected without granting series deletion',()=>{
+  assert.equal(S.canSelect(saved),true);
+  assert.equal(S.canDelete(saved),false);
+});
 test('bad input cannot mutate legacy store',()=>{
   for(const index of [-1,2,1.5])assert.equal(O.rescheduleSavedRecurring(legacy,index,
     '2032-10-20T09:00:00Z','2032-10-20T10:00:00Z'),null);

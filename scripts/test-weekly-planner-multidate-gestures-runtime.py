@@ -110,6 +110,31 @@ Window {
     check(cards().filter(c=>c.effectiveMode==="move").length===2,"explicit batch preview lost")
     mouseRelease(planner,p.x,p.y,Qt.LeftButton);settle()
     check(planner.selectedEventKeys.length===0,"selection not cleared after batch save")
+    // Owner regression: recurring cards participate in an explicit mixed
+    // selection, while a lone drag continues to preview only one instance.
+    for(const c of [card(401),card(403)])mouseClick(first(c,"plannerEventMoveArea"),c.width/2,20,
+      Qt.LeftButton,Qt.ControlModifier)
+    check(planner.selectedEventKeys.length===2,"saved recurring Ctrl selection unavailable")
+    check(!planner.canDeleteSelection,"recurring selection exposed series batch deletion")
+    const oneBefore=JSON.stringify(Events.list.find(e=>e.id===401).occurrences[1])
+    p=held(first(card(401),"plannerEventMoveArea"),0,planner.hourHeight/4)
+    check(cards().filter(c=>c.effectiveMode==="move").length===2,"mixed recurring group preview lost")
+    mouseRelease(planner,p.x,p.y,Qt.LeftButton);settle()
+    check(JSON.stringify(Events.list.find(e=>e.id===401).occurrences[1])===oneBefore,
+      "mixed group movement changed an unselected recurring slot")
+    // Modified background drag selects a region without stealing ordinary
+    // background scrolling or the event's own move/resize pointer owners.
+    const background=all(planner,"plannerCreateSlot")[0]
+    const from=background.mapToItem(planner,background.width*.04,8*planner.hourHeight)
+    const to=background.mapToItem(planner,background.width*1.85,10.5*planner.hourHeight)
+    mousePress(planner,from.x,from.y,Qt.LeftButton,Qt.ControlModifier)
+    mouseMove(planner,to.x,to.y,80);wait(40)
+    check(first(planner,"plannerSelectionRegion").visible,"selection rectangle never appeared")
+    mouseRelease(planner,to.x,to.y,Qt.LeftButton,Qt.ControlModifier);wait(40)
+    check(planner.selectedEventRows.length===3,"region did not select its three intersecting cards")
+    check(planner.selectedEventRows.every(row=>[401,402,403].includes(row.event.id)),
+      "region selected an unrelated occurrence")
+    planner.clearEventSelection()
     // The existing all-day civil-day move must still reach its backend.
     const day=all(planner,"plannerAllDayEvent").find(c=>c.modelData.event.id===404)
     const old=new Date(day.modelData.startDate).getTime()

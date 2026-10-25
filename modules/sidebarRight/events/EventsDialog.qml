@@ -356,14 +356,9 @@ WindowDialog {
         if (!canonical) return
         root.editingEvent=canonical
         root.plannerPage=0
-        root.editingOccurrenceIndex=event?._editOccurrenceIndex ?? 0
-        const slots=Array.isArray(canonical.repeatTemplate)
-            && canonical.repeatTemplate.length>0 ? canonical.repeatTemplate
-            : Array.isArray(canonical.selectedTemplate)
-                && canonical.selectedTemplate.length>0 ? canonical.selectedTemplate
-                : Array.isArray(canonical.occurrences)
-                    && canonical.occurrences.length>0 ? canonical.occurrences
-                    : [canonical]
+        root.editingOccurrenceIndex=event?._editOccurrenceIndex
+            ?? Number(canonical.repeatCycleStart || 0)
+        const slots=DateSelection.editorSlots(canonical,root.editingOccurrenceIndex)
         const selectedKeys=[...new Set(slots.map(slot=>
             DateSelection.key(new Date(slot.startDate || slot.dateTime))
         ).filter(value=>value.length>0))].sort()
