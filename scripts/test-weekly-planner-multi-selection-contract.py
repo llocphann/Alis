@@ -31,6 +31,24 @@ assert 'point.x-allDayButton.dragOriginContentX' in all_day
 assert 'objectName:"plannerDeleteSelected"' in ui
 assert "root.confirmOrDeleteSelected()" in ui
 assert "event.key===Qt.Key_Delete || event.key===Qt.Key_Backspace" in ui
+# A recurring Event is selectable for its own drag/resize, but is not
+# authorized for destructive series batch deletion. The former disabled
+# "Delete (1)" was misleading: make an explicit, clickable editor route.
+assert 'enabled:root.selectedEventRows.length>0' in ui
+assert 'label:!root.canDeleteSelection' in ui
+assert '"Edit to delete ("+root.selectedEventRows.length+")"' in ui
+assert 'function openSelectedRecurringEditor(): void {' in ui
+assert 'root.selectedEventRows.find(row=>!Selection.canDelete(row))' in ui
+assert 'root.editOccurrence(selected)' in ui
+assert 'if (root.canDeleteSelection) root.confirmOrDeleteSelected()' in ui
+assert 'else root.openSelectedRecurringEditor()' in ui
+assert 'Deleting there may affect the full series; this button does not delete anything.' in ui
+assert 'enabled:root.canDeleteSelection' not in ui
+assert '&& root.selectedEventRows.every(row=>Selection.canDelete(row))' in ui
+assert 'if (!root.canDeleteSelection) return' in ui
+# Keep two-step confirmation and non-recurring-only atomic batch behavior.
+assert 'root.localBackend.applyPlannerOccurrenceBatch(actions)' in ui
+assert 'id:row.event.id,occurrenceIndex:row.occurrenceIndex,remove:true' in ui
 assert "if (!root.deleteConfirmation) {root.deleteConfirmation=true;return}" in ui
 assert "root.localBackend.applyPlannerOccurrenceBatch(actions)" in ui
 assert "root.localBackend.applyPlannerOccurrenceBatch(changes)" in ui
