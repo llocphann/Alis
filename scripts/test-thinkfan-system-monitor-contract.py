@@ -118,6 +118,12 @@ def main() -> None:
           "System Monitor third-column heading must be Load, not CPU")
     check('label: Translation.tr("Load:")' not in resources_popup,
           "System Monitor CPU usage metric must be labelled CPU:, not Load:")
+    check(resources_popup.count('minimumValueSample: "99.9 GB"') == 2,
+          "System Monitor RAM Used/Total cells must reserve stable width across cold-to-warm polls")
+    check(resources_popup.count('minimumValueSample: "99°C"') == 2,
+          "System Monitor CPU/GPU thermal cells must reserve stable width across cold-to-warm polls")
+    check(resources_popup.count('minimumValueSample: "99%"') == 2,
+          "System Monitor CPU/GPU load cells must reserve stable width across cold-to-warm polls")
 
     for token in (
         "property bool connectAdjacentScreenEdge: false",

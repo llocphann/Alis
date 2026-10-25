@@ -134,11 +134,13 @@ StyledPopup {
                         icon: "clock_loader_60"
                         label: Translation.tr("Used:")
                         value: (ResourceUsage.memoryUsed / (1024 * 1024)).toFixed(1) + " GB"
+                        minimumValueSample: "99.9 GB"
                     }
                     ResourceItem {
                         icon: "empty_dashboard"
                         label: Translation.tr("Total:")
                         value: (ResourceUsage.memoryTotal / (1024 * 1024)).toFixed(1) + " GB"
+                        minimumValueSample: "99.9 GB"
                     }
                 }
             }
@@ -158,11 +160,13 @@ StyledPopup {
                         icon: "memory"
                         label: "CPU:"
                         value: ResourceUsage.cpuTemp + "°C"
+                        minimumValueSample: "99°C"
                     }
                     ResourceItem {
                         icon: "memory_alt"
                         label: "GPU:"
                         value: ResourceUsage.gpuTemp + "°C"
+                        minimumValueSample: "99°C"
                     }
                 }
             }
@@ -192,6 +196,8 @@ StyledPopup {
                         icon: "memory_alt"
                         label: Translation.tr("GPU:")
                         value: `${Math.round(ResourceUsage.gpuUsage * 100)}%`
+                        minimumValueSample: "99%"
+                        valueHorizontalAlignment: Text.AlignLeft
                     }
                 }
             }

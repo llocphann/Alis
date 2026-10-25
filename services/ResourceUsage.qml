@@ -289,7 +289,8 @@ Singleton {
         }
         if (root._persistentConsumers === 0)
             autoStopTimer.restart();
-        pollTimer.restart();
+        if (!pollTimer.running)
+            pollTimer.restart();
         // Prime values now instead of waiting one updateInterval — but only once.
         // Multiple consumers calling ensureRunning() in their Component.onCompleted
         // would race their reload() ops and drop in-flight reads (FileView warnings).
@@ -372,19 +373,24 @@ Singleton {
         const gpuMonitorEnabled = Config.options?.resources?.monitorGpu ?? true;
         let skipGpu = !gpuMonitorEnabled;
         if (!skipGpu && root._dGpuRuntimeStatusPath !== "") {
-            fileDGpuRuntimeStatus.reload();
+            if (fileDGpuRuntimeStatus.text() !== "")
+                fileDGpuRuntimeStatus.reload();
             skipGpu = fileDGpuRuntimeStatus.text().trim() === "suspended";
         }
 
-        // Reload files
-        fileMeminfo.reload();
-        fileStat.reload();
-        fileNetDev.reload();
-        fileCpuTemp.reload();
+        // Reload files once their initial FileView read has completed.
+        if (fileMeminfo.text() !== "")
+            fileMeminfo.reload();
+        if (fileStat.text() !== "")
+            fileStat.reload();
+        if (fileNetDev.text() !== "")
+            fileNetDev.reload();
+        if (root._cpuTempPath !== "" && fileCpuTemp.text() !== "")
+            fileCpuTemp.reload();
         if (!skipGpu) {
-            if (root._gpuUsageSource !== "nvidia-smi")
+            if (root._gpuUsageSource !== "nvidia-smi" && root._gpuTempPath !== "" && fileGpuTemp.text() !== "")
                 fileGpuTemp.reload();
-            if (root._gpuUsageSource === "sysfs")
+            if (root._gpuUsageSource === "sysfs" && root._gpuUsagePath !== "" && fileGpuUsage.text() !== "")
                 fileGpuUsage.reload();
         }
 
@@ -545,6 +551,10 @@ Singleton {
     FileView {
         id: fileMeminfo
         path: "/proc/meminfo"
+        onLoaded: {
+            if (root._runningRequested && root.memoryTotal <= 0)
+                root._pollSensors()
+        }
     }
     FileView {
         id: fileStat
@@ -559,10 +569,22 @@ Singleton {
     FileView {
         id: fileCpuTemp
         path: root._cpuTempPath
+        onLoaded: {
+            if (root._runningRequested && root.cpuTemp <= 0) {
+                const cpuTempRaw = parseInt(fileCpuTemp.text()) || 0
+                root.cpuTemp = Math.round(cpuTempRaw / 1000)
+            }
+        }
     }
     FileView {
         id: fileGpuTemp
         path: root._gpuTempPath
+        onLoaded: {
+            if (root._runningRequested && root.gpuTemp <= 0 && root._gpuUsageSource !== "nvidia-smi") {
+                const gpuTempRaw = parseInt(fileGpuTemp.text()) || 0
+                root.gpuTemp = Math.round(gpuTempRaw / 1000)
+            }
+        }
     }
     FileView {
         id: fileGpuUsage

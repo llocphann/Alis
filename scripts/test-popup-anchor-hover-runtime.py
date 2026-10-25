@@ -17,6 +17,7 @@ import QtQuick
 import QtTest
 import Quickshell
 import qs
+import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.bar
@@ -124,6 +125,7 @@ ShellRoot {
    MouseArea { anchors.fill:parent;hoverEnabled:true;onClicked:root.clicks++ }
   }
  }
+ ResourcesPopup { id: resourcesPopup }
  TestCase {
   id: test; when:false; optional:true
   function check(v,m) { if(!v) throw new Error(m) }
@@ -361,6 +363,16 @@ ShellRoot {
     check(root.genericCloses===1,"generic dismissal emitted more than once")
     root.genericCloses=0
    }
+   const coldWidth=resourcesPopup.contentItem.implicitWidth
+   const coldHeight=resourcesPopup.contentItem.implicitHeight
+   check(coldWidth>0 && coldHeight>0,"ResourcesPopup content had zero initial implicit size")
+   ResourceUsage.ensureRunning(false,false)
+   tryVerify(()=>ResourceUsage.memoryTotal>0,1000)
+   ResourceUsage.cpuTemp=64;ResourceUsage.gpuTemp=58;ResourceUsage.cpuUsage=0.42;ResourceUsage.gpuUsage=0.37
+   wait(40);render()
+   check(resourcesPopup.contentItem.implicitWidth===coldWidth && resourcesPopup.contentItem.implicitHeight===coldHeight,
+    "ResourcesPopup implicit size shifted between cold and warm telemetry: "+JSON.stringify({coldWidth,coldHeight,warmWidth:resourcesPopup.contentItem.implicitWidth,warmHeight:resourcesPopup.contentItem.implicitHeight}))
+   ResourceUsage.stop()
    generic.enabled=true;generic.forceActiveFocus();wait(40)
    check(generic.activeFocus,"focus fixture did not acquire Qt focus")
    trigger.triggerHovered=false;wait(400)
