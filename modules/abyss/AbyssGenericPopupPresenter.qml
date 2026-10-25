@@ -32,6 +32,7 @@ Item {
     property rect connectionSourceRect: Qt.rect(0,0,0,0)
     // Supplied only by the exact visible module which opened this popup.
     property string sourceJoinedEdge: ""
+    property bool sourceModuleHovered: false
     property bool companionVisitActive: false
 
     property string activeKind: ""
@@ -208,7 +209,8 @@ Item {
             (root.companionVisitActive && root.activeKind === "utilities") || (root.activeKind === "dockAppMenu"
                 ? GlobalStates.abyssDockMenuTriggerHovered
                 : ["wifi","bluetooth","utilities"].includes(root.activeKind)
-                    && root.hoverKind === root.activeKind)
+                    && (root.hoverKind === root.activeKind
+                        || (body.appliedJoinedEdge.length > 0 && root.sourceModuleHovered)))
         source: "content/AbyssPopupContent.qml"
 
         open: root.resident

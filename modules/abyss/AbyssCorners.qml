@@ -74,6 +74,12 @@ Item {
         property bool containsMouse: allowed && dwellReady && mouse.containsMouse
         readonly property var liquidController: root.controller
         readonly property string popupAttachmentEdge: "bottom"
+        readonly property string moduleKind: kind === "quickNotes" ? "notesTimers" : "notificationActivity"
+        readonly property string popupJoinedEdge: {
+            const list = ModuleLayout.resolve(Config.options?.abyss?.modules, root.outputName, [])
+            const entry = list.find(p => p && p.kind === hit.moduleKind)
+            return entry?.joinCorner ? (kind === "quickNotes" ? "left" : "right") : ""
+        }
         width: Math.max(8,Math.min(48,kind === "quickNotes" ? Config.options?.quickNotes?.cornerSize ?? 14 : Config.options?.notificationCenter?.cornerSize ?? 14))
         height: width
         visible: allowed

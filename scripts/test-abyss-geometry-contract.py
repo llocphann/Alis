@@ -144,6 +144,12 @@ for(const owner of ['top','right','bottom','left'])
    assert(dOff>0 && dOff<24 && dOn>0 && dOn<24,'workspace-facing shadow band preserved across joinCorner ON/OFF');
    const before=popupInput(raw.content,w,h,ins,owner,raw.surface);
    const after=popupInput(joined.content,w,h,ins,owner,joined.surface);
+   const primaryRimX=owner==='left'?4:owner==='right'?w-4:c.x+c.width/2;
+   const primaryRimY=owner==='top'?4:owner==='bottom'?h-4:c.y+c.height/2;
+   const cornerRimX=(owner==='left'||adjacent==='left')?4:w-4;
+   const cornerRimY=(owner==='top'||adjacent==='top')?4:h-4;
+   assert(rectContains(after,primaryRimX,primaryRimY),'joined popupInput covers primary Screen Edge');
+   assert(rectContains(after,cornerRimX,cornerRimY),'joined popupInput covers shared Screen Edge corner');
    let added=0;
    for(let y=Math.floor(after.y);y<after.y+after.height;y++)
     for(let x=Math.floor(after.x);x<after.x+after.width;x++) {

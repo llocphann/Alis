@@ -44,7 +44,7 @@ const isolated=save(joined,'brightness','A',{edge:'left',alignment:'end',joinCor
 assert.equal(resolve(isolated,'brightness','A').joinCorner,false,'explicit output can disable inherited joining');
 assert(resolve(isolated,'brightness','B').joinCorner,'another output retains inherited joining');
 assert(resolve(save(isolated,'brightness','A',null),'brightness','A').joinCorner,'reset restores inherited joining');
-for (const kind of ['quickNotes','notificationCenter','notifications','wifi','bluetooth','osd',...osds])
+for (const kind of ['quickNotes','notificationCenter','leftPanel','rightPanel','notifications','wifi','bluetooth','osd',...osds])
   assert(canJoin(kind),kind+' exposes nearby-Edge joining');
 for (const kind of ['media','utilities','dashboard'])
   assert(!canJoin(kind),kind+' does not expose a misleading corner-join control');

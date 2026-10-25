@@ -1,6 +1,6 @@
 var edges = ["top","right","bottom","left"];
 var osds = ["volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch"];
-var cornerJoinKinds = ["osd","quickNotes","notificationCenter","notifications","wifi","launcher"].concat(osds);
+var cornerJoinKinds = ["osd","quickNotes","notificationCenter","notifications","wifi","launcher","leftPanel","rightPanel"].concat(osds);
 function key(kind) {
     if (kind==="calendar") return "clock";
     // Wi-Fi and Bluetooth are the same System Tray connectivity surface.

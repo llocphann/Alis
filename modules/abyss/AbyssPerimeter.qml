@@ -740,11 +740,15 @@ Scope {
             function positionEdge(kind,fallback) { return Presentation.edge(presentation(kind),fallback) }
             function positionAlong(kind,edge,span,fallback) { return Presentation.along(presentation(kind),edge,span,width,height,fallback,nativeInsets) }
             function sidebarAlong(kind,edge,span) {
+                const pos=presentation(kind)
                 const center=((Geometry.horizontal(edge) ? width : height)-span)/2
+                const fallback=pos?.joinCorner===true && (!pos?.alignment || pos.alignment==="source")
+                    ? ((Geometry.horizontal(edge) ? nativeInsets.left : nativeInsets.top) ?? 16)
+                    : center
                 // Center is physical-output centering. Unequal Edge thickness
                 // must not shift a Sidebar; explicit start/end/custom stay saved.
-                return presentation(kind)?.alignment === "center"
-                    ? center : positionAlong(kind,edge,span,center)
+                return pos?.alignment === "center"
+                    ? center : positionAlong(kind,edge,span,fallback)
             }
             function bodyInsets(edge,along,span,ownLauncherKind = "") {
                 return ModuleLayout.clearanceInsets(nativeInsets,
@@ -1204,6 +1208,9 @@ Scope {
                 controller: liquid
                 anchors.fill: parent
                 edge: window.positionEdge(identity,ShellLayoutController.sidebarAssignments().featureSidebar)
+                joinedEdge: Presentation.joinedEdge(identity,
+                    window.presentation(identity),edge,along,span,
+                    window.width,window.height)
                 outputName: window.outputName
                 vacancyRole: "featureSidebar"
                 open: window.presented && field.ready && (Config.options?.enabledPanels ?? []).includes("abyssSidebarLeft")
@@ -1232,6 +1239,9 @@ Scope {
                 controller: liquid
                 anchors.fill: parent
                 edge: window.positionEdge(identity,ShellLayoutController.sidebarAssignments().systemSidebar)
+                joinedEdge: Presentation.joinedEdge(identity,
+                    window.presentation(identity),edge,along,span,
+                    window.width,window.height)
                 outputName: window.outputName
                 vacancyRole: "systemSidebar"
                 open: window.presented && field.ready && (Config.options?.enabledPanels ?? []).includes("abyssSidebarRight")
@@ -1273,6 +1283,8 @@ Scope {
                     activeKind,activeFallbackEdge,activeAlongCenter)
                 sourceJoinedEdge: window.popupSourceModule(
                     activeKind,activeFallbackEdge,activeAlongCenter)?.popupJoinedEdge ?? ""
+                sourceModuleHovered: Boolean(window.popupSourceModule(
+                    activeKind,activeFallbackEdge,activeAlongCenter)?.hovered)
                 companionVisitActive: companionExtension.utilitiesVisitActive
                 bodyInsetsResolver: (edge,along,span) =>
                     window.bodyInsets(edge,along,span)
@@ -1320,9 +1332,21 @@ Scope {
                         Presentation.joinedEdge(presentationKind,
                             configuredPresentation,edge,along,span,
                             window?.width ?? 0,window?.height ?? 0)
+                    readonly property string unifiedConfiguredJoinedEdge:
+                        presentationKind === "notesTimers"
+                            ? Presentation.joinedEdge("quickNotes",
+                                window?.presentation("quickNotes") ?? ({}),edge,along,span,
+                                window?.width ?? 0,window?.height ?? 0)
+                            : presentationKind === "notificationActivity"
+                                ? Presentation.joinedEdge("notificationCenter",
+                                    window?.presentation("notificationCenter") ?? ({}),edge,along,span,
+                                    window?.width ?? 0,window?.height ?? 0)
+                                : ""
                     joinedEdge: configuredJoinedEdge.length > 0
                         ? configuredJoinedEdge
-                        : (hostedPopup?._liquidAnchor?.popupJoinedEdge ?? "")
+                        : unifiedConfiguredJoinedEdge.length > 0
+                            ? unifiedConfiguredJoinedEdge
+                            : (hostedPopup?._liquidAnchor?.popupJoinedEdge ?? "")
                     controller: liquid
                     anchors.fill: parent
                     edge: window?.positionEdge(presentationKind,

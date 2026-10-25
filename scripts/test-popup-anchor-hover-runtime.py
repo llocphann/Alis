@@ -251,6 +251,10 @@ ShellRoot {
     const body=[c.x+c.width/2,c.y+c.height/2]
     const weld=adjacent==="left" ? [4,body[1]] : adjacent==="right" ? [scene.width-4,body[1]]
       : adjacent==="top" ? [body[0],4] : [body[0],scene.height-4]
+    const primaryWeld=edge==="left" ? [4,body[1]] : edge==="right" ? [scene.width-4,body[1]]
+      : edge==="top" ? [body[0],4] : [body[0],scene.height-4]
+    const cornerWeld=[(edge==="left" || adjacent==="left") ? 4 : scene.width-4,
+      (edge==="top" || adjacent==="top") ? 4 : scene.height-4]
     function owned(point) {
      return !controller.sourceInputRegions.some(r=>Geometry.rectContains(r,point[0],point[1]))
       && host.hoverParent.contains(Qt.point(point[0]-host.hoverParent.x,point[1]-host.hoverParent.y))
@@ -272,7 +276,7 @@ ShellRoot {
     // checks so a 1px strip's .5 center cannot be rounded out of that strip.
     const shoulderPoint=[Math.floor(shoulder.x+shoulder.width/2),
       Math.floor(shoulder.y+shoulder.height/2)]
-    for(const point of [body,weld,shoulderPoint,body]) {
+    for(const point of [body,weld,primaryWeld,cornerWeld,shoulderPoint,body]) {
      check(owned(point) && nativeContains(point),"joined paint is outside native/hover mask on "+edge)
      mouseMove(scene,point[0],point[1]);wait(220);render()
      check(popup.requestedVisible && popup._contentHovered,"adjacent weld/shoulder dismissed popup on "+edge)

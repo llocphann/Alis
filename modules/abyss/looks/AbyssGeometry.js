@@ -47,10 +47,13 @@ function popupInput(content,width,height,insets,edge,paintedSurface) {
             else x=paintedSurface.x;
         }
     }
-    if (edge === "top") y=Math.min(y,insets.top);
-    else if (edge === "bottom") bottom=Math.max(bottom,height-insets.bottom);
-    else if (edge === "left") x=Math.min(x,insets.left);
-    else if (edge === "right") right=Math.max(right,width-insets.right);
+    var joined=Boolean(paintedSurface && (horizontal(edge)
+        ? (paintedSurface.x < 0 || paintedSurface.x+paintedSurface.width > width)
+        : (paintedSurface.y < 0 || paintedSurface.y+paintedSurface.height > height)));
+    if (edge === "top") y=joined ? 0 : Math.min(y,insets.top);
+    else if (edge === "bottom") bottom=joined ? height : Math.max(bottom,height-insets.bottom);
+    else if (edge === "left") x=joined ? 0 : Math.min(x,insets.left);
+    else if (edge === "right") right=joined ? width : Math.max(right,width-insets.right);
     x=clamp(x,0,width);y=clamp(y,0,height);
     right=clamp(right,x,width);bottom=clamp(bottom,y,height);
     return {x:x,y:y,width:right-x,height:bottom-y};
@@ -174,7 +177,8 @@ function _popupShoulders(width,height,insets,edge,record,radius,softness,recordR
         if (segment >= 0) append(segment,last,cross);
         if (rows.length === before) append(first,first,cross);
     };
-    for (var i=0;i<Math.ceil(normalReach)+1;i++) {
+    var firstStep=record.joinedEdge ? -Math.ceil(Math.max(0,insets[edge])) : 0;
+    for (var i=firstStep;i<Math.ceil(normalReach)+1;i++) {
         var cross=firstCross+(leading ? i : -i);
         if (cross < 0 || cross >= Math.floor(h ? height : width)) continue;
         var lo=Math.max(0,Math.floor(start-reach)),hi=Math.max(0,Math.min(extent,start));
