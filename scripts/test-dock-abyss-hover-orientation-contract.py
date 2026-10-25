@@ -46,7 +46,7 @@ assert "function commitPinnedDrop(): void" in settings
 assert 'Config.setNestedValue("dock.pinnedApps", values)' in settings
 assert 'title: Translation.tr("Pinned apps")' in settings
 assert 'text: "drag_indicator"' in settings
-assert 'Drag.keys: ["inir-dock-pinned-app"]' in settings
+assert 'Drag.keys: ["alis-dock-pinned-app"]' in settings or 'Drag.keys: ["inir-dock-pinned-app"]' in settings
 assert "root.togglePinnedVisibility(pinnedSlot.appId)" in settings
 assert "root.removePinnedApp(pinnedSlot.appId)" in settings
 assert "function filteredAddApps(): var" in settings

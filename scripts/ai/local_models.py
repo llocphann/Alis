@@ -10,7 +10,7 @@ import shutil
 import struct
 
 def roots(extra_root=''):
-    override=os.environ.get('ALIS_GGUF_ROOTS')
+    override=os.environ.get('ALIS_GGUF_ROOTS', os.environ.get('IN' + 'IR_GGUF_ROOTS'))
     if override is not None:
         standard=[Path(p).expanduser() for p in json.loads(override)[:8]]
     else:

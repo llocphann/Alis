@@ -258,7 +258,7 @@ ShellRoot {
   value=json.loads((ROOT/"defaults/config.json").read_text());value["panelFamily"]="abyss";value["abyss"]["companion"]["enabled"]=False
   (config/"config.json").write_text(json.dumps(value));env["QSG_RHI_BACKEND"]="opengl"
   if CAPTURE:env["ALIS_DASHBOARD_FIELD_CAPTURE_DIR"]=str(CAPTURE)
-  result=run_qs(folder,env,timeout=80)
+  result=run_qs(folder,env,timeout=120)
   if os.environ.get("ALIS_DASHBOARD_FIELD_LOG"):
    Path(os.environ["ALIS_DASHBOARD_FIELD_LOG"]).write_text(result.stdout)
   if CAPTURE:

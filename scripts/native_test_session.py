@@ -6,15 +6,6 @@ import json, os, re, shutil, signal, subprocess, time
 
 def run_qs(folder: Path, env: dict, timeout: int = 25):
     """Bound and clean up the test's whole process group, retaining diagnostics."""
-    cfg_root = Path(env.get("XDG_CONFIG_HOME", str(folder / "config")))
-    alis_cfg = cfg_root / "alis" / "config.json"
-    if not alis_cfg.exists():
-        for legacy_name in ("illogical-impulse", "inir"):
-            legacy_cfg = cfg_root / legacy_name / "config.json"
-            if legacy_cfg.exists():
-                alis_cfg.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(legacy_cfg, alis_cfg)
-                break
     command = ["dbus-run-session", "--", "qs", "-p", str(folder), "--no-color"]
     log = folder / "native-test-qs.log"
     with log.open("wb") as stream:

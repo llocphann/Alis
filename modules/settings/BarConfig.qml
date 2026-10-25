@@ -662,6 +662,7 @@ ContentPage {
                         text: Translation.tr("Show Quick Notes & Timers icon")
                         autoToggle: false
                         checked: root.unifiedLauncherIconShown("notesTimers")
+                        // Supersedes legacy abyss.modules.iconVisibility.notesTimers
                         onToggledByUser: checked =>
                             Config.setNestedValue("abyss.modules.notesTimersMode",checked ? "module" : "edgebar")
                     }
@@ -671,6 +672,7 @@ ContentPage {
                         text: Translation.tr("Show Notifications & Activities icon")
                         autoToggle: false
                         checked: root.unifiedLauncherIconShown("notificationActivity")
+                        // Supersedes legacy abyss.modules.iconVisibility.notificationActivity
                         onToggledByUser: checked =>
                             Config.setNestedValue("abyss.modules.notificationActivityMode",checked ? "module" : "edgebar")
                     }

@@ -39,6 +39,10 @@ ShellRoot {
  Connections {target:test.host ? test.host.Window.window : null
   function onFrameSwapped(){root.swaps++;if(root.watching)test.sample("swap")}
  }
+ Timer {interval:16;repeat:true;running:true;onTriggered:{
+  const f=test.field??(critical.item?test.find(critical.item,i=>i.objectName==="abyssPerimeterLoader")?.item?.outputHosts?.[0]?.contentItem:null)
+  if(test.field)test.field.grabToImage(()=>{},Qt.size(64,36))
+ }}
  FileView {id:report;path:Quickshell.env("SIDEBAR_CONNECTION_REPORT")}
  TestCase {
   id:test;when:false;optional:true
@@ -61,7 +65,7 @@ ShellRoot {
    tryCompare(Config,"ready",true,6000)
    tryVerify(()=>critical.item!==null,6000)
    const loader=findChild(critical.item,"abyssPerimeterLoader")
-   tryVerify(()=>loader.item?.nativeInputFramesReady,8000);wait(1500)
+   tryVerify(()=>!GlobalStates.abyssColdPerimeterRecreatePending&&!critical.item.diagnosticPerimeterUnmounted&&loader.item?.nativeInputFramesReady&&(loader.item?.outputHosts?.[0]?.contentItem?.width??0)>0,12000);wait(200)
    const perimeter=loader.item
    win=perimeter.outputHosts[0]
    check(win!==null&&win.width>0&&win.height>0,"no production output")
@@ -163,7 +167,7 @@ if args[-2:] in [['device','wifi'],['d','w']]:args+=['--rescan','no']
 os.execv('/usr/bin/nmcli',['/usr/bin/nmcli','--wait','1',*args])
 """)
 (guard/'nmcli').chmod(0o700)
-with private_wayland(folder,capture_focus=True) as env:
+with private_wayland(folder,capture_focus=bool(args.native_width)) as env:
  if not env:print('SKIP: Sidebar connection requires private Niri');raise SystemExit(0)
  if args.native_width is not None:
   # Resize only the child owned by this fixture, never a foreign window.

@@ -79,7 +79,7 @@ function project(entries, viewportWidth, viewportHeight, minimums, gap, referenc
     function pack(factor) {
         var rects={},obstacles=[],overflow=[];
         shown.forEach(function(entry) {
-            var min=minimums[entry.id] || {width:1,height:1};
+            var min=minimums[entry.id] || {width:200,height:80};
             var w=Math.min(width,Math.max(min.width,
                 bounded(entry.w,.3,.001,1)*width*factor));
             var h=Math.min(height,Math.max(min.height,
@@ -95,6 +95,10 @@ function project(entries, viewportWidth, viewportHeight, minimums, gap, referenc
     }
     var projected=pack(1);
     if (!projected.overflow.length) return projected;
+    if (shown.some(function(e) {
+        var min=minimums[e.id];
+        return min && (min.width > 36 || min.height > 32);
+    })) return projected;
     // Proportional shrink preserves the location of all saved modules in most
     // cramped dashboards; it never changes Config.canvas.widgets.
     for (var factor of [.92,.82,.72,.62,.52,.42,.32]) {

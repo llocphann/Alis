@@ -7,18 +7,18 @@ view=(ROOT/"modules/sidebarRight/notepad/QuickNotesView.qml").read_text()
 widget=(ROOT/"modules/sidebarRight/notepad/NotepadWidget.qml").read_text()
 planner=(ROOT/"modules/dashboard/DashboardWeeklyPlanner.qml").read_text()
 corner=(ROOT/"modules/screenCorners/QuickNotesPopup.qml").read_text()
-assert "showMarkdownModeSwitch: true" in dash
+assert "autoMarkdownReading: true" in dash
 assert "quickNotesSharedDashboardView" in dash
 assert "QuickNotesView" in dash and "NotepadWidget" not in dash
 assert "Component {id:notesPanel;DashNotes {}}" in planner
-assert 'readingOnHover: true' in corner
-assert "property bool showMarkdownModeSwitch: false" in view
-assert 'objectName: "quickNotesMarkdownModeSwitch"' in view
-assert "allowManualReading: root.showMarkdownModeSwitch" in view
-assert "readingOnHover: root.readingOnHover" in view
-assert "notepad.enterMarkdownReading()" in view and "root.focusEditor()" in view
-assert "property bool markdownEditing: !root.readingOnHover" in widget
-assert "property bool allowManualReading: false" in widget
+assert "autoMarkdownReading: true" in corner
+assert "property bool autoMarkdownReading: false" in view
+assert "property bool externalEscapeHandling: false" in view
+assert "autoMarkdownReading: root.autoMarkdownReading" in view
+assert "externalEscapeHandling: root.externalEscapeHandling" in view
+assert "onEditorDeactivated: root.editorDeactivated()" in view
+assert "property bool markdownEditing: !root.autoMarkdownReading" in widget
+assert "property bool autoMarkdownReading: false" in widget
 assert "root.releaseEditorFocus()" in widget and "root.markdownEditing = false" in widget
 assert widget.count("visible: root.markdownReading") == 1
 assert widget.count("visible: !root.markdownReading") == 1

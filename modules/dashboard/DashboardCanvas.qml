@@ -449,9 +449,11 @@ Item {
             // transaction. Once Done commits a layout, that layout becomes the
             // next edit session's baseline/default rather than jumping back to
             // the factory geometry.
+            const defaultCommitted = Config.options?.dashboard?.canvas?.widgets ?? []
+            // const committed = Config.options?.dashboard?.canvas?.widgets ?? []
             const committed = root.customTabId.length
                 ? (root.layoutOptions?.widgets ?? [])
-                : (Config.options?.dashboard?.canvas?.widgets ?? [])
+                : defaultCommitted
             root._rememberDraft()
             root._basePageOrder=Array.from(root.savedPageOrder)
             root._draftPageOrder=Array.from(root.savedPageOrder)
@@ -707,7 +709,8 @@ Item {
 
     function _minimumSize(id) {
         // A module's *content* is allowed to choose its comfortable size; the
-        // editor must not force old per-widget pixel minima on the canvas.
+        // editor must not force old per-widget pixel minima on the canvas
+        // (e.g. case "system": return { width: 260, height: 180 }).
         // This small hit-target floor prevents a resize handle collapsing to
         // zero, while all other sizes are determined by the saved proportions.
         // Projection sets canvas dimensions; read its independent viewport

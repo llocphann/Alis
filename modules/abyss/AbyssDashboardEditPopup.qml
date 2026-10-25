@@ -23,7 +23,8 @@ Item {
         && (body?.presented ?? false) && (body?.progress ?? 0)>.99
     property real revealProgress: revealRequested ? 1 : 0
     readonly property real targetWidth: Math.min(toolbar.implicitWidth,
-        Math.max(1, contentRect?.width ?? 1), Math.max(1, (parent?.width ?? 1)-24))
+        (contentRect?.width ?? 0) > 0 ? contentRect.width : toolbar.implicitWidth,
+        (parent?.width ?? 0) > 24 ? parent.width - 24 : toolbar.implicitWidth)
     readonly property rect targetRect: Qt.rect(
         Math.max(12, Math.min((parent?.width ?? 0)-targetWidth-12,
             (contentRect?.x ?? 0)+((contentRect?.width ?? 0)-targetWidth)/2)),
@@ -90,7 +91,8 @@ Item {
         nativeInputRegion: root.toolbarInputRegion
     }
     // Escape belongs to the Perimeter PanelWindow, never this reparented
-    // editor. Having both WindowShortcuts for Overview makes them ambiguous.
+    // editor (delegates onActivated: root.canvasController.cancelEditMode()).
+    // Having both WindowShortcuts for Overview makes them ambiguous.
     DashboardEditToolbar {
         id: toolbar
         width: root.width

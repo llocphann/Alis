@@ -39,6 +39,7 @@ Window {
   onTransitionFinished:root.finishes++
  }
  ThumbnailImage {id:quoted;visible:false;sourcePath:Quickshell.env("QUOTED_IMAGE");generateThumbnail:true;sourceSize:Qt.size(64,64)}
+ Timer {interval:16;repeat:true;running:true;onTriggered:root.contentItem.grabToImage(()=>{},Qt.size(64,36))}
  TestCase {
   id:test;when:false;optional:true
   function check(value,message){if(!value)throw new Error(message)}
@@ -68,6 +69,7 @@ Window {
    tryCompare(mode,"hovered",true,1500,"native pointer did not enter the wallpaper action")
    tryVerify(()=>tip.contentItem.shown,2500,"wallpaper action hover did not show its tooltip");wait(200)
    const surface=findChild(tip.contentItem,"styledToolTipSurface")
+   tryVerify(()=>surface.radius>=12,1500)
    check(tip.contentItem.abyss && surface.radius>=12 && surface.color===AbyssStyle.surface,"hover tip did not use the Abyss material")
    root.contentItem.grabToImage(result=>result.saveToFile("/tmp/hadalis-wallpaper-hover-20261007.png"))
    wait(120);mouseMove(search);tryVerify(()=>!tip.contentItem.shown,2000)
@@ -123,7 +125,7 @@ Window {
   if env is None:print('SKIP: wallpaper native test requires private Niri');raise SystemExit(0)
   config=folder/'config/alis';config.mkdir(parents=True,exist_ok=True)
   data=json.loads((ROOT/'defaults/config.json').read_text());data.setdefault('wallpapers',{})['directory']=str(folder/'wallpapers');(config/'config.json').write_text(json.dumps(data))
-  env.update(WALLPAPER_FIXTURES=str(folder/"wallpapers"),QUOTED_IMAGE=str(odd),WALLPAPER_CAPTURE='/tmp/hadalis-wallpaper-carousel-20261007.png',QSG_RHI_BACKEND='opengl',INIR_EXPERIMENTAL_MELT='0')
+  env.update(WALLPAPER_FIXTURES=str(folder/"wallpapers"),QUOTED_IMAGE=str(odd),WALLPAPER_CAPTURE='/tmp/hadalis-wallpaper-carousel-20261007.png',QSG_RHI_BACKEND='opengl',ALIS_DISABLE_LIQUID_SHADER='1')
   result=run_qs(folder,env,timeout=40);output=result.stdout
   if result.returncode or 'WALLPAPER_CAROUSEL_PASS' not in output or any(e in output for e in ['WALLPAPER_CAROUSEL_FAIL','ReferenceError:','TypeError:','Unable to assign','Binding loop','Failed to load configuration']):print(output);raise SystemExit(1)
   for line in output.splitlines():

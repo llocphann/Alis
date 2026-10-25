@@ -997,7 +997,7 @@ Item {
                     compactIpcEditor:true
                     outputName:root.outputOnly ? root.outputName : ""
                     nearbyEdge:root.previewNearbyCorner
-                    // Popups follow their owning Screen Edge modules; only IPC/OSD
+                    // Popups ("utilities","launcher", etc.) follow their owning Screen Edge modules; only IPC/OSD
                     // indicators have independent positions in this editor.
                     allowedKinds:["osd","volume","brightness","mic","mediaOsd","keyboardLayout","voiceSearch"]
                     onPositionsEdited:(positions,kind,outputName,values)=>

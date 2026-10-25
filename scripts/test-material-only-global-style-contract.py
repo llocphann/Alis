@@ -305,7 +305,7 @@ def main() -> None:
     )
 
     for token in (
-        "readonly property bool inirEverywhere: false",
+        "readonly property bool alisEverywhere: false",
         "readonly property bool angelEverywhere: false",
         "readonly property bool auroraEverywhere: false",
         "readonly property bool regaliaEverywhere: false",
@@ -2498,7 +2498,7 @@ console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');
         "buttonRadius: Appearance.rounding.normal",
         "radius: Appearance.rounding.full",
         "buttonRadius: Appearance.rounding.full",
-        'Drag.keys: ["application/x-inir-desktop-entry"]',
+        'Drag.keys: ["application/x-alis-desktop-entry"]',
         "root.entry.execute()",
     ):
         require(overview_search_item, token, "overview/SearchItem.qml")
@@ -2599,7 +2599,7 @@ console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');
         "buttonRadius: Appearance.rounding.normal",
         "buttonRadiusPressed: Appearance.rounding.small",
         "AppSearch.launchEntry(entry)",
-        'Drag.keys: ["application/x-inir-desktop-entry"]',
+        'Drag.keys: ["application/x-alis-desktop-entry"]',
     ):
         require(overview_all_apps_grid, token, "overview/OverviewAllAppsGrid.qml")
 
@@ -2799,7 +2799,7 @@ console.log('Onscreen keyboard palette and key shape: PASS (12 cases)');
         "color: Appearance.colors.colError",
         "color: Appearance.colors.colSubtext",
         'AppLauncher.launch("manageUser")',
-        'Quickshell.shellPath("scripts/inir")',
+        'Quickshell.shellPath("scripts/alis")',
         "GlobalStates.sessionOpen = true",
     ):
         require(control_panel_profile, token, "controlPanel/ProfileHeader.qml")

@@ -122,13 +122,15 @@ ShellRoot {
  Timer {interval:100;running:true;onTriggered:test.run()}
 }
 ''')
-    with private_wayland(folder, capture_focus=True) as env:
+    with private_wayland(folder, capture_focus=False) as env:
         if env is None:
             raise SystemExit('Local private Niri is required')
         if args.scale != 1.0:
             outputs = json.loads(subprocess.check_output(['niri', 'msg', '--json', 'outputs'], env=env, text=True))
             subprocess.run(['niri', 'msg', 'output', next(iter(outputs)), 'scale', str(args.scale)], env=env, check=True, capture_output=True)
-        env.update(CONTACT_OUTPUT=str(args.output), CONTACT_LIGHT='1' if args.light else '0', QSG_RHI_BACKEND='opengl')
+        env.update(CONTACT_OUTPUT=str(args.output), CONTACT_LIGHT='1' if args.light else '0',
+                   QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='rhi', QSG_RHI_BACKEND='opengl',
+                   QT_SCALE_FACTOR=str(args.scale))
         # The expanded inherited-rounding matrix captures 199 images (versus
         # the previous 55), including fractional-scale readbacks. Keep each
         # frame's existing readiness deadline and all exact pixel assertions.

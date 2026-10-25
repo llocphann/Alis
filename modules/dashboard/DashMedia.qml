@@ -37,7 +37,13 @@ DashCard {
     readonly property bool isPlaying: playbackAdapter
         ? Boolean(playbackAdapter.isPlaying) : (root.player?.isPlaying ?? false)
 
+    implicitHeight: root.pad * 2
+        + (root.hasPlayer ? Appearance.sizes.mediaControlsHeight : 112)
+        + (volumeRow.visible ? mediaColumn.spacing + volumeRow.implicitHeight : 0)
+        + (equalizer.visible ? mediaColumn.spacing + equalizer.implicitHeight : 0)
+
     ColumnLayout {
+        id: mediaColumn
         Layout.fillWidth: true
         spacing: root.compact ? 4 : 6
 
@@ -103,6 +109,7 @@ DashCard {
         // MPD volume is needed only in the Music-page instance; the Dashboard
         // card's original playback surface remains unchanged.
         RowLayout {
+            id: volumeRow
             visible: root.mediaBackend !== null
             Layout.fillWidth: true
             Layout.preferredHeight: visible ? implicitHeight : 0

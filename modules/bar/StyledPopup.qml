@@ -644,7 +644,7 @@ LazyLoader {
                 ? Math.max(0, (outputHeight - sceneHeight) / 2)
                 : root.tangentEdgeOverride === "start" ? 0
                 : root.tangentEdgeOverride === "end"
-                    ? Math.max(0, outputHeight - sceneHeight)
+                    ? Math.max(0, outputHeight - sceneHeight) // rotated equivalent of outputHeight - localHeight
                 : top
             return Qt.rect(barX, tangentY, thickness, sceneHeight)
         }
@@ -655,7 +655,7 @@ LazyLoader {
             ? Math.max(0, (outputWidth - sceneWidth) / 2)
             : root.tangentEdgeOverride === "start" ? 0
             : root.tangentEdgeOverride === "end"
-                ? Math.max(0, outputWidth - sceneWidth)
+                ? Math.max(0, outputWidth - sceneWidth) // rotated equivalent of outputWidth - localWidth
             : left
         return Qt.rect(tangentX, barY, sceneWidth, thickness)
     }

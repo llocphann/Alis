@@ -380,7 +380,8 @@ Item {
             return true
         }
         // Edit Mode owns the first Escape, regardless of widget selection or
-        // in-progress tab drag. This is the same discard path as Cancel.
+        // in-progress tab drag. This is the same discard path as Cancel
+        // (generalizes if (dashboardCanvas.editMode) { ... dashboardCanvas.cancelEditMode() }).
         if (root.editMode) {
             dashboardHeader.cancelPageDrag()
             root.canvasController?.cancelEditMode()

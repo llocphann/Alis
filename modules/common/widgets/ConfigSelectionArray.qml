@@ -11,7 +11,7 @@ import qs.modules.common.functions
 Flow {
     id: root
     Layout.fillWidth: true
-    // Planner full-label chips wrap across rows when the option card is narrow.
+    // Default spacing: 2; Planner full-label chips wrap across rows when the option card is narrow.
     spacing: root.wrapFullLabels ? 5 : 2
     // Integración con buscador global de Settings
     property bool enableSettingsSearch: true

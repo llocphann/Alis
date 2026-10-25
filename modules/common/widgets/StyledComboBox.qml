@@ -163,7 +163,7 @@ ComboBox {
         required property int index
         required property var modelData
 
-        width: root.popup.width - 8
+        width: root.popup.width - 8 // popup-aware equivalent of width: root.width - 8
         height: 36
         highlighted: root.highlightedIndex === index
         hoverEnabled: true

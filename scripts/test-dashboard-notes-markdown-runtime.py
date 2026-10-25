@@ -48,16 +48,15 @@ ShellRoot {
    tryVerify(()=>root.frames>previous,3000)
   }
   function sourceView(view){
-   check(!!view && view.showMarkdownModeSwitch,"Dashboard/Planner did not use shared switch")
+   check(!!view && view.autoMarkdownReading,"Dashboard/Planner did not use shared autoMarkdownReading")
    const editor=view.editor
    const source=findChild(editor,"quickNotesSourceEditor")
    const reader=findChild(editor,"quickNotesMarkdownReading")
    const body=findChild(editor,"quickNotesMarkdownBody")
    check(!!source && !!reader && !!body,"shared NotepadWidget lost Markdown")
-   check(editor.markdownEditing && !editor.markdownReading && !reader.visible,
-    "Dashboard/Planner must default to Source Editing")
-   return {editor:editor,source:source,reader:reader,body:body,
-           switchButton:findChild(view,"quickNotesMarkdownModeSwitch")}
+   check(!editor.markdownEditing && editor.markdownReading && reader.visible,
+    "Dashboard/Planner must default to Markdown Reading")
+   return {editor:editor,source:source,reader:reader,body:body}
   }
   function checkRoundTrip(view,tag){
    const parts=sourceView(view),noteId=parts.editor.displayedTabId
@@ -65,9 +64,6 @@ ShellRoot {
    const draft="# "+tag+"\n**Bold** and *italic*"
    parts.source.text=draft
    parts.editor.flushPendingSave()
-   const label=parts.switchButton
-   check(label.visible && label.enabled,"missing enabled Reading/Source control "+tag)
-   mouseClick(label,label.width/2,label.height/2)
    tryVerify(()=>parts.reader.visible && parts.editor.markdownReading,3000)
    check(!parts.source.activeFocus && parts.body.textFormat===Text.MarkdownText,
     "Reading must not own keyboard focus "+tag)
@@ -86,11 +82,11 @@ ShellRoot {
    check(parts.source.text==="hello","bold toggle failed "+tag)
    parts.source.select(0,5);keyClick(Qt.Key_K,Qt.ControlModifier)
    check(parts.source.text==="[hello](https://)","Ctrl+K Source failed "+tag)
-   mouseClick(label,label.width/2,label.height/2)
-   tryVerify(()=>parts.reader.visible,3000)
+   keyClick(Qt.Key_Escape,Qt.NoModifier)
+   tryVerify(()=>parts.reader.visible && parts.editor.markdownReading,3000)
    check(Notepad.tabs[Notepad.indexForTabId(noteId)].text===parts.source.text,
-    "Reading toggle lost pending Source autosave "+tag)
-   check(parts.editor.displayedTabId===noteId,"switch lost displayed stable ID "+tag)
+    "Escape to Reading lost pending Source autosave "+tag)
+   check(parts.editor.displayedTabId===noteId,"Escape lost displayed stable ID "+tag)
    return parts
   }
   function runChecks(){try{
@@ -108,13 +104,13 @@ ShellRoot {
    check(a.editor.markdownReading,"other note surface changed mode on Planner activity")
    root.plannerWidth=480
    wait(140)
-   check(b.switchButton.visible && b.switchButton.width>=60,
-    "small Planner notes column clipped Reading/Source switch")
+   check(b.reader.visible && b.editor.markdownReading,
+    "small Planner notes column lost Reading state")
    screenshot("planner-narrow")
    planner.sideView="todo";wait(60)
    planner.sideView="notes";wait(80)
    const reopen=findChild(side.item,"quickNotesSharedDashboardView")
-   check(reopen.editor.markdownEditing,"new Planner notes instance must default Source")
+   check(reopen.editor.markdownReading,"new Planner notes instance must default Reading")
    check(reopen.editor.displayedTabId.length>0,"Planner remount lost canonical note ID")
    console.info("DASHBOARD_NOTES_MARKDOWN_NATIVE_PASS",root.checks,root.frames)
   }catch(error){console.error("DASHBOARD_NOTES_MARKDOWN_NATIVE_FAIL",error.message,error.stack)}Qt.quit()}

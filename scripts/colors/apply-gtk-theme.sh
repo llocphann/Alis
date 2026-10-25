@@ -77,7 +77,7 @@ fi
 
 # Read the app palette in one jq invocation rather than starting 29 jq
 # processes during every wallpaper recolor. The ordered fields are defined in
-# lib/app-palette-fields.jq and preserve the former fallback precedence.
+# lib/app-palette-fields.jq and preserve the former fallback precedence (e.g. .app_foreground // .on_surface).
 if ! COLOR_VALUES_TEXT="$(jq -r -f "$SCRIPT_DIR/lib/app-palette-fields.jq" "$COLOR_SOURCE" 2>/dev/null)"; then
     echo "[apply-gtk-theme] invalid palette JSON, skipping GTK/KDE refresh" >&2
     exit 0

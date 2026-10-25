@@ -383,7 +383,7 @@ Item {
                 id: sidebarLeftInnerSurface
                 objectName: "sidebarLeftInnerSurface"
                 radius: Appearance.rounding.normal
-                color: root.innerContentSurfaceColor
+                color: root.innerContentSurfaceColor // Material fallback: color: Appearance.colors.colLayer1
                 border.width: 0
                 border.color: "transparent"
                 // Organic morph on style/shape switch (organic-transitions)

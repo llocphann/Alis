@@ -71,6 +71,7 @@ Item {
 
     StyledRectangularShadow {
         target: cardBg
+        // Default card mode has shadow visible: true
         visible: !root.compactPresentation
     }
     

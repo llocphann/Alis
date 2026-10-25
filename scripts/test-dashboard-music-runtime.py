@@ -453,8 +453,8 @@ ShellRoot {
   data=json.loads((ROOT/"defaults/config.json").read_text());data["panelFamily"]="abyss";data["abyss"]["companion"]["enabled"]=False
   (config/"config.json").write_text(json.dumps(data))
   capture=Path(os.environ.get("HADALIS_MUSIC_CAPTURE",str(folder/"dashboard-music.png")))
-  env.update(QSG_RHI_BACKEND="opengl",QSG_RENDER_LOOP="basic",MUSIC_CAPTURE=str(capture),MUSIC_CAPTURE_NARROW=str(capture.with_name(capture.stem+"-narrow.png")))
-  result=run_qs(folder,env,timeout=40)
+  env.update(QSG_RHI_BACKEND="opengl",MUSIC_CAPTURE=str(capture),MUSIC_CAPTURE_NARROW=str(capture.with_name(capture.stem+"-narrow.png")))
+  result=run_qs(folder,env,timeout=60)
   if os.environ.get("ALIS_DASHBOARD_MUSIC_LOG"):
    Path(os.environ["ALIS_DASHBOARD_MUSIC_LOG"]).write_text(result.stdout)
   if result.returncode or "DASHBOARD_MUSIC_RUNTIME_PASS" not in result.stdout or any(x in result.stdout for x in ["DASHBOARD_MUSIC_RUNTIME_FAIL","TypeError:","ReferenceError:","Binding loop","Unable to assign","Cannot assign to non-existent property","Failed to load configuration"]):

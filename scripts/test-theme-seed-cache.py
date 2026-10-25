@@ -16,11 +16,65 @@ import subprocess
 import sys
 import tempfile
 
-if len(sys.argv) != 2:
-    raise SystemExit("usage: python3 scripts/test-theme-seed-cache.py /path/to/alis-theme")
-BINARY = Path(sys.argv[1]).resolve()
-if not BINARY.is_file():
+REPO_ROOT = Path(__file__).resolve().parents[1]
+_TEMP_BUILD_DIR: tempfile.TemporaryDirectory[str] | None = None
+
+
+def _resolve_binary() -> Path:
+    global _TEMP_BUILD_DIR
+    if len(sys.argv) == 2:
+        candidate = Path(sys.argv[1]).resolve()
+        if not candidate.is_file():
+            raise SystemExit("Rust alis-theme binary not found")
+        return candidate
+    if len(sys.argv) > 2:
+        raise SystemExit("usage: python3 scripts/test-theme-seed-cache.py [/path/to/alis-theme]")
+
+    candidates: list[Path] = []
+    if os.getenv("ALIS_NATIVE_BIN_DIR"):
+        candidates.append(Path(os.environ["ALIS_NATIVE_BIN_DIR"]) / "alis-theme")
+    candidates.extend((
+        REPO_ROOT / "native/target/release/alis-theme",
+        REPO_ROOT / "native/target/debug/alis-theme",
+        REPO_ROOT / "native/bin/alis-theme",
+    ))
+    try:
+        origin = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "config", "--get", "remote.origin.url"],
+            text=True, capture_output=True, timeout=5, check=False,
+        ).stdout.strip()
+        if origin and Path(origin).is_dir():
+            origin_root = Path(origin).resolve()
+            candidates.extend((
+                origin_root / "native/target/release/alis-theme",
+                origin_root / "native/target/debug/alis-theme",
+                origin_root / "native/bin/alis-theme",
+            ))
+    except OSError:
+        pass
+    which_bin = shutil.which("alis-theme")
+    if which_bin:
+        candidates.append(Path(which_bin))
+    for candidate in candidates:
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return candidate.resolve()
+
+    if shutil.which("cargo"):
+        _TEMP_BUILD_DIR = tempfile.TemporaryDirectory(prefix="alis-theme-cargo-")
+        target_dir = Path(_TEMP_BUILD_DIR.name)
+        subprocess.run(
+            ["cargo", "build", "--release", "--manifest-path",
+             str(REPO_ROOT / "native/Cargo.toml"), "--bin", "alis-theme"],
+            env={**os.environ, "CARGO_TARGET_DIR": str(target_dir)},
+            check=True,
+        )
+        built = target_dir / "release/alis-theme"
+        if built.is_file():
+            return built.resolve()
     raise SystemExit("Rust alis-theme binary not found")
+
+
+BINARY = _resolve_binary()
 TEST_COUNT = 0
 
 

@@ -66,13 +66,13 @@ ShellRoot {
   function runChecks(){try{
    tryCompare(Config,"ready",true,4000)
    Config.blockWrites=true
-   Directories.scriptsPath=Quickshell.env("PREVIEW_HOOKS")
    MaterialThemeLoader.filePath=Quickshell.env("PREVIEW_BASELINE")
    tryVerify(()=>MaterialThemeLoader.ready && paletteIs(root.a),3000)
    const revision=Config.revision, wallpaper=Config.options.background.wallpaperPath
    const initial=snapshot()
    capture("baseline")
    Wallpapers.previewWallpaper(root.images+"b.png")
+   Directories.scriptsPath=Quickshell.env("PREVIEW_HOOKS")
    tryVerify(()=>paletteIs(root.b),4000)
    check(MaterialThemeLoader.previewActive && Config.options.background.wallpaperPath===wallpaper && Config.revision===revision,"browsing committed wallpaper or configuration")
    capture("highlighted")

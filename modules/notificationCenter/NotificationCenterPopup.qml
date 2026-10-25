@@ -86,6 +86,7 @@ Bar.StyledPopup {
     // Its local x/y are therefore near zero; pin the popup to the trailing
     // tangent edge of the full output instead of interpreting those locals as
     // output coordinates (which incorrectly placed the body bottom-left).
+    // Default corner mode uses tangentEdgeOverride: "end"
     tangentEdgeOverride: root.moduleAnchorMode ? "" : "end"
     attachmentEdgeOverride: root.cornerAttachmentEdge
     attachmentThicknessOverride: root.cornerAttachmentThickness

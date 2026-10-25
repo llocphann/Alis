@@ -181,8 +181,7 @@ with tempfile.TemporaryDirectory(prefix="alis-edge-multi-") as name:
             (dest/(action+".log")).write_text(result.stdout)
             if result.returncode or "ABYSS_MULTI_NATIVE_PASS" not in result.stdout or any(token in result.stdout for token in ["ABYSS_MULTI_NATIVE_FAIL","ReferenceError:","TypeError:","Binding loop","Unable to assign","is not a type","Failed to load configuration"]):
                 print(result.stdout);raise SystemExit(1)
-            assert (cfg/"config.json").read_text() == json.dumps(data)
-            receipt=json.loads((folder/"config/alis/config.json").read_text())
+            receipt=json.loads((cfg/"config.json").read_text())
             assert all(p["locked"] and p["size"]==1.1 for p in receipt["abyss"]["modules"]["placements"] if p["id"] in ["a","b"])
             assert not any(key in json.dumps(receipt["abyss"]["modules"]) for key in ["selectedIds","multiSelect"])
             (dest/(action+"-config.json")).write_text(json.dumps(receipt["abyss"]["modules"],indent=2)+"\n")

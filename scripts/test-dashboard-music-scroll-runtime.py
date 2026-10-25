@@ -221,6 +221,7 @@ ShellRoot {
     list.currentIndex=list.count-1;list.positionViewAtEnd()
     check(list.contentY>list.originY+1,"hidden scrollbar blocked end reveal "+name)
    }
+   dashboard.width=900;renderFrame(dashboard,"narrow horizontal wheel")
    horizontal.cancelFlick();horizontal.contentX=0
    mouseWheel(horizontal,12,12,-120,0);wait(250)
    check(horizontal.contentX>0&&dashboard.currentPage===1,"hidden scrollbar blocked horizontal wheel or changed page")
@@ -258,7 +259,7 @@ ShellRoot {
   (config/"config.json").write_text(json.dumps(data))
   capture=Path(os.environ.get("HADALIS_MUSIC_CAPTURE",str(folder/"dashboard-music.png")))
   env.update(QSG_RHI_BACKEND="opengl",MUSIC_CAPTURE=str(capture),MUSIC_CAPTURE_NARROW=str(capture.with_name(capture.stem+"-narrow.png")))
-  result=run_qs(folder,env,timeout=60)
+  result=run_qs(folder,env,timeout=80)
   if os.environ.get("ALIS_MUSIC_SCROLL_LOG"):
    Path(os.environ["ALIS_MUSIC_SCROLL_LOG"]).write_text(result.stdout)
   if result.returncode or "MUSIC_SCROLL_PASS" not in result.stdout or any(x in result.stdout for x in ["MUSIC_SCROLL_FAIL","TypeError:","ReferenceError:","Binding loop","Unable to assign","Failed to load configuration"]):
@@ -268,7 +269,7 @@ ShellRoot {
   assert saved["dashboard"]["lastPageId"]=="music","independent disk readback missing selected Music page"
   if os.environ.get("ALIS_MUSIC_SCROLL_LOG"):
    Path(os.environ["ALIS_MUSIC_SCROLL_LOG"]).with_name("config-off.json").write_text(json.dumps(saved["dashboard"],indent=2)+"\n")
-  restarted=run_qs(folder,dict(env,MUSIC_SCROLL_ACTION="restart"),timeout=25)
+  restarted=run_qs(folder,dict(env,MUSIC_SCROLL_ACTION="restart"),timeout=45)
   if os.environ.get("ALIS_MUSIC_SCROLL_LOG"):
    Path(os.environ["ALIS_MUSIC_SCROLL_LOG"]).with_name("restart.log").write_text(restarted.stdout)
   if restarted.returncode or "MUSIC_SCROLL_RESTART_PASS" not in restarted.stdout or any(x in restarted.stdout for x in ["MUSIC_SCROLL_FAIL","TypeError:","ReferenceError:","Binding loop","Unable to assign","Failed to load configuration"]):

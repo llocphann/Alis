@@ -662,7 +662,7 @@ def main() -> None:
         "readonly property bool matchDarkPhysicalEdge:",
         "Appearance.m3colors.darkmode",
         "? Appearance.colors.colLayer0",
-        ": Appearance.inir.colLayer1",
+        ": Appearance.alis.colLayer1",
     ):
         check(token in dock,
               f"Dock iRiS Screen Edge / shadow contract missing: {token}")

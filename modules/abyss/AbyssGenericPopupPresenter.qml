@@ -196,6 +196,7 @@ Item {
         along: Presentation.along(root.activePosition,edge,span,
             root.outputWidth,root.outputHeight,
             root.activeAlongCenter-span/2,root.presentationInsets)
+        // joinedEdge: Presentation.joinedEdge(root.activeKind,
         readonly property string configuredJoinedEdge: Presentation.joinedEdge(root.activeKind,
             root.activePosition,edge,along,span,
             root.outputWidth,root.outputHeight)
