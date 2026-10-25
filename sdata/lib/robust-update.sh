@@ -228,6 +228,14 @@ run_verification() {
         fi
     done
 
+    local shell_entrypoint
+    for shell_entrypoint in "setup" "scripts/alis"; do
+        if [[ -f "$II_TARGET/$shell_entrypoint" ]] && ! bash -n "$II_TARGET/$shell_entrypoint" 2>/dev/null; then
+            log_error "Shell entrypoint has invalid bash syntax: $shell_entrypoint"
+            ((errors++))
+        fi
+    done
+
     if [[ -d "$II_TARGET/scripts" ]]; then
         local scripts_without_exec
         scripts_without_exec=$(find "$II_TARGET/scripts" -type f \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) ! -executable 2>/dev/null || true)

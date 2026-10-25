@@ -1,7 +1,7 @@
 pkgbase = alis-meta
 	pkgdesc = Full Alis desktop experience meta-package
 	pkgver = 2.29.3
-	pkgrel = 6
+	pkgrel = 7
 	url = https://github.com/llocphann/Alis
 	arch = any
 	license = GPL-3.0-only

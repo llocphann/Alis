@@ -2484,6 +2484,15 @@ run_update() {
                 fi
             fi
 
+            if [[ -d "${XDG_CONFIG_HOME}/quickshell/alis" && -f "${REPO_ROOT}/sdata/lib/safe-setup-sync.sh" ]]; then
+                if ! bash "${REPO_ROOT}/sdata/lib/safe-setup-sync.sh" \
+                        "${REPO_ROOT}/setup" "${XDG_CONFIG_HOME}/quickshell/alis/setup"; then
+                    _report_update_failure "setup" "Refused unsafe setup entrypoint replacement"
+                    tui_error "Setup synchronization failed; original entrypoint was preserved"
+                    return 1
+                fi
+            fi
+
             if ! sync_launcher_from_repo >/dev/null; then
                 _report_update_failure "launcher" "Launcher refresh failed"
                 tui_error "Could not refresh the Alis launcher"

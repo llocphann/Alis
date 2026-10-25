@@ -2483,28 +2483,41 @@ resolve_setup_dir() {
     fi
 
     local version_file
-    version_file="$(alis_version_file)"
-    local stored_repo=""
-    if [[ -f "$version_file" ]]; then
+    for version_file in "$(alis_version_file)" \
+            "${XDG_CONFIG_HOME:-$HOME/.config}/alis/version.json" \
+            "${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/version.json" \
+            "${XDG_CONFIG_HOME:-$HOME/.config}/in""ir/version.json"; do
+        [[ -f "$version_file" ]] || continue
+        local stored_repo=""
         if command -v jq >/dev/null 2>&1; then
             stored_repo=$(jq -r '.repoPath // .repo_path // empty' "$version_file" 2>/dev/null || true)
         else
             stored_repo=$(sed -n 's/.*"repoPath"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$version_file" | head -1)
             [[ -n "$stored_repo" ]] || stored_repo=$(sed -n 's/.*"repo_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$version_file" | head -1)
         fi
-    fi
 
-    stored_repo="${stored_repo/#\~/$HOME}"
-    # Git worktrees store .git as a file, not a directory. Recover from
-    # either checkout layout when a copied runtime setup is outdated/broken.
-    if [[ -n "$stored_repo" && ( -d "${stored_repo}/.git" || -f "${stored_repo}/.git" )
-            && -x "${stored_repo}/setup" && -f "${stored_repo}/shell.qml" ]] &&
-            bash -n "${stored_repo}/setup" 2>/dev/null; then
-        printf '%s' "$stored_repo"
-        return
-    fi
+        stored_repo="${stored_repo/#\~/$HOME}"
+        # Git worktrees store .git as a file, not a directory. Recover from
+        # either checkout layout when a copied runtime setup is outdated/broken.
+        if [[ -n "$stored_repo" && ( -d "${stored_repo}/.git" || -f "${stored_repo}/.git" )
+                && -x "${stored_repo}/setup" && -f "${stored_repo}/shell.qml" ]] &&
+                bash -n "${stored_repo}/setup" 2>/dev/null; then
+            printf '%s' "$stored_repo"
+            return
+        fi
+    done
 
     resolve_config_dir
+    if [[ -x "$config_dir/setup" && -f "$config_dir/shell.qml" ]] &&
+            bash -n "$config_dir/setup" 2>/dev/null; then
+        printf '%s' "$config_dir"
+        return
+    fi
+    if [[ -x "$user_config_dir/setup" && -f "$user_config_dir/shell.qml" ]] &&
+            bash -n "$user_config_dir/setup" 2>/dev/null; then
+        printf '%s' "$user_config_dir"
+        return
+    fi
     printf '%s' "$config_dir"
 }
 
@@ -2539,6 +2552,13 @@ run_setup_inline() {
     if [[ ! -x "$setup_script" ]]; then
         echo "setup not found in $dir" >&2
         exit 1
+    fi
+
+    local syntax_error
+    if ! syntax_error="$(bash -n "$setup_script" 2>&1)"; then
+        printf 'alis: refusing syntax-invalid setup at %s\n%s\n' "$setup_script" "$syntax_error" >&2
+        printf '%s\n' 'Run update from a healthy Alis Git checkout: bash ./setup update' >&2
+        return 2
     fi
 
     (
@@ -2597,9 +2617,11 @@ show_logs() {
 
 run_repair() {
     local dir="$1"
+    local setup_dir
+    setup_dir="$(resolve_setup_dir)"
 
     printf '\n== running doctor ==\n'
-    run_setup_inline "$dir" doctor
+    run_setup_inline "$setup_dir" doctor
 
     if [[ -z "${WAYLAND_DISPLAY:-}" && -z "${DISPLAY:-}" && -z "${NIRI_SOCKET:-}" ]]; then
         printf '\n== no graphical session ==\n'
