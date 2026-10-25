@@ -71,21 +71,29 @@ vec2 waveAt(float arc) {
         +(-2.0*t3+3.0*t2)*c.x+(t3-t2)*end;
     return vec2(max(0.0,height),mix(b.y,c.y,t2*(3.0-2.0*t)));
 }
+float roundedBox(vec2 p, vec4 rect, float radius);
+vec4 workspaceRect();
+float field(vec2 p);
 vec2 waveProfile(vec2 p) {
     // Flat/disabled/settled outputs avoid all wave texture reads.
     if(waveMaterial.y<0.5 || waveMaterial.x<1.0) return vec2(0.0);
     vec4 distances=vec4(p.y,viewport.x-p.x,viewport.y-p.y,p.x);
     float nearest=min(min(distances.x,distances.y),min(distances.z,distances.w));
-    vec4 weights=exp(-max(vec4(0.0),distances-nearest)/28.0);
-    weights*=step(vec4(0.001),vec4(insets.y,insets.z,insets.w,insets.x));
+    vec4 rawWeights=exp(-max(vec4(0.0),distances-nearest)/28.0);
+    vec4 clampedWeights=max(vec4(0.0),rawWeights-0.001);
+    vec4 weights=clampedWeights*step(vec4(0.001),vec4(insets.y,insets.z,insets.w,insets.x));
     vec4 arcs=vec4(p.x,viewport.x+p.y,2.0*viewport.x+viewport.y-p.x,2.0*(viewport.x+viewport.y)-p.y);
     vec2 result=vec2(0.0);
     // Only nearby sides contribute; the corner blend shares the circular field.
-    if(weights.x>0.001) result+=waveAt(arcs.x)*weights.x;
-    if(weights.y>0.001) result+=waveAt(arcs.y)*weights.y;
-    if(weights.z>0.001) result+=waveAt(arcs.z)*weights.z;
-    if(weights.w>0.001) result+=waveAt(arcs.w)*weights.w;
-    return result/max(0.000001,dot(weights,vec4(1.0)))*smoothstep(0.0,10.0,nearest);
+    if(weights.x>0.0) result+=waveAt(arcs.x)*weights.x;
+    if(weights.y>0.0) result+=waveAt(arcs.y)*weights.y;
+    if(weights.z>0.0) result+=waveAt(arcs.z)*weights.z;
+    if(weights.w>0.0) result+=waveAt(arcs.w)*weights.w;
+    result=result/max(0.000001,dot(clampedWeights,vec4(1.0)))*smoothstep(0.0,10.0,nearest);
+    if(result.x<=0.0001) return vec2(0.0);
+    float dEdge=-roundedBox(p,workspaceRect(),material.x);
+    float bodyExcess=dEdge>result.x-24.0 ? max(0.0,(dEdge-result.x)-field(p)) : 0.0;
+    return result*(1.0-smoothstep(0.0,max(8.0,material.y*0.5),bodyExcess));
 }
 // Local surface tension and two traveling crests are evaluated in the same
 // distance/material pass. Zero uniforms preserve the resting field exactly.
