@@ -3,7 +3,11 @@
 from pathlib import Path
 import subprocess
 root = Path(__file__).resolve().parents[1]
-program = (root / "modules/abyss/looks/AbyssGeometry.js").read_text() + r"""
+program = (
+    (root / "modules/abyss/looks/AbyssGeometry.js").read_text()
+    + "\n"
+    + (root / "modules/abyss/looks/AbyssPyramidMotion.js").read_text()
+    + r"""
 const assert = require('node:assert/strict');
 for(const owner of ['top','bottom','left','right']) {
  const ins={left:40,top:40,right:40,bottom:40};
@@ -104,6 +108,8 @@ for(const owner of ['top','right','bottom','left']) {
     assert.equal(joinCorner(far,adjacent,1920,1200,ins),far,'independently positioned distant popup does not bridge workspace');
     const closed=panel(1920,1200,ins,owner,40,390,280,0,14);
     assert.equal(joinCorner(closed,adjacent,1920,1200,ins),closed,'closed popup paints no corner connector');
+    const pyramidClosed=interpolateRecord(collapsedRecord(base,null),base,0);
+    assert.equal(joinCorner(pyramidClosed,adjacent,1920,1200,ins),pyramidClosed,'unrevealed Pyramid popup at progress 0 paints no corner connector');
     assert.equal(joinCorner(base,owner,1920,1200,ins),base,'only an adjacent Edge can join');
   }
 }
@@ -119,6 +125,23 @@ for(const owner of ['top','right','bottom','left'])
    const raw=panel(w,h,ins,owner,trailing?extent-320:40,280,180,progress,14);
    const joined=joinCorner(raw,adjacent,w,h,ins);
    assert.equal(joined.joinedEdge,adjacent);
+   assert.deepEqual(joined.content,raw.content,'joinCorner ON/OFF keeps clipped content bounds identical during reveal');
+   const c=raw.content;
+   const adjX=adjacent==='left'?ins.left+(raw.surface.x-ins.left)/2
+    :adjacent==='right'?raw.surface.x+raw.surface.width+(w-ins.right-raw.surface.x-raw.surface.width)/2
+    :c.x+c.width/2;
+   const adjY=adjacent==='top'?ins.top+(raw.surface.y-ins.top)/2
+    :adjacent==='bottom'?raw.surface.y+raw.surface.height+(h-ins.bottom-raw.surface.y-raw.surface.height)/2
+    :c.y+c.height/2;
+   assert(distance(adjX,adjY,w,h,ins,34,[raw],24,38)>0,'unjoined adjacent gap stays open workspace');
+   assert(distance(adjX,adjY,w,h,ins,34,[joined],24,38)<0,'joined adjacent seam is continuously painted');
+   const farShadowX=horizontal(owner)?(trailing?raw.surface.x-4:raw.surface.x+raw.surface.width+4)
+    :(owner==='left'?raw.surface.x+raw.surface.width+4:raw.surface.x-4);
+   const farShadowY=!horizontal(owner)?(trailing?raw.surface.y-4:raw.surface.y+raw.surface.height+4)
+    :(owner==='top'?raw.surface.y+raw.surface.height+4:raw.surface.y-4);
+   const dOff=distance(farShadowX,farShadowY,w,h,ins,34,[raw],24,38);
+   const dOn=distance(farShadowX,farShadowY,w,h,ins,34,[joined],24,38);
+   assert(dOff>0 && dOff<24 && dOn>0 && dOn<24,'workspace-facing shadow band preserved across joinCorner ON/OFF');
    const before=popupInput(raw.content,w,h,ins,owner,raw.surface);
    const after=popupInput(joined.content,w,h,ins,owner,joined.surface);
    let added=0;
@@ -217,5 +240,6 @@ assert(host.includes('exclusiveZone: 0'));
 assert(host.includes('mask: Region {}'));
 assert(host.includes('model: Quickshell.screens'));
 """
+)
 subprocess.run(["node", "-e", program], cwd=root, check=True)
 print("ok - connected four-edge SDF, orientations, content bounds and output policy")

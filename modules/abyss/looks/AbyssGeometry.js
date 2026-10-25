@@ -416,6 +416,8 @@ function barZones(layout, vertical, modules) {
 // and input bounds stay unchanged; no second connector/painter is constructed.
 function joinCorner(record, adjacent, width, height, insets) {
     if (!record || !record.surface || record.surface.width<=0 || record.surface.height<=0
+            || (record.progress !== undefined && record.progress <= 0)
+            || (record.depth !== undefined && record.depth <= 0)
             || !["left","right","top","bottom"].includes(adjacent)
             || horizontal(record.edge)===horizontal(adjacent)) return record;
     var surface = record.surface;

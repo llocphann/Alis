@@ -1309,6 +1309,7 @@ Scope {
                     }
 
                     identity: "styledPopup" + index
+                    stableContentSize: true
                     includeEdgeConnection: true
                     stackPolicy: "pyramid"
                     semanticOpenOverride:

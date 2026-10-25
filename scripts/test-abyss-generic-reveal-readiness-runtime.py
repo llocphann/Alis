@@ -30,7 +30,8 @@ ShellRoot {
    AbyssGenericPopupPresenter {
     id:popup;anchors.fill:parent;controller:controller
     outputWidth:800;outputHeight:600;outputName:"readinessQA"
-    requestedKind:"utilities";requestedFallbackEdge:"top";requestedAlongCenter:400
+    requestedKind:"utilities";requestedFallbackEdge:"top";requestedAlongCenter:120
+    sourceJoinedEdge:"left"
    }
   }
  }
@@ -43,6 +44,7 @@ ShellRoot {
    // Pyramid retains its owner-strip origin at progress0. Its workspace-facing
    // depth/content, rather than that redundant physical strip, must stay0.
    check(popup.record.depth===0&&popup.record.content.height===0,"empty content grew into the workspace "+label)
+   check(popup.record.joinedEdge===undefined&&controller.records.length===0,"unready popup painted corner weld or field plate "+label)
    check(popup.inputBounds.width===0&&popup.inputBounds.height===0,"delayed content acquired input "+label)
   }
   function run(){try{
@@ -62,6 +64,7 @@ ShellRoot {
     tryVerify(()=>popup.ready&&popup.revealProgress>.999,5000)
     const item=popup.contentItem.item
     check(item!==null&&popup.contentKind==="utilities","ready reveal lost feature identity")
+    check(popup.record.joinedEdge==="left"&&controller.records.length===1,"ready reveal did not activate corner weld")
     check(popup.inputBounds.width>0&&popup.inputBounds.height>0,"ready content did not acquire input")
     popup.requestedOpen=false;wait(40)
     check(popup.inputBounds.width===0,"semantic close retained input")

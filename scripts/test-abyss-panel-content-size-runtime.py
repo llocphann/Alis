@@ -6,10 +6,12 @@ from native_test_session import private_wayland,run_qs
 ROOT=Path(os.environ.get('ALIS_PANEL_CONTENT_SIZE_SOURCE',Path(__file__).resolve().parents[1])).resolve()
 source=(ROOT/'modules/abyss/AbyssPerimeter.qml').read_text()
 flags=[]
-for identity in ['leftPanel','rightPanel','settings','controls','clipboardBody','wallpaperBody']:
+for identity in ['leftPanel','rightPanel','settings','controls','clipboardBody','wallpaperBody','styledPopupHost']:
  match=re.search(r'\bid:\s*'+re.escape(identity)+r'\b',source)
  assert match is not None,identity
- start=match.start();end=source.index('\n            Abyss',start)
+ start=match.start()
+ next_abyss=source.find('\n            Abyss',start)
+ end=next_abyss if next_abyss>=0 else start+800
  flags.append([identity,re.search(r'\bstableContentSize:\s*true\b',source[start:end])is not None])
 with tempfile.TemporaryDirectory(prefix='alis-sidebar-content-size-')as name:
  folder=Path(name)
@@ -76,7 +78,26 @@ ShellRoot {
      check(!body.acceptsInput&&!body.ready,"closed panel retained content/input")
     }
    }
-   console.info("PANEL_CONTENT_SIZE_PASS",root.checks,"four Edges, reversal, stable content, unchanged geometry/input, resize and unload")
+   for(const edge of ["left","right","top","bottom"]){
+    const horiz=edge==="top"||edge==="bottom"
+    const extent=horiz?scene.width:scene.height
+    for(const [endName,along,expectedJoined] of [["start",24,horiz?"left":"top"],["end",extent-560-24,horiz?"right":"bottom"]]){
+     root.side=edge;root.fixedSize=true;body.along=along;body.joinedEdge="";root.reveal=1;root.shown=true
+     tryVerify(()=>body.ready,3000);wait(20)
+     const item=body.contentItem.item,full={width:item.width,height:item.height}
+     for(const join of [false,true]){
+      body.joinedEdge=join?expectedJoined:""
+      for(const progress of [.12,.45,1,.38]){
+       root.reveal=progress;wait(0)
+       check(item.width===full.width&&item.height===full.height,"joinedEdge changed clipped content size "+edge+" "+endName+" join="+join+" progress="+progress)
+       check(body.record.joinedEdge===(join?expectedJoined:undefined),"unexpected joinedEdge "+edge+" "+endName+" join="+join+" got="+body.record.joinedEdge)
+      }
+     }
+     root.shown=false;tryVerify(()=>body.contentItem.item===null,3000)
+    }
+   }
+   body.along=0;body.joinedEdge=""
+   console.info("PANEL_CONTENT_SIZE_PASS",root.checks,"four Edges, reversal, stable content, joinCorner ON/OFF, unchanged geometry/input, resize and unload")
   }catch(e){console.error("PANEL_CONTENT_SIZE_FAIL",e.message,e.stack)}Qt.quit()}
  }
  Timer {interval:100;running:true;onTriggered:test.run()}

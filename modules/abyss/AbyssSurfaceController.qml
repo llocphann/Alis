@@ -274,7 +274,9 @@ QtObject {
         let kept = 0
         for (let i = 0; i < mapped.length; ++i) {
             const rec = mapped[i]
-            if (rec && rec.surface.width > 0 && rec.surface.height > 0)
+            if (rec && rec.surface.width > 0 && rec.surface.height > 0
+                    && (rec.progress === undefined || rec.progress > 0)
+                    && (rec.depth === undefined || rec.depth > 0))
                 mapped[kept++] = rec
         }
         mapped.length = kept
