@@ -131,7 +131,7 @@ with tempfile.TemporaryDirectory(prefix="alis-edge-locks-") as name:
     for entry in ["modules","services","GlobalStates.qml","qmldir","assets","scripts","defaults","translations"]:(folder/entry).symlink_to(ROOT/entry)
     (folder/"shell.qml").write_text(QML)
     dest=Path(os.environ.get("ALIS_LOCK_EVIDENCE",folder/"evidence")).resolve();dest.mkdir(parents=True,exist_ok=True)
-    with private_wayland(folder) as env:
+    with private_wayland(folder, capture_focus=False) as env:
         if not env:print("SKIP: lock native test requires private Niri");raise SystemExit(0)
         cfg=folder/"config/illogical-impulse";cfg.mkdir(parents=True,exist_ok=True)
         data=json.loads((ROOT/"defaults/config.json").read_text());data["panelFamily"]="abyss"

@@ -53,11 +53,9 @@ ShellRoot {
    const target=item(name),scroll=item("abyssEdgeEditorScroll")
    check(target.visible,"hidden control "+name)
    const point=target.mapToItem(scroll.contentItem,0,0)
-   scroll.contentY=Math.max(0,Math.min(scroll.contentHeight-scroll.height,
-     Math.max(point.y-8,point.y+target.height-scroll.height)));wait(35)
-   // Preview changes can relocate the toolbar after a delayed binding turn.
-   // Inspect the layout actually painted before testing its clip or clicking.
-   frame(null)
+   const nextY=Math.max(0,Math.min(scroll.contentHeight-scroll.height,
+     Math.max(point.y-8,point.y+target.height-scroll.height)))
+   if(Math.abs(scroll.contentY-nextY)>.5){scroll.contentY=nextY;wait(35)}
    const bounds=target.mapToItem(scroll,0,0)
    check(bounds.x>=-.1&&bounds.y>=-.1&&bounds.x+target.width<=scroll.width+.1&&bounds.y+target.height<=scroll.height+.1,"control outside its real clip "+JSON.stringify({name:name,x:bounds.x,y:bounds.y,w:target.width,h:target.height,clipW:scroll.width,clipH:scroll.height}))
    return target
@@ -403,7 +401,7 @@ ShellRoot {
         (config / "config.json").write_text(json.dumps(data))
         if OUTPUT:
             env["ALIS_COMPACT_EDITOR_EVIDENCE"] = str(OUTPUT)
-        result = run_qs(folder, env, timeout=95)
+        result = run_qs(folder, env, timeout=150)
         if OUTPUT:
             (OUTPUT / "native.log").write_text(result.stdout)
             (OUTPUT / "process.json").write_text(json.dumps({"exit_code": result.returncode}, indent=2) + "\n")

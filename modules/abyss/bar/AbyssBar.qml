@@ -32,11 +32,73 @@ Item {
     property var draggedIds: []
     property var liquidController: null
     property var measuredExtents: ({})
-    readonly property var layoutOptions: Object.assign({},launcherModes,draftOptions ?? Layout.optionsForOutput(Config.options?.abyss?.modules,outputName),{extents:measuredExtents,editing:editing,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius})
+    readonly property var configuredLayoutOptions: Object.assign({},launcherModes,draftOptions ?? Layout.optionsForOutput(Config.options?.abyss?.modules,outputName),{extents:measuredExtents,editing:editing,edgeThickness:AbyssStyle.perimeterThickness,cornerRadius:AbyssStyle.perimeterRadius})
+    readonly property var layoutOptions: Object.assign({},configuredLayoutOptions,
+        widthMorphActive ? {_widthFrame:presentedFrame} : {})
+    property var targetFrame: null
+    property var fromFrame: null
+    property real widthProgress: 1
+    property bool frameReady: false
+    property string widthModeKey: ""
+    property string widthContextKey: ""
+    readonly property bool widthMorphActive: fromFrame!==null && widthProgress<1
+    readonly property var presentedFrame: widthMorphActive
+        ? Layout.widthFrameBetween(fromFrame,targetFrame,widthProgress) : targetFrame
+    readonly property var presentedLayoutRecords: presentedFrame?.records ?? layoutRecords
+    function captureWidthFrame(): var {
+        return Object.assign({},presentedFrame,{
+            records:renderedRecords,
+            deformations:deformations,
+            morphDeformations:presentedFrame?.morphDeformations ?? deformations
+        })
+    }
+    function refreshWidthFrame(): void {
+        if(width<=0 || height<=0)return
+        const next=Layout.widthFrame(activePlacements,width,height,configuredLayoutOptions,
+            Appearance.fontSizeScale,AbyssStyle.barThickness,AbyssStyle.neckRadius,
+            AbyssStyle.perimeterRadius+AbyssStyle.neckRadius+AbyssStyle.connectionDepth+32)
+        const key=JSON.stringify(["top","right","bottom","left"].map(e=>configuredLayoutOptions.edgeWidthAffectsModules?.[e]!==false))
+        const contextKey=JSON.stringify([outputName,edge,width,height,
+            ["top","right","bottom","left"].map(e=>Layout.edgeThickness(configuredLayoutOptions,e))])
+        const sameContext=contextKey===widthContextKey
+        widthContextKey=contextKey
+        if(widthMorphActive && sameContext && key===widthModeKey) {
+            targetFrame=next
+            return
+        }
+        const animate=frameReady && Config.ready && visible && AbyssStyle.motionEnabled
+            && targetFrame!==null && sameContext && key!==widthModeKey
+        const previous=animate ? captureWidthFrame() : null
+        widthMotion.stop()
+        widthModeKey=key
+        if(animate){fromFrame=previous;widthProgress=0;targetFrame=next;widthMotion.restart()}
+        else {fromFrame=null;widthProgress=1;targetFrame=next}
+    }
+    function finishWidthMorph(): void {
+        if(widthMorphActive){widthMotion.complete();widthProgress=1;fromFrame=null}
+    }
+    NumberAnimation {
+        id:widthMotion;target:root;property:"widthProgress";from:0;to:1
+        duration:AbyssStyle.motionNormal;easing.type:Easing.OutCubic
+        onFinished:root.fromFrame=null
+    }
+    onConfiguredLayoutOptionsChanged:refreshWidthFrame()
+    onWidthChanged:refreshWidthFrame()
+    onHeightChanged:refreshWidthFrame()
+    onVisibleChanged:if(!visible)finishWidthMorph()
+    Connections {
+        target:Appearance
+        function onAnimationsEnabledChanged(){if(!Appearance.animationsEnabled)root.finishWidthMorph()}
+        function onFontSizeScaleChanged(){root.refreshWidthFrame()}
+    }
+    Connections {
+        target:AbyssStyle
+        function onMotionEnabledChanged(){if(!AbyssStyle.motionEnabled)root.finishWidthMorph()}
+    }
     property var pendingMeasurements: ({})
     property bool measurementQueued: false
     function measure(id, span): void {
-        if (!Number.isFinite(span) || Math.abs((pendingMeasurements[id] ?? measuredExtents[id] ?? -1)-span)<.5) return
+        if (!Number.isFinite(span) || Math.abs((pendingMeasurements[id] ?? measuredExtents[id] ?? -1)-span)<.05) return
         pendingMeasurements=Object.assign({},pendingMeasurements,{[id]:span})
         if(measurementQueued)return
         measurementQueued=true
@@ -60,10 +122,11 @@ Item {
         Layout.seed(zones,edge,width,height))
     readonly property var activePlacements: Layout.livePlacements(
         placements,launcherModes,editing)
-    readonly property var layoutRecords: Layout.geometry(activePlacements,width,height,layoutOptions,Appearance.fontSizeScale)
+    readonly property var fallbackLayoutRecords: Layout.geometry(activePlacements,width,height,configuredLayoutOptions,Appearance.fontSizeScale)
+    readonly property var layoutRecords: targetFrame?.records ?? fallbackLayoutRecords
     readonly property var renderedRecords: {
         const revision=root.revision
-        return layoutRecords.map(record=>{
+        return presentedLayoutRecords.map(record=>{
             const item=itemForId(record.id)
             if(!item)return record
             return Object.assign({},record,{along:record.vertical ? item.y : item.x,
@@ -74,16 +137,17 @@ Item {
     property int revision: 0
     // Optional local expansion shares the output field; it has no extra painter.
     readonly property var capacityNotices: editing ? [] : Layout.capacityNotices(layoutRecords,width,height,Appearance.fontSizeScale)
-    readonly property var deformations: Layout.localSurfaces(renderedRecords.concat(capacityNotices),width,height,layoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness)
+    readonly property var deformations: widthMorphActive ? presentedFrame.deformations : Layout.localSurfaces(renderedRecords.concat(capacityNotices),width,height,targetFrame?.options ?? configuredLayoutOptions,Appearance.fontSizeScale,AbyssStyle.barThickness)
 
     property var moduleIds: []
     function syncModuleIds(): void {
         const next=activePlacements.filter(p=>p.enabled).map(p=>p.id)
         if (JSON.stringify(next)!==JSON.stringify(moduleIds)) moduleIds=next
+        refreshWidthFrame()
     }
     function itemForId(id): var { return modules.itemAt(moduleIds.indexOf(id)) }
     onActivePlacementsChanged: syncModuleIds()
-    Component.onCompleted: syncModuleIds()
+    Component.onCompleted: {syncModuleIds();frameReady=true}
     Repeater {
         id: modules
         model: root.moduleIds
@@ -153,7 +217,7 @@ Item {
             onUnifiedEdgeLauncherChanged: invalidateInputRegion()
             onModuleIconHitOnlyChanged: invalidateInputRegion()
             onModuleIconHitSizeChanged: invalidateInputRegion()
-            readonly property var geometry: root.layoutRecords.find(rec => rec.id === modelData)
+            readonly property var geometry: root.presentedLayoutRecords.find(rec => rec.id === modelData)
             liquidController: root.liquidController
             attachedEdge: placement?.edge ?? "top"
             popupJoinedEdge: placement?.joinCorner ? Layout.adjacentEdge(geometry,root.width,root.height) : ""
@@ -184,7 +248,7 @@ Item {
                 Qt.callLater(rearmMotion)
             }
             onAttachedEdgeChanged:settleDimensionChange()
-            readonly property bool animatePlacement: motionReady && motionEdge===attachedEdge && motionWidth===width && motionHeight===height && Appearance.animationsEnabled
+            readonly property bool animatePlacement: !root.widthMorphActive && motionReady && motionEdge===attachedEdge && motionWidth===width && motionHeight===height && Appearance.animationsEnabled
                 && !placement?.locked && !root.draggedIds.includes(modelData)
             Behavior on x { enabled:module.animatePlacement; NumberAnimation { id:xMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }
             Behavior on y { enabled:module.animatePlacement; NumberAnimation { id:yMotion;duration:Math.min(140,Appearance.animation.elementMove.duration);easing.type:Easing.OutCubic } }

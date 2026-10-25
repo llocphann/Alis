@@ -461,6 +461,8 @@ function stripDepth(placements, edge, options, fontScale) {
     },0);
 }
 function edgeInsetsForModules(placements, options, fontScale, thickness, minimum, reservation) {
+    if (placements.length && options?._widthFrame)
+        return Object.assign({},reservation ? options._widthFrame.reservationInsets : options._widthFrame.paintInsets);
     var insets = {};
     ["top","right","bottom","left"].forEach(function(edge) {
         insets[edge]=edgeThickness(options,edge,thickness);
@@ -789,4 +791,114 @@ function dragPoint(context,x,y,width,height,fontScale) {
     var dx=edge==="left"?context.cross:edge==="right"?-context.cross:context.along;
     var dy=edge==="left"?-context.along:edge==="right"?context.along:context.cross;
     return {edge:edge,x:x-dx,y:y-dy};
+}
+
+// Width-mode animation owns one plain-data frame. Configuration and the physical
+// zero-width corner gate remain separate from its transient foreground geometry.
+function widthFrame(placements,width,height,options,fontScale,minimum,radius,support) {
+    var saved=Object.assign({},options);
+    delete saved._widthFrame;
+    var records=geometry(placements,width,height,saved,fontScale);
+    var morphOptions=Object.assign({},saved,{edgeWidthAffectsModules:{top:false,right:false,bottom:false,left:false}});
+    return {records:records,deformations:localSurfaces(records,width,height,saved,fontScale,minimum),
+        morphDeformations:localSurfaces(records,width,height,morphOptions,fontScale,minimum),
+        paintInsets:edgeInsetsForModules(placements,saved,fontScale,saved.edgeThickness,minimum,false),
+        reservationInsets:edgeInsetsForModules(placements,saved,fontScale,saved.edgeThickness,minimum,true),
+        options:saved,width:width,height:height,radius:radius,support:support};
+}
+function widthMix(a,b,t) { return a+(b-a)*t; }
+function widthRect(a,b,t) {
+    return {x:widthMix(a.x,b.x,t),y:widthMix(a.y,b.y,t),
+        width:widthMix(a.width,b.width,t),height:widthMix(a.height,b.height,t)};
+}
+function widthPoint(record,frame,surface) {
+    var r=surface ? record.surface : record.content;
+    var x=r.x+r.width/2,y=r.y+r.height/2,d=surface ? frame.support : 0;
+    if(record.edge==="top")y=-d;
+    else if(record.edge==="bottom")y=frame.height+d;
+    else if(record.edge==="left")x=-d;
+    else x=frame.width+d;
+    return {x:x,y:y,width:0,height:0};
+}
+function widthCollapsed(record,frame,surface) {
+    var result=Object.assign({},record),point=widthPoint(record,frame,surface);
+    result.content=point;result.span=0;result.depth=0;
+    result.along=record.edge==="top" || record.edge==="bottom" ? point.x : point.y;
+    if(surface){result.surface=point;result.radius=0;}
+    return result;
+}
+function widthRecord(a,b,t,frame,surface) {
+    var result=Object.assign({},b);
+    result.content=widthRect(a.content,b.content,t);
+    result.along=widthMix(a.along,b.along,t);
+    result.span=widthMix(a.span,b.span,t);
+    result.depth=widthMix(a.depth,b.depth,t);
+    if(surface) {
+        result.surface=widthRect(a.surface,b.surface,t);
+        result.radius=widthMix(a.radius ?? frame.radius,b.radius ?? frame.radius,t);
+    }
+    return result;
+}
+function widthMembers(shape,records) {
+    return records.filter(function(r) {
+        return r.edge===shape.edge && r.along+r.span/2>=shape.along-0.01
+            && r.along+r.span/2<=shape.along+shape.span+0.01;
+    }).map(function(r){return r.id;});
+}
+function widthExpandSurface(shape,members,records) {
+    var s=Object.assign({},shape.surface);
+    members.forEach(function(id) {
+        var r=records.find(function(rec){return rec.id===id;});
+        if(!r || !(r.content.width>0 && r.content.height>0))return;
+        var rx=r.content.x-8,ry=r.content.y-8,rr=r.content.x+r.content.width+8,rb=r.content.y+r.content.height+8;
+        var sx=Math.min(s.x,rx),sy=Math.min(s.y,ry);
+        s={x:sx,y:sy,width:Math.max(s.x+s.width,rr)-sx,height:Math.max(s.y+s.height,rb)-sy};
+    });
+    return Object.assign({},shape,{surface:s});
+}
+function widthFrameBetween(from,to,t) {
+    if(t<=0)return from;
+    if(t>=1)return to;
+    var ids=from.records.map(function(r){return r.id;});
+    to.records.forEach(function(r){if(ids.indexOf(r.id)<0)ids.push(r.id);});
+    var records=ids.map(function(id) {
+        var a=from.records.find(function(r){return r.id===id;});
+        var b=to.records.find(function(r){return r.id===id;});
+        return widthRecord(a || widthCollapsed(b,to,false),b || widthCollapsed(a,to,false),t,to,false);
+    });
+    function morphingEdge(edge) {
+        return Math.abs((from.paintInsets?.[edge] ?? 0)-(to.paintInsets?.[edge] ?? 0))>0.01
+            || (from.options?.edgeWidthAffectsModules?.[edge]!==false)!==(to.options?.edgeWidthAffectsModules?.[edge]!==false);
+    }
+    var fromShapes=(from.morphDeformations || from.deformations).filter(function(d){return morphingEdge(d.edge);})
+        .concat(from.deformations.filter(function(d){return !morphingEdge(d.edge);}));
+    var toShapes=(to.morphDeformations || to.deformations).filter(function(d){return morphingEdge(d.edge);})
+        .concat(to.deformations.filter(function(d){return !morphingEdge(d.edge);}));
+    // One source owner per backing: duplicating a joined shape changes the
+    // ordered smooth union even when the duplicate rectangles are identical.
+    var used=[],shapes=fromShapes.map(function(a) {
+        var members=widthMembers(a,from.records);
+        var index=toShapes.findIndex(function(b,i) {
+            return used.indexOf(i)<0 && widthMembers(b,to.records).some(function(id){return members.indexOf(id)>=0;});
+        });
+        if(index>=0) {
+            used.push(index);
+            widthMembers(toShapes[index],to.records).forEach(function(id){if(members.indexOf(id)<0)members.push(id);});
+        }
+        var b=index>=0 ? toShapes[index] : widthCollapsed(a,to,true);
+        return widthExpandSurface(widthRecord(a,b,t,to,true),members,records);
+    });
+    toShapes.forEach(function(b,i) {
+        if(used.indexOf(i)<0) {
+            var members=widthMembers(b,to.records);
+            shapes.push(widthExpandSurface(widthRecord(widthCollapsed(b,to,true),b,t,to,true),members,records));
+        }
+    });
+    var paint={},reservation={};
+    ["top","right","bottom","left"].forEach(function(edge) {
+        paint[edge]=widthMix(from.paintInsets[edge],to.paintInsets[edge],t);
+        reservation[edge]=widthMix(from.reservationInsets[edge],to.reservationInsets[edge],t);
+    });
+    return {records:records,deformations:shapes,morphDeformations:shapes,paintInsets:paint,reservationInsets:reservation,
+        options:to.options,width:to.width,height:to.height,radius:to.radius,support:to.support};
 }
