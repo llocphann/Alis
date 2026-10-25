@@ -60,31 +60,31 @@ assert.equal(hue({title:'Legacy no ID'},'local'),
 // Previous immutable position inventory API still belongs to other consumers.
 assert.equal(scope.position({id:42},'local'),
     scope.assignPositions([{id:42}])[scope.identity({id:42},'local')]);
-assert.doesNotMatch(policy,/Math\\.random|Date\\.now|saveToFile|writeFile/);
+assert.doesNotMatch(policy,/Math\.random|Date\.now|saveToFile|writeFile/);
 const qml=source('modules/dashboard/DashboardWeeklyPlanner.qml');
 assert.match(qml,/import "PlannerEventPalette.js" as EventPalette/);
-assert.match(qml,/function eventIdentityColor\\(row\\): color/);
-assert.match(qml,/EventPalette\\.eventHue\\(row\\?\\.event,row\\?\\.source\\)/);
-assert.match(qml,/Qt\\.hsla\\(EventPalette\\.eventHue/);
-assert.match(qml,/0\\.74,0\\.56,1\\)/);
-assert.doesNotMatch(qml,/eventToneBase|EventPalette\\.toneIndex|CavaTheme\\.vibrantColors/,
+assert.match(qml,/function eventIdentityColor\(row\): color/);
+assert.match(qml,/EventPalette\.eventHue\(row\?\.event,row\?\.source\)/);
+assert.match(qml,/Qt\.hsla\(EventPalette\.eventHue/);
+assert.match(qml,/0\.74,0\.56,1\)/);
+assert.doesNotMatch(qml,/eventToneBase|EventPalette\.toneIndex|CavaTheme\.vibrantColors/,
     'ID colors must not derive from theme or the old tone system');
 const body=qml.slice(qml.indexOf('function eventIdentityColor(row): color'),
     qml.indexOf('    // Match the date and All-day headings'));
-assert.doesNotMatch(body,/Appearance\\.|CavaTheme|m3colors|Date\\.|time|random/,
+assert.doesNotMatch(body,/Appearance\.|CavaTheme|m3colors|Date\.|time|random/,
     'the color function cannot depend on wallpaper/theme/time');
-assert.match(body,/row\\?\\.event\\?\\.color/,
+assert.match(body,/row\?\.event\?\.color/,
     'do not silently discard user-set custom colors');
-assert.match(body,/row\\?\\.event\\?\\.sourceColor/,
+assert.match(body,/row\?\.event\?\.sourceColor/,
     'do not silently discard explicit external calendar colors');
 const allDay=qml.slice(qml.indexOf('objectName:"plannerAllDayEvent"'),
     qml.indexOf('objectName:"plannerTimedEvent"'));
 const timed=qml.slice(qml.indexOf('objectName:"plannerTimedEvent"'),
     qml.indexOf('visible:dayColumn.today && root.presentationActive'));
-assert.match(allDay,/root\\.eventIdentityColor\\(modelData\\)/);
-assert.match(timed,/root\\.eventIdentityColor\\(modelData\\)/);
-assert.match(timed,/gradient: Gradient \\{/);
-assert.equal((timed.match(/color:Qt\\.alpha\\(timedButton\\.eventAccent/g)||[]).length,2,
+assert.match(allDay,/root\.eventIdentityColor\(modelData\)/);
+assert.match(timed,/root\.eventIdentityColor\(modelData\)/);
+assert.match(timed,/gradient: Gradient \{/);
+assert.equal((timed.match(/color:Qt\.alpha\(timedButton\.eventAccent/g)||[]).length,2,
     'both gradient endpoints must use the same stable ID swatch');
 assert.doesNotMatch(timed,/x:1;y:3;width:3/,'do not restore old timed accent stripe');
 assert.doesNotMatch(allDay,/x:2;y:4;width:3/,'do not restore old all-day accent stripe');
