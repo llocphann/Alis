@@ -168,27 +168,18 @@ Item {
     readonly property real columnWidth: Math.max(102 * Appearance.fontSizeScale, (viewport.width - 44) / 7)
     readonly property color ink: Appearance.colors.colOnLayer1
     readonly property color mutedInk: Appearance.colors.colSubtext
-    // Weekly Planner palette: ONE live theme hue, eight visibly distinct
-    // lightness tiers. No CAVA hue shifts, neighboring Event interpolation or
-    // hardcoded rainbow. Rebinding the Material Primary updates every card.
-    readonly property color eventToneBase: Appearance.colors.colPrimary
-    function eventToneColor(row): color {
+    // Dedicated Event identity colors: not derived from theme/wallpaper.
+    // Each persisted Event ID maps to one fixed hue across weeks, dates,
+    // drag/resize and theme changes. External UID is stable across sync.
+    function eventIdentityColor(row): color {
         const explicit=row?.event?.color || (row?.source==="external"
             ? row?.event?.sourceColor : null)
         if (explicit) {
             const saved=Qt.color(explicit)
             if (saved.valid) return saved
         }
-        const base=Qt.color(root.eventToneBase)
-        const index=EventPalette.toneIndex(row?.event,row?.source,8)
-        const levels=[-.21,-.15,-.09,-.03,.03,.09,.15,.21]
-        const dark=Appearance.m3colors.darkmode
-        // Center the brightness ramp around the current theme's Primary,
-        // but keep every tier distinct even for very pale/dark themes.
-        const center=(dark ? .56 : .46)+.20*(base.hslLightness-.50)
-        const lightness=Math.max(.15,Math.min(.85,center+levels[index]))
-        return Qt.hsla(base.hslHue>=0 ? base.hslHue : 0,
-            base.hslSaturation,lightness,1)
+        return Qt.hsla(EventPalette.eventHue(row?.event,row?.source),
+            0.74,0.56,1)
     }
     // Match the date and All-day headings to the actual timeline: its day
     // cells have no opaque backing, so the pinned headings must not paint a
@@ -598,7 +589,7 @@ Item {
                                 required property int index
                                 objectName:"plannerAllDayEvent"
                                 readonly property color eventAccent:
-                                    root.eventToneColor(modelData)
+                                    root.eventIdentityColor(modelData)
                                 x:4+(dragMoved?dragX
                                     : root.activeGroupGesture?.mode==="move"
                                         && root.activeGroupGesture?.keys?.includes(
@@ -736,7 +727,7 @@ Item {
                                 objectName:"plannerTimedEvent"
                                 readonly property bool canReschedule: Selection.canReschedule(modelData)
                                 readonly property color eventAccent:
-                                    root.eventToneColor(modelData)
+                                    root.eventIdentityColor(modelData)
                                 // Resize affordances belong to this card alone. Keep
                                 // the edge MouseAreas active even while the bars fade out.
                                 readonly property bool showResizeHandles: canReschedule
@@ -774,9 +765,8 @@ Item {
                                     +(effectiveMode==="top"?-effectiveDy
                                         :effectiveMode==="bottom"?effectiveDy:0))
                                 radius:7
-                                // Per-Event gradient from the active theme palette.
-                                // Opaque ink and a narrow accent strip preserve
-                                // readability on both dark and light desktops.
+                                // Gradient uses one stable ID swatch: only opacity
+                                // varies across the card, never hue or recurrence.
                                 gradient: Gradient {
                                     orientation:Gradient.Horizontal
                                     GradientStop {
