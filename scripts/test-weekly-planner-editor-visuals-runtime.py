@@ -65,12 +65,17 @@ Window {
     "stored cycle dates changed")
    check(timed().filter(c=>outline(c)===2).length===2
     && [card(1,2),card(1,3)].every(c=>outline(c)===2),"Edit Event calendar selection is absent from grid")
-   check(planner.selectedEventKeys.length===0,"opening editor silently armed a batch gesture")
+   check(planner.selectedEventRows.length===2
+    && planner.selectedEventRows.every(row=>row.event.id===1),
+    "click visually selected both dates but did not arm their ID-group gestures")
    capture("editor-group")
    const durable=JSON.stringify(Events.getDurableEvents())
    form.choosePlannerDay(new Date(2032,9,19,12),Qt.ControlModifier);wait(50)
    check(JSON.stringify(form.plannerSelectedDateKeys)===JSON.stringify(["2032-10-21"]),"calendar toggle lost")
-   check(outline(card(1,2))!==2 && outline(card(1,3))===2,"calendar toggle did not update grid emphasis")
+   check(outline(card(1,2))!==2 && outline(card(1,3))===2
+    && planner.selectedEventRows.length===1
+    && planner.selectedEventRows[0].occurrenceIndex===3,
+    "calendar toggle failed to update visible and actionable ID-group membership")
    check(JSON.stringify(Events.getDurableEvents())===durable,"draft selection wrote Events")
    form.dismiss();wait(60)
    check(timed().every(c=>outline(c)!==2),"Cancel left stale editor outlines")
@@ -82,7 +87,8 @@ Window {
    const p=target.mapToItem(planner,target.width/2,target.height/2)
    mousePress(planner,p.x,p.y,Qt.LeftButton)
    mouseMove(planner,p.x+planner.columnWidth,p.y,80);wait(40)
-   check(timed().filter(c=>c.effectiveMode==="move").length===1,"editor emphasis armed an implicit group drag")
+   check(timed().filter(c=>c.effectiveMode==="move").length===2,
+    "dragging one clicked ID-group member must preview both selected dates")
    card(1,2).cancelGesture();mouseRelease(planner,p.x+planner.columnWidth,p.y,Qt.LeftButton);wait(60)
    check(form.eventTitle==="Unsaved private draft" && JSON.stringify(Events.getDurableEvents())===durable,
     "canceled gesture overwrote form or stored data")
@@ -97,12 +103,13 @@ Window {
    check(timed().every(c=>outline(c)!==2),"same-title different Event inherited editor selection")
    form=find(planner,"plannerInlineEventsEditor");form.dismiss();wait(60)
    // Explicit custom/source colors keep their existing meaning.
-   check(String(planner.eventGradientColor({source:"local",event:{id:1,color:"#ff3355"}},["#000000","#ffffff"]))==="#ff3355",
+   check(String(planner.eventIdentityColor({source:"local",event:{id:1,color:"#ff3355"}}))==="#ff3355",
     "explicit Event color changed")
-   check(String(planner.eventGradientColor({source:"external",event:{uid:"x",sourceColor:"#336699"}},["#000000","#ffffff"]))==="#336699",
+   check(String(planner.eventIdentityColor({source:"external",event:{uid:"x",sourceColor:"#336699"}}))==="#336699",
     "external source color changed")
-   const distinct=[1,9,17,25].map(id=>planner.eventGradientColor({source:"local",event:{id:id}},["#22ccee","#8844dd"]))
-   check(new Set(distinct.map(String)).size===4,"collision resolution did not use theme interpolation")
+   const distinct=[1,9,17,25].map(id=>planner.eventIdentityColor({source:"local",event:{id:id}}))
+   check(new Set(distinct.map(String)).size===4,
+    "different Event IDs should retain different curated muted swatches")
    const full=Events.list
    Events.list=full.filter(e=>e.id!==1);Events.eventRemoved(1);wait(70)
    check([9,17,25].every(id=>String(cards().find(c=>c.modelData.event.id===id).eventAccent)
