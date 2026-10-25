@@ -92,6 +92,14 @@ assert.equal((timed.match(/color:Qt\.alpha\(timedButton\.eventAccent/g)||[]).len
     'gradient ends must share the SAME Event swatch');
 assert.match(timed,/eventMouse\.containsMouse \? \.47 : \.36/);
 assert.match(timed,/eventMouse\.containsMouse \? \.34 : \.24/);
+const resizeSection=timed.slice(timed.indexOf('objectName:"plannerResizeStart"'),
+    timed.indexOf('id:bottomResizeMouse'));
+assert.equal((resizeSection.match(/color:Qt\.lighter\(timedButton\.eventAccent,1\.20\)/g)||[]).length,2,
+    'both hover-resize lines must derive from the same Event swatch');
+assert.doesNotMatch(resizeSection,/color:root\.headerAccent/,
+    'shared Today accent must never recolor individual Event resize bars');
+assert.equal((timed.match(/opacity:timedButton\.showResizeHandles/g)||[]).length,2,
+    'event-local hover/drag visibility must stay intact');
 assert.doesNotMatch(timed,/x:1;y:3;width:3/,'do not resurrect retired accent stripe');
 assert.doesNotMatch(allDay,/x:2;y:4;width:3/,'do not resurrect retired accent stripe');
 for(const action of ['plannerEventMoveArea','plannerResizeStart','plannerResizeEnd',
