@@ -45,6 +45,9 @@ Item {
     property bool expandAllDay: false
     property int activeDragDay: -1
     property var selectedEventKeys: []
+    // Once a grid selection is explicitly made, do not restore the editor's
+    // broader visual outline over a Ctrl-deselected individual occurrence.
+    property bool explicitGridSelection: false
     property string selectionAnchorKey: ""
     property bool deleteConfirmation: false
     property var activeGroupGesture: null
@@ -71,7 +74,10 @@ Item {
         }
         visit(viewport.contentItem)
         root.selectedEventKeys=Array.from(new Set(region.before.concat(hits)))
-        if (hits.length) root.selectionAnchorKey=hits[0]
+        if (hits.length) {
+            root.explicitGridSelection=true
+            root.selectionAnchorKey=hits[0]
+        }
         root.selectionRegion=null
         root.forceActiveFocus()
     }
@@ -86,16 +92,25 @@ Item {
             ? {id:form.editingEvent?.id,days:form.plannerSelectedDateKeys} : null
     }
     function isEditorEvent(row): bool {
+        if (root.explicitGridSelection) return false
         const selected=root.editorEventSelection
         return !!selected && row?.source==="local" && row.event?.id===selected.id
             && selected.days.includes(Qt.formatDate(new Date(row.startDate),"yyyy-MM-dd"))
     }
     function clearEventSelection(): void {
         root.selectedEventKeys=[]
+        root.explicitGridSelection=false
         root.selectionAnchorKey=""
         root.deleteConfirmation=false
         root.activeGroupGesture=null
         root.selectionRegion=null
+    }
+    function selectEventId(row): void {
+        const keys=Selection.groupKeys(root.selectableEventRows,row)
+        if (!keys.length) return
+        root.selectedEventKeys=keys
+        root.selectionAnchorKey=Selection.key(row)
+        root.explicitGridSelection=true
     }
     function gestureTargets(row) {
         if (!Selection.canReschedule(row) && !Selection.canSelect(row)) return []
@@ -109,24 +124,18 @@ Item {
             const result=Selection.choose(root.selectableEventRows,
                 root.selectedEventKeys,root.selectionAnchorKey,row,ctrl,shift)
             if (!result) return
+            root.explicitGridSelection=true
             root.selectedEventKeys=result.keys
             root.selectionAnchorKey=result.anchor
             root.forceActiveFocus()
         } else if (!root.isEventSelected(row)
                 || root.selectedEventKeys.length===0) {
             root.clearEventSelection()
+            root.selectEventId(row)
+            // Preserve single-click canonical editing, but selections and
+            // gesture commits now use the same per-ID occurrence membership.
             root.editOccurrence(row)
         }
-    }
-    // The explicit selection is also used for safe recurring move/resize.
-    // A recurring instance may not be deleted through the non-recurring
-    // atomic batch writer: redirect to the existing Edit Event control
-    // instead of showing a disabled, misleading "Delete (1)" button.
-    function openSelectedRecurringEditor(): void {
-        const selected=root.selectedEventRows.find(row=>!Selection.canDelete(row))
-        if (!selected || selected.source!=="local") return
-        root.clearEventSelection()
-        root.editOccurrence(selected)
     }
     function confirmOrDeleteSelected(): void {
         if (!root.canDeleteSelection) return
@@ -158,8 +167,8 @@ Item {
         }
         if ((event.key===Qt.Key_Delete || event.key===Qt.Key_Backspace)
                 && root.selectedEventRows.length>0) {
+            // Recurring group selection is for safe move/resize only.
             if (root.canDeleteSelection) root.confirmOrDeleteSelected()
-            else root.openSelectedRecurringEditor()
             return true
         }
         return false
@@ -447,24 +456,19 @@ Item {
                     spacing:4 * Appearance.fontSizeScale
                     Action {
                         objectName:"plannerDeleteSelected"
-                        visible:root.selectedEventRows.length>0
-                        enabled:root.selectedEventRows.length>0
-                        label:!root.canDeleteSelection
-                            ? "Edit to delete ("+root.selectedEventRows.length+")"
-                            : root.deleteConfirmation
-                                ? "Confirm delete ("+root.selectedEventRows.length+")"
-                                : "Delete ("+root.selectedEventRows.length+")"
-                        symbol:root.canDeleteSelection ? "delete" : "edit"
-                        buttonInk:root.canDeleteSelection && root.deleteConfirmation
+                        // Repeating instances cannot be deleted by batch.
+                        // No disabled "Delete" or redundant "Edit to delete".
+                        visible:root.canDeleteSelection
+                        enabled:root.canDeleteSelection
+                        label:root.deleteConfirmation
+                            ? "Confirm delete ("+root.selectedEventRows.length+")"
+                            : "Delete ("+root.selectedEventRows.length+")"
+                        symbol:"delete"
+                        buttonInk:root.deleteConfirmation
                             ? Appearance.colors.colError : root.headerInk
-                        onClicked:{
-                            if (root.canDeleteSelection) root.confirmOrDeleteSelected()
-                            else root.openSelectedRecurringEditor()
-                        }
+                        onClicked:root.confirmOrDeleteSelected()
                         StyledToolTip {
-                            text:root.canDeleteSelection
-                                ? "Ctrl+Click to toggle · Shift+Click for range · Ctrl/Shift+drag background to select · Delete twice to confirm"
-                                : "Open Edit Event to review recurring deletion. Deleting there may affect the full series; this button does not delete anything."
+                            text:"Ctrl+Click to toggle · Shift+Click for range · Ctrl/Shift+drag background to select · Delete twice to confirm"
                         }
                     }
                     Action {
@@ -650,9 +654,8 @@ Item {
                                         const dx=point.x-allDayButton.dragOriginContentX
                                         if (!allDayButton.dragMoved && Math.abs(dx)<6) return
                                         allDayButton.dragMoved=true;allDayButton.dragX=dx
-                                        if (!root.isEventSelected(allDayButton.modelData)
-                                                && root.selectedEventKeys.length>0)
-                                            root.clearEventSelection()
+                                        if (!root.isEventSelected(allDayButton.modelData))
+                                            root.selectEventId(allDayButton.modelData)
                                         const targets=root.gestureTargets(allDayButton.modelData)
                                         root.activeGroupGesture={keys:targets.map(row=>Selection.gestureKey(row)),
                                             mode:"move",dx:dx,dy:0}
@@ -828,9 +831,8 @@ Item {
                                     gestureMoved=true
                                     dragX=mode==="move" ? dx : 0
                                     dragY=dy
-                                    if (!root.isEventSelected(modelData)
-                                            && root.selectedEventKeys.length>0)
-                                        root.clearEventSelection()
+                                    if (!root.isEventSelected(modelData))
+                                        root.selectEventId(modelData)
                                     const targets=root.gestureTargets(modelData)
                                     root.activeGroupGesture={keys:targets.map(row=>Selection.gestureKey(row)),
                                         mode:mode,dx:dragX,dy:dragY}
