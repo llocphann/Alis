@@ -114,12 +114,17 @@ Item {
     readonly property var placement: PlacementMemo.stable(placementMemo,
         controller?.bodyPlacements?.[identity] ?? null)
     readonly property bool placementVisible: placement?.visible !== false
-    // A temporarily evicted body retracts using its last valid geometry, keeps
-    // its loaded feature/draft, and can reopen in place when space returns.
+    readonly property bool hasVisiblePlacement:
+        placement !== null && placementVisible
+    // A temporarily evicted or closing body retracts using its last valid
+    // geometry, keeps its loaded feature/draft, and can reopen in place when
+    // space returns.
     property var retainedPlacement: null
-    readonly property var layoutPlacement: placementVisible
-        ? placement : (retainedPlacement ?? placement)
-    readonly property var effectivePlacement: placementVisible
+    readonly property var layoutPlacement: hasVisiblePlacement
+        ? placement
+        : ((placement !== null || progress > 0.001)
+            ? (retainedPlacement ?? placement) : placement)
+    readonly property var effectivePlacement: hasVisiblePlacement
         ? placement : (progress > 0.001 ? retainedPlacement : placement)
     readonly property var pyramidCoordinator:
         root.controller?.pyramidCoordinator ?? null
@@ -184,7 +189,10 @@ Item {
     // Pyramid motion only snapshots/interpolates this already-resolved record.
     readonly property var pyramidRestingRecord: Geometry.placedPanel(
         width,height,edgeInsets,edge,requestedAlong,span,depth,1,padding,
-        obstacles,largeSurface,visualPlacement)
+        visualPlacement ? null
+            : (!controller || root.visualResident || root.semanticOpen
+                ? obstacles : null),
+        largeSurface,visualPlacement)
     readonly property bool pyramidPresentationActive:
         root.pyramidMotionEnabled
         && (root.semanticOpen || root.pyramidClosing
@@ -199,7 +207,7 @@ Item {
     readonly property var pyramidAllocatorRecord:
         root.pyramidAllocatorPlacement
             ? Geometry.placedPanel(width,height,edgeInsets,edge,requestedAlong,span,
-                depth,1,padding,obstacles,largeSurface,
+                depth,1,padding,null,largeSurface,
                 root.pyramidAllocatorPlacement)
             : null
     readonly property var pyramidFullRecord:
@@ -216,14 +224,20 @@ Item {
                         root.pyramidFullRecord,null),
                 root.pyramidFullRecord,root.progress)
             : Geometry.placedPanel(width,height,edgeInsets,edge,requestedAlong,span,
-                depth,progress,padding,obstacles,largeSurface,
-                visualPlacement)
+                depth,progress,padding,
+                visualPlacement ? null
+                    : (!controller || root.visualResident ? obstacles : null),
+                largeSurface,visualPlacement)
     readonly property var record: Geometry.joinCorner(
         rawPresentationRecord,joinedEdge,width,height,edgeInsets)
     // A requested join can be rejected when the popup is too far away.
     // Input follows only the weld actually present in the painted record.
     readonly property string appliedJoinedEdge: record.joinedEdge ?? ""
-    readonly property var targetRecord: Geometry.placedPanel(width,height,edgeInsets,edge,requestedAlong,span,depth,1,padding,obstacles,largeSurface,layoutPlacement)
+    readonly property var targetRecord: Geometry.placedPanel(width,height,edgeInsets,edge,requestedAlong,span,depth,1,padding,
+        layoutPlacement ? null
+            : (!controller || root.visualResident || root.semanticOpen
+                ? obstacles : null),
+        largeSurface,layoutPlacement)
     readonly property Item contentItem: content
     readonly property bool ready: embeddedItem !== null || content.status === Loader.Ready
     readonly property Item contentParent: contentCanvas
@@ -321,7 +335,9 @@ Item {
         id: participant
         identity: root.identity
         controller: root.controller
-        geometry: root.record
+        geometry: root.visualResident || root.semanticOpen
+            || root.pyramidClosing || root.pyramidReopening
+            ? root.record : null
         restingRecord: root.pyramidRestingRecord
         visualPlacement: root.visualPlacement
         surfaceSettled: root.presented && root.ready && Math.abs(root.progress-1) < .001
@@ -333,15 +349,17 @@ Item {
         vacancyRole: root.vacancyRole
         vacancyHovered: root.vacancyHovered
         vacancyHoverOrder: root.vacancyHoverOrder
-        placementRequest: ({id:root.identity,open:root.semanticOpen,order:root.activationOrder,
-            priority:root.placementPriority,padding:root.padding,
-            minSpan:root.minimumSpan,minDepth:root.minimumDepth,
-            allowInward:root.placementCanStackInward,
-            minimumInward:root.minimumInward,
-            stackPolicy:root.stackPolicy,
-            pyramidAnchor:root.pyramidAnchor,
-            stackProximity:root.stackProximity,
-            record:root.requestedRecord})
+        placementRequest: root.semanticOpen
+            ? ({id:root.identity,open:root.semanticOpen,order:root.activationOrder,
+                priority:root.placementPriority,padding:root.padding,
+                minSpan:root.minimumSpan,minDepth:root.minimumDepth,
+                allowInward:root.placementCanStackInward,
+                minimumInward:root.minimumInward,
+                stackPolicy:root.stackPolicy,
+                pyramidAnchor:root.pyramidAnchor,
+                stackProximity:root.stackProximity,
+                record:root.requestedRecord})
+            : null
         inputBounds: root.inputBounds
         nativeInputRegion: root.includeEdgeConnection ? root.nativeInputRegion : null
         mass: root.mass
@@ -435,8 +453,10 @@ Item {
             return
         root.pyramidLatchedFullRecord=
             PyramidMotion.cloneRecord(closingRecord)
+        const closingRequest=participant.placementRequest
+            ?? ({stackProximity:root.stackProximity,record:root.requestedRecord})
         root.pyramidOriginRecord=root.pyramidCoordinator?.beginClose(
-            root.identity,participant.placementRequest,
+            root.identity,closingRequest,
             closingPlacement,root.pyramidLatchedFullRecord)
             ?? PyramidMotion.collapsedRecord(
                 root.pyramidLatchedFullRecord,null)
@@ -467,8 +487,10 @@ Item {
         root.capturePyramidRestingState()
     }
     onPlacementChanged: {
-        if (placement?.visible !== false)
+        if (placement && placement.visible !== false)
             retainedPlacement = placement
+        else if (!placement && progress <= 0.001)
+            retainedPlacement = null
         if (initialized && semanticOpen && pyramidMotionEnabled
                 && !pyramidClosing && !pyramidReopening) {
             root.capturePyramidRestingState()
@@ -487,6 +509,8 @@ Item {
     onVacancyHoveredChanged: root.refreshVacancyInteraction()
     onVacancyRoleChanged: root.refreshVacancyInteraction()
     onProgressChanged: {
+        if (!placement && progress <= 0.001 && retainedPlacement !== null)
+            retainedPlacement = null
         root.finishPyramidCloseIfDone()
         root.finishPyramidReopenIfDone()
     }

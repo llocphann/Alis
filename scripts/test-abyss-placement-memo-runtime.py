@@ -27,18 +27,66 @@ ShellRoot {
  property var hosts:[];property int cycles:20
  Component.onCompleted:Quickshell.watchFiles=false
  function check(value,label){checks++;if(!value)throw new Error(label)}
- AbyssSurfaceController {id:liquid}
+ AbyssSurfaceController {id:liquid;outputWidth:1000;outputHeight:740}
  Item {id:parentItem;width:1000;height:740}
  Component {
   id:factory
-  AbyssBodyHost {controller:liquid;edge:"bottom";Component.onDestruction:root.derivedDestroyed++}
+  AbyssBodyHost {width:1000;height:740;controller:liquid;edge:"bottom";Component.onDestruction:root.derivedDestroyed++}
  }
  Timer {
+  id:loop
   interval:15;running:true;repeat:true
   onTriggered:{if(!Config.ready)return;try{
    if(root.step%2===0){
     root.check(root.derivedDestroyed===root.step/2*8,"derived destruction handler was lost")
     if(root.step===root.cycles*2){
+     loop.running=false
+     const itemA=Qt.createQmlObject('import QtQuick; Item { implicitWidth: 260; implicitHeight: 200 }',parentItem)
+     const itemB=Qt.createQmlObject('import QtQuick; Item { implicitWidth: 260; implicitHeight: 200 }',parentItem)
+     const mover=factory.createObject(parentItem,{identity:"r09-mover",edge:"left",span:320,depth:280,along:120,placementPriority:1,animatePresentation:false,open:true,externalProgress:0,embeddedItem:itemA})
+     const peer=factory.createObject(parentItem,{identity:"r09-peer",edge:"left",span:320,depth:240,along:120,animatePresentation:false,open:false, embeddedItem:itemB})
+     const closedWatchers=[]
+     let watcherRecordChanges=0,watcherTargetChanges=0
+     for(let i=0;i<6;i++){
+      const w=factory.createObject(parentItem,{
+       identity:"r09-closed-"+i,edge:i%2===0?"bottom":"top",span:280,depth:180,along:200+i*20,
+       open:false,obstacles:Qt.binding(()=>mover.progress>0.001?[mover.record]:[])
+      })
+      w.recordChanged.connect(()=>{watcherRecordChanges++})
+      w.targetRecordChanged.connect(()=>{watcherTargetChanges++})
+      closedWatchers.push(w)
+     }
+     let recordsNotifies=0,requestsNotifies=0,placementsNotifies=0
+     liquid.recordsChanged.connect(()=>{recordsNotifies++})
+     liquid.placementRequestsChanged.connect(()=>{requestsNotifies++})
+     liquid.bodyPlacementsChanged.connect(()=>{placementsNotifies++})
+     for(const p of [0.15,0.45,0.8,1.0]){
+      const beforeRecords=recordsNotifies
+      mover.externalProgress=p
+      root.check(recordsNotifies-beforeRecords===1,"peer motion frame cascaded recordsChanged "+(recordsNotifies-beforeRecords)+" times")
+     }
+     root.check(watcherRecordChanges===0,"closed obstacle consumers recomputed record during peer motion: "+watcherRecordChanges)
+     root.check(watcherTargetChanges===0,"closed obstacle consumers recomputed targetRecord during peer motion: "+watcherTargetChanges)
+     root.check(closedWatchers.every(w=>liquid.participants[w.identity]?.geometry===null),"closed host published non-null participant.geometry")
+     root.check(closedWatchers.every(w=>liquid.participants[w.identity]?.placementRequest===null),"closed host published non-null placementRequest")
+     const beforeReq=requestsNotifies,beforePl=placementsNotifies
+     closedWatchers[0].span=360
+     closedWatchers[0].depth=240
+     closedWatchers[0].along=310
+     root.check(requestsNotifies===beforeReq && placementsNotifies===beforePl,"closed host sizing change churned allocator bindings")
+     peer.open=true
+     const openInward=Number(peer.effectivePlacement?.inward ?? 0)
+     root.check(openInward>0 && peer.progress===1,"overlapping peer did not stack inward while open")
+     peer.animatePresentation=true
+     peer.open=false
+     root.check(peer.progress>0.001,"animated close did not keep progress > 0 on close frame")
+     root.check(Number(peer.effectivePlacement?.inward ?? 0)===openInward,"closing non-pyramid host dropped retainedPlacement on close frame")
+     root.check(Number(peer.layoutPlacement?.inward ?? 0)===openInward,"closing non-pyramid host dropped layoutPlacement on close frame")
+     peer.animatePresentation=false
+     peer.availabilityProgress=0
+     root.check(peer.retainedPlacement===null && peer.effectivePlacement===null,"fully closed host did not release retainedPlacement at progress=0")
+     mover.destroy();peer.destroy();itemA.destroy();itemB.destroy()
+     for(const w of closedWatchers)w.destroy()
      console.info("ABYSS_PLACEMENT_MEMO_RUNTIME_PASS",root.checks,"checks;",root.derivedDestroyed,"real hosts released");Qt.quit();return
     }
     const batch=[]

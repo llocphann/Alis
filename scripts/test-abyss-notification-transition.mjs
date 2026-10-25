@@ -289,6 +289,10 @@ same('cooldown releases embedded controls after bounded 700ms',
 same('recording restart cancels pending teardown',
     recordOsd.includes('controlsCoolDown.stop()')
     && recordOsd.includes('root.controlsCooling = false'),true);
+same('embedded recording cooldown retains active audioMode during retract',
+    recordOsd.includes('property string retainedAudioMode: ""')
+    && recordOsd.includes('!recordingStatus.isRecording && embeddedMode && retainedAudioMode.length > 0')
+    && recordOsd.includes('? retainedAudioMode : liveAudioMode'),true);
 same('legacy/native OSD remains tied to live recorder state',
     recordOsd.includes('active: root.recordingStatus.isRecording && !root.embeddedMode'),true);
 console.log('PASS: '+tests+' source-executed Abyss Notification/Recording transition assertions');

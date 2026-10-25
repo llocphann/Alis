@@ -20,7 +20,12 @@ Scope {
     property bool isVertical: false
     property bool collapsed: false
     readonly property bool autoHide: Config.options?.screenRecord?.recordingOsd?.autoHide ?? false
-    readonly property string audioMode: recordingStatus.effectiveAudioMode
+    property string retainedAudioMode: ""
+    readonly property string liveAudioMode: recordingStatus.effectiveAudioMode
+    readonly property string audioMode:
+        !recordingStatus.isRecording && embeddedMode && retainedAudioMode.length > 0
+            ? retainedAudioMode : liveAudioMode
+    onLiveAudioModeChanged: if (recordingStatus.isRecording) retainedAudioMode = liveAudioMode
     readonly property bool usesSystemAudio: audioMode === "system" || audioMode === "both"
     readonly property bool usesMicrophone: audioMode === "microphone" || audioMode === "both"
     property bool revealed: true
@@ -32,6 +37,8 @@ Scope {
     // a bounded cool-down rather than destroying the Qt item tree on the
     // first frame of the toast. Native ii/Waffle teardown is unchanged.
     property bool controlsCooling: false
+    onControlsCoolingChanged: if (!controlsCooling && !recordingStatus.isRecording)
+        retainedAudioMode = ""
     // Minimized is a persistent choice; hovering only peeks at the controls.
     readonly property bool controlsExpanded: !collapsed || osdTargetHovered || draggingControls
     readonly property Item controls: controlsLoader.item
@@ -106,18 +113,25 @@ Scope {
                 if (root.embeddedMode && root.controls) {
                     root.controlsCooling = true
                     controlsCoolDown.restart()
+                } else {
+                    root.retainedAudioMode = ""
                 }
                 return
             }
             controlsCoolDown.stop()
             root.controlsCooling = false
+            root.retainedAudioMode = root.liveAudioMode
             root.collapsed = false
             if (!root.embeddedMode) root.isVertical = false
             root.revealed = true
             root.startHideTimer()
         }
     }
-    Component.onCompleted: root.startHideTimer()
+    Component.onCompleted: {
+        if (root.recordingStatus.isRecording)
+            root.retainedAudioMode = root.liveAudioMode
+        root.startHideTimer()
+    }
     Timer {
         id: controlsCoolDown
         interval: 700
