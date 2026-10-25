@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""User-requested, Hadalis-owned installer for the official optional Hadalird package.
+"""User-requested, Alis-owned installer for the official optional Alis-Intergration package.
 
 No background network activity, privileged operations or execution of downloaded scripts.
-The package is inert until the user enables an integration in Hadalis Settings.
+The package is inert until the user enables an integration in Alis Settings.
 """
 import argparse
 import fcntl
@@ -35,7 +35,7 @@ MAX_FILES = 512
 MAX_MEMBERS = 4096
 SYSTEM_PROVISIONER = "/usr/libexec/alis-hadalird-system-provision"
 EXECUTABLE = {"assets/helpers/alis-battery-charge-limit", "assets/helpers/alis-thinkfan"}
-# The separately released Hadalird payload retains its original helper names.
+# The separately released Alis-Intergration payload retains its original helper names.
 # Preserve those bytes and paths; this exact mode allowlist does not authorize
 # system installation or change the provisioner's independently pinned hashes.
 _EXTERNAL_HELPER_PREFIX = "assets/helpers/" + "in" + "ir-"
@@ -50,7 +50,7 @@ def sha256(data):
 
 def request_bytes(url, limit):
     # Only the official GitHub API and its codeload redirect are allowed.
-    req = urllib.request.Request(url, headers={"User-Agent": "Hadalis-Hadalird-Manager/1",
+    req = urllib.request.Request(url, headers={"User-Agent": "Alis-Intergration-Manager/1",
                                               "Accept": "application/vnd.github+json"})
     with urllib.request.urlopen(req, timeout=25) as response:
         final = response.geturl()
@@ -128,7 +128,7 @@ def assemble(files, revision, target):
     manifest = json.loads(files["manifest.json"])
     if not isinstance(manifest, dict) or manifest.get("id") != "hadalird" or (
             type(manifest.get("hostApi")) is not int or manifest["hostApi"] != 1):
-        raise ValueError("Unsupported Hadalird package or host API")
+        raise ValueError("Unsupported Alis-Intergration package or host API")
     if not isinstance(manifest.get("version"), str) or not manifest["version"] or len(manifest["version"]) > 64:
         raise ValueError("Invalid package version")
     if not isinstance(manifest.get("settings"), dict) or not isinstance(manifest.get("backends"), dict):
@@ -178,7 +178,7 @@ def owned_link(home):
     link = home / "current"
     if link.exists() or link.is_symlink():
         if not link.is_symlink() or link.resolve().parent != (home / "releases").resolve():
-            raise ValueError("An unowned Hadalird installation already exists; preserved unchanged")
+            raise ValueError("An unowned Alis-Intergration installation already exists; preserved unchanged")
     return link
 
 
@@ -207,7 +207,7 @@ def call_system_helper(action, package=None):
         if action == "helpers-status":
             return {"ok": True, "installed": False, "managed": False,
                     "provisionerAvailable": False, "diagnostic": "system-provisioner-not-installed"}
-        raise ValueError("Hadalis system provisioner is unavailable; update your Hadalis system package")
+        raise ValueError("Alis system provisioner is unavailable; update your Alis system package")
     if action == "helpers-status":
         argv = [SYSTEM_PROVISIONER, "status"]
     else:
@@ -237,12 +237,12 @@ def call_system_helper(action, package=None):
 
 
 def gateway_package(action):
-    # The unprivileged package builder is part of Hadalis' own shipped runtime.
+    # The unprivileged package builder is part of Alis' own shipped runtime.
     # It executes makepkg as the user and requests Polkit for pacman only.
     task = action.removeprefix("gateway-")
     runner = ROOT / "scripts/hadalird-system-package.py"
     if task not in ("status", "install", "remove") or not runner.is_file():
-        raise ValueError("Hadalis system gateway package manager is unavailable")
+        raise ValueError("Alis system gateway package manager is unavailable")
     try:
         outcome = subprocess.run(
             ["/usr/bin/python3", str(runner), task], capture_output=True,
@@ -272,9 +272,9 @@ def gateway_package(action):
 def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=request_bytes,
             system_call=call_system_helper, gateway_call=gateway_package):
     home.mkdir(parents=True, exist_ok=True)
-    # Bundled distro payload takes precedence in Hadalis discovery.
+    # Bundled distro payload takes precedence in Alis discovery.
     if action in ("check", "install", "remove", "rollback") and (shell_root / "optional/hadalird").exists():
-        raise ValueError("Hadalis has a bundled Hadalird; update it through the host distribution")
+        raise ValueError("Alis has a bundled Alis-Intergration; update it through the host distribution")
     lock = home / ".install.lock"
     with lock.open("a") as fd:
         fcntl.flock(fd, fcntl.LOCK_EX)
@@ -331,10 +331,10 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
             bundled = shell_root / "optional/hadalird"
             active_package = bundled if bundled.is_dir() else home / "current"
             if not active_package.is_dir():
-                raise ValueError("Install Hadalird before system helpers")
+                raise ValueError("Install Alis-Intergration before system helpers")
             package_dir = active_package.resolve()
             if not package_dir.is_dir():
-                raise ValueError("Invalid Hadalird release")
+                raise ValueError("Invalid Alis-Intergration release")
             gateway = gateway_call("gateway-status")
             provisioner = system_call("helpers-status", None)
             # A full alis-shell Arch package can already own the trusted
@@ -363,10 +363,10 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
                 bundled = shell_root / "optional/hadalird"
                 active_package = bundled if bundled.is_dir() else home / "current"
                 if not active_package.is_dir():
-                    raise ValueError("Install Hadalird before installing its system helpers")
+                    raise ValueError("Install Alis-Intergration before installing its system helpers")
                 package_dir = active_package.resolve()
                 if not package_dir.is_dir():
-                    raise ValueError("Invalid Hadalird release")
+                    raise ValueError("Invalid Alis-Intergration release")
                 # All bytes must match the system package's root-owned pinned
                 # allowlist. The privileged gateway will re-open and check them.
                 payload = system_call(action, package_dir)
@@ -427,7 +427,7 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
             previous_file.write_text(current + "\n")
         result.update(available=True, installedSha=latest, canRollback=bool(current),
                       version=json.loads((candidate / "manifest.json").read_text())["version"],
-                      message="Installed verified Hadalird release")
+                      message="Installed verified Alis-Intergration release")
         return result
 
 

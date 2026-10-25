@@ -75,7 +75,7 @@ Singleton {
         })
     readonly property string sourceLabel: {
         if (!root.useObsidian)
-            return "Hadalis"
+            return "Alis"
         if (root.useMarkdownNote)
             return "Obsidian · Markdown"
         return "Obsidian · " + String(Config.options?.todo?.obsidian?.notePath ?? "")

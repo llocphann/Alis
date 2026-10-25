@@ -27,6 +27,6 @@ Item {
         visible: !content.active
         wrapMode: Text.WordWrap
         color: Appearance.colors.colSubtext
-        text: Translation.tr("Install Hadalird; enable this integration in Settings → Integrations.")
+        text: Translation.tr("Install Alis-Intergration; enable this integration in Settings → Integrations.")
     }
 }

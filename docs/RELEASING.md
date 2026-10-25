@@ -67,8 +67,8 @@ bash scripts/test-nix-module-contract.sh
 A failure or unavailable Nix lane is diagnostic during this phase; it does not override a clean required non-Nix validation result or block release publication. Do not hide the diagnostic result—record it separately and fix it in the deferred compatibility lane.
 
 The optional-package gates verify that Core installation, update and removal
-preserve separately owned Hadalird payloads and user profiles. TLP, Thinkfan and
-Obsidian implementation tests run in the Hadalird repository. These preflight
+preserve separately owned Alis-Intergration payloads and user profiles. TLP, Thinkfan and
+Obsidian implementation tests run in the Alis-Intergration repository. These preflight
 checks use private staging and simulated command/hardware boundaries; real
 battery lifecycle modes such as `--live-restart`, `--live-display`, and
 `--live-suspend` remain manual machine checks and are not invoked by release

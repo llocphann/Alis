@@ -9,7 +9,7 @@
 | Service | What it does |
 |---------|-------------|
 | **Hadanion** | Discovers the separately installed Companion package and loads its session only when enabled. IPC target: `hadanion`. Compatibility IPC target: `wull`. Missing packages keep keyboard/input ownership empty. |
-| **Hadalird** | Validates the separately installed TLP, Thinkfan and Obsidian package and loads only selected integrations. IPC target: `hadalird`. Missing or disabled packages keep their workers unloaded; Core installation and removal preserve optional payloads and user profiles. |
+| **Alis-Intergration** | Validates the separately installed TLP, Thinkfan and Obsidian package and loads only selected integrations. IPC target: `integrations` (legacy alias: `hadalird`). Missing or disabled packages keep their workers unloaded; Core installation and removal preserve optional payloads and user profiles. |
 
 ## Compositor
 
@@ -26,7 +26,7 @@
 | Service | What it does |
 |---------|-------------|
 | **Audio** | PipeWire integration. Default sink/source, volume, mute, per-app mixer. EasyEffects virtual sink detection. IPC target: `audio`. |
-| **MprisController** | MPRIS player management. Filters real players, retains legacy YT Music deduplication compatibility, tracks the active player with a grace period for track transitions, and binds MPD Music to the matching default or Hadalis-named `mpd-mpris` instance. IPC target: `mpris`. |
+| **MprisController** | MPRIS player management. Filters real players, retains legacy YT Music deduplication compatibility, tracks the active player with a grace period for track transitions, and binds MPD Music to the matching default or legacy Hadalis-named `mpd-mpris` instance. IPC target: `mpris`. |
 | **LocalMusic** | Left Sidebar MPD frontend. Reads MPD songs/saved playlists/queue, performs MPD-only database/queue operations, and requests an endpoint-matched `mpd-mpris` player from MprisController for normal transport. |
 | **YtMusic** | Legacy YouTube Music compatibility backend retained in source while the Left Sidebar has moved to `LocalMusic`; it is no longer the user-facing sidebar music route. IPC target: `ytmusic`. |
 | **SongRec** | Music recognition via SongRec (Shazam-like audio fingerprinting). |

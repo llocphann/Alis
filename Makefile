@@ -30,7 +30,7 @@ build:
 	@bash -n scripts/test-local-distribution.sh
 	@bash -n setup
 
-# Host/update contracts remain in core; helper implementations are tested in Hadalird.
+# Host/update contracts remain in core; helper implementations are tested in Alis-Intergration.
 test-local: build test-native-production test-doctor-routing test-optional-audio-deps test-news-contract test-equalizer-contracts test-perimeter-contracts test-weather-contracts test-docs test-install-lifecycle test-prefix-install test-package-docs test-package-metadata test-package-hooks
 	@bash scripts/test-local-distribution.sh
 	@bash scripts/test-brand-entrypoints.sh
@@ -123,7 +123,7 @@ test-package-hooks:
 	@python3 scripts/test-hadalird-arch-package.py
 
 test-battery-helper test-thinkfan-helper:
-	@printf '%s\n' 'Run helper tests in optional Hadalird: https://github.com/llocphann/Hadalird' >&2
+	@printf '%s\n' 'Run helper tests in optional Alis-Intergration: https://github.com/llocphann/Alis-Intergration' >&2
 	@exit 2
 
 install-bin:
@@ -198,7 +198,7 @@ install-license:
 # Keep historical explicit commands actionable without installing, resetting or
 # removing a separate package's privileged payload or owner-created profiles.
 install-battery-helper install-thinkfan-helper uninstall-battery-helper uninstall-thinkfan-helper:
-	@printf '%s\n' 'Privileged integrations are owned by optional Hadalird: https://github.com/llocphann/Hadalird' 'Use Hadalird install-helpers for an explicitly requested installation; preserve existing profiles on removal.' >&2
+	@printf '%s\n' 'Privileged integrations are owned by optional Alis-Intergration: https://github.com/llocphann/Alis-Intergration' 'Use ./setup integrations install for an explicitly requested installation; preserve existing profiles on removal.' >&2
 	@exit 2
 
 install: build install-bin install-shell install-native install-systemd install-icon install-desktop install-docs install-license

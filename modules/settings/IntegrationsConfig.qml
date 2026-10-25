@@ -84,7 +84,7 @@ ContentPage {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 text: Hadalird.managerBusy ? Translation.tr("Working…")
-                    : Hadalird.available ? "Hadalird " + Hadalird.version + " · " + Translation.tr("Installed")
+                    : Hadalird.available ? "Alis-Intergration " + Hadalird.version + " · " + Translation.tr("Installed")
                     : Hadalird.diagnostic === "not-installed" ? Translation.tr("No plugins installed. Install the optional package to get started.")
                     : Translation.tr("Integration package unavailable") + " · " + Hadalird.diagnostic
             }
@@ -92,7 +92,7 @@ ContentPage {
                 Layout.fillWidth: true
                 spacing: 8
                 DialogButton {
-                    buttonText: Hadalird.available ? Translation.tr("Reinstall") : Translation.tr("Install Hadalird")
+                    buttonText: Hadalird.available ? Translation.tr("Reinstall") : Translation.tr("Install Alis-Intergration")
                     enabled: !Hadalird.managerBusy
                     onClicked: Hadalird.manage("install")
                 }
@@ -126,13 +126,13 @@ ContentPage {
                 }
                 DialogButton {
                     visible: Hadalird.canRollback
-                    buttonText: Translation.tr("Restore Hadalird")
+                    buttonText: Translation.tr("Restore Alis-Intergration")
                     enabled: !Hadalird.managerBusy
                     onClicked: Hadalird.manage("rollback")
                 }
                 DialogButton {
                     visible: Hadalird.available && !packageSection.confirmRemoval
-                    buttonText: Translation.tr("Remove Hadalird")
+                    buttonText: Translation.tr("Remove Alis-Intergration")
                     enabled: !Hadalird.managerBusy
                     onClicked: packageSection.confirmRemoval = true
                 }
