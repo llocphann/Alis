@@ -140,6 +140,7 @@ WindowDialog {
     }
 
     component EventTextField: MaterialTextField {
+        enabled: root.show
         // Material's floating-label padding leaves too little room in the
         // compact editor. Keep a single line and size it for the actual font.
         implicitHeight: Math.max(root.compactEditor ? 40 : 52,

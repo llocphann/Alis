@@ -56,6 +56,7 @@ Singleton {
     FileView {
         id: themeProfileControl
         path: Qt.resolvedUrl(root.themeRuntimeRoot + "/enabled")
+        printErrors: false
         watchChanges: true
         onFileChanged: themeProfileControl.reload()
         onLoadedChanged: root.themeRuntimeEnabled =

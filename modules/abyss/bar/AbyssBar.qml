@@ -223,8 +223,8 @@ Item {
             moduleRotation: placement?.rotation !== undefined ? Layout.normalizeRotation(placement.rotation, attachedEdge) : -1
             popupJoinedEdge: placement?.joinCorner ? Layout.adjacentEdge(geometry,root.width,root.height) : ""
             contentScale: ((geometry?.designSpan ?? geometry?.span) ?? 0)/Math.max(1,naturalSpan)
-            onNaturalSpanChanged: root.measure(modelData,naturalSpan)
-            Component.onCompleted: {root.measure(modelData,naturalSpan);Qt.callLater(rearmMotion)}
+            onNaturalSpanChanged: if (root) root.measure(modelData,naturalSpan)
+            Component.onCompleted: {if (root) root.measure(modelData,naturalSpan);Qt.callLater(rearmMotion)}
             kind: placement?.kind ?? "clock"
             outputName: root.outputName
             vertical: placement?.edge === "left" || placement?.edge === "right"
@@ -235,7 +235,7 @@ Item {
             showIcon: module.unifiedEdgeLauncher ? true : placement?.showIcon !== false
             onNotesEditorFocusChanged: (outputName, focused) => root.notesEditorFocusChanged(outputName, focused)
             visible: geometry !== undefined && !geometry.capacityConflict
-            enabled: !root.editing && visible
+            enabled: !(root?.editing ?? false) && visible
             property bool motionReady: false
             property string motionEdge: ""
             property real motionWidth: -1

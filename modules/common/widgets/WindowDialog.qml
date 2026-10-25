@@ -160,6 +160,7 @@ Rectangle {
         spacing: root.contentSpacing
         opacity: root.show ? 1 : 0
         visible: opacity > 0
+        enabled: root.show
         Behavior on opacity {
             animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
         }

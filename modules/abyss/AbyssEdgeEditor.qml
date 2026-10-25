@@ -1347,6 +1347,7 @@ Item {
                         Layout.preferredWidth:editFineControls.useTwoColumns
                             ? 270*Appearance.fontSizeScale
                             : Math.max(0,toolbarScroll.width)
+                        width:Layout.preferredWidth
                         spacing:4*Appearance.fontSizeScale
                             RowLayout {
                             objectName:"abyssEdgeHeaderActions"
