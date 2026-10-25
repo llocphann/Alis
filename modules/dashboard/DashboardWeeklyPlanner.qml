@@ -898,7 +898,7 @@ Item {
                                         width:Math.min(28,parent.width*.3)
                                         height:2
                                         radius:1
-                                        color:root.headerAccent
+                                        color:Qt.lighter(timedButton.eventAccent,1.20)
                                         // Visible only while hovering this event or
                                         // actively resizing it; never show idle bars.
                                         opacity:timedButton.showResizeHandles
@@ -937,7 +937,7 @@ Item {
                                         width:Math.min(28,parent.width*.3)
                                         height:2
                                         radius:1
-                                        color:root.headerAccent
+                                        color:Qt.lighter(timedButton.eventAccent,1.20)
                                         opacity:timedButton.showResizeHandles
                                             ? (bottomResizeMouse.containsMouse
                                                 || timedButton.gestureMode==="bottom" ? .9 : .65)
