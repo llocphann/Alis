@@ -62,6 +62,17 @@ assert 'HoverHandler {id:eventResizeHover}' in event
 assert 'readonly property bool showResizeHandles: canReschedule' in event
 assert '(eventResizeHover.hovered || gestureMode.length>0)' in event
 assert event.count('opacity:timedButton.showResizeHandles') == 2
+# Both resize indicators must follow their OWN Event ID swatch instead of
+# the shared Today/theme accent; keep original hover-only opacity behavior.
+assert event.count('color:Qt.lighter(timedButton.eventAccent,1.20)') == 2, (
+    "top and bottom resize bars must use this Event's muted swatch"
+)
+resize_region=event.split('objectName:"plannerResizeStart"',1)[1].split(
+    'id:bottomResizeMouse',1
+)[0]
+assert 'color:root.headerAccent' not in resize_region, (
+    "shared header/theme accent leaked back into resize bars"
+)
 assert event.count('timedButton.gestureMode==="top" ? .9 : .65') == 1
 assert event.count('timedButton.gestureMode==="bottom" ? .9 : .65') == 1
 assert event.count('                                            : 0') == 2
