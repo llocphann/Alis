@@ -44,6 +44,11 @@ Window {
     "editor highlighted template/history instead of clicked cycle")
    check(!form.hasUnsavedChanges(),"opening stored cycle dirtied the form")
    if(initial){
+    const sibling=all(planner,"plannerTimedEvent").find(c=>
+      c.modelData.event.id===501 && c.modelData.occurrenceIndex===3 && !c.modelData.virtual)
+    mouseClick(find(sibling,"plannerEventMoveArea"),sibling.width/2,20,
+      Qt.LeftButton,Qt.ControlModifier)
+    check(planner.selectedEventRows.length===1,"Ctrl must isolate the dragged weekday")
     form.eventTitle="Unsaved private title"
     const target=find(card(),"plannerEventMoveArea")
     const p=target.mapToItem(planner,target.width/2,target.height/2)
@@ -61,6 +66,16 @@ Window {
       "Cancel/reopen retained an unsaved title")
     check(JSON.stringify(form.plannerSelectedDateKeys)===JSON.stringify(["2032-10-20","2032-10-21"]),
       "reopening restored historical/template highlights")
+    const before=Events.list.find(e=>e.id===501)
+    form.eventTitle="Renamed private cycle"
+    check(form.plannerScheduleUnchanged(),"title edit was confused with a schedule edit")
+    check(form.saveEvent(),"metadata-only Save failed")
+    tryVerify(()=>!Events.persistenceBusy,4000);wait(50)
+    const after=Events.list.find(e=>e.id===501)
+    check(JSON.stringify(after.occurrences)===JSON.stringify(before.occurrences)
+     && JSON.stringify(after.repeatTemplate)===JSON.stringify(before.repeatTemplate)
+     && JSON.stringify(after.plannerFutureSchedule)===JSON.stringify(before.plannerFutureSchedule),
+     "title Save flattened different per-day clocks or modified recurrence history")
    }
    form.dismiss();wait(60)
    console.info("PLANNER_EDITOR_CYCLE_NATIVE_PASS",Quickshell.env("PLANNER_CYCLE_PHASE"),checks)
@@ -83,6 +98,7 @@ with tempfile.TemporaryDirectory(prefix='alis-editor-cycle-') as temporary:
   (config/'config.json').write_bytes((ROOT/'defaults/config.json').read_bytes())
   store=folder/'state/quickshell/user/events.json';store.parent.mkdir(parents=True)
   slots=[slot(d) for d in ['05','07','19','21']]
+  slots[3].update(startDate='2032-10-21T11:30:00.000Z',endDate='2032-10-21T12:30:00.000Z')
   event=dict(id=501,title='Synthetic cycle history',recurrence='weekly',occurrences=slots,
              repeatTemplate=slots[:2],repeatCycleStart=2,ownerExtra={'keep':7})
   fixture=dict(schemaVersion=1,nextId=602,events=[event],unknownRoot={'keep':1},todoUnlinks=[])

@@ -45,6 +45,13 @@ Window {
        integer:Number.isInteger(c.modelData.occurrenceIndex),source:c.modelData.source,
        virtual:c.modelData.virtual,event:c.modelData.event}))))
    const before=JSON.stringify(Events.list),durable=JSON.stringify(Events.getDurableEvents())
+   // Plain drag now owns the visible ID group. Explicitly Ctrl-select one
+   // occurrence to retain the original isolated-instance pointer oracle.
+   planner.clearEventSelection()
+   mouseClick(first(target,"plannerEventMoveArea"),target.width/2,20,
+    Qt.LeftButton,Qt.ControlModifier)
+   check(planner.selectedEventRows.length===1
+    && planner.selectedEventRows[0].occurrenceIndex===index,"Ctrl single selection lost")
    const p=held(first(target,areaName),dx,dy)
    check(target.gestureMoved && target.effectiveMode===mode,"pointer did not start "+mode)
    check(cards().filter(c=>c.effectiveMode.length>0).length===1,
@@ -96,10 +103,10 @@ Window {
     Events.loadFromFile();tryCompare(Events,"ready",true,4000);wait(80)
     planner.changeWeek(1);wait(80)
     check(card(401).modelData.virtual && card(401).modelData.startDate.toISOString()
-      ==='2032-10-26T09:00:00.000Z',"edited instance drifted future cadence")
+      ==='2032-10-26T09:30:00.000Z',"future weekday did not follow the edited clock")
     drag(401,0,"plannerResizeEnd","bottom",0,planner.hourHeight/4)
-    check(Events.list.find(e=>e.id===401).plannerOverrides.length===1,
-      "virtual legacy edit did not persist one bounded exception")
+    check(Events.list.find(e=>e.id===401).plannerFutureSchedule.length===4,
+      "virtual legacy edit did not persist one forward branch rule")
     planner.changeWeek(-1);wait(80)
     // Preserve Owner-accepted Ctrl selection and genuine group movement.
     const selected=[card(403),card(405)]
@@ -152,7 +159,7 @@ Window {
    }
    const durable=Events.getDurableEvents(),old=durable.find(e=>e.id===401)
    check(old.occurrences[0].ownerSlot.value===3 && old.ownerExtra.value===7,"restart metadata lost")
-   check(old.plannerOverrides.length===1,"restart lost/duplicated exception")
+   check(old.plannerFutureSchedule.length===5,"restart lost/duplicated forward rules")
    check(old.occurrences[0].plannerSeriesStartDate==='2032-10-19T09:00:00.000Z',"original anchor lost")
    check(durable.length===5 && Events.nextId===500,"stable IDs changed")
    console.info("PLANNER_MULTIDATE_GESTURES_NATIVE_PASS",phase,checks)

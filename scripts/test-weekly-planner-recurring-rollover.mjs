@@ -16,6 +16,7 @@ const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const policy=p=>{const c=vm.createContext({});vm.runInContext(read(p),c);return c;};
 const Occurrences=policy('services/EventOccurrences.js');
 const RepeatPolicy=policy('services/EventRepeatPolicy.js');
+const FutureSchedule=policy('services/EventFutureSchedule.js');
 const planner=policy('modules/dashboard/WeeklyPlannerPolicy.js');
 const source=read('services/Events.qml');
 const fn=source.slice(source.indexOf('function checkDueEvents()'),source.indexOf('function createNextRecurrence('));
@@ -24,7 +25,7 @@ const slot=(day,notified=true)=>({startDate:`2026-10-${day}T09:00:00`,endDate:`2
 for(const [mode,days,count] of [['weekly',['13'],1],['weekly',['13','15'],2],['daily',['13'],1],['none',['13'],0]]){
  const event={id:42,title:'Private fixture',recurrence:mode,occurrences:days.map(d=>slot(d)),custom:{keep:true}};
  const root={ready:true,list:[event],saves:0,saveToFile(){this.saves++;},eventTriggered(){},reminderTriggered(){},createNextRecurrence(){throw Error('must retain the original ID');}};
- const context=vm.createContext({root,Occurrences,RepeatPolicy,Date:Clock});vm.runInContext(fn+';checkDueEvents();',context);
+ const context=vm.createContext({root,Occurrences,RepeatPolicy,FutureSchedule,Date:Clock});vm.runInContext(fn+';checkDueEvents();',context);
  assert.equal(root.list.length,1);assert.equal(root.list[0].id,42);assert.equal(root.list[0].custom.keep,true);
  assert.equal(root.list[0].occurrences.length,days.length+count);
  assert.ok(root.list[0].occurrences.slice(0,days.length).every(s=>s.notified));
@@ -41,7 +42,7 @@ for(const [mode,days,count] of [['weekly',['13'],1],['weekly',['13','15'],2],['d
  const event={id:71,title:'Selected date fixture',recurrence:'weekly',
   occurrences:[slot('06'),active],selectedTemplate:[active]};
  const root={ready:true,list:[event],saveToFile(){},eventTriggered(){},reminderTriggered(){}};
- const context=vm.createContext({root,Occurrences,RepeatPolicy,Date:Clock});
+ const context=vm.createContext({root,Occurrences,RepeatPolicy,FutureSchedule,Date:Clock});
  vm.runInContext(fn+';checkDueEvents();',context);
  assert.equal(root.list[0].occurrences.length,3,'selected single date must roll over without losing history');
  assert.equal(root.list[0].repeatTemplate.length,1,'history must not become part of the pattern');

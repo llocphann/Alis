@@ -7,6 +7,7 @@ import Quickshell.Io
 import "EventOccurrences.js" as Occurrences
 import "EventBatchPolicy.js" as EventBatch
 import "EventRepeatPolicy.js" as RepeatPolicy
+import "EventFutureSchedule.js" as FutureSchedule
 
 Singleton {
     id: root
@@ -332,8 +333,9 @@ Singleton {
                 new Date(slot.plannerSeriesStartDate || slot.startDate).getTime()<=currentTime)
             if (Array.isArray(event.repeatTemplate) && event.repeatTemplate.length>0
                     && event.recurrence!=="none" && cycleElapsed) {
-                const future=RepeatPolicy.nextCycle(event.repeatTemplate,
-                    event.recurrence,currentTime)
+                const future=FutureSchedule.has(event)
+                    ? FutureSchedule.nextCycle(event,currentTime)
+                    : RepeatPolicy.nextCycle(event.repeatTemplate,event.recurrence,currentTime)
                 if (future && future.length) {
                     // Projection uses this boundary to avoid projecting each
                     // archived cycle again while keeping every selected weekday
@@ -363,6 +365,10 @@ Singleton {
     }
 
     function createNextRecurrence(event, afterTime) {
+        if (FutureSchedule.has(event)) {
+            root.createNextScheduledRecurrence(event,afterTime)
+            return
+        }
         // A legacy repeating Event may have one edited occurrence but no
         // stored occurrences array. Its next event must still follow the
         // original series anchor, not the moved instance's time.
@@ -452,6 +458,28 @@ Singleton {
         if (!created && originalOverrides) event.plannerOverrides=originalOverrides
     }
 
+    function createNextScheduledRecurrence(event, afterTime) {
+        const now=Number.isFinite(Number(afterTime)) ? Number(afterTime) : Date.now()
+        const next=FutureSchedule.nextCycle(event,now)?.[0]
+        if (!next) return
+        const oldOverrides=event.plannerOverrides
+        const materialized=Occurrences.materializeProjectedRecurring(event,[next],0,root.nextId)
+        const actual=materialized.slots[0]
+        const pending=materialized.overrides.filter(item=>
+            item.materializedOccurrenceIndex===undefined && item.forwardedEventId===undefined)
+        if (Array.isArray(oldOverrides))
+            event.plannerOverrides=materialized.overrides.map(item=>pending.includes(item)
+                ? Object.assign({},item,{forwardedEventId:root.nextId}) : item)
+        const state={startDate:actual.plannerSeriesStartDate || actual.startDate,
+            endDate:actual.plannerSeriesEndDate || actual.endDate,overrides:pending,
+            futureSchedule:event.plannerFutureSchedule,branchKey:actual.plannerBranchKey,
+            cycle:actual.plannerScheduleCycle}
+        const created=root.addEvent(event.title,event.description,actual.startDate,
+            event.category,event.priority,event.reminderMinutes,event.recurrence,
+            actual.endDate,event.allDay===true,undefined,state)
+        if (!created && Array.isArray(oldOverrides)) event.plannerOverrides=oldOverrides
+    }
+
     function addEvent(title, description, dateTime, category, priority, reminderMinutes, recurrence, endDate, allDay, occurrenceRanges, plannerState) {
         if (!root.ready) return null
         // A selected date group is one independent Agenda Event ID,
@@ -525,6 +553,11 @@ Singleton {
             event.plannerSeriesStartDate=plannerState.startDate
             event.plannerSeriesEndDate=plannerState.endDate
             event.plannerOverrides=plannerState.overrides
+            if (plannerState.futureSchedule) {
+                event.plannerFutureSchedule=plannerState.futureSchedule
+                event.plannerBranchKey=plannerState.branchKey
+                event.plannerScheduleCycle=plannerState.cycle
+            }
         }
         if (bulk) {
             event=Occurrences.store(event,explicitSlots)
@@ -548,7 +581,7 @@ Singleton {
     // used to open the dialog. Keep prior notifications/history when the
     // template is unchanged; preserve past fired recurring cycles when
     // changing a pattern. Never create, update or delete a Todo.
-    function updateEventGroup(id, fields, ranges) {
+    function updateEventGroup(id, fields, ranges, preserveSchedule) {
         if (!root.ready || !Array.isArray(ranges)
                 || ranges.length<1 || ranges.length>512) return false
         const position=root.list.findIndex(event=>event.id===id)
@@ -565,7 +598,7 @@ Singleton {
             slots.push(slot)
         }
         slots.sort((a,b)=>a.startDate.localeCompare(b.startDate))
-        if (slots.length>1 && !RepeatPolicy.templateAllowed(slots,mode))
+        if (!preserveSchedule && slots.length>1 && !RepeatPolicy.templateAllowed(slots,mode))
             return false
         const original=Array.isArray(previous.repeatTemplate)
             && previous.repeatTemplate.length>0
@@ -588,8 +621,10 @@ Singleton {
             recurrence:mode
         }
         if (!updates.title.length) return false
+        if (preserveSchedule && (!sameMode || updates.allDay!==(previous.allDay===true)))
+            return false
         let result=Object.assign({},previous,updates)
-        if (!sameMode || !samePattern) {
+        if (!preserveSchedule && (!sameMode || !samePattern)) {
             const previousSlots=Occurrences.entries(previous)
             const selectedStart=previousSlots.length-original.length
             const selectedSuffix=Array.isArray(previous.selectedTemplate)
@@ -680,7 +715,7 @@ Singleton {
     // changing any canonical event; emit updates and persist once.
     function applyPlannerOccurrenceBatch(operations) {
         if (!root.ready) return false
-        const result=EventBatch.apply(root.list,operations,Occurrences)
+        const result=EventBatch.apply(root.list,operations,Occurrences,FutureSchedule,Date.now())
         if (!result) return false
         root.list=result.list
         for (const event of result.updated) root.eventUpdated(event)

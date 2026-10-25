@@ -83,10 +83,30 @@ function pack(rows) {
     finish();
     return rows;
 }
-function project(local, external, value, firstDay) {
+function project(local, external, value, firstDay, futureSchedule) {
     var days=week(value,firstDay);
     [[local,"local"],[external,"external"]].forEach(function(pair) {
         (pair[0] || []).forEach(function(event) {
+            if (pair[1]==="local" && futureSchedule?.has(event)) {
+                futureSchedule.project(event,days[0].date,days[6].end).forEach(function(range) {
+                    var start=validDate(range.startDate),finish=validDate(range.endDate);
+                    if (!start || !finish) return;
+                    days.forEach(function(day,index) {
+                        if (start>=day.end || finish<=day.date) return;
+                        var bucket=event.allDay ? day.allDay : day.timed;
+                        if (bucket.length>=512) {day.overflow++;return;}
+                        bucket.push({key:"local:"+String(event.id)+":"+range.occurrenceIndex
+                                +":"+start.getTime()+":"+index,
+                            event:event,source:"local",occurrenceIndex:range.occurrenceIndex,
+                            virtual:range.virtual,plannerOriginalStartIso:range.originalStartIso,
+                            plannerBranchKey:range.branchKey,plannerScheduleCycle:range.cycle,
+                            start:(Math.max(start,day.date)-day.date)/minute,
+                            end:(Math.min(finish,day.end)-day.date)/minute,
+                            startDate:start,endDate:finish,lane:0,lanes:1});
+                    });
+                });
+                return;
+            }
             var grouped = Array.isArray(event.occurrences) && event.occurrences.length;
             var ranges = grouped ? event.occurrences : [event];
             ranges.forEach(function(slot,slotIndex) {

@@ -247,7 +247,8 @@ const source=fs.readFileSync(file('services/Events.qml'),'utf8');
 const recurrenceFunction=source.slice(source.indexOf('function createNextRecurrence('),
   source.indexOf('function addEvent(',source.indexOf('function createNextRecurrence(')));
 const created=[];
-const scope=vm.createContext({root:{addEvent(...args){created.push(args);}},Date,Number,Math});
+const scope=vm.createContext({root:{addEvent(...args){created.push(args);}},Date,Number,Math,
+  FutureSchedule:load('services/EventFutureSchedule.js')});
 vm.runInContext(recurrenceFunction,scope);
 scope.createNextRecurrence(oldUpdated,new Date('2026-10-21T12:00:00Z').getTime());
 assert.equal(created.length,1);

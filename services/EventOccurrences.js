@@ -27,6 +27,10 @@ function entries(event) {
             normalized.plannerSeriesStartDate=slot.plannerSeriesStartDate;
             normalized.plannerSeriesEndDate=slot.plannerSeriesEndDate;
         }
+        if (slot.plannerBranchKey && Number.isInteger(slot.plannerScheduleCycle)) {
+            normalized.plannerBranchKey=slot.plannerBranchKey;
+            normalized.plannerScheduleCycle=slot.plannerScheduleCycle;
+        }
         // Preserve extension fields and per-instance metadata through a
         // save/due/reload pass, including older schemas we do not own.
         return Object.assign({},grouped ? slot : {},normalized);
@@ -215,7 +219,8 @@ function materializeProjectedRecurring(event,future,startIndex,destinationId) {
             return item.materializedOccurrenceIndex===undefined
                 && item.forwardedEventId===undefined
                 && Number.isInteger(item.occurrenceIndex) && !!source
-                && item.originalStartDate===slot.startDate && a && b && b-a>=15*60000
+                && item.originalStartDate===(slot.plannerSeriesStartDate || slot.startDate)
+                && a && b && b-a>=15*60000
                 && recurringVirtualMatches(source.plannerSeriesStartDate
                     || source.startDate || source.dateTime,item.originalStartDate,event.recurrence);
         });
@@ -223,11 +228,14 @@ function materializeProjectedRecurring(event,future,startIndex,destinationId) {
         if (matches.length!==1) return slot;
         var record=matches[0];consumed.add(record);
         return Object.assign({},slot,{startDate:record.startDate,endDate:record.endDate,
-            plannerSeriesStartDate:slot.startDate,plannerSeriesEndDate:slot.endDate});
+            plannerSeriesStartDate:slot.plannerSeriesStartDate || slot.startDate,
+            plannerSeriesEndDate:slot.plannerSeriesEndDate || slot.endDate});
     });
     var next=records.map(function(item) {
         if (!consumed.has(item)) return item;
-        var offset=future.findIndex(function(slot){return slot.startDate===item.originalStartDate;});
+        var offset=future.findIndex(function(slot){
+            return (slot.plannerSeriesStartDate || slot.startDate)===item.originalStartDate;
+        });
         return Object.assign({},item,{materializedOccurrenceIndex:startIndex+offset,
             materializedEventId:destinationId});
     });

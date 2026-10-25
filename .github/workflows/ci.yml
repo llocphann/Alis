@@ -60,6 +60,7 @@ jobs:
           node scripts/test-weekly-planner-multidate-gestures.mjs
           node scripts/test-weekly-planner-editor-cycle.mjs
           node scripts/test-weekly-planner-recurring-selection.mjs
+          node scripts/test-weekly-planner-future-schedule.mjs
           node scripts/test-weekly-planner-event-palette.mjs
           node scripts/test-weekly-planner-visual-identity.mjs
 

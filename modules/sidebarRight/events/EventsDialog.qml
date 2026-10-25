@@ -423,6 +423,15 @@ WindowDialog {
                 "Event time changed. Review your unsaved date selection before saving.")
     }
 
+    function plannerScheduleUnchanged(): bool {
+        let before
+        try { before=JSON.parse(root._cleanFormSnapshot) }
+        catch (error) { return false }
+        const current=JSON.parse(root.formSnapshot())
+        return [2,3,4,5,9,10].every(index=>
+            JSON.stringify(current[index])===JSON.stringify(before[index]))
+    }
+
     function saveEvent(): bool {
         if (!Events.ready || root.eventTitle.trim() === "") return false
 
@@ -451,7 +460,9 @@ WindowDialog {
         const endIso = endDateTime.toISOString()
         const selectedDays=root.plannerPresentation
             ? root.plannerSelectedDateKeys : []
-        if (root.plannerPresentation && selectedDays.length>0
+        const keepSchedule=root.isEditing && root.plannerPresentation
+            && root.plannerScheduleUnchanged()
+        if (!keepSchedule && root.plannerPresentation && selectedDays.length>0
                 && !RepeatPolicy.allowed(selectedDays,root.recurrence)) return false
         const batches=selectedDays.length>1
             ? DateSelection.ranges(selectedDays,root.eventTime,root.eventEndTime,root.allDay)
@@ -470,7 +481,7 @@ WindowDialog {
                 reminderMinutes:root.reminderMinutes,
                 recurrence:root.recurrence,
                 allDay:root.allDay
-            },chosen)
+            },chosen,keepSchedule)
         }
 
         if (root.isEditing && Array.isArray(root.editingEvent.occurrences)) {

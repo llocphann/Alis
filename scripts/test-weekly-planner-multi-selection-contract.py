@@ -61,17 +61,20 @@ assert "root.localBackend.applyPlannerOccurrenceBatch(changes)" in ui
 assert 'function rangeForSelection(row,mode,dx,dy,dayWidth,hourHeight)' in gesture
 assert "function ordered(days)" in policy and "function choose(rows,selected,anchor,target,ctrl,shift)" in policy
 assert "function applyPlannerOccurrenceBatch(operations)" in backend
-assert "const result=EventBatch.apply(root.list,operations,Occurrences)" in backend
+assert "const result=EventBatch.apply(root.list,operations,Occurrences,FutureSchedule,Date.now())" in backend
 batch_method=backend.split("function applyPlannerOccurrenceBatch(operations)",1)[1].split("function removeOccurrence",1)[0]
 assert batch_method.count("root.saveToFile()")==1
 assert "root.list=result.list" in batch_method
-assert "function apply(events,operations,occurrences)" in batch
+assert "function apply(events,operations,occurrences,futureSchedule,nowValue)" in batch
+assert "future:repeating" in ui and "FutureSchedule.has(event)" in backend
 assert "const distinct=new Set" in batch
 assert "if (distinct.size!==next.length) return null" in batch
 # Qt's embedded QML JavaScript parser rejects object-rest/spread in
 # imported service scripts. Node/V8 tests alone will not catch this.
 assert "..." not in batch, "QML script parser rejects spread in EventBatchPolicy.js"
 assert "..." not in policy, "QML script parser rejects spread in PlannerSelection.js"
+future=(root / "services/EventFutureSchedule.js").read_text()
+assert "..." not in future, "QML script parser rejects spread in EventFutureSchedule.js"
 assert "Object.assign({},slots[i]," in batch, "preserve slot metadata without object spread"
 assert "(day.allDay || []).concat(day.timed || [])" in policy
 assert "Array.from(new Set(merged))" in policy

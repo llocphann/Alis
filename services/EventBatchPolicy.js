@@ -1,6 +1,6 @@
 // Pure atomic planner batch edits. No list mutation, signals or writes here.
 // Operations address the ORIGINAL stable Event ID + occurrence index.
-function apply(events,operations,occurrences) {
+function apply(events,operations,occurrences,futureSchedule,nowValue) {
     if (!Array.isArray(events) || !Array.isArray(operations)
             || operations.length<1 || operations.length>512
             || !occurrences || typeof occurrences.entries!=="function") return null;
@@ -9,6 +9,32 @@ function apply(events,operations,occurrences) {
     for (const event of events) {
         if (!event || event.id===undefined || byId.has(event.id)) return null;
         byId.set(event.id,event);
+    }
+    if (operations.some(op=>op?.future===true)) {
+        if (!futureSchedule || typeof futureSchedule.apply!=="function") return null;
+        const groups=new Map(),remaining=[];
+        for (const op of operations) {
+            if (!op || !byId.has(op.id)) return null;
+            if (op.future!==true) {remaining.push(op);continue;}
+            if (!groups.has(op.id)) groups.set(op.id,[]);
+            groups.get(op.id).push(op);
+        }
+        // One Event cannot have two different edit scopes in one transaction.
+        if (remaining.some(op=>groups.has(op.id))) return null;
+        const replacements=new Map();
+        for (const [id,changes] of groups) {
+            const updated=futureSchedule.apply(byId.get(id),changes,
+                nowValue===undefined ? Date.now() : nowValue);
+            if (!updated) return null;
+            replacements.set(id,Array.isArray(updated.occurrences)
+                ? occurrences.store(updated,updated.occurrences) : updated);
+        }
+        const staged=events.map(event=>replacements.get(event.id) || event);
+        const result=remaining.length ? apply(staged,remaining,occurrences)
+            : {list:staged,updated:[],removed:[]};
+        if (!result) return null;
+        return {list:result.list,removed:result.removed,
+            updated:result.updated.concat(Array.from(replacements.values()))};
     }
     if (operations.some(op=>op && byId.has(op.id)
             && (byId.get(op.id).recurrence || "none")!=="none"))

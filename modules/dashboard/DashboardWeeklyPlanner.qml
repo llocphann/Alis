@@ -13,6 +13,7 @@ import "WeeklyPlannerPolicy.js" as Planner
 import "PlannerGesture.js" as Gesture
 import "PlannerSelection.js" as Selection
 import "PlannerEventPalette.js" as EventPalette
+import "../../services/EventFutureSchedule.js" as FutureSchedule
 
 Item {
     id: root
@@ -43,8 +44,23 @@ Item {
     onSideViewChanged: {
         // Click-created ID selections belong to the inline editor session;
         // manual Ctrl/region selections remain independent of panel changes.
-        if (sideView!=="events" && root.followEditorCalendarSelection)
+        if (sideView!=="events" && root.followEditorCalendarSelection) {
             root.clearEventSelection()
+            root.restoreEditorSelection=true
+        } else if (sideView==="events" && root.restoreEditorSelection) {
+            root.restoreEditorSelection=false
+            const form=inlineEventsPanel.item
+            if (form?.isEditing) {
+                const rows=root.selectableEventRows.filter(row=>row.source==="local"
+                    && row.event.id===form.editingEvent.id)
+                root.selectedEventKeys=(form.hasUnsavedChanges()
+                    ? rows.filter(row=>form.plannerSelectedDateKeys.includes(
+                        Qt.formatDate(new Date(row.startDate),"yyyy-MM-dd"))) : rows
+                    ).map(row=>Selection.key(row))
+                root.explicitGridSelection=true
+                root.followEditorCalendarSelection=true
+            }
+        }
         storeBrowser()
     }
     onPresentationActiveChanged: if (presentationActive) root.refreshFollowingToday()
@@ -58,6 +74,7 @@ Item {
     // inside that editor's date picker should update exactly those outlines,
     // unless Ctrl/range/manual selection has explicitly taken ownership.
     property bool followEditorCalendarSelection: false
+    property bool restoreEditorSelection: false
     property string selectionAnchorKey: ""
     property bool deleteConfirmation: false
     property var activeGroupGesture: null
@@ -128,6 +145,7 @@ Item {
         root.selectedEventKeys=[]
         root.explicitGridSelection=false
         root.followEditorCalendarSelection=false
+        root.restoreEditorSelection=false
         root.selectionAnchorKey=""
         root.deleteConfirmation=false
         root.activeGroupGesture=null
@@ -142,8 +160,13 @@ Item {
     }
     function gestureTargets(row) {
         if (!Selection.canReschedule(row) && !Selection.canSelect(row)) return []
-        return root.isEventSelected(row) && root.selectedEventRows.length>1
+        const targets=root.isEventSelected(row) && root.selectedEventRows.length>1
             ? root.selectedEventRows : [row]
+        // A direct historical edit is explicit. Never propagate a selected
+        // recurring group backwards into its other already-past occurrences.
+        return targets.filter(target=>Selection.gestureKey(target)===Selection.gestureKey(row)
+            || (target.event?.recurrence || "none")==="none"
+            || new Date(target.startDate)>=DateTime.clock.date)
     }
     function clickPlannerEvent(row,modifiers): void {
         const ctrl=!!(modifiers & Qt.ControlModifier)
@@ -216,7 +239,7 @@ Item {
     readonly property var days: {
         const revision = root._eventsRevision
         return Planner.project(root.localBackend.list, root.externalBackend.events,
-            root.selectedDate, root.firstDay)
+            root.selectedDate, root.firstDay, FutureSchedule)
     }
     readonly property int maximumMinutes: Math.max.apply(null, days.map(day => day.minutes))
     readonly property int allDayRows: Math.min(expandAllDay ? 512 : 4, Math.max.apply(null, days.map(day => day.allDay.length)))
@@ -330,10 +353,12 @@ Item {
             }
             changes.push({id:target.event.id,occurrenceIndex:target.occurrenceIndex,
                 startIso:range.startIso,endIso:range.endIso,recurring:repeating,
+                future:repeating,branchKey:target.plannerBranchKey,
+                cycle:target.plannerScheduleCycle,previousStartIso:target.startDate.toISOString(),
                 originalStartIso:target.virtual ? target.plannerOriginalStartIso : undefined})
         }
         const candidate=changes[0]
-        if (targets.length>1) {
+        if (targets.length>1 || changes[0].recurring) {
             if (typeof root.localBackend.applyPlannerOccurrenceBatch!=="function"
                     || !root.localBackend.applyPlannerOccurrenceBatch(changes)) {
                 console.warn("[WeeklyPlanner] Group gesture rejected; no events changed")
@@ -694,7 +719,6 @@ Item {
                                         allDayButton.dragMoved=true;allDayButton.dragX=dx
                                         if (!root.isEventSelected(allDayButton.modelData))
                                             root.selectEventId(allDayButton.modelData)
-                                        root.followEditorCalendarSelection=false
                                         const targets=root.gestureTargets(allDayButton.modelData)
                                         root.activeGroupGesture={keys:targets.map(row=>Selection.gestureKey(row)),
                                             mode:"move",dx:dx,dy:0}
@@ -872,7 +896,6 @@ Item {
                                     dragY=dy
                                     if (!root.isEventSelected(modelData))
                                         root.selectEventId(modelData)
-                                    root.followEditorCalendarSelection=false
                                     const targets=root.gestureTargets(modelData)
                                     root.activeGroupGesture={keys:targets.map(row=>Selection.gestureKey(row)),
                                         mode:mode,dx:dragX,dy:dragY}

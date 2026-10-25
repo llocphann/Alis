@@ -208,6 +208,18 @@ Window {
    }
    function dragPointer(area,deltaY) {
     check(!!area,"missing gesture hit area")
+    // Real pointer input must start inside the fitted viewport, including
+    // the bottom handle after a preceding downward group move.
+    const point=area.mapToItem(viewport.contentItem,0,0)
+    if(point.y-viewport.contentY+area.height+Math.max(0,deltaY)>viewport.height-12)
+     viewport.contentY=Math.min(viewport.contentHeight-viewport.height,
+       Math.max(0,point.y+area.height+Math.max(0,deltaY)-viewport.height+32))
+    waitForPolish(root,2500)
+    const presented=root.presentedFrames;root.update()
+    tryVerify(()=>root.presentedFrames>presented,2500)
+    const screen=area.mapToItem(scene,area.width/2,area.height/2)
+    check(screen.y>=0 && screen.y+Math.max(0,deltaY)<scene.height,
+      "gesture hit area is outside the presented viewport")
     const x=area.width/2,y=area.height/2
     mousePress(area,x,y,Qt.LeftButton)
     mouseMove(area,x,y+deltaY,80)
@@ -491,9 +503,9 @@ Window {
    const fall=planner.days.reduce((rows,day)=>rows.concat(day.timed),[])[0];check(fall.end-fall.start===60,"native repeated hour disappeared");capture("fall-clock-change")
    // DASH-I13: match the reported four weekly groups without reading a
    // personal calendar. Verify actual cards, not only the projection array.
-   planner.followToday=false;planner.selectedDate=new Date(2026,9,14,12)
+   planner.followToday=false;planner.selectedDate=new Date(2032,9,14,12)
    function recurringSlot(day,hour,notified){
-     const start=new Date(2026,9,day,hour,30)
+     const start=new Date(2032,9,day,hour,30)
      return {startDate:start.toISOString(),
        endDate:new Date(start.getTime()+90*60000).toISOString(),notified:notified}
    }
