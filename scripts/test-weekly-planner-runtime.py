@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Actual weekly grid, imports, slot activation, responsive tasks and notes."""
-import json,os,tempfile
+import json,os,struct,tempfile,zlib
 from pathlib import Path
 from native_test_session import private_wayland,run_qs
 ROOT=Path(__file__).resolve().parents[1]
@@ -18,6 +18,8 @@ Window {
  property int calls:0
  property var last:null
  property int frames:0
+ property int presentedFrames:0
+ onFrameSwapped:presentedFrames++
  Component.onCompleted:Quickshell.watchFiles=false
  QtObject {
   id:local;property var list:[]
@@ -74,7 +76,26 @@ Window {
   function check(ok,message){checks++;if(!ok)throw new Error(message)}
   function find(item,name){if(item.objectName===name)return item;for(const child of item.children ?? []){const found=find(child,name);if(found)return found}return null}
   function all(item,name){let result=item.objectName===name?[item]:[];for(const child of item.children ?? [])result=result.concat(all(child,name));return result}
-  function capture(name){const count=root.frames;check(scene.grabToImage(image=>{image.saveToFile(Quickshell.env("PLANNER_CAPTURES")+"/"+name+".png");root.frames++}),"capture refused");tryVerify(()=>root.frames>count,2500)}
+  function capture(name){
+   // A settled layout need not produce another frame on an idle Wayland
+   // window. Request one explicitly, then wait for the actual presentation;
+   // windowShown belongs to QtTest's runner and stays false in Quickshell.
+   if(!waitForPolish(scene,2500))throw new Error(name+": layout polish deadline")
+   const presented=root.presentedFrames
+   root.update()
+   tryVerify(()=>root.presentedFrames>presented,2500,name+": presentation deadline")
+   const count=root.frames
+   let finished=false,saved=false
+   check(scene.grabToImage(image=>{
+    saved=image.saveToFile(Quickshell.env("PLANNER_CAPTURES")+"/"+name+".png")
+    if(saved)root.frames++
+    finished=true
+   }),name+": capture refused")
+   root.update()
+   tryVerify(()=>finished,2500,name+": capture callback deadline")
+   check(saved,name+": PNG write failed")
+   check(root.frames===count+1,name+": capture did not settle exactly once")
+  }
   function run(){try{
    tryCompare(Config,"ready",true,4000)
    Config.setNestedValues({"panelFamily":"abyss","performance.reduceAnimations":true})
@@ -162,6 +183,19 @@ Window {
    check(!!movedCard && movedCard.canReschedule,"one-off event lost gesture eligibility")
    check(!!find(movedCard,"plannerResizeStart")?.visible &&
      !!find(movedCard,"plannerResizeEnd")?.visible,"resize grips no longer visible")
+   const resizeBars=["plannerResizeStart","plannerResizeEnd"].map(name=>
+     find(movedCard,name).children.find(child=>child.height===2))
+   mouseMove(scene,2,2);wait(160)
+   check(!movedCard.showResizeHandles && resizeBars.every(bar=>bar && bar.opacity===0),
+     "idle event must hide both bars without disabling resize hit regions")
+   mouseMove(movedCard,movedCard.width/2,movedCard.height/2);wait(160)
+   check(movedCard.showResizeHandles && resizeBars.every(bar=>bar.opacity>0),
+     "hover must reveal both bars on the pointed event")
+   check(all(planner,"plannerTimedEvent").filter(item=>item!==movedCard)
+     .every(item=>!item.showResizeHandles),"hover leaked resize bars to another event")
+   mouseMove(scene,2,2);wait(160)
+   check(!movedCard.showResizeHandles && resizeBars.every(bar=>bar.opacity===0),
+     "leaving an event must hide both bars again")
    const slotStep=planner.hourHeight/4
    const originalStart=timeOf(1,"startDate"),originalEnd=timeOf(1,"endDate")
    dragPointer(find(movedCard,"plannerEventMoveArea"),slotStep)
@@ -440,11 +474,33 @@ with tempfile.TemporaryDirectory(prefix='alis-weekly-planner-') as name:
  (folder/'shell.qml').write_text(QML)
  with private_wayland(folder) as env:
   if not env:print('SKIP: native weekly planner needs private Niri');raise SystemExit(0)
-  config=folder/'config/illogical-impulse';config.mkdir(parents=True,exist_ok=True)
+  config=folder/'config/alis';config.mkdir(parents=True,exist_ok=True)
   raw=json.loads((ROOT/'defaults/config.json').read_text());raw['panelFamily']='abyss';(config/'config.json').write_text(json.dumps(raw))
   dest=Path(os.environ.get('ALIS_PLANNER_EVIDENCE',folder/'captures'));dest.mkdir(parents=True,exist_ok=True)
   env.update(PLANNER_CAPTURES=str(dest),QT_QUICK_BACKEND='software',TZ='America/New_York')
   result=run_qs(folder,env,timeout=40);(dest/'native.log').write_text(result.stdout)
   if result.returncode or 'WEEKLY_PLANNER_NATIVE_PASS' not in result.stdout or any(word in result.stdout for word in ['WEEKLY_PLANNER_NATIVE_FAIL','ReferenceError:','TypeError:','Binding loop','Failed to load configuration','Unable to assign']):print(result.stdout);raise SystemExit(1)
+  captures=['empty','import-read-only','overlap-slots','narrow-resized',
+    'narrow-end-of-week','narrow-todo','narrow-notes','narrow-inline-events',
+    'spring-clock-change','fall-clock-change','recurring-next-week']
+  # Check complete PNGs, not just a callback counter or an old file count.
+  # This also catches failed/truncated writes after a successful Qt request.
+  for capture in captures:
+   data=(dest/(capture+'.png')).read_bytes()
+   assert data[:8]==b'\x89PNG\r\n\x1a\n',capture+': invalid PNG signature'
+   offset=8;compressed=bytearray();size=None;ended=False
+   while offset<len(data):
+    length=struct.unpack_from('>I',data,offset)[0]
+    kind=data[offset+4:offset+8];payload=data[offset+8:offset+8+length]
+    assert len(payload)==length and offset+12+length<=len(data),capture+': truncated PNG'
+    crc=struct.unpack_from('>I',data,offset+8+length)[0]
+    assert zlib.crc32(kind+payload)==crc,capture+': PNG checksum mismatch'
+    if kind==b'IHDR':size=struct.unpack_from('>II',payload)
+    if kind==b'IDAT':compressed.extend(payload)
+    offset+=12+length
+    if kind==b'IEND':ended=True;break
+   assert ended and offset==len(data) and size and min(size)>0,capture+': incomplete PNG'
+   assert zlib.decompress(compressed),capture+': empty PNG pixels'
+  print('WEEKLY_PLANNER_PNG_PASS',len(captures))
   for line in result.stdout.splitlines():
    if 'WEEKLY_PLANNER_NATIVE_PASS' in line:print(line)
