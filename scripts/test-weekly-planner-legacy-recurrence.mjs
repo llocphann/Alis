@@ -114,7 +114,8 @@ const oldRows=P.project([oldSeries],[],'2026-10-20T12:00:00Z',1)
   .flatMap(day=>day.timed);
 const oldReal=oldRows.find(row=>row.event.id===303 && !row.virtual);
 assert.ok(oldReal && S.canReschedule(oldReal),'old weekly Event cannot drag');
-assert.equal(S.canSelect(oldReal),false,'recurring event must not enter batch deletion');
+assert.equal(S.canSelect(oldReal),true,'old recurring instances remain selectable');
+assert.equal(S.canDelete(oldReal),false,'recurring event must not enter batch deletion');
 assert.equal(S.canReschedule({...oldReal,virtual:true}),false,'virtual series must stay read-only');
 assert.equal(S.canReschedule({...oldReal,source:'external'}),false);
 const oldDragged=G.rangeForGesture(oldReal,'move',0,13,102,52);
@@ -194,7 +195,8 @@ const virtualRow=P.project([oldSeries],[],'2026-10-27T12:00:00Z',1)
   .flatMap(day=>day.timed).find(row=>row.event.id===303 && row.virtual);
 assert.ok(virtualRow && virtualRow.plannerOriginalStartIso
   && S.canReschedule(virtualRow),'current-week projected old Event still locked');
-assert.equal(S.canSelect(virtualRow),false,'virtual occurrence entered batch delete');
+assert.equal(S.canSelect(virtualRow),true,'identified virtual occurrences remain selectable');
+assert.equal(S.canDelete(virtualRow),false,'virtual occurrence entered batch delete');
 assert.equal(S.canReschedule({...virtualRow,source:'external'}),false);
 assert.equal(S.canReschedule({...virtualRow,plannerOriginalStartIso:''}),false);
 const virtualResize=G.rangeForGesture(virtualRow,'bottom',0,13,102,52);
