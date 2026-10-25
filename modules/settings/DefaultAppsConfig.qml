@@ -83,8 +83,8 @@ ContentPage {
         property bool available: true
         property bool isFlathub: badgeText.toLowerCase().includes("flathub")
         property bool isFlatpak: badgeRoot.badgeText.toLowerCase().includes("flatpak")
-        implicitHeight: 22
-        implicitWidth: badgeLabel.implicitWidth + 14
+        implicitHeight: 20
+        implicitWidth: badgeLabel.implicitWidth + 12
         radius: Appearance.rounding.full
         color: !badgeRoot.available
             ? ColorUtils.transparentize(Appearance.colors.colError, 0.84)
@@ -105,6 +105,58 @@ ContentPage {
                 : badgeRoot.isFlathub
                     ? Appearance.colors.colPrimary
                     : Appearance.colors.colOnLayer2
+        }
+    }
+
+    component SlotIconButton: RippleButton {
+        id: btnRoot
+        property string iconName: "apps"
+        property string tooltipText: ""
+        property bool activeState: false
+        implicitWidth: 32
+        implicitHeight: 32
+        buttonRadius: Appearance.rounding.full
+        colBackground: btnRoot.activeState
+            ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.84)
+            : Appearance.colors.colLayer2
+        colBackgroundHover: Appearance.colors.colLayer2Hover
+
+        contentItem: MaterialSymbol {
+            anchors.centerIn: parent
+            text: btnRoot.iconName
+            iconSize: 18
+            color: !btnRoot.enabled
+                ? Appearance.colors.colSubtext
+                : btnRoot.activeState
+                    ? Appearance.colors.colPrimary
+                    : Appearance.colors.colOnLayer2
+        }
+
+        StyledToolTip {
+            text: btnRoot.tooltipText
+        }
+    }
+
+    component DiscoveryHeaderBar: RowLayout {
+        Layout.fillWidth: true
+        spacing: 8
+
+        StyledText {
+            Layout.fillWidth: true
+            text: AppLauncher.discovering
+                ? Translation.tr("Scanning installed applications…")
+                : Translation.tr("%1 installed applications").arg((AppLauncher.discoveredApps ?? []).length)
+            font.pixelSize: Appearance.font.pixelSize.smaller
+            color: Appearance.colors.colSubtext
+            elide: Text.ElideRight
+        }
+
+        SlotIconButton {
+            objectName: "defaultAppsRefreshButton"
+            iconName: "refresh"
+            tooltipText: Translation.tr("Refresh apps")
+            enabled: !AppLauncher.discovering
+            onClicked: AppLauncher.refreshDiscovery()
         }
     }
 
@@ -139,39 +191,28 @@ ContentPage {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 10
+            spacing: 8
 
             MaterialSymbol {
                 text: slotCard.slotData?.icon ?? "apps"
-                iconSize: Appearance.font.pixelSize.larger
+                iconSize: Appearance.font.pixelSize.normal
                 color: Appearance.colors.colPrimary
             }
 
-            ColumnLayout {
+            StyledText {
                 Layout.fillWidth: true
-                spacing: 2
-
-                StyledText {
-                    text: slotCard.slotData?.label ?? ""
-                    font.pixelSize: Appearance.font.pixelSize.normal
-                    font.weight: Font.DemiBold
-                    color: Appearance.colors.colOnLayer1
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: slotCard.slotData?.description ?? ""
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: Appearance.colors.colSubtext
-                    wrapMode: Text.WordWrap
-                }
+                text: slotCard.slotData?.label ?? ""
+                font.pixelSize: Appearance.font.pixelSize.small
+                font.weight: Font.DemiBold
+                color: Appearance.colors.colOnLayer1
+                elide: Text.ElideRight
             }
         }
 
         Rectangle {
             objectName: "defaultAppCurrent_" + slotCard.slotId
             Layout.fillWidth: true
-            implicitHeight: currentRow.implicitHeight + 16
+            implicitHeight: currentRow.implicitHeight + 14
             radius: Appearance.rounding.small
             color: Appearance.colors.colLayer1
             border.width: 1
@@ -183,23 +224,23 @@ ContentPage {
                 id: currentRow
                 anchors {
                     fill: parent
-                    margins: 8
+                    margins: 7
                 }
                 spacing: 10
 
                 AppIconView {
                     iconName: slotCard.summary?.icon ?? (slotCard.slotData?.icon ?? "apps")
                     fallbackSymbol: slotCard.slotData?.icon ?? "apps"
-                    iconSize: 26
+                    iconSize: 24
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 2
+                    spacing: 1
 
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 8
+                        spacing: 6
 
                         StyledText {
                             objectName: "defaultAppName_" + slotCard.slotId
@@ -216,17 +257,24 @@ ContentPage {
                             available: Boolean(slotCard.summary?.installed ?? true)
                         }
 
+                        MaterialSymbol {
+                            objectName: "defaultAppXdgStatus_" + slotCard.slotId
+                            visible: Boolean(slotCard.xdgStatus.supported && slotCard.xdgStatus.synced)
+                            text: "verified"
+                            iconSize: 15
+                            color: Appearance.colors.colPrimary
+                        }
+
                         Item { Layout.fillWidth: true }
                     }
 
                     StyledText {
                         Layout.fillWidth: true
                         text: {
-                            const desk = String(slotCard.summary?.desktopId ?? "")
                             const cmd = String(slotCard.summary?.command ?? "")
                             if (!(slotCard.summary?.installed ?? true))
-                                return Translation.tr("Configured app unavailable (%1) — fallback stays active until changed").arg(cmd)
-                            return desk.length > 0 ? `${desk} · ${cmd}` : cmd
+                                return Translation.tr("Unavailable: %1").arg(cmd)
+                            return cmd
                         }
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.monospace
@@ -237,42 +285,67 @@ ContentPage {
                     }
                 }
 
-                Flow {
+                RowLayout {
                     spacing: 6
 
-                    DialogButton {
+                    SlotIconButton {
                         objectName: "defaultAppChooseBtn_" + slotCard.slotId
-                        buttonText: slotCard.pickerOpen ? Translation.tr("Close list") : Translation.tr("Choose app")
+                        iconName: slotCard.pickerOpen ? "expand_less" : "apps"
+                        activeState: slotCard.pickerOpen
+                        tooltipText: slotCard.pickerOpen ? Translation.tr("Close list") : Translation.tr("Choose app")
                         onClicked: {
                             root.openPickerSlot = slotCard.pickerOpen ? "" : slotCard.slotId
                         }
                     }
 
-                    DialogButton {
+                    SlotIconButton {
                         objectName: "defaultAppCustomBtn_" + slotCard.slotId
-                        buttonText: Translation.tr("Custom command")
+                        iconName: "edit"
+                        activeState: slotCard.customOpen
+                        tooltipText: Translation.tr("Custom command")
                         onClicked: {
                             root.openCustomSlot = (root.openCustomSlot === slotCard.slotId) ? "" : slotCard.slotId
                         }
+                    }
+
+                    SlotIconButton {
+                        objectName: "defaultAppSyncXdgBtn_" + slotCard.slotId
+                        visible: Boolean(slotCard.xdgStatus.supported)
+                        enabled: Boolean(slotCard.xdgStatus.canApply)
+                        iconName: slotCard.xdgStatus.synced ? "published_with_changes" : "task_alt"
+                        activeState: Boolean(slotCard.xdgStatus.synced)
+                        tooltipText: slotCard.xdgStatus.synced
+                            ? Translation.tr("Re-apply XDG default")
+                            : Translation.tr("Apply as system default")
+                        onClicked: AppLauncher.syncSystemDefault(slotCard.slotId)
                     }
                 }
             }
         }
 
+        StyledText {
+            Layout.fillWidth: true
+            visible: String(slotCard.xdgStatus.errorText ?? "").length > 0
+            text: slotCard.xdgStatus.errorText ?? ""
+            font.pixelSize: Appearance.font.pixelSize.smallest
+            color: Appearance.colors.colError
+            wrapMode: Text.WordWrap
+        }
+
         ColumnLayout {
             Layout.fillWidth: true
             visible: slotCard.pickerOpen
-            spacing: 8
+            spacing: 6
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 6
 
                 MaterialTextField {
                     id: searchInput
                     objectName: "defaultAppSearch_" + slotCard.slotId
                     Layout.fillWidth: true
-                    placeholderText: Translation.tr("Search installed native & Flatpak apps…")
+                    placeholderText: Translation.tr("Search installed applications…")
                     text: slotCard.searchQuery
                     onTextChanged: {
                         slotCard.searchQuery = text
@@ -303,9 +376,11 @@ ContentPage {
                     }
                 }
 
-                DialogButton {
+                SlotIconButton {
                     objectName: "defaultAppShowAll_" + slotCard.slotId
-                    buttonText: slotCard.showAllApps ? Translation.tr("Category only") : Translation.tr("Show all apps")
+                    iconName: slotCard.showAllApps ? "filter_alt_off" : "filter_alt"
+                    activeState: slotCard.showAllApps
+                    tooltipText: slotCard.showAllApps ? Translation.tr("Category only") : Translation.tr("Show all apps")
                     onClicked: slotCard.showAllApps = !slotCard.showAllApps
                 }
             }
@@ -315,7 +390,7 @@ ContentPage {
                 visible: slotCard.candidates.length === 0
                 text: AppLauncher.discovering
                     ? Translation.tr("Scanning installed applications…")
-                    : Translation.tr("No matching installed applications found. Try 'Show all apps' or set a custom command.")
+                    : Translation.tr("No matching applications found.")
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.colors.colSubtext
                 wrapMode: Text.WordWrap
@@ -334,7 +409,7 @@ ContentPage {
                         required property var modelData
                         objectName: "defaultAppOption_" + slotCard.slotId + "_" + String(modelData.identityKey ?? index)
                         Layout.fillWidth: true
-                        implicitHeight: 46
+                        implicitHeight: 42
                         buttonRadius: Appearance.rounding.small
                         readonly property bool isCurrent: String(slotCard.summary?.identityKey ?? "") === String(modelData.identityKey ?? "")
                             || (String(slotCard.summary?.identityKey ?? "").length === 0 && String(slotCard.summary?.desktopId ?? "") === String(modelData.desktopId ?? ""))
@@ -361,7 +436,7 @@ ContentPage {
                             AppIconView {
                                 iconName: candidateRow.modelData.icon || (slotCard.slotData?.icon ?? "apps")
                                 fallbackSymbol: slotCard.slotData?.icon ?? "apps"
-                                iconSize: 22
+                                iconSize: 20
                             }
 
                             ColumnLayout {
@@ -390,7 +465,7 @@ ContentPage {
 
                                 StyledText {
                                     Layout.fillWidth: true
-                                    text: `${candidateRow.modelData.desktopId} · ${candidateRow.modelData.exec}`
+                                    text: candidateRow.modelData.exec ?? ""
                                     font.pixelSize: Appearance.font.pixelSize.smallest
                                     font.family: Appearance.font.family.monospace
                                     color: Appearance.colors.colSubtext
@@ -413,7 +488,7 @@ ContentPage {
         RowLayout {
             Layout.fillWidth: true
             visible: slotCard.customOpen
-            spacing: 8
+            spacing: 6
 
             MaterialTextField {
                 id: customCmdField
@@ -427,70 +502,14 @@ ContentPage {
                 }
             }
 
-            DialogButton {
+            SlotIconButton {
                 objectName: "defaultAppCustomApply_" + slotCard.slotId
-                buttonText: Translation.tr("Save command")
+                iconName: "check"
+                tooltipText: Translation.tr("Save command")
                 onClicked: {
                     AppLauncher.setCustomCommand(slotCard.slotId, customCmdField.text)
                     root.openCustomSlot = ""
                 }
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            MaterialSymbol {
-                text: !slotCard.xdgStatus.supported
-                    ? "info"
-                    : slotCard.xdgStatus.synced
-                        ? "verified"
-                        : "sync_alt"
-                iconSize: Appearance.font.pixelSize.small
-                color: slotCard.xdgStatus.synced
-                    ? Appearance.colors.colPrimary
-                    : Appearance.colors.colSubtext
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 1
-
-                StyledText {
-                    objectName: "defaultAppXdgStatus_" + slotCard.slotId
-                    Layout.fillWidth: true
-                    text: slotCard.xdgStatus.statusText ?? ""
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: slotCard.xdgStatus.synced
-                        ? Appearance.colors.colOnLayer1
-                        : Appearance.colors.colSubtext
-                    wrapMode: Text.WordWrap
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    visible: String(slotCard.xdgStatus.errorText ?? "").length > 0
-                        || String(slotCard.xdgStatus.messageText ?? "").length > 0
-                    text: String(slotCard.xdgStatus.errorText ?? "").length > 0
-                        ? slotCard.xdgStatus.errorText
-                        : slotCard.xdgStatus.messageText
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                    color: String(slotCard.xdgStatus.errorText ?? "").length > 0
-                        ? Appearance.colors.colError
-                        : Appearance.colors.colPrimary
-                    wrapMode: Text.WordWrap
-                }
-            }
-
-            DialogButton {
-                objectName: "defaultAppSyncXdgBtn_" + slotCard.slotId
-                visible: Boolean(slotCard.xdgStatus.supported)
-                enabled: Boolean(slotCard.xdgStatus.canApply)
-                buttonText: slotCard.xdgStatus.synced
-                    ? Translation.tr("Re-apply XDG default")
-                    : Translation.tr("Apply as system default")
-                onClicked: AppLauncher.syncSystemDefault(slotCard.slotId)
             }
         }
     }
@@ -499,7 +518,7 @@ ContentPage {
         objectName: "defaultAppsTaskTabs"
         icon: "apps"
         title: Translation.tr("Default Applications")
-        description: Translation.tr("Choose preferred native and Flatpak applications for Alis actions and XDG defaults.")
+        description: ""
         summary: Translation.tr("Core Applications · System Utilities")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
@@ -516,27 +535,8 @@ ContentPage {
         icon: "apps"
         title: Translation.tr("Core Applications")
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            StyledText {
-                objectName: "defaultAppsDiscoverySummary"
-                Layout.fillWidth: true
-                text: AppLauncher.discovering
-                    ? Translation.tr("Scanning installed native and Flatpak applications…")
-                    : Translation.tr("%1 installed applications discovered (Native + Flatpak)").arg((AppLauncher.discoveredApps ?? []).length)
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
-                wrapMode: Text.WordWrap
-            }
-
-            DialogButton {
-                objectName: "defaultAppsRefreshButton"
-                buttonText: Translation.tr("Refresh apps")
-                enabled: !AppLauncher.discovering
-                onClicked: AppLauncher.refreshDiscovery()
-            }
+        DiscoveryHeaderBar {
+            objectName: "defaultAppsDiscoverySummary"
         }
 
         Repeater {
@@ -555,12 +555,8 @@ ContentPage {
         icon: "tune"
         title: Translation.tr("System Utilities")
 
-        StyledText {
-            Layout.fillWidth: true
-            text: Translation.tr("Preferred tools for account management, networking, Bluetooth, audio mixer, and system monitoring.")
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            color: Appearance.colors.colSubtext
-            wrapMode: Text.WordWrap
+        DiscoveryHeaderBar {
+            objectName: "defaultAppsUtilitiesDiscoverySummary"
         }
 
         Repeater {

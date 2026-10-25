@@ -665,11 +665,24 @@ Scope {
 
 
 def main() -> None:
+    ui_qml = (ROOT / "modules" / "settings" / "DefaultAppsConfig.qml").read_text(encoding="utf-8")
+    assert "DialogButton" not in ui_qml, "DefaultAppsConfig must use compact icon buttons instead of text DialogButtons"
+    assert "slotData?.description" not in ui_qml, "DefaultAppsConfig must omit verbose slot description notes"
+    for obj_prefix in (
+        "defaultAppsRefreshButton",
+        "defaultAppChooseBtn_",
+        "defaultAppCustomBtn_",
+        "defaultAppSyncXdgBtn_",
+        "defaultAppShowAll_",
+        "defaultAppCustomApply_",
+    ):
+        assert obj_prefix in ui_qml, f"DefaultAppsConfig missing {obj_prefix}"
+
     test_discovery_matrix()
     test_manual_xdg_sync()
     test_legacy_migration_and_deeplinks()
     test_quickshell_runtime_default_apps()
-    print("SET_F01_PASS discovery, launch resolution, manual XDG sync, legacy migration and Quickshell runtime verified")
+    print("SET_F01_PASS discovery, launch resolution, manual XDG sync, legacy migration, compact icon UI and Quickshell runtime verified")
 
 
 if __name__ == "__main__":
