@@ -78,43 +78,47 @@ function assignPositions(localEvents,externalEvents) {
 }
 
 
-// Canonical *display* identity for Weekly Planner tones. Historical Agenda
-// weekly/daily rollovers may create a new persisted Event ID for the very same
-// repeating schedule (Events.createNextRecurrence -> Events.addEvent). Group
-// those read-only by their normalized schedule name/mode/category, NEVER by
-// occurrence time, date or index. Normal one-off Events retain their stable ID.
-// This is intentionally not a data migration; no owner record is modified.
-function toneIdentity(event,source) {
+// Distinct per-Event color identity, intentionally independent of theme,
+// title, time, date, priority and recurrence. The persisted numeric Event ID
+// owns the swatch: changing the Event date cannot change its visual identity.
+// External calendars use their stable UID ahead of ephemeral provider IDs.
+// Existing read-only paletteSlot/position/assignPositions are preserved for
+// older consumers, but the Weekly Planner now uses eventHue() exclusively.
+function eventColorIdentity(event, source) {
     const origin=String(source || "local");
-    const mode=String(event?.recurrence || "none").toLowerCase();
-    // An imported provider may attach an ephemeral local numeric ID; the
-    // calendar UID, when present, remains the permanent visual identity.
     const id=origin==="external"
         ? event?.uid ?? event?.iCalUID ?? event?.externalId ?? event?.id
         : event?.id ?? event?.uid ?? event?.iCalUID ?? event?.externalId;
-    const title=String(event?.title || "").trim().replace(/\s+/g," ").toLocaleLowerCase();
-    if (origin==="local" && ["daily","weekly","monthly","yearly"].includes(mode)
-            && title) {
-        // Optional future persisted series key wins when one is provided, but
-        // legacy separate-ID recurring records still have a safe fallback.
-        const saved=typeof event?.seriesColorKey==="string"
-            ? event.seriesColorKey.trim() : "";
-        return saved ? "local|series-key|"+saved
-            : "local|"+mode+"|"+String(event?.category || "general")
-                .toLocaleLowerCase()+"|"+title;
+    if (id!==undefined && id!==null && id!=="") {
+        // Numeric JSON IDs and legacy numeric-string IDs describe one record.
+        if ((typeof id==="number" || typeof id==="string")
+                && /^\\d+$/.test(String(id)) && Number.isSafeInteger(Number(id)))
+            return origin+":id:"+String(Number(id));
+        return origin+":id:"+String(id);
     }
-    if (id!==undefined && id!==null && id!=="")
-        return origin+"|id|"+String(id);
-    return origin+"|title|"+title;
+    // Last-resort compatibility for imported/legacy records without an ID.
+    return origin+":missing-id:"+String(event?.title || "").trim();
 }
-// One hue from the current Material Primary; distinct intensity/lightness
-// tiers only. Position and assignPositions remain for older read-only
-// consumers, but rendered Event color NEVER uses them as a rainbow position.
-function toneIndex(event,source,count) {
-    const steps=Math.max(1,Math.min(12,Math.floor(Number(count) || 8)));
-    const key=toneIdentity(event,source);
+function eventHue(event, source) {
+    const origin=String(source || "local");
+    const id=origin==="external"
+        ? event?.uid ?? event?.iCalUID ?? event?.externalId ?? event?.id
+        : event?.id ?? event?.uid ?? event?.iCalUID ?? event?.externalId;
+    const number=(typeof id==="number" || typeof id==="string")
+        && /^\\d+$/.test(String(id)) ? Number(id) : NaN;
+    if (Number.isSafeInteger(number) && number>=0) {
+        // Golden-angle rotation spaces consecutive numeric IDs across the
+        // wheel (~137.5°), not adjacent hues or repeating 8-color buckets.
+        // Modulo before multiplication avoids loss of precision for old IDs.
+        return (0.071 + ((number%1000003)*0.3819660112501051)
+            + (origin==="external" ? 0.5 : 0))%1;
+    }
+    // Consistent 32-bit FNV hash for external UID/other string identities.
+    const identity=eventColorIdentity(event,source);
     let hash=2166136261;
-    for (let i=0;i<key.length;i++)
-        hash=Math.imul(hash^key.charCodeAt(i),16777619)>>>0;
-    return hash%steps;
+    for(let i=0;i<identity.length;i++) {
+        hash^=identity.charCodeAt(i);
+        hash=Math.imul(hash,16777619)>>>0;
+    }
+    return (0.071+hash/4294967296)%1;
 }
