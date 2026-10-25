@@ -63,6 +63,20 @@ Flow {
     }
     onPositioningComplete: if (root.centerWrappedRows)
         Qt.callLater(root.centerWrappedOptionRows)
+    Timer {
+        id: flowLayoutTimer
+        interval: 0
+        repeat: false
+        onTriggered: root.forceLayout()
+    }
+    onWidthChanged: if (root.taskNavigation) flowLayoutTimer.restart()
+    onOptionsChanged: if (root.taskNavigation) flowLayoutTimer.restart()
+    Connections {
+        target: Appearance
+        function onFontSizeScaleChanged() {
+            if (root.taskNavigation) flowLayoutTimer.restart()
+        }
+    }
     // Shrink previous label first, then reveal the new one; avoids Flow
     // competing width animations when choosing buttons left-to-right.
     property var revealedSelection: null

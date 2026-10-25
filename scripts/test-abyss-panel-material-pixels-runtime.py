@@ -86,7 +86,7 @@ ShellRoot {
         config.parent.mkdir(parents=True, exist_ok=True)
         value = json.loads((ROOT / "defaults/config.json").read_text())
         value["panelFamily"] = "abyss"; value["abyss"]["companion"]["enabled"] = False
-        config.write_text(json.dumps(value)); env.update(QSG_RHI_BACKEND="opengl", MATERIAL_OUTPUT=str(folder))
+        config.write_text(json.dumps(value)); env.update(QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="rhi", QSG_RHI_BACKEND="opengl", MATERIAL_OUTPUT=str(folder))
         result = run_qs(folder, env, timeout=180)
         bad = ["PANEL_PIXEL_FAIL", "TypeError:", "ReferenceError:", "Binding loop", "Unable to assign", "Failed to load configuration"]
         if result.returncode or "PANEL_PIXEL_PASS 120" not in result.stdout or any(s in result.stdout for s in bad):

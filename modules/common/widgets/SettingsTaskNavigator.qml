@@ -171,6 +171,8 @@ ColumnLayout {
     Item {
         visible: root.options.length > 0
         Layout.fillWidth: true
+        implicitWidth: root.width
+        width: root.width
         implicitHeight: taskOptions.implicitHeight + padding * 2
         readonly property real padding: root.abyssTaskStyle ? SettingsMaterialPreset.taskTabPadding : 0
 

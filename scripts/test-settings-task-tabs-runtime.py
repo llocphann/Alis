@@ -127,7 +127,7 @@ for dpr in ['1','1.25']:
    value=json.loads((ROOT/'defaults/config.json').read_text());value['panelFamily']='abyss';(config/'config.json').write_text(json.dumps(value))
    evidence=os.environ.get('ALIS_SETTINGS_TASK_EVIDENCE','')
    capture_dir=Path(evidence)/('dpr'+dpr) if evidence else folder/'captures';capture_dir.mkdir(parents=True,exist_ok=True)
-   env.update(QT_QUICK_BACKEND='software',QT_SCALE_FACTOR=dpr,TASK_CAPTURE_DIR=str(capture_dir))
+   env.update(QT_QPA_PLATFORM='offscreen',QT_QUICK_BACKEND='software',QT_SCALE_FACTOR=dpr,TASK_CAPTURE_DIR=str(capture_dir))
    result=run_qs(folder,env,timeout=55);output=result.stdout
    if evidence:(Path(evidence)/('dpr'+dpr+'.log')).write_text(output)
    marker=re.search(r'SETTINGS_TASK_TABS_NATIVE_PASS (\{.+\})',output)
