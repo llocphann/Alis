@@ -247,10 +247,10 @@ def call_system_helper(action, package=None):
 
 def gateway_package(action):
     # The unprivileged package builder is part of Alis' own shipped runtime.
-    # It executes makepkg as the user and requests Polkit for pacman only.
+    # It builds the distro package as the user and requests Polkit only for the native package manager.
     task = action.removeprefix("gateway-")
     runner = ROOT / "scripts/alis-intergration-system-package.py"
-    if task not in ("status", "install", "remove") or not runner.is_file():
+    if task not in ("status", "install", "remove", "rollback") or not runner.is_file():
         raise ValueError("Alis system gateway package manager is unavailable")
     try:
         outcome = subprocess.run(
@@ -294,7 +294,7 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
         except ValueError:
             if action in ("install", "remove", "rollback"):
                 owned_link(home)
-            elif action not in ("status", "check", "system-status", "helpers-status", "gateway-status", "helpers-remove", "gateway-remove"):
+            elif action not in ("status", "check", "system-status", "helpers-status", "gateway-status", "helpers-remove", "gateway-remove", "gateway-rollback"):
                 raise
             current = ""
             diagnostic = "invalid-package"
@@ -323,15 +323,19 @@ def operate(action, home, shell_root, revision_fetch=latest_sha, archive_fetch=r
                 systemHelpersInstalled=helper.get("installed") is True,
                 systemHelpersDiagnostic=str(helper.get("diagnostic", "unchecked")),
                 gatewayDiagnostic=str(gateway.get("diagnostic", "not-installed")),
+                gatewayDistro=str(gateway.get("distro", "")),
+                gatewayPackageManager=str(gateway.get("packageManager", "")),
                 message="System status refreshed")
             return result
         if action.startswith("gateway-"):
-            if action not in ("gateway-status", "gateway-install", "gateway-remove"):
+            if action not in ("gateway-status", "gateway-install", "gateway-remove", "gateway-rollback"):
                 raise ValueError("Unsupported system gateway action")
             gateway = gateway_call(action)
             result.update(
                 gatewayPackageInstalled=gateway.get("packageInstalled") is True,
                 systemProvisionerAvailable=gateway.get("installed") is True,
+                gatewayDistro=str(gateway.get("distro", "")),
+                gatewayPackageManager=str(gateway.get("packageManager", "")),
                 systemHelpersDiagnostic=("not-installed" if gateway.get("installed") else
                     str(gateway.get("diagnostic", "system-provisioner-not-installed"))),
                 message=str(gateway.get("message") or "System gateway package status refreshed"))
@@ -449,7 +453,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=("status", "check", "install", "remove", "rollback",
                                                     "system-status", "helpers-status", "helpers-install", "helpers-remove", "helpers-ensure",
-                                                    "gateway-status", "gateway-install", "gateway-remove"))
+                                                    "gateway-status", "gateway-install", "gateway-remove", "gateway-rollback"))
     parser.add_argument("--shell-root", type=Path, default=ROOT)
     parser.add_argument("--data-home", type=Path, default=Path(
         os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))))
