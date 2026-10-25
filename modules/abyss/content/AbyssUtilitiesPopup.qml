@@ -134,6 +134,14 @@ Item {
             Layout.fillHeight: true
             clip: true
             interactive: true
+            Binding on interactive {
+                when: pages.currentIndex === 0 && (root.currentFeature?.arrangementCanvasMouseActive ?? false)
+                value: false
+            }
+            Component.onCompleted: {
+                if (contentItem && contentItem.highlightMoveDuration !== undefined)
+                    contentItem.highlightMoveDuration = Qt.binding(() => AbyssStyle.motionEnabled ? 250 : 60)
+            }
 
             Loader {
                 id: monitorLoader
@@ -205,7 +213,11 @@ Item {
         id: monitorPage
 
         Item {
+            readonly property bool arrangementCanvasMouseActive:
+                innerMonitorLoader.item?.arrangementCanvasMouseActive ?? false
+
             Loader {
+                id: innerMonitorLoader
                 anchors.fill: parent
                 active: CompositorService.isNiri
                 sourceComponent: MonitorVisibilityConfig {

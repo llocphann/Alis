@@ -33,6 +33,7 @@ ShellRoot {
   id:window;visible:true;implicitWidth:900;implicitHeight:640;color:"#111820"
   Item {id:scene;width:root.sceneWidth;height:root.sceneHeight
    AbyssUtilitiesPopup {id:utility;anchors.fill:parent}
+   Rectangle {id:tick;width:1;height:1;color:"#01000000";opacity:0.01}
   }
  }
  TestCase {
@@ -40,14 +41,15 @@ ShellRoot {
   function check(value,label){root.checks++;if(!value)throw Error(label)}
   function find(item,predicate){if(predicate(item))return item;for(const child of item.children??[]){const found=find(child,predicate);if(found)return found}return null}
   function tiles(item){let result=[];if(item.logicalWidth!==undefined&&item.canvasScale!==undefined)result.push(item);for(const child of item.children??[])result=result.concat(tiles(child));return result}
-  function frame(){let done=false;check(scene.grabToImage(image=>{done=true;root.frames++}),"native frame refused");tryVerify(()=>done,4000)}
+  function frame(){tick.opacity=(root.frames%2)?0.01:0.02;let done=false;check(scene.grabToImage(image=>{done=true;root.frames++}),"native frame refused");tryVerify(()=>done,4000)}
   function output(x,y,width,height){return {logical:{x:x,y:y,width:width,height:height,scale:1,transform:"Normal"},make:"Fixture",model:"Synthetic"}}
   function navigate(kind,from,to){
    utility.currentPage=from;wait(350);frame()
    const forward=to>from
-   if(kind==="mouse-drag")
-    mouseDrag(utility,utility.width*(forward ? .88 : .12),utility.height*.65,utility.width*(forward ? -.65 : .65),0,Qt.LeftButton,Qt.NoModifier,20)
-   else
+   if(kind==="mouse-drag"){
+    const dragY=from===0 ? 18 : utility.height*.65
+    mouseDrag(utility,utility.width*(forward ? .88 : .12),dragY,utility.width*(forward ? -.65 : .65),0,Qt.LeftButton,Qt.NoModifier,20)
+   }else
     for(let step=0;step<4;step++)mouseWheel(utility,utility.width*.65,utility.height*.75,forward?-120:120,0,Qt.NoButton,Qt.NoModifier,25)
    wait(600);frame()
    root.gestures.push({kind:kind,from:from,to:utility.currentPage,width:utility.width,height:utility.height})
@@ -108,25 +110,49 @@ ShellRoot {
     }
     // Real input, rather than assigning currentPage alone: horizontal wheel
     // input models the angle-delta path used by touchpads and tilt wheels.
-    // A single synthetic output disables monitor-position dragging entirely.
+    // On Monitor Arrangement (page 0), empty-canvas mouse drag pans the
+    // viewport while unmodified horizontal wheel switches Utilities tabs.
+    NiriService.outputs={A:output(0,0,1920,1080),B:output(1920,0,1920,1080)}
+    utility.currentPage=0;wait(200)
+    const panCanvas=findChild(utility,"monitorArrangementCanvas")
+    const panEditor=find(utility,item=>item.monitorLayoutSnapshot!==undefined)
+    panEditor.syncMonitorLayoutSnapshot(true);panCanvas.fitOutputs();wait(50)
+    const twoTiles=tiles(panCanvas)
+    check(twoTiles.length===2,"two tiles present for drag vs pan check")
+    const tileB=twoTiles.find(t=>t.outputName==="B") ?? twoTiles[1]
+    const tx=tileB.x+tileB.width/2,ty=tileB.y+tileB.height/2
+    mousePress(panCanvas,tx,ty,Qt.LeftButton,Qt.NoModifier)
+    mouseMove(panCanvas,tx,ty+24,20,Qt.LeftButton)
+    mouseMove(panCanvas,tx,ty+48,20,Qt.LeftButton)
+    wait(60);frame()
+    check(utility.currentPage===0&&panCanvas.panOffset.x===0&&panCanvas.panOffset.y===0&&tileB.dragging&&tileB.heldY>tileB.dragOriginCanvasY,"tile drag must move tile without panning viewport or switching tabs")
+    mouseMove(panCanvas,tx,ty,20,Qt.LeftButton)
+    mouseRelease(panCanvas,tx,ty,Qt.LeftButton,Qt.NoModifier)
+    wait(50)
     NiriService.outputs={A:output(0,0,1920,1080)}
+    panEditor.syncMonitorLayoutSnapshot(true);panCanvas.fitOutputs();wait(50)
+    mouseDrag(panCanvas,panCanvas.width*.82,panCanvas.height*.82,-panCanvas.width*.35,0,Qt.LeftButton,Qt.NoModifier,20)
+    wait(150);frame()
+    check(utility.currentPage===0&&panCanvas.panOffset.x!==0,"empty Monitor Arrangement canvas mouse drag must pan viewport without switching tabs")
+    panCanvas.fitOutputs()
     Config.setNestedValue("interactions.scrolling.fasterTouchpadScroll",true)
-    for(const kind of ["horizontal-wheel","mouse-drag"])
-     for(const [from,to] of [[0,1],[1,2],[2,3],[3,2],[2,1],[1,0]])navigate(kind,from,to)
+    for(const [from,to] of [[0,1],[1,2],[2,3],[3,2],[2,1],[1,0]])navigate("horizontal-wheel",from,to)
+    for(const [from,to] of [[1,2],[2,3],[3,2],[2,1],[1,0]])navigate("mouse-drag",from,to)
     utility.currentPage=2;wait(350)
     const audio=findChild(utility,"utilitiesAudioScroll")
     audio.contentY=0;mouseWheel(utility,utility.width*.95,utility.height*.75,0,-120,Qt.NoButton,Qt.NoModifier,25)
     wait(350);frame()
     check(utility.currentPage===2,"vertical Sound scroll changed tabs")
     if(audio.contentHeight>audio.height)check(audio.contentY>0,"Sound overflow no longer scrolls vertically")
+    utility.currentPage=0;wait(350)
    }
   }catch(error){failure=String(error);console.error("UTILITIES_COMPACT_FAIL",failure)}
   report.setText(JSON.stringify({checks:root.checks,frames:root.frames,measurements:root.measurements,gestures:root.gestures,error:failure}))
   if(!failure)console.info("UTILITIES_COMPACT_PASS",root.checks,root.frames)
   finish.start()
   }
-  Component.onCompleted:Qt.callLater(run)
  }
+ Timer {interval:50;running:true;onTriggered:test.run()}
  Timer {id:finish;interval:120;onTriggered:Qt.quit()}
 }
 '''
@@ -165,6 +191,7 @@ sys.exit(77)
                 return 0
             report, calls = folder / 'report.json', folder / 'guard.jsonl'
             env.update(HOME=str(folder), PIPEWIRE_REMOTE='alis-utilities-no-pipewire',
+                       QT_QPA_PLATFORM='offscreen',
                        PATH=str(binary) + ':' + env.get('PATH', ''),
                        ALIS_UTILITIES_REPORT=str(report), ALIS_UTILITIES_GUARD=str(calls))
             result = run_qs(folder, env, timeout=120)

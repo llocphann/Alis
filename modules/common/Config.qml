@@ -421,7 +421,7 @@ Singleton {
             root._pendingCustomInject = false;
             root._customSnapshotForInject = ({});
             const text = JSON.stringify(obj, null, 4);
-            if (configFileView.text() === text) {
+            if (configFileView.text() === text || root._loadPath !== root.filePath) {
                 const view = uncachedRawWriter.createObject(root, {path: root.filePath});
                 if (!view)
                     throw new Error("could not create raw config writer");
@@ -486,7 +486,7 @@ Singleton {
             writeFlightGuard.restart();
             // A migration patches the original document, including keys owned
             // by optional/custom features that JsonAdapter does not declare.
-            if (root._styleMigrationWritePending || root._pendingRawWrite) {
+            if (root._styleMigrationWritePending || root._pendingRawWrite || root._loadPath !== root.filePath) {
                 root._styleMigrationWritePending = false;
                 root._pendingRawWrite = false;
                 root._writeMirrorToDisk();
@@ -519,9 +519,31 @@ Singleton {
     }
 
     property int _legacyProbeIndex: -1
+    property string _loadPath: root.filePath
+    onFilePathChanged: {
+        root._legacyProbeIndex = -1;
+        root._loadPath = root.filePath;
+    }
+
+    Timer {
+        id: legacyProbeTimer
+        interval: 0
+        repeat: false
+        onTriggered: {
+            if (root._legacyProbeIndex === 0) {
+                root._loadPath = `${Directories.configPath}/illogical-impulse/${Directories.shellConfigName}`;
+            } else if (root._legacyProbeIndex === 1) {
+                root._loadPath = `${Directories.configPath}/${"in" + "ir"}/${Directories.shellConfigName}`;
+            } else {
+                root._loadPath = root.filePath;
+                root._initializeDefaultConfigFile();
+            }
+        }
+    }
 
     function _initializeDefaultConfigFile(): void {
         console.log("[Config] File not found, creating new file.");
+        root._loadPath = root.filePath;
         const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'));
         Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir]);
         root.customWidgetData = {};
@@ -538,9 +560,9 @@ Singleton {
 
     FileView {
         id: configFileView
-        path: root.filePath
+        path: root._loadPath
         watchChanges: true
-        blockWrites: root.blockWrites
+        blockWrites: root._loadPath !== root.filePath || root.blockWrites
         printErrors: false
         onFileChanged: {
             // A save from the previous mutation can signal FileChanged after
@@ -586,6 +608,12 @@ Singleton {
                 root.setNestedValues(styleMigration);
             }
             root._reconcileMandatoryPanels();
+            if (root._loadPath !== root.filePath) {
+                const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'));
+                Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir]);
+                root._pendingRawWrite = true;
+                fileWriteTimer.restart();
+            }
             root._bumpRevision();
             root.ready = true;
             if (wasReload)
@@ -597,23 +625,17 @@ Singleton {
             if (error == FileViewError.FileNotFound) {
                 if (root._legacyProbeIndex === -1) {
                     root._legacyProbeIndex = 0;
-                    Qt.callLater(() => {
-                        root.filePath = `${Directories.configPath}/illogical-impulse/${Directories.shellConfigName}`;
-                    });
+                    legacyProbeTimer.restart();
                     return;
                 }
                 if (root._legacyProbeIndex === 0) {
                     root._legacyProbeIndex = 1;
-                    Qt.callLater(() => {
-                        root.filePath = `${Directories.configPath}/${"in" + "ir"}/${Directories.shellConfigName}`;
-                    });
+                    legacyProbeTimer.restart();
                     return;
                 }
                 if (root._legacyProbeIndex === 1) {
                     root._legacyProbeIndex = 2;
-                    Qt.callLater(() => {
-                        root.filePath = Directories.shellConfigPath;
-                    });
+                    legacyProbeTimer.restart();
                     return;
                 }
                 root._initializeDefaultConfigFile();

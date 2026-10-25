@@ -60,6 +60,6 @@ const qml = fs.readFileSync(new URL('../modules/settings/MonitorVisibilityConfig
 assert.ok(qml.includes('return ArrangementViewport.fitScale(bounds, width, tileFitHeight, innerPadding)'));
 assert.ok(qml.includes('Number.EPSILON, fitScale * root.arrangementVisualScale * zoomFactor'));
 assert.ok(qml.includes('ArrangementViewport.dragCoordinate(monitorRect.dragOriginCanvasX'));
-assert.ok(qml.includes('acceptedButtons: Qt.MiddleButton'));
+assert.ok(qml.includes('? (Qt.LeftButton | Qt.MiddleButton) : Qt.MiddleButton'));
 assert.ok(qml.includes('!root.monitorLayoutBusy && root.draggingLayoutOutput.length === 0'));
 console.log(`MONITOR_VIEWPORT_PASS ${fitted} fitted tiles; ${inverses} inverse mappings; ${zooms} cursor-pivot zoom cases; clipped-origin drag regressions PASS`);

@@ -31,6 +31,9 @@ ContentPage {
     property string monitorLayoutInfo: ""
     property string monitorLayoutWarning: ""
     property string draggingLayoutOutput: ""
+    property bool tileMousePressed: false
+    readonly property bool arrangementCanvasMouseActive:
+        canvasMousePress.active || backgroundPanMouse.pressed || tileMousePressed || viewportPan.active || draggingLayoutOutput.length > 0
     property var monitorLayoutSnapshot: ({})
     property var monitorLayoutViewportBounds: ({})
     property bool monitorLayoutPreserveViewport: false
@@ -866,6 +869,14 @@ ContentPage {
             }
         }
 
+        MouseArea {
+            anchors.fill: parent
+            enabled: !root.monitorLayoutBusy && root.niriOutputNames().length > 1
+            acceptedButtons: Qt.LeftButton
+            onPressedChanged: root.tileMousePressed = pressed
+            onCanceled: root.tileMousePressed = false
+        }
+
         HoverHandler {
             id: monitorHover
             enabled: !root.monitorLayoutBusy && root.niriOutputNames().length > 1
@@ -1335,10 +1346,38 @@ ContentPage {
                     // behind monitor tiles and the zoom buttons so their own
                     // drag/click handlers retain priority. Touch gestures remain
                     // available to the containing SwipeView for tab navigation.
+                    MouseArea {
+                        id: backgroundPanMouse
+                        anchors.fill: parent
+                        enabled: monitorLayoutCanvas.viewportEditable
+                        acceptedButtons: root.embeddedArrangementOnly
+                            ? (Qt.LeftButton | Qt.MiddleButton) : Qt.MiddleButton
+                        preventStealing: true
+                        property point origin: Qt.point(0, 0)
+                        property point pressPos: Qt.point(0, 0)
+                        onPressed: mouse => {
+                            origin = monitorLayoutCanvas.panOffset
+                            pressPos = Qt.point(mouse.x, mouse.y)
+                        }
+                        onPositionChanged: mouse => {
+                            if (pressed && !viewportPan.active && root.draggingLayoutOutput.length === 0) {
+                                monitorLayoutCanvas.panTo(
+                                    origin.x + (mouse.x - pressPos.x),
+                                    origin.y + (mouse.y - pressPos.y))
+                            }
+                        }
+                    }
                     HoverHandler {
+                        id: viewportHover
                         enabled: root.embeddedArrangementOnly && monitorLayoutCanvas.viewportEditable
                         acceptedDevices: PointerDevice.Mouse
-                        cursorShape: viewportPan.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                        cursorShape: (viewportPan.active || backgroundPanMouse.pressed) ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                    }
+                    PointHandler {
+                        id: canvasMousePress
+                        enabled: root.embeddedArrangementOnly && monitorLayoutCanvas.viewportEditable
+                        acceptedDevices: PointerDevice.Mouse
+                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
                     }
                     DragHandler {
                         id: viewportPan
