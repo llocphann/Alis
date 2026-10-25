@@ -319,9 +319,9 @@ for page, hints in WAFFLE_LATE_HELP.items():
 # Optional plugin wrappers retain loader/retry behavior while help is localized.
 OPTIONAL_SETTINGS_HELP = {
     "CompanionConfig.qml": ("Companion unavailable. Run ./setup update, then Recheck Companion.", "Recheck Companion",),
-    "ObsidianThemeSettings.qml": ("Install Hadalird; enable this integration in Settings → Integrations.",),
-    "ObsidianTodoSettings.qml": ("Install Hadalird; enable Obsidian in Settings → Integrations.",),
-    "ThinkfanSettings.qml": ("Install Hadalird; enable Thinkfan in Settings → Integrations.",),
+    "ObsidianThemeSettings.qml": ("Install Alis-Intergration; enable this integration in Settings → Integrations.",),
+    "ObsidianTodoSettings.qml": ("Install Alis-Intergration; enable Obsidian in Settings → Integrations.",),
+    "ThinkfanSettings.qml": ("Install Alis-Intergration; enable Thinkfan in Settings → Integrations.",),
 }
 for page, hints in OPTIONAL_SETTINGS_HELP.items():
     source = (ROOT / "modules" / "settings" / page).read_text(encoding="utf-8")
@@ -340,7 +340,7 @@ for name, dynamic_source in (
     source = (ROOT / "modules/settings" / name).read_text(encoding="utf-8")
     assert dynamic_source in source, name
 waffle_tlp_source = (ROOT / "modules/waffle/settings/pages/WTlpPage.qml").read_text(encoding="utf-8")
-tlp_hint = "Install Hadalird; enable TLP in Settings → Integrations."
+tlp_hint = "Install Alis-Intergration; enable TLP in Settings → Integrations."
 assert f"Translation.tr({json.dumps(tlp_hint, ensure_ascii=False)})" in waffle_tlp_source
 assert EN_US.get(tlp_hint) == tlp_hint
 
