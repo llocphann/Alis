@@ -92,7 +92,9 @@ Window {
     finished=true
    }),name+": capture refused")
    root.update()
-   tryVerify(()=>finished,2500,name+": capture callback deadline")
+   try {tryVerify(()=>finished,2500,name+": capture callback deadline")}
+   catch(error){throw new Error(name+": capture callback deadline; presented="
+     +root.presentedFrames+", saved="+root.frames)}
    check(saved,name+": PNG write failed")
    check(root.frames===count+1,name+": capture did not settle exactly once")
   }
@@ -472,7 +474,10 @@ with tempfile.TemporaryDirectory(prefix='alis-weekly-planner-') as name:
  folder=Path(name)
  for entry in ['modules','services','qmldir','GlobalStates.qml','assets','scripts','defaults','translations']:(folder/entry).symlink_to(ROOT/entry)
  (folder/'shell.qml').write_text(QML)
- with private_wayland(folder) as env:
+ # Captures need a presented private output even inside another compositor.
+ # The helper identifies only its own Niri window and restores prior focus;
+ # a user changing focus takes precedence over the restoration.
+ with private_wayland(folder,capture_focus=True) as env:
   if not env:print('SKIP: native weekly planner needs private Niri');raise SystemExit(0)
   config=folder/'config/alis';config.mkdir(parents=True,exist_ok=True)
   raw=json.loads((ROOT/'defaults/config.json').read_text());raw['panelFamily']='abyss';(config/'config.json').write_text(json.dumps(raw))
