@@ -78,47 +78,71 @@ function assignPositions(localEvents,externalEvents) {
 }
 
 
-// Distinct per-Event color identity, intentionally independent of theme,
-// title, time, date, priority and recurrence. The persisted numeric Event ID
-// owns the swatch: changing the Event date cannot change its visual identity.
-// External calendars use their stable UID ahead of ephemeral provider IDs.
-// Existing read-only paletteSlot/position/assignPositions are preserved for
-// older consumers, but the Weekly Planner now uses eventHue() exclusively.
+// Fixed, hand-curated muted colors for the Weekly Planner. Keep the tones
+// understated on dark backgrounds: smoky plum, dusty blue, sage, slate,
+// muted bronze and terracotta. Never derive these colors from the wallpaper.
+const EVENT_SWATCHES=Object.freeze([
+    "#947E68", // muted bronze
+    "#796783", // smoky violet
+    "#648392", // dusty blue
+    "#946F68", // muted terracotta
+    "#638079", // muted teal
+    "#777F9A", // slate periwinkle
+    "#898263", // sage olive
+    "#866978", // faded rose
+    "#668791", // steel cyan
+    "#85745C", // warm stone
+    "#7F7796", // lavender slate
+    "#6D8B76", // sage green
+    "#997B86", // muted mauve
+    "#687C94", // slate blue
+    "#8F846A", // sand olive
+    "#698382"  // dusty jade
+]);
+// Pure identity: every persisted local Event ID maps to the same swatch,
+// regardless of its occurrence index, title, date/time, or recurrence.
+// External calendar UID is prioritized over a transient provider row ID.
 function eventColorIdentity(event, source) {
     const origin=String(source || "local");
     const id=origin==="external"
         ? event?.uid ?? event?.iCalUID ?? event?.externalId ?? event?.id
         : event?.id ?? event?.uid ?? event?.iCalUID ?? event?.externalId;
     if (id!==undefined && id!==null && id!=="") {
-        // Numeric JSON IDs and legacy numeric-string IDs describe one record.
         if ((typeof id==="number" || typeof id==="string")
                 && /^\d+$/.test(String(id)) && Number.isSafeInteger(Number(id)))
             return origin+":id:"+String(Number(id));
         return origin+":id:"+String(id);
     }
-    // Last-resort compatibility for imported/legacy records without an ID.
     return origin+":missing-id:"+String(event?.title || "").trim();
 }
-function eventHue(event, source) {
+function colorNumber(identity) {
+    let hash=2166136261;
+    for (let i=0;i<identity.length;i++)
+        hash=Math.imul(hash^identity.charCodeAt(i),16777619)>>>0;
+    return hash;
+}
+function eventSwatch(event,source) {
     const origin=String(source || "local");
     const id=origin==="external"
         ? event?.uid ?? event?.iCalUID ?? event?.externalId ?? event?.id
         : event?.id ?? event?.uid ?? event?.iCalUID ?? event?.externalId;
-    const number=(typeof id==="number" || typeof id==="string")
+    const numeric=(typeof id==="number" || typeof id==="string")
         && /^\d+$/.test(String(id)) ? Number(id) : NaN;
-    if (Number.isSafeInteger(number) && number>=0) {
-        // Golden-angle rotation spaces consecutive numeric IDs across the
-        // wheel (~137.5°), not adjacent hues or repeating 8-color buckets.
-        // Modulo before multiplication avoids loss of precision for old IDs.
-        return (0.071 + ((number%1000003)*0.3819660112501051)
-            + (origin==="external" ? 0.5 : 0))%1;
-    }
-    // Consistent 32-bit FNV hash for external UID/other string identities.
-    const identity=eventColorIdentity(event,source);
-    let hash=2166136261;
-    for(let i=0;i<identity.length;i++) {
-        hash^=identity.charCodeAt(i);
-        hash=Math.imul(hash,16777619)>>>0;
-    }
-    return (0.071+hash/4294967296)%1;
+    const stable=eventColorIdentity(event,source);
+    const number=Number.isSafeInteger(numeric) && numeric>=0
+        ? numeric : colorNumber(stable);
+    const index=number%EVENT_SWATCHES.length;
+    // Extend the curated palette with two subtle lightness variations, so
+    // first 48 IDs have different fixed swatches without inventing new hues.
+    const variant=Math.floor(number/EVENT_SWATCHES.length)%3;
+    const hex=EVENT_SWATCHES[index];
+    if (variant===0) return hex;
+    const blend=variant===1 ? 0 : 255;
+    const amount=variant===1 ? .11 : .10;
+    const channels=[1,3,5].map(start=>{
+        const channel=parseInt(hex.slice(start,start+2),16);
+        return Math.round(channel*(1-amount)+blend*amount)
+            .toString(16).padStart(2,"0");
+    });
+    return "#"+channels.join("").toUpperCase();
 }
