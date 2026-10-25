@@ -470,6 +470,27 @@ Window {
          startDate:value.startDate,endDate:value.endDate})),repeatCycleStart:2}
    })
    local.list=recurring;external.events=[];wait(100)
+   // A recurring Event is selectable but not deletable through the generic
+   // destructive batch policy. The selection toolbar must offer a working
+   // Edit action rather than a disabled "Delete (1)" control. Clicking it
+   // must never remove a stored or virtual recurrence automatically.
+   const recurringBefore=JSON.stringify(local.list)
+   const recurringRow=planner.selectableEventRows.find(row=>row.event.id===100)
+   check(!!recurringRow,"recurring row missing from Qt Planner selection")
+   planner.clickPlannerEvent(recurringRow,Qt.ControlModifier);wait(50)
+   check(planner.selectedEventRows.length===1 && !planner.canDeleteSelection,
+     "recurring selection should not be armed for destructive batch delete")
+   const recurringAction=find(planner,"plannerDeleteSelected")
+   check(!!recurringAction && recurringAction.visible && recurringAction.enabled
+     && String(recurringAction.label).includes("Edit to delete"),
+     "selected recurring Event still shows a disabled Delete (1)")
+   const beforeEditorCalls=root.calls
+   mouseClick(recurringAction,recurringAction.width/2,recurringAction.height/2)
+   wait(50)
+   check(root.calls===beforeEditorCalls+1 && root.last.id===100,
+     "recurring deletion action did not route to owning Edit Event")
+   check(planner.selectedEventRows.length===0 && JSON.stringify(local.list)===recurringBefore,
+     "opening recurring delete editor mutated or deleted Agenda history")
    function verifyRecurringWeek(label){
      const rows=planner.days.reduce((result,day)=>result.concat(day.timed),[])
      const cards=all(planner,"plannerTimedEvent")
