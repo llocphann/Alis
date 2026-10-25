@@ -22,7 +22,10 @@ Window {
  property var last:null
  property int frames:0
  property int presentedFrames:0
+ property int frameRequest:0
  onFrameSwapped:presentedFrames++
+ // This painted private sibling does not alter captured scene pixels/input.
+ Rectangle {width:1;height:1;z:100000;color:root.frameRequest%2?"#111821":"#111820"}
  Component.onCompleted:Quickshell.watchFiles=false
  QtObject {
   id:local;property var list:[]
@@ -98,6 +101,7 @@ Window {
    // windowShown belongs to QtTest's runner and stays false in Quickshell.
    if(!waitForPolish(root,2500))throw new Error(name+": window layout polish deadline")
    const presented=root.presentedFrames
+   root.frameRequest++
    root.update()
    try {tryVerify(()=>root.presentedFrames>presented,2500,name+": presentation deadline")}
    catch(error){throw new Error(name+": presentation deadline "+JSON.stringify({
@@ -198,7 +202,7 @@ Window {
      viewport.contentY=Math.min(viewport.contentHeight-viewport.height,
        Math.max(0,point.y+area.height+Math.max(0,deltaY)-viewport.height+32))
     waitForPolish(root,2500)
-    const presented=root.presentedFrames;root.update()
+    const presented=root.presentedFrames;root.frameRequest++;root.update()
     tryVerify(()=>root.presentedFrames>presented,2500)
     const screen=area.mapToItem(scene,area.width/2,area.height/2)
     check(screen.y>=0 && screen.y+Math.max(0,deltaY)<scene.height,
@@ -596,7 +600,8 @@ Window {
    planner.presentationActive=true;wait(100)
    planner.selectedDateChanged.disconnect(countDateChanges)
    check(redundantDates===0,"same-day Planner reactivation rebuilt the week")
-   console.info("WEEKLY_PLANNER_NATIVE_PASS",checks,root.frames)
+   console.info("WEEKLY_PLANNER_NATIVE_PASS",checks,root.frames,
+    JSON.stringify({width:root.width,height:root.height,presentedFrames:root.presentedFrames}))
   }catch(error){console.error("WEEKLY_PLANNER_NATIVE_FAIL",error.message,error.stack)}Qt.quit()}
  }
  Timer {interval:100;running:true;onTriggered:test.run()}

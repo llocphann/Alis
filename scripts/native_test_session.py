@@ -71,7 +71,8 @@ def private_wayland(folder: Path, *, capture_focus: bool = False):
     # Qt client decorations otherwise clear white even with a dark canvas.
     config.write_text('prefer-no-csd\n'
                       'hotkey-overlay {\n skip-at-startup\n}\n'
-                      'layout {\n background-color "#111820"\n}\n'
+                      'layout {\n background-color "#111820"\n'
+                      ' default-column-width { proportion 1.0; }\n}\n'
                       'overview {\n backdrop-color "#111820"\n}\n')
     env = dict(os.environ, NIRI_CONFIG=str(config), RUST_LOG="niri=info")
     env.pop("NIRI_SOCKET", None)

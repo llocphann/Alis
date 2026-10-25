@@ -14,6 +14,8 @@ import qs.modules.common
 import qs.modules.dashboard
 Window {
  id:root;visible:true;width:1260;height:820;color:"#111820"
+ property int frameRequest:0
+ Rectangle {width:1;height:1;z:100000;color:root.frameRequest%2?"#111821":"#111820"}
  Component.onCompleted:Quickshell.watchFiles=false
  Item {
   id:canvas;anchors.fill:parent
@@ -44,7 +46,7 @@ Window {
    let done=false,saved=false
    check(canvas.grabToImage(result=>{saved=result.saveToFile(
     Quickshell.env("PLANNER_VISUAL_EVIDENCE")+"/"+name+".png");done=true}),name+": capture refused")
-   root.update();try {tryVerify(()=>done,2500)}
+   root.frameRequest++;root.update();try {tryVerify(()=>done,2500)}
    catch(error){throw new Error(name+": capture callback deadline "+JSON.stringify({
     visible:root.visible,active:root.active,width:root.width,height:root.height}))}
    check(saved,name+": PNG write failed")
