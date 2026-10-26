@@ -660,7 +660,7 @@ ContentPage {
             }
 
             ContentSubsection {
-                title: Translation.tr("Unified Screen Edge launcher icons")
+                title: ""
                 visible: root.abyssContent
 
                 ConfigRow {
@@ -682,12 +682,10 @@ ContentPage {
                         autoToggle: false
                         checked: root.unifiedLauncherIconShown("notificationActivity")
                         // Supersedes legacy abyss.modules.iconVisibility.notificationActivity
+                        // Off: remove this module hover and use Corner Edgebar.
                         onToggledByUser: checked =>
                             Config.setNestedValue("abyss.modules.notificationActivityMode",checked ? "module" : "edgebar")
                     }
-                }
-                SettingsNote {
-                    text: Translation.tr("On: module icon only. Off: remove this module hover and use Corner Edgebar.")
                 }
             }
 
@@ -752,36 +750,36 @@ ContentPage {
             }
 
             ContentSubsection {
-                title: Translation.tr("Active window")
+                title: Translation.tr("Max width (px)")
                 visible: !root.isVertical
 
-                ConfigSpinBox {
-                    icon: "width_normal"
-                    text: Translation.tr("Active window max width (px)")
-                    value: Config.options?.bar?.activeWindow?.width ?? 220
-                    from: 120
-                    to: 420
-                    stepSize: 10
-                    enabled: root.abyssContent || (Config.options?.bar?.modules?.activeWindow ?? true)
-                    opacity: enabled ? 1 : 0.5
-                    onValueChanged: Config.setNestedValue("bar.activeWindow.width", value)
-                }
-            }
+                ConfigRow {
+                    uniform: true
+                    // text: Translation.tr("Active window max width (px)")
+                    ConfigSpinBox {
+                        icon: "width_normal"
+                        text: Translation.tr("Active window")
+                        value: Config.options?.bar?.activeWindow?.width ?? 220
+                        from: 120
+                        to: 420
+                        stepSize: 10
+                        enabled: root.abyssContent || (Config.options?.bar?.modules?.activeWindow ?? true)
+                        opacity: enabled ? 1 : 0.5
+                        onValueChanged: Config.setNestedValue("bar.activeWindow.width", value)
+                    }
 
-            ContentSubsection {
-                title: Translation.tr("Media")
-                visible: !root.isVertical
-
-                ConfigSpinBox {
-                    icon: "width_normal"
-                    text: Translation.tr("Media width (px)")
-                    value: Config.options?.bar?.media?.width ?? 180
-                    from: 120
-                    to: 320
-                    stepSize: 10
-                    enabled: root.abyssContent || (Config.options?.bar?.modules?.media ?? true)
-                    opacity: enabled ? 1 : 0.5
-                    onValueChanged: Config.setNestedValue("bar.media.width", value)
+                    // text: Translation.tr("Media width (px)")
+                    ConfigSpinBox {
+                        icon: "width_normal"
+                        text: Translation.tr("Media")
+                        value: Config.options?.bar?.media?.width ?? 180
+                        from: 120
+                        to: 320
+                        stepSize: 10
+                        enabled: root.abyssContent || (Config.options?.bar?.modules?.media ?? true)
+                        opacity: enabled ? 1 : 0.5
+                        onValueChanged: Config.setNestedValue("bar.media.width", value)
+                    }
                 }
             }
 

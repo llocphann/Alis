@@ -179,96 +179,72 @@ ContentPage {
         }
     }
 
-    SettingsCardSection {
+    ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: 1
-        settingsTaskSection: "network"
-        visible: true
-        expanded: true
-        icon: "cell_tower"
-        title: Translation.tr("Networking")
+        spacing: 14
 
-        SettingsGroup {
-            MaterialTextArea {
-                Layout.fillWidth: true
-                placeholderText: Translation.tr("User agent (for services that require it)")
-                text: Config.options?.networking?.userAgent ?? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-                wrapMode: TextEdit.Wrap
-                onTextChanged: {
-                    Config.setNestedValue("networking.userAgent", text)
+        SettingsCardSection {
+            Layout.fillWidth: true
+            settingsTaskSection: "network"
+            visible: true
+            expanded: true
+            icon: "cell_tower"
+            title: Translation.tr("Networking")
+
+            SettingsGroup {
+                MaterialTextArea {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("User agent (for services that require it)")
+                    text: Config.options?.networking?.userAgent ?? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+                    wrapMode: TextEdit.Wrap
+                    onTextChanged: {
+                        Config.setNestedValue("networking.userAgent", text)
+                    }
                 }
             }
         }
-    }
 
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "network"
-        visible: true
-        expanded: true
-        icon: "wifi_tethering"
-        title: Translation.tr("Hotspot")
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            settingsTaskSection: "network"
+            visible: true
+            expanded: true
+            icon: "wifi_tethering"
+            title: Translation.tr("Hotspot")
 
-        SettingsGroup {
-            MaterialTextArea {
-                Layout.fillWidth: true
-                placeholderText: Translation.tr("Network name (SSID)")
-                text: Config.options?.hotspot?.ssid ?? "Alis Hotspot"
-                wrapMode: TextEdit.Wrap
-                onTextChanged: Config.setNestedValue("hotspot.ssid", text)
-                StyledToolTip {
-                    text: Translation.tr("The name your hotspot will broadcast")
+            SettingsGroup {
+                MaterialTextArea {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Network name (SSID)")
+                    text: Config.options?.hotspot?.ssid ?? "Alis Hotspot"
+                    wrapMode: TextEdit.Wrap
+                    onTextChanged: Config.setNestedValue("hotspot.ssid", text)
+                    StyledToolTip {
+                        text: Translation.tr("The name your hotspot will broadcast")
+                    }
                 }
-            }
 
-            MaterialTextArea {
-                Layout.fillWidth: true
-                placeholderText: Translation.tr("Password")
-                text: Config.options?.hotspot?.password ?? "alishotspot"
-                wrapMode: TextEdit.Wrap
-                onTextChanged: Config.setNestedValue("hotspot.password", text)
-                StyledToolTip {
-                    text: Translation.tr("WPA2 passphrase for the hotspot")
+                MaterialTextArea {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Password")
+                    text: Config.options?.hotspot?.password ?? "alishotspot"
+                    wrapMode: TextEdit.Wrap
+                    onTextChanged: Config.setNestedValue("hotspot.password", text)
+                    StyledToolTip {
+                        text: Translation.tr("WPA2 passphrase for the hotspot")
+                    }
                 }
-            }
 
-            SettingsSwitch {
-                text: Translation.tr("Use 5 GHz band")
-                checked: (Config.options?.hotspot?.band ?? "bg") === "a"
-                onCheckedChanged: Config.setNestedValue("hotspot.band", checked ? "a" : "bg")
-                StyledToolTip {
-                    text: Translation.tr("Use 5 GHz (802.11a) instead of 2.4 GHz. Requires adapter support.")
-                }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "system"
-        visible: true
-        expanded: true
-        icon: "memory"
-        title: Translation.tr("Resources")
-
-        SettingsGroup {
-            ConfigSpinBox {
-                icon: "av_timer"
-                text: Translation.tr("Polling interval (ms)")
-                value: Config.options?.resources?.updateInterval ?? 3000
-                from: 100
-                to: 10000
-                stepSize: 100
-                onValueChanged: {
-                    Config.setNestedValue("resources.updateInterval", value)
-                }
-                StyledToolTip {
-                    text: Translation.tr("How often to update CPU, RAM, and disk usage stats")
+                SettingsSwitch {
+                    text: Translation.tr("Use 5 GHz band")
+                    checked: (Config.options?.hotspot?.band ?? "bg") === "a"
+                    onCheckedChanged: Config.setNestedValue("hotspot.band", checked ? "a" : "bg")
+                    StyledToolTip {
+                        text: Translation.tr("Use 5 GHz (802.11a) instead of 2.4 GHz. Requires adapter support.")
+                    }
                 }
             }
         }
@@ -398,62 +374,94 @@ ContentPage {
         }
     }
 
-    SettingsCardSection {
+    ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: 1
-        settingsTaskSection: "updates"
-        visible: true
-        expanded: true
-        icon: "system_update_alt"
-        title: Translation.tr("Updates")
+        spacing: 14
 
-        SettingsGroup {
-            ConfigSpinBox {
-                icon: "av_timer"
-                text: Translation.tr("Check interval") + ` (${value}m)`
-                value: Config.options?.updates?.checkInterval ?? 120
-                from: 15
-                to: 1440
-                stepSize: 15
-                onValueChanged: Config.setNestedValue("updates.checkInterval", value)
-                StyledToolTip {
-                    text: Translation.tr("How often to check for system updates (in minutes)")
+        SettingsCardSection {
+            Layout.fillWidth: true
+            settingsTaskSection: "system"
+            visible: true
+            expanded: true
+            icon: "memory"
+            title: Translation.tr("Resources")
+
+            SettingsGroup {
+                ConfigSpinBox {
+                    icon: "av_timer"
+                    text: Translation.tr("Polling interval (ms)")
+                    value: Config.options?.resources?.updateInterval ?? 3000
+                    from: 100
+                    to: 10000
+                    stepSize: 100
+                    onValueChanged: {
+                        Config.setNestedValue("resources.updateInterval", value)
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("How often to update CPU, RAM, and disk usage stats")
+                    }
                 }
             }
+        }
 
-            ConfigSpinBox {
-                icon: "notifications"
-                text: Translation.tr("Show icon threshold")
-                value: Config.options?.updates?.adviseUpdateThreshold ?? 10
-                from: 1
-                to: 200
-                stepSize: 5
-                onValueChanged: Config.setNestedValue("updates.adviseUpdateThreshold", value)
-                StyledToolTip {
-                    text: Translation.tr("Show update icon in bar when available updates exceed this number")
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            settingsTaskSection: "updates"
+            visible: true
+            expanded: true
+            icon: "system_update_alt"
+            title: Translation.tr("Updates")
+
+            SettingsGroup {
+                ConfigSpinBox {
+                    icon: "av_timer"
+                    text: Translation.tr("Check interval") + ` (${value}m)`
+                    value: Config.options?.updates?.checkInterval ?? 120
+                    from: 15
+                    to: 1440
+                    stepSize: 15
+                    onValueChanged: Config.setNestedValue("updates.checkInterval", value)
+                    StyledToolTip {
+                        text: Translation.tr("How often to check for system updates (in minutes)")
+                    }
                 }
-            }
 
-            ConfigSpinBox {
-                icon: "warning"
-                text: Translation.tr("Warning threshold")
-                value: Config.options?.updates?.stronglyAdviseUpdateThreshold ?? 50
-                from: 10
-                to: 500
-                stepSize: 10
-                onValueChanged: Config.setNestedValue("updates.stronglyAdviseUpdateThreshold", value)
-                StyledToolTip {
-                    text: Translation.tr("Show warning color when available updates exceed this number")
+                ConfigSpinBox {
+                    icon: "notifications"
+                    text: Translation.tr("Show icon threshold")
+                    value: Config.options?.updates?.adviseUpdateThreshold ?? 10
+                    from: 1
+                    to: 200
+                    stepSize: 5
+                    onValueChanged: Config.setNestedValue("updates.adviseUpdateThreshold", value)
+                    StyledToolTip {
+                        text: Translation.tr("Show update icon in bar when available updates exceed this number")
+                    }
                 }
-            }
 
-            MaterialTextArea {
-                Layout.fillWidth: true
-                placeholderText: Translation.tr("Update command")
-                text: Config.options?.apps?.update ?? ""
-                wrapMode: TextEdit.Wrap
-                onTextChanged: Config.setNestedValue("apps.update", text)
+                ConfigSpinBox {
+                    icon: "warning"
+                    text: Translation.tr("Warning threshold")
+                    value: Config.options?.updates?.stronglyAdviseUpdateThreshold ?? 50
+                    from: 10
+                    to: 500
+                    stepSize: 10
+                    onValueChanged: Config.setNestedValue("updates.stronglyAdviseUpdateThreshold", value)
+                    StyledToolTip {
+                        text: Translation.tr("Show warning color when available updates exceed this number")
+                    }
+                }
+
+                MaterialTextArea {
+                    Layout.fillWidth: true
+                    placeholderText: Translation.tr("Update command")
+                    text: Config.options?.apps?.update ?? ""
+                    wrapMode: TextEdit.Wrap
+                    onTextChanged: Config.setNestedValue("apps.update", text)
+                }
             }
         }
     }

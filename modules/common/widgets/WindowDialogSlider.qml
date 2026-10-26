@@ -23,13 +23,17 @@ Column {
 
     signal moved()
     
+    Layout.minimumWidth: 220
     spacing: -2
     RowLayout {
         width: parent.width
+        spacing: 8
         visible: root.text.length > 0
         ContentSubsectionLabel {
             id: sliderName
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            elide: Text.ElideRight
             text: ""
         }
         StyledText {

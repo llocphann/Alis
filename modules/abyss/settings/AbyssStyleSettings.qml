@@ -471,23 +471,29 @@ ColumnLayout {
                 text:"Popups follow their source Edge. Notes, Timers and Notifications share Edge placement."
             }
             GridLayout {
+                id: popupsTwoColumnGrid
                 Layout.fillWidth: true
                 columns: width >= 620 ? 2 : 1
-                columnSpacing: 14
+                columnSpacing: 16
                 rowSpacing: 14
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.preferredWidth: 4
+                    Layout.maximumWidth: popupsTwoColumnGrid.columns === 2
+                        ? Math.round(popupsTwoColumnGrid.width * 0.42)
+                        : Infinity
                     Layout.alignment: Qt.AlignTop
                     spacing: 10
 
-                    AbyssPositionSettings {}
+                    AbyssPositionSettings { compactActions: true }
                     AbyssOutputSelector { configPath:"sidebar.screenList";title:"Sidebar outputs" }
                     AbyssOutputSelector { configPath:"notifications.screenList";title:"Notification outputs" }
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.preferredWidth: 6
                     Layout.alignment: Qt.AlignTop
                     spacing: 10
 

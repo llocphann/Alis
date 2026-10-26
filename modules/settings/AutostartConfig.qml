@@ -14,6 +14,7 @@ ContentPage {
     settingsPageIndex: 17
     settingsPageName: Translation.tr("Autostart")
     property string activeSection: "apps"
+    readonly property string _legacyGuideCopy: Translation.tr("Niri launches these at login; they keep running after shell restarts.")
 
     SettingsTaskNavigator {
         visible: Autostart.isNiri
@@ -21,13 +22,12 @@ ContentPage {
         icon: "rocket_launch"
         title: Translation.tr("Autostart")
         description: Translation.tr("Manage startup apps and commands written to niri.")
-        summary: Translation.tr("Applications · commands · guide")
+        summary: Translation.tr("Applications · commands")
         currentValue: root.activeSection
         onSelected: value => root.activeSection = value
         options: [
             { displayName: Translation.tr("Applications"), icon: "apps", value: "apps" },
-            { displayName: Translation.tr("Commands"), icon: "terminal", value: "commands" },
-            { displayName: Translation.tr("Guide"), icon: "info", value: "guide" }
+            { displayName: Translation.tr("Commands"), icon: "terminal", value: "commands" }
         ]
     }
 
@@ -112,13 +112,23 @@ ContentPage {
         // ── Applications ─────────────────────────────────────────────────────
 
         SettingsCardSection {
+            id: appsCard
             Layout.fillWidth: true
+            Layout.preferredWidth: 1
             Layout.alignment: Qt.AlignTop
             expanded: true
             icon: "apps"
             title: Translation.tr("Applications")
             settingsTaskSection: "apps"
             visible: Autostart.isNiri
+
+            readonly property bool appListExpanded: appsCardHover.hovered
+                || appSearchField.activeFocus
+                || appSearchField.text.length > 0
+
+            HoverHandler {
+                id: appsCardHover
+            }
 
             ColumnLayout {
                 Layout.fillWidth: true
@@ -142,10 +152,32 @@ ContentPage {
                 ListView {
                     id: appListView
                     Layout.fillWidth: true
-                    implicitHeight: Math.min(420, appListView.contentHeight)
+                    implicitHeight: appsCard.appListExpanded
+                        ? Math.min(420, appListView.contentHeight)
+                        : 0
+                    opacity: appsCard.appListExpanded ? 1 : 0
+                    visible: implicitHeight > 0 || opacity > 0
                     clip: true
                     model: root.getFilteredApps()
                     boundsBehavior: Flickable.StopAtBounds
+
+                    Behavior on implicitHeight {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: Appearance.animation.elementResize.duration
+                            easing.type: Appearance.animation.elementResize.type
+                            easing.bezierCurve: Appearance.animation.elementResize.bezierCurve
+                        }
+                    }
+
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation {
+                            duration: Appearance.animation.elementMoveFast.duration
+                            easing.type: Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
+                        }
+                    }
 
                     // No apps match the filter
                     PagePlaceholder {
@@ -285,219 +317,153 @@ ContentPage {
             }
         }
 
-        ColumnLayout {
+        // ── Custom Commands ──────────────────────────────────────────────────
+
+        SettingsCardSection {
             Layout.fillWidth: true
+            Layout.preferredWidth: 1
             Layout.alignment: Qt.AlignTop
-            spacing: 14
+            expanded: true
+            icon: "terminal"
+            title: Translation.tr("Custom Commands")
+            settingsTaskSection: "commands"
+            visible: Autostart.isNiri
 
-            // ── Custom Commands ──────────────────────────────────────────────────
-
-            SettingsCardSection {
+            ColumnLayout {
                 Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                expanded: true
-                icon: "terminal"
-                title: Translation.tr("Custom Commands")
-                settingsTaskSection: "commands"
-                visible: Autostart.isNiri
+                spacing: 8
 
-                ColumnLayout {
+                StyledText {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    text: Translation.tr("Niri shell commands support pipes, environment variables and &&.")
+                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    color: Appearance.colors.colSubtext
+                }
+
+                RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
 
-                    StyledText {
+                    MaterialTextField {
+                        id: commandInput
                         Layout.fillWidth: true
-                        wrapMode: Text.Wrap
-                        text: Translation.tr("Niri shell commands support pipes, environment variables and &&.")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-
-                        MaterialTextField {
-                            id: commandInput
-                            Layout.fillWidth: true
-                            placeholderText: Translation.tr("e.g. telegram-desktop --start-minimized")
-                            font.pixelSize: Appearance.font.pixelSize.small
-                            onAccepted: {
-                                Autostart.addCommand(commandInput.text)
-                                commandInput.text = ""
-                            }
-                        }
-
-                        RippleButton {
-                            buttonText: Translation.tr("Add")
-                            implicitHeight: 36
-                            buttonRadius: Appearance.rounding.small
-                            onClicked: {
-                                Autostart.addCommand(commandInput.text)
-                                commandInput.text = ""
-                            }
+                        placeholderText: Translation.tr("e.g. telegram-desktop --start-minimized")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        onAccepted: {
+                            Autostart.addCommand(commandInput.text)
+                            commandInput.text = ""
                         }
                     }
 
-                    ListView {
-                        id: commandListView
-                        Layout.fillWidth: true
-                        implicitHeight: Math.min(240, commandListView.contentHeight)
-                        clip: true
-                        model: root.getCommandEntries()
-                        boundsBehavior: Flickable.StopAtBounds
-
-                        PagePlaceholder {
-                            shown: commandListView.count === 0
-                            icon: "terminal"
-                            mascotPose: "salute-ready"
-                            title: Translation.tr("No custom commands")
-                            description: Translation.tr("Add a shell command above to run it at login.")
-                            anchors.fill: parent
+                    RippleButton {
+                        Layout.preferredWidth: 36
+                        Layout.preferredHeight: 36
+                        implicitWidth: 36
+                        implicitHeight: 36
+                        buttonRadius: Appearance.rounding.small
+                        onClicked: {
+                            Autostart.addCommand(commandInput.text)
+                            commandInput.text = ""
                         }
-
-                        delegate: Item {
-                            id: cmdDelegate
-                            required property var modelData
-                            required property int index
-                            width: commandListView.width
-                            implicitHeight: 44
-                            height: 44
-
-                            Rectangle {
-                                anchors.fill: parent
-                                anchors.leftMargin: 4
-                                anchors.rightMargin: 4
-                                radius: Appearance.rounding.small
-                                color: cmdHover.hovered
-                                    ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-                                       : Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
-                                       : Appearance.zzzEverywhere ? Appearance.zzz.bg1
-                                       : Appearance.colors.colLayer1Hover)
-                                    : "transparent"
-                                Behavior on color {
-                                    enabled: Appearance.animationsEnabled
-                                    animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                                }
-                            }
-
-                            HoverHandler { id: cmdHover }
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 10
-                                anchors.rightMargin: 10
-                                spacing: 10
-
-                                MaterialSymbol {
-                                    Layout.preferredWidth: 24
-                                    Layout.alignment: Qt.AlignVCenter
-                                    text: "terminal"
-                                    iconSize: 22
-                                    color: Appearance.colors.colOnSurface
-                                }
-
-                                StyledText {
-                                    Layout.fillWidth: true
-                                    Layout.alignment: Qt.AlignVCenter
-                                    text: cmdDelegate.modelData.entry.command
-                                    font.pixelSize: Appearance.font.pixelSize.normal
-                                    font.family: Appearance.font.family.monospace
-                                    color: Appearance.colors.colOnSurface
-                                    elide: Text.ElideRight
-                                }
-
-                                StyledSwitch {
-                                    Layout.alignment: Qt.AlignVCenter
-                                    checked: cmdDelegate.modelData.entry.enabled
-                                    onCheckedChanged: Autostart.setEntryEnabled(cmdDelegate.modelData.originalIndex, checked)
-                                }
-
-                                RippleButton {
-                                    Layout.alignment: Qt.AlignVCenter
-                                    Layout.preferredWidth: 32
-                                    Layout.preferredHeight: 32
-                                    buttonRadius: Appearance.rounding.full
-                                    onClicked: Autostart.removeEntry(cmdDelegate.modelData.originalIndex)
-                                    contentItem: MaterialSymbol {
-                                        anchors.centerIn: parent
-                                        text: "close"
-                                        iconSize: 18
-                                        color: Appearance.colors.colOnSurfaceVariant
-                                    }
-                                }
-                            }
+                        contentItem: MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: "add"
+                            iconSize: 20
+                            color: Appearance.colors.colOnSurface
+                        }
+                        StyledToolTip {
+                            text: Translation.tr("Add")
                         }
                     }
                 }
-            }
 
-            // ── Info banner ──────────────────────────────────────────────────────
-
-            SettingsCardSection {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                expanded: true
-                icon: "info"
-                title: Translation.tr("How autostart works")
-                settingsTaskSection: "guide"
-                visible: Autostart.isNiri
-
-                ColumnLayout {
+                ListView {
+                    id: commandListView
                     Layout.fillWidth: true
-                    spacing: 6
+                    implicitHeight: Math.min(240, commandListView.contentHeight)
+                    clip: true
+                    model: root.getCommandEntries()
+                    boundsBehavior: Flickable.StopAtBounds
 
-                    StyledText {
-                        Layout.fillWidth: true
-                        wrapMode: Text.Wrap
-                        text: Translation.tr("Niri launches these at login; they keep running after shell restarts.")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnSurface
+                    PagePlaceholder {
+                        shown: commandListView.count === 0
+                        icon: "terminal"
+                        mascotPose: "salute-ready"
+                        title: Translation.tr("No custom commands")
+                        description: Translation.tr("Add a shell command above to run it at login.")
+                        anchors.fill: parent
                     }
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
+                    delegate: Item {
+                        id: cmdDelegate
+                        required property var modelData
+                        required property int index
+                        width: commandListView.width
+                        implicitHeight: 44
+                        height: 44
 
-                        MaterialSymbol {
-                            text: "folder"
-                            iconSize: 16
-                            color: Appearance.colors.colSubtext
-                        }
-
-                        StyledText {
-                            Layout.fillWidth: true
-                            elide: Text.ElideMiddle
-                            text: Autostart.startupFilePath ?? ""
-                            font.pixelSize: Appearance.font.pixelSize.smaller
-                            font.family: Appearance.font.family.monospace
-                            color: Appearance.colors.colSubtext
-                        }
-
-                        RippleButton {
-                            Layout.preferredWidth: 30
-                            Layout.preferredHeight: 30
-                            buttonRadius: Appearance.rounding.full
-                            enabled: Autostart.startupFilePath.length > 0
-                            onClicked: ShellExec.execDetachedArgs(["xdg-open", Autostart.startupFilePath], "Open autostart file")
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "open_in_new"
-                                iconSize: 16
-                                color: Appearance.colors.colOnSurfaceVariant
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.leftMargin: 4
+                            anchors.rightMargin: 4
+                            radius: Appearance.rounding.small
+                            color: cmdHover.hovered
+                                ? (Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
+                                   : Appearance.alisEverywhere ? Appearance.alis.colLayer1Hover
+                                   : Appearance.zzzEverywhere ? Appearance.zzz.bg1
+                                   : Appearance.colors.colLayer1Hover)
+                                : "transparent"
+                            Behavior on color {
+                                enabled: Appearance.animationsEnabled
+                                animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                             }
                         }
 
-                        RippleButton {
-                            Layout.preferredWidth: 30
-                            Layout.preferredHeight: 30
-                            buttonRadius: Appearance.rounding.full
-                            onClicked: Autostart.reload()
-                            contentItem: MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "refresh"
-                                iconSize: 16
-                                color: Appearance.colors.colOnSurfaceVariant
+                        HoverHandler { id: cmdHover }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            spacing: 10
+
+                            MaterialSymbol {
+                                Layout.preferredWidth: 24
+                                Layout.alignment: Qt.AlignVCenter
+                                text: "terminal"
+                                iconSize: 22
+                                color: Appearance.colors.colOnSurface
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                text: cmdDelegate.modelData.entry.command
+                                font.pixelSize: Appearance.font.pixelSize.normal
+                                font.family: Appearance.font.family.monospace
+                                color: Appearance.colors.colOnSurface
+                                elide: Text.ElideRight
+                            }
+
+                            StyledSwitch {
+                                Layout.alignment: Qt.AlignVCenter
+                                checked: cmdDelegate.modelData.entry.enabled
+                                onCheckedChanged: Autostart.setEntryEnabled(cmdDelegate.modelData.originalIndex, checked)
+                            }
+
+                            RippleButton {
+                                Layout.alignment: Qt.AlignVCenter
+                                Layout.preferredWidth: 32
+                                Layout.preferredHeight: 32
+                                buttonRadius: Appearance.rounding.full
+                                onClicked: Autostart.removeEntry(cmdDelegate.modelData.originalIndex)
+                                contentItem: MaterialSymbol {
+                                    anchors.centerIn: parent
+                                    text: "close"
+                                    iconSize: 18
+                                    color: Appearance.colors.colOnSurfaceVariant
+                                }
                             }
                         }
                     }

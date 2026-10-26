@@ -2395,6 +2395,404 @@ ContentPage {
 
     }
 
+    // =====================
+    // ANIMATIONS SECTION
+    // =====================
+    SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        settingsTaskSection: "animations"
+        visible: true
+        expanded: true
+        icon: "animation"
+        title: Translation.tr("Animations")
+
+        SettingsGroup {
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "animation"
+                text: Translation.tr("Enable animations")
+                checked: root.animationsData?.enabled ?? true
+                onCheckedChanged: {
+                    if (!root.animationsReady) return
+                    root.setBooleanConfig("animations", "enabled", checked)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Global slowdown")
+                tooltip: Translation.tr("1.0 is normal speed. Higher values make every animation slower.")
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    StyledSlider {
+                        id: slowdownSlider
+                        Layout.fillWidth: true
+                        from: 50
+                        to: 500
+                        value: Math.round((root.animationsData?.slowdown ?? 1.0) * 100)
+                        stepSize: 10
+                        configuration: StyledSlider.Configuration.S
+                        onMoved: {
+                            if (pressed) return
+                            root.setConfig("animations", "slowdown", (value / 100.0).toFixed(2))
+                        }
+                    }
+
+                    StyledText {
+                        text: (slowdownSlider.value / 100.0).toFixed(2) + "x"
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.family: Appearance.font.family.monospace
+                        color: Appearance.colors.colSubtext
+                        Layout.preferredWidth: 42
+                        horizontalAlignment: Text.AlignRight
+                    }
+                }
+            }
+
+            StyledText {
+                text: Translation.tr("Higher stiffness reacts faster; damping reduces bounce.")
+                font.pixelSize: Appearance.font.pixelSize.smaller
+                color: Appearance.colors.colSubtext
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+            }
+
+            Repeater {
+                model: Object.keys(root.animationsData?.types ?? {})
+
+                delegate: ColumnLayout {
+                    id: animDelegate
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    required property string modelData
+                    readonly property var springData: root.animationsData?.types?.[modelData] ?? {}
+
+                    SettingsDivider {}
+
+                    ContentSubsection {
+                        title: root.animationLabels[animDelegate.modelData] ?? animDelegate.modelData
+                    }
+
+                    SettingsSwitch {
+                        Layout.fillWidth: true
+                        buttonIcon: "animation"
+                        text: Translation.tr("Enable this animation")
+                        checked: root.animationIsEnabled(animDelegate.springData)
+                        onCheckedChanged: {
+                            if (!root.animationsReady) return
+                            root.setBooleanConfig("animations", animDelegate.modelData + ".enabled", checked)
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        visible: (animDelegate.springData?.mode ?? "spring") === "spring" && root.animationIsEnabled(animDelegate.springData)
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            spacing: 2
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: Translation.tr("Damping ratio")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: Appearance.colors.colSubtext
+                                    elide: Text.ElideRight
+                                }
+                                StyledText {
+                                    text: (dampingSlider.value / 100.0).toFixed(2)
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    font.family: Appearance.font.family.monospace
+                                    color: Appearance.colors.colSubtext
+                                    horizontalAlignment: Text.AlignRight
+                                }
+                            }
+
+                            StyledSlider {
+                                id: dampingSlider
+                                Layout.fillWidth: true
+                                from: 1
+                                to: 200
+                                value: Math.round((animDelegate.springData?.damping_ratio ?? 1.0) * 100)
+                                stepSize: 5
+                                configuration: StyledSlider.Configuration.S
+
+                                onMoved: {
+                                    if (pressed) return
+                                    root.setConfig("animations", animDelegate.modelData + ".damping-ratio", (value / 100.0).toFixed(2))
+                                }
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 1
+                            spacing: 2
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: Translation.tr("Stiffness")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: Appearance.colors.colSubtext
+                                    elide: Text.ElideRight
+                                }
+                                StyledText {
+                                    text: String(Math.round(stiffnessSlider.value))
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    font.family: Appearance.font.family.monospace
+                                    color: Appearance.colors.colSubtext
+                                    horizontalAlignment: Text.AlignRight
+                                }
+                            }
+
+                            StyledSlider {
+                                id: stiffnessSlider
+                                Layout.fillWidth: true
+                                from: 50
+                                to: 2000
+                                value: animDelegate.springData?.stiffness ?? 800
+                                stepSize: 50
+                                configuration: StyledSlider.Configuration.S
+
+                                onMoved: {
+                                    if (pressed) return
+                                    root.setConfig("animations", animDelegate.modelData + ".stiffness", String(Math.round(value)))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // =====================
+    // TOUCHPAD SECTION
+    // =====================
+    SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        settingsTaskSection: "input"
+        visible: true
+        expanded: true
+        icon: "touch_app"
+        title: Translation.tr("Touchpad")
+
+        SettingsGroup {
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "touch_app"
+                    text: Translation.tr("Tap to click")
+                    checked: root.touchpadData?.tap ?? true
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.tap", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "swipe"
+                    text: Translation.tr("Natural scroll")
+                    checked: root.touchpadData?.natural_scroll ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.natural-scroll", checked)
+                    }
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "block"
+                    text: Translation.tr("Disable while typing")
+                    checked: root.touchpadData?.dwt ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.dwt", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "joystick"
+                    text: Translation.tr("Disable while trackpointing")
+                    checked: root.touchpadData?.dwtp ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.dwtp", checked)
+                    }
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "mouse"
+                    text: Translation.tr("Disable with external mouse")
+                    checked: root.touchpadData?.disabled_on_external_mouse ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.disabled-on-external-mouse", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "left_click"
+                    text: Translation.tr("Left-handed")
+                    checked: root.touchpadData?.left_handed ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.left-handed", checked)
+                    }
+                }
+            }
+
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "ads_click"
+                    text: Translation.tr("Middle-click emulation")
+                    checked: root.touchpadData?.middle_emulation ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.middle-emulation", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "pan_tool"
+                    text: Translation.tr("Drag lock")
+                    checked: root.touchpadData?.drag_lock ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "touchpad.drag-lock", checked)
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Touchpad acceleration")
+
+                ConfigSelectionArray {
+                    currentValue: root.touchpadData?.accel_profile ?? "adaptive"
+                    options: [
+                        { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
+                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
+                    ]
+                    onSelected: newValue => {
+                        root.setConfig("input", "touchpad.accel-profile", newValue)
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Touchpad scrolling")
+
+                StyledComboBox {
+                    Layout.fillWidth: true
+                    model: root.touchpadScrollMethodOptions
+                    textRole: "displayName"
+                    currentIndex: root.choiceIndex(model, root.touchpadData?.scroll_method ?? "two-finger")
+                    onActivated: root.setConfig("input", "touchpad.scroll-method", model[currentIndex].value)
+                }
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "lock"
+                text: Translation.tr("Scroll button lock")
+                checked: root.touchpadData?.scroll_button_lock ?? false
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setBooleanConfig("input", "touchpad.scroll-button-lock", checked)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Tap button map")
+
+                StyledComboBox {
+                    Layout.fillWidth: true
+                    model: root.tapButtonMapOptions
+                    textRole: "displayName"
+                    currentIndex: root.choiceIndex(model, root.touchpadData?.tap_button_map ?? "left-right-middle")
+                    onActivated: root.setConfig("input", "touchpad.tap-button-map", model[currentIndex].value)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Click method")
+
+                StyledComboBox {
+                    Layout.fillWidth: true
+                    model: root.clickMethodOptions
+                    textRole: "displayName"
+                    currentIndex: root.choiceIndex(model, root.touchpadData?.click_method ?? "button-areas")
+                    onActivated: root.setConfig("input", "touchpad.click-method", model[currentIndex].value)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Touchpad speed")
+                tooltip: Translation.tr("Acceleration speed. Negative = slower, positive = faster.")
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    StyledSlider {
+                        id: touchpadSpeedSlider
+                        Layout.fillWidth: true
+                        from: -100
+                        to: 100
+                        value: Math.round((root.touchpadData?.accel_speed ?? 0) * 100)
+                        stepSize: 5
+                        configuration: StyledSlider.Configuration.S
+
+                        onMoved: {
+                            if (pressed) return
+                            root.setConfig("input", "touchpad.accel-speed", (value / 100.0).toFixed(2))
+                        }
+                    }
+
+                    StyledText {
+                        text: (touchpadSpeedSlider.value / 100.0).toFixed(2)
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.family: Appearance.font.family.monospace
+                        color: Appearance.colors.colSubtext
+                        Layout.preferredWidth: 40
+                        horizontalAlignment: Text.AlignRight
+                    }
+                }
+            }
+        }
+    }
+
     ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -2646,404 +3044,6 @@ ContentPage {
         }
     }
 
-    }
-
-    // =====================
-    // TOUCHPAD SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "input"
-        visible: true
-        expanded: true
-        icon: "touch_app"
-        title: Translation.tr("Touchpad")
-
-        SettingsGroup {
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "touch_app"
-                    text: Translation.tr("Tap to click")
-                    checked: root.touchpadData?.tap ?? true
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.tap", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "swipe"
-                    text: Translation.tr("Natural scroll")
-                    checked: root.touchpadData?.natural_scroll ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.natural-scroll", checked)
-                    }
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "block"
-                    text: Translation.tr("Disable while typing")
-                    checked: root.touchpadData?.dwt ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.dwt", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "joystick"
-                    text: Translation.tr("Disable while trackpointing")
-                    checked: root.touchpadData?.dwtp ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.dwtp", checked)
-                    }
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "mouse"
-                    text: Translation.tr("Disable with external mouse")
-                    checked: root.touchpadData?.disabled_on_external_mouse ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.disabled-on-external-mouse", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "left_click"
-                    text: Translation.tr("Left-handed")
-                    checked: root.touchpadData?.left_handed ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.left-handed", checked)
-                    }
-                }
-            }
-
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "ads_click"
-                    text: Translation.tr("Middle-click emulation")
-                    checked: root.touchpadData?.middle_emulation ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.middle-emulation", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "pan_tool"
-                    text: Translation.tr("Drag lock")
-                    checked: root.touchpadData?.drag_lock ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "touchpad.drag-lock", checked)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Touchpad acceleration")
-
-                ConfigSelectionArray {
-                    currentValue: root.touchpadData?.accel_profile ?? "adaptive"
-                    options: [
-                        { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
-                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
-                    ]
-                    onSelected: newValue => {
-                        root.setConfig("input", "touchpad.accel-profile", newValue)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Touchpad scrolling")
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.touchpadScrollMethodOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.touchpadData?.scroll_method ?? "two-finger")
-                    onActivated: root.setConfig("input", "touchpad.scroll-method", model[currentIndex].value)
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "lock"
-                text: Translation.tr("Scroll button lock")
-                checked: root.touchpadData?.scroll_button_lock ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "touchpad.scroll-button-lock", checked)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Tap button map")
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.tapButtonMapOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.touchpadData?.tap_button_map ?? "left-right-middle")
-                    onActivated: root.setConfig("input", "touchpad.tap-button-map", model[currentIndex].value)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Click method")
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.clickMethodOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.touchpadData?.click_method ?? "button-areas")
-                    onActivated: root.setConfig("input", "touchpad.click-method", model[currentIndex].value)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Touchpad speed")
-                tooltip: Translation.tr("Acceleration speed. Negative = slower, positive = faster.")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledSlider {
-                        id: touchpadSpeedSlider
-                        Layout.fillWidth: true
-                        from: -100
-                        to: 100
-                        value: Math.round((root.touchpadData?.accel_speed ?? 0) * 100)
-                        stepSize: 5
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("input", "touchpad.accel-speed", (value / 100.0).toFixed(2))
-                        }
-                    }
-
-                    StyledText {
-                        text: (touchpadSpeedSlider.value / 100.0).toFixed(2)
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 40
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-        }
-    }
-
-    // =====================
-    // ANIMATIONS SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "animations"
-        visible: true
-        expanded: true
-        icon: "animation"
-        title: Translation.tr("Animations")
-
-        SettingsGroup {
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "animation"
-                text: Translation.tr("Enable animations")
-                checked: root.animationsData?.enabled ?? true
-                onCheckedChanged: {
-                    if (!root.animationsReady) return
-                    root.setBooleanConfig("animations", "enabled", checked)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Global slowdown")
-                tooltip: Translation.tr("1.0 is normal speed. Higher values make every animation slower.")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledSlider {
-                        id: slowdownSlider
-                        Layout.fillWidth: true
-                        from: 50
-                        to: 500
-                        value: Math.round((root.animationsData?.slowdown ?? 1.0) * 100)
-                        stepSize: 10
-                        configuration: StyledSlider.Configuration.S
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("animations", "slowdown", (value / 100.0).toFixed(2))
-                        }
-                    }
-
-                    StyledText {
-                        text: (slowdownSlider.value / 100.0).toFixed(2) + "x"
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 42
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-
-            StyledText {
-                text: Translation.tr("Higher stiffness reacts faster; damping reduces bounce.")
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-            }
-
-            Repeater {
-                model: Object.keys(root.animationsData?.types ?? {})
-
-                delegate: ColumnLayout {
-                    id: animDelegate
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    required property string modelData
-                    readonly property var springData: root.animationsData?.types?.[modelData] ?? {}
-
-                    SettingsDivider {}
-
-                    ContentSubsection {
-                        title: root.animationLabels[animDelegate.modelData] ?? animDelegate.modelData
-                    }
-
-                    SettingsSwitch {
-                        Layout.fillWidth: true
-                        buttonIcon: "animation"
-                        text: Translation.tr("Enable this animation")
-                        checked: root.animationIsEnabled(animDelegate.springData)
-                        onCheckedChanged: {
-                            if (!root.animationsReady) return
-                            root.setBooleanConfig("animations", animDelegate.modelData + ".enabled", checked)
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 12
-                        visible: (animDelegate.springData?.mode ?? "spring") === "spring" && root.animationIsEnabled(animDelegate.springData)
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: 1
-                            spacing: 2
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                StyledText {
-                                    Layout.fillWidth: true
-                                    text: Translation.tr("Damping ratio")
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    color: Appearance.colors.colSubtext
-                                    elide: Text.ElideRight
-                                }
-                                StyledText {
-                                    text: (dampingSlider.value / 100.0).toFixed(2)
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    font.family: Appearance.font.family.monospace
-                                    color: Appearance.colors.colSubtext
-                                    horizontalAlignment: Text.AlignRight
-                                }
-                            }
-
-                            StyledSlider {
-                                id: dampingSlider
-                                Layout.fillWidth: true
-                                from: 1
-                                to: 200
-                                value: Math.round((animDelegate.springData?.damping_ratio ?? 1.0) * 100)
-                                stepSize: 5
-                                configuration: StyledSlider.Configuration.S
-
-                                onMoved: {
-                                    if (pressed) return
-                                    root.setConfig("animations", animDelegate.modelData + ".damping-ratio", (value / 100.0).toFixed(2))
-                                }
-                            }
-                        }
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: 1
-                            spacing: 2
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                StyledText {
-                                    Layout.fillWidth: true
-                                    text: Translation.tr("Stiffness")
-                                    font.pixelSize: Appearance.font.pixelSize.smaller
-                                    color: Appearance.colors.colSubtext
-                                    elide: Text.ElideRight
-                                }
-                                StyledText {
-                                    text: String(Math.round(stiffnessSlider.value))
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    font.family: Appearance.font.family.monospace
-                                    color: Appearance.colors.colSubtext
-                                    horizontalAlignment: Text.AlignRight
-                                }
-                            }
-
-                            StyledSlider {
-                                id: stiffnessSlider
-                                Layout.fillWidth: true
-                                from: 50
-                                to: 2000
-                                value: animDelegate.springData?.stiffness ?? 800
-                                stepSize: 50
-                                configuration: StyledSlider.Configuration.S
-
-                                onMoved: {
-                                    if (pressed) return
-                                    root.setConfig("animations", animDelegate.modelData + ".stiffness", String(Math.round(value)))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     // Default applications are owned by Settings -> Default Applications (SET-F01).

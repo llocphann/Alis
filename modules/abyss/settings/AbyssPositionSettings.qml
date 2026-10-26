@@ -115,6 +115,8 @@ ColumnLayout {
             id:kindChoice
             visible:root.showKindSelector
             Layout.fillWidth:true
+            Layout.minimumWidth:0
+            Layout.preferredWidth:1
             textRole:"label";valueRole:"value"
             model:[{label:"All Edge Bar popups",value:"popup"},{label:"Calendar",value:"clock"},
                 {label:"System resources",value:"resources"},{label:"Battery",value:"battery"},
@@ -142,6 +144,8 @@ ColumnLayout {
             visible:root.showOutputSelector
                 && (root.outputSelectionEnabled || !root.compactVertical)
             Layout.fillWidth:true
+            Layout.minimumWidth:0
+            Layout.preferredWidth:1
             textRole:"label";valueRole:"value"
             model:[{label:"All outputs",value:""}].concat(Quickshell.screens.map(s => ({label:s.name,value:s.name})))
             currentIndex:Math.max(0,model.findIndex(p => p.value===root.outputName))
@@ -186,7 +190,7 @@ ColumnLayout {
             Layout.minimumWidth:0
             Layout.preferredWidth:root.compactIpcEditor
                 ? (root.compactSideToolbar ? root.compactSideSelectorWidth
-                    : root.compactEdgeTriggerWidth) : -1
+                    : root.compactEdgeTriggerWidth) : 1
             Layout.maximumWidth:root.compactIpcEditor
                 && (!root.compactVertical || root.compactSideToolbar)
                 ? (root.compactSideToolbar ? root.compactSideSelectorWidth
@@ -206,7 +210,7 @@ ColumnLayout {
             Layout.minimumWidth:0
             Layout.preferredWidth:root.compactIpcEditor
                 ? (root.compactSideToolbar ? root.compactSideSelectorWidth
-                    : root.compactAlignmentTriggerWidth) : -1
+                    : root.compactAlignmentTriggerWidth) : 1
             Layout.maximumWidth:root.compactIpcEditor
                 && (!root.compactVertical || root.compactSideToolbar)
                 ? (root.compactSideToolbar ? root.compactSideSelectorWidth
