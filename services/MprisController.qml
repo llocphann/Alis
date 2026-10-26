@@ -1511,7 +1511,7 @@ Singleton {
 	}
 
 	function _isMpdOptionTarget(player): bool {
-		return !!(player && root._isMpdMprisPlayer(player) && LocalMusic.available);
+		return !!(player && player === root.mpdPlayer && LocalMusic.available);
 	}
 
 	function _softwareLoopSupported(player): bool {

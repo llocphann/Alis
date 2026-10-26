@@ -112,6 +112,7 @@ Singleton {
     property string localLyricsPath: ""
     property bool localLyricsSynced: false
     property string _pendingLyricsPath: ""
+    property var _wordSyncUpgradedPaths: ({})
     property real _lyricsAnchorPos: 0
     property real _lyricsAnchorMs: 0
     property real _lyricsLivePos: 0
@@ -119,9 +120,12 @@ Singleton {
 
     readonly property real _baseLyricsPosition: {
         const mprisPosition = Number(mprisPlayer?.position)
-        if (mprisAvailable && Number.isFinite(mprisPosition) && mprisPosition > 0)
-            return Math.max(0, mprisPosition)
-        return Math.max(0, currentPosition)
+        const mpdPosition = Math.max(0, currentPosition)
+        if (mprisAvailable && Number.isFinite(mprisPosition) && mprisPosition > 0) {
+            if (mpdPosition <= 0 || Math.abs(mprisPosition - mpdPosition) <= 8)
+                return Math.max(0, mprisPosition)
+        }
+        return mpdPosition
     }
 
     function _reanchorLyricsPosition(pos: real): void {
@@ -864,7 +868,10 @@ Singleton {
     onConfiguredLibraryFolderChanged: root._configurationChanged()
     onConfiguredHostChanged: root._configurationChanged()
     onConfiguredPortChanged: root._configurationChanged()
-    onCurrentPathChanged: Qt.callLater(root.refreshLocalLyrics)
+    onCurrentPathChanged: {
+        root._reanchorLyricsPosition(root.currentPosition)
+        Qt.callLater(root.refreshLocalLyrics)
+    }
 
     Process {
         id: _nativeBackendInfoProc
@@ -1063,19 +1070,43 @@ Singleton {
                         root.localLyricsPath = String(payload.path ?? "")
                         root.localLyricsSynced = payload.synced === true
                         root.localLyricsLines = payload.lines ?? []
-                        if (root.localLyricsStatus === "not_found"
-                                && !requestedPath.includes("://")
-                                && root.currentTitle.trim().length > 0
-                                && (Quickshell.env("FIXTURE_PORT") ?? "").length === 0) {
+                        const canFetchOnline = !requestedPath.includes("://")
+                            && root.currentTitle.trim().length > 0
+                            && (Quickshell.env("FIXTURE_PORT") ?? "").length === 0
+                        if (root.localLyricsStatus === "not_found" && canFetchOnline) {
                             root.localLyricsStatus = "loading"
                             if (_lyricsDownloadProc.running)
                                 _lyricsDownloadProc.running = false
+                            _lyricsDownloadProc.upgradeOnly = false
                             _lyricsDownloadProc.requestedPath = requestedPath
                             _lyricsDownloadProc.output = ""
                             _lyricsDownloadProc.command = [
                                 "/usr/bin/python3",
                                 `${Directories.scriptsPath}/lyrics/lyrics.py`,
                                 "--save-lrc",
+                                requestedPath,
+                                root.currentTitle,
+                                root.currentArtist,
+                                String(Math.round(root.currentDuration || 0)),
+                                root.currentAlbum
+                            ]
+                            _lyricsDownloadProc.running = true
+                        } else if (root.localLyricsStatus === "ok"
+                                && payload.wordSynced !== true
+                                && canFetchOnline
+                                && !root._wordSyncUpgradedPaths[requestedPath]) {
+                            const nextMap = Object.assign({}, root._wordSyncUpgradedPaths)
+                            nextMap[requestedPath] = true
+                            root._wordSyncUpgradedPaths = nextMap
+                            if (_lyricsDownloadProc.running)
+                                _lyricsDownloadProc.running = false
+                            _lyricsDownloadProc.upgradeOnly = true
+                            _lyricsDownloadProc.requestedPath = requestedPath
+                            _lyricsDownloadProc.output = ""
+                            _lyricsDownloadProc.command = [
+                                "/usr/bin/python3",
+                                `${Directories.scriptsPath}/lyrics/lyrics.py`,
+                                "--upgrade-word-sync",
                                 requestedPath,
                                 root.currentTitle,
                                 root.currentArtist,
@@ -1097,6 +1128,7 @@ Singleton {
     Process {
         id: _lyricsDownloadProc
         property string requestedPath: ""
+        property bool upgradeOnly: false
         property string output: ""
 
         stdout: StdioCollector {
@@ -1110,17 +1142,28 @@ Singleton {
             if (requestedPath !== root.currentPath)
                 return
             if (code !== 0) {
-                root._clearLocalLyrics("not_found")
+                if (!_lyricsDownloadProc.upgradeOnly)
+                    root._clearLocalLyrics("not_found")
                 return
             }
             try {
                 const payload = JSON.parse(_lyricsDownloadProc.output || "{}")
+                if (_lyricsDownloadProc.upgradeOnly) {
+                    if (payload.status === "ok" && payload.wordSynced === true && Array.isArray(payload.lines) && payload.lines.length > 0) {
+                        root.localLyricsStatus = "ok"
+                        root.localLyricsPath = String(payload.path ?? root.localLyricsPath)
+                        root.localLyricsSynced = payload.synced === true
+                        root.localLyricsLines = payload.lines
+                    }
+                    return
+                }
                 root.localLyricsStatus = String(payload.status ?? "not_found")
                 root.localLyricsPath = String(payload.path ?? "")
                 root.localLyricsSynced = payload.synced === true
                 root.localLyricsLines = payload.lines ?? []
             } catch (e) {
-                root._clearLocalLyrics("not_found")
+                if (!_lyricsDownloadProc.upgradeOnly)
+                    root._clearLocalLyrics("not_found")
             }
         }
     }

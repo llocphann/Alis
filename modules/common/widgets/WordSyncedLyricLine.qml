@@ -58,7 +58,12 @@ Item {
     property real _livePos: 0
 
     function _syncPositionAnchor(externalPos: real, snap: bool): void {
-        const cleanPos = Math.max(0, Number(externalPos) || 0);
+        let cleanPos = Math.max(0, Number(externalPos) || 0);
+        if (root.active && root.synced && root.lineStartTime > 0 && cleanPos < root.lineStartTime - 0.35) {
+            if (!snap && root._anchorWallMs > 0)
+                return;
+            cleanPos = root.lineStartTime;
+        }
         const now = Date.now();
         if (snap || root._anchorWallMs <= 0 || !root.playing) {
             root._anchorPos = cleanPos;
@@ -81,33 +86,36 @@ Item {
         }
     }
 
+    function _reanchorActiveLine(): void {
+        if (!root.active)
+            return;
+        const initPos = (root.position >= root.lineStartTime - 0.25 && root.position <= root.lineEndTime + 1.0)
+            ? Math.max(root.lineStartTime, root.position)
+            : root.lineStartTime;
+        root._syncPositionAnchor(initPos, true);
+    }
+
+    Component.onCompleted: root._reanchorActiveLine()
     onPositionChanged: root._syncPositionAnchor(root.position, false)
     onPlayingChanged: root._syncPositionAnchor(root.position, true)
-    onActiveChanged: {
-        if (root.active) {
-            const initPos = (root.position >= root.lineStartTime - 0.25 && root.position <= root.lineEndTime + 1.0)
-                ? Math.max(root.lineStartTime, root.position)
-                : root.lineStartTime;
-            root._syncPositionAnchor(initPos, true);
-        }
-    }
-    onLineDataChanged: {
-        if (root.active)
-            root._syncPositionAnchor(Math.max(root.lineStartTime, root.position), true);
-    }
+    onActiveChanged: root._reanchorActiveLine()
+    onLineDataChanged: root._reanchorActiveLine()
 
     Timer {
         id: frameTimer
         interval: 16
         repeat: true
-        running: root.visible && root.active && root.playing && root.synced && Appearance.animationsEnabled
+        running: root.visible && root.active && root.playing && root.synced
         onTriggered: {
             if (root._anchorWallMs <= 0) {
-                root._syncPositionAnchor(root.position, true);
+                root._reanchorActiveLine();
                 return;
             }
             const elapsed = Math.max(0, (Date.now() - root._anchorWallMs) / 1000);
-            root._livePos = root._anchorPos + elapsed;
+            const candidate = root._anchorPos + elapsed;
+            root._livePos = (root.lineStartTime > 0 && candidate < root.lineStartTime - 0.35)
+                ? (root.lineStartTime + elapsed)
+                : candidate;
         }
     }
 
@@ -321,6 +329,7 @@ Item {
         horizontalAlignment: root.horizontalAlignment
         font.pixelSize: root.fontPixelSize
         font.weight: root.active ? root.activeFontWeight : root.inactiveFontWeight
+        font.variableAxes: ({ "wght": root.active ? 650 : 420 })
         font.italic: root.fontItalic
         color: root.active ? root.activeColor : root.inactiveColor
     }
@@ -412,56 +421,57 @@ Item {
                     : 0.0
 
                 // 1. Kéo dài (Sustain): horizontal vocal stretch + slight vertical breath
-                readonly property real sustainStretchX: isSinging && sustainAmt > 0.30
-                    ? (0.13 * envelope * sustainAmt)
+                readonly property real sustainStretchX: isSinging && sustainAmt > 0.25
+                    ? (0.16 * envelope * sustainAmt)
                     : 0.0
-                readonly property real sustainStretchY: isSinging && sustainAmt > 0.30
-                    ? (0.05 * envelope * sustainAmt)
+                readonly property real sustainStretchY: isSinging && sustainAmt > 0.25
+                    ? (0.06 * envelope * sustainAmt)
                     : 0.0
 
                 // 2. Lên giọng (Pitch Rise): upward float + crescendo scale boost
-                readonly property real riseLiftY: isSinging && riseAmt > 0.30
-                    ? (-5.8 * Math.sin(Math.pow(progress, 0.85) * Math.PI) * riseAmt)
+                readonly property real riseLiftY: isSinging && riseAmt > 0.25
+                    ? (-6.6 * Math.sin(Math.pow(progress, 0.85) * Math.PI) * riseAmt)
                     : 0.0
-                readonly property real riseScale: isSinging && riseAmt > 0.30
-                    ? (0.14 * envelope * riseAmt)
+                readonly property real riseScale: isSinging && riseAmt > 0.25
+                    ? (0.16 * envelope * riseAmt)
                     : 0.0
 
                 // 3. Xuống giọng (Pitch Fall): gentle downward pitch glide + soft settle
-                readonly property real fallDropY: isSinging && fallAmt > 0.30 && riseAmt < 0.60
-                    ? (4.0 * Math.sin(Math.pow(progress, 0.9) * Math.PI) * fallAmt)
+                readonly property real fallDropY: isSinging && fallAmt > 0.25 && riseAmt < 0.60
+                    ? (4.6 * Math.sin(Math.pow(progress, 0.9) * Math.PI) * fallAmt)
                     : 0.0
-                readonly property real fallScale: isSinging && fallAmt > 0.30 && riseAmt < 0.55
-                    ? (-0.03 * progress * fallAmt)
+                readonly property real fallScale: isSinging && fallAmt > 0.25 && riseAmt < 0.55
+                    ? (-0.04 * progress * fallAmt)
                     : 0.0
 
                 // 4. Ngân nga (Vibrato / Melisma): continuous sine-wave vertical oscillation & harmonic sway
-                readonly property real vibratoWaveY: isSinging && vibratoAmt > 0.30
-                    ? (Math.sin(root.effectivePosition * 17.5 + index * 1.3) * 3.4 * vibratoAmt * Math.max(0.25, envelope))
+                readonly property real vibratoWaveY: isSinging && vibratoAmt > 0.25
+                    ? (Math.sin(root.effectivePosition * 18.5 + index * 1.3) * 3.8 * vibratoAmt * Math.max(0.30, envelope))
                     : 0.0
-                readonly property real vibratoTilt: isSinging && vibratoAmt > 0.30
-                    ? (Math.sin(root.effectivePosition * 11.0 + index * 0.9) * 2.5 * vibratoAmt * envelope)
+                readonly property real vibratoTilt: isSinging && vibratoAmt > 0.25
+                    ? (Math.sin(root.effectivePosition * 11.5 + index * 0.9) * 3.0 * vibratoAmt * envelope)
                     : 0.0
 
-                // Standard articulation lift for normal words
+                // Standard articulation lift for normal words while being sung
                 readonly property real baseLiftY: isSinging
-                    ? (-1.8 * envelope * (1.0 - Math.max(riseAmt, fallAmt) * 0.7))
+                    ? (-2.6 * envelope * (1.0 - Math.max(riseAmt, fallAmt) * 0.65))
                     : 0.0
-                readonly property real baseScale: isSinging ? (0.05 * envelope) : 0.0
+                readonly property real baseScale: isSinging ? (0.07 * envelope) : 0.0
 
                 readonly property real totalOffsetY: baseLiftY + riseLiftY + fallDropY + vibratoWaveY
                 readonly property real totalScaleX: 1.0 + baseScale + riseScale + sustainStretchX + fallScale
                 readonly property real totalScaleY: 1.0 + baseScale + riseScale + sustainStretchY + fallScale
 
                 readonly property color sungHighlightColor: {
-                    if (isSinging && (riseAmt > 0.45 || vibratoAmt > 0.45 || sustainAmt > 0.55)) {
-                        return ColorUtils.mix(root.activeColor, root.accentColor, 0.48 * envelope);
+                    if (isSinging) {
+                        const boost = Math.max(0.62, Math.max(riseAmt, vibratoAmt, sustainAmt));
+                        return ColorUtils.mix(root.accentColor, root.activeColor, boost);
                     }
                     return root.activeColor;
                 }
 
                 implicitWidth: baseWordLabel.implicitWidth
-                implicitHeight: baseWordLabel.implicitHeight + 6
+                implicitHeight: baseWordLabel.implicitHeight + 8
                 width: implicitWidth
                 height: implicitHeight
 
@@ -489,28 +499,29 @@ Item {
                         }
                     ]
 
-                    // Soft luminous vocal aura behind sustained / rising / vibrato words while sung
+                    // Soft luminous vocal aura behind currently sung word (stronger on sustain / rise / vibrato)
                     Rectangle {
                         id: vocalAura
                         anchors.centerIn: parent
                         width: parent.width + 12
                         height: parent.height + 6
                         radius: height / 2
-                        visible: wordSlot.isSinging && (wordSlot.sustainAmt > 0.35 || wordSlot.riseAmt > 0.40 || wordSlot.vibratoAmt > 0.35)
+                        visible: wordSlot.isSinging
                         color: root.accentColor
-                        opacity: wordSlot.envelope * 0.22 * Math.max(wordSlot.sustainAmt, wordSlot.riseAmt, wordSlot.vibratoAmt)
+                        opacity: wordSlot.envelope * (0.14 + 0.16 * Math.max(wordSlot.sustainAmt, wordSlot.riseAmt, wordSlot.vibratoAmt))
                     }
 
-                    // Unsung / base word layer
+                    // Unsung / already-sung word layer
                     StyledText {
                         id: baseWordLabel
                         text: wordSlot.wordText
                         font.pixelSize: root.fontPixelSize
-                        font.weight: root.activeFontWeight
+                        font.weight: wordSlot.isSung ? root.activeFontWeight : root.inactiveFontWeight
+                        font.variableAxes: ({ "wght": wordSlot.isSinging ? 680 : (wordSlot.isSung ? 630 : 440) })
                         font.italic: root.fontItalic
                         color: wordSlot.isSung
-                            ? ColorUtils.applyAlpha(root.activeColor, 0.90)
-                            : ColorUtils.applyAlpha(root.activeColor, 0.36)
+                            ? root.activeColor
+                            : ColorUtils.applyAlpha(root.inactiveColor, 0.56)
                     }
 
                     // Progressive left-to-right karaoke fill sweep while singing
@@ -528,24 +539,25 @@ Item {
                             height: baseWordLabel.implicitHeight
                             text: wordSlot.wordText
                             font.pixelSize: root.fontPixelSize
-                            font.weight: root.activeFontWeight
+                            font.weight: Font.Bold
+                            font.variableAxes: ({ "wght": 730 })
                             font.italic: root.fontItalic
                             color: wordSlot.sungHighlightColor
                         }
                     }
 
-                    // Kéo dài (Sustain) / Ngân nga (Vibrato) expressive underline bar
+                    // Active word karaoke / Kéo dài (Sustain) / Ngân nga (Vibrato) expressive underline bar
                     Rectangle {
                         id: sustainBar
                         anchors.left: parent.left
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: -2
-                        height: wordSlot.vibratoAmt > 0.45 ? 2.5 : 2
+                        height: (wordSlot.vibratoAmt > 0.35 || wordSlot.sustainAmt > 0.35) ? 2.5 : 1.8
                         radius: height / 2
-                        visible: wordSlot.isSinging && (wordSlot.sustainAmt > 0.40 || wordSlot.vibratoAmt > 0.40)
+                        visible: wordSlot.isSinging
                         width: Math.max(4, parent.width * wordSlot.progress)
                         color: root.accentColor
-                        opacity: 0.85 * wordSlot.envelope
+                        opacity: (0.45 + 0.45 * Math.max(wordSlot.sustainAmt, wordSlot.vibratoAmt, wordSlot.riseAmt)) * Math.max(0.35, wordSlot.envelope)
                     }
                 }
             }

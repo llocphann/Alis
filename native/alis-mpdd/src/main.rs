@@ -527,10 +527,72 @@ fn lrc_line(line: &str) -> (Vec<f64>, String, Vec<(f64, String)>) {
     (stamps, clean_lyric, inline_segments)
 }
 
-fn parse_lrc(text: &str) -> (Vec<Value>, bool) {
+fn is_non_lyric_credit_or_header(text: &str) -> bool {
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return false;
+    }
+    let lowered = trimmed.to_lowercase();
+    for prefix in [
+        "作词",
+        "作曲",
+        "编曲",
+        "制作人",
+        "混音",
+        "母带",
+        "录音",
+        "统筹",
+        "出品",
+        "发行",
+        "监制",
+        "和声",
+        "吉他",
+        "贝斯",
+        "鼓",
+        "弦乐",
+        "作詞",
+        "編曲",
+        "lyrics by",
+        "composed by",
+        "produced by",
+        "arranged by",
+    ] {
+        if let Some(rest) = lowered.strip_prefix(prefix) {
+            let rest_trimmed = rest.trim_start();
+            if rest_trimmed.starts_with(':') || rest_trimmed.starts_with('：') {
+                return true;
+            }
+        }
+    }
+    if trimmed.starts_with('[') && trimmed.ends_with(']') {
+        let inner = trimmed[1..trimmed.len() - 1].trim().to_ascii_lowercase();
+        if [
+            "verse",
+            "chorus",
+            "hook",
+            "bridge",
+            "intro",
+            "outro",
+            "pre-chorus",
+            "interlude",
+            "instrumental",
+            "solo",
+            "guitar solo",
+        ]
+        .iter()
+        .any(|tag| inner == *tag || inner.starts_with(&format!("{tag} ")))
+        {
+            return true;
+        }
+    }
+    false
+}
+
+fn parse_lrc(text: &str) -> (Vec<Value>, bool, bool) {
     let mut offset_ms = 0i64;
     let mut timed: Vec<(f64, String, Vec<(f64, String)>)> = Vec::new();
     let mut plain = Vec::new();
+    let mut has_inline_words = false;
 
     for raw in text.lines() {
         let line = raw.trim_matches(|ch| matches!(ch, '\u{feff}' | '\r' | '\n'));
@@ -554,6 +616,12 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool) {
         }
 
         let (stamps, lyric, inline_segments) = lrc_line(line);
+        if is_non_lyric_credit_or_header(&lyric) {
+            continue;
+        }
+        if !inline_segments.is_empty() {
+            has_inline_words = true;
+        }
         if stamps.is_empty() {
             if !lyric.is_empty() {
                 plain.push(json!({"time": -1.0, "text": lyric}));
@@ -572,7 +640,7 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool) {
     }
 
     if timed.is_empty() {
-        return (plain, false);
+        return (plain, false, false);
     }
 
     let offset = offset_ms as f64 / 1000.0;
@@ -596,10 +664,47 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool) {
         let mut line_end = line_start + vocal_window;
 
         if inline_segments.is_empty() {
+            let tokens: Vec<&str> = text.split_whitespace().filter(|t| !t.is_empty()).collect();
+            let mut words = Vec::new();
+            if !tokens.is_empty() && text.trim() != "♪" {
+                let total = tokens.len();
+                let mut weights = Vec::with_capacity(total);
+                let mut total_w = 0.0;
+                for (i, tok) in tokens.iter().enumerate() {
+                    let core_len = tok
+                        .chars()
+                        .filter(|c| c.is_alphanumeric())
+                        .count()
+                        .max(1) as f64;
+                    let mut w = core_len.powf(0.72).max(0.75);
+                    if i + 1 == total {
+                        w += 0.70;
+                    } else if tok.ends_with(',') || tok.ends_with(';') || tok.ends_with('.') || tok.ends_with('!') || tok.ends_with('?') {
+                        w += 0.35;
+                    }
+                    weights.push(w);
+                    total_w += w;
+                }
+                let span = (line_end - line_start).max(0.25);
+                let mut cursor = line_start;
+                for (tok, w) in tokens.iter().zip(weights.iter()) {
+                    let dur = (span * (w / total_w.max(0.01))).max(0.04);
+                    let w_start = cursor;
+                    let w_end = cursor + dur;
+                    words.push(json!({
+                        "text": tok,
+                        "start": (w_start * 1000.0).round() / 1000.0,
+                        "end": (w_end * 1000.0).round() / 1000.0,
+                        "duration": (dur * 1000.0).round() / 1000.0
+                    }));
+                    cursor = w_end;
+                }
+            }
             result.push(json!({
                 "time": line_start,
                 "endTime": (line_end * 1000.0).round() / 1000.0,
-                "text": text
+                "text": text,
+                "words": words
             }));
         } else {
             let mut words = Vec::new();
@@ -619,13 +724,29 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool) {
                 if w_end > line_end {
                     line_end = w_end;
                 }
-                for sub in seg_text.split_whitespace() {
-                    words.push(json!({
-                        "text": sub,
-                        "start": (w_start * 1000.0).round() / 1000.0,
-                        "end": (w_end * 1000.0).round() / 1000.0,
-                        "duration": ((w_end - w_start).max(0.04) * 1000.0).round() / 1000.0
-                    }));
+                let sub_tokens: Vec<&str> = seg_text.split_whitespace().collect();
+                if sub_tokens.len() <= 1 {
+                    for sub in sub_tokens {
+                        words.push(json!({
+                            "text": sub,
+                            "start": (w_start * 1000.0).round() / 1000.0,
+                            "end": (w_end * 1000.0).round() / 1000.0,
+                            "duration": ((w_end - w_start).max(0.04) * 1000.0).round() / 1000.0
+                        }));
+                    }
+                } else {
+                    let span = (w_end - w_start).max(0.08 * sub_tokens.len() as f64);
+                    let step = span / sub_tokens.len() as f64;
+                    for (sub_i, sub) in sub_tokens.iter().enumerate() {
+                        let s = w_start + sub_i as f64 * step;
+                        let e = s + step;
+                        words.push(json!({
+                            "text": sub,
+                            "start": (s * 1000.0).round() / 1000.0,
+                            "end": (e * 1000.0).round() / 1000.0,
+                            "duration": (step.max(0.04) * 1000.0).round() / 1000.0
+                        }));
+                    }
                 }
             }
             result.push(json!({
@@ -636,12 +757,12 @@ fn parse_lrc(text: &str) -> (Vec<Value>, bool) {
             }));
         }
     }
-    (result, true)
+    (result, true, has_inline_words)
 }
 
 fn local_lyrics(track_text: &str) -> Value {
     if track_text.contains("://") {
-        return json!({"status": "not_found", "path": "", "synced": false, "lines": []});
+        return json!({"status": "not_found", "path": "", "synced": false, "wordSynced": false, "lines": []});
     }
 
     let track = expand_home(track_text);
@@ -656,25 +777,27 @@ fn local_lyrics(track_text: &str) -> Value {
                     "status": "error",
                     "path": path.to_string_lossy(),
                     "synced": false,
+                    "wordSynced": false,
                     "lines": [],
                     "error": error.to_string()
                 });
             }
         };
         let text = String::from_utf8_lossy(&bytes);
-        let (lines, synced) = parse_lrc(&text);
+        let (lines, synced, word_synced) = parse_lrc(&text);
         if !lines.is_empty() {
             let resolved = fs::canonicalize(&path).unwrap_or(path);
             return json!({
                 "status": "ok",
                 "path": resolved.to_string_lossy(),
                 "synced": synced,
+                "wordSynced": word_synced,
                 "lines": lines
             });
         }
     }
 
-    json!({"status": "not_found", "path": "", "synced": false, "lines": []})
+    json!({"status": "not_found", "path": "", "synced": false, "wordSynced": false, "lines": []})
 }
 
 fn cache_dir() -> PathBuf {
@@ -2677,8 +2800,9 @@ mod tests {
 
     #[test]
     fn parses_synced_lyrics_with_offset_and_multiple_stamps() {
-        let (lines, synced) = parse_lrc("[offset:+250]\n[00:01.50][00:03]Hello\n[ar:Ignored]\n");
+        let (lines, synced, word_synced) = parse_lrc("[offset:+250]\n[00:01.50][00:03]Hello\n[ar:Ignored]\n");
         assert!(synced);
+        assert!(!word_synced);
         assert_eq!(lines.len(), 2);
         assert_eq!(lines[0]["time"], json!(1.75));
         assert_eq!(lines[0]["text"], "Hello");
@@ -2687,8 +2811,9 @@ mod tests {
 
     #[test]
     fn parses_plain_lyrics_when_no_timestamps_exist() {
-        let (lines, synced) = parse_lrc("Line one\nLine two\n");
+        let (lines, synced, word_synced) = parse_lrc("Line one\nLine two\n");
         assert!(!synced);
+        assert!(!word_synced);
         assert_eq!(lines.len(), 2);
         assert_eq!(lines[0]["time"], json!(-1.0));
     }

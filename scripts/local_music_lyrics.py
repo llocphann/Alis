@@ -12,6 +12,10 @@ STAMP_RE = re.compile(r"\[(\d{1,3}):(\d{2})(?:[\.:](\d{1,3}))?\]")
 INLINE_WORD_STAMP_RE = re.compile(r"<(\d{1,3}):(\d{2})(?:[\.:](\d{1,3}))?>")
 OFFSET_RE = re.compile(r"^\[offset:([+-]?\d+)\]$", re.IGNORECASE)
 META_RE = re.compile(r"^\[(?:ar|al|ti|by|re|ve|length):", re.IGNORECASE)
+CREDIT_LINE_RE = re.compile(
+    r"^\s*(?:(?:作词|作曲|编曲|制作人|混音|母带|录音|统筹|出品|发行|监制|和声|吉他|贝斯|鼓|弦乐|词|曲|プロデューサー|作詞|作曲|編曲|Lyrics\s*by|Composed\s*by|Produced\s*by|Arranged\s*by)\s*[:：]|\[(?:Verse|Chorus|Hook|Bridge|Intro|Outro|Pre-Chorus|Interlude|Instrumental|Solo|Guitar\s*Solo)[^\]]*\]\s*$)",
+    re.IGNORECASE,
+)
 
 REPEAT_VOWEL_RE = re.compile(
     r"([aăâeêioôơuưyáàảãạắằẳẵặấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ])\1+",
@@ -292,6 +296,8 @@ def parse_lrc(text: str) -> tuple[list[dict[str, object]], bool]:
         stamps = list(STAMP_RE.finditer(line))
         raw_lyric = STAMP_RE.sub("", line).strip()
         clean_lyric = re.sub(r"\s+", " ", INLINE_WORD_STAMP_RE.sub(" ", raw_lyric)).strip()
+        if clean_lyric and CREDIT_LINE_RE.match(clean_lyric):
+            continue
         if stamps:
             for match in stamps:
                 timed.append({
@@ -344,9 +350,14 @@ def load(track_text: str) -> dict[str, object]:
                     "lines": [], "error": str(exc)}
         lines, synced = parse_lrc(text)
         if lines:
-            return {"status": "ok", "path": str(path.resolve()),
-                    "synced": synced, "lines": lines}
-    return {"status": "not_found", "path": "", "synced": False, "lines": []}
+            return {
+                "status": "ok",
+                "path": str(path.resolve()),
+                "synced": synced,
+                "wordSynced": bool(INLINE_WORD_STAMP_RE.search(text)),
+                "lines": lines,
+            }
+    return {"status": "not_found", "path": "", "synced": False, "wordSynced": False, "lines": []}
 
 
 def main() -> int:

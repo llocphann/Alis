@@ -42,6 +42,24 @@ KLYRIC_LINE_RE = re.compile(r"^\[(\d+),(\d+)\](.+)$")
 KLYRIC_WORD_RE = re.compile(r"<(\d+),(\d+),\d+>([^<]*)")
 OFFSET_RE = re.compile(r"^\s*\[offset\s*:\s*([+-]?\d+)\s*\]\s*$", re.IGNORECASE)
 METADATA_RE = re.compile(r"^\s*\[[a-z]{2,8}\s*:.*\]\s*$", re.IGNORECASE)
+CREDIT_LINE_RE = re.compile(
+    r"^\s*(?:(?:作词|作曲|编曲|制作人|混音|母带|录音|统筹|出品|发行|监制|和声|吉他|贝斯|鼓|弦乐|词|曲|プロデューサー|作詞|作曲|編曲|Lyrics\s*by|Composed\s*by|Produced\s*by|Arranged\s*by)\s*[:：]|\[(?:Verse|Chorus|Hook|Bridge|Intro|Outro|Pre-Chorus|Interlude|Instrumental|Solo|Guitar\s*Solo)[^\]]*\]\s*$)",
+    re.IGNORECASE,
+)
+
+
+def _is_cjk_char(ch: str) -> bool:
+    code = ord(ch)
+    return (
+        0x4E00 <= code <= 0x9FFF
+        or 0x3400 <= code <= 0x4DBF
+        or 0x3040 <= code <= 0x30FF
+        or 0xAC00 <= code <= 0xD7AF
+    )
+
+
+def _has_cjk(text: str) -> bool:
+    return any(_is_cjk_char(ch) for ch in text)
 
 NOISE_PATTERNS = [
     r"\(\s*(?:official|lyric|lyrics|music|audio|video|mv|visualizer|live|remaster(?:ed)?|hd|4k|hq)[^)]*\)",
@@ -176,18 +194,22 @@ def convert_netease_yrc_to_enhanced_lrc(yrc_text: str) -> str:
             piece = tok.group(3)
             if not piece:
                 continue
-            # Merge sub-word pieces if previous piece didn't end with space and current doesn't start with space
+            # Merge sub-word pieces (including contractions with ' or ’) when neither piece has CJK
             if (
                 grouped
                 and not grouped[-1][2].endswith((" ", "\t"))
                 and not piece.startswith((" ", "\t"))
-                and grouped[-1][2].strip().isascii()
-                and piece.strip().isascii()
+                and not _has_cjk(grouped[-1][2].strip())
+                and not _has_cjk(piece.strip())
             ):
                 prev_start, _prev_end, prev_text = grouped[-1]
                 grouped[-1] = (prev_start, w_end, prev_text + piece)
             else:
                 grouped.append((w_start, w_end, piece))
+
+        full_line_text = " ".join(p.strip() for _, _, p in grouped if p.strip()).strip()
+        if not full_line_text or CREDIT_LINE_RE.match(full_line_text):
+            continue
 
         parts: list[str] = [format_lrc_Time(line_start_ms / 1000.0, inline=False)]
         last_end = (line_start_ms + line_dur_ms) / 1000.0
@@ -472,6 +494,8 @@ def parse_lrc(lrc: str, key_name: str = "t") -> list[dict]:
             continue
         raw_lyric = raw[stamps[-1].end():].strip()
         clean_lyric = re.sub(r"\s+", " ", INLINE_WORD_STAMP.sub(" ", raw_lyric)).strip()
+        if clean_lyric and CREDIT_LINE_RE.match(clean_lyric):
+            continue
         for stamp in stamps:
             minutes = int(stamp.group(1))
             seconds = float(stamp.group(2).replace(":", "."))
@@ -825,7 +849,7 @@ def save_lrc_for_local_track(audio_path: str, raw_text: str, is_synced: bool) ->
         return str(fallback)
 
 
-def run_save_lrc_mode(args: list[str]) -> None:
+def run_save_lrc_mode(args: list[str], upgrade_only: bool = False) -> None:
     audio_path = args[0].strip() if len(args) > 0 else ""
     title = args[1].strip() if len(args) > 1 else ""
     artist = args[2].strip() if len(args) > 2 else ""
@@ -833,7 +857,7 @@ def run_save_lrc_mode(args: list[str]) -> None:
     album = args[4].strip() if len(args) > 4 else ""
 
     if not audio_path or not title:
-        emit({"status": "not_found", "path": "", "synced": False, "lines": []})
+        emit({"status": "not_found", "path": "", "synced": False, "wordSynced": False, "lines": []})
         return
 
     try:
@@ -842,13 +866,21 @@ def run_save_lrc_mode(args: list[str]) -> None:
         duration = None
 
     try:
-        raw_text, is_synced = find_lyrics_raw(title, artist, album, duration)
+        if upgrade_only:
+            raw_text, is_synced, is_word_synced = fetch_from_netease(
+                title, artist, duration, verbatim_only=True, timeout=5.0
+            )
+            if not (raw_text and is_word_synced):
+                emit({"status": "not_found", "path": "", "synced": False, "wordSynced": False, "lines": []})
+                return
+        else:
+            raw_text, is_synced = find_lyrics_raw(title, artist, album, duration)
     except Exception as exc:
-        emit({"status": "error", "message": str(exc), "path": "", "synced": False, "lines": []})
+        emit({"status": "error", "message": str(exc), "path": "", "synced": False, "wordSynced": False, "lines": []})
         return
 
     if not raw_text:
-        emit({"status": "not_found", "path": "", "synced": False, "lines": []})
+        emit({"status": "not_found", "path": "", "synced": False, "wordSynced": False, "lines": []})
         return
 
     if is_synced:
@@ -857,7 +889,7 @@ def run_save_lrc_mode(args: list[str]) -> None:
         lines = parse_plain(raw_text, duration=duration, key_name="time")
 
     if not lines:
-        emit({"status": "not_found", "path": "", "synced": False, "lines": []})
+        emit({"status": "not_found", "path": "", "synced": False, "wordSynced": False, "lines": []})
         return
 
     saved_path = save_lrc_for_local_track(audio_path, raw_text, is_synced)
@@ -872,8 +904,8 @@ def run_save_lrc_mode(args: list[str]) -> None:
 
 def main() -> None:
     args = sys.argv[1:]
-    if args and args[0] == "--save-lrc":
-        run_save_lrc_mode(args[1:])
+    if args and args[0] in ("--save-lrc", "--upgrade-word-sync"):
+        run_save_lrc_mode(args[1:], upgrade_only=(args[0] == "--upgrade-word-sync"))
         return
 
     title = args[0].strip() if len(args) > 0 else ""

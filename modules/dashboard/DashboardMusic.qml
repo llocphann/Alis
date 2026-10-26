@@ -82,6 +82,23 @@ Item {
         ? true
         : Boolean(backend.localLyricsSynced ?? true)
     readonly property bool hasLyrics: effectiveLyricsLines.some(line => String(line.text ?? "").trim().length > 0)
+    onEffectiveLyricsActiveIndexChanged: {
+        if (root.presentationActive && lyricsList.currentIndex !== root.effectiveLyricsActiveIndex)
+            lyricsList.currentIndex = root.effectiveLyricsActiveIndex
+    }
+    onEffectiveLyricsLinesChanged: {
+        Qt.callLater(() => {
+            if (root.presentationActive)
+                lyricsList.currentIndex = root.effectiveLyricsActiveIndex
+        })
+    }
+    Timer {
+        id: onlineLyricsPositionTimer
+        interval: 480
+        repeat: true
+        running: root.presentationActive && root._useOnlineLyrics && root.effectiveLyricsPlaying
+        onTriggered: MprisController.activePlayer?.positionChanged()
+    }
     readonly property var results: {
         if (sourceMode === "queue") {
             const entries = (backend.activeQueue ?? []).map((track, index) => ({
@@ -558,8 +575,8 @@ Item {
             readonly property int shownColumns: root.hasLyrics ? 4 : 3
             readonly property real mediaColumnWidth: Math.min(380, Math.max(315, width * .29))
             readonly property real remainingWidth: width - spacing * (shownColumns - 1) - mediaColumnWidth
-            readonly property real libraryWidth: remainingWidth * (root.hasLyrics ? .32 : .34)
-            readonly property real resultsWidth: remainingWidth * (root.hasLyrics ? .45 : .66)
+            readonly property real libraryWidth: remainingWidth * (root.hasLyrics ? .224 : .34)
+            readonly property real resultsWidth: remainingWidth * (root.hasLyrics ? .315 : .66)
             readonly property real lyricsWidth: root.hasLyrics
                 ? Math.max(0, remainingWidth - libraryWidth - resultsWidth) : 0
             Pane {
@@ -938,7 +955,7 @@ Item {
                         nextLineTime: (index + 1 < root.effectiveLyricsLines.length)
                             ? Number(root.effectiveLyricsLines[index + 1]?.time ?? -1)
                             : -1
-                        active: index === ListView.view.currentIndex
+                        active: root.presentationActive && index === root.effectiveLyricsActiveIndex
                         playing: root.presentationActive && root.effectiveLyricsPlaying
                         synced: root.effectiveLyricsSynced
                         position: root.effectiveLyricsPosition
