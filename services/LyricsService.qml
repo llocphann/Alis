@@ -24,6 +24,7 @@ Singleton {
     readonly property int after: 3
     readonly property int total: 7
     property var slots: ["", "", "", "", "", "", ""]
+    readonly property string currentLine: root.slots[root.before] ?? ""
 
     property int _requestSerial: 0
     property string _latestRequestId: ""
@@ -122,7 +123,7 @@ Singleton {
         root._latestRequestId = requestId;
         root._latestTrackKey = snapshot.key;
 
-        if (!snapshot.title || !snapshot.artist) {
+        if (!snapshot.title) {
             root._pendingRequest = null;
             if (lyricsProc.running)
                 lyricsProc.running = false;
@@ -276,8 +277,10 @@ Singleton {
             return;
 
         const reported = root.activePlayer?.position ?? 0;
-        root._lastReported = reported;
-        root._reanchor(Math.max(0, reported));
+        if (Math.abs(reported - root._lastReported) > 0.001 || root._anchorMs <= 0) {
+            root._lastReported = reported;
+            root._reanchor(Math.max(0, reported));
+        }
 
         const pos = root._estimatedPosition();
         const idx = root._indexForPosition(pos);

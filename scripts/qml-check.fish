@@ -31,7 +31,7 @@ if not test -d $scan_root
 end
 
 set -l parser ""
-for candidate in qmlformat qmlformat6 /usr/lib/qt6/bin/qmlformat /usr/lib/x86_64-linux-gnu/qt6/bin/qmlformat
+for candidate in qmlformat6 /usr/lib/qt6/bin/qmlformat /usr/lib/x86_64-linux-gnu/qt6/bin/qmlformat qmlformat
     if string match -q '/*' $candidate
         if test -x $candidate
             set parser $candidate

@@ -13,17 +13,32 @@ PathView {
     required property string searchText
     required property string currentWallpaperPath
     required property string monitorName
+    property string selectedColor: ""
+    property var colorTagsByPath: ({})
     property int maxVisibleItems: 5
     property real cardWidth: Math.round(240 * Appearance.fontSizeScale)
     property real cardHeight: Math.round(cardWidth * 9 / 16) + 40
+    property real _wheelAccum: 0
+    property double _lastWheelStepMs: 0
 
     signal applyRequested(string path)
 
     readonly property real itemWidth: cardWidth * .8
     readonly property var filteredEntries: {
         const query = searchText.trim().toLowerCase()
-        if (!query) return entries
-        return entries.filter(entry => entry.relativePath.toLowerCase().includes(query))
+        const color = selectedColor.trim().toLowerCase()
+        if (!query && !color) return entries
+        const tagMap = colorTagsByPath ?? {}
+        return entries.filter(entry => {
+            if (query && !entry.relativePath.toLowerCase().includes(query))
+                return false
+            if (color) {
+                const tags = tagMap[entry.path] ?? []
+                if (!Array.isArray(tags) || !tags.includes(color))
+                    return false
+            }
+            return true
+        })
     }
     readonly property int visibleItems: {
         let visible = Math.min(maxVisibleItems, filteredEntries.length)
@@ -40,8 +55,9 @@ PathView {
     cacheItemCount: 4
     interactive: count > 1
     snapMode: PathView.SnapToItem
-    highlightMoveDuration: Appearance.animationsEnabled
-        ? Appearance.animation.elementMoveFast.duration : 0
+    maximumFlickVelocity: 1100
+    flickDeceleration: 2400
+    highlightMoveDuration: Appearance.animationsEnabled ? 220 : 0
     preferredHighlightBegin: 0.5
     preferredHighlightEnd: 0.5
     highlightRangeMode: PathView.StrictlyEnforceRange
@@ -103,6 +119,7 @@ PathView {
     Component.onDestruction: Wallpapers.cancelWallpaperPreview()
     onCurrentWallpaperPathChanged: Qt.callLater(syncCurrentIndexAndPreview)
     onSearchTextChanged: Qt.callLater(syncCurrentIndexAndPreview)
+    onSelectedColorChanged: Qt.callLater(syncCurrentIndexAndPreview)
     // The desktop always shows the highlighted card, however the highlight
     // moved — navigation, search filtering, or switching Static/Animated.
     onCurrentIndexChanged: previewDebounce.restart()
@@ -120,7 +137,21 @@ PathView {
     WheelHandler {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         onWheel: event => {
-            root.moveSelection(event.angleDelta.y > 0 ? -1 : 1)
+            const dx = Number(event.angleDelta.x ?? 0)
+            const dy = Number(event.angleDelta.y ?? 0)
+            const primary = Math.abs(dx) >= Math.abs(dy) ? dx : dy
+            if (primary === 0)
+                return
+            const now = Date.now()
+            if (now - root._lastWheelStepMs > 320)
+                root._wheelAccum = 0
+            root._wheelAccum += primary
+            if (Math.abs(root._wheelAccum) >= 90 && (now - root._lastWheelStepMs) >= 110) {
+                const step = root._wheelAccum > 0 ? -1 : 1
+                root._wheelAccum = 0
+                root._lastWheelStepMs = now
+                root.moveSelection(step)
+            }
             event.accepted = true
         }
     }

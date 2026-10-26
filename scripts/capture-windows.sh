@@ -115,7 +115,7 @@ restore_clipboard_file() {
 saved_clip_mime="$(select_clipboard_mime)"
 saved_clip_file="$state_dir/clipboard.bin"
 if [[ -n "$saved_clip_mime" ]]; then
-  if ! "$wl_paste_bin" --type "$saved_clip_mime" >"$saved_clip_file" 2>/dev/null; then
+  if ! "$wl_paste_bin" --no-newline --type "$saved_clip_mime" >"$saved_clip_file" 2>/dev/null; then
     saved_clip_mime=""
     : >"$saved_clip_file"
   fi
@@ -251,7 +251,7 @@ done
 current_clip_file="$state_dir/current-clipboard.png"
 current_clip_hash=""
 if "$wl_paste_bin" -l 2>/dev/null | /usr/bin/grep -Fqx "image/png"; then
-  if "$wl_paste_bin" --type "image/png" >"$current_clip_file" 2>/dev/null; then
+  if "$wl_paste_bin" --no-newline --type "image/png" >"$current_clip_file" 2>/dev/null; then
     current_clip_hash="$("$sha256_bin" "$current_clip_file" | cut -d' ' -f1)"
   fi
 fi

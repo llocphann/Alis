@@ -892,7 +892,11 @@ fn status_payload_mode_with_art(
     include_queue: bool,
     art_lookup: &mut ArtLookup,
 ) -> Result<Value> {
-    let status = pairs(&client.command("status", std::iter::empty::<&str>())?);
+    let mut status = pairs(&client.command("status", std::iter::empty::<&str>())?);
+    if status.get("consume").map(String::as_str) == Some("1") {
+        let _ = client.command("consume", ["0"]);
+        status.insert("consume".into(), "0".into());
+    }
     let current_records = records(
         &client.command("currentsong", std::iter::empty::<&str>())?,
         "file",
@@ -1240,7 +1244,7 @@ fn handle_operation(
         "command" => {
             const ALLOWED: &[&str] = &[
                 "next", "previous", "stop", "play", "pause", "seekcur", "setvol", "random",
-                "repeat", "single", "update", "delete", "deleteid", "clear",
+                "repeat", "single", "consume", "update", "delete", "deleteid", "clear",
             ];
             let name = param_string(params, "name")?;
             if !ALLOWED.contains(&name.as_str()) {
@@ -1257,6 +1261,13 @@ fn handle_operation(
                     other => other.to_string(),
                 })
                 .collect::<Vec<_>>();
+            if name == "repeat" && args.len() >= 2 {
+                client.command_batch(&[
+                    command_line("repeat", [&args[0]]),
+                    command_line("single", [&args[1]]),
+                ])?;
+                return Ok(json!({"ok": true, "lines": []}));
+            }
             let lines = client.command(&name, &args)?;
             Ok(json!({"ok": true, "lines": lines}))
         }
@@ -1640,7 +1651,7 @@ fn run_compat(args: &[String]) -> i32 {
                 }
                 const ALLOWED: &[&str] = &[
                     "next", "previous", "stop", "play", "pause", "seekcur", "setvol", "random",
-                    "repeat", "single", "update", "delete", "deleteid", "clear",
+                    "repeat", "single", "consume", "update", "delete", "deleteid", "clear",
                 ];
                 let name = &rest[0];
                 if !ALLOWED.contains(&name.as_str()) {
@@ -1656,6 +1667,13 @@ fn run_compat(args: &[String]) -> i32 {
                         other => other.to_string(),
                     })
                     .collect::<Vec<_>>();
+                if name == "repeat" && command_args.len() >= 2 {
+                    client.command_batch(&[
+                        command_line("repeat", [&command_args[0]]),
+                        command_line("single", [&command_args[1]]),
+                    ])?;
+                    return Ok(json!({"ok": true, "lines": []}));
+                }
                 let lines = client.command(name, &command_args)?;
                 Ok(json!({"ok": true, "lines": lines}))
             }

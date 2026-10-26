@@ -388,6 +388,12 @@ def _music_root(client: MpdClient, override: str) -> str:
 
 def _status_payload(client: MpdClient, music_root: str) -> dict[str, Any]:
     status = _pairs(client.command("status"))
+    if status.get("consume") == "1":
+        try:
+            client.command("consume", 0)
+            status["consume"] = "0"
+        except MpdError:
+            pass
     current_records = _records(client.command("currentsong"))
     queue_records = _records(client.command("playlistinfo"))
     current = _track(current_records[0], music_root) if current_records else None
@@ -549,6 +555,7 @@ ALLOWED_COMMANDS = {
     "random",
     "repeat",
     "single",
+    "consume",
     "update",
     "delete",
     "deleteid",
@@ -623,6 +630,11 @@ def main() -> int:
                 args = json.loads(sys.argv[5])
                 if not isinstance(args, list):
                     return 2
+                if name == "repeat" and len(args) >= 2:
+                    client.command("repeat", args[0])
+                    lines = client.command("single", args[1])
+                    print(json.dumps({"ok": True, "lines": lines}, ensure_ascii=False, separators=(",", ":")))
+                    return 0
                 lines = client.command(name, *args)
                 print(json.dumps({"ok": True, "lines": lines}, ensure_ascii=False, separators=(",", ":")))
                 return 0

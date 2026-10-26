@@ -264,6 +264,8 @@ Singleton {
     function refreshLocalLyrics(): void {
         const path = String(currentPath ?? "").trim()
         _pendingLyricsPath = path
+        if (_lyricsDownloadProc.running)
+            _lyricsDownloadProc.running = false
         if (path.length === 0 || path.includes("://")) {
             if (_lyricsProc.running)
                 _lyricsProc.running = false
@@ -367,6 +369,10 @@ Singleton {
         }
 
         if (event.payload && typeof event.payload === "object") {
+            if (root.mpdMutationPending) {
+                statusRefreshTimer.restart()
+                return
+            }
             root._applyPayload(event.payload, false)
             return
         }
@@ -790,21 +796,18 @@ Singleton {
     function toggleShuffle(): void {
         const target = !shuffleMode
         shuffleMode = target
-        const player = mprisPlayer
-        if (player && (player.shuffleSupported ?? false) && (player.canControl ?? false)) {
-            player.shuffle = target
-            root._scheduleStatusFallback()
-            return
-        }
         _sendMpd("random", [target ? 1 : 0])
     }
 
-    function cycleRepeatMode(): void {
-        const target = (repeatMode + 1) % 3
+    function setRepeatMode(mode: int): void {
+        const target = ((Number(mode) || 0) % 3 + 3) % 3
         repeatMode = target
         // MPD expresses track repeat as repeat+single and queue repeat as repeat.
-        _sendMpd("repeat", [target === 0 ? 0 : 1])
-        _sendMpd("single", [target === 1 ? 1 : 0])
+        _sendMpd("repeat", [target === 0 ? 0 : 1, target === 1 ? 1 : 0])
+    }
+
+    function cycleRepeatMode(): void {
+        setRepeatMode((repeatMode + 1) % 3)
     }
 
     function stop(): void {
@@ -1012,6 +1015,27 @@ Singleton {
                         root.localLyricsPath = String(payload.path ?? "")
                         root.localLyricsSynced = payload.synced === true
                         root.localLyricsLines = payload.lines ?? []
+                        if (root.localLyricsStatus === "not_found"
+                                && !requestedPath.includes("://")
+                                && root.currentTitle.trim().length > 0
+                                && (Quickshell.env("FIXTURE_PORT") ?? "").length === 0) {
+                            root.localLyricsStatus = "loading"
+                            if (_lyricsDownloadProc.running)
+                                _lyricsDownloadProc.running = false
+                            _lyricsDownloadProc.requestedPath = requestedPath
+                            _lyricsDownloadProc.output = ""
+                            _lyricsDownloadProc.command = [
+                                "/usr/bin/python3",
+                                `${Directories.scriptsPath}/lyrics/lyrics.py`,
+                                "--save-lrc",
+                                requestedPath,
+                                root.currentTitle,
+                                root.currentArtist,
+                                String(Math.round(root.currentDuration || 0)),
+                                root.currentAlbum
+                            ]
+                            _lyricsDownloadProc.running = true
+                        }
                     } catch (e) {
                         root._clearLocalLyrics("error")
                     }
@@ -1019,6 +1043,37 @@ Singleton {
             }
             if (root._pendingLyricsPath.length > 0)
                 Qt.callLater(root._startPendingLyrics)
+        }
+    }
+
+    Process {
+        id: _lyricsDownloadProc
+        property string requestedPath: ""
+        property string output: ""
+
+        stdout: StdioCollector {
+            onStreamFinished: _lyricsDownloadProc.output = text ?? ""
+        }
+
+        onStarted: _lyricsDownloadProc.output = ""
+
+        onExited: (code, _status) => {
+            const requestedPath = _lyricsDownloadProc.requestedPath
+            if (requestedPath !== root.currentPath)
+                return
+            if (code !== 0) {
+                root._clearLocalLyrics("not_found")
+                return
+            }
+            try {
+                const payload = JSON.parse(_lyricsDownloadProc.output || "{}")
+                root.localLyricsStatus = String(payload.status ?? "not_found")
+                root.localLyricsPath = String(payload.path ?? "")
+                root.localLyricsSynced = payload.synced === true
+                root.localLyricsLines = payload.lines ?? []
+            } catch (e) {
+                root._clearLocalLyrics("not_found")
+            }
         }
     }
 

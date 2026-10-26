@@ -1552,7 +1552,7 @@ Scope {
                     && GlobalStates.resolveOutputName(GlobalStates.wallpaperSelectorTargetMonitor,[])===window.outputName
                 edgeInsets:window.bodyInsets(edge,along,span)
                 readonly property real contentWidth:Math.min(1080,window.width*.9)
-                readonly property real contentHeight:Math.min(320,window.height*.65)
+                readonly property real contentHeight:Math.min(348,window.height*.66)
                 span:Geometry.horizontal(edge) ? contentWidth : contentHeight
                 depth:Geometry.horizontal(edge) ? contentHeight : contentWidth
                 along:window.positionAlong(identity,edge,span,(Geometry.horizontal(edge) ? window.width : window.height)/2-span/2)

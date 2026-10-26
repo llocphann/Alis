@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Read local sidecar lyrics for the Hadalis MPD Music tab."""
 from __future__ import annotations
+import hashlib
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -11,11 +13,17 @@ OFFSET_RE = re.compile(r"^\[offset:([+-]?\d+)\]$", re.IGNORECASE)
 META_RE = re.compile(r"^\[(?:ar|al|ti|by|re|ve|length):", re.IGNORECASE)
 
 def candidates(track: Path) -> list[Path]:
+    fallback_dir = Path(
+        os.environ.get("XDG_DATA_HOME") or (Path.home() / ".local" / "share")
+    ) / "alis" / "lyrics"
+    digest = hashlib.sha1(str(track).encode("utf-8", "replace")).hexdigest()[:12]
     result = [
         track.with_suffix(".lrc"),
         Path(str(track) + ".lrc"),
         track.with_suffix(".txt"),
         Path(str(track) + ".txt"),
+        fallback_dir / f"{track.stem}-{digest}.lrc",
+        fallback_dir / f"{track.stem}-{digest}.txt",
     ]
     seen: set[str] = set()
     unique: list[Path] = []

@@ -30,15 +30,6 @@ Item {
     readonly property bool downloaded: MediaArtwork.ready
     property string displayedArtFilePath: MediaArtwork.displaySource
 
-    // Cava visualizer
-    CavaProcess {
-        id: cavaProcess
-        active: root.presentationActive && root.hasPlayer
-            && (root.player?.isPlaying ?? false) && Appearance.effectsEnabled
-    }
-
-    property list<real> visualizerPoints: cavaProcess.points
-
     function checkAndDownloadArt() {
         MediaArtwork.refresh()
     }
@@ -133,22 +124,6 @@ Item {
                 GradientStop { position: 0.3; color: ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.4) }
                 GradientStop { position: 1.0; color: ColorUtils.transparentize(blendedColors?.colLayer0 ?? Appearance.colors.colLayer0, 0.2) }
             }
-        }
-
-        // Visualizer at bottom
-        WaveVisualizer {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: 30
-            live: root.player?.isPlaying ?? false
-            points: root.visualizerPoints
-            maxVisualizerValue: 1000
-            smoothing: 2
-            color: ColorUtils.transparentize(
-                Appearance.alisEverywhere ? root.jiraColPrimary : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary),
-                0.6
-            )
         }
 
         RowLayout {

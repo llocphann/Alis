@@ -424,6 +424,8 @@ Item {
         return earliest
     }
     function scrollWorkingHours(): void {
+        if (!root || typeof root.earliestWeekEventMinutes !== "function" || !viewport)
+            return
         const earliestMin = root.earliestWeekEventMinutes()
         const targetHour = Math.floor(earliestMin / 60)
         const targetY = targetHour <= 0 ? 0 : Math.max(0, targetHour * root.hourHeight - 10)

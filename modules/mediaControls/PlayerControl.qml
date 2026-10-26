@@ -230,9 +230,39 @@ Item {
         }
     }
 
+    property bool _lyricsSubscribed: false
+    readonly property bool _wantOnlineLyrics: root.presentationActive
+        && !root.usingPlaybackAdapter
+        && root.player !== null
+        && root.player === MprisController.activePlayer
+    readonly property string effectiveOnlineLyricLine: {
+        if (!root._wantOnlineLyrics || LyricsService.status !== "ok")
+            return ""
+        return String(LyricsService.currentLine ?? "").trim()
+    }
+    function _syncLyricsSubscription(): void {
+        const want = root._wantOnlineLyrics
+        if (want === root._lyricsSubscribed)
+            return
+        root._lyricsSubscribed = want
+        if (want)
+            LyricsService.subscribe()
+        else
+            LyricsService.unsubscribe()
+    }
+    on_WantOnlineLyricsChanged: root._syncLyricsSubscription()
+
     Component.onCompleted: {
         if (root.resolverDisplaySource && root.resolverDisplaySource.length > 0)
             root.displayedArtFilePath = root.resolverDisplaySource
+        root._syncLyricsSubscription()
+    }
+
+    Component.onDestruction: {
+        if (root._lyricsSubscribed) {
+            root._lyricsSubscribed = false
+            LyricsService.unsubscribe()
+        }
     }
 
     Timer {
@@ -405,6 +435,20 @@ Item {
                     animateChange: true
                     animationDistanceX: root.slideDirection * 8
                     animationDistanceY: 0
+                }
+
+                // Online synced lyric line (for streaming players without saving local .lrc)
+                StyledText {
+                    Layout.fillWidth: true
+                    text: root.effectiveOnlineLyricLine
+                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.italic: true
+                    color: blendedColors?.colPrimary ?? Appearance.colors.colPrimary
+                    elide: Text.ElideRight
+                    visible: text !== ""
+                    animateChange: true
+                    animationDistanceX: 0
+                    animationDistanceY: 4
                 }
 
                 Item { Layout.fillHeight: true }

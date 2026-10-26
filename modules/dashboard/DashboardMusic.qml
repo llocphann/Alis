@@ -43,7 +43,36 @@ Item {
     readonly property var tracks: backend.libraryTracks ?? []
     readonly property var genres: Library.genres(tracks)
     readonly property var folders: Library.roots(tracks)
-    readonly property bool hasLyrics: (backend.localLyricsLines ?? []).some(line => String(line.text ?? "").trim().length > 0)
+    property bool _lyricsSubscribed: false
+    function _syncOnlineLyricsSubscription(): void {
+        const want = root.presentationActive && root.backend === LocalMusic
+        if (want === root._lyricsSubscribed)
+            return
+        root._lyricsSubscribed = want
+        if (want)
+            LyricsService.subscribe()
+        else
+            LyricsService.unsubscribe()
+    }
+    Component.onDestruction: {
+        if (root._lyricsSubscribed) {
+            root._lyricsSubscribed = false
+            LyricsService.unsubscribe()
+        }
+    }
+    readonly property bool _useOnlineLyrics: root.backend === LocalMusic
+        && !(backend.localLyricsLines ?? []).some(line => String(line.text ?? "").trim().length > 0)
+        && MprisController.activePlayer !== null
+        && MprisController.activePlayer !== MprisController.mpdPlayer
+        && LyricsService.status === "ok"
+        && (LyricsService.lyricsLines ?? []).some(line => String(line.text ?? "").trim().length > 0)
+    readonly property var effectiveLyricsLines: root._useOnlineLyrics
+        ? (LyricsService.lyricsLines ?? [])
+        : (backend.localLyricsLines ?? [])
+    readonly property int effectiveLyricsActiveIndex: root._useOnlineLyrics
+        ? (LyricsService.activeIndex ?? -1)
+        : (backend.localLyricsActiveIndex ?? -1)
+    readonly property bool hasLyrics: effectiveLyricsLines.some(line => String(line.text ?? "").trim().length > 0)
     readonly property var results: {
         if (sourceMode === "queue") {
             const entries = (backend.activeQueue ?? []).map((track, index) => ({
@@ -119,6 +148,7 @@ Item {
         query = String(saved.query ?? "");
         selectedPlaylistName = String(saved.playlist ?? "");
         browserRestored = true;
+        root._syncOnlineLyricsSubscription();
     }
     onSourceModeChanged: {
         clearSelection();
@@ -296,12 +326,15 @@ Item {
         playlistDialogVisible = false;
         pendingPlaylistTracks = [];
     }
-    onPresentationActiveChanged: if (!presentationActive) {
-        queueCollapseTimer.stop();
-        queueExpanded = false;
-        contextMenu.close();
-        playlistDialogVisible = false;
-        pendingPlaylistTracks = [];
+    onPresentationActiveChanged: {
+        root._syncOnlineLyricsSubscription();
+        if (!presentationActive) {
+            queueCollapseTimer.stop();
+            queueExpanded = false;
+            contextMenu.close();
+            playlistDialogVisible = false;
+            pendingPlaylistTracks = [];
+        }
     }
 
     Timer {
@@ -882,9 +915,9 @@ Item {
                     anchors.fill: parent
                     clip: true
                     spacing: 12
-                    model: root.backend.localLyricsLines ?? []
+                    model: root.effectiveLyricsLines
                     ScrollBar.vertical: MusicScrollBar {}
-                    currentIndex: root.presentationActive ? (root.backend.localLyricsActiveIndex ?? -1) : -1
+                    currentIndex: root.presentationActive ? root.effectiveLyricsActiveIndex : -1
                     highlightRangeMode: ListView.ApplyRange
                     preferredHighlightBegin: height * .35
                     preferredHighlightEnd: height * .65

@@ -277,6 +277,7 @@ RippleButton {
             Loader { // Clipboard image preview
                 // Don't use Layout.fillWidth - let the image determine its own size
                 // Use rowLayout.width to avoid binding loop with contentColumn
+                Layout.alignment: Qt.AlignHCenter
                 active: root.imageEntry
                 sourceComponent: CliphistImage {
                     entry: root.cliphistRawString

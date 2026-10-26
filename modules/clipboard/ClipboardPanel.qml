@@ -280,7 +280,7 @@ Scope {
         updateFilteredModel()
         resetViewPosition()
         Qt.callLater(() => {
-            searchField.forceActiveFocus()
+            keyHandler.forceActiveFocus()
             root.resetViewPosition()
         })
     }
@@ -401,16 +401,24 @@ Scope {
                 }
 
                 if (event.key === Qt.Key_Escape) {
-                    GlobalStates.clipboardOpen = false
+                    if (searchField.activeFocus) {
+                        keyHandler.forceActiveFocus()
+                    } else {
+                        GlobalStates.clipboardOpen = false
+                    }
+                    event.accepted = true
+                } else if (event.key === Qt.Key_F && (event.modifiers & Qt.ControlModifier)) {
+                    searchField.forceActiveFocus()
+                    searchField.selectAll()
                     event.accepted = true
                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                     // Paste current entry and close
                     listView.activateCurrent()
                     event.accepted = true
-                } else if (event.key === Qt.Key_Down || event.key === Qt.Key_J) {
+                } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Right || event.key === Qt.Key_J || event.key === Qt.Key_L) {
                     listView.moveNext()
                     event.accepted = true
-                } else if (event.key === Qt.Key_Up || event.key === Qt.Key_K) {
+                } else if (event.key === Qt.Key_Up || event.key === Qt.Key_Left || event.key === Qt.Key_K || event.key === Qt.Key_H) {
                     listView.movePrevious()
                     event.accepted = true
                 } else if (event.key === Qt.Key_Delete && (event.modifiers & Qt.ShiftModifier)) {

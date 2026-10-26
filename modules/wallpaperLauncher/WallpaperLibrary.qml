@@ -11,12 +11,25 @@ Scope {
 
     property list<var> staticEntries: []
     property list<var> animatedEntries: []
+    property var colorTagsByPath: ({})
+    property var _lastScanRoots: []
     property bool scanning: false
     property string directory: ""
     property string _scanSignature: ""
     property var _pendingRefresh: null
 
     signal refreshed()
+
+    function ensureColorTags(): void {
+        if (colorTagsProcess.running || root._lastScanRoots.length === 0)
+            return
+        colorTagsProcess.exec([
+            "/usr/bin/python3",
+            `${Directories.scriptsPath}/colors/wallpaper-color-tags.py`,
+            "--roots",
+            ...root._lastScanRoots
+        ])
+    }
 
     function refresh(path: string, extraPaths = [], force = false): void {
         const cleanPath = FileUtils.trimFileProtocol(String(path ?? ""))
@@ -52,7 +65,9 @@ Scope {
 
         root.directory = cleanPath
         root._scanSignature = signature
+        root._lastScanRoots = roots
         root.scanning = true
+        colorTagsTimer.restart()
         scanProcess.exec([
             "find", ...roots, "-type", "f", "(",
             "-iname", "*.jpg", "-o", "-iname", "*.jpeg", "-o",
@@ -119,6 +134,26 @@ Scope {
             if (pending)
                 Qt.callLater(() => root.refresh(pending.path,
                     pending.extraPaths, pending.force))
+        }
+    }
+
+    Timer {
+        id: colorTagsTimer
+        interval: 600
+        repeat: false
+        onTriggered: root.ensureColorTags()
+    }
+
+    Process {
+        id: colorTagsProcess
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const parsed = JSON.parse(String(text ?? "{}").trim() || "{}")
+                    if (parsed && typeof parsed === "object")
+                        root.colorTagsByPath = Object.assign({}, root.colorTagsByPath, parsed)
+                } catch (e) {}
+            }
         }
     }
 }

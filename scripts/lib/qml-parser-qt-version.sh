@@ -11,6 +11,7 @@ resolve_cmd() {
     else
         command -v "$candidate" 2>/dev/null || true
     fi
+    return 0
 }
 
 extract_version() {
@@ -25,7 +26,9 @@ system_fallbacks="${HADALIS_QML_VERSION_SYSTEM_FALLBACKS:-1}"
 
 # qmlformat's own --version may be the formatter's tool version (for example
 # "qmlformat 1.0"), not the Qt runtime version. Prefer Qt installation tools.
-for candidate in     "$parser_dir/qtpaths6" "$parser_dir/qtpaths"     qtpaths6 qtpaths
+for candidate in \
+    "$parser_dir/qtpaths6" "$parser_dir/qtpaths" \
+    qtpaths6 qtpaths
 do
     resolved="$(resolve_cmd "$candidate")"
     [[ -n "$resolved" ]] || continue
@@ -36,7 +39,9 @@ do
     fi
 done
 
-for candidate in     "$parser_dir/qmake6" "$parser_dir/qmake"     qmake6 qmake
+for candidate in \
+    "$parser_dir/qmake6" "$parser_dir/qmake" \
+    qmake6 qmake
 do
     resolved="$(resolve_cmd "$candidate")"
     [[ -n "$resolved" ]] || continue

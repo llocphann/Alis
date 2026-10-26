@@ -71,6 +71,17 @@ def installed_revision(data_home):
         return ""
 
 
+def fetch_pinned_revision(target, remote, revision):
+    try:
+        run("git", "fetch", "--depth", "1", "origin", revision, cwd=target)
+    except subprocess.CalledProcessError:
+        sibling = ALIS_ROOT.parent / "Alis-Companion"
+        if remote == CANONICAL_REMOTE and (sibling / ".git").exists():
+            run("git", "fetch", "--depth", "1", str(sibling), revision, cwd=target)
+        else:
+            raise
+
+
 def source_checkout(cache, remote, revision):
     # A private, dedicated checkout: never reset the owner's repository.
     checkout = cache / "source"
@@ -83,14 +94,14 @@ def source_checkout(cache, remote, revision):
             raise CompanionInstallError("Refusing to update an unexpected Companion remote")
         if run("git", "status", "--porcelain", "--untracked-files=all", cwd=checkout, capture=True):
             raise CompanionInstallError("Managed Companion checkout has local modifications; refusing overwrite")
-        run("git", "fetch", "--depth", "1", "origin", revision, cwd=checkout)
+        fetch_pinned_revision(checkout, remote, revision)
         run("git", "checkout", "--detach", revision, cwd=checkout)
     else:
         with tempfile.TemporaryDirectory(prefix=".source-", dir=cache) as temporary:
             target = Path(temporary) / "repo"
             run("git", "clone", "--no-checkout", "--depth", "1",
                 "--single-branch", "--branch", "main", remote, str(target))
-            run("git", "fetch", "--depth", "1", "origin", revision, cwd=target)
+            fetch_pinned_revision(target, remote, revision)
             run("git", "checkout", "--detach", revision, cwd=target)
             target.rename(checkout)
     if run("git", "rev-parse", "HEAD", cwd=checkout, capture=True) != revision:

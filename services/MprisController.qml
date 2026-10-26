@@ -1503,19 +1503,44 @@ Singleton {
 			root.activePlayer.volume = clamped;
 	}
 
+	property var _softwareLoopStates: ({})
+	property var _softwareLoopLastPositions: ({})
+
 	function _isYtMusicOptionTarget(player): bool {
 		return root._isYtMusicMpv(player) && !!YtMusic.currentVideoId;
 	}
 
+	function _isMpdOptionTarget(player): bool {
+		return !!(player && root._isMpdMprisPlayer(player) && LocalMusic.available);
+	}
+
+	function _softwareLoopSupported(player): bool {
+		return !!(player && !player.loopSupported && (player.canControl || player.canSeek || player.canTogglePlaying));
+	}
+
 	function loopSupportedForPlayer(player): bool {
 		if (root._isYtMusicOptionTarget(player)) return true;
-		return !!(player && player.loopSupported && player.canControl);
+		if (root._isMpdOptionTarget(player)) return true;
+		if (player && player.loopSupported && player.canControl) return true;
+		return root._softwareLoopSupported(player);
 	}
 	function loopStateForPlayer(player): var {
 		if (root._isYtMusicOptionTarget(player)) {
 			if (YtMusic.repeatMode === 1) return MprisLoopState.Track;
 			if (YtMusic.repeatMode === 2) return MprisLoopState.Playlist;
 			return MprisLoopState.None;
+		}
+		if (root._isMpdOptionTarget(player)) {
+			if (LocalMusic.repeatMode === 1) return MprisLoopState.Track;
+			if (LocalMusic.repeatMode === 2) return MprisLoopState.Playlist;
+			return MprisLoopState.None;
+		}
+		if (player && player.loopSupported) {
+			return player?.loopState ?? MprisLoopState.None;
+		}
+		if (root._softwareLoopSupported(player)) {
+			const key = root._playerTrackKey(player);
+			return root._softwareLoopStates?.[key] ?? MprisLoopState.None;
 		}
 		return player?.loopState ?? MprisLoopState.None;
 	}
@@ -1526,9 +1551,31 @@ Singleton {
 				: (requested === Number(MprisLoopState.Playlist) ? 2 : 0);
 			return true;
 		}
+		if (root._isMpdOptionTarget(player)) {
+			const requested = Number(loopState);
+			LocalMusic.setRepeatMode(
+				requested === Number(MprisLoopState.Track) ? 1
+					: (requested === Number(MprisLoopState.Playlist) ? 2 : 0)
+			);
+			return true;
+		}
 		if (!root.loopSupportedForPlayer(player)) return false;
-		player.loopState = loopState;
-		return true;
+		if (player && player.loopSupported && player.canControl) {
+			player.loopState = loopState;
+			return true;
+		}
+		if (root._softwareLoopSupported(player)) {
+			const key = root._playerTrackKey(player);
+			if (!key) return false;
+			const next = Object.assign({}, root._softwareLoopStates);
+			if (Number(loopState) === Number(MprisLoopState.None))
+				delete next[key];
+			else
+				next[key] = loopState;
+			root._softwareLoopStates = next;
+			return true;
+		}
+		return false;
 	}
 	function loopActiveForPlayer(player): bool {
 		return Number(root.loopStateForPlayer(player)) !== Number(MprisLoopState.None);
@@ -1546,17 +1593,63 @@ Singleton {
 		return root.setLoopStateForPlayer(player, next);
 	}
 
+	Timer {
+		id: _softwareLoopWatchTimer
+		interval: 450
+		repeat: true
+		running: Object.keys(root._softwareLoopStates ?? {}).length > 0
+		onTriggered: {
+			const states = root._softwareLoopStates ?? {};
+			const lastPositions = Object.assign({}, root._softwareLoopLastPositions ?? {});
+			for (const player of root.players) {
+				const key = root._playerTrackKey(player);
+				const mode = states[key];
+				if (!key || mode === undefined || Number(mode) === Number(MprisLoopState.None))
+					continue;
+				const length = Number(player?.length ?? 0);
+				const pos = Number(player?.position ?? 0);
+				const prevPos = Number(lastPositions[key] ?? 0);
+				if (Number.isFinite(pos) && pos > 0)
+					lastPositions[key] = pos;
+				if (!Number.isFinite(length) || length <= 2)
+					continue;
+				const nearEnd = Number.isFinite(pos) && pos >= length - 1.25;
+				const endedAtTail = !(player?.isPlaying ?? false) && prevPos >= length - 2.5;
+				if (nearEnd || endedAtTail) {
+					lastPositions[key] = 0;
+					if (Number(mode) === Number(MprisLoopState.Playlist)
+							&& !nearEnd && (player?.canGoNext ?? false)) {
+						player.next();
+					} else {
+						if (player?.canSeek ?? true)
+							player.position = 0;
+						if (!(player?.isPlaying ?? false) && (player?.canPlay ?? false))
+							player.play();
+					}
+				}
+			}
+			root._softwareLoopLastPositions = lastPositions;
+		}
+	}
+
 	function shuffleSupportedForPlayer(player): bool {
 		if (root._isYtMusicOptionTarget(player)) return true;
+		if (root._isMpdOptionTarget(player)) return true;
 		return !!(player && player.shuffleSupported && player.canControl);
 	}
 	function shuffleForPlayer(player): bool {
 		if (root._isYtMusicOptionTarget(player)) return YtMusic.shuffleMode;
+		if (root._isMpdOptionTarget(player)) return LocalMusic.shuffleMode;
 		return player?.shuffle ?? false;
 	}
 	function setShuffleForPlayer(player, shuffle: bool): bool {
 		if (root._isYtMusicOptionTarget(player)) {
 			YtMusic.shuffleMode = shuffle;
+			return true;
+		}
+		if (root._isMpdOptionTarget(player)) {
+			if (LocalMusic.shuffleMode !== shuffle)
+				LocalMusic.toggleShuffle();
 			return true;
 		}
 		if (!root.shuffleSupportedForPlayer(player)) return false;
