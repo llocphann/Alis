@@ -111,7 +111,7 @@ ContentPage {
                 DialogButton {
                     buttonText: Translation.tr("Refresh")
                     enabled: !AlisIntergration.managerBusy
-                    onClicked: { AlisIntergration.refresh(); AlisIntergration.refreshSystemStatus() }
+                    onClicked: { AlisIntergration.managerError = ""; AlisIntergration.refresh(); AlisIntergration.refreshSystemStatus() }
                 }
                 DialogButton {
                     buttonText: Translation.tr("Diagnostics")

@@ -93,6 +93,7 @@ Singleton {
         available = false
         loadFailed = false
         probe.running = true
+        refreshSystemStatus()
     }
     // Always reconcile installed helper and gateway state from the local
     // system. No network, system writes, authentication or auto-install.
