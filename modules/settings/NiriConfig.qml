@@ -1286,13 +1286,17 @@ ContentPage {
         columnSpacing: 14
         rowSpacing: 14
 
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        spacing: 14
+
     // =====================
     // DISPLAYS SECTION
     // =====================
     SettingsCardSection {
         Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
         settingsTaskSection: "displays"
         visible: true
         expanded: true
@@ -1514,6 +1518,175 @@ ContentPage {
                 }
             }
         }
+    }
+
+    // =====================
+    // WINDOW RULES SECTION
+    // =====================
+    SettingsCardSection {
+        Layout.fillWidth: true
+        settingsTaskSection: "rules"
+        visible: true
+        expanded: true
+        icon: "rounded_corner"
+        title: Translation.tr("Window Rules")
+
+        SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("Corner radius")
+                tooltip: Translation.tr("Rounding applied to window corners (0 = square)")
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    StyledSlider {
+                        id: cornerRadiusSlider
+                        Layout.fillWidth: true
+                        from: 0
+                        to: 32
+                        value: root.windowRulesData?.corner_radius ?? 16
+                        stepSize: 1
+                        configuration: StyledSlider.Configuration.S
+
+                        onMoved: {
+                            if (pressed) return
+                            root.setConfig("window-rules", "corner-radius", String(Math.round(value)))
+                        }
+                    }
+
+                    StyledText {
+                        text: Math.round(cornerRadiusSlider.value) + "px"
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.family: Appearance.font.family.monospace
+                        color: Appearance.colors.colSubtext
+                        Layout.preferredWidth: 35
+                        horizontalAlignment: Text.AlignRight
+                    }
+                }
+            }
+
+            SettingsDivider {}
+
+            ContentSubsection {
+                title: Translation.tr("Inactive window opacity")
+                tooltip: Translation.tr("Transparency of unfocused windows (1.0 = fully opaque)")
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    StyledSlider {
+                        id: inactiveOpacitySlider
+                        Layout.fillWidth: true
+                        from: 0
+                        to: 100
+                        value: Math.round((root.windowRulesData?.inactive_opacity ?? 0.9) * 100)
+                        stepSize: 5
+                        configuration: StyledSlider.Configuration.S
+
+                        onMoved: {
+                            if (pressed) return
+                            root.setConfig("window-rules", "inactive-opacity", (value / 100.0).toFixed(2))
+                        }
+                    }
+
+                    StyledText {
+                        text: (inactiveOpacitySlider.value / 100.0).toFixed(2)
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.family: Appearance.font.family.monospace
+                        color: Appearance.colors.colSubtext
+                        Layout.preferredWidth: 35
+                        horizontalAlignment: Text.AlignRight
+                    }
+                }
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "crop"
+                text: Translation.tr("Clip windows to rounded geometry")
+                checked: root.windowRulesData?.clip_to_geometry ?? true
+                onCheckedChanged: {
+                    if (!root.windowRulesReady) return
+                    root.setConfig("window-rules", "clip-to-geometry", checked ? "true" : "false")
+                }
+            }
+        }
+    }
+
+    // =====================
+    // CURSOR SECTION
+    // =====================
+    SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        settingsTaskSection: "input"
+        visible: true
+        expanded: true
+        icon: "point_scan"
+        title: Translation.tr("Cursor")
+
+        SettingsGroup {
+            ContentSubsection {
+                title: Translation.tr("Cursor theme")
+                visible: root.cursorThemes.length > 0
+
+                StyledComboBox {
+                    Layout.fillWidth: true
+                    model: root.cursorThemes
+                    currentIndex: root.cursorThemes.indexOf(root.cursorData?.theme ?? "")
+                    onActivated: root.setConfig("input", "cursor.xcursor-theme", model[currentIndex])
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Cursor size")
+                tooltip: Translation.tr("Size in pixels (typically 24 or 32)")
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    StyledSlider {
+                        id: cursorSizeSlider
+                        Layout.fillWidth: true
+                        from: 16
+                        to: 48
+                        value: root.cursorData?.size ?? 24
+                        stepSize: 2
+                        configuration: StyledSlider.Configuration.S
+
+                        onMoved: {
+                            if (pressed) return
+                            root.setConfig("input", "cursor.xcursor-size", String(Math.round(value)))
+                        }
+                    }
+
+                    StyledText {
+                        text: Math.round(cursorSizeSlider.value) + "px"
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.family: Appearance.font.family.monospace
+                        color: Appearance.colors.colSubtext
+                        Layout.preferredWidth: 35
+                        horizontalAlignment: Text.AlignRight
+                    }
+                }
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "keyboard_hide"
+                text: Translation.tr("Hide cursor while typing")
+                checked: root.cursorData?.hide_when_typing ?? true
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setBooleanConfig("input", "cursor.hide-when-typing", checked)
+                }
+            }
+        }
+    }
+
     }
 
     // =====================
@@ -1958,110 +2131,17 @@ ContentPage {
         }
     }
 
-    // =====================
-    // WINDOW RULES SECTION
-    // =====================
-    SettingsCardSection {
+    ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: 1
-        settingsTaskSection: "rules"
-        visible: true
-        expanded: true
-        icon: "rounded_corner"
-        title: Translation.tr("Window Rules")
-
-        SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Corner radius")
-                tooltip: Translation.tr("Rounding applied to window corners (0 = square)")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledSlider {
-                        id: cornerRadiusSlider
-                        Layout.fillWidth: true
-                        from: 0
-                        to: 32
-                        value: root.windowRulesData?.corner_radius ?? 16
-                        stepSize: 1
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("window-rules", "corner-radius", String(Math.round(value)))
-                        }
-                    }
-
-                    StyledText {
-                        text: Math.round(cornerRadiusSlider.value) + "px"
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 35
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-
-            SettingsDivider {}
-
-            ContentSubsection {
-                title: Translation.tr("Inactive window opacity")
-                tooltip: Translation.tr("Transparency of unfocused windows (1.0 = fully opaque)")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledSlider {
-                        id: inactiveOpacitySlider
-                        Layout.fillWidth: true
-                        from: 0
-                        to: 100
-                        value: Math.round((root.windowRulesData?.inactive_opacity ?? 0.9) * 100)
-                        stepSize: 5
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("window-rules", "inactive-opacity", (value / 100.0).toFixed(2))
-                        }
-                    }
-
-                    StyledText {
-                        text: (inactiveOpacitySlider.value / 100.0).toFixed(2)
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 35
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "crop"
-                text: Translation.tr("Clip windows to rounded geometry")
-                checked: root.windowRulesData?.clip_to_geometry ?? true
-                onCheckedChanged: {
-                    if (!root.windowRulesReady) return
-                    root.setConfig("window-rules", "clip-to-geometry", checked ? "true" : "false")
-                }
-            }
-        }
-    }
+        spacing: 14
 
     // =====================
     // KEYBOARD SECTION
     // =====================
     SettingsCardSection {
         Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
         settingsTaskSection: "input"
         visible: true
         expanded: true
@@ -2198,7 +2278,7 @@ ContentPage {
 
             ContentSubsection {
                 title: Translation.tr("Key repeat rate")
-                tooltip: Translation.tr("Characters per second when a key is held")
+                tooltip: Translation.tr("Characters per second when a key held")
 
                 ConfigSpinBox {
                     text: Translation.tr("Rate (chars/s)")
@@ -2213,6 +2293,359 @@ ContentPage {
                 }
             }
         }
+    }
+
+    // =====================
+    // GENERAL INPUT SECTION
+    // =====================
+    SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        settingsTaskSection: "input"
+        visible: true
+        expanded: true
+        icon: "settings_input_component"
+        title: Translation.tr("General Input")
+
+        SettingsGroup {
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "power_settings_new"
+                text: Translation.tr("Disable power key handling")
+                checked: root.generalInputData?.disable_power_key_handling ?? false
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setBooleanConfig("input", "disable-power-key-handling", checked)
+                }
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "history"
+                text: Translation.tr("Workspace auto back-and-forth")
+                checked: root.generalInputData?.workspace_auto_back_and_forth ?? false
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setBooleanConfig("input", "workspace-auto-back-and-forth", checked)
+                }
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "center_focus_strong"
+                text: Translation.tr("Warp pointer to focused window")
+                checked: root.generalInputData?.warp_mouse_to_focus ?? false
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setWarpMouseMode(checked ? (root.generalInputData?.warp_mouse_to_focus_mode ?? "separate") : "off")
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Warp mode")
+                visible: root.generalInputData?.warp_mouse_to_focus ?? false
+
+                StyledComboBox {
+                    Layout.fillWidth: true
+                    model: root.warpMouseModeOptions
+                    textRole: "displayName"
+                    currentIndex: root.choiceIndex(model, root.generalInputData?.warp_mouse_to_focus_mode ?? "separate")
+                    onActivated: root.setWarpMouseMode(model[currentIndex].value)
+                }
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "mouse"
+                text: Translation.tr("Focus follows mouse")
+                checked: root.generalInputData?.focus_follows_mouse ?? false
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setFocusFollowsMouse(checked)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Focus follows mouse threshold")
+                tooltip: Translation.tr("0% focuses only fully visible windows.")
+                visible: root.generalInputData?.focus_follows_mouse ?? false
+
+                ConfigSpinBox {
+                    text: Translation.tr("Max scroll (%)")
+                    value: root.generalInputData?.focus_follows_mouse_max_scroll ?? 0
+                    from: 0
+                    to: 100
+                    stepSize: 5
+                    onValueChanged: {
+                        if (!root.inputReady) return
+                        root.setFocusFollowsMouse(true, value)
+                    }
+                }
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                text: Translation.tr("Common niri options are validated; advanced options remain in raw KDL.")
+                wrapMode: Text.WordWrap
+                color: Appearance.colors.colSubtext
+                font.pixelSize: Appearance.font.pixelSize.small
+            }
+        }
+    }
+
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredWidth: 1
+        spacing: 14
+
+    // =====================
+    // MOUSE SECTION
+    // =====================
+    SettingsCardSection {
+        Layout.fillWidth: true
+        settingsTaskSection: "input"
+        visible: true
+        expanded: true
+        icon: "mouse"
+        title: Translation.tr("Mouse")
+
+        SettingsGroup {
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "swipe"
+                    text: Translation.tr("Natural scroll")
+                    checked: root.mouseData?.natural_scroll ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "mouse.natural-scroll", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "left_click"
+                    text: Translation.tr("Left-handed")
+                    checked: root.mouseData?.left_handed ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "mouse.left-handed", checked)
+                    }
+                }
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "ads_click"
+                text: Translation.tr("Middle-click emulation")
+                checked: root.mouseData?.middle_emulation ?? false
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setBooleanConfig("input", "mouse.middle-emulation", checked)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Mouse acceleration")
+
+                ConfigSelectionArray {
+                    currentValue: root.mouseData?.accel_profile ?? "flat"
+                    options: [
+                        { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
+                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
+                    ]
+                    onSelected: newValue => {
+                        root.setConfig("input", "mouse.accel-profile", newValue)
+                    }
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Mouse scrolling")
+
+                StyledComboBox {
+                    Layout.fillWidth: true
+                    model: root.pointerScrollMethodOptions
+                    textRole: "displayName"
+                    currentIndex: root.choiceIndex(model, root.mouseData?.scroll_method ?? "no-scroll")
+                    onActivated: root.setConfig("input", "mouse.scroll-method", model[currentIndex].value)
+                }
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "lock"
+                text: Translation.tr("Scroll button lock")
+                checked: root.mouseData?.scroll_button_lock ?? false
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setBooleanConfig("input", "mouse.scroll-button-lock", checked)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Mouse speed")
+                tooltip: Translation.tr("Acceleration speed. Negative = slower, positive = faster.")
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    StyledSlider {
+                        id: mouseSpeedSlider
+                        Layout.fillWidth: true
+                        from: -100
+                        to: 100
+                        value: Math.round((root.mouseData?.accel_speed ?? 0) * 100)
+                        stepSize: 5
+                        configuration: StyledSlider.Configuration.S
+
+                        onMoved: {
+                            if (pressed) return
+                            root.setConfig("input", "mouse.accel-speed", (value / 100.0).toFixed(2))
+                        }
+                    }
+
+                    StyledText {
+                        text: (mouseSpeedSlider.value / 100.0).toFixed(2)
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.family: Appearance.font.family.monospace
+                        color: Appearance.colors.colSubtext
+                        Layout.preferredWidth: 40
+                        horizontalAlignment: Text.AlignRight
+                    }
+                }
+            }
+        }
+    }
+
+    // =====================
+    // TRACKPOINT SECTION
+    // =====================
+    SettingsCardSection {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        settingsTaskSection: "input"
+        visible: true
+        expanded: true
+        icon: "joystick"
+        title: Translation.tr("Trackpoint")
+
+        SettingsGroup {
+            ConfigRow {
+                uniform: true
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "swap_vert"
+                    text: Translation.tr("Natural scroll")
+                    checked: root.trackpointData?.natural_scroll ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "trackpoint.natural-scroll", checked)
+                    }
+                }
+
+                SettingsSwitch {
+                    Layout.fillWidth: true
+                    buttonIcon: "left_click"
+                    text: Translation.tr("Left-handed")
+                    checked: root.trackpointData?.left_handed ?? false
+                    onCheckedChanged: {
+                        if (!root.inputReady) return
+                        root.setBooleanConfig("input", "trackpoint.left-handed", checked)
+                    }
+                }
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "ads_click"
+                text: Translation.tr("Middle-click emulation")
+                checked: root.trackpointData?.middle_emulation ?? false
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setBooleanConfig("input", "trackpoint.middle-emulation", checked)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Trackpoint acceleration")
+
+                ConfigSelectionArray {
+                    currentValue: root.trackpointData?.accel_profile ?? "flat"
+                    options: [
+                        { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
+                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
+                    ]
+                    onSelected: newValue => root.setConfig("input", "trackpoint.accel-profile", newValue)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Trackpoint scrolling")
+
+                StyledComboBox {
+                    Layout.fillWidth: true
+                    model: root.pointerScrollMethodOptions
+                    textRole: "displayName"
+                    currentIndex: root.choiceIndex(model, root.trackpointData?.scroll_method ?? "on-button-down")
+                    onActivated: root.setConfig("input", "trackpoint.scroll-method", model[currentIndex].value)
+                }
+            }
+
+            SettingsSwitch {
+                Layout.fillWidth: true
+                buttonIcon: "lock"
+                text: Translation.tr("Scroll button lock")
+                checked: root.trackpointData?.scroll_button_lock ?? false
+                onCheckedChanged: {
+                    if (!root.inputReady) return
+                    root.setBooleanConfig("input", "trackpoint.scroll-button-lock", checked)
+                }
+            }
+
+            ContentSubsection {
+                title: Translation.tr("Trackpoint speed")
+                tooltip: Translation.tr("Acceleration speed. Negative = slower, positive = faster.")
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    StyledSlider {
+                        id: trackpointSpeedSlider
+                        Layout.fillWidth: true
+                        from: -100
+                        to: 100
+                        value: Math.round((root.trackpointData?.accel_speed ?? 0) * 100)
+                        stepSize: 5
+                        configuration: StyledSlider.Configuration.S
+
+                        onMoved: {
+                            if (pressed) return
+                            root.setConfig("input", "trackpoint.accel-speed", (value / 100.0).toFixed(2))
+                        }
+                    }
+
+                    StyledText {
+                        text: (trackpointSpeedSlider.value / 100.0).toFixed(2)
+                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.family: Appearance.font.family.monospace
+                        color: Appearance.colors.colSubtext
+                        Layout.preferredWidth: 40
+                        horizontalAlignment: Text.AlignRight
+                    }
+                }
+            }
+        }
+    }
+
     }
 
     // =====================
@@ -2432,426 +2865,6 @@ ContentPage {
     }
 
     // =====================
-    // MOUSE SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "input"
-        visible: true
-        expanded: true
-        icon: "mouse"
-        title: Translation.tr("Mouse")
-
-        SettingsGroup {
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "swipe"
-                    text: Translation.tr("Natural scroll")
-                    checked: root.mouseData?.natural_scroll ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "mouse.natural-scroll", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "left_click"
-                    text: Translation.tr("Left-handed")
-                    checked: root.mouseData?.left_handed ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "mouse.left-handed", checked)
-                    }
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "ads_click"
-                text: Translation.tr("Middle-click emulation")
-                checked: root.mouseData?.middle_emulation ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "mouse.middle-emulation", checked)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Mouse acceleration")
-
-                ConfigSelectionArray {
-                    currentValue: root.mouseData?.accel_profile ?? "flat"
-                    options: [
-                        { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
-                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
-                    ]
-                    onSelected: newValue => {
-                        root.setConfig("input", "mouse.accel-profile", newValue)
-                    }
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Mouse scrolling")
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.pointerScrollMethodOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.mouseData?.scroll_method ?? "no-scroll")
-                    onActivated: root.setConfig("input", "mouse.scroll-method", model[currentIndex].value)
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "lock"
-                text: Translation.tr("Scroll button lock")
-                checked: root.mouseData?.scroll_button_lock ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "mouse.scroll-button-lock", checked)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Mouse speed")
-                tooltip: Translation.tr("Acceleration speed. Negative = slower, positive = faster.")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledSlider {
-                        id: mouseSpeedSlider
-                        Layout.fillWidth: true
-                        from: -100
-                        to: 100
-                        value: Math.round((root.mouseData?.accel_speed ?? 0) * 100)
-                        stepSize: 5
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("input", "mouse.accel-speed", (value / 100.0).toFixed(2))
-                        }
-                    }
-
-                    StyledText {
-                        text: (mouseSpeedSlider.value / 100.0).toFixed(2)
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 40
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-        }
-    }
-
-    // =====================
-    // TRACKPOINT SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "input"
-        visible: true
-        expanded: true
-        icon: "joystick"
-        title: Translation.tr("Trackpoint")
-
-        SettingsGroup {
-            ConfigRow {
-                uniform: true
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "swap_vert"
-                    text: Translation.tr("Natural scroll")
-                    checked: root.trackpointData?.natural_scroll ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "trackpoint.natural-scroll", checked)
-                    }
-                }
-
-                SettingsSwitch {
-                    Layout.fillWidth: true
-                    buttonIcon: "left_click"
-                    text: Translation.tr("Left-handed")
-                    checked: root.trackpointData?.left_handed ?? false
-                    onCheckedChanged: {
-                        if (!root.inputReady) return
-                        root.setBooleanConfig("input", "trackpoint.left-handed", checked)
-                    }
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "ads_click"
-                text: Translation.tr("Middle-click emulation")
-                checked: root.trackpointData?.middle_emulation ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "trackpoint.middle-emulation", checked)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Trackpoint acceleration")
-
-                ConfigSelectionArray {
-                    currentValue: root.trackpointData?.accel_profile ?? "flat"
-                    options: [
-                        { displayName: Translation.tr("Adaptive"), icon: "tune", value: "adaptive" },
-                        { displayName: Translation.tr("Flat"), icon: "horizontal_rule", value: "flat" }
-                    ]
-                    onSelected: newValue => root.setConfig("input", "trackpoint.accel-profile", newValue)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Trackpoint scrolling")
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.pointerScrollMethodOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.trackpointData?.scroll_method ?? "on-button-down")
-                    onActivated: root.setConfig("input", "trackpoint.scroll-method", model[currentIndex].value)
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "lock"
-                text: Translation.tr("Scroll button lock")
-                checked: root.trackpointData?.scroll_button_lock ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "trackpoint.scroll-button-lock", checked)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Trackpoint speed")
-                tooltip: Translation.tr("Acceleration speed. Negative = slower, positive = faster.")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledSlider {
-                        id: trackpointSpeedSlider
-                        Layout.fillWidth: true
-                        from: -100
-                        to: 100
-                        value: Math.round((root.trackpointData?.accel_speed ?? 0) * 100)
-                        stepSize: 5
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("input", "trackpoint.accel-speed", (value / 100.0).toFixed(2))
-                        }
-                    }
-
-                    StyledText {
-                        text: (trackpointSpeedSlider.value / 100.0).toFixed(2)
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 40
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-        }
-    }
-
-    // =====================
-    // CURSOR SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "input"
-        visible: true
-        expanded: true
-        icon: "point_scan"
-        title: Translation.tr("Cursor")
-
-        SettingsGroup {
-            ContentSubsection {
-                title: Translation.tr("Cursor theme")
-                visible: root.cursorThemes.length > 0
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.cursorThemes
-                    currentIndex: root.cursorThemes.indexOf(root.cursorData?.theme ?? "")
-                    onActivated: root.setConfig("input", "cursor.xcursor-theme", model[currentIndex])
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Cursor size")
-                tooltip: Translation.tr("Size in pixels (typically 24 or 32)")
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    StyledSlider {
-                        id: cursorSizeSlider
-                        Layout.fillWidth: true
-                        from: 16
-                        to: 48
-                        value: root.cursorData?.size ?? 24
-                        stepSize: 2
-                        configuration: StyledSlider.Configuration.S
-
-                        onMoved: {
-                            if (pressed) return
-                            root.setConfig("input", "cursor.xcursor-size", String(Math.round(value)))
-                        }
-                    }
-
-                    StyledText {
-                        text: Math.round(cursorSizeSlider.value) + "px"
-                        font.pixelSize: Appearance.font.pixelSize.smallest
-                        font.family: Appearance.font.family.monospace
-                        color: Appearance.colors.colSubtext
-                        Layout.preferredWidth: 35
-                        horizontalAlignment: Text.AlignRight
-                    }
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "keyboard_hide"
-                text: Translation.tr("Hide cursor while typing")
-                checked: root.cursorData?.hide_when_typing ?? true
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "cursor.hide-when-typing", checked)
-                }
-            }
-        }
-    }
-
-    // =====================
-    // GENERAL INPUT SECTION
-    // =====================
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.preferredWidth: 1
-        settingsTaskSection: "input"
-        visible: true
-        expanded: true
-        icon: "settings_input_component"
-        title: Translation.tr("General Input")
-
-        SettingsGroup {
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "power_settings_new"
-                text: Translation.tr("Disable power key handling")
-                checked: root.generalInputData?.disable_power_key_handling ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "disable-power-key-handling", checked)
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "history"
-                text: Translation.tr("Workspace auto back-and-forth")
-                checked: root.generalInputData?.workspace_auto_back_and_forth ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setBooleanConfig("input", "workspace-auto-back-and-forth", checked)
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "center_focus_strong"
-                text: Translation.tr("Warp pointer to focused window")
-                checked: root.generalInputData?.warp_mouse_to_focus ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setWarpMouseMode(checked ? (root.generalInputData?.warp_mouse_to_focus_mode ?? "separate") : "off")
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Warp mode")
-                visible: root.generalInputData?.warp_mouse_to_focus ?? false
-
-                StyledComboBox {
-                    Layout.fillWidth: true
-                    model: root.warpMouseModeOptions
-                    textRole: "displayName"
-                    currentIndex: root.choiceIndex(model, root.generalInputData?.warp_mouse_to_focus_mode ?? "separate")
-                    onActivated: root.setWarpMouseMode(model[currentIndex].value)
-                }
-            }
-
-            SettingsSwitch {
-                Layout.fillWidth: true
-                buttonIcon: "mouse"
-                text: Translation.tr("Focus follows mouse")
-                checked: root.generalInputData?.focus_follows_mouse ?? false
-                onCheckedChanged: {
-                    if (!root.inputReady) return
-                    root.setFocusFollowsMouse(checked)
-                }
-            }
-
-            ContentSubsection {
-                title: Translation.tr("Focus follows mouse threshold")
-                tooltip: Translation.tr("0% focuses only fully visible windows.")
-                visible: root.generalInputData?.focus_follows_mouse ?? false
-
-                ConfigSpinBox {
-                    text: Translation.tr("Max scroll (%)")
-                    value: root.generalInputData?.focus_follows_mouse_max_scroll ?? 0
-                    from: 0
-                    to: 100
-                    stepSize: 5
-                    onValueChanged: {
-                        if (!root.inputReady) return
-                        root.setFocusFollowsMouse(true, value)
-                    }
-                }
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                text: Translation.tr("Common niri options are validated; advanced options remain in raw KDL.")
-                wrapMode: Text.WordWrap
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.small
-            }
-        }
-    }
-
-    // =====================
     // ANIMATIONS SECTION
     // =====================
     SettingsCardSection {
@@ -2945,77 +2958,87 @@ ContentPage {
                         }
                     }
 
-                    StyledText {
-                        text: Translation.tr("Damping ratio")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
-                        visible: (animDelegate.springData?.mode ?? "spring") === "spring" && root.animationIsEnabled(animDelegate.springData)
-                    }
-
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 8
+                        spacing: 12
                         visible: (animDelegate.springData?.mode ?? "spring") === "spring" && root.animationIsEnabled(animDelegate.springData)
 
-                        StyledSlider {
-                            id: dampingSlider
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            from: 1
-                            to: 200
-                            value: Math.round((animDelegate.springData?.damping_ratio ?? 1.0) * 100)
-                            stepSize: 5
-                            configuration: StyledSlider.Configuration.S
+                            Layout.preferredWidth: 1
+                            spacing: 2
 
-                            onMoved: {
-                                if (pressed) return
-                                root.setConfig("animations", animDelegate.modelData + ".damping-ratio", (value / 100.0).toFixed(2))
+                            RowLayout {
+                                Layout.fillWidth: true
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: Translation.tr("Damping ratio")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: Appearance.colors.colSubtext
+                                    elide: Text.ElideRight
+                                }
+                                StyledText {
+                                    text: (dampingSlider.value / 100.0).toFixed(2)
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    font.family: Appearance.font.family.monospace
+                                    color: Appearance.colors.colSubtext
+                                    horizontalAlignment: Text.AlignRight
+                                }
+                            }
+
+                            StyledSlider {
+                                id: dampingSlider
+                                Layout.fillWidth: true
+                                from: 1
+                                to: 200
+                                value: Math.round((animDelegate.springData?.damping_ratio ?? 1.0) * 100)
+                                stepSize: 5
+                                configuration: StyledSlider.Configuration.S
+
+                                onMoved: {
+                                    if (pressed) return
+                                    root.setConfig("animations", animDelegate.modelData + ".damping-ratio", (value / 100.0).toFixed(2))
+                                }
                             }
                         }
 
-                        StyledText {
-                            text: (dampingSlider.value / 100.0).toFixed(2)
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.family: Appearance.font.family.monospace
-                            color: Appearance.colors.colSubtext
-                            Layout.preferredWidth: 35
-                            horizontalAlignment: Text.AlignRight
-                        }
-                    }
-
-                    StyledText {
-                        text: Translation.tr("Stiffness")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
-                        visible: (animDelegate.springData?.mode ?? "spring") === "spring" && root.animationIsEnabled(animDelegate.springData)
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-                        visible: (animDelegate.springData?.mode ?? "spring") === "spring" && root.animationIsEnabled(animDelegate.springData)
-
-                        StyledSlider {
-                            id: stiffnessSlider
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            from: 50
-                            to: 2000
-                            value: animDelegate.springData?.stiffness ?? 800
-                            stepSize: 50
-                            configuration: StyledSlider.Configuration.S
+                            Layout.preferredWidth: 1
+                            spacing: 2
 
-                            onMoved: {
-                                if (pressed) return
-                                root.setConfig("animations", animDelegate.modelData + ".stiffness", String(Math.round(value)))
+                            RowLayout {
+                                Layout.fillWidth: true
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    text: Translation.tr("Stiffness")
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: Appearance.colors.colSubtext
+                                    elide: Text.ElideRight
+                                }
+                                StyledText {
+                                    text: String(Math.round(stiffnessSlider.value))
+                                    font.pixelSize: Appearance.font.pixelSize.smallest
+                                    font.family: Appearance.font.family.monospace
+                                    color: Appearance.colors.colSubtext
+                                    horizontalAlignment: Text.AlignRight
+                                }
                             }
-                        }
 
-                        StyledText {
-                            text: String(Math.round(stiffnessSlider.value))
-                            font.pixelSize: Appearance.font.pixelSize.smallest
-                            font.family: Appearance.font.family.monospace
-                            color: Appearance.colors.colSubtext
-                            Layout.preferredWidth: 40
-                            horizontalAlignment: Text.AlignRight
+                            StyledSlider {
+                                id: stiffnessSlider
+                                Layout.fillWidth: true
+                                from: 50
+                                to: 2000
+                                value: animDelegate.springData?.stiffness ?? 800
+                                stepSize: 50
+                                configuration: StyledSlider.Configuration.S
+
+                                onMoved: {
+                                    if (pressed) return
+                                    root.setConfig("animations", animDelegate.modelData + ".stiffness", String(Math.round(value)))
+                                }
+                            }
                         }
                     }
                 }

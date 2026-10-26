@@ -148,150 +148,428 @@ ContentPage {
                     id: panelStylePreview
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    implicitHeight: 160
+                    implicitHeight: 176
                     radius: Appearance.rounding.normal
                     clip: true
                     color: Appearance.colors.colLayer2
                     border.width: 1
                     border.color: Appearance.colors.colOutlineVariant
 
-                    property real wavePhase: 0.35
-                    property real pulseStrength: 0.65
+                    readonly property bool isWaffleMode: (Config.options?.panelFamily ?? "abyss") === "waffle"
 
-                    NumberAnimation on pulseStrength {
-                        id: previewPulseAnim
-                        from: 1.0
-                        to: 0.45
-                        duration: 750
-                        easing.type: Easing.OutCubic
+                    // Desktop wallpaper backdrop
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        radius: Math.max(0, parent.radius - 1)
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: Qt.tint(Appearance.colors.colLayer1, Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.14)) }
+                            GradientStop { position: 1.0; color: Appearance.colors.colLayer2 }
+                        }
                     }
 
-                    Canvas {
-                        id: styleCanvas
+                    // ==================== ABYSS SCREENSHOT PREVIEW ====================
+                    Item {
+                        id: abyssScreenshotMockup
                         anchors.fill: parent
-                        onWidthChanged: requestPaint()
-                        onHeightChanged: requestPaint()
-                        Connections {
-                            target: Config.options
-                            function onPanelFamilyChanged() { styleCanvas.requestPaint() }
+                        visible: !panelStylePreview.isWaffleMode
+
+                        // Outer Screen Edge frame + top bar
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.width: 6
+                            border.color: Appearance.colors.colLayer0
+                            radius: panelStylePreview.radius
                         }
-                        Connections {
-                            target: panelStylePreview
-                            function onPulseStrengthChanged() { styleCanvas.requestPaint() }
-                            function onWavePhaseChanged() { styleCanvas.requestPaint() }
-                        }
-                        onPaint: {
-                            const ctx = getContext("2d")
-                            const w = width
-                            const h = height
-                            ctx.clearRect(0, 0, w, h)
-                            if (w <= 0 || h <= 0) return
 
-                            const isWaffleMode = (Config.options?.panelFamily ?? "abyss") === "waffle"
-                            const primary = String(Appearance.colors.colPrimary)
-                            const surface = String(Appearance.colors.colLayer0)
-                            const outline = String(Appearance.colors.colOutlineVariant)
+                        // Top integrated Abyss Bar
+                        Rectangle {
+                            id: abyssTopBarMock
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            height: 24
+                            color: Appearance.colors.colLayer0
 
-                            if (!isWaffleMode) {
-                                // Abyss preview: liquid Screen Edge frame + top wave crest + connected dock
-                                const edge = 10
-                                const r = 18
-                                ctx.fillStyle = surface
-                                ctx.beginPath()
-                                ctx.rect(0, 0, w, h)
-                                ctx.moveTo(edge + r, edge + 14)
-                                ctx.arcTo(w - edge, edge + 14, w - edge, h - edge, r)
-                                ctx.arcTo(w - edge, h - edge, edge, h - edge, r)
-                                ctx.arcTo(edge, h - edge, edge, edge + 14, r)
-                                ctx.arcTo(edge, edge + 14, w - edge, edge + 14, r)
-                                ctx.fill("evenodd")
+                            // Left: Launcher + Workspace pills
+                            Row {
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 5
 
-                                // Top liquid wave crest along the upper Screen Edge
-                                ctx.beginPath()
-                                const baseTop = edge + 14
-                                const center = w * panelStylePreview.wavePhase
-                                ctx.moveTo(edge, baseTop)
-                                for (let x = edge; x <= w - edge; x += 3) {
-                                    const dist = (x - center) / Math.max(40, w * 0.22)
-                                    const env = Math.exp(-dist * dist)
-                                    const ripple = Math.cos(dist * 4.2) * env * 9 * panelStylePreview.pulseStrength
-                                    ctx.lineTo(x, baseTop + Math.max(-4, ripple))
+                                Rectangle {
+                                    width: 12; height: 12; radius: 6
+                                    color: Appearance.colors.colPrimary
                                 }
-                                ctx.strokeStyle = primary
-                                ctx.lineWidth = 2
-                                ctx.stroke()
+                                Rectangle {
+                                    width: 18; height: 8; radius: 4
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    color: Appearance.colors.colPrimary
+                                }
+                                Repeater {
+                                    model: 3
+                                    Rectangle {
+                                        width: 8; height: 8; radius: 4
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        color: Appearance.colors.colLayer2
+                                    }
+                                }
+                            }
 
-                                // Bottom connected dock pill
-                                const dockW = Math.min(130, w * 0.46)
-                                const dockH = 14
-                                const dockX = (w - dockW) / 2
-                                const dockY = h - edge - dockH + 2
-                                ctx.fillStyle = surface
-                                ctx.beginPath()
-                                ctx.roundedRect(dockX, dockY, dockW, dockH, 7, 7)
-                                ctx.fill()
-                                ctx.strokeStyle = primary
-                                ctx.lineWidth = 1.2
-                                ctx.stroke()
-                            } else {
-                                // Waffle preview: floating Start Menu card + bottom taskbar
-                                const barH = 24
-                                const startW = Math.min(120, w * 0.44)
-                                const startH = Math.min(68, h * 0.48)
-                                const startX = (w - startW) / 2
-                                const startY = h - barH - startH - 8
+                            // Center: Connected Abyss Clock Notch
+                            Rectangle {
+                                width: 54
+                                height: 20
+                                radius: 8
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.top: parent.top
+                                anchors.topMargin: 2
+                                color: Appearance.colors.colLayer1
+                                border.width: 1
+                                border.color: Appearance.colors.colOutlineVariant
 
-                                ctx.fillStyle = surface
-                                ctx.beginPath()
-                                ctx.roundedRect(startX, startY, startW, startH, 8, 8)
-                                ctx.fill()
-                                ctx.strokeStyle = outline
-                                ctx.lineWidth = 1
-                                ctx.stroke()
+                                StyledText {
+                                    anchors.centerIn: parent
+                                    text: "14:20"
+                                    font.pixelSize: 10
+                                    font.weight: Font.DemiBold
+                                    color: Appearance.colors.colOnLayer0
+                                }
+                            }
 
-                                // Bottom taskbar
-                                ctx.fillStyle = surface
-                                ctx.fillRect(0, h - barH, w, barH)
-                                ctx.strokeStyle = primary
-                                ctx.lineWidth = 1.5
-                                ctx.beginPath()
-                                ctx.moveTo(0, h - barH)
-                                ctx.lineTo(w, h - barH)
-                                ctx.stroke()
+                            // Right: System status & resource pills
+                            Row {
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 5
 
-                                // Centered taskbar dots
-                                ctx.fillStyle = primary
-                                for (let i = -2; i <= 2; i++) {
-                                    ctx.beginPath()
-                                    ctx.roundedRect(w / 2 + i * 16 - 4, h - barH / 2 - 4, 8, 8, 2, 2)
-                                    ctx.fill()
+                                Rectangle {
+                                    width: 28; height: 12; radius: 6
+                                    color: Appearance.colors.colLayer2
+                                    Row {
+                                        anchors.centerIn: parent
+                                        spacing: 3
+                                        Rectangle { width: 5; height: 5; radius: 2.5; color: Appearance.colors.colPrimary }
+                                        Rectangle { width: 12; height: 4; radius: 2; anchors.verticalCenter: parent.verticalCenter; color: Appearance.colors.colOnLayer1; opacity: 0.65 }
+                                    }
+                                }
+                                Rectangle {
+                                    width: 34; height: 12; radius: 6
+                                    color: Appearance.colors.colSecondaryContainer
+                                    Row {
+                                        anchors.centerIn: parent
+                                        spacing: 3
+                                        Repeater {
+                                            model: 3
+                                            Rectangle { width: 5; height: 5; radius: 2.5; color: Appearance.colors.colOnSecondaryContainer }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Inner concave Screen Edge viewport border
+                        Rectangle {
+                            id: abyssViewportMock
+                            anchors.top: abyssTopBarMock.bottom
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.leftMargin: 6
+                            anchors.rightMargin: 6
+                            anchors.bottomMargin: 6
+                            radius: 12
+                            color: "transparent"
+                            border.width: 1
+                            border.color: Appearance.colors.colOutlineVariant
+
+                            // Tiled desktop windows inside workspace
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.topMargin: 10
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                anchors.bottomMargin: 26
+                                spacing: 8
+
+                                // Left tiled window (focused)
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Layout.preferredWidth: 3
+                                    radius: 7
+                                    color: Appearance.colors.colLayer0
+                                    opacity: 0.94
+                                    border.width: 1.5
+                                    border.color: Appearance.colors.colPrimary
+
+                                    Column {
+                                        anchors.fill: parent
+                                        anchors.margins: 8
+                                        spacing: 5
+                                        Row {
+                                            spacing: 4
+                                            Rectangle { width: 6; height: 6; radius: 3; color: Appearance.colors.colPrimary }
+                                            Rectangle { width: 38; height: 5; radius: 2.5; color: Appearance.colors.colOnLayer1; opacity: 0.45 }
+                                        }
+                                        Rectangle { width: parent.width * 0.85; height: 5; radius: 2.5; color: Appearance.colors.colLayer2 }
+                                        Rectangle { width: parent.width * 0.65; height: 5; radius: 2.5; color: Appearance.colors.colLayer2 }
+                                        Rectangle { width: parent.width * 0.75; height: 5; radius: 2.5; color: Appearance.colors.colLayer2 }
+                                    }
+                                }
+
+                                // Right tiled window
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Layout.preferredWidth: 2
+                                    radius: 7
+                                    color: Appearance.colors.colLayer0
+                                    opacity: 0.88
+                                    border.width: 1
+                                    border.color: Appearance.colors.colOutlineVariant
+
+                                    Column {
+                                        anchors.fill: parent
+                                        anchors.margins: 8
+                                        spacing: 5
+                                        Rectangle { width: parent.width * 0.55; height: 5; radius: 2.5; color: Appearance.colors.colOnLayer1; opacity: 0.4 }
+                                        Rectangle { width: parent.width; height: 22; radius: 4; color: Appearance.colors.colLayer2 }
+                                        Rectangle { width: parent.width * 0.8; height: 14; radius: 4; color: Appearance.colors.colLayer2 }
+                                    }
+                                }
+                            }
+
+                            // Bottom connected Abyss Dock
+                            Rectangle {
+                                width: 112
+                                height: 18
+                                radius: 9
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: -2
+                                color: Appearance.colors.colLayer0
+                                border.width: 1
+                                border.color: Appearance.colors.colOutlineVariant
+
+                                Row {
+                                    anchors.centerIn: parent
+                                    spacing: 6
+                                    Repeater {
+                                        model: 5
+                                        Rectangle {
+                                            required property int index
+                                            width: 11; height: 11; radius: 3.5
+                                            color: index === 0
+                                                ? Appearance.colors.colPrimary
+                                                : (index === 2 ? Appearance.colors.colSecondaryContainer : Appearance.colors.colLayer2)
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
 
-                    StyledText {
-                        anchors.centerIn: parent
-                        text: (Config.options?.panelFamily ?? "abyss") === "waffle"
-                            ? "Waffle · Bottom taskbar & Start menu"
-                            : "Click to test a wave · Abyss"
-                        color: Appearance.colors.colOnLayer1
-                        font.pixelSize: Appearance.font.pixelSize.small
-                    }
-
-                    MouseArea {
+                    // ==================== WAFFLE SCREENSHOT PREVIEW ====================
+                    Item {
+                        id: waffleScreenshotMockup
                         anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onPositionChanged: mouse => {
-                            if (pressed) {
-                                panelStylePreview.wavePhase = Math.max(0.15, Math.min(0.85, mouse.x / Math.max(1, width)))
-                                previewPulseAnim.restart()
+                        visible: panelStylePreview.isWaffleMode
+
+                        // Background desktop window
+                        Rectangle {
+                            width: parent.width * 0.42
+                            height: parent.height * 0.52
+                            x: 14
+                            y: 12
+                            radius: 6
+                            color: Appearance.colors.colLayer0
+                            opacity: 0.72
+                            border.width: 1
+                            border.color: Appearance.colors.colOutlineVariant
+
+                            Column {
+                                anchors.fill: parent
+                                anchors.margins: 8
+                                spacing: 5
+                                Rectangle { width: parent.width * 0.5; height: 5; radius: 2.5; color: Appearance.colors.colOnLayer1; opacity: 0.35 }
+                                Rectangle { width: parent.width * 0.85; height: 5; radius: 2.5; color: Appearance.colors.colLayer2 }
+                                Rectangle { width: parent.width * 0.7; height: 5; radius: 2.5; color: Appearance.colors.colLayer2 }
                             }
                         }
-                        onPressed: mouse => {
-                            panelStylePreview.wavePhase = Math.max(0.15, Math.min(0.85, mouse.x / Math.max(1, width)))
-                            previewPulseAnim.restart()
+
+                        // Centered floating Waffle Start Menu card
+                        Rectangle {
+                            id: waffleStartMenuMock
+                            width: Math.min(156, parent.width * 0.52)
+                            height: Math.min(102, parent.height - waffleTaskbarMock.height - 18)
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: waffleTaskbarMock.top
+                            anchors.bottomMargin: 6
+                            radius: 8
+                            color: Appearance.colors.colLayer0
+                            border.width: 1
+                            border.color: Appearance.colors.colOutlineVariant
+
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: 8
+                                spacing: 6
+
+                                // Search pill inside Start menu
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 14
+                                    radius: 7
+                                    color: Appearance.colors.colLayer2
+                                    border.width: 1
+                                    border.color: Appearance.colors.colOutlineVariant
+
+                                    Row {
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: 6
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        spacing: 4
+                                        Rectangle { width: 5; height: 5; radius: 2.5; color: Appearance.colors.colPrimary }
+                                        Rectangle { width: 42; height: 4; radius: 2; anchors.verticalCenter: parent.verticalCenter; color: Appearance.colors.colOnLayer1; opacity: 0.45 }
+                                    }
+                                }
+
+                                // Pinned app grid (4x2)
+                                GridLayout {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    columns: 4
+                                    columnSpacing: 6
+                                    rowSpacing: 6
+
+                                    Repeater {
+                                        model: 8
+                                        Rectangle {
+                                            required property int index
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            radius: 4
+                                            color: index === 0
+                                                ? Appearance.colors.colPrimary
+                                                : (index % 3 === 0 ? Appearance.colors.colSecondaryContainer : Appearance.colors.colLayer2)
+                                        }
+                                    }
+                                }
+
+                                // Bottom user + power strip
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+                                    Rectangle { width: 8; height: 8; radius: 4; color: Appearance.colors.colPrimary }
+                                    Rectangle { width: 32; height: 4; radius: 2; color: Appearance.colors.colOnLayer1; opacity: 0.45 }
+                                    Item { Layout.fillWidth: true }
+                                    Rectangle { width: 7; height: 7; radius: 3.5; color: Appearance.colors.colLayer2 }
+                                }
+                            }
+                        }
+
+                        // Bottom full-width Waffle Taskbar
+                        Rectangle {
+                            id: waffleTaskbarMock
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            height: 28
+                            color: Appearance.colors.colLayer0
+
+                            Rectangle {
+                                anchors.top: parent.top
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                height: 1
+                                color: Appearance.colors.colOutlineVariant
+                            }
+
+                            // Left: Weather / widget pill
+                            Row {
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 4
+                                Rectangle { width: 10; height: 10; radius: 5; color: Appearance.colors.colSecondaryContainer }
+                                Rectangle { width: 20; height: 5; radius: 2.5; anchors.verticalCenter: parent.verticalCenter; color: Appearance.colors.colOnLayer1; opacity: 0.5 }
+                            }
+
+                            // Center: Start button + search pill + pinned apps
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 6
+
+                                // 4-tile Start icon
+                                Grid {
+                                    columns: 2
+                                    spacing: 1.5
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    Repeater {
+                                        model: 4
+                                        Rectangle { width: 5.5; height: 5.5; radius: 1; color: Appearance.colors.colPrimary }
+                                    }
+                                }
+
+                                // Taskbar search pill
+                                Rectangle {
+                                    width: 34; height: 14; radius: 7
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    color: Appearance.colors.colLayer2
+                                }
+
+                                // Pinned app icons
+                                Repeater {
+                                    model: 3
+                                    Item {
+                                        required property int index
+                                        width: 14; height: 18
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        Rectangle {
+                                            width: 12; height: 12; radius: 3
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            anchors.top: parent.top
+                                            anchors.topMargin: 1
+                                            color: index === 0 ? Appearance.colors.colSecondaryContainer : Appearance.colors.colLayer2
+                                        }
+                                        Rectangle {
+                                            visible: index === 0
+                                            width: 6; height: 2; radius: 1
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            anchors.bottom: parent.bottom
+                                            color: Appearance.colors.colPrimary
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Right: Tray + 2-line clock
+                            Row {
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 6
+
+                                Row {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 3
+                                    Repeater {
+                                        model: 3
+                                        Rectangle { width: 4.5; height: 4.5; radius: 2.25; color: Appearance.colors.colOnLayer1; opacity: 0.65 }
+                                    }
+                                }
+
+                                Column {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 2
+                                    Rectangle { width: 20; height: 4; radius: 2; color: Appearance.colors.colOnLayer0; opacity: 0.8 }
+                                    Rectangle { width: 24; height: 3.5; radius: 1.75; color: Appearance.colors.colOnLayer1; opacity: 0.45 }
+                                }
+                            }
                         }
                     }
                 }

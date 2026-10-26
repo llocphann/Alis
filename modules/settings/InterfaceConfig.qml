@@ -54,10 +54,14 @@ ContentPage {
         columnSpacing: 14
         rowSpacing: 14
 
-    SettingsCardSection {
+    ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: 1
+        spacing: 14
+
+    SettingsCardSection {
+        Layout.fillWidth: true
         settingsTaskSection: "tools"
         visible: true
         expanded: true
@@ -166,7 +170,6 @@ ContentPage {
     SettingsCardSection {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.preferredWidth: 1
         settingsTaskSection: "tools"
         visible: true
         expanded: true
@@ -301,6 +304,7 @@ ContentPage {
                 }
             }
         }
+    }
     }
 
     SettingsCardSection {
@@ -488,11 +492,16 @@ ContentPage {
         }
     }
 
-    SettingsCardSection {
-        settingsTaskSection: "notifications"
+    ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: 1
+        spacing: 14
+        visible: root.isIiActive
+
+    SettingsCardSection {
+        settingsTaskSection: "notifications"
+        Layout.fillWidth: true
         visible: root.isIiActive
         expanded: true
         icon: "notifications"
@@ -518,25 +527,29 @@ ContentPage {
                 }
             }
 
-            ConfigSwitch {
-                buttonIcon: "timer"
-                text: Translation.tr("Ignore app timeout")
-                checked: Config.options?.notifications?.ignoreAppTimeout ?? false
-                onCheckedChanged: Config.setNestedValue("notifications.ignoreAppTimeout", checked)
-                StyledToolTip {
-                    text: Translation.tr("Always use your timeout settings instead of app-defined ones")
-                }
-            }
+            ConfigRow {
+                uniform: true
 
-            ConfigSwitch {
-                buttonIcon: "pinch"
-                text: Translation.tr("Scale on hover")
-                checked: Config.options?.notifications?.scaleOnHover ?? false
-                onCheckedChanged: {
-                    Config.setNestedValue("notifications.scaleOnHover", checked)
+                ConfigSwitch {
+                    buttonIcon: "timer"
+                    text: Translation.tr("Ignore app timeout")
+                    checked: Config.options?.notifications?.ignoreAppTimeout ?? false
+                    onCheckedChanged: Config.setNestedValue("notifications.ignoreAppTimeout", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Always use your timeout settings instead of app-defined ones")
+                    }
                 }
-                StyledToolTip {
-                    text: Translation.tr("Slightly enlarge notifications when the mouse hovers over them")
+
+                ConfigSwitch {
+                    buttonIcon: "pinch"
+                    text: Translation.tr("Scale on hover")
+                    checked: Config.options?.notifications?.scaleOnHover ?? false
+                    onCheckedChanged: {
+                        Config.setNestedValue("notifications.scaleOnHover", checked)
+                    }
+                    StyledToolTip {
+                        text: Translation.tr("Slightly enlarge notifications when the mouse hovers over them")
+                    }
                 }
             }
 
@@ -641,6 +654,12 @@ ContentPage {
             ContentSubsection {
                 title: Translation.tr("Notification position")
                 visible: Config.options?.panelFamily === "abyss"
+                Layout.preferredHeight: 0
+                Layout.maximumHeight: 0
+                implicitHeight: 0
+                opacity: 0
+                clip: true
+                enabled: false
                 AbyssPositionSettings {
                     kind: "notifications"
                     allowedKinds: ["notifications"]
@@ -655,11 +674,13 @@ ContentPage {
 
             NoticeBox {
                 Layout.fillWidth: true
+                visible: Config.options?.panelFamily !== "abyss"
                 materialIcon: "south_east"
                 text: Translation.tr("Hover bottom-right for history; assigned compositor hot corners take priority.")
             }
 
             ConfigSwitch {
+                visible: Config.options?.panelFamily !== "abyss"
                 buttonIcon: "notifications"
                 text: Translation.tr("Enable notification center")
                 checked: Config.options?.notificationCenter?.enable ?? true
@@ -668,6 +689,7 @@ ContentPage {
             }
 
             ConfigSwitch {
+                visible: Config.options?.panelFamily !== "abyss"
                 buttonIcon: "south_east"
                 text: Translation.tr("Open on bottom-right hover")
                 checked: Config.options?.notificationCenter?.hoverEnable ?? true
@@ -679,6 +701,7 @@ ContentPage {
 
             ConfigRow {
                 uniform: true
+                visible: Config.options?.panelFamily !== "abyss"
 
                 ConfigSpinBox {
                     icon: "hourglass"
@@ -756,31 +779,36 @@ ContentPage {
                 }
             }
 
-            ConfigSwitch {
-                buttonIcon: "done_all"
-                text: Translation.tr("Mark read when opened")
-                checked: Config.options?.notificationCenter?.markReadOnOpen ?? true
-                enabled: Config.options?.notificationCenter?.enable ?? true
-                opacity: enabled ? 1 : 0.5
-                onCheckedChanged:
-                    Config.setNestedValue("notificationCenter.markReadOnOpen", checked)
-                StyledToolTip {
-                    text: Translation.tr("Mark history read and retract matching toasts (shared read flag).")
-                }
-            }
+            ConfigRow {
+                uniform: true
 
-            ConfigSwitch {
-                buttonIcon: "fullscreen"
-                text: Translation.tr("Allow over fullscreen apps")
-                checked: Config.options?.notificationCenter?.allowInFullscreen ?? false
-                enabled: Config.options?.notificationCenter?.enable ?? true
-                opacity: enabled ? 1 : 0.5
-                onCheckedChanged:
-                    Config.setNestedValue("notificationCenter.allowInFullscreen", checked)
+                ConfigSwitch {
+                    buttonIcon: "done_all"
+                    text: Translation.tr("Mark read when opened")
+                    checked: Config.options?.notificationCenter?.markReadOnOpen ?? true
+                    enabled: Config.options?.notificationCenter?.enable ?? true
+                    opacity: enabled ? 1 : 0.5
+                    onCheckedChanged:
+                        Config.setNestedValue("notificationCenter.markReadOnOpen", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Mark history read and retract matching toasts (shared read flag).")
+                    }
+                }
+
+                ConfigSwitch {
+                    buttonIcon: "fullscreen"
+                    text: Translation.tr("Allow over fullscreen apps")
+                    checked: Config.options?.notificationCenter?.allowInFullscreen ?? false
+                    enabled: Config.options?.notificationCenter?.enable ?? true
+                    opacity: enabled ? 1 : 0.5
+                    onCheckedChanged:
+                        Config.setNestedValue("notificationCenter.allowInFullscreen", checked)
+                }
             }
 
             RippleButtonWithIcon {
                 Layout.fillWidth: true
+                visible: Config.options?.panelFamily !== "abyss"
                 materialIcon: "preview"
                 mainText: GlobalStates.notificationCenterExplicitOpen
                     ? Translation.tr("Close notification center")
@@ -799,7 +827,6 @@ ContentPage {
     SettingsCardSection {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.preferredWidth: 1
         settingsTaskSection: "control"
         visible: root.isIiActive
         expanded: true
@@ -903,6 +930,7 @@ ContentPage {
                 }
             }
         }
+    }
     }
 
     SettingsCardSection {
@@ -1160,32 +1188,40 @@ ContentPage {
                     }
                 }
 
-                SettingsSwitch {
-                    buttonIcon: "toggle_on"
-                    text: Translation.tr("Controls")
-                    checked: Config.options?.sidebar?.widgets?.controls ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.controls", checked)
+                ConfigRow {
+                    uniform: true
+
+                    SettingsSwitch {
+                        buttonIcon: "toggle_on"
+                        text: Translation.tr("Controls")
+                        checked: Config.options?.sidebar?.widgets?.controls ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.controls", checked)
+                    }
+
+                    SettingsSwitch {
+                        buttonIcon: "monitoring"
+                        text: Translation.tr("System status")
+                        checked: Config.options?.sidebar?.widgets?.status ?? true
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.status", checked)
+                    }
                 }
 
-                SettingsSwitch {
-                    buttonIcon: "monitoring"
-                    text: Translation.tr("System status")
-                    checked: Config.options?.sidebar?.widgets?.status ?? true
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.status", checked)
-                }
+                ConfigRow {
+                    uniform: true
 
-                SettingsSwitch {
-                    buttonIcon: "currency_bitcoin"
-                    text: Translation.tr("Crypto prices")
-                    checked: Config.options?.sidebar?.widgets?.crypto ?? false
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.crypto", checked)
-                }
+                    SettingsSwitch {
+                        buttonIcon: "currency_bitcoin"
+                        text: Translation.tr("Crypto prices")
+                        checked: Config.options?.sidebar?.widgets?.crypto ?? false
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.crypto", checked)
+                    }
 
-                SettingsSwitch {
-                    buttonIcon: "wallpaper"
-                    text: Translation.tr("Wallpaper picker")
-                    checked: Config.options?.sidebar?.widgets?.wallpaper ?? false
-                    onCheckedChanged: Config.setNestedValue("sidebar.widgets.wallpaper", checked)
+                    SettingsSwitch {
+                        buttonIcon: "wallpaper"
+                        text: Translation.tr("Wallpaper picker")
+                        checked: Config.options?.sidebar?.widgets?.wallpaper ?? false
+                        onCheckedChanged: Config.setNestedValue("sidebar.widgets.wallpaper", checked)
+                    }
                 }
 
                 SettingsSwitch {

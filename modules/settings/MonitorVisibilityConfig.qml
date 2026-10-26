@@ -1591,51 +1591,87 @@ ContentPage {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: 1
-        settingsTaskSection: "outputs"
+        settingsTaskSection: "popups"
         visible: !root.embeddedArrangementOnly
         expanded: true
-        icon: "preview"
-        title: Translation.tr("Overview placement")
+        icon: "notifications"
+        title: Translation.tr("Popups")
 
         SettingsGroup {
-            SettingsSwitch {
-                buttonIcon: "screen_share"
-                text: Translation.tr("Active screen only")
-                checked: Config.options?.overview?.activeScreenOnly ?? true
-                onCheckedChanged: Config.setNestedValue("overview.activeScreenOnly", checked)
-                StyledToolTip {
-                    text: Translation.tr("Open the overview on the monitor where it was invoked")
+            NoticeBox {
+                Layout.fillWidth: true
+                materialIcon: "merge"
+                text: Translation.tr("These surfaces are shared by both families, so the same monitor choices apply in Material and Waffle.")
+            }
+
+            PresetActions {
+                paths: root.surfacePaths(root.sharedSurfaces)
+            }
+
+            Repeater {
+                model: root.sharedSurfaces
+                SurfaceVisibilityBlock {
+                    required property var modelData
+                    surface: modelData
                 }
             }
         }
     }
 
-    SettingsCardSection {
+    ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: 1
-        settingsTaskSection: "surfaces"
+        spacing: 14
         visible: !root.embeddedArrangementOnly
-        expanded: true
-        icon: "web_asset"
-        title: Translation.tr("Material shell surfaces")
 
-        SettingsGroup {
-            NoticeBox {
-                Layout.fillWidth: true
-                materialIcon: "apps"
-                text: Translation.tr("These controls only affect the Material family: the ii bar, dock, and floating media controls.")
+        SettingsCardSection {
+            Layout.fillWidth: true
+            settingsTaskSection: "surfaces"
+            visible: !root.embeddedArrangementOnly
+            expanded: true
+            icon: "web_asset"
+            title: Translation.tr("Material shell surfaces")
+
+            SettingsGroup {
+                NoticeBox {
+                    Layout.fillWidth: true
+                    materialIcon: "apps"
+                    text: Translation.tr("These controls only affect the Material family: the ii bar, dock, and floating media controls.")
+                }
+
+                PresetActions {
+                    paths: root.surfacePaths(root.iiSurfaces)
+                }
+
+                Repeater {
+                    model: root.iiSurfaces
+                    SurfaceVisibilityBlock {
+                        required property var modelData
+                        surface: modelData
+                    }
+                }
             }
+        }
 
-            PresetActions {
-                paths: root.surfacePaths(root.iiSurfaces)
-            }
+        SettingsCardSection {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            settingsTaskSection: "outputs"
+            visible: !root.embeddedArrangementOnly
+            expanded: true
+            icon: "preview"
+            title: Translation.tr("Overview placement")
 
-            Repeater {
-                model: root.iiSurfaces
-                SurfaceVisibilityBlock {
-                    required property var modelData
-                    surface: modelData
+            SettingsGroup {
+                SettingsSwitch {
+                    buttonIcon: "screen_share"
+                    text: Translation.tr("Active screen only")
+                    checked: Config.options?.overview?.activeScreenOnly ?? true
+                    onCheckedChanged: Config.setNestedValue("overview.activeScreenOnly", checked)
+                    StyledToolTip {
+                        text: Translation.tr("Open the overview on the monitor where it was invoked")
+                    }
                 }
             }
         }
@@ -1668,36 +1704,6 @@ ContentPage {
                 DesktopWidgetOutputBlock {
                     required property var modelData
                     outputName: String(modelData ?? "")
-                }
-            }
-        }
-    }
-
-    SettingsCardSection {
-        Layout.fillWidth: true
-        Layout.columnSpan: parent.columns
-        settingsTaskSection: "popups"
-        visible: !root.embeddedArrangementOnly
-        expanded: true
-        icon: "notifications"
-        title: Translation.tr("Popups")
-
-        SettingsGroup {
-            NoticeBox {
-                Layout.fillWidth: true
-                materialIcon: "merge"
-                text: Translation.tr("These surfaces are shared by both families, so the same monitor choices apply in Material and Waffle.")
-            }
-
-            PresetActions {
-                paths: root.surfacePaths(root.sharedSurfaces)
-            }
-
-            Repeater {
-                model: root.sharedSurfaces
-                SurfaceVisibilityBlock {
-                    required property var modelData
-                    surface: modelData
                 }
             }
         }
