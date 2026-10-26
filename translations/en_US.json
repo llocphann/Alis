@@ -5980,5 +5980,7 @@
   "Unavailable: %1": "Unavailable: %1",
   "Search installed applications…": "Search installed applications…",
   "No matching applications found.": "No matching applications found.",
-  "Core Applications · System Utilities": "Core Applications · System Utilities"
+  "Core Applications · System Utilities": "Core Applications · System Utilities",
+  "Floating bubbles and sparkle": "Floating bubbles and sparkle",
+  "Add floating bubbles and sparkle around your companion. Respects the shell effects setting.": "Add floating bubbles and sparkle around your companion. Respects the shell effects setting."
 }

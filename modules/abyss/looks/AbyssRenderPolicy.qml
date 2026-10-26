@@ -12,7 +12,7 @@ Singleton {
     readonly property string abyssQuality: Policy.abyss(Config.options?.abyss?.quality,
         Config.options?.abyss?.autoQuality ?? false,powerProfile)
     readonly property string aquaQuality: Policy.aqua(Config.options?.abyss?.companion?.renderQuality,
-        Config.options?.abyss?.companion?.autoQuality ?? false,powerProfile,abyssQuality)
+        Config.options?.abyss?.companion?.autoQuality ?? false,powerProfile)
     readonly property string aquaQualityLabel:
         Policy.aquaLabel(aquaQuality)
 }

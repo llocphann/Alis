@@ -45,13 +45,19 @@ Singleton {
         probe.running=true
     }
     function failLoad(): void {loadFailed=true;diagnostic="load-failed"}
+    property string lastFocusedAppId: ""
+    readonly property string activeDesktopAppId: {
+        const raw=String(ToplevelManager.activeToplevel?.appId || (CompositorService.isNiri ? NiriService.activeWindow?.app_id : "") || "").trim()
+        return raw.length>0 ? raw : (GlobalStates.settingsOverlayOpen ? lastFocusedAppId : "")
+    }
+    onActiveDesktopAppIdChanged: if(activeDesktopAppId.length>0 && !GlobalStates.settingsOverlayOpen) lastFocusedAppId=activeDesktopAppId
     CompanionContext {
         id:contextFeed
         owner:root.session
         permitted:root.contextAvailable
         shareFocus:permitted && Config.options?.abyss?.companion?.contextFocusEnabled===true
         shareAi:permitted && Config.options?.abyss?.companion?.contextAiEnabled===true
-        category:shareFocus ? ContextPolicy.category(ToplevelManager.activeToplevel?.appId ?? "") : "none"
+        category:shareFocus ? ContextPolicy.category(root.activeDesktopAppId) : "none"
         aiBusy:shareAi && Ai.busy
         aiWaiting:shareAi && Ai.waitingForApproval
     }
